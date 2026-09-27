@@ -200,7 +200,11 @@ nameMolecule(mol) →
 
 `TraceStep = { rule, candidatesBefore, values, survivors, note? }` where each
 candidate is `{ atoms, direction?, key }` and `values` are the compared data
-(counts or locant lists). The explanation layer (§5) consumes only the trace
+(counts for P1–P4, locant lists for N1–N3, one locant list per prefix group
+in citation order for N4, the atom-id tuple for the tie-break). Trace order:
+P1, P2, P3, N1, N2, P4, N3, N4, TIE. Rules stop at the first one that leaves
+a single candidate; P1 is always recorded, and N3/N4 are skipped when no
+candidate carries prefixes. The explanation layer (§5) consumes only the trace
 and the result — it never re-derives chemistry.
 
 ### 4.2 Parent candidates
@@ -215,19 +219,21 @@ substituents (§4.5).
 Note: no triple bond can leave a longest parent (internal attachment would
 exceed valence; terminal attachment would make the chain longer). Assert it.
 
-### 4.3 Parent selection (direction-independent)
+### 4.3 Parent selection (direction-independent part)
 
 Compare in order; stop when one chain remains:
 
-1. **P1 Longest chain** — carbon count.
+1. **P1 Longest chain** — carbon count (IUPAC 2013 P-44.3).
 2. **P2 Most multiple bonds** — double + triple bonds **lying within** the
-   chain. A double bond connecting the chain to a substituent does not count.
-3. **P3 Most double bonds** — within the chain.
-4. **P4 Most substituents** — number of individual substituent prefixes
-   attached to the chain: two substituents on one carbon count as two; a
-   doubly-attached substituent (`-iliden`) counts as one.
+   chain. A double bond connecting the chain to a substituent does not count
+   (P-44.4.1.1).
+3. **P3 Most double bonds** — within the chain (P-44.4.1.2).
 
-Remaining chains go, together with both directions of each, to §4.4.
+Remaining chains go, together with both directions of each, to §4.4. The
+IUPAC 2013 order puts the lowest locants for `eno`/`ino` (N1, N2) **before**
+the number of substituent prefixes (P-45.2.1), so P4 is applied inside the
+numbering cascade, after N2. Example: in `C=CCC(C=C(C)C)CCCCC` the non-1-ene
+chain (one substituent) beats the non-2-ene chain (two substituents).
 
 ### 4.4 Numbering (and remaining parent choice)
 
@@ -238,11 +244,16 @@ point of difference — never by sums**:
 5. **N1** all multiple bonds together (`eno` + `ino`); a bond's locant is the
    lower of its two atom locants.
 6. **N2** double bonds.
-7. **N3** all substituent prefixes together (an `-iliden` prefix contributes
+7. **P4 Most substituents** — chain-level count, applied to the chains
+   still represented among the candidates (P-45.2.1): number of individual
+   substituent prefixes attached to the chain: two substituents on one carbon
+   count as two; a doubly-attached substituent (`-iliden`) counts as one.
+   Skipped when all remaining candidates belong to one chain.
+8. **N3** all substituent prefixes together (an `-iliden` prefix contributes
    its parent attachment locant once).
-8. **N4** prefixes in citation (alphanumerical) order: locants of the first
+9. **N4** prefixes in citation (alphanumerical) order: locants of the first
    cited prefix, then the second, … until a difference appears.
-9. **Presentation tie-break** — if every chemical criterion ties, the names
+10. **Presentation tie-break** — if every chemical criterion ties, the names
    are identical (symmetry). Pick the candidate with the lexicographically
    smallest ordered atom-id tuple **only to stabilise highlighting and
    redraw**; the trace records "las dos opciones dan el mismo nombre". This is
@@ -312,7 +323,10 @@ table.
 `tests/fixtures/names.tsv`: `SMILES <TAB> expected name <TAB> rule tested
 <TAB> justification <TAB> alternatives` (the last column: `style=name`
 pairs separated by `;`, empty when there are none). At least 150 rows by the end of phase 060, grouped by
-feature. **Every row is a real SMILES and a justified name**; no fragments,
+feature. A row whose `rule tested` starts with `pending(I-n)` is future
+work: phase I-n names it, and until then the test suite requires the
+engine to return `NOT_YET` for it (so a row can never be skipped silently;
+the implementing phase removes the marker). **Every row is a real SMILES and a justified name**; no fragments,
 no open questions. Mandatory rows (from the Codex review):
 
 | SMILES | Name | What it tests |

@@ -77,17 +77,87 @@ export function renderParent(chain, lexicon, hasPrefixes) {
 } // End of function renderParent()
 
 /**
+ * Returns the words of a substituent prefix as cited inside a name (no
+ * locants, no grouping multiplier): `metil`, `etil`, `propil`…
+ * Phase I-4 supports saturated unbranched chains attached at their end;
+ * phase 050 adds nested prefixes, unsaturation, retained names and
+ * parentheses.
+ *
+ * @param {object} substituent - The substituent structure (structure.js SubstituentStructure).
+ * @param {object} [lexicon] - The lexicon (default: Spanish).
+ * @returns {string} The prefix words.
+ * @throws {Error} For a substituent kind not rendered yet.
+ */
+export function substituentPrefix(substituent, lexicon = lexiconEs) {
+  const { chain, prefixes, freeValence, retained } = substituent;
+  const simple = prefixes.length === 0 && !retained && chain.double.length === 0 && chain.triple.length === 0
+    && freeValence.locant === 1 && freeValence.order === 1;
+  if (!simple) {
+    throw new Error('substituentPrefix: only saturated unbranched end-attached groups are rendered yet (phase 050)');
+  }
+  return lexicon.alkylPrefix(chain.length, freeValence.order);
+}
+
+/**
+ * Builds the alphanumerical citation key of a substituent (design.md §1.1):
+ * the letters of its prefix name (lower-case, locants and punctuation left
+ * out; external multipliers are never part of it) and its numeric parts
+ * (none for a simple prefix). Compared with numbering.js compareCitationKeys.
+ *
+ * @param {object} substituent - The substituent structure.
+ * @param {object} [lexicon] - The lexicon (default: Spanish).
+ * @returns {{alpha: string, numeric: number[]}} The citation key.
+ */
+export function citationKey(substituent, lexicon = lexiconEs) {
+  const words = substituentPrefix(substituent, lexicon);
+  return { alpha: words.toLowerCase().replace(/[^a-z]/g, ''), numeric: [] };
+}
+
+/**
+ * Renders the grouped substituent prefixes, in citation order:
+ * `3-etil-2,2-dimetil` (numbers separated by commas, numbers and letters by
+ * hyphens, prefixes written together with what follows).
+ *
+ * @param {object[]} groups - The prefix groups (structure.js PrefixGroup), in citation order.
+ * @param {object} lexicon - The lexicon.
+ * @returns {object[]} The parts.
+ */
+export function renderPrefixes(groups, lexicon) {
+  const parts = [];
+  groups.forEach((group, g) => {
+    if (g > 0) {
+      parts.push(part('-', 'punct'));
+    }
+    group.locants.forEach((site, i) => {
+      if (i > 0) {
+        parts.push(part(',', 'punct'));
+      }
+      parts.push(part(String(site.locant), 'locant', [site.atom, site.attachAtom], [site.bond]));
+    });
+    parts.push(part('-', 'punct'));
+    const atoms = group.locants.flatMap((site) => site.atoms);
+    const bonds = group.locants.flatMap((site) => [site.bond, ...site.bonds]);
+    const mult = lexicon.multiplier(group.locants.length);
+    if (mult) {
+      parts.push(part(mult, 'multiplier', atoms, bonds));
+    }
+    parts.push(part(substituentPrefix(group.substituent, lexicon), 'prefix', atoms, bonds));
+  }); // End of the loop over the prefix groups
+  return parts;
+} // End of function renderPrefixes()
+
+/**
  * Renders a name structure to text and coloured parts.
  *
  * @param {object} structure - The name structure (structure.js NameStructure).
  * @param {object} [lexicon] - The lexicon to use (default: Spanish).
  * @returns {{name: string, parts: object[]}} The rendered name and its parts.
- * @throws {Error} When the structure has prefixes (rendered from phase 040 on).
  */
 export function renderName(structure, lexicon = lexiconEs) {
-  if (structure.prefixes.length > 0) {
-    throw new Error('renderName: substituent prefixes are not rendered yet (phase 040)');
-  }
-  const parts = renderParent(structure.parent, lexicon, false);
+  const hasPrefixes = structure.prefixes.length > 0;
+  const parts = [
+    ...renderPrefixes(structure.prefixes, lexicon),
+    ...renderParent(structure.parent, lexicon, hasPrefixes),
+  ];
   return { name: parts.map((p) => p.text).join(''), parts };
 }

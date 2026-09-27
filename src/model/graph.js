@@ -291,6 +291,21 @@ function encodeRooted(mol, adj, atom, parent) {
 }
 
 /**
+ * Computes the canonical key of the branch that starts at `root` and leads
+ * away from `exclude` (e.g. a substituent seen from the parent chain atom it
+ * hangs from). Two branches have equal keys if and only if they are
+ * isomorphic, rooted at corresponding atoms, with the same bond orders.
+ *
+ * @param {object} mol - A tree molecule.
+ * @param {number} root - First atom of the branch.
+ * @param {number|null} exclude - Neighbour of `root` that is not part of the branch (null: whole tree).
+ * @returns {string} The rooted canonical key.
+ */
+export function rootedTreeKey(mol, root, exclude) {
+  return encodeRooted(mol, adjacency(mol), root, exclude);
+}
+
+/**
  * Computes the unrooted canonical key of a tree molecule (elements + bond
  * orders; ids, insertion order and coordinates are irrelevant). The tree is
  * rooted at its centre and encoded AHU-style; a bicentred tree is rooted at

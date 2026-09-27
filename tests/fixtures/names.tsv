@@ -56,10 +56,45 @@ C=CC=CC=CC=CC=C	deca-1,3,5,7,9-pentaeno	multiplier penta	Five double bonds; the 
 C#CC#C	buta-1,3-diino	connecting a with ino	First (only) segment is multiplied: buta + diino	
 C#CCCCCC#C	octa-1,7-diino	connecting a, symmetric	[1,7] from both ends; multiplied first segment keeps a	
 # En-ynes: en before ino, elision of the o of eno
-C#CC=CC	pent-3-en-1-ino	N1 beats double bond first	Mandatory row: N1 lists [1,3] vs [2,4]; lowest locants to all multiple bonds win even though the triple bond gets 1 (IUPAC 2013 P-31.1.4.2.4); en cited before ino, eno loses its o	
+C#CC=CC	pent-3-en-1-ino	N1 beats double bond first	Mandatory row: N1 lists [1,3] vs [2,4]; lowest locants to all multiple bonds win even though the triple bond gets 1 (IUPAC 2013: lowest locants to double and triple bonds together first); en cited before ino, eno loses its o	
 C=CCC#C	pent-1-en-4-ino	N2 double bonds lower on a tie	N1 ties [1,4] vs [1,4]; N2 gives the double bond 1 (vs 4)	
 CC#CC=C	pent-1-en-3-ino	N1 lowest locants	N1 [1,3] (from the double-bond end) beats [2,4]	
 C=CC#C	but-1-en-3-ino	N2 on a tie	N1 ties [1,3]; N2 double bond 1 beats 3	
 C=CC=CC#C	hexa-1,3-dien-5-ino	N2 on a tie; en before ino	Mandatory row: N1 ties [1,3,5]; N2 [1,3] beats [3,5]; first segment (dien) multiplied so the stem keeps a	
 C#CC=CC=C	hexa-1,3-dien-5-ino	N2 independent of drawing direction	Same molecule drawn from the triple-bond end	
 C=CC#CC#C	hex-1-en-3,5-diino	later multiplier adds no a	Mandatory row: N1 ties [1,3,5]; N2 [1] beats [5]; only the second segment is multiplied, so no connecting a	
+# Branched alkanes, alkenes and alkynes: parent selection P1-P4, numbering N1-N4 (phase I-4)
+CC(C)C	2-metilpropano	P1, locant kept	Mandatory row (design.md §4.8): longest chain 3 C (propano); methyl on C2 from either end; with a prefix every locant is cited (design.md §1.1 omission table lists only unsubstituted parents)	
+CC(C)(C)C	2,2-dimetilpropano	N3 repeated locants, symmetry	Mandatory row: every 3-C chain carries two methyls on C2; locant list [2,2] keeps the repeated locant; grouped with di; locants separated by commas and joined to the prefix by a hyphen (Spanish IUPAC punctuation, design.md §1.1)	
+CCC(CC)CC	3-etilpentano	P1, N3 tie, symmetric	Three equivalent 5-C chains; the ethyl sits on C3 from both ends; the two directions give the same name	
+CCC(C(C)C)CC	3-etil-2-metilpentano	P4 more substituents wins	Mandatory row: 5-C chains through the isopropyl carbon carry 2 substituents (ethyl + methyl) vs 1 (isopropyl) for the chain through both ethyl arms (IUPAC 2013 P-45.2.1); N3 [2,3] beats [3,4]; etil before metil (e < m in alphanumerical order)	
+CCC(CC)C(C)C	3-etil-2-metilpentano	P4 independent of drawing	Same molecule as the previous row drawn from another atom; same parent choice and numbering	
+CCC(CC)C(C)CC	3-etil-4-metilhexano	N4 first cited prefix lower	Mandatory row: N3 ties [3,4] both ways; N4 gives the lower locant to etil, cited first in alphanumerical order (IUPAC 2013 numbering rule: when locant sets tie, lowest locants go to the prefix cited first in alphanumerical order; P-45.2.3 applies the same criterion to parent-chain choice)	
+CCCC(CC)C(C)CCC	4-etil-5-metiloctano	N4 first cited prefix lower	Unique 8-C chain; N3 ties [4,5]; N4: etil (cited first) gets 4, not 5	
+CC(C)C(CC)CCC	3-etil-2-metilhexano	P4, N3	6-C chains ending in the isopropyl arm carry methyl + ethyl (2) vs isopropyl (1) for the chain through the ethyl arm: P4; N3 [2,3] beats [4,5]; etil cited before metil	
+CC(C)(C)CC(CC)CC	4-etil-2,2-dimetilhexano	N3 repeated locants; alphanumerical order ignores di	6-C chain; N3 [2,2,4] beats [3,5,5]; etil before dimetil because the multiplying prefix di is ignored in alphanumerical order (IUPAC 2013 P-14.5.1)	
+CC(C)C(CC)C(C)C	3-etil-2,4-dimetilpentano	P4 three substituents	5-C chains through both isopropyl ends carry 3 substituents vs 2 for chains through the ethyl arm: P4; [2,3,4] either way (symmetric)	
+CC(C)C(C)CC	2,3-dimetilpentano	N3 lowest locants	5-C chain; N3 [2,3] beats [3,4]	
+CC(C)CC(C)CC	2,4-dimetilhexano	N3 lowest locants	6-C chain; N3 [2,4] beats [3,5]	
+CC(C)CC(C)(C)C	2,2,4-trimetilpentano	N3 first point of difference, repeated locants	5-C chain; N3 compares [2,2,4] with [2,4,4] term by term: first difference 2 < 4 (IUPAC 2013 P-14.3.5)	
+CC(C)CCC(C)(C)CC	2,5,5-trimetilheptano	N3 equal sums, first point of difference	7-C chain; [2,5,5] vs [3,3,6]: both sum 12, the first point of difference (2 < 3) decides, never the sum (IUPAC 2013 P-14.3.5)	
+CC(CCCC)C	2-metilhexano	P1 longest chain	The longest chain (6 C) is not the one drawn first in the SMILES; methyl on C2	
+CCCC(CCC)CCCC	4-propiloctano	P1, propil prefix	8-C chain (butyl + C + propyl arm); the remaining propyl arm is a propil substituent; N3 [4] beats [5]	
+CCCCC(CCCC)CCCC	5-butilnonano	P1, butil prefix, symmetric	9-C chain through two butyl arms; the third is butil on C5 from either end	
+C=C(C)C	2-metilprop-1-eno	P2 chain holding the double bond	3-C chains: the one containing the double bond wins P2 (1 vs 0 multiple bonds); N1 gives it locant 1; locants kept because there is a prefix (design.md §1.1)	
+C=C(C)C=C	2-metilbuta-1,3-dieno	P2, N3 after N1/N2 tie	The 4-C chain holding both double bonds wins P2 (2 vs 1); N1 and N2 tie [1,3]; N3 methyl 2 beats 3; connecting a before dieno	
+C=C(C)C(C)=C	2,3-dimetilbuta-1,3-dieno	P2, symmetric	The 4-C chain with both double bonds wins P2; [1,3] and [2,3] either way	
+C=CC(CC)CC	3-etilpent-1-eno	P2 more multiple bonds	Three 5-C chains; two contain the double bond, the chain through both ethyl arms has none: P2 (IUPAC 2013 P-44.4.1.1); double bond gets 1, ethyl 3	
+CC(C)CC=C	4-metilpent-1-eno	N1 beats substituent locants	N1 gives the double bond 1 (vs 4) even though the methyl then gets 4 instead of 2 (IUPAC 2013: low locants for ene/yne endings take precedence over low locants for detachable prefixes)	
+CC(C)C=CCC	2-metilhex-3-eno	N3 after an N1 tie	6-C chain; the double bond gets 3 from either end (N1 and N2 tie); N3 methyl 2 beats 5	
+CC(C)C#C	3-metilbut-1-ino	N1 triple bond	4-C chain containing the triple bond; N1 gives it 1 (vs 3); methyl on 3	
+CC#CC(C)C	4-metilpent-2-ino	N1 triple bond	5-C chain; N1 triple bond 2 (vs 3), then methyl on 4	
+CC#CC(C)(C)C	4,4-dimetilpent-2-ino	N1, repeated locants	5-C chain; N1 triple bond 2 (vs 3); the two methyls share locant 4	
+C=CC(C)C#C	3-metilpent-1-en-4-ino	N2 double bond lower on an N1 tie	Unique 5-C chain; N1 ties [1,4]; N2 gives the double bond 1 (IUPAC 2013: when multiple-bond locants tie, double bonds get the lower locants); methyl on 3 either way	
+# Future work: rows marked pending(I-n) in rule_tested are named by phase I-n; until then the engine must return NOT_YET
+C=CC(CCC)CCC	4-etenilheptano	pending(I-5) P1 length beats a shorter unsaturated chain	Mandatory row (design.md §4.8): the saturated 7-C chain beats the 6-C chain holding the double bond (IUPAC 2013 P-44.3, longest chain first); etenil needs unsaturated substituent naming	
+C#CC(CCC)CCC	4-etinilheptano	pending(I-5) P1 length beats the triple bond	Mandatory row: 7-C saturated chain beats the 6-C chain holding the triple bond; etinil substituent	
+C=CC(C#C)CCC	3-etinilhex-1-eno	pending(I-5) P3 more double bonds	Two 6-C chains with one multiple bond each (P2 tie); P3 picks the one with the double bond; ethynyl substituent on C3 (double bond gets 1)	
+CCCCC(C(C)C)CCCC	5-isopropilnonano	pending(I-5) isopropil default style	Mandatory row: 9-C chain, isopropyl on C5 (user decision: isopropil by default)	pin=5-(propan-2-il)nonano;substituted=5-(1-metiletil)nonano
+CCC(=C)CCC	3-metilidenhexano	pending(I-6) iliden, double bond outside parent	Mandatory row: under 2013 rules the saturated 6-C chain beats the 5-C chain holding the double bond; =CH2 becomes metiliden	
+C=CCC(C=C(C)C)CCCCC	4-(2-metilprop-1-en-1-il)non-1-eno	pending(I-5) N1 before P4	Two 9-C chains with one double bond each: non-1-ene (1 substituent) vs non-2-ene (2 substituents). IUPAC 2013 compares the ene locants before the number of substituent prefixes (P-44.4.1 leads to the numbering criteria before P-45.2.1), so the non-1-ene chain wins; the 2-methylprop-1-en-1-yl prefix needs unsaturated substituent naming	

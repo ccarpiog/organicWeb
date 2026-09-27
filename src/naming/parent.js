@@ -1,17 +1,201 @@
 /**
- * @file Parent-chain candidates and the selection cascade (design.md §4.2–4.3).
+ * @file Parent-chain candidates and the direction-independent part of the
+ * selection cascade (design.md §4.2–4.3).
  *
- * Stub created by the project scaffold; implemented in phase 040
- * (see docs/design.md §11).
+ * Candidates are the paths between every pair of leaf carbons (a path that
+ * ends at a non-leaf could be extended, so it is never maximal). They are
+ * compared, direction-independently, by:
+ *
+ *   P1 longest chain (carbon count);
+ *   P2 most multiple bonds lying within the chain;
+ *   P3 most double bonds within the chain.
+ *
+ * P1 is always recorded; P2–P3 only while more than one chain remains (the
+ * cascade stops when one chain is left). P4 (most substituents) comes after
+ * the unsaturation locants N1/N2, so it lives in numbering.js. The
+ * leaf-to-leaf restriction is for the parent only, never for substituents.
+ * Pure: reads topology only.
  */
 
+import { adjacency, leaves } from '../model/graph.js';
+
 /**
- * Chooses the parent chain of a molecule.
+ * Orients a chain so that it starts at the end with the smaller atom id.
+ * This orientation identifies a chain independently of its direction.
+ *
+ * @param {number[]} atoms - Chain atom ids (either end first).
+ * @returns {number[]} A new array starting at the smaller end id.
+ */
+export function orientChain(atoms) {
+  return atoms[0] <= atoms[atoms.length - 1] ? [...atoms] : [...atoms].reverse();
+}
+
+/**
+ * Stable, direction-independent key of a chain.
+ *
+ * @param {number[]} atoms - Chain atom ids (either end first).
+ * @returns {string} The key, e.g. '1-2-4-5'.
+ */
+export function chainKey(atoms) {
+  return orientChain(atoms).join('-');
+}
+
+/**
+ * Runs a breadth-first search from `from`; following the parent map from any
+ * atom back to `from` gives the (unique, in a tree) path between them.
+ *
+ * @param {Map<number, {atom: number}[]>} adj - Adjacency map (graph.js).
+ * @param {number} from - Start atom id.
+ * @returns {Map<number, number|null>} BFS parent of every atom (the root maps to null).
+ */
+function bfsParents(adj, from) {
+  const parent = new Map([[from, null]]);
+  const queue = [from];
+  for (let i = 0; i < queue.length; i += 1) {
+    for (const n of adj.get(queue[i])) {
+      if (!parent.has(n.atom)) {
+        parent.set(n.atom, queue[i]);
+        queue.push(n.atom);
+      }
+    }
+  }
+  return parent;
+}
+
+/**
+ * Enumerates every leaf-to-leaf path of a tree molecule (design.md §4.2).
+ * A lone atom (methane) gives the one-atom chain.
+ *
+ * @param {object} mol - A validated acyclic hydrocarbon (a tree).
+ * @returns {number[][]} Paths, each starting at its smaller end id, ordered by key.
+ */
+export function leafToLeafPaths(mol) {
+  const adj = adjacency(mol);
+  if (adj.size === 1) {
+    return [[adj.keys().next().value]];
+  }
+  const ends = leaves(mol);
+  const paths = [];
+  for (let i = 0; i < ends.length; i += 1) {
+    const parent = bfsParents(adj, ends[i]);
+    for (let j = i + 1; j < ends.length; j += 1) {
+      const path = [];
+      for (let current = ends[j]; current !== null; current = parent.get(current)) {
+        path.push(current);
+      }
+      paths.push(orientChain(path));
+    }
+  }
+  return paths;
+} // End of function leafToLeafPaths()
+
+/**
+ * Counts, for one chain, the data compared by P1–P3 (and the substituent
+ * count that numbering.js compares as P4).
+ *
+ * @param {Map<number, {atom: number, bond: number, order: number}[]>} adj - Adjacency map.
+ * @param {number[]} atoms - Chain atom ids in order.
+ * @returns {{length: number, multiple: number, double: number, substituents: number}} The counts.
+ */
+export function chainCounts(adj, atoms) {
+  const inChain = new Set(atoms);
+  let multiple = 0;
+  let double = 0;
+  let substituents = 0;
+  atoms.forEach((atom, i) => {
+    for (const n of adj.get(atom)) {
+      if (!inChain.has(n.atom)) {
+        substituents += 1;
+      } else if (n.atom === atoms[i + 1] && n.order >= 2) {
+        multiple += 1;
+        double += n.order === 2 ? 1 : 0;
+      }
+    }
+  });
+  return { length: atoms.length, multiple, double, substituents };
+} // End of function chainCounts()
+
+/**
+ * Internal invariant of design.md §4.2: no triple bond can leave a longest
+ * chain (an internal attachment would exceed the valence of 4, a terminal
+ * one would make the chain longer).
+ *
+ * @param {Map<number, {atom: number, order: number}[]>} adj - Adjacency map.
+ * @param {number[]} atoms - A longest chain.
+ * @returns {void}
+ * @throws {Error} When a triple bond joins the chain to an atom outside it.
+ */
+function assertNoTripleBondLeaves(adj, atoms) {
+  const inChain = new Set(atoms);
+  for (const atom of atoms) {
+    for (const n of adj.get(atom)) {
+      if (!inChain.has(n.atom) && n.order === 3) {
+        throw new Error(`selectParent: triple bond ${atom}-${n.atom} leaves a longest chain (invariant broken)`);
+      }
+    }
+  }
+}
+
+/**
+ * Copies a chain into the candidate shape stored in the trace.
+ *
+ * @param {number[]} atoms - Chain atom ids (oriented).
+ * @returns {{atoms: number[], key: string}} The trace candidate.
+ */
+function traceCandidate(atoms) {
+  return { atoms: [...atoms], key: atoms.join('-') };
+}
+
+/**
+ * Keeps the chains with the highest count and records the rule.
+ *
+ * @param {string} rule - Rule id ('P1'…'P3').
+ * @param {number[][]} chains - Chains entering the rule.
+ * @param {number[]} values - Count of each chain (same order).
+ * @returns {{step: object, survivors: number[][]}} The trace step and the surviving chains.
+ */
+function applyCountRule(rule, chains, values) {
+  const best = Math.max(...values);
+  const survivors = chains.filter((_, i) => values[i] === best);
+  const step = {
+    rule,
+    candidatesBefore: chains.map(traceCandidate),
+    values: [...values],
+    survivors: survivors.map(traceCandidate),
+  };
+  return { step, survivors };
+}
+
+/**
+ * Narrows the parent chain(s) of a molecule by P1–P3 (design.md §4.3). The
+ * chains that remain tied go, with both directions of each, to numbering
+ * (numbering.js: N1, N2, then P4, N3, N4, §4.4).
  *
  * @param {object} mol - A validated acyclic hydrocarbon.
- * @returns {object} The selected parent chain and its trace.
- * @throws {Error} Always, until phase 040 implements it.
+ * @returns {{chains: number[][], trace: object[]}} The remaining chains (each starting at its smaller end id) and the P-rule trace steps.
+ * @throws {Error} When the invariant "no triple bond leaves a longest chain" is broken.
  */
 export function selectParent(mol) {
-  throw new Error('selectParent is not implemented yet (phase 040)');
-}
+  const adj = adjacency(mol);
+  let chains = leafToLeafPaths(mol);
+  const counts = new Map(chains.map((chain) => [chain.join('-'), chainCounts(adj, chain)]));
+  const trace = [];
+  const rules = [
+    { rule: 'P1', field: 'length' },
+    { rule: 'P2', field: 'multiple' },
+    { rule: 'P3', field: 'double' },
+  ];
+  for (const { rule, field } of rules) {
+    if (rule !== 'P1' && chains.length < 2) {
+      break;
+    }
+    const values = chains.map((chain) => counts.get(chain.join('-'))[field]);
+    const { step, survivors } = applyCountRule(rule, chains, values);
+    trace.push(step);
+    chains = survivors;
+    if (rule === 'P1') {
+      chains.forEach((chain) => assertNoTripleBondLeaves(adj, chain));
+    }
+  }
+  return { chains: chains.map((chain) => [...chain]), trace };
+} // End of function selectParent()

@@ -6,7 +6,7 @@
  * The name structure holds data only (lengths, locants, atom and bond ids);
  * never words. A lexicon (lexicon.es.js, later lexicon.en.js) and render.js
  * turn it into text, so the same structure can be rendered in any language.
- * Later phases extend these shapes (substituent prefixes, `-iliden`, prefix
+ * Later phases extend these shapes (nested substituents, `-iliden`, prefix
  * styles); they must add fields, not redesign existing ones.
  */
 
@@ -31,7 +31,7 @@
  */
 
 /**
- * The attachment of a substituent to the chain that carries it (phase 040+).
+ * One occurrence of a substituent: its attachment to the chain that carries it.
  *
  * @typedef {object} PrefixLocant
  * @property {number} locant - Locant of the carrying chain atom.
@@ -39,10 +39,12 @@
  * @property {number} attachAtom - Id of the substituent atom bonded to it.
  * @property {number} bond - Id of the connecting bond.
  * @property {number} order - Order of the connecting bond (1 → `-il`, 2 → `-iliden`).
+ * @property {number[]} atoms - Atoms of this occurrence's substituent subtree (for highlighting).
+ * @property {number[]} bonds - Bonds of this occurrence's subtree (not the connecting bond).
  */
 
 /**
- * The language-neutral description of one substituent prefix (phase 040+).
+ * The language-neutral description of one substituent prefix.
  * Retained names (`isopropil`, `tert-butil`) are flagged by `retained`, never
  * encoded as text.
  *
@@ -57,8 +59,9 @@
 
 /**
  * Identical substituents grouped under one prefix, e.g. the two `metil` of
- * `2,3-dimetil` (phase 040+). `key` is a structured sort/identity key built
- * from data, never an assembled name string.
+ * `2,3-dimetil`. `key` is the canonical identity of the substituent subtree
+ * (built from the graph, never from an assembled name string); the
+ * group's `substituent` describes its first occurrence.
  *
  * @typedef {object} PrefixGroup
  * @property {string} key - Identity of the substituent (equal keys are grouped).
@@ -96,13 +99,14 @@
 
 /**
  * One rule application recorded in the trace (design.md §4.1). `values[i]`
- * is the compared datum of `candidatesBefore[i]`: a count (P1–P4) or a
- * sorted locant list (N1–N4), or the atom-id tuple (tie-break).
+ * is the compared datum of `candidatesBefore[i]`: a count (P1–P4), a
+ * sorted locant list (N1–N3), a list of locant lists in citation order (N4),
+ * or the atom-id tuple (tie-break).
  *
  * @typedef {object} TraceStep
  * @property {string} rule - Rule id: 'P1'…'P4', 'N1'…'N4', 'TIE'.
  * @property {TraceCandidate[]} candidatesBefore - Candidates entering the rule.
- * @property {Array<number|number[]>} values - Compared values, aligned with candidatesBefore.
+ * @property {Array<number|number[]|number[][]>} values - Compared values, aligned with candidatesBefore.
  * @property {TraceCandidate[]} survivors - Candidates left after the rule.
  * @property {string} [note] - Extra remark (Spanish when shown to the user).
  */

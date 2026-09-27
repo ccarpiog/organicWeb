@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T11:07:49Z",
+ "updated": "2026-09-27T11:27:59Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
@@ -34,8 +34,11 @@
   {
    "id": "I-4",
    "title": "Naming engine II: parent chain",
-   "status": "queued",
-   "summary": "Selects the parent chain and numbering (P1–P4, N1–N4) and names simple straight-chain substituents."
+   "status": "done",
+   "summary": "Selects the parent chain and numbering (P1–P4, N1–N4) and names simple straight-chain substituents.",
+   "risk": "high",
+   "review": "docs/reviews/I-4.md",
+   "narrative": "docs/progress-archive/i-4.md"
   },
   {
    "id": "I-5",
@@ -71,19 +74,19 @@
    "id": "I-10",
    "title": "Explanation and results panel",
    "status": "queued",
-   "summary": "Plan item 100, not yet triaged from the inbox."
+   "summary": "Turns the naming trace into Spanish step-by-step explanations and adds the results panel with a stepper."
   },
   {
    "id": "I-11",
    "title": "Redraw and examples",
    "status": "queued",
-   "summary": "Plan item 110, not yet triaged from the inbox."
+   "summary": "Adds the \"Ordenar dibujo\" canonical redraw with undo and an examples menu of 12–15 molecules."
   },
   {
    "id": "I-12",
    "title": "Polish and release",
    "status": "queued",
-   "summary": "Plan item 120, not yet triaged from the inbox."
+   "summary": "Adds help, accessibility and responsive polish, a self-contained dist build, e2e on the build and the README."
   }
  ]
 }

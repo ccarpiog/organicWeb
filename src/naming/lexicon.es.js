@@ -20,6 +20,21 @@ const STEMS = Object.freeze([
 /** Largest supported chain length (design.md §1.1 hard cap). */
 export const MAX_STEM = 30;
 
+/**
+ * Largest supported multiplier. Independent of MAX_STEM: with the 60-carbon
+ * cap a parent can carry up to 38 identical methyl groups, so multipliers
+ * are composed beyond 30 (`hentriaconta`, `dotriaconta`…) up to 99.
+ */
+export const MAX_MULTIPLIER = 99;
+
+/** Unit parts of composed numerical terms 31–99 (IUPAC 2013 P-14.2.1: hen, do, tri…). */
+const UNIT_PARTS = Object.freeze(['', 'hen', 'do', 'tri', 'tetra', 'penta', 'hexa', 'hepta', 'octa', 'nona']);
+
+/** Tens parts of numerical terms 30–99 (without the final a). */
+const TENS_PARTS = Object.freeze({
+  3: 'triacont', 4: 'tetracont', 5: 'pentacont', 6: 'hexacont', 7: 'heptacont', 8: 'octacont', 9: 'nonacont',
+});
+
 /** Simple multipliers that are not stem + `a` (index = count). */
 const SMALL_MULTIPLIERS = Object.freeze(['', '', 'di', 'tri', 'tetra']);
 
@@ -55,17 +70,32 @@ export const LOCANT_OMISSION = Object.freeze([
 ]);
 
 /**
- * Checks that a count is an integer within 1…MAX_STEM.
+ * Checks that a count is an integer within 1…max.
  *
  * @param {number} n - The count.
  * @param {string} caller - Function name for the error message.
+ * @param {number} [max] - Upper bound (default MAX_STEM).
  * @returns {void}
  * @throws {RangeError} When the count is out of range.
  */
-function checkCount(n, caller) {
-  if (!Number.isInteger(n) || n < 1 || n > MAX_STEM) {
-    throw new RangeError(`${caller}: count must be an integer from 1 to ${MAX_STEM}, got ${n}`);
+function checkCount(n, caller, max = MAX_STEM) {
+  if (!Number.isInteger(n) || n < 1 || n > max) {
+    throw new RangeError(`${caller}: count must be an integer from 1 to ${max}, got ${n}`);
   }
+}
+
+/**
+ * Numerical term without its final `a` for 1–99: the stem table up to 30,
+ * then unit part + tens part (`hentriacont`, `dotriacont`, `tetracont`).
+ *
+ * @param {number} n - The number (1–99).
+ * @returns {string} The numerical term, e.g. 'dotriacont' for 32.
+ */
+function numeralTerm(n) {
+  if (n <= MAX_STEM) {
+    return STEMS[n];
+  }
+  return UNIT_PARTS[n % 10] + TENS_PARTS[Math.floor(n / 10)];
 }
 
 /**
@@ -84,24 +114,24 @@ export function stem(length) {
  * Returns the simple multiplying prefix (for simple prefixes and endings).
  * One takes no multiplier.
  *
- * @param {number} n - How many identical items (1–30).
- * @returns {string} '', 'di', 'tri', 'tetra', 'penta', … 'undeca', 'icosa'…
+ * @param {number} n - How many identical items (1–MAX_MULTIPLIER).
+ * @returns {string} '', 'di', 'tri', 'tetra', 'penta', … 'undeca', 'icosa', 'dotriaconta'…
  * @throws {RangeError} When n is out of range.
  */
 export function multiplier(n) {
-  checkCount(n, 'multiplier');
-  return n < SMALL_MULTIPLIERS.length ? SMALL_MULTIPLIERS[n] : `${STEMS[n]}a`;
+  checkCount(n, 'multiplier', MAX_MULTIPLIER);
+  return n < SMALL_MULTIPLIERS.length ? SMALL_MULTIPLIERS[n] : `${numeralTerm(n)}a`;
 }
 
 /**
  * Returns the multiplying prefix for compound (parenthesised) prefixes.
  *
- * @param {number} n - How many identical items (1–30).
+ * @param {number} n - How many identical items (1–MAX_MULTIPLIER).
  * @returns {string} '', 'bis', 'tris', 'tetrakis', 'pentakis'…
  * @throws {RangeError} When n is out of range.
  */
 export function compoundMultiplier(n) {
-  checkCount(n, 'compoundMultiplier');
+  checkCount(n, 'compoundMultiplier', MAX_MULTIPLIER);
   return n < SMALL_COMPOUND_MULTIPLIERS.length ? SMALL_COMPOUND_MULTIPLIERS[n] : `${multiplier(n)}kis`;
 }
 

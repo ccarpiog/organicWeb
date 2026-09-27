@@ -40,6 +40,17 @@ test('simple and compound multipliers', () => {
   assert.deepEqual([1, 2, 3, 4, 5, 6].map(compoundMultiplier), ['', 'bis', 'tris', 'tetrakis', 'pentakis', 'hexakis']);
 });
 
+test('multipliers above 30 are composed (independent of the 30-carbon stem cap)', () => {
+  assert.deepEqual([30, 31, 32, 33, 38, 40, 41, 60, 99].map(multiplier), [
+    'triaconta', 'hentriaconta', 'dotriaconta', 'tritriaconta', 'octatriaconta', 'tetraconta',
+    'hentetraconta', 'hexaconta', 'nonanonaconta',
+  ]);
+  assert.equal(compoundMultiplier(32), 'dotriacontakis');
+  assert.throws(() => multiplier(0), RangeError);
+  assert.throws(() => multiplier(100), RangeError);
+  assert.throws(() => stem(32), RangeError); // parent stems stay capped at 30
+});
+
 test('endings, en/ino elision and the connecting a', () => {
   assert.equal(unsaturationEnding('double', true), 'eno');
   assert.equal(unsaturationEnding('double', false), 'en');
