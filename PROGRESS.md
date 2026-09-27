@@ -23,9 +23,11 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-13 | Visible carbon dots in skeletal mode | `autoclaude/processed/130-visible-carbons.md` | done — `docs/progress-archive/i-13.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-13.md` |
 | I-14 | Single-bond drag grows a chain | `autoclaude/processed/140-drag-chain-single-bond.md` | done — `docs/progress-archive/i-14.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-14.md` |
 | I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | done — `docs/progress-archive/i-15.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-15.md` |
+| I-16 | Toggle to hide stepper highlights | `autoclaude/processed/160-hide-highlights.md` | queued (next) | — | — |
+| I-17 | Editing in the 90° view | `autoclaude/processed/170-edit-in-carbons-view.md` | queued (after I-16) | — | — |
 
-All phases are done: the twelve original plan items and three user-feedback
-items (I-13…I-15) queued from the inbox.
+The twelve original plan items and user-feedback items I-13…I-15 are done;
+I-16 and I-17 (user feedback) are queued.
 
 ## Inbox
 
@@ -42,11 +44,14 @@ items (I-13…I-15) queued from the inbox.
   `140-drag-chain-single-bond.md`, `150-right-angles.md` → queued as I-13,
   I-14, I-15. I-15 (90° view) must also define how I-14's chain drag behaves
   while the 90° view is on.
+- 2026-09-27 pickup 6 (after I-15): `160-hide-highlights.md`,
+  `170-edit-in-carbons-view.md` → queued as I-16, I-17. `180-author-credit.md`
+  was not ready (still settling); next boundary.
 
 ## Next action
 
-None — the plan is finished and the inbox is empty. New work arrives as
-inbox items (`autoclaude/inbox/`); triage them per the autoclaude workflow.
+Execute I-16 (spec `autoclaude/processed/160-hide-highlights.md`), then
+I-17. Re-poll the inbox at each phase boundary (`180-author-credit.md` waits).
 
 ## Key paths
 

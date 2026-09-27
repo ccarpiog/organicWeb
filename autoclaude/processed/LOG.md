@@ -17,3 +17,5 @@ up. The item itself is in this directory, unchanged.
 - 2026-09-27 15:41 · 130-visible-carbons.md · queued · phase I-13 — Visible carbon dots in skeletal mode
 - 2026-09-27 15:41 · 140-drag-chain-single-bond.md · queued · phase I-14 — Single-bond drag grows a chain
 - 2026-09-27 15:41 · 150-right-angles.md · queued · phase I-15 — 90-degree condensed-formula view toggle
+- 2026-09-27 16:56 · 160-hide-highlights.md · queued · phase I-16 — Toggle to hide stepper highlights
+- 2026-09-27 16:56 · 170-edit-in-carbons-view.md · queued · phase I-17 — Editing in the 90° view
