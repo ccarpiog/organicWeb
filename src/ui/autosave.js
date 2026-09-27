@@ -13,6 +13,9 @@ export const STORAGE_KEY = 'organicWeb.molecule';
 /** localStorage key of the display mode ('skeletal' | 'condensed'). */
 export const MODE_KEY = 'organicWeb.displayMode';
 
+/** localStorage key of the 90° view preference ('on' | 'off'), kept in both display modes. */
+export const RIGHT_ANGLE_KEY = 'organicWeb.rightAngles';
+
 /**
  * The page's localStorage, or null when it cannot be used (reading the
  * property itself throws in some privacy modes).

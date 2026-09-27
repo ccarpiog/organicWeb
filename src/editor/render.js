@@ -1,8 +1,10 @@
 /**
  * @file SVG rendering of the molecule (design.md §6.3): bonds drawn as one,
  * two or three strokes, the two display modes (Esqueleto / Con carbonos),
- * the carbon dots of Esqueleto mode, hover highlight, selection, the drag
- * previews (bond, chain with its "N C" counter, marquee), the pan/zoom view
+ * the carbon dots of Esqueleto mode, the 90° view's `=` / `≡` strokes that
+ * stop short of the labels (labelSize(), rightAngleSegments()), hover
+ * highlight, selection, the drag previews (bond, chain with its "N C"
+ * counter, marquee), the pan/zoom view
  * transform, and the highlight API used by the stepper (`highlight`,
  * `showLocants`).
  *
@@ -113,6 +115,90 @@ export function atomLabelPosition(mol, atomId, mode = 'skeletal') {
     return { x: atom.x, y: atom.y + LONE_LABEL_OFFSET };
   }
   return { x: atom.x, y: atom.y };
+}
+
+/**
+ * Estimated advance widths of the condensed-label characters at the 14 px
+ * label font (css/app.css), in drawing units, generous so a real font never
+ * draws wider. Subscript digits are narrower than capitals.
+ */
+const LABEL_CHAR_WIDTHS = Object.freeze({ C: 11, H: 11 });
+
+/** Estimated width of a subscript digit (and any other character) of a label. */
+const LABEL_OTHER_WIDTH = 8;
+
+/** Estimated height of a condensed label box, in drawing units. */
+export const LABEL_HEIGHT = 17;
+
+/**
+ * Gap left between a bond stroke and a carbon label in the 90° view (right
+ * angles), measured from the label's estimated box.
+ */
+export const RIGHT_ANGLE_PAD = 4;
+
+/**
+ * Estimated size of a condensed carbon label (`CH₃`, `CH₂`, `CH`, `C`) at the
+ * label font: used to space the 90° view and to stop bond strokes short of
+ * the labels. Pure, so the layout can use it under Node.
+ *
+ * @param {string} label - The label text.
+ * @returns {{width: number, height: number}} Width and height in drawing units.
+ */
+export function labelSize(label) {
+  let width = 0;
+  for (const ch of String(label)) {
+    width += LABEL_CHAR_WIDTHS[ch] ?? LABEL_OTHER_WIDTH;
+  }
+  return { width, height: LABEL_HEIGHT };
+}
+
+/**
+ * Length cut from a bond end at a labelled carbon in the 90° view: half the
+ * label's width for a horizontal bond, half its height for a vertical one,
+ * plus RIGHT_ANGLE_PAD.
+ *
+ * @param {string} label - The carbon's label.
+ * @param {boolean} horizontal - True for a horizontal bond.
+ * @returns {number} The cut, in drawing units.
+ */
+export function rightAngleCut(label, horizontal) {
+  const size = labelSize(label);
+  return (horizontal ? size.width : size.height) / 2 + RIGHT_ANGLE_PAD;
+}
+
+/**
+ * Strokes of a bond in the 90° view: one line, two (`=`) or three (`≡`)
+ * parallel lines of equal length centred on the bond axis, each stopped
+ * short of the two carbon labels (rightAngleCut()).
+ *
+ * @param {object} mol - The molecule (at its displayed coordinates).
+ * @param {number} bondId - The bond.
+ * @returns {{x1: number, y1: number, x2: number, y2: number}[]} The strokes.
+ */
+export function rightAngleSegments(mol, bondId) {
+  const bond = mol.bonds.get(bondId);
+  const a = mol.atoms.get(bond.a);
+  const b = mol.atoms.get(bond.b);
+  const horizontal = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y);
+  const cutA = rightAngleCut(carbonLabel(mol, bond.a), horizontal);
+  const cutB = rightAngleCut(carbonLabel(mol, bond.b), horizontal);
+  const offsets = bond.order === 3 ? [-BOND_SPACING, 0, BOND_SPACING]
+    : bond.order === 2 ? [-BOND_SPACING / 2, BOND_SPACING / 2] : [0];
+  return offsets.map((offset) => trimSegment(shifted(a, b, offset, 0), cutA, cutB));
+} // End of function rightAngleSegments()
+
+/**
+ * Position of a locant number in the 90° view: up and to the right of the
+ * carbon label, clear of the four bond directions (left, right, up, down)
+ * a right-angle drawing can use.
+ *
+ * @param {object} mol - The molecule (at its displayed coordinates).
+ * @param {number} atomId - The numbered atom.
+ * @returns {{x: number, y: number}} Where to draw the number.
+ */
+export function rightAngleLocantPosition(mol, atomId) {
+  const atom = mol.atoms.get(atomId);
+  return { x: atom.x + 14, y: atom.y - 17 };
 }
 
 /**
@@ -408,6 +494,7 @@ export function createRenderer(svg) {
   let highlights = [];
   let locants = null;
   let lastMol = null;
+  let lastRightAngle = false;
   let mode = 'skeletal';
   let view = { ...IDENTITY_VIEW };
 
@@ -480,7 +567,8 @@ export function createRenderer(svg) {
     }
     for (const [id, number] of locants) {
       if (lastMol.atoms.has(id)) {
-        const node = text('locant', locantPosition(lastMol, id), String(number), layers.locants);
+        const where = lastRightAngle ? rightAngleLocantPosition(lastMol, id) : locantPosition(lastMol, id);
+        const node = text('locant', where, String(number), layers.locants);
         node.dataset.atomId = String(id);
       }
     }
@@ -561,17 +649,23 @@ export function createRenderer(svg) {
   } // End of function drawPreview()
 
   /**
-   * Draws the molecule and the transient state.
+   * Draws the molecule and the transient state. With `rightAngle` (the 90°
+   * view, Con carbonos only) the molecule is expected at its projected
+   * coordinates: multiple bonds become `=` / `≡` strokes centred on the bond
+   * and every stroke stops short of the labels (rightAngleSegments()).
    *
-   * @param {object} mol - The molecule.
+   * @param {object} mol - The molecule, at the coordinates to draw.
    * @param {{hover?: {type: string, id: number}|null, preview?: object|null, selection?: Set<number>|null,
-   *   marquee?: object|null}} [state] - Hovered item, drag preview, selected atoms and marquee rectangle.
+   *   marquee?: object|null, rightAngle?: boolean}} [state] - Hovered item, drag preview, selected atoms,
+   *   marquee rectangle and whether the 90° view is drawn.
    * @returns {void}
    */
   function render(mol, state = {}) {
     lastMol = mol;
     const hover = state.hover || null;
     const condensed = mode === 'condensed';
+    lastRightAngle = Boolean(state.rightAngle) && condensed;
+    svg.classList.toggle('is-right-angle', lastRightAngle);
     layers.bonds.replaceChildren();
     layers.atoms.replaceChildren();
     for (const bond of mol.bonds.values()) {
@@ -584,6 +678,12 @@ export function createRenderer(svg) {
       const a = mol.atoms.get(bond.a);
       const b = mol.atoms.get(bond.b);
       line({ x1: a.x, y1: a.y, x2: b.x, y2: b.y }, 'bond-halo', group);
+      if (lastRightAngle) {
+        for (const s of rightAngleSegments(mol, bond.id)) {
+          line(s, 'bond-line', group);
+        }
+        continue;
+      }
       for (const s of bondSegments(mol, bond.id)) {
         line(condensed ? trimSegment(s, LABEL_GAP, LABEL_GAP) : s, 'bond-line', group);
       }

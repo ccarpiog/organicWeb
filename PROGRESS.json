@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T15:04:08Z",
+ "updated": "2026-09-27T15:32:33Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish ESO web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with editor refinements from the inbox.",
  "phases": [
@@ -133,8 +133,11 @@
   {
    "id": "I-15",
    "title": "90-degree condensed-formula view toggle",
-   "status": "queued",
-   "summary": "Adds a toggle that draws the labelled-carbons view with 90-degree angles in textbook style."
+   "status": "done",
+   "summary": "Adds a toggle that draws the labelled-carbons view with 90-degree angles in textbook style, read-only while shown.",
+   "risk": "high",
+   "review": "docs/reviews/I-15.md",
+   "narrative": "docs/progress-archive/i-15.md"
   }
  ]
 }

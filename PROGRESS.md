@@ -22,10 +22,10 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-12 | Polish and release build | `autoclaude/processed/120-polish-release.md` | done — `docs/progress-archive/i-12.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-12.md` |
 | I-13 | Visible carbon dots in skeletal mode | `autoclaude/processed/130-visible-carbons.md` | done — `docs/progress-archive/i-13.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-13.md` |
 | I-14 | Single-bond drag grows a chain | `autoclaude/processed/140-drag-chain-single-bond.md` | done — `docs/progress-archive/i-14.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-14.md` |
-| I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | queued (next) | — | — |
+| I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | done — `docs/progress-archive/i-15.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-15.md` |
 
-The twelve original plan items are done. Three user-feedback items (I-13…I-15)
-were queued from the inbox and run in filename order.
+All phases are done: the twelve original plan items and three user-feedback
+items (I-13…I-15) queued from the inbox.
 
 ## Inbox
 
@@ -45,10 +45,8 @@ were queued from the inbox and run in filename order.
 
 ## Next action
 
-Run I-15 (90° condensed-formula view toggle), spec
-`autoclaude/processed/150-right-angles.md`. It must define how the I-14
-single-bond chain drag behaves while the 90° view is on. The Cadena tool no
-longer exists (I-14); chain drawing is the Enlace simple drag.
+None — the plan is finished and the inbox is empty. New work arrives as
+inbox items (`autoclaude/inbox/`); triage them per the autoclaude workflow.
 
 ## Key paths
 
@@ -75,12 +73,15 @@ longer exists (I-14); chain drawing is the Enlace simple drag.
   `src/editor/render.js`; lone-label hit box `onLoneLabel()` in `geometry.js`.
 - Layout: pure `canonicalLayout()` in `src/layout/canonical.js`; examples list
   `src/ui/examples.js`; editor `setCoordinates()` / `animateCoordinates()`.
+- 90° view: pure projection in `src/layout/rightangle.js`; editor
+  `shownMolecule()` / `isReadOnly()` / `refresh()` in `src/editor/editor.js`;
+  toggle in `src/ui/canvasbar.js` (localStorage `organicWeb.rightAngles`).
 
-## Verification (last phase, I-14)
+## Verification (last phase, I-15)
 
-- `npm test` 0 (380 pass) · `npm run check` 0 · `npm run e2e` 0 (83 pass,
-  source + dist; global setup rebuilds dist). Oracle not rerun (naming
-  engine untouched).
+- `npm test` 0 (393 pass) · `npm run check` 0 · `npm run build` 0 ·
+  `npm run e2e` 0 (99 pass, source + dist). Oracle not rerun (naming engine
+  untouched).
 
 ## Open risks / deviations
 
@@ -130,10 +131,15 @@ longer exists (I-14); chain drawing is the Enlace simple drag.
   Preview jumps from straight bond to zigzag at the chain threshold
   (`docs/progress-archive/i-14.md`).
 
+- I-15: 90° view is a display-only projection, read-only only while shown;
+  fallbacks (empty, loose pieces, unplaceable) stay editable. Review should-fix
+  (Mover live preview lost) fixed with an e2e regression
+  (`docs/progress-archive/i-15.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- Triage `7c81094`, I-13 `1cf9915`, both pushed. I-14 committed and pushed
-  right after this checkpoint (see `git log`).
+- I-14 `66280ae`, pushed. I-15 committed and pushed right after this
+  checkpoint (see `git log`).

@@ -1,7 +1,9 @@
 /**
  * @file Drawing toolbar (design.md §6.1): tool buttons with icons and Spanish
  * tooltips, plus Deshacer / Rehacer / Limpiar / Ordenar dibujo. Kept in sync with the editor
- * through its change notifications.
+ * through its change notifications. While the drawing is read-only (the 90°
+ * drawing actually shown, design.md §6.3) the tools and "Ordenar dibujo" are disabled;
+ * Deshacer, Rehacer and Limpiar stay available.
  */
 
 /** Tool buttons: editor tool id, Spanish label, keyboard shortcuts (design.md §6.1), icon (SVG inner markup, 24×24). */
@@ -96,16 +98,22 @@ export function buildToolbar(container, editor, options) {
    * @returns {void}
    */
   function sync() {
+    const readOnly = typeof editor.isReadOnly === 'function' && editor.isReadOnly();
+    container.classList.toggle('is-read-only', readOnly);
     for (const [tool, button] of toolButtons) {
       button.setAttribute('aria-pressed', String(editor.getTool() === tool));
+      button.disabled = readOnly;
     }
     actionButtons.get('undo').disabled = !editor.canUndo();
     actionButtons.get('redo').disabled = !editor.canRedo();
     actionButtons.get('clear').disabled = editor.peekMolecule().atoms.size === 0;
-    actionButtons.get('arrange').disabled = editor.peekMolecule().atoms.size === 0;
-  }
+    actionButtons.get('arrange').disabled = readOnly || editor.peekMolecule().atoms.size === 0;
+  } // End of function sync()
 
   editor.onChange(sync);
+  if (typeof editor.onViewChange === 'function') {
+    editor.onViewChange(sync);
+  }
   sync();
   return { sync };
 } // End of function buildToolbar()

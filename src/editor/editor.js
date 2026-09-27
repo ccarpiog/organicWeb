@@ -24,11 +24,23 @@
  * (only a preview is shown), so Esc or pointer cancel trivially restores the
  * starting state.
  *
+ * Display projection (the 90° view, design.md §6.3): setProjector(fn) makes
+ * the editor draw the molecule at the positions `fn(mol)` returns (computed
+ * once per molecule version) instead of its own coordinates, which never
+ * change. While a projection is actually shown (the projector succeeded)
+ * the drawing is read-only: drawing gestures and tool shortcuts are ignored
+ * (a left drag pans), and only whole-drawing actions (undo, redo, Limpiar,
+ * loading an example) change the molecule. When the projector falls back
+ * (empty drawing, loose pieces, no clean placement…) the normal drawing is
+ * shown and fully editable; the first edit that makes the molecule
+ * projectable switches to the projection (and read-only) by itself.
+ *
  * Test API: the instance exposes getMolecule(), getMoleculeJSON(), setTool(),
  * getTool(), undo(), redo(), clear(), loadMolecule(), setCoordinates(),
  * animateCoordinates(), isAnimating(), onEdit(), getSelection(),
- * getView(), setDisplayMode(), atomClientPoint(), bondClientPoint(),
- * modelToClient() and clientToModel(). The app publishes it as `window.__editor` (src/ui/app.js)
+ * getView(), setDisplayMode(), setProjector(), getProjection(), isReadOnly(),
+ * getShownMolecule(), atomClientPoint(), bondClientPoint(), modelToClient()
+ * and clientToModel(). The app publishes it as `window.__editor` (src/ui/app.js)
  * for end-to-end tests.
  */
 
@@ -1080,14 +1092,15 @@ function isTextField(target) {
  * pen; one drawing pointer at a time), pan (space+drag, middle-button drag,
  * two-finger drag), zoom (wheel, pinch), keyboard shortcuts (shortcutFor()),
  * Esc to cancel the gesture in progress (or clear the selection), rendering
- * after every change, the display mode, and shake + notification on refused
- * edits.
+ * after every change, the display mode, the display projection (90° view,
+ * read-only), and shake + notification on refused edits.
  *
  * @param {SVGSVGElement} svg - The canvas element.
  * @param {{notify?: function(string): void}} [options] - `notify(message)` shows a Spanish toast.
  * @returns {object} The editor API: the core API plus highlight(), clearHighlight(), showLocants(),
- *   animateCoordinates(), isAnimating(), setDisplayMode(), getDisplayMode(), getView(), setView(), centerView(), zoomBy(), atomClientPoint(),
- *   bondClientPoint(), modelToClient(), clientToModel(), render() and destroy().
+ *   animateCoordinates(), isAnimating(), setDisplayMode(), getDisplayMode(), setProjector(), getProjection(),
+ *   isReadOnly(), getShownMolecule(), onViewChange(), getView(), setView(), centerView(), zoomBy(),
+ *   atomClientPoint(), bondClientPoint(), modelToClient(), clientToModel(), render() and destroy().
  */
 export function createEditor(svg, options = {}) {
   const doc = svg.ownerDocument;
@@ -1099,16 +1112,88 @@ export function createEditor(svg, options = {}) {
   let spaceHeld = false;
   const touches = new Map();
   let animation = null; // Redraw animation in progress: {from, to, start, frame}.
+  let projector = null; // Display projection (90° view): mol → {ok, positions} | {ok: false, reason}.
+  let projection = null; // Cache: {source, projector, result, shown}.
+  const viewListeners = [];
+
+  /**
+   * The projection of the current molecule (computed once per molecule
+   * version and projector); null when no projector is set. A projector that
+   * throws, or returns positions not covering every atom, counts as a failure.
+   *
+   * @returns {{ok: boolean, reason?: string, positions?: Map<number, {x: number, y: number}>}|null} The projection.
+   */
+  function currentProjection() {
+    if (!projector) {
+      return null;
+    }
+    const mol = core.peekMolecule();
+    if (!projection || projection.source !== mol || projection.projector !== projector) {
+      let result;
+      try {
+        result = projector(mol);
+      } catch (err) {
+        result = { ok: false, reason: 'ERROR' };
+      }
+      let shown = null;
+      if (result && result.ok) {
+        const covers = result.positions instanceof Map && result.positions.size === mol.atoms.size &&
+          [...mol.atoms.keys()].every((id) => result.positions.has(id));
+        if (covers) {
+          shown = cloneMolecule(mol);
+          for (const [id, p] of result.positions) {
+            shown.atoms.get(id).x = p.x;
+            shown.atoms.get(id).y = p.y;
+          }
+        } else {
+          result = { ok: false, reason: 'ERROR' };
+        }
+      }
+      projection = { source: mol, projector, result: result || { ok: false, reason: 'ERROR' }, shown };
+    } // End of the projection cache refresh
+    return projection.result;
+  } // End of function currentProjection()
+
+  /**
+   * The molecule as drawn: the projected copy when the projection succeeded,
+   * else the molecule itself (during a redraw animation, at the interpolated positions).
+   *
+   * @returns {{mol: object, rightAngle: boolean}} The drawn molecule and whether it is projected.
+   */
+  function shownMolecule() {
+    const result = currentProjection();
+    if (result && result.ok) {
+      return { mol: projection.shown, rightAngle: true };
+    }
+    return { mol: animation ? animation.shown : core.peekMolecule(), rightAngle: false };
+  }
+
+  /**
+   * Tells whether the drawing is read-only: a projection is set and shown.
+   *
+   * @returns {boolean} True while the projected (90°) drawing is on screen.
+   */
+  function isReadOnly() {
+    const result = currentProjection();
+    return Boolean(result && result.ok);
+  }
 
   /**
    * Redraws the molecule with the current hover, preview and selection
-   * (during a redraw animation, at the interpolated positions).
+   * (during a redraw animation, at the interpolated positions; with a
+   * successful projection, at the projected positions and without any
+   * hover, preview or selection, which belong to editing).
    *
    * @returns {void}
    */
   function refresh() {
     const state = core.getViewState();
-    renderer.render(animation ? animation.shown : state.mol, state);
+    const shown = shownMolecule();
+    const extra = shown.rightAngle ? { hover: null, preview: null, selection: null, marquee: null } : {};
+    // Outside the projection and animations, draw the view state's molecule:
+    // it carries a move gesture's transient coordinates.
+    const drawn = shown.rightAngle || animation ? shown.mol : state.mol;
+    renderer.render(drawn, { ...state, ...extra, rightAngle: shown.rightAngle });
   }
 
   /**
@@ -1198,7 +1283,9 @@ export function createEditor(svg, options = {}) {
       return;
     }
     const middle = event.pointerType === 'mouse' && event.button === 1;
-    if (middle || (spaceHeld && event.button === 0)) {
+    // Read-only (90° view): the main button or a finger pans instead of drawing.
+    const readOnlyPan = isReadOnly() && (event.pointerType !== 'mouse' || event.button === 0);
+    if (middle || (spaceHeld && event.button === 0) || readOnlyPan) {
       event.preventDefault();
       capture(event);
       pan = { pointerId: event.pointerId, last: renderer.clientToCanvas(event.clientX, event.clientY) };
@@ -1255,7 +1342,7 @@ export function createEditor(svg, options = {}) {
       }
       return;
     }
-    if (activePointer !== null && event.pointerId !== activePointer) {
+    if ((activePointer !== null && event.pointerId !== activePointer) || isReadOnly()) {
       return;
     }
     core.pointerMove(toModel(event));
@@ -1375,6 +1462,9 @@ export function createEditor(svg, options = {}) {
     const command = shortcutFor(event);
     if (!command) {
       return;
+    }
+    if (command.tool && isReadOnly()) {
+      return; // Read-only (90° view): tools cannot be picked.
     }
     event.preventDefault();
     if (command.tool) {
@@ -1520,13 +1610,13 @@ export function createEditor(svg, options = {}) {
   refresh();
 
   /**
-   * Client coordinates of an atom (for tests and tooltips).
+   * Client coordinates of an atom as drawn (for tests and tooltips).
    *
    * @param {number} atomId - The atom.
    * @returns {{x: number, y: number}|null} The client point, or null if absent.
    */
   function atomClientPoint(atomId) {
-    const atom = core.peekMolecule().atoms.get(atomId);
+    const atom = shownMolecule().mol.atoms.get(atomId);
     return atom ? renderer.modelToClient(atom) : null;
   }
 
@@ -1537,7 +1627,7 @@ export function createEditor(svg, options = {}) {
    * @returns {{x: number, y: number}|null} The client point, or null if absent.
    */
   function bondClientPoint(bondId) {
-    const mol = core.peekMolecule();
+    const mol = shownMolecule().mol;
     const bond = mol.bonds.get(bondId);
     if (!bond) {
       return null;
@@ -1559,14 +1649,62 @@ export function createEditor(svg, options = {}) {
   }
 
   /**
-   * "Centrar": fits the molecule in the visible canvas (identity view when empty).
+   * "Centrar": fits the drawn molecule (projected in the 90° view) in the
+   * visible canvas (identity view when empty).
    *
    * @returns {{scale: number, x: number, y: number}} The new view.
    */
   function centerView() {
-    const view = core.peekMolecule().atoms.size > 0 ? fitView(core.peekMolecule(), renderer.visibleRect()) : { ...IDENTITY_VIEW };
+    const mol = shownMolecule().mol;
+    const view = mol.atoms.size > 0 ? fitView(mol, renderer.visibleRect()) : { ...IDENTITY_VIEW };
     renderer.setView(view);
     return renderer.getView();
+  }
+
+  /**
+   * Sets or removes the display projection (the 90° view). While it
+   * succeeds the drawing is read-only (isReadOnly()): setting it cancels any
+   * gesture in progress and clears the hover and selection. The model's
+   * coordinates never change.
+   *
+   * @param {function(object): object|null} fn - `fn(mol)` → `{ok: true, positions: Map}` or
+   *   `{ok: false, reason}`; null restores the normal, editable drawing.
+   * @returns {void}
+   */
+  function setProjector(fn) {
+    const next = typeof fn === 'function' ? fn : null;
+    if (next === projector) {
+      return;
+    }
+    if (next) {
+      stopAnimation();
+      activePointer = null;
+      core.cancelGesture();
+      core.clearHover();
+      core.clearSelection();
+    }
+    projector = next;
+    projection = null;
+    refresh();
+    for (const listener of viewListeners) {
+      listener();
+    }
+  } // End of function setProjector()
+
+  /**
+   * Subscribes to projection changes (read-only on/off).
+   *
+   * @param {function(): void} listener - Called after setProjector() changes the projector.
+   * @returns {function(): void} Unsubscribe function.
+   */
+  function onViewChange(listener) {
+    viewListeners.push(listener);
+    return () => {
+      const i = viewListeners.indexOf(listener);
+      if (i >= 0) {
+        viewListeners.splice(i, 1);
+      }
+    };
   }
 
   /**
@@ -1611,6 +1749,11 @@ export function createEditor(svg, options = {}) {
     isAnimating: () => animation !== null,
     setDisplayMode,
     getDisplayMode: renderer.getMode,
+    setProjector,
+    getProjection: currentProjection,
+    isReadOnly,
+    getShownMolecule: () => shownMolecule().mol,
+    onViewChange,
     getView: renderer.getView,
     setView: renderer.setView,
     centerView,

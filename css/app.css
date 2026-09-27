@@ -268,6 +268,28 @@ body {
   border-radius: 0 8px 8px 0;
 }
 
+/* 90° view toggle and its note (src/ui/canvasbar.js), Con carbonos only. */
+.right-angle-toggle[hidden],
+.right-angle-note[hidden] {
+  display: none;
+}
+
+.right-angle-note {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+/* The 90° view is read-only: a drag pans the drawing. */
+.canvas.is-right-angle {
+  cursor: grab;
+}
+
+.canvas.is-right-angle.is-panning {
+  cursor: grabbing;
+}
+
 .bar-button[aria-pressed="true"] {
   color: var(--color-accent-text);
   background: var(--color-accent);

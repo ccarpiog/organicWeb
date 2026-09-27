@@ -121,12 +121,13 @@ src/
   editor/geometry.js    placement angles, snapping, bond length
   editor/render.js      SVG rendering (skeletal and condensed modes)
   layout/canonical.js   redraw: main chain horizontal zigzag, branches placed
+  layout/rightangle.js  90° view: display-only right-angle projection (§6.3)
   ui/app.js             wires editor, toolbar, canvas bar, autosave, results panel
   ui/results.js         name button, coloured name, alternatives, errors, stepper
   ui/examples.js        example gallery
   ui/toolbar.js         drawing toolbar (tools, Deshacer/Rehacer/Limpiar)
   ui/feedback.js        in-page toast and confirmation dialog
-  ui/canvasbar.js       bar under the canvas: formula, Esqueleto/Con carbonos, Centrar
+  ui/canvasbar.js       bar under the canvas: formula, Esqueleto/Con carbonos, Ángulos rectos (90°), Centrar
   ui/autosave.js        localStorage autosave/restore (injected storage, try/catch)
 tests/
   unit/*.test.js        node --test
@@ -491,6 +492,7 @@ to a bottom bar.
 | **Mover** | Drag an atom (moves it) or a bond (moves its two atoms). Drag on empty space → marquee selection; then drag the selection (press on a selected atom, a bond between selected atoms, or inside the selection's box). Click selects an atom; click on empty space or Esc clears the selection. Dropping an atom on another is refused. |
 | Pan / zoom | Space+drag, middle-drag or two-finger drag pans; wheel / pinch zooms; "Centrar" button fits the molecule. |
 | Buttons | Deshacer, Rehacer, Limpiar (in-page confirmation dialog, never `window.confirm`), Ordenar dibujo (§7). |
+| 90° view (read-only) | While the "Ángulos rectos (90°)" drawing is actually shown (§6.3) every tool and Ordenar dibujo are disabled, with the note "Desactiva los ángulos rectos para editar."; clicks draw nothing, tool shortcuts are ignored, and a drag with the main button or one finger **pans** (so the Enlace simple chain drag is not available in this view). Deshacer, Rehacer, Limpiar and Ejemplos still work, and the view follows the molecule they leave. When the view falls back to the normal drawing (empty canvas, loose pieces, unnameable structure, no clean placement) the toggle stays on but the editor is fully editable (tools, chain drag, Ordenar dibujo); the first edit that makes the molecule projectable switches to the 90° drawing and read-only by itself, so a student who reloads with the toggle saved on can still draw. |
 
 Rules: every pointer gesture commits **one** undo transaction; Esc or pointer
 cancel restores the starting state. Duplicate bonds and self-bonds are
@@ -531,6 +533,45 @@ Keyboard: `c` carbono, `1/2/3` bond tools (`h` also Enlace simple), `t` cambiar 
   future carbons in the accent colour, and the redraw animation re-renders
   the dots every frame. **Con carbonos** draws no dots and labels each carbon
   with C + implicit H only (`CH₃`, `CH₂`, `CH`, `C`) — never `=` in labels.
+- **Ángulos rectos (90°)** toggle, shown in Con carbonos only (Esqueleto
+  keeps the 120° zigzag and hides it; the preference is kept and remembered
+  in `localStorage` like the display mode). It draws the textbook
+  semi-developed formula: the parent chain (from the naming result, as in
+  §7) on one horizontal line with locant 1 on the left, branches straight up
+  or down from their carbon and continuing horizontally or vertically.
+  - It is a **display-only projection** (`rightAngleLayout()` in
+    `src/layout/rightangle.js`, pure; handed to the editor through
+    `setProjector()`): the model's coordinates never change, so turning it
+    off restores the drawing exactly, and undo, autosave and "is ordered"
+    are unaffected. It is recomputed whenever the molecule changes (edit,
+    undo, redo, example, restore).
+  - Placement on an integer grid, collision-free by construction: a branch
+    leaving the chain or going straight on owns a half-plane (it may turn to
+    both sides); a branch that turned owns a quadrant (it may only go on or
+    turn away from the chain). Bonds are lengthened, never bent, when a
+    sibling's box is in the way; the most compact choice is kept; branches
+    on the same side of the chain never share a column. A single branch
+    hangs down (the user's reference picture), two go up and down.
+  - Uniform column step = widest label (estimated by `labelSize()`) plus
+    two 4-unit gaps and a 16-unit visible stroke; row step likewise for the
+    label height. Strokes stop 4 units short of the label boxes; double and
+    triple bonds become two/three equal parallel strokes (`=`, `≡`),
+    horizontal or vertical. Locant numbers sit up-right of their label.
+  - Every drawing is checked by `rightAngleProblems()` (axis-aligned bonds,
+    no overlapping labels, no bond through a label, no crossing or
+    overlapping bonds). **Fallback**: an empty drawing, an unnameable
+    structure (several fragments, a ring…) or no clean placement (a carbon
+    with three children inside a turned branch: none in 1 200 random 1–14 C
+    molecules, ≈0.3 % of 15–40 C, ≈2 % of 40–60 C) draws the normal, **editable** layout
+    with a short note under the canvas ("Hay piezas sueltas: se ve el dibujo
+    normal."; on an empty canvas the gentle hint "Los ángulos rectos
+    aparecerán cuando dibujes una molécula.").
+  - The drawing is **read-only** only while the projection is shown (§6.1;
+    `isReadOnly()` = a projector is set and succeeded), with the note
+    "Desactiva los ángulos rectos para editar."; it becomes read-only as
+    soon as an edit makes the molecule projectable, and editable again if
+    undo returns to an unprojectable one. Stepper highlights and locants are
+    drawn on the projected positions.
 - Hover highlight on atoms and bonds. Highlight API for the stepper:
   `highlight({atoms, bonds, style})` with styles
   `parent|candidate|substituent|locant`, and `showLocants(Map atomId→n)`.
@@ -570,6 +611,11 @@ unchanged):
   chain candidates) are shown unchanged.
 - After naming, a hint offers it: "¿Quieres ver la cadena principal
   ordenada?".
+- While the 90° drawing is shown (§6.3) "Ordenar dibujo" and its hint are disabled (the
+  change would be invisible there; the message "Desactiva los ángulos rectos
+  para ordenar el dibujo." answers a call anyway). The 90° view already puts
+  the parent chain on one horizontal line; turning it off shows the ordered
+  or unordered model drawing as it was.
 
 ---
 

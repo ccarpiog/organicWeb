@@ -1,14 +1,76 @@
 /**
  * @file Bar under the canvas (design.md §6.1, §6.3): the live molecular
- * formula ("Fórmula: C₅H₁₂"), the Esqueleto / Con carbonos display toggle
- * and the "Centrar" button.
+ * formula ("Fórmula: C₅H₁₂"), the Esqueleto / Con carbonos display toggle,
+ * the "Ángulos rectos (90°)" toggle (shown in Con carbonos only; the stored
+ * preference survives a switch to Esqueleto), its note, and the "Centrar"
+ * button.
+ *
+ * The 90° view is a display projection (src/layout/rightangle.js) handed to
+ * the editor with setProjector(): the molecule's coordinates never change,
+ * and the drawing is read-only only while the 90° drawing is shown (a
+ * fallback to the normal drawing stays editable).
  */
 
 import { formulaUnicode } from '../model/molecule.js';
 import { DISPLAY_MODES } from '../editor/render.js';
+import { nameMolecule } from '../naming/index.js';
+import { rightAngleLayout } from '../layout/rightangle.js';
 
 /** Spanish labels of the display modes. */
 export const MODE_LABELS = Object.freeze({ skeletal: 'Esqueleto', condensed: 'Con carbonos' });
+
+/** Label of the 90° view toggle. */
+export const RIGHT_ANGLE_LABEL = 'Ángulos rectos (90°)';
+
+/** Note shown while the 90° view is on (the drawing is read-only). */
+export const READ_ONLY_HINT = 'Desactiva los ángulos rectos para editar.';
+
+/**
+ * Notes shown when the 90° view falls back to the normal, editable drawing,
+ * by reason (the empty canvas gets a gentle hint).
+ */
+export const FALLBACK_NOTES = Object.freeze({
+  EMPTY: 'Los ángulos rectos aparecerán cuando dibujes una molécula.',
+  DISCONNECTED: 'Hay piezas sueltas: se ve el dibujo normal.',
+  CYCLE: 'Hay un anillo: se ve el dibujo normal.',
+  NO_ROOM: 'Esta molécula no cabe con ángulos rectos sin cruces: se ve el dibujo normal.',
+  OTHER: 'Esta molécula no se puede dibujar con ángulos rectos: se ve el dibujo normal.',
+});
+
+/**
+ * The 90° projection of a molecule: names it (for its parent chain) and
+ * lays it out with rightAngleLayout(). Pure (no DOM).
+ *
+ * @param {object} mol - The molecule.
+ * @returns {{ok: true, positions: Map<number, {x: number, y: number}>}|{ok: false, reason: string}}
+ *   The positions, or the reason for falling back (`EMPTY`, `DISCONNECTED`, `CYCLE`, `NO_ROOM`, or a
+ *   naming error code).
+ */
+export function projectRightAngles(mol) {
+  if (mol.atoms.size === 0) {
+    return { ok: false, reason: 'EMPTY' };
+  }
+  const result = nameMolecule(mol);
+  if (!result.ok) {
+    return { ok: false, reason: (result.error && result.error.code) || 'OTHER' };
+  }
+  return rightAngleLayout(mol, result);
+}
+
+/**
+ * Text of the note under the canvas while the 90° view is on: the
+ * read-only hint while the projection is shown, else why the normal
+ * (editable) drawing is shown.
+ *
+ * @param {{ok: boolean, reason?: string}|null} projection - The editor's current projection.
+ * @returns {string} The Spanish note.
+ */
+export function rightAngleNote(projection) {
+  if (!projection || projection.ok) {
+    return READ_ONLY_HINT;
+  }
+  return FALLBACK_NOTES[projection.reason] || FALLBACK_NOTES.OTHER;
+}
 
 /**
  * Text of the formula line: "Fórmula: C₅H₁₂", or "Fórmula: —" for an empty drawing.
@@ -25,9 +87,11 @@ export function formulaText(mol) {
  *
  * @param {HTMLElement} container - The `#canvas-bar` element.
  * @param {object} editor - The editor (createEditor()).
- * @param {{initialMode?: string, onModeChange?: function(string): void}} [options] - Starting display
- *   mode and a listener for mode changes (used to remember the choice).
- * @returns {{sync: function(): void}} `sync()` refreshes the formula.
+ * @param {{initialMode?: string, onModeChange?: function(string): void, initialRightAngles?: boolean,
+ *   onRightAnglesChange?: function(boolean): void}} [options] - Starting display mode and 90° preference,
+ *   and listeners for their changes (used to remember the choices).
+ * @returns {{sync: function(): void, setRightAngles: function(boolean): void}} `sync()` refreshes the
+ *   formula and the note; `setRightAngles(on)` changes the 90° preference.
  */
 export function buildCanvasBar(container, editor, options = {}) {
   const doc = container.ownerDocument;
@@ -55,6 +119,16 @@ export function buildCanvasBar(container, editor, options = {}) {
   }
   container.appendChild(group);
 
+  const rightAngle = doc.createElement('button');
+  rightAngle.type = 'button';
+  rightAngle.className = 'bar-button right-angle-toggle';
+  rightAngle.id = 'right-angle-button';
+  rightAngle.textContent = RIGHT_ANGLE_LABEL;
+  rightAngle.title = 'Dibujar la fórmula semidesarrollada con ángulos de 90°';
+  rightAngle.addEventListener('click', () => setRightAngles(!rightAngles));
+  rightAngle.addEventListener('mousedown', (event) => event.preventDefault());
+  container.appendChild(rightAngle);
+
   const center = doc.createElement('button');
   center.type = 'button';
   center.className = 'bar-button';
@@ -65,33 +139,79 @@ export function buildCanvasBar(container, editor, options = {}) {
   center.addEventListener('mousedown', (event) => event.preventDefault());
   container.appendChild(center);
 
+  const note = doc.createElement('p');
+  note.className = 'right-angle-note';
+  note.id = 'right-angle-note';
+  note.setAttribute('role', 'status');
+  note.hidden = true;
+  container.appendChild(note);
+
+  let mode = 'skeletal';
+  let rightAngles = Boolean(options.initialRightAngles);
+
   /**
-   * Applies a display mode and updates the toggle.
+   * Hands the projection to the editor when the 90° view applies (Con
+   * carbonos and the toggle on), removes it otherwise, and updates the toggle.
    *
-   * @param {string} mode - 'skeletal' or 'condensed'.
    * @returns {void}
    */
-  function selectMode(mode) {
-    editor.setDisplayMode(mode);
-    for (const [name, button] of modeButtons) {
-      button.setAttribute('aria-pressed', String(name === mode));
-    }
-    if (options.onModeChange) {
-      options.onModeChange(mode);
+  function applyRightAngles() {
+    const active = mode === 'condensed' && rightAngles;
+    rightAngle.hidden = mode !== 'condensed';
+    rightAngle.setAttribute('aria-pressed', String(rightAngles));
+    editor.setProjector(active ? projectRightAngles : null);
+    sync();
+  }
+
+  /**
+   * Changes the 90° preference.
+   *
+   * @param {boolean} on - True to turn the 90° view on.
+   * @returns {void}
+   */
+  function setRightAngles(on) {
+    rightAngles = Boolean(on);
+    applyRightAngles();
+    if (options.onRightAnglesChange) {
+      options.onRightAnglesChange(rightAngles);
     }
   }
 
   /**
-   * Refreshes the formula line.
+   * Applies a display mode and updates the toggles.
+   *
+   * @param {string} next - 'skeletal' or 'condensed'.
+   * @returns {void}
+   */
+  function selectMode(next) {
+    mode = next;
+    editor.setDisplayMode(next);
+    for (const [name, button] of modeButtons) {
+      button.setAttribute('aria-pressed', String(name === next));
+    }
+    applyRightAngles();
+    if (options.onModeChange) {
+      options.onModeChange(next);
+    }
+  }
+
+  /**
+   * Refreshes the formula line and the 90° note.
    *
    * @returns {void}
    */
   function sync() {
     formula.textContent = formulaText(editor.peekMolecule());
+    const projection = editor.getProjection();
+    note.hidden = !projection;
+    const text = projection ? rightAngleNote(projection) : '';
+    if (note.textContent !== text) {
+      note.textContent = text;
+    }
   }
 
   selectMode(DISPLAY_MODES.includes(options.initialMode) ? options.initialMode : 'skeletal');
   editor.onChange(sync);
   sync();
-  return { sync };
+  return { sync, setRightAngles };
 } // End of function buildCanvasBar()

@@ -197,3 +197,19 @@ test('a click during the redraw animation ends it and edits nothing', async ({ p
   expect(await page.evaluate(() => window.__editor.getMoleculeJSON().atoms.length)).toBe(before.atoms.length + 1);
   expect(errors).toEqual([]);
 }); // End of test 'a click during the redraw animation ends it and edits nothing'
+
+test('a Mover drag shows the atom at its new place before the release', async ({ page }) => {
+  const errors = await openApp(page);
+  await loadExample(page, 'Rama con un enlace doble');
+  const atom = page.locator('circle.atom[data-atom-id="1"]');
+  const before = Number(await atom.getAttribute('cx'));
+  await page.evaluate(() => window.__editor.setTool('move'));
+  const p = await page.evaluate(() => window.__editor.atomClientPoint(1));
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
+  await page.mouse.move(p.x + 60, p.y, { steps: 8 });
+  // Mid-gesture: the rendered circle already follows the pointer.
+  expect(Number(await atom.getAttribute('cx'))).toBeGreaterThan(before + 20);
+  await page.mouse.up();
+  expect(errors).toEqual([]);
+});

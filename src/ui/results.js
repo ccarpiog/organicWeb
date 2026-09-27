@@ -7,7 +7,9 @@
  * applies the canonical layout as one animated, undoable coordinate edit.
  * While the drawing shows exactly that layout, the parent chain stays
  * highlighted in every step and its locants are shown from the numbering
- * step on (option views of a step are shown as they are).
+ * step on (option views of a step are shown as they are). In the read-only
+ * 90° view (design.md §6.3) the hint is hidden and arrange() is refused with
+ * a message; the highlights follow the projected drawing.
  *
  * A chemical edit clears the result (a stale name must never show); a
  * coordinate-only edit keeps it, and the highlights follow the moved atoms.
@@ -43,6 +45,9 @@ export const ALREADY_ORDERED = 'El dibujo ya está ordenado.';
 
 /** Toast shown when no clear ordered drawing was found (the drawing is left as it is). */
 export const CANNOT_ORDER = 'No he podido ordenar esta molécula sin que se crucen enlaces. El dibujo se queda como estaba.';
+
+/** Message when "Ordenar dibujo" is asked for in the read-only 90° view. */
+export const READ_ONLY_ORDER = 'Desactiva los ángulos rectos para ordenar el dibujo.';
 
 /**
  * Creates an element with a class and optional text.
@@ -319,6 +324,15 @@ export function buildResults(panel, editor, button, options = {}) {
   } // End of function matchesArranged()
 
   /**
+   * Tells whether the drawing is read-only (the 90° view).
+   *
+   * @returns {boolean} True while the editor shows a projection.
+   */
+  function isReadOnly() {
+    return typeof editor.isReadOnly === 'function' && editor.isReadOnly();
+  }
+
+  /**
    * Updates the ordered state, the redraw hint and the canvas marks.
    *
    * @returns {void}
@@ -326,7 +340,7 @@ export function buildResults(panel, editor, button, options = {}) {
   function syncOrdered() {
     ordered = current !== null && matchesArranged();
     if (hint) {
-      hint.hidden = ordered;
+      hint.hidden = ordered || isReadOnly();
     }
     if (current && lastView) {
       showOnCanvas(lastView.view, lastView.isOption);
@@ -550,6 +564,7 @@ export function buildResults(panel, editor, button, options = {}) {
     redraw.type = 'button';
     redraw.addEventListener('click', () => arrange());
     hint.appendChild(redraw);
+    hint.hidden = isReadOnly();
     nodes.push(hint);
     const toggle = make(doc, 'button', 'stepper-toggle', 'Ver paso a paso');
     toggle.type = 'button';
@@ -598,6 +613,12 @@ export function buildResults(panel, editor, button, options = {}) {
    * @returns {object} The naming result on failure, else the edit outcome.
    */
   function arrange() {
+    if (isReadOnly()) {
+      if (options.notify) {
+        options.notify(READ_ONLY_ORDER);
+      }
+      return { ok: false, message: READ_ONLY_ORDER };
+    }
     if (!current) {
       const result = nameCurrent();
       if (!result.ok) {
@@ -624,6 +645,9 @@ export function buildResults(panel, editor, button, options = {}) {
 
   button.disabled = false;
   button.addEventListener('click', nameCurrent);
+  if (typeof editor.onViewChange === 'function') {
+    editor.onViewChange(syncOrdered);
+  }
   editor.onEdit((event) => {
     if (event && event.kind === 'chemical' && panel.dataset.state) {
       clear();

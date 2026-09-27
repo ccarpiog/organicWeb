@@ -1,6 +1,6 @@
 /**
  * @file Application entry point: wires the editor, the toolbar, the canvas
- * bar (formula, display mode, Centrar), the autosave, the name button, the
+ * bar (formula, display mode, 90° view, Centrar), the autosave, the name button, the
  * results panel with the naming engine and the step-by-step explanation
  * (design.md §9, src/ui/results.js), "Ordenar dibujo" (design.md §7), the
  * Ejemplos menu (src/ui/examples.js) and the Ayuda dialog (src/ui/help.js).
@@ -17,7 +17,7 @@ import { buildCanvasBar } from './canvasbar.js';
 import { buildResults } from './results.js';
 import { buildHelp } from './help.js';
 import {
-  getStorage, readItem, writeItem, restoreDrawing, startAutosave, MODE_KEY,
+  getStorage, readItem, writeItem, restoreDrawing, startAutosave, MODE_KEY, RIGHT_ANGLE_KEY,
 } from './autosave.js';
 
 /**
@@ -53,6 +53,8 @@ export function initApp(doc) {
       buildCanvasBar(canvasBar, editor, {
         initialMode: readItem(storage, MODE_KEY),
         onModeChange: (mode) => writeItem(storage, MODE_KEY, mode),
+        initialRightAngles: readItem(storage, RIGHT_ANGLE_KEY) === 'on',
+        onRightAnglesChange: (on) => writeItem(storage, RIGHT_ANGLE_KEY, on ? 'on' : 'off'),
       });
     }
     const panel = doc.getElementById('results');
