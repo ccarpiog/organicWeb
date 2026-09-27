@@ -26,11 +26,11 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-16 | Toggle to hide stepper highlights | `autoclaude/processed/160-hide-highlights.md` | done — `docs/progress-archive/i-16.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-16.md` |
 | I-17 | Editing in the 90° view | `autoclaude/processed/170-edit-in-carbons-view.md` | done — `docs/progress-archive/i-17.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-17.md` |
 | I-18 | Author credit footer | `autoclaude/processed/180-author-credit.md` | done — `docs/progress-archive/i-18.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-18.md` |
-| I-19 | Undo after "Ordenar dibujo" (bug) | `autoclaude/processed/190-undo-ordenar-dibujo.md` | queued (next) | — | — |
-| I-20 | `npm run deploy` to Fastmail Files + docs | `autoclaude/processed/200-deploy-fastmail.md` | queued (after I-19) | — | — |
+| I-19 | Undo after "Ordenar dibujo" (bug) | `autoclaude/processed/190-undo-ordenar-dibujo.md` | done — `docs/progress-archive/i-19.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-19.md` |
+| I-20 | `npm run deploy` to Fastmail Files + docs | `autoclaude/processed/200-deploy-fastmail.md` | queued (next) | — | — |
 
-The twelve original plan items and user-feedback items I-13…I-18 are done;
-I-19 and I-20 (user feedback) are queued.
+The twelve original plan items and user-feedback items I-13…I-19 are done;
+I-20 (user feedback) is queued.
 
 ## Inbox
 
@@ -57,8 +57,7 @@ I-19 and I-20 (user feedback) are queued.
 
 ## Next action
 
-Poll the inbox, then execute I-19 (`autoclaude/processed/190-undo-ordenar-dibujo.md`), then I-20
-(`autoclaude/processed/200-deploy-fastmail.md`; the loop never runs the real
+Poll the inbox, then execute I-20 (`autoclaude/processed/200-deploy-fastmail.md`; the loop never runs the real
 deploy).
 
 ## Decisions needed (user)
@@ -101,9 +100,9 @@ deploy).
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-18)
+## Verification (last phase, I-19)
 
-- `npm test` 0 (410 pass) · `npm run check` 0 · `npm run e2e` 0 (119 pass,
+- `npm test` 0 (411 pass) · `npm run check` 0 · `npm run e2e` 0 (127 pass,
   source + dist, includes build). Oracle not rerun (naming engine untouched).
 
 ## Open risks / deviations
@@ -170,10 +169,15 @@ deploy).
 - I-18: author footer sits below the fold on desktop (main area fills the
   viewport); reachable by scrolling (`docs/progress-archive/i-18.md`).
 
+- I-19: root cause was the fit-to-view zoom living outside the undo step;
+  history now carries the view (held while the 90° view is shown). Ejemplos
+  load has the same unrestored-view issue, out of scope
+  (`docs/progress-archive/i-19.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-17 `6832d55`, pushed; triage `05db564`. I-18 committed and pushed right
+- I-18 `f15a138`, pushed; triage `05db564`. I-19 committed and pushed right
   after this checkpoint (see `git log`).

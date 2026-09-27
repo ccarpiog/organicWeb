@@ -115,6 +115,36 @@ test('history records, undoes, redoes and drops redo on a new record', () => {
   assert.equal(history.canUndo(), false);
 });
 
+test('a redraw recorded with canvas views hands them back on undo and redo (Ordenar dibujo)', () => {
+  const history = createHistory();
+  history.record('s0', 's1');
+  history.record('s1', 's2', 'redraw', { before: 'v0', after: 'v1' });
+  assert.deepEqual(history.undo().view, { before: 'v0', after: 'v1' });
+  assert.deepEqual(history.redo().view, { before: 'v0', after: 'v1' });
+  history.undo();
+  assert.equal(history.undo().view, undefined, 'entries without views carry none');
+
+  const events = [];
+  const editor = createEditorCore({ onChange: (e) => events.push(e) });
+  clickAt(editor, { x: 0, y: 0 });
+  const drawn = editor.getMoleculeJSON();
+  const viewBefore = { scale: 1, x: 0, y: 0 };
+  const viewAfter = { scale: 1.5, x: 40, y: -20 };
+  const positions = new Map(drawn.atoms.map((a) => [a.id, { x: a.x + 100, y: a.y + 50 }]));
+  assert.ok(editor.setCoordinates(positions, { view: { before: viewBefore, after: viewAfter } }).changed);
+  const moved = editor.getMoleculeJSON();
+  assert.deepEqual(events.at(-1), { reason: 'edit', kind: 'coordinates', view: viewAfter });
+  assert.ok(editor.undo());
+  assert.deepEqual(editor.getMoleculeJSON(), drawn, 'one undo brings the drawn coordinates back exactly');
+  assert.deepEqual(events.at(-1), { reason: 'undo', kind: 'coordinates', view: viewBefore });
+  assert.ok(editor.redo());
+  assert.deepEqual(editor.getMoleculeJSON(), moved);
+  assert.deepEqual(events.at(-1), { reason: 'redo', kind: 'coordinates', view: viewAfter });
+  editor.undo();
+  editor.undo();
+  assert.deepEqual(events.at(-1), { reason: 'undo', kind: 'chemical' }, 'other edits carry no view');
+});
+
 test('Carbono: click on empty space draws methane; click on an atom grows it', () => {
   const editor = createEditorCore();
   editor.setTool('carbon');

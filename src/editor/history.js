@@ -5,7 +5,11 @@
  * stored as a pair of serialised snapshots (`moleculeToJSON()` output) taken
  * before and after it. Drawings are tiny, so whole snapshots are simpler and
  * safer than inverse operations, and restoring goes through
- * `moleculeFromJSON()`, i.e. through validation. Pure: no DOM.
+ * `moleculeFromJSON()`, i.e. through validation. An entry may also carry
+ * the canvas view before and after it (opaque `{before, after}` data), for a
+ * transaction that re-centred the canvas ("Ordenar dibujo", design.md §7):
+ * undo and redo hand those views back so the drawing reappears where it was.
+ * Pure: no DOM.
  */
 
 /** Default maximum number of undoable transactions. */
@@ -28,10 +32,11 @@ export function createHistory(options = {}) {
    * @param {object} before - Snapshot before the transaction.
    * @param {object} after - Snapshot after the transaction.
    * @param {string} [label] - Short English description, for debugging.
+   * @param {{before: object, after: object}|null} [view] - Canvas views before and after it, when it changed the view.
    * @returns {void}
    */
-  function record(before, after, label = '') {
-    done.push({ before, after, label });
+  function record(before, after, label = '', view = null) {
+    done.push(view ? { before, after, label, view } : { before, after, label });
     if (done.length > limit) {
       done.shift();
     }
@@ -41,7 +46,7 @@ export function createHistory(options = {}) {
   /**
    * Steps back one transaction.
    *
-   * @returns {{before: object, after: object, label: string}|null} The entry undone (restore its `before`), or null.
+   * @returns {{before: object, after: object, label: string, view?: object}|null} The entry undone (restore its `before`), or null.
    */
   function undo() {
     const entry = done.pop() || null;
@@ -54,7 +59,7 @@ export function createHistory(options = {}) {
   /**
    * Steps forward one undone transaction.
    *
-   * @returns {{before: object, after: object, label: string}|null} The entry redone (restore its `after`), or null.
+   * @returns {{before: object, after: object, label: string, view?: object}|null} The entry redone (restore its `after`), or null.
    */
   function redo() {
     const entry = undone.pop() || null;

@@ -605,7 +605,13 @@ unchanged):
 - Linear centres straightened.
 - Applied as **one** undoable coordinate edit, animated ~400 ms
   (`prefers-reduced-motion` respected); pressing it on an already ordered
-  drawing adds no undo step. The naming result stays (when no name is shown,
+  drawing adds no undo step. When the ordered drawing would not fit the
+  visible canvas, the canvas is re-centred on it as part of that edit: one
+  Deshacer (also during the animation) brings the previous drawing back in
+  the view it had, so every carbon is where it was on screen, and Rehacer
+  shows the ordered drawing re-centred again. Undone or redone while the
+  90° drawing is shown, the canvas keeps the 90° drawing's view, and the
+  normal drawing gets its restored view when it comes back. The naming result stays (when no name is shown,
   the toolbar button names the molecule first); the parent is highlighted
   persistently while the ordered drawing is shown (i.e. until an atom moves
   or undo restores other coordinates); locant numbers appear next to parent

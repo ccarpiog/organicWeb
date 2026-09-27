@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T16:26:48Z",
+  "updated": "2026-09-27T16:48:46Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with editor refinements from the inbox.",
   "phases": [
@@ -169,8 +169,11 @@
     {
       "id": "I-19",
       "title": "Undo after Ordenar dibujo",
-      "status": "queued",
-      "summary": "Fixes Deshacer so it restores the hand-drawn layout after Ordenar dibujo."
+      "status": "done",
+      "summary": "Fixes Deshacer so it restores the hand-drawn layout after Ordenar dibujo.",
+      "risk": "routine",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-19.md",
+      "narrative": "docs/progress-archive/i-19.md"
     },
     {
       "id": "I-20",

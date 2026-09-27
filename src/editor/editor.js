@@ -231,8 +231,9 @@ export function addedAtoms(before, after) {
  * @param {{onChange?: Function, onReject?: Function, onEdit?: Function, display?: function(): (object|null)}} [options]
  *   Listeners: onChange({reason, kind}) after every committed edit, undo, redo, restore, tool, gesture or
  *   selection change; onEdit({reason, kind}) only for changes of the molecule (kind 'chemical' or
- *   'coordinates'); onReject({message, atoms}) when an edit is refused. `display()`: the projected
- *   drawing, or null (see above).
+ *   'coordinates'); onReject({message, atoms}) when an edit is refused. Events of an edit recorded
+ *   with canvas views (setCoordinates() with `view`), and of its undo and redo, also carry the
+ *   `view` to show. `display()`: the projected drawing, or null (see above).
  * @returns {object} The core API (see the returned object).
  */
 export function createEditorCore(options = {}) {
@@ -252,19 +253,22 @@ export function createEditorCore(options = {}) {
    *
    * @param {string} reason - 'edit' | 'undo' | 'redo' | 'restore' | 'tool' | 'gesture' | 'selection'.
    * @param {'chemical'|'coordinates'|null} [kind] - What changed, for changes of the molecule.
+   * @param {object|null} [view] - Canvas view that goes with the new state (a transaction
+   *   recorded with views, see setCoordinates()); the event then carries it as `view`.
    * @returns {void}
    */
-  function emit(reason, kind = null) {
+  function emit(reason, kind = null, view = null) {
     if (kind) {
       // Atoms that no longer exist leave the selection.
       selection = new Set([...selection].filter((id) => mol.atoms.has(id)));
     }
+    const event = view ? { reason, kind, view } : { reason, kind };
     for (const listener of changeListeners) {
-      listener({ reason, kind });
+      listener(event);
     }
     if (kind) {
       for (const listener of editListeners) {
-        listener({ reason, kind });
+        listener(event);
       }
     }
   } // End of function emit()
@@ -289,9 +293,11 @@ export function createEditorCore(options = {}) {
    *
    * @param {string} label - English description (debugging).
    * @param {function(object): ({message: string, atoms?: number[]}|void)} mutate - Edits the draft.
+   * @param {{before: object, after: object}|null} [view] - Canvas views before and after the
+   *   transaction, recorded with it (undo/redo hand them back).
    * @returns {{ok: boolean, changed?: boolean, message?: string, atoms?: number[]}} The outcome.
    */
-  function transact(label, mutate) {
+  function transact(label, mutate, view = null) {
     const draft = cloneMolecule(mol);
     let refusal;
     try {
@@ -317,8 +323,8 @@ export function createEditorCore(options = {}) {
       return { ok: true, changed: false };
     }
     mol = draft;
-    history.record(before, after, label);
-    emit('edit', editKind(before, after));
+    history.record(before, after, label, view);
+    emit('edit', editKind(before, after), view ? view.after : null);
     return { ok: true, changed: true };
   } // End of function transact()
 
@@ -871,7 +877,7 @@ export function createEditorCore(options = {}) {
     if (!entry || !restore(entry.before)) {
       return false;
     }
-    emit('undo', editKind(entry.after, entry.before));
+    emit('undo', editKind(entry.after, entry.before), entry.view ? entry.view.before : null);
     return true;
   }
 
@@ -885,7 +891,7 @@ export function createEditorCore(options = {}) {
     if (!entry || !restore(entry.after)) {
       return false;
     }
-    emit('redo', editKind(entry.before, entry.after));
+    emit('redo', editKind(entry.before, entry.after), entry.view ? entry.view.after : null);
     return true;
   }
 
@@ -948,11 +954,15 @@ export function createEditorCore(options = {}) {
   /**
    * Moves atoms to new positions as one undoable coordinate edit (redraw,
    * design.md §7). Every atom must exist; atoms not listed keep their place.
+   * With `options.view` the edit also re-centres the canvas: the views are
+   * recorded with it, and the change events of the edit, its undo and its
+   * redo carry the view to show (`after`, `before`, `after`).
    *
    * @param {Map<number, {x: number, y: number}>} positions - Atom id → new position.
+   * @param {{view?: {before: object, after: object}}} [options] - Canvas views before and after.
    * @returns {object} The transaction outcome (`changed: false` when nothing moved).
    */
-  function setCoordinates(positions) {
+  function setCoordinates(positions, options = {}) {
     gesture = null;
     return transact('redraw', (d) => {
       for (const [id, p] of positions) {
@@ -964,7 +974,7 @@ export function createEditorCore(options = {}) {
         atom.y = p.y;
       }
       return undefined;
-    });
+    }, options.view || null);
   } // End of function setCoordinates()
 
   /**
@@ -1236,6 +1246,7 @@ export function createEditor(svg, options = {}) {
   let animation = null; // Redraw animation in progress: {from, to, start, frame}.
   let projector = null; // Display projection (90° view): mol → {ok, positions} | {ok: false, reason}.
   let projection = null; // Cache: {source, projector, result, shown}.
+  let pendingView = null; // Normal-drawing view of an undo/redo made while the 90° drawing was shown.
   const viewListeners = [];
 
   /**
@@ -1329,6 +1340,11 @@ export function createEditor(svg, options = {}) {
     // Outside the projection and animations, draw the view state's molecule:
     // it carries a move gesture's transient coordinates.
     const drawn = shown.rightAngle || animation ? shown.mol : state.mol;
+    if (pendingView && !shown.rightAngle) {
+      // Back to the normal drawing: show it in the view its undo/redo carried.
+      renderer.setView(pendingView);
+      pendingView = null;
+    }
     renderer.render(drawn, { ...state, ...extra, rightAngle: shown.rightAngle });
   }
 
@@ -1707,11 +1723,68 @@ export function createEditor(svg, options = {}) {
   } // End of function animationFrame()
 
   /**
+   * The view that fits the drawing once atoms are at new positions, when that
+   * drawing would not fit the visible canvas in the current view (else null).
+   * In the 90° view the model coordinates are not shown, so it is always null.
+   *
+   * @param {Map<number, {x: number, y: number}>} positions - Atom id → new position.
+   * @returns {{scale: number, x: number, y: number}|null} The fitted view, or null to keep the current one.
+   */
+  function fittedView(positions) {
+    if (isProjected()) {
+      return null;
+    }
+    const next = core.getMolecule();
+    for (const [id, p] of positions) {
+      const atom = next.atoms.get(id);
+      if (!atom) {
+        return null; // setCoordinates() refuses it anyway.
+      }
+      atom.x = p.x;
+      atom.y = p.y;
+    }
+    if (next.atoms.size === 0) {
+      return null;
+    }
+    const box = moleculeBounds(next);
+    const r = renderer.visibleRect();
+    const view = renderer.getView();
+    const toCanvas = (x, y) => ({ x: x * view.scale + view.x, y: y * view.scale + view.y });
+    const p = toCanvas(box.minX, box.minY);
+    const q = toCanvas(box.maxX, box.maxY);
+    const fits = p.x >= r.x && p.y >= r.y && q.x <= r.x + r.width && q.y <= r.y + r.height;
+    return fits ? null : fitView(next, r);
+  } // End of function fittedView()
+
+  /**
+   * Shows the canvas view a change event carries: the fitted view of a
+   * re-centring redraw (and of its redo), or the view before it on undo.
+   * That view belongs to the normal drawing: while the 90° drawing is shown
+   * its own view stays, and the carried one is kept for when the normal
+   * drawing comes back (refresh()).
+   *
+   * @param {{view?: {scale: number, x: number, y: number}}} event - The core's change event.
+   * @returns {void}
+   */
+  function applyEditView(event) {
+    if (!event || !event.view) {
+      return;
+    }
+    if (isProjected()) {
+      pendingView = event.view;
+    } else {
+      pendingView = null;
+      renderer.setView(event.view);
+    }
+  }
+
+  /**
    * Moves atoms to new positions as one undoable coordinate edit
    * (setCoordinates()), animated over `duration` ms unless the system asks
    * for reduced motion. The model changes at once; only the drawing is
    * interpolated, and any other change ends the animation. With `fit`, the
-   * view is re-centred when the new drawing does not fit the visible canvas.
+   * view is re-centred when the new drawing does not fit the visible canvas;
+   * that re-centring belongs to the undoable edit (undo restores the view).
    *
    * @param {Map<number, {x: number, y: number}>} positions - Atom id → new position.
    * @param {{duration?: number, fit?: boolean}} [opts] - Animation length (default 400 ms) and re-centring.
@@ -1720,20 +1793,13 @@ export function createEditor(svg, options = {}) {
   function animateCoordinates(positions, opts = {}) {
     stopAnimation();
     const before = core.getMolecule();
-    const outcome = core.setCoordinates(positions);
+    const fitted = opts.fit ? fittedView(positions) : null;
+    // The re-centring is part of the edit: undo shows the old drawing in the
+    // view it was drawn in (applyEditView()), redo in the fitted one.
+    const view = fitted ? { before: renderer.getView(), after: fitted } : null;
+    const outcome = core.setCoordinates(positions, { view });
     if (!outcome.ok || !outcome.changed) {
       return outcome;
-    }
-    if (opts.fit) {
-      const box = moleculeBounds(core.peekMolecule());
-      const r = renderer.visibleRect();
-      const view = renderer.getView();
-      const toCanvas = (x, y) => ({ x: x * view.scale + view.x, y: y * view.scale + view.y });
-      const p = toCanvas(box.minX, box.minY);
-      const q = toCanvas(box.maxX, box.maxY);
-      if (p.x < r.x || p.y < r.y || q.x > r.x + r.width || q.y > r.y + r.height) {
-        centerView();
-      }
     }
     const duration = opts.duration ?? 400;
     if (duration > 0 && !prefersReducedMotion() && win && win.requestAnimationFrame) {
@@ -1761,6 +1827,7 @@ export function createEditor(svg, options = {}) {
     win.addEventListener('blur', handleKeyUp);
   }
   core.onChange(stopAnimation);
+  core.onChange(applyEditView);
   core.onChange(refresh);
   core.onReject(onReject);
   refresh();
