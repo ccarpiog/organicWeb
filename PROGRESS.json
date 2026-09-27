@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T16:03:09Z",
+  "updated": "2026-09-27T16:22:08Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with editor refinements from the inbox.",
   "phases": [
@@ -151,8 +151,23 @@
     {
       "id": "I-17",
       "title": "Editing in the 90° view",
+      "status": "done",
+      "summary": "Makes every editing tool work while the 90° condensed drawing is shown.",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-17.md",
+      "narrative": "docs/progress-archive/i-17.md"
+    },
+    {
+      "id": "I-18",
+      "title": "Author credit footer",
       "status": "queued",
-      "summary": "Makes every editing tool work while the 90° condensed drawing is shown."
+      "summary": "Shows the page author and year in a footer and in the page metadata."
+    },
+    {
+      "id": "I-19",
+      "title": "Undo after Ordenar dibujo",
+      "status": "queued",
+      "summary": "Fixes Deshacer so it restores the hand-drawn layout after Ordenar dibujo."
     }
   ]
 }

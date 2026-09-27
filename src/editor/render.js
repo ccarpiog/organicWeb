@@ -661,6 +661,10 @@ export function createRenderer(svg) {
    * @returns {void}
    */
   function render(mol, state = {}) {
+    if (mol !== lastMol) {
+      // Rings of added carbons belong to the drawing they were put on.
+      layers.flash.querySelectorAll('.added-ring').forEach((ring) => ring.remove());
+    }
     lastMol = mol;
     const hover = state.hover || null;
     const condensed = mode === 'condensed';
@@ -742,22 +746,29 @@ export function createRenderer(svg) {
   }
 
   /**
-   * Briefly marks atoms involved in a refused edit (red ring that shakes).
+   * Briefly marks atoms of the last drawing: by default the atoms involved in
+   * a refused edit (red ring, while the canvas shakes); the 90° view passes
+   * `added-ring` to show the carbons a gesture added. A newer flash replaces
+   * an older one.
    *
    * @param {number[]} atomIds - Atoms to mark.
+   * @param {{className?: string, duration?: number}} [options] - Ring class (default `reject-ring`) and
+   *   how long the rings stay, in ms (default 700).
    * @returns {void}
    */
-  function flash(atomIds) {
+  function flash(atomIds, options = {}) {
     layers.flash.replaceChildren();
+    const className = options.className || 'reject-ring';
     for (const id of atomIds || []) {
       const atom = lastMol && lastMol.atoms.get(id);
       if (atom) {
-        el('circle', { class: 'reject-ring', cx: atom.x, cy: atom.y, r: 12 }, layers.flash);
+        el('circle', { class: className, cx: atom.x, cy: atom.y, r: 12 }, layers.flash);
       }
     }
     const win = doc.defaultView;
     if (win) {
-      win.setTimeout(() => layers.flash.replaceChildren(), 700);
+      const rings = [...layers.flash.children];
+      win.setTimeout(() => rings.forEach((ring) => ring.remove()), options.duration ?? 700);
     }
   } // End of function flash()
 

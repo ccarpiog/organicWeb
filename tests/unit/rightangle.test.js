@@ -16,7 +16,7 @@ import { parseSmiles } from '../../src/model/smiles.js';
 import { moleculeToJSON, createMolecule, addAtom, addBond, cloneMolecule } from '../../src/model/molecule.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { rightAngleLayout, rightAngleProblems, gridSteps, MIN_STROKE } from '../../src/layout/rightangle.js';
-import { projectRightAngles, rightAngleNote, READ_ONLY_HINT, FALLBACK_NOTES } from '../../src/ui/canvasbar.js';
+import { projectRightAngles, rightAngleNote, RIGHT_ANGLE_HINT, FALLBACK_NOTES } from '../../src/ui/canvasbar.js';
 import {
   carbonLabel, labelSize, rightAngleSegments, rightAngleCut, RIGHT_ANGLE_PAD,
 } from '../../src/editor/render.js';
@@ -232,9 +232,12 @@ test('projectRightAngles(): fallback reasons and the Spanish note', () => {
   addBond(ring, ids[0], ids[2], 1);
   assert.equal(projectRightAngles(ring).reason, 'CYCLE');
   assert.equal(projectRightAngles(parseSmiles('CC(C)C')).ok, true);
-  assert.equal(rightAngleNote({ ok: true }), READ_ONLY_HINT);
+  assert.equal(rightAngleNote({ ok: true }), RIGHT_ANGLE_HINT);
   assert.equal(rightAngleNote({ ok: false, reason: 'NO_ROOM' }), FALLBACK_NOTES.NO_ROOM);
   assert.equal(rightAngleNote({ ok: false, reason: 'TOO_BIG' }), FALLBACK_NOTES.OTHER);
+  // The projected drawing is editable: its note only mentions Mover and Ordenar dibujo.
+  assert.doesNotMatch(RIGHT_ANGLE_HINT, /para editar/);
+  assert.match(RIGHT_ANGLE_HINT, /mover átomos u ordenar el dibujo/);
   // A fallback leaves the drawing editable: its note never asks to turn the view off.
   for (const text of Object.values(FALLBACK_NOTES)) {
     assert.doesNotMatch(text, /Desactiva/);

@@ -155,7 +155,7 @@ test('the switch hides the marks in the 90° view too', async ({ page }) => {
   await page.getByRole('button', { name: 'Con carbonos' }).click();
   await loadExample(page, 'Alcano con muchas ramas');
   await page.locator('#right-angle-button').click();
-  expect(await page.evaluate(() => window.__editor.isReadOnly())).toBe(true);
+  expect(await page.evaluate(() => window.__editor.isProjected())).toBe(true);
   await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
   await page.getByRole('button', { name: 'Ver paso a paso' }).click();
   const stepper = page.locator('#stepper');

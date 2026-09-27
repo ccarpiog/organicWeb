@@ -1,9 +1,10 @@
 /**
  * @file Drawing toolbar (design.md §6.1): tool buttons with icons and Spanish
  * tooltips, plus Deshacer / Rehacer / Limpiar / Ordenar dibujo. Kept in sync with the editor
- * through its change notifications. While the drawing is read-only (the 90°
- * drawing actually shown, design.md §6.3) the tools and "Ordenar dibujo" are disabled;
- * Deshacer, Rehacer and Limpiar stay available.
+ * through its change notifications. While the 90° drawing is actually shown
+ * (design.md §6.1, §6.3) every tool works through it except Mover, which is
+ * disabled together with "Ordenar dibujo" (neither would change the
+ * projected drawing).
  */
 
 /** Tool buttons: editor tool id, Spanish label, keyboard shortcuts (design.md §6.1), icon (SVG inner markup, 24×24). */
@@ -98,16 +99,15 @@ export function buildToolbar(container, editor, options) {
    * @returns {void}
    */
   function sync() {
-    const readOnly = typeof editor.isReadOnly === 'function' && editor.isReadOnly();
-    container.classList.toggle('is-read-only', readOnly);
+    const projected = typeof editor.isProjected === 'function' && editor.isProjected();
     for (const [tool, button] of toolButtons) {
       button.setAttribute('aria-pressed', String(editor.getTool() === tool));
-      button.disabled = readOnly;
+      button.disabled = projected && tool === 'move';
     }
     actionButtons.get('undo').disabled = !editor.canUndo();
     actionButtons.get('redo').disabled = !editor.canRedo();
     actionButtons.get('clear').disabled = editor.peekMolecule().atoms.size === 0;
-    actionButtons.get('arrange').disabled = readOnly || editor.peekMolecule().atoms.size === 0;
+    actionButtons.get('arrange').disabled = projected || editor.peekMolecule().atoms.size === 0;
   } // End of function sync()
 
   editor.onChange(sync);

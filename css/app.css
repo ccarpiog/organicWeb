@@ -281,12 +281,12 @@ body {
   color: var(--color-text-muted);
 }
 
-/* The 90° view is read-only: a drag pans the drawing. */
-.canvas.is-right-angle {
+/* Mover is unavailable in the 90° view: a drag with it pans the drawing. */
+.canvas.is-move-pans {
   cursor: grab;
 }
 
-.canvas.is-right-angle.is-panning {
+.canvas.is-move-pans.is-panning {
   cursor: grabbing;
 }
 
@@ -452,6 +452,19 @@ body {
   stroke-width: 2.5;
 }
 
+/* Carbons a gesture just added in the 90° view (the drawing was re-laid out). */
+.canvas .added-ring {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2.5;
+  animation: added-fade 1.2s ease-out forwards;
+}
+
+@keyframes added-fade {
+  0%, 60% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 .canvas.shake {
   animation: shake 0.35s ease-in-out;
 }
@@ -465,6 +478,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .canvas.shake {
     animation-duration: 0.01s;
+  }
+
+  .canvas .added-ring {
+    animation: none;
   }
 }
 

@@ -6,9 +6,9 @@
  * button.
  *
  * The 90° view is a display projection (src/layout/rightangle.js) handed to
- * the editor with setProjector(): the molecule's coordinates never change,
- * and the drawing is read-only only while the 90° drawing is shown (a
- * fallback to the normal drawing stays editable).
+ * the editor with setProjector(): the projection never changes the
+ * molecule's coordinates, and the projected drawing stays editable (every
+ * tool but Mover; "Ordenar dibujo" is off too, as its note says).
  */
 
 import { formulaUnicode } from '../model/molecule.js';
@@ -22,8 +22,8 @@ export const MODE_LABELS = Object.freeze({ skeletal: 'Esqueleto', condensed: 'Co
 /** Label of the 90° view toggle. */
 export const RIGHT_ANGLE_LABEL = 'Ángulos rectos (90°)';
 
-/** Note shown while the 90° view is on (the drawing is read-only). */
-export const READ_ONLY_HINT = 'Desactiva los ángulos rectos para editar.';
+/** Note shown while the 90° drawing is shown (Mover and Ordenar dibujo are off there). */
+export const RIGHT_ANGLE_HINT = 'Puedes dibujar aquí. Para mover átomos u ordenar el dibujo, desactiva los ángulos rectos.';
 
 /**
  * Notes shown when the 90° view falls back to the normal, editable drawing,
@@ -58,16 +58,16 @@ export function projectRightAngles(mol) {
 }
 
 /**
- * Text of the note under the canvas while the 90° view is on: the
- * read-only hint while the projection is shown, else why the normal
- * (editable) drawing is shown.
+ * Text of the note under the canvas while the 90° view is on: the hint
+ * about Mover and Ordenar dibujo while the projection is shown, else why the
+ * normal drawing is shown.
  *
  * @param {{ok: boolean, reason?: string}|null} projection - The editor's current projection.
  * @returns {string} The Spanish note.
  */
 export function rightAngleNote(projection) {
   if (!projection || projection.ok) {
-    return READ_ONLY_HINT;
+    return RIGHT_ANGLE_HINT;
   }
   return FALLBACK_NOTES[projection.reason] || FALLBACK_NOTES.OTHER;
 }

@@ -489,10 +489,10 @@ to a bottom bar.
 | **Enlace simple: chain drag** (MolView-like) | With Enlace simple only, a drag long enough for a zigzag of two or more bonds (drag projected on the 30°-snapped axis ≥ 1.5 × `40·cos 30°`) grows a zigzag chain bond by bond along the drag (120° angles, fixed bond length, one bond per `40·cos 30°` of drag, side chosen away from the start atom's neighbours), with a live counter "5 C" = carbons the drag adds (from empty space, the whole chain; the one-bond preview shows "1 C"/"2 C" too). Release commits the whole chain as one transaction; a full start carbon refuses it ("Este carbono ya tiene 4 enlaces"), and a chain carbon landing on an existing atom refuses it (overlap message) — never a carbon on top of another. **Release on an atom:** whenever the pointer is over an existing atom, the drag is the one-bond drag above, whatever its length (the preview switches to that single bond), so "release on an atom bonds to it" keeps working; the chain never joins atoms. Doble/triple keep the one-bond drag: only the first bond of a chain could carry the order, which would be surprising. |
 | **Cambiar enlace** | Click a bond → cycle 1→2→3→1 (skipping orders that break valence). |
 | **Borrar** | Click atom → delete it and its bonds. Click bond → delete the bond only; both carbons stay (the model does not record how an atom was created, so an endpoint cannot be told apart from a carbon placed on its own). |
-| **Mover** | Drag an atom (moves it) or a bond (moves its two atoms). Drag on empty space → marquee selection; then drag the selection (press on a selected atom, a bond between selected atoms, or inside the selection's box). Click selects an atom; click on empty space or Esc clears the selection. Dropping an atom on another is refused. |
+| **Mover** | Drag an atom (moves it) or a bond (moves its two atoms). Drag on empty space → marquee selection; then drag the selection (press on a selected atom, a bond between selected atoms, or inside the selection's box). Click selects an atom; click on empty space or Esc clears the selection. Dropping an atom on another is refused. Not available while the 90° drawing is shown (see below). |
 | Pan / zoom | Space+drag, middle-drag or two-finger drag pans; wheel / pinch zooms; "Centrar" button fits the molecule. |
 | Buttons | Deshacer, Rehacer, Limpiar (in-page confirmation dialog, never `window.confirm`), Ordenar dibujo (§7). |
-| 90° view (read-only) | While the "Ángulos rectos (90°)" drawing is actually shown (§6.3) every tool and Ordenar dibujo are disabled, with the note "Desactiva los ángulos rectos para editar."; clicks draw nothing, tool shortcuts are ignored, and a drag with the main button or one finger **pans** (so the Enlace simple chain drag is not available in this view). Deshacer, Rehacer, Limpiar and Ejemplos still work, and the view follows the molecule they leave. When the view falls back to the normal drawing (empty canvas, loose pieces, unnameable structure, no clean placement) the toggle stays on but the editor is fully editable (tools, chain drag, Ordenar dibujo); the first edit that makes the molecule projectable switches to the 90° drawing and read-only by itself, so a student who reloads with the toggle saved on can still draw. |
+| 90° view (editing) | While the "Ángulos rectos (90°)" drawing is actually shown (§6.3) every tool works on it except **Mover**. Gestures are hit-tested on the **projected** positions (hover, the pressed carbon or bond, the release target, a snapped end landing on a carbon) and previews are drawn there; each gesture becomes one ordinary model edit, after which the projection is recomputed and the carbons the gesture added (or, if none, the ends of the bond it added or changed) get a blue ring for about 1 s, since the re-layout may move things. **Mapping to the model:** a carbon grown from an existing carbon (Carbono or bond-tool click, one-bond drag to empty space, every carbon of an Enlace simple chain drag) gets its model position by the §6.2 rules — the drag direction has no meaning in the model — and a chain drag adds as many carbons as its projected length measures (the live counter); bond orders, joins (release on a carbon) and Borrar act on the hit ids; a new loose piece (click or drag on empty space) goes to the pressed points in the model (the projection is centred on the model drawing), moved down by whole bond lengths until it clears every model carbon by 0.6 bond lengths, so it is never refused for hitting an invisible atom. **Mover** and **Ordenar dibujo** are disabled there (they only change model coordinates, which the projection ignores), the `m` shortcut is ignored, and a drag with Mover still picked pans; the note under the canvas says "Puedes dibujar aquí. Para mover átomos u ordenar el dibujo, desactiva los ángulos rectos.". One undo step per gesture, Esc / pointer cancel and valence refusals work as everywhere. An edit that makes the molecule unprojectable (a loose piece, a ring…) falls back to the normal drawing (§6.3), and the first edit that makes it projectable again switches back to the 90° drawing by itself. |
 
 Rules: every pointer gesture commits **one** undo transaction; Esc or pointer
 cancel restores the starting state. Duplicate bonds and self-bonds are
@@ -562,15 +562,17 @@ Keyboard: `c` carbono, `1/2/3` bond tools (`h` also Enlace simple), `t` cambiar 
     overlapping bonds). **Fallback**: an empty drawing, an unnameable
     structure (several fragments, a ring…) or no clean placement (a carbon
     with three children inside a turned branch: none in 1 200 random 1–14 C
-    molecules, ≈0.3 % of 15–40 C, ≈2 % of 40–60 C) draws the normal, **editable** layout
+    molecules, ≈0.3 % of 15–40 C, ≈2 % of 40–60 C) draws the normal layout (every tool, Mover and Ordenar dibujo included)
     with a short note under the canvas ("Hay piezas sueltas: se ve el dibujo
     normal."; on an empty canvas the gentle hint "Los ángulos rectos
     aparecerán cuando dibujes una molécula.").
-  - The drawing is **read-only** only while the projection is shown (§6.1;
-    `isReadOnly()` = a projector is set and succeeded), with the note
-    "Desactiva los ángulos rectos para editar."; it becomes read-only as
-    soon as an edit makes the molecule projectable, and editable again if
-    undo returns to an unprojectable one. Stepper highlights and locants are
+  - The projected drawing is **editable** (§6.1 "90° view (editing)";
+    `isProjected()` = a projector is set and succeeded): the editor core
+    receives the projected copy as its `display` and hit-tests gestures on
+    it, while every edit is made on the model; only Mover and Ordenar dibujo
+    are off there. The drawing switches to the projection as soon as an edit
+    makes the molecule projectable, and back to the normal drawing if an
+    edit or undo makes it unprojectable. Stepper highlights and locants are
     drawn on the projected positions (unless "Resaltar en el dibujo" is off, §9).
 - Hover highlight on atoms and bonds. Highlight API for the stepper:
   `highlight({atoms, bonds, style})` with styles

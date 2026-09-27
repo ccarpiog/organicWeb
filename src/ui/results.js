@@ -7,9 +7,10 @@
  * applies the canonical layout as one animated, undoable coordinate edit.
  * While the drawing shows exactly that layout, the parent chain stays
  * highlighted in every step and its locants are shown from the numbering
- * step on (option views of a step are shown as they are). In the read-only
- * 90° view (design.md §6.3) the hint is hidden and arrange() is refused with
- * a message; the highlights follow the projected drawing.
+ * step on (option views of a step are shown as they are). While the 90°
+ * drawing is shown (design.md §6.3) the hint is hidden and arrange() is
+ * refused with a message (the change would be invisible there); the
+ * highlights follow the projected drawing.
  *
  * The "Resaltar en el dibujo" switch (one inside the stepper, one under the
  * name while the stepper is closed; both share one state) hides or shows
@@ -53,8 +54,8 @@ export const ALREADY_ORDERED = 'El dibujo ya está ordenado.';
 /** Toast shown when no clear ordered drawing was found (the drawing is left as it is). */
 export const CANNOT_ORDER = 'No he podido ordenar esta molécula sin que se crucen enlaces. El dibujo se queda como estaba.';
 
-/** Message when "Ordenar dibujo" is asked for in the read-only 90° view. */
-export const READ_ONLY_ORDER = 'Desactiva los ángulos rectos para ordenar el dibujo.';
+/** Message when "Ordenar dibujo" is asked for while the 90° drawing is shown. */
+export const RIGHT_ANGLE_ORDER = 'Desactiva los ángulos rectos para ordenar el dibujo.';
 
 /** Label of the switch that hides/shows the canvas marks. */
 export const MARKS_LABEL = 'Resaltar en el dibujo';
@@ -408,12 +409,12 @@ export function buildResults(panel, editor, button, options = {}) {
   } // End of function matchesArranged()
 
   /**
-   * Tells whether the drawing is read-only (the 90° view).
+   * Tells whether the 90° drawing is shown.
    *
    * @returns {boolean} True while the editor shows a projection.
    */
-  function isReadOnly() {
-    return typeof editor.isReadOnly === 'function' && editor.isReadOnly();
+  function isProjected() {
+    return typeof editor.isProjected === 'function' && editor.isProjected();
   }
 
   /**
@@ -424,7 +425,7 @@ export function buildResults(panel, editor, button, options = {}) {
   function syncOrdered() {
     ordered = current !== null && matchesArranged();
     if (hint) {
-      hint.hidden = ordered || isReadOnly();
+      hint.hidden = ordered || isProjected();
     }
     if (current && lastView) {
       showOnCanvas(lastView.view, lastView.isOption);
@@ -650,7 +651,7 @@ export function buildResults(panel, editor, button, options = {}) {
     redraw.type = 'button';
     redraw.addEventListener('click', () => arrange());
     hint.appendChild(redraw);
-    hint.hidden = isReadOnly();
+    hint.hidden = isProjected();
     nodes.push(hint);
     const toggle = make(doc, 'button', 'stepper-toggle', 'Ver paso a paso');
     toggle.type = 'button';
@@ -705,11 +706,11 @@ export function buildResults(panel, editor, button, options = {}) {
    * @returns {object} The naming result on failure, else the edit outcome.
    */
   function arrange() {
-    if (isReadOnly()) {
+    if (isProjected()) {
       if (options.notify) {
-        options.notify(READ_ONLY_ORDER);
+        options.notify(RIGHT_ANGLE_ORDER);
       }
-      return { ok: false, message: READ_ONLY_ORDER };
+      return { ok: false, message: RIGHT_ANGLE_ORDER };
     }
     if (!current) {
       const result = nameCurrent();

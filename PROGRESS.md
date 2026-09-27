@@ -24,12 +24,12 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-14 | Single-bond drag grows a chain | `autoclaude/processed/140-drag-chain-single-bond.md` | done — `docs/progress-archive/i-14.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-14.md` |
 | I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | done — `docs/progress-archive/i-15.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-15.md` |
 | I-16 | Toggle to hide stepper highlights | `autoclaude/processed/160-hide-highlights.md` | done — `docs/progress-archive/i-16.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-16.md` |
-| I-17 | Editing in the 90° view | `autoclaude/processed/170-edit-in-carbons-view.md` | queued (next) | — | — |
-| I-18 | Author credit footer | `autoclaude/processed/180-author-credit.md` | queued (after I-17) | — | — |
+| I-17 | Editing in the 90° view | `autoclaude/processed/170-edit-in-carbons-view.md` | done — `docs/progress-archive/i-17.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-17.md` |
+| I-18 | Author credit footer | `autoclaude/processed/180-author-credit.md` | queued (next) | — | — |
 | I-19 | Undo after "Ordenar dibujo" (bug) | `autoclaude/processed/190-undo-ordenar-dibujo.md` | queued (after I-18) | — | — |
 
-The twelve original plan items and user-feedback items I-13…I-16 are done;
-I-17…I-19 (user feedback) are queued.
+The twelve original plan items and user-feedback items I-13…I-17 are done;
+I-18 and I-19 (user feedback) are queued.
 
 ## Inbox
 
@@ -54,8 +54,8 @@ I-17…I-19 (user feedback) are queued.
 
 ## Next action
 
-Execute I-17 (spec `autoclaude/processed/170-edit-in-carbons-view.md`),
-then I-18, I-19; poll the inbox at each phase boundary.
+Poll the inbox, then execute I-18 (spec `autoclaude/processed/180-author-credit.md`),
+then I-19 (`autoclaude/processed/190-undo-ordenar-dibujo.md`).
 
 ## Key paths
 
@@ -83,14 +83,14 @@ then I-18, I-19; poll the inbox at each phase boundary.
 - Layout: pure `canonicalLayout()` in `src/layout/canonical.js`; examples list
   `src/ui/examples.js`; editor `setCoordinates()` / `animateCoordinates()`.
 - 90° view: pure projection in `src/layout/rightangle.js`; editor
-  `shownMolecule()` / `isReadOnly()` / `refresh()` in `src/editor/editor.js`;
+  `shownMolecule()` / `isProjected()` / `refresh()` in `src/editor/editor.js`;
   toggle in `src/ui/canvasbar.js` (localStorage `organicWeb.rightAngles`).
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-16)
+## Verification (last phase, I-17)
 
-- `npm test` 0 (397 pass) · `npm run check` 0 · `npm run e2e` 0 (105 pass,
+- `npm test` 0 (410 pass) · `npm run check` 0 · `npm run e2e` 0 (111 pass,
   source + dist, includes build). Oracle not rerun (naming engine untouched).
 
 ## Open risks / deviations
@@ -141,8 +141,8 @@ then I-18, I-19; poll the inbox at each phase boundary.
   Preview jumps from straight bond to zigzag at the chain threshold
   (`docs/progress-archive/i-14.md`).
 
-- I-15: 90° view is a display-only projection, read-only only while shown;
-  fallbacks (empty, loose pieces, unplaceable) stay editable. Review should-fix
+- I-15: 90° view is a display-only projection (editable since I-17);
+  fallbacks (empty, loose pieces, unplaceable) draw the normal layout. Review should-fix
   (Mover live preview lost) fixed with an e2e regression
   (`docs/progress-archive/i-15.md`).
 
@@ -150,10 +150,14 @@ then I-18, I-19; poll the inbox at each phase boundary.
   switch outside the stepper covers the post-Ordenar highlight
   (`docs/progress-archive/i-16.md`).
 
+- I-17: 90° view is editable; Mover and Ordenar dibujo disabled there; drag
+  direction ignored for model placement. Review's two should-fix fixed with
+  regressions (`docs/progress-archive/i-17.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-15 `adb1a4c`, pushed; triage `1d4a5a2`. I-16 committed and pushed right
+- I-16 `da0bf69`, pushed; triage `944a17d`. I-17 committed and pushed right
   after this checkpoint (see `git log`).

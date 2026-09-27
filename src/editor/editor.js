@@ -26,19 +26,23 @@
  *
  * Display projection (the 90° view, design.md §6.3): setProjector(fn) makes
  * the editor draw the molecule at the positions `fn(mol)` returns (computed
- * once per molecule version) instead of its own coordinates, which never
- * change. While a projection is actually shown (the projector succeeded)
- * the drawing is read-only: drawing gestures and tool shortcuts are ignored
- * (a left drag pans), and only whole-drawing actions (undo, redo, Limpiar,
- * loading an example) change the molecule. When the projector falls back
- * (empty drawing, loose pieces, no clean placement…) the normal drawing is
- * shown and fully editable; the first edit that makes the molecule
- * projectable switches to the projection (and read-only) by itself.
+ * once per molecule version) instead of its own coordinates, which the
+ * projection never changes. The projected drawing stays editable: the core
+ * hit-tests pointer gestures on the projected positions (its `display`
+ * option) and turns each gesture into an ordinary model edit, whose new
+ * carbons get model coordinates by the §6.2 rules (projectedGesture rules in
+ * createEditorCore()); the projection is then recomputed and the carbons the
+ * gesture added (or whose bond changed) flash briefly (addedAtoms()). Only
+ * Mover is unavailable there (a left drag with it pans), since moving a
+ * projected carbon would change nothing visible. When the projector falls
+ * back (empty drawing, loose pieces, no clean placement…) the normal drawing
+ * is shown, and the first edit that makes the molecule projectable switches
+ * to the projection by itself.
  *
  * Test API: the instance exposes getMolecule(), getMoleculeJSON(), setTool(),
  * getTool(), undo(), redo(), clear(), loadMolecule(), setCoordinates(),
  * animateCoordinates(), isAnimating(), onEdit(), getSelection(),
- * getView(), setDisplayMode(), setProjector(), getProjection(), isReadOnly(),
+ * getView(), setDisplayMode(), setProjector(), getProjection(), isProjected(),
  * getShownMolecule(), atomClientPoint(), bondClientPoint(), modelToClient()
  * and clientToModel(). The app publishes it as `window.__editor` (src/ui/app.js)
  * for end-to-end tests.
@@ -52,7 +56,7 @@ import { validateStructure, MESSAGES, MAX_CHAIN } from '../model/validate.js';
 import { createHistory } from './history.js';
 import {
   nextAtomPosition, snapEndpoint, hitTest, distance, straightenLinearCentres, overlappingAtoms,
-  chainPoints, chooseChainSide, ATOM_HIT_RADIUS,
+  chainPoints, chooseChainSide, clearance, ATOM_HIT_RADIUS, BOND_LENGTH, MIN_CLEARANCE,
 } from './geometry.js';
 import {
   createRenderer, rectFromCorners, moleculeBounds, zoomView, panView, fitView, IDENTITY_VIEW,
@@ -175,15 +179,64 @@ function removeFrom(list, item) {
 }
 
 /**
+ * What the 90° view flashes after a gesture, since the projection re-lays
+ * the drawing out (design.md §6.3): the carbons the edit added or, when it
+ * added none, the ends of every bond it added or whose order it changed. Pure.
+ *
+ * @param {object} before - The molecule before the edit.
+ * @param {object} after - The molecule after the edit.
+ * @returns {number[]} Atom ids (present in `after`), ascending.
+ */
+export function addedAtoms(before, after) {
+  const atoms = new Set();
+  for (const id of after.atoms.keys()) {
+    if (!before.atoms.has(id)) {
+      atoms.add(id);
+    }
+  }
+  if (atoms.size > 0) {
+    return [...atoms].sort((p, q) => p - q);
+  }
+  for (const bond of after.bonds.values()) {
+    const old = before.bonds.get(bond.id);
+    if (!old || old.a !== bond.a || old.b !== bond.b || old.order !== bond.order) {
+      atoms.add(bond.a);
+      atoms.add(bond.b);
+    }
+  }
+  return [...atoms].sort((p, q) => p - q);
+} // End of function addedAtoms()
+
+/**
  * Creates the DOM-free editor core.
  *
- * @param {{onChange?: Function, onReject?: Function, onEdit?: Function}} [options] - Listeners:
- *   onChange({reason, kind}) after every committed edit, undo, redo, restore, tool, gesture or selection
- *   change; onEdit({reason, kind}) only for changes of the molecule (kind 'chemical' or 'coordinates');
- *   onReject({message, atoms}) when an edit is refused.
+ * Projected gestures (the 90° view, design.md §6.1/§6.3): `options.display()`
+ * returns the molecule as drawn — the same atoms and bonds at projected
+ * positions — or null when the model's own drawing is shown. A gesture keeps
+ * the display it started on. With a display:
+ * - hover, the pressed item, the release target and a snapped end landing on
+ *   a carbon are all hit-tested on the projected positions, and drag previews
+ *   are drawn there;
+ * - a carbon grown from an existing carbon (click, one-bond drag to empty
+ *   space, each carbon of an Enlace simple chain drag) gets its model
+ *   position from nextAtomPosition() (§6.2 zigzag), since the drag direction
+ *   has no meaning in the model; a chain drag adds as many carbons as the
+ *   projected drag measures;
+ * - a new loose piece (a click or drag on empty space) is placed at the
+ *   pressed points in the model (both drawings share their centre), moved
+ *   down by whole bond lengths until it clears every model atom (loosePoints());
+ * - bond orders, joins and erasures act on the hit ids, as usual;
+ * - Mover does nothing (the shell pans instead).
+ *
+ * @param {{onChange?: Function, onReject?: Function, onEdit?: Function, display?: function(): (object|null)}} [options]
+ *   Listeners: onChange({reason, kind}) after every committed edit, undo, redo, restore, tool, gesture or
+ *   selection change; onEdit({reason, kind}) only for changes of the molecule (kind 'chemical' or
+ *   'coordinates'); onReject({message, atoms}) when an edit is refused. `display()`: the projected
+ *   drawing, or null (see above).
  * @returns {object} The core API (see the returned object).
  */
 export function createEditorCore(options = {}) {
+  const displayOf = typeof options.display === 'function' ? options.display : () => null;
   let mol = createMolecule();
   let tool = DEFAULT_TOOL;
   let gesture = null;
@@ -391,21 +444,45 @@ export function createEditorCore(options = {}) {
   }
 
   /**
+   * Model positions of a new loose piece started on empty space of the
+   * projected drawing: the pressed points themselves (the projection is
+   * centred on the model drawing), moved down together by whole bond lengths
+   * until every point clears the model atoms by MIN_CLEARANCE, since those
+   * atoms are not where the projection shows them.
+   *
+   * @param {{x: number, y: number}[]} points - The piece's points, in drawing units.
+   * @returns {{x: number, y: number}[]} The points to use in the model.
+   */
+  function loosePoints(points) {
+    for (let k = 0; k <= 60; k += 1) {
+      const moved = points.map((p) => ({ x: p.x, y: p.y + k * BOND_LENGTH }));
+      if (moved.every((p) => clearance(mol, p) >= MIN_CLEARANCE)) {
+        return moved;
+      }
+    }
+    return points.map((p) => ({ x: p.x, y: p.y }));
+  } // End of function loosePoints()
+
+  /**
    * Applies a click (press and release without dragging) with the current tool.
    *
    * @param {{type: string, id: number}|null} target - What was clicked.
    * @param {{x: number, y: number}} point - Where (drawing units).
+   * @param {object|null} [display] - The projected drawing the click was made on (null: the model's).
    * @returns {object|null} The transaction outcome, or null when the click does nothing.
    */
-  function click(target, point) {
+  function click(target, point, display = null) {
     const order = TOOL_ORDER[tool];
     if (tool === 'move') {
-      selectClicked(target);
+      if (!display) {
+        selectClicked(target);
+      }
       return null;
     }
+    const at = display ? loosePoints([point])[0] : point;
     if (tool === 'carbon' && !target) {
       return transact('add carbon', (d) => {
-        addAtom(d, point);
+        addAtom(d, at);
       });
     }
     if (order && target && target.type === 'atom') {
@@ -413,7 +490,7 @@ export function createEditorCore(options = {}) {
     }
     if (order && !target) {
       return transact('add fragment', (d) => {
-        const first = addAtom(d, point);
+        const first = addAtom(d, at);
         return grow(d, first, order);
       });
     }
@@ -437,7 +514,8 @@ export function createEditorCore(options = {}) {
 
   /**
    * Resolves where a drag of a bond-making tool would go: source point/atom,
-   * snapped end point or the atom under the pointer.
+   * snapped end point or the atom under the pointer, all in the drawing the
+   * gesture was made on (the projected one in the 90° view).
    *
    * @param {object} g - The gesture.
    * @returns {{sourceAtom: number|null, from: {x: number, y: number}, targetAtom: number|null, snapAtom: number|null, to: {x: number, y: number}}|null}
@@ -447,17 +525,18 @@ export function createEditorCore(options = {}) {
     if (!TOOL_ORDER[tool] || (g.target && g.target.type !== 'atom')) {
       return null;
     }
+    const drawn = g.display || mol;
     const sourceAtom = g.target ? g.target.id : null;
-    const from = sourceAtom ? { ...mol.atoms.get(sourceAtom) } : { ...g.start };
+    const from = sourceAtom ? { ...drawn.atoms.get(sourceAtom) } : { ...g.start };
     const exclude = sourceAtom ? [sourceAtom] : [];
-    const over = hitTest(mol, g.current, { atomsOnly: true });
+    const over = hitTest(drawn, g.current, { atomsOnly: true });
     const targetAtom = over ? over.id : null;
-    let to = targetAtom ? { ...mol.atoms.get(targetAtom) } : snapEndpoint(from, g.current);
+    let to = targetAtom ? { ...drawn.atoms.get(targetAtom) } : snapEndpoint(from, g.current);
     // A snapped end that falls on an existing atom means that atom, not a new one on top of it.
-    const landing = targetAtom ? null : hitTest(mol, to, { atomsOnly: true, exclude });
+    const landing = targetAtom ? null : hitTest(drawn, to, { atomsOnly: true, exclude });
     const snapAtom = landing ? landing.id : null;
     if (snapAtom) {
-      to = { ...mol.atoms.get(snapAtom) };
+      to = { ...drawn.atoms.get(snapAtom) };
     }
     return { sourceAtom, from: { x: from.x, y: from.y }, targetAtom, snapAtom, to: { x: to.x, y: to.y } };
   } // End of function dragPlan()
@@ -487,6 +566,8 @@ export function createEditorCore(options = {}) {
    * is a chain only for the single-bond tool, when the zigzag has at least two
    * bonds and the pointer is not over an existing atom; otherwise it is a
    * one-bond drag (dragPlan()), which keeps "release on an atom bonds to it".
+   * The points are in the drawing the gesture was made on (the projected one
+   * in the 90° view).
    *
    * @param {object} g - The gesture.
    * @returns {{sourceAtom: number|null, points: {x: number, y: number}[], count: number}|null}
@@ -496,13 +577,14 @@ export function createEditorCore(options = {}) {
     if (tool !== 'single' || (g.target && g.target.type !== 'atom')) {
       return null;
     }
-    if (hitTest(mol, g.current, { atomsOnly: true })) {
+    const drawn = g.display || mol;
+    if (hitTest(drawn, g.current, { atomsOnly: true })) {
       return null;
     }
     const sourceAtom = g.target ? g.target.id : null;
-    const start = sourceAtom ? mol.atoms.get(sourceAtom) : g.start;
+    const start = sourceAtom ? drawn.atoms.get(sourceAtom) : g.start;
     const origin = { x: start.x, y: start.y };
-    const side = chooseChainSide(mol, sourceAtom, origin, g.current);
+    const side = chooseChainSide(drawn, sourceAtom, origin, g.current);
     const maxBonds = sourceAtom ? MAX_CHAIN : MAX_CHAIN - 1;
     const { points, bonds } = chainPoints(origin, g.current, { side, maxBonds });
     if (bonds < 2) {
@@ -514,12 +596,29 @@ export function createEditorCore(options = {}) {
   /**
    * Commits a chain drag as one transaction: every carbon of the chain, or
    * nothing (a full start carbon, or a chain carbon landing on an existing
-   * atom, refuses the whole chain).
+   * atom, refuses the whole chain). On the projected drawing a chain from a
+   * carbon grows `count` carbons one after another at their §6.2 positions,
+   * and a chain from empty space goes to loosePoints().
    *
-   * @param {{sourceAtom: number|null, points: {x: number, y: number}[]}} plan - The chainPlan() result.
+   * @param {{sourceAtom: number|null, points: {x: number, y: number}[], count: number}} plan - The chainPlan() result.
+   * @param {object|null} [display] - The projected drawing the drag was made on (null: the model's).
    * @returns {object} The transaction outcome.
    */
-  function finishChain(plan) {
+  function finishChain(plan, display = null) {
+    if (display && plan.sourceAtom) {
+      return transact('draw chain', (d) => {
+        let previous = plan.sourceAtom;
+        for (let i = 0; i < plan.count; i += 1) {
+          const refusal = grow(d, previous, 1);
+          if (refusal) {
+            return refusal;
+          }
+          previous = d.nextAtomId - 1; // grow() has just added this carbon.
+        }
+        return undefined;
+      });
+    }
+    const points = display ? loosePoints(plan.points) : plan.points;
     return transact('draw chain', (d) => {
       if (plan.sourceAtom) {
         const refusal = checkRoom(d, [plan.sourceAtom], 1);
@@ -527,8 +626,8 @@ export function createEditorCore(options = {}) {
           return refusal;
         }
       }
-      let previous = plan.sourceAtom ?? addAtom(d, plan.points[0]);
-      for (const point of plan.points.slice(1)) {
+      let previous = plan.sourceAtom ?? addAtom(d, points[0]);
+      for (const point of points.slice(1)) {
         const next = addAtom(d, point);
         addBond(d, previous, next, 1);
         previous = next;
@@ -618,23 +717,39 @@ export function createEditorCore(options = {}) {
    * @returns {object|null} The transaction outcome, or null when the drag does nothing.
    */
   function finishDrag(g) {
+    const display = g.display || null;
     const chain = chainPlan(g);
     if (chain) {
-      return finishChain(chain);
+      return finishChain(chain, display);
     }
     if (tool === 'move') {
-      return finishMove(g);
+      return display ? null : finishMove(g);
     }
     const plan = dragPlan(g);
     if (!plan) {
       // Cambiar enlace / Borrar: a wobbly click still counts if it ends on the same item.
-      const end = hitTest(mol, g.current);
+      const end = hitTest(display || mol, g.current);
       const same = end && g.target && end.type === g.target.type && end.id === g.target.id;
-      return same ? click(g.target, g.start) : null;
+      return same ? click(g.target, g.start, display) : null;
     }
     const order = TOOL_ORDER[tool];
+    // Model points: as drawn, except on the projected drawing, where a piece
+    // started on empty space goes to loosePoints() and a carbon grown from an
+    // existing one takes its §6.2 position (no forced end).
+    const endpoint = plan.targetAtom ?? plan.snapAtom;
+    if (display && !plan.sourceAtom && endpoint) {
+      // From empty space onto a projected carbon: the carbon grows one new
+      // carbon at its §6.2 model position, as a drag out of it would (the
+      // pressed point has no model counterpart next to that carbon).
+      return transact('drag bond', (d) => grow(d, endpoint, order));
+    }
+    let from = plan.from;
+    let to = plan.to;
+    if (display) {
+      [from, to] = plan.sourceAtom ? [null, undefined] : loosePoints([plan.from, plan.to]);
+    }
     return transact('drag bond', (d) => {
-      const source = plan.sourceAtom ?? addAtom(d, plan.from);
+      const source = plan.sourceAtom ?? addAtom(d, from);
       if (plan.targetAtom) {
         return join(d, source, plan.targetAtom, order);
       }
@@ -648,7 +763,7 @@ export function createEditorCore(options = {}) {
         }
         return grow(d, source, order);
       }
-      return grow(d, source, order, plan.to);
+      return grow(d, source, order, to);
     });
   } // End of function finishDrag()
 
@@ -662,8 +777,12 @@ export function createEditorCore(options = {}) {
     if (gesture) {
       return;
     }
-    const target = hitTest(mol, point);
-    gesture = { start: { ...point }, current: { ...point }, target, moved: false };
+    const display = displayOf();
+    if (display && tool === 'move') {
+      return; // Mover does not act on the projected drawing (the shell pans instead).
+    }
+    const target = hitTest(display || mol, point);
+    gesture = { start: { ...point }, current: { ...point }, target, moved: false, display };
     if (tool === 'move') {
       gesture.moveIds = moveTargets(target, point);
     }
@@ -679,7 +798,8 @@ export function createEditorCore(options = {}) {
    */
   function pointerMove(point) {
     if (!gesture) {
-      hover = hitTest(mol, point);
+      const display = displayOf();
+      hover = display && tool === 'move' ? null : hitTest(display || mol, point);
       return;
     }
     gesture.current = { ...point };
@@ -704,7 +824,7 @@ export function createEditorCore(options = {}) {
       g.current = { ...point };
       g.moved = g.moved || distance(g.start, point) > DRAG_THRESHOLD;
     }
-    const outcome = g.moved ? finishDrag(g) : click(g.target, g.start);
+    const outcome = g.moved ? finishDrag(g) : click(g.target, g.start, g.display || null);
     emit('gesture');
     return outcome;
   } // End of function pointerUp()
@@ -1092,20 +1212,22 @@ function isTextField(target) {
  * pen; one drawing pointer at a time), pan (space+drag, middle-button drag,
  * two-finger drag), zoom (wheel, pinch), keyboard shortcuts (shortcutFor()),
  * Esc to cancel the gesture in progress (or clear the selection), rendering
- * after every change, the display mode, the display projection (90° view,
- * read-only), and shake + notification on refused edits.
+ * after every change, the display mode, the display projection (90° view:
+ * gestures act through the projected drawing, Mover pans there), the flash
+ * of the carbons a gesture added in that view, and shake + notification on
+ * refused edits.
  *
  * @param {SVGSVGElement} svg - The canvas element.
  * @param {{notify?: function(string): void}} [options] - `notify(message)` shows a Spanish toast.
  * @returns {object} The editor API: the core API plus highlight(), clearHighlight(), showLocants(),
  *   animateCoordinates(), isAnimating(), setDisplayMode(), getDisplayMode(), setProjector(), getProjection(),
- *   isReadOnly(), getShownMolecule(), onViewChange(), getView(), setView(), centerView(), zoomBy(),
+ *   isProjected(), getShownMolecule(), onViewChange(), getView(), setView(), centerView(), zoomBy(),
  *   atomClientPoint(), bondClientPoint(), modelToClient(), clientToModel(), render() and destroy().
  */
 export function createEditor(svg, options = {}) {
   const doc = svg.ownerDocument;
   const renderer = createRenderer(svg);
-  const core = createEditorCore();
+  const core = createEditorCore({ display: projectedMolecule });
   let activePointer = null;
   let pan = null;
   let pinch = null;
@@ -1169,27 +1291,41 @@ export function createEditor(svg, options = {}) {
   }
 
   /**
-   * Tells whether the drawing is read-only: a projection is set and shown.
+   * Tells whether the projected (90°) drawing is shown: a projection is set
+   * and succeeded. Gestures then act through the projected positions, and
+   * Mover is unavailable.
    *
-   * @returns {boolean} True while the projected (90°) drawing is on screen.
+   * @returns {boolean} True while the projected drawing is on screen.
    */
-  function isReadOnly() {
+  function isProjected() {
     const result = currentProjection();
     return Boolean(result && result.ok);
   }
 
   /**
+   * The projected drawing the core hit-tests gestures on, or null when the
+   * model's own drawing is shown (the core's `display` option).
+   *
+   * @returns {object|null} The projected copy of the molecule.
+   */
+  function projectedMolecule() {
+    return isProjected() ? projection.shown : null;
+  }
+
+  /**
    * Redraws the molecule with the current hover, preview and selection
    * (during a redraw animation, at the interpolated positions; with a
-   * successful projection, at the projected positions and without any
-   * hover, preview or selection, which belong to editing).
+   * successful projection, at the projected positions, where the hover and
+   * previews are computed too, and without Mover's selection). With the
+   * projection shown and Mover picked, the canvas shows the pan cursor.
    *
    * @returns {void}
    */
   function refresh() {
     const state = core.getViewState();
     const shown = shownMolecule();
-    const extra = shown.rightAngle ? { hover: null, preview: null, selection: null, marquee: null } : {};
+    const extra = shown.rightAngle ? { selection: null, marquee: null } : {};
+    svg.classList.toggle('is-move-pans', shown.rightAngle && core.getTool() === 'move');
     // Outside the projection and animations, draw the view state's molecule:
     // it carries a move gesture's transient coordinates.
     const drawn = shown.rightAngle || animation ? shown.mol : state.mol;
@@ -1283,9 +1419,9 @@ export function createEditor(svg, options = {}) {
       return;
     }
     const middle = event.pointerType === 'mouse' && event.button === 1;
-    // Read-only (90° view): the main button or a finger pans instead of drawing.
-    const readOnlyPan = isReadOnly() && (event.pointerType !== 'mouse' || event.button === 0);
-    if (middle || (spaceHeld && event.button === 0) || readOnlyPan) {
+    // Mover in the 90° view: the main button or a finger pans instead.
+    const movePan = isProjected() && core.getTool() === 'move' && (event.pointerType !== 'mouse' || event.button === 0);
+    if (middle || (spaceHeld && event.button === 0) || movePan) {
       event.preventDefault();
       capture(event);
       pan = { pointerId: event.pointerId, last: renderer.clientToCanvas(event.clientX, event.clientY) };
@@ -1342,7 +1478,7 @@ export function createEditor(svg, options = {}) {
       }
       return;
     }
-    if ((activePointer !== null && event.pointerId !== activePointer) || isReadOnly()) {
+    if (activePointer !== null && event.pointerId !== activePointer) {
       return;
     }
     core.pointerMove(toModel(event));
@@ -1376,12 +1512,32 @@ export function createEditor(svg, options = {}) {
     }
     activePointer = null;
     if (event.type === 'pointerup') {
+      const before = core.peekMolecule();
       core.pointerUp(toModel(event));
+      flashAdded(before);
     } else {
       core.cancelGesture();
     }
     refresh();
   } // End of function handleEnd()
+
+  /**
+   * In the 90° view, briefly rings the carbons a gesture added or re-bonded
+   * (addedAtoms()), since the projection has just re-laid the drawing out.
+   *
+   * @param {object} before - The molecule before the gesture.
+   * @returns {void}
+   */
+  function flashAdded(before) {
+    const after = core.peekMolecule();
+    if (after === before || !isProjected()) {
+      return;
+    }
+    const atoms = addedAtoms(before, after);
+    if (atoms.length > 0) {
+      renderer.flash(atoms, { className: 'added-ring', duration: 1200 });
+    }
+  } // End of function flashAdded()
 
   /**
    * Handles lostpointercapture: a pointer the editor still tracks (a touch, the
@@ -1463,8 +1619,8 @@ export function createEditor(svg, options = {}) {
     if (!command) {
       return;
     }
-    if (command.tool && isReadOnly()) {
-      return; // Read-only (90° view): tools cannot be picked.
+    if (command.tool === 'move' && isProjected()) {
+      return; // 90° view: Mover is unavailable.
     }
     event.preventDefault();
     if (command.tool) {
@@ -1663,12 +1819,12 @@ export function createEditor(svg, options = {}) {
 
   /**
    * Sets or removes the display projection (the 90° view). While it
-   * succeeds the drawing is read-only (isReadOnly()): setting it cancels any
-   * gesture in progress and clears the hover and selection. The model's
-   * coordinates never change.
+   * succeeds (isProjected()) gestures act through the projected drawing:
+   * setting or removing it cancels any gesture in progress and clears the
+   * hover and selection. The projection never changes the model's coordinates.
    *
    * @param {function(object): object|null} fn - `fn(mol)` → `{ok: true, positions: Map}` or
-   *   `{ok: false, reason}`; null restores the normal, editable drawing.
+   *   `{ok: false, reason}`; null restores the normal drawing.
    * @returns {void}
    */
   function setProjector(fn) {
@@ -1676,13 +1832,13 @@ export function createEditor(svg, options = {}) {
     if (next === projector) {
       return;
     }
-    if (next) {
-      stopAnimation();
-      activePointer = null;
-      core.cancelGesture();
-      core.clearHover();
-      core.clearSelection();
-    }
+    // Either way the drawn coordinates change under any gesture in progress:
+    // it is cancelled (nothing was committed yet), as are hover and selection.
+    stopAnimation();
+    activePointer = null;
+    core.cancelGesture();
+    core.clearHover();
+    core.clearSelection();
     projector = next;
     projection = null;
     refresh();
@@ -1692,7 +1848,7 @@ export function createEditor(svg, options = {}) {
   } // End of function setProjector()
 
   /**
-   * Subscribes to projection changes (read-only on/off).
+   * Subscribes to projection changes (projector set or removed).
    *
    * @param {function(): void} listener - Called after setProjector() changes the projector.
    * @returns {function(): void} Unsubscribe function.
@@ -1751,7 +1907,7 @@ export function createEditor(svg, options = {}) {
     getDisplayMode: renderer.getMode,
     setProjector,
     getProjection: currentProjection,
-    isReadOnly,
+    isProjected,
     getShownMolecule: () => shownMolecule().mol,
     onViewChange,
     getView: renderer.getView,

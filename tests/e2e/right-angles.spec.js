@@ -2,11 +2,12 @@
  * @file 90° view e2e (design.md §6.3): the "Ángulos rectos (90°)" toggle is
  * shown only in Con carbonos and remembered across reloads; the projected
  * drawing has horizontal/vertical bonds with strokes clear of the real
- * rendered labels; the drawing is read-only (tools disabled, clicks do not
- * draw, a drag pans) while undo and examples still update it; the stepper
+ * rendered labels; every tool but Mover edits through the projected drawing
+ * (one undo step per gesture, Esc, valence toasts, added carbons ringed),
+ * Mover pans there; every tool also works in plain Con carbonos; the stepper
  * highlights and locants follow the projected positions; fallbacks show a
- * note and stay editable (a chain drawn on an empty canvas switches to the
- * 90° view); and turning the view off restores the drawing exactly.
+ * note (a chain drawn on an empty canvas switches to the 90° view); and
+ * turning the view off restores the drawing exactly.
  */
 
 import { test, expect } from '@playwright/test';
@@ -119,18 +120,18 @@ test('the toggle shows only in Con carbonos and is remembered across reloads', a
   // Esqueleto hides the toggle and keeps the zigzag, but not the preference.
   await page.getByRole('button', { name: 'Esqueleto' }).click();
   await expect(toggle).toBeHidden();
-  expect(await page.evaluate(() => window.__editor.isReadOnly())).toBe(false);
+  expect(await page.evaluate(() => window.__editor.isProjected())).toBe(false);
   expect(await page.evaluate(() => localStorage.getItem('organicWeb.rightAngles'))).toBe('on');
   await page.getByRole('button', { name: 'Con carbonos' }).click();
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-  expect(await page.evaluate(() => window.__editor.isReadOnly())).toBe(false); // Empty canvas: editable.
+  expect(await page.evaluate(() => window.__editor.isProjected())).toBe(false); // Empty canvas: editable.
   await loadExample(page, 'Alcano ramificado');
 
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
   await expect(toggle).toBeVisible();
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
-  expect(await page.evaluate(() => window.__editor.isReadOnly())).toBe(true);
+  expect(await page.evaluate(() => window.__editor.isProjected())).toBe(true);
   await toggle.click();
   await page.reload();
   await expect(page.locator('#right-angle-button')).toHaveAttribute('aria-pressed', 'false');
@@ -186,48 +187,243 @@ test('multiple bonds keep = and ≡ strokes clear of the labels', async ({ page 
   expect(errors).toEqual([]);
 });
 
-test('the 90° view is read-only: tools disabled, clicks do not draw, a drag pans, undo still works', async ({ page }) => {
+test('every tool edits through the 90° drawing, one undo step per gesture', async ({ page }) => {
   const errors = await openApp(page);
   await page.getByRole('button', { name: 'Con carbonos' }).click();
-  await loadExample(page, 'Alcano ramificado');
-  await loadExample(page, 'Alcano con muchas ramas');
+  await loadExample(page, 'Alcano con muchas ramas'); // 2,2,4-trimetilpentano: chain 1-2-5-6-7, C8 on C6.
   await page.locator('#right-angle-button').click();
-  const note = page.locator('#right-angle-note');
-  await expect(note).toHaveText('Desactiva los ángulos rectos para editar.');
-  await expect(page.locator('#toolbar [data-tool="single"]')).toBeDisabled();
+  const canvas = page.locator('svg#canvas');
+  await expect(canvas).toHaveClass(/is-right-angle/);
+  await expect(page.locator('#right-angle-note')).toHaveText(
+    'Puedes dibujar aquí. Para mover átomos u ordenar el dibujo, desactiva los ángulos rectos.');
+  for (const tool of ['carbon', 'single', 'double', 'triple', 'cycle', 'erase']) {
+    await expect(page.locator(`#toolbar [data-tool="${tool}"]`)).toBeEnabled();
+  }
   await expect(page.locator('#toolbar [data-tool="move"]')).toBeDisabled();
   await expect(page.locator('#toolbar [data-action="arrange"]')).toBeDisabled();
-  await expect(page.locator('#toolbar [data-action="undo"]')).toBeEnabled();
-  await expect(page.locator('#redraw-hint')).toHaveCount(0);
+
+  const json = () => page.evaluate(() => window.__editor.getMoleculeJSON());
+  const atomAt = (id) => page.evaluate((a) => window.__editor.atomClientPoint(a), id);
+  const bondId = async (a, b) => (await json()).bonds.find((x) => (x.a === a && x.b === b) || (x.a === b && x.b === a)).id;
+  const bondAt = async (a, b) => page.evaluate((id) => window.__editor.bondClientPoint(id), await bondId(a, b));
+  const states = [await json()];
+  const model = states[0];
+
+  // Carbono: a click on the projected CH₃ of C7 grows C9 there; the new carbon is ringed.
+  await page.locator('#toolbar [data-tool="carbon"]').click();
+  let p = await atomAt(7);
+  await page.mouse.click(p.x, p.y);
+  await expect(page.locator('svg#canvas .atom-label')).toHaveCount(9);
+  await expect(canvas).toHaveClass(/is-right-angle/);
+  await expect(page.locator('svg#canvas .added-ring')).toHaveCount(1);
+  expect((await json()).bonds.some((b) => (b.a === 7 && b.b === 9) || (b.a === 9 && b.b === 7))).toBe(true);
+  // The projection never moves model carbons.
+  expect((await json()).atoms.filter((a) => a.id <= 8)).toEqual(model.atoms);
+  states.push(await json());
+
+  // Enlace doble on the projected bond C7–C9, then Cambiar enlace makes it triple.
+  await page.locator('#toolbar [data-tool="double"]').click();
+  p = await bondAt(7, 9);
+  await page.mouse.click(p.x, p.y);
+  await expect(page.locator('svg#canvas .bond[data-order="2"]')).toHaveCount(1);
+  states.push(await json());
+  await page.locator('#toolbar [data-tool="cycle"]').click();
+  p = await bondAt(7, 9);
+  await page.mouse.click(p.x, p.y);
+  await expect(page.locator('svg#canvas .bond[data-order="3"]')).toHaveCount(1);
+  states.push(await json());
+
+  // Enlace simple chain drag from the chain end C1 outwards (the triple bond now sets the
+  // numbering, so C1 may be drawn at either end): the live counter, then three new carbons.
+  await page.locator('#toolbar [data-tool="single"]').click();
+  p = await atomAt(1);
+  const end = await page.evaluate((id) => {
+    const shown = window.__editor.getShownMolecule();
+    const a = shown.atoms.get(id);
+    const xs = [...shown.atoms.values()].map((atom) => atom.x);
+    const out = a.x - Math.min(...xs) < Math.max(...xs) - a.x ? -1 : 1;
+    return window.__editor.modelToClient({ x: a.x + out * (40 * Math.cos(Math.PI / 6) * 3 + 5), y: a.y });
+  }, 1);
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
+  await page.mouse.move(end.x, end.y, { steps: 10 });
+  await expect(page.locator('svg#canvas .chain-counter')).toHaveText('3 C');
+  await page.mouse.up();
+  await expect(page.locator('svg#canvas .atom-label')).toHaveCount(12);
+  await expect(canvas).toHaveClass(/is-right-angle/);
+  await expect(page.locator('svg#canvas .added-ring')).toHaveCount(3);
+  states.push(await json());
+
+  // Esc during a drag restores the drawing.
+  p = await atomAt(8);
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
+  await page.mouse.move(p.x + 60, p.y + 60, { steps: 6 });
+  await page.keyboard.press('Escape');
+  await page.mouse.up();
+  expect(await json()).toEqual(states.at(-1));
+
+  // A valence refusal still shakes and shows the toast: C2 already has 4 bonds.
+  p = await atomAt(2);
+  await page.mouse.click(p.x, p.y);
+  await expect(page.locator('#toast')).toHaveText('Este carbono ya tiene 4 enlaces.');
+  expect(await json()).toEqual(states.at(-1));
+
+  // Borrar on a projected carbon deletes it (C3, a methyl of C2).
+  await page.locator('#toolbar [data-tool="erase"]').click();
+  p = await atomAt(3);
+  await page.mouse.click(p.x, p.y);
+  expect((await json()).atoms.some((a) => a.id === 3)).toBe(false);
+  await expect(canvas).toHaveClass(/is-right-angle/);
+  states.push(await json());
+
+  // A drag between two projected carbons bonds them: a ring, so the view falls back.
+  await page.locator('#toolbar [data-tool="single"]').click();
+  const a = await atomAt(4);
+  const b = await atomAt(8);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(b.x, b.y, { steps: 10 });
+  await page.mouse.up();
+  await expect(page.locator('#right-angle-note')).toHaveText('Hay un anillo: se ve el dibujo normal.');
+  await expect(canvas).not.toHaveClass(/is-right-angle/);
+  states.push(await json());
+
+  // Every gesture was exactly one undo step, back to the example.
+  for (let i = states.length - 2; i >= 0; i -= 1) {
+    await page.keyboard.press('Control+z');
+    expect(await json()).toEqual(states[i]);
+  }
+  await expect(canvas).toHaveClass(/is-right-angle/);
+  expect(errors).toEqual([]);
+}); // End of test 'every tool edits through the 90° drawing…'
+
+test('turning the 90° view off (or on) during a drag cancels the gesture cleanly', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.getByRole('button', { name: 'Con carbonos' }).click();
+  await loadExample(page, 'Alcano con muchas ramas');
+  await page.locator('#right-angle-button').click();
+  const model = await page.evaluate(() => window.__editor.getMoleculeJSON());
+  const toggle = () => page.evaluate(() => document.querySelector('#right-angle-button').click());
+  for (const expectedClass of [/is-right-angle/, /^(?!.*is-right-angle)/]) {
+    await expect(page.locator('svg#canvas')).toHaveClass(expectedClass);
+    const p = await page.evaluate(() => window.__editor.atomClientPoint(7));
+    await page.mouse.move(p.x, p.y);
+    await page.mouse.down();
+    await page.mouse.move(p.x + 150, p.y + 10, { steps: 8 });
+    await expect(page.locator('svg#canvas .chain-counter')).toBeVisible();
+    await toggle(); // Mid-drag: 90° off, then (second round) on again.
+    await expect(page.locator('svg#canvas .chain-counter')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__editor.isGestureActive())).toBe(false);
+    await page.mouse.move(p.x + 170, p.y + 20, { steps: 3 });
+    await page.mouse.up();
+    expect(await page.evaluate(() => window.__editor.getMoleculeJSON())).toEqual(model);
+  }
+  // No stray undo step: one undo returns to the previous (empty) drawing.
+  await page.keyboard.press('Control+z');
+  expect(await page.evaluate(() => window.__editor.getMoleculeJSON().atoms.length)).toBe(0);
+  expect(errors).toEqual([]);
+}); // End of test 'turning the 90° view off (or on) during a drag…'
+
+test('Mover is unavailable in the 90° view: its shortcut is ignored and a drag with it pans', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.getByRole('button', { name: 'Con carbonos' }).click();
+  await loadExample(page, 'Alcano con muchas ramas');
+  await page.keyboard.press('m');
+  expect(await page.evaluate(() => window.__editor.getTool())).toBe('move');
+  await page.locator('#right-angle-button').click();
+  await expect(page.locator('svg#canvas')).toHaveClass(/is-move-pans/);
+  await expect(page.locator('#toolbar [data-tool="move"]')).toBeDisabled();
 
   const model = await page.evaluate(() => window.__editor.getMoleculeJSON());
-  const box = await page.locator('svg#canvas').boundingBox();
-  // A click on empty space and on an atom (Enlace simple is the tool) changes nothing.
-  await page.mouse.click(box.x + 30, box.y + 30);
-  const atom = await page.evaluate(() => window.__editor.atomClientPoint(5));
-  await page.mouse.click(atom.x, atom.y);
-  // The I-14 chain drag is not available either: a long drag from an atom pans.
   const view = await page.evaluate(() => window.__editor.getView());
+  const atom = await page.evaluate(() => window.__editor.atomClientPoint(5));
   await page.mouse.move(atom.x, atom.y);
   await page.mouse.down();
-  await page.mouse.move(atom.x + 160, atom.y + 20, { steps: 8 });
-  await expect(page.locator('svg#canvas .chain-counter')).toHaveCount(0);
+  await page.mouse.move(atom.x + 120, atom.y + 20, { steps: 8 });
   await page.mouse.up();
   expect(await page.evaluate(() => window.__editor.getMoleculeJSON())).toEqual(model);
   const panned = await page.evaluate(() => window.__editor.getView());
   expect(panned.x).toBeGreaterThan(view.x);
-  expect(panned.scale).toBe(view.scale);
-  // Tool shortcuts are ignored.
-  await page.keyboard.press('2');
-  expect(await page.evaluate(() => window.__editor.getTool())).toBe('single');
 
-  // Undo still works and the projection follows the molecule (2,3-dimetilpentano: 7 C).
-  await page.keyboard.press('Control+z');
-  await expect(page.locator('svg#canvas .atom-label')).toHaveCount(7);
-  expect((await geometryReport(page)).slanted).toBe(0);
-  await expect(page.locator('svg#canvas')).toHaveClass(/is-right-angle/);
+  // Another tool works; the `m` shortcut is ignored while the 90° drawing is shown.
+  await page.keyboard.press('c');
+  await expect(page.locator('svg#canvas')).not.toHaveClass(/is-move-pans/);
+  await page.keyboard.press('m');
+  expect(await page.evaluate(() => window.__editor.getTool())).toBe('carbon');
+  // Turning the view off makes Mover available again.
+  await page.locator('#right-angle-button').click();
+  await expect(page.locator('#toolbar [data-tool="move"]')).toBeEnabled();
+  await page.keyboard.press('m');
+  expect(await page.evaluate(() => window.__editor.getTool())).toBe('move');
   expect(errors).toEqual([]);
-}); // End of test 'the 90° view is read-only…'
+}); // End of test 'Mover is unavailable in the 90° view…'
+
+test('every tool works in plain Con carbonos (no 90°)', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.getByRole('button', { name: 'Con carbonos' }).click();
+  const box = await page.locator('svg#canvas').boundingBox();
+  const json = () => page.evaluate(() => window.__editor.getMoleculeJSON());
+  const atomAt = (id) => page.evaluate((a) => window.__editor.atomClientPoint(a), id);
+  const bondAt = (id) => page.evaluate((b) => window.__editor.bondClientPoint(b), id);
+  const tool = (name) => page.locator(`#toolbar [data-tool="${name}"]`).click();
+
+  // Carbono: a lone carbon, then a click on it grows a second one.
+  await tool('carbon');
+  await page.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.4);
+  let p = await atomAt(1);
+  await page.mouse.click(p.x, p.y);
+  expect((await json()).bonds).toHaveLength(1);
+  // Enlace simple: a click on a carbon grows one more; a chain drag adds several.
+  await tool('single');
+  p = await atomAt(2);
+  await page.mouse.click(p.x, p.y);
+  p = await atomAt(3);
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
+  await page.mouse.move(p.x + 140, p.y + 5, { steps: 10 });
+  await expect(page.locator('svg#canvas .chain-counter')).toBeVisible();
+  await page.mouse.up();
+  const atoms = (await json()).atoms.length;
+  expect(atoms).toBeGreaterThan(4);
+  // Enlace doble / triple on a bond, then Cambiar enlace.
+  await tool('double');
+  p = await bondAt(1);
+  await page.mouse.click(p.x, p.y);
+  expect((await json()).bonds.find((b) => b.id === 1).order).toBe(2);
+  await tool('triple');
+  p = await bondAt(1);
+  await page.mouse.click(p.x, p.y);
+  expect((await json()).bonds.find((b) => b.id === 1).order).toBe(3);
+  await tool('cycle');
+  p = await bondAt(1);
+  await page.mouse.click(p.x, p.y);
+  expect((await json()).bonds.find((b) => b.id === 1).order).toBe(1);
+  // One-bond drag between two carbons (a ring is allowed while drawing).
+  await tool('single');
+  const a = await atomAt(1);
+  const b = await atomAt(3);
+  await page.mouse.move(a.x, a.y);
+  await page.mouse.down();
+  await page.mouse.move(b.x, b.y, { steps: 8 });
+  await page.mouse.up();
+  expect((await json()).bonds.some((x) => (x.a === 1 && x.b === 3) || (x.a === 3 && x.b === 1))).toBe(true);
+  // Borrar a carbon, Mover another.
+  await tool('erase');
+  p = await atomAt(1);
+  await page.mouse.click(p.x, p.y);
+  expect((await json()).atoms.some((x) => x.id === 1)).toBe(false);
+  await tool('move');
+  const before = (await json()).atoms.find((x) => x.id === 2);
+  p = await atomAt(2);
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
+  await page.mouse.move(p.x, p.y + 60, { steps: 6 });
+  await page.mouse.up();
+  const after = (await json()).atoms.find((x) => x.id === 2);
+  expect(after.y).toBeGreaterThan(before.y + 20);
+  expect(errors).toEqual([]);
+}); // End of test 'every tool works in plain Con carbonos (no 90°)'
 
 test('stepper highlights and locants follow the projected drawing', async ({ page }) => {
   const errors = await openApp(page);
@@ -290,14 +486,14 @@ test('fallbacks draw the normal, editable layout with a note', async ({ page }) 
   for (const atom of TWO_PIECES.atoms) {
     expect([shown[atom.id].x, shown[atom.id].y]).toEqual([atom.x, atom.y]);
   }
-  // Editable in the fallback: tools, Ordenar dibujo, shortcuts.
-  expect(await page.evaluate(() => window.__editor.isReadOnly())).toBe(false);
+  // The fallback is the normal drawing: every tool, Ordenar dibujo, shortcuts.
+  expect(await page.evaluate(() => window.__editor.isProjected())).toBe(false);
   await expect(page.locator('#toolbar [data-tool="single"]')).toBeEnabled();
   await expect(page.locator('#toolbar [data-action="arrange"]')).toBeEnabled();
   await page.keyboard.press('2');
   expect(await page.evaluate(() => window.__editor.getTool())).toBe('double');
 
-  // Joining the pieces makes the molecule projectable: the 90° view and read-only switch on.
+  // Joining the pieces makes the molecule projectable: the 90° view switches on, still editable.
   await page.keyboard.press('1');
   const a = await page.evaluate(() => window.__editor.atomClientPoint(2));
   const b = await page.evaluate(() => window.__editor.atomClientPoint(3));
@@ -306,8 +502,9 @@ test('fallbacks draw the normal, editable layout with a note', async ({ page }) 
   await page.mouse.move(b.x, b.y, { steps: 8 });
   await page.mouse.up();
   await expect(page.locator('svg#canvas')).toHaveClass(/is-right-angle/);
-  await expect(note).toHaveText('Desactiva los ángulos rectos para editar.');
-  await expect(page.locator('#toolbar [data-tool="single"]')).toBeDisabled();
+  await expect(note).toHaveText('Puedes dibujar aquí. Para mover átomos u ordenar el dibujo, desactiva los ángulos rectos.');
+  await expect(page.locator('#toolbar [data-tool="single"]')).toBeEnabled();
+  await expect(page.locator('#toolbar [data-tool="move"]')).toBeDisabled();
   expect(errors).toEqual([]);
 }); // End of test 'fallbacks draw the normal, editable layout with a note'
 
@@ -332,10 +529,11 @@ test('with the toggle saved on, an empty canvas still lets the student draw a ch
   const count = await page.evaluate(() => window.__editor.getMoleculeJSON().atoms.length);
   expect(count).toBeGreaterThan(2);
 
-  // The chain is projectable: 90° view, read-only, all labels on one line.
+  // The chain is projectable: 90° view, still editable, all labels on one line.
   await expect(page.locator('svg#canvas')).toHaveClass(/is-right-angle/);
-  await expect(page.locator('#toolbar [data-tool="single"]')).toBeDisabled();
-  await expect(page.locator('#right-angle-note')).toHaveText('Desactiva los ángulos rectos para editar.');
+  await expect(page.locator('#toolbar [data-tool="single"]')).toBeEnabled();
+  await expect(page.locator('#right-angle-note')).toHaveText(
+    'Puedes dibujar aquí. Para mover átomos u ordenar el dibujo, desactiva los ángulos rectos.');
   const labels = Object.values(await labelPositions(page));
   expect(labels).toHaveLength(count);
   expect(new Set(labels.map((l) => l.y)).size).toBe(1);
