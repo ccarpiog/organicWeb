@@ -48,8 +48,17 @@
  * atom on empty space is a carbon; releasing on an existing atom only bonds).
  * Bond tools always create carbons and never change an element.
  *
+ * Ring tool (Anillos, design.md §6.1): tool 'ring' places a regular ring of
+ * setRingSize() carbons (3–8, single bonds, standard bond length): a click on
+ * empty space draws a free ring centred there (flat side at the bottom); on
+ * an atom, a ring hung from it by a single bond along its best free §6.2
+ * direction; on a bond, a ring fused on that bond, on its side with fewer
+ * neighbours. A new ring atom too near an existing atom refuses the whole
+ * ring. A drag counts as a click where it started. While hovering (outside
+ * the 90° view) the ring about to be placed is previewed.
+ *
  * Test API: the instance exposes getMolecule(), getMoleculeJSON(), setTool(),
- * getTool(), setElement(), getElement(), undo(), redo(), clear(), loadMolecule(), setCoordinates(),
+ * getTool(), setElement(), getElement(), setRingSize(), getRingSize(), undo(), redo(), clear(), loadMolecule(), setCoordinates(),
  * animateCoordinates(), isAnimating(), onEdit(), getSelection(),
  * getView(), setDisplayMode(), setProjector(), getProjection(), isProjected(),
  * getShownMolecule(), atomClientPoint(), bondClientPoint(), modelToClient()
@@ -67,6 +76,7 @@ import { createHistory } from './history.js';
 import {
   nextAtomPosition, snapEndpoint, hitTest, distance, straightenLinearCentres, overlappingAtoms,
   chainPoints, chooseChainSide, clearance, ATOM_HIT_RADIUS, BOND_LENGTH, MIN_CLEARANCE,
+  RING_SIZES, freeRingPoints, attachedRingPoints, fusedRingPoints, fusedRingSide, ringAttachAngles, pointsClear,
 } from './geometry.js';
 import {
   createRenderer, rectFromCorners, moleculeBounds, zoomView, panView, fitView, IDENTITY_VIEW,
@@ -77,7 +87,10 @@ import {
  * of the palette: it places and changes atoms of the selected element
  * (setElement(); carbon by default), keeping its historical id.
  */
-export const TOOLS = Object.freeze(['carbon', 'single', 'double', 'triple', 'cycle', 'erase', 'move']);
+export const TOOLS = Object.freeze(['carbon', 'single', 'double', 'triple', 'cycle', 'erase', 'move', 'ring']);
+
+/** Ring size of the Anillos tool until setRingSize() picks another (design.md §6.1). */
+export const DEFAULT_RING_SIZE = 6;
 
 /** Bond order drawn by each bond-making tool. */
 const TOOL_ORDER = Object.freeze({ carbon: 1, single: 1, double: 2, triple: 3 });
@@ -106,11 +119,24 @@ export const EDIT_MESSAGES = Object.freeze({
 /**
  * Keyboard shortcuts without modifiers (design.md §6.1): key → tool. `h`, the
  * shortcut of the former Cadena tool, selects Enlace simple, whose drag now
- * draws chains.
+ * draws chains. `a` (anillo) selects Anillos; pressed again while Anillos is
+ * the tool, it moves to the next ring size (the editor shell, nextRingSize()).
  */
 const TOOL_KEYS = Object.freeze({
-  1: 'single', 2: 'double', 3: 'triple', t: 'cycle', h: 'single', e: 'erase', delete: 'erase', m: 'move',
+  1: 'single', 2: 'double', 3: 'triple', t: 'cycle', h: 'single', e: 'erase', delete: 'erase', m: 'move', a: 'ring',
 });
+
+/**
+ * The ring size after `size` in RING_SIZES, wrapping from 8 back to 3 (the
+ * `a` key while Anillos is already the tool). Pure.
+ *
+ * @param {number} size - The current ring size.
+ * @returns {number} The next size (the first one when `size` is not offered).
+ */
+export function nextRingSize(size) {
+  const index = RING_SIZES.indexOf(size);
+  return RING_SIZES[(index + 1) % RING_SIZES.length];
+}
 
 /**
  * Keyboard shortcuts of the element palette (design.md §6.1): key → element
@@ -123,7 +149,7 @@ export const ELEMENT_KEYS = Object.freeze({ c: 'C', o: 'O', n: 'N', f: 'F', l: '
  * Maps a key press to an editor command (design.md §6.1): `c o n f l b i`
  * pick carbono, oxígeno, nitrógeno, flúor, cloro, bromo or yodo for the
  * element tool, `1/2/3` bond tools (`h` also Enlace simple), `t` Cambiar
- * enlace, `e`/`Supr` Borrar, `m` Mover, Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z (or
+ * enlace, `e`/`Supr` Borrar, `m` Mover, `a` Anillos, Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z (or
  * Ctrl/Cmd+Y) redo. Pure.
  *
  * @param {{key: string, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean, altKey?: boolean}} event - The key event.
@@ -327,8 +353,10 @@ export function createEditorCore(options = {}) {
   let mol = createMolecule();
   let tool = DEFAULT_TOOL;
   let element = 'C'; // Element of the element tool ('carbon').
+  let ringSize = DEFAULT_RING_SIZE; // Ring size of the Anillos tool ('ring').
   let gesture = null;
   let hover = null;
+  let pointer = null; // Last pointer position without a gesture (the ring preview follows it).
   let selection = new Set();
   const history = createHistory();
   const changeListeners = options.onChange ? [options.onChange] : [];
@@ -348,6 +376,10 @@ export function createEditorCore(options = {}) {
     if (kind) {
       // Atoms that no longer exist leave the selection.
       selection = new Set([...selection].filter((id) => mol.atoms.has(id)));
+      // A hover on an atom or bond that no longer exists is dropped too (the ring preview reads it).
+      if (!targetExists(hover)) {
+        hover = null;
+      }
     }
     const event = view ? { reason, kind, view } : { reason, kind };
     for (const listener of changeListeners) {
@@ -359,6 +391,20 @@ export function createEditorCore(options = {}) {
       }
     }
   } // End of function emit()
+
+  /**
+   * Tells whether a hit-test target still names an atom or bond of the
+   * current molecule (a replaced molecule can leave a stale id behind).
+   *
+   * @param {{type: string, id: number}|null} target - An atom or bond target.
+   * @returns {boolean} True when the target is null or exists in the molecule.
+   */
+  function targetExists(target) {
+    if (!target) {
+      return true;
+    }
+    return target.type === 'atom' ? mol.atoms.has(target.id) : mol.bonds.has(target.id);
+  }
 
   /**
    * Notifies reject listeners.
@@ -589,6 +635,83 @@ export function createEditorCore(options = {}) {
   } // End of function loosePoints()
 
   /**
+   * Plans an Anillos placement (design.md §6.1) of a ring of the current
+   * size on the model, without changing anything: a free ring centred at the
+   * point on empty space (on the projected drawing, moved to loosePoints()),
+   * a ring hung from an atom by a single bond (the first of
+   * ringAttachAngles() whose ring clears every atom), or a ring fused on a
+   * bond (fusedRingSide()). Refused when an atom it bonds to has no room for
+   * one more bond or a new atom would land too near an existing one.
+   *
+   * @param {{type: string, id: number}|null} target - What was clicked (ids are model ids).
+   * @param {{x: number, y: number}} point - Where (drawing units).
+   * @param {object|null} [display] - The projected drawing the click was made on (null: the model's).
+   * @returns {{kind: 'free'|'attach'|'fuse', points: {x: number, y: number}[], atom?: number, a?: number, b?: number}
+   *   |{refusal: {message: string, atoms: number[]}}|null} The plan (`points`: new atoms in ring order; for
+   *   'fuse', from the one bonded to `b` to the one bonded to `a`), the refusal, or null when the target
+   *   names an atom or bond that no longer exists.
+   */
+  function ringPlan(target, point, display = null) {
+    const overlap = (atoms) => ({ refusal: { message: EDIT_MESSAGES.OVERLAP, atoms } });
+    if (!targetExists(target)) {
+      return null;
+    }
+    if (!target) {
+      const centred = freeRingPoints(point, ringSize);
+      const points = display ? loosePoints(centred) : centred;
+      return pointsClear(mol, points) ? { kind: 'free', points } : overlap([]);
+    }
+    if (target.type === 'atom') {
+      const refusal = checkRoom(mol, [target.id], 1);
+      if (refusal) {
+        return { refusal };
+      }
+      const anchor = mol.atoms.get(target.id);
+      for (const angle of ringAttachAngles(mol, target.id)) {
+        const points = attachedRingPoints(anchor, angle, ringSize);
+        if (pointsClear(mol, points)) {
+          return { kind: 'attach', atom: target.id, points };
+        }
+      }
+      return overlap([target.id]);
+    }
+    const bond = mol.bonds.get(target.id);
+    const refusal = checkRoom(mol, [bond.a, bond.b], 1);
+    if (refusal) {
+      return { refusal };
+    }
+    const side = fusedRingSide(mol, bond.a, bond.b, ringSize);
+    const points = fusedRingPoints(mol.atoms.get(bond.a), mol.atoms.get(bond.b), ringSize, side);
+    return pointsClear(mol, points) ? { kind: 'fuse', a: bond.a, b: bond.b, points } : overlap([bond.a, bond.b]);
+  } // End of function ringPlan()
+
+  /**
+   * Adds a planned ring (ringPlan()) to a draft: its new carbons and single
+   * bonds, plus the attaching bond ('attach') or the bonds closing it onto
+   * the shared bond's atoms ('fuse').
+   *
+   * @param {object} draft - Draft molecule (mutated).
+   * @param {{kind: string, points: {x: number, y: number}[], atom?: number, a?: number, b?: number}} plan - The plan.
+   * @returns {void}
+   */
+  function applyRing(draft, plan) {
+    const ids = plan.points.map((p) => addAtom(draft, p));
+    if (plan.kind === 'fuse') {
+      let previous = plan.b;
+      for (const id of ids) {
+        addBond(draft, previous, id, 1);
+        previous = id;
+      }
+      addBond(draft, previous, plan.a, 1);
+      return;
+    }
+    ids.forEach((id, k) => addBond(draft, id, ids[(k + 1) % ids.length], 1));
+    if (plan.kind === 'attach') {
+      addBond(draft, plan.atom, ids[0], 1);
+    }
+  } // End of function applyRing()
+
+  /**
    * Applies a click (press and release without dragging) with the current tool.
    *
    * @param {{type: string, id: number}|null} target - What was clicked.
@@ -603,6 +726,13 @@ export function createEditorCore(options = {}) {
         selectClicked(target);
       }
       return null;
+    }
+    if (tool === 'ring') {
+      const plan = ringPlan(target, point, display);
+      if (!plan) {
+        return null;
+      }
+      return plan.refusal ? reject(plan.refusal) : transact('add ring', (d) => applyRing(d, plan));
     }
     const at = display ? loosePoints([point])[0] : point;
     if (tool === 'carbon' && !target) {
@@ -850,6 +980,9 @@ export function createEditorCore(options = {}) {
    */
   function finishDrag(g) {
     const display = g.display || null;
+    if (tool === 'ring') {
+      return click(g.target, g.start, display); // A ring does not follow the drag: it goes where the press was.
+    }
     const chain = chainPlan(g);
     if (chain) {
       return finishChain(chain, display);
@@ -917,6 +1050,7 @@ export function createEditorCore(options = {}) {
     }
     const target = hitTest(display || mol, point);
     gesture = { start: { ...point }, current: { ...point }, target, moved: false, display };
+    pointer = null;
     if (tool === 'move') {
       gesture.moveIds = moveTargets(target, point);
     }
@@ -934,6 +1068,7 @@ export function createEditorCore(options = {}) {
     if (!gesture) {
       const display = displayOf();
       hover = display && tool === 'move' ? null : hitTest(display || mol, point);
+      pointer = { ...point };
       return;
     }
     gesture.current = { ...point };
@@ -1053,6 +1188,7 @@ export function createEditorCore(options = {}) {
    */
   function clear() {
     gesture = null;
+    hover = null;
     return transact('clear', (d) => {
       d.atoms.clear();
       d.bonds.clear();
@@ -1071,6 +1207,7 @@ export function createEditorCore(options = {}) {
       return reject({ message: result.error.message });
     }
     gesture = null;
+    hover = null;
     return transact('load', (d) => {
       d.atoms = result.mol.atoms;
       d.bonds = result.mol.bonds;
@@ -1127,6 +1264,60 @@ export function createEditorCore(options = {}) {
   }
 
   /**
+   * Selects the Anillos tool with a ring size (design.md §6.1).
+   *
+   * @param {number} size - One of RING_SIZES (3 to 8).
+   * @returns {void}
+   * @throws {Error} For a size not offered.
+   */
+  function setRingSize(size) {
+    if (!RING_SIZES.includes(size)) {
+      throw new Error(`setRingSize: unsupported ring size ${size}`);
+    }
+    gesture = null;
+    selection = new Set();
+    tool = 'ring';
+    ringSize = size;
+    emit('tool');
+  }
+
+  /**
+   * The ring size of the Anillos tool (kept while other tools are used).
+   *
+   * @returns {number} One of RING_SIZES.
+   */
+  function getRingSize() {
+    return ringSize;
+  }
+
+  /**
+   * The Anillos preview: the ring the pressed or hovered spot would get
+   * (ringPlan()), as a closed outline plus its attaching bond, or null when
+   * that placement would be refused, the pointer is off the canvas, or the
+   * projected (90°) drawing is shown (its positions are not the model's).
+   *
+   * @returns {{type: 'ring', points: {x: number, y: number}[], bond: {from: object, to: object}|null}|null}
+   *   The ring's vertices in ring order (shared atoms included) and the attaching bond.
+   */
+  function ringPreview() {
+    const target = gesture ? gesture.target : hover;
+    const point = gesture ? gesture.start : pointer;
+    if (!point || (gesture ? gesture.display : displayOf())) {
+      return null;
+    }
+    const plan = ringPlan(target, point);
+    if (!plan || plan.refusal) {
+      return null;
+    }
+    const at = (id) => ({ x: mol.atoms.get(id).x, y: mol.atoms.get(id).y });
+    if (plan.kind === 'fuse') {
+      return { type: 'ring', points: [at(plan.a), at(plan.b), ...plan.points], bond: null };
+    }
+    const bond = plan.kind === 'attach' ? { from: at(plan.atom), to: plan.points[0] } : null;
+    return { type: 'ring', points: plan.points, bond };
+  } // End of function ringPreview()
+
+  /**
    * Selects the element tool with an element of the palette (design.md §6.1).
    *
    * @param {string} symbol - C, O, N, F, Cl, Br or I.
@@ -1159,13 +1350,17 @@ export function createEditorCore(options = {}) {
    * one-bond preview that creates a new carbon also carries the live counter
    * (`count`: carbons added, 2 from empty space). With the element tool on a
    * heteroatom, a new end atom carries its `element`; a drag from a
-   * heteroatom has `fromDot: false` (no carbon dot there).
+   * heteroatom has `fromDot: false` (no carbon dot there). With Anillos, the
+   * ring about to be placed, pressed or only hovered (ringPreview()).
    *
    * @returns {{type: 'chain', points: object[], count: number}|{type: 'bond', from: object, to: object, order: number,
-   *   count?: number, element?: string, fromDot?: boolean}|null}
+   *   count?: number, element?: string, fromDot?: boolean}|{type: 'ring', points: object[], bond: object|null}|null}
    *   The preview.
    */
   function getPreview() {
+    if (tool === 'ring') {
+      return ringPreview();
+    }
     if (!gesture || !gesture.moved) {
       return null;
     }
@@ -1299,6 +1494,7 @@ export function createEditorCore(options = {}) {
    */
   function clearHover() {
     hover = null;
+    pointer = null;
   }
 
   /**
@@ -1352,6 +1548,8 @@ export function createEditorCore(options = {}) {
     getTool,
     setElement,
     getElement,
+    setRingSize,
+    getRingSize,
     getPreview,
     getViewState,
     getSelection,
@@ -1811,6 +2009,9 @@ export function createEditor(svg, options = {}) {
     event.preventDefault();
     if (command.element) {
       core.setElement(command.element);
+    } else if (command.tool === 'ring') {
+      // `a` picks Anillos; pressed again, the next ring size.
+      core.setRingSize(core.getTool() === 'ring' ? nextRingSize(core.getRingSize()) : core.getRingSize());
     } else if (command.tool) {
       core.setTool(command.tool);
     } else if (command.action === 'undo') {

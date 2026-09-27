@@ -589,6 +589,7 @@ to a bottom bar.
 | **Elementos** (palette: C, O, N, F, Cl, Br, I; editor tool id `carbon`, element via `setElement()`) | Pick an element, then: click empty space → a lone atom of it (a lone carbon is how you draw methane). Click an atom of **another** element → change that atom to the picked one, as one undo step; refused in Spanish when its bonds exceed the new valence ("No se puede cambiar a oxígeno: este átomo tiene 3 enlaces y el oxígeno solo admite 2."). Click an atom of the **same** element → grow a new atom of it with a single bond at the best free angle (§6.2) — so Carbono on a carbon still grows a carbon. Drag from an atom or empty space → the one-bond drag of the bond tools (single bond): only the **new end atom** gets the picked element (its symbol shows in the preview); a start atom placed on empty space is a carbon, and releasing on an existing atom only bonds it — a drag never changes an element (a wobbly click that ends on the pressed atom is the self-bond refusal). |
 | **Enlace simple / doble / triple** (default simple) | Bond tools always create **carbons** and never change an element; valence is checked per element (C 4, N 3, O 2, halogens 1), so C=O is drawn as a double bond with one end changed to O (or Enlace doble on a C–O bond) and C≡N likewise. Click empty space → new two-carbon fragment with that bond order. Click an atom → grow a new carbon bonded with that order. Drag from an atom or empty space → **one** new bond in the drag direction, snapped to 30°; releasing on an existing atom bonds the two (a ring is allowed; naming refuses it; the pressed atom itself → self-bond refusal). Click an existing bond → **set** it to the tool's order. |
 | **Enlace simple: chain drag** (MolView-like) | With Enlace simple only, a drag long enough for a zigzag of two or more bonds (drag projected on the 30°-snapped axis ≥ 1.5 × `40·cos 30°`) grows a zigzag chain bond by bond along the drag (120° angles, fixed bond length, one bond per `40·cos 30°` of drag, side chosen away from the start atom's neighbours), with a live counter "5 C" = carbons the drag adds (from empty space, the whole chain; the one-bond preview shows "1 C"/"2 C" too). Release commits the whole chain as one transaction; a full start carbon refuses it ("Este carbono ya tiene 4 enlaces"), and a chain carbon landing on an existing atom refuses it (overlap message) — never a carbon on top of another. **Release on an atom:** whenever the pointer is over an existing atom, the drag is the one-bond drag above, whatever its length (the preview switches to that single bond), so "release on an atom bonds to it" keeps working; the chain never joins atoms. Doble/triple keep the one-bond drag: only the first bond of a chain could carry the order, which would be surprising. |
+| **Anillos** (group of six buttons, ring sizes 3–8; editor tool id `ring`, size via `setRingSize()`) | Places a regular ring of carbons joined by single bonds, standard bond length (`freeRingPoints()`, `attachedRingPoints()`, `fusedRingPoints()` in `geometry.js`). Click empty space → a free ring centred at the pointer, one flat side at the bottom. Click an atom → a ring hung from it by a **single bond** (a cycloalkyl substituent), along the atom's best free direction (the §6.2 preferred angles, then the other 30° directions: the first where the whole ring fits), lying outward along it; refused with the valence message when the atom is full ("Este carbono ya tiene 4 enlaces."). Click a bond → a ring **fused** on it (sharing both atoms; the shared bond sets the side length), on the side with fewer neighbours of its two atoms, then the side with more room (`fusedRingSide()`); allowed although naming refuses fused rings (`RING_SYSTEM`); valence refusals apply. A new ring atom closer than 0.6 bond lengths to an existing atom refuses the whole ring with the overlap message; nothing changes. A drag counts as a click where it was pressed. Hovering previews the ring about to be placed (dashed, accent colour; no preview where the placement would be refused, nor over the 90° drawing). One undo step; `onEdit` kind `chemical`. In the 90° view a ring on a projected atom or bond is built on the model atoms, a free ring goes where loose pieces go (below), and the ring makes the view fall back to the normal drawing. |
 | **Cambiar enlace** | Click a bond → cycle 1→2→3→1 (skipping orders that break valence, e.g. C=O → C–O; a C–Cl bond cannot change: "Este enlace no puede cambiar: sus átomos no admiten más enlaces."). |
 | **Borrar** | Click atom → delete it and its bonds. Click bond → delete the bond only; both atoms stay (the model does not record how an atom was created, so an endpoint cannot be told apart from a carbon placed on its own). |
 | **Mover** | Drag an atom (moves it) or a bond (moves its two atoms). Drag on empty space → marquee selection; then drag the selection (press on a selected atom, a bond between selected atoms, or inside the selection's box). Click selects an atom; click on empty space or Esc clears the selection. Dropping an atom on another is refused. Not available while the 90° drawing is shown (see below). |
@@ -610,6 +611,7 @@ selects Enlace simple, so the key still leads to chain drawing.
 
 Keyboard: elements `c` carbono, `o` oxígeno, `n` nitrógeno, `f` flúor, `l` cloro,
 `b` bromo, `i` yodo (`ELEMENT_KEYS` in `editor.js`); `1/2/3` bond tools (`h` also Enlace simple), `t` cambiar enlace,
+`a` anillos (pressed again while Anillos is the tool: next ring size, 3→…→8→3; digits stay free because `3` is Enlace triple),
 `e`/`Supr` borrar, `m` mover, `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z` (also
 `Ctrl/Cmd+Y`). Ignored in text fields and while a dialog is open.
 
@@ -627,6 +629,14 @@ Keyboard: elements `c` carbono, `o` oxígeno, `n` nitrógeno, `f` flúor, `l` cl
 
 - Double bonds: two parallel lines, second one offset toward the inside of the
   zigzag; triple: three lines. Bond multiplicity is shown only by strokes.
+  A double bond that belongs to a ring (ring bonds from `perceiveRings()`)
+  draws its shorter second line toward the ring's interior: the centroid of
+  the smallest ring through that bond, so in a fused system the smaller
+  ring's centre (`ringBondCentres()`, `ringInnerSide()` in `render.js`); the
+  zigzag rule is the fallback only when that centre lies on the bond line.
+  This applies in both display modes (Con carbonos draws the same strokes,
+  trimmed at the labels); the 90° view is never drawn for a ring. Triple
+  bonds in rings and acyclic double bonds are unchanged.
 - Display toggle **Esqueleto / Con carbonos**. **Esqueleto** (default) draws
   every carbon as a line vertex marked with a small filled dot (radius 3.5
   drawing units against 2-unit bonds, so it scales with the zoom), so a
@@ -739,7 +749,7 @@ unchanged):
 - After naming, a hint offers it: "¿Quieres ver la cadena principal
   ordenada?". A named ring gets no hint, and the button answers "Todavía no
   sé ordenar el dibujo de un anillo. El dibujo se queda como estaba." until
-  ring layouts exist (I-27).
+  ring layouts exist (I-27b).
 - While the 90° drawing is shown (§6.3) "Ordenar dibujo" and its hint are disabled (the
   change would be invisible there; the message "Desactiva los ángulos rectos
   para ordenar el dibujo." answers a call anyway). The 90° view already puts
@@ -985,7 +995,7 @@ before being presented as validated IUPAC 2013 coverage.
   `canonicalKey()` adds a monocycle key (polycycles still have none), and the
   OPSIN adapter keeps rings and compares them with it.
 - The 90° view and "Ordenar dibujo" assume branched chains; they need
-  specific strategies (I-27). Until then both fall back safely: Ordenar
+  specific strategies (I-27b). Until then both fall back safely: Ordenar
   dibujo shows the naming error, or for any named ring (bare, substituted
   or unsaturated) "Todavía no sé ordenar el dibujo de un anillo…" and offers
   no hint; the 90° view draws the
@@ -1011,7 +1021,7 @@ certifies IUPAC preference or Spanish spelling.
 | I-24 | Ring infrastructure | New `model/rings.js`, `graph.js`, SMILES, oracle: ring closures in SMILES, structural identity for monocycles, scope messages. | Rotations, invalid closures, polycycles; no infinite recursion, no formula-only comparisons. |
 | I-25 | Simple cycloalkanes | New `N/rings.js`, `structure.js`, renderer, both lexicons, E: `ciclohexano`; explain the closure and carbon count. | Supported sizes, formulas; closure bond highlighted. |
 | I-26 | Substituted and unsaturated rings | `N/rings.js`, `parent.js`, `numbering.js`, `substituent.js`, E: every start/direction; unsaturation and substituent locants; explicit ring-vs-chain choice per the 2013 rules. | Symmetry, dienes, side chains; old school rules not carried over automatically. |
-| I-27 | Drawing and ordering rings | Editor, new `layout/rings.js`, `canonical.js`, `rightangle.js`: polygon templates, inner double-bond lines, Ordenar dibujo by strategy; 90° view falls back to the normal drawing for rings. | Collisions, undo, locants; topology and editability kept. |
+| I-27 | Drawing and ordering rings | Split in two. **I-27a** (done): editor ring templates (Anillos tool, sizes 3–8: free, hung from an atom, fused on a bond; §6.1) and inner double-bond lines for ring bonds (§6.3). **I-27b**: new `layout/rings.js`, `canonical.js`, `rightangle.js`: Ordenar dibujo by strategy for rings; the 90° view keeps falling back to the normal drawing for rings. | Collisions, undo, locants; topology and editability kept. |
 | I-28 | Benzene and hydrocarbon derivatives | New `N/aromatic.js`, lexicons, editor, E, OPSIN adapter: benzene, monosubstituted alkylbenzenes, fenilo; hexagon template with alternating bonds; explain equivalent Kekulé drawings. | Both Kekulé forms; aromaticity never inferred from any alternation. |
 | I-29 | Functional groups and seniority | New `N/groups.js`, `seniority.js`; selection, structure, E: detect groups without overlaps; steps "Reconoce los grupos", "Elige el principal", "Sufijo o prefijo". | Acid/ester/amide vs alcohol/ketone; detection does not yet enable naming. |
 | I-30 | Halogen derivatives | Prefixes fluoro-, cloro-, bromo-, yodo-; multipliers and alphabetical order; never a suffix. | Several halogens and ties; ordering of translated prefixes. |

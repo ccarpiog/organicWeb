@@ -11,7 +11,8 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 - **Editor** (SVG, mouse, pen and touch): element palette (C, O, N, F,
   Cl, Br, I: place or change atoms; heteroatoms labelled `OH`, `NH₂`…), single/double/triple
   bonds (a single-bond drag draws a zig-zag chain with a live carbon
-  counter), Cambiar enlace, Borrar, Mover (marquee selection), undo/redo, Limpiar
+  counter), ring templates (Anillos, 3–8 carbons: on empty space, hung from an
+  atom or fused on a bond), Cambiar enlace, Borrar, Mover (marquee selection), undo/redo, Limpiar
   (with an in-page confirmation), pan (Space + drag, middle drag, two
   fingers) and zoom (wheel, pinch), Centrar, skeletal or condensed display,
   live molecular formula, keyboard shortcuts, and autosave in the browser.

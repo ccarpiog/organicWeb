@@ -679,3 +679,160 @@ export function chooseChainSide(mol, atomId, start, pointer) {
   const down = chainPoints(start, pointer, { side: -1, maxBonds: 1 }).points[1];
   return clearance(mol, down, exclude) > clearance(mol, up, exclude) + EPSILON ? -1 : 1;
 }
+
+/** Ring sizes offered by the Anillos tool (design.md §6.1), smallest first. */
+export const RING_SIZES = Object.freeze([3, 4, 5, 6, 7, 8]);
+
+/**
+ * Circumradius of a regular polygon (distance from its centre to a vertex).
+ *
+ * @param {number} n - Number of vertices (≥ 3).
+ * @param {number} [side] - Side length (default BOND_LENGTH).
+ * @returns {number} The circumradius.
+ */
+export function ringRadius(n, side = BOND_LENGTH) {
+  return side / (2 * Math.sin(Math.PI / n));
+}
+
+/**
+ * Vertices of a free regular ring centred at a point, in the conventional
+ * orientation: one flat side at the bottom (horizontal, below the centre).
+ * Sides are BOND_LENGTH long; vertices go round in order.
+ *
+ * @param {{x: number, y: number}} centre - The ring's centre.
+ * @param {number} n - Ring size (≥ 3).
+ * @returns {{x: number, y: number}[]} The n vertices, in ring order.
+ */
+export function freeRingPoints(centre, n) {
+  const radius = ringRadius(n);
+  // y grows downwards: π/2 points down, so the first two vertices straddle it.
+  const start = Math.PI / 2 - Math.PI / n;
+  const points = [];
+  for (let k = 0; k < n; k += 1) {
+    points.push(pointAt(centre, start + (k * 2 * Math.PI) / n, radius));
+  }
+  return points;
+}
+
+/**
+ * Vertices of a ring hung from an atom by one bond (a cycloalkyl
+ * substituent): the first vertex is one BOND_LENGTH from the anchor along
+ * `angle`, and the ring lies outward along that direction (its centre on the
+ * same line, farther out).
+ *
+ * @param {{x: number, y: number}} anchor - The atom the ring is bonded to.
+ * @param {number} angle - Direction of the attaching bond, in radians.
+ * @param {number} n - Ring size (≥ 3).
+ * @returns {{x: number, y: number}[]} The n vertices in ring order, the bonded one first.
+ */
+export function attachedRingPoints(anchor, angle, n) {
+  const first = pointAt(anchor, angle);
+  const radius = ringRadius(n);
+  const centre = pointAt(first, angle, radius);
+  const points = [];
+  for (let k = 0; k < n; k += 1) {
+    points.push(pointAt(centre, angle + Math.PI + (k * 2 * Math.PI) / n, radius));
+  }
+  return points;
+}
+
+/**
+ * The new vertices of a regular ring fused on the bond a–b (sharing both
+ * atoms), on one side of it. The shared bond keeps its own length, which
+ * sets the ring's side length.
+ *
+ * @param {{x: number, y: number}} a - First atom of the shared bond.
+ * @param {{x: number, y: number}} b - Second atom of the shared bond.
+ * @param {number} n - Ring size (≥ 3).
+ * @param {number} side - 1 for the side of the left normal of a→b (cross(a, b, p) > 0), −1 for the other.
+ * @returns {{x: number, y: number}[]} The n − 2 new vertices in ring order, from the one bonded to b
+ *   to the one bonded to a.
+ */
+export function fusedRingPoints(a, b, n, side) {
+  const length = distance(a, b);
+  const nx = -(b.y - a.y) / (length || 1);
+  const ny = (b.x - a.x) / (length || 1);
+  const apothem = length / (2 * Math.tan(Math.PI / n));
+  const centre = { x: (a.x + b.x) / 2 + side * nx * apothem, y: (a.y + b.y) / 2 + side * ny * apothem };
+  const radius = ringRadius(n, length);
+  const fromA = angleBetween(centre, a);
+  const fromB = angleBetween(centre, b);
+  let step = fromB - fromA;
+  while (step > Math.PI) {
+    step -= FULL_TURN;
+  }
+  while (step <= -Math.PI) {
+    step += FULL_TURN;
+  }
+  const points = [];
+  for (let k = 1; k <= n - 2; k += 1) {
+    points.push(pointAt(centre, fromB + k * step, radius));
+  }
+  return points;
+} // End of function fusedRingPoints()
+
+/**
+ * Side of the bond a–b on which to fuse a new ring (design.md §6.1): the
+ * side with fewer neighbours of a and b; on a tie, the side whose new ring
+ * atoms keep more room from the existing atoms; then side 1.
+ *
+ * @param {object} mol - The molecule.
+ * @param {number} aId - First atom of the bond.
+ * @param {number} bId - Second atom of the bond.
+ * @param {number} n - Ring size.
+ * @returns {number} 1 or −1 (see fusedRingPoints()).
+ */
+export function fusedRingSide(mol, aId, bId, n) {
+  const a = mol.atoms.get(aId);
+  const b = mol.atoms.get(bId);
+  let balance = 0; // Neighbours on side 1 minus neighbours on side −1.
+  for (const end of [aId, bId]) {
+    for (const nb of neighbours(mol, end)) {
+      if (nb.atom !== aId && nb.atom !== bId) {
+        balance += Math.sign(Math.round(cross(a, b, mol.atoms.get(nb.atom)) * 1e6));
+      }
+    }
+  }
+  if (balance !== 0) {
+    return balance > 0 ? -1 : 1;
+  }
+  /**
+   * Smallest clearance of the new ring atoms on one side.
+   *
+   * @param {number} side - 1 or −1.
+   * @returns {number} The room (Infinity when the ring adds no atom near anything).
+   */
+  const room = (side) => Math.min(...fusedRingPoints(a, b, n, side).map((p) => clearance(mol, p)));
+  return room(-1) > room(1) + EPSILON ? -1 : 1;
+} // End of function fusedRingSide()
+
+/**
+ * Candidate directions for a ring hung from an atom, best first: the §6.2
+ * preferred angles (preferredAngles()), then every other 30° direction by
+ * closeness to the best one, as nextAtomPosition() does for one atom.
+ *
+ * @param {object} mol - The molecule.
+ * @param {number} atomId - The anchor atom.
+ * @returns {number[]} Angles in radians, best first (may repeat).
+ */
+export function ringAttachAngles(mol, atomId) {
+  const preferred = preferredAngles(mol, atomId, 1);
+  const fallback = [];
+  for (let k = 0; k < 360 / SNAP_DEGREES; k += 1) {
+    fallback.push(normalizeAngle(preferred[0] + toRadians(k * SNAP_DEGREES)));
+  }
+  fallback.sort((p, q) => angleDifference(p, preferred[0]) - angleDifference(q, preferred[0]));
+  return [...preferred, ...fallback];
+}
+
+/**
+ * Tells whether every proposed point keeps MIN_CLEARANCE from the atoms of
+ * a molecule (the §6.2 overlap rule used for new atoms).
+ *
+ * @param {object} mol - The molecule.
+ * @param {{x: number, y: number}[]} points - Proposed new atom positions.
+ * @returns {boolean} True when none is too near an existing atom.
+ */
+export function pointsClear(mol, points) {
+  return points.every((p) => clearance(mol, p) >= MIN_CLEARANCE);
+}

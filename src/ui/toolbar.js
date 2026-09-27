@@ -1,7 +1,7 @@
 /**
  * @file Drawing toolbar (design.md §6.1): the element palette (C, O, N, F,
  * Cl, Br, I — the element tool), tool buttons with icons and Spanish
- * tooltips, plus Deshacer / Rehacer / Limpiar / Ordenar dibujo. Kept in sync with the editor
+ * tooltips, the Anillos group (one button per ring size, 3 to 8), plus Deshacer / Rehacer / Limpiar / Ordenar dibujo. Kept in sync with the editor
  * through its change notifications. While the 90° drawing is actually shown
  * (design.md §6.1, §6.3) every tool works through it except Mover, which is
  * disabled together with "Ordenar dibujo" (neither would change the
@@ -10,6 +10,7 @@
 
 import { ELEMENTS, ELEMENT_NAMES_ES } from '../model/elements.js';
 import { ELEMENT_KEYS } from '../editor/editor.js';
+import { RING_SIZES } from '../editor/geometry.js';
 
 /**
  * Icon of an element button: its symbol, in the toolbar's icon box.
@@ -31,6 +32,31 @@ const ELEMENT_BUTTONS = ELEMENTS.map((symbol) => {
   const key = Object.keys(ELEMENT_KEYS).find((k) => ELEMENT_KEYS[k] === symbol);
   return { element: symbol, label: name.charAt(0).toUpperCase() + name.slice(1), keys: [key.toUpperCase()], icon: elementIcon(symbol) };
 });
+
+/**
+ * Icon of a ring button: a regular polygon of `n` sides with a flat bottom,
+ * as the Anillos tool draws it.
+ *
+ * @param {number} n - Ring size.
+ * @returns {string} SVG inner markup (24×24).
+ */
+function ringIcon(n) {
+  const radius = 9;
+  const start = Math.PI / 2 - Math.PI / n;
+  const points = [];
+  for (let k = 0; k < n; k += 1) {
+    const angle = start + (k * 2 * Math.PI) / n;
+    points.push(`${(12 + radius * Math.cos(angle)).toFixed(2)},${(12.5 + radius * Math.sin(angle)).toFixed(2)}`);
+  }
+  return `<polygon points="${points.join(' ')}"/>`;
+}
+
+/**
+ * Ring buttons of the Anillos group (design.md §6.1): ring size, Spanish
+ * label ("Anillo de 6 carbonos"), shortcut `A` (picks Anillos; pressed
+ * again, the next size) and icon.
+ */
+const RING_BUTTONS = RING_SIZES.map((n) => ({ size: n, label: `Anillo de ${n} carbonos`, keys: ['A'], icon: ringIcon(n) }));
 
 /** Tool buttons: editor tool id, Spanish label, keyboard shortcuts (design.md §6.1), icon (SVG inner markup, 24×24). */
 const TOOL_BUTTONS = [
@@ -139,13 +165,24 @@ export function buildToolbar(container, editor, options) {
     tools.appendChild(button);
   }
   addSeparator();
+  const ringButtons = new Map();
+  const rings = addGroup('ring-list', 'Anillos');
+  for (const spec of RING_BUTTONS) {
+    const button = makeButton(doc, spec);
+    button.classList.add('ring-button');
+    button.dataset.ringSize = String(spec.size);
+    button.addEventListener('click', () => editor.setRingSize(spec.size));
+    ringButtons.set(spec.size, button);
+    rings.appendChild(button);
+  }
+  addSeparator();
   const actions = addGroup('action-list', 'Acciones');
   for (const spec of ACTION_BUTTONS) {
     const button = makeButton(doc, spec);
     button.dataset.action = spec.action;
     actionButtons.set(spec.action, button);
     actions.appendChild(button);
-  } // End of the loops that fill the three groups
+  } // End of the loops that fill the four groups
   actionButtons.get('undo').addEventListener('click', () => editor.undo());
   actionButtons.get('redo').addEventListener('click', () => editor.redo());
   actionButtons.get('arrange').addEventListener('click', () => {
@@ -169,6 +206,10 @@ export function buildToolbar(container, editor, options) {
     const elementTool = editor.getTool() === 'carbon';
     for (const [element, button] of elementButtons) {
       button.setAttribute('aria-pressed', String(elementTool && editor.getElement() === element));
+    }
+    const ringTool = editor.getTool() === 'ring';
+    for (const [size, button] of ringButtons) {
+      button.setAttribute('aria-pressed', String(ringTool && editor.getRingSize() === size));
     }
     for (const [tool, button] of toolButtons) {
       button.setAttribute('aria-pressed', String(editor.getTool() === tool));

@@ -35,7 +35,8 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-24 | v2.4 Ring infrastructure | same, §3.4 | done — `docs/progress-archive/i-24.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-24.md` |
 | I-25 | v2.5 Simple cycloalkanes | same, §3.5 | done — `docs/progress-archive/i-25.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-25.md` |
 | I-26 | v2.6 Substituted and unsaturated rings | same, §3.6 | done — `docs/progress-archive/i-26.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-26.md` |
-| I-27 | v2.7 Drawing and ordering rings | same, §3.7 | queued | — | — |
+| I-27a | v2.7a Ring templates and inner double-bond lines (split from I-27) | same, §3.7 | done — `docs/progress-archive/i-27a.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-27a.md` |
+| I-27b | v2.7b Ordenar dibujo for rings (split from I-27) | same, §3.7 | queued | high / — | — |
 | I-28 | v2.8 Benzene and hydrocarbon derivatives | same, §3.8 | queued | — | — |
 | I-29 | v2.9 Functional groups and seniority | same, §3.9 | queued | — | — |
 | I-30 | v2.10 Halogen derivatives | same, §3.10 | queued | — | — |
@@ -52,7 +53,8 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-26 done; I-27…I-41 queued in order;
+v2 plan (user-confirmed scope): I-21…I-26 and I-27a done; I-27b…I-41 queued in order
+(I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
 
@@ -87,15 +89,16 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-27 (v2 §3.7 drawing and ordering rings: editor,
-new `src/layout/rings.js`, `canonical.js`, `rightangle.js` — polygon templates,
-inner double-bond lines, Ordenar dibujo by strategy for rings with side
-chains; 90° view keeps falling back to the normal drawing for rings). Since
-I-26 every single carbocycle except benzene is named (ring always the parent,
-design §13.5); Ordenar dibujo still refuses all rings with "Todavía no sé
-ordenar el dibujo de un anillo…", which I-27 lifts. Spec: design §13.4 row
-I-27 and `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3
-item 7. Deploying (`npm run deploy`, `scripts/deploy.mjs`) stays a manual user step.
+Poll the inbox, then run I-27b (v2 §3.7 second half: Ordenar dibujo for a
+named single carbocycle — new `src/layout/rings.js`, `canonical.js`: ring as a
+regular polygon with a fixed locant-1 position and numbering direction, side
+chains outward as zigzags via the existing substituent layout, collision and
+crossing checks, one undo step, ring highlight and locant labels, the naming
+hint offered). It lifts the "Todavía no sé ordenar el dibujo de un anillo…"
+refusal (design §7, §13.3); benzene stays refused until I-28, RING_SYSTEM
+molecules keep the naming error; the 90° view keeps its ring fallback. Spec:
+design §13.4 row I-27 and `autoclaude/processed/215-rings-functional-groups-confirmed.md`
+§3 item 7. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -143,14 +146,16 @@ item 7. Deploying (`npm run deploy`, `scripts/deploy.mjs`) stays a manual user s
 - Rings: pure perception/classification `src/model/rings.js`; `canonicalKey()`
   (trees + monocycles) in `graph.js`; errors `CYCLE` / `RING_SYSTEM` (`ringKind`)
   in `validate.js`; SMILES ring closures in `smiles.js`.
+- Ring tool (I-27a): `ringPlan()` / `targetExists()` in `src/editor/editor.js`, polygon
+  geometry in `geometry.js`, inner double-bond lines in `render.js`, "Anillos" group in
+  `src/ui/toolbar.js` (`a` cycles sizes 3–8).
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-26)
+## Verification (last phase, I-27a)
 
-- `npm test` 0 (545 pass) · `npm run check` 0 (83 files) · `npm run e2e` 0
-  (159 pass, source + dist) · `npm run oracle -- --count 300 --seed 1` 0 (461
-  pass incl. 150 random monocycles, 0 adapter failures).
+- `npm test` 0 (562 pass) · `npm run check` 0 (85 files) · `npm run e2e` 0
+  (167 pass, source + dist).
 
 ## Open risks / deviations
 
@@ -256,10 +261,15 @@ item 7. Deploying (`npm run deploy`, `scripts/deploy.mjs`) stays a manual user s
   should-fix (option labels repeated after Z) fixed with a regression
   (`docs/progress-archive/i-26.md`).
 
+- I-27a: ring tool (3–8, `a`); a ring hung from a ring carbon is two rings →
+  `RING_SYSTEM`; ring double bonds draw the inner line toward the smallest ring.
+  Review should-fix (stale hover crash) fixed with a regression
+  (`docs/progress-archive/i-27a.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-25 `6a7d852`, pushed. I-26 committed and pushed right after this
+- I-26 `1f4fccf`, pushed. I-27a committed and pushed right after this
   checkpoint (see `git log`).

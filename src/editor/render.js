@@ -5,7 +5,8 @@
  * shown in every mode, with the bond strokes stopped short of them), the 90° view's `=` / `≡` strokes that
  * stop short of the labels (labelSize(), rightAngleSegments()), hover
  * highlight, selection, the drag previews (bond, chain with its "N C"
- * counter, marquee), the pan/zoom view
+ * counter, the Anillos ring, marquee), double bonds of a ring drawn with
+ * their second stroke inside the ring (ringBondCentres()), the pan/zoom view
  * transform, and the highlight API used by the stepper (`highlight`,
  * `showLocants`).
  *
@@ -16,6 +17,7 @@
  */
 
 import { neighbours } from '../model/molecule.js';
+import { perceiveRings } from '../model/rings.js';
 import { cross, LONE_LABEL_OFFSET } from './geometry.js';
 import { atomLabel, labelSize, LABEL_HEIGHT } from './labels.js';
 
@@ -387,21 +389,97 @@ export function symmetricSegments(a, b, order) {
 }
 
 /**
+ * Centre of the smallest ring through each ring bond (design.md §6.3): the
+ * centroid of that ring's atoms, where the inner stroke of a ring double bond
+ * goes. Ring bonds come from perceiveRings() (model/rings.js); the smallest
+ * ring through a bond a–b is a shortest path from b back to a over the other
+ * ring bonds (breadth-first, neighbours in ascending id order), so in a fused
+ * system each bond takes the centre of the smaller ring it belongs to.
+ *
+ * @param {object} mol - The molecule, with coordinates.
+ * @returns {Map<number, {x: number, y: number}>} Ring bond id → ring centre (acyclic bonds absent).
+ */
+export function ringBondCentres(mol) {
+  const centres = new Map();
+  const ringBonds = perceiveRings(mol).ringBonds;
+  if (ringBonds.length === 0) {
+    return centres;
+  }
+  const adj = new Map();
+  for (const id of ringBonds) {
+    const bond = mol.bonds.get(id);
+    for (const [from, to] of [[bond.a, bond.b], [bond.b, bond.a]]) {
+      if (!adj.has(from)) {
+        adj.set(from, []);
+      }
+      adj.get(from).push({ atom: to, bond: id });
+    }
+  }
+  for (const list of adj.values()) {
+    list.sort((p, q) => p.atom - q.atom);
+  }
+  for (const id of ringBonds) {
+    const bond = mol.bonds.get(id);
+    const previous = new Map([[bond.b, null]]);
+    const queue = [bond.b];
+    for (let i = 0; i < queue.length && !previous.has(bond.a); i += 1) {
+      for (const next of adj.get(queue[i])) {
+        if (next.bond !== id && !previous.has(next.atom)) {
+          previous.set(next.atom, queue[i]);
+          queue.push(next.atom);
+        }
+      }
+    }
+    if (!previous.has(bond.a)) {
+      continue; // Not closed through the other ring bonds (cannot happen for a ring bond).
+    }
+    let x = 0;
+    let y = 0;
+    let count = 0;
+    for (let atom = bond.a; atom !== null; atom = previous.get(atom)) {
+      x += mol.atoms.get(atom).x;
+      y += mol.atoms.get(atom).y;
+      count += 1;
+    }
+    centres.set(id, { x: x / count, y: y / count });
+  } // End of the loop that finds the smallest ring through each ring bond
+  return centres;
+} // End of function ringBondCentres()
+
+/**
+ * Side of a ring bond on which its ring's centre lies: where the inner
+ * stroke of a ring double bond goes (design.md §6.3). Pure.
+ *
+ * @param {{x: number, y: number}} a - First end of the bond.
+ * @param {{x: number, y: number}} b - Second end of the bond.
+ * @param {{x: number, y: number}} centre - The ring centre (ringBondCentres()).
+ * @returns {number} 1 or −1 (along the left normal of a→b, as in bondSegments()), 0 when the centre is on the bond line.
+ */
+export function ringInnerSide(a, b, centre) {
+  return Math.sign(Math.round(cross(a, b, centre) * 1e6));
+}
+
+/**
  * Strokes of a bond: one line for a single bond; for a double bond the main
- * line plus a shorter one offset toward the inside of the zigzag (two
- * centred lines when there is no inside, e.g. a terminal or linear bond);
- * three lines for a triple bond.
+ * line plus a shorter one offset toward the inside of its ring (for a ring
+ * bond, the centre of the smallest ring through it) or else of the zigzag
+ * (two centred lines when there is no inside, e.g. a terminal or linear
+ * bond); three lines for a triple bond.
  *
  * @param {object} mol - The molecule.
  * @param {number} bondId - The bond.
+ * @param {Map<number, {x: number, y: number}>} [centres] - ringBondCentres(mol), when the caller has
+ *   it already (the renderer computes it once per drawing); computed when omitted.
  * @returns {{x1: number, y1: number, x2: number, y2: number}[]} The strokes, main line first.
  */
-export function bondSegments(mol, bondId) {
+export function bondSegments(mol, bondId, centres) {
   const bond = mol.bonds.get(bondId);
   const a = mol.atoms.get(bond.a);
   const b = mol.atoms.get(bond.b);
   if (bond.order === 2) {
-    const side = innerSide(mol, bond);
+    const centre = (centres || ringBondCentres(mol)).get(bondId);
+    const ringSide = centre ? ringInnerSide(a, b, centre) : 0;
+    const side = ringSide !== 0 ? ringSide : innerSide(mol, bond);
     if (side !== 0) {
       return [shifted(a, b, 0, 0), shifted(a, b, side * BOND_SPACING, INNER_TRIM)];
     }
@@ -610,11 +688,12 @@ export function createRenderer(svg) {
   /**
    * Redraws the transient previews: a ghost bond (with its "N C" counter when
    * it has a `count`), a ghost zigzag chain with its "N C" counter, or the
-   * marquee rectangle.
+   * marquee rectangle, or the ghost ring of Anillos (its outline and the
+   * bond that hangs it from an atom).
    *
    * @param {object|null} preview - `{type: 'bond', from, to, order, count?, element?, fromDot?}` (`element`:
    *   symbol of the new end atom of an element-tool drag; `fromDot: false` when the drag starts on a
-   *   heteroatom, which gets no dot) or `{type: 'chain', points, count}`.
+   *   heteroatom, which gets no dot), `{type: 'chain', points, count}` or `{type: 'ring', points, bond}`.
    * @param {{x: number, y: number, width: number, height: number}|null} marquee - The marquee rectangle.
    * @returns {void}
    */
@@ -627,6 +706,18 @@ export function createRenderer(svg) {
       return;
     }
     const dots = showsCarbonDots(mode);
+    if (preview.type === 'ring') {
+      const pts = preview.points;
+      pts.forEach((p, i) => {
+        const q = pts[(i + 1) % pts.length];
+        line({ x1: p.x, y1: p.y, x2: q.x, y2: q.y }, 'preview-line preview-ring', layers.preview);
+      });
+      if (preview.bond) {
+        const { from, to } = preview.bond;
+        line({ x1: from.x, y1: from.y, x2: to.x, y2: to.y }, 'preview-line preview-ring', layers.preview);
+      }
+      return;
+    }
     if (preview.type === 'chain') {
       const pts = preview.points;
       for (let i = 1; i < pts.length; i += 1) {
@@ -683,6 +774,7 @@ export function createRenderer(svg) {
     svg.classList.toggle('is-right-angle', lastRightAngle);
     layers.bonds.replaceChildren();
     layers.atoms.replaceChildren();
+    const centres = lastRightAngle ? null : ringBondCentres(mol);
     for (const bond of mol.bonds.values()) {
       const group = el('g', { class: 'bond' }, layers.bonds);
       group.dataset.bondId = String(bond.id);
@@ -700,7 +792,7 @@ export function createRenderer(svg) {
         continue;
       }
       const [cutA, cutB] = bondEndCuts(mol, bond.id, mode);
-      for (const s of bondSegments(mol, bond.id)) {
+      for (const s of bondSegments(mol, bond.id, centres)) {
         line(cutA > 0 || cutB > 0 ? trimSegment(s, cutA, cutB) : s, 'bond-line', group);
       }
     } // End of the loop that draws the bonds
