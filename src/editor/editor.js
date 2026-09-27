@@ -50,9 +50,10 @@
 
 import {
   createMolecule, addAtom, removeAtom, addBond, removeBond, setBondOrder, bondBetween, bondOrderSum,
-  cloneMolecule, moleculeToJSON, moleculeFromJSON, CARBON_VALENCE,
+  cloneMolecule, moleculeToJSON, moleculeFromJSON,
 } from '../model/molecule.js';
-import { validateStructure, MESSAGES, MAX_CHAIN } from '../model/validate.js';
+import { validateStructure, valenceMessage, MESSAGES, MAX_CHAIN } from '../model/validate.js';
+import { valenceOf, ELEMENT_NAMES_ES } from '../model/elements.js';
 import { createHistory } from './history.js';
 import {
   nextAtomPosition, snapEndpoint, hitTest, distance, straightenLinearCentres, overlappingAtoms,
@@ -138,18 +139,50 @@ export function editKind(before, after) {
 } // End of function editKind()
 
 /**
- * Builds a refusal for atoms that would exceed carbon valence: "ya tiene 4
- * enlaces" when one of them is already full, the generic valence message
- * otherwise.
+ * Neutral valence of an atom of a molecule (elements.js), 0 when it is missing.
+ *
+ * @param {object} mol - The molecule.
+ * @param {number} atomId - The atom.
+ * @returns {number} The valence.
+ */
+function atomValence(mol, atomId) {
+  const atom = mol.atoms.get(atomId);
+  return atom ? valenceOf(atom.element) : 0;
+}
+
+/**
+ * Spanish "already full" message for an element: EDIT_MESSAGES.FULL for
+ * carbon, e.g. "Este oxígeno ya tiene 2 enlaces." otherwise.
+ *
+ * @param {string} element - The element symbol.
+ * @returns {string} The message.
+ */
+function fullMessage(element) {
+  if (element === 'C' || !ELEMENT_NAMES_ES[element]) {
+    return EDIT_MESSAGES.FULL;
+  }
+  const max = valenceOf(element);
+  return `Este ${ELEMENT_NAMES_ES[element]} ya tiene ${max} ${max === 1 ? 'enlace' : 'enlaces'}.`;
+}
+
+/**
+ * Builds a refusal for atoms that would exceed their valence: "ya tiene N
+ * enlaces" when one of them is already full, the element's valence message
+ * otherwise (the carbon messages are unchanged).
  *
  * @param {object} mol - The molecule before the edit.
  * @param {number[]} atomIds - The atoms that would be over-bonded.
  * @returns {{message: string, atoms: number[]}} The refusal.
  */
 function valenceRefusal(mol, atomIds) {
-  const full = atomIds.some((id) => mol.atoms.has(id) && bondOrderSum(mol, id) >= CARBON_VALENCE);
-  return { message: full ? EDIT_MESSAGES.FULL : EDIT_MESSAGES.VALENCE, atoms: atomIds };
-}
+  const full = atomIds.find((id) => mol.atoms.has(id) && bondOrderSum(mol, id) >= atomValence(mol, id));
+  if (full !== undefined) {
+    return { message: fullMessage(mol.atoms.get(full).element), atoms: atomIds };
+  }
+  const first = atomIds.find((id) => mol.atoms.has(id));
+  const message = first === undefined ? EDIT_MESSAGES.VALENCE : valenceMessage(mol.atoms.get(first).element);
+  return { message, atoms: atomIds };
+} // End of function valenceRefusal()
 
 /**
  * Checks that adding `extra` bond order to each atom keeps it within valence.
@@ -160,7 +193,7 @@ function valenceRefusal(mol, atomIds) {
  * @returns {{message: string, atoms: number[]}|null} A refusal, or null when there is room.
  */
 function checkRoom(mol, atomIds, extra) {
-  const over = atomIds.filter((id) => bondOrderSum(mol, id) + extra > CARBON_VALENCE);
+  const over = atomIds.filter((id) => bondOrderSum(mol, id) + extra > atomValence(mol, id));
   return over.length > 0 ? valenceRefusal(mol, over) : null;
 }
 

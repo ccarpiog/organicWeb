@@ -3,7 +3,9 @@
  * JSON serialisation (design.md §3.1).
  *
  * A molecule is a plain object `{ atoms, bonds, nextAtomId, nextBondId }`:
- * - `atoms: Map<number, Atom>` with `Atom = { id, element: 'C', x, y }`;
+ * - `atoms: Map<number, Atom>` with `Atom = { id, element, x, y }`, where
+ *   `element` is one of C, O, N, F, Cl, Br, I (elements.js) — always a
+ *   neutral atom in its usual valence, never charged or a radical;
  * - `bonds: Map<number, Bond>` with `Bond = { id, a, b, order: 1|2|3 }`;
  * - ids are positive integers handed out by incrementing counters and never
  *   reused, so they stay stable across undo/redo and redraw.
@@ -18,12 +20,19 @@
  */
 
 import { validateStructure, validationError, isId, isCounter, describeValue, MAX_ID } from './validate.js';
+import { VALENCES, isSupportedElement, valenceOf } from './elements.js';
 
 /** Current JSON format version written by moleculeToJSON(). */
 export const JSON_VERSION = 1;
 
 /** Maximum number of bonds a carbon may have (sum of bond orders). */
-export const CARBON_VALENCE = 4;
+export const CARBON_VALENCE = VALENCES.C;
+
+/** The only keys a serialised atom may carry (anything else, e.g. `charge`, is corrupt data). */
+const ATOM_KEYS = Object.freeze(['id', 'element', 'x', 'y']);
+
+/** The only keys a serialised bond may carry. */
+const BOND_KEYS = Object.freeze(['id', 'a', 'b', 'order']);
 
 /** Unicode subscript digits, indexed by digit value. */
 const SUBSCRIPT_DIGITS = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
@@ -71,18 +80,22 @@ function takeId(mol, counter, used, caller) {
 }
 
 /**
- * Adds a carbon atom.
+ * Adds an atom (a carbon unless another supported element is given).
  *
  * @param {object} mol - The molecule (mutated).
  * @param {{x?: number, y?: number}} [position] - Optional editor coordinates (default 0, 0).
+ * @param {string} [element] - Element symbol from elements.js (default 'C').
  * @returns {number} The new atom id.
- * @throws {Error} If the id counter is exhausted or points at an occupied id.
+ * @throws {Error} If the element is unsupported, or the id counter is exhausted or points at an occupied id.
  */
-export function addAtom(mol, position = {}) {
+export function addAtom(mol, position = {}, element = 'C') {
+  if (!isSupportedElement(element)) {
+    throw new Error(`addAtom: unsupported element ${describeValue(element)}`);
+  }
   const id = takeId(mol, 'nextAtomId', mol.atoms, 'addAtom');
   const x = Number.isFinite(position.x) ? position.x : 0;
   const y = Number.isFinite(position.y) ? position.y : 0;
-  mol.atoms.set(id, { id, element: 'C', x, y });
+  mol.atoms.set(id, { id, element, x, y });
   return id;
 }
 
@@ -229,16 +242,18 @@ export function bondOrderSum(mol, atomId) {
 }
 
 /**
- * Number of implicit hydrogens on a carbon: 4 − Σ bond orders. Clamped at 0
- * so an over-bonded carbon being edited never yields a negative count (a
- * validated molecule never needs the clamp).
+ * Number of implicit hydrogens on an atom: its neutral valence (elements.js:
+ * C 4, N 3, O 2, halogens 1) − Σ bond orders. Clamped at 0 so an over-bonded
+ * atom being edited never yields a negative count (a validated molecule never
+ * needs the clamp); an unsupported element gets no hydrogens.
  *
  * @param {object} mol - The molecule.
  * @param {number} atomId - The atom.
  * @returns {number} Implicit hydrogen count.
  */
 export function implicitH(mol, atomId) {
-  return Math.max(0, CARBON_VALENCE - bondOrderSum(mol, atomId));
+  const atom = mol.atoms.get(atomId);
+  return Math.max(0, valenceOf(atom && atom.element) - bondOrderSum(mol, atomId));
 }
 
 /**
@@ -263,7 +278,8 @@ export function elementCounts(mol) {
 /**
  * Molecular formula in Hill order with ASCII digits: C first, then H, then
  * the other elements alphabetically (alphabetical throughout when there is no
- * carbon); a count of 1 is omitted. Examples: `CH4`, `C7H16`.
+ * carbon); a count of 1 is omitted. Examples: `CH4`, `C7H16`, `C2H6O`,
+ * `CH3Cl`, `C2H4BrCl`, `H2O`.
  *
  * @param {object} mol - The molecule.
  * @returns {string} The formula; empty string for an empty molecule.
@@ -350,7 +366,24 @@ function corrupt(detail) {
 }
 
 /**
+ * Finds the first own key of a serialised record that is not in the allowed
+ * list.
+ *
+ * @param {object} record - A serialised atom or bond.
+ * @param {readonly string[]} allowed - The keys it may carry.
+ * @returns {string|null} The first unexpected key, or null when there is none.
+ */
+function unexpectedKey(record, allowed) {
+  const extra = Object.keys(record).find((key) => !allowed.includes(key));
+  return extra === undefined ? null : extra;
+}
+
+/**
  * Restores a molecule from `moleculeToJSON()` output (object or JSON string).
+ * Atoms must be one of the supported elements (elements.js) and carry only
+ * `id`, `element`, `x`, `y`; bonds only `id`, `a`, `b`, `order`. A missing
+ * `element`, an unknown one, or any extra field such as `charge` or
+ * `radical` is corrupt data (the model has no charges or radicals).
  * Never throws (a catch-all guards the whole boundary): corrupt input yields `{ok: false, error}` with code `INVALID`
  * (or `VALENCE` when the data is well-formed but chemically impossible), so a
  * damaged autosave can simply start an empty drawing. The restored graph has
@@ -399,6 +432,14 @@ function restoreMolecule(data) {
     if (atom === null || typeof atom !== 'object' || !isId(atom.id)) {
       return corrupt('atom without a valid id');
     }
+    const extra = unexpectedKey(atom, ATOM_KEYS);
+    if (extra !== null) {
+      // Charges, radicals, explicit H counts… are not part of the model.
+      return corrupt(`atom ${atom.id} has unsupported field ${describeValue(extra)}`);
+    }
+    if (!isSupportedElement(atom.element)) {
+      return corrupt(`atom ${atom.id} has unsupported element ${describeValue(atom.element)}`);
+    }
     if (mol.atoms.has(atom.id)) {
       return corrupt(`duplicate atom id ${atom.id}`);
     }
@@ -415,6 +456,10 @@ function restoreMolecule(data) {
     }
     if (mol.bonds.has(bond.id)) {
       return corrupt(`duplicate bond id ${bond.id}`);
+    }
+    const extra = unexpectedKey(bond, BOND_KEYS);
+    if (extra !== null) {
+      return corrupt(`bond ${bond.id} has unsupported field ${describeValue(extra)}`);
     }
     mol.bonds.set(bond.id, { id: bond.id, a: bond.a, b: bond.b, order: bond.order });
     maxBond = Math.max(maxBond, bond.id);

@@ -29,7 +29,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-19 | Undo after "Ordenar dibujo" (bug) | `autoclaude/processed/190-undo-ordenar-dibujo.md` | done — `docs/progress-archive/i-19.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-19.md` |
 | I-20 | `npm run deploy` to Fastmail Files + docs | `autoclaude/processed/200-deploy-fastmail.md` | done — `docs/progress-archive/i-20.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-20.md` |
 
-| I-21 | v2.1 Multi-element model (+ v2 plan into design.md, scope lift in CLAUDE.md) | `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.1 | queued | — | — |
+| I-21 | v2.1 Multi-element model (+ v2 plan into design.md, scope lift in CLAUDE.md) | `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.1 | done — `docs/progress-archive/i-21.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-21.md` |
 | I-22 | v2.2 Multi-element SMILES and oracle | same, §3.2 | queued | — | — |
 | I-23 | v2.3 Element palette | same, §3.3 | queued | — | — |
 | I-24 | v2.4 Ring infrastructure | same, §3.4 | queued | — | — |
@@ -52,8 +52,9 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-I-21…I-41 (v2 plan, user-confirmed scope) are queued in order; phases may be
-split as they are selected.
+v2 plan (user-confirmed scope): I-21 done; I-22…I-41 queued in order;
+phases may be split as they are selected. The v2 plan now lives in
+`docs/design.md` §13.
 
 ## Inbox
 
@@ -86,9 +87,10 @@ split as they are selected.
 
 ## Next action
 
-Run I-21 (v2 §3.1 multi-element model). It also copies the v2 plan into
-`docs/design.md` as a new section with the user's final §4 decisions and
-lifts the "acyclic hydrocarbons only" line in `CLAUDE.md`. Deploying
+Poll the inbox, then run I-22 (v2 §3.2 multi-element SMILES and oracle:
+`src/model/smiles.js`, `scripts/oracle/`; `writeSmiles()` currently throws on
+heteroatoms — I-22 must make it write them). Spec: design §13 and
+`autoclaude/processed/215-rings-functional-groups-confirmed.md`. Deploying
 (`npm run deploy`, defined in `scripts/deploy.mjs`) stays a manual user step —
 the loop never runs it.
 
@@ -133,12 +135,10 @@ the loop never runs it.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-20)
+## Verification (last phase, I-21)
 
-- `npm test` 0 (424 pass) · `npm run check` 0 · `npm run e2e` 0 (127 pass,
-  source + dist; run before the review fixes, which touch no app code) ·
-  `node scripts/deploy.mjs --dry-run --force --skip-checks` 0. Real deploy
-  not run. Oracle not rerun (naming engine untouched).
+- `npm test` 0 (434 pass) · `npm run check` 0 (74 files) · `npm run e2e` 0
+  (127 pass, source + dist). Oracle not rerun (naming engine untouched).
 
 ## Open risks / deviations
 
@@ -213,10 +213,15 @@ the loop never runs it.
   should-fix, fixed with regressions); `--dry-run` never reads the Keychain;
   non-2xx errors omit the response body (`docs/progress-archive/i-20.md`).
 
+- I-21: element table `src/model/elements.js`; heteroatom molecules get the
+  `HETEROATOM` "aún no sé nombrar" error; `writeSmiles()` throws on
+  heteroatoms until I-22; heteroatom labels and "carbono" wording in some
+  editor refusals wait for I-23 (`docs/progress-archive/i-21.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-19 `c7d61a2`, pushed. I-20 committed and pushed right after this
-  checkpoint (see `git log`).
+- I-20 `8a0cd57`, pushed; triage `498e8dd`. I-21 committed and pushed right
+  after this checkpoint (see `git log`).

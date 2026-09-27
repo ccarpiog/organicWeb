@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { bundleModules } from '../../scripts/build.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const MODEL_FILES = ['molecule.js', 'graph.js', 'validate.js', 'smiles.js'];
+const MODEL_FILES = ['elements.js', 'molecule.js', 'graph.js', 'validate.js', 'smiles.js'];
 
 test('model modules bundle and run in a classic script', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'organic-model-'));

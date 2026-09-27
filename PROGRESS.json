@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T16:56:33Z",
+  "updated": "2026-09-27T17:59:57Z",
   "plan": "PLAN.md",
-  "goal": "Build a Spanish ESO web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with editor refinements from the inbox.",
+  "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
     {
       "id": "I-1",
@@ -183,6 +183,135 @@
       "risk": "routine",
       "review": "Codex ship-with-fixes, fixed — docs/reviews/I-20.md",
       "narrative": "docs/progress-archive/i-20.md"
+    },
+    {
+      "id": "I-21",
+      "title": "v2.1 Multi-element model",
+      "status": "done",
+      "summary": "Extends atoms to C, O, N, F, Cl, Br, I with central valences and records the v2 plan in the design doc.",
+      "risk": "high",
+      "review": "docs/reviews/I-21.md",
+      "narrative": "docs/progress-archive/i-21.md"
+    },
+    {
+      "id": "I-22",
+      "title": "v2.2 Multi-element SMILES and oracle",
+      "status": "queued",
+      "summary": "v2 plan phase 2: multi-element smiles and oracle (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-23",
+      "title": "v2.3 Element palette",
+      "status": "queued",
+      "summary": "v2 plan phase 3: element palette (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-24",
+      "title": "v2.4 Ring infrastructure",
+      "status": "queued",
+      "summary": "v2 plan phase 4: ring infrastructure (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-25",
+      "title": "v2.5 Simple cycloalkanes",
+      "status": "queued",
+      "summary": "v2 plan phase 5: simple cycloalkanes (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-26",
+      "title": "v2.6 Substituted and unsaturated rings",
+      "status": "queued",
+      "summary": "v2 plan phase 6: substituted and unsaturated rings (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-27",
+      "title": "v2.7 Drawing and ordering rings",
+      "status": "queued",
+      "summary": "v2 plan phase 7: drawing and ordering rings (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-28",
+      "title": "v2.8 Benzene and hydrocarbon derivatives",
+      "status": "queued",
+      "summary": "v2 plan phase 8: benzene and hydrocarbon derivatives (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-29",
+      "title": "v2.9 Functional groups and seniority",
+      "status": "queued",
+      "summary": "v2 plan phase 9: functional groups and seniority (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-30",
+      "title": "v2.10 Halogen derivatives",
+      "status": "queued",
+      "summary": "v2 plan phase 10: halogen derivatives (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-31",
+      "title": "v2.11 Alcohols",
+      "status": "queued",
+      "summary": "v2 plan phase 11: alcohols (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-32",
+      "title": "v2.12 Aldehydes and ketones",
+      "status": "queued",
+      "summary": "v2 plan phase 12: aldehydes and ketones (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-33",
+      "title": "v2.13 Carboxylic acids",
+      "status": "queued",
+      "summary": "v2 plan phase 13: carboxylic acids (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-34",
+      "title": "v2.14 Ethers",
+      "status": "queued",
+      "summary": "v2 plan phase 14: ethers (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-35",
+      "title": "v2.15 Esters",
+      "status": "queued",
+      "summary": "v2 plan phase 15: esters (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-36",
+      "title": "v2.16 Amines",
+      "status": "queued",
+      "summary": "v2 plan phase 16: amines (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-37",
+      "title": "v2.17 Amides",
+      "status": "queued",
+      "summary": "v2 plan phase 17: amides (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-38",
+      "title": "v2.18 Nitriles",
+      "status": "queued",
+      "summary": "v2 plan phase 18: nitriles (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-39",
+      "title": "v2.19 Functional combinations",
+      "status": "queued",
+      "summary": "v2 plan phase 19: functional combinations (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-40",
+      "title": "v2.20 Functions on rings",
+      "status": "queued",
+      "summary": "v2 plan phase 20: functions on rings (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+    },
+    {
+      "id": "I-41",
+      "title": "v2.21 Condensed formulas and wrap-up",
+      "status": "queued",
+      "summary": "v2 plan phase 21: condensed formulas and wrap-up (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
     }
   ]
 }

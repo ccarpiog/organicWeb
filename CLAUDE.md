@@ -8,7 +8,11 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   unsaturation; `hex-2-eno` style). Full rules and decisions: `docs/design.md`.
 - User decision: the `–CH(CH₃)₂` group is named `isopropil` by default; the
   app also shows the `propan-2-il` (IUPAC preferred) and `1-metiletil` forms.
-- v1 scope: acyclic hydrocarbons only (no rings, benzene, heteroatoms, stereo).
+- Scope: v1 (acyclic hydrocarbons) is done; v2 is in progress, adding rings and
+  functional groups (ESO + 1º Bachillerato) per `docs/design.md` §13, phases
+  I-21…I-41. Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts,
+  heterocycles, polycycles, orto/meta/para. Systematic name first;
+  traditional names go under "Otras formas válidas".
 - Tech: vanilla JavaScript ES modules, no framework, no runtime dependencies.
   Tests: `npm test` (`node --test`), static checks: `npm run check`,
   end-to-end: `npm run e2e` (Playwright; runs every spec on the dev server

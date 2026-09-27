@@ -21,6 +21,7 @@ names the sections of this file it implements. The plan was reviewed by Codex
 | Nomenclature | **IUPAC 2013 recommendations, preferred IUPAC names (PINs)**, Spanish adaptation. Longest chain first, then unsaturation. Locants immediately before the part they refer to: `hex-2-eno`, `buta-1,3-dieno`. |
 | v1 scope | **Acyclic hydrocarbons only**: alkanes, alkenes, alkynes, any branching, single/double/triple bonds, branched, unsaturated and doubly-attached (`-iliden`) substituents. |
 | Out of scope v1 | Rings, benzene, heteroatoms, stereochemistry (E/Z, R/S), charges, radicals, name→structure. The editor can draw a ring; naming then says kindly that it is not supported yet. |
+| v2 scope (in progress) | Rings and functional groups, level ESO + 1º Bachillerato — plan, phases I-21…I-41 and the user's final decisions in §13. Until a family's phase lands, a valid molecule of that family gets a kind "not nameable yet" message. |
 | Platform | Static web app, no backend, works offline. Desktop + tablet (pointer events, touch). |
 | Tech | Vanilla JavaScript ES modules, no framework, no build step for development. JSDoc on every function. Unit tests with Node's built-in runner (`node --test`), zero runtime dependencies. Playwright as a dev dependency for end-to-end tests. |
 | Distribution | `npm run build` produces `dist/index.html`, one self-contained file (JS + CSS inlined) that opens from `file://` and can be put on any static host. |
@@ -155,13 +156,24 @@ for `alert`/`confirm`/`prompt` in app code), `oracle` (§8).
 
 - `Molecule { atoms: Map<id, Atom>, bonds: Map<id, Bond> }`; ids are
   incrementing integers, stable across undo/redo and redraw.
-- `Atom { id, element: 'C', x, y }`. Coordinates matter only to the editor
-  and layout; **the naming engine must never read them.**
+- `Atom { id, element, x, y }` with `element` ∈ C, O, N, F, Cl, Br, I
+  (`model/elements.js`, since I-21; carbon is the default). Coordinates
+  matter only to the editor and layout; **the naming engine must never read
+  them.**
 - `Bond { id, a, b, order: 1|2|3 }`.
-- `implicitH(atom) = 4 − Σ order` (never negative: validation guarantees it).
-- Derived: molecular formula `CₙHₘ`, neighbours, connected components,
+- Neutral valences live in ONE table (`VALENCES` in `model/elements.js`):
+  C 4, N 3, O 2, F/Cl/Br/I 1. `implicitH(atom) = valence(element) − Σ order`
+  (never negative: validation guarantees it). No charges, radicals, isotopes
+  or explicit H counts exist in the model.
+- Derived: molecular formula in Hill order (`C₂H₆O`, `CH₃Cl`; alphabetical
+  when there is no carbon: `H₂O`, `ClH`), neighbours, connected components,
   `hasCycle()`, `isEmpty()`.
-- JSON serialisation (autosave, undo snapshots).
+- JSON serialisation (autosave, undo snapshots), unchanged format (version 1):
+  old carbon-only saves restore unchanged. Restoration rejects (as `INVALID`)
+  a missing or unknown element and any atom or bond field beyond
+  `id, element, x, y` / `id, a, b, order` (e.g. `charge`, `radical`,
+  `hCount`, `aromatic`), so charges and radicals are never accepted by
+  accident.
 - `smiles.js`: parses `C`, `=`, `#` (and an optional explicit `-`),
   parenthesised branches; rejects ring digits, other elements, aromatic
   atoms, brackets, dots, stereo marks, dangling bonds and unbalanced or empty
@@ -174,18 +186,26 @@ for `alert`/`confirm`/`prompt` in app code), `oracle` (§8).
 `validate(mol)` (`validateStructure` + `validateForNaming` in
 `model/validate.js`) checks: atom and bond ids unique; bond endpoints exist; no
 self-bonds; no duplicate bonds between the same pair; orders ∈ {1,2,3};
-carbon valence ≤ 4; then, for naming only: non-empty, connected, acyclic,
-size caps. The same checks guard editor transactions, JSON restoration
-(corrupt autosave → start empty, no crash) and SMILES input. Errors are codes
-with Spanish messages:
+supported elements only, with no charge/radical fields; Σ order ≤ the
+element's neutral valence; then, for naming only: non-empty, connected,
+acyclic, size caps (≤ 60 carbons `MAX_CARBONS`, ≤ 80 heavy atoms
+`MAX_HEAVY_ATOMS`), carbon only (`HETEROATOM`), parent chain ≤ 30
+(`MAX_CHAIN`). The same checks guard editor transactions, JSON restoration
+(corrupt autosave → start empty, no crash) and SMILES input.
+
+Two kinds of naming failure are kept apart: an **invalid structure**
+(`INVALID`, `VALENCE`: the drawing itself is wrong) and a **valid molecule
+that cannot be named yet** (`CYCLE`, `HETEROATOM`; `isNotNameableYet()`).
+Errors are codes with Spanish messages:
 
 | Code | Message |
 |---|---|
 | `EMPTY` | Dibuja primero una molécula. |
 | `DISCONNECTED` | Hay piezas sueltas: todas las partes deben estar unidas. |
 | `CYCLE` | Has dibujado un anillo. De momento solo sé nombrar cadenas abiertas. |
-| `VALENCE` | Este carbono tendría más de 4 enlaces. |
-| `TOO_BIG` | La molécula es demasiado grande (máximo 60 carbonos, cadena de 30). |
+| `VALENCE` | Este carbono tendría más de 4 enlaces. — per element for the lowest-id offending atom: Este oxígeno tendría más de 2 enlaces. / Este nitrógeno tendría más de 3 enlaces. / Este cloro (flúor, bromo, yodo) tendría más de 1 enlace. (The editor's "full" refusal likewise: Este oxígeno ya tiene 2 enlaces.) |
+| `TOO_BIG` | La molécula es demasiado grande (máximo 60 carbonos, cadena de 30). — heavy-atom cap: La molécula es demasiado grande (máximo 80 átomos sin contar los hidrógenos). |
+| `HETEROATOM` | Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos. (valid, not nameable yet; `atoms` lists the heteroatoms) |
 | `INVALID` | Los datos de la molécula están dañados. Empieza un dibujo nuevo. (internal/corrupt data) |
 
 ---
@@ -775,7 +795,101 @@ Zero-padded so alphabetical order = execution order.
 | 11 | `110-redraw-examples.md` | §7 redraw + Ejemplos gallery. |
 | 12 | `120-polish-release.md` | Ayuda, glossary, accessibility, responsive, `dist/index.html`, README, final acceptance. |
 
+The v1 phases above were delivered as I-1…I-20 (see the progress archive).
+The v2 phases I-21…I-41 are listed in §13.4.
+
 ## 12. Future (not v1)
 
-Rings and benzene, E/Z, quiz mode ("¿Cómo se llama?" in reverse:
-name → draw it), functional groups.
+Rings, benzene and functional groups are now planned as v2 (§13). Still
+future: E/Z, quiz mode ("¿Cómo se llama?" in reverse: name → draw it).
+
+---
+
+## 13. v2 — rings and functional groups
+
+Source: inbox item `autoclaude/processed/215-rings-functional-groups-confirmed.md`
+(plan drafted with a Codex review of the codebase). v2 lifts the v1 limit
+"acyclic hydrocarbons only". Every v2 phase keeps all existing hydrocarbon
+behaviour, fixtures, snapshots and e2e green; unsupported combinations return
+a clear Spanish "not nameable yet" message, never a crash or a wrong name.
+
+### 13.1 User decisions (FINAL, 2026-09-27)
+
+These answer the plan's open questions and are final, not provisional:
+
+| Topic | Decision |
+|---|---|
+| Level | **ESO + 1º Bachillerato** — every family in the phase list below. |
+| Displayed name | **Systematic IUPAC name first** (propanona, ácido etanoico, metilbenceno). Traditional names (acetona, ácido acético, tolueno…) are listed under "Otras formas válidas", as `isopropil` is today. |
+| Benzene | **Monosubstituted derivatives only**; no orto/meta/para. |
+| Out of scope | Stereochemistry (E/Z, cis/trans, R/S), charges, salts, heterocycles, polycycles (fused, bridged, spiro). |
+
+Still to review per phase: new tables and exceptions need reviewed fixtures
+before being presented as validated IUPAC 2013 coverage.
+
+### 13.2 Model and data changes
+
+- **Multi-element atoms** (I-21, done): `Atom.element` ∈ C, O, N, F, Cl,
+  Br, I; neutral valences C 4, N 3, O 2, halogens 1 in one table
+  (`model/elements.js`); implicit H per element; Hill formula; JSON, autosave,
+  undo and ids backward compatible; element-specific valence errors; charges,
+  radicals and unknown elements rejected on restore; "invalid structure" vs
+  "valid but not nameable yet" (§3.2); separate caps on carbons (60), heavy
+  atoms (80) and parent size (30).
+- **Ring perception**, not just detection: members, closure bonds, cyclic
+  components and attachment points. Start with a single carbocycle; refuse
+  fused, bridged, spiro and heterocyclic systems with explicit messages.
+- **`NameStructure` and trace** gain parent kind, functional groups,
+  principal group, suffixes, prefixes and locants on heteroatoms. The engine
+  stays pure; the explanation is derived only from the result.
+
+### 13.3 v1 assumptions that break
+
+- `parent.js` enumerates leaf-to-leaf paths: fails on rings and must be
+  restricted to the relevant carbon skeleton for functional compounds.
+- "Longest chain first" can no longer universally precede principal-group
+  selection.
+- Substituents are no longer always hydrocarbon subtrees; the ban on triple
+  bonds outside the chain no longer holds universally (nitriles).
+- `buildChainStructure()` requires n−1 bonds; a ring also needs the closure.
+- SMILES, valence messages and labels assume carbon (valence messages and H
+  counts fixed in I-21; the SMILES writer refuses heteroatoms until I-22).
+- Tree keys include elements but do not support cycles. The OPSIN adapter
+  parses broad syntax and then reduces it to a carbon tree.
+- The 90° view and "Ordenar dibujo" assume branched chains; they need
+  specific strategies and a safe fallback to the normal drawing.
+- The explanation rebuilds counts from hydrocarbon structures: it must
+  receive composition and groups from the engine.
+
+### 13.4 Phases
+
+Conventions: **N** = `src/naming/`, **E** = `src/explain/explain.js`.
+Common validation per phase: justified fixtures, negative cases, invariance
+under ids/order/coordinates, explanation snapshots, relevant editor tests;
+`npm test`, `npm run check`, `npm run e2e` (dev server and `file://`). OPSIN
+(when available) checks structure through the English lexicon; it never
+certifies IUPAC preference or Spanish spelling.
+
+| Id | Phase | Content | Key tests |
+|---|---|---|---|
+| I-21 | Multi-element model | `model/{elements,molecule,validate}.js`, autosave, contracts: neutral valences, element-specific errors; new nomenclature still blocked (`HETEROATOM`). | H counts, formulas, old saves, corruption; never accept charges or radicals. |
+| I-22 | Multi-element SMILES and oracle | `model/smiles.js`, `scripts/oracle/{smiles-full,compare,generate}.mjs`: O/N/halogens, keep all heavy atoms; no visible change. | Round trips, same-formula isomers, explicit H; tell adapter failures apart. |
+| I-23 | Element palette | `editor/{editor,render,geometry}.js`, `ui/toolbar.js`, Ayuda: select, place and change C/O/N/F/Cl/Br/I; heteroatoms always labelled; C=O and C≡N with the existing bond tools. | Valence, keyboard/touch, one transaction per gesture; no accidental element changes. |
+| I-24 | Ring infrastructure | New `model/rings.js`, `graph.js`, SMILES, oracle: ring closures in SMILES, structural identity for monocycles, scope messages. | Rotations, invalid closures, polycycles; no infinite recursion, no formula-only comparisons. |
+| I-25 | Simple cycloalkanes | New `N/rings.js`, `structure.js`, renderer, both lexicons, E: `ciclohexano`; explain the closure and carbon count. | Supported sizes, formulas; closure bond highlighted. |
+| I-26 | Substituted and unsaturated rings | `N/rings.js`, `parent.js`, `numbering.js`, `substituent.js`, E: every start/direction; unsaturation and substituent locants; explicit ring-vs-chain choice per the 2013 rules. | Symmetry, dienes, side chains; old school rules not carried over automatically. |
+| I-27 | Drawing and ordering rings | Editor, new `layout/rings.js`, `canonical.js`, `rightangle.js`: polygon templates, inner double-bond lines, Ordenar dibujo by strategy; 90° view falls back to the normal drawing for rings. | Collisions, undo, locants; topology and editability kept. |
+| I-28 | Benzene and hydrocarbon derivatives | New `N/aromatic.js`, lexicons, editor, E, OPSIN adapter: benzene, monosubstituted alkylbenzenes, fenilo; hexagon template with alternating bonds; explain equivalent Kekulé drawings. | Both Kekulé forms; aromaticity never inferred from any alternation. |
+| I-29 | Functional groups and seniority | New `N/groups.js`, `seniority.js`; selection, structure, E: detect groups without overlaps; steps "Reconoce los grupos", "Elige el principal", "Sufijo o prefijo". | Acid/ester/amide vs alcohol/ketone; detection does not yet enable naming. |
+| I-30 | Halogen derivatives | Prefixes fluoro-, cloro-, bromo-, yodo-; multipliers and alphabetical order; never a suffix. | Several halogens and ties; ordering of translated prefixes. |
+| I-31 | Alcohols | `etanol`, `propan-2-ol`, diols; maximise suffix groups, lowest locants; show OH. | Branched and unsaturated; alcohol vs phenol vs carboxylic OH. |
+| I-32 | Aldehydes and ketones | `etanal`, `propanona` (acetona as "Otras formas válidas"); aldehyde carbon in the chain; explain -al/-ona. | Terminal/internal, several carbonyls; C=O is not a hydrocarbon unsaturation. |
+| I-33 | Carboxylic acids | `ácido etanoico` (ácido acético as alternative), simple diacids; count the carboxyl carbon; COOH as a group. | Branching, numbering; salts and derivatives excluded. |
+| I-34 | Ethers | Alkoxy nomenclature `metoxietano`; explicit rules for the parent side; highlight both sides of the O. | Symmetric/asymmetric, branched; a carbon chain never runs through O. |
+| I-35 | Esters | `etanoato de metilo`; acid part and O-bound group explained separately. | Branched alkyls; Spanish and English assemble in different orders. |
+| I-36 | Amines | Simple primary/secondary/tertiary; -amina and N-/N,N- locants; labels NH₂/NH/N. | N-substitution; ammonium and heterocycles excluded. |
+| I-37 | Amides | `etanamida`, simple N-substitution; C(=O)N as one unit. | N-substituted; never ketone + amine. |
+| I-38 | Nitriles | `etanonitrilo`; C of C≡N in the chain, N not counted. | Branched, simple dinitriles; drop the old "no triple bond outside the chain" assertion. |
+| I-39 | Functional combinations | Seniority ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina; ethers/halogens as prefixes; hidroxi-, oxo-, amino-, ciano-. | Pair matrix and counter-examples; only covered combinations enabled. |
+| I-40 | Functions on rings | Cycloalkanols, cycloalkanones, fenol and selected monosubstituted derivatives; -carboxílico, -carbaldehído, -carbonitrilo. | Counting and numbering; small aromatic functional catalogue. |
+| I-41 | Condensed formulas and wrap-up | Render, both layouts, Ayuda, examples, docs: OH per atom; CHO/COOH as optional abbreviations mapped to all their atoms; 90° view for acyclic heteroatoms. | Selection, highlight, collisions, accessibility; abbreviations never change the graph. |

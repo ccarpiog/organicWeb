@@ -34,6 +34,8 @@ test('exact Spanish messages from the design table', () => {
     CYCLE: 'Has dibujado un anillo. De momento solo sé nombrar cadenas abiertas.',
     VALENCE: 'Este carbono tendría más de 4 enlaces.',
     TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
+    HETEROATOM: 'Esta molécula tiene átomos que no son carbono ni hidrógeno. '
+      + 'Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos.',
     INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
   });
 });
@@ -108,7 +110,7 @@ test('INVALID: ids, endpoints, self-bonds, duplicate bonds, orders, elements', (
     (() => { const m = parseSmiles('CC'); m.atoms.set(9, m.atoms.get(1)); return m; })(), // id ≠ key (duplicate id)
     (() => { const m = parseSmiles('CC'); m.atoms.set(3, null); return m; })(),
     (() => { const m = parseSmiles('CC'); m.atoms.set(-1, { id: -1, element: 'C' }); return m; })(),
-    (() => { const m = parseSmiles('CC'); m.atoms.get(2).element = 'O'; return m; })(),
+    (() => { const m = parseSmiles('CC'); m.atoms.get(2).element = 'Si'; return m; })(),
     (() => { const m = parseSmiles('CC'); m.bonds.set(5, m.bonds.get(1)); return m; })(), // bond id ≠ key
     (() => { const m = parseSmiles('CC'); m.bonds.set(2, 'bond'); return m; })(),
     (() => { const m = parseSmiles('CC'); m.bonds.get(1).b = 7; return m; })(),

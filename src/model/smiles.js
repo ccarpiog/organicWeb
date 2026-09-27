@@ -157,13 +157,18 @@ export function parseSmiles(smiles) {
  * branches in parentheses and the last neighbour continuing the main chain;
  * components are joined with ".". Coordinates are ignored.
  *
- * @param {object} mol - The molecule; must be acyclic.
+ * @param {object} mol - The molecule; must be acyclic and carbon-only.
  * @returns {string} The SMILES string; empty for an empty molecule.
- * @throws {Error} If the molecule contains a cycle.
+ * @throws {Error} If the molecule contains a cycle or an atom other than carbon
+ *   (never written silently as C; heteroatom SMILES is phase I-22).
  */
 export function writeSmiles(mol) {
   if (hasCycle(mol)) {
     throw new Error('writeSmiles: cyclic molecules are not supported');
+  }
+  const other = [...mol.atoms.values()].find((atom) => atom.element !== 'C');
+  if (other) {
+    throw new Error(`writeSmiles: element ${other.element} is not supported yet (carbon only)`);
   }
   const adj = adjacency(mol);
   /**

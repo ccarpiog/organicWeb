@@ -63,8 +63,8 @@ test('formula in Hill order, with Unicode subscripts for display', () => {
   assert.equal(toSubscript('C10H22'), 'C₁₀H₂₂');
   const mol = createMolecule();
   const a = addAtom(mol);
-  mol.atoms.set(a, { ...mol.atoms.get(a), element: 'X' }); // no carbon: alphabetical
-  assert.equal(formula(mol), 'H4X');
+  mol.atoms.set(a, { ...mol.atoms.get(a), element: 'O' }); // no carbon: alphabetical
+  assert.equal(formula(mol), 'H2O');
 }); // End of test 'formula in Hill order, with Unicode subscripts for display'
 
 test('clone is independent', () => {
@@ -111,7 +111,7 @@ test('corrupt JSON returns an error result instead of crashing', () => {
     { ...good, atoms: [{ id: 1.5, element: 'C', x: 0, y: 0 }] },
     { ...good, atoms: [...good.atoms, { ...good.atoms[0] }] }, // duplicate atom id
     { ...good, atoms: good.atoms.map((t) => ({ ...t, x: 'left' })) },
-    { ...good, atoms: good.atoms.map((t) => ({ ...t, element: 'N' })) },
+    { ...good, atoms: good.atoms.map((t) => ({ ...t, element: 'Si' })) },
     { ...good, bonds: [7] },
     { ...good, bonds: [...good.bonds, { ...good.bonds[0] }] }, // duplicate bond id
     { ...good, bonds: [{ id: 1, a: 1, b: 9, order: 1 }] }, // missing endpoint
