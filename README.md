@@ -6,7 +6,8 @@ recommendations), with a step-by-step explanation and an optional redraw that
 makes the main chain obvious. The user interface is in Spanish; code and
 documentation are in English.
 
-Status: project scaffold. The design and phase plan live in
+Status: molecule model and naming of unbranched chains done; branched
+molecules, editor and explanations in progress. The design and phase plan live in
 [`docs/design.md`](docs/design.md).
 
 ## Requirements

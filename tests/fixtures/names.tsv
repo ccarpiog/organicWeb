@@ -1,1 +1,65 @@
-smiles	expected_name	rule_tested	justification
+smiles	expected_name	rule_tested	justification	alternatives
+# Straight-chain alkanes C1-C30
+C	metano	stem 1 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; no locants to cite	
+CC	etano	stem 2 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; no locants to cite	
+CCC	propano	stem 3 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCC	butano	stem 4 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCC	pentano	stem 5 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCC	hexano	stem 6 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCC	heptano	stem 7 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCC	octano	stem 8 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCC	nonano	stem 9 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCC	decano	stem 10 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCC	undecano	stem 11 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCC	dodecano	stem 12 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCC	tridecano	stem 13 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCC	tetradecano	stem 14 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCC	pentadecano	stem 15 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCC	hexadecano	stem 16 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCC	heptadecano	stem 17 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCC	octadecano	stem 18 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCC	nonadecano	stem 19 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCC	icosano	stem 20 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCCC	henicosano	stem 21 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCCCC	docosano	stem 22 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCCCCC	tricosano	stem 23 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCCCCCC	tetracosano	stem 24 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCCCCCCC	pentacosano	stem 25 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCCCCCCCC	hexacosano	stem 26 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCCCCCCCCC	heptacosano	stem 27 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCCCCCCCCCC	octacosano	stem 28 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCC	nonacosano	stem 29 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC	triacontano	stem 30 + ano	IUPAC 2013 P-21.2.1: saturated unbranched parent = numerical stem + ane (Spanish -ano); stem table of design.md §1.1; unsubstituted alkane needs no locants	
+# Alkenes, alkynes and locant omission
+C=C	eteno	locant omission	Only one possible position; listed in the explicit locant-omission table of design.md §1.1	
+C#C	etino	locant omission	Omission table of design.md §1.1: unsubstituted ethyne cites no locant	
+C=CC	propeno	locant omission	Mandatory row (design.md §4.8): omission table lists propeno; locant 1 not cited	
+C#CC	propino	locant omission	Omission table of design.md §1.1: unsubstituted propyne cites no locant	
+C=C=C	propadieno	locant omission, connecting a	Omission table lists propadieno; the multiplied first segment keeps the connecting a (prop + a + dieno)	
+C=CCC	but-1-eno	N1 lowest locant; locant kept	Numbering from the double-bond end gives 1 (vs 3); but-1-eno is not in the omission table so the locant is kept (design.md §1.1)	
+CCC=C	but-1-eno	N1 independent of drawing direction	Same molecule drawn from the other end: N1 still chooses locant 1	
+CC=CC	but-2-eno	N1 tie, symmetric	Both directions give [2]; the names are identical (presentation tie-break only)	
+C#CCC	but-1-ino	N1 lowest locant	Triple bond gets locant 1 (vs 3); locant kept	
+CC#CC	but-2-ino	N1 tie, symmetric	Both directions give [2]	
+CCC=CC	pent-2-eno	N1 lowest locant	Double bond at 2 from the nearer end (vs 3)	
+CCC#CCC	hex-3-ino	N1 tie, symmetric	Both directions give [3]	
+C=CCCCCCCCCCCCCCCCCCC	icos-1-eno	stem 20 with unsaturation	Stem icos (design.md §1.1) + locant + eno	
+# Polyenes, polyynes and the connecting a
+C=CC=C	buta-1,3-dieno	connecting a	Mandatory row (design.md §4.8): first segment multiplied (di) so the stem keeps the a	
+C=C=CC	buta-1,2-dieno	cumulated double bonds	Mandatory row: cumulated bonds at [1,2] beat [2,3]; connecting a before dieno	
+C=C=C=C	buta-1,2,3-trieno	cumulated, tri	All three bonds double; [1,2,3] either way; multiplier tri	
+CC=C=CC	penta-2,3-dieno	cumulated, symmetric	[2,3] from both ends; connecting a	
+C=CC=CC=C	hexa-1,3,5-trieno	multiplier tri	Three double bonds [1,3,5] from either end; connecting a	
+C=CCCCC=C	hepta-1,6-dieno	N1 tie, symmetric	[1,6] from both ends	
+CC=CCC=CC	hepta-2,5-dieno	N1 tie, symmetric	[2,5] from both ends	
+C=CC=CC=CC=CC=C	deca-1,3,5,7,9-pentaeno	multiplier penta	Five double bonds; the multiplying prefix penta keeps its final a before eno (no elision in multiplied endings, cf. hexa-1,3,5-trieno)	
+C#CC#C	buta-1,3-diino	connecting a with ino	First (only) segment is multiplied: buta + diino	
+C#CCCCCC#C	octa-1,7-diino	connecting a, symmetric	[1,7] from both ends; multiplied first segment keeps a	
+# En-ynes: en before ino, elision of the o of eno
+C#CC=CC	pent-3-en-1-ino	N1 beats double bond first	Mandatory row: N1 lists [1,3] vs [2,4]; lowest locants to all multiple bonds win even though the triple bond gets 1 (IUPAC 2013 P-31.1.4.2.4); en cited before ino, eno loses its o	
+C=CCC#C	pent-1-en-4-ino	N2 double bonds lower on a tie	N1 ties [1,4] vs [1,4]; N2 gives the double bond 1 (vs 4)	
+CC#CC=C	pent-1-en-3-ino	N1 lowest locants	N1 [1,3] (from the double-bond end) beats [2,4]	
+C=CC#C	but-1-en-3-ino	N2 on a tie	N1 ties [1,3]; N2 double bond 1 beats 3	
+C=CC=CC#C	hexa-1,3-dien-5-ino	N2 on a tie; en before ino	Mandatory row: N1 ties [1,3,5]; N2 [1,3] beats [3,5]; first segment (dien) multiplied so the stem keeps a	
+C#CC=CC=C	hexa-1,3-dien-5-ino	N2 independent of drawing direction	Same molecule drawn from the triple-bond end	
+C=CC#CC#C	hex-1-en-3,5-diino	later multiplier adds no a	Mandatory row: N1 ties [1,3,5]; N2 [1] beats [5]; only the second segment is multiplied, so no connecting a	

@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T10:57:38Z",
+ "updated": "2026-09-27T11:07:49Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
@@ -25,8 +25,11 @@
   {
    "id": "I-3",
    "title": "Naming engine I: unbranched chains",
-   "status": "queued",
-   "summary": "Defines naming contracts and lexicon and names unbranched alkanes, alkenes and alkynes."
+   "status": "done",
+   "summary": "Defines naming contracts and lexicon and names unbranched alkanes, alkenes and alkynes.",
+   "risk": "high",
+   "review": "docs/reviews/I-3.md",
+   "narrative": "docs/progress-archive/i-3.md"
   },
   {
    "id": "I-4",
@@ -50,19 +53,19 @@
    "id": "I-7",
    "title": "Naming oracle",
    "status": "queued",
-   "summary": "Plan item 070, not yet triaged from the inbox."
+   "summary": "Checks names against the OPSIN reference tool on random molecules and tests that atom order never changes a name."
   },
   {
    "id": "I-8",
    "title": "Editor core",
    "status": "queued",
-   "summary": "Plan item 080, not yet triaged from the inbox."
+   "summary": "Builds the SVG drawing editor: carbons, bonds, erase, undo/redo, validation toasts and a test API."
   },
   {
    "id": "I-9",
    "title": "Editor extras",
    "status": "queued",
-   "summary": "Plan item 090, not yet triaged from the inbox."
+   "summary": "Adds chain tool, move/marquee, pan/zoom, label toggle, live formula, autosave and keyboard shortcuts."
   },
   {
    "id": "I-10",

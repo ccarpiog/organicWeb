@@ -10,7 +10,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 |---|---|---|---|---|---|
 | I-1 | Project scaffold | `autoclaude/processed/010-scaffold.md` | done — `docs/progress-archive/i-1.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-1.md` |
 | I-2 | Molecule model, validation, SMILES subset | `autoclaude/processed/020-model.md` | done — `docs/progress-archive/i-2.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-2.md` |
-| I-3 | Naming engine I: contracts, lexicon, unbranched chains | `autoclaude/processed/030-naming-linear.md` | queued | — | — |
+| I-3 | Naming engine I: contracts, lexicon, unbranched chains | `autoclaude/processed/030-naming-linear.md` | done — `docs/progress-archive/i-3.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-3.md` |
 | I-4 | Naming engine II: parent selection and numbering | `autoclaude/processed/040-naming-parent.md` | queued | — | — |
 | I-5 | Naming engine III: recursive preferred substituents | `autoclaude/processed/050-naming-substituents.md` | queued | — | — |
 | I-6 | Naming engine IV: iliden substituents and fixture set | `autoclaude/processed/060-naming-iliden-fixtures.md` | queued | — | — |
@@ -33,8 +33,11 @@ queued as `I-10` … `I-12` at later phase boundaries.
 
 ## Next action
 
-Execute I-3 (naming engine I: contracts, lexicon, unbranched chains) per
-`autoclaude/processed/030-naming-linear.md`.
+Poll the inbox (phase boundary; items 100–120 remain), then execute I-4
+(naming engine II: parent selection and numbering) per
+`autoclaude/processed/040-naming-parent.md`. I-4 must remove the `NOT_YET`
+path and the placeholder P1 step in `src/naming/index.js`, and add prefix
+rendering to `src/naming/render.js` (it currently throws on prefixes).
 
 ## Key paths
 
@@ -42,12 +45,14 @@ Execute I-3 (naming engine I: contracts, lexicon, unbranched chains) per
   before adding code to `src/` (no circular imports, no `import()`, no
   multi-declarator or destructuring exports, bindings copied not live).
 - Tests: `tests/unit/*.test.js` (node --test), `tests/e2e/*.spec.js`.
+- Naming: `src/naming/{structure,lexicon.es,render,numbering,index}.js`;
+  fixtures `tests/fixtures/names.tsv` (§4.8 format, `#` section lines).
 - Model: `src/model/{molecule,graph,validate,smiles}.js` — `canonicalTreeKey`
   in graph.js; `validateStructure` / `validateForNaming` in validate.js.
 
-## Verification (last phase, I-2)
+## Verification (last phase, I-3)
 
-- `npm test` 0 (62 pass) · `npm run check` 0 · `npm run build` 0 ·
+- `npm test` 0 (138 pass) · `npm run check` 0 · `npm run build` 0 ·
   `npm run e2e` 0 (3 pass).
 
 ## Open risks / deviations
@@ -57,5 +62,5 @@ Execute I-3 (naming engine I: contracts, lexicon, unbranched chains) per
 
 ## Git state
 
-- I-1 commit `911eae8`, pushed to origin/main.
-- I-2 committed and pushed right after this checkpoint (see `git log`).
+- I-2 `21b918a`, pushed. I-3 committed and pushed right after this
+  checkpoint (see `git log`).
