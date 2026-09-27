@@ -157,11 +157,15 @@ test('locant omission: one-carbon, monosubstituted two-carbon and fully halogena
   }
 });
 
-test('validation: only halogens bonded to a carbon are named; O and N molecules keep the refusal', () => {
+test('validation: halogens bonded to a carbon are named; other O and N molecules keep the refusal', () => {
   for (const smiles of ['CCl', 'ClC1CCCCC1', 'ClC1=CC=CC=C1', 'C=CCBr', 'FC(F)(F)F']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  for (const smiles of ['ClCCO', 'ClC(=O)C', 'NCCBr', 'ClC(O)C1=CC=CC=C1', 'ClCOC', 'FC(F)(F)C#N', 'OC1CCC(Cl)CC1']) {
+  // Alcohols with halogens are named since I-31 (tests/unit/alcohols.test.js).
+  for (const smiles of ['ClCCO', 'OC1CCC(Cl)CC1']) {
+    assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
+  }
+  for (const smiles of ['ClCCOC', 'ClC(=O)C', 'NCCBr', 'ClCOC', 'FC(F)(F)C#N', 'ClCC(=O)O']) {
     const mol = parseSmiles(smiles);
     const result = nameMolecule(mol);
     assert.equal(result.ok, false, smiles);
@@ -184,6 +188,8 @@ test('validation: only halogens bonded to a carbon are named; O and N molecules 
   assert.equal(validateForNaming(parseSmiles('ClC1=CC=C(Cl)C=C1')).code, 'CYCLE');
   assert.equal(validateForNaming(parseSmiles('CC1=CC=C(Br)C=C1')).code, 'CYCLE');
   assert.match(MESSAGES.HETEROATOM, /derivados halogenados/);
+  // An OH on the side chain of a ring (the benzene here) has its own message.
+  assert.equal(validateForNaming(parseSmiles('ClC(O)C1=CC=CC=C1')).reason, 'sideChainAlcohol');
 });
 
 test('size caps count carbons: a halogen never lengthens the chain', () => {
@@ -216,9 +222,9 @@ test('names never depend on atom ids, bond order or drawing order', () => {
 });
 
 test('explanation: formula with halogens, halogens off the chain, prefixes, order and omitted locants', () => {
-  assert.deepEqual(atomCounts(named('CC(Br)CCl').structure), { carbons: 3, hydrogens: 6, halogens: { Br: 1, Cl: 1 } });
-  assert.deepEqual(atomCounts(named('ClC(Cl)(Cl)Cl').structure), { carbons: 1, hydrogens: 0, halogens: { Cl: 4 } });
-  assert.deepEqual(atomCounts(named('CCCC(CCl)CCCC').structure), { carbons: 9, hydrogens: 19, halogens: { Cl: 1 } });
+  assert.deepEqual(atomCounts(named('CC(Br)CCl').structure), { carbons: 3, hydrogens: 6, halogens: { Br: 1, Cl: 1 }, oxygens: 0 });
+  assert.deepEqual(atomCounts(named('ClC(Cl)(Cl)Cl').structure), { carbons: 1, hydrogens: 0, halogens: { Cl: 4 }, oxygens: 0 });
+  assert.deepEqual(atomCounts(named('CCCC(CCl)CCCC').structure), { carbons: 9, hydrogens: 19, halogens: { Cl: 1 }, oxygens: 0 });
   assert.match(stepText('CC(Br)CCl', 'count'), /3 carbonos, 6 hidrógenos, 1 átomo de bromo y 1 átomo de cloro \(C₃H₆BrCl\)/);
   assert.match(stepText('ClC(Cl)(Cl)Cl', 'count'), /ningún hidrógeno y 4 átomos de cloro \(CCl₄\)/);
   assert.match(stepText('CC(Br)CCl', 'chain'), /nunca forman parte de la cadena: solo cuentan los carbonos/);

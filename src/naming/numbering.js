@@ -5,10 +5,15 @@
  * Every candidate is a `(chain, direction)` pair. Locant rules compare
  * sorted locant lists, keeping repeated locants, term by term, numerically,
  * at the first point of difference — never by sums, never by assembled
- * strings. IUPAC 2013 compares the unsaturation locants before the number
- * of substituent prefixes, so the order is:
+ * strings. IUPAC 2013 gives the lowest locants to the principal
+ * characteristic groups first and compares the unsaturation locants before
+ * the number of substituent prefixes, so the order is:
  *
- *   N1 all multiple bonds together (a bond's locant is its lower atom locant);
+ *   N0 the principal groups cited as a suffix (the OH of `-ol`, one locant
+ *      per group; IUPAC 2013 P-31.1.4.2.4, design.md §13.4 I-31); skipped
+ *      without suffix groups;
+ *   N1 all multiple bonds together (a bond's locant is its lower atom locant;
+ *      a ring's closure bond n–1 is compared as n, and cited 1(n) if chosen);
  *   N2 double bonds;
  *   P4 most substituent prefixes (a chain-level count, direction-independent);
  *   N3 all substituent prefixes together;
@@ -27,7 +32,7 @@
  *
  * The same cascade numbers substituent chains (substituent.js); there an
  * FV rule (lowest locant for the free valence, IUPAC 2013 P-31.1.4.2.4)
- * comes before N1. Ring parents (rings.js) reuse it through
+ * comes before N1 (a substituent has no suffix, so FV and N0 never meet). Ring parents (rings.js) reuse it through
  * runNumberingCascade() with every start atom and direction of the ring as
  * candidates (design.md §13.5).
  *
@@ -198,8 +203,13 @@ export function chainBonds(adj, atoms) {
 }
 
 /**
- * Sorted locants of the chain bonds whose order satisfies a test. A bond's
- * locant is the lower of its two atom locants, i.e. its index + 1.
+ * Sorted locants of the chain or ring bonds whose order satisfies a test, as
+ * compared by the numbering rules. A bond's locant is the lower of its two
+ * atom locants, i.e. its index + 1; a ring's closure bond (the last one,
+ * joining n and 1) is compared as n, the highest, so a numbering that puts
+ * a multiple bond on it only wins when the principal groups (N0) force it
+ * (`ciclohexa-1,3-dieno`, `ciclonona-1,2-dieno`, CAS practice). Once chosen,
+ * that bond is cited with the compound locant 1(n) (structure.js).
  *
  * @param {number[]} orders - Bond orders in locant order.
  * @param {function(number): boolean} test - Which orders to keep.
@@ -287,33 +297,36 @@ function applySubstituentCountRule(candidates, counts) {
  * its bonds and bond orders in locant order, the free-valence locant (FV)
  * and the prefix locants (all sorted, and grouped in citation order). Shared
  * by chains (numberParent()) and rings (rings.js), whose candidates also
- * list the closing bond last (locant n).
+ * list the closing bond last (compared as locant n).
  *
  * @param {number[]} atoms - Candidate atom ids in locant order.
  * @param {number[]} bonds - Bond ids in locant order.
  * @param {number[]} orders - Order of each bond in `bonds`.
  * @param {{atom: number, key: string, citation: object}[]} prefixes - The prefixes carried by the candidate's atoms.
  * @param {number|null} [freeValenceAtom] - Attachment atom of a substituent chain (enables FV), or null.
- * @returns {{bonds: number[], orders: number[], freeValence: number[], all: number[], groups: object[]}} The compared data.
+ * @param {number[]} [suffixAtoms] - Carrying atom of each suffix group (one entry per OH; N0), default none.
+ * @returns {{bonds: number[], orders: number[], freeValence: number[], suffix: number[], all: number[], groups: object[]}} The compared data.
  */
-export function candidateData(atoms, bonds, orders, prefixes, freeValenceAtom = null) {
+export function candidateData(atoms, bonds, orders, prefixes, freeValenceAtom = null, suffixAtoms = []) {
   const locantOf = new Map(atoms.map((atom, i) => [atom, i + 1]));
   return {
     bonds: [...bonds],
     orders: [...orders],
     freeValence: freeValenceAtom === null || freeValenceAtom === undefined ? [] : [locantOf.get(freeValenceAtom)],
+    suffix: suffixAtoms.map((atom) => locantOf.get(atom)).sort((p, q) => p - q),
     ...prefixLocants(prefixes, locantOf),
   };
 }
 
 /**
- * Runs the numbering cascade on prepared candidates: (FV,) N1, N2, P4, N3,
- * N4, N5 and then the presentation tie-break (smallest ordered atom-id
+ * Runs the numbering cascade on prepared candidates: (FV,) (N0,) N1, N2, P4,
+ * N3, N4, N5 and then the presentation tie-break (smallest ordered atom-id
  * tuple — not an IUPAC rule; it only stabilises highlighting and redraw).
  * The cascade stops as soon as one candidate remains; each rule applied is
- * recorded with the compared values. P4 is skipped when the remaining
- * candidates all come from one chain (always, for a ring); N3 and N4 when no
- * candidate carries prefixes (nothing to compare).
+ * recorded with the compared values. N0 is skipped without suffix groups
+ * (`options.hasSuffix`); P4 when the remaining candidates all come from one
+ * chain (always, for a ring); N3 and N4 when no candidate carries prefixes
+ * (nothing to compare).
  *
  * N5 is applied only when the candidates left after N4 would give different
  * names (different prefixes with the same locants); it compares complete-name
@@ -323,7 +336,7 @@ export function candidateData(atoms, bonds, orders, prefixes, freeValenceAtom = 
  *
  * @param {{atoms: number[], direction: string, key: string, chainIndex: number}[]} candidates - Directed candidates (unique keys).
  * @param {Map<string, object>} data - candidateData() of each candidate, by key.
- * @param {{prefixCounts: number[], hasFreeValence?: boolean, nameKey?: function(object[]): object}} options - Prefix count of each source chain (P4, by chainIndex); whether FV applies; complete-name key (N5).
+ * @param {{prefixCounts: number[], hasFreeValence?: boolean, hasSuffix?: boolean, nameKey?: function(object[]): object}} options - Prefix count of each source chain (P4, by chainIndex); whether FV applies; whether N0 applies (suffix groups); complete-name key (N5).
  * @returns {{chosen: object, trace: object[]}} The winning candidate and the trace steps.
  */
 export function runNumberingCascade(candidates, data, options) {
@@ -332,6 +345,7 @@ export function runNumberingCascade(candidates, data, options) {
   let remaining = [...candidates];
   const rules = [
     { rule: 'FV', value: (d) => d.freeValence, skip: !options.hasFreeValence },
+    { rule: 'N0', value: (d) => d.suffix, skip: !options.hasSuffix },
     { rule: 'N1', value: (d) => bondLocants(d.orders, (order) => order >= 2) },
     { rule: 'N2', value: (d) => bondLocants(d.orders, (order) => order === 2) },
     { rule: 'P4' },
@@ -354,7 +368,7 @@ export function runNumberingCascade(candidates, data, options) {
     const { step, survivors } = applyLocantRule(rule, remaining, remaining.map((c) => value(data.get(c.key))));
     trace.push(step);
     remaining = survivors;
-  } // End of the loop over the rules FV, N1, N2, P4, N3, N4
+  } // End of the loop over the rules FV, N0, N1, N2, P4, N3, N4
   const differ = () => {
     const first = data.get(remaining[0].key).groups;
     return remaining.some((c) => !sameGroups(data.get(c.key).groups, first));
@@ -379,12 +393,13 @@ export function runNumberingCascade(candidates, data, options) {
  * Chooses the parent and its numbering among the given chains (both
  * directions of each), with runNumberingCascade(). With `freeValenceAtom`
  * (a substituent chain) the FV rule — lowest locant for that atom — comes
- * first.
+ * first; with `suffixesOf` (a parent carrying OH groups, design.md §13.4
+ * I-31) the N0 rule — lowest locants for the suffix groups — comes before N1.
  *
- * @param {object} mol - A validated acyclic hydrocarbon.
+ * @param {object} mol - A validated acyclic molecule.
  * @param {number[][]} chains - The remaining chains (atom-id paths).
  * @param {function(number[]): {atom: number, key: string, citation: {alpha: string, numeric: number[]}}[]} [prefixesOf] - Prefixes of a chain (called with each array of `chains`): carrying atom, identity key and citation key.
- * @param {{adj?: Map<number, object[]>, freeValenceAtom?: number, nameKey?: function(object[]): {alpha: string, numeric: number[]}}} [options] - Precomputed adjacency; attachment atom of a substituent chain (enables FV); complete-name key of a candidate's groups (N5).
+ * @param {{adj?: Map<number, object[]>, freeValenceAtom?: number, suffixesOf?: function(number[]): number[], nameKey?: function(object[]): {alpha: string, numeric: number[]}}} [options] - Precomputed adjacency; attachment atom of a substituent chain (enables FV); carrying atom of each suffix group of a chain (enables N0); complete-name key of a candidate's groups (N5).
  * @returns {{atoms: number[], bonds: number[], orders: number[], direction: string, key: string, chainIndex: number, trace: object[]}} The chosen numbering and its trace.
  */
 export function numberParent(mol, chains, prefixesOf = () => [], options = {}) {
@@ -392,15 +407,20 @@ export function numberParent(mol, chains, prefixesOf = () => [], options = {}) {
   const fvAtom = options.freeValenceAtom;
   const hasFreeValence = fvAtom !== undefined && fvAtom !== null;
   const prefixesByChain = chains.map((chain) => prefixesOf(chain));
+  const suffixesByChain = chains.map((chain) => (options.suffixesOf ? options.suffixesOf(chain) : []));
   const data = new Map();
   const candidates = directedCandidates(chains);
   for (const candidate of candidates) {
     const { bonds, orders } = chainBonds(adj, candidate.atoms);
-    data.set(candidate.key, candidateData(candidate.atoms, bonds, orders, prefixesByChain[candidate.chainIndex], hasFreeValence ? fvAtom : null));
+    data.set(candidate.key, candidateData(
+      candidate.atoms, bonds, orders, prefixesByChain[candidate.chainIndex], hasFreeValence ? fvAtom : null,
+      suffixesByChain[candidate.chainIndex],
+    ));
   }
   const { chosen, trace } = runNumberingCascade(candidates, data, {
     prefixCounts: prefixesByChain.map((list) => list.length),
     hasFreeValence,
+    hasSuffix: suffixesByChain.some((list) => list.length > 0),
     nameKey: options.nameKey,
   });
   const { bonds, orders } = data.get(chosen.key);

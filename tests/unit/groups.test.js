@@ -340,7 +340,7 @@ test('lexicons: suffix and prefix forms of every group kind', () => {
 });
 
 test('a heteroatom molecule is still refused with HETEROATOM, carrying its groups', () => {
-  for (const smiles of ['CCO', 'CC(=O)O', 'ClCCOC', 'OC1=CC=CC=C1', 'OC1CCCCC1', 'COOC', 'O']) {
+  for (const smiles of ['NCCO', 'CC(=O)O', 'ClCCOC', 'OCC1=CC=CC=C1', 'NC1CCCCC1', 'COOC', 'O']) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(result.ok, false, smiles);
     assert.equal(result.error.code, 'HETEROATOM', smiles);
@@ -379,15 +379,15 @@ test('explanation of a refusal: groups, principal, suffix or prefix, then the me
 
 /** Heteroatom molecules whose group steps are snapshot-tested. */
 const GROUP_SNAPSHOT_SMILES = [
-  'CCO', // one alcohol
-  'OC1=CC=CC=C1', // phenol
+  'NCCO', // alcohol > amine
+  'OCC1=CC=CC=C1', // alcohol on the side chain of a benzene: its own message
   'CC(=O)O', // acid: not alcohol + ketone
   'CC(=O)OC', // ester: not ether + ketone
   'CC(=O)NC', // amide: not amine + ketone
   'OCCC(=O)CC=O', // aldehyde > ketone > alcohol
   'NCC#N', // nitrile > amine
   'ClCCOC', // prefix-only groups
-  'BrCC(Br)CO', // two bromine atoms and an alcohol
+  'BrCC(Br)CN', // two bromine atoms and an amine
   'CCOOC', // unsupported peroxide
   'CC(=O)OCC(=O)O', // ester bonded through its O: aciloxi-
   'CCOC(=O)CC(=O)O', // ester bonded through its carbonyl carbon: alcoxicarbonil-

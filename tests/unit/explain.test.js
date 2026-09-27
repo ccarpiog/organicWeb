@@ -1,6 +1,6 @@
 /**
  * @file Unit tests for the explanation layer (design.md §5): snapshot tests
- * of explain() for ~20 fixtures (tests/fixtures/explain-snapshots.json),
+ * of explain() for ~60 fixtures (tests/fixtures/explain-snapshots.json),
  * formula counts against the model for every fixture, glossary markup, the
  * outside-unsaturation sentence, the isopropyl names, locant-omission notes,
  * the numbering comparison and the purity of src/explain/.
@@ -78,6 +78,19 @@ const SNAPSHOT_SMILES = [
   'CCCC(CCl)CCCC', // 4-(clorometil)octano: halogen inside a substituent
   'ClC1CCCC(C)C1', // 1-cloro-3-metilciclohexano: halogen on a ring, N4
   'ClC1=CC=CC=C1', // clorobenceno: halogen on benzene
+  'CO', // metanol: one-carbon alcohol, no locant (I-31)
+  'CCO', // etanol: omitted locant, elided o
+  'CC(O)C', // propan-2-ol: suffix locant
+  'C=CCO', // prop-2-en-1-ol: N0 before N1
+  'CC(O)CC(C)C', // 4-metilpentan-2-ol: N0 before N3
+  'CCCCC(CO)CCC', // 2-propilhexan-1-ol: P0 beats a longer chain
+  'OCCO', // etano-1,2-diol: diol, o kept before -diol
+  'OCC(CO)CO', // 2-(hidroximetil)propano-1,3-diol: hidroxi- on a branch
+  'ClCCO', // 2-cloroetan-1-ol: halogen + OH, locants cited
+  'OC1CCCCC1', // ciclohexanol: ring, omitted locant
+  'CC1CCCCC1O', // 2-metilciclohexan-1-ol: ring N0 then N3
+  'OC1C=CCCC1', // ciclohex-2-en-1-ol: ring N0 then N1
+  'OC1=CC=CC=C1', // fenol: retained name
 ];
 
 /**
@@ -134,10 +147,10 @@ test('every fixture: steps are well-formed and the formula matches the model', a
   const order = Object.keys(STEP_TITLES);
   for (const smiles of fixtures.keys()) {
     const { mol, result, steps } = run(smiles);
-    const { carbons, hydrogens, halogens } = atomCounts(result.structure);
+    const { carbons, hydrogens, halogens, oxygens } = atomCounts(result.structure);
     const count = (symbol, n) => (n === 0 ? '' : `${symbol}${n === 1 ? '' : n}`);
     const halogenPart = ['Br', 'Cl', 'F', 'I'].map((el) => count(el, halogens[el] || 0)).join('');
-    assert.equal(`${count('C', carbons)}${count('H', hydrogens)}${halogenPart}`, formula(mol), smiles);
+    assert.equal(`${count('C', carbons)}${count('H', hydrogens)}${halogenPart}${count('O', oxygens)}`, formula(mol), smiles);
     assert.equal(steps[0].id, 'count');
     assert.equal(steps[steps.length - 1].id, 'assemble');
     const ids = steps.map((s) => s.id);

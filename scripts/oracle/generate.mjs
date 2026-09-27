@@ -4,8 +4,10 @@
  * substituted and unsaturated monocycles (design.md §13.4 I-26), of
  * benzene and monosubstituted benzenes in either Kekulé drawing (I-28),
  * of halogen derivatives of all of those (I-30: F, Cl, Br, I in place of
- * random hydrogens, one- to three-carbon parents included), plus the list
- * of cycloalkanes in a size range. Development only,
+ * random hydrogens, one- to three-carbon parents included), of alcohols
+ * (I-31: OH groups in place of random hydrogens — on ring carbons only for a
+ * ring —, phenol, some with halogens too), plus the list of cycloalkanes in
+ * a size range. Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
  */
@@ -349,6 +351,84 @@ export function generateHalogenated({ count, seed, minSize = 4, maxSize = 14 }) 
   } // End of the loop that draws distinct halogen derivatives
   return molecules;
 } // End of function generateHalogenated()
+
+/**
+ * Copies a molecule and replaces some of the hydrogens of its carbons by OH
+ * groups: each hydrogen of each allowed carbon becomes, with probability
+ * `rate`, an oxygen bonded to that carbon (design.md §13.4 I-31).
+ *
+ * @param {object} mol - A hydrocarbon or halogen derivative (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} rate - Probability of replacing each hydrogen.
+ * @param {Set<number>|null} [only] - The carbons that may carry an OH (default: every carbon).
+ * @returns {object} The copy (possibly without any OH).
+ */
+export function hydroxylate(mol, random, rate, only = null) {
+  const copy = cloneMolecule(mol);
+  for (const [id, atom] of [...copy.atoms]) {
+    if (atom.element !== 'C' || (only && !only.has(id))) {
+      continue;
+    }
+    const free = CARBON_VALENCE - bondOrderSum(copy, id);
+    for (let k = 0; k < free; k += 1) {
+      if (random() < rate) {
+        addBond(copy, id, addAtom(copy, {}, 'O'), 1);
+      }
+    }
+  } // End of the loop over the carbons
+  return copy;
+} // End of function hydroxylate()
+
+/**
+ * Generates up to `count` distinct (by canonical key) alcohols, each with at
+ * least one OH group (design.md §13.4 I-31): random acyclic hydrocarbons of
+ * 1 carbon up to `maxSize` (methanol, ethanol… included), random monocycles
+ * with OH groups on ring carbons only (an OH on a side chain is refused),
+ * phenol, and a share of each halogenated as well (halogenate()). Only
+ * molecules valid for naming are kept.
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C; acyclic ones may be smaller).
+ * @returns {object[]} The molecules.
+ */
+export function generateAlcohols({ count, seed, minSize = 4, maxSize = 14 }) {
+  const random = seededRandom(seed * 5381 + 31);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50) {
+    attempts += 1;
+    const kind = random();
+    let base;
+    let only = null;
+    if (kind < 0.62 || maxSize < 3) {
+      const size = randomInt(random, 1, maxSize);
+      base = randomHydrocarbon(random, { size, unsaturation: random() * 0.5, branchiness: 0.2 + random() * 0.8 });
+    } else if (kind < 0.95 || maxSize < 6) {
+      const size = randomInt(random, Math.max(minSize, 3), Math.max(maxSize, 3));
+      const ringSize = randomInt(random, 3, Math.min(10, size));
+      base = randomMonocycle(random, {
+        ringSize, extra: size - ringSize, unsaturation: random() * 0.4, branchiness: 0.2 + random() * 0.8,
+      });
+      only = new Set([...base.atoms.keys()].slice(0, ringSize)); // randomMonocycle() adds the ring atoms first.
+    } else {
+      base = randomBenzene(random, { extra: 0, kekule: random() < 0.5 ? 1 : 2 });
+    } // End of the choice of the parent molecule
+    if (random() < 0.3) {
+      base = halogenate(base, random, 0.05 + random() * 0.2);
+    }
+    const mol = hydroxylate(base, random, 0.05 + random() * 0.3, only);
+    const oxygens = [...mol.atoms.values()].filter((atom) => atom.element === 'O').length;
+    if (oxygens === 0 || validateForNaming(mol)) {
+      continue; // No OH drawn, or not valid for naming (e.g. a polysubstituted benzene).
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct alcohols
+  return molecules;
+} // End of function generateAlcohols()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

@@ -1,12 +1,12 @@
 /**
- * @file Halogen derivatives e2e (design.md §13.4 I-30): a molecule drawn with
- * the Cloro tool is named (cloroetano) instead of refused, with the halogen
- * explained as a prefix in the stepper; molecules loaded through the editor
- * test API get their names (2-metil-4-yodopentano with the Spanish
- * alphabetical order, clorobenceno); "Ordenar dibujo" lays out a halogen
- * derivative, the 90° view keeps the normal drawing, and a molecule with
- * an ether oxygen keeps its HETEROATOM refusal. Runs on the dev server and on
- * dist/index.html.
+ * @file Alcohols e2e (design.md §13.4 I-31): a molecule drawn with the
+ * Oxígeno tool (C–C–OH) is named etanol instead of refused, with the –OH
+ * group, the `-ol` suffix and the omitted locant explained in the stepper
+ * and the OH shown on the canvas; molecules loaded through the editor test
+ * API get their names (propan-2-ol, prop-2-en-1-ol with the OH numbered
+ * before the double bond, ciclohexanol, fenol); "Ordenar dibujo" lays out an
+ * alcohol; an acid and an OH on a ring's side chain are still refused. Runs
+ * on the dev server and on dist/index.html.
  */
 
 import { test, expect } from '@playwright/test';
@@ -95,27 +95,38 @@ async function readSteps(page) {
   return steps;
 }
 
-test('a molecule drawn with the Cloro tool is named, with the halogen explained as a prefix', async ({ page }) => {
+/**
+ * Asks for the name of the current drawing.
+ *
+ * @param {import('@playwright/test').Page} page - The page.
+ * @returns {Promise<void>}
+ */
+async function askName(page) {
+  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+}
+
+test('a molecule drawn with the Oxígeno tool is named etanol, with the –OH group explained', async ({ page }) => {
   const errors = await openApp(page);
-  // C–C from the empty canvas, a third carbon, then Cloro on it: C–C–Cl.
+  // C–C from the empty canvas, a third carbon, then Oxígeno on it: C–C–OH.
   await clickCanvas(page, 0.4, 0.5);
   await clickAtom(page, 2);
-  await page.locator('#toolbar').getByRole('button', { name: 'Cloro', exact: true }).click();
+  await page.locator('#toolbar').getByRole('button', { name: 'Oxígeno', exact: true }).click();
   await clickAtom(page, 3);
-  expect(await page.evaluate(() => window.__editor.getMoleculeJSON().atoms.map((a) => a.element))).toEqual(['C', 'C', 'Cl']);
+  expect(await page.evaluate(() => window.__editor.getMoleculeJSON().atoms.map((a) => a.element))).toEqual(['C', 'C', 'O']);
+  // The OH is shown on the canvas.
+  await expect(page.locator('svg#canvas text', { hasText: /^OH$/ })).toHaveCount(1);
 
-  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
-  await expect(page.locator('#result-name')).toHaveText('cloroetano');
+  await askName(page);
+  await expect(page.locator('#result-name')).toHaveText('etanol');
   await expect(page.locator('#results .results-error')).toHaveCount(0);
   const steps = await readSteps(page);
   const titles = steps.map((s) => s.title);
-  expect(titles[0]).toBe('Cuenta los carbonos');
-  expect(titles).toContain('Nombra los sustituyentes');
-  expect(titles[titles.length - 1]).toBe('Monta el nombre');
-  expect(steps[0].text).toContain('1 átomo de cloro (C₂H₅Cl)');
-  const substituents = steps.find((s) => s.title === 'Nombra los sustituyentes').text;
-  expect(substituents).toContain('«cloro-» (Cl)');
-  expect(substituents).toContain('Un halógeno nunca va al final del nombre');
+  expect(titles).toEqual(['Cuenta los carbonos', 'Reconoce el grupo funcional', 'Busca la cadena principal', 'Numera la cadena', 'Monta el nombre']);
+  expect(steps[0].text).toContain('1 átomo de oxígeno (C₂H₆O)');
+  expect(steps[1].text).toContain('la molécula es un alcohol');
+  expect(steps[1].text).toContain('sufijo «-ol»');
+  expect(steps[3].text).toContain('En «etanol» no hace falta el número');
+  expect(steps[4].text).toContain('La «o» final de «-ano» se quita delante de «-ol»');
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
   // Ordenar dibujo lays it out (one undoable edit), keeping the atoms and bonds.
@@ -124,35 +135,43 @@ test('a molecule drawn with the Cloro tool is named, with the halogen explained 
   await expect.poll(() => page.evaluate(() => window.__editor.isAnimating())).toBe(false);
   const after = await page.evaluate(() => window.__editor.getMoleculeJSON());
   expect(after.bonds).toEqual(before.bonds);
-  expect(after.atoms.map((a) => a.element)).toEqual(['C', 'C', 'Cl']);
-
-  // The 90° view keeps the normal drawing for a molecule with a halogen.
-  await page.getByRole('button', { name: 'Con carbonos' }).click();
-  await page.locator('#right-angle-button').click();
-  expect(await page.evaluate(() => window.__editor.isProjected())).toBe(false);
-  await expect(page.locator('#right-angle-note')).toHaveText('Hay átomos que no son carbono: se ve el dibujo normal.');
+  expect(after.atoms.map((a) => a.element)).toEqual(['C', 'C', 'O']);
   expect(errors).toEqual([]);
-}); // End of test 'a molecule drawn with the Cloro tool is named…'
+}); // End of test 'a molecule drawn with the Oxígeno tool is named etanol…'
 
-test('loaded halogen derivatives: Spanish alphabetical order, halogen on benzene; an ether is still refused', async ({ page }) => {
+test('loaded alcohols: suffix locants, OH before the double bond, rings and fenol; acids stay refused', async ({ page }) => {
   const errors = await openApp(page);
-  await loadSmiles(page, 'CC(I)CC(C)C');
-  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
-  await expect(page.locator('#result-name')).toHaveText('2-metil-4-yodopentano');
+  for (const [smiles, name] of [
+    ['CC(O)C', 'propan-2-ol'],
+    ['OCCO', 'etano-1,2-diol'],
+    ['OC1CCCCC1', 'ciclohexanol'],
+    ['CC1CCCCC1O', '2-metilciclohexan-1-ol'],
+    ['OC1=CC=CC=C1', 'fenol'],
+  ]) {
+    await loadSmiles(page, smiles);
+    await askName(page);
+    await expect(page.locator('#result-name')).toHaveText(name);
+  } // End of the loop over the loaded alcohols
+
+  await loadSmiles(page, 'C=CCO');
+  await askName(page);
+  await expect(page.locator('#result-name')).toHaveText('prop-2-en-1-ol');
   const steps = await readSteps(page);
-  const order = steps.find((s) => s.title === 'Ordena alfabéticamente').text;
-  expect(order).toContain('«metil» va antes que «yodo» (m va antes que y).');
+  const numbering = steps.find((s) => s.title === 'Numera la cadena').text;
+  expect(numbering).toContain('Regla: los grupos –OH (el grupo principal) deben tener los localizadores más bajos.');
+  expect(numbering).toContain('el enlace doble tendría el número 1 en vez del 2, pero manda el –OH');
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
-  await loadSmiles(page, 'ClC1=CC=CC=C1');
-  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
-  await expect(page.locator('#result-name')).toHaveText('clorobenceno');
-
-  await loadSmiles(page, 'ClCCOC');
-  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+  await loadSmiles(page, 'CC(=O)O');
+  await askName(page);
   const error = page.locator('#results .results-error');
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('derivados halogenados');
+  await expect(error).toContainText('y alcoholes');
   await expect(page.locator('#result-name')).toHaveCount(0);
+
+  await loadSmiles(page, 'OCC1=CC=CC=C1');
+  await askName(page);
+  await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
+  await expect(error).toContainText('cuando el –OH está unido directamente al anillo');
   expect(errors).toEqual([]);
-}); // End of test 'loaded halogen derivatives…'
+}); // End of test 'loaded alcohols…'

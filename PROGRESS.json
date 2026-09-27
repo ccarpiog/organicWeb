@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T21:45:47Z",
+  "updated": "2026-09-27T22:30:20Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -281,13 +281,17 @@
       "summary": "Names halogen derivatives with fluoro-, cloro-, bromo-, yodo- prefixes, multipliers and alphabetical order.",
       "risk": "high",
       "review": "docs/reviews/I-30.md",
-      "narrative": "docs/progress-archive/i-30.md"
+      "narrative": "docs/progress-archive/i-30.md",
+      "commit": "521c7cc"
     },
     {
       "id": "I-31",
       "title": "v2.11 Alcohols",
-      "status": "queued",
-      "summary": "v2 plan phase 11: alcohols (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Names alcohols with -ol/-diol suffixes and hidroxi- prefixes, including cycloalkanols and fenol.",
+      "risk": "high",
+      "review": "docs/reviews/I-31.md",
+      "narrative": "docs/progress-archive/i-31.md"
     },
     {
       "id": "I-32",

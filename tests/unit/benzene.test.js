@@ -165,7 +165,9 @@ test('polysubstituted benzenes are refused with CYCLE; a ring in the substituent
     assert.equal(error.ringKind, 'several', smiles);
   }
   assert.equal(validateForNaming(parseSmiles('C1=CC2=CC=CC=C2C=C1')).code, 'RING_SYSTEM', 'naphthalene: fused');
-  assert.equal(validateForNaming(parseSmiles('C1=CC=C(C=C1)O')).code, 'HETEROATOM', 'phenol waits for I-40');
+  assert.equal(validateForNaming(parseSmiles('C1=CC=C(C=C1)O')), null, 'phenol is named since I-31');
+  assert.equal(validateForNaming(parseSmiles('C1=CC=C(C=C1)CO')).code, 'HETEROATOM', 'an OH on the side chain waits for I-40');
+  assert.equal(validateForNaming(parseSmiles('OC1=CC=C(C)C=C1')).code, 'CYCLE', 'a substituted phenol is a polysubstituted benzene');
 });
 
 test('English rendering for the oracle: benzene, methylbenzene, (propan-2-yl)benzene', () => {

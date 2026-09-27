@@ -200,6 +200,7 @@ C1=CC1	ciclopropeno	ring ene, smallest ring, locant omitted	Unsubstituted monocy
 C1=CCCC1	ciclopenteno	ring ene, locant omitted	Unsubstituted cyclopentane ring with one double bond: numbering starts at one end of it and runs through it (N1 [1]); single multiple bond without prefixes, locant omitted (design §1.1, P-31.1.4.2.4 cyclohexene-type names)	
 C1=CCCCC1	ciclohexeno	ring ene, locant omitted, symmetry	The two numberings through the double bond give the same name (tie-break); cyclohexene in IUPAC 2013 (P-31.1.4.2.4), no locant (design §1.1)	
 C1=CC=CCC1	ciclohexa-1,3-dieno	ring diene, connecting a, N1	N1 compares all start atoms and directions: [1,3] beats [1,5]; the first unsaturation segment is multiplied, so the stem keeps the connecting a (ciclohexa-); locants kept (two positions possible)	
+C1=C=CCCCCCC1	ciclonona-1,2-dieno	cumulated ring double bonds, closure bond compared as n	Numbering from the central carbon would put the second double bond on the closure bond (1(9)); compared as 9 it loses to 1,2 (1,2-cyclononadiene, CAS/common practice)	
 C1=CCC=CC1	ciclohexa-1,4-dieno	ring diene, symmetry	N1: [1,4] from four equivalent numberings (starting on either double bond, running through it) beats every other start ([2,5], [3,6]…); connecting a	
 C1=CC=CC=CCC1	cicloocta-1,3,5-trieno	ring triene	N1 [1,3,5] beats [1,3,7] and [1,5,7]; multiplier tri, connecting a	
 C1=CC=CC=CC=C1	cicloocta-1,3,5,7-tetraeno	ring tetraene, symmetry	Alternating double bonds all round an 8-ring (not aromatic: only the six-carbon benzene ring is recognised, I-28); every numbering starting on a double bond gives [1,3,5,7]; the bond joining atom 8 back to 1 is single	
@@ -315,3 +316,63 @@ FC1=CC=CC=C1	fluorobenceno	fluoro on benzene	Same rule as clorobenceno
 BrC1=CC=CC=C1	bromobenceno	bromo on benzene	Same rule as clorobenceno	
 IC1=CC=CC=C1	yodobenceno	yodo on benzene	Spanish prefix yodo (English iodo); no locant	
 ClCC1=CC=CC=C1	(clorometil)benceno	halogenated side chain on benzene	The side chain is one substituent, clorometil (no inner locant on a one-carbon group); no ring locant	
+# Alcohols (I-31): the OH is the principal characteristic group, cited as the suffix -ol (-diol, -triol; IUPAC 2013 P-63.1.2); the parent carries the most OH groups before being the longest (P-44.1.1); the OH gets the lowest locants before multiple bonds and prefixes (P-31.1.4.2.4); an OH on a branch is the hidroxi- prefix; the final o of -ano/-eno/-ino is elided before -ol but kept before -diol (P-16.7.1); locants omitted only on one-carbon parents, monosubstituted two-carbon parents and monosubstituted saturated rings (P-14.3.4.2); fenol is retained (P-63.1.1.1); no traditional alcohol names are offered (tests/unit/alcohols.test.js)
+CO	metanol	one-carbon alcohol, suffix without locant	The OH is the principal characteristic group, cited as the suffix -ol (IUPAC 2013 P-63.1.2); a substituted mononuclear parent cites no locant (P-14.3.4.2(a)); the final o of -ano is elided before the vowel of -ol (P-16.7.1)	
+CCO	etanol	two-carbon alcohol, locant omitted	A monosubstituted chain of two identical atoms omits the locant 1 (P-14.3.4.2(b)): etanol, not etan-1-ol	
+CCCO	propan-1-ol	suffix locant cited from three carbons	From three carbons every locant is cited, even when the OH is at a chain end (P-14.3.4.2 applies only to one- and two-carbon parents); an- keeps no o before -ol	
+CC(O)C	propan-2-ol	internal OH	The OH gets locant 2 in both directions; isopropyl alcohol is a common name only, not offered (the design lists no traditional alcohol names)	
+CCCCO	butan-1-ol	N0: lowest locant to the OH	N0 before any other rule (P-31.1.4.2.4): 1 beats 4	
+CC(O)CC	butan-2-ol	N0 decides the direction	[2] beats [3] for the principal group	
+CC(C)CO	2-metilpropan-1-ol	OH first, then the substituent	N0 fixes the direction (OH at 1); the methyl then sits at 2	
+CC(C)(C)O	2-metilpropan-2-ol	tertiary alcohol	Longest chain through the OH carbon has 3 carbons; OH at 2 either way, methyl at 2 (tert-butyl alcohol is a common name only)	
+CC(O)CC(C)C	4-metilpentan-2-ol	N0 before N3	The OH takes the lowest locant (2) although the methyl would get 2 from the other end (P-31.1.4.2.4 before P-31.1.4.3.4)	
+CCCCC(CO)CCC	2-propilhexan-1-ol	P0: most principal groups before length	IUPAC 2013 P-44.1.1: the parent chain must carry the maximum number of principal characteristic groups before the chain length is considered, so the 6-carbon chain with the OH beats the 8-carbon chain without it	
+CCCC(C(C)O)CCCC	3-propilheptan-2-ol	P0 then P1 among chains with the OH	Of the chains through the OH carbon, the longest has 7 carbons; the 9-carbon chain does not contain the OH carbon	
+OC(C)C(C(C)C)CC	3-etil-4-metilpentan-2-ol	P4 after P0, P1 and N0	Two 5-carbon chains carry the OH at 2; the one with more substituent prefixes wins (P-45.2.1): ethyl + methyl beat one isopropyl	
+CCCCC(C(C)C)C(O)C	3-isopropilheptan-2-ol	isopropyl on an alcohol, alternatives	Default style isopropil (design §1.1); the prefix-style alternatives are re-run through numbering as for hydrocarbons	pin=3-(propan-2-il)heptan-2-ol;substituted=3-(1-metiletil)heptan-2-ol
+CC(C)C(O)C(C)C	2,4-dimetilpentan-3-ol	symmetric secondary alcohol	OH at 3 in both directions; the methyls get 2,4 either way	
+CC(C)C(O)CC	2-metilpentan-3-ol	N0 tie, then N3	The OH is at 3 in both directions; the methyl decides: [2] beats [4]	
+C=CCO	prop-2-en-1-ol	OH before the double bond	N0 (OH) comes before N1 (multiple bonds): prop-2-en-1-ol, not prop-1-en-3-ol; the o of -eno is elided before -ol; allyl alcohol is a common name only	
+CC(O)C#C	but-3-in-2-ol	triple bond and OH	N0: OH at 2 beats 3; the triple bond then gets 3; ino loses its o before -ol	
+CC(O)CC=C	pent-4-en-2-ol	principal group beats unsaturation locants	OH at 2 (not 4) although the double bond then gets 4 instead of 1 (P-31.1.4.2.4 before P-31.1.4.3)	
+C=CC(O)CC	pent-1-en-3-ol	N0 tie, then N1	The OH is at 3 both ways; the double bond decides: [1] beats [4]	
+OC(C=C)C=C	penta-1,4-dien-3-ol	connecting a with a suffix	The first unsaturation segment is multiplied, so the stem keeps its a (penta-1,4-dien-); dieno loses its o before -ol	
+C=CCC(O)C#C	hex-5-en-1-in-3-ol	OH decides the direction of an enyne	N0: OH at 3 beats 4 (the multiple bonds give [1,5] in both directions); en is cited before ino, and ino loses its o before -ol	
+OCC=CCO	but-2-eno-1,4-diol	diol with a double bond, o kept	-diol starts with a consonant, so eno keeps its o (P-16.7.1): but-2-eno-1,4-diol	
+C=CO	etenol	enol, two-carbon parent	An OH on a C=C carbon is still an alcohol group (groups.js); ethenol is named systematically; a two-carbon parent never cites its multiple-bond locant and one substituent needs no locant (P-14.3.4.2(b))	
+C=C(O)C	prop-1-en-2-ol	enol on a three-carbon chain	N0 (OH at 2 either way), then N1: the double bond gets 1	
+C#CO	etinol	OH on a triple-bond carbon	Systematic name of the ynol; no locants on a two-carbon parent with one substituent	
+OCCO	etano-1,2-diol	diol, locants kept, o kept	Two OH groups on ethane: both locants cited (P-14.3.4.2(b) only for one substituent); the o of etano is kept before the consonant of -diol; etilenglicol is a traditional name not offered	
+OCO	metanodiol	gem-diol on one carbon	Two OH on the only carbon: no locants on a mononuclear parent (P-14.3.4.2(a)); gem-diols are named systematically	
+CC(O)(O)C	propano-2,2-diol	gem-diol, repeated locant	Two principal groups on one carbon get the locant twice (P-14.3.3)	
+OCCCCO	butano-1,4-diol	terminal diol	Symmetric: both numberings give [1,4]; di multiplies the suffix	
+OCCCO	propano-1,3-diol	symmetric diol	Both numberings give [1,3]: the same name	
+OCC(O)C	propano-1,2-diol	N0 compares all OH locants	[1,2] beats [2,3] at the first term	
+CC(O)CCC(C)O	hexano-2,5-diol	symmetric internal diol	Both directions give [2,5]	
+OCC(O)CO	propano-1,2,3-triol	triol	tri multiplies the suffix; glicerina/glicerol are traditional names not offered (design lists none for alcohols)	
+OCC(O)C(O)CO	butano-1,2,3,4-tetrol	tetrol, multiplier a elided	The final a of tetra is elided before the vowel of -ol (IUPAC 2013 P-16.7.1(c): butane-1,2,3,4-tetrol); the o of butano is kept before the consonant t	
+OCC(O)C(O)C(O)CO	pentano-1,2,3,4,5-pentol	pentol, multiplier a elided	The final a of penta is elided before -ol (P-16.7.1(c)); prefix multipliers keep it (tetrametil)	
+CC(O)(C)C(C)(C)O	2,3-dimetilbutano-2,3-diol	diol with substituents	Chain of 4 through both OH carbons; methyls at 2,3	
+OCC(CO)CO	2-(hidroximetil)propano-1,3-diol	maximum OH on the chain, hidroxi- prefix on a branch	No chain holds all three OH groups; P0 keeps the 3-carbon chains with two (P-44.1.1); the third OH is cited as hidroxi inside the branch, (hidroximetil), enclosed as a compound prefix	
+CCC(CCO)C(C)CO	3-etil-2-metilpentano-1,5-diol	P0 with branches	The only chain carrying both OH groups has 5 carbons; N0 ties [1,5], N3 decides: [2,3] beats [3,4]	
+ClCCO	2-cloroetan-1-ol	halogen + OH on ethane: all locants cited	With two substituents (a prefix and the suffix) P-14.3.4.2(b) no longer applies, so both locants are cited (2-chloroethan-1-ol)	
+OC(Cl)(Cl)Cl	triclorometanol	halogens and OH on one carbon	Mononuclear parent: no locants (P-14.3.4.2(a)); consecutive prefix and parent written together	
+ClC(Cl)(Cl)CO	2,2,2-tricloroetan-1-ol	OH before halogens	N0 gives the OH carbon 1; the three chlorines get 2,2,2	
+OC(Cl)CCl	1,2-dicloroetan-1-ol	OH and halogens, N3 after N0	N0: OH at 1 (only possible direction for the OH), then the chlorines get [1,2]	
+ClCC(O)C	1-cloropropan-2-ol	N0 tie, halogen decides	OH at 2 both ways; N3: chlorine at 1 beats 3	
+OCC(Cl)C(Br)CO	2-bromo-3-clorobutano-1,4-diol	N0 and N3 tie, N4 alphabetical	[1,4] and [2,3] tie in both directions; bromo is cited first (b before c), so it gets the lower locant (P-31.1.4.3.4)	
+ClC=CO	2-cloroeten-1-ol	ethene with two substituents	The bond locant of ethene is never cited; with two substituents both substituent locants are	
+OC1CCCCC1	ciclohexanol	cycloalkanol, locant omitted	The ring is the parent and carries the OH; a monosubstituted saturated ring omits the locant 1 (P-14.3.4.2(c))	
+C1CC1O	ciclopropanol	smallest cycloalkanol	Same rule as ciclohexanol	
+CC1CCCCC1O	2-metilciclohexan-1-ol	OH carbon is 1, locant cited	N0 puts the OH at 1; with another substituent the 1 is cited (2-methylcyclohexan-1-ol, IUPAC 2013 style)	
+CC1(O)CCCC1	1-metilciclopentan-1-ol	OH and methyl on the same ring carbon	N0: OH at 1; the methyl on the same carbon also gets 1	
+OC1C(C)CCC(C)C1	2,5-dimetilciclohexan-1-ol	ring N0 then N3	From the OH carbon, one direction gives the methyls [2,5], the other [3,6]	
+FC1CCC(O)CC1	4-fluorociclohexan-1-ol	halogen on a cycloalkanol	OH at 1, fluorine at 4 either way; all locants cited	
+OC1CCC(O)CC1	ciclohexano-1,4-diol	ring diol, o kept	Two OH on the ring: [1,4]; the o of ciclohexano is kept before -diol	
+OC1C=CCCC1	ciclohex-2-en-1-ol	OH before the ring double bond	N0 gives the OH carbon 1, then N1 puts the double bond at 2 (not 6)	
+OC1=CCCCC1	ciclohex-1-en-1-ol	enol on a ring	OH at 1, and the double bond from the same carbon gets 1; every locant cited	
+OC1C(O)CC(O)CC=1	ciclohex-1(6)-eno-1,2,4-triol	closure-bond double bond, compound locant	N0 forces the OH locants 1,2,4 (only one numbering); the double bond then joins atoms 6 and 1, whose locants differ by more than one, so it is cited with the compound locant 1(6) (IUPAC 2013 P-31.1.4.2.4)	
+OC1C(O)CCCC=1	ciclohex-2-eno-1,2-diol	closure bond compared as n	N0 ties [1,2] in two numberings; N1 compares the closure bond (1(6) if chosen) as 6, so the double bond at 2 wins (CAS/common practice)	
+CC(C)C1CCC(O)CC1	4-isopropilciclohexan-1-ol	isopropyl on a cycloalkanol, alternatives	Prefix styles as for rings (design §1.1)	pin=4-(propan-2-il)ciclohexan-1-ol;substituted=4-(1-metiletil)ciclohexan-1-ol
+OC1=CC=CC=C1	fenol	phenol, retained name	An OH on benzene: phenol is the retained preferred IUPAC name (P-63.1.1.1); bencenol is not used; one substituent, no locant	
+OC1C=CC=CC=1	fenol	phenol, other Kekulé drawing	The same molecule with the ring double bonds on the other three sides: same name	

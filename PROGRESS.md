@@ -40,7 +40,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-28 | v2.8 Benzene and hydrocarbon derivatives | same, §3.8 | done — `docs/progress-archive/i-28.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-28.md` |
 | I-29 | v2.9 Functional groups and seniority | same, §3.9 | done — `docs/progress-archive/i-29.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-29.md` |
 | I-30 | v2.10 Halogen derivatives | same, §3.10 | done — `docs/progress-archive/i-30.md` | high / opus | Codex ship-with-fixes, 1 fixed, 1 declined — `docs/reviews/I-30.md` |
-| I-31 | v2.11 Alcohols | same, §3.11 | queued | — | — |
+| I-31 | v2.11 Alcohols | same, §3.11 | done — `docs/progress-archive/i-31.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-31.md` |
 | I-32 | v2.12 Aldehydes and ketones | same, §3.12 | queued | — | — |
 | I-33 | v2.13 Carboxylic acids | same, §3.13 | queued | — | — |
 | I-34 | v2.14 Ethers | same, §3.14 | queued | — | — |
@@ -53,7 +53,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-30 done; I-31…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-31 done; I-32…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
@@ -89,11 +89,12 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-31 (v2 §3.11 alcohols: suffix -ol, hidroxi- prefix when not
-principal, multipliers -diol/-triol, locant rules; build on `src/naming/groups.js` /
-`seniority.js` and I-30's heteroatom-admission path in `validate.js`; molecules with only
-alcohol + halogen groups become nameable). Spec: design §13.4 row I-31, §13.6, and
-`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 11.
+Poll the inbox, then run I-32 (v2 §3.12 aldehydes and ketones: `-al` / `-ona` suffixes,
+`oxo-` prefix when not principal, aldehyde carbon always locant 1 and uncited, ketone
+locants; seniority aldehído > cetona > alcohol with `hidroxi-`; build on I-31's
+principal-group chain choice and numbering in `parent.js` / `numbering.js` and admission in
+`validate.js`). Spec: design §13.4 row I-32, §13.6, and
+`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 12.
 Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
@@ -157,13 +158,16 @@ Deploying stays a manual user step.
   snapshots `tests/fixtures/explain-group-snapshots.json`; design §13.6.
 - Halogens (I-30): halogen prefixes as `substituent.halogen` (render `substituentTokens()`),
   admission in `validate.js`; tests `tests/unit/halogens.test.js`, `tests/e2e/halogens.spec.js`.
+- Alcohols (I-31): principal-group chain choice and numbering in `parent.js` /
+  `numbering.js`; suffix rendering and multiplier elision in `render.js`; ring closing-bond
+  compound locant `1(n)`; tests `tests/unit/alcohols.test.js`, `tests/e2e/alcohols.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-30)
+## Verification (last phase, I-31)
 
-- `npm test` 0 (689 pass) · `npm run check` 0 (94 files) · `npm run e2e` 0
-  (175 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (2111 pass).
+- `npm test` 0 (764 pass) · `npm run check` 0 (96 files) · `npm run e2e` 0
+  (179 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (2611 pass).
 
 ## Open risks / deviations
 
@@ -295,10 +299,15 @@ Deploying stays a manual user step.
   `2-cloroetenil` vs `2-cloroeten-1-il` declined with reasoning
   (`docs/progress-archive/i-30.md`).
 
+- I-31: cycloalkanols and `fenol` brought forward from I-40; a ring with OH on a side
+  chain is refused until I-40; `2-cloroetan-1-ol`, enols and gem-diols decided from
+  memory; ring closing bond ranks as n, rendered `1(n)` only when OH locants force it.
+  Review should-fix (`tetrol`, closing-bond locant) fixed (`docs/progress-archive/i-31.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-29 `0d97826`, pushed. I-30 committed and pushed right after this
+- I-30 `521c7cc`, pushed. I-31 committed and pushed right after this
   checkpoint (see `git log`).

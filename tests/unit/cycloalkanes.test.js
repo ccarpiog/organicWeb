@@ -87,7 +87,7 @@ test('every ring size from 3 to 30 is named ciclo + stem + ano, cyclo…ane in E
     assert.deepEqual(result.alternatives, []);
     assert.equal(englishName(result.structure), `cyclo${lexiconEn.stem(n)}ane`);
     assert.equal(formula(mol), `C${n}H${2 * n}`);
-    assert.deepEqual(atomCounts(result.structure), { carbons: n, hydrogens: 2 * n, halogens: {} });
+    assert.deepEqual(atomCounts(result.structure), { carbons: n, hydrogens: 2 * n, halogens: {}, oxygens: 0 });
   } // End of the loop over the ring sizes
   assert.equal(englishName(nameMolecule(parseSmiles('C1CCCCC1')).structure), 'cyclohexane');
   assert.equal(generateCycloalkanes({ minSize: 1, maxSize: 60 }).length, 28);
@@ -120,7 +120,8 @@ test('ring structures render their unsaturation (I-26)', () => {
   const unsaturated = buildRingStructure([1, 2, 3, 4], [1, 2, 3, 4], [2, 1, 1, 1]);
   assert.deepEqual(unsaturated.double.map((s) => [s.locant, s.atoms]), [[1, [1, 2]]]);
   const closing = buildRingStructure([1, 2, 3, 4], [1, 2, 3, 4], [1, 1, 1, 2]);
-  assert.deepEqual(closing.double.map((s) => [s.locant, s.atoms]), [[4, [4, 1]]]);
+  // The closure bond joins locants 4 and 1: compound locant 1(4) (IUPAC 2013 P-31.1.4.2.4).
+  assert.deepEqual(closing.double.map((s) => [s.locant, s.closing, s.atoms]), [[1, 4, [4, 1]]]);
   assert.equal(renderName(buildNameStructure({ parent: unsaturated })).name, 'ciclobuteno');
 });
 

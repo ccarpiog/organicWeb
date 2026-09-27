@@ -3,20 +3,26 @@
  * selection cascade (design.md §4.2–4.3).
  *
  * Candidates are the paths between every pair of leaf carbons (a path that
- * ends at a non-leaf could be extended, so it is never maximal). They are
- * compared, direction-independently, by:
+ * ends at a non-leaf could be extended, so it is never maximal — extending
+ * it never loses a principal group either). They are compared,
+ * direction-independently, by:
  *
+ *   P0 most principal characteristic groups (OH groups on chain carbons,
+ *      cited as `-ol`; IUPAC 2013 P-44.1.1, design.md §13.4 I-31) — only
+ *      when the molecule has OH groups, and then always recorded;
  *   P1 longest chain (carbon count);
  *   P2 most multiple bonds lying within the chain;
  *   P3 most double bonds within the chain.
  *
- * P1 is always recorded; P2–P3 only while more than one chain remains (the
- * cascade stops when one chain is left). P4 (most substituents) comes after
+ * P1 is always recorded (after P0, over the chains P0 kept); P2–P3 only
+ * while more than one chain remains (the cascade stops when one chain is
+ * left). P4 (most substituents) comes after
  * the unsaturation locants N1/N2, so it lives in numbering.js. The
  * leaf-to-leaf restriction is for the parent only, never for substituents.
  * Paths run over the carbon skeleton only: a halogen (design.md §13.4 I-30)
  * is never a chain atom, only a substituent, so it counts in P4 like any
- * other prefix (chainCounts() on the whole graph).
+ * other prefix (chainCounts() on the whole graph); nor is the O of an OH
+ * (I-31), counted by P0 instead.
  * Pure: reads topology only.
  */
 
@@ -96,22 +102,26 @@ export function leafToLeafPaths(mol) {
 } // End of function leafToLeafPaths()
 
 /**
- * Counts, for one chain, the data compared by P1–P3 (and the substituent
+ * Counts, for one chain, the data compared by P0–P3 (and the substituent
  * count that numbering.js compares as P4: every neighbour outside the chain,
- * halogens included).
+ * halogens included, the OH suffix groups not).
  *
  * @param {Map<number, {atom: number, bond: number, order: number}[]>} adj - Adjacency map.
  * @param {number[]} atoms - Chain atom ids in order.
- * @returns {{length: number, multiple: number, double: number, substituents: number}} The counts.
+ * @param {function(number): boolean} [isSuffixAtom] - Tells whether a neighbour is a suffix group's heteroatom (an OH oxygen); default none.
+ * @returns {{suffixes: number, length: number, multiple: number, double: number, substituents: number}} The counts.
  */
-export function chainCounts(adj, atoms) {
+export function chainCounts(adj, atoms, isSuffixAtom = () => false) {
   const inChain = new Set(atoms);
   let multiple = 0;
   let double = 0;
   let substituents = 0;
+  let suffixes = 0;
   atoms.forEach((atom, i) => {
     for (const n of adj.get(atom)) {
-      if (!inChain.has(n.atom)) {
+      if (isSuffixAtom(n.atom)) {
+        suffixes += 1;
+      } else if (!inChain.has(n.atom)) {
         substituents += 1;
       } else if (n.atom === atoms[i + 1] && n.order >= 2) {
         multiple += 1;
@@ -119,7 +129,7 @@ export function chainCounts(adj, atoms) {
       }
     }
   });
-  return { length: atoms.length, multiple, double, substituents };
+  return { suffixes, length: atoms.length, multiple, double, substituents };
 } // End of function chainCounts()
 
 /**
@@ -174,26 +184,36 @@ function applyCountRule(rule, chains, values) {
 }
 
 /**
- * Narrows the parent chain(s) of a molecule by P1–P3 (design.md §4.3). The
+ * Narrows the parent chain(s) of a molecule by P0–P3 (design.md §4.3). The
  * chains that remain tied go, with both directions of each, to numbering
- * (numbering.js: N1, N2, then P4, N3, N4, §4.4).
+ * (numbering.js: N0, N1, N2, then P4, N3, N4, §4.4). P0 (most OH groups on
+ * the chain) is applied, and recorded, only when the molecule has OH groups
+ * (an alcohol, design.md §13.4 I-31): IUPAC 2013 puts the principal
+ * characteristic groups before the chain length (P-44.1.1), so a shorter
+ * chain carrying more OH groups wins.
  *
- * @param {object} mol - A validated acyclic hydrocarbon or halogen derivative.
+ * @param {object} mol - A validated acyclic hydrocarbon, halogen derivative or alcohol.
  * @returns {{chains: number[][], trace: object[]}} The remaining chains (each starting at its smaller end id) and the P-rule trace steps.
  * @throws {Error} When the invariant "no triple bond leaves a longest chain" is broken.
  */
 export function selectParent(mol) {
   const adj = adjacency(mol);
   let chains = leafToLeafPaths(mol);
-  const counts = new Map(chains.map((chain) => [chain.join('-'), chainCounts(adj, chain)]));
+  const isOxygen = (id) => mol.atoms.get(id).element === 'O';
+  const counts = new Map(chains.map((chain) => [chain.join('-'), chainCounts(adj, chain, isOxygen)]));
   const trace = [];
+  const alcohol = [...mol.atoms.values()].some((atom) => atom.element === 'O');
   const rules = [
+    { rule: 'P0', field: 'suffixes' },
     { rule: 'P1', field: 'length' },
     { rule: 'P2', field: 'multiple' },
     { rule: 'P3', field: 'double' },
   ];
   for (const { rule, field } of rules) {
-    if (rule !== 'P1' && chains.length < 2) {
+    if (rule === 'P0' && !alcohol) {
+      continue;
+    }
+    if (rule !== 'P0' && rule !== 'P1' && chains.length < 2) {
       break;
     }
     const values = chains.map((chain) => counts.get(chain.join('-'))[field]);

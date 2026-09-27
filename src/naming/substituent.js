@@ -34,6 +34,13 @@
  * alphabetised with the others (Spanish order: bromo < cloro < etil <
  * fluoro < metil < yodo) and counted by P4, N3 and N4 like any prefix; it is
  * never part of a chain (`(clorometil)`, `2-cloroetil`).
+ *
+ * OH groups (design.md §13.4 I-31) on the parent are its principal groups,
+ * cited as the `-ol` suffix (suffixSites()), never as substituents
+ * (collectSubstituents() leaves them out); an OH on a substituent chain is a
+ * simple prefix of that group, `hidroxi` (hydroxySubstituent():
+ * `(hidroximetil)`, `(2-hidroxietil)`), alphabetised under h. Substituent
+ * chains, like the parent, run over carbons only.
  * Pure: topology only.
  */
 
@@ -210,14 +217,17 @@ function countBonds(adj, atoms, test) {
 /**
  * Lists every substituent hanging from a chain (a parent chain, or the
  * chain of a substituent when `exclude` is its carrying atom), each named
- * recursively under the context's style.
+ * recursively under the context's style. On a parent (`parent` true) an OH
+ * is a suffix group (suffixSites()), not a substituent, and is left out; on
+ * a substituent chain it is the `hidroxi` prefix (hydroxySubstituent()).
  *
  * @param {object} ctx - Naming context (createNamingContext).
  * @param {number[]} chainAtoms - The chain's atom ids.
  * @param {number|null} [exclude] - An atom outside the chain that is not a substituent (the carrying atom of a substituent chain).
+ * @param {boolean} [parent] - True for the parent chain or ring, whose OH groups are suffixes (default false).
  * @returns {{chainAtom: number, attachAtom: number, bond: number, order: number, atoms: number[], bonds: number[], multipleBonds: number[], key: string, structure: object, citation: object}[]} One entry per substituent, in chain order then attachment-atom order.
  */
-export function substituentsOf(ctx, chainAtoms, exclude = null) {
+export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) {
   const inChain = new Set(chainAtoms);
   const result = [];
   for (const chainAtom of chainAtoms) {
@@ -226,8 +236,11 @@ export function substituentsOf(ctx, chainAtoms, exclude = null) {
         continue;
       }
       const element = ctx.mol.atoms.get(n.atom).element;
-      if (isHalogen(element)) {
-        const structure = halogenSubstituent(n.atom, element);
+      if (element === 'O' && parent) {
+        continue; // A suffix group of the parent (`-ol`), not a prefix.
+      }
+      if (isHalogen(element) || element === 'O') {
+        const structure = element === 'O' ? hydroxySubstituent(n.atom) : halogenSubstituent(n.atom, element);
         result.push({
           chainAtom,
           attachAtom: n.atom,
@@ -287,6 +300,52 @@ export function halogenSubstituent(atom, element) {
     bonds: [],
   };
 }
+
+/**
+ * The substituent structure of an OH group cited as a prefix (design.md
+ * §13.4 I-31): `hidroxi` (lexicon groupPrefix('alcohol')), a simple prefix
+ * like a halogen (never enclosed; `di`, `tri`… when repeated), with no chain
+ * and no prefixes. Only an OH on a substituent chain is cited this way: on
+ * the parent it is the principal group, cited as the `-ol` suffix.
+ *
+ * @param {number} atom - The oxygen atom id.
+ * @returns {object} The SubstituentStructure (structure.js) with `hydroxy` set.
+ */
+export function hydroxySubstituent(atom) {
+  return {
+    hydroxy: true,
+    chain: null,
+    prefixes: [],
+    freeValence: { locant: 1, order: 1 },
+    retained: null,
+    commonName: null,
+    atoms: [atom],
+    bonds: [],
+  };
+} // End of function hydroxySubstituent()
+
+/**
+ * The suffix groups of a parent (design.md §13.4 I-31): every OH bonded to
+ * one of its atoms — the principal characteristic groups, cited as `-ol`.
+ * Validation admits an oxygen only as an OH on a carbon, so every oxygen
+ * neighbour of a parent atom is one.
+ *
+ * @param {object} mol - A validated molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number[]} atoms - The parent's atom ids.
+ * @returns {{atom: number, attachAtom: number, bond: number}[]} One site per OH: carrying atom, oxygen, bond; in parent-atom order.
+ */
+export function suffixSites(mol, adj, atoms) {
+  const sites = [];
+  for (const atom of atoms) {
+    for (const n of adj.get(atom)) {
+      if (mol.atoms.get(n.atom).element === 'O') {
+        sites.push({ atom, attachAtom: n.atom, bond: n.bond });
+      }
+    }
+  } // End of the loop over the parent atoms
+  return sites;
+} // End of function suffixSites()
 
 /**
  * Builds the N5 complete-name key function for numberParent(): it renders a
@@ -381,7 +440,7 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
     throw new Error(`buildSubstituent: attachment bond of order ${order}`);
   }
   const { adj, style } = ctx;
-  const skip = (id) => isHalogen(ctx.mol.atoms.get(id).element);
+  const skip = (id) => ctx.mol.atoms.get(id).element !== 'C';
   let chains = substituentChainCandidates(adj, chainAtom, attachAtom, style === 'substituted', skip);
   chains = keepMax(chains, (c) => c.length);
   chains = keepMax(chains, (c) => countBonds(adj, c, (order) => order >= 2));
@@ -416,7 +475,7 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
  * @param {number} chainAtom - The carrying chain atom.
  * @param {number} attachAtom - The substituent atom bonded to it.
  * @param {string} [style] - Prefix style (default 'isopropil').
- * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom), or null when the two atoms are not bonded.
+ * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH), or null when the two atoms are not bonded.
  */
 export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLES[0]) {
   const ctx = createNamingContext(mol, style);
@@ -425,18 +484,22 @@ export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLE
     return null;
   }
   const element = mol.atoms.get(attachAtom).element;
+  if (element === 'O') {
+    return hydroxySubstituent(attachAtom);
+  }
   return isHalogen(element) ? halogenSubstituent(attachAtom, element) : nameSubstituentIn(ctx, chainAtom, attachAtom, link.order);
 }
 
 /**
- * Lists every substituent hanging from a parent chain, named under a prefix
- * style.
+ * Lists every substituent hanging from a parent chain or ring, named under a
+ * prefix style. The parent's OH groups are its suffix (suffixSites()), so
+ * they are not listed.
  *
- * @param {object} mol - A validated acyclic hydrocarbon.
- * @param {number[]} chainAtoms - The chain's atom ids.
+ * @param {object} mol - A validated molecule.
+ * @param {number[]} chainAtoms - The parent's atom ids.
  * @param {object} [ctx] - Naming context (a default-style one is created when omitted).
  * @returns {object[]} Entries as substituentsOf() returns them.
  */
 export function collectSubstituents(mol, chainAtoms, ctx = createNamingContext(mol)) {
-  return substituentsOf(ctx, chainAtoms, null);
+  return substituentsOf(ctx, chainAtoms, null, true);
 }

@@ -3,7 +3,9 @@
  * names a molecule with exactly one carbocycle (3–30 ring carbons) and any
  * acyclic hydrocarbon side chains — `ciclohexano`, `ciclohexeno`,
  * `ciclohexa-1,3-dieno`, `metilciclohexano`, `3-metilciclohex-1-eno`,
- * `etenilciclohexano`, `metilidenciclohexano`.
+ * `etenilciclohexano`, `metilidenciclohexano`, and with OH groups on ring
+ * carbons (design.md §13.4 I-31) `ciclohexanol`, `2-metilciclohexan-1-ol`,
+ * `ciclohex-2-en-1-ol`: the OH carbon gets the lowest locant (N0).
  *
  * Ring vs chain (IUPAC 2013 P-44.1.2.2, P-52.2.8): a ring is senior to a
  * chain whatever the chain's length or unsaturation, so with one ring the
@@ -18,7 +20,9 @@
  *
  * Numbering: every start atom and both directions are candidates (2n); each
  * candidate lists its n ring bonds in locant order, the last one joining
- * locant n back to 1 (so that bond gets locant n, the highest). They go
+ * locant n back to 1 (that bond is compared as locant n, the highest, so it
+ * is only chosen when the OH locants force it; it is then cited with the
+ * compound locant `1(6)`, IUPAC 2013 P-31.1.4.2.4). They go
  * through the same cascade as chains (numbering.js runNumberingCascade()),
  * i.e. the IUPAC 2013 P-31.1.4 lowest-locant criteria in order: N1 multiple
  * bonds together (ene + yne), N2 double bonds, N3 all detachable prefixes,
@@ -32,10 +36,10 @@
 
 import { perceiveRings } from '../model/rings.js';
 import { adjacency } from '../model/graph.js';
-import { buildRingStructure, buildNameStructure } from './structure.js';
+import { buildRingStructure, buildNameStructure, buildSuffix } from './structure.js';
 import { renderName } from './render.js';
 import { candidateData, runNumberingCascade } from './numbering.js';
-import { createNamingContext, collectSubstituents, groupPrefixes, PREFIX_STYLES } from './substituent.js';
+import { createNamingContext, collectSubstituents, groupPrefixes, suffixSites, PREFIX_STYLES } from './substituent.js';
 import { lexiconEs } from './lexicon.es.js';
 
 /**
@@ -102,22 +106,27 @@ function withRingBonds(step, data) {
 /**
  * Chooses the numbering of a ring among every start atom and both
  * directions (ringCandidates()) with the chain cascade
- * (numbering.js runNumberingCascade(): N1 multiple bonds, N2 double bonds,
- * N3 prefixes, N4 citation order, then the presentation tie-break).
+ * (numbering.js runNumberingCascade(): N0 suffix groups (the OH of `-ol`,
+ * design.md §13.4 I-31), N1 multiple bonds, N2 double bonds, N3 prefixes,
+ * N4 citation order, then the presentation tie-break).
  *
  * @param {object} mol - The molecule.
  * @param {object} perceived - The ring in perceived order (ringParent()).
  * @param {{chainAtom: number, key: string, citation: object}[]} substituents - Its substituents (substituentsOf() entries).
+ * @param {number[]} [suffixAtoms] - The ring atom carrying each suffix group (one entry per OH), default none.
  * @returns {{parent: object, trace: object[]}} The numbered ring structure and the numbering trace steps (candidates with their ring bonds).
  */
-export function numberRing(mol, perceived, substituents) {
+export function numberRing(mol, perceived, substituents, suffixAtoms = []) {
   const prefixes = substituents.map((sub) => ({ atom: sub.chainAtom, key: sub.key, citation: sub.citation }));
   const candidates = ringCandidates(perceived);
   const data = new Map(candidates.map((c) => [
     c.key,
-    candidateData(c.atoms, c.bonds, c.bonds.map((id) => mol.bonds.get(id).order), prefixes),
+    candidateData(c.atoms, c.bonds, c.bonds.map((id) => mol.bonds.get(id).order), prefixes, null, suffixAtoms),
   ]));
-  const { chosen, trace } = runNumberingCascade(candidates, data, { prefixCounts: [prefixes.length] });
+  const { chosen, trace } = runNumberingCascade(candidates, data, {
+    prefixCounts: [prefixes.length],
+    hasSuffix: suffixAtoms.length > 0,
+  });
   return {
     parent: buildRingStructure(chosen.atoms, data.get(chosen.key).bonds, data.get(chosen.key).orders),
     trace: trace.map((step) => withRingBonds(step, data)),
@@ -130,7 +139,8 @@ export function numberRing(mol, perceived, substituents) {
  * chains are its substituents, and the ring numbering is chosen among every
  * start and direction. The trace starts with a 'RING' step (the ring as the
  * only candidate, its size as the value) followed by the numbering rules
- * that were applied (none for a bare cycloalkane).
+ * that were applied (none for a bare cycloalkane). OH groups on ring carbons
+ * are the `-ol` suffix (`structure.suffix`) and are numbered first (N0).
  *
  * @param {object} mol - A molecule accepted by validateForNaming() that has a ring.
  * @param {string} [style] - Prefix style (default 'isopropil', design.md §1.1).
@@ -141,15 +151,20 @@ export function nameRingWithStyle(mol, style = PREFIX_STYLES[0]) {
   const adj = adjacency(mol);
   const ctx = createNamingContext(mol, style, lexiconEs, adj);
   const substituents = collectSubstituents(mol, perceived.atoms, ctx);
+  const sites = suffixSites(mol, adj, perceived.atoms);
   const saturated = perceived.double.length === 0 && perceived.triple.length === 0;
   let parent = perceived;
   let numberingTrace = [];
-  if (substituents.length > 0 || !saturated) {
-    const numbered = numberRing(mol, perceived, substituents);
+  if (substituents.length > 0 || sites.length > 0 || !saturated) {
+    const numbered = numberRing(mol, perceived, substituents, sites.map((site) => site.atom));
     parent = numbered.parent;
     numberingTrace = numbered.trace;
   }
-  const structure = buildNameStructure({ parent, prefixes: groupPrefixes(substituents, parent.atoms) });
+  const structure = buildNameStructure({
+    parent,
+    prefixes: groupPrefixes(substituents, parent.atoms),
+    suffix: buildSuffix(sites, parent.atoms),
+  });
   const { name, parts } = renderName(structure, lexiconEs);
   const candidate = { atoms: [...perceived.atoms], bonds: [...perceived.bonds], key: 'ring' };
   return {

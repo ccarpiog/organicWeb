@@ -45,6 +45,9 @@ export const RING_PREFIX = 'cyclo';
 /** Retained name of the benzene ring as a parent (IUPAC 2013 P-22.1.2). */
 export const BENZENE_NAME = 'benzene';
 
+/** Stem of the retained name `phenol` (phen + ol; IUPAC 2013 P-63.1.1.1, see lexicon.es.js). */
+export const PHENOL_STEM = 'phen';
+
 /** Traditional names of monosubstituted benzenes retained by IUPAC 2013 (P-22.1.3; see lexicon.es.js). */
 export const TRADITIONAL_NAMES = Object.freeze({ toluene: 'toluene', styrene: 'styrene' });
 
@@ -359,6 +362,7 @@ export const lexiconEn = Object.freeze({
   prefixForm,
   ringPrefix: RING_PREFIX,
   benzeneName: BENZENE_NAME,
+  phenolStem: PHENOL_STEM,
   traditionalName,
   traditionalLabel,
   groupSuffix,

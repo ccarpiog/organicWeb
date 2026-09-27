@@ -9,8 +9,10 @@
  * `tolueno` and `estireno`, design.md §13.4 I-28), and the suffixes,
  * prefixes and family names of the characteristic groups (`-oico`, `-ol`,
  * `hidroxi`, `cloro`…, design.md §13.6), with the halogen prefixes named
- * since I-30 (`clorometano`, `2-bromo-1-cloropropano`) and the omission of
- * their locants on one- and two-carbon and fully halogenated parents.
+ * since I-30 (`clorometano`, `2-bromo-1-cloropropano`), the alcohol suffix
+ * `-ol` and prefix `hidroxi` and the retained `fenol` since I-31, and the
+ * omission of their locants on one- and two-carbon, monosubstituted ring and
+ * fully halogenated parents.
  *
  * Everything that depends on the language lives here; render.js only
  * assembles parts and punctuation. The exported `lexiconEs` object is the
@@ -60,6 +62,14 @@ export const RING_PREFIX = 'ciclo';
  * `benzene` is retained; `ciclohexa-1,3,5-trieno` is not an acceptable name).
  */
 export const BENZENE_NAME = 'benceno';
+
+/**
+ * Stem of the retained name `fenol` (C₆H₅–OH; IUPAC 2013 P-63.1.1.1: phenol
+ * is the retained preferred name, `bencenol` is not used). The name is
+ * rendered as this stem plus the alcohol suffix (`fen` + `ol`), so the `ol`
+ * part can point at the OH group.
+ */
+export const PHENOL_STEM = 'fen';
 
 /**
  * Traditional names of monosubstituted benzenes still retained by IUPAC 2013
@@ -224,41 +234,44 @@ export function omitsLocants(chain, hasPrefixes) {
 }
 
 /**
- * Locant omission for a ring parent (design.md §1.1, §13.4 I-26), an
+ * Locant omission for a ring parent (design.md §1.1, §13.4 I-26, I-31), an
  * explicit rule like the chain table above, never inferred from "only one
  * structural possibility":
  * - an unsubstituted monocycle with exactly one multiple bond omits its
  *   locant: `ciclohexeno`, `ciclooctino` (every lowest-locant numbering puts
  *   the bond at 1; IUPAC 2013 P-31.1.4.2.4 names these cyclohexene,
  *   cyclooctyne);
- * - a saturated monocycle with exactly one substituent omits that
- *   substituent's locant: `metilciclohexano`, `metilidenciclohexano`
- *   (IUPAC 2013 P-14.3.4.2(c): the locant 1 is omitted in a monosubstituted
- *   parent hydride with only one kind of substitutable hydrogen);
+ * - a saturated monocycle with exactly one substituent — one prefix, or one
+ *   suffix group (`-ol`) — omits its locant: `metilciclohexano`,
+ *   `metilidenciclohexano`, `ciclohexanol` (IUPAC 2013 P-14.3.4.2(c): the
+ *   locant 1 is omitted in a monosubstituted parent hydride with only one
+ *   kind of substitutable hydrogen);
  * - a benzene parent (`retained` 'benzene', aromatic.js) never cites the
  *   locants of its double bonds, and a single substituent omits its locant
- *   as well: `benceno`, `metilbenceno` (P-14.3.4.2(c); polysubstituted
- *   benzenes are refused before naming, design.md §13.1);
+ *   as well: `benceno`, `metilbenceno`, `fenol` (P-14.3.4.2(c);
+ *   polysubstituted benzenes are refused before naming, design.md §13.1);
  * - everything else keeps all its locants, the 1 of a ring double bond
- *   included: `3-metilciclohex-1-eno`, `1-metilciclohex-1-eno`,
- *   `ciclohexa-1,3-dieno`, `1,1-dimetilciclohexano` (as `but-1-eno` and
- *   `2-metilprop-1-eno` keep theirs).
+ *   and of a suffix included: `3-metilciclohex-1-eno`, `1-metilciclohex-1-eno`,
+ *   `ciclohexa-1,3-dieno`, `1,1-dimetilciclohexano`, `2-metilciclohexan-1-ol`,
+ *   `ciclohex-2-en-1-ol` (as `but-1-eno` and `2-metilprop-1-eno` keep theirs).
  *
  * @param {{double: object[], triple: object[]}} ring - The ring structure.
  * @param {{locants: object[]}[]} prefixes - Its prefix groups.
- * @returns {{parent: boolean, prefixes: boolean}} Whether the ending locants and the prefix locants are omitted.
+ * @param {number} [suffixCount] - Number of suffix groups on the ring (`-ol`: one per OH; default 0).
+ * @returns {{parent: boolean, prefixes: boolean}} Whether the ending locants and the substituent locants (prefixes and suffix) are omitted.
  */
-export function ringOmitsLocants(ring, prefixes) {
-  const single = prefixes.length === 1 && prefixes[0].locants.length === 1;
+export function ringOmitsLocants(ring, prefixes, suffixCount = 0) {
+  const occurrences = prefixes.reduce((sum, group) => sum + group.locants.length, 0) + suffixCount;
+  const single = occurrences === 1;
   if (ring.retained === 'benzene') {
     return { parent: true, prefixes: single };
   }
   const multiple = ring.double.length + ring.triple.length;
   return {
-    parent: prefixes.length === 0 && multiple === 1,
-    prefixes: (multiple === 0 && single) || fullyHalogenated(ring, prefixes),
+    parent: occurrences === 0 && multiple === 1,
+    prefixes: (multiple === 0 && single) || (suffixCount === 0 && fullyHalogenated(ring, prefixes)),
   };
-}
+} // End of function ringOmitsLocants()
 
 /**
  * Number of hydrogens of an unsubstituted parent hydride: CₙH₂ₙ₊₂ for a
@@ -294,29 +307,33 @@ export function fullyHalogenated(parent, prefixes) {
 }
 
 /**
- * Locant omission for the substituent prefixes of a chain parent (design.md
- * §1.1, §13.4 I-30), an explicit rule like the tables above. Hydrocarbon
- * chains always cite them (`2-metilpropano`); only halogen derivatives can
- * put prefixes on the parents concerned:
+ * Locant omission for the substituent prefixes and suffix groups of a chain
+ * parent (design.md §1.1, §13.4 I-30, I-31), an explicit rule like the
+ * tables above. Hydrocarbon chains always cite them (`2-metilpropano`); only
+ * halogens and suffix groups (`-ol`) can reach the parents concerned:
  * - a one-carbon parent (IUPAC 2013 P-14.3.4.2(a), substituted mononuclear
- *   parent hydride): `clorometano`, `diclorometano`, `triclorometano`,
- *   `tetraclorometano`;
- * - a two-carbon parent with exactly one substituent (P-14.3.4.2(b),
- *   monosubstituted chain of two identical atoms): `cloroetano`,
- *   `cloroeteno`, `cloroetino` (but `1,1-dicloroetano`, `1,2-dicloroetano`);
- * - a parent completely substituted by one halogen (fullyHalogenated()):
- *   `hexacloroetano`, `tetrafluoroeteno`, `octafluoropropano`.
+ *   parent hydride): `clorometano`, `triclorometano`, `metanol`,
+ *   `metanodiol`, `clorometanol`;
+ * - a two-carbon parent with exactly one substituent, prefix or suffix
+ *   (P-14.3.4.2(b), monosubstituted chain of two identical atoms):
+ *   `cloroetano`, `cloroeteno`, `etanol`, `etenol` (but `1,1-dicloroetano`,
+ *   `etano-1,2-diol`, `2-cloroetan-1-ol`: with two substituents every locant
+ *   is cited);
+ * - a parent completely substituted by one halogen (fullyHalogenated(); no
+ *   suffix): `hexacloroetano`, `tetrafluoroeteno`, `octafluoropropano`.
  *
  * @param {{length: number, double: object[], triple: object[]}} chain - The parent chain structure.
  * @param {{substituent: object, locants: object[]}[]} prefixes - Its prefix groups.
- * @returns {boolean} True when the prefix locants are omitted.
+ * @param {number} [suffixCount] - Number of suffix groups on the parent (one per OH; default 0).
+ * @returns {boolean} True when the prefix and suffix locants are omitted.
  */
-export function chainOmitsPrefixLocants(chain, prefixes) {
-  if (prefixes.length === 0) {
+export function chainOmitsPrefixLocants(chain, prefixes, suffixCount = 0) {
+  const occurrences = prefixes.reduce((sum, group) => sum + group.locants.length, 0) + suffixCount;
+  if (occurrences === 0) {
     return false;
   }
-  const occurrences = prefixes.reduce((sum, group) => sum + group.locants.length, 0);
-  return chain.length === 1 || (chain.length === 2 && occurrences === 1) || fullyHalogenated(chain, prefixes);
+  return chain.length === 1 || (chain.length === 2 && occurrences === 1)
+    || (suffixCount === 0 && fullyHalogenated(chain, prefixes));
 }
 
 /**
@@ -634,6 +651,7 @@ export const lexiconEs = Object.freeze({
   prefixForm,
   ringPrefix: RING_PREFIX,
   benzeneName: BENZENE_NAME,
+  phenolStem: PHENOL_STEM,
   traditionalName,
   traditionalLabel,
   groupSuffix,

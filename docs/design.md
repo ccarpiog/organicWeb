@@ -46,6 +46,21 @@ names the sections of this file it implements. The plan was reviewed by Codex
   undeca, dodeca… for simple prefixes, even when parenthesised only for
   their own locants (`di(propan-2-il)`); bis, tris, tetrakis, pentakis… for
   compound (substituted) prefixes (`bis(2-metilpropil)`) (IUPAC 2013 P-16.9).
+- **Suffixes** (I-31, alcohols): the principal characteristic group follows
+  the parent's ending with its locants and a multiplier: `propan-2-ol`,
+  `butano-1,4-diol`, `propano-1,2,3-triol`. The final `o` of `-ano`,
+  `-eno`, `-ino` is elided before a vowel and kept before a consonant
+  (IUPAC 2013 P-16.7.1): `etanol`, `prop-2-en-1-ol`, `but-3-in-2-ol`, but
+  `etano-1,2-diol`, `but-2-eno-1,4-diol` (English `ethanol`,
+  `ethane-1,2-diol`). The connecting `a` still depends only on the first
+  unsaturation segment (`penta-1,4-dien-3-ol`). An OH on benzene gives the
+  retained `fenol` (P-63.1.1.1; `bencenol` is not used), rendered `fen` +
+  `ol`. Decided (IUPAC 2013 P-16.7.1(c), fixtured): the final `a` of a
+  suffix multiplier is elided before a vowel-initial suffix —
+  `butano-1,2,3,4-tetrol`, `pentano-1,2,3,4,5-pentol` (English
+  `butane-1,2,3,4-tetrol`); `di`/`tri` are unchanged (`diol`, `triol`) and
+  prefix multipliers always keep their `a` (`tetrametil`, `tetracloro`)
+  (`render.js suffixWords()`).
 - **Group name vs. prefix**: groups named on their own take a final `o`
   (`metilo`, `etilo`, `metilideno`, `etilideno`, `isopropilo`); cited as a
   prefix inside a name they drop it (`metil`, `etil`, `metiliden`,
@@ -128,6 +143,19 @@ names the sections of this file it implements. The plan was reviewed by Codex
     prefixes are written together (`clorotrifluorometano`). Inside a
     one-carbon substituent the nested prefix has no locant either
     (`(clorometil)`, `(trifluorometil)`).
+  - Alcohols (I-31): the suffix locants follow the same rules as the prefix
+    locants, counting every OH and every prefix as one substituent — a
+    one-carbon parent cites none (`metanol`, `metanodiol`,
+    `triclorometanol`), a two-carbon parent with exactly one substituent
+    neither (`etanol`, `etenol`, `etinol`), but two substituents keep all
+    their locants (`etano-1,2-diol`, `2-cloroetan-1-ol`, IUPAC 2013
+    `2-chloroethan-1-ol`; `2-cloroeten-1-ol`); a saturated ring whose only
+    substituent is one OH omits it (`ciclohexanol`), any other ring cites
+    the 1 of the OH (`2-metilciclohexan-1-ol`, `ciclohex-2-en-1-ol`,
+    `ciclohexano-1,4-diol`); from three chain carbons every locant is cited
+    (`propan-1-ol`). A parent with a suffix never uses the unsubstituted
+    table (`prop-2-en-1-ol`, not `propenol`) nor the fully-halogenated rule
+    (`2,2,2-tricloroetan-1-ol`).
 - **Punctuation**: numbers separated by commas, numbers and letters by
   hyphens; prefixes written together with the parent
   (`3-etil-2-metilhexano`); parentheses around compound prefixes.
@@ -186,7 +214,7 @@ src/
 tests/
   unit/*.test.js        node --test
   fixtures/names.tsv    SMILES <TAB> expected name <TAB> rule tested <TAB> justification
-  fixtures/explain-snapshots.json  explain() output for ~20 fixtures (UPDATE_SNAPSHOTS=1 regenerates)
+  fixtures/explain-snapshots.json  explain() output for ~60 fixtures (UPDATE_SNAPSHOTS=1 regenerates)
   e2e/*.spec.js         Playwright
 scripts/
   build.mjs             inline everything into dist/index.html (no deps)
@@ -268,9 +296,15 @@ most one substituent: two or more → `CYCLE` with `ringReason`
 orto/meta/para, §13.1); a ring above 30 carbons → `TOO_BIG`; any other ring system →
 `RING_SYSTEM` with `ringKind`; all carry the ring atoms in `atoms`), size
 caps (≤ 60 carbons `MAX_CARBONS`, ≤ 80 heavy atoms `MAX_HEAVY_ATOMS`, rings
-included), carbon and halogens bonded to a carbon only (`HETEROATOM` for
-any other atom — O, N, a halogen bonded to a heteroatom or to nothing —,
-also on a ring's side chain; `isHalogenDerivative()`, I-30), parent chain
+included), carbon, halogens bonded to a carbon (`isHalogenDerivative()`,
+I-30) and OH groups on a carbon (an oxygen with exactly one single bond, to
+a carbon: `isHydroxyOxygen()`, `hasNameableHeteroatoms()`, I-31) only
+(`HETEROATOM` for any other atom — N, any other O such as C=O, ethers,
+acids or O–O, a halogen bonded to a heteroatom or to nothing —, also on a
+ring's side chain), no OH on a ring's side chain (`HETEROATOM` with
+`reason` `sideChainAlcohol`, `sideChain` the OH oxygens,
+`sideChainHydroxyls()`: that parent would be the chain, with the ring as a
+`ciclohexil`/`fenil` substituent, planned for I-40), parent chain
 ≤ 30 carbons (`MAX_CHAIN`, measured on the carbon skeleton, `carbonSkeleton()`
 in `graph.js`, so a halogen never lengthens a chain; for a ring, every side
 chain ≤ 30: `longestSideChain()`). The same checks guard editor transactions, JSON restoration
@@ -289,7 +323,7 @@ Errors are codes with Spanish messages:
 | `RING_SYSTEM` | Out of scope (§13.1), one message per `ringKind`: `heterocycle` Este anillo tiene átomos que no son carbono: es un heterociclo. Los heterociclos quedan fuera de lo que sé nombrar. · `fused` Has dibujado anillos fusionados (dos anillos que comparten un enlace). Este tipo de moléculas queda fuera de lo que sé nombrar. · `bridged` Has dibujado anillos con puente (dos anillos que comparten más de dos átomos). … · `spiro` Has dibujado un compuesto espiro (dos anillos que comparten un solo átomo). … · `several` Esta molécula tiene varios anillos. De momento solo podré nombrar moléculas con un único anillo. (generic: Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.) |
 | `VALENCE` | Este carbono tendría más de 4 enlaces. — per element for the lowest-id offending atom: Este oxígeno tendría más de 2 enlaces. / Este nitrógeno tendría más de 3 enlaces. / Este cloro (flúor, bromo, yodo) tendría más de 1 enlace. (The editor's "full" refusal likewise: Este oxígeno ya tiene 2 enlaces.) |
 | `TOO_BIG` | La molécula es demasiado grande (máximo 60 carbonos, cadena de 30). — also a ring side chain above 30 carbons — heavy-atom cap: La molécula es demasiado grande (máximo 80 átomos sin contar los hidrógenos). — a ring above 30 carbons: El anillo es demasiado grande (máximo 30 carbonos en el anillo). |
-| `HETEROATOM` | Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos y derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono). (valid, not nameable yet; `atoms` lists every heteroatom, halogens included; since I-29 the naming result also carries `groups`, §4.1, §13.6; since I-30 a molecule whose only heteroatoms are halogens bonded to carbons is named instead) |
+| `HETEROATOM` | Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono). (valid, not nameable yet; `atoms` lists every heteroatom, halogens included; since I-29 the naming result also carries `groups`, §4.1, §13.6; since I-30 a molecule whose only heteroatoms are halogens bonded to carbons is named instead, since I-31 also one with OH groups on carbons) — an OH on a ring's side chain (`reason` `sideChainAlcohol`): Esta molécula tiene un anillo y un grupo –OH en una de sus ramas. De momento solo sé nombrar los alcoholes con anillo cuando el –OH está unido directamente al anillo (como el ciclohexanol o el fenol). |
 | `INVALID` | Los datos de la molécula están dañados. Empieza un dibujo nuevo. (internal/corrupt data) |
 
 ---
@@ -321,21 +355,26 @@ most senior kind present (or null) and `unsupported` tells whether some
 group was not recognised. It never turns the refusal into a name; hydrocarbon
 results and other refusals have no `groups`.
 
+An alcohol (I-31) has `structure.suffix` (`{kind: 'alcohol', locants}`,
+one `{locant, atom, attachAtom, bond}` per OH on the parent, §4.7); every
+other result has `suffix: null`.
+
 `TraceStep = { rule, candidatesBefore, values, survivors, note? }` where each
 candidate is `{ atoms, direction?, key, bonds }` (`bonds`: the chain's bond ids,
 added by `nameMolecule()` so the explanation can highlight every compared chain)
 and `values` are the compared data
-(counts for P1–P4, locant lists for N1–N3, the prefix locants flattened
+(counts for P0–P4, locant lists for N0–N3, the prefix locants flattened
 in citation order for N4, the citation keys for N5, the atom-id tuple for
 the tie-break). A ring parent (I-25, I-26) starts with a `RING` step instead
 of P1–P4 — the ring as the only candidate, its size as the value: with one
 ring the ring is always the parent (§13.5) — followed, when the ring is
 substituted or unsaturated, by the ring numbering rules N1–N4 and TIE over
 every start atom and direction (each candidate with its n ring bonds in
-`bonds`); a bare cycloalkane has the `RING` step only. Trace order: P1, P2, P3, N1, N2, P4, N3, N4, N5, TIE (N5
+`bonds`); a bare cycloalkane has the `RING` step only. Trace order: P0, P1, P2, P3, N0, N1, N2, P4, N3, N4, N5, TIE (N5
 only when the candidates left after N4 would give different names). Rules stop at the first one that leaves
-a single candidate; P1 is always recorded, and N3/N4 are skipped when no
-candidate carries prefixes. The explanation layer (§5) consumes only the trace
+a single candidate; P0 (most OH groups) and N0 (lowest OH locants, also on
+rings) appear only for an alcohol, P0 always recorded then; P1 is always
+recorded, and N3/N4 are skipped when no candidate carries prefixes. The explanation layer (§5) consumes only the trace
 and the result — it never re-derives chemistry.
 
 ### 4.2 Parent candidates
@@ -343,8 +382,10 @@ and the result — it never re-derives chemistry.
 The validated molecule is a tree. Candidates are paths of its **carbon
 skeleton** (`carbonSkeleton()`): a halogen (I-30) is never a chain atom,
 only a substituent prefix, so it counts in P4, N3 and N4 like any other
-prefix. A one-carbon skeleton (methane, `clorometano`) is handled
-separately. Otherwise enumerate the path between every pair of leaf carbons
+prefix; nor is the O of an OH (I-31), which P0 counts instead. A
+one-carbon skeleton (methane, `clorometano`, `metanol`) is handled
+separately. Extending a path never loses an OH, so the leaf-to-leaf paths
+still contain the best parent of an alcohol. Otherwise enumerate the path between every pair of leaf carbons
 and keep the longest. This is complete: a path ending at a non-leaf could be extended, so
 it is not maximal. (With ≤ 60 atoms there are at most ~1 800 paths.)
 **This leaf-to-leaf restriction applies to the parent only**, never to
@@ -357,6 +398,11 @@ exceed valence; terminal attachment would make the chain longer). Assert it.
 
 Compare in order; stop when one chain remains:
 
+0. **P0 Most principal groups** (I-31, alcohols only) — OH groups on the
+   chain's carbons (IUPAC 2013 P-44.1.1: the maximum number of principal
+   characteristic groups comes before the length): `CCCCC(CO)CCC` is
+   `2-propilhexan-1-ol`, not an octane. An OH no chain can hold is a
+   `hidroxi-` prefix of its branch (`2-(hidroximetil)propano-1,3-diol`).
 1. **P1 Longest chain** — carbon count (IUPAC 2013 P-44.3).
 2. **P2 Most multiple bonds** — double + triple bonds **lying within** the
    chain. A double bond connecting the chain to a substituent does not count
@@ -375,6 +421,10 @@ Every candidate is a `(chain, direction)` pair. Compare **sorted locant
 lists, keeping repeated locants, term by term, numerically, at the first
 point of difference — never by sums**:
 
+4. **N0** (I-31, alcohols only) the OH groups, one locant per OH (IUPAC 2013
+   P-31.1.4.2.4: the principal characteristic groups come before the
+   multiple bonds and the prefixes): `prop-2-en-1-ol`, `pent-4-en-2-ol`,
+   `4-metilpentan-2-ol`.
 5. **N1** all multiple bonds together (`eno` + `ino`); a bond's locant is the
    lower of its two atom locants.
 6. **N2** double bonds.
@@ -472,6 +522,12 @@ Substituent chain selection:
   makes it a compound prefix (`bis(clorometil)`) and never a retained one
   (a substituted isopropyl or tert-butyl group is named systematically).
   Substituent chains, like the parent, run over carbons only.
+- **OH groups** (I-31): an OH on a parent atom is the principal group, the
+  `-ol` suffix, never a substituent (`suffixSites()`; `collectSubstituents()`
+  leaves it out). An OH on a substituent chain is the simple prefix
+  `hidroxi` of that group (`hydroxySubstituent()`, `hydroxy: true`, identity
+  key `-O()`, alphabetised under h, never enclosed): `(hidroximetil)`,
+  `bis(hidroximetil)`, `3-(2-hidroxietil)pentano-1,2,5-triol`.
 - Identical substituents are grouped: di/tri for simple prefixes, also when
   they are parenthesised for their own locants (`di(propan-2-il)`); bis/tris
   for compound, i.e. substituted, prefixes (`bis(2-metilpropil)`,
@@ -518,7 +574,11 @@ prefixes in front as for chains (`1-etil-3-metilciclohexano`,
 `retained: 'benzene'`, rendered as the single word `benceno`/`benzene`
 (the Kekulé double bonds, at locants 1, 3, 5 of the chosen numbering, stay
 in the structure but are never cited); `fenil`/`phenyl` is a retained
-substituent prefix (`retained: 'phenyl'`). `render.js` turns it into the Spanish string and coloured parts
+substituent prefix (`retained: 'phenyl'`). An alcohol's structure also has `suffix` (I-31), rendered after the ending
+(`renderEnding()`, `suffixWords()`: locants, multiplier, `ol`, and the
+elided final vowel of the ending, §1.1); the `ol` part refers to every OH
+and its carbon; a benzene parent with a suffix renders `fen` + `ol`.
+`render.js` turns it into the Spanish string and coloured parts
 using `lexicon.es.js`; the oracle (§8) renders the same structure with
 `lexicon.en.js`. No name is ever produced by substring translation.
 
@@ -568,7 +628,10 @@ chain on a small ring, the ring locant-omission rule); halogen derivatives
 (I-30: several halogens, halogen + alkyl, N3 before N4, alphabetical ties,
 Spanish order with `yodo`, P4 counting halogens, halogens with double and
 triple bonds, on rings and on benzene, inside substituents, and every
-locant-omission case).
+locant-omission case); alcohols (I-31: simple, branched, P0 against a longer
+chain, N0 against multiple bonds and prefixes, enols and gem-diols, diols
+and triols, `hidroxi-` branches, OH + halogens, cycloalkanols, `fenol`, and
+the locant-omission and vowel-elision cases).
 
 The oracle (§8) is the second line of defence, not a replacement.
 
@@ -666,6 +729,24 @@ la y); **Monta el nombre**, that halogens never change the ending. The
 "number is written anyway" note of short chains is not given for halogen
 locants (they tell isomers apart).
 
+An alcohol (I-31) gets one more step after **Cuenta los carbonos** (which
+counts the oxygen atoms in the Hill formula, `C₂H₆O`, and says each O is
+drawn as OH): **Reconoce el grupo funcional** (step id `group`: the –OH
+group, the molecule is an alcohol or, on benzene, a fenol; the –OH is the
+principal group, named with the suffix «-ol», «-diol», «-triol»; an OH on a
+branch is «hidroxi-»; halogens are never principal). A chain parent then
+gets **Busca la cadena principal** (id `groupChain`, from P0 and P1: the
+chain must carry the most –OH groups before being the longest; a longer
+chain with fewer –OH is shown as an option) instead of **Busca la cadena
+más larga**. **Numera la cadena** / **Numera el anillo** explain N0 (the
+–OH carbon gets the lowest number, before the multiple bonds and the
+prefixes; "Fíjate: empezando por el otro extremo, el enlace doble tendría
+el número 1…, pero manda el –OH"), and the omitted locants of `etanol` and
+`ciclohexanol`; **Busca el anillo** says the –OH is not part of the ring;
+**Reconoce el benceno** says a benzene with an –OH is «fenol»; **Monta el
+nombre** explains the suffix and the final `o` of the ending («propan-2-ol»
+but «etano-1,2-diol»), with legend entries for the OH locants and `-ol`.
+
 Where the locant-omission table applies, a note explains it ("En «propeno» no
 hace falta el número: el doble enlace solo puede estar en el carbono 1").
 A molecule refused with `HETEROATOM` (I-29) gets four steps instead of
@@ -685,7 +766,7 @@ Glossary tooltips on underlined terms: *cadena principal*, *sustituyente
 *sustituyente* also covers an atom such as chlorine (I-30). Tone: second
 person, short sentences, encouraging.
 
-Snapshot tests: `explain()` output for ~20 fixtures stored as JSON and
+Snapshot tests: `explain()` output for ~60 fixtures stored as JSON and
 compared.
 
 ---
@@ -913,8 +994,12 @@ OPSIN (open-source name→structure, Java) reads English IUPAC names.
    I-28; their traditional names `toluene` / `styrene` are checked too),
    half as many halogen derivatives (I-30, `generateHalogenated()`: random
    hydrocarbons of 1 C upward, monocycles and benzenes whose hydrogens are
-   replaced at random by F, Cl, Br or I, `halogenate()`), plus one
-   cycloalkane per ring size in the carbon range (I-25).
+   replaced at random by F, Cl, Br or I, `halogenate()`), half as many
+   alcohols (I-31, `generateAlcohols()`: random hydrocarbons of 1 C upward
+   and monocycles whose hydrogens become OH groups at random,
+   `hydroxylate()` — on ring carbons only for a ring —, phenol, some also
+   halogenated), plus one cycloalkane per ring size in the carbon range
+   (I-25).
 3. name → English → OPSIN → SMILES → a **dev-only fuller SMILES parser**
    (bracket atoms, explicit H) → hydrogen-suppressed molecule keeping every
    heavy atom and its element (I-22), rings kept (I-24) → compare with the
@@ -1126,7 +1211,9 @@ before being presented as validated IUPAC 2013 coverage.
   locants on heteroatoms to the structure. Halogen derivatives (I-30) need
   neither: a halogen is a prefix whose locant is its carbon's, carried as a
   `halogen` SubstituentStructure (§4.5), and their results carry no
-  `groups`. The engine stays pure; the
+  `groups`. Alcohols (I-31) add the locants on heteroatoms to the
+  structure as `suffix` (§4.1, §4.7) and carry no `groups` either (the
+  explanation reads the suffix). The engine stays pure; the
   explanation is derived only from the result.
 
 ### 13.3 v1 assumptions that break
@@ -1179,7 +1266,7 @@ certifies IUPAC preference or Spanish spelling.
 | I-28 | Benzene and hydrocarbon derivatives | **Done.** New `N/aromatic.js`: benzene (exactly a six-carbon ring with alternating ring bonds) named `benceno`, monosubstituted benzenes without locant (`metilbenceno`, `isopropilbenceno` with the prefix-style alternatives), traditional `tolueno` / `estireno` (P-22.1.3) as a last alternative (no `cumeno`); polysubstituted → `CYCLE` `polysubstitutedBenzene`; retained `fenil`/`phenyl` prefix (`phenylSubstituent()`, unused by hydrocarbons); both lexicons; E step "Reconoce el benceno" (Kekulé drawings, no numbers, ring senior, `fenilo` form not preferred); Benceno button in Anillos (`a` cycle); Ordenar dibujo via the ring strategy; OPSIN adapter kekulizes aromatic SMILES, accepts either Kekulé drawing and generates benzene derivatives. | Both Kekulé forms; aromaticity never inferred from any alternation. |
 | I-29 | Functional groups and seniority | **Done.** New `N/groups.js`: clusters of heteroatoms and functional carbons (C=O, C=N, C≡N) matched whole against acid, ester, amide, nitrile, aldehyde, ketone, alcohol (`phenol` flag on benzene), ether, amine (primary/secondary/tertiary), halide; anything else (O–O, N–O, N–N, C=N, acyl halide, anhydride, carbonate, H₂O…) is one `unsupported` record; no atom in two groups (§13.6). New `N/seniority.js`: P-41 order, principal kind, suffix/prefix role; affix tables in both lexicons (`groupSuffix()`, `groupPrefix()`, `formylPrefix`, `groupFamilyName()`). The `HETEROATOM` refusal carries `groups` (§4.1); E steps "Reconoce los grupos", "Elige el principal", "Sufijo o prefijo", "Aún no sé nombrarla", shown by a stepper under the error. I-29 itself names no heteroatom molecule. | Acid/ester/amide vs alcohol/ether/amine/ketone, aldehyde vs ketone, phenol; pair matrix; unsupported patterns; id invariance; snapshots `tests/fixtures/explain-group-snapshots.json`. |
 | I-30 | Halogen derivatives | **Done.** A molecule whose only heteroatoms are halogens bonded to carbons passes validation (`isHalogenDerivative()`; caps on the carbon skeleton) and is named on chains, monocycles and monosubstituted benzene: prefixes fluoro-, cloro-, bromo-, yodo- (`halogenPrefix()` in both lexicons, `halogen` substituents in `N/substituent.js`), never a suffix nor a chain atom; multipliers; Spanish alphabetical order with the alkyl prefixes; P4/N3/N4 count halogens after the multiple bonds; halogens nested in substituents (`(clorometil)`); locant omission for one-carbon, monosubstituted two-carbon and fully halogenated parents (§1.1). No traditional names (cloroformo…) are offered. E: formula with halogens and halogen notes in every step (§5). Any O or N keeps the `HETEROATOM` refusal. Oracle generates halogen derivatives. | Several halogens and ties; ordering of translated prefixes (`yodo`); fixtures, `tests/unit/halogens.test.js`, snapshots, `tests/e2e/halogens.spec.js`. |
-| I-31 | Alcohols | `etanol`, `propan-2-ol`, diols; maximise suffix groups, lowest locants; show OH. | Branched and unsaturated; alcohol vs phenol vs carboxylic OH. |
+| I-31 | Alcohols | **Done.** A molecule whose heteroatoms are halogens on carbons and OH groups on carbons passes validation (`isHydroxyOxygen()`, `hasNameableHeteroatoms()`); with a ring every OH must be on a ring carbon (else `HETEROATOM` `sideChainAlcohol`, §3.2). The OH is the principal group, cited as the suffix `-ol`/`-diol`/`-triol` (`structure.suffix`, `buildSuffix()`, `suffixSites()`); P0 (most OH groups, before the length) in `N/parent.js`, N0 (lowest OH locants, before N1) in `N/numbering.js` for chains and rings; an OH on a branch is the `hidroxi` prefix (`hydroxySubstituent()`); vowel elision (`propan-2-ol`, `etano-1,2-diol`) and locant omission (`metanol`, `etanol`, `ciclohexanol`, §1.1); cycloalkanols (`2-metilciclohexan-1-ol`) and the retained `fenol` brought forward from I-40. Enols (`etenol`, `prop-1-en-2-ol`) and gem-diols (`propano-2,2-diol`) are named systematically. No traditional names (alcohol etílico, etilenglicol, glicerina) are offered: the design asks for none. "Show OH": every O is labelled OH on the canvas (§6.3, since I-23) and the explanation highlights each OH group and its carbon. E: steps `group` and `groupChain`, N0 texts (§5). Oracle generates alcohols. | Branched and unsaturated; alcohol vs phenol vs carboxylic OH; fixtures, `tests/unit/alcohols.test.js`, snapshots, `tests/e2e/alcohols.spec.js`. |
 | I-32 | Aldehydes and ketones | `etanal`, `propanona` (acetona as "Otras formas válidas"); aldehyde carbon in the chain; explain -al/-ona. | Terminal/internal, several carbonyls; C=O is not a hydrocarbon unsaturation. |
 | I-33 | Carboxylic acids | `ácido etanoico` (ácido acético as alternative), simple diacids; count the carboxyl carbon; COOH as a group. | Branching, numbering; salts and derivatives excluded. |
 | I-34 | Ethers | Alkoxy nomenclature `metoxietano`; explicit rules for the parent side; highlight both sides of the O. | Symmetric/asymmetric, branched; a carbon chain never runs through O. |
@@ -1188,7 +1275,7 @@ certifies IUPAC preference or Spanish spelling.
 | I-37 | Amides | `etanamida`, simple N-substitution; C(=O)N as one unit. | N-substituted; never ketone + amine. |
 | I-38 | Nitriles | `etanonitrilo`; C of C≡N in the chain, N not counted. | Branched, simple dinitriles; drop the old "no triple bond outside the chain" assertion. |
 | I-39 | Functional combinations | Seniority ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina; ethers/halogens as prefixes; hidroxi-, oxo-, amino-, ciano-. | Pair matrix and counter-examples; only covered combinations enabled. |
-| I-40 | Functions on rings | Cycloalkanols, cycloalkanones, fenol and selected monosubstituted derivatives; -carboxílico, -carbaldehído, -carbonitrilo. | Counting and numbering; small aromatic functional catalogue. |
+| I-40 | Functions on rings | Cycloalkanones and selected monosubstituted derivatives (cycloalkanols and `fenol` are done since I-31); rings as substituents of a chain carrying the principal group (`ciclohexil`, `fenil`: e.g. an OH on a ring's side chain, refused since I-31); -carboxílico, -carbaldehído, -carbonitrilo. | Counting and numbering; small aromatic functional catalogue. |
 | I-41 | Condensed formulas and wrap-up | Render, both layouts, Ayuda, examples, docs: OH per atom; CHO/COOH as optional abbreviations mapped to all their atoms; 90° view for acyclic heteroatoms. | Selection, highlight, collisions, accessibility; abbreviations never change the graph. |
 
 ### 13.5 Ring vs chain and ring numbering (I-26)
@@ -1209,17 +1296,26 @@ decision table is:
 | Several rings, fused/bridged/spiro rings, heterocycles | Refused (`RING_SYSTEM`) | — |
 | Benzene ring, at most one side chain (I-28) | The ring, named `benceno` (P-22.1.2); the chain is a prefix without locant, whatever its length or unsaturation — never `1-feniletano` | `benceno`, `etilbenceno`, `etenilbenceno` |
 | Benzene ring, two or more side chains | Refused (`CYCLE`, `polysubstitutedBenzene`; no orto/meta/para) | — |
+| One carbocycle with OH groups on ring carbons (I-31) | The ring, carrying the `-ol` suffix (it holds every principal group); OH carbon numbered first | `ciclohexanol`, `2-metilciclohexan-1-ol`, `fenol` |
+| One carbocycle with an OH on a side chain (I-31) | Refused (`HETEROATOM`, `sideChainAlcohol`): the chain would carry more principal groups (P-44.1.1) and be the parent, with the ring as a prefix (I-40) | — |
 
 The school rule "the longest chain wins over a smaller ring"
 (`1-ciclopropildecano`) belongs to older recommendations and is **not**
 carried over; the explanation says so when a side chain is longer than the
-ring. Functional groups (I-40) may later move the choice (a principal group
-on a chain), which will extend this table.
+ring. Functional groups move the choice when a principal group sits on a
+chain (IUPAC 2013 P-44.1.1 before P-44.1.2.2); since I-31 such alcohols are
+refused, and I-40 will name them.
 
 **Ring numbering.** Every start atom and both directions are candidates
 (2n). Each lists its ring bonds in locant order; the bond joining locant n
-back to 1 gets locant n (it can only appear in a winning set when every ring
-bond is multiple). The chain cascade is reused as is
+back to 1 is compared as locant n, the highest, in every lowest-locant
+rule (as in CAS/common practice: `ciclohexa-1,3-dieno`,
+`ciclonona-1,2-dieno`, `ciclohex-2-eno-1,2-diol`), so it is only chosen
+when the principal-group locants (N0, I-31) force it. When it is chosen,
+its lower atom locant is 1 and, because the two atom locants differ by
+more than one, it is cited with the compound locant `1(n)` (IUPAC 2013
+P-31.1.4.2.4) in names, coloured parts, explanations and English:
+`ciclohex-1(6)-eno-1,2,4-triol` (`structure.js siteLocantText()`). The chain cascade is reused as is
 (`numbering.js runNumberingCascade()`), which is the IUPAC 2013 P-31.1.4
 order for this scope: N1 multiple bonds (ene + yne) together, N2 double
 bonds, N3 all detachable prefixes together, N4 prefixes in citation order
@@ -1286,8 +1382,10 @@ forms and the explanation states the condition for each. Unsupported groups get 
 so the explanation can show the reasoning.
 
 **Transport.** Detection does not enable naming: `validateForNaming()` still
-returns `HETEROATOM` for any molecule with O or N (only halogens bonded to
-carbons are named since I-30, without going through the group analysis),
-and `nameMolecule()` adds `groups` (`analyzeGroups()`)
+returns `HETEROATOM` for any molecule with N or with an O that is not an OH
+on a carbon (halogens bonded to carbons are named since I-30 and OH groups
+on carbons since I-31, both without going through the group analysis:
+validation checks the atoms directly, since `model/` cannot import
+`naming/groups.js`), and `nameMolecule()` adds `groups` (`analyzeGroups()`)
 to that refusal only (a detection failure leaves the refusal without
 `groups`). The explanation reads nothing else (§5).

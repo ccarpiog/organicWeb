@@ -110,24 +110,36 @@ for (const row of fixtureRows) {
       assert.equal(result.trace[0].rule, 'RING');
       assert.equal(result.parent.atoms.length, result.parent.bonds.length);
       assert.equal(result.parent.atoms.length, result.structure.parent.length);
-      const bare = result.structure.prefixes.length === 0
+      const bare = result.structure.prefixes.length === 0 && !result.structure.suffix
         && result.structure.parent.double.length + result.structure.parent.triple.length === 0;
       if (bare) {
         assert.deepEqual(result.trace.map((step) => step.rule), ['RING']);
         assert.equal(result.parent.atoms.length, mol.atoms.size);
       } else {
-        assert.ok(result.trace.slice(1).every((step) => /^(N[1-4]|TIE)$/.test(step.rule)), 'ring numbering rules only');
+        assert.ok(result.trace.slice(1).every((step) => /^(N[0-4]|TIE)$/.test(step.rule)), 'ring numbering rules only');
       }
       return;
     }
-    const p1 = result.trace[0];
+    // An alcohol (I-31) starts with P0 (most OH groups), then P1 over the chains P0 kept.
+    const alcohol = Boolean(result.structure.suffix);
+    const p1 = result.trace[alcohol ? 1 : 0];
+    if (alcohol) {
+      assert.equal(result.trace[0].rule, 'P0');
+      assert.equal(p1.candidatesBefore.length, result.trace[0].survivors.length);
+      assert.equal(result.structure.suffix.locants.length, Math.max(...result.trace[0].values));
+    }
     assert.equal(p1.rule, 'P1');
     assert.equal(result.parent.atoms.length, Math.max(...p1.values));
     const carbons = carbonSkeleton(mol).atoms.size;
     if (isUnbranched(mol)) {
       assert.equal(result.parent.atoms.length, carbons);
     }
-    if (carbons > 1) {
+    if (carbons > 1 && alcohol) {
+      // N0 always runs first on the directed candidates; N1 only while N0 leaves a tie.
+      const n0 = result.trace.find((step) => step.rule === 'N0');
+      assert.ok(n0, 'trace has an N0 step');
+      assert.ok(result.trace.indexOf(n0) < result.trace.findIndex((step) => /^N[1-5]$/.test(step.rule)) || !result.trace.some((step) => /^N[1-5]$/.test(step.rule)));
+    } else if (carbons > 1) {
       const n1 = result.trace.find((step) => step.rule === 'N1');
       assert.ok(n1, 'trace has an N1 step');
       assert.ok(n1.candidatesBefore.length >= 2);
@@ -505,11 +517,16 @@ test('structure is language-neutral data', () => {
   // No words anywhere: every leaf value of the structure is a number.
   // (`parentKind` and a ring's `kind` are identifiers, 'chain' or 'ring', not words.)
   assert.equal(structure.parentKind, 'chain');
-  for (const other of [structure, nameMolecule(parseSmiles('C1CCCCC1')).structure]) {
+  assert.equal(structure.suffix, null, 'no suffix on a hydrocarbon');
+  const alcohols = ['OCC(O)C', 'OC1CCCCC1'].map((smiles) => nameMolecule(parseSmiles(smiles)).structure);
+  for (const other of [structure, nameMolecule(parseSmiles('C1CCCCC1')).structure, ...alcohols]) {
     const leaves = [];
     JSON.stringify(other, (key, value) => {
       if (key === 'parentKind' || key === 'kind') {
-        assert.ok(['chain', 'ring'].includes(value));
+        assert.ok(['chain', 'ring', 'alcohol'].includes(value));
+        return undefined;
+      }
+      if (key === 'suffix' && value === null) {
         return undefined;
       }
       if (value === null || typeof value !== 'object') {

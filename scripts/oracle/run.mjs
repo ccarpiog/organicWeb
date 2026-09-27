@@ -6,7 +6,9 @@
  * substituted or unsaturated monocycles and a tenth as many benzene
  * derivatives (benzene and monosubstituted benzenes, either Kekulé
  * drawing), half as many halogen derivatives of such molecules (F, Cl, Br,
- * I; halomethanes and haloethanes included, design.md §13.4 I-30), adds
+ * I; halomethanes and haloethanes included, design.md §13.4 I-30), half as
+ * many alcohols (OH groups on chains or on ring carbons, phenol, some also
+ * halogenated; I-31), adds
  * one cycloalkane per ring size in the carbon range, names
  * each one in every prefix style (plus its traditional name, `toluene` or
  * `styrene`, when it has one), renders the same name structures in English, lets OPSIN
@@ -34,7 +36,7 @@ import { PREFIX_STYLES } from '../../src/naming/substituent.js';
 import { traditionalNameId } from '../../src/naming/aromatic.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import {
-  generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, generateCycloalkanes,
+  generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, generateAlcohols, generateCycloalkanes,
 } from './generate.mjs';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
 import { englishName, compareWithOpsin } from './compare.mjs';
@@ -217,10 +219,13 @@ export async function main(argv) {
   const halogenated = generateHalogenated({
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
+  const alcohols = generateAlcohols({
+    count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
+  });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
-  const molecules = [...random, ...monocycles, ...benzenes, ...halogenated, ...rings];
+  const molecules = [...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...rings];
   console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes `
-    + `+ ${halogenated.length} halogen derivatives + ${rings.length} cycloalkanes, `
+    + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
   const availability = await checkAvailability(options.jar, options.java);
   if (!availability.ok) {

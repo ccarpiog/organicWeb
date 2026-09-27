@@ -31,19 +31,31 @@
  * (parent.js works on the carbon skeleton): `clorometano`,
  * `2-bromo-1-cloropropano`, `clorociclohexano`, `clorobenceno`.
  *
- * Any other heteroatom (O, N) is still refused (`HETEROATOM`), but
- * the refusal carries `groups`: its characteristic groups (groups.js), the
- * principal group and the suffix/prefix classification (seniority.js,
- * design.md §13.4 I-29). Successful results (hydrocarbons and halogen
- * derivatives) never have `groups`.
+ * Alcohols (design.md §13.4 I-31): an OH on a carbon is the principal
+ * characteristic group, cited as the `-ol` suffix (`structure.suffix`): the
+ * parent chain carries the most OH groups (P0, before the length; parent.js)
+ * and they get the lowest locants (N0, before the multiple bonds;
+ * numbering.js) — `etanol`, `propan-2-ol`, `butano-1,4-diol`,
+ * `prop-2-en-1-ol`; an OH left on a branch is the `hidroxi` prefix of that
+ * branch (`2-(hidroximetil)propano-1,3-diol`). On a ring the OH groups must
+ * be on ring carbons (validation): `ciclohexanol`, `2-metilciclohexan-1-ol`,
+ * and on benzene the retained `fenol`.
+ *
+ * Any other heteroatom (N, an O that is not an OH on a carbon) is still
+ * refused (`HETEROATOM`), but the refusal carries `groups`: its
+ * characteristic groups (groups.js), the principal group and the
+ * suffix/prefix classification (seniority.js, design.md §13.4 I-29).
+ * Successful results never have `groups`.
  */
 
 import { validateForNaming } from '../model/validate.js';
 import { adjacency, hasCycle } from '../model/graph.js';
 import { selectParent } from './parent.js';
-import { createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, PREFIX_STYLES } from './substituent.js';
+import {
+  createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, suffixSites, PREFIX_STYLES,
+} from './substituent.js';
 import { numberParent, chainBonds } from './numbering.js';
-import { buildChainStructure, buildNameStructure } from './structure.js';
+import { buildChainStructure, buildNameStructure, buildSuffix } from './structure.js';
 import { renderName } from './render.js';
 import { nameRingWithStyle } from './rings.js';
 import { hasBenzeneRing, nameBenzeneWithStyle, traditionalAlternative } from './aromatic.js';
@@ -91,7 +103,7 @@ const STYLE_DEPENDENT_PREFIXES = Object.freeze(['isopropyl', 'isopropylidene']);
  * Names a validated molecule under one prefix style: substituents,
  * numbering, grouping and rendering.
  *
- * @param {object} mol - A validated acyclic hydrocarbon or halogen derivative.
+ * @param {object} mol - A validated acyclic hydrocarbon, halogen derivative or alcohol.
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {{chains: number[][], trace: object[]}} selection - Result of selectParent().
  * @param {string} style - Prefix style.
@@ -112,10 +124,15 @@ function nameWithStyle(mol, adj, selection, style) {
     citation: sub.citation,
   }));
   const nameKey = nameKeyFunction([...substituentsByChain.values()], lexiconEs);
-  const numbering = numberParent(mol, selection.chains, prefixesOf, { adj, nameKey });
+  const suffixesOf = (chain) => suffixSites(mol, adj, chain).map((site) => site.atom);
+  const numbering = numberParent(mol, selection.chains, prefixesOf, { adj, nameKey, suffixesOf });
   const substituents = substituentsByChain.get(selection.chains[numbering.chainIndex]);
   const parent = buildChainStructure(numbering.atoms, numbering.bonds, numbering.orders);
-  const structure = buildNameStructure({ parent, prefixes: groupPrefixes(substituents, numbering.atoms) });
+  const structure = buildNameStructure({
+    parent,
+    prefixes: groupPrefixes(substituents, numbering.atoms),
+    suffix: buildSuffix(suffixSites(mol, adj, numbering.atoms), numbering.atoms),
+  });
   const { name, parts } = renderName(structure, lexiconEs);
   return {
     ok: true,

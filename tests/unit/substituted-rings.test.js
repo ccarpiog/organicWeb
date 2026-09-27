@@ -250,9 +250,10 @@ test('explanation: omitted locants are explained and not labelled', () => {
 }); // End of test 'explanation: omitted locants…'
 
 test('validation left for rings: heteroatoms, polycycles, heterocycles and the size caps', () => {
-  assert.equal(validateForNaming(parseSmiles('OC1CCCCC1')).code, 'HETEROATOM');
+  assert.equal(validateForNaming(parseSmiles('NC1CCCCC1')).code, 'HETEROATOM');
   assert.equal(validateForNaming(parseSmiles('ClC1=CCCCC1')), null, 'halogen derivatives are named since I-30');
-  assert.equal(validateForNaming(parseSmiles('ClC1CCC(O)CC1')).code, 'HETEROATOM');
+  assert.equal(validateForNaming(parseSmiles('ClC1CCC(O)CC1')), null, 'cycloalkanols are named since I-31');
+  assert.equal(validateForNaming(parseSmiles('OCC1CCCCC1')).code, 'HETEROATOM', 'an OH on a side chain waits for I-40');
   assert.equal(validateForNaming(parseSmiles('CC1CCOCC1')).code, 'RING_SYSTEM');
   assert.equal(validateForNaming(parseSmiles('CC1CCC2CCCCC2C1')).code, 'RING_SYSTEM');
   assert.equal(validateForNaming(parseSmiles('C1CC1CC1CC1')).code, 'RING_SYSTEM');

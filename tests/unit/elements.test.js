@@ -238,11 +238,11 @@ test('corrupted saves: unknown elements, charges and radicals are never accepted
 
 test('a valid molecule with heteroatoms is "not nameable yet", never a crash or a hydrocarbon name', () => {
   const molecules = [
-    build(['C', 'O'], [[1, 2]]), // metanol
+    build(['C', 'N'], [[1, 2]]), // metanamina
     build(['C', 'C', 'O'], [[1, 2], [2, 3, 2]]), // etanal
     build(['C', 'O', 'C'], [[1, 2], [2, 3]]), // metoximetano
     build(['C', 'C', 'N'], [[1, 2], [2, 3, 3]]), // etanonitrilo
-    build(['C', 'C', 'O', 'Cl'], [[1, 2], [2, 3], [1, 4]]), // 2-cloroetanol: a halogen does not lift the refusal
+    build(['C', 'C', 'N', 'Cl'], [[1, 2], [2, 3], [1, 4]]), // 2-cloroetanamina: a halogen does not lift the refusal
     build(['O']), // agua
     build(['Br', 'Br'], [[1, 2]]), // a halogen bonded to no carbon
     build(['Cl']),
@@ -258,15 +258,17 @@ test('a valid molecule with heteroatoms is "not nameable yet", never a crash or 
     assert.equal(result.error.code, 'HETEROATOM');
     assert.equal(result.name, undefined);
   }
-  assert.deepEqual(validateForNaming(build(['C', 'C', 'O', 'Cl'], [[1, 2], [2, 3], [1, 4]])).atoms, [3, 4]);
+  assert.deepEqual(validateForNaming(build(['C', 'C', 'N', 'Cl'], [[1, 2], [2, 3], [1, 4]])).atoms, [3, 4]);
   assert.match(MESSAGES.HETEROATOM, /Aún no sé nombrar/);
   // Rings are "not yet" too; empty, disconnected and valence problems are not.
   assert.ok(isNotNameableYet(validateForNaming(build(['C', 'C', 'O'], [[1, 2], [2, 3], [3, 1]]))));
   assert.equal(isNotNameableYet(validateForNaming(createMolecule())), false);
   assert.equal(isNotNameableYet(validateForNaming(build(['C', 'O']))), false);
   assert.equal(isNotNameableYet(null), false);
-  // Hydrocarbons are still named, and so are halogen derivatives (I-30).
+  // Hydrocarbons are still named, and so are halogen derivatives (I-30) and alcohols (I-31).
   assert.equal(nameMolecule(parseSmiles('CC(C)C')).name, '2-metilpropano');
+  assert.equal(nameMolecule(build(['C', 'O'], [[1, 2]])).name, 'metanol');
+  assert.equal(nameMolecule(build(['C', 'C', 'O', 'Cl'], [[1, 2], [2, 3], [1, 4]])).name, '2-cloroetan-1-ol');
   assert.equal(validateForNaming(build(['C', 'Cl', 'Cl', 'Cl', 'Cl'], [[1, 2], [1, 3], [1, 4], [1, 5]])), null);
   assert.equal(nameMolecule(build(['C', 'Cl', 'Cl', 'Cl', 'Cl'], [[1, 2], [1, 3], [1, 4], [1, 5]])).name, 'tetraclorometano');
   // The SMILES writer keeps the element (never writes a heteroatom as C).
@@ -302,8 +304,8 @@ test('separate caps: carbons, heavy atoms and parent chain', () => {
   addBond(long, 29, addAtom(long));
   assert.equal(long.atoms.size, 60);
   assert.equal(validateForNaming(long), null);
-  addBond(long, 1, addAtom(long, {}, 'O'));
-  assert.equal(validateForNaming(long).code, 'HETEROATOM', '60 carbons + 1 O: carbon cap not reached');
+  addBond(long, 1, addAtom(long, {}, 'N'));
+  assert.equal(validateForNaming(long).code, 'HETEROATOM', '60 carbons + 1 N: carbon cap not reached');
   addBond(long, 30, addAtom(long));
   const tooBig = validateForNaming(long);
   assert.equal(tooBig.code, 'TOO_BIG');

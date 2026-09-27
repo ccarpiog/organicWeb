@@ -15,6 +15,7 @@
  *
  * @typedef {object} UnsaturationSite
  * @property {number} locant - Lower locant of the bond's two atoms (1-based).
+ * @property {number} [closing] - Only on a ring's closure bond: the higher locant of its two atoms (`n`), cited in parentheses as a compound locant, `1(6)` (IUPAC 2013 P-31.1.4.2.4).
  * @property {number} bond - Bond id.
  * @property {number[]} atoms - The bond's two atom ids, in locant order.
  */
@@ -35,8 +36,12 @@
  * Same fields as a ChainStructure plus `kind` and `closure`, so code that
  * reads `length`, `atoms`, `bonds`, `double` and `triple` works on both;
  * the ring has as many bonds as atoms. Unsaturation sites use the lower
- * locant of the bond as in a chain (the closure bond, joining the last
- * atom to the first, gets locant `length`).
+ * locant of the bond as in a chain; the closure bond, joining the last
+ * atom (`length`) to the first, has locant 1 and `closing` = `length`: its
+ * two locants differ by more than one, so IUPAC 2013 cites it as the
+ * compound locant `1(6)` (ciclohex-1(6)-eno-1,2,4-triol). The numbering
+ * rules compare that bond as locant n (numbering.js bondLocants()), so it
+ * only happens when the principal groups (N0) force the numbering.
  *
  * @typedef {object} RingStructure
  * @property {'ring'} kind - Always 'ring'.
@@ -72,6 +77,7 @@
  * @typedef {object} SubstituentStructure
  * @property {ChainStructure|null} chain - The substituent's own numbered chain (null for a halogen).
  * @property {string} [halogen] - Set on a halogen atom cited as a prefix (design.md §13.4 I-30): 'F', 'Cl', 'Br' or 'I' (`fluoro`, `cloro`, `bromo`, `yodo`); such a substituent has no chain and no prefixes, and `atoms` is the halogen atom.
+ * @property {boolean} [hydroxy] - Set on an OH group cited as a prefix (`hidroxi`, design.md §13.4 I-31): an OH on a substituent chain, never on the parent (there it is the `-ol` suffix); no chain, no prefixes, `atoms` is the oxygen atom.
  * @property {PrefixGroup[]} prefixes - Its own grouped prefixes, in citation order.
  * @property {{locant: number, order: number}} freeValence - Locant and order of the free valence (1 → `-il`, 2 → `-iliden`).
  * @property {string|null} [retained] - Retained-name id cited instead of the systematic prefix: 'isopropyl' or 'isopropylidene' (style 'isopropil' only) or 'tert-butyl' (styles 'isopropil' and 'pin'); the chain and prefixes still describe the systematic name. 'phenyl' (`fenil`, aromatic.js phenylSubstituent()) has a benzene RingStructure as its `chain`.
@@ -93,12 +99,33 @@
  */
 
 /**
+ * One principal characteristic group cited as a suffix: its carrying parent
+ * atom and its heteroatom (design.md §13.4 I-31: the OH of `-ol`).
+ *
+ * @typedef {object} SuffixLocant
+ * @property {number} locant - Locant of the carrying parent atom.
+ * @property {number} atom - Id of the carrying parent atom (a carbon).
+ * @property {number} attachAtom - Id of the group's heteroatom bonded to it (the O of an OH).
+ * @property {number} bond - Id of the bond between them.
+ */
+
+/**
+ * The principal characteristic groups of a name, cited as a suffix after the
+ * parent's ending (`propan-2-ol`, `butano-1,4-diol`, `ciclohexanol`, `fenol`).
+ *
+ * @typedef {object} SuffixStructure
+ * @property {'alcohol'} kind - Group kind (groups.js GROUP_KINDS); only alcohols are named so far.
+ * @property {SuffixLocant[]} locants - One entry per group, ascending locants (a carbon with two OH appears twice).
+ */
+
+/**
  * The language-neutral name structure (design.md §4.7).
  *
  * @typedef {object} NameStructure
  * @property {'chain'|'ring'} parentKind - Kind of parent: an open chain, or a ring (`ciclo…`; always the ring when there is one, design.md §13.5).
  * @property {ChainStructure|RingStructure} parent - The numbered parent chain or ring.
  * @property {PrefixGroup[]} prefixes - Grouped substituent prefixes in citation order (empty for an unbranched molecule).
+ * @property {SuffixStructure|null} suffix - The principal characteristic groups cited as a suffix (`-ol`, design.md §13.4 I-31), or null (hydrocarbons and halogen derivatives).
  */
 
 /**
@@ -124,13 +151,13 @@
 
 /**
  * One rule application recorded in the trace (design.md §4.1). `values[i]`
- * is the compared datum of `candidatesBefore[i]`: a count (P1–P4), a
- * sorted locant list (N1–N3), the prefix locants flattened in citation
+ * is the compared datum of `candidatesBefore[i]`: a count (P0–P4), a
+ * sorted locant list (N0–N3), the prefix locants flattened in citation
  * order, not sorted (N4), a list of citation keys `{alpha, numeric, italic}`
  * (N5), or the atom-id tuple (tie-break).
  *
  * @typedef {object} TraceStep
- * @property {string} rule - Rule id: 'P1'…'P4', 'N1'…'N5', 'TIE', or 'RING' (a ring parent: one candidate, its size as value; ring numbering steps N1–N4/TIE may follow).
+ * @property {string} rule - Rule id: 'P0' (most principal groups, I-31), 'P1'…'P4', 'N0' (lowest locants for the principal groups, I-31), 'N1'…'N5', 'TIE', or 'RING' (a ring parent: one candidate, its size as value; ring numbering steps N0–N4/TIE may follow).
  * @property {TraceCandidate[]} candidatesBefore - Candidates entering the rule.
  * @property {Array<number|number[]|object[]>} values - Compared values, aligned with candidatesBefore.
  * @property {TraceCandidate[]} survivors - Candidates left after the rule.
@@ -193,6 +220,57 @@ export function buildChainStructure(atoms, bonds, orders) {
 } // End of function buildChainStructure()
 
 /**
+ * Sort value of a compound locant `low(high)` (IUPAC 2013 P-31.1.4.2.4, a
+ * ring's closure bond: `1(6)`), used to order the sites of a ring for
+ * citation (1, 1(6), 2…); the numbering rules do not use it (they compare
+ * the closure bond as n). Encoded as `low + high / 1000`, so it stays a
+ * number; locantText() writes it back.
+ *
+ * @param {number} low - The lower (cited) locant.
+ * @param {number} high - The higher locant, cited in parentheses (below 1000).
+ * @returns {number} The comparable value.
+ */
+export function compoundLocant(low, high) {
+  return low + high / 1000;
+}
+
+/**
+ * Writes a locant value as it is cited: an integer as is, a compound
+ * locant (compoundLocant()) as `low(high)`. Non-numbers pass through.
+ *
+ * @param {number|string} value - A locant value.
+ * @returns {string} The text: `3`, `1(6)`.
+ */
+export function locantText(value) {
+  if (typeof value !== 'number' || Number.isInteger(value)) {
+    return String(value);
+  }
+  const low = Math.floor(value);
+  return `${low}(${Math.round((value - low) * 1000)})`;
+}
+
+/**
+ * Comparable locant value of an unsaturation site: its locant, or the
+ * compound locant of a ring's closure bond (`1(6)`).
+ *
+ * @param {{locant: number, closing?: number}} site - The site.
+ * @returns {number} The value (see compoundLocant()).
+ */
+export function siteLocantValue(site) {
+  return site.closing ? compoundLocant(site.locant, site.closing) : site.locant;
+}
+
+/**
+ * Cited locant of an unsaturation site: `2`, or `1(6)` for a ring's closure bond.
+ *
+ * @param {{locant: number, closing?: number}} site - The site.
+ * @returns {string} The text.
+ */
+export function siteLocantText(site) {
+  return locantText(siteLocantValue(site));
+}
+
+/**
  * Builds the structure of a numbered ring from its atoms, bonds and bond
  * orders, all in ring (locant) order: bonds[i] joins atoms[i] and
  * atoms[i + 1], and the last bond closes the ring.
@@ -211,7 +289,9 @@ export function buildRingStructure(atoms, bonds, orders) {
   const double = [];
   const triple = [];
   orders.forEach((order, i) => {
-    const site = { locant: i + 1, bond: bonds[i], atoms: [atoms[i], atoms[(i + 1) % n]] };
+    const site = i === n - 1
+      ? { locant: 1, closing: n, bond: bonds[i], atoms: [atoms[i], atoms[0]] }
+      : { locant: i + 1, bond: bonds[i], atoms: [atoms[i], atoms[i + 1]] };
     if (order === 2) {
       double.push(site);
     } else if (order === 3) {
@@ -220,6 +300,10 @@ export function buildRingStructure(atoms, bonds, orders) {
       throw new Error(`buildRingStructure: invalid bond order ${order}`);
     }
   });
+  // The closure site (1(n)) goes right after a plain locant 1: 1 < 1(n) < 2.
+  const byLocant = (a, b) => siteLocantValue(a) - siteLocantValue(b);
+  double.sort(byLocant);
+  triple.sort(byLocant);
   return {
     kind: 'ring', length: n, atoms: [...atoms], bonds: [...bonds], closure: bonds[n - 1], double, triple,
   };
@@ -229,7 +313,7 @@ export function buildRingStructure(atoms, bonds, orders) {
  * Assembles the language-neutral name structure. The parent kind is taken
  * from the parent: 'ring' for a RingStructure, else 'chain'.
  *
- * @param {{parent: ChainStructure|RingStructure, prefixes?: PrefixGroup[]}} parts - The numbered parent and its grouped prefixes (citation order).
+ * @param {{parent: ChainStructure|RingStructure, prefixes?: PrefixGroup[], suffix?: SuffixStructure|null}} parts - The numbered parent, its grouped prefixes (citation order) and its suffix groups.
  * @returns {NameStructure} The name structure.
  */
 export function buildNameStructure(parts) {
@@ -237,5 +321,26 @@ export function buildNameStructure(parts) {
     parentKind: parts.parent.kind === 'ring' ? 'ring' : 'chain',
     parent: parts.parent,
     prefixes: parts.prefixes ? [...parts.prefixes] : [],
+    suffix: parts.suffix && parts.suffix.locants.length > 0 ? parts.suffix : null,
   };
 }
+
+/**
+ * Builds the suffix of a numbered parent from its suffix sites (the OH
+ * groups on parent atoms, substituent.js suffixSites()): one SuffixLocant per
+ * group, ascending locants (then oxygen id); null without sites.
+ *
+ * @param {{atom: number, attachAtom: number, bond: number}[]} sites - The suffix groups (carrying atom, heteroatom, bond).
+ * @param {number[]} atoms - Parent atom ids in locant order.
+ * @param {'alcohol'} [kind] - Group kind (default 'alcohol').
+ * @returns {SuffixStructure|null} The suffix structure.
+ */
+export function buildSuffix(sites, atoms, kind = 'alcohol') {
+  if (sites.length === 0) {
+    return null;
+  }
+  const locantOf = new Map(atoms.map((atom, i) => [atom, i + 1]));
+  const locants = sites.map((site) => ({ locant: locantOf.get(site.atom), atom: site.atom, attachAtom: site.attachAtom, bond: site.bond }));
+  locants.sort((p, q) => p.locant - q.locant || p.attachAtom - q.attachAtom);
+  return { kind, locants };
+} // End of function buildSuffix()

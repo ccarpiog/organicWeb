@@ -27,6 +27,12 @@
  * school form with the ring as a `fenil` prefix on a chain (`feniletano`) is
  * not preferred and never produced.
  *
+ * An OH on the ring (the only substituent) makes a phenol (design.md §13.4
+ * I-31): its structure is the benzene parent with an `-ol` suffix, rendered
+ * as the retained preferred name `fenol` (IUPAC 2013 P-63.1.1.1; the
+ * systematic `bencenol` is not used). Substituted phenols have two ring
+ * substituents and are refused like any polysubstituted benzene.
+ *
  * Traditional names retained by IUPAC 2013 for monosubstituted benzenes
  * (P-22.1.3) — `tolueno` (even the preferred IUPAC name) and `estireno`
  * (general nomenclature) — are offered as alternatives only (design.md
@@ -44,10 +50,10 @@
 import { perceiveRings } from '../model/rings.js';
 import { adjacency } from '../model/graph.js';
 import { isBenzeneRing } from '../model/validate.js';
-import { buildRingStructure, buildNameStructure } from './structure.js';
+import { buildRingStructure, buildNameStructure, buildSuffix } from './structure.js';
 import { renderName } from './render.js';
 import { ringParent, numberRing } from './rings.js';
-import { createNamingContext, collectSubstituents, groupPrefixes, PREFIX_STYLES } from './substituent.js';
+import { createNamingContext, collectSubstituents, groupPrefixes, suffixSites, PREFIX_STYLES } from './substituent.js';
 import { lexiconEs } from './lexicon.es.js';
 
 /**
@@ -144,7 +150,8 @@ export function traditionalAlternative(result) {
 /**
  * Names benzene or a monosubstituted benzene under one prefix style. The
  * ring is the parent (`retained` 'benzene', rendered `benceno`), its single
- * side chain (if any) the only substituent, cited without locant. The trace
+ * side chain (if any) the only substituent, cited without locant; a single
+ * OH is the `-ol` suffix instead (`fenol`). The trace
  * is the RING step alone (the ring as the only candidate, its size as the
  * value): the name has no locant, so no numbering rule is explained.
  *
@@ -161,12 +168,17 @@ export function nameBenzeneWithStyle(mol, style = PREFIX_STYLES[0]) {
   const adj = adjacency(mol);
   const ctx = createNamingContext(mol, style, lexiconEs, adj);
   const substituents = collectSubstituents(mol, perceived.atoms, ctx);
-  if (substituents.length > 1) {
-    throw new Error(`nameBenzeneWithStyle: ${substituents.length} substituents (polysubstituted benzenes are refused)`);
+  const sites = suffixSites(mol, adj, perceived.atoms);
+  if (substituents.length + sites.length > 1) {
+    throw new Error(`nameBenzeneWithStyle: ${substituents.length + sites.length} substituents (polysubstituted benzenes are refused)`);
   }
-  const numbered = numberRing(mol, perceived, substituents);
+  const numbered = numberRing(mol, perceived, substituents, sites.map((site) => site.atom));
   const parent = { ...numbered.parent, retained: 'benzene' };
-  const structure = buildNameStructure({ parent, prefixes: groupPrefixes(substituents, parent.atoms) });
+  const structure = buildNameStructure({
+    parent,
+    prefixes: groupPrefixes(substituents, parent.atoms),
+    suffix: buildSuffix(sites, parent.atoms),
+  });
   const { name, parts } = renderName(structure, lexiconEs);
   const candidate = { atoms: [...perceived.atoms], bonds: [...perceived.bonds], key: 'ring' };
   return {

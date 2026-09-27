@@ -5,11 +5,16 @@
  * (`-` between numbers and letters, `,` between numbers) and attaches the
  * atom/bond references to every part. Substituent prefixes are rendered
  * recursively (nested prefixes, unsaturation, free-valence locant, retained
- * prefixes, enclosing marks, bis/tris). No name is ever produced by
- * substring translation.
+ * prefixes, enclosing marks, bis/tris). The principal characteristic
+ * groups (design.md §13.4 I-31: OH) follow the parent's ending as a suffix
+ * with their locants and multiplier (`propan-2-ol`, `butano-1,4-diol`); the
+ * final vowel of the ending is elided before a vowel (`an` + `ol`) and kept
+ * before a consonant (`ano` + `diol`), IUPAC 2013 P-16.7.1. No name is ever
+ * produced by substring translation.
  */
 
 import { lexiconEs } from './lexicon.es.js';
+import { siteLocantText } from './structure.js';
 
 /**
  * Creates one name part.
@@ -36,43 +41,111 @@ function locantParts(sites) {
     if (i > 0) {
       parts.push(part(',', 'punct'));
     }
-    parts.push(part(String(site.locant), 'locant', site.atoms, [site.bond]));
+    parts.push(part(siteLocantText(site), 'locant', site.atoms, [site.bond]));
   });
   return parts;
 }
 
 /**
  * Renders a numbered chain as a parent name: stem + connecting vowel +
- * unsaturation segments with locants + ending (design.md §4.7).
+ * unsaturation segments with locants + ending + suffix (design.md §4.7).
  *
  * @param {object} chain - The chain structure (structure.js ChainStructure).
  * @param {object} lexicon - The lexicon.
- * @param {boolean} hasPrefixes - Whether prefixes precede the parent (disables locant omission).
+ * @param {boolean} hasPrefixes - Whether prefixes precede the parent or a suffix follows it (disables locant omission).
+ * @param {object|null} [suffix] - The suffix groups (structure.js SuffixStructure), or null.
+ * @param {boolean} [omitSuffixLocants] - Leave out the suffix locants (`etanol`, `metanol`).
  * @returns {object[]} The parts.
  */
-export function renderParent(chain, lexicon, hasPrefixes) {
+export function renderParent(chain, lexicon, hasPrefixes, suffix = null, omitSuffixLocants = false) {
   return [
     part(lexicon.stem(chain.length), 'stem', chain.atoms),
-    ...renderEnding(chain, lexicon, lexicon.omitsLocants(chain, hasPrefixes)),
+    ...renderEnding(chain, lexicon, lexicon.omitsLocants(chain, hasPrefixes || Boolean(suffix)), suffix, omitSuffixLocants),
   ];
 }
 
 /**
+ * The words of a suffix: its multiplier (`di`, `tri`; '' for one group), the
+ * suffix itself (`ol`) and whether the parent ending loses its final vowel
+ * before them (only before a vowel: `propan-2-ol`, but `butano-1,4-diol`;
+ * IUPAC 2013 P-16.7.1). A multiplier's final `a` is elided before a suffix
+ * that starts with a vowel (P-16.7.1(c)): `tetr` + `ol`, `pent` + `ol`
+ * (`butano-1,2,3,4-tetrol`); `di`, `tri` are unchanged. Only suffix
+ * multipliers do this; prefix multipliers keep their `a` (`tetrametil`).
+ *
+ * @param {{kind: string, locants: object[]}} suffix - The suffix structure.
+ * @param {object} lexicon - The lexicon.
+ * @returns {{multiplier: string, word: string, elides: boolean}} The pieces.
+ */
+export function suffixWords(suffix, lexicon) {
+  const word = lexicon.groupSuffix(suffix.kind);
+  const full = lexicon.multiplier(suffix.locants.length);
+  const mult = full.endsWith('a') && /^[aeiou]/.test(word) ? full.slice(0, -1) : full;
+  return { multiplier: mult, word, elides: /^[aeiou]/.test(`${mult}${word}`) };
+}
+
+/**
+ * Renders a suffix after the parent's ending: hyphen, locants and hyphen
+ * (unless omitted), multiplier and suffix word: `-2-ol`, `-1,4-diol`, `ol`.
+ * Locants refer to the carrying carbon and the OH; the suffix word to every
+ * group.
+ *
+ * @param {{kind: string, locants: object[]}} suffix - The suffix structure.
+ * @param {object} lexicon - The lexicon.
+ * @param {boolean} omit - Leave out the locants.
+ * @returns {object[]} The parts.
+ */
+function renderSuffix(suffix, lexicon, omit) {
+  const parts = [];
+  const atoms = suffix.locants.flatMap((site) => [site.atom, site.attachAtom]);
+  const bonds = suffix.locants.map((site) => site.bond);
+  if (!omit) {
+    parts.push(part('-', 'punct'));
+    suffix.locants.forEach((site, i) => {
+      if (i > 0) {
+        parts.push(part(',', 'punct'));
+      }
+      parts.push(part(String(site.locant), 'locant', [site.atom, site.attachAtom], [site.bond]));
+    });
+    parts.push(part('-', 'punct'));
+  }
+  const { multiplier: mult, word } = suffixWords(suffix, lexicon);
+  if (mult) {
+    parts.push(part(mult, 'multiplier', atoms, bonds));
+  }
+  parts.push(part(word, 'ending', atoms, bonds));
+  return parts;
+} // End of function renderSuffix()
+
+/**
  * Renders what follows the stem of a parent chain or ring: the connecting
  * vowel, the unsaturation segments with their locants (unless omitted) and
- * multipliers, and the ending (`ano`; `a-1,3-dieno`; `-3-en-1-ino`).
+ * multipliers, the ending (`ano`; `a-1,3-dieno`; `-3-en-1-ino`) and the
+ * suffix groups, before which the ending's final vowel is elided when the
+ * suffix starts with a vowel (`an-2-ol`, `-2-en-1-ol`, but `ano-1,2-diol`).
  *
  * @param {object} parent - The chain or ring structure.
  * @param {object} lexicon - The lexicon.
  * @param {boolean} omit - Whether the unsaturation locants are omitted.
+ * @param {object|null} [suffix] - The suffix groups (structure.js SuffixStructure), or null.
+ * @param {boolean} [omitSuffixLocants] - Whether the suffix locants are omitted.
  * @returns {object[]} The parts.
  */
-function renderEnding(parent, lexicon, omit) {
+function renderEnding(parent, lexicon, omit, suffix = null, omitSuffixLocants = false) {
   const segments = lexicon.segmentOrder
     .map((kind) => ({ kind, sites: parent[kind] }))
     .filter((segment) => segment.sites.length > 0);
+  const elide = Boolean(suffix) && suffixWords(suffix, lexicon).elides;
+  const tail = suffix ? renderSuffix(suffix, lexicon, omitSuffixLocants) : [];
+  /**
+   * The final ending, without its last vowel when the suffix elides it.
+   *
+   * @param {string} text - The ending (`ano`, `eno`, `ino`).
+   * @returns {string} The written ending.
+   */
+  const finalEnding = (text) => (elide ? text.slice(0, -1) : text);
   if (segments.length === 0) {
-    return [part(lexicon.endings.saturated, 'ending', [], parent.bonds)];
+    return [part(finalEnding(lexicon.endings.saturated), 'ending', [], parent.bonds), ...tail];
   }
   const parts = [];
   if (lexicon.needsConnectingVowel(parent)) {
@@ -88,9 +161,11 @@ function renderEnding(parent, lexicon, omit) {
     if (mult) {
       parts.push(part(mult, 'multiplier', atoms, bonds));
     }
-    parts.push(part(lexicon.unsaturationEnding(segment.kind, i === segments.length - 1), 'ending', atoms, bonds));
+    const last = i === segments.length - 1;
+    const ending = lexicon.unsaturationEnding(segment.kind, last);
+    parts.push(part(last ? finalEnding(ending) : ending, 'ending', atoms, bonds));
   });
-  return parts;
+  return [...parts, ...tail];
 } // End of function renderEnding()
 
 /**
@@ -102,23 +177,36 @@ function renderEnding(parent, lexicon, omit) {
  * The ring locant-omission rule (lexicon ringOmitsLocants()) decides
  * whether the unsaturation locants are written. A benzene ring (`retained`
  * 'benzene', aromatic.js) is one retained word, `benceno` (IUPAC 2013
- * P-22.1.2), referring to every ring atom and bond.
+ * P-22.1.2), referring to every ring atom and bond; with an OH suffix it is
+ * the retained `fenol` (P-63.1.1.1), written as the stem `fen` and the
+ * suffix `ol` so that `ol` points at the OH group. The suffix groups (`-ol`)
+ * follow the ending: `ciclohexanol`, `ciclohex-2-en-1-ol`.
  *
  * @param {object} ring - The ring structure (structure.js RingStructure).
  * @param {object} lexicon - The lexicon.
  * @param {object[]} prefixes - The prefix groups of the name (they change the omission rule).
+ * @param {object|null} [suffix] - The suffix groups (structure.js SuffixStructure), or null.
  * @returns {object[]} The parts.
  */
-export function renderRingParent(ring, lexicon, prefixes) {
+export function renderRingParent(ring, lexicon, prefixes, suffix = null) {
+  const suffixCount = suffix ? suffix.locants.length : 0;
+  const omission = lexicon.ringOmitsLocants(ring, prefixes, suffixCount);
   if (ring.retained === 'benzene') {
+    if (suffix) {
+      const [site] = suffix.locants;
+      return [
+        part(lexicon.phenolStem, 'stem', ring.atoms, ring.bonds),
+        part(lexicon.groupSuffix(suffix.kind), 'ending', [site.atom, site.attachAtom], [site.bond]),
+      ];
+    }
     return [part(lexicon.benzeneName, 'stem', ring.atoms, ring.bonds)];
   }
   return [
     part(lexicon.ringPrefix, 'stem', ring.atoms, [ring.closure]),
     part(lexicon.stem(ring.length), 'stem', ring.atoms),
-    ...renderEnding(ring, lexicon, lexicon.ringOmitsLocants(ring, prefixes).parent),
+    ...renderEnding(ring, lexicon, omission.parent, suffix, omission.prefixes),
   ];
-}
+} // End of function renderRingParent()
 
 /**
  * Creates one token of a substituent prefix. Tokens are finer than name
@@ -138,15 +226,15 @@ function token(text, kind) {
  * contains its own locants or its own substituents (design.md §4.5):
  * `(propan-2-il)`, `(prop-2-en-1-il)`, `(2-metilpropil)`. Unenclosed:
  * `metil`, `propil`, `etenil`, `etinil`, `metiliden`, `etiliden`,
- * `eteniliden`, `isopropil`, `isopropiliden`, `tert-butil`, and the halogen
- * prefixes `fluoro`, `cloro`, `bromo`, `yodo`.
+ * `eteniliden`, `isopropil`, `isopropiliden`, `tert-butil`, the halogen
+ * prefixes `fluoro`, `cloro`, `bromo`, `yodo`, and `hidroxi`.
  * Enclosure does not decide the multiplier (see isCompoundPrefix()).
  *
  * @param {object} substituent - The substituent structure.
  * @returns {boolean} True when the prefix is enclosed.
  */
 export function needsEnclosure(substituent) {
-  if (substituent.retained || substituent.halogen) {
+  if (substituent.retained || substituent.halogen || substituent.hydroxy) {
     return false;
   }
   const { chain, prefixes, freeValence } = substituent;
@@ -164,7 +252,7 @@ export function needsEnclosure(substituent) {
  * @returns {boolean} True when the prefix is compound.
  */
 export function isCompoundPrefix(substituent) {
-  return !substituent.retained && !substituent.halogen && substituent.prefixes.length > 0;
+  return !substituent.retained && !substituent.halogen && !substituent.hydroxy && substituent.prefixes.length > 0;
 }
 
 /**
@@ -256,7 +344,7 @@ function locantTokens(locants) {
  * `2-metilprop-1-en-1-il`, `etenil`, `buta-1,3-dien-1-il`, `metiliden`,
  * `propan-2-iliden`, `eteniliden` — or a retained prefix (`isopropil`,
  * `isopropiliden`, `tert-butil`, `fenil`), or a halogen prefix (`cloro`,
- * design.md §13.4 I-30). A saturated group with the free valence at
+ * design.md §13.4 I-30), or `hidroxi` (an OH on a substituent chain, I-31). A saturated group with the free valence at
  * locant 1 uses the short form (`propil`, `propiliden`, `2-metilpropil`);
  * one- and two-carbon groups cite no locant.
  *
@@ -267,6 +355,9 @@ function locantTokens(locants) {
 function substituentTokens(substituent, lexicon) {
   if (substituent.halogen) {
     return [token(lexicon.halogenPrefix(substituent.halogen), 'prefix')];
+  }
+  if (substituent.hydroxy) {
+    return [token(lexicon.groupPrefix('alcohol'), 'prefix')];
   }
   if (substituent.retained) {
     const { italic, text } = lexicon.retainedPrefix(substituent.retained);
@@ -304,7 +395,7 @@ function substituentTokens(substituent, lexicon) {
     tokens.push(token(lexicon.connectingVowel, 'stem'));
   }
   for (const segment of segments) {
-    tokens.push(token('-', 'punct'), ...locantTokens(segment.sites.map((site) => site.locant)));
+    tokens.push(token('-', 'punct'), ...locantTokens(segment.sites.map(siteLocantText)));
     const mult = lexicon.multiplier(segment.sites.length);
     if (mult) {
       tokens.push(token(mult, 'multiplier'));
@@ -438,24 +529,36 @@ export function renderPrefixes(groups, lexicon, omitLocants = false) {
 } // End of function renderPrefixes()
 
 /**
- * Tells whether the attachment locants of a name's prefixes are omitted:
+ * Number of suffix groups of a name structure (one per OH; 0 without suffix).
+ *
+ * @param {{suffix?: {locants: object[]}|null}} structure - The name structure.
+ * @returns {number} The count.
+ */
+export function suffixCount(structure) {
+  return structure.suffix ? structure.suffix.locants.length : 0;
+}
+
+/**
+ * Tells whether the attachment locants of a name's prefixes — and the
+ * locants of its suffix groups, which follow the same rule — are omitted:
  * ring rule (lexicon ringOmitsLocants()) for a ring parent, chain rule
  * (lexicon chainOmitsPrefixLocants(): `clorometano`, `cloroetano`,
- * `hexacloroetano`) for a chain.
+ * `hexacloroetano`, `etanol`, `metanodiol`) for a chain.
  *
  * @param {object} structure - The name structure (structure.js NameStructure).
  * @param {object} [lexicon] - The lexicon (default: Spanish; both share the rules).
- * @returns {boolean} True when no prefix locant is written.
+ * @returns {boolean} True when no prefix or suffix locant is written.
  */
 export function omitsPrefixLocants(structure, lexicon = lexiconEs) {
+  const count = suffixCount(structure);
   return structure.parentKind === 'ring'
-    ? lexicon.ringOmitsLocants(structure.parent, structure.prefixes).prefixes
-    : lexicon.chainOmitsPrefixLocants(structure.parent, structure.prefixes);
+    ? lexicon.ringOmitsLocants(structure.parent, structure.prefixes, count).prefixes
+    : lexicon.chainOmitsPrefixLocants(structure.parent, structure.prefixes, count);
 }
 
 /**
  * Renders a name structure to text and coloured parts (a chain parent, or
- * a ring parent when `parentKind` is 'ring').
+ * a ring parent when `parentKind` is 'ring'), with its suffix groups.
  *
  * @param {object} structure - The name structure (structure.js NameStructure).
  * @param {object} [lexicon] - The lexicon to use (default: Spanish).
@@ -464,10 +567,11 @@ export function omitsPrefixLocants(structure, lexicon = lexiconEs) {
 export function renderName(structure, lexicon = lexiconEs) {
   const hasPrefixes = structure.prefixes.length > 0;
   const ring = structure.parentKind === 'ring';
-  const parent = ring
-    ? renderRingParent(structure.parent, lexicon, structure.prefixes)
-    : renderParent(structure.parent, lexicon, hasPrefixes);
+  const suffix = structure.suffix || null;
   const omitPrefixLocants = omitsPrefixLocants(structure, lexicon);
+  const parent = ring
+    ? renderRingParent(structure.parent, lexicon, structure.prefixes, suffix)
+    : renderParent(structure.parent, lexicon, hasPrefixes, suffix, omitPrefixLocants);
   const parts = [...renderPrefixes(structure.prefixes, lexicon, omitPrefixLocants), ...parent];
   return { name: parts.map((p) => p.text).join(''), parts };
 }
