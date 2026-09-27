@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T11:27:59Z",
+ "updated": "2026-09-27T11:53:15Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
@@ -43,8 +43,11 @@
   {
    "id": "I-5",
    "title": "Naming engine III: substituents",
-   "status": "queued",
-   "summary": "Names branched and unsaturated substituents recursively, with isopropil, PIN and substituted styles."
+   "status": "done",
+   "summary": "Names branched and unsaturated substituents recursively, with isopropil, PIN and substituted styles.",
+   "risk": "high",
+   "review": "docs/reviews/I-5.md",
+   "narrative": "docs/progress-archive/i-5.md"
   },
   {
    "id": "I-6",

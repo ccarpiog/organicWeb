@@ -13,7 +13,15 @@
  *   P4 most substituent prefixes (a chain-level count, direction-independent);
  *   N3 all substituent prefixes together;
  *   N4 prefixes in citation (alphanumerical) order, group by group;
+ *   N5 only when the survivors still give different names: the name that
+ *      comes first in alphanumerical order, compared as a whole — all
+ *      letters of the prefixes (multipliers included), then all locants
+ *      (IUPAC 2013 P-45.5);
  *   TIE presentation tie-break (smallest atom-id tuple; not an IUPAC rule).
+ *
+ * The same cascade numbers substituent chains (substituent.js); there an
+ * FV rule (lowest locant for the free valence, IUPAC 2013 P-31.1.4.2.4)
+ * comes before N1.
  *
  * The cascade stops as soon as one candidate remains. Pure: reads topology only.
  */
@@ -63,13 +71,16 @@ export function compareLocantGroups(a, b) {
 
 /**
  * Compares two alphanumerical citation keys (design.md §1.1): first the
- * letters of the prefix name (multipliers such as di/tri and locants are not
- * part of them), letter by letter; if they are equal, the numeric parts as
- * locant lists. The key is structured data built from the prefix words only;
- * whole assembled names are never compared.
+ * letters of the complete prefix name (external multipliers such as di/bis,
+ * locants and italic descriptors such as `tert-` are not part of them;
+ * multipliers inside a compound prefix are), letter by letter; if they are
+ * equal, the numeric parts as locant lists; then, only to keep the order
+ * total, a key without an italic descriptor before one with it. The key is
+ * structured data built from the prefix words only; whole assembled names
+ * are never compared.
  *
- * @param {{alpha: string, numeric: number[]}} a - First key.
- * @param {{alpha: string, numeric: number[]}} b - Second key.
+ * @param {{alpha: string, numeric: number[], italic?: string}} a - First key.
+ * @param {{alpha: string, numeric: number[], italic?: string}} b - Second key.
  * @returns {number} Negative when `a` is cited first, positive when `b` is, 0 when equal.
  */
 export function compareCitationKeys(a, b) {
@@ -80,7 +91,27 @@ export function compareCitationKeys(a, b) {
       return diff;
     }
   }
-  return a.alpha.length - b.alpha.length || compareLocantLists(a.numeric, b.numeric);
+  const ia = a.italic || '';
+  const ib = b.italic || '';
+  return a.alpha.length - b.alpha.length || compareLocantLists(a.numeric, b.numeric)
+    || (ia === ib ? 0 : ia < ib ? -1 : 1);
+} // End of function compareCitationKeys()
+
+/**
+ * Default complete-name key of a candidate's prefix groups (N5), used when
+ * the caller gives no renderer-based one: the letters of the citation keys
+ * in citation order, then all locants (group locants and the numeric parts
+ * of the prefixes, in order). It lacks the multiplying prefixes; the engine
+ * always passes render.js prefixNameKey() instead.
+ *
+ * @param {{citation: {alpha: string, numeric: number[]}, locants: number[]}[]} groups - Groups in citation order.
+ * @returns {{alpha: string, numeric: number[]}} The key.
+ */
+function defaultNameKey(groups) {
+  return {
+    alpha: groups.map((g) => g.citation.alpha).join(''),
+    numeric: groups.flatMap((g) => [...g.locants, ...g.citation.numeric]),
+  };
 }
 
 /**
@@ -111,13 +142,19 @@ export function applyLocantRule(rule, candidates, values, compare = compareLocan
 } // End of function applyLocantRule()
 
 /**
- * Deep-copies a compared value (a locant list or a list of locant lists).
+ * Deep-copies a compared value (a locant list, a list of locant lists or a
+ * list of citation keys).
  *
- * @param {Array<number|number[]>} value - The value.
- * @returns {Array<number|number[]>} An independent copy.
+ * @param {Array<number|number[]|object>} value - The value.
+ * @returns {Array<number|number[]|object>} An independent copy.
  */
 function copyValue(value) {
-  return value.map((item) => (Array.isArray(item) ? [...item] : item));
+  return value.map((item) => {
+    if (Array.isArray(item)) {
+      return [...item];
+    }
+    return item && typeof item === 'object' ? { ...item, numeric: [...item.numeric] } : item;
+  });
 }
 
 /**
@@ -262,34 +299,50 @@ function applySubstituentCountRule(candidates, counts) {
 
 /**
  * Chooses the parent and its numbering among the given chains (both
- * directions of each), applying N1, N2, P4, N3, N4 and then the presentation tie-break
+ * directions of each), applying (FV,) N1, N2, P4, N3, N4, N5 and then the presentation tie-break
  * (smallest ordered atom-id tuple — not an IUPAC rule; it only stabilises
  * highlighting and redraw). The cascade stops as soon as one candidate
  * remains; each rule applied is recorded with the compared values. P4 is
  * skipped when the remaining candidates all come from one chain; N3 and N4
  * when no candidate carries prefixes (nothing to compare).
  *
+ * N5 is applied only when the candidates left after N4 would give different
+ * names (different prefixes with the same locants); it compares complete-name
+ * keys from `options.nameKey` (called with a candidate's groups
+ * `{key, citation, locants}` in citation order). With `freeValenceAtom`
+ * (a substituent chain) the FV rule — lowest locant for that atom — comes
+ * first.
+ *
  * The result is `unsupported` when N4 must compare a prefix the engine cannot
  * name yet (no citation key), or when candidates left for the tie-break would
- * give different names; the caller then reports `NOT_YET`.
+ * still give different names; the caller then reports `NOT_YET`.
  *
  * @param {object} mol - A validated acyclic hydrocarbon.
- * @param {number[][]} chains - The remaining parent chains (atom-id paths).
+ * @param {number[][]} chains - The remaining chains (atom-id paths).
  * @param {function(number[]): {atom: number, key: string, citation: ({alpha: string, numeric: number[]}|null)}[]} [prefixesOf] - Prefixes of a chain (called with each array of `chains`): carrying atom, identity key and citation key (null when it cannot be named yet).
+ * @param {{adj?: Map<number, object[]>, freeValenceAtom?: number, nameKey?: function(object[]): {alpha: string, numeric: number[]}}} [options] - Precomputed adjacency; attachment atom of a substituent chain (enables FV); complete-name key of a candidate's groups (N5).
  * @returns {{atoms: number[], bonds: number[], orders: number[], direction: string, key: string, chainIndex: number, trace: object[], unsupported: boolean}} The chosen numbering and its trace.
  */
-export function numberParent(mol, chains, prefixesOf = () => []) {
-  const adj = adjacency(mol);
+export function numberParent(mol, chains, prefixesOf = () => [], options = {}) {
+  const adj = options.adj || adjacency(mol);
+  const fvAtom = options.freeValenceAtom;
+  const hasFreeValence = fvAtom !== undefined && fvAtom !== null;
   const prefixesByChain = chains.map((chain) => prefixesOf(chain));
   const data = new Map();
   let candidates = directedCandidates(chains);
   for (const candidate of candidates) {
     const locantOf = new Map(candidate.atoms.map((atom, i) => [atom, i + 1]));
     const { bonds, orders } = chainBonds(adj, candidate.atoms);
-    data.set(candidate.key, { bonds, orders, ...prefixLocants(prefixesByChain[candidate.chainIndex], locantOf) });
+    data.set(candidate.key, {
+      bonds,
+      orders,
+      freeValence: hasFreeValence ? [locantOf.get(fvAtom)] : [],
+      ...prefixLocants(prefixesByChain[candidate.chainIndex], locantOf),
+    });
   }
   const hasPrefixes = prefixesByChain.some((list) => list.length > 0);
   const rules = [
+    { rule: 'FV', value: (d) => d.freeValence, skip: !hasFreeValence },
     { rule: 'N1', value: (d) => bondLocants(d.orders, (order) => order >= 2) },
     { rule: 'N2', value: (d) => bondLocants(d.orders, (order) => order === 2) },
     { rule: 'P4' },
@@ -317,10 +370,20 @@ export function numberParent(mol, chains, prefixesOf = () => []) {
     const { step, survivors } = applyLocantRule(rule, candidates, candidates.map((c) => value(data.get(c.key))), compare);
     trace.push(step);
     candidates = survivors;
-  } // End of the loop over the rules N1, N2, P4, N3, N4
-  if (!unsupported && candidates.length > 1) {
+  } // End of the loop over the rules FV, N1, N2, P4, N3, N4
+  const differ = () => {
     const first = data.get(candidates[0].key).groups;
-    unsupported = candidates.some((c) => !sameGroups(data.get(c.key).groups, first));
+    return candidates.some((c) => !sameGroups(data.get(c.key).groups, first));
+  };
+  if (!unsupported && candidates.length > 1 && differ()) {
+    const nameKey = options.nameKey || defaultNameKey;
+    const values = candidates.map((c) => [nameKey(data.get(c.key).groups)]);
+    const { step, survivors } = applyLocantRule('N5', candidates, values, (a, b) => compareCitationKeys(a[0], b[0]));
+    trace.push(step);
+    candidates = survivors;
+  }
+  if (!unsupported && candidates.length > 1) {
+    unsupported = differ();
     const { step, survivors } = applyLocantRule('TIE', candidates, candidates.map((c) => c.atoms));
     step.note = TIE_NOTE;
     trace.push(step);

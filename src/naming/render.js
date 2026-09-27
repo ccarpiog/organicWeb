@@ -3,7 +3,9 @@
  * name string and its coloured parts, using a lexicon (lexicon.es.js by
  * default). Words come only from the lexicon; this module adds punctuation
  * (`-` between numbers and letters, `,` between numbers) and attaches the
- * atom/bond references to every part. No name is ever produced by
+ * atom/bond references to every part. Substituent prefixes are rendered
+ * recursively (nested prefixes, unsaturation, free-valence locant, retained
+ * prefixes, enclosing marks, bis/tris). No name is ever produced by
  * substring translation.
  */
 
@@ -77,46 +79,246 @@ export function renderParent(chain, lexicon, hasPrefixes) {
 } // End of function renderParent()
 
 /**
- * Returns the words of a substituent prefix as cited inside a name (no
- * locants, no grouping multiplier): `metil`, `etil`, `propil`…
- * Phase I-4 supports saturated unbranched chains attached at their end;
- * phase 050 adds nested prefixes, unsaturation, retained names and
- * parentheses.
+ * Creates one token of a substituent prefix. Tokens are finer than name
+ * parts: they remember whether a piece is an italic descriptor (`tert-`),
+ * which alphanumerical ordering ignores.
+ *
+ * @param {string} text - The text.
+ * @param {string} kind - locant|multiplier|prefix|stem|ending|punct|italic.
+ * @returns {{text: string, kind: string}} The token.
+ */
+function token(text, kind) {
+  return { text, kind };
+}
+
+/**
+ * Tells whether a substituent prefix is enclosed in parentheses, i.e.
+ * contains its own locants or its own substituents (design.md §4.5):
+ * `(propan-2-il)`, `(prop-2-en-1-il)`, `(2-metilpropil)`. Unenclosed:
+ * `metil`, `propil`, `etenil`, `etinil`, `isopropil`, `tert-butil`.
+ * Enclosure does not decide the multiplier (see isCompoundPrefix()).
+ *
+ * @param {object} substituent - The substituent structure.
+ * @returns {boolean} True when the prefix is enclosed.
+ */
+export function needsEnclosure(substituent) {
+  if (substituent.retained) {
+    return false;
+  }
+  const { chain, prefixes, freeValence } = substituent;
+  const unsaturated = chain.double.length > 0 || chain.triple.length > 0;
+  return prefixes.length > 0 || (unsaturated && chain.length > 2) || (!unsaturated && freeValence.locant > 1);
+}
+
+/**
+ * Tells whether a substituent prefix is compound (substituted itself:
+ * `2-metilpropil`, `1-metiletil`), so identical ones are multiplied with
+ * bis/tris. A simple prefix that is enclosed only because of its own
+ * locants still takes di/tri: `di(propan-2-il)` (IUPAC 2013 P-16.9).
+ *
+ * @param {object} substituent - The substituent structure.
+ * @returns {boolean} True when the prefix is compound.
+ */
+export function isCompoundPrefix(substituent) {
+  return !substituent.retained && substituent.prefixes.length > 0;
+}
+
+/**
+ * Nesting level of the enclosing marks of a compound prefix: 0 for ( ) when
+ * no nested prefix is enclosed, 1 for [ ] around a ( ) prefix, 2 for { }…
+ *
+ * @param {object} substituent - The substituent structure (compound).
+ * @returns {number} The level.
+ */
+function enclosureLevel(substituent) {
+  let level = 0;
+  for (const group of substituent.prefixes) {
+    if (needsEnclosure(group.substituent)) {
+      level = Math.max(level, enclosureLevel(group.substituent) + 1);
+    }
+  }
+  return level;
+}
+
+/**
+ * Tokens of one prefix group as cited inside a name: locants, hyphen,
+ * multiplier (di… for simple prefixes, even enclosed ones — `di(propan-2-il)`;
+ * bis… for compound ones — `bis(2-metilpropil)`; a hyphen
+ * follows it before an italic descriptor: `di-tert-butil`), enclosing marks
+ * and the prefix words.
+ *
+ * @param {object} group - The prefix group (structure.js PrefixGroup).
+ * @param {object} lexicon - The lexicon.
+ * @returns {{text: string, kind: string}[]} The tokens.
+ */
+function groupTokens(group, lexicon) {
+  const tokens = [];
+  group.locants.forEach((site, i) => {
+    if (i > 0) {
+      tokens.push(token(',', 'punct'));
+    }
+    tokens.push(token(String(site.locant), 'locant'));
+  });
+  tokens.push(token('-', 'punct'));
+  const words = substituentTokens(group.substituent, lexicon);
+  const enclosed = needsEnclosure(group.substituent);
+  const count = group.locants.length;
+  const mult = isCompoundPrefix(group.substituent) ? lexicon.compoundMultiplier(count) : lexicon.multiplier(count);
+  if (mult) {
+    tokens.push(token(mult, 'multiplier'));
+    if (words[0].kind === 'italic') {
+      tokens.push(token('-', 'punct'));
+    }
+  }
+  if (enclosed) {
+    const [open, close] = lexicon.enclosingMarks[enclosureLevel(group.substituent) % lexicon.enclosingMarks.length];
+    tokens.push(token(open, 'punct'), ...words, token(close, 'punct'));
+  } else {
+    tokens.push(...words);
+  }
+  return tokens;
+} // End of function groupTokens()
+
+/**
+ * Tokens of a locant list followed by a hyphen: `1`, `,`, `3`, `-`.
+ *
+ * @param {number[]} locants - Ascending locants.
+ * @returns {{text: string, kind: string}[]} The tokens.
+ */
+function locantTokens(locants) {
+  const tokens = [];
+  locants.forEach((locant, i) => {
+    if (i > 0) {
+      tokens.push(token(',', 'punct'));
+    }
+    tokens.push(token(String(locant), 'locant'));
+  });
+  tokens.push(token('-', 'punct'));
+  return tokens;
+}
+
+/**
+ * Tokens of a substituent prefix as cited inside a name, without its
+ * enclosing marks and grouping multiplier (design.md §4.5): nested prefixes,
+ * stem, unsaturation segments and the free valence — `propil`,
+ * `propan-2-il`, `2-metilprop-1-en-1-il`, `etenil`, `buta-1,3-dien-1-il` —
+ * or a retained prefix (`isopropil`, `tert-butil`). A saturated group with
+ * the free valence at locant 1 uses the short form (`propil`,
+ * `2-metilpropil`); one- and two-carbon groups cite no locant.
+ *
+ * @param {object} substituent - The substituent structure (structure.js SubstituentStructure).
+ * @param {object} lexicon - The lexicon.
+ * @returns {{text: string, kind: string}[]} The tokens.
+ */
+function substituentTokens(substituent, lexicon) {
+  if (substituent.retained) {
+    const { italic, text } = lexicon.retainedPrefix(substituent.retained);
+    return italic ? [token(italic, 'italic'), token(text, 'prefix')] : [token(text, 'prefix')];
+  }
+  const { chain, prefixes, freeValence } = substituent;
+  const tokens = [];
+  prefixes.forEach((group, g) => {
+    if (g > 0) {
+      tokens.push(token('-', 'punct'));
+    }
+    tokens.push(...groupTokens(group, lexicon));
+  });
+  tokens.push(token(lexicon.stem(chain.length), 'stem'));
+  const segments = lexicon.segmentOrder
+    .map((kind) => ({ kind, sites: chain[kind] }))
+    .filter((segment) => segment.sites.length > 0);
+  const suffix = token(lexicon.freeValenceSuffix, 'ending');
+  if (segments.length === 0) {
+    if (freeValence.locant === 1) {
+      tokens.push(suffix);
+    } else {
+      tokens.push(token(lexicon.saturatedInfix, 'ending'), token('-', 'punct'), ...locantTokens([freeValence.locant]), suffix);
+    }
+    return tokens;
+  }
+  if (chain.length <= 2) {
+    tokens.push(token(lexicon.substituentUnsaturationEnding(segments[0].kind), 'ending'), suffix);
+    return tokens;
+  }
+  if (lexicon.needsConnectingVowel(chain)) {
+    tokens.push(token(lexicon.connectingVowel, 'stem'));
+  }
+  for (const segment of segments) {
+    tokens.push(token('-', 'punct'), ...locantTokens(segment.sites.map((site) => site.locant)));
+    const mult = lexicon.multiplier(segment.sites.length);
+    if (mult) {
+      tokens.push(token(mult, 'multiplier'));
+    }
+    tokens.push(token(lexicon.substituentUnsaturationEnding(segment.kind), 'ending'));
+  }
+  tokens.push(token('-', 'punct'), ...locantTokens([freeValence.locant]), suffix);
+  return tokens;
+} // End of function substituentTokens()
+
+/**
+ * Returns the words of a substituent prefix as cited inside a name, without
+ * attachment locants, grouping multiplier or enclosing marks: `metil`,
+ * `propan-2-il`, `2-metilprop-1-en-1-il`, `isopropil`, `tert-butil`.
  *
  * @param {object} substituent - The substituent structure (structure.js SubstituentStructure).
  * @param {object} [lexicon] - The lexicon (default: Spanish).
  * @returns {string} The prefix words.
- * @throws {Error} For a substituent kind not rendered yet.
  */
 export function substituentPrefix(substituent, lexicon = lexiconEs) {
-  const { chain, prefixes, freeValence, retained } = substituent;
-  const simple = prefixes.length === 0 && !retained && chain.double.length === 0 && chain.triple.length === 0
-    && freeValence.locant === 1 && freeValence.order === 1;
-  if (!simple) {
-    throw new Error('substituentPrefix: only saturated unbranched end-attached groups are rendered yet (phase 050)');
-  }
-  return lexicon.alkylPrefix(chain.length, freeValence.order);
+  return substituentTokens(substituent, lexicon).map((t) => t.text).join('');
 }
 
 /**
  * Builds the alphanumerical citation key of a substituent (design.md §1.1):
- * the letters of its prefix name (lower-case, locants and punctuation left
- * out; external multipliers are never part of it) and its numeric parts
- * (none for a simple prefix). Compared with numbering.js compareCitationKeys.
+ * the letters of its complete prefix name, lower-case (locants,
+ * punctuation and italic descriptors such as `tert-` left out; multipliers
+ * inside a compound prefix kept — `(2,2-dimetilpropil)` sorts under d;
+ * external multipliers are never part of it), its locants in order of
+ * citation (compared numerically when the letters tie), and its italic
+ * descriptors. Compared with numbering.js compareCitationKeys.
  *
  * @param {object} substituent - The substituent structure.
  * @param {object} [lexicon] - The lexicon (default: Spanish).
- * @returns {{alpha: string, numeric: number[]}} The citation key.
+ * @returns {{alpha: string, numeric: number[], italic: string}} The citation key.
  */
 export function citationKey(substituent, lexicon = lexiconEs) {
-  const words = substituentPrefix(substituent, lexicon);
-  return { alpha: words.toLowerCase().replace(/[^a-z]/g, ''), numeric: [] };
+  const tokens = substituentTokens(substituent, lexicon);
+  const letters = tokens.filter((t) => t.kind !== 'italic' && t.kind !== 'locant').map((t) => t.text).join('');
+  return {
+    alpha: letters.toLowerCase().replace(/[^a-z]/g, ''),
+    numeric: tokens.filter((t) => t.kind === 'locant').map((t) => Number(t.text)),
+    italic: tokens.filter((t) => t.kind === 'italic').map((t) => t.text).join(''),
+  };
+}
+
+/**
+ * Builds the complete-name key of a list of prefix groups (N5, IUPAC 2013
+ * P-45.5): every letter of the prefix part of the name as cited —
+ * multiplying prefixes (di, bis…) and nested prefixes included, italic
+ * descriptors left out — and then every locant in order of citation. All
+ * letters are compared before any locant (numbering.js
+ * compareCitationKeys).
+ *
+ * @param {{substituent: object, locants: {locant: number}[]}[]} groups - Prefix groups in citation order.
+ * @param {object} [lexicon] - The lexicon (default: Spanish).
+ * @returns {{alpha: string, numeric: number[], italic: string}} The key.
+ */
+export function prefixNameKey(groups, lexicon = lexiconEs) {
+  const tokens = groups.flatMap((group) => groupTokens(group, lexicon));
+  const letters = tokens.filter((t) => t.kind !== 'italic' && t.kind !== 'locant').map((t) => t.text).join('');
+  return {
+    alpha: letters.toLowerCase().replace(/[^a-z]/g, ''),
+    numeric: tokens.filter((t) => t.kind === 'locant').map((t) => Number(t.text)),
+    italic: tokens.filter((t) => t.kind === 'italic').map((t) => t.text).join(''),
+  };
 }
 
 /**
  * Renders the grouped substituent prefixes, in citation order:
- * `3-etil-2,2-dimetil` (numbers separated by commas, numbers and letters by
- * hyphens, prefixes written together with what follows).
+ * `3-etil-2,2-dimetil`, `4-metil-6-(propan-2-il)` (numbers separated by
+ * commas, numbers and letters by hyphens, prefixes with their own locants
+ * enclosed, compound prefixes multiplied with bis/tris). Each group's prefix words form one `prefix`
+ * part; nested prefixes are not split further.
  *
  * @param {object[]} groups - The prefix groups (structure.js PrefixGroup), in citation order.
  * @param {object} lexicon - The lexicon.
@@ -128,20 +330,34 @@ export function renderPrefixes(groups, lexicon) {
     if (g > 0) {
       parts.push(part('-', 'punct'));
     }
-    group.locants.forEach((site, i) => {
-      if (i > 0) {
-        parts.push(part(',', 'punct'));
-      }
-      parts.push(part(String(site.locant), 'locant', [site.atom, site.attachAtom], [site.bond]));
-    });
-    parts.push(part('-', 'punct'));
     const atoms = group.locants.flatMap((site) => site.atoms);
     const bonds = group.locants.flatMap((site) => [site.bond, ...site.bonds]);
-    const mult = lexicon.multiplier(group.locants.length);
-    if (mult) {
-      parts.push(part(mult, 'multiplier', atoms, bonds));
+    const tokens = groupTokens(group, lexicon);
+    let i = 0;
+    for (const site of group.locants) {
+      if (i > 0) {
+        parts.push(part(',', 'punct'));
+        i += 1;
+      }
+      parts.push(part(tokens[i].text, 'locant', [site.atom, site.attachAtom], [site.bond]));
+      i += 1;
     }
-    parts.push(part(substituentPrefix(group.substituent, lexicon), 'prefix', atoms, bonds));
+    // Remaining tokens: hyphen, multiplier, enclosing marks and the prefix words (one part).
+    let words = '';
+    for (const t of tokens.slice(i)) {
+      if (t.kind === 'punct' && words === '') {
+        parts.push(part(t.text, 'punct'));
+      } else if (t.kind === 'multiplier' && words === '') {
+        parts.push(part(t.text, 'multiplier', atoms, bonds));
+      } else {
+        words += t.text;
+      }
+    }
+    const close = needsEnclosure(group.substituent) ? words.slice(-1) : '';
+    parts.push(part(close ? words.slice(0, -1) : words, 'prefix', atoms, bonds));
+    if (close) {
+      parts.push(part(close, 'punct'));
+    }
   }); // End of the loop over the prefix groups
   return parts;
 } // End of function renderPrefixes()

@@ -2,7 +2,9 @@
  * @file Spanish word tables and morphology rules for IUPAC 2013 names
  * (design.md §1.1): stems 1–30, multipliers (di/tri… and bis/tris…),
  * endings, the connecting `a`, the `en`/`ino` rules, the locant-omission
- * table and the group-name vs. prefix forms.
+ * table, the group-name vs. prefix forms, substituent-prefix morphology
+ * (`il`, `an`, retained `isopropil`/`tert-butil`, enclosing marks), common
+ * group names for explanations and the prefix-style labels.
  *
  * Everything that depends on the language lives here; render.js only
  * assembles parts and punctuation. The exported `lexiconEs` object is the
@@ -215,8 +217,106 @@ export function prefixForm(name) {
   return name.endsWith('o') ? name.slice(0, -1) : name;
 }
 
+/** Suffix of a singly attached substituent prefix (`propil`, `propan-2-il`). */
+export const FREE_VALENCE_SUFFIX = 'il';
+
+/** Infix between the stem and a cited free-valence locant of a saturated group (`propan-2-il`). */
+export const SATURATED_INFIX = 'an';
+
+/**
+ * Retained substituent prefixes (design.md §4.5), keyed by the retained-name
+ * id stored in the structure. `italic` is the descriptor ignored in
+ * alphanumerical order (`tert-`); `text` is the alphabetised part.
+ */
+export const RETAINED_PREFIXES = Object.freeze({
+  isopropyl: Object.freeze({ italic: '', text: 'isopropil' }),
+  'tert-butyl': Object.freeze({ italic: 'tert-', text: 'butil' }),
+});
+
+/**
+ * Common (non-preferred) group names, keyed by the `commonName` id of a
+ * substituent structure. Used only in explanations ("también se conoce como
+ * vinilo"), never in a name.
+ */
+export const COMMON_GROUP_NAMES = Object.freeze({
+  vinyl: 'vinilo',
+  allyl: 'alilo',
+  isobutyl: 'isobutilo',
+  'sec-butyl': 'sec-butilo',
+  isopropyl: 'isopropilo',
+  'tert-butyl': 'tert-butilo',
+});
+
+/** Enclosing marks for compound prefixes, innermost first: ( ), then [ ], then { } (IUPAC 2013 P-16.5.4). */
+export const ENCLOSING_MARKS = Object.freeze([
+  Object.freeze(['(', ')']),
+  Object.freeze(['[', ']']),
+  Object.freeze(['{', '}']),
+]);
+
+/** Labels of the prefix styles shown next to the alternative names (design.md §1.1). */
+export const STYLE_LABELS = Object.freeze({
+  isopropil: 'forma aceptada con isopropil',
+  pin: 'nombre preferido por la IUPAC (2013)',
+  substituted: 'forma sistemática clásica',
+});
+
+/**
+ * Returns the ending of one unsaturation segment inside a substituent
+ * prefix, where it is always followed by the free-valence locant and `il`,
+ * so the final `o` is dropped: `prop-2-en-1-il`, `but-3-in-1-il`.
+ *
+ * @param {'double'|'triple'} kind - Segment kind.
+ * @returns {string} 'en' or 'in'.
+ */
+export function substituentUnsaturationEnding(kind) {
+  return (kind === 'triple' ? ENDINGS.triple : ENDINGS.double).slice(0, -1);
+}
+
+/**
+ * Returns a retained substituent prefix.
+ *
+ * @param {string} id - Retained-name id ('isopropyl' or 'tert-butyl').
+ * @returns {{italic: string, text: string}} The italic descriptor ('' if none) and the alphabetised text.
+ * @throws {Error} For an unknown id.
+ */
+export function retainedPrefix(id) {
+  const entry = RETAINED_PREFIXES[id];
+  if (!entry) {
+    throw new Error(`retainedPrefix: unknown retained prefix ${id}`);
+  }
+  return entry;
+}
+
+/**
+ * Returns the common (non-preferred) name of a group, for explanations only.
+ *
+ * @param {string} id - The `commonName` id of a substituent structure.
+ * @returns {string|null} The Spanish group name (`vinilo`), or null when unknown.
+ */
+export function commonGroupName(id) {
+  return COMMON_GROUP_NAMES[id] || null;
+}
+
+/**
+ * Returns the label of a prefix style.
+ *
+ * @param {string} style - 'isopropil', 'pin' or 'substituted'.
+ * @returns {string} The Spanish label.
+ */
+export function styleLabel(style) {
+  return STYLE_LABELS[style] || style;
+}
+
 /** The Spanish lexicon, as consumed by render.js. */
 export const lexiconEs = Object.freeze({
+  freeValenceSuffix: FREE_VALENCE_SUFFIX,
+  saturatedInfix: SATURATED_INFIX,
+  enclosingMarks: ENCLOSING_MARKS,
+  substituentUnsaturationEnding,
+  retainedPrefix,
+  commonGroupName,
+  styleLabel,
   language: 'es',
   endings: ENDINGS,
   connectingVowel: CONNECTING_VOWEL,

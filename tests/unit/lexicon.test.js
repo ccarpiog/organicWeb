@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   stem, multiplier, compoundMultiplier, unsaturationEnding, needsConnectingVowel, omitsLocants,
-  alkylPrefix, groupName, prefixForm,
+  alkylPrefix, groupName, prefixForm, substituentUnsaturationEnding, retainedPrefix, commonGroupName, styleLabel,
 } from '../../src/naming/lexicon.es.js';
 import { compareLocantLists } from '../../src/naming/numbering.js';
 
@@ -78,6 +78,19 @@ test('group name vs prefix forms', () => {
   assert.equal(groupName('metiliden'), 'metilideno');
   assert.equal(groupName('isopropil'), 'isopropilo');
   assert.equal(prefixForm('etilo'), 'etil');
+});
+
+test('substituent-prefix morphology, retained and common names, style labels', () => {
+  assert.equal(substituentUnsaturationEnding('double'), 'en');
+  assert.equal(substituentUnsaturationEnding('triple'), 'in');
+  assert.deepEqual({ ...retainedPrefix('isopropyl') }, { italic: '', text: 'isopropil' });
+  assert.deepEqual({ ...retainedPrefix('tert-butyl') }, { italic: 'tert-', text: 'butil' });
+  assert.throws(() => retainedPrefix('neopentyl'));
+  assert.equal(commonGroupName('vinyl'), 'vinilo');
+  assert.equal(commonGroupName('allyl'), 'alilo');
+  assert.equal(commonGroupName('unknown'), null);
+  assert.equal(styleLabel('pin'), 'nombre preferido por la IUPAC (2013)');
+  assert.equal(styleLabel('substituted'), 'forma sistemática clásica');
 });
 
 test('locant lists compare term by term, never by sums', () => {

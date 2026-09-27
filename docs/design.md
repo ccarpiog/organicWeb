@@ -42,8 +42,9 @@ names the sections of this file it implements. The plan was reviewed by Codex
   multiplied: `hex-1-en-3,5-diino`. Unsaturated alkanes with no multiplier:
   `but-1-eno`.
 - **Multipliers**: di, tri, tetra, penta, hexa, hepta, octa, nona, deca,
-  undeca, dodeca… for simple prefixes; bis, tris, tetrakis, pentakis… for
-  compound (parenthesised) prefixes.
+  undeca, dodeca… for simple prefixes, even when parenthesised only for
+  their own locants (`di(propan-2-il)`); bis, tris, tetrakis, pentakis… for
+  compound (substituted) prefixes (`bis(2-metilpropil)`) (IUPAC 2013 P-16.9).
 - **Group name vs. prefix**: groups named on their own take a final `o`
   (`metilo`, `etilo`, `metilideno`, `etilideno`, `isopropilo`); cited as a
   prefix inside a name they drop it (`metil`, `etil`, `metiliden`,
@@ -201,8 +202,9 @@ nameMolecule(mol) →
 `TraceStep = { rule, candidatesBefore, values, survivors, note? }` where each
 candidate is `{ atoms, direction?, key }` and `values` are the compared data
 (counts for P1–P4, locant lists for N1–N3, one locant list per prefix group
-in citation order for N4, the atom-id tuple for the tie-break). Trace order:
-P1, P2, P3, N1, N2, P4, N3, N4, TIE. Rules stop at the first one that leaves
+in citation order for N4, the citation keys for N5, the atom-id tuple for
+the tie-break). Trace order: P1, P2, P3, N1, N2, P4, N3, N4, N5, TIE (N5
+only when the candidates left after N4 would give different names). Rules stop at the first one that leaves
 a single candidate; P1 is always recorded, and N3/N4 are skipped when no
 candidate carries prefixes. The explanation layer (§5) consumes only the trace
 and the result — it never re-derives chemistry.
@@ -253,7 +255,14 @@ point of difference — never by sums**:
    its parent attachment locant once).
 9. **N4** prefixes in citation (alphanumerical) order: locants of the first
    cited prefix, then the second, … until a difference appears.
-10. **Presentation tie-break** — if every chemical criterion ties, the names
+10. **N5** only when the survivors still give different names (different
+   prefixes with the same locants, e.g. two chains each leaving a different
+   group as substituent): the name that comes first in alphanumerical
+   order, compared as a whole — every letter of the prefix part
+   (multiplying prefixes and nested prefixes included) before any locant,
+   not prefix by prefix (IUPAC 2013 P-45.5): `6-(2-metilbutil)-8-(2-metilheptil)hexadecano`
+   beats `6-metil-8-[2-(2-metilbutil)heptil]hexadecano`.
+11. **Presentation tie-break** — if every chemical criterion ties, the names
    are identical (symmetry). Pick the candidate with the lexicographically
    smallest ordered atom-id tuple **only to stabilise highlighting and
    redraw**; the trace records "las dos opciones dan el mismo nombre". This is
@@ -274,28 +283,53 @@ Substituent chain selection:
   atom** — it need not be an endpoint (this is what yields `propan-2-il`,
   `butan-2-il`).
 - Criteria in order: longest chain; most multiple bonds within it; most
-  double bonds; most substituents; then numbering: **lowest locant for the
-  free valence first**, then multiple bonds together, double bonds,
-  substituent prefixes, citation order — same comparison rules as §4.4.
+  double bonds; then the §4.4 cascade with the free valence first: **FV
+  lowest locant for the free valence**, N1 multiple bonds together, N2
+  double bonds, P4 most substituents, N3 substituent prefixes, N4 citation
+  order, N5, tie-break (`numberParent` with `freeValenceAtom`). Decision
+  (phase I-5): most substituents comes after the ene/yne locants, as for
+  the parent (IUPAC 2013 P-31.1.4 numbering criteria before P-45.2.1);
+  FV cannot change the chain choice (every longest chain through the
+  attachment atom uses the two deepest branches, so the free-valence
+  locant is the same), it only fixes the direction.
 - Retained prefixes, encoded explicitly in the lexicon: `tert-butil`
   (C(CH₃)₃ attached at the central carbon), and — in the default
   `'isopropil'` style only — `isopropil` (CH(CH₃)₂ attached at the central
   carbon). In `'pin'` style the latter is `propan-2-il`; in `'substituted'`
-  style every group is named with the free valence at 1 (`1-metiletil`).
-  Nothing else is retained in v1.
+  style only chains that start at the attachment atom are candidates, so
+  every group is named with the free valence at 1 (`1-metiletil`,
+  `1,1-dimetiletil` for tert-butyl, `1-metiletenil`). Nothing else is
+  retained in v1. Retained and common names are recognised by the rooted
+  canonical key of the group (topology), never from name strings; common
+  names (`vinilo`, `alilo`, `isobutilo`, `sec-butilo`) are exposed as the
+  `commonName` id of the substituent structure, for explanations only.
+- A style whose name would need a nested `-iliden` group that the default
+  style avoids (e.g. `substituted` gives `1-metilidenbutil` where `pin`
+  gives `pent-1-en-2-il`) is left out of `alternatives` until phase 060.
 - Naming: prefixes + stem + unsaturation + `il`/`iliden` with the free-valence
   locant: `propan-2-il`, `prop-2-en-1-il`, `prop-1-en-2-il`, `but-3-in-1-il`,
   `2-metilpropil`, `(2,2-dimetilpropil)`, `propan-2-iliden`. One- and
   two-carbon groups carry no locant: `metil`, `etil`, `etenil`, `etinil`,
-  `metiliden`, `etiliden`. An unbranched saturated chain attached at its end
-  takes the short form (`propil`, not `propan-1-il`) — confirm this against
-  the PIN rules in the fixture review of phase 050 and record the source.
+  `metiliden`, `etiliden`. A saturated chain attached at its end takes the
+  short form (`propil`, `2-metilpropil`, not `propan-1-il`): confirmed in
+  phase I-5 against IUPAC 2013 P-29.2 (free valence at a chain end: `-ano` →
+  `-il`, locant 1 implied; the `-an-n-il` form only when the free valence is
+  inside the chain), recorded in the fixture justifications (`5-propilnonano`,
+  `5-tert-butilnonano` for the retained `tert-butil`, P-29.6).
+  Unsaturated groups always cite the free-valence locant (`prop-2-en-1-il`);
+  the final `o` of `eno`/`ino` is dropped before it (`but-3-in-1-il`).
 - Parentheses around any prefix that contains its own locants or its own
-  substituents: `(propan-2-il)`, `(prop-2-en-1-il)`, `(2-metilpropil)`.
+  substituents: `(propan-2-il)`, `(prop-2-en-1-il)`, `(2-metilpropil)`;
+  nested enclosures use `( )` inside `[ ]` inside `{ }`
+  (`7-[2-(propan-2-il)pentil]tridecano`, IUPAC 2013 P-16.5.4).
   Simple prefixes (`metil`, `etil`, `etenil`, `metiliden`, `isopropil`,
   `tert-butil`) get no parentheses.
-- Identical substituents are grouped: di/tri for simple prefixes,
-  bis/tris for parenthesised ones (`bis(propan-2-il)`).
+- Identical substituents are grouped: di/tri for simple prefixes, also when
+  they are parenthesised for their own locants (`di(propan-2-il)`); bis/tris
+  for compound, i.e. substituted, prefixes (`bis(2-metilpropil)`,
+  `bis(1-metiletil)`) (IUPAC 2013 P-16.9). Enclosure and multiplier are
+  separate decisions. A multiplier before
+  an italic descriptor takes a hyphen (`di-tert-butil`).
 
 ### 4.6 Doubly-attached substituents (`-iliden`)
 
@@ -351,7 +385,7 @@ no open questions. Mandatory rows (from the Codex review):
 
 Plus: C1–C30 straight alkanes; `eteno`, `etino`, `propino`, `propadieno`,
 `but-1-eno`, `but-2-eno`, `2-metilprop-1-eno`, `pent-1-en-4-ino`,
-`hexa-1,3,5-trieno`; `tert-butil` and `bis(…)` cases; alphabetisation of a
+`hexa-1,3,5-trieno`; `tert-butil`, `di(…)` and `bis(…)` cases; alphabetisation of a
 compound prefix under its inner multiplier; N4 cases; symmetric molecules.
 
 The oracle (§8) is the second line of defence, not a replacement.

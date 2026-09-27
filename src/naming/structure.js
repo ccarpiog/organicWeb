@@ -6,8 +6,8 @@
  * The name structure holds data only (lengths, locants, atom and bond ids);
  * never words. A lexicon (lexicon.es.js, later lexicon.en.js) and render.js
  * turn it into text, so the same structure can be rendered in any language.
- * Later phases extend these shapes (nested substituents, `-iliden`, prefix
- * styles); they must add fields, not redesign existing ones.
+ * Later phases extend these shapes (`-iliden` substituents); they must add
+ * fields, not redesign existing ones.
  */
 
 /**
@@ -46,13 +46,15 @@
 /**
  * The language-neutral description of one substituent prefix.
  * Retained names (`isopropil`, `tert-butil`) are flagged by `retained`, never
- * encoded as text.
+ * encoded as text. The chain is chosen among paths containing the attachment
+ * atom; `freeValence.locant` is the attachment atom's locant in it.
  *
  * @typedef {object} SubstituentStructure
  * @property {ChainStructure} chain - The substituent's own numbered chain.
  * @property {PrefixGroup[]} prefixes - Its own grouped prefixes, in citation order.
  * @property {{locant: number, order: number}} freeValence - Locant and order of the free valence.
- * @property {string|null} [retained] - Retained-name id, e.g. 'isopropyl', 'tert-butyl'.
+ * @property {string|null} [retained] - Retained-name id cited instead of the systematic prefix: 'isopropyl' (style 'isopropil' only) or 'tert-butyl' (styles 'isopropil' and 'pin'); the chain and prefixes still describe the systematic name.
+ * @property {string|null} [commonName] - Id of a common name for explanations only, never cited in the name: 'vinyl', 'allyl', 'isobutyl', 'sec-butyl', or 'isopropyl'/'tert-butyl' when not retained (lexicon commonGroupName()).
  * @property {number[]} atoms - Every atom of the substituent subtree.
  * @property {number[]} bonds - Every bond of the substituent subtree (not the connecting bond).
  */
@@ -101,10 +103,11 @@
  * One rule application recorded in the trace (design.md §4.1). `values[i]`
  * is the compared datum of `candidatesBefore[i]`: a count (P1–P4), a
  * sorted locant list (N1–N3), a list of locant lists in citation order (N4),
- * or the atom-id tuple (tie-break).
+ * a list of citation keys `{alpha, numeric, italic}` (N5), or the atom-id
+ * tuple (tie-break).
  *
  * @typedef {object} TraceStep
- * @property {string} rule - Rule id: 'P1'…'P4', 'N1'…'N4', 'TIE'.
+ * @property {string} rule - Rule id: 'P1'…'P4', 'N1'…'N5', 'TIE'.
  * @property {TraceCandidate[]} candidatesBefore - Candidates entering the rule.
  * @property {Array<number|number[]|number[][]>} values - Compared values, aligned with candidatesBefore.
  * @property {TraceCandidate[]} survivors - Candidates left after the rule.
@@ -121,7 +124,7 @@
  * @property {NameStructure} structure - The language-neutral structure.
  * @property {{atoms: number[], bonds: number[]}} parent - Parent atoms and bonds in locant order.
  * @property {TraceStep[]} trace - Every rule applied, in order.
- * @property {{style: string, label: string, name: string, parts: NamePart[]}[]} alternatives - Other prefix styles (empty without an isopropyl group).
+ * @property {{style: string, label: string, name: string, parts: NamePart[]}[]} alternatives - The name in the other prefix styles ('isopropil', 'pin', 'substituted', in that order), each from its own run of prefix naming and N4; empty without an isopropyl group.
  */
 
 /**

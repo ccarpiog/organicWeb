@@ -4,26 +4,31 @@
  * coordinates or any browser global.
  *
  * Pipeline: validation → parent selection P1–P3 (parent.js) → substituents
- * of the remaining chains (substituent.js) → N1, N2, P4, N3, N4 and
- * tie-break (numbering.js; IUPAC 2013 compares ene/yne locants before the
- * number of substituents) → grouped prefixes in citation order → rendering
- * (render.js). Substituents other than saturated unbranched end-attached
- * chains return a `NOT_YET` error until phases 050/060 name them.
+ * of the remaining chains, named recursively (substituent.js) → N1, N2, P4,
+ * N3, N4, N5 and tie-break (numbering.js; IUPAC 2013 compares ene/yne
+ * locants before the number of substituents) → grouped prefixes in citation
+ * order → rendering (render.js).
+ *
+ * The prefix style (design.md §1.1) changes prefix names, hence citation
+ * order and N4; each style is a full re-run of prefix naming and numbering,
+ * never a text substitution. When the molecule contains an isopropyl group,
+ * `alternatives` holds the names in the other two styles. Doubly-attached
+ * (`-iliden`) substituents return a `NOT_YET` error until phase 060.
  */
 
 import { validateForNaming } from '../model/validate.js';
 import { adjacency } from '../model/graph.js';
 import { selectParent } from './parent.js';
-import { collectSubstituents } from './substituent.js';
-import { numberParent, compareCitationKeys } from './numbering.js';
+import { createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, PREFIX_STYLES } from './substituent.js';
+import { numberParent } from './numbering.js';
 import { buildChainStructure, buildNameStructure } from './structure.js';
-import { renderName, citationKey } from './render.js';
+import { renderName } from './render.js';
 import { lexiconEs } from './lexicon.es.js';
 
-/** Error for input the engine cannot name yet (branched, unsaturated or doubly-attached substituents). */
+/** Error for input the engine cannot name yet (doubly-attached `-iliden` substituents). */
 export const NOT_YET_ERROR = Object.freeze({
   code: 'NOT_YET',
-  message: 'Todavía no sé nombrar este tipo de rama. De momento solo sé nombrar ramas sencillas como metil, etil o propil.',
+  message: 'Todavía no sé nombrar este tipo de rama. De momento no sé nombrar ramas unidas a la cadena por un doble enlace (como metiliden).',
 });
 
 /** Error for an unexpected engine failure (a bug); nameMolecule never throws. */
@@ -31,38 +36,6 @@ export const INTERNAL_ERROR = Object.freeze({
   code: 'INTERNAL',
   message: 'Algo ha fallado al nombrar esta molécula. Prueba a dibujarla de nuevo.',
 });
-
-/**
- * Groups the substituents of the numbered parent into prefix groups, in
- * citation (alphanumerical) order, each occurrence with its locant.
- *
- * @param {object[]} substituents - Entries from collectSubstituents(), all with a structure.
- * @param {number[]} atoms - Parent atom ids in locant order.
- * @param {object} lexicon - The lexicon (citation order depends on the prefix words).
- * @returns {object[]} The prefix groups (structure.js PrefixGroup).
- */
-function groupPrefixes(substituents, atoms, lexicon) {
-  const locantOf = new Map(atoms.map((atom, i) => [atom, i + 1]));
-  const byKey = new Map();
-  for (const sub of substituents) {
-    if (!byKey.has(sub.key)) {
-      byKey.set(sub.key, { key: sub.key, substituent: sub.structure, locants: [], citation: citationKey(sub.structure, lexicon) });
-    }
-    byKey.get(sub.key).locants.push({
-      locant: locantOf.get(sub.chainAtom),
-      atom: sub.chainAtom,
-      attachAtom: sub.attachAtom,
-      bond: sub.bond,
-      order: sub.order,
-      atoms: [...sub.atoms],
-      bonds: [...sub.bonds],
-    });
-  }
-  const groups = [...byKey.values()];
-  groups.forEach((group) => group.locants.sort((p, q) => p.locant - q.locant || p.attachAtom - q.attachAtom));
-  groups.sort((g, h) => compareCitationKeys(g.citation, h.citation) || (g.key < h.key ? -1 : 1));
-  return groups.map(({ key, substituent, locants }) => ({ key, substituent, locants }));
-} // End of function groupPrefixes()
 
 /**
  * Builds a failure result with the NOT_YET error.
@@ -79,7 +52,7 @@ function notYet() {
  * `detail` (English, for developers) holds the exception message.
  *
  * @param {object} mol - The molecule to name (see model/molecule.js).
- * @param {{prefixStyle?: 'isopropil'|'pin'|'substituted'}} [options] - Prefix style (used from phase 050 on).
+ * @param {{prefixStyle?: 'isopropil'|'pin'|'substituted'}} [options] - Prefix style (default 'isopropil', design.md §1.1).
  * @returns {object} The naming result (structure.js NamingResult, design.md §4.1).
  */
 export function nameMolecule(mol, options = {}) {
@@ -91,22 +64,29 @@ export function nameMolecule(mol, options = {}) {
 }
 
 /**
- * Validates and names a molecule (the body of nameMolecule, which may throw
- * only on an internal bug).
+ * Tells whether a name structure cites a retained prefix, at any depth.
  *
- * @param {object} mol - The molecule to name.
- * @param {object} options - Naming options (see nameMolecule).
- * @returns {object} The naming result.
+ * @param {{prefixes: object[]}} structure - A name or substituent structure.
+ * @param {string} id - Retained-name id, e.g. 'isopropyl'.
+ * @returns {boolean} True when some prefix (or nested prefix) is that retained group.
  */
-function nameValidated(mol, options) {
-  const error = validateForNaming(mol);
-  if (error) {
-    return { ok: false, error };
-  }
-  const lexicon = lexiconEs;
-  const adj = adjacency(mol);
-  const selection = selectParent(mol);
-  const substituentsByChain = new Map(selection.chains.map((chain) => [chain, collectSubstituents(mol, chain, adj)]));
+export function hasRetainedPrefix(structure, id) {
+  return structure.prefixes.some((group) => group.substituent.retained === id || hasRetainedPrefix(group.substituent, id));
+}
+
+/**
+ * Names a validated molecule under one prefix style: substituents,
+ * numbering, grouping and rendering.
+ *
+ * @param {object} mol - A validated acyclic hydrocarbon.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {{chains: number[][], trace: object[]}} selection - Result of selectParent().
+ * @param {string} style - Prefix style.
+ * @returns {object} The naming result without `alternatives`, or the NOT_YET failure.
+ */
+function nameWithStyle(mol, adj, selection, style) {
+  const ctx = createNamingContext(mol, style, lexiconEs, adj);
+  const substituentsByChain = new Map(selection.chains.map((chain) => [chain, collectSubstituents(mol, chain, ctx)]));
   /**
    * Describes the prefixes of one remaining chain for numbering.
    *
@@ -116,17 +96,17 @@ function nameValidated(mol, options) {
   const prefixesOf = (chain) => substituentsByChain.get(chain).map((sub) => ({
     atom: sub.chainAtom,
     key: sub.key,
-    citation: sub.structure ? citationKey(sub.structure, lexicon) : null,
+    citation: sub.citation,
   }));
-  const numbering = numberParent(mol, selection.chains, prefixesOf);
+  const nameKey = nameKeyFunction([...substituentsByChain.values()], lexiconEs);
+  const numbering = numberParent(mol, selection.chains, prefixesOf, { adj, nameKey });
   const substituents = substituentsByChain.get(selection.chains[numbering.chainIndex]);
   if (numbering.unsupported || substituents.some((sub) => !sub.structure)) {
     return notYet();
   }
   const parent = buildChainStructure(numbering.atoms, numbering.bonds, numbering.orders);
-  const prefixes = groupPrefixes(substituents, numbering.atoms, lexicon);
-  const structure = buildNameStructure({ parent, prefixes });
-  const { name, parts } = renderName(structure, lexicon);
+  const structure = buildNameStructure({ parent, prefixes: groupPrefixes(substituents, numbering.atoms) });
+  const { name, parts } = renderName(structure, lexiconEs);
   return {
     ok: true,
     name,
@@ -134,6 +114,57 @@ function nameValidated(mol, options) {
     structure,
     parent: { atoms: [...parent.atoms], bonds: [...parent.bonds] },
     trace: [...selection.trace, ...numbering.trace],
-    alternatives: [],
   };
+} // End of function nameWithStyle()
+
+/**
+ * Validates and names a molecule (the body of nameMolecule, which may throw
+ * only on an internal bug). When the default-style name contains
+ * `isopropil`, the names in the other two styles are added as
+ * `alternatives`, each from its own run of prefix naming and numbering (a
+ * style that would need a nested `-iliden` group is left out until phase
+ * 060).
+ *
+ * @param {object} mol - The molecule to name.
+ * @param {object} options - Naming options (see nameMolecule).
+ * @returns {object} The naming result.
+ * @throws {RangeError} For an unknown prefix style (reported as INTERNAL).
+ */
+function nameValidated(mol, options) {
+  const error = validateForNaming(mol);
+  if (error) {
+    return { ok: false, error };
+  }
+  const style = options.prefixStyle || PREFIX_STYLES[0];
+  if (!PREFIX_STYLES.includes(style)) {
+    throw new RangeError(`unknown prefix style ${style}`);
+  }
+  const adj = adjacency(mol);
+  const selection = selectParent(mol);
+  const main = nameWithStyle(mol, adj, selection, style);
+  if (!main.ok) {
+    return main;
+  }
+  const byStyle = new Map([[style, main]]);
+  const named = (s) => {
+    if (!byStyle.has(s)) {
+      byStyle.set(s, nameWithStyle(mol, adj, selection, s));
+    }
+    return byStyle.get(s);
+  };
+  const alternatives = [];
+  const reference = named(PREFIX_STYLES[0]);
+  if (reference.ok && hasRetainedPrefix(reference.structure, 'isopropyl')) {
+    for (const other of PREFIX_STYLES.filter((s) => s !== style)) {
+      const result = named(other);
+      if (!result.ok) {
+        // The 'substituted' style can need a nested -iliden group that the
+        // other styles avoid (`1-metilidenbutil` vs `pent-1-en-2-il`);
+        // -iliden groups are named from phase 060 on.
+        continue;
+      }
+      alternatives.push({ style: other, label: lexiconEs.styleLabel(other), name: result.name, parts: result.parts });
+    }
+  } // End of the alternatives for a molecule with an isopropyl group
+  return { ...main, alternatives };
 } // End of function nameValidated()

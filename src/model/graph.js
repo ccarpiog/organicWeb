@@ -299,10 +299,11 @@ function encodeRooted(mol, adj, atom, parent) {
  * @param {object} mol - A tree molecule.
  * @param {number} root - First atom of the branch.
  * @param {number|null} exclude - Neighbour of `root` that is not part of the branch (null: whole tree).
+ * @param {Map<number, object[]>} [adj] - Adjacency from adjacency() (computed when omitted).
  * @returns {string} The rooted canonical key.
  */
-export function rootedTreeKey(mol, root, exclude) {
-  return encodeRooted(mol, adjacency(mol), root, exclude);
+export function rootedTreeKey(mol, root, exclude, adj = adjacency(mol)) {
+  return encodeRooted(mol, adj, root, exclude);
 }
 
 /**

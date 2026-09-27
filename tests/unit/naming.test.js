@@ -16,6 +16,10 @@ import { parseSmiles } from '../../src/model/smiles.js';
 import { adjacency } from '../../src/model/graph.js';
 import { createMolecule, addAtom, addBond } from '../../src/model/molecule.js';
 import { nameMolecule } from '../../src/naming/index.js';
+import { numberParent, compareCitationKeys } from '../../src/naming/numbering.js';
+import { substituentChainCandidates, nameSubstituent } from '../../src/naming/substituent.js';
+import { citationKey } from '../../src/naming/render.js';
+import { commonGroupName } from '../../src/naming/lexicon.es.js';
 import { bundleModules } from '../../scripts/build.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -145,6 +149,155 @@ test('all acceptance names of phase I-4 are covered by fixtures', () => {
   assert.ok(branched.length >= 19, `only ${branched.length} branched rows`);
 });
 
+test('all acceptance names of phase I-5 are covered by fixtures', () => {
+  const named = fixtureRows.filter((row) => !row.pending);
+  const bySmiles = new Map(named.map((row) => [row.smiles, row]));
+  const expect = [
+    ['C=CC(CCC)CCC', '4-etenilheptano', ''],
+    ['C#CC(CCC)CCC', '4-etinilheptano', ''],
+    ['C=CCC(CCCC)CCCC', '5-(prop-2-en-1-il)nonano', ''],
+    ['CCCCC(C(C)C)CCCC', '5-isopropilnonano', 'pin=5-(propan-2-il)nonano;substituted=5-(1-metiletil)nonano'],
+    ['CCCC(C)CC(C(C)C)CCC', '4-isopropil-6-metilnonano', 'pin=4-metil-6-(propan-2-il)nonano;substituted=4-metil-6-(1-metiletil)nonano'],
+    ['C=CCC(C=C(C)C)CCCCC', '4-(2-metilprop-1-en-1-il)non-1-eno', ''],
+  ];
+  for (const [smiles, name, alternatives] of expect) {
+    assert.ok(bySmiles.has(smiles), `missing fixture ${smiles}`);
+    assert.equal(bySmiles.get(smiles).name, name);
+    assert.equal(bySmiles.get(smiles).alternatives, alternatives);
+  }
+  const names = named.map((row) => row.name);
+  assert.ok(names.some((n) => n.includes('diisopropil')), 'a diisopropil row');
+  assert.ok(named.some((row) => row.alternatives.includes('di(propan-2-il)')), 'a di(propan-2-il) alternative (P-16.9)');
+  assert.ok(names.some((n) => n.includes('tert-butil')), 'a tert-butil row');
+  assert.ok(names.includes('6-(2,2-dimetilpropil)-7-etildodecano'), 'compound prefix alphabetised under its inner multiplier');
+  assert.equal(fixtureRows.filter((row) => row.pending === 'I-5').length, 0, 'no pending(I-5) rows remain');
+  const section = named.filter((row) => row.line > named.find((r) => r.smiles === 'C=CC(CCC)CCC').line);
+  assert.ok(section.length >= 18, `only ${section.length} I-5 rows`);
+});
+
+test('prefixStyle option: each style re-runs citation order and N4', () => {
+  const mol = parseSmiles('CCCC(C)CC(C(C)C)CCC');
+  const main = nameMolecule(mol);
+  const pin = nameMolecule(mol, { prefixStyle: 'pin' });
+  const substituted = nameMolecule(mol, { prefixStyle: 'substituted' });
+  assert.equal(main.name, '4-isopropil-6-metilnonano');
+  assert.equal(pin.name, '4-metil-6-(propan-2-il)nonano');
+  assert.equal(substituted.name, '4-metil-6-(1-metiletil)nonano');
+  assert.deepEqual(pin.alternatives.map((a) => a.style), ['isopropil', 'substituted']);
+  assert.equal(pin.alternatives[0].name, main.name);
+  assert.deepEqual(main.alternatives.map((a) => a.label), ['nombre preferido por la IUPAC (2013)', 'forma sistemática clásica']);
+  // The locant 4 refers to a different chain atom in each style: numbering was re-run.
+  const isoAtoms = main.parts[0].atoms;
+  const pinAtoms = main.alternatives[0].parts[0].atoms;
+  assert.equal(main.parts[0].text, '4');
+  assert.equal(main.alternatives[0].parts[0].text, '4');
+  assert.notDeepEqual(isoAtoms, pinAtoms);
+  assert.deepEqual(main.alternatives[0].parts.map((p) => p.text).join(''), pin.name);
+  const n4 = pin.trace.find((step) => step.rule === 'N4');
+  assert.ok(n4, 'pin style decides by N4');
+  assert.equal(nameMolecule(mol, { prefixStyle: 'nope' }).error.code, 'INTERNAL');
+  // No isopropyl group: no alternatives, even with a tert-butyl group.
+  assert.deepEqual(nameMolecule(parseSmiles('CCCCC(C(C)(C)C)CCCC')).alternatives, []);
+  assert.equal(nameMolecule(parseSmiles('CCCCC(C(C)(C)C)CCCC'), { prefixStyle: 'substituted' }).name, '5-(1,1-dimetiletil)nonano');
+});
+
+test('enclosed prefixes: parts, parentheses, di for simple and bis for compound', () => {
+  const result = nameMolecule(parseSmiles('CCCCC(C(C)C)(C(C)C)CCCC'), { prefixStyle: 'pin' });
+  assert.deepEqual(result.parts.map((p) => [p.text, p.kind]), [
+    ['5', 'locant'], [',', 'punct'], ['5', 'locant'], ['-', 'punct'], ['di', 'multiplier'], ['(', 'punct'],
+    ['propan-2-il', 'prefix'], [')', 'punct'], ['non', 'stem'], ['ano', 'ending'],
+  ]);
+  assert.equal(result.parts[6].atoms.length, 6);
+  assert.equal(nameMolecule(parseSmiles('CCCCC(C(C)C)(C(C)C)CCCC'), { prefixStyle: 'substituted' }).name, '5,5-bis(1-metiletil)nonano');
+  assert.equal(nameMolecule(parseSmiles('CCCCC(CC(C)C)(CC(C)C)CCCC')).name, '5,5-bis(2-metilpropil)nonano');
+  assert.equal(nameMolecule(parseSmiles('CCCCCC(CCC=C)(CCC=C)CCCCC')).name, '6,6-di(but-3-en-1-il)undecano');
+  const nested = nameMolecule(parseSmiles('CCCCCCC(CC(C(C)C)CCC)CCCCCC'), { prefixStyle: 'pin' });
+  assert.equal(nested.name, '7-[2-(propan-2-il)pentil]tridecano');
+  assert.deepEqual(nested.parts.filter((p) => p.kind === 'punct').map((p) => p.text), ['-', '[', ']']);
+});
+
+test('substituent structures: chain, free valence, retained and common names', () => {
+  const vinyl = nameMolecule(parseSmiles('C=CC(CCC)CCC')).structure.prefixes[0].substituent;
+  assert.equal(vinyl.chain.length, 2);
+  assert.deepEqual(vinyl.freeValence, { locant: 1, order: 1 });
+  assert.equal(vinyl.commonName, 'vinyl');
+  assert.equal(commonGroupName(vinyl.commonName), 'vinilo');
+  const commons = [
+    ['C=CCC(CCCC)CCCC', 'allyl', 'alilo'],
+    ['CCCCC(CC(C)C)CCCC', 'isobutyl', 'isobutilo'],
+    ['CCCCC(C(C)CC)CCCC', 'sec-butyl', 'sec-butilo'],
+  ];
+  for (const [smiles, id, word] of commons) {
+    const result = nameMolecule(parseSmiles(smiles));
+    assert.equal(result.structure.prefixes[0].substituent.commonName, id);
+    assert.ok(!result.name.includes(word.slice(0, -1)), `${word} never in the name`);
+  }
+  const iso = nameMolecule(parseSmiles('CCCCC(C(C)C)CCCC'));
+  assert.equal(iso.structure.prefixes[0].substituent.retained, 'isopropyl');
+  const pin = nameMolecule(parseSmiles('CCCCC(C(C)C)CCCC'), { prefixStyle: 'pin' }).structure.prefixes[0].substituent;
+  assert.equal(pin.retained, null);
+  assert.equal(pin.commonName, 'isopropyl');
+  assert.deepEqual(pin.freeValence, { locant: 2, order: 1 });
+  assert.equal(pin.chain.length, 3);
+  const sub = nameMolecule(parseSmiles('CCCCC(C(C)C)CCCC'), { prefixStyle: 'substituted' }).structure.prefixes[0].substituent;
+  assert.deepEqual(sub.freeValence, { locant: 1, order: 1 });
+  assert.equal(sub.chain.length, 2);
+  assert.equal(sub.prefixes.length, 1);
+  // Doubly attached groups, directly or nested, are not named yet.
+  const mol = parseSmiles('CCC(=C)CCC');
+  assert.equal(nameSubstituent(mol, 3, 4), null);
+});
+
+test('substituent chain candidates contain the attachment atom', () => {
+  const mol = parseSmiles('CC(C)CC'); // attach at atom 2 seen from atom 4: arms to 1 and 3
+  const adj = adjacency(mol);
+  const all = substituentChainCandidates(adj, 4, 2, false).map((c) => c.join('-')).sort();
+  assert.deepEqual(all, ['1-2-3', '2-1', '2-3']);
+  const arms = substituentChainCandidates(adj, 4, 2, true).map((c) => c.join('-')).sort();
+  assert.deepEqual(arms, ['2-1', '2-3']);
+  assert.deepEqual(substituentChainCandidates(adj, 4, 5, false), [[5]]);
+});
+
+test('citation keys: complete prefix name, inner multipliers kept, tert- ignored', () => {
+  const key = (smiles, style) => citationKey(nameMolecule(parseSmiles(smiles), { prefixStyle: style }).structure.prefixes[0].substituent);
+  assert.deepEqual(key('CCCCC(CC(C)(C)C)CCCC'), { alpha: 'dimetilpropil', numeric: [2, 2], italic: '' });
+  assert.deepEqual(key('CCCCC(C(C)(C)C)CCCC'), { alpha: 'butil', numeric: [], italic: 'tert-' });
+  assert.deepEqual(key('CCCCC(C(C)C)CCCC', 'pin'), { alpha: 'propanil', numeric: [2], italic: '' });
+  assert.ok(compareCitationKeys({ alpha: 'butil', numeric: [] }, { alpha: 'butil', numeric: [], italic: 'tert-' }) < 0);
+  assert.ok(compareCitationKeys({ alpha: 'metilbutil', numeric: [1] }, { alpha: 'metilbutil', numeric: [2] }) < 0);
+  assert.ok(compareCitationKeys({ alpha: 'metil', numeric: [] }, { alpha: 'metiletil', numeric: [1] }) < 0);
+});
+
+test('N5 compares complete names, all letters before locants', () => {
+  const result = nameMolecule(parseSmiles('CCCCCCCCC(CC(C)CCCCC)CC(CC(C)CC)CCCCC'));
+  assert.equal(result.name, '6-(2-metilbutil)-8-(2-metilheptil)hexadecano');
+  const n5 = result.trace.find((step) => step.rule === 'N5');
+  assert.ok(n5, 'decided by N5');
+  assert.equal(n5.survivors.length, 1);
+});
+
+test('a requested style is kept when the default style cannot name the molecule', () => {
+  const mol = parseSmiles('CCCC(C(CCCCC)CCCCC)C(C=C)=CC');
+  assert.equal(nameMolecule(mol).error.code, 'NOT_YET'); // default style needs an -iliden group
+  const substituted = nameMolecule(mol, { prefixStyle: 'substituted' });
+  assert.equal(substituted.ok, true, JSON.stringify(substituted.error));
+  assert.deepEqual(substituted.alternatives, []);
+});
+
+test('N5: when N4 ties but the names differ, the earlier prefixes win', () => {
+  const mol = parseSmiles('CC(C)C');
+  const chains = [[1, 2, 3], [1, 2, 4]];
+  const prefixesOf = (chain) => (chain[2] === 3
+    ? [{ atom: 2, key: 'x', citation: { alpha: 'propil', numeric: [] } }]
+    : [{ atom: 2, key: 'y', citation: { alpha: 'etil', numeric: [] } }]);
+  const result = numberParent(mol, chains, prefixesOf);
+  const n5 = result.trace.find((step) => step.rule === 'N5');
+  assert.ok(n5, 'N5 applied');
+  assert.equal(result.chainIndex, 1);
+  assert.equal(result.unsupported, false);
+  assert.equal(result.trace.at(-1).rule, 'TIE');
+});
+
 test('P steps record counts and survivors', () => {
   const result = nameMolecule(parseSmiles('CCC(C(C)C)CC'));
   const rules = result.trace.map((step) => step.rule);
@@ -270,7 +423,8 @@ test('structure is language-neutral data', () => {
 test('invalid input and unsupported substituents return an error result', () => {
   assert.equal(nameMolecule(createMolecule()).error.code, 'EMPTY');
   assert.equal(nameMolecule(null).error.code, 'INVALID');
-  for (const smiles of ['C=CC(CCC)CCC', 'CCC(=C)CCC', 'CCCCC(C(C)C)CCCC']) {
+  // Only doubly-attached (-iliden) groups, at any depth, are not named yet.
+  for (const smiles of ['CCC(=C)CCC', 'CCCC(=CC)CCC', 'CCCCCCC(CC(=C)CCC)CCCCCC']) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(result.ok, false, smiles);
     assert.equal(result.error.code, 'NOT_YET');
@@ -287,7 +441,7 @@ test('more than 30 identical prefixes use composed multipliers', () => {
   assert.match(biggest.name, /^2,2,3,3,.*,20,20-octatriacontametilhenicosano$/);
 });
 
-test('random valid trees get a name or NOT_YET, never an exception', () => {
+test('random valid trees get a name or NOT_YET (only with a double bond), never an exception', () => {
   let seed = 12345;
   const random = () => {
     seed = (seed * 1103515245 + 12345) % 2147483648;
@@ -317,9 +471,16 @@ test('random valid trees get a name or NOT_YET, never an exception', () => {
     }
     const result = nameMolecule(mol);
     assert.ok(result.ok || result.error.code === 'NOT_YET', JSON.stringify(result.error));
+    if (!result.ok) {
+      // NOT_YET is reserved for doubly-attached substituents.
+      assert.ok([...mol.bonds.values()].some((bond) => bond.order === 2), 'NOT_YET without a double bond');
+    } else {
+      assert.equal(result.parts.map((p) => p.text).join(''), result.name);
+      result.alternatives.forEach((alt) => assert.notEqual(alt.name, result.name));
+    }
     named += result.ok ? 1 : 0;
   } // End of the loop that builds and names random trees
-  assert.ok(named > 1000);
+  assert.ok(named > 2500);
 });
 
 test('naming ignores atom coordinates', () => {
@@ -367,13 +528,13 @@ test('naming modules bundle and run in a classic script', async () => {
       [
         "import { parseSmiles } from './model/smiles.js';",
         "import { nameMolecule } from './naming/index.js';",
-        "globalThis.__result = ['C=CC=CC#C', 'CCCC', 'C=C=C'].map((s) => nameMolecule(parseSmiles(s)).name).join(' ');",
+        "globalThis.__result = ['C=CC=CC#C', 'CCCC', 'C=C=C', 'CCCC(C)CC(C(C)C)CCC'].map((s) => nameMolecule(parseSmiles(s)).name).join(' ');",
       ].join('\n'),
     );
     const code = await bundleModules(path.join(dir, 'entry.js'), dir);
     const context = {};
     vm.runInNewContext(code, context);
-    assert.equal(context.__result, 'hexa-1,3-dien-5-ino butano propadieno');
+    assert.equal(context.__result, 'hexa-1,3-dien-5-ino butano propadieno 4-isopropil-6-metilnonano');
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

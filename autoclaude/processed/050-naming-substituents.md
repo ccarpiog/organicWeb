@@ -36,4 +36,8 @@ Spec: `docs/design.md` §1.1 (preferred prefixes, alphanumerical order),
   number differently (§4.8), a `diisopropil` case (and its `bis(propan-2-il)`
   alternative), a `tert-butil` case, a compound prefix alphabetised under its inner
   multiplier, plus ≥ 10 more justified rows.
+- Note (I-5 review): the acceptance wording `bis(propan-2-il)` above is
+  superseded by `di(propan-2-il)` per IUPAC 2013 P-16.9 (propan-2-il is a
+  simple prefix, parenthesised only for its locant; bis/tris are for
+  substituted prefixes such as `bis(2-metilpropil)`).
 - Only doubly-attached substituents still return `NOT_YET`.
