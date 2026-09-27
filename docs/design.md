@@ -152,14 +152,17 @@ for `alert`/`confirm`/`prompt` in app code), `oracle` (§8).
 - Derived: molecular formula `CₙHₘ`, neighbours, connected components,
   `hasCycle()`, `isEmpty()`.
 - JSON serialisation (autosave, undo snapshots).
-- `smiles.js`: parses `C`, `=`, `#`, parenthesised branches; rejects ring
-  digits, other elements, aromatic atoms, brackets — with an explicit error,
-  never by silently dropping input. The writer is for debugging and examples.
+- `smiles.js`: parses `C`, `=`, `#` (and an optional explicit `-`),
+  parenthesised branches; rejects ring digits, other elements, aromatic
+  atoms, brackets, dots, stereo marks, dangling bonds and unbalanced or empty
+  parentheses — with an explicit error (developer-facing, English), never by
+  silently dropping input. The writer is for debugging and examples.
   Fixtures use SMILES, so the test suite never depends on coordinates.
 
 ### 3.2 Validation (single function, used everywhere)
 
-`validate(mol)` checks: atom and bond ids unique; bond endpoints exist; no
+`validate(mol)` (`validateStructure` + `validateForNaming` in
+`model/validate.js`) checks: atom and bond ids unique; bond endpoints exist; no
 self-bonds; no duplicate bonds between the same pair; orders ∈ {1,2,3};
 carbon valence ≤ 4; then, for naming only: non-empty, connected, acyclic,
 size caps. The same checks guard editor transactions, JSON restoration
@@ -173,7 +176,7 @@ with Spanish messages:
 | `CYCLE` | Has dibujado un anillo. De momento solo sé nombrar cadenas abiertas. |
 | `VALENCE` | Este carbono tendría más de 4 enlaces. |
 | `TOO_BIG` | La molécula es demasiado grande (máximo 60 carbonos, cadena de 30). |
-| `INVALID` | internal/corrupt data; generic friendly message |
+| `INVALID` | Los datos de la molécula están dañados. Empieza un dibujo nuevo. (internal/corrupt data) |
 
 ---
 

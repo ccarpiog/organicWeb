@@ -9,7 +9,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | id | title | spec | status | risk / worker | review |
 |---|---|---|---|---|---|
 | I-1 | Project scaffold | `autoclaude/processed/010-scaffold.md` | done — `docs/progress-archive/i-1.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-1.md` |
-| I-2 | Molecule model, validation, SMILES subset | `autoclaude/processed/020-model.md` | queued | — | — |
+| I-2 | Molecule model, validation, SMILES subset | `autoclaude/processed/020-model.md` | done — `docs/progress-archive/i-2.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-2.md` |
 | I-3 | Naming engine I: contracts, lexicon, unbranched chains | `autoclaude/processed/030-naming-linear.md` | queued | — | — |
 | I-4 | Naming engine II: parent selection and numbering | `autoclaude/processed/040-naming-parent.md` | queued | — | — |
 | I-5 | Naming engine III: recursive preferred substituents | `autoclaude/processed/050-naming-substituents.md` | queued | — | — |
@@ -28,8 +28,9 @@ queued as `I-7` … `I-12` at later phase boundaries.
 
 ## Next action
 
-Execute I-2 (molecule model, validation, SMILES) per
-`autoclaude/processed/020-model.md`. Poll the inbox first (phase boundary).
+Poll the inbox first (phase boundary; items 070–120 remain), then execute
+I-3 (naming engine I: contracts, lexicon, unbranched chains) per
+`autoclaude/processed/030-naming-linear.md`.
 
 ## Key paths
 
@@ -37,10 +38,12 @@ Execute I-2 (molecule model, validation, SMILES) per
   before adding code to `src/` (no circular imports, no `import()`, no
   multi-declarator or destructuring exports, bindings copied not live).
 - Tests: `tests/unit/*.test.js` (node --test), `tests/e2e/*.spec.js`.
+- Model: `src/model/{molecule,graph,validate,smiles}.js` — `canonicalTreeKey`
+  in graph.js; `validateStructure` / `validateForNaming` in validate.js.
 
-## Verification (last phase)
+## Verification (last phase, I-2)
 
-- `npm test` 0 (30 pass) · `npm run check` 0 · `npm run build` 0 ·
+- `npm test` 0 (62 pass) · `npm run check` 0 · `npm run build` 0 ·
   `npm run e2e` 0 (3 pass).
 
 ## Open risks / deviations
@@ -50,4 +53,5 @@ Execute I-2 (molecule model, validation, SMILES) per
 
 ## Git state
 
-- I-1 commit `911eae8`, pushed to origin/main; tree clean after it.
+- I-1 commit `911eae8`, pushed to origin/main.
+- I-2 committed and pushed right after this checkpoint (see `git log`).

@@ -1,16 +1,86 @@
-{"schema_version": 1, "updated": "2026-09-27T10:44:12Z", "plan": "PLAN.md",
+{
+ "schema_version": 1,
+ "updated": "2026-09-27T10:57:38Z",
+ "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
-  {"id": "I-1", "title": "Project scaffold", "status": "done", "risk": "routine", "review": "docs/reviews/I-1.md", "narrative": "docs/progress-archive/i-1.md", "summary": "Creates the repo skeleton, HTML shell, CSS, single-file build and test tooling."},
-  {"id": "I-2", "title": "Molecule model, validation, SMILES subset", "status": "queued", "summary": "Adds the molecule graph model, validation messages, canonical tree key and SMILES parser."},
-  {"id": "I-3", "title": "Naming engine I: unbranched chains", "status": "queued", "summary": "Defines naming contracts and lexicon and names unbranched alkanes, alkenes and alkynes."},
-  {"id": "I-4", "title": "Naming engine II: parent chain", "status": "queued", "summary": "Plan item 040, not yet triaged from the inbox."},
-  {"id": "I-5", "title": "Naming engine III: substituents", "status": "queued", "summary": "Plan item 050, not yet triaged from the inbox."},
-  {"id": "I-6", "title": "Naming: ylidene groups and fixtures", "status": "queued", "summary": "Plan item 060, not yet triaged from the inbox."},
-  {"id": "I-7", "title": "Naming oracle", "status": "queued", "summary": "Plan item 070, not yet triaged from the inbox."},
-  {"id": "I-8", "title": "Editor core", "status": "queued", "summary": "Plan item 080, not yet triaged from the inbox."},
-  {"id": "I-9", "title": "Editor extras", "status": "queued", "summary": "Plan item 090, not yet triaged from the inbox."},
-  {"id": "I-10", "title": "Explanation and results panel", "status": "queued", "summary": "Plan item 100, not yet triaged from the inbox."},
-  {"id": "I-11", "title": "Redraw and examples", "status": "queued", "summary": "Plan item 110, not yet triaged from the inbox."},
-  {"id": "I-12", "title": "Polish and release", "status": "queued", "summary": "Plan item 120, not yet triaged from the inbox."}
- ]}
+  {
+   "id": "I-1",
+   "title": "Project scaffold",
+   "status": "done",
+   "risk": "routine",
+   "review": "docs/reviews/I-1.md",
+   "narrative": "docs/progress-archive/i-1.md",
+   "summary": "Creates the repo skeleton, HTML shell, CSS, single-file build and test tooling."
+  },
+  {
+   "id": "I-2",
+   "title": "Molecule model, validation, SMILES subset",
+   "status": "done",
+   "summary": "Adds the molecule graph model, validation messages, canonical tree key and SMILES parser.",
+   "risk": "routine",
+   "review": "docs/reviews/I-2.md",
+   "narrative": "docs/progress-archive/i-2.md"
+  },
+  {
+   "id": "I-3",
+   "title": "Naming engine I: unbranched chains",
+   "status": "queued",
+   "summary": "Defines naming contracts and lexicon and names unbranched alkanes, alkenes and alkynes."
+  },
+  {
+   "id": "I-4",
+   "title": "Naming engine II: parent chain",
+   "status": "queued",
+   "summary": "Selects the parent chain and numbering (P1–P4, N1–N4) and names simple straight-chain substituents."
+  },
+  {
+   "id": "I-5",
+   "title": "Naming engine III: substituents",
+   "status": "queued",
+   "summary": "Names branched and unsaturated substituents recursively, with isopropil, PIN and substituted styles."
+  },
+  {
+   "id": "I-6",
+   "title": "Naming: ylidene groups and fixtures",
+   "status": "queued",
+   "summary": "Names double-bond-attached iliden substituents, removes NOT_YET paths and grows fixtures to 150+."
+  },
+  {
+   "id": "I-7",
+   "title": "Naming oracle",
+   "status": "queued",
+   "summary": "Plan item 070, not yet triaged from the inbox."
+  },
+  {
+   "id": "I-8",
+   "title": "Editor core",
+   "status": "queued",
+   "summary": "Plan item 080, not yet triaged from the inbox."
+  },
+  {
+   "id": "I-9",
+   "title": "Editor extras",
+   "status": "queued",
+   "summary": "Plan item 090, not yet triaged from the inbox."
+  },
+  {
+   "id": "I-10",
+   "title": "Explanation and results panel",
+   "status": "queued",
+   "summary": "Plan item 100, not yet triaged from the inbox."
+  },
+  {
+   "id": "I-11",
+   "title": "Redraw and examples",
+   "status": "queued",
+   "summary": "Plan item 110, not yet triaged from the inbox."
+  },
+  {
+   "id": "I-12",
+   "title": "Polish and release",
+   "status": "queued",
+   "summary": "Plan item 120, not yet triaged from the inbox."
+  }
+ ]
+}
