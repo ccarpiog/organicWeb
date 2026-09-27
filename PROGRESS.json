@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T16:22:36Z",
+  "updated": "2026-09-27T16:26:48Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with editor refinements from the inbox.",
   "phases": [
@@ -160,14 +160,23 @@
     {
       "id": "I-18",
       "title": "Author credit footer",
-      "status": "queued",
-      "summary": "Shows the page author and year in a footer and in the page metadata."
+      "status": "done",
+      "summary": "Shows the page author and year in a footer and in the page metadata.",
+      "risk": "routine",
+      "review": "Codex ship, 0 findings — docs/reviews/I-18.md",
+      "narrative": "docs/progress-archive/i-18.md"
     },
     {
       "id": "I-19",
       "title": "Undo after Ordenar dibujo",
       "status": "queued",
       "summary": "Fixes Deshacer so it restores the hand-drawn layout after Ordenar dibujo."
+    },
+    {
+      "id": "I-20",
+      "title": "npm run deploy to Fastmail Files",
+      "status": "queued",
+      "summary": "Adds a documented npm run deploy that uploads the single-file build to Fastmail Files over WebDAV."
     }
   ]
 }

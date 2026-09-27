@@ -911,6 +911,19 @@ body {
   margin-top: 0.35rem !important;
 }
 
+/* Author credit under the app (index.html). Muted text on the page
+   background passes WCAG AA in both schemes (about 5.5:1 light, 7:1 dark). */
+.app-footer {
+  padding: 0.5rem var(--gap) 0.75rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.app-footer p {
+  margin: 0;
+}
+
 /* Narrow screens: toolbar becomes a row, results go below the canvas. */
 @media (max-width: 800px) {
   .app-main {

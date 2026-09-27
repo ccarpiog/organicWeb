@@ -128,3 +128,8 @@ docs/design.md    design and implementation plan
 - Structure → name only; there is no name → structure.
 - Future (design §12): rings and benzene, E/Z, a quiz mode ("¿Cómo se
   llama?" in reverse: read a name, draw it) and functional groups.
+
+## Author
+
+Created by Carlos Carpio García, 2026. The page shows the credit
+«Creado por Carlos Carpio García · 2026» in its footer.

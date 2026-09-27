@@ -25,12 +25,12 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | done — `docs/progress-archive/i-15.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-15.md` |
 | I-16 | Toggle to hide stepper highlights | `autoclaude/processed/160-hide-highlights.md` | done — `docs/progress-archive/i-16.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-16.md` |
 | I-17 | Editing in the 90° view | `autoclaude/processed/170-edit-in-carbons-view.md` | done — `docs/progress-archive/i-17.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-17.md` |
-| I-18 | Author credit footer | `autoclaude/processed/180-author-credit.md` | queued (next) | — | — |
-| I-19 | Undo after "Ordenar dibujo" (bug) | `autoclaude/processed/190-undo-ordenar-dibujo.md` | queued (after I-18) | — | — |
+| I-18 | Author credit footer | `autoclaude/processed/180-author-credit.md` | done — `docs/progress-archive/i-18.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-18.md` |
+| I-19 | Undo after "Ordenar dibujo" (bug) | `autoclaude/processed/190-undo-ordenar-dibujo.md` | queued (next) | — | — |
 | I-20 | `npm run deploy` to Fastmail Files + docs | `autoclaude/processed/200-deploy-fastmail.md` | queued (after I-19) | — | — |
 
-The twelve original plan items and user-feedback items I-13…I-17 are done;
-I-18, I-19 and I-20 (user feedback) are queued.
+The twelve original plan items and user-feedback items I-13…I-18 are done;
+I-19 and I-20 (user feedback) are queued.
 
 ## Inbox
 
@@ -57,8 +57,7 @@ I-18, I-19 and I-20 (user feedback) are queued.
 
 ## Next action
 
-Poll the inbox, then execute I-18 (spec `autoclaude/processed/180-author-credit.md`),
-then I-19 (`autoclaude/processed/190-undo-ordenar-dibujo.md`), then I-20
+Poll the inbox, then execute I-19 (`autoclaude/processed/190-undo-ordenar-dibujo.md`), then I-20
 (`autoclaude/processed/200-deploy-fastmail.md`; the loop never runs the real
 deploy).
 
@@ -102,9 +101,9 @@ deploy).
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-17)
+## Verification (last phase, I-18)
 
-- `npm test` 0 (410 pass) · `npm run check` 0 · `npm run e2e` 0 (111 pass,
+- `npm test` 0 (410 pass) · `npm run check` 0 · `npm run e2e` 0 (119 pass,
   source + dist, includes build). Oracle not rerun (naming engine untouched).
 
 ## Open risks / deviations
@@ -168,10 +167,13 @@ deploy).
   direction ignored for model placement. Review's two should-fix fixed with
   regressions (`docs/progress-archive/i-17.md`).
 
+- I-18: author footer sits below the fold on desktop (main area fills the
+  viewport); reachable by scrolling (`docs/progress-archive/i-18.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-16 `da0bf69`, pushed; triage `944a17d`. I-17 committed and pushed right
+- I-17 `6832d55`, pushed; triage `05db564`. I-18 committed and pushed right
   after this checkpoint (see `git log`).
