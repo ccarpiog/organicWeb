@@ -1,6 +1,6 @@
 /**
- * @file Unit tests for the editor extras (design.md §6.1, §6.3): the Cadena
- * zigzag generator, carbon label text in both display modes, the view
+ * @file Unit tests for the editor extras (design.md §6.1, §6.3): the zigzag
+ * generator and the Enlace simple chain drag, carbon label text in both display modes, the view
  * arithmetic, keyboard shortcuts, chemical vs coordinate edit events, the
  * Mover marquee, the formula line and the autosave helpers.
  */
@@ -130,10 +130,12 @@ test('chooseChainSide grows away from the start atom\'s neighbour', () => {
   assert.equal(chooseChainSide(mol, null, { x: 0, y: 0 }, pointer), 1);
 });
 
-test('Cadena in the core: one transaction, N new carbons, counter in the preview', () => {
+test('Enlace simple drag in the core: one transaction, N new carbons, counter in the preview', () => {
   const editor = createEditorCore();
-  editor.setTool('chain');
+  assert.equal(editor.getTool(), 'single');
   editor.pointerDown({ x: 100, y: 100 });
+  editor.pointerMove({ x: 100 + 2 * CHAIN_STEP, y: 100 });
+  assert.equal(editor.getPreview().count, 3, 'the counter grows with the drag');
   editor.pointerMove({ x: 100 + 4 * CHAIN_STEP, y: 100 });
   const preview = editor.getPreview();
   assert.equal(preview.type, 'chain');
@@ -141,6 +143,9 @@ test('Cadena in the core: one transaction, N new carbons, counter in the preview
   editor.pointerUp({ x: 100 + 4 * CHAIN_STEP, y: 100 });
   assert.equal(editor.peekMolecule().atoms.size, 5);
   assert.equal(editor.peekMolecule().bonds.size, 4);
+  for (const bond of editor.peekMolecule().bonds.values()) {
+    assert.equal(bond.order, 1);
+  }
   // From an existing atom: the counter shows the carbons added.
   const end = editor.peekMolecule().atoms.get(5);
   editor.pointerDown(end);
@@ -148,21 +153,133 @@ test('Cadena in the core: one transaction, N new carbons, counter in the preview
   assert.equal(editor.getPreview().count, 3);
   editor.pointerUp({ x: end.x, y: end.y + 3 * CHAIN_STEP });
   assert.equal(editor.peekMolecule().atoms.size, 8);
+  // Each chain is exactly one undo step.
   editor.undo();
   assert.equal(editor.peekMolecule().atoms.size, 5);
   editor.undo();
   assert.equal(editor.peekMolecule().atoms.size, 0);
+  editor.redo();
+  assert.equal(editor.peekMolecule().atoms.size, 5);
+}); // End of test 'Enlace simple drag in the core…'
+
+test('Enlace simple drag: Esc (cancelGesture) restores the start state and records nothing', () => {
+  const editor = createEditorCore();
+  editor.loadMolecule(placed('CC'));
+  const before = editor.getMoleculeJSON();
+  const edits = [];
+  editor.onEdit((e) => edits.push(e));
+  const start = editor.peekMolecule().atoms.get(2);
+  editor.pointerDown(start);
+  editor.pointerMove({ x: start.x + 5 * CHAIN_STEP, y: start.y + 60 });
+  assert.equal(editor.getPreview().type, 'chain');
+  assert.equal(editor.cancelGesture(), true);
+  assert.equal(editor.getPreview(), null);
+  assert.equal(editor.pointerUp({ x: start.x + 5 * CHAIN_STEP, y: start.y + 60 }), null);
+  assert.deepEqual(editor.getMoleculeJSON(), before);
+  assert.deepEqual(edits, []);
+  editor.undo(); // Only the load is in the history.
+  assert.equal(editor.peekMolecule().atoms.size, 0);
 });
 
-test('Cadena from a full carbon is refused', () => {
+test('Enlace simple: a click and a one-bond drag keep their behaviour', () => {
+  const editor = createEditorCore();
+  // Click on empty space: a two-carbon fragment.
+  editor.pointerDown({ x: 100, y: 100 });
+  editor.pointerUp({ x: 100, y: 100 });
+  assert.equal(editor.peekMolecule().atoms.size, 2);
+  // Click on an atom: one more carbon.
+  const a2 = editor.peekMolecule().atoms.get(2);
+  editor.pointerDown(a2);
+  editor.pointerUp(a2);
+  assert.equal(editor.peekMolecule().atoms.size, 3);
+  // A short drag from an atom: one bond, straight along the snapped direction, with a "1 C" counter.
+  const a1 = editor.peekMolecule().atoms.get(1);
+  editor.pointerDown(a1);
+  editor.pointerMove({ x: a1.x - 2, y: a1.y + 45 });
+  const preview = editor.getPreview();
+  assert.equal(preview.type, 'bond');
+  assert.equal(preview.count, 1);
+  editor.pointerUp({ x: a1.x - 2, y: a1.y + 45 });
+  const a4 = editor.peekMolecule().atoms.get(4);
+  assert.equal(Math.round(toDegrees(normalizeAngle(angleBetween(a1, a4)))), 90);
+  assert.ok(Math.abs(distance(a1, a4) - BOND_LENGTH) < 1e-9);
+  // A short drag on empty space: a two-carbon fragment ("2 C").
+  editor.pointerDown({ x: 400, y: 400 });
+  editor.pointerMove({ x: 440, y: 401 });
+  assert.equal(editor.getPreview().count, 2);
+  editor.pointerUp({ x: 440, y: 401 });
+  assert.equal(editor.peekMolecule().atoms.size, 6);
+}); // End of test 'Enlace simple: a click and a one-bond drag…'
+
+test('Enlace simple: releasing on an atom bonds to it, even after a long drag; the pressed atom is refused', () => {
+  const editor = createEditorCore();
+  editor.loadMolecule({
+    version: 1,
+    atoms: [{ id: 1, element: 'C', x: 0, y: 0 }, { id: 2, element: 'C', x: 200, y: 0 }],
+    bonds: [],
+  });
+  const before = editor.getMoleculeJSON();
+  editor.pointerDown({ x: 0, y: 0 });
+  editor.pointerMove({ x: 120, y: 30 });
+  assert.equal(editor.getPreview().type, 'chain', 'a long drag on empty space previews a chain');
+  editor.pointerMove({ x: 202, y: 3 });
+  const preview = editor.getPreview();
+  assert.equal(preview.type, 'bond', 'over an atom, the preview is the single bond to it');
+  assert.equal(preview.count, undefined);
+  const outcome = editor.pointerUp({ x: 202, y: 3 });
+  assert.equal(outcome.ok, true);
+  assert.deepEqual(editor.getMoleculeJSON().bonds.map((b) => [b.a, b.b, b.order]), [[1, 2, 1]]);
+  assert.equal(editor.peekMolecule().atoms.size, 2);
+  editor.undo();
+  assert.deepEqual(editor.getMoleculeJSON(), before);
+  // Dragging back onto the pressed atom: self-bond refusal, nothing changes.
+  editor.pointerDown({ x: 0, y: 0 });
+  editor.pointerMove({ x: 150, y: 0 });
+  const self = editor.pointerUp({ x: 1, y: 1 });
+  assert.equal(self.ok, false);
+  assert.equal(self.message, 'No se puede unir un carbono consigo mismo.');
+  assert.deepEqual(editor.getMoleculeJSON(), before);
+}); // End of test 'Enlace simple: releasing on an atom bonds to it…'
+
+test('Enlace simple drag from a full carbon is refused', () => {
   const editor = createEditorCore();
   editor.loadMolecule(placed('CC(C)(C)C'));
-  editor.setTool('chain');
   const centre = editor.peekMolecule().atoms.get(2);
   const outcome = drag(editor, centre, { x: centre.x + 300, y: centre.y + 300 });
   assert.equal(outcome.ok, false);
   assert.equal(outcome.message, 'Este carbono ya tiene 4 enlaces.');
   assert.equal(editor.peekMolecule().atoms.size, 5);
+});
+
+test('Enlace simple drag: a chain carbon landing on an existing atom refuses the chain', () => {
+  const editor = createEditorCore();
+  // A lone carbon exactly where the second chain carbon of a rightward drag from (0, 0) goes.
+  editor.loadMolecule({
+    version: 1,
+    atoms: [{ id: 1, element: 'C', x: 2 * CHAIN_STEP, y: 0 }],
+    bonds: [],
+  });
+  const before = editor.getMoleculeJSON();
+  const outcome = drag(editor, { x: 0, y: 0 }, { x: 4 * CHAIN_STEP, y: 30 });
+  assert.equal(outcome.ok, false);
+  assert.equal(outcome.message, 'No hay sitio: ese carbono quedaría encima de otro.');
+  assert.deepEqual(editor.getMoleculeJSON(), before);
+});
+
+test('Enlace doble / triple: a long drag still makes one bond of that order', () => {
+  for (const [tool, order] of [['double', 2], ['triple', 3]]) {
+    const editor = createEditorCore();
+    editor.setTool(tool);
+    editor.pointerDown({ x: 0, y: 0 });
+    editor.pointerMove({ x: 6 * CHAIN_STEP, y: 0 });
+    const preview = editor.getPreview();
+    assert.equal(preview.type, 'bond');
+    assert.equal(preview.count, undefined);
+    editor.pointerUp({ x: 6 * CHAIN_STEP, y: 0 });
+    const json = editor.getMoleculeJSON();
+    assert.equal(json.atoms.length, 2, tool);
+    assert.deepEqual(json.bonds.map((b) => b.order), [order]);
+  }
 });
 
 // ---------------------------------------------------------------- labels
@@ -254,7 +371,7 @@ test('fitView centres the molecule in the visible rectangle', () => {
 test('shortcutFor maps the §6.1 keys', () => {
   const cases = [
     ['c', 'carbon'], ['C', 'carbon'], ['1', 'single'], ['2', 'double'], ['3', 'triple'], ['t', 'cycle'],
-    ['h', 'chain'], ['e', 'erase'], ['Delete', 'erase'], ['m', 'move'],
+    ['h', 'single'], ['e', 'erase'], ['Delete', 'erase'], ['m', 'move'],
   ];
   for (const [key, tool] of cases) {
     assert.deepEqual(shortcutFor({ key }), { tool }, key);

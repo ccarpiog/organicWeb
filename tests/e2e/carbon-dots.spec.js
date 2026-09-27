@@ -149,10 +149,10 @@ test('dots stay on every carbon after Ordenar dibujo, under the highlight, hover
   expect(errors).toEqual([]);
 }); // End of test 'dots stay on every carbon after Ordenar dibujo…'
 
-test('the Cadena preview dots its future carbons in Esqueleto', async ({ page }) => {
+test('the Enlace simple chain preview dots its future carbons in Esqueleto', async ({ page }) => {
   const errors = await openApp(page);
   const box = await page.locator('svg#canvas').boundingBox();
-  await page.evaluate(() => window.__editor.setTool('chain'));
+  await page.evaluate(() => window.__editor.setTool('single'));
   const start = { x: box.x + box.width * 0.3, y: box.y + box.height * 0.5 };
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
@@ -167,7 +167,7 @@ test('the Cadena preview dots its future carbons in Esqueleto', async ({ page })
   await expect(page.locator('svg#canvas .carbon-dot')).toHaveCount(count);
   await expectOneVisibleDotPerCarbon(page);
   expect(errors).toEqual([]);
-}); // End of test 'the Cadena preview dots its future carbons…'
+}); // End of test 'the Enlace simple chain preview dots its future carbons…'
 
 /**
  * Clicks the centre of the rendered CH₄ label.

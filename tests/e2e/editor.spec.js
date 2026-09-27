@@ -122,7 +122,8 @@ test('dragging from an atom adds a bond; Esc cancels a drag in progress', async 
 
   await page.mouse.move(p.x, p.y);
   await page.mouse.down();
-  await page.mouse.move(p.x + 5, p.y + 80, { steps: 4 });
+  // A short drag: one bond (a longer Enlace simple drag draws a chain).
+  await page.mouse.move(p.x + 5, p.y + 42, { steps: 4 });
   await page.mouse.up();
   expect(await shape(page)).toEqual({ atoms: [1, 2, 3], bonds: ['1-2:1', '1-3:1'] });
 });

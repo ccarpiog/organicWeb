@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T14:56:44Z",
+ "updated": "2026-09-27T15:04:08Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish ESO web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with editor refinements from the inbox.",
  "phases": [
@@ -124,8 +124,11 @@
   {
    "id": "I-14",
    "title": "Single-bond drag grows a chain",
-   "status": "queued",
-   "summary": "Dragging with the single-bond tool grows a chain carbon by carbon, like MolView."
+   "status": "done",
+   "summary": "Dragging with the single-bond tool grows a chain carbon by carbon, like MolView.",
+   "risk": "routine",
+   "review": "docs/reviews/I-14.md",
+   "narrative": "docs/progress-archive/i-14.md"
   },
   {
    "id": "I-15",

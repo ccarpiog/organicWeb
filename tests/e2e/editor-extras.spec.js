@@ -1,6 +1,6 @@
 /**
- * @file Editor extras e2e (design.md §6.1, §6.3): Cadena tool with its live
- * counter, Mover with marquee selection (a coordinate-only edit), autosave
+ * @file Editor extras e2e (design.md §6.1, §6.3): the Enlace simple chain
+ * drag with its live counter, Mover with marquee selection (a coordinate-only edit), autosave
  * and restore on reload (including corrupt storage), the live formula, the
  * display toggle, pan/zoom and the keyboard shortcuts.
  */
@@ -81,9 +81,10 @@ async function shape(page) {
   });
 }
 
-test('Cadena: a drag shows a live "N C" counter and draws that many carbons', async ({ page }) => {
+test('Enlace simple: a drag shows a live "N C" counter, draws that many carbons, one undo removes them', async ({ page }) => {
   await openApp(page);
-  await page.getByRole('button', { name: 'Cadena' }).click();
+  await expect(page.getByRole('button', { name: 'Enlace simple' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Cadena' })).toHaveCount(0);
   const start = { x: 250, y: 250 };
   const from = await toClient(page, start);
   const to = await toClient(page, { x: start.x + 4 * CHAIN_STEP, y: start.y });
@@ -107,6 +108,27 @@ test('Cadena: a drag shows a live "N C" counter and draws that many carbons', as
   await page.mouse.up();
   expect((await shape(page)).atoms).toBe(7);
   await expect(page.locator('#formula')).toHaveText('Fórmula: C₇H₁₆');
+
+  // Each chain is one undo step: Deshacer removes the whole chain.
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  expect((await shape(page)).atoms).toBe(5);
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  expect(await shape(page)).toEqual({ atoms: 0, bonds: [] });
+});
+
+test('Enlace simple: Esc during a chain drag cancels it and records nothing', async ({ page }) => {
+  await openApp(page);
+  const from = await toClient(page, { x: 250, y: 250 });
+  const to = await toClient(page, { x: 250 + 5 * CHAIN_STEP, y: 250 });
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 8 });
+  await expect(page.locator('svg#canvas .chain-counter')).toHaveText('6 C');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('svg#canvas .chain-counter')).toHaveCount(0);
+  await page.mouse.up();
+  expect(await shape(page)).toEqual({ atoms: 0, bonds: [] });
+  await expect(page.getByRole('button', { name: 'Deshacer' })).toBeDisabled();
 });
 
 test('Mover: marquee + drag moves the selection as a coordinate-only edit', async ({ page }) => {
@@ -201,7 +223,7 @@ test('keyboard shortcuts switch tools and undo/redo', async ({ page }) => {
   const expectTool = (name) => expect(tools.getByRole('button', { name, exact: true })).toHaveAttribute('aria-pressed', 'true');
   for (const [key, name] of [
     ['c', 'Carbono'], ['2', 'Enlace doble'], ['3', 'Enlace triple'], ['1', 'Enlace simple'], ['t', 'Cambiar enlace'],
-    ['h', 'Cadena'], ['e', 'Borrar'], ['m', 'Mover'], ['Delete', 'Borrar'], ['C', 'Carbono'],
+    ['h', 'Enlace simple'], ['e', 'Borrar'], ['m', 'Mover'], ['Delete', 'Borrar'], ['C', 'Carbono'],
   ]) {
     await page.keyboard.press(key);
     await expectTool(name);

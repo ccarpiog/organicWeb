@@ -9,8 +9,8 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 ## Features
 
 - **Editor** (SVG, mouse, pen and touch): Carbono, single/double/triple
-  bonds, Cambiar enlace, Cadena (drag to draw a zig-zag chain with a live
-  carbon counter), Borrar, Mover (marquee selection), undo/redo, Limpiar
+  bonds (a single-bond drag draws a zig-zag chain with a live carbon
+  counter), Cambiar enlace, Borrar, Mover (marquee selection), undo/redo, Limpiar
   (with an in-page confirmation), pan (Space + drag, middle drag, two
   fingers) and zoom (wheel, pinch), Centrar, skeletal or condensed display,
   live molecular formula, keyboard shortcuts, and autosave in the browser.

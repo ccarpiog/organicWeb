@@ -192,7 +192,8 @@ test('drag from an atom: new carbon in the 30°-snapped direction; release on an
   const editor = createEditorCore();
   clickAt(editor, { x: 100, y: 100 }); // atoms 1, 2
   const a1 = editor.peekMolecule().atoms.get(1);
-  const after = assertOneStep(editor, () => drag(editor, a1, { x: a1.x + 5, y: a1.y + 100 }));
+  // 45 units of drag: one bond (a longer Enlace simple drag draws a chain, editor-extras tests).
+  const after = assertOneStep(editor, () => drag(editor, a1, { x: a1.x + 5, y: a1.y + 45 }));
   const a3 = after.atoms.find((a) => a.id === 3);
   const direction = Math.round(toDegrees(normalizeAngle(angleBetween(a1, a3))));
   assert.equal(direction, 90);
@@ -343,8 +344,11 @@ test('dragging past an already bonded atom never puts a new carbon on top of it'
   clickAt(editor, { x: 100, y: 100 }); // A(1)–B(2), B up-right of A
   const a = editor.peekMolecule().atoms.get(1);
   const b = editor.peekMolecule().atoms.get(2);
-  // Release beyond B along A→B (not on B): the snapped end is exactly B.
-  const beyond = { x: a.x + (b.x - a.x) * 1.8, y: a.y + (b.y - a.y) * 1.8 };
+  // Release just beyond B, slightly off the A→B axis (not on B, and short
+  // enough to be a one-bond drag): the snapped end is exactly B.
+  const ux = (b.x - a.x) / BOND_LENGTH;
+  const uy = (b.y - a.y) / BOND_LENGTH;
+  const beyond = { x: a.x + ux * 51 - uy * 8, y: a.y + uy * 51 + ux * 8 };
   assert.ok(distance(beyond, b) > ATOM_HIT_RADIUS);
   editor.pointerDown(a);
   editor.pointerMove(beyond);
@@ -360,8 +364,9 @@ test('a snapped drag end on an unbonded atom joins it', () => {
   const editor = createEditorCore();
   load(editor, [[1, 0, 0], [2, 40, 0]], []);
   editor.pointerDown({ x: 0, y: 0 });
-  editor.pointerMove({ x: 70, y: 1 });
-  editor.pointerUp({ x: 70, y: 1 });
+  // Off atom 2 (beyond its hit radius) but short enough to be a one-bond drag.
+  editor.pointerMove({ x: 51, y: 8 });
+  editor.pointerUp({ x: 51, y: 8 });
   assert.deepEqual(shape(editor), { atoms: [1, 2], bonds: ['1-2:1'] });
 });
 

@@ -555,7 +555,7 @@ export const CHAIN_STEP = BOND_LENGTH * Math.cos(Math.PI / 6);
 export const CHAIN_OFFSET = BOND_LENGTH * Math.sin(Math.PI / 6);
 
 /**
- * Zigzag chain for the Cadena tool (design.md §6.1): the drag direction is
+ * Zigzag chain of an Enlace simple drag (design.md §6.1): the drag direction is
  * snapped to 30°, and the number of bonds is the drag length projected on
  * that axis divided by CHAIN_STEP (at least one). Every bond has length
  * BOND_LENGTH and makes 120° with the next one.

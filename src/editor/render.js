@@ -515,10 +515,11 @@ export function createRenderer(svg) {
   } // End of function drawSelection()
 
   /**
-   * Redraws the transient previews: a ghost bond, a ghost zigzag chain with
-   * its "N C" counter, or the marquee rectangle.
+   * Redraws the transient previews: a ghost bond (with its "N C" counter when
+   * it has a `count`), a ghost zigzag chain with its "N C" counter, or the
+   * marquee rectangle.
    *
-   * @param {object|null} preview - `{type: 'bond', from, to, order}` or `{type: 'chain', points, count}`.
+   * @param {object|null} preview - `{type: 'bond', from, to, order, count?}` or `{type: 'chain', points, count}`.
    * @param {{x: number, y: number, width: number, height: number}|null} marquee - The marquee rectangle.
    * @returns {void}
    */
@@ -554,6 +555,9 @@ export function createRenderer(svg) {
       el('circle', { class: 'preview-dot', cx: preview.from.x, cy: preview.from.y, r: CARBON_DOT_RADIUS }, layers.preview);
     }
     el('circle', { class: 'preview-end', cx: preview.to.x, cy: preview.to.y, r: 4 }, layers.preview);
+    if (preview.count) {
+      text('chain-counter', { x: preview.to.x, y: preview.to.y - 22 }, `${preview.count} C`, layers.preview);
+    }
   } // End of function drawPreview()
 
   /**

@@ -47,7 +47,7 @@ import {
 } from './render.js';
 
 /** Tool ids, in toolbar order (design.md §6.1). */
-export const TOOLS = Object.freeze(['carbon', 'single', 'double', 'triple', 'cycle', 'chain', 'erase', 'move']);
+export const TOOLS = Object.freeze(['carbon', 'single', 'double', 'triple', 'cycle', 'erase', 'move']);
 
 /** Bond order drawn by each bond-making tool. */
 const TOOL_ORDER = Object.freeze({ carbon: 1, single: 1, double: 2, triple: 3 });
@@ -69,14 +69,18 @@ export const EDIT_MESSAGES = Object.freeze({
   INVALID: MESSAGES.INVALID,
 });
 
-/** Keyboard shortcuts without modifiers (design.md §6.1): key → tool. */
+/**
+ * Keyboard shortcuts without modifiers (design.md §6.1): key → tool. `h`, the
+ * shortcut of the former Cadena tool, selects Enlace simple, whose drag now
+ * draws chains.
+ */
 const TOOL_KEYS = Object.freeze({
-  c: 'carbon', 1: 'single', 2: 'double', 3: 'triple', t: 'cycle', h: 'chain', e: 'erase', delete: 'erase', m: 'move',
+  c: 'carbon', 1: 'single', 2: 'double', 3: 'triple', t: 'cycle', h: 'single', e: 'erase', delete: 'erase', m: 'move',
 });
 
 /**
  * Maps a key press to an editor command (design.md §6.1): `c` Carbono,
- * `1/2/3` bond tools, `t` Cambiar enlace, `h` Cadena, `e`/`Supr` Borrar,
+ * `1/2/3` bond tools (`h` also Enlace simple), `t` Cambiar enlace, `e`/`Supr` Borrar,
  * `m` Mover, Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z (or Ctrl/Cmd+Y) redo. Pure.
  *
  * @param {{key: string, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean, altKey?: boolean}} event - The key event.
@@ -466,15 +470,21 @@ export function createEditorCore(options = {}) {
   } // End of function selectClicked()
 
   /**
-   * Resolves the zigzag chain of a Cadena drag (design.md §6.1): it starts at
-   * the pressed atom, or at the press point on empty space.
+   * Resolves the zigzag chain of an Enlace simple drag (design.md §6.1): it
+   * starts at the pressed atom, or at the press point on empty space. The drag
+   * is a chain only for the single-bond tool, when the zigzag has at least two
+   * bonds and the pointer is not over an existing atom; otherwise it is a
+   * one-bond drag (dragPlan()), which keeps "release on an atom bonds to it".
    *
    * @param {object} g - The gesture.
    * @returns {{sourceAtom: number|null, points: {x: number, y: number}[], count: number}|null}
-   *   The plan (`count`: carbons the chain adds), or null when the drag started on a bond.
+   *   The plan (`count`: carbons the chain adds), or null when the drag is not a chain.
    */
   function chainPlan(g) {
-    if (g.target && g.target.type !== 'atom') {
+    if (tool !== 'single' || (g.target && g.target.type !== 'atom')) {
+      return null;
+    }
+    if (hitTest(mol, g.current, { atomsOnly: true })) {
       return null;
     }
     const sourceAtom = g.target ? g.target.id : null;
@@ -483,20 +493,21 @@ export function createEditorCore(options = {}) {
     const side = chooseChainSide(mol, sourceAtom, origin, g.current);
     const maxBonds = sourceAtom ? MAX_CHAIN : MAX_CHAIN - 1;
     const { points, bonds } = chainPoints(origin, g.current, { side, maxBonds });
+    if (bonds < 2) {
+      return null;
+    }
     return { sourceAtom, points, count: sourceAtom ? bonds : bonds + 1 };
   } // End of function chainPlan()
 
   /**
-   * Commits a Cadena drag as one transaction.
+   * Commits a chain drag as one transaction: every carbon of the chain, or
+   * nothing (a full start carbon, or a chain carbon landing on an existing
+   * atom, refuses the whole chain).
    *
-   * @param {object} g - The gesture.
-   * @returns {object|null} The transaction outcome, or null when the drag does nothing.
+   * @param {{sourceAtom: number|null, points: {x: number, y: number}[]}} plan - The chainPlan() result.
+   * @returns {object} The transaction outcome.
    */
-  function finishChain(g) {
-    const plan = chainPlan(g);
-    if (!plan) {
-      return null;
-    }
+  function finishChain(plan) {
     return transact('draw chain', (d) => {
       if (plan.sourceAtom) {
         const refusal = checkRoom(d, [plan.sourceAtom], 1);
@@ -595,8 +606,9 @@ export function createEditorCore(options = {}) {
    * @returns {object|null} The transaction outcome, or null when the drag does nothing.
    */
   function finishDrag(g) {
-    if (tool === 'chain') {
-      return finishChain(g);
+    const chain = chainPlan(g);
+    if (chain) {
+      return finishChain(chain);
     }
     if (tool === 'move') {
       return finishMove(g);
@@ -841,21 +853,32 @@ export function createEditorCore(options = {}) {
   }
 
   /**
-   * The drag preview to draw, if a bond-making drag is in progress.
+   * The drag preview to draw, if a bond-making drag is in progress: a chain
+   * (Enlace simple, two or more bonds) or one bond. With Enlace simple a
+   * one-bond preview that creates a new carbon also carries the live counter
+   * (`count`: carbons added, 2 from empty space).
    *
-   * @returns {{from: object, to: object, order: number}|null} The preview.
+   * @returns {{type: 'chain', points: object[], count: number}|{type: 'bond', from: object, to: object, order: number, count?: number}|null}
+   *   The preview.
    */
   function getPreview() {
     if (!gesture || !gesture.moved) {
       return null;
     }
-    if (tool === 'chain') {
-      const chain = chainPlan(gesture);
-      return chain ? { type: 'chain', points: chain.points, count: chain.count } : null;
+    const chain = chainPlan(gesture);
+    if (chain) {
+      return { type: 'chain', points: chain.points, count: chain.count };
     }
     const plan = dragPlan(gesture);
-    return plan ? { type: 'bond', from: plan.from, to: plan.to, order: TOOL_ORDER[tool] } : null;
-  }
+    if (!plan) {
+      return null;
+    }
+    const preview = { type: 'bond', from: plan.from, to: plan.to, order: TOOL_ORDER[tool] };
+    if (tool === 'single' && !plan.targetAtom && !plan.snapAtom) {
+      preview.count = plan.sourceAtom ? 1 : 2;
+    }
+    return preview;
+  } // End of function getPreview()
 
   /**
    * Everything the renderer needs: the molecule as displayed (with the atoms

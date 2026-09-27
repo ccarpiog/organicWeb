@@ -104,7 +104,7 @@ test('every control has an accessible name and is reachable with Tab, with a vis
       outlines.push(info.outline);
     }
   } // End of the Tab loop
-  for (const name of ['examples-button', 'help-button', 'Carbono', 'Enlace simple', 'Cadena', 'Mover', 'Deshacer',
+  for (const name of ['examples-button', 'help-button', 'Carbono', 'Enlace simple', 'Cambiar enlace', 'Mover', 'Deshacer',
     'Ordenar dibujo', 'name-button', 'center-button', 'Ocultar el paso a paso', 'Siguiente']) {
     expect(reached, name).toContain(name);
   }

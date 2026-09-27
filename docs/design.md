@@ -484,9 +484,9 @@ to a bottom bar.
 | Tool | Behaviour |
 |---|---|
 | **Carbono** | Click empty space → a lone carbon (this is how you draw methane). Click an atom → grow a new carbon from it at the best free angle (§6.2). |
-| **Enlace simple / doble / triple** (default simple) | Click empty space → new two-carbon fragment with that bond order. Click an atom → grow a new carbon bonded with that order. Drag from an atom → new carbon in the drag direction, snapped to 30°; releasing on an existing atom bonds the two (a ring is allowed; naming refuses it). Click an existing bond → **set** it to the tool's order. |
+| **Enlace simple / doble / triple** (default simple) | Click empty space → new two-carbon fragment with that bond order. Click an atom → grow a new carbon bonded with that order. Drag from an atom or empty space → **one** new bond in the drag direction, snapped to 30°; releasing on an existing atom bonds the two (a ring is allowed; naming refuses it; the pressed atom itself → self-bond refusal). Click an existing bond → **set** it to the tool's order. |
+| **Enlace simple: chain drag** (MolView-like) | With Enlace simple only, a drag long enough for a zigzag of two or more bonds (drag projected on the 30°-snapped axis ≥ 1.5 × `40·cos 30°`) grows a zigzag chain bond by bond along the drag (120° angles, fixed bond length, one bond per `40·cos 30°` of drag, side chosen away from the start atom's neighbours), with a live counter "5 C" = carbons the drag adds (from empty space, the whole chain; the one-bond preview shows "1 C"/"2 C" too). Release commits the whole chain as one transaction; a full start carbon refuses it ("Este carbono ya tiene 4 enlaces"), and a chain carbon landing on an existing atom refuses it (overlap message) — never a carbon on top of another. **Release on an atom:** whenever the pointer is over an existing atom, the drag is the one-bond drag above, whatever its length (the preview switches to that single bond), so "release on an atom bonds to it" keeps working; the chain never joins atoms. Doble/triple keep the one-bond drag: only the first bond of a chain could carry the order, which would be surprising. |
 | **Cambiar enlace** | Click a bond → cycle 1→2→3→1 (skipping orders that break valence). |
-| **Cadena** | Drag from empty space or an atom: a zigzag chain grows along the drag (direction snapped to 30°, one bond per `40·cos 30°` of drag), live counter "5 C" = carbons the chain adds (from empty space, the whole chain). Release commits; a click does nothing. |
 | **Borrar** | Click atom → delete it and its bonds. Click bond → delete the bond only; both carbons stay (the model does not record how an atom was created, so an endpoint cannot be told apart from a carbon placed on its own). |
 | **Mover** | Drag an atom (moves it) or a bond (moves its two atoms). Drag on empty space → marquee selection; then drag the selection (press on a selected atom, a bond between selected atoms, or inside the selection's box). Click selects an atom; click on empty space or Esc clears the selection. Dropping an atom on another is refused. |
 | Pan / zoom | Space+drag, middle-drag or two-finger drag pans; wheel / pinch zooms; "Centrar" button fits the molecule. |
@@ -499,7 +499,11 @@ rejected; any valence violation is refused with a brief shake and a toast
 geometry is recomputed (triple bonds and cumulated double bonds straightened
 to 180°) as part of the same transaction.
 
-Keyboard: `c` carbono, `1/2/3` bond tools, `t` cambiar enlace, `h` cadena,
+The former **Cadena** tool was removed as redundant (one tool fewer for
+students): the Enlace simple drag does the same, and its `h` shortcut now
+selects Enlace simple, so the key still leads to chain drawing.
+
+Keyboard: `c` carbono, `1/2/3` bond tools (`h` also Enlace simple), `t` cambiar enlace,
 `e`/`Supr` borrar, `m` mover, `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z` (also
 `Ctrl/Cmd+Y`). Ignored in text fields and while a dialog is open.
 
@@ -523,7 +527,7 @@ Keyboard: `c` carbono, `1/2/3` bond tools, `t` cambiar enlace, `h` cadena,
   student can count carbons even where two bonds are nearly collinear; chain
   ends are dotted too, and a lone carbon gets its dot plus a `CH₄` label just
   below it (clicking that label acts on the carbon, in both modes). The dot is drawn above the hover, selection and stepper highlight
-  discs, which stay visible around it; drag previews (bond, Cadena) dot their
+  discs, which stay visible around it; drag previews (bond, chain) dot their
   future carbons in the accent colour, and the redraw animation re-renders
   the dots every frame. **Con carbonos** draws no dots and labels each carbon
   with C + implicit H only (`CH₃`, `CH₂`, `CH`, `C`) — never `=` in labels.

@@ -21,8 +21,8 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-11 | Redraw and examples | `autoclaude/processed/110-redraw-examples.md` | done — `docs/progress-archive/i-11.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-11.md` |
 | I-12 | Polish and release build | `autoclaude/processed/120-polish-release.md` | done — `docs/progress-archive/i-12.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-12.md` |
 | I-13 | Visible carbon dots in skeletal mode | `autoclaude/processed/130-visible-carbons.md` | done — `docs/progress-archive/i-13.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-13.md` |
-| I-14 | Single-bond drag grows a chain | `autoclaude/processed/140-drag-chain-single-bond.md` | queued (next) | — | — |
-| I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | queued (after I-14) | — | — |
+| I-14 | Single-bond drag grows a chain | `autoclaude/processed/140-drag-chain-single-bond.md` | done — `docs/progress-archive/i-14.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-14.md` |
+| I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | queued (next) | — | — |
 
 The twelve original plan items are done. Three user-feedback items (I-13…I-15)
 were queued from the inbox and run in filename order.
@@ -45,9 +45,10 @@ were queued from the inbox and run in filename order.
 
 ## Next action
 
-Run I-14 (single-bond drag grows a chain), spec
-`autoclaude/processed/140-drag-chain-single-bond.md`. Note I-13 added carbon
-dots to drag previews and a lone-carbon label hit box in `hitTest()`.
+Run I-15 (90° condensed-formula view toggle), spec
+`autoclaude/processed/150-right-angles.md`. It must define how the I-14
+single-bond chain drag behaves while the 90° view is on. The Cadena tool no
+longer exists (I-14); chain drawing is the Enlace simple drag.
 
 ## Key paths
 
@@ -75,9 +76,9 @@ dots to drag previews and a lone-carbon label hit box in `hitTest()`.
 - Layout: pure `canonicalLayout()` in `src/layout/canonical.js`; examples list
   `src/ui/examples.js`; editor `setCoordinates()` / `animateCoordinates()`.
 
-## Verification (last phase, I-13)
+## Verification (last phase, I-14)
 
-- `npm test` 0 (375 pass) · `npm run check` 0 · `npm run e2e` 0 (81 pass,
+- `npm test` 0 (380 pass) · `npm run check` 0 · `npm run e2e` 0 (83 pass,
   source + dist; global setup rebuilds dist). Oracle not rerun (naming
   engine untouched).
 
@@ -124,10 +125,15 @@ dots to drag previews and a lone-carbon label hit box in `hitTest()`.
   label box to the carbon (review should-fix, fixed). A bond drag snapping onto
   that box joins methane (`docs/progress-archive/i-13.md`).
 
+- I-14: Cadena tool removed (`h` selects Enlace simple); release over an
+  atom is always a one-bond drag to it; double/triple drags make one bond.
+  Preview jumps from straight bond to zigzag at the chain threshold
+  (`docs/progress-archive/i-14.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-12 `0e58a06`, pushed. Triage `7c81094`. I-13 committed and pushed right
-  after this checkpoint (see `git log`).
+- Triage `7c81094`, I-13 `1cf9915`, both pushed. I-14 committed and pushed
+  right after this checkpoint (see `git log`).
