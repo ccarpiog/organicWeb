@@ -25,7 +25,8 @@
  * starting state.
  *
  * Test API: the instance exposes getMolecule(), getMoleculeJSON(), setTool(),
- * getTool(), undo(), redo(), clear(), loadMolecule(), onEdit(), getSelection(),
+ * getTool(), undo(), redo(), clear(), loadMolecule(), setCoordinates(),
+ * animateCoordinates(), isAnimating(), onEdit(), getSelection(),
  * getView(), setDisplayMode(), atomClientPoint(), bondClientPoint(),
  * modelToClient() and clientToModel(). The app publishes it as `window.__editor` (src/ui/app.js)
  * for end-to-end tests.
@@ -801,6 +802,28 @@ export function createEditorCore(options = {}) {
   } // End of function loadMolecule()
 
   /**
+   * Moves atoms to new positions as one undoable coordinate edit (redraw,
+   * design.md §7). Every atom must exist; atoms not listed keep their place.
+   *
+   * @param {Map<number, {x: number, y: number}>} positions - Atom id → new position.
+   * @returns {object} The transaction outcome (`changed: false` when nothing moved).
+   */
+  function setCoordinates(positions) {
+    gesture = null;
+    return transact('redraw', (d) => {
+      for (const [id, p] of positions) {
+        const atom = d.atoms.get(id);
+        if (!atom || !Number.isFinite(p.x) || !Number.isFinite(p.y)) {
+          return { message: EDIT_MESSAGES.INVALID };
+        }
+        atom.x = p.x;
+        atom.y = p.y;
+      }
+      return undefined;
+    });
+  } // End of function setCoordinates()
+
+  /**
    * Selects a tool.
    *
    * @param {string} name - One of TOOLS.
@@ -991,6 +1014,7 @@ export function createEditorCore(options = {}) {
     clear,
     loadMolecule,
     replaceMolecule,
+    setCoordinates,
     setTool,
     getTool,
     getPreview,
@@ -1039,7 +1063,7 @@ function isTextField(target) {
  * @param {SVGSVGElement} svg - The canvas element.
  * @param {{notify?: function(string): void}} [options] - `notify(message)` shows a Spanish toast.
  * @returns {object} The editor API: the core API plus highlight(), clearHighlight(), showLocants(),
- *   setDisplayMode(), getDisplayMode(), getView(), setView(), centerView(), zoomBy(), atomClientPoint(),
+ *   animateCoordinates(), isAnimating(), setDisplayMode(), getDisplayMode(), getView(), setView(), centerView(), zoomBy(), atomClientPoint(),
  *   bondClientPoint(), modelToClient(), clientToModel(), render() and destroy().
  */
 export function createEditor(svg, options = {}) {
@@ -1051,15 +1075,17 @@ export function createEditor(svg, options = {}) {
   let pinch = null;
   let spaceHeld = false;
   const touches = new Map();
+  let animation = null; // Redraw animation in progress: {from, to, start, frame}.
 
   /**
-   * Redraws the molecule with the current hover, preview and selection.
+   * Redraws the molecule with the current hover, preview and selection
+   * (during a redraw animation, at the interpolated positions).
    *
    * @returns {void}
    */
   function refresh() {
     const state = core.getViewState();
-    renderer.render(state.mol, state);
+    renderer.render(animation ? animation.shown : state.mol, state);
   }
 
   /**
@@ -1160,6 +1186,14 @@ export function createEditor(svg, options = {}) {
       return;
     }
     event.preventDefault();
+    if (animation) {
+      // The model already holds the final coordinates while the drawing shows
+      // interpolated ones: a press would hit-test atoms the user cannot see
+      // there. It only ends the animation (atoms jump to their final places).
+      stopAnimation();
+      refresh();
+      return;
+    }
     // Keyboard focus leaves the toolbar so that Space means "pan", not "press this button".
     const focused = doc.activeElement;
     if (focused && focused !== doc.body && typeof focused.blur === 'function') {
@@ -1351,6 +1385,98 @@ export function createEditor(svg, options = {}) {
     svg.classList.remove('shake');
   }
 
+  /**
+   * Stops a redraw animation, leaving the atoms at their final positions.
+   *
+   * @returns {void}
+   */
+  function stopAnimation() {
+    if (animation) {
+      if (win && win.cancelAnimationFrame) {
+        win.cancelAnimationFrame(animation.frame);
+      }
+      animation = null;
+    }
+  }
+
+  /**
+   * Tells whether the user asked the system to reduce motion.
+   *
+   * @returns {boolean} True under `prefers-reduced-motion: reduce`.
+   */
+  function prefersReducedMotion() {
+    return Boolean(win && win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  /**
+   * Draws one frame of the redraw animation (ease-in-out), then schedules the next.
+   *
+   * @param {number} now - Frame timestamp (ms).
+   * @returns {void}
+   */
+  function animationFrame(now) {
+    if (!animation) {
+      return;
+    }
+    if (animation.start === null) {
+      animation.start = now;
+    }
+    const t = Math.min(1, (now - animation.start) / animation.duration);
+    const k = t < 0.5 ? 2 * t * t : 1 - ((-2 * t + 2) ** 2) / 2;
+    for (const [id, p] of animation.to) {
+      const q = animation.from.get(id);
+      const atom = animation.shown.atoms.get(id);
+      atom.x = q.x + (p.x - q.x) * k;
+      atom.y = q.y + (p.y - q.y) * k;
+    }
+    if (t >= 1) {
+      animation = null;
+    } else {
+      animation.frame = win.requestAnimationFrame(animationFrame);
+    }
+    refresh();
+  } // End of function animationFrame()
+
+  /**
+   * Moves atoms to new positions as one undoable coordinate edit
+   * (setCoordinates()), animated over `duration` ms unless the system asks
+   * for reduced motion. The model changes at once; only the drawing is
+   * interpolated, and any other change ends the animation. With `fit`, the
+   * view is re-centred when the new drawing does not fit the visible canvas.
+   *
+   * @param {Map<number, {x: number, y: number}>} positions - Atom id → new position.
+   * @param {{duration?: number, fit?: boolean}} [opts] - Animation length (default 400 ms) and re-centring.
+   * @returns {object} The transaction outcome.
+   */
+  function animateCoordinates(positions, opts = {}) {
+    stopAnimation();
+    const before = core.getMolecule();
+    const outcome = core.setCoordinates(positions);
+    if (!outcome.ok || !outcome.changed) {
+      return outcome;
+    }
+    if (opts.fit) {
+      const box = moleculeBounds(core.peekMolecule());
+      const r = renderer.visibleRect();
+      const view = renderer.getView();
+      const toCanvas = (x, y) => ({ x: x * view.scale + view.x, y: y * view.scale + view.y });
+      const p = toCanvas(box.minX, box.minY);
+      const q = toCanvas(box.maxX, box.maxY);
+      if (p.x < r.x || p.y < r.y || q.x > r.x + r.width || q.y > r.y + r.height) {
+        centerView();
+      }
+    }
+    const duration = opts.duration ?? 400;
+    if (duration > 0 && !prefersReducedMotion() && win && win.requestAnimationFrame) {
+      const from = new Map([...before.atoms.values()].map((a) => [a.id, { x: a.x, y: a.y }]));
+      const to = new Map([...core.peekMolecule().atoms.values()].map((a) => [a.id, { x: a.x, y: a.y }]));
+      animation = { from, to, shown: before, start: null, duration, frame: 0 };
+      animation.frame = win.requestAnimationFrame(animationFrame);
+      refresh();
+    }
+    return outcome;
+  } // End of function animateCoordinates()
+
   const win = doc.defaultView;
   svg.addEventListener('pointerdown', handleDown);
   svg.addEventListener('pointermove', handleMove);
@@ -1365,6 +1491,7 @@ export function createEditor(svg, options = {}) {
   if (win) {
     win.addEventListener('blur', handleKeyUp);
   }
+  core.onChange(stopAnimation);
   core.onChange(refresh);
   core.onReject(onReject);
   refresh();
@@ -1457,6 +1584,8 @@ export function createEditor(svg, options = {}) {
     highlight: renderer.highlight,
     clearHighlight: renderer.clearHighlight,
     showLocants: renderer.showLocants,
+    animateCoordinates,
+    isAnimating: () => animation !== null,
     setDisplayMode,
     getDisplayMode: renderer.getMode,
     getView: renderer.getView,

@@ -1,6 +1,6 @@
 /**
  * @file Drawing toolbar (design.md §6.1): tool buttons with icons and Spanish
- * tooltips, plus Deshacer / Rehacer / Limpiar. Kept in sync with the editor
+ * tooltips, plus Deshacer / Rehacer / Limpiar / Ordenar dibujo. Kept in sync with the editor
  * through its change notifications.
  */
 
@@ -21,6 +21,7 @@ const ACTION_BUTTONS = [
   { action: 'undo', label: 'Deshacer', keys: ['Ctrl+Z'], icon: '<path d="M9 7H4V2"/><path d="M4 7a8 8 0 1 1 2 9"/>' },
   { action: 'redo', label: 'Rehacer', keys: ['Ctrl+Shift+Z'], icon: '<path d="M15 7h5V2"/><path d="M20 7a8 8 0 1 0-2 9"/>' },
   { action: 'clear', label: 'Limpiar', icon: '<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/>' },
+  { action: 'arrange', label: 'Ordenar dibujo', icon: '<polyline points="2,14 7,9 12,14 17,9 22,14"/><path d="M4 20h16"/><path d="M4 4h16"/>' },
 ];
 
 /**
@@ -52,7 +53,8 @@ function makeButton(doc, spec) {
  *
  * @param {HTMLElement} container - The `#toolbar` element.
  * @param {object} editor - The editor (createEditor()).
- * @param {{confirmClear: function(): Promise<boolean>}} options - Asks the user before Limpiar.
+ * @param {{confirmClear: function(): Promise<boolean>, arrange?: function(): void}} options - Asks the
+ *   user before Limpiar; runs "Ordenar dibujo" (design.md §7).
  * @returns {{sync: function(): void}} `sync()` refreshes pressed/disabled states.
  */
 export function buildToolbar(container, editor, options) {
@@ -78,6 +80,11 @@ export function buildToolbar(container, editor, options) {
   }
   actionButtons.get('undo').addEventListener('click', () => editor.undo());
   actionButtons.get('redo').addEventListener('click', () => editor.redo());
+  actionButtons.get('arrange').addEventListener('click', () => {
+    if (options.arrange) {
+      options.arrange();
+    }
+  });
   actionButtons.get('clear').addEventListener('click', async () => {
     if (await options.confirmClear()) {
       editor.clear();
@@ -96,6 +103,7 @@ export function buildToolbar(container, editor, options) {
     actionButtons.get('undo').disabled = !editor.canUndo();
     actionButtons.get('redo').disabled = !editor.canRedo();
     actionButtons.get('clear').disabled = editor.peekMolecule().atoms.size === 0;
+    actionButtons.get('arrange').disabled = editor.peekMolecule().atoms.size === 0;
   }
 
   editor.onChange(sync);

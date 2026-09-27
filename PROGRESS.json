@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T13:30:17Z",
+ "updated": "2026-09-27T13:56:13Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
@@ -97,8 +97,11 @@
   {
    "id": "I-11",
    "title": "Redraw and examples",
-   "status": "queued",
-   "summary": "Adds the \"Ordenar dibujo\" canonical redraw with undo and an examples menu of 12–15 molecules."
+   "status": "done",
+   "summary": "Adds the \"Ordenar dibujo\" canonical redraw with animation and undo, and an examples menu of 14 molecules.",
+   "risk": "routine",
+   "review": "docs/reviews/I-11.md",
+   "narrative": "docs/progress-archive/i-11.md"
   },
   {
    "id": "I-12",

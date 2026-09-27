@@ -544,12 +544,18 @@ unchanged):
 - Substituents drawn away from the parent on the zigzag's free side,
   recursively as zigzags; resolve collisions by flipping sides, then widening
   angles. Tested on densely branched examples (no two atoms closer than 0.5
-  bond lengths).
+  bond lengths, no bond crossings). If no such layout is found, the drawing
+  is left unchanged and a Spanish message says so. A press on the canvas
+  during the animation only ends it.
 - Linear centres straightened.
 - Applied as **one** undoable coordinate edit, animated ~400 ms
-  (`prefers-reduced-motion` respected). The naming result stays; the parent
-  is highlighted persistently while the ordered drawing is shown; locant
-  numbers appear next to parent atoms from the numbering step on.
+  (`prefers-reduced-motion` respected); pressing it on an already ordered
+  drawing adds no undo step. The naming result stays (when no name is shown,
+  the toolbar button names the molecule first); the parent is highlighted
+  persistently while the ordered drawing is shown (i.e. until an atom moves
+  or undo restores other coordinates); locant numbers appear next to parent
+  atoms from the numbering step on. A step's option views (Opción A/B,
+  chain candidates) are shown unchanged.
 - After naming, a hint offers it: "¿Quieres ver la cadena principal
   ordenada?".
 
@@ -616,7 +622,8 @@ on narrow screens).
 - A chemical edit clears the result (stale names must never show);
   coordinate edits do not.
 - **Ejemplos** menu: 12–15 molecules from SMILES covering each feature,
-  loaded with the canonical layout.
+  loaded with the canonical layout (one undoable edit). Menu labels describe
+  the feature ("Alcano ramificado"), not the name, so the student still asks.
 - **Ayuda** dialog: how to draw, short, with small inline SVG illustrations.
 - Light/dark theme following the system, colour tokens in `:root`.
 - Accessibility: keyboard reachable controls, visible focus, ARIA labels on

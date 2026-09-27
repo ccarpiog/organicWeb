@@ -1,14 +1,15 @@
 /**
  * @file Application entry point: wires the editor, the toolbar, the canvas
- * bar (formula, display mode, Centrar), the autosave, the name button and the
+ * bar (formula, display mode, Centrar), the autosave, the name button, the
  * results panel with the naming engine and the step-by-step explanation
- * (design.md §9, src/ui/results.js).
+ * (design.md §9, src/ui/results.js), "Ordenar dibujo" (design.md §7) and the
+ * Ejemplos menu (src/ui/examples.js).
  *
  * For end-to-end tests the editor instance is published as `window.__editor`
  * (see the test API in src/editor/editor.js).
  */
 
-import { listExamples } from './examples.js';
+import { listExamples, buildExamplesMenu } from './examples.js';
 import { createEditor } from '../editor/editor.js';
 import { buildToolbar } from './toolbar.js';
 import { showToast, confirmDialog } from './feedback.js';
@@ -33,9 +34,11 @@ export function initApp(doc) {
     const storage = getStorage(doc.defaultView);
     const restored = restoreDrawing(editor, storage) === 'restored';
     startAutosave(editor, storage);
+    let results = null;
     const toolbar = doc.getElementById('toolbar');
     if (toolbar) {
       buildToolbar(toolbar, editor, {
+        arrange: () => (results ? results.arrange() : null),
         confirmClear: () => confirmDialog(doc, {
           title: '¿Borrar todo el dibujo?',
           message: 'Se borrará la molécula entera. Podrás recuperarla con «Deshacer».',
@@ -51,9 +54,13 @@ export function initApp(doc) {
         onModeChange: (mode) => writeItem(storage, MODE_KEY, mode),
       });
     }
-    const results = doc.getElementById('results');
-    if (results && nameButton) {
-      buildResults(results, editor, nameButton);
+    const panel = doc.getElementById('results');
+    if (panel && nameButton) {
+      results = buildResults(panel, editor, nameButton, { notify: (message) => showToast(doc, message) });
+    }
+    const headerActions = doc.getElementById('header-actions');
+    if (headerActions) {
+      buildExamplesMenu(headerActions, editor);
     }
     if (restored) {
       // The saved coordinates may lie far from the fresh identity view (the

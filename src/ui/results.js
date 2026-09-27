@@ -2,7 +2,12 @@
  * @file Results panel (design.md §9): the "¿Cómo se llama?" button, the
  * coloured name, "Otras formas válidas", friendly Spanish errors and the
  * "Ver paso a paso" stepper (Anterior / Siguiente, progress dots) whose
- * steps drive the canvas highlights and locant labels.
+ * steps drive the canvas highlights and locant labels, and "Ordenar dibujo"
+ * (design.md §7): the hint offering it after naming and arrange(), which
+ * applies the canonical layout as one animated, undoable coordinate edit.
+ * While the drawing shows exactly that layout, the parent chain stays
+ * highlighted in every step and its locants are shown from the numbering
+ * step on (option views of a step are shown as they are).
  *
  * A chemical edit clears the result (a stale name must never show); a
  * coordinate-only edit keeps it, and the highlights follow the moved atoms.
@@ -12,6 +17,7 @@
 
 import { nameMolecule } from '../naming/index.js';
 import { explain, parseMarkup, GLOSSARY } from '../explain/explain.js';
+import { canonicalLayout, layoutProblems } from '../layout/canonical.js';
 
 /** Extra hints shown under an error message, by error code. */
 export const ERROR_HINTS = Object.freeze({
@@ -22,6 +28,18 @@ export const ERROR_HINTS = Object.freeze({
 
 /** Hint shown when there is no result. */
 const IDLE_HINT = 'Dibuja una molécula en el lienzo y pulsa «¿Cómo se llama?».';
+
+/** Question offering the redraw after naming (design.md §7). */
+export const REDRAW_HINT = '¿Quieres ver la cadena principal ordenada?';
+
+/** Label of the redraw buttons. */
+export const REDRAW_LABEL = 'Ordenar dibujo';
+
+/** Toast shown when the drawing already has the ordered layout. */
+export const ALREADY_ORDERED = 'El dibujo ya está ordenado.';
+
+/** Toast shown when no clear ordered drawing was found (the drawing is left as it is). */
+export const CANNOT_ORDER = 'No he podido ordenar esta molécula sin que se crucen enlaces. El dibujo se queda como estaba.';
 
 /**
  * Creates an element with a class and optional text.
@@ -135,25 +153,99 @@ function renderCompare(doc, compare) {
  * @param {HTMLElement} panel - The `#results` element.
  * @param {object} editor - The editor (createEditor()).
  * @param {HTMLButtonElement} button - The "¿Cómo se llama?" button.
- * @returns {{nameCurrent: function(): object, clear: function(): void, getSteps: function(): object[]}} Handles (also used by tests).
+ * @param {{notify?: function(string): void}} [options] - `notify(message)` shows a Spanish toast.
+ * @returns {{nameCurrent: function(): object, clear: function(): void, getSteps: function(): object[],
+ *   arrange: function(): object, isOrdered: function(): boolean}} Handles (also used by tests).
  */
-export function buildResults(panel, editor, button) {
+export function buildResults(panel, editor, button, options = {}) {
   const doc = panel.ownerDocument;
   const body = panel.querySelector('.results-body') || panel.appendChild(make(doc, 'div', 'results-body'));
   let steps = [];
   let stepIndex = 0;
   let optionIndex = -1;
   let stepper = null;
+  let current = null; // The successful result on show.
+  let arranged = null; // Positions of the last canonical layout applied (Map id → {x, y}).
+  let ordered = false; // True while the drawing shows exactly that layout.
+  let lastView = null; // The step (or option) the canvas marks come from.
+  let hint = null; // The redraw hint box.
+
+  /**
+   * Adds the persistent marks of the ordered drawing to a step view: the
+   * parent chain highlight, and its locants from the numbering step on when
+   * the step shows none.
+   *
+   * @param {object|null} view - The step view.
+   * @param {boolean} isOption - True for an option view (shown unchanged).
+   * @returns {object|null} The view to draw.
+   */
+  function withOrderedMarks(view, isOption) {
+    if (!ordered || !current || !view || isOption) {
+      return view;
+    }
+    const parent = { atoms: current.parent.atoms, bonds: current.parent.bonds, style: 'parent' };
+    const highlight = view.highlight || [];
+    const next = { ...view };
+    if (!highlight.some((spec) => spec.style === 'parent')) {
+      next.highlight = [parent, ...highlight];
+    }
+    const numbering = steps.findIndex((step) => step.id === 'numbering');
+    const at = stepper && !stepper.root.hidden ? stepIndex : steps.length - 1;
+    if (!view.locants && at >= numbering) {
+      next.locants = current.parent.atoms.map((id, i) => [id, i + 1]);
+    }
+    return next;
+  } // End of function withOrderedMarks()
 
   /**
    * Applies a highlight and locant labels on the canvas.
    *
    * @param {{highlight?: object[], locants?: Array<[number, number]>|null}} view - What to show.
+   * @param {boolean} [isOption] - True when the view is one of a step's options.
    * @returns {void}
    */
-  function showOnCanvas(view) {
-    editor.highlight(view && view.highlight ? view.highlight : null);
-    editor.showLocants(view && view.locants ? view.locants : null);
+  function showOnCanvas(view, isOption = false) {
+    lastView = { view, isOption };
+    const shown = withOrderedMarks(view, isOption);
+    editor.highlight(shown && shown.highlight ? shown.highlight : null);
+    editor.showLocants(shown && shown.locants ? shown.locants : null);
+  }
+
+  /**
+   * Tells whether the drawing shows exactly the last canonical layout applied.
+   *
+   * @returns {boolean} True when every atom sits at its arranged position.
+   */
+  function matchesArranged() {
+    if (!arranged) {
+      return false;
+    }
+    const mol = editor.peekMolecule();
+    if (mol.atoms.size !== arranged.size) {
+      return false;
+    }
+    for (const [id, p] of arranged) {
+      const atom = mol.atoms.get(id);
+      if (!atom || Math.abs(atom.x - p.x) > 1e-6 || Math.abs(atom.y - p.y) > 1e-6) {
+        return false;
+      }
+    }
+    return true;
+  } // End of function matchesArranged()
+
+  /**
+   * Updates the ordered state, the redraw hint and the canvas marks.
+   *
+   * @returns {void}
+   */
+  function syncOrdered() {
+    ordered = current !== null && matchesArranged();
+    if (hint) {
+      hint.hidden = ordered;
+    }
+    if (current && lastView) {
+      showOnCanvas(lastView.view, lastView.isOption);
+    }
   }
 
   /**
@@ -164,6 +256,10 @@ export function buildResults(panel, editor, button) {
   function clear() {
     steps = [];
     stepper = null;
+    current = null;
+    arranged = null;
+    ordered = false;
+    hint = null;
     showOnCanvas(null);
     body.replaceChildren(make(doc, 'p', 'results-hint', IDLE_HINT));
     delete panel.dataset.state;
@@ -178,6 +274,10 @@ export function buildResults(panel, editor, button) {
   function showError(error) {
     steps = [];
     stepper = null;
+    current = null;
+    arranged = null;
+    ordered = false;
+    hint = null;
     showOnCanvas(null);
     const box = make(doc, 'div', 'results-error');
     box.setAttribute('role', 'alert');
@@ -255,7 +355,7 @@ export function buildResults(panel, editor, button) {
         dot.removeAttribute('aria-current');
       }
     });
-    showOnCanvas(optionIndex >= 0 ? step.options[optionIndex] : step);
+    showOnCanvas(optionIndex >= 0 ? step.options[optionIndex] : step, optionIndex >= 0);
   } // End of function renderStep()
 
   /**
@@ -319,6 +419,9 @@ export function buildResults(panel, editor, button) {
     steps = explain(result);
     stepIndex = 0;
     optionIndex = -1;
+    current = result;
+    arranged = null;
+    ordered = false;
     const nodes = [];
     nodes.push(make(doc, 'p', 'result-label', 'Se llama:'));
     const name = make(doc, 'p', 'result-name');
@@ -342,6 +445,14 @@ export function buildResults(panel, editor, button) {
       section.append(heading, list);
       nodes.push(section);
     } // End of the alternatives block
+    hint = make(doc, 'div', 'redraw-hint');
+    hint.id = 'redraw-hint';
+    hint.appendChild(make(doc, 'p', 'redraw-hint-text', REDRAW_HINT));
+    const redraw = make(doc, 'button', 'redraw-hint-button', REDRAW_LABEL);
+    redraw.type = 'button';
+    redraw.addEventListener('click', () => arrange());
+    hint.appendChild(redraw);
+    nodes.push(hint);
     const toggle = make(doc, 'button', 'stepper-toggle', 'Ver paso a paso');
     toggle.type = 'button';
     toggle.setAttribute('aria-expanded', 'false');
@@ -379,13 +490,48 @@ export function buildResults(panel, editor, button) {
     return result;
   }
 
+  /**
+   * "Ordenar dibujo": names the molecule first when no name is shown, then
+   * applies its canonical layout (design.md §7) as one animated, undoable
+   * coordinate edit. The name stays on show. A layout with crossing bonds or
+   * atoms too close together (layoutProblems()) is refused with a message.
+   *
+   * @returns {object} The naming result on failure, else the edit outcome.
+   */
+  function arrange() {
+    if (!current) {
+      const result = nameCurrent();
+      if (!result.ok) {
+        return result;
+      }
+    }
+    const laid = canonicalLayout(editor.getMolecule(), current);
+    if (!layoutProblems(laid).ok) {
+      if (options.notify) {
+        options.notify(CANNOT_ORDER);
+      }
+      return { ok: false, message: CANNOT_ORDER };
+    }
+    const positions = new Map([...laid.atoms.values()].map((a) => [a.id, { x: a.x, y: a.y }]));
+    arranged = positions;
+    // Already ordered (up to rounding): no new undo step.
+    const outcome = matchesArranged() ? { ok: true, changed: false } : editor.animateCoordinates(positions, { fit: true });
+    if (outcome.ok && !outcome.changed && options.notify) {
+      options.notify(ALREADY_ORDERED);
+    }
+    syncOrdered();
+    return outcome;
+  } // End of function arrange()
+
   button.disabled = false;
   button.addEventListener('click', nameCurrent);
   editor.onEdit((event) => {
     if (event && event.kind === 'chemical' && panel.dataset.state) {
       clear();
+    } else if (event && event.kind === 'coordinates') {
+      syncOrdered();
     }
   });
   clear();
-  return { nameCurrent, clear, getSteps: () => steps };
+  return { nameCurrent, clear, getSteps: () => steps, arrange, isOrdered: () => ordered };
 } // End of function buildResults()

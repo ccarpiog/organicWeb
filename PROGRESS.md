@@ -18,7 +18,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-8 | Editor core | `autoclaude/processed/080-editor-core.md` | done — `docs/progress-archive/i-8.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-8.md` |
 | I-9 | Editor extras | `autoclaude/processed/090-editor-extras.md` | done — `docs/progress-archive/i-9.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-9.md` |
 | I-10 | Explanations and results panel | `autoclaude/processed/100-explain-results.md` | done — `docs/progress-archive/i-10.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-10.md` |
-| I-11 | Redraw and examples | `autoclaude/processed/110-redraw-examples.md` | queued | — | — |
+| I-11 | Redraw and examples | `autoclaude/processed/110-redraw-examples.md` | done — `docs/progress-archive/i-11.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-11.md` |
 | I-12 | Polish and release build | `autoclaude/processed/120-polish-release.md` | queued | — | — |
 
 All twelve plan items are now queued; the inbox holds no plan items.
@@ -37,8 +37,8 @@ All twelve plan items are now queued; the inbox holds no plan items.
 
 ## Next action
 
-Poll the inbox (phase boundary), then execute I-11 (redraw and examples) per
-`autoclaude/processed/110-redraw-examples.md`.
+Poll the inbox (phase boundary), then execute I-12 (polish and release build)
+per `autoclaude/processed/120-polish-release.md`.
 
 ## Key paths
 
@@ -58,12 +58,13 @@ Poll the inbox (phase boundary), then execute I-11 (redraw and examples) per
   `tests/fixtures/explain-snapshots.json` (`UPDATE_SNAPSHOTS=1 npm test`).
 - Model: `src/model/{molecule,graph,validate,smiles}.js` — `canonicalTreeKey`
   in graph.js; `validateStructure` / `validateForNaming` in validate.js.
+- Layout: pure `canonicalLayout()` in `src/layout/canonical.js`; examples list
+  `src/ui/examples.js`; editor `setCoordinates()` / `animateCoordinates()`.
 
-## Verification (last phase, I-10)
+## Verification (last phase, I-11)
 
-- `npm test` 0 (361 pass) · `npm run check` 0 · `npm run build` 0 ·
-  `npm run e2e` 0 (23 pass) · `npm run oracle -- --count 1000 --seed 4` 0
-  (1000 pass; naming trace extended additively).
+- `npm test` 0 (371 pass) · `npm run check` 0 · `npm run build` 0 ·
+  `npm run e2e` 0 (28 pass). Oracle not rerun (naming engine untouched).
 
 ## Open risks / deviations
 
@@ -95,10 +96,15 @@ Poll the inbox (phase boundary), then execute I-11 (redraw and examples) per
   always enabled; Spanish explanation texts not yet reviewed by a teacher.
   Review's three should-fix findings fixed (`docs/progress-archive/i-10.md`).
 
+- I-11: layouts that still fail clearance/crossing checks after restarts
+  leave the drawing unchanged with a message (~1/800 random molecules up to
+  40 C; none up to 20 C). Review's blocker and should-fix fixed with
+  regressions (`docs/progress-archive/i-11.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-9 `49c830d`, pushed. I-10 committed and pushed right after this
+- I-10 `6456448`, pushed. I-11 committed and pushed right after this
   checkpoint (see `git log`).
