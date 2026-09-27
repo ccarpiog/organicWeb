@@ -17,7 +17,8 @@
     "e2e:dist": "playwright test --project=dist",
     "build": "node scripts/build.mjs",
     "serve": "node scripts/serve.mjs",
-    "oracle": "node scripts/oracle/run.mjs"
+    "oracle": "node scripts/oracle/run.mjs",
+    "deploy": "node scripts/deploy.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0"

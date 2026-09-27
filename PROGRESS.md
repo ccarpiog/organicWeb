@@ -27,10 +27,10 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-17 | Editing in the 90° view | `autoclaude/processed/170-edit-in-carbons-view.md` | done — `docs/progress-archive/i-17.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-17.md` |
 | I-18 | Author credit footer | `autoclaude/processed/180-author-credit.md` | done — `docs/progress-archive/i-18.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-18.md` |
 | I-19 | Undo after "Ordenar dibujo" (bug) | `autoclaude/processed/190-undo-ordenar-dibujo.md` | done — `docs/progress-archive/i-19.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-19.md` |
-| I-20 | `npm run deploy` to Fastmail Files + docs | `autoclaude/processed/200-deploy-fastmail.md` | queued (next) | — | — |
+| I-20 | `npm run deploy` to Fastmail Files + docs | `autoclaude/processed/200-deploy-fastmail.md` | done — `docs/progress-archive/i-20.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-20.md` |
 
-The twelve original plan items and user-feedback items I-13…I-19 are done;
-I-20 (user feedback) is queued.
+The twelve original plan items and user-feedback items I-13…I-20 are done.
+No phase is queued.
 
 ## Inbox
 
@@ -57,8 +57,10 @@ I-20 (user feedback) is queued.
 
 ## Next action
 
-Poll the inbox, then execute I-20 (`autoclaude/processed/200-deploy-fastmail.md`; the loop never runs the real
-deploy).
+Plan complete; inbox empty (2026-09-27, after I-20). Poll the inbox; if a
+new item arrives, triage it as I-21. Otherwise nothing to do until the user
+decides on the deferred v2 item below. Deploying (`npm run deploy`, defined in
+`scripts/deploy.mjs`) stays a manual user step — the loop never runs it.
 
 ## Decisions needed (user)
 
@@ -97,13 +99,17 @@ deploy).
 - 90° view: pure projection in `src/layout/rightangle.js`; editor
   `shownMolecule()` / `isProjected()` / `refresh()` in `src/editor/editor.js`;
   toggle in `src/ui/canvasbar.js` (localStorage `organicWeb.rightAngles`).
+- Deploy: `scripts/deploy.mjs` (injectable `deploy()`), tests
+  `tests/unit/deploy.test.js`; docs README "Deployment", design §10.1.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-19)
+## Verification (last phase, I-20)
 
-- `npm test` 0 (411 pass) · `npm run check` 0 · `npm run e2e` 0 (127 pass,
-  source + dist, includes build). Oracle not rerun (naming engine untouched).
+- `npm test` 0 (424 pass) · `npm run check` 0 · `npm run e2e` 0 (127 pass,
+  source + dist; run before the review fixes, which touch no app code) ·
+  `node scripts/deploy.mjs --dry-run --force --skip-checks` 0. Real deploy
+  not run. Oracle not rerun (naming engine untouched).
 
 ## Open risks / deviations
 
@@ -174,10 +180,14 @@ deploy).
   load has the same unrestored-view issue, out of scope
   (`docs/progress-archive/i-19.md`).
 
+- I-20: deploy is https-only and never follows redirects (review blocker and
+  should-fix, fixed with regressions); `--dry-run` never reads the Keychain;
+  non-2xx errors omit the response body (`docs/progress-archive/i-20.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-18 `f15a138`, pushed; triage `05db564`. I-19 committed and pushed right
-  after this checkpoint (see `git log`).
+- I-19 `c7d61a2`, pushed. I-20 committed and pushed right after this
+  checkpoint (see `git log`).

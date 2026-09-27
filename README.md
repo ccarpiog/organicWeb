@@ -76,6 +76,7 @@ npm run e2e          # Playwright end-to-end tests, on the source AND on dist/in
 npm run e2e:source   # … only on the dev server
 npm run e2e:dist     # … only on the built file, opened via file://
 npm run oracle       # OPSIN cross-check (development only, needs Java)
+npm run deploy       # upload dist/index.html to Fastmail Files (manual step, see Deployment)
 ```
 
 The dev page uses native ES modules, so open it through the server, not
@@ -117,6 +118,50 @@ tests/e2e/        Playwright
 scripts/          build, static server, checks, oracle tooling
 docs/design.md    design and implementation plan
 ```
+
+## Deployment
+
+The app is published as a static site from Fastmail Files: the single-file
+build is uploaded over WebDAV to
+`https://myfiles.fastmail.com/OrganicWeb/index.html`. Deploying is always a
+manual step run by the maintainer.
+
+**Prerequisites (one time):**
+
+1. In Fastmail, create an app password with access to **Files** only.
+2. Store it in the macOS Keychain (the command prompts for the password, so
+   it never lands in the shell history):
+
+   ```sh
+   security add-generic-password -s fastmail-webdav -a carlos@carpio.cc -w
+   ```
+
+3. In Fastmail's web UI (Files), make the `OrganicWeb` folder a public
+   website. This is a one-time setting; uploads do not change it.
+
+**Deploy:**
+
+```sh
+npm run deploy                     # checks, build, upload
+npm run deploy -- --dry-run        # everything except the upload (no Keychain read)
+npm run deploy -- --skip-checks    # skip npm test and npm run check
+npm run deploy -- --force          # allow a dirty git working tree
+npm run deploy -- --help
+```
+
+`scripts/deploy.mjs` refuses to run on a dirty git tree (unless `--force`),
+runs `npm test` and `npm run check` (unless `--skip-checks`), builds
+`dist/index.html`, reads the password with
+`security find-generic-password -s fastmail-webdav -a carlos@carpio.cc -w`,
+PUTs the file with `Content-Type: text/html; charset=utf-8` and prints the
+HTTP status and size. Any non-2xx response exits with a non-zero status. The
+password stays in memory (a Basic `Authorization` header for Node's `fetch`);
+it is never logged, written to disk or passed on a command line.
+
+Environment overrides: `FASTMAIL_USER` (WebDAV user, default
+`carlos@carpio.cc`), `FASTMAIL_WEBDAV_URL` (destination file URL; must be `https://`) and
+`FASTMAIL_KEYCHAIN_SERVICE` (Keychain service, default `fastmail-webdav`;
+the Keychain account is the WebDAV user).
 
 ## Known limitations and future work
 

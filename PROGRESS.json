@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T16:48:46Z",
+  "updated": "2026-09-27T16:56:33Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with editor refinements from the inbox.",
   "phases": [
@@ -178,8 +178,11 @@
     {
       "id": "I-20",
       "title": "npm run deploy to Fastmail Files",
-      "status": "queued",
-      "summary": "Adds a documented npm run deploy that uploads the single-file build to Fastmail Files over WebDAV."
+      "status": "done",
+      "summary": "Adds a documented npm run deploy that uploads the single-file build to Fastmail Files over HTTPS WebDAV.",
+      "risk": "routine",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-20.md",
+      "narrative": "docs/progress-archive/i-20.md"
     }
   ]
 }

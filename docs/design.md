@@ -722,6 +722,38 @@ on narrow screens).
 - No `alert/confirm/prompt`.
 - Engine code never touches coordinates or the DOM.
 
+### 10.1 Deployment (Fastmail Files)
+
+The app is hosted as a static site from Fastmail Files. `npm run deploy`
+(`scripts/deploy.mjs`) uploads the single-file build `dist/index.html` over
+WebDAV with one HTTP PUT to `https://myfiles.fastmail.com/OrganicWeb/index.html`
+(`Content-Type: text/html; charset=utf-8`). Deploying is a **manual user
+step**; the autoclaude loop never runs it (only `--dry-run`).
+
+- Prerequisites (one time): a Fastmail app password restricted to **Files**,
+  stored in the macOS Keychain with
+  `security add-generic-password -s fastmail-webdav -a carlos@carpio.cc -w`;
+  and the `OrganicWeb` folder made a public website in Fastmail's web UI
+  (a one-time setting that uploads do not change).
+- Flow: refuse a dirty git tree (`git status --porcelain` non-empty) unless
+  `--force` → `npm test` and `npm run check` unless `--skip-checks` →
+  `writeBuild()` → read the password with
+  `security find-generic-password -s <service> -a <user> -w` → PUT → print
+  HTTP status and byte size. Any failure or non-2xx response exits non-zero.
+  Unknown flags print the usage and exit with status 2.
+- `--dry-run` does everything except the Keychain read and the PUT.
+  **Decision:** the dry run does not read the Keychain, so it needs no
+  credentials and provably never touches the network.
+- Secrets: the password is the child's stdout (never in any argv), stays in
+  memory as a Basic `Authorization` header for Node's global `fetch`, and is
+  never logged or written. No secret is stored in the repository. The upload
+  URL must be `https://` (checked before any side effect), and the PUT does
+  not follow redirects, so a 3xx fails the deploy.
+- Env overrides: `FASTMAIL_USER`, `FASTMAIL_WEBDAV_URL`,
+  `FASTMAIL_KEYCHAIN_SERVICE` (the Keychain account is the WebDAV user).
+- Tests (`tests/unit/deploy.test.js`) inject fakes for git, npm, the build,
+  the Keychain and `fetch`; they never contact Fastmail or read the Keychain.
+
 ---
 
 ## 11. Phase list (delivered as inbox items)
