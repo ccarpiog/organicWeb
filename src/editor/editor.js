@@ -1,13 +1,21 @@
 /**
  * @file SVG sketcher (design.md §6.1): tools, pointer gestures, transactions,
- * undo/redo and the highlight API.
+ * undo/redo, selection, pan/zoom, keyboard shortcuts and the highlight API.
  *
  * Two layers:
  * - createEditorCore(): all the editing logic, DOM-free (unit-tested). It
  *   receives pointer positions in drawing units and owns the molecule, the
- *   current tool, the in-progress gesture and the history.
+ *   current tool, the in-progress gesture, the selection and the history.
  * - createEditor(svg): binds the core to an SVG canvas with pointer events
- *   (mouse, touch and pen), Esc to cancel, rendering, and the shake feedback.
+ *   (mouse, touch and pen), pan (space+drag, middle drag, two fingers), zoom
+ *   (wheel, pinch), keyboard shortcuts, Esc to cancel, rendering, the display
+ *   mode and the shake feedback.
+ *
+ * Edit events: every change notification carries `{reason, kind}`; `kind`
+ * is 'chemical' (atoms, bonds or orders changed) or 'coordinates' (only
+ * positions changed: Mover, a later redraw) for committed edits, undo, redo
+ * and restore, and null otherwise. onEdit() subscribes to those edits only.
+ * Only chemical edits may invalidate a shown name (design.md §6.3).
  *
  * Transaction rules: every gesture commits at most ONE undo entry, applied to
  * a draft copy of the molecule that must pass `validateStructure()` before it
@@ -17,8 +25,9 @@
  * starting state.
  *
  * Test API: the instance exposes getMolecule(), getMoleculeJSON(), setTool(),
- * getTool(), undo(), redo(), clear(), loadMolecule(), atomClientPoint() and
- * bondClientPoint(). The app publishes it as `window.__editor` (src/ui/app.js)
+ * getTool(), undo(), redo(), clear(), loadMolecule(), onEdit(), getSelection(),
+ * getView(), setDisplayMode(), atomClientPoint(), bondClientPoint(),
+ * modelToClient() and clientToModel(). The app publishes it as `window.__editor` (src/ui/app.js)
  * for end-to-end tests.
  */
 
@@ -26,15 +35,18 @@ import {
   createMolecule, addAtom, removeAtom, addBond, removeBond, setBondOrder, bondBetween, bondOrderSum,
   cloneMolecule, moleculeToJSON, moleculeFromJSON, CARBON_VALENCE,
 } from '../model/molecule.js';
-import { validateStructure, MESSAGES } from '../model/validate.js';
+import { validateStructure, MESSAGES, MAX_CHAIN } from '../model/validate.js';
 import { createHistory } from './history.js';
 import {
   nextAtomPosition, snapEndpoint, hitTest, distance, straightenLinearCentres, overlappingAtoms,
+  chainPoints, chooseChainSide, ATOM_HIT_RADIUS,
 } from './geometry.js';
-import { createRenderer } from './render.js';
+import {
+  createRenderer, rectFromCorners, moleculeBounds, zoomView, panView, fitView, IDENTITY_VIEW,
+} from './render.js';
 
-/** Tool ids, in toolbar order. */
-export const TOOLS = Object.freeze(['carbon', 'single', 'double', 'triple', 'cycle', 'erase']);
+/** Tool ids, in toolbar order (design.md §6.1). */
+export const TOOLS = Object.freeze(['carbon', 'single', 'double', 'triple', 'cycle', 'chain', 'erase', 'move']);
 
 /** Bond order drawn by each bond-making tool. */
 const TOOL_ORDER = Object.freeze({ carbon: 1, single: 1, double: 2, triple: 3 });
@@ -55,6 +67,54 @@ export const EDIT_MESSAGES = Object.freeze({
   OVERLAP: 'No hay sitio: ese carbono quedaría encima de otro.',
   INVALID: MESSAGES.INVALID,
 });
+
+/** Keyboard shortcuts without modifiers (design.md §6.1): key → tool. */
+const TOOL_KEYS = Object.freeze({
+  c: 'carbon', 1: 'single', 2: 'double', 3: 'triple', t: 'cycle', h: 'chain', e: 'erase', delete: 'erase', m: 'move',
+});
+
+/**
+ * Maps a key press to an editor command (design.md §6.1): `c` Carbono,
+ * `1/2/3` bond tools, `t` Cambiar enlace, `h` Cadena, `e`/`Supr` Borrar,
+ * `m` Mover, Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z (or Ctrl/Cmd+Y) redo. Pure.
+ *
+ * @param {{key: string, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean, altKey?: boolean}} event - The key event.
+ * @returns {{tool: string}|{action: string}|null} The command, or null when the key is not a shortcut.
+ */
+export function shortcutFor(event) {
+  if (!event || typeof event.key !== 'string' || event.altKey) {
+    return null;
+  }
+  const key = event.key.toLowerCase();
+  if (event.ctrlKey || event.metaKey) {
+    if (key === 'z') {
+      return { action: event.shiftKey ? 'redo' : 'undo' };
+    }
+    return key === 'y' && !event.shiftKey ? { action: 'redo' } : null;
+  }
+  return Object.prototype.hasOwnProperty.call(TOOL_KEYS, key) ? { tool: TOOL_KEYS[key] } : null;
+} // End of function shortcutFor()
+
+/**
+ * Classifies the change between two snapshots (moleculeToJSON() output):
+ * 'chemical' when atoms, elements, bonds or orders differ, 'coordinates' when
+ * only positions differ, 'none' when nothing does. Id counters are ignored.
+ *
+ * @param {object} before - Snapshot before.
+ * @param {object} after - Snapshot after.
+ * @returns {'chemical'|'coordinates'|'none'} The kind of edit.
+ */
+export function editKind(before, after) {
+  const topology = (json) => JSON.stringify([
+    json.atoms.map((a) => [a.id, a.element]),
+    json.bonds.map((b) => [b.id, b.a, b.b, b.order]),
+  ]);
+  if (topology(before) !== topology(after)) {
+    return 'chemical';
+  }
+  const coords = (json) => JSON.stringify(json.atoms.map((a) => [a.x, a.y]));
+  return coords(before) === coords(after) ? 'none' : 'coordinates';
+} // End of function editKind()
 
 /**
  * Builds a refusal for atoms that would exceed carbon valence: "ya tiene 4
@@ -100,8 +160,10 @@ function removeFrom(list, item) {
 /**
  * Creates the DOM-free editor core.
  *
- * @param {{onChange?: Function, onReject?: Function}} [options] - Listeners: onChange({reason}) after
- *   every committed edit, undo, redo, load or tool change; onReject({message, atoms}) when an edit is refused.
+ * @param {{onChange?: Function, onReject?: Function, onEdit?: Function}} [options] - Listeners:
+ *   onChange({reason, kind}) after every committed edit, undo, redo, restore, tool, gesture or selection
+ *   change; onEdit({reason, kind}) only for changes of the molecule (kind 'chemical' or 'coordinates');
+ *   onReject({message, atoms}) when an edit is refused.
  * @returns {object} The core API (see the returned object).
  */
 export function createEditorCore(options = {}) {
@@ -109,21 +171,33 @@ export function createEditorCore(options = {}) {
   let tool = DEFAULT_TOOL;
   let gesture = null;
   let hover = null;
+  let selection = new Set();
   const history = createHistory();
   const changeListeners = options.onChange ? [options.onChange] : [];
   const rejectListeners = options.onReject ? [options.onReject] : [];
+  const editListeners = options.onEdit ? [options.onEdit] : [];
 
   /**
-   * Notifies change listeners.
+   * Notifies change listeners and, for changes of the molecule, edit listeners.
    *
-   * @param {string} reason - 'edit' | 'undo' | 'redo' | 'load' | 'tool' | 'gesture'.
+   * @param {string} reason - 'edit' | 'undo' | 'redo' | 'restore' | 'tool' | 'gesture' | 'selection'.
+   * @param {'chemical'|'coordinates'|null} [kind] - What changed, for changes of the molecule.
    * @returns {void}
    */
-  function emit(reason) {
-    for (const listener of changeListeners) {
-      listener({ reason });
+  function emit(reason, kind = null) {
+    if (kind) {
+      // Atoms that no longer exist leave the selection.
+      selection = new Set([...selection].filter((id) => mol.atoms.has(id)));
     }
-  }
+    for (const listener of changeListeners) {
+      listener({ reason, kind });
+    }
+    if (kind) {
+      for (const listener of editListeners) {
+        listener({ reason, kind });
+      }
+    }
+  } // End of function emit()
 
   /**
    * Notifies reject listeners.
@@ -174,7 +248,7 @@ export function createEditorCore(options = {}) {
     }
     mol = draft;
     history.record(before, after, label);
-    emit('edit');
+    emit('edit', editKind(before, after));
     return { ok: true, changed: true };
   } // End of function transact()
 
@@ -308,6 +382,10 @@ export function createEditorCore(options = {}) {
    */
   function click(target, point) {
     const order = TOOL_ORDER[tool];
+    if (tool === 'move') {
+      selectClicked(target);
+      return null;
+    }
     if (tool === 'carbon' && !target) {
       return transact('add carbon', (d) => {
         addAtom(d, point);
@@ -368,12 +446,160 @@ export function createEditorCore(options = {}) {
   } // End of function dragPlan()
 
   /**
+   * Mover click: selects the clicked atom (or both ends of the clicked bond);
+   * a click on empty space clears the selection.
+   *
+   * @param {{type: string, id: number}|null} target - What was clicked.
+   * @returns {void}
+   */
+  function selectClicked(target) {
+    if (!target) {
+      selection = new Set();
+    } else if (target.type === 'atom') {
+      selection = new Set([target.id]);
+    } else {
+      const bond = mol.bonds.get(target.id);
+      selection = new Set([bond.a, bond.b]);
+    }
+    emit('selection');
+  } // End of function selectClicked()
+
+  /**
+   * Resolves the zigzag chain of a Cadena drag (design.md §6.1): it starts at
+   * the pressed atom, or at the press point on empty space.
+   *
+   * @param {object} g - The gesture.
+   * @returns {{sourceAtom: number|null, points: {x: number, y: number}[], count: number}|null}
+   *   The plan (`count`: carbons the chain adds), or null when the drag started on a bond.
+   */
+  function chainPlan(g) {
+    if (g.target && g.target.type !== 'atom') {
+      return null;
+    }
+    const sourceAtom = g.target ? g.target.id : null;
+    const start = sourceAtom ? mol.atoms.get(sourceAtom) : g.start;
+    const origin = { x: start.x, y: start.y };
+    const side = chooseChainSide(mol, sourceAtom, origin, g.current);
+    const maxBonds = sourceAtom ? MAX_CHAIN : MAX_CHAIN - 1;
+    const { points, bonds } = chainPoints(origin, g.current, { side, maxBonds });
+    return { sourceAtom, points, count: sourceAtom ? bonds : bonds + 1 };
+  } // End of function chainPlan()
+
+  /**
+   * Commits a Cadena drag as one transaction.
+   *
+   * @param {object} g - The gesture.
+   * @returns {object|null} The transaction outcome, or null when the drag does nothing.
+   */
+  function finishChain(g) {
+    const plan = chainPlan(g);
+    if (!plan) {
+      return null;
+    }
+    return transact('draw chain', (d) => {
+      if (plan.sourceAtom) {
+        const refusal = checkRoom(d, [plan.sourceAtom], 1);
+        if (refusal) {
+          return refusal;
+        }
+      }
+      let previous = plan.sourceAtom ?? addAtom(d, plan.points[0]);
+      for (const point of plan.points.slice(1)) {
+        const next = addAtom(d, point);
+        addBond(d, previous, next, 1);
+        previous = next;
+      }
+      if (plan.sourceAtom) {
+        straightenLinearCentres(d, [plan.sourceAtom]);
+      }
+      return undefined;
+    });
+  } // End of function finishChain()
+
+  /**
+   * Atoms inside the marquee of a gesture.
+   *
+   * @param {object} g - A marquee gesture.
+   * @returns {Set<number>} The enclosed atom ids.
+   */
+  function marqueeAtoms(g) {
+    const r = rectFromCorners(g.start, g.current);
+    const inside = new Set();
+    for (const atom of mol.atoms.values()) {
+      if (atom.x >= r.x && atom.x <= r.x + r.width && atom.y >= r.y && atom.y <= r.y + r.height) {
+        inside.add(atom.id);
+      }
+    }
+    return inside;
+  } // End of function marqueeAtoms()
+
+  /**
+   * Decides what a Mover press grabs: the selection (pressed on a selected
+   * atom, on a bond between selected atoms, or inside the selection's box),
+   * a single atom, a bond's two atoms, or nothing (a marquee starts).
+   *
+   * @param {{type: string, id: number}|null} target - What was pressed.
+   * @param {{x: number, y: number}} point - Where.
+   * @returns {number[]|null} Atom ids to move, or null for a marquee.
+   */
+  function moveTargets(target, point) {
+    const bond = target && target.type === 'bond' ? mol.bonds.get(target.id) : null;
+    const onSelection = target
+      ? (target.type === 'atom' ? selection.has(target.id) : selection.has(bond.a) && selection.has(bond.b))
+      : false;
+    if (onSelection) {
+      return [...selection];
+    }
+    if (target) {
+      return target.type === 'atom' ? [target.id] : [bond.a, bond.b];
+    }
+    if (selection.size > 0) {
+      const box = moleculeBounds({ atoms: new Map([...selection].map((id) => [id, mol.atoms.get(id)])) });
+      const pad = ATOM_HIT_RADIUS;
+      if (point.x >= box.minX - pad && point.x <= box.maxX + pad && point.y >= box.minY - pad && point.y <= box.maxY + pad) {
+        return [...selection];
+      }
+    }
+    return null;
+  } // End of function moveTargets()
+
+  /**
+   * Commits a Mover drag: a coordinate edit of the grabbed atoms, or the
+   * marquee selection.
+   *
+   * @param {object} g - The gesture.
+   * @returns {object|null} The transaction outcome, or null for a marquee.
+   */
+  function finishMove(g) {
+    if (!g.moveIds) {
+      selection = marqueeAtoms(g);
+      emit('selection');
+      return null;
+    }
+    const dx = g.current.x - g.start.x;
+    const dy = g.current.y - g.start.y;
+    return transact('move atoms', (d) => {
+      for (const id of g.moveIds) {
+        const atom = d.atoms.get(id);
+        atom.x += dx;
+        atom.y += dy;
+      }
+    });
+  } // End of function finishMove()
+
+  /**
    * Commits a finished drag.
    *
    * @param {object} g - The gesture.
    * @returns {object|null} The transaction outcome, or null when the drag does nothing.
    */
   function finishDrag(g) {
+    if (tool === 'chain') {
+      return finishChain(g);
+    }
+    if (tool === 'move') {
+      return finishMove(g);
+    }
     const plan = dragPlan(g);
     if (!plan) {
       // Cambiar enlace / Borrar: a wobbly click still counts if it ends on the same item.
@@ -411,7 +637,11 @@ export function createEditorCore(options = {}) {
     if (gesture) {
       return;
     }
-    gesture = { start: { ...point }, current: { ...point }, target: hitTest(mol, point), moved: false };
+    const target = hitTest(mol, point);
+    gesture = { start: { ...point }, current: { ...point }, target, moved: false };
+    if (tool === 'move') {
+      gesture.moveIds = moveTargets(target, point);
+    }
     hover = null;
     emit('gesture');
   }
@@ -496,7 +726,7 @@ export function createEditorCore(options = {}) {
     if (!entry || !restore(entry.before)) {
       return false;
     }
-    emit('undo');
+    emit('undo', editKind(entry.after, entry.before));
     return true;
   }
 
@@ -510,9 +740,31 @@ export function createEditorCore(options = {}) {
     if (!entry || !restore(entry.after)) {
       return false;
     }
-    emit('redo');
+    emit('redo', editKind(entry.before, entry.after));
     return true;
   }
+
+  /**
+   * Replaces the molecule without an undo entry (autosave restore). The data
+   * goes through moleculeFromJSON(), i.e. through validateStructure();
+   * corrupt data leaves the molecule untouched.
+   *
+   * @param {object|string} data - moleculeToJSON() output, or its JSON text.
+   * @returns {{ok: true}|{ok: false, error: object}} The outcome.
+   */
+  function replaceMolecule(data) {
+    const result = moleculeFromJSON(data);
+    if (!result.ok) {
+      return { ok: false, error: result.error };
+    }
+    mol = result.mol;
+    gesture = null;
+    hover = null;
+    selection = new Set();
+    history.clear();
+    emit('restore', 'chemical');
+    return { ok: true };
+  } // End of function replaceMolecule()
 
   /**
    * Limpiar: removes everything as one undoable transaction (the in-page
@@ -560,6 +812,7 @@ export function createEditorCore(options = {}) {
       throw new Error(`setTool: unknown tool ${name}`);
     }
     gesture = null;
+    selection = new Set();
     tool = name;
     emit('tool');
   }
@@ -570,8 +823,65 @@ export function createEditorCore(options = {}) {
    * @returns {{from: object, to: object, order: number}|null} The preview.
    */
   function getPreview() {
-    const plan = gesture && gesture.moved ? dragPlan(gesture) : null;
-    return plan ? { from: plan.from, to: plan.to, order: TOOL_ORDER[tool] } : null;
+    if (!gesture || !gesture.moved) {
+      return null;
+    }
+    if (tool === 'chain') {
+      const chain = chainPlan(gesture);
+      return chain ? { type: 'chain', points: chain.points, count: chain.count } : null;
+    }
+    const plan = dragPlan(gesture);
+    return plan ? { type: 'bond', from: plan.from, to: plan.to, order: TOOL_ORDER[tool] } : null;
+  }
+
+  /**
+   * Everything the renderer needs: the molecule as displayed (with the atoms
+   * being moved at their dragged positions), hover, preview, selection (with
+   * the atoms inside a marquee in progress) and the marquee rectangle.
+   *
+   * @returns {{mol: object, hover: object|null, preview: object|null, selection: Set<number>, marquee: object|null}}
+   *   The view state; `mol` must not be mutated.
+   */
+  function getViewState() {
+    const state = { mol, hover, preview: getPreview(), selection, marquee: null };
+    if (tool === 'move' && gesture && gesture.moved) {
+      if (gesture.moveIds) {
+        const shown = cloneMolecule(mol);
+        for (const id of gesture.moveIds) {
+          const atom = shown.atoms.get(id);
+          atom.x += gesture.current.x - gesture.start.x;
+          atom.y += gesture.current.y - gesture.start.y;
+        }
+        state.mol = shown;
+      } else {
+        state.marquee = rectFromCorners(gesture.start, gesture.current);
+        state.selection = marqueeAtoms(gesture);
+      }
+    }
+    return state;
+  } // End of function getViewState()
+
+  /**
+   * The selected atoms (Mover).
+   *
+   * @returns {number[]} Selected atom ids, ascending.
+   */
+  function getSelection() {
+    return [...selection].sort((p, q) => p - q);
+  }
+
+  /**
+   * Empties the selection.
+   *
+   * @returns {boolean} True when something was selected.
+   */
+  function clearSelection() {
+    if (selection.size === 0) {
+      return false;
+    }
+    selection = new Set();
+    emit('selection');
+    return true;
   }
 
   /**
@@ -583,6 +893,18 @@ export function createEditorCore(options = {}) {
   function onChange(listener) {
     changeListeners.push(listener);
     return () => removeFrom(changeListeners, listener);
+  }
+
+  /**
+   * Subscribes to edits of the molecule only: `{reason, kind}` with kind
+   * 'chemical' or 'coordinates' (design.md §6.3).
+   *
+   * @param {Function} listener - Called with `{reason, kind}`.
+   * @returns {Function} Unsubscribe function.
+   */
+  function onEdit(listener) {
+    editListeners.push(listener);
+    return () => removeFrom(editListeners, listener);
   }
 
   /**
@@ -668,13 +990,18 @@ export function createEditorCore(options = {}) {
     redo,
     clear,
     loadMolecule,
+    replaceMolecule,
     setTool,
     getTool,
     getPreview,
+    getViewState,
+    getSelection,
+    clearSelection,
     getHover,
     clearHover,
     isGestureActive,
     onChange,
+    onEdit,
     onReject,
     canUndo: history.canUndo,
     canRedo: history.canRedo,
@@ -684,29 +1011,55 @@ export function createEditorCore(options = {}) {
   };
 } // End of function createEditorCore()
 
+/** Wheel zoom sensitivity: scale factor = exp(−deltaY × this), deltaY in pixels. */
+const WHEEL_ZOOM_RATE = 0.0015;
+
+/**
+ * Tells whether a key event comes from a text field (where letters are text,
+ * not shortcuts).
+ *
+ * @param {EventTarget|null} target - The event target.
+ * @returns {boolean} True for inputs, text areas, selects and editable content.
+ */
+function isTextField(target) {
+  if (!target || typeof target.closest !== 'function') {
+    return false;
+  }
+  return Boolean(target.isContentEditable || target.closest('input, textarea, select'));
+}
+
 /**
  * Creates an editor bound to an SVG element: pointer events (mouse, touch,
- * pen; one pointer at a time), Esc to cancel the gesture in progress,
- * rendering after every change, and shake + notification on refused edits.
+ * pen; one drawing pointer at a time), pan (space+drag, middle-button drag,
+ * two-finger drag), zoom (wheel, pinch), keyboard shortcuts (shortcutFor()),
+ * Esc to cancel the gesture in progress (or clear the selection), rendering
+ * after every change, the display mode, and shake + notification on refused
+ * edits.
  *
  * @param {SVGSVGElement} svg - The canvas element.
  * @param {{notify?: function(string): void}} [options] - `notify(message)` shows a Spanish toast.
  * @returns {object} The editor API: the core API plus highlight(), clearHighlight(), showLocants(),
- *   atomClientPoint(), bondClientPoint(), render() and destroy().
+ *   setDisplayMode(), getDisplayMode(), getView(), setView(), centerView(), zoomBy(), atomClientPoint(),
+ *   bondClientPoint(), modelToClient(), clientToModel(), render() and destroy().
  */
 export function createEditor(svg, options = {}) {
   const doc = svg.ownerDocument;
   const renderer = createRenderer(svg);
   const core = createEditorCore();
   let activePointer = null;
+  let pan = null;
+  let pinch = null;
+  let spaceHeld = false;
+  const touches = new Map();
 
   /**
-   * Redraws the molecule with the current hover and preview.
+   * Redraws the molecule with the current hover, preview and selection.
    *
    * @returns {void}
    */
   function refresh() {
-    renderer.render(core.peekMolecule(), { hover: core.getHover(), preview: core.getPreview() });
+    const state = core.getViewState();
+    renderer.render(state.mol, state);
   }
 
   /**
@@ -737,24 +1090,12 @@ export function createEditor(svg, options = {}) {
   }
 
   /**
-   * Handles pointerdown: starts a gesture for the first pointer; a second
-   * pointer (e.g. a second finger) cancels it.
+   * Captures a pointer on the canvas, if the browser allows it.
    *
    * @param {PointerEvent} event - The event.
    * @returns {void}
    */
-  function handleDown(event) {
-    if (event.pointerType === 'mouse' && event.button !== 0) {
-      return;
-    }
-    if (activePointer !== null) {
-      core.cancelGesture();
-      activePointer = null;
-      refresh();
-      return;
-    }
-    event.preventDefault();
-    activePointer = event.pointerId;
+  function capture(event) {
     if (svg.setPointerCapture) {
       try {
         svg.setPointerCapture(event.pointerId);
@@ -762,52 +1103,162 @@ export function createEditor(svg, options = {}) {
         // Synthetic events may not be capturable; the gesture still works.
       }
     }
+  }
+
+  /**
+   * Midpoint and distance of the two touches, in canvas units.
+   *
+   * @returns {{mid: {x: number, y: number}, dist: number}} The pinch geometry.
+   */
+  function pinchGeometry() {
+    const [p, q] = [...touches.values()].slice(0, 2).map((t) => renderer.clientToCanvas(t.x, t.y));
+    return { mid: { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 }, dist: Math.max(distance(p, q), 1) };
+  }
+
+  /**
+   * Handles pointerdown: a second finger turns the gesture into a two-finger
+   * pan/pinch; space+drag or the middle button pans; otherwise the first
+   * pointer starts a drawing gesture (a further non-touch pointer cancels it).
+   *
+   * @param {PointerEvent} event - The event.
+   * @returns {void}
+   */
+  function handleDown(event) {
+    if (event.pointerType === 'touch') {
+      touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      // Capture every touch on the stable SVG root before any refresh: the
+      // implicit capture target (an atom or bond) is replaced when the
+      // drawing is re-rendered, and its pointer events would be lost.
+      capture(event);
+      if (touches.size >= 2) {
+        event.preventDefault();
+        core.cancelGesture();
+        activePointer = null;
+        pan = null;
+        pinch = pinchGeometry();
+        refresh();
+        return;
+      }
+    }
+    if (activePointer !== null || pan || pinch) {
+      if (activePointer !== null) {
+        core.cancelGesture();
+        activePointer = null;
+        refresh();
+      }
+      return;
+    }
+    const middle = event.pointerType === 'mouse' && event.button === 1;
+    if (middle || (spaceHeld && event.button === 0)) {
+      event.preventDefault();
+      capture(event);
+      pan = { pointerId: event.pointerId, last: renderer.clientToCanvas(event.clientX, event.clientY) };
+      svg.classList.add('is-panning');
+      return;
+    }
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    // Keyboard focus leaves the toolbar so that Space means "pan", not "press this button".
+    const focused = doc.activeElement;
+    if (focused && focused !== doc.body && typeof focused.blur === 'function') {
+      focused.blur();
+    }
+    activePointer = event.pointerId;
+    capture(event);
     core.pointerDown(toModel(event));
     refresh();
   } // End of function handleDown()
 
   /**
-   * Handles pointermove: hover, or drag preview.
+   * Handles pointermove: pinch, pan, hover or drag preview.
    *
    * @param {PointerEvent} event - The event.
    * @returns {void}
    */
   function handleMove(event) {
+    if (touches.has(event.pointerId)) {
+      touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    }
+    if (pinch) {
+      if (touches.size >= 2) {
+        const now = pinchGeometry();
+        const moved = panView(renderer.getView(), now.mid.x - pinch.mid.x, now.mid.y - pinch.mid.y);
+        renderer.setView(zoomView(moved, now.mid, now.dist / pinch.dist));
+        pinch = now;
+      }
+      return;
+    }
+    if (pan) {
+      if (event.pointerId === pan.pointerId) {
+        const p = renderer.clientToCanvas(event.clientX, event.clientY);
+        renderer.setView(panView(renderer.getView(), p.x - pan.last.x, p.y - pan.last.y));
+        pan.last = p;
+      }
+      return;
+    }
     if (activePointer !== null && event.pointerId !== activePointer) {
       return;
     }
     core.pointerMove(toModel(event));
     refresh();
-  }
+  } // End of function handleMove()
 
   /**
-   * Handles pointerup: commits the gesture.
+   * Handles pointerup, pointercancel and lost capture: ends a pinch or pan;
+   * commits (up) or cancels (cancel, lost capture) the drawing gesture.
    *
    * @param {PointerEvent} event - The event.
    * @returns {void}
    */
-  function handleUp(event) {
+  function handleEnd(event) {
+    touches.delete(event.pointerId);
+    if (pinch) {
+      if (touches.size < 2) {
+        pinch = null;
+      }
+      return;
+    }
+    if (pan) {
+      if (event.pointerId === pan.pointerId) {
+        pan = null;
+        svg.classList.remove('is-panning');
+      }
+      return;
+    }
     if (event.pointerId !== activePointer) {
       return;
     }
     activePointer = null;
-    core.pointerUp(toModel(event));
+    if (event.type === 'pointerup') {
+      core.pointerUp(toModel(event));
+    } else {
+      core.cancelGesture();
+    }
     refresh();
-  }
+  } // End of function handleEnd()
 
   /**
-   * Handles pointercancel: restores the starting state.
+   * Handles lostpointercapture: a pointer the editor still tracks (a touch, the
+   * pan pointer or the drawing pointer) will not deliver its pointerup here,
+   * so it is treated as a pointercancel and the gesture state is cleaned up.
+   * After a normal pointerup the pointer is no longer tracked and this is a
+   * no-op. Only the SVG root's own capture counts: the event bubbles up from
+   * descendants that lose an implicit capture when capture() moves it here.
    *
    * @param {PointerEvent} event - The event.
    * @returns {void}
    */
-  function handleCancel(event) {
-    if (event.pointerId !== activePointer) {
+  function handleLostCapture(event) {
+    if (event.target !== svg) {
       return;
     }
-    activePointer = null;
-    core.cancelGesture();
-    refresh();
+    const tracked = touches.has(event.pointerId) || (pan && pan.pointerId === event.pointerId) ||
+      event.pointerId === activePointer;
+    if (tracked) {
+      handleEnd(event);
+    }
   }
 
   /**
@@ -823,15 +1274,71 @@ export function createEditor(svg, options = {}) {
   }
 
   /**
-   * Handles keydown: Esc cancels the gesture in progress.
+   * Handles wheel: zooms about the pointer.
+   *
+   * @param {WheelEvent} event - The event.
+   * @returns {void}
+   */
+  function handleWheel(event) {
+    event.preventDefault();
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 400 : 1;
+    const delta = Math.max(-200, Math.min(200, event.deltaY * unit));
+    const point = renderer.clientToCanvas(event.clientX, event.clientY);
+    renderer.setView(zoomView(renderer.getView(), point, Math.exp(-delta * WHEEL_ZOOM_RATE)));
+  }
+
+  /**
+   * Handles keydown: Esc cancels the gesture (or clears the selection), Space
+   * arms panning, and the §6.1 shortcuts switch tools or undo/redo. Keys typed
+   * in text fields or while a dialog is open are left alone.
    *
    * @param {KeyboardEvent} event - The event.
    * @returns {void}
    */
   function handleKey(event) {
-    if (event.key === 'Escape' && core.cancelGesture()) {
-      event.preventDefault();
-      refresh();
+    if (isTextField(event.target) || doc.querySelector('dialog[open]')) {
+      return;
+    }
+    if (event.key === 'Escape') {
+      if (core.cancelGesture() || core.clearSelection()) {
+        event.preventDefault();
+        refresh();
+      }
+      return;
+    }
+    if (event.code === 'Space' || event.key === ' ') {
+      const onControl = event.target && typeof event.target.closest === 'function' && event.target.closest('button, a, summary');
+      if (!onControl) {
+        event.preventDefault();
+        spaceHeld = true;
+        svg.classList.add('can-pan');
+      }
+      return;
+    }
+    const command = shortcutFor(event);
+    if (!command) {
+      return;
+    }
+    event.preventDefault();
+    if (command.tool) {
+      core.setTool(command.tool);
+    } else if (command.action === 'undo') {
+      core.undo();
+    } else {
+      core.redo();
+    }
+  } // End of function handleKey()
+
+  /**
+   * Handles keyup (and window blur): releases Space.
+   *
+   * @param {KeyboardEvent|FocusEvent} event - The event.
+   * @returns {void}
+   */
+  function handleKeyUp(event) {
+    if (event.type === 'blur' || event.code === 'Space' || event.key === ' ') {
+      spaceHeld = false;
+      svg.classList.remove('can-pan');
     }
   }
 
@@ -844,13 +1351,20 @@ export function createEditor(svg, options = {}) {
     svg.classList.remove('shake');
   }
 
+  const win = doc.defaultView;
   svg.addEventListener('pointerdown', handleDown);
   svg.addEventListener('pointermove', handleMove);
-  svg.addEventListener('pointerup', handleUp);
-  svg.addEventListener('pointercancel', handleCancel);
+  svg.addEventListener('pointerup', handleEnd);
+  svg.addEventListener('pointercancel', handleEnd);
+  svg.addEventListener('lostpointercapture', handleLostCapture);
   svg.addEventListener('pointerleave', handleLeave);
+  svg.addEventListener('wheel', handleWheel, { passive: false });
   svg.addEventListener('animationend', handleAnimationEnd);
   doc.addEventListener('keydown', handleKey);
+  doc.addEventListener('keyup', handleKeyUp);
+  if (win) {
+    win.addEventListener('blur', handleKeyUp);
+  }
   core.onChange(refresh);
   core.onReject(onReject);
   refresh();
@@ -884,6 +1398,40 @@ export function createEditor(svg, options = {}) {
   }
 
   /**
+   * Switches between Esqueleto ('skeletal') and Con carbonos ('condensed').
+   *
+   * @param {string} mode - 'skeletal' or 'condensed'.
+   * @returns {void}
+   */
+  function setDisplayMode(mode) {
+    renderer.setMode(mode);
+    refresh();
+  }
+
+  /**
+   * "Centrar": fits the molecule in the visible canvas (identity view when empty).
+   *
+   * @returns {{scale: number, x: number, y: number}} The new view.
+   */
+  function centerView() {
+    const view = core.peekMolecule().atoms.size > 0 ? fitView(core.peekMolecule(), renderer.visibleRect()) : { ...IDENTITY_VIEW };
+    renderer.setView(view);
+    return renderer.getView();
+  }
+
+  /**
+   * Zooms about the centre of the visible canvas (buttons, tests).
+   *
+   * @param {number} factor - Scale multiplier (> 1 zooms in).
+   * @returns {{scale: number, x: number, y: number}} The new view.
+   */
+  function zoomBy(factor) {
+    const r = renderer.visibleRect();
+    renderer.setView(zoomView(renderer.getView(), { x: r.x + r.width / 2, y: r.y + r.height / 2 }, factor));
+    return renderer.getView();
+  }
+
+  /**
    * Detaches every listener.
    *
    * @returns {void}
@@ -891,11 +1439,17 @@ export function createEditor(svg, options = {}) {
   function destroy() {
     svg.removeEventListener('pointerdown', handleDown);
     svg.removeEventListener('pointermove', handleMove);
-    svg.removeEventListener('pointerup', handleUp);
-    svg.removeEventListener('pointercancel', handleCancel);
+    svg.removeEventListener('pointerup', handleEnd);
+    svg.removeEventListener('pointercancel', handleEnd);
+    svg.removeEventListener('lostpointercapture', handleLostCapture);
     svg.removeEventListener('pointerleave', handleLeave);
+    svg.removeEventListener('wheel', handleWheel);
     svg.removeEventListener('animationend', handleAnimationEnd);
     doc.removeEventListener('keydown', handleKey);
+    doc.removeEventListener('keyup', handleKeyUp);
+    if (win) {
+      win.removeEventListener('blur', handleKeyUp);
+    }
   }
 
   return {
@@ -903,8 +1457,16 @@ export function createEditor(svg, options = {}) {
     highlight: renderer.highlight,
     clearHighlight: renderer.clearHighlight,
     showLocants: renderer.showLocants,
+    setDisplayMode,
+    getDisplayMode: renderer.getMode,
+    getView: renderer.getView,
+    setView: renderer.setView,
+    centerView,
+    zoomBy,
     atomClientPoint,
     bondClientPoint,
+    modelToClient: renderer.modelToClient,
+    clientToModel: renderer.clientToModel,
     render: refresh,
     destroy,
   };

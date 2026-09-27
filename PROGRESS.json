@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T12:46:42Z",
+ "updated": "2026-09-27T13:05:46Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
@@ -79,8 +79,11 @@
   {
    "id": "I-9",
    "title": "Editor extras",
-   "status": "queued",
-   "summary": "Adds chain tool, move/marquee, pan/zoom, label toggle, live formula, autosave and keyboard shortcuts."
+   "status": "done",
+   "summary": "Adds chain tool, move/marquee, pan/zoom, label toggle, live formula, autosave with recentring, shortcuts and chemical vs coordinate edit events.",
+   "risk": "routine",
+   "review": "docs/reviews/I-9.md",
+   "narrative": "docs/progress-archive/i-9.md"
   },
   {
    "id": "I-10",

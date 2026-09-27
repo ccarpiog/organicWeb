@@ -503,3 +503,62 @@ export function overlappingAtoms(after, before, radius = ATOM_HIT_RADIUS) {
   }
   return [...found].sort((p, q) => p - q);
 } // End of function overlappingAtoms()
+
+/** Advance along the drag axis per zigzag bond (bond at ±30° from the axis). */
+export const CHAIN_STEP = BOND_LENGTH * Math.cos(Math.PI / 6);
+
+/** Sideways offset of the odd atoms of a zigzag chain from the drag axis. */
+export const CHAIN_OFFSET = BOND_LENGTH * Math.sin(Math.PI / 6);
+
+/**
+ * Zigzag chain for the Cadena tool (design.md §6.1): the drag direction is
+ * snapped to 30°, and the number of bonds is the drag length projected on
+ * that axis divided by CHAIN_STEP (at least one). Every bond has length
+ * BOND_LENGTH and makes 120° with the next one.
+ *
+ * @param {{x: number, y: number}} start - First atom of the chain (where the drag began).
+ * @param {{x: number, y: number}} pointer - Current pointer position.
+ * @param {{side?: number, maxBonds?: number}} [options] - `side` 1 (default) puts the first bond on the
+ *   left of the axis (up when dragging to the right), −1 on the right; `maxBonds` caps the chain.
+ * @returns {{points: {x: number, y: number}[], bonds: number}} The atom positions, `points[0]` = start.
+ */
+export function chainPoints(start, pointer, options = {}) {
+  const side = options.side === -1 ? -1 : 1;
+  const maxBonds = options.maxBonds || Infinity;
+  const angle = snapAngle(angleBetween(start, pointer));
+  const dir = { x: Math.cos(angle), y: Math.sin(angle) };
+  // Left normal of the axis in screen terms (y grows downwards): (dy, −dx).
+  const normal = { x: dir.y, y: -dir.x };
+  const projected = (pointer.x - start.x) * dir.x + (pointer.y - start.y) * dir.y;
+  const bonds = Math.min(maxBonds, Math.max(1, Math.round(projected / CHAIN_STEP)));
+  const points = [];
+  for (let i = 0; i <= bonds; i += 1) {
+    const lateral = i % 2 === 1 ? side * CHAIN_OFFSET : 0;
+    points.push({
+      x: start.x + dir.x * CHAIN_STEP * i + normal.x * lateral,
+      y: start.y + dir.y * CHAIN_STEP * i + normal.y * lateral,
+    });
+  }
+  return { points, bonds };
+} // End of function chainPoints()
+
+/**
+ * Chooses the zigzag side of a chain grown from an existing atom: the side
+ * whose first new atom lies farther from the other atoms (so the chain
+ * continues away from the atom's neighbours). Ties keep side 1.
+ *
+ * @param {object} mol - The molecule.
+ * @param {number|null} atomId - The start atom, or null for a chain drawn on empty space.
+ * @param {{x: number, y: number}} start - Start point of the chain.
+ * @param {{x: number, y: number}} pointer - Current pointer position.
+ * @returns {number} 1 or −1 (see chainPoints()).
+ */
+export function chooseChainSide(mol, atomId, start, pointer) {
+  if (atomId === null || atomId === undefined) {
+    return 1;
+  }
+  const exclude = [atomId];
+  const up = chainPoints(start, pointer, { side: 1, maxBonds: 1 }).points[1];
+  const down = chainPoints(start, pointer, { side: -1, maxBonds: 1 }).points[1];
+  return clearance(mol, down, exclude) > clearance(mol, up, exclude) + EPSILON ? -1 : 1;
+}

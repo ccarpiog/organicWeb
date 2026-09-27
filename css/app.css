@@ -128,6 +128,7 @@ body {
   grid-area: canvas;
   position: relative;
   display: flex;
+  flex-direction: column;
   min-height: 20rem;
   background: var(--color-canvas);
   border: 1px solid var(--color-border);
@@ -138,9 +139,63 @@ body {
 .canvas {
   flex: 1;
   width: 100%;
-  height: 100%;
+  min-height: 0;
   touch-action: none;
   color: var(--color-bond);
+}
+
+.canvas.can-pan {
+  cursor: grab;
+}
+
+.canvas.is-panning {
+  cursor: grabbing;
+}
+
+/* Bar under the canvas: formula, display toggle, Centrar (src/ui/canvasbar.js). */
+.canvas-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.formula {
+  margin: 0 auto 0 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.display-toggle {
+  display: inline-flex;
+}
+
+.bar-button {
+  padding: 0.35rem 0.75rem;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.display-toggle .bar-button:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.display-toggle .bar-button:last-child {
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+}
+
+.bar-button[aria-pressed="true"] {
+  color: var(--color-accent-text);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 /* Toolbar buttons (src/ui/toolbar.js). */
@@ -231,6 +286,42 @@ body {
   fill: var(--color-accent);
 }
 
+.canvas .chain-counter {
+  fill: var(--color-accent);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--color-canvas);
+  stroke-width: 4px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.canvas .marquee {
+  fill: var(--color-hover);
+  stroke: var(--color-accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.canvas .sel-atom {
+  fill: var(--color-hover);
+  stroke: var(--color-accent);
+  stroke-width: 1.5;
+}
+
+.canvas .sel-bond {
+  stroke: var(--color-hover);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.canvas[data-display-mode="condensed"] .atom-label {
+  font-size: 14px;
+}
+
 .canvas .hl-bond {
   stroke-width: 12;
   stroke-linecap: round;
@@ -271,7 +362,7 @@ body {
 .toast {
   position: absolute;
   left: 50%;
-  bottom: 1rem;
+  bottom: 4rem;
   transform: translateX(-50%);
   max-width: calc(100% - 2rem);
   padding: 0.6rem 1rem;

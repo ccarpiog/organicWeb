@@ -125,6 +125,8 @@ src/
   ui/examples.js        example gallery
   ui/toolbar.js         drawing toolbar (tools, Deshacer/Rehacer/Limpiar)
   ui/feedback.js        in-page toast and confirmation dialog
+  ui/canvasbar.js       bar under the canvas: formula, Esqueleto/Con carbonos, Centrar
+  ui/autosave.js        localStorage autosave/restore (injected storage, try/catch)
 tests/
   unit/*.test.js        node --test
   fixtures/names.tsv    SMILES <TAB> expected name <TAB> rule tested <TAB> justification
@@ -466,9 +468,9 @@ to a bottom bar.
 | **Carbono** | Click empty space → a lone carbon (this is how you draw methane). Click an atom → grow a new carbon from it at the best free angle (§6.2). |
 | **Enlace simple / doble / triple** (default simple) | Click empty space → new two-carbon fragment with that bond order. Click an atom → grow a new carbon bonded with that order. Drag from an atom → new carbon in the drag direction, snapped to 30°; releasing on an existing atom bonds the two (a ring is allowed; naming refuses it). Click an existing bond → **set** it to the tool's order. |
 | **Cambiar enlace** | Click a bond → cycle 1→2→3→1 (skipping orders that break valence). |
-| **Cadena** | Drag from empty space or an atom: a zigzag chain grows along the drag, live counter "5 C". Release commits. |
+| **Cadena** | Drag from empty space or an atom: a zigzag chain grows along the drag (direction snapped to 30°, one bond per `40·cos 30°` of drag), live counter "5 C" = carbons the chain adds (from empty space, the whole chain). Release commits; a click does nothing. |
 | **Borrar** | Click atom → delete it and its bonds. Click bond → delete the bond only; both carbons stay (the model does not record how an atom was created, so an endpoint cannot be told apart from a carbon placed on its own). |
-| **Mover** | Drag an atom (moves it). Drag on empty space → marquee selection; then drag the selection. |
+| **Mover** | Drag an atom (moves it) or a bond (moves its two atoms). Drag on empty space → marquee selection; then drag the selection (press on a selected atom, a bond between selected atoms, or inside the selection's box). Click selects an atom; click on empty space or Esc clears the selection. Dropping an atom on another is refused. |
 | Pan / zoom | Space+drag, middle-drag or two-finger drag pans; wheel / pinch zooms; "Centrar" button fits the molecule. |
 | Buttons | Deshacer, Rehacer, Limpiar (in-page confirmation dialog, never `window.confirm`), Ordenar dibujo (§7). |
 
@@ -480,7 +482,8 @@ geometry is recomputed (triple bonds and cumulated double bonds straightened
 to 180°) as part of the same transaction.
 
 Keyboard: `c` carbono, `1/2/3` bond tools, `t` cambiar enlace, `h` cadena,
-`e`/`Supr` borrar, `m` mover, `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z`.
+`e`/`Supr` borrar, `m` mover, `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z` (also
+`Ctrl/Cmd+Y`). Ignored in text fields and while a dialog is open.
 
 ### 6.2 Geometry
 
@@ -503,10 +506,14 @@ Keyboard: `c` carbono, `1/2/3` bond tools, `t` cambiar enlace, `h` cadena,
   `parent|candidate|substituent|locant`, and `showLocants(Map atomId→n)`.
 - Live molecular formula under the canvas ("Fórmula: C₅H₁₂").
 - Autosave to `localStorage` (every access in try/catch; restore goes
-  through `validate()`).
+  through `validate()`'s structural part, `validateStructure()`, since a
+  drawing in progress may be disconnected; corrupt data is removed and the
+  canvas starts empty). Restore is not an undo entry. The display mode is
+  remembered too.
 - The editor distinguishes **chemical edits** (atoms/bonds/orders) from
   **coordinate edits** (move, redraw): only chemical edits invalidate a
-  shown name.
+  shown name. Every edit, undo, redo and restore is classified by comparing
+  snapshots (`editKind()`) and reported through `onEdit({reason, kind})`.
 
 ---
 

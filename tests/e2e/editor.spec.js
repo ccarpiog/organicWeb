@@ -87,14 +87,14 @@ test('draw butane by clicks, set a double bond, undo, redo, erase an atom', asyn
 });
 
 test('the Carbono tool draws methane', async ({ page }) => {
-  await page.getByRole('button', { name: 'Carbono' }).click();
+  await page.getByRole('button', { name: 'Carbono', exact: true }).click();
   await clickCanvas(page, 0.5, 0.5);
   expect(await shape(page)).toEqual({ atoms: [1], bonds: [] });
   await expect(page.locator('svg#canvas .atom-label')).toHaveText('CH₄');
 });
 
 test('a fifth bond on a carbon shows a toast and changes nothing', async ({ page }) => {
-  await page.getByRole('button', { name: 'Carbono' }).click();
+  await page.getByRole('button', { name: 'Carbono', exact: true }).click();
   await clickCanvas(page, 0.5, 0.5);
   for (let i = 0; i < 4; i += 1) {
     await clickAtom(page, 1);

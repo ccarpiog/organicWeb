@@ -16,7 +16,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-6 | Naming engine IV: iliden substituents and fixture set | `autoclaude/processed/060-naming-iliden-fixtures.md` | done — `docs/progress-archive/i-6.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-6.md` |
 | I-7 | OPSIN oracle and graph-invariance checks | `autoclaude/processed/070-oracle.md` | done — `docs/progress-archive/i-7.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-7.md` |
 | I-8 | Editor core | `autoclaude/processed/080-editor-core.md` | done — `docs/progress-archive/i-8.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-8.md` |
-| I-9 | Editor extras | `autoclaude/processed/090-editor-extras.md` | queued | — | — |
+| I-9 | Editor extras | `autoclaude/processed/090-editor-extras.md` | done — `docs/progress-archive/i-9.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-9.md` |
 | I-10 | Explanations and results panel | `autoclaude/processed/100-explain-results.md` | queued | — | — |
 | I-11 | Redraw and examples | `autoclaude/processed/110-redraw-examples.md` | queued | — | — |
 | I-12 | Polish and release build | `autoclaude/processed/120-polish-release.md` | queued | — | — |
@@ -37,8 +37,8 @@ All twelve plan items are now queued; the inbox holds no plan items.
 
 ## Next action
 
-Poll the inbox (phase boundary), then execute I-9 (editor extras) per
-`autoclaude/processed/090-editor-extras.md`.
+Poll the inbox (phase boundary), then execute I-10 (explanations and results
+panel) per `autoclaude/processed/100-explain-results.md`.
 
 ## Key paths
 
@@ -52,14 +52,15 @@ Poll the inbox (phase boundary), then execute I-9 (editor extras) per
   jar in gitignored `scripts/oracle/vendor/`, `--download` fetches it).
 - Editor: `src/editor/{editor,geometry,history,render}.js` — DOM-free
   `createEditorCore()` + `createEditor(svg)`; test API `window.__editor`
-  (see `editor.js` header). UI glue `src/ui/{app,toolbar,feedback}.js`.
+  (see `editor.js` header); `onEdit({reason, kind})` with kind `chemical` /
+  `coordinates`. UI glue `src/ui/{app,toolbar,feedback,canvasbar,autosave}.js`.
 - Model: `src/model/{molecule,graph,validate,smiles}.js` — `canonicalTreeKey`
   in graph.js; `validateStructure` / `validateForNaming` in validate.js.
 
-## Verification (last phase, I-8)
+## Verification (last phase, I-9)
 
-- `npm test` 0 (329 pass) · `npm run check` 0 · `npm run build` 0 ·
-  `npm run e2e` 0 (9 pass). Oracle not rerun (naming untouched).
+- `npm test` 0 (348 pass) · `npm run check` 0 · `npm run build` 0 ·
+  `npm run e2e` 0 (19 pass). Oracle not rerun (naming untouched).
 
 ## Open risks / deviations
 
@@ -83,10 +84,14 @@ Poll the inbox (phase boundary), then execute I-9 (editor extras) per
   match; see `docs/progress-archive/i-8.md`). Drag from empty space makes a
   two-carbon fragment (spec silent).
 
+- I-9: restore validates structure only (loose fragments allowed), is not an
+  undo step, and recentres the view. Pinch zoom has no e2e test. Review's two
+  should-fix findings fixed with regressions (`docs/progress-archive/i-9.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-7 `6ff3bac`, pushed. I-8 committed and pushed right after this
+- I-8 `dcd818a`, pushed. I-9 committed and pushed right after this
   checkpoint (see `git log`).

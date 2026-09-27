@@ -32,7 +32,7 @@ test('dist/index.html works from file://', async ({ page }) => {
   await expect(page.getByRole('button', { name: '¿Cómo se llama?' })).toBeDisabled();
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
   // The bundled editor works: the Carbono tool draws methane.
-  await page.getByRole('button', { name: 'Carbono' }).click();
+  await page.getByRole('button', { name: 'Carbono', exact: true }).click();
   const box = await page.locator('svg#canvas').boundingBox();
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.locator('svg#canvas .atom-label')).toHaveText('CH₄');
