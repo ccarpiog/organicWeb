@@ -17,9 +17,11 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-7 | OPSIN oracle and graph-invariance checks | `autoclaude/processed/070-oracle.md` | queued | — | — |
 | I-8 | Editor core | `autoclaude/processed/080-editor-core.md` | queued | — | — |
 | I-9 | Editor extras | `autoclaude/processed/090-editor-extras.md` | queued | — | — |
+| I-10 | Explanations and results panel | `autoclaude/processed/100-explain-results.md` | queued | — | — |
+| I-11 | Redraw and examples | `autoclaude/processed/110-redraw-examples.md` | queued | — | — |
+| I-12 | Polish and release build | `autoclaude/processed/120-polish-release.md` | queued | — | — |
 
-Remaining plan items (100–120) are still in `autoclaude/inbox/` and will be
-queued as `I-10` … `I-12` at later phase boundaries.
+All twelve plan items are now queued; the inbox holds no plan items.
 
 ## Inbox
 
@@ -30,10 +32,12 @@ queued as `I-10` … `I-12` at later phase boundaries.
   I-4, I-5, I-6.
 - 2026-09-27 pickup 3 (after I-2): `070-oracle.md`, `080-editor-core.md`,
   `090-editor-extras.md` → queued as I-7, I-8, I-9.
+- 2026-09-27 pickup 4 (after I-3): `100-explain-results.md`,
+  `110-redraw-examples.md`, `120-polish-release.md` → queued as I-10, I-11, I-12.
 
 ## Next action
 
-Poll the inbox (phase boundary; items 100–120 remain), then execute I-4
+Poll the inbox (phase boundary), then execute I-4
 (naming engine II: parent selection and numbering) per
 `autoclaude/processed/040-naming-parent.md`. I-4 must remove the `NOT_YET`
 path and the placeholder P1 step in `src/naming/index.js`, and add prefix
@@ -56,6 +60,10 @@ rendering to `src/naming/render.js` (it currently throws on prefixes).
   `npm run e2e` 0 (3 pass).
 
 ## Open risks / deviations
+
+- Commits `21b918a` and `add6d93` carry a `Co-Authored-By: Claude` trailer,
+  against the user's rule of no AI references in commits. Already pushed, not
+  rewritten; later commits omit it.
 
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.

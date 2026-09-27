@@ -11,3 +11,6 @@ up. The item itself is in this directory, unchanged.
 - 2026-09-27 11:58 · 070-oracle.md · queued · phase I-7 — OPSIN oracle and graph-invariance checks
 - 2026-09-27 11:58 · 080-editor-core.md · queued · phase I-8 — Editor core
 - 2026-09-27 11:58 · 090-editor-extras.md · queued · phase I-9 — Editor extras
+- 2026-09-27 12:08 · 100-explain-results.md · queued · phase I-10 — Explanations and results panel
+- 2026-09-27 12:08 · 110-redraw-examples.md · queued · phase I-11 — Redraw and examples
+- 2026-09-27 12:08 · 120-polish-release.md · queued · phase I-12 — Polish and release build
