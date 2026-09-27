@@ -9,8 +9,10 @@ documentation are in English.
 Status: molecule model done; naming covers unbranched chains and branched
 molecules with any substituent (branched, unsaturated, nested, singly or
 doubly attached — `-iliden` — with the `isopropil` / PIN / classic prefix
-styles); every valid acyclic hydrocarbon gets a name. Editor and
-explanations in progress. The design and phase plan live in
+styles); every valid acyclic hydrocarbon gets a name. The editor draws
+carbons and single/double/triple bonds (click, drag with 30° snap, change
+order, erase, undo/redo, clear); the chain, move and pan/zoom tools, the
+results panel and the explanations are in progress. The design and phase plan live in
 [`docs/design.md`](docs/design.md).
 
 ## Requirements
@@ -35,6 +37,14 @@ npm run check        # syntax check of every .js/.mjs file + no alert/confirm/pr
 npm run e2e          # Playwright end-to-end tests (Chromium)
 npm run oracle       # OPSIN cross-check (development only; see scripts/oracle/README.md)
 ```
+
+End-to-end tests drive the editor through `window.__editor`, the editor
+instance published by `src/ui/app.js`: `getMoleculeJSON()`, `getMolecule()`,
+`setTool(name)` / `getTool()` (tools: `carbon`, `single`, `double`, `triple`,
+`cycle`, `erase`), `undo()`, `redo()`, `clear()`, `loadMolecule(json)`,
+`atomClientPoint(id)` / `bondClientPoint(id)` (where to click), and the
+stepper's `highlight()` / `clearHighlight()` / `showLocants()` (see the header
+of `src/editor/editor.js`).
 
 ## Build
 

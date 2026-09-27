@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T12:27:09Z",
+ "updated": "2026-09-27T12:46:42Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
@@ -70,8 +70,11 @@
   {
    "id": "I-8",
    "title": "Editor core",
-   "status": "queued",
-   "summary": "Builds the SVG drawing editor: carbons, bonds, erase, undo/redo, validation toasts and a test API."
+   "status": "done",
+   "summary": "Builds the SVG drawing editor: carbons, bonds, erase, undo/redo, validation toasts, collision checks and a test API.",
+   "risk": "routine",
+   "review": "docs/reviews/I-8.md",
+   "narrative": "docs/progress-archive/i-8.md"
   },
   {
    "id": "I-9",

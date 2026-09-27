@@ -15,7 +15,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-5 | Naming engine III: recursive preferred substituents | `autoclaude/processed/050-naming-substituents.md` | done — `docs/progress-archive/i-5.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-5.md` |
 | I-6 | Naming engine IV: iliden substituents and fixture set | `autoclaude/processed/060-naming-iliden-fixtures.md` | done — `docs/progress-archive/i-6.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-6.md` |
 | I-7 | OPSIN oracle and graph-invariance checks | `autoclaude/processed/070-oracle.md` | done — `docs/progress-archive/i-7.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-7.md` |
-| I-8 | Editor core | `autoclaude/processed/080-editor-core.md` | queued | — | — |
+| I-8 | Editor core | `autoclaude/processed/080-editor-core.md` | done — `docs/progress-archive/i-8.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-8.md` |
 | I-9 | Editor extras | `autoclaude/processed/090-editor-extras.md` | queued | — | — |
 | I-10 | Explanations and results panel | `autoclaude/processed/100-explain-results.md` | queued | — | — |
 | I-11 | Redraw and examples | `autoclaude/processed/110-redraw-examples.md` | queued | — | — |
@@ -37,8 +37,8 @@ All twelve plan items are now queued; the inbox holds no plan items.
 
 ## Next action
 
-Poll the inbox (phase boundary), then execute I-8 (editor core) per
-`autoclaude/processed/080-editor-core.md`.
+Poll the inbox (phase boundary), then execute I-9 (editor extras) per
+`autoclaude/processed/090-editor-extras.md`.
 
 ## Key paths
 
@@ -50,14 +50,16 @@ Poll the inbox (phase boundary), then execute I-8 (editor core) per
   fixtures `tests/fixtures/names.tsv` (§4.8 format, `#` section lines).
 - Oracle: `npm run oracle -- --count 1000 --seed 1` (`scripts/oracle/`, OPSIN 2.9.0
   jar in gitignored `scripts/oracle/vendor/`, `--download` fetches it).
+- Editor: `src/editor/{editor,geometry,history,render}.js` — DOM-free
+  `createEditorCore()` + `createEditor(svg)`; test API `window.__editor`
+  (see `editor.js` header). UI glue `src/ui/{app,toolbar,feedback}.js`.
 - Model: `src/model/{molecule,graph,validate,smiles}.js` — `canonicalTreeKey`
   in graph.js; `validateStructure` / `validateForNaming` in validate.js.
 
-## Verification (last phase, I-7)
+## Verification (last phase, I-8)
 
-- `npm test` 0 (300 pass) · `npm run check` 0 · `npm run build` 0 ·
-  `npm run e2e` 0 (3 pass) · `npm run oracle -- --count 1000 --seed 1` →
-  1000 passed, 0 failed, 0 skipped.
+- `npm test` 0 (329 pass) · `npm run check` 0 · `npm run build` 0 ·
+  `npm run e2e` 0 (9 pass). Oracle not rerun (naming untouched).
 
 ## Open risks / deviations
 
@@ -77,10 +79,14 @@ Poll the inbox (phase boundary), then execute I-8 (editor core) per
   (OPSIN cannot judge preference). ~37 000 molecules, no naming bugs. I-6 review
   finding (N4 must compare one flattened citation-order locant sequence) fixed.
 
+- I-8: Borrar on a bond now keeps both carbons (design §6.1 changed to
+  match; see `docs/progress-archive/i-8.md`). Drag from empty space makes a
+  two-carbon fragment (spec silent).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-6 `7e93bbb`, pushed. I-7 committed and pushed right after this
+- I-7 `6ff3bac`, pushed. I-8 committed and pushed right after this
   checkpoint (see `git log`).

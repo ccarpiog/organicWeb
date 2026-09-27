@@ -123,6 +123,8 @@ src/
   layout/canonical.js   redraw: main chain horizontal zigzag, branches placed
   ui/app.js             wires editor, name button, results panel, stepper
   ui/examples.js        example gallery
+  ui/toolbar.js         drawing toolbar (tools, Deshacer/Rehacer/Limpiar)
+  ui/feedback.js        in-page toast and confirmation dialog
 tests/
   unit/*.test.js        node --test
   fixtures/names.tsv    SMILES <TAB> expected name <TAB> rule tested <TAB> justification
@@ -465,7 +467,7 @@ to a bottom bar.
 | **Enlace simple / doble / triple** (default simple) | Click empty space → new two-carbon fragment with that bond order. Click an atom → grow a new carbon bonded with that order. Drag from an atom → new carbon in the drag direction, snapped to 30°; releasing on an existing atom bonds the two (a ring is allowed; naming refuses it). Click an existing bond → **set** it to the tool's order. |
 | **Cambiar enlace** | Click a bond → cycle 1→2→3→1 (skipping orders that break valence). |
 | **Cadena** | Drag from empty space or an atom: a zigzag chain grows along the drag, live counter "5 C". Release commits. |
-| **Borrar** | Click atom → delete it and its bonds. Click bond → delete bond; atoms left with no bonds that were created only as its endpoints are removed too. |
+| **Borrar** | Click atom → delete it and its bonds. Click bond → delete the bond only; both carbons stay (the model does not record how an atom was created, so an endpoint cannot be told apart from a carbon placed on its own). |
 | **Mover** | Drag an atom (moves it). Drag on empty space → marquee selection; then drag the selection. |
 | Pan / zoom | Space+drag, middle-drag or two-finger drag pans; wheel / pinch zooms; "Centrar" button fits the molecule. |
 | Buttons | Deshacer, Rehacer, Limpiar (in-page confirmation dialog, never `window.confirm`), Ordenar dibujo (§7). |

@@ -18,6 +18,13 @@
   --color-canvas: #ffffff;
   --color-bond: #1d2330;
   --color-highlight: #fde68a;
+  --color-hover: rgba(31, 111, 235, 0.25);
+  --color-error: #dc2626;
+  /* Stepper highlight styles (design.md §6.3). */
+  --color-hl-parent: rgba(37, 99, 235, 0.35);
+  --color-hl-candidate: rgba(245, 158, 11, 0.4);
+  --color-hl-substituent: rgba(16, 185, 129, 0.4);
+  --color-hl-locant: rgba(124, 58, 237, 0.35);
   /* Name part colours (used from phase 030 on). */
   --color-part-locant: #7c3aed;
   --color-part-prefix: #0f766e;
@@ -43,6 +50,12 @@
     --color-canvas: #151a23;
     --color-bond: #e6e9ef;
     --color-highlight: #6b5a1e;
+    --color-hover: rgba(76, 141, 255, 0.35);
+    --color-error: #f87171;
+    --color-hl-parent: rgba(96, 165, 250, 0.45);
+    --color-hl-candidate: rgba(251, 191, 36, 0.45);
+    --color-hl-substituent: rgba(52, 211, 153, 0.45);
+    --color-hl-locant: rgba(196, 161, 255, 0.45);
     --color-part-locant: #c4a1ff;
     --color-part-prefix: #5eead4;
     --color-part-parent: #93b4ff;
@@ -113,6 +126,7 @@ body {
 
 .canvas-area {
   grid-area: canvas;
+  position: relative;
   display: flex;
   min-height: 20rem;
   background: var(--color-canvas);
@@ -127,6 +141,191 @@ body {
   height: 100%;
   touch-action: none;
   color: var(--color-bond);
+}
+
+/* Toolbar buttons (src/ui/toolbar.js). */
+.tool-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tool-button:hover:not(:disabled) {
+  background: var(--color-hover);
+}
+
+.tool-button[aria-pressed="true"] {
+  color: var(--color-accent-text);
+  background: var(--color-accent);
+}
+
+.tool-button:disabled {
+  color: var(--color-disabled);
+  cursor: not-allowed;
+}
+
+.toolbar-separator {
+  align-self: stretch;
+  min-width: 1px;
+  min-height: 1px;
+  margin: 0.25rem 0;
+  background: var(--color-border);
+}
+
+/* Canvas drawing (src/editor/render.js). */
+.canvas .bond-line {
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.canvas .bond-halo {
+  stroke: transparent;
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+
+.canvas .bond.is-hover .bond-halo {
+  stroke: var(--color-hover);
+}
+
+.canvas .atom {
+  fill: transparent;
+}
+
+.canvas .atom.is-hover {
+  fill: var(--color-hover);
+}
+
+.canvas .atom-label,
+.canvas .locant {
+  fill: currentColor;
+  font-family: var(--font-ui);
+  font-size: 16px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.canvas .locant {
+  fill: var(--color-part-locant);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.canvas .preview-line {
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  stroke-linecap: round;
+}
+
+.canvas .preview-end {
+  fill: var(--color-accent);
+}
+
+.canvas .hl-bond {
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+
+.canvas .hl-parent { stroke: var(--color-hl-parent); fill: var(--color-hl-parent); }
+.canvas .hl-candidate { stroke: var(--color-hl-candidate); fill: var(--color-hl-candidate); }
+.canvas .hl-substituent { stroke: var(--color-hl-substituent); fill: var(--color-hl-substituent); }
+.canvas .hl-locant { stroke: var(--color-hl-locant); fill: var(--color-hl-locant); }
+
+.canvas .hl-atom {
+  stroke: none;
+}
+
+.canvas .reject-ring {
+  fill: none;
+  stroke: var(--color-error);
+  stroke-width: 2.5;
+}
+
+.canvas.shake {
+  animation: shake 0.35s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canvas.shake {
+    animation-duration: 0.01s;
+  }
+}
+
+/* Toast for refused edits (src/ui/feedback.js). */
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  max-width: calc(100% - 2rem);
+  padding: 0.6rem 1rem;
+  color: var(--color-accent-text);
+  background: var(--color-text);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.toast[hidden] {
+  display: none;
+}
+
+/* In-page confirmation dialog. */
+.dialog {
+  max-width: 26rem;
+  padding: 1.25rem;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.dialog h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.dialog-button {
+  padding: 0.5rem 1rem;
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.dialog-button--danger {
+  color: #ffffff;
+  background: var(--color-error);
+  border-color: var(--color-error);
 }
 
 .results {
