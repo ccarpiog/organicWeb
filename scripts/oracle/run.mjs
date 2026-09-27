@@ -3,8 +3,11 @@
  * bundled.
  *
  * Generates seeded random acyclic hydrocarbons and half as many random
- * substituted or unsaturated monocycles, adds one cycloalkane per ring size
- * in the carbon range, names each one in every prefix style, renders the same name structures in English, lets OPSIN
+ * substituted or unsaturated monocycles and a tenth as many benzene
+ * derivatives (benzene and monosubstituted benzenes, either Kekulé
+ * drawing), adds one cycloalkane per ring size in the carbon range, names
+ * each one in every prefix style (plus its traditional name, `toluene` or
+ * `styrene`, when it has one), renders the same name structures in English, lets OPSIN
  * turn the English names back into SMILES and checks that they denote the
  * original molecule (ring count, canonical key + formula). Prints passed / failed /
  * skipped. Without Java or the pinned jar every molecule is reported as
@@ -26,7 +29,9 @@ import { fileURLToPath } from 'node:url';
 import { writeSmiles } from '../../src/model/smiles.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
-import { generateMolecules, generateMonocycles, generateCycloalkanes } from './generate.mjs';
+import { traditionalNameId } from '../../src/naming/aromatic.js';
+import { lexiconEn } from '../../src/naming/lexicon.en.js';
+import { generateMolecules, generateMonocycles, generateBenzenes, generateCycloalkanes } from './generate.mjs';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
 import { englishName, compareWithOpsin } from './compare.mjs';
 
@@ -74,22 +79,31 @@ export function parseArgs(argv) {
 
 /**
  * Names every molecule in every prefix style and renders the English names.
+ * A benzene derivative with a traditional name retained by IUPAC 2013
+ * (aromatic.js traditionalNameId(): `toluene`, `styrene`) gets one more
+ * entry, style 'traditional', so OPSIN checks that name too.
  *
  * @param {object[]} molecules - The molecules.
  * @returns {{mol: object, smiles: string, names: {style: string, spanish: string, english: string|null, error: string|null}[]}[]} One case per molecule.
  */
 export function buildCases(molecules) {
-  return molecules.map((mol) => ({
-    mol,
-    smiles: writeSmiles(mol),
-    names: PREFIX_STYLES.map((style) => {
+  return molecules.map((mol) => {
+    const names = [];
+    for (const style of PREFIX_STYLES) {
       const result = nameMolecule(mol, { prefixStyle: style });
       if (!result.ok) {
-        return { style, spanish: '', english: null, error: `${result.error.code} ${result.error.detail || result.error.message}` };
+        names.push({ style, spanish: '', english: null, error: `${result.error.code} ${result.error.detail || result.error.message}` });
+        continue;
       }
-      return { style, spanish: result.name, english: englishName(result.structure), error: null };
-    }),
-  }));
+      names.push({ style, spanish: result.name, english: englishName(result.structure), error: null });
+      const traditional = style === PREFIX_STYLES[0] ? traditionalNameId(result.structure) : null;
+      if (traditional) {
+        const spanish = result.alternatives.find((a) => a.style === 'traditional').name;
+        names.push({ style: 'traditional', spanish, english: lexiconEn.traditionalName(traditional), error: null });
+      }
+    } // End of the loop over the prefix styles
+    return { mol, smiles: writeSmiles(mol), names };
+  });
 } // End of function buildCases()
 
 /**
@@ -193,9 +207,13 @@ export async function main(argv) {
   const monocycles = generateMonocycles({
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
+  const benzenes = generateBenzenes({
+    count: Math.ceil(options.count / 10), seed: options.seed, minSize: options.min, maxSize: options.max,
+  });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
-  const molecules = [...random, ...monocycles, ...rings];
-  console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${rings.length} cycloalkanes, `
+  const molecules = [...random, ...monocycles, ...benzenes, ...rings];
+  console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes `
+    + `+ ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
   const availability = await checkAvailability(options.jar, options.java);
   if (!availability.ok) {

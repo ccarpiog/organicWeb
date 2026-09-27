@@ -49,7 +49,7 @@ test('Ayuda opens an in-page dialog with illustrations and the glossary; Esc clo
   const dialog = page.getByRole('dialog', { name: 'Cómo se usa' });
   await expect(dialog).toBeVisible();
   expect(await dialog.locator('svg.help-figure').count()).toBeGreaterThanOrEqual(4);
-  await expect(dialog.locator('.help-glossary dt')).toHaveCount(7);
+  await expect(dialog.locator('.help-glossary dt')).toHaveCount(8);
   await expect(dialog.locator('.help-glossary')).toContainText('Cadena principal');
   await expect(dialog.locator('.help-glossary')).toContainText('Anillo');
   // The focus starts on the heading, at the top of the dialog.

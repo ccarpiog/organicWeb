@@ -272,20 +272,27 @@ test('validation left for rings: heteroatoms, polycycles, heterocycles and the s
   assert.equal(validateForNaming(big).code, 'TOO_BIG');
 }); // End of test 'validation left for rings…'
 
-test('a benzene ring (Kekulé hexagon) is refused with CYCLE until I-28; other alternations are named', () => {
+test('a benzene ring (Kekulé hexagon) is named by aromatic.js since I-28; other alternations stay cycloalkenes', () => {
   for (const smiles of ['C1=CC=CC=C1', 'C1C=CC=CC=1', 'CC1=CC=CC=C1', 'C=CC1=CC=CC=C1']) {
+    assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
+    assert.match(named(smiles).name, /benceno$/, smiles);
+  }
+  // Two or more substituents: CYCLE with ringReason 'polysubstitutedBenzene' (no orto/meta/para).
+  for (const smiles of ['CC1=CC=CC=C1C', 'CC1=CC(C)=CC=C1', 'CC1=CC=C(C)C=C1', 'CC1=C(C)C(C)=C(C)C(C)=C1C']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'CYCLE', smiles);
-    assert.equal(error.ringReason, 'benzene', smiles);
-    assert.equal(error.message, MESSAGES.CYCLE);
-    assert.match(error.message, /benceno/);
+    assert.equal(error.ringReason, 'polysubstitutedBenzene', smiles);
+    assert.match(error.message, /^Este benceno tiene \d sustituyentes\./);
     assert.ok(isNotNameableYet(error));
     assert.equal(error.atoms.length, 6);
     assert.equal(nameMolecule(parseSmiles(smiles)).error.code, 'CYCLE', smiles);
   }
+  assert.notEqual(MESSAGES.CYCLE, validateForNaming(parseSmiles('CC1=CC=CC=C1C')).message);
+  assert.match(validateForNaming(parseSmiles('CC1=CC=CC=C1C')).message, /tiene 2 sustituyentes/);
   assert.equal(named('C1=CC=CC=CC=C1').name, 'cicloocta-1,3,5,7-tetraeno');
   assert.equal(named('C=C1C=CC=CC1').name, '5-metilidenciclohexa-1,3-dieno');
   assert.equal(named('C1=CC=CCC1').name, 'ciclohexa-1,3-dieno');
+  assert.equal(named('C1=CC=C1').name, 'ciclobuta-1,3-dieno');
 }); // End of test 'a benzene ring…'
 
 test('Ordenar dibujo lays out substituted rings (I-27b); the 90° view still falls back', () => {

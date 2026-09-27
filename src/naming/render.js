@@ -100,7 +100,9 @@ function renderEnding(parent, lexicon, omit) {
  * connecting `a`, unsaturation locants and multipliers: `ciclohexano`,
  * `ciclohexeno`, `ciclohexa-1,3-dieno`, `ciclohex-1-eno` (after prefixes).
  * The ring locant-omission rule (lexicon ringOmitsLocants()) decides
- * whether the unsaturation locants are written.
+ * whether the unsaturation locants are written. A benzene ring (`retained`
+ * 'benzene', aromatic.js) is one retained word, `benceno` (IUPAC 2013
+ * P-22.1.2), referring to every ring atom and bond.
  *
  * @param {object} ring - The ring structure (structure.js RingStructure).
  * @param {object} lexicon - The lexicon.
@@ -108,6 +110,9 @@ function renderEnding(parent, lexicon, omit) {
  * @returns {object[]} The parts.
  */
 export function renderRingParent(ring, lexicon, prefixes) {
+  if (ring.retained === 'benzene') {
+    return [part(lexicon.benzeneName, 'stem', ring.atoms, ring.bonds)];
+  }
   return [
     part(lexicon.ringPrefix, 'stem', ring.atoms, [ring.closure]),
     part(lexicon.stem(ring.length), 'stem', ring.atoms),
@@ -242,7 +247,7 @@ function locantTokens(locants) {
  * attachment bond, `iliden` for a double one) — `propil`, `propan-2-il`,
  * `2-metilprop-1-en-1-il`, `etenil`, `buta-1,3-dien-1-il`, `metiliden`,
  * `propan-2-iliden`, `eteniliden` — or a retained prefix (`isopropil`,
- * `isopropiliden`, `tert-butil`). A saturated group with the free valence at
+ * `isopropiliden`, `tert-butil`, `fenil`). A saturated group with the free valence at
  * locant 1 uses the short form (`propil`, `propiliden`, `2-metilpropil`);
  * one- and two-carbon groups cite no locant.
  *

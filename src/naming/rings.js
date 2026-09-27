@@ -100,6 +100,31 @@ function withRingBonds(step, data) {
 }
 
 /**
+ * Chooses the numbering of a ring among every start atom and both
+ * directions (ringCandidates()) with the chain cascade
+ * (numbering.js runNumberingCascade(): N1 multiple bonds, N2 double bonds,
+ * N3 prefixes, N4 citation order, then the presentation tie-break).
+ *
+ * @param {object} mol - The molecule.
+ * @param {object} perceived - The ring in perceived order (ringParent()).
+ * @param {{chainAtom: number, key: string, citation: object}[]} substituents - Its substituents (substituentsOf() entries).
+ * @returns {{parent: object, trace: object[]}} The numbered ring structure and the numbering trace steps (candidates with their ring bonds).
+ */
+export function numberRing(mol, perceived, substituents) {
+  const prefixes = substituents.map((sub) => ({ atom: sub.chainAtom, key: sub.key, citation: sub.citation }));
+  const candidates = ringCandidates(perceived);
+  const data = new Map(candidates.map((c) => [
+    c.key,
+    candidateData(c.atoms, c.bonds, c.bonds.map((id) => mol.bonds.get(id).order), prefixes),
+  ]));
+  const { chosen, trace } = runNumberingCascade(candidates, data, { prefixCounts: [prefixes.length] });
+  return {
+    parent: buildRingStructure(chosen.atoms, data.get(chosen.key).bonds, data.get(chosen.key).orders),
+    trace: trace.map((step) => withRingBonds(step, data)),
+  };
+} // End of function numberRing()
+
+/**
  * Names a validated molecule with one carbocycle under one prefix style:
  * the ring is the parent (ring vs chain, see the file header), the side
  * chains are its substituents, and the ring numbering is chosen among every
@@ -120,16 +145,10 @@ export function nameRingWithStyle(mol, style = PREFIX_STYLES[0]) {
   let parent = perceived;
   let numberingTrace = [];
   if (substituents.length > 0 || !saturated) {
-    const prefixes = substituents.map((sub) => ({ atom: sub.chainAtom, key: sub.key, citation: sub.citation }));
-    const candidates = ringCandidates(perceived);
-    const data = new Map(candidates.map((c) => [
-      c.key,
-      candidateData(c.atoms, c.bonds, c.bonds.map((id) => mol.bonds.get(id).order), prefixes),
-    ]));
-    const { chosen, trace } = runNumberingCascade(candidates, data, { prefixCounts: [prefixes.length] });
-    parent = buildRingStructure(chosen.atoms, data.get(chosen.key).bonds, data.get(chosen.key).orders);
-    numberingTrace = trace.map((step) => withRingBonds(step, data));
-  } // End of the ring numbering of a substituted or unsaturated ring
+    const numbered = numberRing(mol, perceived, substituents);
+    parent = numbered.parent;
+    numberingTrace = numbered.trace;
+  }
   const structure = buildNameStructure({ parent, prefixes: groupPrefixes(substituents, parent.atoms) });
   const { name, parts } = renderName(structure, lexiconEs);
   const candidate = { atoms: [...perceived.atoms], bonds: [...perceived.bonds], key: 'ring' };

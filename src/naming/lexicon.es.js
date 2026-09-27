@@ -4,7 +4,9 @@
  * endings, the connecting `a`, the `en`/`ino` rules, the locant-omission
  * table, the group-name vs. prefix forms, substituent-prefix morphology
  * (`il`, `an`, retained `isopropil`/`tert-butil`, enclosing marks), common
- * group names for explanations and the prefix-style labels.
+ * group names for explanations and the prefix-style labels, and the retained
+ * benzene words (`benceno`, the `fenil` prefix, the traditional names
+ * `tolueno` and `estireno`, design.md §13.4 I-28).
  *
  * Everything that depends on the language lives here; render.js only
  * assembles parts and punctuation. The exported `lexiconEs` object is the
@@ -48,6 +50,29 @@ const SMALL_COMPOUND_MULTIPLIERS = Object.freeze(['', '', 'bis', 'tris']);
  * (ciclohexano; IUPAC 2013 P-22.1.1: the nondetachable prefix cyclo + the name of the unbranched saturated chain with as many carbons).
  */
 export const RING_PREFIX = 'ciclo';
+
+/**
+ * Retained name of the benzene ring as a parent (IUPAC 2013 P-22.1.2:
+ * `benzene` is retained; `ciclohexa-1,3,5-trieno` is not an acceptable name).
+ */
+export const BENZENE_NAME = 'benceno';
+
+/**
+ * Traditional names of monosubstituted benzenes still retained by IUPAC 2013
+ * (P-22.1.3), keyed by the id aromatic.js traditionalNameId() returns. They
+ * are only listed under "Otras formas válidas" (design.md §13.1: the
+ * systematic name comes first). `tolueno` is even the 2013 preferred name
+ * (substitution allowed on the ring only); `estireno` is retained for general
+ * nomenclature. Cumene, cymene and the like are no longer retained
+ * (P-22.1.3), so `cumeno` is not offered.
+ */
+export const TRADITIONAL_NAMES = Object.freeze({ toluene: 'tolueno', styrene: 'estireno' });
+
+/** Labels shown next to each traditional name (design.md §1.1 style labels). */
+export const TRADITIONAL_LABELS = Object.freeze({
+  toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
+  styrene: 'nombre tradicional, que la IUPAC (2013) acepta',
+});
 
 /** Endings of the parent name. */
 export const ENDINGS = Object.freeze({ saturated: 'ano', double: 'eno', triple: 'ino' });
@@ -200,6 +225,10 @@ export function omitsLocants(chain, hasPrefixes) {
  *   substituent's locant: `metilciclohexano`, `metilidenciclohexano`
  *   (IUPAC 2013 P-14.3.4.2(c): the locant 1 is omitted in a monosubstituted
  *   parent hydride with only one kind of substitutable hydrogen);
+ * - a benzene parent (`retained` 'benzene', aromatic.js) never cites the
+ *   locants of its double bonds, and a single substituent omits its locant
+ *   as well: `benceno`, `metilbenceno` (P-14.3.4.2(c); polysubstituted
+ *   benzenes are refused before naming, design.md §13.1);
  * - everything else keeps all its locants, the 1 of a ring double bond
  *   included: `3-metilciclohex-1-eno`, `1-metilciclohex-1-eno`,
  *   `ciclohexa-1,3-dieno`, `1,1-dimetilciclohexano` (as `but-1-eno` and
@@ -210,10 +239,14 @@ export function omitsLocants(chain, hasPrefixes) {
  * @returns {{parent: boolean, prefixes: boolean}} Whether the ending locants and the prefix locants are omitted.
  */
 export function ringOmitsLocants(ring, prefixes) {
+  const single = prefixes.length === 1 && prefixes[0].locants.length === 1;
+  if (ring.retained === 'benzene') {
+    return { parent: true, prefixes: single };
+  }
   const multiple = ring.double.length + ring.triple.length;
   return {
     parent: prefixes.length === 0 && multiple === 1,
-    prefixes: multiple === 0 && prefixes.length === 1 && prefixes[0].locants.length === 1,
+    prefixes: multiple === 0 && single,
   };
 }
 
@@ -286,6 +319,7 @@ export const RETAINED_PREFIXES = Object.freeze({
   isopropyl: Object.freeze({ italic: '', text: 'isopropil' }),
   isopropylidene: Object.freeze({ italic: '', text: 'isopropiliden' }),
   'tert-butyl': Object.freeze({ italic: 'tert-', text: 'butil' }),
+  phenyl: Object.freeze({ italic: '', text: 'fenil' }),
 });
 
 /**
@@ -336,7 +370,7 @@ export function substituentUnsaturationEnding(kind) {
 /**
  * Returns a retained substituent prefix.
  *
- * @param {string} id - Retained-name id ('isopropyl', 'isopropylidene' or 'tert-butyl').
+ * @param {string} id - Retained-name id ('isopropyl', 'isopropylidene', 'tert-butyl' or 'phenyl').
  * @returns {{italic: string, text: string}} The italic descriptor ('' if none) and the alphabetised text.
  * @throws {Error} For an unknown id.
  */
@@ -368,6 +402,31 @@ export function styleLabel(style) {
   return STYLE_LABELS[style] || style;
 }
 
+/**
+ * Returns a traditional name of a monosubstituted benzene (TRADITIONAL_NAMES).
+ *
+ * @param {string} id - 'toluene' or 'styrene'.
+ * @returns {string} The Spanish name.
+ * @throws {Error} For an unknown id.
+ */
+export function traditionalName(id) {
+  const name = TRADITIONAL_NAMES[id];
+  if (!name) {
+    throw new Error(`traditionalName: unknown traditional name ${id}`);
+  }
+  return name;
+}
+
+/**
+ * Returns the label shown next to a traditional name.
+ *
+ * @param {string} id - 'toluene' or 'styrene'.
+ * @returns {string} The Spanish label.
+ */
+export function traditionalLabel(id) {
+  return TRADITIONAL_LABELS[id] || 'nombre tradicional';
+}
+
 /** The Spanish lexicon, as consumed by render.js. */
 export const lexiconEs = Object.freeze({
   freeValenceSuffix,
@@ -392,4 +451,7 @@ export const lexiconEs = Object.freeze({
   groupName,
   prefixForm,
   ringPrefix: RING_PREFIX,
+  benzeneName: BENZENE_NAME,
+  traditionalName,
+  traditionalLabel,
 });

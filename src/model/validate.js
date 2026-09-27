@@ -10,7 +10,8 @@
  * - validateForNaming(): the structural checks, then non-empty, connected,
  *   the ring scope (rings are classified by rings.js: a single carbocycle of
  *   at most 30 ring carbons is nameable, with or without side chains and ring
- *   multiple bonds, except a benzene ring (CYCLE, named from I-28); a larger
+ *   multiple bonds — a benzene ring included, but only with at most one
+ *   substituent (two or more: CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
  *   one gets TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps (≤ 60 carbons, ≤ 80 heavy atoms),
  *   only elements the engine can name yet (carbon), and longest chain ≤ 30
  *   (for a ring: every side chain ≤ 30).
@@ -44,8 +45,8 @@ export const NOT_NAMEABLE_YET = Object.freeze(['CYCLE', 'RING_SYSTEM', 'HETEROAT
 export const MESSAGES = Object.freeze({
   EMPTY: 'Dibuja primero una molécula.',
   DISCONNECTED: 'Hay piezas sueltas: todas las partes deben estar unidas.',
-  CYCLE: 'Este anillo es un benceno: un hexágono con tres enlaces dobles alternados. El benceno y sus derivados '
-    + 'tienen nombres propios que aún no sé poner, pero pronto aprenderé.',
+  CYCLE: 'Este benceno tiene varios sustituyentes. Solo sé nombrar el benceno con un sustituyente como máximo '
+    + '(como el metilbenceno): los bencenos con dos o más sustituyentes quedan fuera de lo que sé nombrar.',
   RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
   VALENCE: 'Este carbono tendría más de 4 enlaces.',
   TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
@@ -316,15 +317,44 @@ export function isBenzeneRing(mol, ring) {
 }
 
 /**
+ * Spanish CYCLE message for a benzene ring with `count` (≥ 2) substituents
+ * (design.md §3.2, §13.1: monosubstituted benzenes only, no orto/meta/para).
+ *
+ * @param {number} count - Number of substituents on the ring.
+ * @returns {string} The message.
+ */
+export function polysubstitutedBenzeneMessage(count) {
+  return MESSAGES.CYCLE.replace('varios sustituyentes', `${count} sustituyentes`);
+}
+
+/**
+ * The ring atoms of a single ring that carry a side chain (a bond to an atom
+ * outside the ring), ascending.
+ *
+ * @param {object} mol - The molecule.
+ * @param {{atoms: number[]}} ring - The ring (perceiveRings()).
+ * @returns {number[]} The substituted ring atoms.
+ */
+export function substitutedRingAtoms(mol, ring) {
+  const inRing = new Set(ring.atoms);
+  const adj = adjacency(mol);
+  return ring.atoms.filter((id) => adj.get(id).some((n) => !inRing.has(n.atom))).sort((p, q) => p - q);
+}
+
+/**
  * The scope check for a molecule with rings. A single carbocycle of at most
  * MAX_CHAIN carbons is in scope (null), with or without side chains and ring
  * multiple bonds (design.md §13.4 I-26; its side chains are checked later
- * by validateForNaming()), except a benzene ring: CYCLE with `ringReason`
- * 'benzene' (valid, named from I-28; `ciclohexa-1,3,5-trieno` is not an
- * acceptable name, IUPAC 2013 P-22.1.2 retains benceno). Otherwise: TOO_BIG
- * for a larger ring, and RING_SYSTEM with `ringKind` for a heterocycle,
- * fused, bridged or spiro system, or several rings (out of scope, design.md
- * §13.1). `atoms` lists every ring atom, for highlighting.
+ * by validateForNaming()). A benzene ring is in scope with at most one
+ * substituent (I-28, named by naming/aromatic.js); with two or more it gets
+ * CYCLE with `ringReason` 'polysubstitutedBenzene' (valid, but orto/meta/para
+ * and polysubstituted benzenes are out of scope, design.md §13.1). A
+ * benzene ring always carries at most one substituent per ring atom (each
+ * ring atom already has three bonds). Otherwise: TOO_BIG for a larger ring,
+ * and RING_SYSTEM with `ringKind` for a heterocycle, fused, bridged or spiro
+ * system, or several rings (out of scope, design.md §13.1) — a benzene with
+ * a ring in its substituent included. `atoms` lists every ring atom, for
+ * highlighting.
  *
  * @param {object} mol - A structurally valid, connected molecule with at least one ring.
  * @returns {{code: string, message: string, atoms: number[]}|null} The error, or null for a nameable single carbocycle.
@@ -338,8 +368,18 @@ function ringError(mol) {
   if (atoms.length > MAX_CHAIN) {
     return validationError('TOO_BIG', { message: RING_TOO_BIG_MESSAGE, detail: `ring of ${atoms.length} carbons`, atoms });
   }
-  if (isBenzeneRing(mol, perception.rings[0])) {
-    return validationError('CYCLE', { atoms, ringKind: kind, ringReason: 'benzene' });
+  const [ring] = perception.rings;
+  if (isBenzeneRing(mol, ring)) {
+    const substituted = substitutedRingAtoms(mol, ring);
+    if (substituted.length > 1) {
+      return validationError('CYCLE', {
+        message: polysubstitutedBenzeneMessage(substituted.length),
+        atoms,
+        ringKind: kind,
+        ringReason: 'polysubstitutedBenzene',
+        substituted,
+      });
+    }
   }
   return null;
 } // End of function ringError()

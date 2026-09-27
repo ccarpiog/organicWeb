@@ -340,6 +340,22 @@ body {
   justify-content: center;
 }
 
+/*
+ * Anillos (3–8 carbons and benceno, seven buttons): shorter buttons on wide
+ * screens with a fine pointer, so the four rows take the height of three and
+ * the toolbar still fits a 720 px-high window.
+ */
+@media (min-width: 801px) and (pointer: fine) {
+  .ring-list .tool-button {
+    height: 1.75rem;
+  }
+
+  .ring-list .tool-button svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
 .element-button svg text {
   font-family: var(--font-ui);
 }

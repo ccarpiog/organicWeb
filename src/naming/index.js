@@ -19,7 +19,11 @@
  * one carbocycle, which is always the parent (ring vs chain, IUPAC 2013
  * P-44.1.2.2); rings.js names it with its side chains as substituents
  * (`ciclohexano`, `metilciclohexano`, `3-metilciclohex-1-eno`, design.md
- * §13.4 I-25, I-26), under the same prefix styles and alternatives.
+ * §13.4 I-25, I-26), under the same prefix styles and alternatives. A
+ * benzene ring (six carbons, alternating double and single ring bonds; at
+ * most one substituent, validation refuses more) is named by aromatic.js:
+ * `benceno`, `metilbenceno`, `isopropilbenceno` (I-28), with the traditional
+ * `tolueno` / `estireno` as an extra alternative.
  */
 
 import { validateForNaming } from '../model/validate.js';
@@ -30,6 +34,7 @@ import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure } from './structure.js';
 import { renderName } from './render.js';
 import { nameRingWithStyle } from './rings.js';
+import { hasBenzeneRing, nameBenzeneWithStyle, traditionalAlternative } from './aromatic.js';
 import { lexiconEs } from './lexicon.es.js';
 
 /** Error for an unexpected engine failure (a bug); nameMolecule never throws. */
@@ -130,7 +135,9 @@ function withCandidateBonds(trace, adj) {
 
 /**
  * Validates and names a molecule (the body of nameMolecule, which may throw
- * only on an internal bug). A molecule with one ring is named by rings.js. When the default-style name contains
+ * only on an internal bug). A molecule with one ring is named by rings.js
+ * (aromatic.js for a benzene ring, which may add a traditional name as the
+ * last alternative). When the default-style name contains
  * `isopropil` or `isopropiliden`, the names in the other two styles are
  * added as `alternatives`, each from its own run of prefix naming and
  * numbering (a style may need a nested `-iliden` group that the others
@@ -151,16 +158,23 @@ function nameValidated(mol, options) {
     throw new RangeError(`unknown prefix style ${style}`);
   }
   const cyclic = hasCycle(mol);
+  const benzene = cyclic && hasBenzeneRing(mol);
   const adj = cyclic ? null : adjacency(mol);
   const selection = cyclic ? null : selectParent(mol);
   /**
-   * Names the molecule under one prefix style: the ring parent (rings.js)
-   * when validation let a ring through, else the chain pipeline.
+   * Names the molecule under one prefix style: benzene (aromatic.js) or
+   * another ring parent (rings.js) when validation let a ring through, else
+   * the chain pipeline.
    *
    * @param {string} s - Prefix style.
    * @returns {object} The naming result without `alternatives`.
    */
-  const nameIn = (s) => (cyclic ? nameRingWithStyle(mol, s) : nameWithStyle(mol, adj, selection, s));
+  const nameIn = (s) => {
+    if (benzene) {
+      return nameBenzeneWithStyle(mol, s);
+    }
+    return cyclic ? nameRingWithStyle(mol, s) : nameWithStyle(mol, adj, selection, s);
+  };
   const main = nameIn(style);
   const byStyle = new Map([[style, main]]);
   const named = (s) => {
@@ -177,5 +191,9 @@ function nameValidated(mol, options) {
       alternatives.push({ style: other, label: lexiconEs.styleLabel(other), name: result.name, parts: result.parts });
     }
   } // End of the alternatives for a molecule with an isopropyl or isopropylidene group
+  const traditional = benzene ? traditionalAlternative(main) : null;
+  if (traditional) {
+    alternatives.push(traditional);
+  }
   return { ...main, alternatives };
 } // End of function nameValidated()

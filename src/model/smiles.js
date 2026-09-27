@@ -15,7 +15,7 @@
  * with an explicit SmilesError: invalid ring closures (`SMILES_RING`: a label
  * never closed, a closure to the same atom `C11`, a second bond between the
  * same pair `C1C1`, different bond orders on the two ends `C=1CC#1`, `%`
- * without two digits), other elements, aromatic lowercase atoms (benzene is phase I-28), charges,
+ * without two digits), other elements, aromatic lowercase atoms (benzene is written in Kekulé form, `C1=CC=CC=C1`), charges,
  * isotopes, atom classes, explicit `[H]` atoms, dots, stereo marks, dangling
  * bonds, unbalanced or empty parentheses — input is never silently dropped.
  * The parsed graph then goes through validateStructure() (validate.js), so

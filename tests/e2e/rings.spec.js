@@ -4,8 +4,10 @@
  * highlights the closure bond; a hand-drawn substituted ring is named
  * (1-etil-3-metilciclohexano, I-26) with its ring numbering on the canvas;
  * "Ordenar dibujo" draws a named ring as a regular polygon (I-27b: locant 1
- * on top, numbering clockwise, one Deshacer restores the drawing) while
- * benzene keeps its naming error; a ring with an oxygen, fused and spiro
+ * on top, numbering clockwise, one Deshacer restores the drawing); benzene
+ * and toluene are named (I-28: tolueno under "Otras formas válidas", the
+ * Kekulé step in the stepper, Ordenar dibujo orders them) while a
+ * disubstituted benzene keeps its naming error; a ring with an oxygen, fused and spiro
  * rings get their out-of-scope messages; the 90° view falls back safely; a
  * ring survives the autosave restore. Runs on the dev server and on
  * dist/index.html.
@@ -298,21 +300,47 @@ for (const [smiles, text] of [
   });
 }
 
-test('a benzene hexagon gets the "not yet" benzene message (named from I-28)', async ({ page }) => {
+test('benzene and toluene are named (I-28); a disubstituted benzene keeps its naming error', async ({ page }) => {
   const errors = await openApp(page);
-  await loadSmiles(page, 'C1=CC=CC=C1');
+  await loadSmiles(page, 'CC1C=CC=CC=1');
+  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+  await expect(page.locator('#result-name')).toHaveText('metilbenceno');
+  await expect(page.locator('#alternatives')).toContainText('tolueno');
+  await expect(page.locator('#redraw-hint')).toContainText('¿Quieres ver el anillo ordenado?');
+  await page.getByRole('button', { name: 'Ver paso a paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper.locator('.step-dot')).toHaveCount(4);
+  await stepper.locator('.step-dot').nth(1).click();
+  await expect(stepper.locator('.step-title')).toHaveText('Reconoce el benceno');
+  await expect(stepper.locator('.step-content')).toContainText('estructuras de Kekulé');
+  // The three double bonds apart from the three single ring bonds.
+  await expect(page.locator('svg#canvas .hl-bond.hl-candidate')).toHaveCount(3);
+  await expect(page.locator('svg#canvas .hl-bond.hl-parent')).toHaveCount(3);
+  // Ordenar dibujo orders the hexagon as one undoable edit.
+  const before = await page.evaluate(() => window.__editor.getMoleculeJSON());
+  await page.locator('#toolbar [data-action="arrange"]').click();
+  await expect.poll(() => page.evaluate(() => window.__editor.isAnimating())).toBe(false);
+  const after = await page.evaluate(() => window.__editor.getMoleculeJSON());
+  expect(after.bonds).toEqual(before.bonds);
+  expect(after.atoms.map((a) => [a.x, a.y])).not.toEqual(before.atoms.map((a) => [a.x, a.y]));
+  // Regression (I-28 review): the name has no locants, so the ordered benzene shows no ring numbers,
+  // on any step of the stepper.
+  await expect(page.locator('svg#canvas .locant')).toHaveCount(0);
+  for (let i = 0; i < 4; i += 1) {
+    await stepper.locator('.step-dot').nth(i).click();
+    await expect(page.locator('svg#canvas .locant')).toHaveCount(0);
+  }
+  // A disubstituted benzene: CYCLE, no name, Ordenar dibujo shows the error and changes nothing.
+  await loadSmiles(page, 'CC1=CC=CC=C1C');
   await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
   const error = page.locator('#results .results-error');
   await expect(error).toHaveAttribute('data-code', 'CYCLE');
-  await expect(error).toContainText('Este anillo es un benceno');
+  await expect(error).toContainText('Este benceno tiene 2 sustituyentes');
   await expect(page.locator('#result-name')).toHaveCount(0);
-  await expect(page.locator('#redraw-hint')).toHaveCount(0);
-  // Ordenar dibujo shows the same naming error and leaves the drawing as it is.
-  const before = await page.evaluate(() => window.__editor.getMoleculeJSON());
+  const unchanged = await page.evaluate(() => window.__editor.getMoleculeJSON());
   await page.locator('#toolbar [data-action="arrange"]').click();
   await expect(page.locator('#results .results-error')).toHaveAttribute('data-code', 'CYCLE');
-  expect(await page.evaluate(() => window.__editor.isAnimating())).toBe(false);
-  expect(await page.evaluate(() => window.__editor.getMoleculeJSON())).toEqual(before);
+  expect(await page.evaluate(() => window.__editor.getMoleculeJSON())).toEqual(unchanged);
   expect(errors).toEqual([]);
 });
 

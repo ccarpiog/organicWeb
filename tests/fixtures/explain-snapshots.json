@@ -12936,12 +12936,7 @@
       "style": "substituent"
      }
     ],
-    "locants": [
-     [
-      2,
-      1
-     ]
-    ],
+    "locants": null,
     "options": [
      {
       "label": "metil",
@@ -12976,12 +12971,7 @@
         "style": "substituent"
        }
       ],
-      "locants": [
-       [
-        2,
-        1
-       ]
-      ]
+      "locants": null
      }
     ]
    },
@@ -13327,12 +13317,7 @@
       "style": "substituent"
      }
     ],
-    "locants": [
-     [
-      11,
-      1
-     ]
-    ],
+    "locants": null,
     "options": [
      {
       "label": "decil",
@@ -13379,12 +13364,7 @@
         "style": "substituent"
        }
       ],
-      "locants": [
-       [
-        11,
-        1
-       ]
-      ]
+      "locants": null
      }
     ]
    },
@@ -13716,12 +13696,7 @@
       "style": "substituent"
      }
     ],
-    "locants": [
-     [
-      2,
-      1
-     ]
-    ],
+    "locants": null,
     "options": [
      {
       "label": "metiliden",
@@ -13756,12 +13731,7 @@
         "style": "substituent"
        }
       ],
-      "locants": [
-       [
-        2,
-        1
-       ]
-      ]
+      "locants": null
      }
     ]
    },
@@ -16630,6 +16600,1010 @@
        8,
        9,
        10
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C1=CC=CC=C1": {
+  "name": "benceno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 6 carbonos y 6 hidrógenos (C₆H₆).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "Los 6 carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "Sin ramas no hace falta numerar: el nombre no lleva números."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       2,
+       4,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       1,
+       3,
+       5
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El anillo tiene nombre propio: «benceno». No lleva números ni terminación que añadir.",
+     "El nombre completo es «benceno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "anillo de 6 carbonos con tres enlaces dobles alternados"
+     }
+    ],
+    "parts": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC1=CC=CC=C1": {
+  "name": "metilbenceno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 7 carbonos y 8 hidrógenos (C₇H₈).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       1
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "La rama que sale del anillo es un [[sustituyente]]. Con las normas de la IUPAC (2013), el anillo manda siempre sobre una cadena abierta: el nombre acaba en «benceno» y la rama va delante.",
+     "Algunos libros antiguos lo hacen al revés: toman la cadena como principal y el anillo como grupo «fenilo» (por ejemplo, «feniletano» en vez de «etilbenceno»). Esa forma no es la preferida.",
+     "Con un solo sustituyente no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono de la rama es siempre el 1 y el número no se escribe."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       3,
+       5,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       2,
+       4,
+       6
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el anillo hay un grupo metilo: se escribe «metil», sin número.",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "metil",
+      "text": "En el anillo hay un grupo metilo: se escribe «metil», sin número. «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         3,
+         4,
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         2,
+         3,
+         4,
+         5,
+         6,
+         7
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         1
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero va el sustituyente, sin número, y al final «benceno», todo junto.",
+     "El nombre completo es «metilbenceno».",
+     "También es correcto:",
+     "«tolueno»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "anillo de 6 carbonos con tres enlaces dobles alternados"
+     }
+    ],
+    "parts": [
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCCCCCCCCCC1=CC=CC=C1": {
+  "name": "decilbenceno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 16 carbonos y 26 hidrógenos (C₁₆H₂₆).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "La rama que sale del anillo es un [[sustituyente]]. Con las normas de la IUPAC (2013), el anillo manda siempre sobre una cadena abierta: el nombre acaba en «benceno» y la rama va delante.",
+     "Aquí la rama tiene 10 carbonos y el anillo solo 6, pero aun así manda el anillo.",
+     "Algunos libros antiguos lo hacen al revés: toman la cadena como principal y el anillo como grupo «fenilo» (por ejemplo, «feniletano» en vez de «etilbenceno»). Esa forma no es la preferida.",
+     "Con un solo sustituyente no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono de la rama es siempre el 1 y el número no se escribe."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "bonds": [
+       12,
+       14,
+       16
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       11,
+       13,
+       15
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el anillo hay un grupo decilo: se escribe «decil», sin número.",
+     "«decil» es un grupo de 10 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "bonds": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "decil",
+      "text": "En el anillo hay un grupo decilo: se escribe «decil», sin número. «decil» es un grupo de 10 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         11,
+         12,
+         13,
+         14,
+         15,
+         16
+        ],
+        "bonds": [
+         11,
+         12,
+         13,
+         14,
+         15,
+         16
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         10,
+         9,
+         8,
+         7,
+         6,
+         5,
+         4,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         10,
+         1,
+         2,
+         3,
+         4,
+         5,
+         6,
+         7,
+         8,
+         9
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero va el sustituyente, sin número, y al final «benceno», todo junto.",
+     "El nombre completo es «decilbenceno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "bonds": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "decil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo decilo (10 carbonos)"
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "anillo de 6 carbonos con tres enlaces dobles alternados"
+     }
+    ],
+    "parts": [
+     {
+      "text": "decil",
+      "kind": "prefix",
+      "atoms": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ]
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "bonds": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(C)C1=CC=CC=C1": {
+  "name": "isopropilbenceno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos y 12 hidrógenos (C₉H₁₂).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       3,
+       1,
+       2
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "La rama que sale del anillo es un [[sustituyente]]. Con las normas de la IUPAC (2013), el anillo manda siempre sobre una cadena abierta: el nombre acaba en «benceno» y la rama va delante.",
+     "Algunos libros antiguos lo hacen al revés: toman la cadena como principal y el anillo como grupo «fenilo» (por ejemplo, «feniletano» en vez de «etilbenceno»). Esa forma no es la preferida.",
+     "Con un solo sustituyente no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono de la rama es siempre el 1 y el número no se escribe."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       7,
+       9
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       4,
+       6,
+       8
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el anillo hay un grupo isopropilo: se escribe «isopropil», sin número.",
+     "Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos: «isopropil» es el nombre tradicional, que la IUPAC acepta (es el que usamos aquí); «propan-2-il» es el preferido por la IUPAC: una cadena de 3 carbonos (prop) unida por su carbono 2; «1-metiletil» toma una cadena de 2 carbonos (et) unida por su carbono 1, con un metil en ese mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "isopropil",
+      "text": "En el anillo hay un grupo isopropilo: se escribe «isopropil», sin número. Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos: «isopropil» es el nombre tradicional, que la IUPAC acepta (es el que usamos aquí); «propan-2-il» es el preferido por la IUPAC: una cadena de 3 carbonos (prop) unida por su carbono 2; «1-metiletil» toma una cadena de 2 carbonos (et) unida por su carbono 1, con un metil en ese mismo carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         5,
+         6,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         4,
+         5,
+         6,
+         7,
+         8,
+         9
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         3,
+         1,
+         2
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero va el sustituyente, sin número, y al final «benceno», todo junto.",
+     "El nombre completo es «isopropilbenceno».",
+     "También son correctos:",
+     "«(propan-2-il)benceno»: nombre preferido por la IUPAC (2013).",
+     "«(1-metiletil)benceno»: forma sistemática clásica."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "isopropil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo isopropilo (3 carbonos)"
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "anillo de 6 carbonos con tres enlaces dobles alternados"
+     }
+    ],
+    "parts": [
+     {
+      "text": "isopropil",
+      "kind": "prefix",
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ]
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
       ]
      }
     ]

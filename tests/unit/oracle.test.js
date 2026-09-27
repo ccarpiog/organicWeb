@@ -20,8 +20,10 @@ import { nameMolecule } from '../../src/naming/index.js';
 import { lexiconEs } from '../../src/naming/lexicon.es.js';
 import { lexiconEn, stem } from '../../src/naming/lexicon.en.js';
 import { parseFullSmiles, heavyAtomTree, OracleSmilesError } from '../../scripts/oracle/smiles-full.mjs';
-import { englishName, compareWithOpsin } from '../../scripts/oracle/compare.mjs';
-import { generateMolecules, generateMonocycles } from '../../scripts/oracle/generate.mjs';
+import { englishName, compareWithOpsin, kekuleKeys } from '../../scripts/oracle/compare.mjs';
+import { generateMolecules, generateMonocycles, generateBenzenes } from '../../scripts/oracle/generate.mjs';
+import { perceiveRings } from '../../src/model/rings.js';
+import { isBenzeneRing } from '../../src/model/validate.js';
 import { checkAvailability } from '../../scripts/oracle/opsin.mjs';
 import { main, parseArgs, evaluate } from '../../scripts/oracle/run.mjs';
 
@@ -90,7 +92,11 @@ test('heavyAtomTree keeps hydrocarbons as before and counts the formula from the
   assert.equal(heavyAtomTree('C1CC1').problem, null);
   assert.equal(heavyAtomTree('C1CC1').mol.bonds.size, 3);
   assert.match(heavyAtomTree('CC.C').problem, /fragments/);
-  assert.match(heavyAtomTree('c1ccccc1').problem, /aromatic/);
+  // Aromatic SMILES are kekulized (I-28): benzene and toluene come back as Kekulé hexagons.
+  assert.equal(heavyAtomTree('c1ccccc1').problem, null);
+  assert.equal(heavyAtomTree('c1ccccc1').formula, 'C6H6');
+  assert.equal(heavyAtomTree('Cc1ccccc1').formula, 'C7H8');
+  assert.equal([...heavyAtomTree('c1ccccc1').mol.bonds.values()].filter((b) => b.order === 2).length, 3);
   assert.match(heavyAtomTree('C[CH2]').problem, /valence/);
 }); // End of test 'heavyAtomTree keeps hydrocarbons as before and counts the formula from the SMILES'
 
@@ -208,8 +214,8 @@ test('without the jar every molecule is skipped, never passed, with exit status 
   const status = await main(['--count', '5', '--seed', '1', '--jar', path.join(ROOT, 'scripts', 'oracle', 'vendor', 'missing.jar')]);
   assert.equal(status, 0);
   assert.ok(lines.some((line) => /^skipped: /.test(line)));
-  // 5 random molecules, 3 random monocycles and the 11 cycloalkanes of the default 4–14 C range.
-  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 19  adapter failures: 0'), lines.join('\n'));
+  // 5 random molecules, 3 random monocycles, 1 benzene and the 11 cycloalkanes of the default 4–14 C range.
+  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 20  adapter failures: 0'), lines.join('\n'));
   lines.length = 0;
   assert.equal(await main(['--count', '3', '--java', 'no-such-java-binary']), 0);
   assert.ok(lines.some((line) => /Java not available/.test(line)));
@@ -229,7 +235,7 @@ test('a jar whose checksum is not the pinned one is rejected at any path', async
   assert.match(availability.reason, /checksum/);
 }); // End of test 'a jar whose checksum is not the pinned one is rejected at any path'
 
-test('real OPSIN round trip over 200 random molecules, 100 monocycles and the cycloalkanes (skipped without Java or the jar)', async (t) => {
+test('real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes and the cycloalkanes (skipped without Java or the jar)', async (t) => {
   const availability = await checkAvailability();
   if (!availability.ok) {
     t.skip(availability.reason);
@@ -239,8 +245,8 @@ test('real OPSIN round trip over 200 random molecules, 100 monocycles and the cy
   t.mock.method(console, 'log', (text) => lines.push(text));
   const status = await main(['--count', '200', '--seed', '42']);
   assert.equal(status, 0, lines.join('\n'));
-  assert.ok(lines.includes('passed: 311  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
-}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles and the cycloalkanes'
+  assert.ok(lines.includes('passed: 331  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
+}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes and the cycloalkanes'
 
 test('the English lexicon never reaches the app', async () => {
   const files = [];
@@ -262,3 +268,32 @@ test('the English lexicon never reaches the app', async () => {
     assert.doesNotMatch(source, /from\s+['"][^'"]*lexicon\.en\.js['"]/, `${path.relative(ROOT, file)} imports the English lexicon`);
   }
 }); // End of test 'the English lexicon never reaches the app'
+
+test('benzene derivatives (I-28): generated in both Kekulé drawings, compared whatever drawing OPSIN returns', () => {
+  const benzenes = generateBenzenes({ count: 20, seed: 5 });
+  assert.equal(benzenes.length, 20);
+  assert.deepEqual(generateBenzenes({ count: 20, seed: 5 }).map(writeSmiles), benzenes.map(writeSmiles), 'deterministic');
+  assert.equal(nameMolecule(benzenes[0]).name, 'benceno', 'benzene itself comes first');
+  const firstOrders = new Set();
+  for (const mol of benzenes) {
+    assert.equal(validateForNaming(mol), null);
+    const { rings } = perceiveRings(mol);
+    assert.equal(rings.length, 1);
+    assert.ok(isBenzeneRing(mol, rings[0]));
+    firstOrders.add(mol.bonds.get(rings[0].bonds[0]).order);
+    assert.match(nameMolecule(mol).name, /benceno$/);
+  }
+  assert.equal(firstOrders.size, 2, 'both Kekulé drawings are generated');
+  // The original in one drawing, OPSIN's SMILES in the other or aromatic: all pass.
+  const toluene = parseSmiles('CC1=CC=CC=C1');
+  assert.equal(kekuleKeys(toluene).length, 2);
+  assert.equal(kekuleKeys(parseSmiles('C1=CC=CCC1')).length, 1, 'no swap for a cyclohexadiene');
+  for (const opsin of ['CC1=CC=CC=C1', 'CC1C=CC=CC=1', 'Cc1ccccc1', 'c1ccccc1C']) {
+    assert.deepEqual(compareWithOpsin(toluene, opsin), { status: 'passed', reason: null }, opsin);
+    assert.deepEqual(compareWithOpsin(parseSmiles('CC1C=CC=CC=1'), opsin), { status: 'passed', reason: null }, opsin);
+  }
+  assert.equal(compareWithOpsin(parseSmiles('C1=CC=CC=C1'), 'c1ccccc1').status, 'passed');
+  assert.equal(compareWithOpsin(toluene, 'CC1=CCCC=C1').status, 'failed', 'a cyclohexadiene is not toluene');
+  assert.equal(compareWithOpsin(parseSmiles('C=CC1=CC=CC=C1'), 'C=Cc1ccccc1').status, 'passed');
+  assert.equal(englishName(nameMolecule(toluene).structure), 'methylbenzene');
+});

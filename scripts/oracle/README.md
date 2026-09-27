@@ -20,7 +20,7 @@ refused (the run is reported as skipped).
 
 ```sh
 npm run oracle -- --download                 # once: fetch the pinned jar
-npm run oracle -- --count 1000 --seed 1      # 1000 random molecules + 500 monocycles + 11 cycloalkanes, 4–14 C
+npm run oracle -- --count 1000 --seed 1      # 1000 random molecules + 500 monocycles + 100 benzenes + 11 cycloalkanes, 4–14 C
 npm run oracle -- --count 3000 --seed 6 --min 10 --max 30
 ```
 
@@ -42,31 +42,35 @@ Output: `passed: … failed: … skipped: … adapter failures: …`.
    hydrocarbons from a seed (mulberry32), within the naming size caps;
    `generateMonocycles()` draws half as many distinct (by canonical key)
    random monocycles — a ring of 3–10 carbons with random side chains and
-   random double/triple bonds in the ring and the chains (benzene rings,
-   not named yet, are redrawn); and `generateCycloalkanes()` adds one
+   random double/triple bonds in the ring and the chains (benzene rings
+   drawn by chance are named too); `generateBenzenes()` draws a tenth as
+   many benzene derivatives — benzene, then a Kekulé hexagon in either
+   drawing with one random side chain; and `generateCycloalkanes()` adds one
    cycloalkane per ring size in the carbon range (3–30 at most):
    `cyclopropane` … `cyclotriacontane`.
 2. Each molecule is named in every prefix style (`isopropil`, `pin`,
-   `substituted`); the same name structures are rendered in English with
+   `substituted`), plus its traditional name when it has one (`toluene`,
+   `styrene`); the same name structures are rendered in English with
    `src/naming/lexicon.en.js` (`compare.mjs`).
 3. `opsin.mjs` sends all English names to OPSIN in one batch (`-osmi`).
 4. `smiles-full.mjs` (a fuller SMILES parser: bracket atoms, explicit H,
-   rings, aromatic atoms, charges) turns OPSIN's SMILES into a
+   rings, aromatic atoms — kekulized by `kekulize()` —, charges) turns OPSIN's SMILES into a
    hydrogen-suppressed model molecule that keeps every heavy atom with its
    element (`heavyAtomTree()`), plus a Hill formula counted from the SMILES.
    Rings are kept. Structures the model cannot hold (unsupported elements,
-   aromatic or charged atoms, several fragments, radicals) are naming failures.
+   charged atoms, several fragments, radicals) are naming failures.
 5. A molecule passes when, for every style, the number of rings, the
    canonical key (`canonicalKey()` in `src/model/graph.js`: the tree key, or
    the monocycle key for one ring; elements, bond orders and ring closures,
-   so ethanol and dimethyl ether, or cyclohexane and hex-1-ene, differ) and
+   so ethanol and dimethyl ether, or cyclohexane and hex-1-ene, differ; a
+   benzene ring matches in either Kekulé drawing, `kekuleKeys()`) and
    the formula match the original — never the formula alone; polycycles
    fail until they have a key. OPSIN SMILES that the parser cannot read is an
    **adapter failure**, counted apart from naming failures.
 
 The generator stays hydrocarbon-only: the naming engine does not name
 heteroatom compounds yet, but the comparison already handles them. Only
-single carbocycles are generated (polycycles and benzene are not named yet).
+single carbocycles are generated (polycycles are not named).
 
 A round trip proves that a name denotes the right structure, not that the
 parent choice, numbering or spelling are the preferred ones; the fixtures

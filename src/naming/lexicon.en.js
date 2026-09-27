@@ -10,7 +10,8 @@
  * connecting `a`, the locant-omission table) are language-independent and
  * are shared with the Spanish lexicon; only words differ: `meth`/`eth`
  * stems, `-ane`/`-ene`/`-yne` endings, `-yl`/`-ylidene` free valences and
- * the retained `isopropyl`, `isopropylidene`, `tert-butyl` prefixes.
+ * the retained `isopropyl`, `isopropylidene`, `tert-butyl`, `phenyl`
+ * prefixes, `benzene` and the traditional `toluene` and `styrene`.
  */
 
 import {
@@ -38,6 +39,12 @@ const STEMS = Object.freeze([
  */
 export const RING_PREFIX = 'cyclo';
 
+/** Retained name of the benzene ring as a parent (IUPAC 2013 P-22.1.2). */
+export const BENZENE_NAME = 'benzene';
+
+/** Traditional names of monosubstituted benzenes retained by IUPAC 2013 (P-22.1.3; see lexicon.es.js). */
+export const TRADITIONAL_NAMES = Object.freeze({ toluene: 'toluene', styrene: 'styrene' });
+
 /** Endings of the parent name. */
 export const ENDINGS = Object.freeze({ saturated: 'ane', double: 'ene', triple: 'yne' });
 
@@ -52,6 +59,7 @@ export const RETAINED_PREFIXES = Object.freeze({
   isopropyl: Object.freeze({ italic: '', text: 'isopropyl' }),
   isopropylidene: Object.freeze({ italic: '', text: 'isopropylidene' }),
   'tert-butyl': Object.freeze({ italic: 'tert-', text: 'butyl' }),
+  phenyl: Object.freeze({ italic: '', text: 'phenyl' }),
 });
 
 /** Common (non-preferred) group names, keyed by the `commonName` id of a substituent structure. */
@@ -168,7 +176,7 @@ export function prefixForm(name) {
 /**
  * Returns a retained substituent prefix.
  *
- * @param {string} id - Retained-name id ('isopropyl', 'isopropylidene' or 'tert-butyl').
+ * @param {string} id - Retained-name id ('isopropyl', 'isopropylidene', 'tert-butyl' or 'phenyl').
  * @returns {{italic: string, text: string}} The italic descriptor ('' if none) and the alphabetised text.
  * @throws {Error} For an unknown id.
  */
@@ -200,6 +208,31 @@ export function styleLabel(style) {
   return STYLE_LABELS[style] || style;
 }
 
+/**
+ * Returns a traditional name of a monosubstituted benzene.
+ *
+ * @param {string} id - 'toluene' or 'styrene'.
+ * @returns {string} The English name.
+ * @throws {Error} For an unknown id.
+ */
+export function traditionalName(id) {
+  const name = TRADITIONAL_NAMES[id];
+  if (!name) {
+    throw new Error(`traditionalName: unknown traditional name ${id}`);
+  }
+  return name;
+}
+
+/**
+ * Returns the label of a traditional name (English, developer-facing only).
+ *
+ * @param {string} id - 'toluene' or 'styrene'.
+ * @returns {string} The label.
+ */
+export function traditionalLabel(id) {
+  return id === 'toluene' ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
+}
+
 /** The English lexicon, as consumed by render.js (same members as lexiconEs). */
 export const lexiconEn = Object.freeze({
   freeValenceSuffix,
@@ -224,4 +257,7 @@ export const lexiconEn = Object.freeze({
   groupName,
   prefixForm,
   ringPrefix: RING_PREFIX,
+  benzeneName: BENZENE_NAME,
+  traditionalName,
+  traditionalLabel,
 });

@@ -7,7 +7,9 @@
  * dots. The result is a plain graph; heavyAtomTree() then turns it into a
  * hydrogen-suppressed model molecule keeping every heavy atom and its element,
  * plus the formula counted from the SMILES itself (implicit and explicit
- * hydrogens).
+ * hydrogens). Aromatic (lowercase) atoms are kekulized first (kekulize():
+ * OPSIN usually writes benzene as `C1=CC=CC=C1`, but aromatic SMILES such as
+ * `c1ccccc1` must compare the same, design.md §13.4 I-28).
  *
  * Syntax outside this grammar raises an OracleSmilesError: an adapter
  * failure, never a naming failure. Never bundled.
@@ -177,6 +179,83 @@ export function parseFullSmiles(smiles) {
 } // End of function parseFullSmiles()
 
 /**
+ * Tells whether an aromatic atom takes one double bond in a Kekulé
+ * structure: an aromatic carbon always does; another aromatic atom only if
+ * its neutral valence leaves room after its σ bonds and explicit hydrogens
+ * (pyridine-type `n` yes; `[nH]`, `o`, `s` no).
+ *
+ * @param {{atoms: object[], bonds: object[]}} graph - Result of parseFullSmiles().
+ * @param {number} i - Atom index.
+ * @returns {boolean} True when the atom needs a double bond.
+ */
+function needsDoubleBond(graph, i) {
+  const atom = graph.atoms[i];
+  if (atom.element === 'C') {
+    return true;
+  }
+  const degree = graph.bonds.filter((b) => b.a === i || b.b === i).length;
+  const valence = (VALENCES[atom.element] || [0])[0];
+  return atom.charge === 0 && valence - degree - (atom.hCount || 0) >= 1;
+}
+
+/**
+ * Kekulizes the aromatic part of a parsed SMILES graph in place: the
+ * aromatic bonds (order 1.5) become single or double so that every aromatic
+ * atom that needs one (needsDoubleBond()) gets exactly one double bond — a
+ * perfect matching found by backtracking (small graphs only) — and the atoms
+ * are then marked non-aromatic. Any Kekulé structure will do: the
+ * comparison (compare.mjs) does not depend on which one.
+ *
+ * @param {{atoms: object[], bonds: object[]}} graph - Result of parseFullSmiles() (mutated).
+ * @returns {{atoms: object[], bonds: object[]}} The same graph.
+ * @throws {OracleSmilesError} When the aromatic system has no Kekulé structure.
+ */
+export function kekulize(graph) {
+  const aromaticBonds = graph.bonds.filter((b) => b.order === 1.5);
+  const needy = graph.atoms.map((atom, i) => atom.aromatic && needsDoubleBond(graph, i));
+  const matched = graph.atoms.map(() => false);
+  /**
+   * Matches the remaining needy atoms, lowest index first.
+   *
+   * @returns {boolean} True when every needy atom got one double bond.
+   */
+  const solve = () => {
+    const i = needy.findIndex((need, k) => need && !matched[k]);
+    if (i < 0) {
+      return true;
+    }
+    for (const bond of aromaticBonds) {
+      const other = bond.a === i ? bond.b : (bond.b === i ? bond.a : -1);
+      if (other < 0 || bond.order !== 1.5 || !needy[other] || matched[other]) {
+        continue;
+      }
+      bond.order = 2;
+      matched[i] = true;
+      matched[other] = true;
+      if (solve()) {
+        return true;
+      }
+      bond.order = 1.5;
+      matched[i] = false;
+      matched[other] = false;
+    }
+    return false;
+  }; // End of function solve()
+  if (!solve()) {
+    throw new OracleSmilesError('aromatic system without a Kekulé structure', 0);
+  }
+  for (const bond of aromaticBonds) {
+    if (bond.order === 1.5) {
+      bond.order = 1;
+    }
+  }
+  graph.atoms.forEach((atom) => {
+    atom.aromatic = false;
+  });
+  return graph;
+} // End of function kekulize()
+
+/**
  * Hydrogen count of each atom: explicit for bracket atoms; for the organic
  * subset, the lowest default valence that fits the bond-order sum, minus it
  * (IUPAC/OpenSMILES rule).
@@ -205,8 +284,9 @@ export function hydrogenCounts(graph) {
  * every heavy atom with its element (C, O, N, F, Cl, Br, I), plus the Hill
  * formula counted from the SMILES itself (implicit and explicit hydrogens,
  * so it does not rely on the model's valence rule). Explicit hydrogen atoms
- * (`[H]`) are folded into their neighbour's count. Anything the model cannot
- * hold — an unsupported element, aromatic or charged atoms, a bond order
+ * (`[H]`) are folded into their neighbour's count; aromatic atoms are
+ * kekulized first (kekulize()). Anything the model cannot
+ * hold — an unsupported element, charged atoms, a bond order
  * outside 1–3, several fragments, an atom whose valence is not its neutral
  * one (radical, carbene) — is reported as `problem`: the name then denotes
  * something else, a naming failure. Rings are kept (ring-closure bonds
@@ -218,7 +298,7 @@ export function hydrogenCounts(graph) {
  * @throws {OracleSmilesError} On unsupported syntax (adapter failure).
  */
 export function heavyAtomTree(smiles) {
-  const graph = parseFullSmiles(smiles);
+  const graph = kekulize(parseFullSmiles(smiles));
   const hydrogens = hydrogenCounts(graph);
   const heavy = graph.atoms.map((atom, i) => i).filter((i) => graph.atoms[i].element !== 'H');
   const counts = { H: graph.atoms.length - heavy.length };
@@ -232,8 +312,8 @@ export function heavyAtomTree(smiles) {
   if (unsupported.length > 0) {
     return { mol: null, formula: formulaText, problem: `unsupported elements: ${unsupported.join(',')}` };
   }
-  if (graph.atoms.some((atom) => atom.aromatic || atom.charge !== 0)) {
-    return { mol: null, formula: formulaText, problem: 'aromatic or charged atoms' };
+  if (graph.atoms.some((atom) => atom.charge !== 0)) {
+    return { mol: null, formula: formulaText, problem: 'charged atoms' };
   }
   const mol = createMolecule();
   const ids = new Map(heavy.map((i) => [i, addAtom(mol, {}, graph.atoms[i].element)]));

@@ -46,6 +46,7 @@
  * @property {number} closure - Id of the bond that closes the ring (the last of `bonds`).
  * @property {UnsaturationSite[]} double - Double bonds of the ring, ascending locants.
  * @property {UnsaturationSite[]} triple - Triple bonds of the ring, ascending locants.
+ * @property {'benzene'} [retained] - Set on a benzene ring (aromatic.js, design.md §13.4 I-28): the ring is cited by its retained name `benceno`, never by `ciclo…` with locants; its double bonds (1, 3, 5) are one Kekulé drawing.
  */
 
 /**
@@ -72,7 +73,7 @@
  * @property {ChainStructure} chain - The substituent's own numbered chain.
  * @property {PrefixGroup[]} prefixes - Its own grouped prefixes, in citation order.
  * @property {{locant: number, order: number}} freeValence - Locant and order of the free valence (1 → `-il`, 2 → `-iliden`).
- * @property {string|null} [retained] - Retained-name id cited instead of the systematic prefix: 'isopropyl' or 'isopropylidene' (style 'isopropil' only) or 'tert-butyl' (styles 'isopropil' and 'pin'); the chain and prefixes still describe the systematic name.
+ * @property {string|null} [retained] - Retained-name id cited instead of the systematic prefix: 'isopropyl' or 'isopropylidene' (style 'isopropil' only) or 'tert-butyl' (styles 'isopropil' and 'pin'); the chain and prefixes still describe the systematic name. 'phenyl' (`fenil`, aromatic.js phenylSubstituent()) has a benzene RingStructure as its `chain`.
  * @property {string|null} [commonName] - Id of a common name for explanations only, never cited in the name: 'vinyl', 'allyl', 'isobutyl', 'sec-butyl', or 'isopropyl'/'tert-butyl' when not retained; for doubly attached groups 'vinylidene', 'allylidene', 'isobutylidene', 'sec-butylidene', or 'isopropylidene' when not retained (lexicon commonGroupName()).
  * @property {number[]} atoms - Every atom of the substituent subtree.
  * @property {number[]} bonds - Every bond of the substituent subtree (not the connecting bond).
@@ -145,7 +146,7 @@
  * @property {NameStructure} structure - The language-neutral structure.
  * @property {{atoms: number[], bonds: number[]}} parent - Parent atoms and bonds in locant order.
  * @property {TraceStep[]} trace - Every rule applied, in order.
- * @property {{style: string, label: string, name: string, parts: NamePart[]}[]} alternatives - The name in the other prefix styles ('isopropil', 'pin', 'substituted', in that order), each from its own run of prefix naming and N4; empty without an isopropyl or isopropylidene group.
+ * @property {{style: string, label: string, name: string, parts: NamePart[]}[]} alternatives - The name in the other prefix styles ('isopropil', 'pin', 'substituted', in that order), each from its own run of prefix naming and N4; empty without an isopropyl or isopropylidene group. A benzene derivative with a traditional name retained by IUPAC 2013 (`tolueno`, `estireno`) gets it last, style 'traditional' (aromatic.js).
  */
 
 /**

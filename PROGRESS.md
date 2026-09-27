@@ -37,7 +37,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-26 | v2.6 Substituted and unsaturated rings | same, §3.6 | done — `docs/progress-archive/i-26.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-26.md` |
 | I-27a | v2.7a Ring templates and inner double-bond lines (split from I-27) | same, §3.7 | done — `docs/progress-archive/i-27a.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-27a.md` |
 | I-27b | v2.7b Ordenar dibujo for rings (split from I-27) | same, §3.7 | done — `docs/progress-archive/i-27b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-27b.md` |
-| I-28 | v2.8 Benzene and hydrocarbon derivatives | same, §3.8 | queued | — | — |
+| I-28 | v2.8 Benzene and hydrocarbon derivatives | same, §3.8 | done — `docs/progress-archive/i-28.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-28.md` |
 | I-29 | v2.9 Functional groups and seniority | same, §3.9 | queued | — | — |
 | I-30 | v2.10 Halogen derivatives | same, §3.10 | queued | — | — |
 | I-31 | v2.11 Alcohols | same, §3.11 | queued | — | — |
@@ -53,7 +53,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-27b done; I-28…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-28 done; I-29…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
@@ -89,15 +89,12 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-28 (v2 §3.8 benzene and hydrocarbon derivatives:
-new `src/naming/aromatic.js`, lexicons, editor, explain, OPSIN adapter —
-benzene, monosubstituted alkylbenzenes, fenilo; a hexagon template with
-alternating bonds in the ring tool; explain equivalent Kekulé drawings; never
-infer aromaticity from any alternation). Benzene is refused today with
-`CYCLE`, `ringReason: 'benzene'` (validate.js), and Ordenar dibujo refuses it
-with that naming error. Spec: design §13.4 row I-28 and
-`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 8.
-Deploying stays a manual user step.
+Poll the inbox, then run I-29 (v2 §3.9 functional groups and seniority: new
+`src/naming/groups.js` and `seniority.js`; detect groups without overlaps; explain
+steps "Reconoce los grupos", "Elige el principal", "Sufijo o prefijo"; detection
+does not yet enable naming — heteroatom molecules keep `HETEROATOM`). Spec: design
+§13.4 row I-29 and `autoclaude/processed/215-rings-functional-groups-confirmed.md`
+§3 item 9. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -150,14 +147,18 @@ Deploying stays a manual user step.
   `src/ui/toolbar.js` (`a` cycles sizes 3–8).
 - Ring layout (I-27b): pure `src/layout/rings.js` (locant 1 top, clockwise; sector and
   intrusion checks), strategy in `canonical.js`, `layoutProblems()` `inside` count.
+- Benzene (I-28): pure `src/naming/aromatic.js` (detection + naming); `ringReason`
+  `polysubstitutedBenzene` in `validate.js`; Benceno template in the ring tool
+  (`editor.js`); explain step "Reconoce el benceno"; oracle kekulization in
+  `scripts/oracle/smiles-full.mjs`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-27b)
+## Verification (last phase, I-28)
 
-- `npm test` 0 (570 pass) · `npm run check` 0 (87 files) · `npm run e2e` 0
-  (169 pass, source + dist) · `npm run oracle -- --count 300 --seed 1` 0 (461
-  pass, 0 adapter failures).
+- `npm test` 0 (603 pass) · `npm run check` 0 (89 files) · `npm run e2e` 0
+  (171 pass, source + dist) · `npm run oracle -- --count 300 --seed 1` 0 (491
+  pass incl. 30 benzenes, 0 adapter failures).
 
 ## Open risks / deviations
 
@@ -273,10 +274,16 @@ Deploying stays a manual user step.
   branches in atom-id order (pre-existing; ties by bond order could depend on
   ids). Both review should-fix fixed (`docs/progress-archive/i-27b.md`).
 
+- I-28: benzene monosubstituted only (polysubstituted → `CYCLE`
+  `polysubstitutedBenzene`); `tolueno`/`estireno` as other valid forms (toluene
+  labelled as the 2013 preferred name, from memory of P-22.1.3), no `cumeno`; ring
+  buttons shrunk on wide pointer screens. Both review should-fix fixed with
+  regressions (`docs/progress-archive/i-28.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-27a `8f37ab1`, pushed. I-27b committed and pushed right after this
+- I-27b `b6e8eeb`, pushed. I-28 committed and pushed right after this
   checkpoint (see `git log`).

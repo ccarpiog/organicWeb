@@ -688,12 +688,13 @@ export function createRenderer(svg) {
   /**
    * Redraws the transient previews: a ghost bond (with its "N C" counter when
    * it has a `count`), a ghost zigzag chain with its "N C" counter, or the
-   * marquee rectangle, or the ghost ring of Anillos (its outline and the
-   * bond that hangs it from an atom).
+   * marquee rectangle, or the ghost ring of Anillos (its outline, the inner
+   * strokes of a benzene's double bonds and the bond that hangs it from an atom).
    *
    * @param {object|null} preview - `{type: 'bond', from, to, order, count?, element?, fromDot?}` (`element`:
    *   symbol of the new end atom of an element-tool drag; `fromDot: false` when the drag starts on a
-   *   heteroatom, which gets no dot), `{type: 'chain', points, count}` or `{type: 'ring', points, bond}`.
+   *   heteroatom, which gets no dot), `{type: 'chain', points, count}` or `{type: 'ring', points, bond, doubles}`
+   *   (`doubles`: outline edges drawn as double bonds, for the benzene template).
    * @param {{x: number, y: number, width: number, height: number}|null} marquee - The marquee rectangle.
    * @returns {void}
    */
@@ -708,9 +709,14 @@ export function createRenderer(svg) {
     const dots = showsCarbonDots(mode);
     if (preview.type === 'ring') {
       const pts = preview.points;
+      const centre = { x: pts.reduce((sum, p) => sum + p.x, 0) / pts.length, y: pts.reduce((sum, p) => sum + p.y, 0) / pts.length };
       pts.forEach((p, i) => {
         const q = pts[(i + 1) % pts.length];
         line({ x1: p.x, y1: p.y, x2: q.x, y2: q.y }, 'preview-line preview-ring', layers.preview);
+        if ((preview.doubles || []).includes(i)) {
+          // A benzene template: the inner stroke of each double bond, as the ring will draw it.
+          line(shifted(p, q, ringInnerSide(p, q, centre) * BOND_SPACING, INNER_TRIM), 'preview-line preview-ring', layers.preview);
+        }
       });
       if (preview.bond) {
         const { from, to } = preview.bond;

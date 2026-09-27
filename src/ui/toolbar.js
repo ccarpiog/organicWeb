@@ -1,7 +1,8 @@
 /**
  * @file Drawing toolbar (design.md §6.1): the element palette (C, O, N, F,
  * Cl, Br, I — the element tool), tool buttons with icons and Spanish
- * tooltips, the Anillos group (one button per ring size, 3 to 8), plus Deshacer / Rehacer / Limpiar / Ordenar dibujo. Kept in sync with the editor
+ * tooltips, the Anillos group (one button per ring size, 3 to 8, and one for
+ * the benzene hexagon with alternating double bonds), plus Deshacer / Rehacer / Limpiar / Ordenar dibujo. Kept in sync with the editor
  * through its change notifications. While the 90° drawing is actually shown
  * (design.md §6.1, §6.3) every tool works through it except Mover, which is
  * disabled together with "Ordenar dibujo" (neither would change the
@@ -9,8 +10,7 @@
  */
 
 import { ELEMENTS, ELEMENT_NAMES_ES } from '../model/elements.js';
-import { ELEMENT_KEYS } from '../editor/editor.js';
-import { RING_SIZES } from '../editor/geometry.js';
+import { ELEMENT_KEYS, RING_TEMPLATES, BENZENE_TEMPLATE } from '../editor/editor.js';
 
 /**
  * Icon of an element button: its symbol, in the toolbar's icon box.
@@ -52,11 +52,33 @@ function ringIcon(n) {
 }
 
 /**
- * Ring buttons of the Anillos group (design.md §6.1): ring size, Spanish
- * label ("Anillo de 6 carbonos"), shortcut `A` (picks Anillos; pressed
- * again, the next size) and icon.
+ * Icon of the benzene button: the hexagon of ringIcon(6) with the inner
+ * strokes of three alternating double bonds.
+ *
+ * @returns {string} SVG inner markup (24×24).
  */
-const RING_BUTTONS = RING_SIZES.map((n) => ({ size: n, label: `Anillo de ${n} carbonos`, keys: ['A'], icon: ringIcon(n) }));
+function benzeneIcon() {
+  const radius = 9;
+  const inner = 5.6;
+  const start = Math.PI / 2 - Math.PI / 6;
+  const vertex = (k, r) => [12 + r * Math.cos(start + (k * Math.PI) / 3), 12.5 + r * Math.sin(start + (k * Math.PI) / 3)];
+  const strokes = [0, 2, 4].map((k) => {
+    const [x1, y1] = vertex(k, inner);
+    const [x2, y2] = vertex(k + 1, inner);
+    return `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}"/>`;
+  });
+  return `${ringIcon(6)}${strokes.join('')}`;
+}
+
+/**
+ * Ring buttons of the Anillos group (design.md §6.1): template (ring size
+ * or 'benzene'), Spanish label ("Anillo de 6 carbonos", "Benceno"),
+ * shortcut `A` (picks Anillos; pressed again, the next template: 3…8, then
+ * benceno) and icon.
+ */
+const RING_BUTTONS = RING_TEMPLATES.map((t) => (t === BENZENE_TEMPLATE
+  ? { template: t, label: 'Benceno', keys: ['A'], icon: benzeneIcon() }
+  : { template: t, label: `Anillo de ${t} carbonos`, keys: ['A'], icon: ringIcon(t) }));
 
 /** Tool buttons: editor tool id, Spanish label, keyboard shortcuts (design.md §6.1), icon (SVG inner markup, 24×24). */
 const TOOL_BUTTONS = [
@@ -170,9 +192,13 @@ export function buildToolbar(container, editor, options) {
   for (const spec of RING_BUTTONS) {
     const button = makeButton(doc, spec);
     button.classList.add('ring-button');
-    button.dataset.ringSize = String(spec.size);
-    button.addEventListener('click', () => editor.setRingSize(spec.size));
-    ringButtons.set(spec.size, button);
+    if (spec.template === BENZENE_TEMPLATE) {
+      button.dataset.ringTemplate = spec.template;
+    } else {
+      button.dataset.ringSize = String(spec.template);
+    }
+    button.addEventListener('click', () => editor.setRingTemplate(spec.template));
+    ringButtons.set(spec.template, button);
     rings.appendChild(button);
   }
   addSeparator();
@@ -208,8 +234,8 @@ export function buildToolbar(container, editor, options) {
       button.setAttribute('aria-pressed', String(elementTool && editor.getElement() === element));
     }
     const ringTool = editor.getTool() === 'ring';
-    for (const [size, button] of ringButtons) {
-      button.setAttribute('aria-pressed', String(ringTool && editor.getRingSize() === size));
+    for (const [template, button] of ringButtons) {
+      button.setAttribute('aria-pressed', String(ringTool && editor.getRingTemplate() === template));
     }
     for (const [tool, button] of toolButtons) {
       button.setAttribute('aria-pressed', String(editor.getTool() === tool));

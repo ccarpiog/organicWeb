@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T20:13:32Z",
+  "updated": "2026-09-27T20:50:29Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -259,8 +259,11 @@
     {
       "id": "I-28",
       "title": "v2.8 Benzene and hydrocarbon derivatives",
-      "status": "queued",
-      "summary": "v2 plan phase 8: benzene and hydrocarbon derivatives (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Names benzene and single-substituent benzenes in either Kekulé form, adds a benzene ring template and oracle support.",
+      "risk": "high",
+      "review": "docs/reviews/I-28.md",
+      "narrative": "docs/progress-archive/i-28.md"
     },
     {
       "id": "I-29",

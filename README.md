@@ -11,8 +11,9 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 - **Editor** (SVG, mouse, pen and touch): element palette (C, O, N, F,
   Cl, Br, I: place or change atoms; heteroatoms labelled `OH`, `NH₂`…), single/double/triple
   bonds (a single-bond drag draws a zig-zag chain with a live carbon
-  counter), ring templates (Anillos, 3–8 carbons: on empty space, hung from an
-  atom or fused on a bond), Cambiar enlace, Borrar, Mover (marquee selection), undo/redo, Limpiar
+  counter), ring templates (Anillos, 3–8 carbons and a benzene hexagon with
+  alternating double bonds: on empty space, hung from an atom or fused on a
+  bond), Cambiar enlace, Borrar, Mover (marquee selection), undo/redo, Limpiar
   (with an in-page confirmation), pan (Space + drag, middle drag, two
   fingers) and zoom (wheel, pinch), Centrar, skeletal or condensed display,
   live molecular formula, keyboard shortcuts, and autosave in the browser.
@@ -21,10 +22,15 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   attached `-iliden` substituents) and of hydrocarbons with a single
   carbocycle of 3–30 carbons, with side chains and ring double or triple
   bonds (`ciclohexano`, `ciclohexa-1,3-dieno`, `3-metilciclohex-1-eno`,
-  `metilidenciclohexano`…; the ring is always the parent chain), with the name coloured by part
+  `metilidenciclohexano`…; the ring is always the parent chain), and of
+  benzene and monosubstituted benzenes in either Kekulé drawing (`benceno`,
+  `metilbenceno`, `etenilbenceno`, `isopropilbenceno`…; benzenes with two or
+  more substituents get a clear refusal), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
-  the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles.
+  the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles;
+  `tolueno` and `estireno` are listed as traditional names of
+  `metilbenceno` and `etenilbenceno`.
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
   alphabetical order, assembly) that highlights each step on the drawing;
@@ -36,7 +42,7 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 - **Ejemplos**: a menu of 14 molecules, one per feature.
 - **Ayuda**: a short in-page guide to drawing, with illustrations, keyboard
   shortcuts and the glossary.
-- Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles), disconnected pieces, an empty canvas
+- Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles, benzenes with two or more substituents), disconnected pieces, an empty canvas
   and impossible bonds. Light and dark theme following the system.
 - Accessible: every control is reachable with the keyboard and has a visible
   focus ring and an accessible name; the name and the current explanation
@@ -174,12 +180,12 @@ the Keychain account is the WebDAV user).
 ## Known limitations and future work
 
 - Hydrocarbons only, with at most one ring (a carbocycle); several rings,
-  fused, bridged and spiro rings, heterocycles, benzene (planned),
-  heteroatoms and functional groups (planned), stereochemistry (E/Z, R/S),
-  charges and radicals are not named.
+  fused, bridged and spiro rings, heterocycles, benzenes with two or more
+  substituents (no orto/meta/para), heteroatoms and functional groups
+  (planned), stereochemistry (E/Z, R/S), charges and radicals are not named.
 - Parent chain up to 30 carbons, whole molecule up to 60.
 - Structure → name only; there is no name → structure.
-- Future (design §12, §13): benzene, functional groups, redrawing rings,
+- Future (design §12, §13): functional groups,
   E/Z and a quiz mode ("¿Cómo se llama?" in reverse: read a name, draw it).
 
 ## Author

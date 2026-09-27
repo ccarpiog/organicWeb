@@ -1,9 +1,11 @@
 /**
  * @file Anillos tool e2e (design.md §6.1, §6.3, §13 I-27a): the ring-size
  * buttons, a free ring on the canvas named ciclo…ano, a ring hung from an
- * atom (one undo step removes it), the `a` shortcut cycling the size, the
- * hover preview, and the inner stroke of a ring double bond. Runs on the dev
- * server and on dist/index.html.
+ * atom (one undo step removes it), the `a` shortcut cycling the size (then
+ * benceno), the hover preview, the inner stroke of a ring double bond, and
+ * the benzene template (I-28: a Kekulé hexagon named benceno, hung from an
+ * atom as etilbenceno, ordered by Ordenar dibujo). Runs on the dev server
+ * and on dist/index.html.
  */
 
 import { test, expect } from '@playwright/test';
@@ -43,7 +45,7 @@ async function clickCanvas(page, fx, fy) {
 test('the ring buttons draw a free ring, named ciclo…ano', async ({ page }) => {
   const errors = await openApp(page);
   const group = page.getByRole('group', { name: 'Anillos' });
-  await expect(group.getByRole('button')).toHaveCount(6);
+  await expect(group.getByRole('button')).toHaveCount(7);
   const five = group.getByRole('button', { name: 'Anillo de 5 carbonos', exact: true });
   await expect(five).toHaveAttribute('title', 'Anillo de 5 carbonos (A)');
   await five.click();
@@ -82,7 +84,7 @@ test('a ring clicked on an atom hangs from it; undo removes it in one step', asy
   expect(errors).toEqual([]);
 });
 
-test('the a key picks Anillos, then cycles the ring size', async ({ page }) => {
+test('the a key picks Anillos, then cycles the ring size and benceno', async ({ page }) => {
   await openApp(page);
   const group = page.getByRole('group', { name: 'Anillos' });
   await page.keyboard.press('a');
@@ -91,6 +93,9 @@ test('the a key picks Anillos, then cycles the ring size', async ({ page }) => {
   await page.keyboard.press('a');
   await page.keyboard.press('a');
   expect(await page.evaluate(() => window.__editor.getRingSize())).toBe(8);
+  await page.keyboard.press('a');
+  expect(await page.evaluate(() => window.__editor.getRingTemplate())).toBe('benzene');
+  await expect(group.locator('[aria-pressed="true"]')).toHaveAttribute('data-ring-template', 'benzene');
   await page.keyboard.press('a');
   expect(await page.evaluate(() => window.__editor.getRingSize())).toBe(3);
   await expect(group.locator('[aria-pressed="true"]')).toHaveAttribute('data-ring-size', '3');
@@ -115,4 +120,35 @@ test('a ring double bond draws its second stroke inside the ring', async ({ page
   const centre = { x: atoms.reduce((s, a) => s + a.x, 0) / 6, y: atoms.reduce((s, a) => s + a.y, 0) / 6 };
   const d = (s) => Math.hypot(s.x - centre.x, s.y - centre.y);
   expect(d(strokes[1])).toBeLessThan(d(strokes[0]));
+});
+
+test('the Benceno button draws a Kekulé hexagon named benceno; hung from an atom it gives etilbenceno (I-28)', async ({ page }) => {
+  const errors = await openApp(page);
+  const benzene = page.getByRole('group', { name: 'Anillos' }).getByRole('button', { name: 'Benceno', exact: true });
+  await expect(benzene).toHaveAttribute('title', 'Benceno (A)');
+  await benzene.click();
+  await expect(benzene).toHaveAttribute('aria-pressed', 'true');
+  // The preview: six outline strokes plus the inner strokes of the three double bonds.
+  const box = await page.locator('svg#canvas').boundingBox();
+  await page.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.5);
+  await expect(page.locator('#canvas .preview-ring')).toHaveCount(9);
+  await clickCanvas(page, 0.4, 0.5);
+  const mol = await page.evaluate(() => window.__editor.getMoleculeJSON());
+  expect(mol.atoms).toHaveLength(6);
+  expect(mol.bonds.map((b) => b.order).sort()).toEqual([1, 1, 1, 2, 2, 2]);
+  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+  await expect(page.locator('#result-name')).toHaveText('benceno');
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  expect((await page.evaluate(() => window.__editor.getMoleculeJSON())).atoms).toHaveLength(0);
+  // Ethane, then a benzene hung from its end carbon.
+  await page.getByRole('button', { name: 'Enlace simple' }).click();
+  await clickCanvas(page, 0.3, 0.5);
+  await expect.poll(() => page.evaluate(() => window.__editor.getMoleculeJSON().atoms.length)).toBe(2);
+  await benzene.click();
+  const p = await page.evaluate(() => window.__editor.atomClientPoint(2));
+  await page.mouse.click(p.x, p.y);
+  expect((await page.evaluate(() => window.__editor.getMoleculeJSON())).atoms).toHaveLength(8);
+  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+  await expect(page.locator('#result-name')).toHaveText('etilbenceno');
+  expect(errors).toEqual([]);
 });

@@ -31,8 +31,8 @@ test('exact Spanish messages from the design table', () => {
   assert.deepEqual(MESSAGES, {
     EMPTY: 'Dibuja primero una molécula.',
     DISCONNECTED: 'Hay piezas sueltas: todas las partes deben estar unidas.',
-    CYCLE: 'Este anillo es un benceno: un hexágono con tres enlaces dobles alternados. El benceno y sus derivados '
-      + 'tienen nombres propios que aún no sé poner, pero pronto aprenderé.',
+    CYCLE: 'Este benceno tiene varios sustituyentes. Solo sé nombrar el benceno con un sustituyente como máximo '
+      + '(como el metilbenceno): los bencenos con dos o más sustituyentes quedan fuera de lo que sé nombrar.',
     RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
     VALENCE: 'Este carbono tendría más de 4 enlaces.',
     TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',

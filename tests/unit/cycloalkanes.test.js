@@ -212,7 +212,8 @@ test('Ordenar dibujo lays out a named ring (I-27b); the 90° view falls back', (
   assert.equal(canArrange(result), true);
   assert.equal(redrawHint(result), '¿Quieres ver el anillo ordenado?');
   assert.equal(redrawHint(nameMolecule(parseSmiles('CCCC'))), '¿Quieres ver la cadena principal ordenada?');
-  assert.equal(canArrange(nameMolecule(parseSmiles('C1=CC=CC=C1'))), false, 'benzene is not named yet');
+  assert.equal(canArrange(nameMolecule(parseSmiles('C1=CC=CC=C1'))), true, 'benzene is named since I-28');
+  assert.equal(canArrange(nameMolecule(parseSmiles('CC1=CC(C)=CC=C1'))), false, 'a disubstituted benzene is refused');
   assert.equal(canArrange(nameMolecule(parseSmiles('CCCC'))), true);
   assert.deepEqual(projectRightAngles(mol), { ok: false, reason: 'CYCLE' });
 });

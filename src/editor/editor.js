@@ -49,7 +49,9 @@
  * Bond tools always create carbons and never change an element.
  *
  * Ring tool (Anillos, design.md §6.1): tool 'ring' places a regular ring of
- * setRingSize() carbons (3–8, single bonds, standard bond length): a click on
+ * setRingSize() carbons (3–8, single bonds, standard bond length), or with
+ * setRingTemplate('benzene') a benzene hexagon (ring bonds alternating
+ * double and single, one Kekulé drawing, I-28): a click on
  * empty space draws a free ring centred there (flat side at the bottom); on
  * an atom, a ring hung from it by a single bond along its best free §6.2
  * direction; on a bond, a ring fused on that bond, on its side with fewer
@@ -58,7 +60,7 @@
  * the 90° view) the ring about to be placed is previewed.
  *
  * Test API: the instance exposes getMolecule(), getMoleculeJSON(), setTool(),
- * getTool(), setElement(), getElement(), setRingSize(), getRingSize(), undo(), redo(), clear(), loadMolecule(), setCoordinates(),
+ * getTool(), setElement(), getElement(), setRingSize(), getRingSize(), setRingTemplate(), getRingTemplate(), undo(), redo(), clear(), loadMolecule(), setCoordinates(),
  * animateCoordinates(), isAnimating(), onEdit(), getSelection(),
  * getView(), setDisplayMode(), setProjector(), getProjection(), isProjected(),
  * getShownMolecule(), atomClientPoint(), bondClientPoint(), modelToClient()
@@ -92,6 +94,39 @@ export const TOOLS = Object.freeze(['carbon', 'single', 'double', 'triple', 'cyc
 /** Ring size of the Anillos tool until setRingSize() picks another (design.md §6.1). */
 export const DEFAULT_RING_SIZE = 6;
 
+/** Ring template of the benzene hexagon (six carbons, alternating double and single bonds; design.md §6.1, I-28). */
+export const BENZENE_TEMPLATE = 'benzene';
+
+/** Every template of the Anillos tool, in toolbar and `a`-key order: the ring sizes 3–8, then benceno. */
+export const RING_TEMPLATES = Object.freeze([...RING_SIZES, BENZENE_TEMPLATE]);
+
+/**
+ * Number of ring carbons of an Anillos template.
+ *
+ * @param {number|string} template - A ring size (3–8) or BENZENE_TEMPLATE.
+ * @returns {number} The ring size (6 for benzene).
+ */
+export function templateSize(template) {
+  return template === BENZENE_TEMPLATE ? 6 : template;
+}
+
+/**
+ * Orders of the ring bonds of a new Anillos ring, in ring order around the
+ * closed outline (design.md §6.1): all single for a plain ring; for benzene
+ * alternating, starting with `first` (2 or 1).
+ *
+ * @param {number|string} template - A ring size or BENZENE_TEMPLATE.
+ * @param {number} [first] - Order of the first ring bond of a benzene (default 2).
+ * @returns {number[]} One order per ring bond (bonds[k] joins vertices k and k + 1, the last closes the ring).
+ */
+export function templateOrders(template, first = 2) {
+  const n = templateSize(template);
+  if (template !== BENZENE_TEMPLATE) {
+    return Array(n).fill(1);
+  }
+  return Array.from({ length: n }, (_, k) => (k % 2 === 0 ? first : 3 - first));
+}
+
 /** Bond order drawn by each bond-making tool. */
 const TOOL_ORDER = Object.freeze({ carbon: 1, single: 1, double: 2, triple: 3 });
 
@@ -113,6 +148,7 @@ export const EDIT_MESSAGES = Object.freeze({
   DUPLICATE: 'Estos dos átomos ya están unidos.',
   NO_ORDER: 'Este enlace no puede cambiar: sus átomos no admiten más enlaces.',
   OVERLAP: 'No hay sitio: ese átomo quedaría encima de otro.',
+  BENZENE_FUSE: 'Aquí no cabe un benceno: los átomos de este enlace no admiten los enlaces dobles alternados del benceno.',
   INVALID: MESSAGES.INVALID,
 });
 
@@ -120,7 +156,8 @@ export const EDIT_MESSAGES = Object.freeze({
  * Keyboard shortcuts without modifiers (design.md §6.1): key → tool. `h`, the
  * shortcut of the former Cadena tool, selects Enlace simple, whose drag now
  * draws chains. `a` (anillo) selects Anillos; pressed again while Anillos is
- * the tool, it moves to the next ring size (the editor shell, nextRingSize()).
+ * the tool, it moves to the next template — 3…8 carbons, then benceno, then
+ * 3 again (the editor shell, nextRingTemplate()).
  */
 const TOOL_KEYS = Object.freeze({
   1: 'single', 2: 'double', 3: 'triple', t: 'cycle', h: 'single', e: 'erase', delete: 'erase', m: 'move', a: 'ring',
@@ -136,6 +173,18 @@ const TOOL_KEYS = Object.freeze({
 export function nextRingSize(size) {
   const index = RING_SIZES.indexOf(size);
   return RING_SIZES[(index + 1) % RING_SIZES.length];
+}
+
+/**
+ * The Anillos template after `template` in RING_TEMPLATES: 3 → … → 8 →
+ * benceno → 3 (the `a` key while Anillos is already the tool). Pure.
+ *
+ * @param {number|string} template - The current template.
+ * @returns {number|string} The next template (the first one when `template` is not offered).
+ */
+export function nextRingTemplate(template) {
+  const index = RING_TEMPLATES.indexOf(template);
+  return RING_TEMPLATES[(index + 1) % RING_TEMPLATES.length];
 }
 
 /**
@@ -353,7 +402,7 @@ export function createEditorCore(options = {}) {
   let mol = createMolecule();
   let tool = DEFAULT_TOOL;
   let element = 'C'; // Element of the element tool ('carbon').
-  let ringSize = DEFAULT_RING_SIZE; // Ring size of the Anillos tool ('ring').
+  let ringTemplate = DEFAULT_RING_SIZE; // Template of the Anillos tool ('ring'): a size 3–8 or 'benzene'.
   let gesture = null;
   let hover = null;
   let pointer = null; // Last pointer position without a gesture (the ring preview follows it).
@@ -643,23 +692,34 @@ export function createEditorCore(options = {}) {
    * bond (fusedRingSide()). Refused when an atom it bonds to has no room for
    * one more bond or a new atom would land too near an existing one.
    *
+   * `orders` gives the order of every new bond of the ring, in the order
+   * applyRing() adds them: the ring bonds around the new atoms (and, for
+   * 'fuse', the two bonds closing onto b and a), all single for a plain ring.
+   * A benzene alternates double and single, and always gets exactly three
+   * alternating ring double bonds: fused on a double bond, its two new bonds
+   * at the shared atoms are single (the shared bond is one of the three); on
+   * a single bond they are double, which both shared atoms must have room
+   * for; a triple bond, or a single bond without that room, is refused with
+   * EDIT_MESSAGES.BENZENE_FUSE.
+   *
    * @param {{type: string, id: number}|null} target - What was clicked (ids are model ids).
    * @param {{x: number, y: number}} point - Where (drawing units).
    * @param {object|null} [display] - The projected drawing the click was made on (null: the model's).
-   * @returns {{kind: 'free'|'attach'|'fuse', points: {x: number, y: number}[], atom?: number, a?: number, b?: number}
-   *   |{refusal: {message: string, atoms: number[]}}|null} The plan (`points`: new atoms in ring order; for
+   * @returns {{kind: 'free'|'attach'|'fuse', points: {x: number, y: number}[], orders: number[], atom?: number, a?: number,
+   *   b?: number}|{refusal: {message: string, atoms: number[]}}|null} The plan (`points`: new atoms in ring order; for
    *   'fuse', from the one bonded to `b` to the one bonded to `a`), the refusal, or null when the target
    *   names an atom or bond that no longer exists.
    */
   function ringPlan(target, point, display = null) {
     const overlap = (atoms) => ({ refusal: { message: EDIT_MESSAGES.OVERLAP, atoms } });
+    const ringSize = templateSize(ringTemplate);
     if (!targetExists(target)) {
       return null;
     }
     if (!target) {
       const centred = freeRingPoints(point, ringSize);
       const points = display ? loosePoints(centred) : centred;
-      return pointsClear(mol, points) ? { kind: 'free', points } : overlap([]);
+      return pointsClear(mol, points) ? { kind: 'free', points, orders: templateOrders(ringTemplate) } : overlap([]);
     }
     if (target.type === 'atom') {
       const refusal = checkRoom(mol, [target.id], 1);
@@ -670,7 +730,7 @@ export function createEditorCore(options = {}) {
       for (const angle of ringAttachAngles(mol, target.id)) {
         const points = attachedRingPoints(anchor, angle, ringSize);
         if (pointsClear(mol, points)) {
-          return { kind: 'attach', atom: target.id, points };
+          return { kind: 'attach', atom: target.id, points, orders: templateOrders(ringTemplate) };
         }
       }
       return overlap([target.id]);
@@ -680,32 +740,44 @@ export function createEditorCore(options = {}) {
     if (refusal) {
       return { refusal };
     }
+    // A benzene on a double bond: single bonds at the shared atoms (the shared bond is one of the three
+    // double bonds). On a single bond: double bonds at both shared atoms, which need room for them.
+    // Anything else (a triple bond, or no room) would not be a benzene: refused.
+    const benzene = ringTemplate === BENZENE_TEMPLATE;
+    const doubleEnds = benzene && bond.order === 1;
+    if (benzene && (bond.order === 3 || (doubleEnds && checkRoom(mol, [bond.a, bond.b], 2)))) {
+      return { refusal: { message: EDIT_MESSAGES.BENZENE_FUSE, atoms: [bond.a, bond.b] } };
+    }
     const side = fusedRingSide(mol, bond.a, bond.b, ringSize);
     const points = fusedRingPoints(mol.atoms.get(bond.a), mol.atoms.get(bond.b), ringSize, side);
-    return pointsClear(mol, points) ? { kind: 'fuse', a: bond.a, b: bond.b, points } : overlap([bond.a, bond.b]);
+    // Bonds b→p1, p1→p2, …, p(n−2)→a: the shared bond a–b is the ring bond before the first of them.
+    const orders = ringTemplate === BENZENE_TEMPLATE ? templateOrders(ringTemplate, doubleEnds ? 2 : 1).slice(0, ringSize - 1)
+      : Array(ringSize - 1).fill(1);
+    return pointsClear(mol, points) ? { kind: 'fuse', a: bond.a, b: bond.b, points, orders } : overlap([bond.a, bond.b]);
   } // End of function ringPlan()
 
   /**
-   * Adds a planned ring (ringPlan()) to a draft: its new carbons and single
-   * bonds, plus the attaching bond ('attach') or the bonds closing it onto
-   * the shared bond's atoms ('fuse').
+   * Adds a planned ring (ringPlan()) to a draft: its new carbons and ring
+   * bonds (orders from the plan: single, or alternating for benzene), plus
+   * the single attaching bond ('attach') or the bonds closing it onto the
+   * shared bond's atoms ('fuse').
    *
    * @param {object} draft - Draft molecule (mutated).
-   * @param {{kind: string, points: {x: number, y: number}[], atom?: number, a?: number, b?: number}} plan - The plan.
+   * @param {{kind: string, points: {x: number, y: number}[], orders: number[], atom?: number, a?: number, b?: number}} plan - The plan.
    * @returns {void}
    */
   function applyRing(draft, plan) {
     const ids = plan.points.map((p) => addAtom(draft, p));
     if (plan.kind === 'fuse') {
       let previous = plan.b;
-      for (const id of ids) {
-        addBond(draft, previous, id, 1);
+      ids.forEach((id, k) => {
+        addBond(draft, previous, id, plan.orders[k]);
         previous = id;
-      }
-      addBond(draft, previous, plan.a, 1);
+      });
+      addBond(draft, previous, plan.a, plan.orders[ids.length]);
       return;
     }
-    ids.forEach((id, k) => addBond(draft, id, ids[(k + 1) % ids.length], 1));
+    ids.forEach((id, k) => addBond(draft, id, ids[(k + 1) % ids.length], plan.orders[k]));
     if (plan.kind === 'attach') {
       addBond(draft, plan.atom, ids[0], 1);
     }
@@ -1264,6 +1336,34 @@ export function createEditorCore(options = {}) {
   }
 
   /**
+   * Selects the Anillos tool with a template (design.md §6.1): a ring size
+   * (3–8 carbons, single bonds) or BENZENE_TEMPLATE.
+   *
+   * @param {number|string} template - One of RING_TEMPLATES.
+   * @returns {void}
+   * @throws {Error} For a template not offered.
+   */
+  function setRingTemplate(template) {
+    if (!RING_TEMPLATES.includes(template)) {
+      throw new Error(`setRingTemplate: unsupported ring template ${template}`);
+    }
+    gesture = null;
+    selection = new Set();
+    tool = 'ring';
+    ringTemplate = template;
+    emit('tool');
+  }
+
+  /**
+   * The template of the Anillos tool (kept while other tools are used).
+   *
+   * @returns {number|string} One of RING_TEMPLATES.
+   */
+  function getRingTemplate() {
+    return ringTemplate;
+  }
+
+  /**
    * Selects the Anillos tool with a ring size (design.md §6.1).
    *
    * @param {number} size - One of RING_SIZES (3 to 8).
@@ -1274,20 +1374,17 @@ export function createEditorCore(options = {}) {
     if (!RING_SIZES.includes(size)) {
       throw new Error(`setRingSize: unsupported ring size ${size}`);
     }
-    gesture = null;
-    selection = new Set();
-    tool = 'ring';
-    ringSize = size;
-    emit('tool');
+    setRingTemplate(size);
   }
 
   /**
-   * The ring size of the Anillos tool (kept while other tools are used).
+   * The ring size of the Anillos tool (kept while other tools are used; 6
+   * for the benzene template).
    *
    * @returns {number} One of RING_SIZES.
    */
   function getRingSize() {
-    return ringSize;
+    return templateSize(ringTemplate);
   }
 
   /**
@@ -1296,8 +1393,9 @@ export function createEditorCore(options = {}) {
    * that placement would be refused, the pointer is off the canvas, or the
    * projected (90°) drawing is shown (its positions are not the model's).
    *
-   * @returns {{type: 'ring', points: {x: number, y: number}[], bond: {from: object, to: object}|null}|null}
-   *   The ring's vertices in ring order (shared atoms included) and the attaching bond.
+   * @returns {{type: 'ring', points: {x: number, y: number}[], bond: {from: object, to: object}|null, doubles: number[]}|null}
+   *   The ring's vertices in ring order (shared atoms included), the attaching bond, and the outline
+   *   edges that will be double bonds (edge k joins points[k] and points[k + 1], the last one closes it).
    */
   function ringPreview() {
     const target = gesture ? gesture.target : hover;
@@ -1310,11 +1408,13 @@ export function createEditorCore(options = {}) {
       return null;
     }
     const at = (id) => ({ x: mol.atoms.get(id).x, y: mol.atoms.get(id).y });
+    const doubleEdges = (orders, offset) => orders.map((order, k) => (order === 2 ? k + offset : -1)).filter((k) => k >= 0);
     if (plan.kind === 'fuse') {
-      return { type: 'ring', points: [at(plan.a), at(plan.b), ...plan.points], bond: null };
+      // Outline a, b, p1…: edge 0 is the shared bond (unchanged), edge k + 1 is the plan's bond k.
+      return { type: 'ring', points: [at(plan.a), at(plan.b), ...plan.points], bond: null, doubles: doubleEdges(plan.orders, 1) };
     }
     const bond = plan.kind === 'attach' ? { from: at(plan.atom), to: plan.points[0] } : null;
-    return { type: 'ring', points: plan.points, bond };
+    return { type: 'ring', points: plan.points, bond, doubles: doubleEdges(plan.orders, 0) };
   } // End of function ringPreview()
 
   /**
@@ -1550,6 +1650,8 @@ export function createEditorCore(options = {}) {
     getElement,
     setRingSize,
     getRingSize,
+    setRingTemplate,
+    getRingTemplate,
     getPreview,
     getViewState,
     getSelection,
@@ -2010,8 +2112,8 @@ export function createEditor(svg, options = {}) {
     if (command.element) {
       core.setElement(command.element);
     } else if (command.tool === 'ring') {
-      // `a` picks Anillos; pressed again, the next ring size.
-      core.setRingSize(core.getTool() === 'ring' ? nextRingSize(core.getRingSize()) : core.getRingSize());
+      // `a` picks Anillos; pressed again, the next template (3…8 carbons, benceno).
+      core.setRingTemplate(core.getTool() === 'ring' ? nextRingTemplate(core.getRingTemplate()) : core.getRingTemplate());
     } else if (command.tool) {
       core.setTool(command.tool);
     } else if (command.action === 'undo') {

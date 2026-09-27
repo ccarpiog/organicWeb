@@ -190,6 +190,18 @@ test('the drawing follows the naming result: locant 1 on the substituent, 3 cloc
   assert.ok(c3.x > c1.x && c3.y > c1.y, 'locant 3 is clockwise (down right) from locant 1');
 });
 
+test('benzene and monosubstituted benzenes are ordered by the ring strategy (I-28), in either Kekulé drawing', () => {
+  for (const smiles of ['C1=CC=CC=C1', 'C1C=CC=CC=1', 'CC1=CC=CC=C1', 'CC1C=CC=CC=1', 'CC(C)C1=CC=CC=C1', 'CCCCCCCCCCC1=CC=CC=C1']) {
+    const { out, result } = checkRing(parseSmiles(smiles), smiles);
+    assert.match(result.name, /benceno$/);
+    // Locant 1 (the substituted carbon, if any) on top; the bond orders stay those drawn.
+    const top = out.atoms.get(result.parent.atoms[0]);
+    for (const id of result.parent.atoms) {
+      assert.ok(top.y <= out.atoms.get(id).y + 1e-9, `${smiles}: locant 1 is the top ring vertex`);
+    }
+  }
+});
+
 test('two side chains on one ring atom are spread symmetrically about the exterior bisector', () => {
   const [a, b] = ringBranchAngles(0, 6, 2);
   const radial = RING_START_ANGLE;

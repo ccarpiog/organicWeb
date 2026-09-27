@@ -367,7 +367,8 @@ export function buildResults(panel, editor, button, options = {}) {
     const numbering = steps.findIndex((step) => step.id === 'numbering' || step.id === 'ringNumbering');
     const at = stepper && !stepper.root.hidden ? stepIndex : steps.length - 1;
     const unnumbered = numbering >= 0 && steps[numbering].id === 'ringNumbering' && !steps[numbering].locants;
-    if (!view.locants && at >= numbering && !unnumbered) {
+    // Only a numbered parent gets persistent locants: no numbering step (benzene, I-28) means no numbers.
+    if (!view.locants && numbering >= 0 && at >= numbering && !unnumbered) {
       next.locants = current.parent.atoms.map((id, i) => [id, i + 1]);
     }
     return next;

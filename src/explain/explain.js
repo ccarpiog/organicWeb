@@ -31,7 +31,11 @@
  * the formula CₙH₂ₙ and why no number is needed. A substituted or
  * unsaturated ring (I-26) gets count, ring (plus the ring-vs-chain rule),
  * ringNumbering (every start and direction, options compared like a
- * chain's), substituents, order and assemble.
+ * chain's), substituents, order and assemble. Benzene and a monosubstituted
+ * benzene (I-28, the ring's `retained` 'benzene') get count, benzene (the
+ * hexagon with alternating double bonds, the two equivalent Kekulé drawings,
+ * why a single substituent needs no number, the ring senior to the chain),
+ * substituents and assemble: nothing to number or order.
  */
 
 import { toSubscript } from '../model/molecule.js';
@@ -47,12 +51,14 @@ export const GLOSSARY = Object.freeze({
   'enlace doble': 'Dos carbonos unidos por dos enlaces. Se dibuja con dos rayas.',
   'enlace triple': 'Dos carbonos unidos por tres enlaces. Se dibuja con tres rayas.',
   anillo: 'Una cadena de carbonos cerrada: el último carbono está unido al primero.',
+  benceno: 'Un anillo de 6 carbonos con tres enlaces dobles alternados (uno sí, uno no). Es muy estable y tiene nombre propio.',
 });
 
 /** Titles of the steps (design.md §5). */
 export const STEP_TITLES = Object.freeze({
   count: 'Cuenta los carbonos',
   ring: 'Busca el anillo',
+  benzene: 'Reconoce el benceno',
   chain: 'Busca la cadena más larga',
   tiebreak: 'Desempates',
   numbering: 'Numera la cadena',
@@ -194,6 +200,17 @@ function parentWords(result) {
 function isBareRing(result) {
   const { parentKind, parent, prefixes } = result.structure;
   return parentKind === 'ring' && prefixes.length === 0 && parent.double.length + parent.triple.length === 0;
+}
+
+/**
+ * Tells whether a result is benzene or a benzene derivative (a ring parent
+ * with `retained` 'benzene', naming/aromatic.js).
+ *
+ * @param {object} result - The naming result.
+ * @returns {boolean} True for a benzene parent.
+ */
+function isBenzene(result) {
+  return result.structure.parentKind === 'ring' && result.structure.parent.retained === 'benzene';
 }
 
 /**
@@ -551,6 +568,49 @@ function ringStep(result) {
     locants: null,
   };
 } // End of function ringStep()
+
+/**
+ * Step for a benzene parent, "Reconoce el benceno" (design.md §13.4 I-28):
+ * the hexagon with three alternating double bonds and its own name
+ * `benceno`; the two Kekulé drawings (double bonds swapped) are the same
+ * molecule, so they get the same name; with a side chain, the ring is the
+ * parent (IUPAC 2013 P-44.1.2.2) and the old form with the ring as `fenil`
+ * is not preferred; a single substituent needs no number. The ring and its
+ * double bonds are highlighted apart.
+ *
+ * @param {object} result - A naming result with a benzene parent.
+ * @returns {object} The step.
+ */
+function benzeneStep(result) {
+  const { parent, prefixes } = result.structure;
+  const doubles = parent.double.map((site) => site.bond);
+  const text = [
+    `${prefixes.length > 0 ? 'En tu molécula, 6 de los carbonos' : 'Los 6 carbonos'} forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, ${q(lexiconEs.benzeneName)}. No se llama «ciclohexatrieno».`,
+    'El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.',
+  ];
+  if (prefixes.length > 0) {
+    text.push('La rama que sale del anillo es un [[sustituyente]]. Con las normas de la IUPAC (2013), el anillo manda siempre sobre una cadena abierta: el nombre acaba en «benceno» y la rama va delante.');
+    const longest = Math.max(...prefixes.flatMap((g) => g.locants.map((site) => site.atoms.length)));
+    if (longest > parent.length) {
+      text.push(`Aquí la rama tiene ${longest} carbonos y el anillo solo ${parent.length}, pero aun así manda el anillo.`);
+    }
+    text.push('Algunos libros antiguos lo hacen al revés: toman la cadena como principal y el anillo como grupo «fenilo» (por ejemplo, «feniletano» en vez de «etilbenceno»). Esa forma no es la preferida.');
+    text.push('Con un solo sustituyente no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono de la rama es siempre el 1 y el número no se escribe.');
+  } else {
+    text.push('Sin ramas no hace falta numerar: el nombre no lleva números.');
+  }
+  return {
+    id: 'benzene',
+    title: STEP_TITLES.benzene,
+    text,
+    highlight: [
+      { atoms: [...result.parent.atoms], bonds: result.parent.bonds.filter((id) => !doubles.includes(id)), style: 'parent' },
+      { atoms: [], bonds: doubles, style: 'candidate' },
+      ...substituentSpecs(result),
+    ],
+    locants: null,
+  };
+} // End of function benzeneStep()
 
 /**
  * Step for a ring parent, "Numera el anillo": an unsubstituted, saturated
@@ -1106,6 +1166,9 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain) {
   if (sub.retained === 'isopropylidene') {
     return ['Es un grupo de 3 carbonos unido por el carbono del centro con un [[enlace doble]]. Tiene tres nombres válidos: «isopropiliden» (el tradicional, que usamos aquí), «propan-2-iliden» (el preferido por la IUPAC: cadena de 3 carbonos unida por su carbono 2) y «1-metiletiliden» (cadena de 2 carbonos con un metil en el carbono 1).'];
   }
+  if (sub.retained === 'phenyl') {
+    return ['«fenil» es el nombre del [[benceno]] cuando va como sustituyente: un anillo de benceno al que le falta un hidrógeno (grupo fenilo, C₆H₅–).'];
+  }
   if (sub.retained === 'tert-butyl') {
     return ['«tert-butil» es un nombre tradicional que la IUPAC acepta: un carbono unido a tres metilos. Su nombre sistemático es «1,1-dimetiletil».'];
   }
@@ -1182,7 +1245,8 @@ function substituentsStep(result) {
       label: substituentPrefix(sub, lexiconEs),
       text: [line, ...details].join(' '),
       highlight: [parentSpec(result), { ...groupIds(group), style: 'substituent' }],
-      locants: group.locants.map((s) => [s.atom, s.locant]),
+      // A locant the name omits (metilciclohexano, metilbenceno) is not drawn either.
+      locants: omit ? null : group.locants.map((s) => [s.atom, s.locant]),
     });
     text.push(...details);
   } // End of the loop over the prefix groups
@@ -1191,7 +1255,7 @@ function substituentsStep(result) {
     title: STEP_TITLES.substituents,
     text,
     highlight: [parentSpec(result), ...substituentSpecs(result)],
-    locants: groups.flatMap((g) => g.locants.map((s) => [s.atom, s.locant])),
+    locants: omit ? null : groups.flatMap((g) => g.locants.map((s) => [s.atom, s.locant])),
     options,
   };
 } // End of function substituentsStep()
@@ -1292,6 +1356,10 @@ function nameLegend(result) {
       meaning: `sustituyente: grupo ${groupNameOf(sub)} (${count(sub.atoms.length, 'carbono', 'carbonos')})`,
     });
   } // End of the loop over the prefix groups
+  if (isBenzene(result)) {
+    legend.push({ text: lexiconEs.benzeneName, kind: 'stem', meaning: 'anillo de 6 carbonos con tres enlaces dobles alternados' });
+    return legend;
+  }
   if (result.structure.parentKind === 'ring') {
     legend.push({ text: `${lexiconEs.ringPrefix}-`, kind: 'stem', meaning: 'la cadena se cierra: es un anillo' });
     legend.push({ text: lexiconEs.stem(parent.length), kind: 'stem', meaning: `${count(parent.length, 'carbono', 'carbonos')} en el anillo` });
@@ -1339,7 +1407,12 @@ function assembleStep(result) {
   const ring = result.structure.parentKind === 'ring';
   const hasLocants = result.parts.some((p) => p.kind === 'locant');
   const text = [];
-  if (prefixes.length > 0 && !ring) {
+  const benzene = isBenzene(result);
+  if (benzene) {
+    text.push(prefixes.length > 0
+      ? `Primero va el sustituyente, sin número, y al final ${q(lexiconEs.benzeneName)}, todo junto.`
+      : `El anillo tiene nombre propio: ${q(lexiconEs.benzeneName)}. No lleva números ni terminación que añadir.`);
+  } else if (prefixes.length > 0 && !ring) {
     text.push('Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.');
     text.push('Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.');
   } else if (prefixes.length > 0) {
@@ -1358,7 +1431,7 @@ function assembleStep(result) {
     text.push('El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.');
   }
   const parent = result.structure.parent;
-  if (parent.double.length + parent.triple.length > 0) {
+  if (!benzene && parent.double.length + parent.triple.length > 0) {
     text.push('La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».');
   }
   text.push(`El nombre completo es ${q(result.name)}.`);
@@ -1390,6 +1463,14 @@ function assembleStep(result) {
 export function explain(result) {
   if (!result || !result.ok) {
     return [];
+  }
+  if (isBenzene(result)) {
+    return [
+      countStep(result),
+      benzeneStep(result),
+      substituentsStep(result),
+      assembleStep(result),
+    ].filter(Boolean);
   }
   if (result.structure.parentKind === 'ring') {
     return [

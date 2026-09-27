@@ -62,6 +62,10 @@ const SNAPSHOT_SMILES = [
   'CC1=CCCC1C', // 1,5-dimetilciclopent-1-eno: first point of difference
   'CCC1CCCC(C)C1', // 1-etil-3-metilciclohexano: ring N3 then N4
   'CC(C)C1CCC(C)CC1', // 1-isopropil-4-metilciclohexano: alternatives on a ring
+  'C1=CC=CC=C1', // benceno: benzene step, Kekulé drawings, no numbers
+  'CC1=CC=CC=C1', // metilbenceno: no locant, tolueno as a traditional name
+  'CCCCCCCCCCC1=CC=CC=C1', // decilbenceno: ring senior to a longer chain
+  'CC(C)C1=CC=CC=C1', // isopropilbenceno: alternatives on benzene
 ];
 
 /**

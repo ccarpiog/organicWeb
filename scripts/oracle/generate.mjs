@@ -1,8 +1,9 @@
 /**
  * @file Seeded random generator of valid acyclic hydrocarbons for the OPSIN
  * oracle and the graph-invariance tests (design.md §8), of valid
- * substituted and unsaturated monocycles (design.md §13.4 I-26), plus the
- * list of cycloalkanes in a size range. Development only,
+ * substituted and unsaturated monocycles (design.md §13.4 I-26), of
+ * benzene and monosubstituted benzenes in either Kekulé drawing (I-28),
+ * plus the list of cycloalkanes in a size range. Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
  */
@@ -122,10 +123,11 @@ export function generateMolecules({ count, seed, minSize = 4, maxSize = 14 }) {
  * @param {object} mol - The molecule (mutated).
  * @param {function(): number} random - Seeded generator.
  * @param {number} unsaturation - Probability of trying to raise a bond.
+ * @param {object[]} [bonds] - The bonds that may be raised (default: every bond).
  * @returns {void}
  */
-function raiseRandomBonds(mol, random, unsaturation) {
-  for (const bond of shuffle([...mol.bonds.values()], random)) {
+function raiseRandomBonds(mol, random, unsaturation, bonds = [...mol.bonds.values()]) {
+  for (const bond of shuffle([...bonds], random)) {
     if (random() >= unsaturation) {
       continue;
     }
@@ -201,6 +203,77 @@ export function generateMonocycles({ count, seed, minSize = 4, maxSize = 14 }) {
   } // End of the loop that draws distinct monocycles
   return molecules;
 } // End of function generateMonocycles()
+
+/**
+ * Builds one random benzene derivative: a Kekulé hexagon (ring bonds
+ * alternating, the first one double or single per `kekule`) with, when
+ * `extra` > 0, one acyclic side chain of `extra` carbons on a ring atom
+ * (grown and unsaturated at random like randomHydrocarbon(); the ring bonds
+ * are never changed, so the ring stays a benzene ring).
+ *
+ * @param {function(): number} random - Seeded generator.
+ * @param {{extra: number, kekule?: 1|2, unsaturation?: number, branchiness?: number}} options - Side-chain carbons, order of the first ring bond, probability of raising a side-chain bond, branching probability.
+ * @returns {object} The molecule (benzene or a monosubstituted benzene).
+ */
+export function randomBenzene(random, { extra, kekule = 2, unsaturation = 0.25, branchiness = 0.5 }) {
+  const mol = createMolecule();
+  const ring = Array.from({ length: 6 }, () => addAtom(mol));
+  ring.forEach((id, i) => addBond(mol, id, ring[(i + 1) % 6], i % 2 === 0 ? kekule : 3 - kekule));
+  const side = [];
+  const sideBonds = [];
+  for (let i = 0; i < extra; i += 1) {
+    const free = side.filter((id) => bondOrderSum(mol, id) < CARBON_VALENCE);
+    const last = side[side.length - 1];
+    let target = ring[0];
+    if (side.length > 0) {
+      target = random() >= branchiness && free.includes(last) ? last : free[Math.floor(random() * free.length)];
+    }
+    const atom = addAtom(mol);
+    const bond = addBond(mol, target, atom, 1);
+    if (side.length > 0) {
+      sideBonds.push(mol.bonds.get(bond));
+    }
+    side.push(atom);
+  } // End of the loop that grows the side chain
+  raiseRandomBonds(mol, random, unsaturation, sideBonds);
+  return mol;
+} // End of function randomBenzene()
+
+/**
+ * Generates up to `count` distinct (by canonical key) benzene derivatives
+ * with a total size in [max(minSize, 6), maxSize]: benzene itself when 6 C
+ * is in range, then random monosubstituted benzenes (randomBenzene(), either
+ * Kekulé drawing). Only molecules valid for naming are kept.
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C).
+ * @returns {object[]} The molecules.
+ */
+export function generateBenzenes({ count, seed, minSize = 4, maxSize = 14 }) {
+  const random = seededRandom(seed * 6271 + 28);
+  const seen = new Set();
+  const molecules = [];
+  const low = Math.max(minSize, 6);
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50 && low <= maxSize) {
+    const size = attempts === 0 ? low : randomInt(random, low, maxSize);
+    attempts += 1;
+    const mol = randomBenzene(random, {
+      extra: size - 6,
+      kekule: random() < 0.5 ? 1 : 2,
+      unsaturation: random() * 0.5,
+      branchiness: 0.2 + random() * 0.8,
+    });
+    if (validateForNaming(mol)) {
+      continue; // Beyond a cap (cannot happen within 60 C, but never feed an invalid input).
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct benzene derivatives
+  return molecules;
+} // End of function generateBenzenes()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

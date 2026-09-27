@@ -2,7 +2,8 @@
  * @file Unit tests for phase I-27a (design.md §6.1, §6.3, §13.4): the
  * Anillos tool of the DOM-free editor core (free, attached and fused rings,
  * regular geometry, valence and overlap refusals, one undo step, the hover
- * preview, drags, the `a` shortcut, the 90° view) and the inner stroke of
+ * preview, drags, the `a` shortcut, the 90° view), the benzene template
+ * (I-28: alternating bonds free, hung and fused) and the inner stroke of
  * ring double bonds (ringBondCentres(), ringInnerSide(), bondSegments()).
  */
 
@@ -19,7 +20,10 @@ import {
 } from '../../src/editor/geometry.js';
 import {
   createEditorCore, shortcutFor, nextRingSize, TOOLS, EDIT_MESSAGES, DEFAULT_RING_SIZE,
+  RING_TEMPLATES, BENZENE_TEMPLATE, nextRingTemplate, templateOrders,
 } from '../../src/editor/editor.js';
+import { validateStructure } from '../../src/model/validate.js';
+import { perceiveRings } from '../../src/model/rings.js';
 import { bondSegments, ringBondCentres, ringInnerSide } from '../../src/editor/render.js';
 import { projectRightAngles } from '../../src/ui/canvasbar.js';
 import { listExamples, exampleMolecule } from '../../src/ui/examples.js';
@@ -513,4 +517,171 @@ test('acyclic and exocyclic double bonds keep the zigzag rule', () => {
   const [, inner] = bondSegments(chain, db);
   const main = bondSegments(chain, db)[0];
   assert.ok(distance(mid(inner), chain.atoms.get(c1)) < distance(mid(main), chain.atoms.get(c1)));
+});
+
+// ---------------------------------------------------------------- benzene template (I-28)
+
+/**
+ * Tells whether every ring of a molecule containing `atoms` alternates
+ * double and single bonds with each of those atoms in exactly one ring
+ * double bond (a Kekulé benzene).
+ *
+ * @param {object} mol - The molecule.
+ * @param {number[]} atoms - The six atoms of the benzene ring.
+ * @returns {boolean} True for a Kekulé hexagon.
+ */
+function isKekuleHexagon(mol, atoms) {
+  const inRing = new Set(atoms);
+  const ringBonds = [...mol.bonds.values()].filter((b) => inRing.has(b.a) && inRing.has(b.b));
+  return atoms.length === 6 && ringBonds.length === 6
+    && ringBonds.filter((b) => b.order === 2).length === 3
+    && atoms.every((id) => ringBonds.filter((b) => b.order === 2 && (b.a === id || b.b === id)).length === 1);
+}
+
+test('the benzene template: setRingTemplate(), the `a` cycle 3…8 → benceno → 3', () => {
+  assert.deepEqual([...RING_TEMPLATES], [3, 4, 5, 6, 7, 8, BENZENE_TEMPLATE]);
+  const core = createEditorCore();
+  core.setRingTemplate(BENZENE_TEMPLATE);
+  assert.equal(core.getTool(), 'ring');
+  assert.equal(core.getRingTemplate(), 'benzene');
+  assert.equal(core.getRingSize(), 6);
+  core.setRingSize(4);
+  assert.equal(core.getRingTemplate(), 4);
+  assert.throws(() => core.setRingTemplate('naphthalene'));
+  assert.equal(nextRingTemplate(7), 8);
+  assert.equal(nextRingTemplate(8), BENZENE_TEMPLATE);
+  assert.equal(nextRingTemplate(BENZENE_TEMPLATE), 3);
+  assert.deepEqual(templateOrders(BENZENE_TEMPLATE), [2, 1, 2, 1, 2, 1]);
+  assert.deepEqual(templateOrders(BENZENE_TEMPLATE, 1), [1, 2, 1, 2, 1, 2]);
+  assert.deepEqual(templateOrders(5), [1, 1, 1, 1, 1]);
+});
+
+test('a free benzene: a regular hexagon with alternating bonds, named benceno, one undo step, previewed', () => {
+  const { core, edits } = recordingCore();
+  core.setRingTemplate(BENZENE_TEMPLATE);
+  core.pointerMove({ x: 200, y: 150 });
+  const preview = core.getPreview();
+  assert.equal(preview.points.length, 6);
+  assert.deepEqual(preview.doubles, [0, 2, 4], 'the preview shows the three double bonds');
+  assert.equal(clickAt(core, { x: 200, y: 150 }).ok, true);
+  const mol = core.getMolecule();
+  assert.equal(mol.atoms.size, 6);
+  assert.ok(allBondsStandard(mol));
+  assert.ok(isKekuleHexagon(mol, [...mol.atoms.keys()]));
+  assert.equal(nameMolecule(mol).name, 'benceno');
+  assert.deepEqual(edits.map((e) => e.kind), ['chemical']);
+  core.undo();
+  assert.equal(core.getMolecule().atoms.size, 0);
+  assert.equal(core.canUndo(), false);
+  // Plain rings keep single bonds and preview none.
+  core.setRingSize(6);
+  core.pointerMove({ x: 200, y: 150 });
+  assert.deepEqual(core.getPreview().doubles, []);
+});
+
+test('a benzene hung from an atom by a single bond: etilbenceno; Ordenar dibujo orders it', () => {
+  const core = createEditorCore();
+  clickAt(core, { x: 100, y: 200 }); // Ethane.
+  const end = core.getMolecule().atoms.get(2);
+  core.setRingTemplate(BENZENE_TEMPLATE);
+  assert.equal(clickAt(core, { x: end.x, y: end.y }).ok, true);
+  const mol = core.getMolecule();
+  assert.equal(bondBetween(mol, 2, 3).order, 1, 'the attaching bond is single');
+  assert.ok(isKekuleHexagon(mol, [3, 4, 5, 6, 7, 8]));
+  assert.ok(minAtomDistance(mol) >= MIN_CLEARANCE - EPS);
+  const result = nameMolecule(mol);
+  assert.equal(result.name, 'etilbenceno');
+  const out = canonicalLayout(mol, result);
+  assert.equal(out.atoms.size, 8);
+});
+
+test('a benzene fused on a bond keeps a valid Kekulé pattern (RING_SYSTEM fused when named)', () => {
+  // On a cyclohexane bond (single, both ends with room for a double bond): a Kekulé benzene.
+  const core = createEditorCore();
+  core.setRingSize(6);
+  clickAt(core, { x: 200, y: 200 });
+  const six = core.getMolecule();
+  const shared = six.bonds.get(1);
+  const a = six.atoms.get(shared.a);
+  const b = six.atoms.get(shared.b);
+  core.setRingTemplate(BENZENE_TEMPLATE);
+  core.pointerMove({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  assert.deepEqual(core.getPreview().doubles, [1, 3, 5], 'double bonds at both shared atoms');
+  assert.equal(clickAt(core, { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }).ok, true);
+  let mol = core.getMolecule();
+  assert.equal(validateStructure(mol), null);
+  assert.ok(isKekuleHexagon(mol, [shared.a, shared.b, 7, 8, 9, 10]));
+  assert.equal(nameMolecule(mol).error.ringKind, 'fused');
+  // On a benzene double bond: accepted, single bonds at the shared atoms, a Kekulé hexagon again.
+  const again = createEditorCore();
+  again.setRingTemplate(BENZENE_TEMPLATE);
+  clickAt(again, { x: 200, y: 200 });
+  const first = again.getMolecule();
+  const doubleBond = [...first.bonds.values()].find((b) => b.order === 2);
+  const singleBond = [...first.bonds.values()].find((b) => b.order === 1);
+  const midOf = (m, b) => {
+    const p = m.atoms.get(b.a);
+    const q = m.atoms.get(b.b);
+    return { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 };
+  };
+  assert.equal(clickAt(again, midOf(first, doubleBond)).ok, true);
+  mol = again.getMolecule();
+  assert.equal(validateStructure(mol), null);
+  assert.equal(mol.atoms.size, 10);
+  assert.ok(isKekuleHexagon(mol, [doubleBond.a, doubleBond.b, 7, 8, 9, 10]), 'the new ring is a benzene');
+  assert.equal(nameMolecule(mol).error.code, 'RING_SYSTEM');
+  again.undo();
+  assert.equal(again.getMolecule().atoms.size, 6, 'one undo step');
+  // On a benzene single bond: its atoms have no room for a double bond → refused, nothing changes.
+  const before = again.getMoleculeJSON();
+  const refused = clickAt(again, midOf(again.getMolecule(), singleBond));
+  assert.equal(refused.ok, false);
+  assert.equal(refused.message, EDIT_MESSAGES.BENZENE_FUSE);
+  assert.deepEqual(again.getMoleculeJSON(), before);
+  again.pointerMove(midOf(again.getMolecule(), singleBond));
+  assert.equal(again.getPreview(), null, 'no preview where it would be refused');
+}); // End of test 'a benzene fused on a bond…'
+
+test('a benzene is refused on bonds that cannot give three alternating double bonds', () => {
+  /**
+   * Loads a molecule with coordinates and tries Benceno on one of its bonds.
+   *
+   * @param {Array<[number, number]>} points - Atom positions.
+   * @param {Array<[number, number, number]>} bonds - Bonds as [atom index, atom index, order].
+   * @param {number} which - Index of the bond to click.
+   * @returns {{outcome: object, before: object, core: object}} The click outcome, the JSON before and the core.
+   */
+  const tryOn = (points, bonds, which) => {
+    const core = createEditorCore();
+    const m = createMolecule();
+    const ids = points.map(([x, y]) => addAtom(m, { x, y }));
+    const bondIds = bonds.map(([i, j, order]) => addBond(m, ids[i], ids[j], order));
+    core.loadMolecule(m);
+    core.setRingTemplate(BENZENE_TEMPLATE);
+    const before = core.getMoleculeJSON();
+    const b = core.getMolecule().bonds.get(bondIds[which]);
+    const p = core.getMolecule().atoms.get(b.a);
+    const q = core.getMolecule().atoms.get(b.b);
+    return { outcome: clickAt(core, { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 }), before, core };
+  };
+  // Isobutane: the central carbon has three bonds, no room for a double bond.
+  const isobutane = tryOn([[200, 200], [240, 200], [180, 165], [180, 235]], [[0, 1, 1], [0, 2, 1], [0, 3, 1]], 0);
+  assert.equal(isobutane.outcome.ok, false);
+  assert.equal(isobutane.outcome.message, EDIT_MESSAGES.BENZENE_FUSE);
+  assert.deepEqual(isobutane.core.getMoleculeJSON(), isobutane.before);
+  // A triple bond can never be a benzene ring bond.
+  const ethyne = tryOn([[200, 200], [240, 200]], [[0, 1, 3]], 0);
+  assert.equal(ethyne.outcome.ok, false);
+  // Accepted: ethane (single bond, both ends free) and ethene (double bond).
+  for (const order of [1, 2]) {
+    const { outcome, core } = tryOn([[200, 200], [240, 200]], [[0, 1, order]], 0);
+    assert.equal(outcome.ok, true, `order ${order}`);
+    const m = core.getMolecule();
+    assert.ok(isKekuleHexagon(m, [...m.atoms.keys()]), `order ${order}: a Kekulé hexagon`);
+    assert.equal(nameMolecule(m).name, 'benceno');
+  }
+  // Propane's middle bond end (CH2 with two bonds) still has room: a benzene with a methyl.
+  const propane = tryOn([[160, 220], [200, 200], [240, 220]], [[0, 1, 1], [1, 2, 1]], 1);
+  assert.equal(propane.outcome.ok, true);
+  assert.equal(nameMolecule(propane.core.getMolecule()).name, 'metilbenceno');
 });
