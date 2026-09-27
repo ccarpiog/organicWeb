@@ -29,8 +29,31 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-19 | Undo after "Ordenar dibujo" (bug) | `autoclaude/processed/190-undo-ordenar-dibujo.md` | done — `docs/progress-archive/i-19.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-19.md` |
 | I-20 | `npm run deploy` to Fastmail Files + docs | `autoclaude/processed/200-deploy-fastmail.md` | done — `docs/progress-archive/i-20.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-20.md` |
 
+| I-21 | v2.1 Multi-element model (+ v2 plan into design.md, scope lift in CLAUDE.md) | `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.1 | queued | — | — |
+| I-22 | v2.2 Multi-element SMILES and oracle | same, §3.2 | queued | — | — |
+| I-23 | v2.3 Element palette | same, §3.3 | queued | — | — |
+| I-24 | v2.4 Ring infrastructure | same, §3.4 | queued | — | — |
+| I-25 | v2.5 Simple cycloalkanes | same, §3.5 | queued | — | — |
+| I-26 | v2.6 Substituted and unsaturated rings | same, §3.6 | queued | — | — |
+| I-27 | v2.7 Drawing and ordering rings | same, §3.7 | queued | — | — |
+| I-28 | v2.8 Benzene and hydrocarbon derivatives | same, §3.8 | queued | — | — |
+| I-29 | v2.9 Functional groups and seniority | same, §3.9 | queued | — | — |
+| I-30 | v2.10 Halogen derivatives | same, §3.10 | queued | — | — |
+| I-31 | v2.11 Alcohols | same, §3.11 | queued | — | — |
+| I-32 | v2.12 Aldehydes and ketones | same, §3.12 | queued | — | — |
+| I-33 | v2.13 Carboxylic acids | same, §3.13 | queued | — | — |
+| I-34 | v2.14 Ethers | same, §3.14 | queued | — | — |
+| I-35 | v2.15 Esters | same, §3.15 | queued | — | — |
+| I-36 | v2.16 Amines | same, §3.16 | queued | — | — |
+| I-37 | v2.17 Amides | same, §3.17 | queued | — | — |
+| I-38 | v2.18 Nitriles | same, §3.18 | queued | — | — |
+| I-39 | v2.19 Functional combinations | same, §3.19 | queued | — | — |
+| I-40 | v2.20 Functions on rings | same, §3.20 | queued | — | — |
+| I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
+
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-No phase is queued.
+I-21…I-41 (v2 plan, user-confirmed scope) are queued in order; phases may be
+split as they are selected.
 
 ## Inbox
 
@@ -54,22 +77,28 @@ No phase is queued.
   `190-undo-ordenar-dibujo.md` → queued as I-18, I-19.
 - 2026-09-27 pickup 8 (before I-18): `200-deploy-fastmail.md` → queued as
   I-20; `210-rings-functional-groups.md` → deferred (see Decisions needed).
+- 2026-09-27 pickup 9 (after I-20): `215-rings-functional-groups-confirmed.md`
+  — the re-drop of 210 with the v2 scope confirmed by the user and the §4
+  decisions answered (ESO + 1º Bachillerato; systematic name first, traditional
+  names under "Otras formas válidas"; benzene monosubstituted only; stereo,
+  charges, salts, heterocycles, polycycles out) → queued as I-21…I-41, one
+  per plan phase §3.1…§3.21.
 
 ## Next action
 
-Plan complete; inbox empty (2026-09-27, after I-20). Poll the inbox; if a
-new item arrives, triage it as I-21. Otherwise nothing to do until the user
-decides on the deferred v2 item below. Deploying (`npm run deploy`, defined in
-`scripts/deploy.mjs`) stays a manual user step — the loop never runs it.
+Run I-21 (v2 §3.1 multi-element model). It also copies the v2 plan into
+`docs/design.md` as a new section with the user's final §4 decisions and
+lifts the "acyclic hydrocarbons only" line in `CLAUDE.md`. Deploying
+(`npm run deploy`, defined in `scripts/deploy.mjs`) stays a manual user step —
+the loop never runs it.
 
-## Decisions needed (user)
+## Decisions (user, final — 2026-09-27)
 
-- `autoclaude/processed/210-rings-functional-groups.md` (v2: cyclic
-  hydrocarbons + functional groups, ~21 phases) was **deferred**: it lifts the
-  CLAUDE.md constraint "v1 scope: acyclic hydrocarbons only", which an inbox
-  item cannot change, and its §4 leaves level / displayed-name / benzene-scope
-  decisions to the user. To start it, update the scope line in `CLAUDE.md`
-  (or confirm the v2 scope) and re-drop the item.
+- v2 scope approved: cyclic hydrocarbons + functional groups
+  (`autoclaude/processed/215-rings-functional-groups-confirmed.md`); level ESO
+  + 1º Bachillerato; systematic IUPAC name first, traditional names under
+  "Otras formas válidas"; benzene monosubstituted only (no o/m/p); stereo,
+  charges, salts, heterocycles, polycycles out of scope.
 
 ## Key paths
 

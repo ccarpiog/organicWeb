@@ -23,3 +23,4 @@ up. The item itself is in this directory, unchanged.
 - 2026-09-27 17:03 · 190-undo-ordenar-dibujo.md · queued · phase I-19 — Undo after Ordenar dibujo
 - 2026-09-27 17:23 · 200-deploy-fastmail.md · queued · phase I-20 — npm run deploy to Fastmail Files + docs
 - 2026-09-27 17:23 · 210-rings-functional-groups.md · deferred · lifts CLAUDE.md v1 scope (acyclic hydrocarbons only) and has open user decisions (§4); needs the user to confirm the v2 scope change
+- 2026-09-27 18:48 · 215-rings-functional-groups-confirmed.md · queued · phases I-21…I-41 — v2: cyclic hydrocarbons + functional groups (21 phases, user-confirmed scope)
