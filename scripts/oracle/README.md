@@ -45,11 +45,18 @@ Output: `passed: … failed: … skipped: … adapter failures: …`.
    `src/naming/lexicon.en.js` (`compare.mjs`).
 3. `opsin.mjs` sends all English names to OPSIN in one batch (`-osmi`).
 4. `smiles-full.mjs` (a fuller SMILES parser: bracket atoms, explicit H,
-   rings, aromatic atoms, charges) reduces OPSIN's SMILES to a
-   hydrogen-suppressed carbon tree plus a formula counted from the SMILES.
-5. A molecule passes when, for every style, the canonical tree key and the
-   formula match the original. OPSIN SMILES that the parser cannot read is an
-   **adapter failure**, not a naming failure.
+   rings, aromatic atoms, charges) turns OPSIN's SMILES into a
+   hydrogen-suppressed model molecule that keeps every heavy atom with its
+   element (`heavyAtomTree()`), plus a Hill formula counted from the SMILES.
+   Structures the model cannot hold (unsupported elements, aromatic or
+   charged atoms, rings, several fragments, radicals) are naming failures.
+5. A molecule passes when, for every style, the canonical tree key (elements
+   and bond orders, so ethanol and dimethyl ether differ) and the formula
+   match the original. OPSIN SMILES that the parser cannot read is an
+   **adapter failure**, counted apart from naming failures.
+
+The generator stays hydrocarbon-only: the naming engine does not name
+heteroatom compounds yet, but the comparison already handles them.
 
 A round trip proves that a name denotes the right structure, not that the
 parent choice, numbering or spelling are the preferred ones; the fixtures

@@ -106,7 +106,7 @@ css/app.css             styles, light/dark via tokens
 src/
   model/molecule.js     graph: atoms, bonds, valence, implicit H, formula
   model/validate.js     full graph validation (§3.2), shared by every entry point
-  model/smiles.js       tiny acyclic C-only SMILES parser/writer
+  model/smiles.js       tiny acyclic SMILES parser/writer (C O N F Cl Br I)
   model/graph.js        connectivity, cycle detection, paths, canonical tree key
   naming/lexicon.es.js  Spanish word tables (stems, multipliers, endings, retained prefixes)
   naming/lexicon.en.js  English tables — used only by the oracle (§8)
@@ -174,11 +174,16 @@ for `alert`/`confirm`/`prompt` in app code), `oracle` (§8).
   `id, element, x, y` / `id, a, b, order` (e.g. `charge`, `radical`,
   `hCount`, `aromatic`), so charges and radicals are never accepted by
   accident.
-- `smiles.js`: parses `C`, `=`, `#` (and an optional explicit `-`),
-  parenthesised branches; rejects ring digits, other elements, aromatic
-  atoms, brackets, dots, stereo marks, dangling bonds and unbalanced or empty
-  parentheses — with an explicit error (developer-facing, English), never by
-  silently dropping input. The writer is for debugging and examples.
+- `smiles.js`: parses the organic-subset atoms `C O N F Cl Br I` (implicit
+  H from the element table), bracket atoms with one of those elements and an
+  optional H count (`[CH4]`, `[OH]`, `[NH2]`; the count must equal the one
+  the model derives, else `SMILES_HYDROGEN`), `=`, `#` (and an optional
+  explicit `-`), parenthesised branches; rejects ring digits, other elements,
+  aromatic lowercase atoms, charges, isotopes, atom classes, `[H]` atoms,
+  dots, stereo marks, dangling bonds and unbalanced or empty parentheses —
+  with an explicit error (developer-facing, English), never by silently
+  dropping input. The writer (debugging, examples, oracle) writes every
+  element as an organic-subset symbol, so round trips keep element identity.
   Fixtures use SMILES, so the test suite never depends on coordinates.
 
 ### 3.2 Validation (single function, used everywhere)
@@ -659,10 +664,11 @@ OPSIN (open-source name→structure, Java) reads English IUPAC names.
 2. A seeded random generator produces valid acyclic hydrocarbons (4–14 C,
    random branching and unsaturation within valence).
 3. name → English → OPSIN → SMILES → a **dev-only fuller SMILES parser**
-   (bracket atoms, explicit H) → hydrogen-suppressed carbon tree → compare
-   with the original using an unrooted canonical tree key (atoms + bond
-   orders), plus a formula check. Unsupported OPSIN syntax is an adapter
-   failure, not a naming failure.
+   (bracket atoms, explicit H) → hydrogen-suppressed molecule keeping every
+   heavy atom and its element (I-22) → compare with the original using an
+   unrooted canonical tree key (elements + bond orders), plus a formula
+   check. Unsupported OPSIN syntax is an adapter failure, not a naming
+   failure.
 4. OPSIN runs from a **pinned** CLI jar (version + SHA-256 recorded in
    `scripts/oracle/README.md`, downloaded to `scripts/oracle/vendor/`,
    gitignored) when Java is available. The public web service is optional
@@ -853,9 +859,10 @@ before being presented as validated IUPAC 2013 coverage.
   bonds outside the chain no longer holds universally (nitriles).
 - `buildChainStructure()` requires n−1 bonds; a ring also needs the closure.
 - SMILES, valence messages and labels assume carbon (valence messages and H
-  counts fixed in I-21; the SMILES writer refuses heteroatoms until I-22).
+  counts fixed in I-21; SMILES reads and writes O, N and halogens since I-22).
 - Tree keys include elements but do not support cycles. The OPSIN adapter
-  parses broad syntax and then reduces it to a carbon tree.
+  parses broad syntax and keeps every heavy atom (I-22), but still refuses
+  rings.
 - The 90° view and "Ordenar dibujo" assume branched chains; they need
   specific strategies and a safe fallback to the normal drawing.
 - The explanation rebuilds counts from hydrocarbon structures: it must

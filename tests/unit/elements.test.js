@@ -266,8 +266,8 @@ test('a valid molecule with heteroatoms is "not nameable yet", never a crash or 
   assert.equal(isNotNameableYet(null), false);
   // Hydrocarbons are still named.
   assert.equal(nameMolecule(parseSmiles('CC(C)C')).name, '2-metilpropano');
-  // The carbon-only SMILES writer refuses heteroatoms instead of writing them as C.
-  assert.throws(() => writeSmiles(build(['C', 'O'], [[1, 2]])), /element O is not supported/);
+  // The SMILES writer keeps the element (never writes a heteroatom as C).
+  assert.equal(writeSmiles(build(['C', 'O'], [[1, 2]])), 'CO');
 }); // End of test 'a valid molecule with heteroatoms is "not nameable yet", never a crash or a hydrocarbon name'
 
 test('separate caps: carbons, heavy atoms and parent chain', () => {

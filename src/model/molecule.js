@@ -276,26 +276,37 @@ export function elementCounts(mol) {
 } // End of function elementCounts()
 
 /**
- * Molecular formula in Hill order with ASCII digits: C first, then H, then
- * the other elements alphabetically (alphabetical throughout when there is no
- * carbon); a count of 1 is omitted. Examples: `CH4`, `C7H16`, `C2H6O`,
- * `CH3Cl`, `C2H4BrCl`, `H2O`.
+ * Formats element counts as a formula in Hill order with ASCII digits: C
+ * first, then H, then the other elements alphabetically (alphabetical
+ * throughout when there is no carbon); a count of 1 is omitted and zero
+ * counts are skipped. Shared with the oracle, which counts atoms from OPSIN's
+ * SMILES.
+ *
+ * @param {Record<string, number>} counts - Element symbol → count.
+ * @returns {string} The formula; empty string when every count is zero.
+ */
+export function hillFormula(counts) {
+  const symbols = Object.keys(counts).filter((s) => counts[s] > 0);
+  let ordered;
+  if (counts.C > 0) {
+    const rest = symbols.filter((s) => s !== 'C' && s !== 'H').sort();
+    ordered = ['C', ...(counts.H > 0 ? ['H'] : []), ...rest];
+  } else {
+    ordered = symbols.sort();
+  }
+  return ordered.map((s) => (counts[s] === 1 ? s : `${s}${counts[s]}`)).join('');
+} // End of function hillFormula()
+
+/**
+ * Molecular formula in Hill order with ASCII digits (hillFormula()).
+ * Examples: `CH4`, `C7H16`, `C2H6O`, `CH3Cl`, `C2H4BrCl`, `H2O`.
  *
  * @param {object} mol - The molecule.
  * @returns {string} The formula; empty string for an empty molecule.
  */
 export function formula(mol) {
-  const counts = elementCounts(mol);
-  const symbols = Object.keys(counts);
-  let ordered;
-  if (counts.C) {
-    const rest = symbols.filter((s) => s !== 'C' && s !== 'H').sort();
-    ordered = ['C', ...(counts.H ? ['H'] : []), ...rest];
-  } else {
-    ordered = symbols.sort();
-  }
-  return ordered.map((s) => (counts[s] === 1 ? s : `${s}${counts[s]}`)).join('');
-} // End of function formula()
+  return hillFormula(elementCounts(mol));
+}
 
 /**
  * Converts every ASCII digit of a string to its Unicode subscript form,

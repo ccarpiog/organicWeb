@@ -1,15 +1,18 @@
 /**
  * @file Oracle comparison (design.md §8): the English rendering of a name
  * structure, and the check that OPSIN's structure for that name is the
- * original molecule — same unrooted canonical tree key (carbon skeleton and
- * bond orders) and same molecular formula. Development only, never bundled.
+ * original molecule — same unrooted canonical tree key over every heavy atom
+ * (elements and bond orders, so same-formula isomers such as ethanol and
+ * dimethyl ether stay distinct) and same molecular formula. OPSIN SMILES
+ * that cannot be read is an adapter failure, a category apart from naming
+ * mismatches. Development only, never bundled.
  */
 
 import { canonicalTreeKey } from '../../src/model/graph.js';
 import { formula } from '../../src/model/molecule.js';
 import { renderName } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
-import { hydrocarbonTree } from './smiles-full.mjs';
+import { heavyAtomTree } from './smiles-full.mjs';
 
 /**
  * Renders a name structure in English (the same structure the Spanish name
@@ -35,8 +38,9 @@ export function compareWithOpsin(mol, opsinSmiles) {
   }
   let tree;
   try {
-    tree = hydrocarbonTree(opsinSmiles);
+    tree = heavyAtomTree(opsinSmiles);
   } catch (err) {
+    // Any exception here is the adapter's (unsupported syntax), never the name's.
     return { status: 'adapter', reason: `unreadable OPSIN SMILES: ${err.message}` };
   }
   const expectedFormula = formula(mol);
@@ -47,7 +51,7 @@ export function compareWithOpsin(mol, opsinSmiles) {
     return { status: 'failed', reason: tree.problem };
   }
   if (canonicalTreeKey(tree.mol) !== canonicalTreeKey(mol)) {
-    return { status: 'failed', reason: 'different structure (canonical tree keys differ)' };
+    return { status: 'failed', reason: 'different structure (canonical tree keys over elements and bond orders differ)' };
   }
   return { status: 'passed', reason: null };
 } // End of function compareWithOpsin()

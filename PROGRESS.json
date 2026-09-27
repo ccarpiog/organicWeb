@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T17:59:57Z",
+  "updated": "2026-09-27T18:08:38Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -196,8 +196,11 @@
     {
       "id": "I-22",
       "title": "v2.2 Multi-element SMILES and oracle",
-      "status": "queued",
-      "summary": "v2 plan phase 2: multi-element smiles and oracle (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Teaches the SMILES reader/writer and the OPSIN oracle adapter about O, N and halogen atoms.",
+      "risk": "routine",
+      "review": "docs/reviews/I-22.md",
+      "narrative": "docs/progress-archive/i-22.md"
     },
     {
       "id": "I-23",

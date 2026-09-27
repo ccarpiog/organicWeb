@@ -19,11 +19,11 @@ import { validateForNaming } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { lexiconEs } from '../../src/naming/lexicon.es.js';
 import { lexiconEn, stem } from '../../src/naming/lexicon.en.js';
-import { parseFullSmiles, hydrocarbonTree, OracleSmilesError } from '../../scripts/oracle/smiles-full.mjs';
+import { parseFullSmiles, heavyAtomTree, OracleSmilesError } from '../../scripts/oracle/smiles-full.mjs';
 import { englishName, compareWithOpsin } from '../../scripts/oracle/compare.mjs';
 import { generateMolecules } from '../../scripts/oracle/generate.mjs';
 import { checkAvailability } from '../../scripts/oracle/opsin.mjs';
-import { main, parseArgs } from '../../scripts/oracle/run.mjs';
+import { main, parseArgs, evaluate } from '../../scripts/oracle/run.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -81,16 +81,39 @@ test('the fuller SMILES parser reads bracket atoms, rings, charges and explicit 
   }
 }); // End of test 'the fuller SMILES parser reads bracket atoms, rings, charges and explicit hydrogens'
 
-test('hydrocarbonTree reduces OPSIN SMILES to a carbon tree and its formula', () => {
-  const tree = hydrocarbonTree('[CH3]C([H])=C(C)C');
+test('heavyAtomTree keeps hydrocarbons as before and counts the formula from the SMILES', () => {
+  const tree = heavyAtomTree('[CH3]C([H])=C(C)C');
   assert.equal(tree.problem, null);
   assert.equal(tree.formula, 'C5H10');
   assert.equal(canonicalTreeKey(tree.mol), canonicalTreeKey(parseSmiles('CC=C(C)C')));
-  assert.match(hydrocarbonTree('CCO').problem, /non-carbon/);
-  assert.match(hydrocarbonTree('C1CC1').problem, /acyclic/);
-  assert.match(hydrocarbonTree('c1ccccc1').problem, /aromatic/);
-  assert.match(hydrocarbonTree('C[CH2]').problem, /valence/);
-});
+  assert.match(heavyAtomTree('C1CC1').problem, /acyclic/);
+  assert.match(heavyAtomTree('CC.C').problem, /acyclic/);
+  assert.match(heavyAtomTree('c1ccccc1').problem, /aromatic/);
+  assert.match(heavyAtomTree('C[CH2]').problem, /valence/);
+}); // End of test 'heavyAtomTree keeps hydrocarbons as before and counts the formula from the SMILES'
+
+test('heavyAtomTree keeps every heavy atom and its element', () => {
+  const cases = [
+    ['CCO', 'C2H6O'], ['OCC', 'C2H6O'], ['C[OH]', 'CH4O'], ['[NH2]CC', 'C2H7N'], ['ClC(Br)(F)I', 'CBrClFI'], ['ClC(Br)F', 'CHBrClF'],
+    ['CC(=O)O', 'C2H4O2'], ['CC#N', 'C2H3N'], ['O[H]', 'H2O'], ['[H]OC([H])([H])[H]', 'CH4O'],
+  ];
+  for (const [smiles, expected] of cases) {
+    const tree = heavyAtomTree(smiles);
+    assert.equal(tree.problem, null, smiles);
+    assert.equal(tree.formula, expected, smiles);
+    const heavy = parseFullSmiles(smiles).atoms.filter((a) => a.element !== 'H').length;
+    assert.equal(tree.mol.atoms.size, heavy, `${smiles}: no heavy atom dropped`);
+  }
+  const ethanol = heavyAtomTree('CCO').mol;
+  assert.deepEqual([...ethanol.atoms.values()].map((a) => a.element), ['C', 'C', 'O']);
+  assert.equal(canonicalTreeKey(ethanol), canonicalTreeKey(parseSmiles('OCC')));
+  assert.notEqual(canonicalTreeKey(ethanol), canonicalTreeKey(heavyAtomTree('COC').mol));
+  // Structures the model cannot hold are naming problems, not adapter failures.
+  assert.match(heavyAtomTree('CCS').problem, /unsupported elements: S/);
+  assert.match(heavyAtomTree('CC(=O)[O-]').problem, /charged/);
+  assert.match(heavyAtomTree('C[N](C)(C)(C)C').problem, /valence/);
+  assert.match(heavyAtomTree('C[O]').problem, /valence/);
+}); // End of test 'heavyAtomTree keeps every heavy atom and its element'
 
 test('compareWithOpsin checks the structure and the formula', () => {
   const mol = parseSmiles('CCC(=C)CCC');
@@ -100,6 +123,41 @@ test('compareWithOpsin checks the structure and the formula', () => {
   assert.equal(compareWithOpsin(mol, '').status, 'failed');
   assert.equal(compareWithOpsin(mol, 'CC?').status, 'adapter');
 });
+
+test('compareWithOpsin compares heteroatom structures over elements', () => {
+  const ethanol = parseSmiles('CCO');
+  assert.deepEqual(compareWithOpsin(ethanol, 'OCC'), { status: 'passed', reason: null });
+  assert.deepEqual(compareWithOpsin(ethanol, 'C([H])([H])([H])C[OH]'), { status: 'passed', reason: null });
+  const ether = compareWithOpsin(ethanol, 'COC');
+  assert.equal(ether.status, 'failed', 'dimethyl ether has the same formula but is not ethanol');
+  assert.match(ether.reason, /canonical tree keys/);
+  assert.equal(compareWithOpsin(parseSmiles('ClCCBr'), 'CC(Cl)Br').status, 'failed');
+  assert.equal(compareWithOpsin(parseSmiles('ClCCBr'), 'BrCCCl').status, 'passed');
+  assert.match(compareWithOpsin(ethanol, 'CCS').reason, /formula/);
+  assert.equal(compareWithOpsin(parseSmiles('CN'), 'C[NH3+]').status, 'failed');
+}); // End of test 'compareWithOpsin compares heteroatom structures over elements'
+
+test('adapter failures are classified apart from naming failures', () => {
+  const mol = parseSmiles('CCO');
+  for (const unreadable of ['C[OH', 'CC(O', 'C?O', 'CO)', 'C1CO']) {
+    const verdict = compareWithOpsin(mol, unreadable);
+    assert.equal(verdict.status, 'adapter', unreadable);
+    assert.match(verdict.reason, /unreadable OPSIN SMILES/);
+  }
+  const names = (english) => [{ style: 'isopropil', spanish: 'x', english, error: null }];
+  const cases = [
+    { mol, smiles: 'CCO', names: names('ok') },
+    { mol, smiles: 'CCO', names: names('unreadable') },
+    { mol, smiles: 'CCO', names: names('wrong') },
+  ];
+  const out = new Map([['ok', 'OCC'], ['unreadable', 'C[OH'], ['wrong', 'COC']]);
+  const result = evaluate(cases, out);
+  assert.equal(result.passed, 1);
+  assert.equal(result.adapter.length, 1);
+  assert.equal(result.adapter[0].problems[0].status, 'adapter');
+  assert.equal(result.failed.length, 1);
+  assert.equal(result.failed[0].problems[0].status, 'failed');
+}); // End of test 'adapter failures are classified apart from naming failures'
 
 test('the seeded generator is deterministic, distinct and valid', () => {
   const a = generateMolecules({ count: 200, seed: 5 }).map(writeSmiles);

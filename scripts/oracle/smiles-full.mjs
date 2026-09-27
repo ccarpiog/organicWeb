@@ -1,18 +1,20 @@
 /**
  * @file Development-only, fuller SMILES parser for OPSIN output (design.md
- * §8). Unlike src/model/smiles.js (carbon-only acyclic subset), it reads the
+ * §8). Unlike src/model/smiles.js (small acyclic subset), it reads the
  * general syntax OPSIN may emit: organic-subset and aromatic atoms, bracket
  * atoms (isotope, element, chirality, hydrogen count, charge, atom class),
  * bond symbols `- = # $ : / \`, branches, ring closures (`1`, `%12`) and
- * dots. The result is a plain graph; hydrocarbonTree() then reduces it to a
- * hydrogen-suppressed carbon tree (a project molecule) plus the formula
- * counted from the SMILES itself (implicit and explicit hydrogens).
+ * dots. The result is a plain graph; heavyAtomTree() then turns it into a
+ * hydrogen-suppressed model molecule keeping every heavy atom and its element,
+ * plus the formula counted from the SMILES itself (implicit and explicit
+ * hydrogens).
  *
  * Syntax outside this grammar raises an OracleSmilesError: an adapter
  * failure, never a naming failure. Never bundled.
  */
 
-import { createMolecule, addAtom, addBond } from '../../src/model/molecule.js';
+import { createMolecule, addAtom, addBond, hillFormula } from '../../src/model/molecule.js';
+import { isSupportedElement, valenceOf } from '../../src/model/elements.js';
 import { isConnected, hasCycle } from '../../src/model/graph.js';
 
 /** Error for SMILES syntax the adapter does not understand. */
@@ -195,38 +197,43 @@ export function hydrogenCounts(graph) {
     const valence = (VALENCES[atom.element] || [0]).find((v) => v >= used);
     return valence === undefined ? 0 : valence - used;
   });
-} // End of function hydrogenCounts() // End of function hydrogenCounts()
+} // End of function hydrogenCounts()
 
 /**
- * Reduces a parsed SMILES to a hydrogen-suppressed carbon tree and its
- * formula counted from the SMILES itself. Explicit hydrogen atoms (`[H]`)
- * are folded into their neighbour's count. Anything that is not a neutral,
- * non-aromatic acyclic hydrocarbon with bond orders 1–3 is reported as
- * `problem` (the name then denotes something else: a naming failure).
+ * Turns OPSIN's SMILES into a hydrogen-suppressed model molecule that keeps
+ * every heavy atom with its element (C, O, N, F, Cl, Br, I), plus the Hill
+ * formula counted from the SMILES itself (implicit and explicit hydrogens,
+ * so it does not rely on the model's valence rule). Explicit hydrogen atoms
+ * (`[H]`) are folded into their neighbour's count. Anything the model cannot
+ * hold — an unsupported element, aromatic or charged atoms, a bond order
+ * outside 1–3, several fragments or a ring, an atom whose valence is not
+ * its neutral one (radical, carbene) — is reported as `problem`: the name
+ * then denotes something else, a naming failure.
  *
  * @param {string} smiles - OPSIN's SMILES.
- * @returns {{mol: object|null, formula: string, problem: string|null}} The carbon tree (model molecule), the Hill formula and the reason it is not a hydrocarbon tree.
+ * @returns {{mol: object|null, formula: string, problem: string|null}} The molecule (model/molecule.js), the Hill formula and the reason it is not a representable acyclic molecule.
  * @throws {OracleSmilesError} On unsupported syntax (adapter failure).
  */
-export function hydrocarbonTree(smiles) {
+export function heavyAtomTree(smiles) {
   const graph = parseFullSmiles(smiles);
   const hydrogens = hydrogenCounts(graph);
   const heavy = graph.atoms.map((atom, i) => i).filter((i) => graph.atoms[i].element !== 'H');
-  let hTotal = graph.atoms.length - heavy.length;
+  const counts = { H: graph.atoms.length - heavy.length };
   for (const i of heavy) {
-    hTotal += hydrogens[i];
+    const { element } = graph.atoms[i];
+    counts[element] = (counts[element] || 0) + 1;
+    counts.H += hydrogens[i];
   }
-  const carbons = heavy.filter((i) => graph.atoms[i].element === 'C').length;
-  const formulaText = `C${carbons === 1 ? '' : carbons}${hTotal === 0 ? '' : `H${hTotal === 1 ? '' : hTotal}`}`;
-  const others = heavy.filter((i) => graph.atoms[i].element !== 'C').map((i) => graph.atoms[i].element);
-  if (others.length > 0) {
-    return { mol: null, formula: formulaText, problem: `non-carbon atoms: ${others.join(',')}` };
+  const formulaText = hillFormula(counts);
+  const unsupported = [...new Set(heavy.map((i) => graph.atoms[i].element).filter((e) => !isSupportedElement(e)))];
+  if (unsupported.length > 0) {
+    return { mol: null, formula: formulaText, problem: `unsupported elements: ${unsupported.join(',')}` };
   }
   if (graph.atoms.some((atom) => atom.aromatic || atom.charge !== 0)) {
     return { mol: null, formula: formulaText, problem: 'aromatic or charged atoms' };
   }
   const mol = createMolecule();
-  const ids = new Map(heavy.map((i) => [i, addAtom(mol)]));
+  const ids = new Map(heavy.map((i) => [i, addAtom(mol, {}, graph.atoms[i].element)]));
   for (const bond of graph.bonds) {
     if (!ids.has(bond.a) || !ids.has(bond.b)) {
       continue; // Bond to an explicit hydrogen atom, already counted.
@@ -239,9 +246,10 @@ export function hydrocarbonTree(smiles) {
   if (!isConnected(mol) || hasCycle(mol)) {
     return { mol: null, formula: formulaText, problem: 'not a single acyclic molecule' };
   }
-  const radical = heavy.some((i) => {
+  const odd = heavy.find((i) => {
     const bondSum = graph.bonds.filter((b) => b.a === i || b.b === i).reduce((s, b) => s + b.order, 0);
-    return bondSum + hydrogens[i] !== 4;
+    return bondSum + hydrogens[i] !== valenceOf(graph.atoms[i].element);
   });
-  return { mol, formula: formulaText, problem: radical ? 'carbon with a valence other than 4 (radical or carbene)' : null };
-} // End of function hydrocarbonTree()
+  const problem = odd === undefined ? null : `${graph.atoms[odd].element} with a valence other than its neutral one (radical, carbene or hypervalent)`;
+  return { mol, formula: formulaText, problem };
+} // End of function heavyAtomTree()
