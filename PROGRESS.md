@@ -11,14 +11,20 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-1 | Project scaffold | `autoclaude/processed/010-scaffold.md` | done — `docs/progress-archive/i-1.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-1.md` |
 | I-2 | Molecule model, validation, SMILES subset | `autoclaude/processed/020-model.md` | queued | — | — |
 | I-3 | Naming engine I: contracts, lexicon, unbranched chains | `autoclaude/processed/030-naming-linear.md` | queued | — | — |
+| I-4 | Naming engine II: parent selection and numbering | `autoclaude/processed/040-naming-parent.md` | queued | — | — |
+| I-5 | Naming engine III: recursive preferred substituents | `autoclaude/processed/050-naming-substituents.md` | queued | — | — |
+| I-6 | Naming engine IV: iliden substituents and fixture set | `autoclaude/processed/060-naming-iliden-fixtures.md` | queued | — | — |
 
-Remaining plan items (040–120) are still in `autoclaude/inbox/` and will be
-queued as `I-4` … `I-12` at later phase boundaries.
+Remaining plan items (070–120) are still in `autoclaude/inbox/` and will be
+queued as `I-7` … `I-12` at later phase boundaries.
 
 ## Inbox
 
 - 2026-09-27 pickup 1: `010-scaffold.md`, `020-model.md`,
   `030-naming-linear.md` → queued as I-1, I-2, I-3 (in plan order).
+- 2026-09-27 pickup 2 (after I-1): `040-naming-parent.md`,
+  `050-naming-substituents.md`, `060-naming-iliden-fixtures.md` → queued as
+  I-4, I-5, I-6.
 
 ## Next action
 
@@ -44,4 +50,4 @@ Execute I-2 (molecule model, validation, SMILES) per
 
 ## Git state
 
-- I-1 commit: see `git log` (recorded after push in the next checkpoint).
+- I-1 commit `911eae8`, pushed to origin/main; tree clean after it.
