@@ -9,7 +9,9 @@
  * groups (design.md §13.4 I-31: OH; I-32: the C=O of aldehydes and
  * ketones) follow the parent's ending as a suffix with their locants and
  * multiplier (`propan-2-ol`, `butano-1,4-diol`, `pentano-2,4-diona`; an
- * aldehyde's locants are never cited: `propanal`, `butanodial`); the
+ * aldehyde's locants are never cited: `propanal`, `butanodial`; nor are a
+ * carboxylic acid's, I-33, whose name also starts with the lexicon's class
+ * word: `ácido propanoico`, `ácido butanodioico`); the
  * final vowel of the ending is elided before a vowel (`an` + `ol`) and kept
  * before a consonant (`ano` + `diol`), IUPAC 2013 P-16.7.1. No name is ever
  * produced by substring translation.
@@ -56,11 +58,11 @@ function locantParts(sites) {
  * @param {object} lexicon - The lexicon.
  * @param {boolean} hasPrefixes - Whether prefixes precede the parent or a suffix follows it (disables locant omission).
  * @param {object|null} [suffix] - The suffix groups (structure.js SuffixStructure), or null.
- * @param {boolean} [omitSuffixLocants] - Leave out the suffix locants (`etanol`, `metanol`). An aldehyde suffix on a chain never cites them, whatever this says: its carbon is always a chain end, locant 1 (IUPAC 2013 P-14.3.4.1: `propanal`, `2-metilpropanal`, `butanodial`).
+ * @param {boolean} [omitSuffixLocants] - Leave out the suffix locants (`etanol`, `metanol`). An aldehyde or acid suffix on a chain never cites them, whatever this says: its carbon is always a chain end, locant 1 (IUPAC 2013 P-14.3.4.1: `propanal`, `2-metilpropanal`, `butanodial`, `ácido propanoico`).
  * @returns {object[]} The parts.
  */
 export function renderParent(chain, lexicon, hasPrefixes, suffix = null, omitSuffixLocants = false) {
-  const omitSuffix = omitSuffixLocants || Boolean(suffix && suffix.kind === 'aldehyde');
+  const omitSuffix = omitSuffixLocants || Boolean(suffix && (suffix.kind === 'aldehyde' || suffix.kind === 'acid'));
   return [
     part(lexicon.stem(chain.length), 'stem', chain.atoms),
     ...renderEnding(chain, lexicon, lexicon.omitsLocants(chain, hasPrefixes || Boolean(suffix)), suffix, omitSuffix),
@@ -88,10 +90,24 @@ export function suffixWords(suffix, lexicon) {
 }
 
 /**
+ * The atoms and bonds of the suffix groups: each carrying atom and its
+ * heteroatom with their bond, plus the OH oxygen of a –COOH and its bond
+ * (SuffixLocant `hydroxyAtom`, design.md §13.4 I-33).
+ *
+ * @param {{locants: object[]}} suffix - The suffix structure.
+ * @returns {{atoms: number[], bonds: number[]}} The ids.
+ */
+export function suffixGroupIds(suffix) {
+  const atoms = suffix.locants.flatMap((site) => [site.atom, site.attachAtom, ...(site.hydroxyAtom === undefined ? [] : [site.hydroxyAtom])]);
+  const bonds = suffix.locants.flatMap((site) => [site.bond, ...(site.hydroxyBond === undefined ? [] : [site.hydroxyBond])]);
+  return { atoms, bonds };
+}
+
+/**
  * Renders a suffix after the parent's ending: hyphen, locants and hyphen
  * (unless omitted), multiplier and suffix word: `-2-ol`, `-1,4-diol`, `ol`.
  * Locants refer to the carrying carbon and the OH; the suffix word to every
- * group.
+ * group (both oxygens of a –COOH).
  *
  * @param {{kind: string, locants: object[]}} suffix - The suffix structure.
  * @param {object} lexicon - The lexicon.
@@ -100,8 +116,7 @@ export function suffixWords(suffix, lexicon) {
  */
 function renderSuffix(suffix, lexicon, omit) {
   const parts = [];
-  const atoms = suffix.locants.flatMap((site) => [site.atom, site.attachAtom]);
-  const bonds = suffix.locants.map((site) => site.bond);
+  const { atoms, bonds } = suffixGroupIds(suffix);
   if (!omit) {
     parts.push(part('-', 'punct'));
     suffix.locants.forEach((site, i) => {
@@ -567,7 +582,9 @@ export function omitsPrefixLocants(structure, lexicon = lexiconEs) {
  * a ring parent when `parentKind` is 'ring'), with its suffix groups.
  * With `citeLocants` (a chain parent only) the prefix and suffix locants are
  * written even where the omission rule would leave them out: `propan-2-ona`,
- * the IUPAC 2013 form of `propanona` (design.md §13.4 I-32).
+ * the IUPAC 2013 form of `propanona` (design.md §13.4 I-32). A suffix
+ * kind with a class word (lexicon suffixClassWord(): `ácido`, I-33) starts
+ * the name with that word and a space, referring to the suffix groups.
  *
  * @param {object} structure - The name structure (structure.js NameStructure).
  * @param {object} [lexicon] - The lexicon to use (default: Spanish).
@@ -582,6 +599,12 @@ export function renderName(structure, lexicon = lexiconEs, options = {}) {
   const parent = ring
     ? renderRingParent(structure.parent, lexicon, structure.prefixes, suffix)
     : renderParent(structure.parent, lexicon, hasPrefixes, suffix, omitPrefixLocants);
-  const parts = [...renderPrefixes(structure.prefixes, lexicon, omitPrefixLocants), ...parent];
+  const classWord = suffix && lexicon.suffixClassWord ? lexicon.suffixClassWord(suffix.kind) : null;
+  const lead = [];
+  if (classWord) {
+    const { atoms, bonds } = suffixGroupIds(suffix);
+    lead.push(part(classWord, 'ending', atoms, bonds), part(' ', 'punct'));
+  }
+  const parts = [...lead, ...renderPrefixes(structure.prefixes, lexicon, omitPrefixLocants), ...parent];
   return { name: parts.map((p) => p.text).join(''), parts };
 }

@@ -39,8 +39,9 @@ test('exact Spanish messages from the design table', () => {
     HETEROATOM: 'Esta molécula tiene átomos que no son carbono ni hidrógeno. '
       + 'Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, '
       + 'derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), '
-      + 'alcoholes (con grupos –OH unidos a un carbono) '
-      + 'y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O).',
+      + 'alcoholes (con grupos –OH unidos a un carbono), '
+      + 'aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O) '
+      + 'y ácidos carboxílicos (con el grupo –COOH).',
     INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
   });
 });

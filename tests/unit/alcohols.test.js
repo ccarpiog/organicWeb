@@ -59,8 +59,8 @@ test('validation: an OH on a carbon is admitted; every other O and N group keeps
   for (const smiles of ['CO', 'OCCO', 'C=CO', 'C#CO', 'ClCCO', 'OC1CCCCC1', 'OC1=CC=CC=C1', 'OC(O)C', 'FC(F)(F)CO']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Carboxylic OH (acid), ethers, peroxides, water, amines, esters: refused as before (aldehydes and ketones are named since I-32).
-  for (const smiles of ['CC(=O)O', 'OCC(=O)O', 'COC', 'CCOO', 'O', 'NCCO', 'CC(=O)OC', 'OCCOC']) {
+  // Ethers, peroxides, water, amines, esters, a peracid: refused as before (aldehydes and ketones are named since I-32, acids since I-33).
+  for (const smiles of ['CC(=O)OO', 'COC', 'CCOO', 'O', 'NCCO', 'CC(=O)OC', 'OCCOC']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
@@ -70,7 +70,7 @@ test('validation: an OH on a carbon is admitted; every other O and N group keeps
   const adj = adjacency(mol);
   const oxygens = [...mol.atoms.values()].filter((a) => a.element === 'O').map((a) => a.id);
   assert.deepEqual(oxygens.map((id) => isHydroxyOxygen(mol, adj, id)), [false, true], 'the acid OH looks like an OH on its own…');
-  assert.equal(hasNameableHeteroatoms(mol, oxygens), false, '…but the C=O oxygen is not admitted, so the acid is refused');
+  assert.equal(hasNameableHeteroatoms(mol, oxygens), true, '…and the whole –COOH is admitted as an acid (I-33), never as an alcohol');
   assert.equal(hasNameableHeteroatoms(parseSmiles('ClCCO'), [1, 4]), true, 'a halogen and an OH on carbons');
 });
 
@@ -81,9 +81,8 @@ test('alcohol vs phenol vs carboxylic OH', () => {
   assert.equal(named('OC1C=CC=CC=1').name, 'fenol', 'the other Kekulé drawing');
   assert.equal(named('OC1=CCCCC1').name, 'ciclohex-1-en-1-ol', 'a cyclohexene is not benzene');
   const acid = named('CC(=O)O');
-  assert.equal(acid.ok, false);
-  assert.equal(acid.error.code, 'HETEROATOM');
-  assert.equal(acid.groups.principal, 'acid', 'the OH of an acid is part of the acid, never an alcohol');
+  assert.equal(acid.name, 'ácido etanoico', 'the OH of an acid is part of the acid, never an alcohol (I-33)');
+  assert.equal(acid.structure.suffix.kind, 'acid');
   // A substituted phenol is a polysubstituted benzene; an OH on a benzene side chain waits for I-40.
   assert.equal(named('OC1=CC=C(C)C=C1').error.code, 'CYCLE');
   const benzyl = named('OCC1=CC=CC=C1');

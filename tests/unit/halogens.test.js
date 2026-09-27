@@ -165,7 +165,7 @@ test('validation: halogens bonded to a carbon are named; other O and N molecules
   for (const smiles of ['ClCCO', 'OC1CCC(Cl)CC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  for (const smiles of ['ClCCOC', 'ClC(=O)C', 'NCCBr', 'ClCOC', 'FC(F)(F)C#N', 'ClCC(=O)O']) {
+  for (const smiles of ['ClCCOC', 'ClC(=O)C', 'NCCBr', 'ClCOC', 'FC(F)(F)C#N', 'ClCC(=O)OC']) {
     const mol = parseSmiles(smiles);
     const result = nameMolecule(mol);
     assert.equal(result.ok, false, smiles);

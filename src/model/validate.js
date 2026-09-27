@@ -14,21 +14,23 @@
  *   substituent (two or more: CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
  *   one gets TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps (≤ 60 carbons, ≤ 80 heavy atoms),
  *   only elements the engine can name yet (carbon, halogens bonded to a
- *   carbon — design.md §13.4 I-30 —, OH groups on a carbon, I-31, and the
- *   C=O of aldehydes and ketones, I-32; on a molecule with a ring, only OH
- *   groups on ring carbons and ketone C=O whose carbon is a ring atom; on a
- *   chain, at most two aldehydes), and longest carbon chain ≤ 30 (for a
- *   ring: every side chain ≤ 30).
+ *   carbon — design.md §13.4 I-30 —, OH groups on a carbon, I-31, the
+ *   C=O of aldehydes and ketones, I-32, and carboxyl groups –C(=O)OH,
+ *   I-33; on a molecule with a ring, only OH groups on ring carbons and
+ *   ketone C=O whose carbon is a ring atom, no acid; on a chain, at most
+ *   two aldehydes and at most two acids), and longest carbon chain ≤ 30
+ *   (for a ring: every side chain ≤ 30).
  *
  * Two kinds of failure are kept apart (design.md §13.1): an invalid structure
  * (INVALID, VALENCE — the drawing itself is wrong) and a valid molecule the
  * engine cannot name (CYCLE, RING_SYSTEM, HETEROATOM — see isNotNameableYet()).
  * Halogens bonded to a carbon are named since I-30, OH groups on a carbon
- * (alcohols, phenol) since I-31, aldehydes and ketones since I-32; any
- * other heteroatom (N, an O of an acid, ester or ether, a halogen on a
- * heteroatom…) still gets HETEROATOM, and so do an alcohol or ketone with a
- * ring whose OH or C=O is on a side chain, any aldehyde with a ring, and a
- * chain with more than two aldehydes.
+ * (alcohols, phenol) since I-31, aldehydes and ketones since I-32,
+ * carboxylic acids since I-33; any other heteroatom (N, an O of an ester,
+ * anhydride or ether, a halogen on a heteroatom or on a C=O carbon…) still
+ * gets HETEROATOM, and so do an alcohol or ketone with a ring whose OH or
+ * C=O is on a side chain, any aldehyde or acid with a ring, and a chain
+ * with more than two aldehydes or more than two acids.
  *
  * Errors are `{code, message}` objects with the Spanish messages of the §3.2
  * table; some carry extra data (`detail` in English for developers, `atoms`
@@ -63,8 +65,9 @@ export const MESSAGES = Object.freeze({
   HETEROATOM: 'Esta molécula tiene átomos que no son carbono ni hidrógeno. '
     + 'Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, '
     + 'derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), '
-    + 'alcoholes (con grupos –OH unidos a un carbono) '
-    + 'y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O).',
+    + 'alcoholes (con grupos –OH unidos a un carbono), '
+    + 'aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O) '
+    + 'y ácidos carboxílicos (con el grupo –COOH).',
   INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
 });
 
@@ -125,6 +128,42 @@ export const SIDE_CHAIN_CARBONYL_MESSAGE = 'Esta molécula tiene un anillo y un 
 export const MANY_ALDEHYDES_MESSAGE = 'Esta molécula tiene más de dos grupos –CHO (aldehído). '
   + 'Un –CHO siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos, '
   + 'así que no puede llevarlos todos. Estos compuestos se nombran con «-carbaldehído», y eso aún no sé hacerlo.';
+
+/**
+ * HETEROATOM message for a molecule with a ring and a carboxyl group
+ * (design.md §13.4 I-33): a –COOH carbon can never be a ring atom, so the
+ * group is either bonded to the ring, named with the suffix
+ * `-carboxílico` (`ácido ciclohexanocarboxílico`), or on a side chain,
+ * which then carries the principal group; both wait for I-40.
+ */
+export const RING_ACID_MESSAGE = 'Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). '
+  + 'Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), '
+  + 'y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico).';
+
+/**
+ * HETEROATOM message for an open chain with more than two carboxyl groups
+ * (design.md §13.4 I-33): a –COOH carbon is always a chain end and the
+ * chain has only two ends, so at least one –COOH would be a branch, the
+ * prefix `carboxi-`, or IUPAC 2013 names every group with the suffix
+ * `-carboxílico` on a smaller parent (`ácido propano-1,2,3-tricarboxílico`);
+ * neither is supported yet.
+ */
+export const MANY_ACIDS_MESSAGE = 'Esta molécula tiene más de dos grupos –COOH (ácido). '
+  + 'Un –COOH siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos, '
+  + 'así que alguno quedaría en una rama. Estos compuestos se nombran con el prefijo «carboxi-» '
+  + 'o con «-carboxílico», y eso aún no sé hacerlo.';
+
+/**
+ * HETEROATOM message of the naming engine (naming/index.js) when a –COOH
+ * would not be part of the parent chain (design.md §13.4 I-33): it would
+ * be the prefix `carboxi-`, not supported yet. Validation already refuses
+ * every molecule where this can happen (MANY_ACIDS_MESSAGE,
+ * RING_ACID_MESSAGE: with at most two –COOH on an open chain both are
+ * chain ends of the parent), so this is a safety net that turns a broken
+ * invariant into a refusal instead of a wrong name.
+ */
+export const CARBOXY_SUBSTITUENT_MESSAGE = 'Esta molécula tiene un grupo –COOH en una rama. '
+  + 'Se nombraría con el prefijo «carboxi-», y eso aún no sé hacerlo.';
 
 /**
  * HETEROATOM message of the naming engine (naming/index.js) when a C=O
@@ -524,8 +563,9 @@ export function isHalogenDerivative(mol, hetero) {
 /**
  * Tells whether an atom is the oxygen of an OH group on a carbon (an
  * alcohol or phenol group, design.md §13.4 I-31): an oxygen with exactly
- * one bond, a single bond, to a carbon. Such a carbon can have no C=O (that
- * oxygen would not be an OH), so the group is never part of an acid.
+ * one bond, a single bond, to a carbon. The OH of a carboxyl group matches
+ * too: it is told apart by its carbon (isCarboxylCarbon(); the naming
+ * engine's principal.js oxygenKind() classifies it as 'acid').
  *
  * @param {object} mol - A structurally valid molecule.
  * @param {Map<number, object[]>} adj - Its adjacency map.
@@ -569,12 +609,70 @@ export function carbonylKind(mol, adj, id) {
 } // End of function carbonylKind()
 
 /**
+ * Tells whether a carbon is the carbon X of a carboxyl group –C(=O)OH
+ * (design.md §13.4 I-33, §13.6 table: X(=O)–OH with X bonded to at most
+ * one R): exactly one oxygen double-bonded to it and one OH oxygen, both
+ * bonded to nothing else, and at most one other neighbour, a carbon on a
+ * single bond (none for methanoic acid). An ester (the O bonded to another
+ * carbon), an acyl halide, carbonic acid (two OH), a peracid… are not.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} id - An atom id.
+ * @returns {boolean} True for the carbon of a –COOH.
+ */
+export function isCarboxylCarbon(mol, adj, id) {
+  if (mol.atoms.get(id).element !== 'C') {
+    return false;
+  }
+  const links = adj.get(id);
+  const lone = (n) => mol.atoms.get(n.atom).element === 'O' && adj.get(n.atom).length === 1;
+  const oxo = links.filter((n) => lone(n) && n.order === 2).length;
+  const hydroxy = links.filter((n) => lone(n) && n.order === 1).length;
+  const others = links.filter((n) => !lone(n));
+  return oxo === 1 && hydroxy === 1 && others.length <= 1
+    && others.every((n) => n.order === 1 && mol.atoms.get(n.atom).element === 'C');
+} // End of function isCarboxylCarbon()
+
+/**
+ * Role of an oxygen in a carboxyl group –C(=O)OH (design.md §13.4 I-33):
+ * 'carbonyl' for the O of the C=O, 'hydroxy' for the O of the OH, null
+ * when the atom is not an oxygen of a carboxyl group (isCarboxylCarbon()).
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} id - An atom id.
+ * @returns {'carbonyl'|'hydroxy'|null} The role.
+ */
+export function carboxylRole(mol, adj, id) {
+  const links = adj.get(id);
+  if (mol.atoms.get(id).element !== 'O' || links.length !== 1 || !isCarboxylCarbon(mol, adj, links[0].atom)) {
+    return null;
+  }
+  return links[0].order === 2 ? 'carbonyl' : 'hydroxy';
+}
+
+/**
+ * The carbons of the carboxyl groups of a molecule (isCarboxylCarbon()),
+ * ascending.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @returns {number[]} The carbon ids.
+ */
+export function carboxylCarbons(mol) {
+  const adj = adjacency(mol);
+  return [...mol.atoms.keys()].filter((id) => isCarboxylCarbon(mol, adj, id)).sort((p, q) => p - q);
+}
+
+/**
  * Tells whether every non-carbon atom of a molecule is one the engine can
  * name: a halogen bonded to a carbon (a prefix, I-30), the oxygen of an OH
- * on a carbon (the `-ol` suffix or the `hidroxi` prefix, I-31) or the
+ * on a carbon (the `-ol` suffix or the `hidroxi` prefix, I-31), the
  * oxygen of an aldehyde or ketone C=O (the `-al` / `-ona` suffix or the
- * `oxo` prefix, I-32; carbonylKind()). Any other O, and every N, is not. An
- * OH on the carbon of a C=O (a carboxylic acid) is refused through its C=O.
+ * `oxo` prefix, I-32; carbonylKind()) or an oxygen of a carboxyl group
+ * (the `ácido …oico` suffix, I-33; carboxylRole()). Any other O, and every
+ * N, is not. The OH of an ester-like or otherwise unsupported C=O carbon
+ * (`OC(=O)O`, a peracid) is refused through its C=O.
  *
  * @param {object} mol - A structurally valid molecule.
  * @param {number[]} hetero - Its non-carbon atom ids.
@@ -585,7 +683,7 @@ export function hasNameableHeteroatoms(mol, hetero) {
   const halogens = hetero.filter((id) => isHalogen(mol.atoms.get(id).element));
   return isHalogenDerivative(mol, halogens)
     && hetero.every((id) => isHalogen(mol.atoms.get(id).element) || isHydroxyOxygen(mol, adj, id)
-      || carbonylKind(mol, adj, id) !== null);
+      || carbonylKind(mol, adj, id) !== null || carboxylRole(mol, adj, id) !== null);
 }
 
 /**
@@ -638,12 +736,15 @@ export function aldehydeOxygens(mol) {
 
 /**
  * The refusal of a nameable-heteroatom molecule whose oxygen groups the
- * engine cannot place yet (design.md §13.4 I-31, I-32), or null. With a
- * ring: an aldehyde (`ringAldehyde`), a ketone C=O on a side chain
- * (`sideChainCarbonyl`) or an OH on a side chain (`sideChainAlcohol`), in
- * that order. Without a ring: more than two aldehyde groups
+ * engine cannot place yet (design.md §13.4 I-31, I-32, I-33), or null.
+ * With a ring: a carboxyl group (`ringAcid`), an aldehyde
+ * (`ringAldehyde`), a ketone C=O on a side chain (`sideChainCarbonyl`) or
+ * an OH on a side chain (`sideChainAlcohol`), in that order. Without a
+ * ring: more than two carboxyl groups (`manyAcids`, whose third –COOH
+ * would be a `carboxi-` branch), then more than two aldehyde groups
  * (`manyAldehydes`). The error lists the heteroatoms (`atoms`) and the
- * offending oxygens (`sideChain` or `aldehydes`).
+ * offending groups (`acids`: the carboxyl carbons; `sideChain` or
+ * `aldehydes`: oxygens).
  *
  * @param {object} mol - A validated molecule whose heteroatoms are nameable.
  * @param {boolean} cyclic - Whether it has a ring.
@@ -651,6 +752,13 @@ export function aldehydeOxygens(mol) {
  * @returns {{code: string, message: string}|null} The HETEROATOM error, or null.
  */
 function oxygenPlacementError(mol, cyclic, hetero) {
+  const acids = carboxylCarbons(mol);
+  if (cyclic && acids.length > 0) {
+    return validationError('HETEROATOM', { message: RING_ACID_MESSAGE, atoms: hetero, reason: 'ringAcid', acids });
+  }
+  if (acids.length > 2) {
+    return validationError('HETEROATOM', { message: MANY_ACIDS_MESSAGE, atoms: hetero, reason: 'manyAcids', acids });
+  }
   if (!cyclic) {
     const aldehydes = aldehydeOxygens(mol);
     return aldehydes.length > 2
@@ -680,14 +788,15 @@ function oxygenPlacementError(mol, cyclic, hetero) {
  * Structural checks plus the naming checks, in order: non-empty, connected,
  * ring scope (ringError(): a single carbocycle of at most 30 carbons
  * passes; TOO_BIG or RING_SYSTEM otherwise), carbon and heavy-atom caps,
- * carbon, halogens on carbon, OH groups on carbon and aldehyde or ketone
- * C=O only (HETEROATOM for any other atom: valid but not nameable yet;
- * also for an OH, a ketone C=O or any aldehyde on a ring molecule outside
- * the ring, and for more than two aldehydes on a chain:
- * oxygenPlacementError()), chain cap — the longest carbon chain of a tree,
- * or the longest side chain of a ring (design.md §3.2, §13.1). A molecule
- * passing this is a hydrocarbon (or a halogen derivative, alcohol,
- * aldehyde or ketone of one) of at most 60 carbons that is either a tree
+ * carbon, halogens on carbon, OH groups on carbon, aldehyde or ketone
+ * C=O and carboxyl groups only (HETEROATOM for any other atom: valid but
+ * not nameable yet; also for an OH, a ketone C=O or any aldehyde on a ring
+ * molecule outside the ring, any acid with a ring, and for more than two
+ * aldehydes or acids on a chain: oxygenPlacementError()), chain cap — the
+ * longest carbon chain of a tree, or the longest side chain of a ring
+ * (design.md §3.2, §13.1). A molecule passing this is a hydrocarbon (or a
+ * halogen derivative, alcohol, aldehyde, ketone or carboxylic acid of one)
+ * of at most 60 carbons that is either a tree
  * whose longest carbon chain has at most 30, or a single carbocycle of 3
  * to 30 carbons whose side chains have at most 30 carbons and carry no
  * oxygen. The engine may still refuse a C=O carbon that ends up bonded to
@@ -723,7 +832,7 @@ export function validateForNaming(mol) {
   }
   const hetero = [...mol.atoms.values()].filter((atom) => atom.element !== 'C').map((atom) => atom.id).sort((p, q) => p - q);
   if (hetero.length > 0 && !hasNameableHeteroatoms(mol, hetero)) {
-    // A valid molecule, but the engine only names hydrocarbons, halogen derivatives, alcohols, aldehydes and ketones so far.
+    // A valid molecule, but the engine only names hydrocarbons, halogen derivatives, alcohols, aldehydes, ketones and acids so far.
     return validationError('HETEROATOM', { atoms: hetero });
   }
   const placement = hetero.length > 0 ? oxygenPlacementError(mol, cyclic, hetero) : null;

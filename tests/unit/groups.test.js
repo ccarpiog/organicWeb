@@ -340,7 +340,7 @@ test('lexicons: suffix and prefix forms of every group kind', () => {
 });
 
 test('a heteroatom molecule is still refused with HETEROATOM, carrying its groups', () => {
-  for (const smiles of ['NCCO', 'CC(=O)O', 'ClCCOC', 'OCC1=CC=CC=C1', 'NC1CCCCC1', 'COOC', 'O']) {
+  for (const smiles of ['NCCO', 'NCC(=O)O', 'ClCCOC', 'OCC1=CC=CC=C1', 'NC1CCCCC1', 'COOC', 'O']) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(result.ok, false, smiles);
     assert.equal(result.error.code, 'HETEROATOM', smiles);
@@ -355,19 +355,20 @@ test('a heteroatom molecule is still refused with HETEROATOM, carrying its group
 });
 
 test('explanation of a refusal: groups, principal, suffix or prefix, then the message', () => {
-  const steps = explain(nameMolecule(parseSmiles('OCCC(=O)O')));
+  // An amine keeps the refusal (acids alone are named since I-33).
+  const steps = explain(nameMolecule(parseSmiles('NCC(O)C(=O)O')));
   assert.deepEqual(steps.map((s) => s.id), ['groups', 'principal', 'affixes', 'notYet']);
   assert.deepEqual(steps.map((s) => s.title), ['Reconoce los grupos', 'Elige el principal', 'Sufijo o prefijo', 'Aún no sé nombrarla']);
   const text = (i) => steps[i].text.map(plainText).join(' ');
   assert.match(text(0), /1 ácido carboxílico/);
   assert.match(text(0), /1 alcohol/);
   assert.match(text(0), /el –OH de un ácido no cuenta como alcohol/);
-  assert.match(text(1), /el grupo principal es el ácido carboxílico: en la lista va antes que el alcohol/);
+  assert.match(text(1), /el grupo principal es el ácido carboxílico: en la lista va antes que el alcohol y la amina/);
   assert.match(text(2), /El ácido carboxílico: sufijo «-oico»/);
   assert.match(text(2), /El alcohol: prefijo «hidroxi-»/);
   assert.match(text(3), /Aún no sé nombrar este tipo de compuestos/);
   // Highlights: principal (parent) apart from the prefix groups (substituent).
-  assert.deepEqual(steps[1].highlight.map((h) => [h.style, h.atoms.length]), [['parent', 3], ['substituent', 1]]);
+  assert.deepEqual(steps[1].highlight.map((h) => [h.style, h.atoms.length]), [['parent', 3], ['substituent', 2]]);
   // Only ethers and halogens: no principal group, no suffix.
   const prefixOnly = explain(nameMolecule(parseSmiles('ClCCOC')));
   assert.match(prefixOnly[1].text.join(' '), /no hay grupo principal/);
@@ -381,7 +382,7 @@ test('explanation of a refusal: groups, principal, suffix or prefix, then the me
 const GROUP_SNAPSHOT_SMILES = [
   'NCCO', // alcohol > amine
   'OCC1=CC=CC=C1', // alcohol on the side chain of a benzene: its own message
-  'CC(=O)O', // acid: not alcohol + ketone
+  'NCC(=O)O', // acid (named since I-33) with an amine: the acid is not alcohol + ketone
   'CC(=O)OC', // ester: not ether + ketone
   'CC(=O)NC', // amide: not amine + ketone
   'NCC(O)CC(=O)CC=O', // aldehyde > ketone > alcohol > amine (the amine keeps the refusal since I-32)

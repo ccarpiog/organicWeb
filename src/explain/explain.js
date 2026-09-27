@@ -67,6 +67,16 @@
  * `oxo-` and `hidroxi-` prefixes are described in the substituents step
  * and the legend.
  *
+ * Carboxylic acids (design.md §13.4 I-33, `structure.suffix.kind` 'acid')
+ * get the same steps: the group step (acidGroupStep()) shows each –COOH
+ * whole (carbon, C=O oxygen and OH oxygen), says that its OH is not an
+ * alcohol nor its C=O a ketone, that its carbon is a chain end counted in
+ * the chain (locant 1), gives `ácido …oico` (`…dioico`) and, with other
+ * oxygen groups, the seniority ácido > aldehído > cetona > alcohol and the
+ * `oxo-` / `hidroxi-` prefixes; the numbering step says why the acid's
+ * locant is never written (terminalGroupNote()); the legend and the
+ * assemble step explain the word `ácido` that starts the name.
+ *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
  * GroupAnalysis); it gets groups ("Reconoce los grupos": each
@@ -82,7 +92,7 @@ import { SENIORITY } from '../naming/seniority.js';
 import { ELEMENT_NAMES_ES } from '../model/elements.js';
 import {
   substituentPrefix, citationKey, needsEnclosure, isCompoundPrefix, renderPrefixes, omitsPrefixLocants,
-  suffixWords, suffixCount,
+  suffixWords, suffixCount, suffixGroupIds,
 } from '../naming/render.js';
 import { locantText, siteLocantText } from '../naming/structure.js';
 
@@ -315,7 +325,7 @@ function ringOmission(result) {
 
 /**
  * How the principal group of each suffix kind is called in sentences
- * (design.md §5; alcohols I-31, aldehydes and ketones I-32): `the` / `one` /
+ * (design.md §5; alcohols I-31, aldehydes and ketones I-32, acids I-33): `the` / `one` /
  * `many` for the group, `art` for its short form with the article, `group`
  * without article, `carbonWith` / `carbonThe` / `carbonA` for its carbon,
  * `label` for the N0 row of the comparison table, `prefix` for the prefix
@@ -323,6 +333,21 @@ function ringOmission(result) {
  * family, `ringExample` for the ring name without locant.
  */
 const SUFFIX_GROUP_WORDS = Object.freeze({
+  acid: Object.freeze({
+    the: 'el grupo –COOH',
+    one: 'un grupo –COOH',
+    many: 'grupos –COOH',
+    group: 'grupo –COOH',
+    art: 'el –COOH',
+    short: '–COOH',
+    carbonWith: 'el carbono del –COOH',
+    carbonThe: 'el carbono del grupo –COOH',
+    carbonA: 'un carbono de un grupo –COOH',
+    label: 'Grupos –COOH',
+    prefix: 'carboxi',
+    family: 'ácido carboxílico',
+    ringExample: '',
+  }),
   alcohol: Object.freeze({
     the: 'el grupo –OH',
     one: 'un grupo –OH',
@@ -395,6 +420,18 @@ function isCarbonyl(result) {
 }
 
 /**
+ * Tells whether a result's principal group is a carboxylic acid –COOH
+ * (design.md §13.4 I-33).
+ *
+ * @param {object} result - The naming result.
+ * @returns {boolean} True for `ácido …oico`.
+ */
+function isAcid(result) {
+  const { suffix } = result.structure;
+  return Boolean(suffix) && suffix.kind === 'acid';
+}
+
+/**
  * Number of prefixes of one kind of atom group inside a substituent (nested
  * ones included): OH groups cited `hidroxi-` (`hydroxy`) or C=O oxygens
  * cited `oxo-` (`oxo`).
@@ -462,14 +499,15 @@ function hydroxylsIn(result) {
  * Groups of the principal kind that are cited as prefixes because no chain
  * can carry them all (design.md §13.4 I-31, I-32): OH groups (`hidroxi-`)
  * for an alcohol, C=O oxygens (`oxo-`) on branches for a ketone; none for
- * an aldehyde (validation keeps every –CHO on the parent).
+ * an aldehyde or an acid (validation keeps every –CHO and –COOH on the
+ * parent).
  *
  * @param {object} result - The naming result.
  * @returns {number} The count.
  */
 function principalInBranches(result) {
   const { suffix } = result.structure;
-  if (!suffix || suffix.kind === 'aldehyde') {
+  if (!suffix || suffix.kind === 'aldehyde' || suffix.kind === 'acid') {
     return 0;
   }
   return prefixSum(result, suffix.kind === 'alcohol' ? hydroxyTotal : oxoTotal);
@@ -477,7 +515,7 @@ function principalInBranches(result) {
 
 /**
  * The OH and C=O groups of a name, wherever they are cited (suffix or
- * prefixes, at any depth).
+ * prefixes, at any depth); a –COOH counts as one OH and one C=O.
  *
  * @param {object} result - The naming result.
  * @returns {{oh: number, co: number}} The number of OH groups and of C=O groups.
@@ -486,35 +524,36 @@ function oxygenGroups(result) {
   const { suffix } = result.structure;
   const n = suffixCount(result.structure);
   const alcohol = Boolean(suffix) && suffix.kind === 'alcohol';
+  const acid = Boolean(suffix) && suffix.kind === 'acid';
   return {
-    oh: (alcohol ? n : 0) + prefixSum(result, hydroxyTotal),
+    oh: (alcohol || acid ? n : 0) + prefixSum(result, hydroxyTotal),
     co: (alcohol ? 0 : n) + prefixSum(result, oxoTotal),
   };
 }
 
 /**
  * Whether the suffix locants of a name are omitted: always for an aldehyde
- * on a chain (its carbon is a chain end, IUPAC 2013 P-14.3.4.1), else the
- * prefix rule (ringOmission()).
+ * or an acid on a chain (its carbon is a chain end, IUPAC 2013
+ * P-14.3.4.1), else the prefix rule (ringOmission()).
  *
  * @param {object} result - A naming result with a suffix.
  * @returns {boolean} True when the suffix locants are not written.
  */
 function suffixOmitted(result) {
   const { parentKind, suffix } = result.structure;
-  return (parentKind === 'chain' && suffix.kind === 'aldehyde') || ringOmission(result).prefixes;
+  return (parentKind === 'chain' && (suffix.kind === 'aldehyde' || suffix.kind === 'acid')) || ringOmission(result).prefixes;
 }
 
 /**
- * Highlight spec of the principal groups (the OH groups of the suffix, with
- * their carbons and C–O bonds).
+ * Highlight spec of the principal groups (the groups of the suffix with
+ * their carbons and bonds: an OH, a C=O, or a whole –COOH with both
+ * oxygens, render.js suffixGroupIds()).
  *
  * @param {object} result - A naming result with a suffix.
  * @returns {{atoms: number[], bonds: number[], style: string}} The spec.
  */
 function suffixSpec(result) {
-  const { locants } = result.structure.suffix;
-  return { atoms: locants.flatMap((s) => [s.atom, s.attachAtom]), bonds: locants.map((s) => s.bond), style: 'parent' };
+  return { ...suffixGroupIds(result.structure.suffix), style: 'parent' };
 }
 
 /**
@@ -657,7 +696,8 @@ function substituentPi(sub) {
  * each OH group replaces a hydrogen by an OH, so it adds an oxygen and
  * leaves the hydrogen count unchanged, and each C=O — of the `-al` / `-ona`
  * suffix or of an `oxo-` prefix — replaces two hydrogens by one oxygen, so
- * it counts as one π bond).
+ * it counts as one π bond; a –COOH is one of each: two oxygens, one π
+ * bond).
  *
  * @param {object} structure - The name structure.
  * @returns {{carbons: number, hydrogens: number, halogens: Object<string, number>, oxygens: number}} The counts (halogens by element; empty for a hydrocarbon).
@@ -666,9 +706,10 @@ export function atomCounts(structure) {
   const { parent, prefixes } = structure;
   let carbons = parent.length;
   let pi = parent.double.length + 2 * parent.triple.length;
-  let oxygens = suffixCount(structure);
+  const acid = Boolean(structure.suffix) && structure.suffix.kind === 'acid';
+  let oxygens = suffixCount(structure) * (acid ? 2 : 1);
   if (structure.suffix && structure.suffix.kind !== 'alcohol') {
-    pi += suffixCount(structure); // Each C=O of `-al` / `-ona`.
+    pi += suffixCount(structure); // Each C=O of `-al` / `-ona` / `-oico`.
   }
   const halogens = {};
   for (const group of prefixes) {
@@ -827,6 +868,11 @@ function countStep(result) {
         drawing += `; cada ${single.join(' o ')} ocupa el sitio de un hidrógeno`;
       }
       drawing += ', y cada oxígeno con enlace doble ocupa el sitio de dos.';
+      if (isAcid(result)) {
+        drawing += suffixCount(result.structure) === 1
+          ? ' En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono.'
+          : ' En cada grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono.';
+      }
     } // End of the oxygen sentences
     text.push(drawing);
   } // End of the count sentences
@@ -857,6 +903,9 @@ function groupStep(result) {
   const { suffix } = result.structure;
   if (!suffix) {
     return null;
+  }
+  if (isAcid(result)) {
+    return acidGroupStep(result);
   }
   if (isCarbonyl(result)) {
     return carbonylGroupStep(result);
@@ -978,6 +1027,99 @@ function carbonylGroupStep(result) {
 } // End of function carbonylGroupStep()
 
 /**
+ * The other oxygen groups of an acid, all cited as prefixes (design.md
+ * §13.4 I-33): the –CHO at the other end of the parent chain (an `oxo`
+ * prefix on its last carbon), the ketone C=O on the parent (`oxo` on an
+ * inner carbon), the C=O inside branches (`oxo` there) and every OH
+ * (`hidroxi`).
+ *
+ * @param {object} result - A naming result whose suffix is an acid.
+ * @returns {{aldehyde: number, ketone: number, branchCo: number, oh: number}} The counts.
+ */
+function acidCompanions(result) {
+  const { parent, prefixes } = result.structure;
+  const sites = prefixes.filter((g) => g.substituent.oxo).flatMap((g) => g.locants);
+  const aldehyde = sites.filter((site) => site.locant === parent.length).length;
+  const ketone = sites.length - aldehyde;
+  return { aldehyde, ketone, branchCo: prefixSum(result, oxoTotal) - sites.length, oh: prefixSum(result, hydroxyTotal) };
+}
+
+/**
+ * Step "Reconoce el grupo funcional" for a carboxylic acid (design.md §13.4
+ * I-33): the –COOH group (a carbon with an O on a double bond and an OH,
+ * one group: its OH is not an alcohol, its C=O not a ketone), its carbon
+ * always a chain end counted in the chain, the name `ácido …oico`
+ * (`…dioico`), the seniority ácido > aldehído > cetona > alcohol when other
+ * oxygen groups are present (they become the prefixes `oxo-` and
+ * `hidroxi-`), and halogens as prefixes. Each –COOH is highlighted whole
+ * (carbon and both oxygens).
+ *
+ * @param {object} result - A naming result whose suffix is an acid.
+ * @returns {object} The step.
+ */
+function acidGroupStep(result) {
+  const { suffix, parent } = result.structure;
+  const n = suffix.locants.length;
+  const ending = lexiconEs.groupSuffix('acid');
+  const word = lexiconEs.suffixClassWord('acid');
+  const text = [];
+  text.push(n === 1
+    ? 'Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.'
+    : `Tu molécula tiene ${n} grupos –COOH (cada uno, un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH). Son [[grupos funcionales|grupo funcional]]: la molécula es un ácido carboxílico con ${n} grupos ácido.`);
+  text.push('Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.');
+  if (parent.length === 1) {
+    text.push('Aquí el carbono del –COOH es el único carbono de la molécula.');
+  } else {
+    text.push(n === 1
+      ? 'El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.'
+      : 'El carbono de cada –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Esos carbonos son carbonos de la cadena: se cuentan al buscarla y al numerarla.');
+  }
+  text.push(`El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «${word}» y termina con el [[sufijo]] «-${ending}» (como en «${word} etanoico»).`);
+  if (n > 1) {
+    const { multiplier: mult } = suffixWords(suffix, lexiconEs);
+    text.push(`Aquí hay ${n} grupos –COOH, uno en cada extremo de la cadena principal, así que el sufijo dice cuántos: «-${mult}${ending}» («di» = 2).`);
+  }
+  const { aldehyde, ketone, branchCo, oh } = acidCompanions(result);
+  const otherCo = ketone + branchCo;
+  const others = [];
+  if (aldehyde > 0) {
+    others.push('un grupo –CHO en el otro extremo (un aldehído)');
+  }
+  if (ketone > 0) {
+    others.push(ketone === 1 ? 'un grupo C=O entre dos carbonos (una cetona)' : `${ketone} grupos C=O entre dos carbonos (cetonas)`);
+  }
+  if (branchCo > 0) {
+    others.push(branchCo === 1 ? 'un grupo C=O en una rama' : `${branchCo} grupos C=O en ramas`);
+  }
+  if (oh > 0) {
+    others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
+  }
+  if (others.length > 0) {
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > aldehído > cetona > alcohol.`);
+    const how = [];
+    if (aldehyde + otherCo > 0) {
+      how.push(aldehyde > 0
+        ? 'cada C=O que no es del ácido se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
+        : 'cada C=O que no es del ácido se nombra con el [[prefijo]] «oxo-»');
+    }
+    if (oh > 0) {
+      how.push(aldehyde + otherCo > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH que no es del ácido se nombra con el [[prefijo]] «hidroxi-»');
+    }
+    text.push(`Aquí manda el ácido, así que ${joinY(how)}, delante del nombre.`);
+  } // End of the seniority sentences
+  if (halogensIn(result).length > 0) {
+    text.push('Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]].');
+  }
+  return {
+    id: 'group',
+    title: STEP_TITLES.group,
+    text,
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result)],
+    locants: null,
+  };
+} // End of function acidGroupStep()
+
+/**
  * Counts the multiple bonds that stay outside the parent chain (in
  * substituents, or connecting a `-iliden` group), the groups holding them,
  * and, bond by bond (every occurrence of a repeated group on its own), how
@@ -1096,6 +1238,8 @@ function groupChainSentences(result, p0, p1, step) {
   text.push(`La [[cadena principal]] tiene que ${carry} el mayor número posible de ${words.many}, porque ${words.art} es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más ${words.many}, gana la más larga.`);
   if (isCarbonyl(result)) {
     text.push('El carbono de cada C=O forma parte de la cadena: se cuenta como los demás carbonos. El oxígeno no forma parte de ella.');
+  } else if (isAcid(result)) {
+    text.push('El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.');
   }
   if (decided(p0)) {
     const lengths = p0.candidatesBefore.map((c) => c.atoms.length);
@@ -1758,8 +1902,8 @@ function prefixOmissionNote(result) {
     return `En ${q(result.name)} no hacen falta números: todos los hidrógenos se han cambiado por ${element}, así que no hay que decir dónde está cada uno.`;
   }
   const { suffix } = result.structure;
-  if (suffix && suffix.kind === 'aldehyde' && prefixes.length === 0) {
-    return null; // aldehydeNote() explains it.
+  if (suffix && (suffix.kind === 'aldehyde' || suffix.kind === 'acid') && prefixes.length === 0) {
+    return null; // terminalGroupNote() explains it.
   }
   if (suffix && suffix.kind === 'ketone' && parent.length === 3) {
     const cited = (result.alternatives || []).find((a) => a.style === 'locants');
@@ -1906,7 +2050,7 @@ function numberingStep(result) {
   const note = omissionNote(result);
   const prefixNote = prefixOmissionNote(result);
   const hasLocants = result.parts.some((p) => p.kind === 'locant');
-  const aldehyde = aldehydeNote(result);
+  const aldehyde = terminalGroupNote(result);
   if (!hasLocants) {
     text.push('Aquí no hace falta numerar: el nombre no lleva números.');
     if (note) {
@@ -1961,24 +2105,26 @@ function numberingStep(result) {
 } // End of function numberingStep()
 
 /**
- * Note on the uncited locant of an aldehyde on a chain (design.md §13.4
- * I-32; IUPAC 2013 P-14.3.4.1): the –CHO carbon is always a chain end, so
- * it is always carbon 1 (with two, the first and the last) and its number
- * is never written.
+ * Note on the uncited locant of an aldehyde or an acid on a chain
+ * (design.md §13.4 I-32, I-33; IUPAC 2013 P-14.3.4.1): the –CHO or –COOH
+ * carbon is always a chain end, so it is always carbon 1 (with two, the
+ * first and the last) and its number is never written.
  *
  * @param {object} result - The naming result (chain parent).
- * @returns {string|null} The note, or null when the suffix is not an aldehyde.
+ * @returns {string|null} The note, or null when the suffix is neither an aldehyde nor an acid.
  */
-function aldehydeNote(result) {
+function terminalGroupNote(result) {
   const { suffix, parent } = result.structure;
-  if (!suffix || suffix.kind !== 'aldehyde') {
+  if (!suffix || (suffix.kind !== 'aldehyde' && suffix.kind !== 'acid')) {
     return null;
   }
+  const { short } = groupWords(result);
   if (suffix.locants.length === 1) {
-    return `El carbono del grupo –CHO siempre es el 1, así que su número no se escribe: ${q(result.name)}, nunca «-1-al».`;
+    const never = `-1-${lexiconEs.groupSuffix(suffix.kind)}`;
+    return `El carbono del grupo ${short} siempre es el 1, así que su número no se escribe: ${q(result.name)}, nunca ${q(never)}.`;
   }
-  return `Los dos grupos –CHO están en los extremos, en los carbonos 1 y ${parent.length}. Siempre es así, de modo que sus números no se escriben: ${q(result.name)}.`;
-} // End of function aldehydeNote()
+  return `Los dos grupos ${short} están en los extremos, en los carbonos 1 y ${parent.length}. Siempre es así, de modo que sus números no se escriben: ${q(result.name)}.`;
+} // End of function terminalGroupNote()
 
 /**
  * Group name used when talking about a substituent (`metilo`,
@@ -2020,12 +2166,16 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
     return [`${q(prefix)} es el [[prefijo]] del ${ELEMENT_NAMES_ES[sub.halogen]} (${sub.halogen}), un halógeno unido ${words.to}.`];
   }
   if (sub.hydroxy) {
-    // Only when a C=O is the principal group can an OH be cited on the parent itself.
-    return [`${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el grupo C=O va antes que el –OH.`];
+    // Only when a C=O or a –COOH is the principal group can an OH be cited on the parent itself.
+    return [principal === 'acid'
+      ? `${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el ácido (–COOH) va antes que el alcohol.`
+      : `${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el grupo C=O va antes que el –OH.`];
   }
   if (sub.oxo) {
-    // Only when an aldehyde is principal can a ketone C=O be cited on the parent itself.
-    return [`${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de una cetona). No es el [[grupo principal]]: el aldehído va antes que la cetona.`];
+    // Only when an aldehyde or an acid is principal can a C=O be cited on the parent itself.
+    return [principal === 'acid'
+      ? `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona.`
+      : `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de una cetona). No es el [[grupo principal]]: el aldehído va antes que la cetona.`];
   }
   if (sub.retained === 'isopropyl') {
     out.push('Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos:');
@@ -2269,7 +2419,8 @@ function orderStep(result) {
 
 /**
  * Legend of the name pieces (design.md §5: "hex = 6 carbonos, -eno = hay
- * un doble enlace"), built from the structure, in writing order.
+ * un doble enlace"), built from the structure, in writing order (the word
+ * `ácido` of an acid first, lexicon suffixClassWord()).
  *
  * @param {object} result - The naming result.
  * @returns {{text: string, kind: string, meaning: string}[]} Legend entries.
@@ -2279,6 +2430,10 @@ function nameLegend(result) {
   const words = parentWords(result);
   const omission = ringOmission(result);
   const legend = [];
+  const classWord = result.structure.suffix ? lexiconEs.suffixClassWord(result.structure.suffix.kind) : null;
+  if (classWord) {
+    legend.push({ text: classWord, kind: 'ending', meaning: `la molécula es un ${groupWords(result).family}: su nombre empieza por esta palabra` });
+  }
   for (const group of prefixes) {
     const sub = group.substituent;
     const k = group.locants.length;
@@ -2360,10 +2515,11 @@ function nameLegend(result) {
 } // End of function nameLegend()
 
 /**
- * Legend entries of the suffix of an alcohol, aldehyde or ketone (design.md
- * §13.4 I-31, I-32): the locants of the carbons of the principal groups
- * (unless omitted: `etanol`, `ciclohexanol`, `propanona`, every aldehyde on
- * a chain) and `-ol`, `-diol`, `-al`, `-dial`, `-ona`, `-diona`…
+ * Legend entries of the suffix of an alcohol, aldehyde, ketone or acid
+ * (design.md §13.4 I-31, I-32, I-33): the locants of the carbons of the
+ * principal groups (unless omitted: `etanol`, `ciclohexanol`, `propanona`,
+ * every aldehyde and acid on a chain) and `-ol`, `-diol`, `-al`, `-dial`,
+ * `-ona`, `-diona`, `-oico`, `-dioico`…
  *
  * @param {object} result - The naming result.
  * @returns {{text: string, kind: string, meaning: string}[]} The entries (none without a suffix).
@@ -2377,6 +2533,7 @@ function suffixLegend(result) {
   const n = suffix.locants.length;
   const legend = [];
   if (!suffixOmitted(result)) {
+    // An acid's locants are never written on a chain (suffixOmitted()), so only –OH and C=O reach here.
     const carbons = suffix.kind === 'alcohol'
       ? `${n === 1 ? 'carbono que lleva' : 'carbonos que llevan'} el grupo –OH`
       : `${n === 1 ? 'carbono del grupo' : 'carbonos de los grupos'} C=O`;
@@ -2462,12 +2619,14 @@ function assembleStep(result) {
 } // End of function assembleStep()
 
 /**
- * Sentences of "Monta el nombre" about the suffix of an alcohol, aldehyde
- * or ketone (design.md §13.4 I-31, I-32): `-ol` / `-al` / `-ona` at the very
- * end with its locants (never for an aldehyde on a chain), `-diol`,
- * `-dial`, `-diona`…, and the final `o` of the ending, dropped before a
- * vowel (`propan-2-ol`, `propanal`) and kept before a consonant
- * (`etano-1,2-diol`, `pentano-2,4-diona`, IUPAC 2013 P-16.7.1).
+ * Sentences of "Monta el nombre" about the suffix of an alcohol, aldehyde,
+ * ketone or acid (design.md §13.4 I-31, I-32, I-33): `-ol` / `-al` /
+ * `-ona` / `-oico` at the very end with its locants (never for an aldehyde
+ * or acid on a chain), `-diol`, `-dial`, `-diona`, `-dioico`…, the word
+ * `ácido` that starts an acid's name, and the final `o` of the ending,
+ * dropped before a vowel (`propan-2-ol`, `propanal`, `ácido propanoico`)
+ * and kept before a consonant (`etano-1,2-diol`, `pentano-2,4-diona`,
+ * `ácido butanodioico`, IUPAC 2013 P-16.7.1).
  *
  * @param {object} result - A naming result with a suffix.
  * @returns {string[]} The sentences.
@@ -2491,6 +2650,12 @@ function suffixSentences(result) {
     text.push(suffix.locants.length === 1
       ? 'El –CHO no lleva número: su carbono siempre es el 1.'
       : 'Los –CHO no llevan número: sus carbonos siempre son los dos extremos.');
+  }
+  if (suffix.kind === 'acid') {
+    text.push(suffix.locants.length === 1
+      ? 'El –COOH no lleva número: su carbono siempre es el 1.'
+      : 'Los –COOH no llevan número: sus carbonos siempre son los dos extremos.');
+    text.push(`Delante de todo va la palabra ${q(lexiconEs.suffixClassWord('acid'))}, separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.`);
   }
   const segments = lexiconEs.segmentOrder.filter((kind) => parent[kind].length > 0);
   const last = segments.length === 0

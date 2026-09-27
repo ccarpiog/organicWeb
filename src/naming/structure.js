@@ -107,19 +107,21 @@
  * @typedef {object} SuffixLocant
  * @property {number} locant - Locant of the carrying parent atom.
  * @property {number} atom - Id of the carrying parent atom (a carbon).
- * @property {number} attachAtom - Id of the group's heteroatom bonded to it (the O of an OH or of a C=O).
+ * @property {number} attachAtom - Id of the group's heteroatom bonded to it (the O of an OH or of a C=O; for a –COOH, the O of its C=O).
  * @property {number} bond - Id of the bond between them.
+ * @property {number} [hydroxyAtom] - For a –COOH only (design.md §13.4 I-33): id of its OH oxygen, part of the same group.
+ * @property {number} [hydroxyBond] - For a –COOH only: id of the bond between the carbon and that OH oxygen.
  */
 
 /**
  * The principal characteristic groups of a name, cited as a suffix after the
  * parent's ending (`propan-2-ol`, `butano-1,4-diol`, `ciclohexanol`, `fenol`,
- * `propanal`, `butanodial`, `pentano-2,4-diona`, `ciclohexanona`). An
- * aldehyde's locants (always a chain end) are never cited (IUPAC 2013
- * P-14.3.4.1).
+ * `propanal`, `butanodial`, `pentano-2,4-diona`, `ciclohexanona`,
+ * `ácido propanoico`, `ácido butanodioico`). An aldehyde's or acid's
+ * locants (always a chain end) are never cited (IUPAC 2013 P-14.3.4.1).
  *
  * @typedef {object} SuffixStructure
- * @property {'alcohol'|'aldehyde'|'ketone'} kind - Group kind (groups.js GROUP_KINDS; principal.js OXYGEN_KINDS).
+ * @property {'acid'|'alcohol'|'aldehyde'|'ketone'} kind - Group kind (groups.js GROUP_KINDS; principal.js OXYGEN_KINDS).
  * @property {SuffixLocant[]} locants - One entry per group, ascending locants (a carbon with two OH appears twice).
  */
 
@@ -336,9 +338,9 @@ export function buildNameStructure(parts) {
  * SuffixLocant per group, ascending locants (then oxygen id); null without
  * sites.
  *
- * @param {{atom: number, attachAtom: number, bond: number}[]} sites - The suffix groups (carrying atom, heteroatom, bond).
+ * @param {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number}[]} sites - The suffix groups (carrying atom, heteroatom, bond; the OH of a –COOH).
  * @param {number[]} atoms - Parent atom ids in locant order.
- * @param {'alcohol'|'aldehyde'|'ketone'|null} [kind] - Group kind (default 'alcohol').
+ * @param {'acid'|'alcohol'|'aldehyde'|'ketone'|null} [kind] - Group kind (default 'alcohol').
  * @returns {SuffixStructure|null} The suffix structure.
  */
 export function buildSuffix(sites, atoms, kind = 'alcohol') {
@@ -346,7 +348,13 @@ export function buildSuffix(sites, atoms, kind = 'alcohol') {
     return null;
   }
   const locantOf = new Map(atoms.map((atom, i) => [atom, i + 1]));
-  const locants = sites.map((site) => ({ locant: locantOf.get(site.atom), atom: site.atom, attachAtom: site.attachAtom, bond: site.bond }));
+  const locants = sites.map((site) => ({
+    locant: locantOf.get(site.atom),
+    atom: site.atom,
+    attachAtom: site.attachAtom,
+    bond: site.bond,
+    ...(site.hydroxyAtom === undefined ? {} : { hydroxyAtom: site.hydroxyAtom, hydroxyBond: site.hydroxyBond }),
+  }));
   locants.sort((p, q) => p.locant - q.locant || p.attachAtom - q.attachAtom);
   return { kind, locants };
 } // End of function buildSuffix()

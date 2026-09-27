@@ -107,6 +107,14 @@ const SNAPSHOT_SMILES = [
   'O=C1CCCCC1', // ciclohexanona: cycloalkanone, no locant
   'CC1CCCCC1=O', // 2-metilciclohexan-1-ona: ring N0 then N3
   'OC1CCC(=O)CC1', // 4-hidroxiciclohexan-1-ona: hidroxi- on a ring ketone
+  'OC=O', // ácido metanoico: one-carbon acid, ácido fórmico (I-33)
+  'CC(=O)O', // ácido etanoico: COOH carbon 1, uncited, ácido acético
+  'CC(C)C(=O)O', // ácido 2-metilpropanoico: N0 for the COOH, prefix locant cited
+  'OC(=O)CCC(=O)O', // ácido butanodioico: -dioico, o kept, no locants
+  'C=CC(C)C(=O)O', // ácido 2-metilbut-3-enoico: N0 before N1
+  'CC(O)C(=O)O', // ácido 2-hidroxipropanoico: acid > alcohol, hidroxi-
+  'O=CCC(=O)O', // ácido 3-oxopropanoico: acid > aldehyde, terminal CHO as oxo-
+  'CC(=O)CC(O)C(=O)O', // ácido 2-hidroxi-4-oxopentanoico: acid > ketone > alcohol
 ];
 
 /**

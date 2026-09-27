@@ -8,8 +8,10 @@
  * (I-31: OH groups in place of random hydrogens — on ring carbons only for a
  * ring —, phenol, some with halogens too), of aldehydes and ketones (I-32:
  * =O in place of two hydrogens of a carbon — on ring carbons only for a
- * ring —, some with OH groups and halogens too), plus the list of
- * cycloalkanes in a size range. Development only,
+ * ring —, some with OH groups and halogens too), of carboxylic acids (I-33:
+ * one or two –COOH at chain ends of acyclic molecules, some with C=O, OH
+ * groups and halogens too), plus the list of cycloalkanes in a size range.
+ * Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
  */
@@ -17,8 +19,9 @@
 import { createMolecule, addAtom, addBond, bondOrderSum, cloneMolecule, CARBON_VALENCE } from '../../src/model/molecule.js';
 import { HALOGEN_ELEMENTS } from '../../src/model/elements.js';
 import { canonicalTreeKey, canonicalKey } from '../../src/model/graph.js';
-import { validateForNaming, MAX_CHAIN } from '../../src/model/validate.js';
+import { validateForNaming, carboxylCarbons, MAX_CHAIN } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
+import { PREFIX_STYLES } from '../../src/naming/substituent.js';
 
 /**
  * Creates a seeded pseudo-random generator (mulberry32).
@@ -504,8 +507,10 @@ export function generateCarbonyls({ count, seed, minSize = 4, maxSize = 14 }) {
     if (random() < 0.25) {
       mol = halogenate(mol, random, 0.05 + random() * 0.2);
     }
-    if (validateForNaming(mol) || !nameMolecule(mol).ok) {
-      continue; // Not valid for naming (a ketene, an acid…) or refused by the engine (an acyl branch).
+    if (validateForNaming(mol) || !nameMolecule(mol).ok || carboxylCarbons(mol).length > 0) {
+      // Not valid for naming (a ketene…), refused by the engine (an acyl branch), or an acid
+      // (an OH drawn on an aldehyde carbon: generateAcids() covers those).
+      continue;
     }
     const key = canonicalKey(mol);
     if (!seen.has(key)) {
@@ -515,6 +520,82 @@ export function generateCarbonyls({ count, seed, minSize = 4, maxSize = 14 }) {
   } // End of the loop that draws distinct aldehydes and ketones
   return molecules;
 } // End of function generateCarbonyls()
+
+/**
+ * Copies a molecule and turns some of its end carbons into carboxyl
+ * carbons (design.md §13.4 I-33): each carbon with at most one carbon
+ * neighbour, bonded to it by a single bond and with three hydrogens (a
+ * –CH₃ end, or the lone carbon of methane), gets a double-bonded O and an
+ * OH, becoming a –COOH; at most `max` of them, chosen in random order.
+ *
+ * @param {object} mol - A hydrocarbon (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} max - The most –COOH groups to add (1 or 2).
+ * @returns {object} The copy (possibly without any –COOH).
+ */
+export function carboxylate(mol, random, max) {
+  const copy = cloneMolecule(mol);
+  const ends = [...copy.atoms.keys()].filter((id) => {
+    const bonds = [...copy.bonds.values()].filter((b) => b.a === id || b.b === id);
+    return bonds.length <= 1 && bonds.every((b) => b.order === 1) && CARBON_VALENCE - bondOrderSum(copy, id) >= 3;
+  });
+  for (const id of shuffle(ends, random).slice(0, max)) {
+    addBond(copy, id, addAtom(copy, {}, 'O'), 2);
+    addBond(copy, id, addAtom(copy, {}, 'O'), 1);
+  }
+  return copy;
+} // End of function carboxylate()
+
+/**
+ * Generates up to `count` distinct (by canonical key) carboxylic acids
+ * (design.md §13.4 I-33): random acyclic hydrocarbons of 1 carbon up to
+ * `maxSize` (methanoic, ethanoic, ethanedioic acid… included) with one or
+ * two –COOH at chain ends (carboxylate()), a share of them also with C=O
+ * (carbonylate(): ketones, or an aldehyde at the other end, cited `oxo-`),
+ * OH groups (hydroxylate(), `hidroxi-`) and halogens (halogenate()). Only
+ * molecules the engine names in every prefix style are kept (valid for
+ * naming — no ring, at most two –COOH — and without an acyl branch in any
+ * style: the 'substituted' style may need a `formil` branch that the
+ * others avoid, which the engine refuses).
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default up to 14 C; the minimum is ignored: small acids are the common ones).
+ * @returns {object[]} The molecules.
+ */
+export function generateAcids({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 7919 + 33);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50) {
+    attempts += 1;
+    const size = randomInt(random, 1, Math.max(1, maxSize - 1));
+    const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.4, branchiness: 0.2 + random() * 0.8 });
+    let mol = carboxylate(base, random, random() < 0.3 ? 2 : 1);
+    if (mol.atoms.size === base.atoms.size) {
+      continue; // No end carbon could take a –COOH.
+    }
+    const carbons = new Set([...base.atoms.keys()]);
+    if (random() < 0.3) {
+      mol = carbonylate(mol, random, 0.05 + random() * 0.2, carbons);
+    }
+    if (random() < 0.3) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.15, carbons);
+    }
+    if (random() < 0.25) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.2);
+    }
+    if (validateForNaming(mol) || carboxylCarbons(mol).length === 0
+      || !PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
+      continue; // Not valid for naming, the –COOH was spoilt, or refused by the engine in some style (an acyl branch).
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct acids
+  return molecules;
+} // End of function generateAcids()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

@@ -34873,5 +34873,3528 @@
     ]
    }
   ]
+ },
+ "OC=O": {
+  "name": "ácido metanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 1 carbono, 2 hidrógenos y 2 átomos de oxígeno (CH₂O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. El oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "Aquí el carbono del –COOH es el único carbono de la molécula.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido metanoico».",
+     "El nombre completo es «ácido metanoico».",
+     "También es correcto:",
+     "«ácido fórmico»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2
+      ],
+      "bonds": [],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "met",
+      "kind": "stem",
+      "meaning": "1 carbono en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "met",
+      "kind": "stem",
+      "atoms": [
+       2
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)O": {
+  "name": "ácido etanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 2 carbonos, 4 hidrógenos y 2 átomos de oxígeno (C₂H₄O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. El oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       2,
+       3
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 2 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido etanoico», nunca «-1-oico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido etanoico».",
+     "El nombre completo es «ácido etanoico».",
+     "También es correcto:",
+     "«ácido acético»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(C)C(=O)O": {
+  "name": "ácido 2-metilpropanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 4 carbonos, 8 hidrógenos y 2 átomos de oxígeno (C₄H₈O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. El oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       1,
+       2,
+       4,
+       5
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Las cadenas que llevan menos grupos –COOH quedan descartadas.",
+     "De las cadenas que llevan el grupo –COOH, la más larga tiene 3 carbonos. Hay 2 cadenas de 3. Pulsa cada opción para verlas."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 2",
+      "text": "Una cadena de 3 carbonos con el grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4
+        ],
+        "bonds": [
+         1,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 2",
+      "text": "Una cadena de 3 carbonos con el grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         2,
+         4
+        ],
+        "bonds": [
+         2,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 3; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 3. Gana la opción B.",
+     "Las opciones que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-metilpropanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      1,
+      3
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         3
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4
+        ],
+        "bonds": [
+         1,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        4,
+        3
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         3,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        1,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 2 hay un grupo metilo: se escribe «2-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "metil",
+      "text": "En el carbono 2 hay un grupo metilo: se escribe «2-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         3,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         3
+        ],
+        "bonds": [
+         2
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 2-metilpropanoico».",
+     "El nombre completo es «ácido 2-metilpropanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      1,
+      3
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       1
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "OC(=O)CCC(=O)O": {
+  "name": "ácido butanodioico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 4 carbonos, 6 hidrógenos y 4 átomos de oxígeno (C₄H₆O₄).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno de un grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En cada grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6,
+       3,
+       1,
+       7,
+       8
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       2,
+       1,
+       6,
+       7
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 2 grupos –COOH (cada uno, un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH). Son [[grupos funcionales|grupo funcional]]: la molécula es un ácido carboxílico con 2 grupos ácido.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono de cada –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Esos carbonos son carbonos de la cadena: se cuentan al buscarla y al numerarla.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "Aquí hay 2 grupos –COOH, uno en cada extremo de la cadena principal, así que el sufijo dice cuántos: «-dioico» («di» = 2)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       1,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       1,
+       6,
+       7
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 4 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       1,
+       6,
+       7
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "Los dos grupos –COOH están en los extremos, en los carbonos 1 y 4. Siempre es así, de modo que sus números no se escriben: «ácido butanodioico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      6,
+      4
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "Al final va el [[sufijo]] del grupo principal, «-dioico», sin número.",
+     "«di» quiere decir que hay 2 grupos –COOH en la cadena principal.",
+     "Los –COOH no llevan número: sus carbonos siempre son los dos extremos.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se queda delante de «-dioico», porque empieza por consonante: «ácido butanodioico».",
+     "El nombre completo es «ácido butanodioico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       1,
+       6,
+       7
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "meaning": "4 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     },
+     {
+      "text": "-dioico",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       1,
+       6,
+       7
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       4,
+       5
+      ]
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       2,
+       3,
+       1,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       1,
+       6,
+       7
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       1,
+       6,
+       7
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C=CC(C)C(=O)O": {
+  "name": "ácido 2-metilbut-3-enoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 5 carbonos, 8 hidrógenos y 2 átomos de oxígeno (C₅H₈O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. El oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       3,
+       2,
+       1,
+       4,
+       6,
+       7
+      ],
+      "bonds": [
+       4,
+       2,
+       1,
+       3,
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Las cadenas que llevan menos grupos –COOH quedan descartadas.",
+     "De las cadenas que llevan el grupo –COOH, la más larga tiene 4 carbonos. Solo hay una así."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 4; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 4. Gana la opción B.",
+     "Fíjate: empezando por el otro extremo, el enlace doble tendría el número 1 en vez del 3, pero manda el –COOH, porque es el [[grupo principal]].",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-metilbut-3-enoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      1,
+      4
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         4
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5
+        ],
+        "bonds": [
+         1,
+         2,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        5,
+        4
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         4,
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        1
+       ],
+       [
+        3,
+        2
+       ],
+       [
+        2,
+        3
+       ],
+       [
+        1,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 2 hay un grupo metilo: se escribe «2-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "metil",
+      "text": "En el carbono 2 hay un grupo metilo: se escribe «2-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         4,
+         2,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-eno» se quita delante de «-oico», porque empieza por vocal: «ácido 2-metilbut-3-enoico».",
+     "El nombre completo es «ácido 2-metilbut-3-enoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      1,
+      4
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "meaning": "4 carbonos en la cadena principal"
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "dónde está el enlace doble (el carbono con el número más bajo)"
+     },
+     {
+      "text": "-en",
+      "kind": "ending",
+      "meaning": "hay un enlace doble (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "atoms": [
+       5,
+       3,
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "en",
+      "kind": "ending",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(O)C(=O)O": {
+  "name": "ácido 2-hidroxipropanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 3 carbonos, 6 hidrógenos y 3 átomos de oxígeno (C₃H₆O₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno de un grupo –OH se ve como OH: es un oxígeno con su hidrógeno. El oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       1,
+       2,
+       4,
+       5
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo –OH (un alcohol). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que cada –OH que no es del ácido se nombra con el [[prefijo]] «hidroxi-», delante del nombre."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 3 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 3; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 3. Gana la opción B.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-hidroxipropanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      1,
+      3
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         3
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4
+        ],
+        "bonds": [
+         1,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        4,
+        3
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         3,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        1,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Los grupos –OH unidos a la cadena principal que no son el [[grupo principal]] también se nombran como [[sustituyentes|sustituyente]], con un [[prefijo]]: «hidroxi-» el –OH.",
+     "En el carbono 2 hay un grupo –OH: se escribe «2-hidroxi».",
+     "«hidroxi» es el [[prefijo]] de un grupo –OH (alcohol) unido a la cadena principal. No es el [[grupo principal]]: el ácido (–COOH) va antes que el alcohol."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "hidroxi",
+      "text": "En el carbono 2 hay un grupo –OH: se escribe «2-hidroxi». «hidroxi» es el [[prefijo]] de un grupo –OH (alcohol) unido a la cadena principal. No es el [[grupo principal]]: el ácido (–COOH) va antes que el alcohol.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         3,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         3
+        ],
+        "bonds": [
+         2
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 2-hidroxipropanoico».",
+     "El nombre completo es «ácido 2-hidroxipropanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      1,
+      3
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «hidroxi»"
+     },
+     {
+      "text": "hidroxi",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo –OH, que aquí no es el grupo principal"
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "hidroxi",
+      "kind": "prefix",
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       1
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "O=CCC(=O)O": {
+  "name": "ácido 3-oxopropanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 3 carbonos, 4 hidrógenos y 3 átomos de oxígeno (C₃H₄O₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       2,
+       1,
+       4,
+       5
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo –CHO en el otro extremo (un aldehído). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que cada C=O que no es del ácido se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena), delante del nombre."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 3 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 3; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 3. Gana la opción B.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 3-oxopropanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      2,
+      3
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         3
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         3,
+         4
+        ],
+        "bonds": [
+         2,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        3,
+        2
+       ],
+       [
+        4,
+        3
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3,
+         2
+        ],
+        "bonds": [
+         3,
+         2
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        3,
+        2
+       ],
+       [
+        2,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Los grupos C=O unidos a la cadena principal que no son el [[grupo principal]] también se nombran como [[sustituyentes|sustituyente]], con un [[prefijo]]: «oxo-» el C=O.",
+     "En el carbono 3 hay un oxígeno unido con un enlace doble (C=O): se escribe «3-oxo».",
+     "«oxo» es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono de la cadena principal (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "oxo",
+      "text": "En el carbono 3 hay un oxígeno unido con un enlace doble (C=O): se escribe «3-oxo». «oxo» es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono de la cadena principal (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3,
+         2
+        ],
+        "bonds": [
+         3,
+         2
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         1
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 3-oxopropanoico».",
+     "El nombre completo es «ácido 3-oxopropanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      2,
+      3
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «oxo»"
+     },
+     {
+      "text": "oxo",
+      "kind": "prefix",
+      "meaning": "sustituyente: oxígeno unido con un enlace doble (C=O), que aquí no es el grupo principal"
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "oxo",
+      "kind": "prefix",
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       4,
+       3,
+       2
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       2
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)CC(O)C(=O)O": {
+  "name": "ácido 2-hidroxi-4-oxopentanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 5 carbonos, 8 hidrógenos y 4 átomos de oxígeno (C₅H₈O₄).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno de un grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       5,
+       4,
+       2,
+       1,
+       6,
+       3,
+       8,
+       9
+      ],
+      "bonds": [
+       6,
+       4,
+       3,
+       1,
+       5,
+       2,
+       7,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo C=O entre dos carbonos (una cetona) y un grupo –OH (un alcohol). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que cada C=O que no es del ácido se nombra con el [[prefijo]] «oxo-» y cada –OH, con el [[prefijo]] «hidroxi-», delante del nombre."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 5 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       5,
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       6,
+       4,
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 5; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 5. Gana la opción B.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-hidroxi-4-oxopentanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       5,
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       6,
+       4,
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      7,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      2,
+      4
+     ],
+     [
+      1,
+      5
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         5
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4,
+         5,
+         7
+        ],
+        "bonds": [
+         1,
+         3,
+         4,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        4,
+        3
+       ],
+       [
+        5,
+        4
+       ],
+       [
+        7,
+        5
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         5,
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         6,
+         4,
+         3,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        7,
+        1
+       ],
+       [
+        5,
+        2
+       ],
+       [
+        4,
+        3
+       ],
+       [
+        2,
+        4
+       ],
+       [
+        1,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Los grupos –OH y C=O unidos a la cadena principal que no son el [[grupo principal]] también se nombran como [[sustituyentes|sustituyente]], con un [[prefijo]]: «hidroxi-» el –OH y «oxo-» el C=O.",
+     "En el carbono 2 hay un grupo –OH: se escribe «2-hidroxi».",
+     "«hidroxi» es el [[prefijo]] de un grupo –OH (alcohol) unido a la cadena principal. No es el [[grupo principal]]: el ácido (–COOH) va antes que el alcohol.",
+     "En el carbono 4 hay un oxígeno unido con un enlace doble (C=O): se escribe «4-oxo».",
+     "«oxo» es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono de la cadena principal (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       5,
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       6,
+       4,
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      2
+     ],
+     [
+      2,
+      4
+     ]
+    ],
+    "options": [
+     {
+      "label": "hidroxi",
+      "text": "En el carbono 2 hay un grupo –OH: se escribe «2-hidroxi». «hidroxi» es el [[prefijo]] de un grupo –OH (alcohol) unido a la cadena principal. No es el [[grupo principal]]: el ácido (–COOH) va antes que el alcohol.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         5,
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         6,
+         4,
+         3,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         6
+        ],
+        "bonds": [
+         5
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        2
+       ]
+      ]
+     },
+     {
+      "label": "oxo",
+      "text": "En el carbono 4 hay un oxígeno unido con un enlace doble (C=O): se escribe «4-oxo». «oxo» es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono de la cadena principal (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         5,
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         6,
+         4,
+         3,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         3
+        ],
+        "bonds": [
+         2
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "order",
+    "title": "Ordena alfabéticamente",
+    "text": [
+     "Los sustituyentes se escriben por orden alfabético: «hidroxi» y «oxo».",
+     "«hidroxi» va antes que «oxo» (h va antes que o)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 2-hidroxi-4-oxopentanoico».",
+     "El nombre completo es «ácido 2-hidroxi-4-oxopentanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       5,
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       6,
+       4,
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      7,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      2,
+      4
+     ],
+     [
+      1,
+      5
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «hidroxi»"
+     },
+     {
+      "text": "hidroxi",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo –OH, que aquí no es el grupo principal"
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «oxo»"
+     },
+     {
+      "text": "oxo",
+      "kind": "prefix",
+      "meaning": "sustituyente: oxígeno unido con un enlace doble (C=O), que aquí no es el grupo principal"
+     },
+     {
+      "text": "pent",
+      "kind": "stem",
+      "meaning": "5 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "hidroxi",
+      "kind": "prefix",
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "oxo",
+      "kind": "prefix",
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "pent",
+      "kind": "stem",
+      "atoms": [
+       7,
+       5,
+       4,
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       6,
+       4,
+       3,
+       1
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
  }
 }

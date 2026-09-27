@@ -60,7 +60,7 @@ import { buildChainStructure } from './structure.js';
 import { numberParent, compareCitationKeys } from './numbering.js';
 import { citationKey, prefixNameKey } from './render.js';
 import { lexiconEs } from './lexicon.es.js';
-import { principalKindOf, isPrincipalOxygen } from './principal.js';
+import { principalKindOf, isPrincipalOxygen, isSuffixOxygen } from './principal.js';
 
 /** Bond-order symbols that prefix a substituent identity key. */
 const ATTACH_SYMBOL = { 1: '-', 2: '=', 3: '#' };
@@ -401,23 +401,32 @@ export function hasAcylPrefix(structure) {
 } // End of function hasAcylPrefix()
 
 /**
- * The suffix groups of a parent (design.md §13.4 I-31, I-32): every oxygen
- * of the principal kind bonded to one of its atoms — the OH of `-ol`, or the
- * C=O of `-al` / `-ona`, whose carbon is the parent atom.
+ * The suffix groups of a parent (design.md §13.4 I-31, I-32, I-33): every
+ * oxygen of the principal kind bonded to one of its atoms — the OH of
+ * `-ol`, or the C=O of `-al` / `-ona`, whose carbon is the parent atom; a
+ * –COOH (`ácido …oico`) is one site, its C=O oxygen, carrying its OH
+ * oxygen as `hydroxyAtom` / `hydroxyBond`.
  *
  * @param {object} mol - A validated molecule.
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {number[]} atoms - The parent's atom ids.
  * @param {string|null} [principal] - The principal oxygen kind (default: principalKindOf() of the molecule).
- * @returns {{atom: number, attachAtom: number, bond: number}[]} One site per group: carrying atom, oxygen, bond; in parent-atom order.
+ * @returns {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number}[]} One site per group: carrying atom, oxygen, bond (and the OH of a –COOH); in parent-atom order.
  */
 export function suffixSites(mol, adj, atoms, principal = principalKindOf(mol, adj)) {
   const sites = [];
   for (const atom of atoms) {
     for (const n of adj.get(atom)) {
-      if (isPrincipalOxygen(mol, adj, n.atom, principal)) {
-        sites.push({ atom, attachAtom: n.atom, bond: n.bond });
+      if (!isSuffixOxygen(mol, adj, n.atom, principal)) {
+        continue;
       }
+      const site = { atom, attachAtom: n.atom, bond: n.bond };
+      if (principal === 'acid') {
+        const hydroxy = adj.get(atom).find((m) => m.order === 1 && isPrincipalOxygen(mol, adj, m.atom, principal));
+        site.hydroxyAtom = hydroxy.atom;
+        site.hydroxyBond = hydroxy.bond;
+      }
+      sites.push(site);
     }
   } // End of the loop over the parent atoms
   return sites;

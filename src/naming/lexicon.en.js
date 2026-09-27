@@ -48,13 +48,16 @@ export const BENZENE_NAME = 'benzene';
 /** Stem of the retained name `phenol` (phen + ol; IUPAC 2013 P-63.1.1.1, see lexicon.es.js). */
 export const PHENOL_STEM = 'phen';
 
-/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3) and small carbonyl compounds (see lexicon.es.js). */
+/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3), small carbonyl compounds and acids (P-65.1.1.1; see lexicon.es.js). */
 export const TRADITIONAL_NAMES = Object.freeze({
   toluene: 'toluene',
   styrene: 'styrene',
   formaldehyde: 'formaldehyde',
   acetaldehyde: 'acetaldehyde',
   acetone: 'acetone',
+  formicAcid: 'formic acid',
+  aceticAcid: 'acetic acid',
+  oxalicAcid: 'oxalic acid',
 });
 
 /** Endings of the parent name. */
@@ -222,7 +225,7 @@ export function styleLabel(style) {
 }
 
 /**
- * Returns a traditional name (a monosubstituted benzene or a small carbonyl compound).
+ * Returns a traditional name (a monosubstituted benzene, a small carbonyl compound or a small acid).
  *
  * @param {string} id - A TRADITIONAL_NAMES id.
  * @returns {string} The English name.
@@ -243,7 +246,7 @@ export function traditionalName(id) {
  * @returns {string} The label.
  */
 export function traditionalLabel(id) {
-  return id === 'toluene' ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
+  return ['toluene', 'formicAcid', 'aceticAcid', 'oxalicAcid'].includes(id) ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
 }
 
 /** Suffixes of the characteristic groups (see lexicon.es.js GROUP_SUFFIXES): `ethanoic acid`, `methyl ethanoate`… */
@@ -302,6 +305,24 @@ export const GROUP_FAMILY_NAMES = Object.freeze({
  */
 export function groupSuffix(kind) {
   return Object.prototype.hasOwnProperty.call(GROUP_SUFFIXES, kind) ? GROUP_SUFFIXES[kind] : null;
+}
+
+/**
+ * Class words written before the name (see lexicon.es.js
+ * SUFFIX_CLASS_WORDS): none in English, where the word `acid` follows as
+ * part of the suffix itself (`ethanoic acid`, GROUP_SUFFIXES).
+ */
+export const SUFFIX_CLASS_WORDS = Object.freeze({});
+
+/**
+ * Returns the class word written before a name whose suffix is of a kind
+ * (SUFFIX_CLASS_WORDS), or null (always, in English).
+ *
+ * @param {string} kind - A group kind (groups.js GROUP_KINDS).
+ * @returns {string|null} The word.
+ */
+export function suffixClassWord(kind) {
+  return Object.prototype.hasOwnProperty.call(SUFFIX_CLASS_WORDS, kind) ? SUFFIX_CLASS_WORDS[kind] : null;
 }
 
 /**
@@ -373,6 +394,7 @@ export const lexiconEn = Object.freeze({
   traditionalName,
   traditionalLabel,
   groupSuffix,
+  suffixClassWord,
   groupPrefix,
   groupFamilyName,
   formylPrefix: FORMYL_PREFIX,

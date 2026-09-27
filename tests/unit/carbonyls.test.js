@@ -7,7 +7,7 @@
  * unsaturation; seniority aldehído > cetona > alcohol with the `oxo-` and
  * `hidroxi-` prefixes; a ketone left on a branch (`(2-oxopropil)`);
  * cycloalkanones; `propanona` with `propan-2-ona` and `acetona`, and
- * `formaldehído` / `acetaldehído`; the refusals (acids and other C=O
+ * `formaldehído` / `acetaldehído`; the refusals (esters and other C=O
  * derivatives, an aldehyde with a ring, a ketone on a ring's side chain,
  * more than two aldehydes on a chain, an acyl branch); both lexicons; id
  * invariance; the explanation steps; the oracle generator. The names
@@ -57,17 +57,17 @@ function stepText(smiles, id) {
   return step ? step.text.map(plainText).join(' ') : '';
 }
 
-test('validation: aldehyde and ketone C=O are admitted; acids and other C=O derivatives keep the refusal', () => {
+test('validation: aldehyde and ketone C=O are admitted; other C=O derivatives keep the refusal', () => {
   for (const smiles of ['C=O', 'CC=O', 'O=CC=O', 'CC(C)=O', 'CC(=O)CC(C)=O', 'OCC=O', 'ClCC=O', 'O=C1CCCCC1', 'OC1CCC(=O)CC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Acid, ester, acyl chloride, amide, ketene, CO₂, formic acid, carbonate: the C=O carbon has another heteroatom or a C=C.
-  for (const smiles of ['CC(=O)O', 'CC(=O)OC', 'CC(=O)Cl', 'CC(N)=O', 'C=C=O', 'O=C=O', 'OC=O', 'OC(=O)O', 'NCC=O']) {
+  // Ester, acyl chloride, amide, ketene, CO₂, carbonic acid: the C=O carbon has another heteroatom or a C=C (acids are named since I-33).
+  for (const smiles of ['CC(=O)OC', 'CC(=O)Cl', 'CC(N)=O', 'C=C=O', 'O=C=O', 'OC(=O)O', 'NCC=O']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
   }
-  assert.match(MESSAGES.HETEROATOM, /y aldehídos y cetonas \(con un oxígeno unido a un carbono por un enlace doble, C=O\)/);
+  assert.match(MESSAGES.HETEROATOM, /aldehídos y cetonas \(con un oxígeno unido a un carbono por un enlace doble, C=O\)/);
   const kinds = (smiles) => {
     const mol = parseSmiles(smiles);
     const adj = adjacency(mol);
@@ -78,7 +78,8 @@ test('validation: aldehyde and ketone C=O are admitted; acids and other C=O deri
   assert.deepEqual(kinds('CC(C)=O'), [null, null, null, 'ketone']);
   assert.deepEqual(kinds('CC(=O)O'), [null, null, null, null], 'the C=O of an acid is not an aldehyde');
   assert.deepEqual(kinds('C=C=O'), [null, null, null], 'a ketene is not an aldehyde');
-  assert.equal(hasNameableHeteroatoms(parseSmiles('CC(=O)O'), [3, 4]), false);
+  assert.equal(hasNameableHeteroatoms(parseSmiles('CC(=O)O'), [3, 4]), true, 'an acid, through carboxylRole() (I-33)');
+  assert.equal(hasNameableHeteroatoms(parseSmiles('CC(=O)OC'), [3, 4]), false, 'an ester');
   assert.equal(hasNameableHeteroatoms(parseSmiles('OCC(C)=O'), [1, 5]), true, 'an OH and a ketone');
 });
 

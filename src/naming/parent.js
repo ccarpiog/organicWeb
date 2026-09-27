@@ -8,10 +8,11 @@
  * direction-independently, by:
  *
  *   P0 most principal characteristic groups (the groups of the principal
- *      oxygen kind on chain carbons: OH groups cited as `-ol`, I-31, or the
- *      C=O of aldehydes and ketones cited as `-al` / `-ona`, I-32; IUPAC
- *      2013 P-44.1.1, design.md §13.4) — only when the molecule has such
- *      groups, and then always recorded;
+ *      oxygen kind on chain carbons: OH groups cited as `-ol`, I-31, the
+ *      C=O of aldehydes and ketones cited as `-al` / `-ona`, I-32, or the
+ *      –COOH of acids cited as `ácido …oico`, each counted once, I-33;
+ *      IUPAC 2013 P-44.1.1, design.md §13.4) — only when the molecule has
+ *      such groups, and then always recorded;
  *   P1 longest chain (carbon count);
  *   P2 most multiple bonds lying within the chain;
  *   P3 most double bonds within the chain.
@@ -26,15 +27,16 @@
  * other prefix (chainCounts() on the whole graph); nor is any oxygen: one
  * of the principal kind is counted by P0, any other (a non-principal OH or
  * C=O, cited `hidroxi-` / `oxo-`) is a prefix counted by P4. A C=O carbon
- * is a skeleton carbon like any other (an aldehyde carbon is always a leaf,
- * so it can end a chain; a ketone carbon has two carbon neighbours), and
+ * is a skeleton carbon like any other (an aldehyde or carboxyl carbon is
+ * always a leaf, so it can end a chain; a ketone carbon has two carbon
+ * neighbours), and
  * the C=O bond is never a chain bond, so it counts in no P2/P3 comparison
  * (design.md §13.6 "Where X belongs").
  * Pure: reads topology only.
  */
 
 import { adjacency, leaves, carbonSkeleton } from '../model/graph.js';
-import { principalKindOf, isPrincipalOxygen } from './principal.js';
+import { principalKindOf, isPrincipalOxygen, isSuffixOxygen } from './principal.js';
 
 /**
  * Orients a chain so that it starts at the end with the smaller atom id.
@@ -112,14 +114,15 @@ export function leafToLeafPaths(mol) {
 /**
  * Counts, for one chain, the data compared by P0–P3 (and the substituent
  * count that numbering.js compares as P4: every neighbour outside the chain,
- * halogens included, the OH suffix groups not).
+ * halogens included, the suffix groups not).
  *
  * @param {Map<number, {atom: number, bond: number, order: number}[]>} adj - Adjacency map.
  * @param {number[]} atoms - Chain atom ids in order.
- * @param {function(number): boolean} [isSuffixAtom] - Tells whether a neighbour is a suffix group's heteroatom (an oxygen of the principal kind); default none.
+ * @param {function(number): boolean} [isSuffixAtom] - Tells whether a neighbour is a suffix group's heteroatom (the one oxygen that stands for a group of the principal kind); default none.
+ * @param {function(number): boolean} [isGroupAtom] - Tells whether a neighbour is another atom of a suffix group (the OH of a –COOH), counted neither as a suffix nor as a substituent; default none.
  * @returns {{suffixes: number, length: number, multiple: number, double: number, substituents: number}} The counts.
  */
-export function chainCounts(adj, atoms, isSuffixAtom = () => false) {
+export function chainCounts(adj, atoms, isSuffixAtom = () => false, isGroupAtom = () => false) {
   const inChain = new Set(atoms);
   let multiple = 0;
   let double = 0;
@@ -129,6 +132,8 @@ export function chainCounts(adj, atoms, isSuffixAtom = () => false) {
     for (const n of adj.get(atom)) {
       if (isSuffixAtom(n.atom)) {
         suffixes += 1;
+      } else if (isGroupAtom(n.atom)) {
+        continue;
       } else if (!inChain.has(n.atom)) {
         substituents += 1;
       } else if (n.atom === atoms[i + 1] && n.order >= 2) {
@@ -209,8 +214,9 @@ export function selectParent(mol) {
   const adj = adjacency(mol);
   let chains = leafToLeafPaths(mol);
   const principal = principalKindOf(mol, adj);
-  const isSuffix = (id) => isPrincipalOxygen(mol, adj, id, principal);
-  const counts = new Map(chains.map((chain) => [chain.join('-'), chainCounts(adj, chain, isSuffix)]));
+  const isSuffix = (id) => isSuffixOxygen(mol, adj, id, principal);
+  const isGroup = (id) => isPrincipalOxygen(mol, adj, id, principal);
+  const counts = new Map(chains.map((chain) => [chain.join('-'), chainCounts(adj, chain, isSuffix, isGroup)]));
   const trace = [];
   const hasPrincipal = principal !== null;
   const rules = [

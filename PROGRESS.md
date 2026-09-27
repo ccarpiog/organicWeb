@@ -42,7 +42,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-30 | v2.10 Halogen derivatives | same, §3.10 | done — `docs/progress-archive/i-30.md` | high / opus | Codex ship-with-fixes, 1 fixed, 1 declined — `docs/reviews/I-30.md` |
 | I-31 | v2.11 Alcohols | same, §3.11 | done — `docs/progress-archive/i-31.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-31.md` |
 | I-32 | v2.12 Aldehydes and ketones | same, §3.12 | done — `docs/progress-archive/i-32.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-32.md` |
-| I-33 | v2.13 Carboxylic acids | same, §3.13 | queued | — | — |
+| I-33 | v2.13 Carboxylic acids | same, §3.13 | done — `docs/progress-archive/i-33.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-33.md` |
 | I-34 | v2.14 Ethers | same, §3.14 | queued | — | — |
 | I-35 | v2.15 Esters | same, §3.15 | queued | — | — |
 | I-36 | v2.16 Amines | same, §3.16 | queued | — | — |
@@ -53,7 +53,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-32 done; I-33…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-33 done; I-34…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
@@ -89,13 +89,13 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-33 (v2 §3.13 carboxylic acids: `ácido etanoico` with `ácido
-acético` as another valid form, simple diacids, the carboxyl carbon counted in the chain and
-locant 1; COOH as one group; seniority ácido > aldehído > cetona > alcohol, so C=O and OH
-become `oxo-`/`hidroxi-` prefixes; build on I-32's `src/naming/principal.js`, P0/N0 in
-`parent.js` / `numbering.js`, admission in `validate.js`, acyl/ring refusals). Spec: design
-§13.4 row I-33, §13.6, and `autoclaude/processed/215-rings-functional-groups-confirmed.md`
-§3 item 13. Deploying stays a manual user step.
+Poll the inbox, then run I-34 (v2 §3.14 ethers: alkoxy nomenclature `metoxietano`; explicit
+rules for which side is the parent; highlight both sides of the O; a carbon chain never runs
+through O; symmetric/asymmetric and branched tests). Build on I-33's admission in
+`validate.js` and `src/naming/principal.js`; ethers are always prefixes (`alcoxi-`, §13.6).
+Spec: design §13.4 row I-34, §13.6, and
+`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 14. Deploying stays a
+manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -165,13 +165,15 @@ become `oxo-`/`hidroxi-` prefixes; build on I-32's `src/naming/principal.js`, P0
   refusals `ringAldehyde` / `sideChainCarbonyl` / `manyAldehydes` / `acylSubstituent`
   (`validate.js`, `nameValidated()` in `index.js`); tests `tests/unit/carbonyls.test.js`,
   `tests/e2e/carbonyls.spec.js`.
+- Acids (I-33): acid kind in `src/naming/principal.js`; refusals `manyAcids` / `ringAcid` /
+  `carboxySubstituent`; tests `tests/unit/acids.test.js`, `tests/e2e/acids.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-32)
+## Verification (last phase, I-33)
 
-- `npm test` 0 (818 pass) · `npm run check` 0 (99 files) · `npm run e2e` 0
-  (183 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (3111 pass).
+- `npm test` 0 (859 pass) · `npm run check` 0 (101 files) · `npm run e2e` 0
+  (187 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (3611 pass).
 
 ## Open risks / deviations
 
@@ -314,10 +316,15 @@ become `oxo-`/`hidroxi-` prefixes; build on I-32's `src/naming/principal.js`, P0
   should-fix (acyl leaked through the pin style) fixed with a regression
   (`docs/progress-archive/i-32.md`).
 
+- I-33: open-chain acids only (ring + COOH → `ringAcid`, 3+ COOH → `manyAcids`);
+  `ácido fórmico`/`acético`/`oxálico` offered; aldehyde end beside an acid is `oxo-`.
+  A larger oracle run (seed 7, 1–20 C) shows 7 pre-existing aldehyde/ketone refusals in the
+  'substituted' style, not wrong names (`docs/progress-archive/i-33.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-31 `49f114c`, pushed. I-32 committed and pushed right after this
+- I-32 `305589b`, pushed. I-33 committed and pushed right after this
   checkpoint (see `git log`).

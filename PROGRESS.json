@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T23:04:02Z",
+  "updated": "2026-09-27T23:28:32Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -305,8 +305,11 @@
     {
       "id": "I-33",
       "title": "v2.13 Carboxylic acids",
-      "status": "queued",
-      "summary": "v2 plan phase 13: carboxylic acids (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Names open-chain carboxylic acids and diacids (ácido etanoico), with acid seniority over carbonyls and alcohols.",
+      "risk": "high",
+      "review": "docs/reviews/I-33.md",
+      "narrative": "docs/progress-archive/i-33.md"
     },
     {
       "id": "I-34",

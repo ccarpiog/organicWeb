@@ -1,15 +1,16 @@
 /**
- * @file Aldehydes and ketones e2e (design.md §13.4 I-32): a C=O drawn with
- * the existing tools (a chain, Oxígeno on its last carbon, then Enlace doble
- * on that bond) is named propanal instead of refused, with the –CHO group,
- * the `-al` suffix and the uncited locant explained in the stepper and the
- * C=O (carbon and oxygen) highlighted on the canvas; molecules loaded
- * through the editor test API get their names (propanona with propan-2-ona
- * and acetona under "Otras formas válidas", etanal, butanodial,
- * pentano-2,4-diona, pent-3-en-2-ona, 4-oxopentanal, 4-hidroxibutan-2-ona,
- * ciclohexanona, 2-metilciclohexan-1-ona); "Ordenar dibujo" lays out a
- * carbonyl; an aldehyde on a ring, an acyl branch and an ester are refused
- * with their messages. Runs on the dev server and on dist/index.html.
+ * @file Carboxylic acids e2e (design.md §13.4 I-33): a –COOH drawn with the
+ * existing tools (a carbon with two more carbons on it, both turned into
+ * oxygens with Oxígeno, then Enlace doble on one C–O bond) is named ácido etanoico instead of refused, with
+ * ácido acético under "Otras formas válidas", the –COOH group, the word
+ * «ácido», the `-oico` suffix and the uncited locant explained in the
+ * stepper and the whole –COOH (carbon and both oxygens) highlighted on the
+ * canvas; molecules loaded through the editor test API get their names
+ * (ácido metanoico, ácido 2-metilpropanoico, ácido but-2-enoico, ácido
+ * butanodioico, ácido 4-oxopentanoico, ácido 2-hidroxipropanoico, ácido
+ * 3-oxopropanoico); "Ordenar dibujo" lays out an acid; three –COOH, an acid
+ * with a ring and an ester are refused with their messages. Runs on the dev
+ * server and on dist/index.html.
  */
 
 import { test, expect } from '@playwright/test';
@@ -99,26 +100,28 @@ async function askName(page) {
   await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
 }
 
-test('a C=O drawn with the bond tools is named propanal, with the –CHO group explained and highlighted', async ({ page }) => {
+test('a –COOH drawn with the tools is named ácido etanoico, with the group explained and highlighted whole', async ({ page }) => {
   const errors = await openApp(page);
   const tools = page.locator('#toolbar');
-  // C–C from the empty canvas, two more carbons, Oxígeno on the last one, then Enlace doble on that bond.
+  // C–C from the empty canvas, two more carbons on the second one, Oxígeno on both, then Enlace doble on the first C–O bond.
   await clickCanvas(page, 0.4, 0.5);
   await clickAtom(page, 2);
-  await clickAtom(page, 3);
+  await clickAtom(page, 2);
   await tools.getByRole('button', { name: 'Oxígeno', exact: true }).click();
+  await clickAtom(page, 3);
   await clickAtom(page, 4);
   await tools.getByRole('button', { name: 'Enlace doble' }).click();
-  await clickBond(page, 3);
+  await clickBond(page, 2);
   const json = await page.evaluate(() => window.__editor.getMoleculeJSON());
-  expect(json.atoms.map((a) => a.element)).toEqual(['C', 'C', 'C', 'O']);
-  expect(json.bonds.map((b) => b.order)).toEqual([1, 1, 2]);
-  // The C=O oxygen is labelled O (no hydrogen).
+  expect(json.atoms.map((a) => a.element)).toEqual(['C', 'C', 'O', 'O']);
+  expect(json.bonds.map((b) => b.order)).toEqual([1, 2, 1]);
+  // The C=O oxygen is labelled O, the other one OH.
   await expect(page.locator('svg#canvas text', { hasText: /^O$/ })).toHaveCount(1);
 
   await askName(page);
-  await expect(page.locator('#result-name')).toHaveText('propanal');
+  await expect(page.locator('#result-name')).toHaveText('ácido etanoico');
   await expect(page.locator('#results .results-error')).toHaveCount(0);
+  await expect(page.locator('#alternatives')).toContainText('ácido acético');
   await page.getByRole('button', { name: 'Ver paso a paso' }).click();
   const stepper = page.locator('#stepper');
   const dots = stepper.locator('.step-dot');
@@ -130,15 +133,17 @@ test('a C=O drawn with the bond tools is named propanal, with the –CHO group e
     texts.push(await stepper.locator('.step-content').textContent());
   }
   expect(titles).toEqual(['Cuenta los carbonos', 'Reconoce el grupo funcional', 'Busca la cadena principal', 'Numera la cadena', 'Monta el nombre']);
-  expect(texts[0]).toContain('1 átomo de oxígeno (C₃H₆O)');
-  expect(texts[1]).toContain('la molécula es un aldehído');
-  expect(texts[1]).toContain('sufijo «-al»');
-  expect(texts[3]).toContain('El carbono del grupo –CHO siempre es el 1, así que su número no se escribe');
-  expect(texts[4]).toContain('La «o» final de «-ano» se quita delante de «-al»');
-  // "Reconoce el grupo funcional": the C=O is highlighted whole, its carbon and its oxygen and the double bond.
+  expect(texts[0]).toContain('2 átomos de oxígeno (C₂H₄O₂)');
+  expect(texts[1]).toContain('la molécula es un ácido carboxílico');
+  expect(texts[1]).toContain('el –OH del –COOH no es un alcohol');
+  expect(texts[1]).toContain('el nombre empieza por la palabra «ácido» y termina con el sufijo «-oico»');
+  expect(texts[3]).toContain('El carbono del grupo –COOH siempre es el 1, así que su número no se escribe');
+  expect(texts[4]).toContain('Delante de todo va la palabra «ácido»');
+  expect(texts[4]).toContain('La «o» final de «-ano» se quita delante de «-oico»');
+  // "Reconoce el grupo funcional": the –COOH is highlighted whole, its carbon, both oxygens and both C–O bonds.
   await dots.nth(1).click();
-  await expect(page.locator('svg#canvas .hl-atom.hl-parent')).toHaveCount(2);
-  await expect(page.locator('svg#canvas .hl-bond.hl-parent')).toHaveCount(1);
+  await expect(page.locator('svg#canvas .hl-atom.hl-parent')).toHaveCount(3);
+  await expect(page.locator('svg#canvas .hl-bond.hl-parent')).toHaveCount(2);
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
   // Ordenar dibujo lays it out (one undoable edit), keeping the atoms and bonds.
@@ -147,57 +152,54 @@ test('a C=O drawn with the bond tools is named propanal, with the –CHO group e
   await expect.poll(() => page.evaluate(() => window.__editor.isAnimating())).toBe(false);
   const after = await page.evaluate(() => window.__editor.getMoleculeJSON());
   expect(after.bonds).toEqual(before.bonds);
-  expect(after.atoms.map((a) => a.element)).toEqual(['C', 'C', 'C', 'O']);
+  expect(after.atoms.map((a) => a.element)).toEqual(['C', 'C', 'O', 'O']);
   expect(errors).toEqual([]);
-}); // End of test 'a C=O drawn with the bond tools is named propanal…'
+}); // End of test 'a –COOH drawn with the tools is named ácido etanoico…'
 
-test('loaded aldehydes and ketones: -al, -ona, oxo-, hidroxi-, rings, propanona and acetona; out-of-scope C=O refused', async ({ page }) => {
+test('loaded acids: ácido …oico, -dioico, oxo-, hidroxi-, ácido fórmico; out-of-scope acids refused', async ({ page }) => {
   const errors = await openApp(page);
   for (const [smiles, name] of [
-    ['CC=O', 'etanal'],
-    ['O=CCCC=O', 'butanodial'],
-    ['CC(C)C=O', '2-metilpropanal'],
-    ['CCC(C)=O', 'butan-2-ona'],
-    ['CC(=O)CC(C)=O', 'pentano-2,4-diona'],
-    ['CC=CC(C)=O', 'pent-3-en-2-ona'],
-    ['CC(=O)CCC=O', '4-oxopentanal'],
-    ['CC(=O)CCO', '4-hidroxibutan-2-ona'],
-    ['O=C1CCCCC1', 'ciclohexanona'],
-    ['CC1CCCCC1=O', '2-metilciclohexan-1-ona'],
+    ['OC=O', 'ácido metanoico'],
+    ['CC(C)C(=O)O', 'ácido 2-metilpropanoico'],
+    ['CC=CC(=O)O', 'ácido but-2-enoico'],
+    ['OC(=O)CCC(=O)O', 'ácido butanodioico'],
+    ['CC(=O)CCC(=O)O', 'ácido 4-oxopentanoico'],
+    ['CC(O)C(=O)O', 'ácido 2-hidroxipropanoico'],
+    ['O=CCC(=O)O', 'ácido 3-oxopropanoico'],
   ]) {
     await loadSmiles(page, smiles);
     await askName(page);
     await expect(page.locator('#result-name')).toHaveText(name);
-  } // End of the loop over the loaded carbonyls
+  } // End of the loop over the loaded acids
 
-  await loadSmiles(page, 'CC(C)=O');
+  await loadSmiles(page, 'OC=O');
   await askName(page);
-  await expect(page.locator('#result-name')).toHaveText('propanona');
-  await expect(page.locator('#alternatives')).toContainText('propan-2-ona');
-  await expect(page.locator('#alternatives')).toContainText('acetona');
+  await expect(page.locator('#alternatives')).toContainText('ácido fórmico');
+
+  await loadSmiles(page, 'CC(C)C(=O)O');
+  await askName(page);
   await page.getByRole('button', { name: 'Ver paso a paso' }).click();
   const stepper = page.locator('#stepper');
   await stepper.locator('.step-dot').nth(3).click();
   await expect(stepper.locator('.step-title')).toHaveText('Numera la cadena');
-  await expect(stepper.locator('.step-content')).toContainText('En «propanona» no hace falta el número');
+  await expect(stepper.locator('.step-content')).toContainText('Regla: los grupos –COOH (el grupo principal) deben tener los localizadores más bajos.');
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
   const error = page.locator('#results .results-error');
-  await loadSmiles(page, 'O=CC1CCCCC1');
+  await loadSmiles(page, 'OC(=O)CC(CC(=O)O)C(=O)O');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('carbaldehído');
+  await expect(error).toContainText('más de dos grupos –COOH');
   await expect(page.locator('#result-name')).toHaveCount(0);
 
-  await loadSmiles(page, 'CC(=O)C(C(C)=O)C(C)=O');
+  await loadSmiles(page, 'OC(=O)C1CCCCC1');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('un grupo acilo');
+  await expect(error).toContainText('-carboxílico');
 
-  // An ester (acids are named since I-33).
   await loadSmiles(page, 'CC(=O)OC');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('aldehídos y cetonas');
+  await expect(error).toContainText('ácidos carboxílicos (con el grupo –COOH)');
   expect(errors).toEqual([]);
-}); // End of test 'loaded aldehydes and ketones…'
+}); // End of test 'loaded acids…'

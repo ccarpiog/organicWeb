@@ -86,6 +86,9 @@ export const TRADITIONAL_NAMES = Object.freeze({
   formaldehyde: 'formaldehído',
   acetaldehyde: 'acetaldehído',
   acetone: 'acetona',
+  formicAcid: 'ácido fórmico',
+  aceticAcid: 'ácido acético',
+  oxalicAcid: 'ácido oxálico',
 });
 
 /**
@@ -95,7 +98,12 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * `formaldehído` (metanal) and `acetaldehído` (etanal) are retained by IUPAC
  * 2013 (aldehydes, P-66.6), `acetona` (propanona) is kept for general
  * nomenclature (ketones, P-64); all three are the everyday names found in
- * Spanish school books.
+ * Spanish school books. The acid names (design.md §13.4 I-33) are offered
+ * for the bare ácido metanoico, etanoico and etanodioico: IUPAC 2013
+ * retains `formic acid`, `acetic acid` and `oxalic acid` as preferred
+ * names (P-65.1.1.1), so they are labelled like `tolueno`; the other
+ * school names (propiónico, butírico, malónico, succínico…) are not
+ * offered, to keep the list small.
  */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
@@ -103,6 +111,9 @@ export const TRADITIONAL_LABELS = Object.freeze({
   formaldehyde: 'nombre tradicional, que la IUPAC (2013) conserva',
   acetaldehyde: 'nombre tradicional, que la IUPAC (2013) conserva',
   acetone: 'nombre tradicional, que la IUPAC (2013) acepta',
+  formicAcid: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
+  aceticAcid: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
+  oxalicAcid: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
 });
 
 /** Endings of the parent name. */
@@ -519,10 +530,10 @@ export function styleLabel(style) {
 }
 
 /**
- * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene
- * or a small carbonyl compound.
+ * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene,
+ * a small carbonyl compound or a small acid.
  *
- * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde' or 'acetone'.
+ * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid' or 'oxalicAcid'.
  * @returns {string} The Spanish name.
  * @throws {Error} For an unknown id.
  */
@@ -618,6 +629,25 @@ export function groupSuffix(kind) {
 }
 
 /**
+ * Class word written before the name when a group is the suffix (IUPAC
+ * 2013 P-65.1.1, Spanish usage): `ácido` for a carboxylic acid (`ácido
+ * etanoico`, `ácido butanodioico`, design.md §13.4 I-33). A diacid keeps
+ * the singular word: it is one molecule.
+ */
+export const SUFFIX_CLASS_WORDS = Object.freeze({ acid: 'ácido' });
+
+/**
+ * Returns the class word written before a name whose suffix is of a kind
+ * (SUFFIX_CLASS_WORDS), or null when the kind has none.
+ *
+ * @param {string} kind - A group kind (groups.js GROUP_KINDS).
+ * @returns {string|null} The word, e.g. 'ácido'.
+ */
+export function suffixClassWord(kind) {
+  return Object.prototype.hasOwnProperty.call(SUFFIX_CLASS_WORDS, kind) ? SUFFIX_CLASS_WORDS[kind] : null;
+}
+
+/**
  * Prefixes of an ester or amide bonded to the parent through its O or N
  * (the acyl part hangs from the heteroatom: acetiloxi-, acetilamino-; IUPAC 2013 P-65.6.3 esters,
  * P-66.1 amides). Bonded through the carbonyl carbon they take GROUP_PREFIXES.
@@ -686,6 +716,7 @@ export const lexiconEs = Object.freeze({
   traditionalName,
   traditionalLabel,
   groupSuffix,
+  suffixClassWord,
   groupPrefix,
   groupFamilyName,
   formylPrefix: FORMYL_PREFIX,

@@ -53,14 +53,28 @@
  * traditional names `acetona`, `formaldehído`, `acetaldehído` are offered
  * for the bare molecules.
  *
- * Any other heteroatom (N, an O of an acid, ester or ether) is still
+ * Carboxylic acids (design.md §13.4 I-33) are the most senior group (ácido
+ * > aldehído > cetona > alcohol): the –COOH carbon is a chain carbon, a
+ * chain end, locant 1, never cited, and the name starts with the class word
+ * `ácido`: `ácido etanoico`, `ácido 2-metilpropanoico`, `ácido
+ * but-2-enoico`, `ácido butanodioico`, `ácido 4-oxopentanoico`, `ácido
+ * 2-hidroxipropanoico`, `ácido 3-oxopropanoico` (an aldehyde end beside
+ * the acid is `oxo-`). Validation refuses more than two –COOH (`manyAcids`)
+ * and any acid with a ring (`ringAcid`); a –COOH left out of the suffix (a
+ * `carboxi-` branch) is refused here as a safety net
+ * (`carboxySubstituent`). The traditional `ácido fórmico`, `ácido acético`
+ * and `ácido oxálico` are offered for the bare molecules.
+ *
+ * Any other heteroatom (N, an O of an ester, anhydride or ether) is still
  * refused (`HETEROATOM`), but the refusal carries `groups`: its
  * characteristic groups (groups.js), the principal group and the
  * suffix/prefix classification (seniority.js, design.md §13.4 I-29).
  * Successful results never have `groups`.
  */
 
-import { validateForNaming, validationError, ACYL_SUBSTITUENT_MESSAGE } from '../model/validate.js';
+import {
+  validateForNaming, validationError, carboxylCarbons, ACYL_SUBSTITUENT_MESSAGE, CARBOXY_SUBSTITUENT_MESSAGE,
+} from '../model/validate.js';
 import { adjacency, hasCycle } from '../model/graph.js';
 import { selectParent } from './parent.js';
 import {
@@ -68,7 +82,7 @@ import {
 } from './substituent.js';
 import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure, buildSuffix } from './structure.js';
-import { renderName } from './render.js';
+import { renderName, suffixCount, suffixGroupIds } from './render.js';
 import { nameRingWithStyle } from './rings.js';
 import { hasBenzeneRing, nameBenzeneWithStyle, traditionalAlternative } from './aromatic.js';
 import { analyzeGroups } from './seniority.js';
@@ -254,10 +268,14 @@ function nameValidated(mol, options) {
   // Every style that is emitted (main, reference, alternatives) is checked:
   // each runs its own prefix naming, so one may need an acyl branch the
   // others avoid.
+  const acids = carboxylCarbons(mol);
   for (const s of new Set([style, PREFIX_STYLES[0], ...others])) {
     const acyl = hasAcylPrefix(named(s).structure);
     if (acyl) {
       return withGroups({ ok: false, error: acylError(acyl) }, mol);
+    }
+    if (acids.length > 0 && suffixCount(named(s).structure) !== acids.length) {
+      return withGroups({ ok: false, error: carboxyError(acids) }, mol);
     }
   }
   const located = locantAlternative(main);
@@ -289,6 +307,19 @@ function acylError(acyl) {
 }
 
 /**
+ * The HETEROATOM refusal of a molecule whose name would leave a –COOH out
+ * of the parent's suffix (a `carboxi-` prefix, design.md §13.4 I-33). A
+ * safety net: validation already refuses every molecule where this can
+ * happen (`manyAcids`, `ringAcid`).
+ *
+ * @param {number[]} acids - The carboxyl carbons of the molecule.
+ * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
+ */
+function carboxyError(acids) {
+  return validationError('HETEROATOM', { message: CARBOXY_SUBSTITUENT_MESSAGE, atoms: [...acids], reason: 'carboxySubstituent' });
+}
+
+/**
  * The alternative that writes the locants the main name omits, when IUPAC
  * 2013 cites them in the preferred name: `propan-2-ona` for `propanona`
  * (lexicon.es.js chainOmitsPrefixLocants(), design.md §13.4 I-32); null for
@@ -307,8 +338,9 @@ function locantAlternative(result) {
 }
 
 /**
- * The traditional-name alternative of a small carbonyl compound (principal.js
- * carbonylTraditionalId(): `formaldehído`, `acetaldehído`, `acetona`),
+ * The traditional-name alternative of a small carbonyl compound or acid
+ * (principal.js carbonylTraditionalId(): `formaldehído`, `acetaldehído`,
+ * `acetona`, `ácido fórmico`, `ácido acético`, `ácido oxálico`),
  * listed last under "Otras formas válidas" (design.md §13.1), or null. Its
  * one part refers to every atom and bond of the molecule, like a benzene's
  * traditional name (aromatic.js traditionalAlternative()).
@@ -322,8 +354,8 @@ function carbonylAlternative(result) {
     return null;
   }
   const name = lexiconEs.traditionalName(id);
-  const { suffix } = result.structure;
-  const atoms = [...result.parent.atoms, ...suffix.locants.map((s) => s.attachAtom)];
-  const bonds = [...result.parent.bonds, ...suffix.locants.map((s) => s.bond)];
+  const group = suffixGroupIds(result.structure.suffix);
+  const atoms = [...new Set([...result.parent.atoms, ...group.atoms])];
+  const bonds = [...result.parent.bonds, ...group.bonds];
   return { style: 'traditional', label: lexiconEs.traditionalLabel(id), name, parts: [{ text: name, kind: 'stem', atoms, bonds }] };
 } // End of function carbonylAlternative()

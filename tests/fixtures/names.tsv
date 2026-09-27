@@ -419,3 +419,34 @@ CC1CCCCC1=O	2-metilciclohexan-1-ona	ring N0 then N3	C=O carbon 1; with another s
 O=C1C=CCCC1	ciclohex-2-en-1-ona	ring ketone before the ring double bond	N0 gives the C=O carbon 1, then N1 the double bond 2	
 O=C1CCC(=O)CC1	ciclohexano-1,4-diona	ring diketone	[1,4]; the o of ciclohexano is kept before -diona	
 OC1CCC(=O)CC1	4-hidroxiciclohexan-1-ona	ring ketone with OH	Ketone > alcohol: C=O at 1, OH as hidroxi- at 4	
+# Carboxylic acids (I-33): the –COOH is the most senior group here (ácido > aldehído > cetona > alcohol, IUPAC 2013 P-41), cited as the suffix -oic acid (Spanish ácido …oico, -dioico; P-65.1.2.1); the COOH carbon is a chain carbon, always a chain end, locant 1, never cited (P-14.3.4.1); the parent carries the most COOH before being the longest (P-44.1.1) and they get the lowest locants before multiple bonds and prefixes (P-31.1.4.2.4); with an acid principal a ketone or a terminal CHO is oxo- and an OH hidroxi- (P-65.1.2.1 examples: 3-oxopropanoic acid); ácido fórmico / acético / oxálico only under Otras formas válidas (retained PINs, P-65.1.1.1); rings with COOH (-carboxílico) and more than two COOH are refused (tests/unit/acids.test.js)
+OC=O	ácido metanoico	one-carbon acid	The COOH carbon is the only carbon: methanoic acid (P-65.1.2.1), no locant; formic acid is the retained IUPAC 2013 PIN (P-65.1.1.1), offered as a traditional name	traditional=ácido fórmico
+CC(=O)O	ácido etanoico	two-carbon acid	The COOH carbon is chain carbon 1, never cited (P-14.3.4.1); acetic acid is the retained PIN (P-65.1.1.1), offered as a traditional name (systematic name first, design §13.1)	traditional=ácido acético
+CCC(=O)O	ácido propanoico	carboxyl carbon counted in the chain	Three carbons counting the COOH carbon; the o of propano is elided before -oico (P-16.7.1); propionic acid is not offered	
+CCCCCCCCCCCCCCCCCC(=O)O	ácido octadecanoico	long unbranched acid	Eighteen carbons with the COOH carbon at 1; stearic acid is not offered	
+CC(C)C(=O)O	ácido 2-metilpropanoico	branched acid	N0 puts the COOH carbon at 1, so the methyl gets 2; the prefix locant is cited, the suffix one is not	
+CC(C)CC(=O)O	ácido 3-metilbutanoico	numbering from the COOH end	COOH at 1 (N0) fixes the direction; methyl at 3, not 2	
+CC(C)(C)CC(=O)O	ácido 3,3-dimetilbutanoico	gem-dimethyl acid	COOH at 1; both methyls at 3	
+CCCC(C(C)C)C(C(C)C)CC(=O)O	ácido 3,4-diisopropilheptanoico	isopropyl on an acid	Longest chain through the COOH carbon; isopropil by default, the other two styles as alternatives (design §1.1)	pin=ácido 3,4-di(propan-2-il)heptanoico;substituted=ácido 3,4-bis(1-metiletil)heptanoico
+CC=CC(=O)O	ácido but-2-enoico	unsaturated acid	COOH at 1, double bond at 2 (cited: with a suffix the ene locant is written); the o of -eno is elided before -oico; E/Z out of scope	
+C=CC(=O)O	ácido prop-2-enoico	unsaturated acid, locant cited	With a suffix the ene locant is cited, as in prop-2-enal and prop-2-en-1-ol (design §1.1); acrylic acid is not offered	
+C=CC(C)C(=O)O	ácido 2-metilbut-3-enoico	N0 before N1 in an acid	COOH at 1 forces the double bond to 3 (not 1 from the other end), P-31.1.4.2.4	
+C#CC(=O)O	ácido prop-2-inoico	acid with a triple bond	-ino + -oico: the o is elided; locant cited	
+ClCCC(=O)O	ácido 3-cloropropanoico	halogen on an acid	COOH at 1, chlorine at 3	
+ClCC(=O)O	ácido 2-cloroetanoico	halogen on a two-carbon acid	Two substituents on a two-carbon parent (suffix + prefix): the prefix locant is cited, as in 2-cloroetanal	
+FC(F)(F)C(=O)O	ácido 2,2,2-trifluoroetanoico	trihalogenated acid	Every prefix locant cited (the suffix is not a halogen, so the fully-halogenated rule does not apply)	
+BrCCCC(=O)O	ácido 4-bromobutanoico	halogen far from the COOH	COOH at 1, bromine at 4	
+OC(=O)C(=O)O	ácido etanodioico	two-carbon diacid	Both carbons are COOH: -dioico with the o kept before a consonant (P-16.7.1); terminal locants never cited; oxalic acid is the retained PIN (P-65.1.1.1), offered as a traditional name	traditional=ácido oxálico
+OC(=O)CC(=O)O	ácido propanodioico	diacid	The chain runs between the two COOH carbons (P-44.1.1); malonic acid is not offered	
+OC(=O)CCC(=O)O	ácido butanodioico	diacid	Succinic acid is not offered	
+OC(=O)CCCCC(=O)O	ácido hexanodioico	diacid, o kept	hexano + dioico: the o stays before a consonant; adipic acid is not offered	
+OC(=O)C=CC(=O)O	ácido but-2-enodioico	unsaturated diacid	Both COOH at the ends; double bond at 2 either way; the o of -eno is kept before -dioico; E/Z (maleic/fumaric) out of scope	
+OC(=O)CC(O)C(=O)O	ácido 2-hidroxibutanodioico	diacid with an OH	Acid > alcohol: the OH is hidroxi- at 2 (N0 ties at [1,4], then the prefix gets the lower locant: [2] vs [3]); malic acid is not offered	
+CC(O)C(=O)O	ácido 2-hidroxipropanoico	acid principal, OH as hidroxi-	Acid > alcohol (P-41): the OH is the hidroxi prefix (P-63) at 2; lactic acid is not offered	
+OCC(=O)O	ácido 2-hidroxietanoico	two-carbon hydroxy acid	Two substituents on ethane (suffix + prefix): the prefix locant is cited; glycolic acid is not offered	
+CC(=O)CCC(=O)O	ácido 4-oxopentanoico	acid principal, ketone as oxo-	Acid > ketone (P-41): the ketone C=O is the oxo prefix (P-64) at 4; levulinic acid is not offered	
+OC(=O)CC(C)=O	ácido 3-oxobutanoico	beta-keto acid	COOH at 1, oxo at 3	
+O=CCC(=O)O	ácido 3-oxopropanoico	acid principal, terminal aldehyde as oxo-	Acid > aldehyde: the CHO carbon is in the chain, so its C=O is the oxo prefix (not formil-, which is for a CHO outside the chain; IUPAC 2013 example 3-oxopropanoic acid, P-65.1.2.1)	
+OC(=O)C(C=O)C	ácido 2-metil-3-oxopropanoico	aldehyde end and a methyl	The chain joins the COOH and CHO carbons (longest through the COOH); metil (m) before oxo (o)	
+CC(C(=O)O)C(C)=O	ácido 2-metil-3-oxobutanoico	oxo and alkyl on an acid	COOH at 1; the ketone carbon is in the four-carbon chain (oxo at 3), the other methyl is a prefix at 2	
+CC(=O)CC(O)C(=O)O	ácido 2-hidroxi-4-oxopentanoico	acid with hidroxi and oxo	Acid > ketone > alcohol; hidroxi (h) before oxo (o)	
