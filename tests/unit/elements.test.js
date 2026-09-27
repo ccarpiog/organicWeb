@@ -311,7 +311,7 @@ test('editor refusals name the full heteroatom', () => {
   const editor = createEditorCore();
   editor.replaceMolecule(moleculeToJSON(build(['C', 'O', 'C', 'Cl'], [[1, 2], [2, 3], [3, 4]])));
   const before = editor.getMoleculeJSON();
-  editor.setTool('carbon');
+  editor.setTool('single'); // A bond tool grows a carbon: never changes the clicked element.
   for (const [id, message] of [[2, 'Este oxígeno ya tiene 2 enlaces.'], [4, 'Este cloro ya tiene 1 enlace.']]) {
     const atom = editor.peekMolecule().atoms.get(id);
     editor.pointerDown({ x: atom.x, y: atom.y });

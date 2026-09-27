@@ -1,7 +1,7 @@
 /**
  * @file Ayuda dialog (design.md §9): the header button that opens the
- * in-page `#help-dialog` (how to draw, with small inline SVG illustrations,
- * written in index.html) and its "Palabras clave" list, filled from the
+ * in-page `#help-dialog` (how to draw, the element palette and the keyboard
+ * shortcuts, with small inline SVG illustrations, written in index.html) and its "Palabras clave" list, filled from the
  * explanation glossary so the definitions live in one place.
  */
 

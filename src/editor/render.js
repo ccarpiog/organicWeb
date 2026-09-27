@@ -1,7 +1,8 @@
 /**
  * @file SVG rendering of the molecule (design.md §6.3): bonds drawn as one,
  * two or three strokes, the two display modes (Esqueleto / Con carbonos),
- * the carbon dots of Esqueleto mode, the 90° view's `=` / `≡` strokes that
+ * the carbon dots of Esqueleto mode, heteroatom labels (`OH`, `NH₂`, `Cl`…,
+ * shown in every mode, with the bond strokes stopped short of them), the 90° view's `=` / `≡` strokes that
  * stop short of the labels (labelSize(), rightAngleSegments()), hover
  * highlight, selection, the drag previews (bond, chain with its "N C"
  * counter, marquee), the pan/zoom view
@@ -14,8 +15,13 @@
  * when called, so the module can be imported under Node.
  */
 
-import { implicitH, neighbours, toSubscript } from '../model/molecule.js';
+import { neighbours } from '../model/molecule.js';
 import { cross, LONE_LABEL_OFFSET } from './geometry.js';
+import { atomLabel, labelSize, LABEL_HEIGHT } from './labels.js';
+
+// The label text and size live in labels.js (shared with the DOM-free hit-testing
+// of geometry.js); re-exported here for the existing callers.
+export { atomLabel, labelSize, LABEL_HEIGHT };
 
 /** SVG namespace. */
 export const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -55,34 +61,45 @@ export const IDENTITY_VIEW = Object.freeze({ scale: 1, x: 0, y: 0 });
 
 /**
  * Condensed label of a carbon: C plus its implicit hydrogens (`CH₄`, `CH₃`,
- * `CH₂`, `CH`, `C`). Never contains `=`.
+ * `CH₂`, `CH`, `C`). Never contains `=`. Kept for the carbon-only callers;
+ * it is atomLabel(), which also labels heteroatoms.
  *
  * @param {object} mol - The molecule.
  * @param {number} atomId - The carbon.
  * @returns {string} The label with Unicode subscripts.
  */
 export function carbonLabel(mol, atomId) {
-  const h = implicitH(mol, atomId);
-  if (h === 0) {
-    return 'C';
-  }
-  return h === 1 ? 'CH' : `CH${toSubscript(h)}`;
+  return atomLabel(mol, atomId);
 }
 
 /**
- * Text shown on a carbon in a display mode: in `condensed` (Con carbonos)
- * every carbon shows C plus its implicit hydrogens (`CH₃`, `CH₂`, `CH`, `C`,
- * `CH₄`); in `skeletal` (Esqueleto) only a lone carbon is labelled, since it
- * has no bond to show it.
+ * Tells whether an atom is a heteroatom (anything but carbon), which is
+ * always drawn with its label (design.md §6.3).
  *
  * @param {object} mol - The molecule.
- * @param {number} atomId - The carbon.
+ * @param {number} atomId - The atom.
+ * @returns {boolean} True for O, N, F, Cl, Br and I.
+ */
+export function isHeteroatom(mol, atomId) {
+  const atom = mol.atoms.get(atomId);
+  return Boolean(atom) && atom.element !== 'C';
+}
+
+/**
+ * Text shown on an atom in a display mode: in `condensed` (Con carbonos)
+ * every atom shows its symbol plus its implicit hydrogens (`CH₃`, `CH₂`, `CH`,
+ * `C`, `CH₄`, `OH`, `NH₂`…); in `skeletal` (Esqueleto) a carbon is labelled
+ * only when it is lone (it has no bond to show it), while a heteroatom is
+ * always labelled (`OH`, `O`, `NH₂`, `Cl`, `H₂O`…).
+ *
+ * @param {object} mol - The molecule.
+ * @param {number} atomId - The atom.
  * @param {string} [mode] - 'skeletal' (default) or 'condensed'.
  * @returns {string|null} The label, or null when the carbon is drawn as a bare vertex.
  */
 export function atomLabelText(mol, atomId, mode = 'skeletal') {
-  if (mode === 'condensed' || neighbours(mol, atomId).length === 0) {
-    return carbonLabel(mol, atomId);
+  if (mode === 'condensed' || isHeteroatom(mol, atomId) || neighbours(mol, atomId).length === 0) {
+    return atomLabel(mol, atomId);
   }
   return null;
 }
@@ -90,7 +107,8 @@ export function atomLabelText(mol, atomId, mode = 'skeletal') {
 /**
  * Tells whether a display mode marks every carbon with a filled dot: only
  * Esqueleto does, so that no carbon vanishes where two bonds are nearly
- * collinear; Con carbonos already labels every carbon.
+ * collinear; Con carbonos already labels every carbon. Heteroatoms never get
+ * a dot: their label marks them.
  *
  * @param {string} [mode] - 'skeletal' (default) or 'condensed'.
  * @returns {boolean} True when carbon dots are drawn.
@@ -100,57 +118,44 @@ export function showsCarbonDots(mode = 'skeletal') {
 }
 
 /**
- * Where a carbon's label is drawn: on the atom, except for a lone carbon in
+ * Where an atom's label is drawn: on the atom, except for a lone carbon in
  * skeletal mode, whose `CH₄` label moves LONE_LABEL_OFFSET (geometry.js) below
  * its dot so both stay legible; hitTest() maps that label back to the carbon.
  *
  * @param {object} mol - The molecule.
- * @param {number} atomId - The carbon.
+ * @param {number} atomId - The atom.
  * @param {string} [mode] - 'skeletal' (default) or 'condensed'.
  * @returns {{x: number, y: number}} The label's centre, in drawing units.
  */
 export function atomLabelPosition(mol, atomId, mode = 'skeletal') {
   const atom = mol.atoms.get(atomId);
-  if (showsCarbonDots(mode) && neighbours(mol, atomId).length === 0) {
+  if (showsCarbonDots(mode) && atom.element === 'C' && neighbours(mol, atomId).length === 0) {
     return { x: atom.x, y: atom.y + LONE_LABEL_OFFSET };
   }
   return { x: atom.x, y: atom.y };
 }
 
 /**
- * Estimated advance widths of the condensed-label characters at the 14 px
- * label font (css/app.css), in drawing units, generous so a real font never
- * draws wider. Subscript digits are narrower than capitals.
+ * Lengths cut from the two ends of a bond's strokes so they do not run into
+ * atom labels: LABEL_GAP at every end in Con carbonos (every atom is
+ * labelled), and only at heteroatom ends in Esqueleto.
+ *
+ * @param {object} mol - The molecule.
+ * @param {number} bondId - The bond.
+ * @param {string} [mode] - 'skeletal' (default) or 'condensed'.
+ * @returns {[number, number]} The cuts at the bond's `a` and `b` ends.
  */
-const LABEL_CHAR_WIDTHS = Object.freeze({ C: 11, H: 11 });
-
-/** Estimated width of a subscript digit (and any other character) of a label. */
-const LABEL_OTHER_WIDTH = 8;
-
-/** Estimated height of a condensed label box, in drawing units. */
-export const LABEL_HEIGHT = 17;
+export function bondEndCuts(mol, bondId, mode = 'skeletal') {
+  const bond = mol.bonds.get(bondId);
+  const cut = (id) => (mode === 'condensed' || isHeteroatom(mol, id) ? LABEL_GAP : 0);
+  return [cut(bond.a), cut(bond.b)];
+}
 
 /**
  * Gap left between a bond stroke and a carbon label in the 90° view (right
  * angles), measured from the label's estimated box.
  */
 export const RIGHT_ANGLE_PAD = 4;
-
-/**
- * Estimated size of a condensed carbon label (`CH₃`, `CH₂`, `CH`, `C`) at the
- * label font: used to space the 90° view and to stop bond strokes short of
- * the labels. Pure, so the layout can use it under Node.
- *
- * @param {string} label - The label text.
- * @returns {{width: number, height: number}} Width and height in drawing units.
- */
-export function labelSize(label) {
-  let width = 0;
-  for (const ch of String(label)) {
-    width += LABEL_CHAR_WIDTHS[ch] ?? LABEL_OTHER_WIDTH;
-  }
-  return { width, height: LABEL_HEIGHT };
-}
 
 /**
  * Length cut from a bond end at a labelled carbon in the 90° view: half the
@@ -169,7 +174,7 @@ export function rightAngleCut(label, horizontal) {
 /**
  * Strokes of a bond in the 90° view: one line, two (`=`) or three (`≡`)
  * parallel lines of equal length centred on the bond axis, each stopped
- * short of the two carbon labels (rightAngleCut()).
+ * short of the two atom labels (rightAngleCut()).
  *
  * @param {object} mol - The molecule (at its displayed coordinates).
  * @param {number} bondId - The bond.
@@ -180,8 +185,8 @@ export function rightAngleSegments(mol, bondId) {
   const a = mol.atoms.get(bond.a);
   const b = mol.atoms.get(bond.b);
   const horizontal = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y);
-  const cutA = rightAngleCut(carbonLabel(mol, bond.a), horizontal);
-  const cutB = rightAngleCut(carbonLabel(mol, bond.b), horizontal);
+  const cutA = rightAngleCut(atomLabel(mol, bond.a), horizontal);
+  const cutB = rightAngleCut(atomLabel(mol, bond.b), horizontal);
   const offsets = bond.order === 3 ? [-BOND_SPACING, 0, BOND_SPACING]
     : bond.order === 2 ? [-BOND_SPACING / 2, BOND_SPACING / 2] : [0];
   return offsets.map((offset) => trimSegment(shifted(a, b, offset, 0), cutA, cutB));
@@ -607,7 +612,9 @@ export function createRenderer(svg) {
    * it has a `count`), a ghost zigzag chain with its "N C" counter, or the
    * marquee rectangle.
    *
-   * @param {object|null} preview - `{type: 'bond', from, to, order, count?}` or `{type: 'chain', points, count}`.
+   * @param {object|null} preview - `{type: 'bond', from, to, order, count?, element?, fromDot?}` (`element`:
+   *   symbol of the new end atom of an element-tool drag; `fromDot: false` when the drag starts on a
+   *   heteroatom, which gets no dot) or `{type: 'chain', points, count}`.
    * @param {{x: number, y: number, width: number, height: number}|null} marquee - The marquee rectangle.
    * @returns {void}
    */
@@ -639,10 +646,14 @@ export function createRenderer(svg) {
     for (const s of symmetricSegments(preview.from, preview.to, preview.order)) {
       line(s, 'preview-line', layers.preview);
     }
-    if (dots) {
+    if (dots && preview.fromDot !== false) {
       el('circle', { class: 'preview-dot', cx: preview.from.x, cy: preview.from.y, r: CARBON_DOT_RADIUS }, layers.preview);
     }
     el('circle', { class: 'preview-end', cx: preview.to.x, cy: preview.to.y, r: 4 }, layers.preview);
+    if (preview.element && preview.element !== 'C') {
+      // The element tool: the new atom at the end shows its symbol.
+      text('preview-label', { x: preview.to.x, y: preview.to.y - 16 }, preview.element, layers.preview);
+    }
     if (preview.count) {
       text('chain-counter', { x: preview.to.x, y: preview.to.y - 22 }, `${preview.count} C`, layers.preview);
     }
@@ -688,8 +699,9 @@ export function createRenderer(svg) {
         }
         continue;
       }
+      const [cutA, cutB] = bondEndCuts(mol, bond.id, mode);
       for (const s of bondSegments(mol, bond.id)) {
-        line(condensed ? trimSegment(s, LABEL_GAP, LABEL_GAP) : s, 'bond-line', group);
+        line(cutA > 0 || cutB > 0 ? trimSegment(s, cutA, cutB) : s, 'bond-line', group);
       }
     } // End of the loop that draws the bonds
     for (const atom of mol.atoms.values()) {
@@ -698,13 +710,16 @@ export function createRenderer(svg) {
       if (hover && hover.type === 'atom' && hover.id === atom.id) {
         node.classList.add('is-hover');
       }
-      if (showsCarbonDots(mode)) {
+      if (showsCarbonDots(mode) && atom.element === 'C') {
         const dot = el('circle', { class: 'carbon-dot', cx: atom.x, cy: atom.y, r: CARBON_DOT_RADIUS }, layers.atoms);
         dot.dataset.atomId = String(atom.id);
       }
       const label = atomLabelText(mol, atom.id, mode);
       if (label) {
-        text('atom-label', atomLabelPosition(mol, atom.id, mode), label, layers.atoms).dataset.atomId = String(atom.id);
+        const cls = atom.element === 'C' ? 'atom-label' : `atom-label hetero-label element-${atom.element}`;
+        const node = text(cls, atomLabelPosition(mol, atom.id, mode), label, layers.atoms);
+        node.dataset.atomId = String(atom.id);
+        node.dataset.element = atom.element;
       }
     } // End of the loop that draws the atoms
     drawSelection(mol, state.selection || null);

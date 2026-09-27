@@ -237,7 +237,7 @@ test('Enlace simple: releasing on an atom bonds to it, even after a long drag; t
   editor.pointerMove({ x: 150, y: 0 });
   const self = editor.pointerUp({ x: 1, y: 1 });
   assert.equal(self.ok, false);
-  assert.equal(self.message, 'No se puede unir un carbono consigo mismo.');
+  assert.equal(self.message, 'No se puede unir un átomo consigo mismo.');
   assert.deepEqual(editor.getMoleculeJSON(), before);
 }); // End of test 'Enlace simple: releasing on an atom bonds to it…'
 
@@ -262,7 +262,7 @@ test('Enlace simple drag: a chain carbon landing on an existing atom refuses the
   const before = editor.getMoleculeJSON();
   const outcome = drag(editor, { x: 0, y: 0 }, { x: 4 * CHAIN_STEP, y: 30 });
   assert.equal(outcome.ok, false);
-  assert.equal(outcome.message, 'No hay sitio: ese carbono quedaría encima de otro.');
+  assert.equal(outcome.message, 'No hay sitio: ese átomo quedaría encima de otro.');
   assert.deepEqual(editor.getMoleculeJSON(), before);
 });
 
@@ -370,12 +370,16 @@ test('fitView centres the molecule in the visible rectangle', () => {
 
 test('shortcutFor maps the §6.1 keys', () => {
   const cases = [
-    ['c', 'carbon'], ['C', 'carbon'], ['1', 'single'], ['2', 'double'], ['3', 'triple'], ['t', 'cycle'],
+    ['1', 'single'], ['2', 'double'], ['3', 'triple'], ['t', 'cycle'],
     ['h', 'single'], ['e', 'erase'], ['Delete', 'erase'], ['m', 'move'],
   ];
   for (const [key, tool] of cases) {
     assert.deepEqual(shortcutFor({ key }), { tool }, key);
     assert.ok(TOOLS.includes(tool));
+  }
+  const elementCases = [['c', 'C'], ['C', 'C'], ['o', 'O'], ['n', 'N'], ['f', 'F'], ['l', 'Cl'], ['b', 'Br'], ['i', 'I'], ['I', 'I']];
+  for (const [key, element] of elementCases) {
+    assert.deepEqual(shortcutFor({ key }), { tool: 'carbon', element }, key);
   }
   assert.deepEqual(shortcutFor({ key: 'z', ctrlKey: true }), { action: 'undo' });
   assert.deepEqual(shortcutFor({ key: 'z', metaKey: true }), { action: 'undo' });

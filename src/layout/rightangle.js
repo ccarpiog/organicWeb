@@ -33,7 +33,7 @@
 
 import { adjacency } from '../model/graph.js';
 import { BOND_LENGTH } from '../editor/geometry.js';
-import { carbonLabel, labelSize, RIGHT_ANGLE_PAD } from '../editor/render.js';
+import { atomLabel, labelSize, RIGHT_ANGLE_PAD } from '../editor/render.js';
 
 /** Shortest visible bond stroke between two labels, in drawing units. */
 export const MIN_STROKE = 16;
@@ -325,7 +325,7 @@ export function gridSteps(mol) {
   let width = 0;
   let height = 0;
   for (const id of mol.atoms.keys()) {
-    const size = labelSize(carbonLabel(mol, id));
+    const size = labelSize(atomLabel(mol, id));
     width = Math.max(width, size.width);
     height = Math.max(height, size.height);
   }
@@ -387,7 +387,7 @@ export function rightAngleLayout(mol, result, options = {}) {
  * @returns {{x1: number, y1: number, x2: number, y2: number}} The box.
  */
 function labelBox(mol, id, p) {
-  const size = labelSize(carbonLabel(mol, id));
+  const size = labelSize(atomLabel(mol, id));
   return { x1: p.x - size.width / 2, y1: p.y - size.height / 2, x2: p.x + size.width / 2, y2: p.y + size.height / 2 };
 }
 

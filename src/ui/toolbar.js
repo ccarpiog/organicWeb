@@ -1,5 +1,6 @@
 /**
- * @file Drawing toolbar (design.md §6.1): tool buttons with icons and Spanish
+ * @file Drawing toolbar (design.md §6.1): the element palette (C, O, N, F,
+ * Cl, Br, I — the element tool), tool buttons with icons and Spanish
  * tooltips, plus Deshacer / Rehacer / Limpiar / Ordenar dibujo. Kept in sync with the editor
  * through its change notifications. While the 90° drawing is actually shown
  * (design.md §6.1, §6.3) every tool works through it except Mover, which is
@@ -7,9 +8,32 @@
  * projected drawing).
  */
 
+import { ELEMENTS, ELEMENT_NAMES_ES } from '../model/elements.js';
+import { ELEMENT_KEYS } from '../editor/editor.js';
+
+/**
+ * Icon of an element button: its symbol, in the toolbar's icon box.
+ *
+ * @param {string} symbol - The element symbol.
+ * @returns {string} SVG inner markup (24×24).
+ */
+function elementIcon(symbol) {
+  const size = symbol.length > 1 ? 13 : 15;
+  return `<text x="12" y="17" text-anchor="middle" font-size="${size}" font-weight="700" fill="currentColor" stroke="none">${symbol}</text>`;
+}
+
+/**
+ * Element palette buttons (design.md §6.1), in ELEMENTS order: element
+ * symbol, Spanish label ("Oxígeno"), keyboard shortcut (ELEMENT_KEYS) and icon.
+ */
+const ELEMENT_BUTTONS = ELEMENTS.map((symbol) => {
+  const name = ELEMENT_NAMES_ES[symbol];
+  const key = Object.keys(ELEMENT_KEYS).find((k) => ELEMENT_KEYS[k] === symbol);
+  return { element: symbol, label: name.charAt(0).toUpperCase() + name.slice(1), keys: [key.toUpperCase()], icon: elementIcon(symbol) };
+});
+
 /** Tool buttons: editor tool id, Spanish label, keyboard shortcuts (design.md §6.1), icon (SVG inner markup, 24×24). */
 const TOOL_BUTTONS = [
-  { tool: 'carbon', label: 'Carbono', keys: ['C'], icon: '<text x="12" y="17" text-anchor="middle" font-size="15" font-weight="700" fill="currentColor" stroke="none">C</text>' },
   { tool: 'single', label: 'Enlace simple', keys: ['1', 'H'], icon: '<line x1="4" y1="18" x2="20" y2="6"/>' },
   { tool: 'double', label: 'Enlace doble', keys: ['2'], icon: '<line x1="3" y1="15" x2="17" y2="4"/><line x1="7" y1="20" x2="21" y2="9"/>' },
   { tool: 'triple', label: 'Enlace triple', keys: ['3'], icon: '<line x1="2" y1="13" x2="15" y2="3"/><line x1="5" y1="17" x2="19" y2="7"/><line x1="9" y1="21" x2="22" y2="11"/>' },
@@ -61,25 +85,67 @@ function makeButton(doc, spec) {
  */
 export function buildToolbar(container, editor, options) {
   const doc = container.ownerDocument;
+  const elementButtons = new Map();
   const toolButtons = new Map();
   const actionButtons = new Map();
+
+  /**
+   * Adds a group of buttons (a grid of two columns on wide screens).
+   *
+   * @param {string} className - Extra class of the group.
+   * @param {string} label - Spanish accessible name of the group.
+   * @returns {HTMLDivElement} The group.
+   */
+  function addGroup(className, label) {
+    const group = doc.createElement('div');
+    group.className = `tool-group ${className}`;
+    group.setAttribute('role', 'group');
+    group.setAttribute('aria-label', label);
+    container.appendChild(group);
+    return group;
+  }
+
+  /**
+   * Adds a separator line between groups.
+   *
+   * @returns {void}
+   */
+  function addSeparator() {
+    const separator = doc.createElement('span');
+    separator.className = 'toolbar-separator';
+    separator.setAttribute('role', 'separator');
+    container.appendChild(separator);
+  }
+
+  const palette = addGroup('element-palette', 'Elementos');
+  for (const spec of ELEMENT_BUTTONS) {
+    const button = makeButton(doc, spec);
+    button.classList.add('element-button');
+    button.dataset.element = spec.element;
+    if (spec.element === 'C') {
+      button.dataset.tool = 'carbon'; // The carbon button is also "the element tool" button.
+    }
+    button.addEventListener('click', () => editor.setElement(spec.element));
+    elementButtons.set(spec.element, button);
+    palette.appendChild(button);
+  }
+  addSeparator();
+  const tools = addGroup('tool-list', 'Herramientas');
   for (const spec of TOOL_BUTTONS) {
     const button = makeButton(doc, spec);
     button.dataset.tool = spec.tool;
     button.addEventListener('click', () => editor.setTool(spec.tool));
     toolButtons.set(spec.tool, button);
-    container.appendChild(button);
+    tools.appendChild(button);
   }
-  const separator = doc.createElement('span');
-  separator.className = 'toolbar-separator';
-  separator.setAttribute('role', 'separator');
-  container.appendChild(separator);
+  addSeparator();
+  const actions = addGroup('action-list', 'Acciones');
   for (const spec of ACTION_BUTTONS) {
     const button = makeButton(doc, spec);
     button.dataset.action = spec.action;
     actionButtons.set(spec.action, button);
-    container.appendChild(button);
-  }
+    actions.appendChild(button);
+  } // End of the loops that fill the three groups
   actionButtons.get('undo').addEventListener('click', () => editor.undo());
   actionButtons.get('redo').addEventListener('click', () => editor.redo());
   actionButtons.get('arrange').addEventListener('click', () => {
@@ -100,6 +166,10 @@ export function buildToolbar(container, editor, options) {
    */
   function sync() {
     const projected = typeof editor.isProjected === 'function' && editor.isProjected();
+    const elementTool = editor.getTool() === 'carbon';
+    for (const [element, button] of elementButtons) {
+      button.setAttribute('aria-pressed', String(elementTool && editor.getElement() === element));
+    }
     for (const [tool, button] of toolButtons) {
       button.setAttribute('aria-pressed', String(editor.getTool() === tool));
       button.disabled = projected && tool === 'move';

@@ -33,6 +33,7 @@ export const FALLBACK_NOTES = Object.freeze({
   EMPTY: 'Los ángulos rectos aparecerán cuando dibujes una molécula.',
   DISCONNECTED: 'Hay piezas sueltas: se ve el dibujo normal.',
   CYCLE: 'Hay un anillo: se ve el dibujo normal.',
+  HETEROATOM: 'Hay átomos que no son carbono: se ve el dibujo normal.',
   NO_ROOM: 'Esta molécula no cabe con ángulos rectos sin cruces: se ve el dibujo normal.',
   OTHER: 'Esta molécula no se puede dibujar con ángulos rectos: se ve el dibujo normal.',
 });
@@ -43,8 +44,8 @@ export const FALLBACK_NOTES = Object.freeze({
  *
  * @param {object} mol - The molecule.
  * @returns {{ok: true, positions: Map<number, {x: number, y: number}>}|{ok: false, reason: string}}
- *   The positions, or the reason for falling back (`EMPTY`, `DISCONNECTED`, `CYCLE`, `NO_ROOM`, or a
- *   naming error code).
+ *   The positions, or the reason for falling back (`EMPTY`, `DISCONNECTED`, `CYCLE`, `HETEROATOM`,
+ *   `NO_ROOM`, or another naming error code).
  */
 export function projectRightAngles(mol) {
   if (mol.atoms.size === 0) {

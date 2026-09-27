@@ -9,6 +9,7 @@
  */
 
 import { neighbours } from '../model/molecule.js';
+import { atomLabel, labelSize } from './labels.js';
 
 /** Bond length in drawing units (40 px at zoom 1). */
 export const BOND_LENGTH = 40;
@@ -25,11 +26,18 @@ export const ATOM_HIT_RADIUS = 12;
  */
 export const LONE_LABEL_OFFSET = 16;
 
-/** Half width of the area around a lone carbon's `CH₄` label that hits the carbon. */
+/** Half width of the area around a lone carbon's `CH₄` label that hits the atom. */
 export const LABEL_HIT_HALF_WIDTH = 17;
 
-/** Half height of the area around a lone carbon's `CH₄` label that hits the carbon. */
+/** Half height of the area around a lone carbon's `CH₄` label that hits the atom. */
 export const LABEL_HIT_HALF_HEIGHT = 10;
+
+/**
+ * Margin added around a heteroatom's estimated label box (labelSize(),
+ * labels.js) to make its hit box: small, so the visible part of a bond
+ * between two close labels stays a bond.
+ */
+export const HETERO_LABEL_HIT_PAD = 1;
 
 /** A pointer closer than this to a bond segment hits the bond. */
 export const BOND_HIT_DISTANCE = 7;
@@ -332,10 +340,10 @@ export function distanceToSegment(p, a, b) {
  * @param {object} mol - The molecule.
  * @param {object} atom - The atom.
  * @param {{x: number, y: number}} point - The point in drawing units.
- * @returns {boolean} True when the atom is lone and the point is on its label area.
+ * @returns {boolean} True when the atom is a lone carbon and the point is on its label area.
  */
 export function onLoneLabel(mol, atom, point) {
-  if (neighbours(mol, atom.id).length > 0) {
+  if (atom.element !== 'C' || neighbours(mol, atom.id).length > 0) {
     return false;
   }
   return Math.abs(point.x - atom.x) <= LABEL_HIT_HALF_WIDTH
@@ -344,41 +352,52 @@ export function onLoneLabel(mol, atom, point) {
 }
 
 /**
- * Finds what lies under a point: the nearest atom within ATOM_HIT_RADIUS,
- * else a lone carbon whose `CH₄` label is under the point (onLoneLabel()),
- * else the nearest bond within BOND_HIT_DISTANCE, else nothing.
+ * Hit box of a heteroatom's label (`OH`, `O`, `NH₂`, `Cl`, `H₂O`…), which every
+ * display mode draws centred on the atom: the label's estimated box
+ * (labelSize() of atomLabel(), so `O` is narrower than `NH₂`) plus
+ * HETERO_LABEL_HIT_PAD on every side. Pure: the text width is estimated.
+ *
+ * @param {object} mol - The molecule.
+ * @param {object} atom - The atom.
+ * @returns {{halfWidth: number, halfHeight: number}|null} Half sizes around the atom, or null for carbon.
+ */
+export function heteroLabelBox(mol, atom) {
+  if (atom.element === 'C') {
+    return null;
+  }
+  const size = labelSize(atomLabel(mol, atom.id));
+  return {
+    halfWidth: size.width / 2 + HETERO_LABEL_HIT_PAD,
+    halfHeight: size.height / 2 + HETERO_LABEL_HIT_PAD,
+  };
+}
+
+/**
+ * Tells whether a point lies on the label of a heteroatom (heteroLabelBox()),
+ * so a click on the text acts on the atom.
+ *
+ * @param {object} mol - The molecule.
+ * @param {object} atom - The atom.
+ * @param {{x: number, y: number}} point - The point in drawing units.
+ * @returns {boolean} True when the atom is not carbon and the point is on its label.
+ */
+export function onHeteroLabel(mol, atom, point) {
+  const box = heteroLabelBox(mol, atom);
+  return box !== null
+    && Math.abs(point.x - atom.x) <= box.halfWidth
+    && Math.abs(point.y - atom.y) <= box.halfHeight;
+}
+
+/**
+ * Nearest bond within BOND_HIT_DISTANCE of a point.
  *
  * @param {object} mol - The molecule.
  * @param {{x: number, y: number}} point - The point in drawing units.
- * @param {{atomsOnly?: boolean, exclude?: number[]}} [options] - Restrict to atoms; atom ids to ignore.
- * @returns {{type: 'atom'|'bond', id: number}|null} The hit, or null.
+ * @returns {{type: 'bond', id: number}|null} The bond hit, or null.
  */
-export function hitTest(mol, point, options = {}) {
-  const exclude = options.exclude || [];
+function nearestBond(mol, point) {
   let best = null;
-  let bestDistance = ATOM_HIT_RADIUS;
-  for (const atom of mol.atoms.values()) {
-    const d = distance(atom, point);
-    if (d <= bestDistance && !exclude.includes(atom.id)) {
-      best = { type: 'atom', id: atom.id };
-      bestDistance = d;
-    }
-  }
-  if (!best) {
-    // The label of a lone carbon stands for the carbon (nearest label centre wins).
-    let bestLabel = Infinity;
-    for (const atom of mol.atoms.values()) {
-      const d = distance({ x: atom.x, y: atom.y + LONE_LABEL_OFFSET / 2 }, point);
-      if (d < bestLabel && !exclude.includes(atom.id) && onLoneLabel(mol, atom, point)) {
-        best = { type: 'atom', id: atom.id };
-        bestLabel = d;
-      }
-    }
-  }
-  if (best || options.atomsOnly) {
-    return best;
-  }
-  bestDistance = BOND_HIT_DISTANCE;
+  let bestDistance = BOND_HIT_DISTANCE;
   for (const bond of mol.bonds.values()) {
     const d = distanceToSegment(point, mol.atoms.get(bond.a), mol.atoms.get(bond.b));
     if (d <= bestDistance) {
@@ -387,6 +406,60 @@ export function hitTest(mol, point, options = {}) {
     }
   }
   return best;
+}
+
+/**
+ * Finds what lies under a point: the nearest atom within ATOM_HIT_RADIUS,
+ * else the atom whose label is under the point (a lone carbon's `CH₄` label,
+ * onLoneLabel(), or a heteroatom's label sized to its text, onHeteroLabel();
+ * nearest label centre wins), else the nearest bond within BOND_HIT_DISTANCE,
+ * else nothing. A heteroatom is drawn as its label only, so its hit circle
+ * gives way to a bond stroke outside the label box: the visible part of a
+ * bond between two close labels (e.g. O–O or N–Cl 30 units apart) stays a
+ * bond, while the label text always stands for the atom. With `atomsOnly`
+ * bonds are ignored, so the hit circle applies in full.
+ *
+ * @param {object} mol - The molecule.
+ * @param {{x: number, y: number}} point - The point in drawing units.
+ * @param {{atomsOnly?: boolean, exclude?: number[]}} [options] - Restrict to atoms; atom ids to ignore.
+ * @returns {{type: 'atom'|'bond', id: number}|null} The hit, or null.
+ */
+export function hitTest(mol, point, options = {}) {
+  const exclude = options.exclude || [];
+  const bond = options.atomsOnly ? null : nearestBond(mol, point);
+  let best = null;
+  let bestDistance = ATOM_HIT_RADIUS;
+  for (const atom of mol.atoms.values()) {
+    const d = distance(atom, point);
+    if (d > bestDistance || exclude.includes(atom.id)) {
+      continue;
+    }
+    if (bond && atom.element !== 'C' && !onHeteroLabel(mol, atom, point)) {
+      continue; // Off the heteroatom's label, on a bond stroke: the bond wins.
+    }
+    best = { type: 'atom', id: atom.id };
+    bestDistance = d;
+  } // End of the loop over the atom hit circles
+  if (!best) {
+    // The label of a lone carbon or of a heteroatom stands for the atom (nearest label centre wins).
+    let bestLabel = Infinity;
+    for (const atom of mol.atoms.values()) {
+      if (exclude.includes(atom.id)) {
+        continue;
+      }
+      const hetero = onHeteroLabel(mol, atom, point);
+      if (!hetero && !onLoneLabel(mol, atom, point)) {
+        continue;
+      }
+      const centre = hetero ? atom : { x: atom.x, y: atom.y + LONE_LABEL_OFFSET / 2 };
+      const d = distance(centre, point);
+      if (d < bestLabel) {
+        best = { type: 'atom', id: atom.id };
+        bestLabel = d;
+      }
+    } // End of the loop over the atom labels
+  }
+  return best || bond;
 } // End of function hitTest()
 
 /**

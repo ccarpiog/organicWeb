@@ -509,20 +509,21 @@ to a bottom bar.
 
 | Tool | Behaviour |
 |---|---|
-| **Carbono** | Click empty space → a lone carbon (this is how you draw methane). Click an atom → grow a new carbon from it at the best free angle (§6.2). |
-| **Enlace simple / doble / triple** (default simple) | Click empty space → new two-carbon fragment with that bond order. Click an atom → grow a new carbon bonded with that order. Drag from an atom or empty space → **one** new bond in the drag direction, snapped to 30°; releasing on an existing atom bonds the two (a ring is allowed; naming refuses it; the pressed atom itself → self-bond refusal). Click an existing bond → **set** it to the tool's order. |
+| **Elementos** (palette: C, O, N, F, Cl, Br, I; editor tool id `carbon`, element via `setElement()`) | Pick an element, then: click empty space → a lone atom of it (a lone carbon is how you draw methane). Click an atom of **another** element → change that atom to the picked one, as one undo step; refused in Spanish when its bonds exceed the new valence ("No se puede cambiar a oxígeno: este átomo tiene 3 enlaces y el oxígeno solo admite 2."). Click an atom of the **same** element → grow a new atom of it with a single bond at the best free angle (§6.2) — so Carbono on a carbon still grows a carbon. Drag from an atom or empty space → the one-bond drag of the bond tools (single bond): only the **new end atom** gets the picked element (its symbol shows in the preview); a start atom placed on empty space is a carbon, and releasing on an existing atom only bonds it — a drag never changes an element (a wobbly click that ends on the pressed atom is the self-bond refusal). |
+| **Enlace simple / doble / triple** (default simple) | Bond tools always create **carbons** and never change an element; valence is checked per element (C 4, N 3, O 2, halogens 1), so C=O is drawn as a double bond with one end changed to O (or Enlace doble on a C–O bond) and C≡N likewise. Click empty space → new two-carbon fragment with that bond order. Click an atom → grow a new carbon bonded with that order. Drag from an atom or empty space → **one** new bond in the drag direction, snapped to 30°; releasing on an existing atom bonds the two (a ring is allowed; naming refuses it; the pressed atom itself → self-bond refusal). Click an existing bond → **set** it to the tool's order. |
 | **Enlace simple: chain drag** (MolView-like) | With Enlace simple only, a drag long enough for a zigzag of two or more bonds (drag projected on the 30°-snapped axis ≥ 1.5 × `40·cos 30°`) grows a zigzag chain bond by bond along the drag (120° angles, fixed bond length, one bond per `40·cos 30°` of drag, side chosen away from the start atom's neighbours), with a live counter "5 C" = carbons the drag adds (from empty space, the whole chain; the one-bond preview shows "1 C"/"2 C" too). Release commits the whole chain as one transaction; a full start carbon refuses it ("Este carbono ya tiene 4 enlaces"), and a chain carbon landing on an existing atom refuses it (overlap message) — never a carbon on top of another. **Release on an atom:** whenever the pointer is over an existing atom, the drag is the one-bond drag above, whatever its length (the preview switches to that single bond), so "release on an atom bonds to it" keeps working; the chain never joins atoms. Doble/triple keep the one-bond drag: only the first bond of a chain could carry the order, which would be surprising. |
-| **Cambiar enlace** | Click a bond → cycle 1→2→3→1 (skipping orders that break valence). |
-| **Borrar** | Click atom → delete it and its bonds. Click bond → delete the bond only; both carbons stay (the model does not record how an atom was created, so an endpoint cannot be told apart from a carbon placed on its own). |
+| **Cambiar enlace** | Click a bond → cycle 1→2→3→1 (skipping orders that break valence, e.g. C=O → C–O; a C–Cl bond cannot change: "Este enlace no puede cambiar: sus átomos no admiten más enlaces."). |
+| **Borrar** | Click atom → delete it and its bonds. Click bond → delete the bond only; both atoms stay (the model does not record how an atom was created, so an endpoint cannot be told apart from a carbon placed on its own). |
 | **Mover** | Drag an atom (moves it) or a bond (moves its two atoms). Drag on empty space → marquee selection; then drag the selection (press on a selected atom, a bond between selected atoms, or inside the selection's box). Click selects an atom; click on empty space or Esc clears the selection. Dropping an atom on another is refused. Not available while the 90° drawing is shown (see below). |
 | Pan / zoom | Space+drag, middle-drag or two-finger drag pans; wheel / pinch zooms; "Centrar" button fits the molecule. |
 | Buttons | Deshacer, Rehacer, Limpiar (in-page confirmation dialog, never `window.confirm`), Ordenar dibujo (§7). |
 | 90° view (editing) | While the "Ángulos rectos (90°)" drawing is actually shown (§6.3) every tool works on it except **Mover**. Gestures are hit-tested on the **projected** positions (hover, the pressed carbon or bond, the release target, a snapped end landing on a carbon) and previews are drawn there; each gesture becomes one ordinary model edit, after which the projection is recomputed and the carbons the gesture added (or, if none, the ends of the bond it added or changed) get a blue ring for about 1 s, since the re-layout may move things. **Mapping to the model:** a carbon grown from an existing carbon (Carbono or bond-tool click, one-bond drag to empty space, every carbon of an Enlace simple chain drag) gets its model position by the §6.2 rules — the drag direction has no meaning in the model — and a chain drag adds as many carbons as its projected length measures (the live counter); bond orders, joins (release on a carbon) and Borrar act on the hit ids; a new loose piece (click or drag on empty space) goes to the pressed points in the model (the projection is centred on the model drawing), moved down by whole bond lengths until it clears every model carbon by 0.6 bond lengths, so it is never refused for hitting an invisible atom. **Mover** and **Ordenar dibujo** are disabled there (they only change model coordinates, which the projection ignores), the `m` shortcut is ignored, and a drag with Mover still picked pans; the note under the canvas says "Puedes dibujar aquí. Para mover átomos u ordenar el dibujo, desactiva los ángulos rectos.". One undo step per gesture, Esc / pointer cancel and valence refusals work as everywhere. An edit that makes the molecule unprojectable (a loose piece, a ring…) falls back to the normal drawing (§6.3), and the first edit that makes it projectable again switches back to the 90° drawing by itself. |
 
 Rules: every pointer gesture commits **one** undo transaction; Esc or pointer
-cancel restores the starting state. Duplicate bonds and self-bonds are
-rejected; any valence violation is refused with a brief shake and a toast
-("Este carbono ya tiene 4 enlaces"). After a bond-order change, linear
+cancel restores the starting state. Duplicate bonds ("Estos dos átomos ya
+están unidos.") and self-bonds ("No se puede unir un átomo consigo mismo.")
+are rejected; any valence violation is refused with a brief shake and a toast
+("Este carbono ya tiene 4 enlaces", "Este oxígeno ya tiene 2 enlaces."). After a bond-order change, linear
 geometry is recomputed (triple bonds and cumulated double bonds straightened
 to 180°) as part of the same transaction.
 
@@ -530,7 +531,8 @@ The former **Cadena** tool was removed as redundant (one tool fewer for
 students): the Enlace simple drag does the same, and its `h` shortcut now
 selects Enlace simple, so the key still leads to chain drawing.
 
-Keyboard: `c` carbono, `1/2/3` bond tools (`h` also Enlace simple), `t` cambiar enlace,
+Keyboard: elements `c` carbono, `o` oxígeno, `n` nitrógeno, `f` flúor, `l` cloro,
+`b` bromo, `i` yodo (`ELEMENT_KEYS` in `editor.js`); `1/2/3` bond tools (`h` also Enlace simple), `t` cambiar enlace,
 `e`/`Supr` borrar, `m` mover, `Ctrl/Cmd+Z`, `Ctrl/Cmd+Shift+Z` (also
 `Ctrl/Cmd+Y`). Ignored in text fields and while a dialog is open.
 
@@ -558,6 +560,20 @@ Keyboard: `c` carbono, `1/2/3` bond tools (`h` also Enlace simple), `t` cambiar 
   future carbons in the accent colour, and the redraw animation re-renders
   the dots every frame. **Con carbonos** draws no dots and labels each carbon
   with C + implicit H only (`CH₃`, `CH₂`, `CH`, `C`) — never `=` in labels.
+- **Heteroatoms** (O, N, F, Cl, Br, I) are labelled in **every** mode with
+  their symbol + implicit H (`OH`, `O`, `NH₂`, `NH`, `N`, `Cl`…; a lone one
+  shows its formula: `H₂O`, `NH₃`, `HF`, `HCl`, `HBr`, `HI`), centred on the
+  atom, coloured by element (O red, N blue, halogens green), never dotted;
+  bond strokes stop `LABEL_GAP` short of them (`atomLabel()` in `labels.js`,
+  `bondEndCuts()` in `render.js`). A click anywhere on the label box — sized
+  to the text (`labelSize()` + 1 unit, `heteroLabelBox()`/`onHeteroLabel()` in
+  `geometry.js`) — acts on the atom; off that box, a visible bond stroke wins
+  over the heteroatom's hit circle, so a bond between two close labels
+  (O–O, N–Cl) stays editable (`hitTest()`).
+  Carbon rendering is unchanged. The 90° view and "Ordenar dibujo" need a
+  name, so a heteroatom molecule (naming error `HETEROATOM`) shows the normal
+  drawing ("Hay átomos que no son carbono: se ve el dibujo normal.") and
+  "Ordenar dibujo" shows the "aún no sé nombrar" message instead.
 - **Ángulos rectos (90°)** toggle, shown in Con carbonos only (Esqueleto
   keeps the 120° zigzag and hides it; the preference is kept and remembered
   in `localStorage` like the display mode). It draws the textbook
@@ -859,7 +875,9 @@ before being presented as validated IUPAC 2013 coverage.
   bonds outside the chain no longer holds universally (nitriles).
 - `buildChainStructure()` requires n−1 bonds; a ring also needs the closure.
 - SMILES, valence messages and labels assume carbon (valence messages and H
-  counts fixed in I-21; SMILES reads and writes O, N and halogens since I-22).
+  counts fixed in I-21; SMILES reads and writes O, N and halogens since I-22;
+  canvas labels, the element palette and "átomo" wording in editor refusals
+  since I-23, §6.1/§6.3).
 - Tree keys include elements but do not support cycles. The OPSIN adapter
   parses broad syntax and keeps every heavy atom (I-22), but still refuses
   rings.

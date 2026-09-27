@@ -31,7 +31,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 
 | I-21 | v2.1 Multi-element model (+ v2 plan into design.md, scope lift in CLAUDE.md) | `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.1 | done — `docs/progress-archive/i-21.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-21.md` |
 | I-22 | v2.2 Multi-element SMILES and oracle | same, §3.2 | done — `docs/progress-archive/i-22.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-22.md` |
-| I-23 | v2.3 Element palette | same, §3.3 | queued | — | — |
+| I-23 | v2.3 Element palette | same, §3.3 | done — `docs/progress-archive/i-23.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-23.md` |
 | I-24 | v2.4 Ring infrastructure | same, §3.4 | queued | — | — |
 | I-25 | v2.5 Simple cycloalkanes | same, §3.5 | queued | — | — |
 | I-26 | v2.6 Substituted and unsaturated rings | same, §3.6 | queued | — | — |
@@ -52,7 +52,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21, I-22 done; I-23…I-41 queued in order;
+v2 plan (user-confirmed scope): I-21…I-23 done; I-24…I-41 queued in order;
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
 
@@ -87,11 +87,11 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-23 (v2 §3.3 element palette: `src/editor/{editor,
-render,geometry}.js`, `src/ui/toolbar.js`, Ayuda — place/change C/O/N/F/Cl/Br/I,
-heteroatoms always labelled, and replace the leftover "carbono" wording in the
-self-bond / duplicate-bond / change-bond refusals noted in I-21). Spec: design
-§13 and `autoclaude/processed/215-rings-functional-groups-confirmed.md`. Deploying
+Poll the inbox, then run I-24 (v2 §3.4 ring infrastructure: new
+`src/model/rings.js`, `graph.js`, SMILES ring closures, oracle; structural
+identity for monocycles; explicit scope messages refusing fused/bridged/spiro/
+heterocyclic systems; no infinite recursion). Spec: design §13.4 row I-24 and
+`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.4. Deploying
 (`npm run deploy`, defined in `scripts/deploy.mjs`) stays a manual user step —
 the loop never runs it.
 
@@ -133,14 +133,16 @@ the loop never runs it.
   toggle in `src/ui/canvasbar.js` (localStorage `organicWeb.rightAngles`).
 - Deploy: `scripts/deploy.mjs` (injectable `deploy()`), tests
   `tests/unit/deploy.test.js`; docs README "Deployment", design §10.1.
+- Element palette: toolbar `src/ui/toolbar.js`; DOM-free label sizing
+  `src/editor/labels.js`; heteroatom hit boxes `onHeteroLabel()` in `geometry.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-22)
+## Verification (last phase, I-23)
 
-- `npm test` 0 (440 pass) · `npm run check` 0 (74 files) · `npm run e2e` 0
-  (127 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0
-  (1000 pass, 0 adapter failures).
+- After the review fix: `npm test` 0 (460 pass) · `npm run check` 0 (77 files)
+  · `npm run e2e` 0 (141 pass, source + dist). Oracle not rerun (no naming or
+  SMILES change).
 
 ## Open risks / deviations
 
@@ -223,10 +225,16 @@ the loop never runs it.
   oracle keeps heavy atoms (`heavyAtomTree()`), generator still hydrocarbon-only
   (`docs/progress-archive/i-22.md`).
 
+- I-23: element palette (shortcuts `c o n f l b i`); bond tools always draw
+  carbons; 90° view falls back and Ordenar dibujo refuses when heteroatoms are
+  present. Review should-fix (label hit boxes hid bonds) fixed with regressions;
+  N–Cl at 30 units leaves ~5 units of clickable bond
+  (`docs/progress-archive/i-23.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- Triage `498e8dd`; I-21 `0892d1c`, pushed. I-22 committed and pushed right
+- I-21 `0892d1c`, I-22 `7fb4a83`, pushed. I-23 committed and pushed right
   after this checkpoint (see `git log`).

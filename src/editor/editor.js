@@ -39,8 +39,17 @@
  * is shown, and the first edit that makes the molecule projectable switches
  * to the projection by itself.
  *
+ * Element tool (design.md §6.1): tool 'carbon' places and changes atoms of
+ * the palette element picked with setElement() (carbon after setTool('carbon')).
+ * A click on empty space places a lone atom of it; a click on an atom of
+ * another element changes that atom (refused when its bonds exceed the new
+ * valence), a click on an atom of the same element grows a new one from it
+ * (single bond); a drag creates its new END atom with that element (a start
+ * atom on empty space is a carbon; releasing on an existing atom only bonds).
+ * Bond tools always create carbons and never change an element.
+ *
  * Test API: the instance exposes getMolecule(), getMoleculeJSON(), setTool(),
- * getTool(), undo(), redo(), clear(), loadMolecule(), setCoordinates(),
+ * getTool(), setElement(), getElement(), undo(), redo(), clear(), loadMolecule(), setCoordinates(),
  * animateCoordinates(), isAnimating(), onEdit(), getSelection(),
  * getView(), setDisplayMode(), setProjector(), getProjection(), isProjected(),
  * getShownMolecule(), atomClientPoint(), bondClientPoint(), modelToClient()
@@ -53,7 +62,7 @@ import {
   cloneMolecule, moleculeToJSON, moleculeFromJSON,
 } from '../model/molecule.js';
 import { validateStructure, valenceMessage, MESSAGES, MAX_CHAIN } from '../model/validate.js';
-import { valenceOf, ELEMENT_NAMES_ES } from '../model/elements.js';
+import { valenceOf, isSupportedElement, ELEMENT_NAMES_ES } from '../model/elements.js';
 import { createHistory } from './history.js';
 import {
   nextAtomPosition, snapEndpoint, hitTest, distance, straightenLinearCentres, overlappingAtoms,
@@ -63,7 +72,11 @@ import {
   createRenderer, rectFromCorners, moleculeBounds, zoomView, panView, fitView, IDENTITY_VIEW,
 } from './render.js';
 
-/** Tool ids, in toolbar order (design.md §6.1). */
+/**
+ * Tool ids, in toolbar order (design.md §6.1). 'carbon' is the element tool
+ * of the palette: it places and changes atoms of the selected element
+ * (setElement(); carbon by default), keeping its historical id.
+ */
 export const TOOLS = Object.freeze(['carbon', 'single', 'double', 'triple', 'cycle', 'erase', 'move']);
 
 /** Bond order drawn by each bond-making tool. */
@@ -75,14 +88,18 @@ export const DEFAULT_TOOL = 'single';
 /** Pointer travel (drawing units) above which a press becomes a drag. */
 export const DRAG_THRESHOLD = 6;
 
-/** Spanish messages for refused edits (design.md §6.1). */
+/**
+ * Spanish messages for refused edits (design.md §6.1). Messages about atoms
+ * that may not be carbon say "átomo"; FULL is the carbon case of the
+ * element-specific "ya tiene N enlaces" message (fullMessage()).
+ */
 export const EDIT_MESSAGES = Object.freeze({
   FULL: 'Este carbono ya tiene 4 enlaces.',
   VALENCE: MESSAGES.VALENCE,
-  SELF: 'No se puede unir un carbono consigo mismo.',
-  DUPLICATE: 'Estos dos carbonos ya están unidos.',
-  NO_ORDER: 'Este enlace no puede cambiar: sus carbonos ya tienen 4 enlaces.',
-  OVERLAP: 'No hay sitio: ese carbono quedaría encima de otro.',
+  SELF: 'No se puede unir un átomo consigo mismo.',
+  DUPLICATE: 'Estos dos átomos ya están unidos.',
+  NO_ORDER: 'Este enlace no puede cambiar: sus átomos no admiten más enlaces.',
+  OVERLAP: 'No hay sitio: ese átomo quedaría encima de otro.',
   INVALID: MESSAGES.INVALID,
 });
 
@@ -92,16 +109,26 @@ export const EDIT_MESSAGES = Object.freeze({
  * draws chains.
  */
 const TOOL_KEYS = Object.freeze({
-  c: 'carbon', 1: 'single', 2: 'double', 3: 'triple', t: 'cycle', h: 'single', e: 'erase', delete: 'erase', m: 'move',
+  1: 'single', 2: 'double', 3: 'triple', t: 'cycle', h: 'single', e: 'erase', delete: 'erase', m: 'move',
 });
 
 /**
- * Maps a key press to an editor command (design.md §6.1): `c` Carbono,
- * `1/2/3` bond tools (`h` also Enlace simple), `t` Cambiar enlace, `e`/`Supr` Borrar,
- * `m` Mover, Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z (or Ctrl/Cmd+Y) redo. Pure.
+ * Keyboard shortcuts of the element palette (design.md §6.1): key → element
+ * of the element tool: each symbol's first letter, except `l` for Cl (`c`
+ * is carbon) and `b` for Br. No clash with the tool keys (`e` stays Borrar).
+ */
+export const ELEMENT_KEYS = Object.freeze({ c: 'C', o: 'O', n: 'N', f: 'F', l: 'Cl', b: 'Br', i: 'I' });
+
+/**
+ * Maps a key press to an editor command (design.md §6.1): `c o n f l b i`
+ * pick carbono, oxígeno, nitrógeno, flúor, cloro, bromo or yodo for the
+ * element tool, `1/2/3` bond tools (`h` also Enlace simple), `t` Cambiar
+ * enlace, `e`/`Supr` Borrar, `m` Mover, Ctrl/Cmd+Z undo, Ctrl/Cmd+Shift+Z (or
+ * Ctrl/Cmd+Y) redo. Pure.
  *
  * @param {{key: string, ctrlKey?: boolean, metaKey?: boolean, shiftKey?: boolean, altKey?: boolean}} event - The key event.
- * @returns {{tool: string}|{action: string}|null} The command, or null when the key is not a shortcut.
+ * @returns {{tool: string, element?: string}|{action: string}|null} The command (`element` for the
+ *   palette keys, with tool 'carbon'), or null when the key is not a shortcut.
  */
 export function shortcutFor(event) {
   if (!event || typeof event.key !== 'string' || event.altKey) {
@@ -114,8 +141,27 @@ export function shortcutFor(event) {
     }
     return key === 'y' && !event.shiftKey ? { action: 'redo' } : null;
   }
+  if (Object.prototype.hasOwnProperty.call(ELEMENT_KEYS, key)) {
+    return { tool: 'carbon', element: ELEMENT_KEYS[key] };
+  }
   return Object.prototype.hasOwnProperty.call(TOOL_KEYS, key) ? { tool: TOOL_KEYS[key] } : null;
 } // End of function shortcutFor()
+
+/**
+ * Spanish refusal for changing an atom to an element whose valence its
+ * bonds already exceed, e.g. "No se puede cambiar a oxígeno: este átomo
+ * tiene 3 enlaces y el oxígeno solo admite 2." Pure.
+ *
+ * @param {string} element - The element asked for.
+ * @param {number} bonds - Sum of the atom's bond orders.
+ * @returns {string} The message.
+ */
+export function elementChangeMessage(element, bonds) {
+  const name = ELEMENT_NAMES_ES[element] || element;
+  const max = valenceOf(element);
+  return `No se puede cambiar a ${name}: este átomo tiene ${bonds} ${bonds === 1 ? 'enlace' : 'enlaces'} `
+    + `y el ${name} solo admite ${max}.`;
+}
 
 /**
  * Classifies the change between two snapshots (moleculeToJSON() output):
@@ -213,8 +259,9 @@ function removeFrom(list, item) {
 
 /**
  * What the 90° view flashes after a gesture, since the projection re-lays
- * the drawing out (design.md §6.3): the carbons the edit added or, when it
- * added none, the ends of every bond it added or whose order it changed. Pure.
+ * the drawing out (design.md §6.3): the atoms the edit added or, when it
+ * added none, the atoms whose element changed and the ends of every bond it
+ * added or whose order it changed. Pure.
  *
  * @param {object} before - The molecule before the edit.
  * @param {object} after - The molecule after the edit.
@@ -229,6 +276,12 @@ export function addedAtoms(before, after) {
   }
   if (atoms.size > 0) {
     return [...atoms].sort((p, q) => p - q);
+  }
+  for (const atom of after.atoms.values()) {
+    const old = before.atoms.get(atom.id);
+    if (old && old.element !== atom.element) {
+      atoms.add(atom.id);
+    }
   }
   for (const bond of after.bonds.values()) {
     const old = before.bonds.get(bond.id);
@@ -273,6 +326,7 @@ export function createEditorCore(options = {}) {
   const displayOf = typeof options.display === 'function' ? options.display : () => null;
   let mol = createMolecule();
   let tool = DEFAULT_TOOL;
+  let element = 'C'; // Element of the element tool ('carbon').
   let gesture = null;
   let hover = null;
   let selection = new Set();
@@ -362,47 +416,79 @@ export function createEditorCore(options = {}) {
   } // End of function transact()
 
   /**
-   * Adds the new carbon and its bond, then re-straightens linear centres.
+   * Adds the new atom and its bond, then re-straightens linear centres.
    *
    * @param {object} draft - Draft molecule (mutated).
    * @param {number} atomId - The atom to grow from.
    * @param {number} order - Order of the new bond.
-   * @param {{x: number, y: number}} position - Where the new carbon goes.
+   * @param {{x: number, y: number}} position - Where the new atom goes.
+   * @param {string} [newElement] - Element of the new atom (default carbon).
    * @returns {void}
    */
-  function placeCarbon(draft, atomId, order, position) {
-    const newId = addAtom(draft, position);
+  function placeAtom(draft, atomId, order, position, newElement = 'C') {
+    const newId = addAtom(draft, position, newElement);
     addBond(draft, atomId, newId, order);
     straightenLinearCentres(draft, [atomId, newId]);
   }
 
   /**
-   * Grows a new carbon from an atom. A forced position (a drag end) is used
-   * only if the final coordinates, after straightening, overlap no atom;
-   * otherwise the carbon goes to the best free angle (§6.2).
+   * Grows a new atom (a carbon unless `newElement` says otherwise) from an
+   * atom. A forced position (a drag end) is used only if the final
+   * coordinates, after straightening, overlap no atom; otherwise the atom
+   * goes to the best free angle (§6.2). The new atom's own valence is checked
+   * by validateStructure() when the transaction commits.
    *
    * @param {object} draft - Draft molecule.
    * @param {number} atomId - The atom to grow from.
    * @param {number} order - Order of the new bond.
    * @param {{x: number, y: number}} [position] - Forced position (a drag end); computed when omitted.
+   * @param {string} [newElement] - Element of the new atom (default carbon).
    * @returns {{message: string, atoms: number[]}|undefined} A refusal, if any.
    */
-  function grow(draft, atomId, order, position) {
+  function grow(draft, atomId, order, position, newElement = 'C') {
     const refusal = checkRoom(draft, [atomId], order);
     if (refusal) {
       return refusal;
     }
     if (position) {
       const trial = cloneMolecule(draft);
-      placeCarbon(trial, atomId, order, position);
+      placeAtom(trial, atomId, order, position, newElement);
       if (overlappingAtoms(trial, draft).length === 0) {
         Object.assign(draft, trial);
         return undefined;
       }
     }
-    placeCarbon(draft, atomId, order, nextAtomPosition(draft, atomId, { order }));
+    placeAtom(draft, atomId, order, nextAtomPosition(draft, atomId, { order }), newElement);
     return undefined;
   } // End of function grow()
+
+  /**
+   * Changes an atom's element (element tool on an atom of another element),
+   * refusing it when the atom's bonds exceed the new element's valence.
+   *
+   * @param {object} draft - Draft molecule.
+   * @param {number} atomId - The atom.
+   * @param {string} newElement - The new element symbol.
+   * @returns {{message: string, atoms: number[]}|undefined} A refusal, if any.
+   */
+  function changeElement(draft, atomId, newElement) {
+    const bonds = bondOrderSum(draft, atomId);
+    if (bonds > valenceOf(newElement)) {
+      return { message: elementChangeMessage(newElement, bonds), atoms: [atomId] };
+    }
+    draft.atoms.get(atomId).element = newElement;
+    return undefined;
+  }
+
+  /**
+   * Element of the atom a gesture creates at its free end: the palette's
+   * element with the element tool, carbon with the bond tools.
+   *
+   * @returns {string} An element symbol.
+   */
+  function newEndElement() {
+    return tool === 'carbon' ? element : 'C';
+  }
 
   /**
    * Bonds two existing atoms, refusing self, duplicate and over-valence bonds.
@@ -520,9 +606,16 @@ export function createEditorCore(options = {}) {
     }
     const at = display ? loosePoints([point])[0] : point;
     if (tool === 'carbon' && !target) {
-      return transact('add carbon', (d) => {
-        addAtom(d, at);
+      return transact('add atom', (d) => {
+        addAtom(d, at, element);
       });
+    }
+    if (tool === 'carbon' && target && target.type === 'atom') {
+      // Element tool on an atom: another element changes it; the same element grows a new atom of it.
+      if (mol.atoms.get(target.id).element !== element) {
+        return transact('change element', (d) => changeElement(d, target.id, element));
+      }
+      return transact('grow atom', (d) => grow(d, target.id, 1, undefined, element));
     }
     if (order && target && target.type === 'atom') {
       return transact('grow carbon', (d) => grow(d, target.id, order));
@@ -777,11 +870,13 @@ export function createEditorCore(options = {}) {
     // existing one takes its §6.2 position (no forced end).
     const endpoint = plan.targetAtom ?? plan.snapAtom;
     if (display && !plan.sourceAtom && endpoint) {
-      // From empty space onto a projected carbon: the carbon grows one new
-      // carbon at its §6.2 model position, as a drag out of it would (the
-      // pressed point has no model counterpart next to that carbon).
+      // From empty space onto a projected atom: the atom grows one new
+      // carbon (the drag's start atom, carbon as everywhere) at its §6.2
+      // model position, as a drag out of it would (the pressed point has no
+      // model counterpart next to that atom).
       return transact('drag bond', (d) => grow(d, endpoint, order));
     }
+    const endElement = newEndElement();
     let from = plan.from;
     let to = plan.to;
     if (display) {
@@ -800,9 +895,9 @@ export function createEditorCore(options = {}) {
           Object.assign(d, trial);
           return undefined;
         }
-        return grow(d, source, order);
+        return grow(d, source, order, undefined, endElement);
       }
-      return grow(d, source, order, to);
+      return grow(d, source, order, to, endElement);
     });
   } // End of function finishDrag()
 
@@ -1011,7 +1106,8 @@ export function createEditorCore(options = {}) {
   } // End of function setCoordinates()
 
   /**
-   * Selects a tool.
+   * Selects a tool. Selecting the element tool ('carbon') this way picks
+   * carbon; setElement() picks another element.
    *
    * @param {string} name - One of TOOLS.
    * @returns {void}
@@ -1024,16 +1120,49 @@ export function createEditorCore(options = {}) {
     gesture = null;
     selection = new Set();
     tool = name;
+    if (name === 'carbon') {
+      element = 'C';
+    }
     emit('tool');
+  }
+
+  /**
+   * Selects the element tool with an element of the palette (design.md §6.1).
+   *
+   * @param {string} symbol - C, O, N, F, Cl, Br or I.
+   * @returns {void}
+   * @throws {Error} For an unsupported element.
+   */
+  function setElement(symbol) {
+    if (!isSupportedElement(symbol)) {
+      throw new Error(`setElement: unsupported element ${symbol}`);
+    }
+    gesture = null;
+    selection = new Set();
+    tool = 'carbon';
+    element = symbol;
+    emit('tool');
+  } // End of function setElement()
+
+  /**
+   * The element of the element tool (meaningful while getTool() is 'carbon').
+   *
+   * @returns {string} An element symbol.
+   */
+  function getElement() {
+    return element;
   }
 
   /**
    * The drag preview to draw, if a bond-making drag is in progress: a chain
    * (Enlace simple, two or more bonds) or one bond. With Enlace simple a
    * one-bond preview that creates a new carbon also carries the live counter
-   * (`count`: carbons added, 2 from empty space).
+   * (`count`: carbons added, 2 from empty space). With the element tool on a
+   * heteroatom, a new end atom carries its `element`; a drag from a
+   * heteroatom has `fromDot: false` (no carbon dot there).
    *
-   * @returns {{type: 'chain', points: object[], count: number}|{type: 'bond', from: object, to: object, order: number, count?: number}|null}
+   * @returns {{type: 'chain', points: object[], count: number}|{type: 'bond', from: object, to: object, order: number,
+   *   count?: number, element?: string, fromDot?: boolean}|null}
    *   The preview.
    */
   function getPreview() {
@@ -1051,6 +1180,12 @@ export function createEditorCore(options = {}) {
     const preview = { type: 'bond', from: plan.from, to: plan.to, order: TOOL_ORDER[tool] };
     if (tool === 'single' && !plan.targetAtom && !plan.snapAtom) {
       preview.count = plan.sourceAtom ? 1 : 2;
+    }
+    if (!plan.targetAtom && !plan.snapAtom && newEndElement() !== 'C') {
+      preview.element = newEndElement();
+    }
+    if (plan.sourceAtom && mol.atoms.get(plan.sourceAtom).element !== 'C') {
+      preview.fromDot = false;
     }
     return preview;
   } // End of function getPreview()
@@ -1215,6 +1350,8 @@ export function createEditorCore(options = {}) {
     setCoordinates,
     setTool,
     getTool,
+    setElement,
+    getElement,
     getPreview,
     getViewState,
     getSelection,
@@ -1672,7 +1809,9 @@ export function createEditor(svg, options = {}) {
       return; // 90° view: Mover is unavailable.
     }
     event.preventDefault();
-    if (command.tool) {
+    if (command.element) {
+      core.setElement(command.element);
+    } else if (command.tool) {
       core.setTool(command.tool);
     } else if (command.action === 'undo') {
       core.undo();

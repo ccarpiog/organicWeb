@@ -8,7 +8,8 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 
 ## Features
 
-- **Editor** (SVG, mouse, pen and touch): Carbono, single/double/triple
+- **Editor** (SVG, mouse, pen and touch): element palette (C, O, N, F,
+  Cl, Br, I: place or change atoms; heteroatoms labelled `OH`, `NH₂`…), single/double/triple
   bonds (a single-bond drag draws a zig-zag chain with a live carbon
   counter), Cambiar enlace, Borrar, Mover (marquee selection), undo/redo, Limpiar
   (with an in-page confirmation), pan (Space + drag, middle drag, two

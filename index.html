@@ -63,7 +63,7 @@
   <dialog id="help-dialog" class="dialog help-dialog" aria-labelledby="help-dialog-title">
     <form method="dialog">
       <h2 id="help-dialog-title" tabindex="-1">Cómo se usa</h2>
-      <p class="help-intro">Dibuja un hidrocarburo sin anillos (un alcano, un alqueno o un alquino) y la aplicación te dice su nombre y cómo se llega a él.</p>
+      <p class="help-intro">Dibuja un hidrocarburo sin anillos (un alcano, un alqueno o un alquino) y la aplicación te dice su nombre y cómo se llega a él. También puedes dibujar oxígeno, nitrógeno y halógenos, aunque de momento solo sé nombrar hidrocarburos.</p>
       <ol class="help-steps">
         <li class="help-step">
           <svg class="help-figure" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true">
@@ -101,6 +101,19 @@
         </li>
         <li class="help-step">
           <svg class="help-figure" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true">
+            <line x1="12" y1="40" x2="45" y2="20" class="help-bond"/>
+            <line x1="45" y1="20" x2="72" y2="36" class="help-bond"/>
+            <line x1="41" y1="27" x2="66" y2="42" class="help-bond"/>
+            <text x="84" y="47" text-anchor="middle" class="help-label">O</text>
+            <path d="M92 46l12 6-6 2-2 6z" class="help-cursor"/>
+          </svg>
+          <div>
+            <h3>Oxígeno, nitrógeno y halógenos</h3>
+            <p>Los primeros botones de la barra de herramientas son los elementos: C (carbono), O (oxígeno), N (nitrógeno), F (flúor), Cl (cloro), Br (bromo) e I (yodo). Elige uno y pulsa en el lienzo vacío para colocar ese átomo, o pulsa sobre un átomo para cambiarlo por ese elemento (si ya es de ese elemento, le añades otro unido). Arrastra desde un átomo para unirle uno nuevo del elemento elegido. Las herramientas de enlace siempre dibujan carbonos y nunca cambian un átomo: para un C=O, dibuja un enlace doble y cambia uno de sus extremos a O. Cada elemento admite sus enlaces (carbono 4, nitrógeno 3, oxígeno 2, halógenos 1); si no caben, te avisa. Los átomos que no son carbono siempre llevan su símbolo y sus hidrógenos (OH, NH₂, Cl…).</p>
+          </div>
+        </li>
+        <li class="help-step">
+          <svg class="help-figure" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true">
             <line x1="20" y1="40" x2="55" y2="20" class="help-bond"/>
             <line x1="55" y1="20" x2="90" y2="40" class="help-bond help-erase"/>
             <line x1="80" y1="28" x2="100" y2="48" class="help-cross"/>
@@ -108,7 +121,7 @@
           </svg>
           <div>
             <h3>Corrige</h3>
-            <p>«Borrar» quita el carbono o el enlace que pulses, «Mover» recoloca carbonos y «Deshacer» anula el último cambio.</p>
+            <p>«Borrar» quita el átomo o el enlace que pulses, «Mover» recoloca átomos y «Deshacer» anula el último cambio.</p>
           </div>
         </li>
         <li class="help-step">
@@ -123,7 +136,7 @@
         </li>
       </ol>
       <h3 class="help-subtitle">Con el teclado</h3>
-      <p class="help-keys"><kbd>C</kbd> carbono · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> enlaces · <kbd>T</kbd> cambiar enlace · <kbd>E</kbd> borrar · <kbd>M</kbd> mover · <kbd>Ctrl</kbd>+<kbd>Z</kbd> deshacer. Para mover el lienzo, mantén pulsada la barra espaciadora y arrastra; la rueda del ratón (o dos dedos en una tableta) acerca y aleja.</p>
+      <p class="help-keys"><kbd>C</kbd> carbono · <kbd>O</kbd> oxígeno · <kbd>N</kbd> nitrógeno · <kbd>F</kbd> flúor · <kbd>L</kbd> cloro · <kbd>B</kbd> bromo · <kbd>I</kbd> yodo · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> enlaces · <kbd>T</kbd> cambiar enlace · <kbd>E</kbd> borrar · <kbd>M</kbd> mover · <kbd>Ctrl</kbd>+<kbd>Z</kbd> deshacer. Para mover el lienzo, mantén pulsada la barra espaciadora y arrastra; la rueda del ratón (o dos dedos en una tableta) acerca y aleja.</p>
       <h3 class="help-subtitle">Palabras clave</h3>
       <dl class="help-glossary" id="help-glossary">
         <!-- Filled from the explanation glossary by src/ui/help.js. -->
