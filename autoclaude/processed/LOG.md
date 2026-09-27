@@ -19,3 +19,5 @@ up. The item itself is in this directory, unchanged.
 - 2026-09-27 15:41 · 150-right-angles.md · queued · phase I-15 — 90-degree condensed-formula view toggle
 - 2026-09-27 16:56 · 160-hide-highlights.md · queued · phase I-16 — Toggle to hide stepper highlights
 - 2026-09-27 16:56 · 170-edit-in-carbons-view.md · queued · phase I-17 — Editing in the 90° view
+- 2026-09-27 17:03 · 180-author-credit.md · queued · phase I-18 — Author credit footer
+- 2026-09-27 17:03 · 190-undo-ordenar-dibujo.md · queued · phase I-19 — Undo after Ordenar dibujo

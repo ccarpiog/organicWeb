@@ -25,9 +25,11 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | done — `docs/progress-archive/i-15.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-15.md` |
 | I-16 | Toggle to hide stepper highlights | `autoclaude/processed/160-hide-highlights.md` | done — `docs/progress-archive/i-16.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-16.md` |
 | I-17 | Editing in the 90° view | `autoclaude/processed/170-edit-in-carbons-view.md` | queued (next) | — | — |
+| I-18 | Author credit footer | `autoclaude/processed/180-author-credit.md` | queued (after I-17) | — | — |
+| I-19 | Undo after "Ordenar dibujo" (bug) | `autoclaude/processed/190-undo-ordenar-dibujo.md` | queued (after I-18) | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-16 are done;
-I-17 (user feedback) is queued.
+I-17…I-19 (user feedback) are queued.
 
 ## Inbox
 
@@ -47,11 +49,13 @@ I-17 (user feedback) is queued.
 - 2026-09-27 pickup 6 (after I-15): `160-hide-highlights.md`,
   `170-edit-in-carbons-view.md` → queued as I-16, I-17. `180-author-credit.md`
   was not ready (still settling); next boundary.
+- 2026-09-27 pickup 7 (after I-16): `180-author-credit.md`,
+  `190-undo-ordenar-dibujo.md` → queued as I-18, I-19.
 
 ## Next action
 
-Poll the inbox (`180-author-credit.md` waits), then execute I-17 (spec
-`autoclaude/processed/170-edit-in-carbons-view.md`).
+Execute I-17 (spec `autoclaude/processed/170-edit-in-carbons-view.md`),
+then I-18, I-19; poll the inbox at each phase boundary.
 
 ## Key paths
 
