@@ -1,7 +1,8 @@
 /*
  * Química orgánica — application styles.
  * Colour tokens live on :root; dark mode overrides them via prefers-color-scheme.
- * Layout: toolbar | canvas | results; results drop below the canvas under 800px.
+ * Layout: toolbar | canvas | results; results drop below the canvas under 800px;
+ * under 600px (phones) the toolbar sticks to the bottom of the screen.
  */
 
 :root {
@@ -89,6 +90,24 @@ body {
 :focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+/* Hidden on screen, read by screen readers (the #announcer live region). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.app-header-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .app-header {
@@ -436,7 +455,7 @@ body {
 
 /* In-page confirmation dialog. */
 .dialog {
-  max-width: 26rem;
+  max-width: min(26rem, calc(100vw - 2rem));
   padding: 1.25rem;
   color: var(--color-text);
   background: var(--color-surface);
@@ -468,6 +487,13 @@ body {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   cursor: pointer;
+}
+
+.dialog-button--primary {
+  font-weight: 600;
+  color: var(--color-accent-text);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
 .dialog-button--danger {
@@ -695,6 +721,11 @@ body {
   background: var(--color-accent);
 }
 
+.compare-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 .compare {
   width: 100%;
   margin: 0.25rem 0 0.5rem;
@@ -740,15 +771,15 @@ body {
   cursor: help;
 }
 
-.term:hover::after,
-.term:focus::after {
+.term:not(.tip-dismissed):hover::after,
+.term:not(.tip-dismissed):focus::after {
   content: attr(data-tip);
   position: absolute;
-  left: 0;
+  left: var(--tip-shift, 0);
   top: 100%;
   z-index: 10;
   width: max-content;
-  max-width: 16rem;
+  max-width: var(--tip-width, 16rem);
   padding: 0.4rem 0.6rem;
   color: var(--color-accent-text);
   background: var(--color-text);
@@ -795,5 +826,175 @@ body {
 
   .canvas-area {
     min-height: 60vh;
+  }
+}
+
+/* Ayuda dialog (index.html, src/ui/help.js). */
+.help-dialog h2:focus {
+  outline: none;
+}
+
+.help-dialog {
+  max-width: min(40rem, calc(100vw - 1rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+}
+
+.help-intro {
+  margin: 0 0 0.75rem;
+}
+
+.help-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.help-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.help-step h3,
+.help-subtitle {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.help-step p,
+.help-keys {
+  margin: 0;
+}
+
+.help-subtitle {
+  margin-top: 0.75rem;
+}
+
+.help-figure {
+  flex: none;
+  padding: 2px;
+  color: var(--color-bond);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.help-figure .help-bond,
+.help-figure .help-cross {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.help-figure .help-new {
+  stroke: var(--color-accent);
+}
+
+.help-figure .help-erase {
+  stroke-dasharray: 5 5;
+}
+
+.help-figure .help-cross {
+  stroke: var(--color-error);
+}
+
+.help-figure .help-dot,
+.help-figure .help-cursor {
+  fill: var(--color-accent);
+}
+
+.help-figure .help-label {
+  fill: var(--color-accent);
+  font: 700 13px var(--font-ui);
+}
+
+.help-figure .help-button {
+  fill: var(--color-accent);
+}
+
+.help-figure .help-button-text {
+  fill: var(--color-accent-text);
+  font: 700 12px var(--font-ui);
+}
+
+kbd {
+  padding: 0 0.3rem;
+  font: inherit;
+  font-size: 0.9em;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.help-glossary {
+  margin: 0;
+}
+
+.help-glossary dt {
+  font-weight: 600;
+}
+
+.help-glossary dd {
+  margin: 0 0 0.4rem 1rem;
+}
+
+/* Touch screens: bigger targets. */
+@media (pointer: coarse) {
+  .tool-button {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .step-dot {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+}
+
+/* Phones: the toolbar sticks to the bottom of the screen, under the thumb. */
+@media (max-width: 600px) {
+  .app-header {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .app-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .app-main {
+    grid-template-areas:
+      "canvas"
+      "results"
+      "toolbar";
+    gap: 0.75rem;
+    padding: 0.5rem 0.5rem 0;
+  }
+
+  .toolbar {
+    position: sticky;
+    bottom: 0;
+    z-index: 15;
+    justify-content: center;
+    gap: 0.25rem;
+    margin: 0 -0.5rem;
+    border-width: 1px 0 0;
+    border-radius: 0;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  .toolbar-separator {
+    display: none;
+  }
+
+  .canvas-area {
+    min-height: 55vh;
+  }
+
+  .help-step {
+    flex-direction: column;
   }
 }

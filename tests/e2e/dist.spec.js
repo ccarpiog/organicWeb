@@ -1,18 +1,12 @@
 /**
  * @file E2e check of the single-file build: dist/index.html, opened through a
  * file:// URL, shows the shell and runs its inlined script (editor, naming
- * engine and explanation included) without errors.
+ * engine and explanation included) without errors and without fetching
+ * anything. Runs in the `dist` project only (playwright.config.js), whose
+ * global set-up has just rebuilt the file.
  */
 
 import { test, expect } from '@playwright/test';
-import { pathToFileURL } from 'node:url';
-import { writeBuild } from '../../scripts/build.mjs';
-
-let distUrl;
-
-test.beforeAll(async () => {
-  distUrl = pathToFileURL(await writeBuild()).href;
-});
 
 test('dist/index.html works from file://', async ({ page }) => {
   const errors = [];
@@ -25,7 +19,9 @@ test('dist/index.html works from file://', async ({ page }) => {
   const requests = [];
   page.on('request', (request) => requests.push(request.url()));
 
-  await page.goto(distUrl);
+  await page.goto('index.html');
+  const distUrl = page.url();
+  expect(distUrl).toMatch(/^file:.*\/dist\/index\.html$/);
   await expect(page).toHaveTitle('Química orgánica');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Química orgánica');
   await expect(page.locator('svg#canvas')).toBeVisible();

@@ -19,9 +19,9 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-9 | Editor extras | `autoclaude/processed/090-editor-extras.md` | done — `docs/progress-archive/i-9.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-9.md` |
 | I-10 | Explanations and results panel | `autoclaude/processed/100-explain-results.md` | done — `docs/progress-archive/i-10.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-10.md` |
 | I-11 | Redraw and examples | `autoclaude/processed/110-redraw-examples.md` | done — `docs/progress-archive/i-11.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-11.md` |
-| I-12 | Polish and release build | `autoclaude/processed/120-polish-release.md` | queued | — | — |
+| I-12 | Polish and release build | `autoclaude/processed/120-polish-release.md` | done — `docs/progress-archive/i-12.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-12.md` |
 
-All twelve plan items are now queued; the inbox holds no plan items.
+All twelve plan items are done; the inbox is empty. The plan is finished.
 
 ## Inbox
 
@@ -37,8 +37,8 @@ All twelve plan items are now queued; the inbox holds no plan items.
 
 ## Next action
 
-Poll the inbox (phase boundary), then execute I-12 (polish and release build)
-per `autoclaude/processed/120-polish-release.md`.
+None — the plan is complete. Poll the inbox for new items; if empty, the run is
+DONE.
 
 ## Key paths
 
@@ -58,13 +58,17 @@ per `autoclaude/processed/120-polish-release.md`.
   `tests/fixtures/explain-snapshots.json` (`UPDATE_SNAPSHOTS=1 npm test`).
 - Model: `src/model/{molecule,graph,validate,smiles}.js` — `canonicalTreeKey`
   in graph.js; `validateStructure` / `validateForNaming` in validate.js.
+- Help / a11y: `src/ui/help.js` (Ayuda dialog); aria-live region and tooltips
+  in `src/ui/results.js`; e2e projects `source` and `dist` in
+  `playwright.config.js` (`tests/e2e/global-setup.js` rebuilds dist).
 - Layout: pure `canonicalLayout()` in `src/layout/canonical.js`; examples list
   `src/ui/examples.js`; editor `setCoordinates()` / `animateCoordinates()`.
 
-## Verification (last phase, I-11)
+## Verification (last phase, I-12)
 
-- `npm test` 0 (371 pass) · `npm run check` 0 · `npm run build` 0 ·
-  `npm run e2e` 0 (28 pass). Oracle not rerun (naming engine untouched).
+- `npm test` 0 (373 pass) · `npm run check` 0 · `npm run build` 0 ·
+  `npm run e2e` 0 (69 pass, source + dist via file://). Oracle not rerun
+  (naming engine untouched).
 
 ## Open risks / deviations
 
@@ -101,10 +105,14 @@ per `autoclaude/processed/120-polish-release.md`.
   40 C; none up to 20 C). Review's blocker and should-fix fixed with
   regressions (`docs/progress-archive/i-11.md`).
 
+- I-12: review's two should-fix findings (help focus on phones, Esc on a
+  hovered tooltip) fixed with e2e regressions (`docs/progress-archive/i-12.md`).
+  Spanish help text not yet reviewed by a teacher.
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-10 `6456448`, pushed. I-11 committed and pushed right after this
+- I-11 `0b1e31e`, pushed. I-12 committed and pushed right after this
   checkpoint (see `git log`).

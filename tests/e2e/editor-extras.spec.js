@@ -37,7 +37,7 @@ async function openApp(page) {
     }
   });
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/index.html');
+  await page.goto('index.html');
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
   return errors;
 }

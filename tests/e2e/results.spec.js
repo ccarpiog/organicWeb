@@ -7,6 +7,8 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { parseSmiles } from '../../src/model/smiles.js';
+import { moleculeToJSON } from '../../src/model/molecule.js';
 
 /**
  * Opens the app and waits until it is ready, collecting page errors.
@@ -22,7 +24,7 @@ async function openApp(page) {
     }
   });
   page.on('pageerror', (error) => errors.push(error.message));
-  await page.goto('/index.html');
+  await page.goto('index.html');
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
   return errors;
 }
@@ -68,24 +70,21 @@ async function drag(page, from, to) {
 }
 
 /**
- * Loads a molecule from SMILES (dev server only: imports the model module),
- * spreading the atoms so that none overlap.
+ * Loads a molecule from SMILES, spreading the atoms so that none overlap.
+ * The SMILES is parsed here in Node (the model modules are pure), so this
+ * works on the dev server and on the single-file build alike.
  *
  * @param {import('@playwright/test').Page} page - The page.
  * @param {string} smiles - The SMILES string.
  * @returns {Promise<void>}
  */
 async function loadSmiles(page, smiles) {
-  await page.evaluate(async (text) => {
-    const { parseSmiles } = await import('/src/model/smiles.js');
-    const { moleculeToJSON } = await import('/src/model/molecule.js');
-    const json = moleculeToJSON(parseSmiles(text));
-    json.atoms.forEach((atom, i) => {
-      atom.x = 150 + (i % 8) * 60;
-      atom.y = 150 + Math.floor(i / 8) * 60 + (i % 2) * 25;
-    });
-    window.__editor.loadMolecule(json);
-  }, smiles);
+  const json = moleculeToJSON(parseSmiles(smiles));
+  json.atoms.forEach((atom, i) => {
+    atom.x = 150 + (i % 8) * 60;
+    atom.y = 150 + Math.floor(i / 8) * 60 + (i % 2) * 25;
+  });
+  await page.evaluate((data) => window.__editor.loadMolecule(data), json);
 }
 
 /**

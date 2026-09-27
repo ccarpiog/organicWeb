@@ -16,7 +16,7 @@
       <p class="app-subtitle">Dibuja un hidrocarburo y descubre su nombre</p>
     </div>
     <div class="app-header-actions" id="header-actions">
-      <!-- The Ejemplos menu is created by src/ui/examples.js. -->
+      <!-- The Ejemplos menu (src/ui/examples.js) and the Ayuda button (src/ui/help.js) are created by script. -->
     </div>
   </header>
 
@@ -36,11 +36,14 @@
 
     <aside class="results" id="results" aria-label="Resultado">
       <button type="button" id="name-button" class="name-button" disabled>¿Cómo se llama?</button>
-      <div class="results-body" aria-live="polite">
+      <div class="results-body">
         <p class="results-hint">Dibuja una molécula en el lienzo y pulsa «¿Cómo se llama?».</p>
       </div>
     </aside>
   </main>
+
+  <!-- Screen-reader announcements: the name and the current explanation step (src/ui/results.js). -->
+  <p id="announcer" class="visually-hidden" aria-live="polite" aria-atomic="true"></p>
 
   <dialog id="confirm-dialog" class="dialog" aria-labelledby="confirm-dialog-title">
     <form method="dialog">
@@ -49,6 +52,79 @@
       <div class="dialog-buttons">
         <button type="submit" value="cancel" data-role="cancel" class="dialog-button"></button>
         <button type="submit" value="confirm" data-role="confirm" class="dialog-button dialog-button--danger"></button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="help-dialog" class="dialog help-dialog" aria-labelledby="help-dialog-title">
+    <form method="dialog">
+      <h2 id="help-dialog-title" tabindex="-1">Cómo se usa</h2>
+      <p class="help-intro">Dibuja un hidrocarburo sin anillos (un alcano, un alqueno o un alquino) y la aplicación te dice su nombre y cómo se llega a él.</p>
+      <ol class="help-steps">
+        <li class="help-step">
+          <svg class="help-figure" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true">
+            <line x1="20" y1="40" x2="55" y2="20" class="help-bond"/>
+            <line x1="55" y1="20" x2="90" y2="40" class="help-bond help-new"/>
+            <circle cx="90" cy="40" r="4" class="help-dot"/>
+            <path d="M92 42l12 6-6 2-2 6z" class="help-cursor"/>
+          </svg>
+          <div>
+            <h3>Dibuja los carbonos</h3>
+            <p>Con «Enlace simple», pulsa en el lienzo vacío: aparecen dos carbonos unidos. Pulsa en un carbono para añadirle otro, o arrastra desde él para elegir hacia dónde crece. Cada esquina o extremo de la línea es un carbono.</p>
+          </div>
+        </li>
+        <li class="help-step">
+          <svg class="help-figure" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true">
+            <line x1="15" y1="40" x2="45" y2="20" class="help-bond"/>
+            <line x1="45" y1="20" x2="75" y2="40" class="help-bond help-new"/>
+            <line x1="50" y1="28" x2="72" y2="43" class="help-bond help-new"/>
+            <line x1="75" y1="40" x2="105" y2="20" class="help-bond"/>
+          </svg>
+          <div>
+            <h3>Enlaces dobles y triples</h3>
+            <p>Elige «Enlace doble» o «Enlace triple» y pulsa sobre un enlace ya dibujado. «Cambiar enlace» lo va pasando de simple a doble, a triple y otra vez a simple.</p>
+          </div>
+        </li>
+        <li class="help-step">
+          <svg class="help-figure" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true">
+            <polyline points="10,42 30,24 50,42 70,24 90,42" class="help-bond help-new"/>
+            <text x="100" y="22" class="help-label">5 C</text>
+          </svg>
+          <div>
+            <h3>Cadenas largas de una vez</h3>
+            <p>Con «Cadena», arrastra por el lienzo: el número te dice cuántos carbonos llevas.</p>
+          </div>
+        </li>
+        <li class="help-step">
+          <svg class="help-figure" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true">
+            <line x1="20" y1="40" x2="55" y2="20" class="help-bond"/>
+            <line x1="55" y1="20" x2="90" y2="40" class="help-bond help-erase"/>
+            <line x1="80" y1="28" x2="100" y2="48" class="help-cross"/>
+            <line x1="100" y1="28" x2="80" y2="48" class="help-cross"/>
+          </svg>
+          <div>
+            <h3>Corrige</h3>
+            <p>«Borrar» quita el carbono o el enlace que pulses, «Mover» recoloca carbonos y «Deshacer» anula el último cambio.</p>
+          </div>
+        </li>
+        <li class="help-step">
+          <svg class="help-figure" viewBox="0 0 120 60" width="120" height="60" aria-hidden="true">
+            <rect x="8" y="16" width="104" height="28" rx="8" class="help-button"/>
+            <text x="60" y="35" text-anchor="middle" class="help-button-text">¿Cómo se llama?</text>
+          </svg>
+          <div>
+            <h3>Descubre el nombre</h3>
+            <p>Pulsa «¿Cómo se llama?». Con «Ver paso a paso» verás cómo se llega al nombre, y «Ordenar dibujo» coloca la cadena principal para que se vea bien.</p>
+          </div>
+        </li>
+      </ol>
+      <h3 class="help-subtitle">Con el teclado</h3>
+      <p class="help-keys"><kbd>C</kbd> carbono · <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> enlaces · <kbd>T</kbd> cambiar enlace · <kbd>H</kbd> cadena · <kbd>E</kbd> borrar · <kbd>M</kbd> mover · <kbd>Ctrl</kbd>+<kbd>Z</kbd> deshacer. Para mover el lienzo, mantén pulsada la barra espaciadora y arrastra; la rueda del ratón (o dos dedos en una tableta) acerca y aleja.</p>
+      <h3 class="help-subtitle">Palabras clave</h3>
+      <dl class="help-glossary" id="help-glossary">
+        <!-- Filled from the explanation glossary by src/ui/help.js. -->
+      </dl>
+      <div class="dialog-buttons">
+        <button type="submit" value="close" class="dialog-button dialog-button--primary">Entendido</button>
       </div>
     </form>
   </dialog>

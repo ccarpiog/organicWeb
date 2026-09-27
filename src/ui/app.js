@@ -2,8 +2,8 @@
  * @file Application entry point: wires the editor, the toolbar, the canvas
  * bar (formula, display mode, Centrar), the autosave, the name button, the
  * results panel with the naming engine and the step-by-step explanation
- * (design.md §9, src/ui/results.js), "Ordenar dibujo" (design.md §7) and the
- * Ejemplos menu (src/ui/examples.js).
+ * (design.md §9, src/ui/results.js), "Ordenar dibujo" (design.md §7), the
+ * Ejemplos menu (src/ui/examples.js) and the Ayuda dialog (src/ui/help.js).
  *
  * For end-to-end tests the editor instance is published as `window.__editor`
  * (see the test API in src/editor/editor.js).
@@ -15,6 +15,7 @@ import { buildToolbar } from './toolbar.js';
 import { showToast, confirmDialog } from './feedback.js';
 import { buildCanvasBar } from './canvasbar.js';
 import { buildResults } from './results.js';
+import { buildHelp } from './help.js';
 import {
   getStorage, readItem, writeItem, restoreDrawing, startAutosave, MODE_KEY,
 } from './autosave.js';
@@ -61,6 +62,7 @@ export function initApp(doc) {
     const headerActions = doc.getElementById('header-actions');
     if (headerActions) {
       buildExamplesMenu(headerActions, editor);
+      buildHelp(headerActions);
     }
     if (restored) {
       // The saved coordinates may lie far from the fresh identity view (the

@@ -24,7 +24,7 @@ function collectErrors(page) {
 
 test('the shell loads with title, canvas and an enabled name button', async ({ page }) => {
   const errors = collectErrors(page);
-  await page.goto('/index.html');
+  await page.goto('index.html');
   await expect(page).toHaveTitle('Química orgánica');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Química orgánica');
   await expect(page.locator('svg#canvas')).toBeVisible();
@@ -36,7 +36,7 @@ test('the shell loads with title, canvas and an enabled name button', async ({ p
 
 test('results sit beside the canvas on wide screens and below it on narrow ones', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.goto('/index.html');
+  await page.goto('index.html');
   let canvas = await page.locator('.canvas-area').boundingBox();
   let results = await page.locator('#results').boundingBox();
   expect(results.x).toBeGreaterThanOrEqual(canvas.x + canvas.width);

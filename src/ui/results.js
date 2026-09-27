@@ -11,12 +11,15 @@
  *
  * A chemical edit clears the result (a stale name must never show); a
  * coordinate-only edit keeps it, and the highlights follow the moved atoms.
+ * The name and the text of the current step are announced to screen
+ * readers through the page's `#announcer` live region.
+ *
  * The DOM is built with createElement/textContent only (never innerHTML
  * with text), so no name or message can inject markup.
  */
 
 import { nameMolecule } from '../naming/index.js';
-import { explain, parseMarkup, GLOSSARY } from '../explain/explain.js';
+import { explain, parseMarkup, plainText, GLOSSARY } from '../explain/explain.js';
 import { canonicalLayout, layoutProblems } from '../layout/canonical.js';
 
 /** Extra hints shown under an error message, by error code. */
@@ -61,9 +64,51 @@ function make(doc, tag, className, text) {
   return node;
 }
 
+/** Margin (px) kept between a glossary tooltip and the window edges. */
+const TIP_MARGIN = 8;
+
+/** Widest a glossary tooltip gets (px); matches `.term::after` max-width (16rem). */
+const TIP_MAX_WIDTH = 256;
+
+/**
+ * Horizontal shift (px) that keeps a glossary tooltip, drawn from the left
+ * edge of its term, inside the window. Pure.
+ *
+ * @param {number} left - Left edge of the term (client px).
+ * @param {number} viewportWidth - Width of the window (px).
+ * @returns {{shift: number, width: number}} Shift to the left (≤ 0) and the tooltip's maximum width.
+ */
+export function tipPlacement(left, viewportWidth) {
+  const width = Math.max(0, Math.min(TIP_MAX_WIDTH, viewportWidth - 2 * TIP_MARGIN));
+  const overflow = left + width - (viewportWidth - TIP_MARGIN);
+  const shift = overflow > 0 ? -Math.min(overflow, Math.max(0, left - TIP_MARGIN)) : 0;
+  return { shift, width };
+}
+
+/**
+ * Places the tooltip of a glossary term so that it stays inside the window
+ * (on phones a term near the right edge would otherwise cause a horizontal
+ * scroll).
+ *
+ * @param {HTMLElement} term - The `.term` span.
+ * @returns {void}
+ */
+function placeTip(term) {
+  const view = term.ownerDocument.defaultView;
+  if (!view) {
+    return;
+  }
+  // A term split over two lines anchors its tooltip to its first line box.
+  const first = term.getClientRects()[0] || term.getBoundingClientRect();
+  const { shift, width } = tipPlacement(first.left, view.innerWidth);
+  term.style.setProperty('--tip-shift', `${shift}px`);
+  term.style.setProperty('--tip-width', `${width}px`);
+}
+
 /**
  * Renders a paragraph with glossary terms as focusable, underlined spans
- * whose definition shows as a tooltip.
+ * whose definition shows as a tooltip (on hover, on keyboard focus and on a
+ * tap; Esc hides it).
  *
  * @param {Document} doc - The document.
  * @param {string} text - Paragraph with `[[shown|key]]` marks.
@@ -78,6 +123,19 @@ export function renderMarkup(doc, text, tag = 'p') {
       term.tabIndex = 0;
       term.dataset.tip = GLOSSARY[segment.term];
       term.setAttribute('aria-description', GLOSSARY[segment.term]);
+      // Esc dismisses the tooltip (hover and focus alike) until a fresh
+      // interaction: the pointer leaves the term, or the term is focused again.
+      term.addEventListener('pointerenter', () => placeTip(term));
+      term.addEventListener('pointerleave', () => term.classList.remove('tip-dismissed'));
+      term.addEventListener('focus', () => {
+        term.classList.remove('tip-dismissed');
+        placeTip(term);
+      });
+      term.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          term.classList.add('tip-dismissed');
+        }
+      });
       node.appendChild(term);
     } else {
       node.appendChild(doc.createTextNode(segment.text));
@@ -169,6 +227,33 @@ export function buildResults(panel, editor, button, options = {}) {
   let ordered = false; // True while the drawing shows exactly that layout.
   let lastView = null; // The step (or option) the canvas marks come from.
   let hint = null; // The redraw hint box.
+  const announcer = doc.getElementById('announcer');
+
+  /**
+   * Announces a text to screen readers through `#announcer` (a polite live
+   * region). Repeating the same text still announces it.
+   *
+   * @param {string} text - Spanish text.
+   * @returns {void}
+   */
+  function announce(text) {
+    if (!announcer) {
+      return;
+    }
+    // A changed text is what triggers the announcement: alternate a trailing no-break space.
+    announcer.textContent = announcer.textContent === text ? `${text}\u00a0` : text;
+  }
+
+  /**
+   * Plain text of the current step for screen readers: "Paso 2 de 5. Title. Paragraphs".
+   *
+   * @returns {string} The announcement.
+   */
+  function stepAnnouncement() {
+    const step = steps[stepIndex];
+    const text = step.text.map(plainText).join(' ');
+    return `Paso ${stepIndex + 1} de ${steps.length}. ${step.title}. ${text}`.trim();
+  }
 
   /**
    * Adds the persistent marks of the ordered drawing to a step view: the
@@ -261,6 +346,9 @@ export function buildResults(panel, editor, button, options = {}) {
     ordered = false;
     hint = null;
     showOnCanvas(null);
+    if (announcer) {
+      announcer.textContent = ''; // No stale name for screen readers.
+    }
     body.replaceChildren(make(doc, 'p', 'results-hint', IDLE_HINT));
     delete panel.dataset.state;
   }
@@ -279,6 +367,9 @@ export function buildResults(panel, editor, button, options = {}) {
     ordered = false;
     hint = null;
     showOnCanvas(null);
+    if (announcer) {
+      announcer.textContent = ''; // The error box is a role="alert" region of its own.
+    }
     const box = make(doc, 'div', 'results-error');
     box.setAttribute('role', 'alert');
     box.dataset.code = error.code;
@@ -306,7 +397,10 @@ export function buildResults(panel, editor, button, options = {}) {
       content.appendChild(renderMarkup(doc, paragraph));
     }
     if (step.compare) {
-      content.appendChild(renderCompare(doc, step.compare));
+      // The wrapper scrolls sideways on narrow screens, never the page.
+      const wrap = make(doc, 'div', 'compare-wrap');
+      wrap.appendChild(renderCompare(doc, step.compare));
+      content.appendChild(wrap);
     }
     if (step.parts) {
       const name = make(doc, 'p', 'step-name');
@@ -346,6 +440,11 @@ export function buildResults(panel, editor, button, options = {}) {
         content.appendChild(detail);
       }
     } // End of the step options
+    if (optionIndex >= 0) {
+      announce(`${step.options[optionIndex].label}: ${plainText(step.options[optionIndex].text)}`);
+    } else {
+      announce(stepAnnouncement());
+    }
     prev.disabled = stepIndex === 0;
     next.disabled = stepIndex === steps.length - 1;
     dots.forEach((dot, i) => {
@@ -385,7 +484,6 @@ export function buildResults(panel, editor, button, options = {}) {
     const title = make(doc, 'h3', 'step-title');
     header.append(count, title);
     const content = make(doc, 'div', 'step-content');
-    content.setAttribute('aria-live', 'polite');
     const nav = make(doc, 'div', 'stepper-nav');
     const prev = make(doc, 'button', 'step-button', 'Anterior');
     prev.type = 'button';
@@ -473,6 +571,7 @@ export function buildResults(panel, editor, button, options = {}) {
     body.replaceChildren(...nodes);
     panel.dataset.state = 'result';
     showOnCanvas(steps[steps.length - 1]);
+    announce(`Se llama: ${result.name}`);
   } // End of function showResult()
 
   /**

@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T13:56:13Z",
+ "updated": "2026-09-27T14:13:49Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
@@ -106,8 +106,11 @@
   {
    "id": "I-12",
    "title": "Polish and release",
-   "status": "queued",
-   "summary": "Adds help, accessibility and responsive polish, a self-contained dist build, e2e on the build and the README."
+   "status": "done",
+   "summary": "Adds the Ayuda dialog, accessibility and phone layout polish, e2e on the self-contained build and the English README.",
+   "risk": "routine",
+   "review": "docs/reviews/I-12.md",
+   "narrative": "docs/progress-archive/i-12.md"
   }
  ]
 }

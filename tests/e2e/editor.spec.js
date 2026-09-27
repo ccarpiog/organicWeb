@@ -57,7 +57,7 @@ async function clickCanvas(page, fx, fy) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/index.html');
+  await page.goto('index.html');
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
 });
 

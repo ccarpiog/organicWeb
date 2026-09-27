@@ -11,7 +11,8 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
 - v1 scope: acyclic hydrocarbons only (no rings, benzene, heteroatoms, stereo).
 - Tech: vanilla JavaScript ES modules, no framework, no runtime dependencies.
   Tests: `npm test` (`node --test`), static checks: `npm run check`,
-  end-to-end: `npm run e2e` (Playwright), OPSIN cross-check (dev only, needs
+  end-to-end: `npm run e2e` (Playwright; runs every spec on the dev server
+  and on `dist/index.html` via `file://`), OPSIN cross-check (dev only, needs
   Java): `npm run oracle` (`scripts/oracle/README.md`). Dev server: `npm run serve`.
   Single-file build: `npm run build` → `dist/index.html`.
 - The naming engine (`src/naming/`) is pure: it never reads atom coordinates or the DOM.
