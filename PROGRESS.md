@@ -20,8 +20,12 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-10 | Explanations and results panel | `autoclaude/processed/100-explain-results.md` | done — `docs/progress-archive/i-10.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-10.md` |
 | I-11 | Redraw and examples | `autoclaude/processed/110-redraw-examples.md` | done — `docs/progress-archive/i-11.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-11.md` |
 | I-12 | Polish and release build | `autoclaude/processed/120-polish-release.md` | done — `docs/progress-archive/i-12.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-12.md` |
+| I-13 | Visible carbon dots in skeletal mode | `autoclaude/processed/130-visible-carbons.md` | queued (next) | — | — |
+| I-14 | Single-bond drag grows a chain | `autoclaude/processed/140-drag-chain-single-bond.md` | queued (after I-13) | — | — |
+| I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | queued (after I-14) | — | — |
 
-All twelve plan items are done; the inbox is empty. The plan is finished.
+The twelve original plan items are done. Three user-feedback items (I-13…I-15)
+were queued from the inbox and run in filename order.
 
 ## Inbox
 
@@ -34,11 +38,15 @@ All twelve plan items are done; the inbox is empty. The plan is finished.
   `090-editor-extras.md` → queued as I-7, I-8, I-9.
 - 2026-09-27 pickup 4 (after I-3): `100-explain-results.md`,
   `110-redraw-examples.md`, `120-polish-release.md` → queued as I-10, I-11, I-12.
+- 2026-09-27 pickup 5 (after I-12): `130-visible-carbons.md`,
+  `140-drag-chain-single-bond.md`, `150-right-angles.md` → queued as I-13,
+  I-14, I-15. I-15 (90° view) must also define how I-14's chain drag behaves
+  while the 90° view is on.
 
 ## Next action
 
-None — the plan is complete. Poll the inbox for new items; if empty, the run is
-DONE.
+Run I-13 (visible carbon dots in skeletal mode), spec
+`autoclaude/processed/130-visible-carbons.md`.
 
 ## Key paths
 

@@ -14,3 +14,6 @@ up. The item itself is in this directory, unchanged.
 - 2026-09-27 12:08 · 100-explain-results.md · queued · phase I-10 — Explanations and results panel
 - 2026-09-27 12:08 · 110-redraw-examples.md · queued · phase I-11 — Redraw and examples
 - 2026-09-27 12:08 · 120-polish-release.md · queued · phase I-12 — Polish and release build
+- 2026-09-27 15:41 · 130-visible-carbons.md · queued · phase I-13 — Visible carbon dots in skeletal mode
+- 2026-09-27 15:41 · 140-drag-chain-single-bond.md · queued · phase I-14 — Single-bond drag grows a chain
+- 2026-09-27 15:41 · 150-right-angles.md · queued · phase I-15 — 90-degree condensed-formula view toggle
