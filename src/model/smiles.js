@@ -1,28 +1,34 @@
 /**
- * @file Tiny acyclic SMILES parser and writer for the supported elements
- * (design.md §3.1): C, O, N, F, Cl, Br, I (model/elements.js).
+ * @file Tiny SMILES parser and writer for the supported elements
+ * (design.md §3.1): C, O, N, F, Cl, Br, I (model/elements.js), with ring
+ * closures (design.md §13.2).
  *
  * Supported subset: organic-subset atoms `C O N F Cl Br I` (implicit
  * hydrogens = the element's neutral valence − Σ bond orders), bracket atoms
  * holding one of those elements and an optional hydrogen count (`[CH4]`,
  * `[OH]`, `[NH2]`, `[Cl]`), bonds `-` (explicit single, optional), `=` and
- * `#`, and parenthesised branches. A bracket atom's hydrogen count must be
+ * `#`, parenthesised branches, and ring-closure labels `1`–`9` and `%nn`
+ * (`C1CCCCC1`), with an optional bond symbol on either end (`C1CC=1`,
+ * `C=1CC1`). A bracket atom's hydrogen count must be
  * the one the model derives (neutral atom, usual valence): `[CH2]` as a
  * terminal carbon is a radical and is refused. Everything else is rejected
- * with an explicit SmilesError: ring-closure digits (rings are phase I-24),
- * other elements, aromatic lowercase atoms (benzene is phase I-28), charges,
+ * with an explicit SmilesError: invalid ring closures (`SMILES_RING`: a label
+ * never closed, a closure to the same atom `C11`, a second bond between the
+ * same pair `C1C1`, different bond orders on the two ends `C=1CC#1`, `%`
+ * without two digits), other elements, aromatic lowercase atoms (benzene is phase I-28), charges,
  * isotopes, atom classes, explicit `[H]` atoms, dots, stereo marks, dangling
  * bonds, unbalanced or empty parentheses — input is never silently dropped.
  * The parsed graph then goes through validateStructure() (validate.js), so
  * `C(C)(C)(C)(C)C` or `CO(C)C` fail with the `VALENCE` code. SMILES is
  * developer-facing (fixtures, examples), so the error messages are in English.
  *
- * Parsed atoms get coordinates (0, 0); the layout places them later.
+ * Parsed atoms get coordinates (0, 0); the layout places them later. Both
+ * the parser and the writer are iterative (no recursion over the graph).
  */
 
-import { createMolecule, addAtom, addBond, implicitH } from './molecule.js';
+import { createMolecule, addAtom, addBond, bondBetween, implicitH } from './molecule.js';
 import { validateStructure } from './validate.js';
-import { adjacency, connectedComponents, hasCycle } from './graph.js';
+import { adjacency, connectedComponents } from './graph.js';
 import { isSupportedElement } from './elements.js';
 
 /** Bond order by SMILES bond symbol. */
@@ -62,9 +68,6 @@ export class SmilesError extends Error {
  */
 function rejectCharacter(text, i) {
   const ch = text[i];
-  if (/[0-9%]/.test(ch)) {
-    throw new SmilesError('SMILES_RING', `ring-closure "${ch}" is not supported (acyclic molecules only)`, i);
-  }
   if (ch === ']') {
     throw new SmilesError('SMILES_BRACKET', 'unbalanced "]"', i);
   }
@@ -139,6 +142,27 @@ function parseBracketAtom(text, start) {
 } // End of function parseBracketAtom()
 
 /**
+ * Reads a ring-closure label at `text[i]`: one digit (`1`) or `%` followed
+ * by exactly two digits (`%12`). As in OpenSMILES, the label is a ring
+ * number: `1` and `%01` are the same label, so `number` is the key to match.
+ *
+ * @param {string} text - The whole SMILES string.
+ * @param {number} i - Index of the digit or `%`.
+ * @returns {{label: string, number: number, end: number}} The label as written (for messages), its ring
+ *   number and the index of its last character.
+ * @throws {SmilesError} `SMILES_RING` when `%` is not followed by two digits.
+ */
+function readRingLabel(text, i) {
+  if (text[i] !== '%') {
+    return { label: text[i], number: Number(text[i]), end: i };
+  }
+  if (!/^[0-9]{2}$/.test(text.slice(i + 1, i + 3))) {
+    throw new SmilesError('SMILES_RING', 'ring-closure "%" must be followed by two digits', i);
+  }
+  return { label: text.slice(i, i + 3), number: Number(text.slice(i + 1, i + 3)), end: i + 2 };
+}
+
+/**
  * Checks that every bracket atom declares exactly the hydrogens the model
  * derives for it (neutral valence − Σ bond orders). A different count would
  * be a radical, a carbene or a charged atom, which the model cannot hold.
@@ -163,8 +187,10 @@ function checkBracketHydrogens(mol, brackets) {
 }
 
 /**
- * Parses an acyclic SMILES string (elements C, O, N, F, Cl, Br, I) into a
- * molecule. Atom ids follow the order of the atoms in the string (1, 2, 3…).
+ * Parses a SMILES string (elements C, O, N, F, Cl, Br, I; branches and ring
+ * closures) into a molecule. Atom ids follow the order of the atoms in the
+ * string (1, 2, 3…); bond ids the order in which bonds are completed (a
+ * ring-closure bond when its label is closed).
  *
  * @param {string} smiles - The SMILES string (surrounding whitespace is ignored).
  * @returns {object} The parsed molecule (see molecule.js), structurally valid.
@@ -183,6 +209,7 @@ export function parseSmiles(smiles) {
   let pending = null; // Pending bond: { order, position }.
   const branches = []; // Stack of { atom, position, atomsAtOpen }.
   const brackets = []; // Bracket atoms: { atom, hCount, position }.
+  const openRings = new Map(); // Open ring numbers (`1` ≡ `%01`) → { label, atom, order|null, position }.
   /**
    * Adds an atom and bonds it to the previous one (if any).
    *
@@ -198,6 +225,44 @@ export function parseSmiles(smiles) {
     pending = null;
     return atom;
   };
+  /**
+   * Opens or closes a ring-closure label on the previous atom. A bond symbol
+   * written just before the label belongs to the closure bond; if both ends
+   * carry one, they must agree.
+   *
+   * @param {string} label - The label as written (`'1'`, `'%12'`), for messages.
+   * @param {number} number - Its ring number, the key matched against open labels.
+   * @param {number} position - Index of the label in the input.
+   * @returns {void}
+   * @throws {SmilesError} `SMILES_RING` for a closure to the same atom, a duplicate bond or conflicting orders.
+   */
+  const ringClosure = (label, number, position) => {
+    if (previous === null) {
+      throw new SmilesError('SMILES_RING', `ring-closure "${label}" has no atom before it`, position);
+    }
+    const top = branches[branches.length - 1];
+    if (top && mol.atoms.size === top.atomsAtOpen) {
+      throw new SmilesError('SMILES_PAREN', `a branch must start with an atom, not ring-closure "${label}"`, position);
+    }
+    const order = pending ? pending.order : null;
+    pending = null;
+    const open = openRings.get(number);
+    if (!open) {
+      openRings.set(number, { label, atom: previous, order, position });
+      return;
+    }
+    openRings.delete(number);
+    if (open.atom === previous) {
+      throw new SmilesError('SMILES_RING', `ring-closure "${label}" closes on the atom that opened it`, position);
+    }
+    if (bondBetween(mol, open.atom, previous)) {
+      throw new SmilesError('SMILES_RING', `ring-closure "${label}" duplicates an existing bond between the same two atoms`, position);
+    }
+    if (open.order !== null && order !== null && open.order !== order) {
+      throw new SmilesError('SMILES_RING', `ring-closure "${label}" has different bond orders on its two ends`, position);
+    }
+    addBond(mol, open.atom, previous, open.order ?? order ?? 1);
+  }; // End of function ringClosure()
   for (let i = 0; i < text.length; i += 1) {
     const ch = text[i];
     const organic = ORGANIC.find((symbol) => text.startsWith(symbol, i));
@@ -240,6 +305,10 @@ export function parseSmiles(smiles) {
         throw new SmilesError('SMILES_PAREN', 'empty branch "()"', open.position);
       }
       previous = open.atom;
+    } else if (/[0-9%]/.test(ch)) {
+      const { label, number, end } = readRingLabel(text, i);
+      ringClosure(label, number, i);
+      i = end;
     } else {
       rejectCharacter(text, i);
     }
@@ -250,6 +319,10 @@ export function parseSmiles(smiles) {
   if (branches.length > 0) {
     throw new SmilesError('SMILES_PAREN', 'unclosed "("', branches[branches.length - 1].position);
   }
+  if (openRings.size > 0) {
+    const open = openRings.values().next().value;
+    throw new SmilesError('SMILES_RING', `ring-closure "${open.label}" is never closed`, open.position);
+  }
   const error = validateStructure(mol);
   if (error) {
     throw new SmilesError(error.code, `invalid structure: ${error.detail || error.code}`);
@@ -259,45 +332,135 @@ export function parseSmiles(smiles) {
 } // End of function parseSmiles()
 
 /**
+ * Depth-first spanning tree of one component, walked iteratively in the
+ * order a recursive walk would take (neighbours in ascending id order; a
+ * neighbour already reached through an earlier branch is not a child).
+ * Every bond outside the tree joins an atom to one of its ancestors: a ring
+ * closure.
+ *
+ * @param {Map<number, object[]>} adj - Adjacency from graph.js adjacency().
+ * @param {number} start - First atom written.
+ * @returns {{children: Map<number, object[]>, closures: {bond: number, ancestor: number, descendant: number,
+ *   order: number}[]}} Children of each atom (adjacency entries, in order) and the ring-closure bonds.
+ */
+function depthFirstTree(adj, start) {
+  const children = new Map([[start, []]]);
+  const closures = [];
+  const treeBond = new Map([[start, null]]); // Atom → bond to its tree parent.
+  const onPath = new Set([start]); // Atoms whose walk is still open (ancestors of the current atom).
+  const stack = [{ atom: start, next: 0 }];
+  while (stack.length > 0) {
+    const frame = stack[stack.length - 1];
+    const list = adj.get(frame.atom);
+    if (frame.next >= list.length) {
+      onPath.delete(frame.atom);
+      stack.pop();
+      continue;
+    }
+    const n = list[frame.next];
+    frame.next += 1;
+    if (n.bond === treeBond.get(frame.atom)) {
+      continue;
+    }
+    if (!children.has(n.atom)) {
+      children.get(frame.atom).push(n);
+      children.set(n.atom, []);
+      treeBond.set(n.atom, n.bond);
+      onPath.add(n.atom);
+      stack.push({ atom: n.atom, next: 0 });
+    } else if (onPath.has(n.atom)) {
+      closures.push({ bond: n.bond, ancestor: n.atom, descendant: frame.atom, order: n.order });
+    }
+  } // End of the depth-first walk
+  return { children, closures };
+} // End of function depthFirstTree()
+
+/**
  * Writes a SMILES string for a molecule (for debugging, examples and the
- * oracle). Each component is written from its smallest-id leaf (or lone
- * atom), with side branches in parentheses and the last neighbour continuing
- * the main chain; components are joined with ".". Every supported element is
+ * oracle). Each component is written from its smallest-id leaf (or, with no
+ * leaf, its smallest atom id), depth first, with side branches in
+ * parentheses and the last neighbour continuing the main chain; every bond
+ * outside that tree becomes a ring closure, labelled with the smallest free
+ * digit (`1`–`9`, then `%10`…), its bond symbol written at the opening end
+ * (`C=1CCCCC1`). Components are joined with ".". Every supported element is
  * written as an organic-subset symbol (`C O N F Cl Br I`): the model's
  * hydrogens are always the neutral-valence implicit ones, so no bracket atom
- * is ever needed. Coordinates are ignored.
+ * is ever needed. Acyclic molecules are written exactly as before ring
+ * support. Iterative, so a long chain cannot overflow the stack. Coordinates
+ * are ignored.
  *
- * @param {object} mol - The molecule; must be acyclic.
+ * @param {object} mol - The molecule.
  * @returns {string} The SMILES string; empty for an empty molecule.
- * @throws {Error} If the molecule contains a cycle or an unsupported element
- *   (never written silently as C).
+ * @throws {Error} If the molecule contains an unsupported element (never
+ *   written silently as C) or needs more than 99 simultaneous ring labels.
  */
 export function writeSmiles(mol) {
-  if (hasCycle(mol)) {
-    throw new Error('writeSmiles: cyclic molecules are not supported');
-  }
   const other = [...mol.atoms.values()].find((atom) => !isSupportedElement(atom.element));
   if (other) {
     throw new Error(`writeSmiles: element ${other.element} is not supported`);
   }
   const adj = adjacency(mol);
   /**
-   * Writes the subtree rooted at an atom, coming from `parent`.
+   * Writes one connected component.
    *
-   * @param {number} atom - Current atom id.
-   * @param {number|null} parent - Atom we came from.
-   * @returns {string} SMILES of the subtree.
+   * @param {number[]} component - Its atom ids (ascending).
+   * @returns {string} SMILES of the component.
    */
-  const write = (atom, parent) => {
-    const children = adj.get(atom).filter((n) => n.atom !== parent);
-    const parts = children.map((n) => ORDER_SYMBOL[n.order] + write(n.atom, atom));
-    const last = parts.pop();
-    return `${mol.atoms.get(atom).element}${parts.map((p) => `(${p})`).join('')}${last === undefined ? '' : last}`;
-  };
-  return connectedComponents(mol)
-    .map((component) => {
-      const start = component.find((id) => adj.get(id).length <= 1) ?? component[0];
-      return write(start, null);
-    })
-    .join('.');
+  const writeComponent = (component) => {
+    const start = component.find((id) => adj.get(id).length <= 1) ?? component[0];
+    const { children, closures } = depthFirstTree(adj, start);
+    const opening = new Map(); // Atom → closures it opens.
+    const closing = new Map(); // Atom → closures it closes.
+    for (const c of closures) {
+      opening.set(c.ancestor, [...(opening.get(c.ancestor) || []), c]);
+      closing.set(c.descendant, [...(closing.get(c.descendant) || []), c]);
+    }
+    const labels = new Map(); // Closure bond id → label in use.
+    const used = new Set();
+    /**
+     * Takes the smallest free ring label.
+     *
+     * @returns {string} The label, e.g. `1` or `%10`.
+     */
+    const takeLabel = () => {
+      for (let k = 1; k <= 99; k += 1) {
+        if (!used.has(k)) {
+          used.add(k);
+          return k < 10 ? String(k) : `%${k}`;
+        }
+      }
+      throw new Error('writeSmiles: more than 99 open ring closures');
+    };
+    let text = '';
+    const work = [start]; // Atom ids to write, or literal strings.
+    while (work.length > 0) {
+      const item = work.pop();
+      if (typeof item === 'string') {
+        text += item;
+        continue;
+      }
+      text += mol.atoms.get(item).element;
+      const closed = (closing.get(item) || []).map((c) => labels.get(c.bond));
+      for (const c of opening.get(item) || []) {
+        const label = takeLabel();
+        labels.set(c.bond, label);
+        text += ORDER_SYMBOL[c.order] + label;
+      }
+      for (const label of closed) {
+        text += label;
+        used.delete(label.startsWith('%') ? Number(label.slice(1)) : Number(label));
+      }
+      const kids = children.get(item);
+      for (let k = kids.length - 1; k >= 0; k -= 1) {
+        const n = kids[k];
+        if (k === kids.length - 1) {
+          work.push(n.atom, ORDER_SYMBOL[n.order]);
+        } else {
+          work.push(')', n.atom, ORDER_SYMBOL[n.order], '(');
+        }
+      }
+    } // End of the loop writing the atoms
+    return text;
+  }; // End of function writeComponent()
+  return connectedComponents(mol).map(writeComponent).join('.');
 } // End of function writeSmiles()

@@ -31,7 +31,7 @@
  * model's own coordinates (and undo, autosave) are untouched.
  */
 
-import { adjacency } from '../model/graph.js';
+import { adjacency, hasCycle } from '../model/graph.js';
 import { BOND_LENGTH } from '../editor/geometry.js';
 import { atomLabel, labelSize, RIGHT_ANGLE_PAD } from '../editor/render.js';
 
@@ -343,12 +343,17 @@ export function gridSteps(mol) {
  * @param {{center?: {x: number, y: number}}} [options] - Point the drawing is centred on (default: the
  *   centre of the molecule's current bounding box, so the view does not jump).
  * @returns {{ok: true, positions: Map<number, {x: number, y: number}>}|{ok: false, reason: string}}
- *   The projected positions, or `NO_ROOM` when no collision-free drawing was found.
+ *   The projected positions, or `NO_ROOM` when no collision-free drawing was found (`CYCLE` for a
+ *   molecule with a ring, which the grid walk cannot place).
  * @throws {Error} When the result is not a successful naming of this molecule.
  */
 export function rightAngleLayout(mol, result, options = {}) {
   if (!result || !result.ok || !result.parent || !Array.isArray(result.parent.atoms)) {
     throw new Error('rightAngleLayout: a successful naming result is required');
+  }
+  if (hasCycle(mol)) {
+    // The grid walk assumes a tree; a ring falls back to the normal drawing.
+    return { ok: false, reason: 'CYCLE' };
   }
   const adj = adjacency(mol);
   const chain = result.parent.atoms;

@@ -21,7 +21,7 @@
  */
 
 import { cloneMolecule } from '../model/molecule.js';
-import { adjacency } from '../model/graph.js';
+import { adjacency, isTree } from '../model/graph.js';
 import { BOND_LENGTH } from '../editor/geometry.js';
 
 /** Zigzag half-angle of the parent chain: bonds go ±30° from the horizontal. */
@@ -277,11 +277,16 @@ export function layoutProblems(mol, length = BOND_LENGTH) {
  *   (default BOND_LENGTH) and the point the drawing is centred on (default: the centre of the
  *   molecule's current bounding box).
  * @returns {object} A copy of the molecule with new coordinates (same ids, bonds and orders).
- * @throws {Error} When the result is not a successful naming of this molecule.
+ * @throws {Error} When the result is not a successful naming of this molecule, or the molecule is
+ *   not a connected tree (rings are laid out from phase I-27).
  */
 export function canonicalLayout(mol, result, options = {}) {
   if (!result || !result.ok || !result.parent || !Array.isArray(result.parent.atoms)) {
     throw new Error('canonicalLayout: a successful naming result is required');
+  }
+  if (!isTree(mol)) {
+    // The breadth-first walk below assumes a tree: a ring would make it loop forever.
+    throw new Error('canonicalLayout: the molecule is not a connected tree');
   }
   const L = options.bondLength || BOND_LENGTH;
   const adj = adjacency(mol);

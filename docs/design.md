@@ -106,8 +106,9 @@ css/app.css             styles, light/dark via tokens
 src/
   model/molecule.js     graph: atoms, bonds, valence, implicit H, formula
   model/validate.js     full graph validation (§3.2), shared by every entry point
-  model/smiles.js       tiny acyclic SMILES parser/writer (C O N F Cl Br I)
-  model/graph.js        connectivity, cycle detection, paths, canonical tree key
+  model/smiles.js       tiny SMILES parser/writer (C O N F Cl Br I, branches, ring closures)
+  model/graph.js        connectivity, cycle detection, paths, canonical tree and monocycle keys
+  model/rings.js        ring perception (members, closures, blocks, attachments) and classification
   naming/lexicon.es.js  Spanish word tables (stems, multipliers, endings, retained prefixes)
   naming/lexicon.en.js  English tables — used only by the oracle (§8)
   naming/parent.js      parent-chain candidates and selection cascade
@@ -167,7 +168,12 @@ for `alert`/`confirm`/`prompt` in app code), `oracle` (§8).
   or explicit H counts exist in the model.
 - Derived: molecular formula in Hill order (`C₂H₆O`, `CH₃Cl`; alphabetical
   when there is no carbon: `H₂O`, `ClH`), neighbours, connected components,
-  `hasCycle()`, `isEmpty()`.
+  `hasCycle()`, `cyclomaticNumber()`, `isEmpty()`; ring perception and
+  classification in `model/rings.js` (§13.2). Structural identity:
+  `canonicalKey()` in `model/graph.js` — the unrooted canonical tree key for a
+  tree, the monocycle key (smallest reading over every ring rotation and
+  reflection, side chains as rooted tree keys) for one ring; polycycles have
+  no key yet.
 - JSON serialisation (autosave, undo snapshots), unchanged format (version 1):
   old carbon-only saves restore unchanged. Restoration rejects (as `INVALID`)
   a missing or unknown element and any atom or bond field beyond
@@ -178,12 +184,19 @@ for `alert`/`confirm`/`prompt` in app code), `oracle` (§8).
   H from the element table), bracket atoms with one of those elements and an
   optional H count (`[CH4]`, `[OH]`, `[NH2]`; the count must equal the one
   the model derives, else `SMILES_HYDROGEN`), `=`, `#` (and an optional
-  explicit `-`), parenthesised branches; rejects ring digits, other elements,
+  explicit `-`), parenthesised branches, ring closures `1`–`9` and `%nn`
+  with an optional bond symbol on either end (`C1CC=1`, `C=1CC1`); rejects
+  invalid closures (`SMILES_RING`: unclosed label, closure to the same atom
+  `C11`, a second bond between the same pair `C1C1`, different orders on the
+  two ends), other elements,
   aromatic lowercase atoms, charges, isotopes, atom classes, `[H]` atoms,
   dots, stereo marks, dangling bonds and unbalanced or empty parentheses —
   with an explicit error (developer-facing, English), never by silently
   dropping input. The writer (debugging, examples, oracle) writes every
-  element as an organic-subset symbol, so round trips keep element identity.
+  element as an organic-subset symbol, so round trips keep element identity,
+  and writes every bond outside its depth-first tree as a ring closure (bond
+  symbol at the opening end, smallest free label); acyclic output is
+  unchanged. Parser and writer are iterative.
   Fixtures use SMILES, so the test suite never depends on coordinates.
 
 ### 3.2 Validation (single function, used everywhere)
@@ -193,21 +206,24 @@ for `alert`/`confirm`/`prompt` in app code), `oracle` (§8).
 self-bonds; no duplicate bonds between the same pair; orders ∈ {1,2,3};
 supported elements only, with no charge/radical fields; Σ order ≤ the
 element's neutral valence; then, for naming only: non-empty, connected,
-acyclic, size caps (≤ 60 carbons `MAX_CARBONS`, ≤ 80 heavy atoms
+acyclic (a ring is classified by `model/rings.js`: a single carbocycle →
+`CYCLE`, any other ring system → `RING_SYSTEM` with `ringKind`; both carry
+the ring atoms in `atoms`), size caps (≤ 60 carbons `MAX_CARBONS`, ≤ 80 heavy atoms
 `MAX_HEAVY_ATOMS`), carbon only (`HETEROATOM`), parent chain ≤ 30
 (`MAX_CHAIN`). The same checks guard editor transactions, JSON restoration
 (corrupt autosave → start empty, no crash) and SMILES input.
 
 Two kinds of naming failure are kept apart: an **invalid structure**
 (`INVALID`, `VALENCE`: the drawing itself is wrong) and a **valid molecule
-that cannot be named yet** (`CYCLE`, `HETEROATOM`; `isNotNameableYet()`).
+that cannot be named** (`CYCLE`, `RING_SYSTEM`, `HETEROATOM`; `isNotNameableYet()`).
 Errors are codes with Spanish messages:
 
 | Code | Message |
 |---|---|
 | `EMPTY` | Dibuja primero una molécula. |
 | `DISCONNECTED` | Hay piezas sueltas: todas las partes deben estar unidas. |
-| `CYCLE` | Has dibujado un anillo. De momento solo sé nombrar cadenas abiertas. |
+| `CYCLE` | Has dibujado un anillo. Aún no sé nombrar anillos, pero pronto aprenderé: de momento solo nombro cadenas abiertas. (a single carbocycle, nameable from I-25) |
+| `RING_SYSTEM` | Out of scope (§13.1), one message per `ringKind`: `heterocycle` Este anillo tiene átomos que no son carbono: es un heterociclo. Los heterociclos quedan fuera de lo que sé nombrar. · `fused` Has dibujado anillos fusionados (dos anillos que comparten un enlace). Este tipo de moléculas queda fuera de lo que sé nombrar. · `bridged` Has dibujado anillos con puente (dos anillos que comparten más de dos átomos). … · `spiro` Has dibujado un compuesto espiro (dos anillos que comparten un solo átomo). … · `several` Esta molécula tiene varios anillos. De momento solo podré nombrar moléculas con un único anillo. (generic: Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.) |
 | `VALENCE` | Este carbono tendría más de 4 enlaces. — per element for the lowest-id offending atom: Este oxígeno tendría más de 2 enlaces. / Este nitrógeno tendría más de 3 enlaces. / Este cloro (flúor, bromo, yodo) tendría más de 1 enlace. (The editor's "full" refusal likewise: Este oxígeno ya tiene 2 enlaces.) |
 | `TOO_BIG` | La molécula es demasiado grande (máximo 60 carbonos, cadena de 30). — heavy-atom cap: La molécula es demasiado grande (máximo 80 átomos sin contar los hidrógenos). |
 | `HETEROATOM` | Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos. (valid, not nameable yet; `atoms` lists the heteroatoms) |
@@ -681,9 +697,11 @@ OPSIN (open-source name→structure, Java) reads English IUPAC names.
    random branching and unsaturation within valence).
 3. name → English → OPSIN → SMILES → a **dev-only fuller SMILES parser**
    (bracket atoms, explicit H) → hydrogen-suppressed molecule keeping every
-   heavy atom and its element (I-22) → compare with the original using an
-   unrooted canonical tree key (elements + bond orders), plus a formula
-   check. Unsupported OPSIN syntax is an adapter failure, not a naming
+   heavy atom and its element (I-22), rings kept (I-24) → compare with the
+   original using `canonicalKey()` (unrooted tree key, or the monocycle key;
+   elements + bond orders + ring closures) after checking that both have the
+   same number of rings, plus a formula check. A formula match alone never
+   passes; polycycles fail until they have a key. Unsupported OPSIN syntax is an adapter failure, not a naming
    failure.
 4. OPSIN runs from a **pinned** CLI jar (version + SHA-256 recorded in
    `scripts/oracle/README.md`, downloaded to `scripts/oracle/vendor/`,
@@ -742,7 +760,7 @@ on narrow screens).
   student who prefers the plain drawing is not asked again; the switch is
   always visible next to the text, so a forgotten "off" is easy to spot.
 - Errors in friendly Spanish (§3.2), with a short hint for `EMPTY`, `CYCLE`
-  and `DISCONNECTED` (`src/ui/results.js`).
+  and `DISCONNECTED` (`src/ui/results.js`); `RING_SYSTEM` has no hint.
 - A chemical edit clears the result (stale names must never show);
   coordinate edits do not.
 - **Ejemplos** menu: 12–15 molecules from SMILES covering each feature,
@@ -858,9 +876,20 @@ before being presented as validated IUPAC 2013 coverage.
   radicals and unknown elements rejected on restore; "invalid structure" vs
   "valid but not nameable yet" (§3.2); separate caps on carbons (60), heavy
   atoms (80) and parent size (30).
-- **Ring perception**, not just detection: members, closure bonds, cyclic
-  components and attachment points. Start with a single carbocycle; refuse
-  fused, bridged, spiro and heterocyclic systems with explicit messages.
+- **Ring perception** (I-24, done), not just detection: `model/rings.js`
+  `perceiveRings()` gives the cyclomatic number per component, ordered ring
+  members (one fundamental cycle per closure bond of a breadth-first
+  spanning forest), closure bonds, ring blocks (biconnected components),
+  cyclic components and attachment points; `classifyRings()` says
+  `acyclic`, `carbocycle`, `heterocycle`, `fused`, `bridged` (fused when
+  every branch atom of a polycyclic block is bonded to another branch atom —
+  exact for bicycles, a heuristic beyond), `spiro` or `several` (ring
+  assemblies, rings joined by a chain), in that precedence over every ring
+  block, so mixed systems do not depend on atom ids (fused + bridged blocks
+  → `bridged`; a polycyclic block plus other rings → `fused`/`bridged`).
+  SMILES ring labels are ring numbers (`1` ≡ `%01`). A single carbocycle gets `CYCLE`
+  (named from I-25); every other ring system gets `RING_SYSTEM` with an
+  explicit message (§3.2).
 - **`NameStructure` and trace** gain parent kind, functional groups,
   principal group, suffixes, prefixes and locants on heteroatoms. The engine
   stays pure; the explanation is derived only from the result.
@@ -873,16 +902,20 @@ before being presented as validated IUPAC 2013 coverage.
   selection.
 - Substituents are no longer always hydrocarbon subtrees; the ban on triple
   bonds outside the chain no longer holds universally (nitriles).
-- `buildChainStructure()` requires n−1 bonds; a ring also needs the closure.
+- `buildChainStructure()` requires n−1 bonds; a ring also needs the closure
+  (rings.js gives the ordered members and the closure bond).
 - SMILES, valence messages and labels assume carbon (valence messages and H
   counts fixed in I-21; SMILES reads and writes O, N and halogens since I-22;
   canvas labels, the element palette and "átomo" wording in editor refusals
   since I-23, §6.1/§6.3).
-- Tree keys include elements but do not support cycles. The OPSIN adapter
-  parses broad syntax and keeps every heavy atom (I-22), but still refuses
-  rings.
+- Tree keys include elements but do not support cycles; since I-24
+  `canonicalKey()` adds a monocycle key (polycycles still have none), and the
+  OPSIN adapter keeps rings and compares them with it.
 - The 90° view and "Ordenar dibujo" assume branched chains; they need
-  specific strategies and a safe fallback to the normal drawing.
+  specific strategies (I-27). Until then both fall back safely: naming
+  refuses rings, so Ordenar dibujo only shows the ring message and the 90°
+  view draws the normal drawing ("Hay un anillo…" / "Hay anillos…"); the
+  layouts themselves refuse a cyclic molecule instead of looping.
 - The explanation rebuilds counts from hydrocarbon structures: it must
   receive composition and groups from the engine.
 

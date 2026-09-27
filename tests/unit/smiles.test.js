@@ -35,8 +35,17 @@ test('parses atoms, bond orders and branches', () => {
 const ERRORS = [
   ['', 'SMILES_EMPTY'],
   ['   ', 'SMILES_EMPTY'],
-  ['C1CCCCC1', 'SMILES_RING'],
   ['CC%10CC', 'SMILES_RING'],
+  ['C1CCCCC', 'SMILES_RING'],
+  ['C11', 'SMILES_RING'],
+  ['C1C1', 'SMILES_RING'],
+  ['C1CC2CC1', 'SMILES_RING'],
+  ['C=1CC#1', 'SMILES_RING'],
+  ['C=1CCC-1C', 'SMILES_RING'],
+  ['C%1CC%1', 'SMILES_RING'],
+  ['1CC1', 'SMILES_RING'],
+  ['C(1CC1)', 'SMILES_PAREN'],
+  ['C1(C)(C)(C)CC1', 'VALENCE'],
   ['CCS', 'SMILES_ELEMENT'],
   ['CP', 'SMILES_ELEMENT'],
   ['BC', 'SMILES_ELEMENT'],
@@ -61,7 +70,6 @@ const ERRORS = [
   ['[CH4', 'SMILES_BRACKET'],
   ['C]', 'SMILES_BRACKET'],
   ['[]', 'SMILES_BRACKET'],
-  ['OC1CC1', 'SMILES_RING'],
   ['CO.O', 'SMILES_DOT'],
   ['CO(C)C', 'VALENCE'],
   ['C=N#C', 'VALENCE'],
@@ -100,7 +108,7 @@ test('rejects unsupported or malformed input with explicit errors', () => {
 });
 
 test('errors report the position of the problem', () => {
-  const positions = [['C1CC1', 1], ['CC=', 2], ['CCS', 2], ['CC(C', 2], ['CC[CH2]', 2], ['C[NH4+]', 5], ['C[13CH3]', 2]];
+  const positions = [['C1CC', 1], ['C=1CC#1', 6], ['C11', 2], ['CC=', 2], ['CCS', 2], ['CC(C', 2], ['CC[CH2]', 2], ['C[NH4+]', 5], ['C[13CH3]', 2]];
   for (const [smiles, position] of positions) {
     assert.throws(() => parseSmiles(smiles), (err) => err.position === position);
   }

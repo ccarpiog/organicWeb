@@ -48,11 +48,14 @@ Output: `passed: … failed: … skipped: … adapter failures: …`.
    rings, aromatic atoms, charges) turns OPSIN's SMILES into a
    hydrogen-suppressed model molecule that keeps every heavy atom with its
    element (`heavyAtomTree()`), plus a Hill formula counted from the SMILES.
-   Structures the model cannot hold (unsupported elements, aromatic or
-   charged atoms, rings, several fragments, radicals) are naming failures.
-5. A molecule passes when, for every style, the canonical tree key (elements
-   and bond orders, so ethanol and dimethyl ether differ) and the formula
-   match the original. OPSIN SMILES that the parser cannot read is an
+   Rings are kept. Structures the model cannot hold (unsupported elements,
+   aromatic or charged atoms, several fragments, radicals) are naming failures.
+5. A molecule passes when, for every style, the number of rings, the
+   canonical key (`canonicalKey()` in `src/model/graph.js`: the tree key, or
+   the monocycle key for one ring; elements, bond orders and ring closures,
+   so ethanol and dimethyl ether, or cyclohexane and hex-1-ene, differ) and
+   the formula match the original — never the formula alone; polycycles
+   fail until they have a key. OPSIN SMILES that the parser cannot read is an
    **adapter failure**, counted apart from naming failures.
 
 The generator stays hydrocarbon-only: the naming engine does not name

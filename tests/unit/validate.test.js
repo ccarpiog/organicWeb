@@ -31,7 +31,8 @@ test('exact Spanish messages from the design table', () => {
   assert.deepEqual(MESSAGES, {
     EMPTY: 'Dibuja primero una molécula.',
     DISCONNECTED: 'Hay piezas sueltas: todas las partes deben estar unidas.',
-    CYCLE: 'Has dibujado un anillo. De momento solo sé nombrar cadenas abiertas.',
+    CYCLE: 'Has dibujado un anillo. Aún no sé nombrar anillos, pero pronto aprenderé: de momento solo nombro cadenas abiertas.',
+    RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
     VALENCE: 'Este carbono tendría más de 4 enlaces.',
     TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
     HETEROATOM: 'Esta molécula tiene átomos que no son carbono ni hidrógeno. '

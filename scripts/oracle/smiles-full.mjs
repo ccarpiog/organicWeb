@@ -15,7 +15,7 @@
 
 import { createMolecule, addAtom, addBond, hillFormula } from '../../src/model/molecule.js';
 import { isSupportedElement, valenceOf } from '../../src/model/elements.js';
-import { isConnected, hasCycle } from '../../src/model/graph.js';
+import { isConnected } from '../../src/model/graph.js';
 
 /** Error for SMILES syntax the adapter does not understand. */
 export class OracleSmilesError extends Error {
@@ -91,7 +91,7 @@ export function parseFullSmiles(smiles) {
   }
   const atoms = [];
   const bonds = [];
-  const rings = new Map(); // Ring number → { atom, order, position }.
+  const rings = new Map(); // Ring number (numeric, so `1` ≡ `%01`) → { atom, order, position }.
   const stack = [];
   let previous = null;
   let pending = null;
@@ -156,6 +156,7 @@ export function parseFullSmiles(smiles) {
       } else {
         number = ch;
       }
+      number = Number(number); // `1` and `%01` are the same ring number (OpenSMILES).
       if (rings.has(number)) {
         const open = rings.get(number);
         rings.delete(number);
@@ -206,12 +207,14 @@ export function hydrogenCounts(graph) {
  * so it does not rely on the model's valence rule). Explicit hydrogen atoms
  * (`[H]`) are folded into their neighbour's count. Anything the model cannot
  * hold — an unsupported element, aromatic or charged atoms, a bond order
- * outside 1–3, several fragments or a ring, an atom whose valence is not
- * its neutral one (radical, carbene) — is reported as `problem`: the name
- * then denotes something else, a naming failure.
+ * outside 1–3, several fragments, an atom whose valence is not its neutral
+ * one (radical, carbene) — is reported as `problem`: the name then denotes
+ * something else, a naming failure. Rings are kept (ring-closure bonds
+ * become ordinary bonds); the comparison (compare.mjs) tells ring systems
+ * apart structurally.
  *
  * @param {string} smiles - OPSIN's SMILES.
- * @returns {{mol: object|null, formula: string, problem: string|null}} The molecule (model/molecule.js), the Hill formula and the reason it is not a representable acyclic molecule.
+ * @returns {{mol: object|null, formula: string, problem: string|null}} The molecule (model/molecule.js), the Hill formula and the reason it is not a representable single molecule.
  * @throws {OracleSmilesError} On unsupported syntax (adapter failure).
  */
 export function heavyAtomTree(smiles) {
@@ -243,8 +246,8 @@ export function heavyAtomTree(smiles) {
     }
     addBond(mol, ids.get(bond.a), ids.get(bond.b), bond.order);
   }
-  if (!isConnected(mol) || hasCycle(mol)) {
-    return { mol: null, formula: formulaText, problem: 'not a single acyclic molecule' };
+  if (!isConnected(mol)) {
+    return { mol: null, formula: formulaText, problem: 'not a single molecule (several fragments)' };
   }
   const odd = heavy.find((i) => {
     const bondSum = graph.bonds.filter((b) => b.a === i || b.b === i).reduce((s, b) => s + b.order, 0);

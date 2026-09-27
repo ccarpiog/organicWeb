@@ -32,7 +32,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-21 | v2.1 Multi-element model (+ v2 plan into design.md, scope lift in CLAUDE.md) | `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.1 | done — `docs/progress-archive/i-21.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-21.md` |
 | I-22 | v2.2 Multi-element SMILES and oracle | same, §3.2 | done — `docs/progress-archive/i-22.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-22.md` |
 | I-23 | v2.3 Element palette | same, §3.3 | done — `docs/progress-archive/i-23.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-23.md` |
-| I-24 | v2.4 Ring infrastructure | same, §3.4 | queued | — | — |
+| I-24 | v2.4 Ring infrastructure | same, §3.4 | done — `docs/progress-archive/i-24.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-24.md` |
 | I-25 | v2.5 Simple cycloalkanes | same, §3.5 | queued | — | — |
 | I-26 | v2.6 Substituted and unsaturated rings | same, §3.6 | queued | — | — |
 | I-27 | v2.7 Drawing and ordering rings | same, §3.7 | queued | — | — |
@@ -52,7 +52,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-23 done; I-24…I-41 queued in order;
+v2 plan (user-confirmed scope): I-21…I-24 done; I-25…I-41 queued in order;
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
 
@@ -87,13 +87,15 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-24 (v2 §3.4 ring infrastructure: new
-`src/model/rings.js`, `graph.js`, SMILES ring closures, oracle; structural
-identity for monocycles; explicit scope messages refusing fused/bridged/spiro/
-heterocyclic systems; no infinite recursion). Spec: design §13.4 row I-24 and
-`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.4. Deploying
-(`npm run deploy`, defined in `scripts/deploy.mjs`) stays a manual user step —
-the loop never runs it.
+Poll the inbox, then run I-25 (v2 §3.5 simple cycloalkanes: new
+`src/naming/rings.js`, `structure.js`, renderer, both lexicons, explain —
+`ciclohexano`; explain the closure and carbon count; name hand-drawn rings;
+closure bond highlighted). Ring perception is `src/model/rings.js`; a single
+carbocycle currently gets the `CYCLE` "aún no sé nombrar anillos" error in
+`src/model/validate.js`, which I-25 lifts for unsubstituted rings. Spec:
+design §13.4 row I-25 and
+`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.5.
+Deploying (`npm run deploy`, `scripts/deploy.mjs`) stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -135,14 +137,17 @@ the loop never runs it.
   `tests/unit/deploy.test.js`; docs README "Deployment", design §10.1.
 - Element palette: toolbar `src/ui/toolbar.js`; DOM-free label sizing
   `src/editor/labels.js`; heteroatom hit boxes `onHeteroLabel()` in `geometry.js`.
+- Rings: pure perception/classification `src/model/rings.js`; `canonicalKey()`
+  (trees + monocycles) in `graph.js`; errors `CYCLE` / `RING_SYSTEM` (`ringKind`)
+  in `validate.js`; SMILES ring closures in `smiles.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-23)
+## Verification (last phase, I-24)
 
-- After the review fix: `npm test` 0 (460 pass) · `npm run check` 0 (77 files)
-  · `npm run e2e` 0 (141 pass, source + dist). Oracle not rerun (no naming or
-  SMILES change).
+- After the review fix: `npm test` 0 (473 pass) · `npm run check` 0 (80 files)
+  · `npm run e2e` 0 (153 pass, source + dist) · `npm run oracle -- --count 200
+  --seed 1` 0 (200 pass, 0 adapter failures).
 
 ## Open risks / deviations
 
@@ -231,10 +236,16 @@ the loop never runs it.
   N–Cl at 30 units leaves ~5 units of clickable bond
   (`docs/progress-archive/i-23.md`).
 
+- I-24: `CYCLE` (single carbocycle) and `RING_SYSTEM` (heterociclo, fusionados,
+  con puente, espiro, varios anillos) scope errors, checked before `TOO_BIG` /
+  `HETEROATOM`. Fused vs bridged exact only for two rings (cubane → fused);
+  oracle cannot compare molecules with 2+ rings. Review's two should-fix fixed
+  with regressions (`docs/progress-archive/i-24.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-21 `0892d1c`, I-22 `7fb4a83`, pushed. I-23 committed and pushed right
+- I-22 `7fb4a83`, I-23 `61ae2f1`, pushed. I-24 committed and pushed right
   after this checkpoint (see `git log`).

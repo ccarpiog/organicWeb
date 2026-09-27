@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { bundleModules } from '../../scripts/build.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const MODEL_FILES = ['elements.js', 'molecule.js', 'graph.js', 'validate.js', 'smiles.js'];
+const MODEL_FILES = ['elements.js', 'molecule.js', 'graph.js', 'rings.js', 'validate.js', 'smiles.js'];
 
 test('model modules bundle and run in a classic script', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'organic-model-'));
@@ -28,7 +28,8 @@ test('model modules bundle and run in a classic script', async () => {
       path.join(dir, 'entry.js'),
       [
         "import { parseSmiles, writeSmiles } from './model/smiles.js';",
-        "import { canonicalTreeKey } from './model/graph.js';",
+        "import { canonicalTreeKey, canonicalKey } from './model/graph.js';",
+        "import { classifyRings } from './model/rings.js';",
         "import { validate } from './model/validate.js';",
         "import { formulaUnicode, moleculeToJSON, moleculeFromJSON } from './model/molecule.js';",
         "const mol = parseSmiles('CC(C)CC');",
@@ -38,13 +39,18 @@ test('model modules bundle and run in a classic script', async () => {
         "  same: canonicalTreeKey(mol) === canonicalTreeKey(parseSmiles('CCC(C)C')),",
         '  valid: validate(mol).ok,',
         '  restored: back.ok && writeSmiles(back.mol),',
+        "  ring: canonicalKey(parseSmiles('CC1CCCC1')) === canonicalKey(parseSmiles('C1CCC(C)C1')),",
+        "  kind: classifyRings(parseSmiles('C1CCC2CCCCC2C1')).kind,",
+        "  code: validate(parseSmiles('C1CCCCC1')).error.code,",
         '};',
       ].join('\n'),
     );
     const code = await bundleModules(path.join(dir, 'entry.js'), dir);
     const context = {};
     vm.runInNewContext(code, context);
-    assert.deepEqual({ ...context.__result }, { formula: 'C₅H₁₂', same: true, valid: true, restored: 'CC(C)CC' });
+    assert.deepEqual({ ...context.__result }, {
+      formula: 'C₅H₁₂', same: true, valid: true, restored: 'CC(C)CC', ring: true, kind: 'fused', code: 'CYCLE',
+    });
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

@@ -86,8 +86,10 @@ test('heavyAtomTree keeps hydrocarbons as before and counts the formula from the
   assert.equal(tree.problem, null);
   assert.equal(tree.formula, 'C5H10');
   assert.equal(canonicalTreeKey(tree.mol), canonicalTreeKey(parseSmiles('CC=C(C)C')));
-  assert.match(heavyAtomTree('C1CC1').problem, /acyclic/);
-  assert.match(heavyAtomTree('CC.C').problem, /acyclic/);
+  // Rings are kept (compared structurally by compareWithOpsin); several fragments are a problem.
+  assert.equal(heavyAtomTree('C1CC1').problem, null);
+  assert.equal(heavyAtomTree('C1CC1').mol.bonds.size, 3);
+  assert.match(heavyAtomTree('CC.C').problem, /fragments/);
   assert.match(heavyAtomTree('c1ccccc1').problem, /aromatic/);
   assert.match(heavyAtomTree('C[CH2]').problem, /valence/);
 }); // End of test 'heavyAtomTree keeps hydrocarbons as before and counts the formula from the SMILES'
@@ -130,7 +132,7 @@ test('compareWithOpsin compares heteroatom structures over elements', () => {
   assert.deepEqual(compareWithOpsin(ethanol, 'C([H])([H])([H])C[OH]'), { status: 'passed', reason: null });
   const ether = compareWithOpsin(ethanol, 'COC');
   assert.equal(ether.status, 'failed', 'dimethyl ether has the same formula but is not ethanol');
-  assert.match(ether.reason, /canonical tree keys/);
+  assert.match(ether.reason, /canonical keys/);
   assert.equal(compareWithOpsin(parseSmiles('ClCCBr'), 'CC(Cl)Br').status, 'failed');
   assert.equal(compareWithOpsin(parseSmiles('ClCCBr'), 'BrCCCl').status, 'passed');
   assert.match(compareWithOpsin(ethanol, 'CCS').reason, /formula/);

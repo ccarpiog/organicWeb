@@ -219,7 +219,7 @@ test('a ring shows the friendly CYCLE message; an empty canvas asks to draw', as
   expect(await page.evaluate(() => window.__editor.getMoleculeJSON().bonds.length)).toBe(3);
   await button.click();
   const alert = page.getByRole('alert');
-  await expect(alert).toContainText('Has dibujado un anillo. De momento solo sé nombrar cadenas abiertas.');
+  await expect(alert).toContainText('Has dibujado un anillo. Aún no sé nombrar anillos');
   await expect(alert).toContainText('Borra un enlace del anillo');
   await expect(page.locator('#result-name')).toHaveCount(0);
 });

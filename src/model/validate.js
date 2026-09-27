@@ -8,12 +8,14 @@
  *   self-bonds, no duplicate bonds, orders 1–3, neutral valence per element:
  *   C 4, N 3, O 2, halogens 1);
  * - validateForNaming(): the structural checks, then non-empty, connected,
- *   acyclic, size caps (≤ 60 carbons, ≤ 80 heavy atoms), only elements the
- *   engine can name yet (carbon), and longest chain ≤ 30.
+ *   acyclic (rings are classified by rings.js: a single carbocycle gets
+ *   CYCLE, any other ring system RING_SYSTEM with its kind), size caps
+ *   (≤ 60 carbons, ≤ 80 heavy atoms), only elements the engine can name yet
+ *   (carbon), and longest chain ≤ 30.
  *
  * Two kinds of failure are kept apart (design.md §13.1): an invalid structure
  * (INVALID, VALENCE — the drawing itself is wrong) and a valid molecule the
- * engine cannot name yet (CYCLE, HETEROATOM — see isNotNameableYet()).
+ * engine cannot name (CYCLE, RING_SYSTEM, HETEROATOM — see isNotNameableYet()).
  *
  * Errors are `{code, message}` objects with the Spanish messages of the §3.2
  * table; some carry extra data (`detail` in English for developers, `atoms`
@@ -21,6 +23,7 @@
  */
 
 import { isConnected, hasCycle, longestChainLength } from './graph.js';
+import { classifyRings } from './rings.js';
 import { isSupportedElement, valenceOf, ELEMENT_NAMES_ES } from './elements.js';
 
 /** Maximum number of carbons in a molecule the app will name (design.md §1.1). */
@@ -33,18 +36,35 @@ export const MAX_HEAVY_ATOMS = 80;
 export const MAX_CHAIN = 30;
 
 /** Codes of valid molecules the engine cannot name yet (as opposed to invalid structures). */
-export const NOT_NAMEABLE_YET = Object.freeze(['CYCLE', 'HETEROATOM']);
+export const NOT_NAMEABLE_YET = Object.freeze(['CYCLE', 'RING_SYSTEM', 'HETEROATOM']);
 
 /** Spanish user-facing messages by error code (design.md §3.2). */
 export const MESSAGES = Object.freeze({
   EMPTY: 'Dibuja primero una molécula.',
   DISCONNECTED: 'Hay piezas sueltas: todas las partes deben estar unidas.',
-  CYCLE: 'Has dibujado un anillo. De momento solo sé nombrar cadenas abiertas.',
+  CYCLE: 'Has dibujado un anillo. Aún no sé nombrar anillos, pero pronto aprenderé: de momento solo nombro cadenas abiertas.',
+  RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
   VALENCE: 'Este carbono tendría más de 4 enlaces.',
   TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
   HETEROATOM: 'Esta molécula tiene átomos que no son carbono ni hidrógeno. '
     + 'Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos.',
   INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
+});
+
+/**
+ * RING_SYSTEM messages by ring-system kind (rings.js classifyRings()):
+ * valid molecules outside the scope of the app (design.md §13.1).
+ */
+export const RING_SYSTEM_MESSAGES = Object.freeze({
+  heterocycle: 'Este anillo tiene átomos que no son carbono: es un heterociclo. '
+    + 'Los heterociclos quedan fuera de lo que sé nombrar.',
+  fused: 'Has dibujado anillos fusionados (dos anillos que comparten un enlace). '
+    + 'Este tipo de moléculas queda fuera de lo que sé nombrar.',
+  bridged: 'Has dibujado anillos con puente (dos anillos que comparten más de dos átomos). '
+    + 'Este tipo de moléculas queda fuera de lo que sé nombrar.',
+  spiro: 'Has dibujado un compuesto espiro (dos anillos que comparten un solo átomo). '
+    + 'Este tipo de moléculas queda fuera de lo que sé nombrar.',
+  several: 'Esta molécula tiene varios anillos. De momento solo podré nombrar moléculas con un único anillo.',
 });
 
 /** TOO_BIG message when the heavy-atom cap (not the carbon cap) is exceeded. */
@@ -271,8 +291,26 @@ export function validateStructure(mol) {
 } // End of function validateStructure()
 
 /**
+ * The "not nameable" error for a molecule with rings: CYCLE for a single
+ * carbocycle (nameable in a later phase), RING_SYSTEM with `ringKind` for a
+ * heterocycle, fused, bridged or spiro system, or several rings (out of
+ * scope, design.md §13.1). `atoms` lists every ring atom, for highlighting.
+ *
+ * @param {object} mol - A structurally valid, connected molecule with at least one ring.
+ * @returns {{code: string, message: string, atoms: number[], ringKind: string}} The error.
+ */
+function ringError(mol) {
+  const { kind, perception } = classifyRings(mol);
+  const atoms = perception.ringAtoms;
+  if (kind === 'carbocycle') {
+    return validationError('CYCLE', { atoms, ringKind: kind });
+  }
+  return validationError('RING_SYSTEM', { message: RING_SYSTEM_MESSAGES[kind], atoms, ringKind: kind });
+} // End of function ringError()
+
+/**
  * Structural checks plus the naming checks, in order: non-empty, connected,
- * acyclic, carbon and heavy-atom caps, carbon only (HETEROATOM: valid but not
+ * acyclic (CYCLE for a single carbocycle, RING_SYSTEM otherwise), carbon and heavy-atom caps, carbon only (HETEROATOM: valid but not
  * nameable yet), chain cap (design.md §3.2, §13.1). A molecule passing this
  * is a hydrocarbon tree of at most 60 carbons whose longest chain has at most 30.
  *
@@ -291,7 +329,7 @@ export function validateForNaming(mol) {
     return validationError('DISCONNECTED');
   }
   if (hasCycle(mol)) {
-    return validationError('CYCLE');
+    return ringError(mol);
   }
   const carbons = [...mol.atoms.values()].filter((atom) => atom.element === 'C').length;
   if (carbons > MAX_CARBONS) {
