@@ -517,7 +517,15 @@ Keyboard: `c` carbono, `1/2/3` bond tools, `t` cambiar enlace, `h` cadena,
 
 - Double bonds: two parallel lines, second one offset toward the inside of the
   zigzag; triple: three lines. Bond multiplicity is shown only by strokes.
-- Display toggle **Esqueleto / Con carbonos**: the second labels each carbon
+- Display toggle **Esqueleto / Con carbonos**. **Esqueleto** (default) draws
+  every carbon as a line vertex marked with a small filled dot (radius 3.5
+  drawing units against 2-unit bonds, so it scales with the zoom), so a
+  student can count carbons even where two bonds are nearly collinear; chain
+  ends are dotted too, and a lone carbon gets its dot plus a `CH₄` label just
+  below it (clicking that label acts on the carbon, in both modes). The dot is drawn above the hover, selection and stepper highlight
+  discs, which stay visible around it; drag previews (bond, Cadena) dot their
+  future carbons in the accent colour, and the redraw animation re-renders
+  the dots every frame. **Con carbonos** draws no dots and labels each carbon
   with C + implicit H only (`CH₃`, `CH₂`, `CH`, `C`) — never `=` in labels.
 - Hover highlight on atoms and bonds. Highlight API for the stepper:
   `highlight({atoms, bonds, style})` with styles

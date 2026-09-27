@@ -19,6 +19,18 @@ export const SNAP_DEGREES = 30;
 /** A pointer closer than this to an atom centre hits the atom. */
 export const ATOM_HIT_RADIUS = 12;
 
+/**
+ * How far below its atom a lone carbon's `CH₄` label is drawn in skeletal
+ * mode (below the carbon dot; render.js), in drawing units.
+ */
+export const LONE_LABEL_OFFSET = 16;
+
+/** Half width of the area around a lone carbon's `CH₄` label that hits the carbon. */
+export const LABEL_HIT_HALF_WIDTH = 17;
+
+/** Half height of the area around a lone carbon's `CH₄` label that hits the carbon. */
+export const LABEL_HIT_HALF_HEIGHT = 10;
+
 /** A pointer closer than this to a bond segment hits the bond. */
 export const BOND_HIT_DISTANCE = 7;
 
@@ -312,7 +324,28 @@ export function distanceToSegment(p, a, b) {
 }
 
 /**
+ * Tells whether a point lies on the `CH₄` label of a lone carbon, wherever
+ * the display mode draws it: centred on the atom (Con carbonos) or
+ * LONE_LABEL_OFFSET below it (Esqueleto). The area is one box spanning both
+ * positions, so hit-testing needs no display mode.
+ *
+ * @param {object} mol - The molecule.
+ * @param {object} atom - The atom.
+ * @param {{x: number, y: number}} point - The point in drawing units.
+ * @returns {boolean} True when the atom is lone and the point is on its label area.
+ */
+export function onLoneLabel(mol, atom, point) {
+  if (neighbours(mol, atom.id).length > 0) {
+    return false;
+  }
+  return Math.abs(point.x - atom.x) <= LABEL_HIT_HALF_WIDTH
+    && point.y >= atom.y - LABEL_HIT_HALF_HEIGHT
+    && point.y <= atom.y + LONE_LABEL_OFFSET + LABEL_HIT_HALF_HEIGHT;
+}
+
+/**
  * Finds what lies under a point: the nearest atom within ATOM_HIT_RADIUS,
+ * else a lone carbon whose `CH₄` label is under the point (onLoneLabel()),
  * else the nearest bond within BOND_HIT_DISTANCE, else nothing.
  *
  * @param {object} mol - The molecule.
@@ -329,6 +362,17 @@ export function hitTest(mol, point, options = {}) {
     if (d <= bestDistance && !exclude.includes(atom.id)) {
       best = { type: 'atom', id: atom.id };
       bestDistance = d;
+    }
+  }
+  if (!best) {
+    // The label of a lone carbon stands for the carbon (nearest label centre wins).
+    let bestLabel = Infinity;
+    for (const atom of mol.atoms.values()) {
+      const d = distance({ x: atom.x, y: atom.y + LONE_LABEL_OFFSET / 2 }, point);
+      if (d < bestLabel && !exclude.includes(atom.id) && onLoneLabel(mol, atom, point)) {
+        best = { type: 'atom', id: atom.id };
+        bestLabel = d;
+      }
     }
   }
   if (best || options.atomsOnly) {

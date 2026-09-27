@@ -20,8 +20,8 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-10 | Explanations and results panel | `autoclaude/processed/100-explain-results.md` | done — `docs/progress-archive/i-10.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-10.md` |
 | I-11 | Redraw and examples | `autoclaude/processed/110-redraw-examples.md` | done — `docs/progress-archive/i-11.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-11.md` |
 | I-12 | Polish and release build | `autoclaude/processed/120-polish-release.md` | done — `docs/progress-archive/i-12.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-12.md` |
-| I-13 | Visible carbon dots in skeletal mode | `autoclaude/processed/130-visible-carbons.md` | queued (next) | — | — |
-| I-14 | Single-bond drag grows a chain | `autoclaude/processed/140-drag-chain-single-bond.md` | queued (after I-13) | — | — |
+| I-13 | Visible carbon dots in skeletal mode | `autoclaude/processed/130-visible-carbons.md` | done — `docs/progress-archive/i-13.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-13.md` |
+| I-14 | Single-bond drag grows a chain | `autoclaude/processed/140-drag-chain-single-bond.md` | queued (next) | — | — |
 | I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | queued (after I-14) | — | — |
 
 The twelve original plan items are done. Three user-feedback items (I-13…I-15)
@@ -45,8 +45,9 @@ were queued from the inbox and run in filename order.
 
 ## Next action
 
-Run I-13 (visible carbon dots in skeletal mode), spec
-`autoclaude/processed/130-visible-carbons.md`.
+Run I-14 (single-bond drag grows a chain), spec
+`autoclaude/processed/140-drag-chain-single-bond.md`. Note I-13 added carbon
+dots to drag previews and a lone-carbon label hit box in `hitTest()`.
 
 ## Key paths
 
@@ -69,14 +70,16 @@ Run I-13 (visible carbon dots in skeletal mode), spec
 - Help / a11y: `src/ui/help.js` (Ayuda dialog); aria-live region and tooltips
   in `src/ui/results.js`; e2e projects `source` and `dist` in
   `playwright.config.js` (`tests/e2e/global-setup.js` rebuilds dist).
+- Carbon dots: `showsCarbonDots()` / `atomLabelPosition()` in
+  `src/editor/render.js`; lone-label hit box `onLoneLabel()` in `geometry.js`.
 - Layout: pure `canonicalLayout()` in `src/layout/canonical.js`; examples list
   `src/ui/examples.js`; editor `setCoordinates()` / `animateCoordinates()`.
 
-## Verification (last phase, I-12)
+## Verification (last phase, I-13)
 
-- `npm test` 0 (373 pass) · `npm run check` 0 · `npm run build` 0 ·
-  `npm run e2e` 0 (69 pass, source + dist via file://). Oracle not rerun
-  (naming engine untouched).
+- `npm test` 0 (375 pass) · `npm run check` 0 · `npm run e2e` 0 (81 pass,
+  source + dist; global setup rebuilds dist). Oracle not rerun (naming
+  engine untouched).
 
 ## Open risks / deviations
 
@@ -117,10 +120,14 @@ Run I-13 (visible carbon dots in skeletal mode), spec
   hovered tooltip) fixed with e2e regressions (`docs/progress-archive/i-12.md`).
   Spanish help text not yet reviewed by a teacher.
 
+- I-13: CH₄ label sits below its dot in Esqueleto; `hitTest()` maps the
+  label box to the carbon (review should-fix, fixed). A bond drag snapping onto
+  that box joins methane (`docs/progress-archive/i-13.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-11 `0b1e31e`, pushed. I-12 committed and pushed right after this
-  checkpoint (see `git log`).
+- I-12 `0e58a06`, pushed. Triage `7c81094`. I-13 committed and pushed right
+  after this checkpoint (see `git log`).

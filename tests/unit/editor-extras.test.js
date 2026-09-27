@@ -10,10 +10,11 @@ import assert from 'node:assert/strict';
 import { createMolecule, addAtom, addBond, moleculeToJSON } from '../../src/model/molecule.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 import {
-  BOND_LENGTH, CHAIN_STEP, chainPoints, chooseChainSide, distance, angleBetween, toDegrees, normalizeAngle,
+  BOND_LENGTH, CHAIN_STEP, LONE_LABEL_OFFSET, chainPoints, chooseChainSide, distance, angleBetween, toDegrees, normalizeAngle,
 } from '../../src/editor/geometry.js';
 import {
-  atomLabelText, carbonLabel, trimSegment, zoomView, panView, fitView, clampZoom, MIN_ZOOM, MAX_ZOOM,
+  atomLabelText, atomLabelPosition, showsCarbonDots, CARBON_DOT_RADIUS,
+  carbonLabel, trimSegment, zoomView, panView, fitView, clampZoom, MIN_ZOOM, MAX_ZOOM,
   rectFromCorners, IDENTITY_VIEW,
 } from '../../src/editor/render.js';
 import { createEditorCore, shortcutFor, editKind, TOOLS } from '../../src/editor/editor.js';
@@ -191,6 +192,24 @@ test('atomLabelText: Esqueleto labels only a lone carbon', () => {
   const c = addAtom(methane, { x: 0, y: 0 });
   assert.equal(atomLabelText(methane, c, 'skeletal'), 'CH₄');
   assert.equal(atomLabelText(methane, c, 'condensed'), 'CH₄');
+});
+
+test('showsCarbonDots / atomLabelPosition: Esqueleto dots every carbon and moves a lone label below its dot', () => {
+  assert.equal(showsCarbonDots('skeletal'), true);
+  assert.equal(showsCarbonDots(), true, 'skeletal is the default');
+  assert.equal(showsCarbonDots('condensed'), false);
+  const methane = createMolecule();
+  const c = addAtom(methane, { x: 10, y: 20 });
+  assert.deepEqual(atomLabelPosition(methane, c, 'skeletal'), { x: 10, y: 20 + LONE_LABEL_OFFSET });
+  assert.deepEqual(atomLabelPosition(methane, c, 'condensed'), { x: 10, y: 20 });
+  assert.ok(LONE_LABEL_OFFSET > CARBON_DOT_RADIUS, 'the label clears the dot');
+  const propane = parseSmiles('CCC');
+  for (const id of propane.atoms.keys()) {
+    const atom = propane.atoms.get(id);
+    for (const mode of ['skeletal', 'condensed']) {
+      assert.deepEqual(atomLabelPosition(propane, id, mode), { x: atom.x, y: atom.y });
+    }
+  }
 });
 
 test('trimSegment shortens a bond at both ends and leaves short ones alone', () => {

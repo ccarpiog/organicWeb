@@ -336,6 +336,18 @@ body {
   fill: var(--color-hover);
 }
 
+/* Esqueleto: a filled dot on every carbon, above the hover/selection/highlight
+   discs so it stays visible (render.js CARBON_DOT_RADIUS). */
+.canvas .carbon-dot {
+  fill: currentColor;
+  pointer-events: none;
+}
+
+.canvas .preview-dot {
+  fill: var(--color-accent);
+  pointer-events: none;
+}
+
 .canvas .atom-label,
 .canvas .locant {
   fill: currentColor;

@@ -11,6 +11,7 @@ import { createMolecule, addAtom, addBond } from '../../src/model/molecule.js';
 import {
   BOND_LENGTH, MIN_CLEARANCE, snapAngle, snapEndpoint, toDegrees, toRadians, angleBetween, normalizeAngle,
   nextAtomPosition, preferredAngles, isLinearCentre, hitTest, straightenLinearCentres, distance, clearance,
+  onLoneLabel, LONE_LABEL_OFFSET, LABEL_HIT_HALF_WIDTH,
 } from '../../src/editor/geometry.js';
 import { bondSegments, carbonLabel, normalizeHighlight, locantPosition } from '../../src/editor/render.js';
 
@@ -177,6 +178,23 @@ test('hitTest prefers atoms, then bonds, within their radii', () => {
   assert.deepEqual(hitTest(mol, mid), { type: 'bond', id: 1 });
   assert.equal(hitTest(mol, mid, { atomsOnly: true }), null);
   assert.equal(hitTest(mol, { x: a.x - 100, y: a.y }), null);
+});
+
+test('hitTest maps the CH₄ label of a lone carbon (Esqueleto: below its dot) to the carbon', () => {
+  const mol = createMolecule();
+  const c = addAtom(mol, { x: 100, y: 100 });
+  const label = { x: 100, y: 100 + LONE_LABEL_OFFSET };
+  assert.deepEqual(hitTest(mol, label), { type: 'atom', id: c });
+  assert.deepEqual(hitTest(mol, { x: 100 + LABEL_HIT_HALF_WIDTH - 1, y: label.y + 5 }), { type: 'atom', id: c });
+  assert.deepEqual(hitTest(mol, label, { atomsOnly: true }), { type: 'atom', id: c });
+  assert.equal(hitTest(mol, label, { exclude: [c] }), null);
+  assert.equal(hitTest(mol, { x: 100, y: 100 + LONE_LABEL_OFFSET + 30 }), null);
+  assert.equal(hitTest(mol, { x: 100 + LABEL_HIT_HALF_WIDTH + 5, y: label.y }), null);
+  // Once bonded the carbon has no label: the area below it is empty space again.
+  const d = addAtom(mol, { x: 140, y: 100 });
+  addBond(mol, c, d, 1);
+  assert.equal(onLoneLabel(mol, mol.atoms.get(c), label), false);
+  assert.equal(hitTest(mol, label), null);
 });
 
 test('bond strokes: 1, 2 or 3 lines; the second line of a double bond goes inside the zigzag', () => {

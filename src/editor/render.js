@@ -1,9 +1,10 @@
 /**
  * @file SVG rendering of the molecule (design.md §6.3): bonds drawn as one,
  * two or three strokes, the two display modes (Esqueleto / Con carbonos),
- * hover highlight, selection, the drag previews (bond, chain with its "N C"
- * counter, marquee), the pan/zoom view transform, and the highlight API used
- * by the stepper (`highlight`, `showLocants`).
+ * the carbon dots of Esqueleto mode, hover highlight, selection, the drag
+ * previews (bond, chain with its "N C" counter, marquee), the pan/zoom view
+ * transform, and the highlight API used by the stepper (`highlight`,
+ * `showLocants`).
  *
  * The geometry of the strokes, the label text and the view arithmetic
  * (bondSegments(), atomLabelText(), zoomView(), fitView()…) are pure and
@@ -12,7 +13,7 @@
  */
 
 import { implicitH, neighbours, toSubscript } from '../model/molecule.js';
-import { cross } from './geometry.js';
+import { cross, LONE_LABEL_OFFSET } from './geometry.js';
 
 /** SVG namespace. */
 export const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -34,6 +35,12 @@ export const DISPLAY_MODES = Object.freeze(['skeletal', 'condensed']);
 
 /** Gap left between a bond stroke and a carbon label, in drawing units (condensed mode). */
 export const LABEL_GAP = 11;
+
+/**
+ * Radius of the filled dot drawn on every carbon in skeletal mode, in drawing
+ * units (it scales with the zoom like the bonds, which are 2 units wide).
+ */
+export const CARBON_DOT_RADIUS = 3.5;
 
 /** Smallest zoom factor of the view. */
 export const MIN_ZOOM = 0.25;
@@ -76,6 +83,36 @@ export function atomLabelText(mol, atomId, mode = 'skeletal') {
     return carbonLabel(mol, atomId);
   }
   return null;
+}
+
+/**
+ * Tells whether a display mode marks every carbon with a filled dot: only
+ * Esqueleto does, so that no carbon vanishes where two bonds are nearly
+ * collinear; Con carbonos already labels every carbon.
+ *
+ * @param {string} [mode] - 'skeletal' (default) or 'condensed'.
+ * @returns {boolean} True when carbon dots are drawn.
+ */
+export function showsCarbonDots(mode = 'skeletal') {
+  return mode === 'skeletal';
+}
+
+/**
+ * Where a carbon's label is drawn: on the atom, except for a lone carbon in
+ * skeletal mode, whose `CH₄` label moves LONE_LABEL_OFFSET (geometry.js) below
+ * its dot so both stay legible; hitTest() maps that label back to the carbon.
+ *
+ * @param {object} mol - The molecule.
+ * @param {number} atomId - The carbon.
+ * @param {string} [mode] - 'skeletal' (default) or 'condensed'.
+ * @returns {{x: number, y: number}} The label's centre, in drawing units.
+ */
+export function atomLabelPosition(mol, atomId, mode = 'skeletal') {
+  const atom = mol.atoms.get(atomId);
+  if (showsCarbonDots(mode) && neighbours(mol, atomId).length === 0) {
+    return { x: atom.x, y: atom.y + LONE_LABEL_OFFSET };
+  }
+  return { x: atom.x, y: atom.y };
 }
 
 /**
@@ -330,10 +367,12 @@ export function locantPosition(mol, atomId) {
 } // End of function locantPosition()
 
 /**
-/**
  * Creates the renderer for one SVG canvas. The molecule is drawn inside a
  * `g.mol-root` group that carries the pan/zoom transform, in layers:
- * highlight, selection, bonds, atoms, preview, locants, flash.
+ * highlight, selection, bonds, atoms, preview, locants, flash. In skeletal
+ * mode the atoms layer holds a `circle.carbon-dot` per carbon, drawn above
+ * the (transparent) hit circle and the underlying highlight/selection
+ * layers, so hover, selection and stepper highlights surround the dot.
  *
  * @param {SVGSVGElement} svg - The canvas element.
  * @returns {object} `{render, highlight, clearHighlight, showLocants, flash, setMode, getMode, getView, setView,
@@ -491,10 +530,17 @@ export function createRenderer(svg) {
     if (!preview) {
       return;
     }
+    const dots = showsCarbonDots(mode);
     if (preview.type === 'chain') {
       const pts = preview.points;
       for (let i = 1; i < pts.length; i += 1) {
         line({ x1: pts[i - 1].x, y1: pts[i - 1].y, x2: pts[i].x, y2: pts[i].y }, 'preview-line', layers.preview);
+      }
+      if (dots) {
+        // Every future carbon but the last (which gets the end marker) is dotted.
+        for (const p of pts.slice(0, -1)) {
+          el('circle', { class: 'preview-dot', cx: p.x, cy: p.y, r: CARBON_DOT_RADIUS }, layers.preview);
+        }
       }
       const end = pts[pts.length - 1];
       el('circle', { class: 'preview-end', cx: end.x, cy: end.y, r: 4 }, layers.preview);
@@ -503,6 +549,9 @@ export function createRenderer(svg) {
     }
     for (const s of symmetricSegments(preview.from, preview.to, preview.order)) {
       line(s, 'preview-line', layers.preview);
+    }
+    if (dots) {
+      el('circle', { class: 'preview-dot', cx: preview.from.x, cy: preview.from.y, r: CARBON_DOT_RADIUS }, layers.preview);
     }
     el('circle', { class: 'preview-end', cx: preview.to.x, cy: preview.to.y, r: 4 }, layers.preview);
   } // End of function drawPreview()
@@ -541,9 +590,13 @@ export function createRenderer(svg) {
       if (hover && hover.type === 'atom' && hover.id === atom.id) {
         node.classList.add('is-hover');
       }
+      if (showsCarbonDots(mode)) {
+        const dot = el('circle', { class: 'carbon-dot', cx: atom.x, cy: atom.y, r: CARBON_DOT_RADIUS }, layers.atoms);
+        dot.dataset.atomId = String(atom.id);
+      }
       const label = atomLabelText(mol, atom.id, mode);
       if (label) {
-        text('atom-label', atom, label, layers.atoms).dataset.atomId = String(atom.id);
+        text('atom-label', atomLabelPosition(mol, atom.id, mode), label, layers.atoms).dataset.atomId = String(atom.id);
       }
     } // End of the loop that draws the atoms
     drawSelection(mol, state.selection || null);

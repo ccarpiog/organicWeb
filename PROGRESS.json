@@ -1,8 +1,8 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T14:13:49Z",
+ "updated": "2026-09-27T14:56:44Z",
  "plan": "PLAN.md",
- "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
+ "goal": "Build a Spanish ESO web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with editor refinements from the inbox.",
  "phases": [
   {
    "id": "I-1",
@@ -111,6 +111,27 @@
    "risk": "routine",
    "review": "docs/reviews/I-12.md",
    "narrative": "docs/progress-archive/i-12.md"
+  },
+  {
+   "id": "I-13",
+   "title": "Visible carbon dots in skeletal mode",
+   "status": "done",
+   "risk": "routine",
+   "summary": "Marks every carbon vertex with a dot in skeletal mode so carbons can be counted at a glance.",
+   "review": "docs/reviews/I-13.md",
+   "narrative": "docs/progress-archive/i-13.md"
+  },
+  {
+   "id": "I-14",
+   "title": "Single-bond drag grows a chain",
+   "status": "queued",
+   "summary": "Dragging with the single-bond tool grows a chain carbon by carbon, like MolView."
+  },
+  {
+   "id": "I-15",
+   "title": "90-degree condensed-formula view toggle",
+   "status": "queued",
+   "summary": "Adds a toggle that draws the labelled-carbons view with 90-degree angles in textbook style."
   }
  ]
 }
