@@ -7,9 +7,10 @@ makes the main chain obvious. The user interface is in Spanish; code and
 documentation are in English.
 
 Status: molecule model done; naming covers unbranched chains and branched
-molecules with any singly attached substituent (branched and unsaturated,
-nested, with the `isopropil` / PIN / classic prefix styles); doubly-attached
-(`-iliden`) substituents, editor and explanations in progress. The design and phase plan live in
+molecules with any substituent (branched, unsaturated, nested, singly or
+doubly attached — `-iliden` — with the `isopropil` / PIN / classic prefix
+styles); every valid acyclic hydrocarbon gets a name. Editor and
+explanations in progress. The design and phase plan live in
 [`docs/design.md`](docs/design.md).
 
 ## Requirements

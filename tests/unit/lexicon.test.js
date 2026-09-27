@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import {
   stem, multiplier, compoundMultiplier, unsaturationEnding, needsConnectingVowel, omitsLocants,
   alkylPrefix, groupName, prefixForm, substituentUnsaturationEnding, retainedPrefix, commonGroupName, styleLabel,
+  freeValenceSuffix,
 } from '../../src/naming/lexicon.es.js';
 import { compareLocantLists } from '../../src/naming/numbering.js';
 
@@ -85,7 +86,11 @@ test('substituent-prefix morphology, retained and common names, style labels', (
   assert.equal(substituentUnsaturationEnding('triple'), 'in');
   assert.deepEqual({ ...retainedPrefix('isopropyl') }, { italic: '', text: 'isopropil' });
   assert.deepEqual({ ...retainedPrefix('tert-butyl') }, { italic: 'tert-', text: 'butil' });
+  assert.deepEqual({ ...retainedPrefix('isopropylidene') }, { italic: '', text: 'isopropiliden' });
   assert.throws(() => retainedPrefix('neopentyl'));
+  assert.equal(freeValenceSuffix(1), 'il');
+  assert.equal(freeValenceSuffix(2), 'iliden');
+  assert.throws(() => freeValenceSuffix(3), RangeError);
   assert.equal(commonGroupName('vinyl'), 'vinilo');
   assert.equal(commonGroupName('allyl'), 'alilo');
   assert.equal(commonGroupName('unknown'), null);

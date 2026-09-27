@@ -64,8 +64,10 @@ names the sections of this file it implements. The plan was reviewed by Codex
   `sec-butilo`) appear only in explanatory notes ("también se conoce como
   vinilo").
 - **Alternative names ("Otras formas válidas").** Whenever the molecule
-  contains an isopropyl group, the result also lists the name in the other
-  two accepted styles, each labelled:
+  contains an isopropyl group (or its doubly attached analogue, cited as
+  `isopropiliden` by default, `propan-2-iliden` in PIN style and
+  `1-metiletiliden` in the classic style), the result also lists the name in
+  the other two accepted styles, each labelled:
   - `5-(propan-2-il)nonano` — "nombre preferido por la IUPAC (2013)";
   - `5-(1-metiletil)nonano` — "forma sistemática clásica".
   Changing the prefix changes its alphabetical position (`i` vs `p` vs `m`),
@@ -195,13 +197,13 @@ nameMolecule(mol) →
     structure: NameStructure,       // language-neutral (§4.7)
     parent: { atoms: [id…] in locant order, bonds: [id…] },
     trace: [TraceStep…],
-    alternatives: [{ style, label, name, parts }] }   // §1.1; empty if no isopropyl group
+    alternatives: [{ style, label, name, parts }] }   // §1.1; empty if no isopropyl/isopropylidene group
 | { ok: false, error: { code, message } }
 ```
 
 `TraceStep = { rule, candidatesBefore, values, survivors, note? }` where each
 candidate is `{ atoms, direction?, key }` and `values` are the compared data
-(counts for P1–P4, locant lists for N1–N3, one locant list per prefix group
+(counts for P1–P4, locant lists for N1–N3, the prefix locants flattened
 in citation order for N4, the citation keys for N5, the atom-id tuple for
 the tie-break). Trace order: P1, P2, P3, N1, N2, P4, N3, N4, N5, TIE (N5
 only when the candidates left after N4 would give different names). Rules stop at the first one that leaves
@@ -253,8 +255,13 @@ point of difference — never by sums**:
    Skipped when all remaining candidates belong to one chain.
 8. **N3** all substituent prefixes together (an `-iliden` prefix contributes
    its parent attachment locant once).
-9. **N4** prefixes in citation (alphanumerical) order: locants of the first
-   cited prefix, then the second, … until a difference appears.
+9. **N4** prefixes in citation (alphanumerical) order: all prefix locants
+   written as one sequence in the order they appear in the name (not
+   sorted), compared term by term at the first point of difference
+   (P-31.1.4.3.4). The sequence is flat, never compared group by group:
+   chains with different prefix sets must compare the same way the names
+   read, e.g. `5,6-di(butan-2-il)-3,7-dimetilidennon-4-eno` (5,6,3,7) beats
+   `5-(butan-2-il)-6-(but-1-en-2-il)-7-metil-3-metilidennon-4-eno` (5,6,7,3).
 10. **N5** only when the survivors still give different names (different
    prefixes with the same locants, e.g. two chains each leaving a different
    group as substituent): the name that comes first in alphanumerical
@@ -303,9 +310,9 @@ Substituent chain selection:
   canonical key of the group (topology), never from name strings; common
   names (`vinilo`, `alilo`, `isobutilo`, `sec-butilo`) are exposed as the
   `commonName` id of the substituent structure, for explanations only.
-- A style whose name would need a nested `-iliden` group that the default
-  style avoids (e.g. `substituted` gives `1-metilidenbutil` where `pin`
-  gives `pent-1-en-2-il`) is left out of `alternatives` until phase 060.
+- A style may need a nested `-iliden` group that the default style avoids
+  (`substituted` gives `1-metilidenbutil` where `pin` gives
+  `pent-1-en-2-il`); it is named like any other group (phase I-6).
 - Naming: prefixes + stem + unsaturation + `il`/`iliden` with the free-valence
   locant: `propan-2-il`, `prop-2-en-1-il`, `prop-1-en-2-il`, `but-3-in-1-il`,
   `2-metilpropil`, `(2,2-dimetilpropil)`, `propan-2-iliden`. One- and
@@ -339,6 +346,20 @@ Under 2013 rules the longest chain wins even if a double bond leaves it.
 substituent, not counted in P2/P3/N1/N2, and its parent locant is part of the
 prefix locants (N3/N4).
 
+Decisions (phase I-6): a doubly attached group is named exactly like a singly
+attached one (§4.5: chain through the attachment atom, FV first) with a free
+valence of order 2 (`freeValence.order`), rendered `iliden`: `metiliden`,
+`etiliden`, `propiliden` (short form at a chain end), `(butan-2-iliden)`,
+`eteniliden` (=C=CH₂, no locants like `etenil`), `(prop-2-en-1-iliden)`.
+=C(CH₃)₂ is the retained `isopropiliden` in the default style only
+(alphabetised under **i**, simple prefix: `diisopropiliden`). It applies at any
+depth (`2-metilidenpentil`). A triple bond can never connect a substituent
+(the carrying atom would have no room for a branch), so orders 1 and 2 are
+the only ones. Common names for explanations only: `vinilideno`,
+`alilideno`, `isobutilideno`, `sec-butilideno`, `isopropilideno` (when not
+retained). In alphanumerical order `metil` precedes `metiliden` (shorter
+first when the letters coincide), and `etenil` precedes `etiliden`.
+
 ### 4.7 Name structure and rendering
 
 The engine produces a **language-neutral name structure** (parent length,
@@ -356,11 +377,10 @@ table.
 
 `tests/fixtures/names.tsv`: `SMILES <TAB> expected name <TAB> rule tested
 <TAB> justification <TAB> alternatives` (the last column: `style=name`
-pairs separated by `;`, empty when there are none). At least 150 rows by the end of phase 060, grouped by
-feature. A row whose `rule tested` starts with `pending(I-n)` is future
-work: phase I-n names it, and until then the test suite requires the
-engine to return `NOT_YET` for it (so a row can never be skipped silently;
-the implementing phase removes the marker). **Every row is a real SMILES and a justified name**; no fragments,
+pairs separated by `;`, empty when there are none). At least 150 rows
+(asserted by the test suite), grouped by feature. Every valid molecule is
+named, so no row may be marked `pending(I-n)` (the test suite rejects the
+marker). **Every row is a real SMILES and a justified name**; no fragments,
 no open questions. Mandatory rows (from the Codex review):
 
 | SMILES | Name | What it tests |

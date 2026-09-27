@@ -21,8 +21,12 @@
  * at the attachment atom (free valence at 1: `1-metiletil`,
  * `1,1-dimetiletil`). `tert-butil` is retained in 'isopropil' and 'pin'.
  *
- * Doubly-attached (`-iliden`) substituents, at any depth, are not named yet
- * (phase 060): their structure is null and the engine reports `NOT_YET`.
+ * Doubly-attached substituents (design.md §4.6), at any depth, are named the
+ * same way with the free valence of order 2 (`-iliden`: `metiliden`,
+ * `propan-2-iliden`, `1-metilidenbutil` nested); =C(CH₃)₂ is the retained
+ * `isopropiliden` in the 'isopropil' style. The connecting double bond is
+ * never part of a chain, so it counts in no P2/P3/N1/N2 comparison; the
+ * group is one prefix at one locant (P4, N3, N4).
  * Pure: topology only.
  */
 
@@ -53,6 +57,20 @@ const GROUP_SHAPES = Object.freeze({
 });
 
 /**
+ * Ids of the same shapes attached by a double bond (`-ilideno` groups):
+ * `isopropilideno` (retained in the 'isopropil' style), `vinilideno`
+ * (=C=CH₂), `alilideno`, `isobutilideno`, `sec-butilideno` (common names,
+ * explanations only). tert-butyl cannot be doubly attached.
+ */
+const YLIDENE_SHAPES = Object.freeze({
+  isopropyl: 'isopropylidene',
+  vinyl: 'vinylidene',
+  allyl: 'allylidene',
+  isobutyl: 'isobutylidene',
+  'sec-butyl': 'sec-butylidene',
+});
+
+/**
  * Creates the naming context shared by every substituent of one naming run
  * (one molecule, one prefix style). Named substituents are cached per
  * (carrying atom, attachment atom) pair.
@@ -61,7 +79,7 @@ const GROUP_SHAPES = Object.freeze({
  * @param {string} [style] - Prefix style: 'isopropil' (default), 'pin' or 'substituted'.
  * @param {object} [lexicon] - The lexicon (citation order depends on the prefix words).
  * @param {Map<number, object[]>} [adj] - Adjacency map (computed when omitted).
- * @returns {{mol: object, adj: Map<number, object[]>, style: string, lexicon: object, cache: Map<string, object|null>}} The context.
+ * @returns {{mol: object, adj: Map<number, object[]>, style: string, lexicon: object, cache: Map<string, object>}} The context.
  * @throws {RangeError} For an unknown style.
  */
 export function createNamingContext(mol, style = PREFIX_STYLES[0], lexicon = lexiconEs, adj = adjacency(mol)) {
@@ -188,7 +206,7 @@ function countBonds(adj, atoms, test) {
  * @param {object} ctx - Naming context (createNamingContext).
  * @param {number[]} chainAtoms - The chain's atom ids.
  * @param {number|null} [exclude] - An atom outside the chain that is not a substituent (the carrying atom of a substituent chain).
- * @returns {{chainAtom: number, attachAtom: number, bond: number, order: number, atoms: number[], bonds: number[], key: string, structure: object|null, citation: object|null}[]} One entry per substituent, in chain order then attachment-atom order.
+ * @returns {{chainAtom: number, attachAtom: number, bond: number, order: number, atoms: number[], bonds: number[], key: string, structure: object, citation: object}[]} One entry per substituent, in chain order then attachment-atom order.
  */
 export function substituentsOf(ctx, chainAtoms, exclude = null) {
   const inChain = new Set(chainAtoms);
@@ -199,7 +217,7 @@ export function substituentsOf(ctx, chainAtoms, exclude = null) {
         continue;
       }
       const subtree = substituentSubtree(ctx.adj, chainAtom, n.atom);
-      const structure = n.order === 1 ? nameSubstituentIn(ctx, chainAtom, n.atom) : null;
+      const structure = nameSubstituentIn(ctx, chainAtom, n.atom, n.order);
       result.push({
         chainAtom,
         attachAtom: n.atom,
@@ -209,7 +227,7 @@ export function substituentsOf(ctx, chainAtoms, exclude = null) {
         bonds: subtree.bonds,
         key: ATTACH_SYMBOL[n.order] + rootedTreeKey(ctx.mol, n.atom, chainAtom, ctx.adj),
         structure,
-        citation: structure ? citationKey(structure, ctx.lexicon) : null,
+        citation: citationKey(structure, ctx.lexicon),
       });
     } // End of the loop over the neighbours of one chain atom
   } // End of the loop over the chain atoms
@@ -270,36 +288,43 @@ export function groupPrefixes(substituents, atoms) {
 } // End of function groupPrefixes()
 
 /**
- * Names the substituent that starts at `attachAtom` (singly attached to
- * `chainAtom`) under the context's style, or returns null when it contains
- * a doubly-attached group (not named before phase 060). Results are cached
- * in the context.
+ * Names the substituent that starts at `attachAtom` (attached to `chainAtom`
+ * by a bond of the given order) under the context's style. Results are
+ * cached in the context.
  *
  * @param {object} ctx - Naming context (createNamingContext).
  * @param {number} chainAtom - The carrying atom.
  * @param {number} attachAtom - The attachment atom.
- * @returns {object|null} The SubstituentStructure (structure.js), or null.
+ * @param {number} order - Order of the connecting bond (1 → `-il`, 2 → `-iliden`).
+ * @returns {object} The SubstituentStructure (structure.js).
  */
-function nameSubstituentIn(ctx, chainAtom, attachAtom) {
+function nameSubstituentIn(ctx, chainAtom, attachAtom, order) {
   const cacheKey = `${chainAtom}>${attachAtom}`;
   if (!ctx.cache.has(cacheKey)) {
-    ctx.cache.set(cacheKey, buildSubstituent(ctx, chainAtom, attachAtom));
+    ctx.cache.set(cacheKey, buildSubstituent(ctx, chainAtom, attachAtom, order));
   }
   return ctx.cache.get(cacheKey);
 }
 
 /**
- * Builds the structure of a singly attached substituent (the body of
- * nameSubstituentIn): chooses its chain (P1–P3, then the numbering cascade
- * with the free valence first), groups its own substituents and flags
- * retained and common names.
+ * Builds the structure of a substituent (the body of nameSubstituentIn):
+ * chooses its chain (P1–P3, then the numbering cascade with the free
+ * valence first), groups its own substituents and flags retained and common
+ * names. The connecting bond is outside the subtree, so it never counts as
+ * a multiple bond of the substituent chain; its order is the order of the
+ * free valence (2 → `-iliden`).
  *
  * @param {object} ctx - Naming context.
  * @param {number} chainAtom - The carrying atom.
  * @param {number} attachAtom - The attachment atom.
- * @returns {object|null} The SubstituentStructure, or null when a nested group cannot be named yet.
+ * @param {number} order - Order of the connecting bond (1 or 2).
+ * @returns {object} The SubstituentStructure.
+ * @throws {Error} For a connecting bond of another order (a triple bond cannot leave a chain).
  */
-function buildSubstituent(ctx, chainAtom, attachAtom) {
+function buildSubstituent(ctx, chainAtom, attachAtom, order) {
+  if (order !== 1 && order !== 2) {
+    throw new Error(`buildSubstituent: attachment bond of order ${order}`);
+  }
   const { adj, style } = ctx;
   let chains = substituentChainCandidates(adj, chainAtom, attachAtom, style === 'substituted');
   chains = keepMax(chains, (c) => c.length);
@@ -310,17 +335,16 @@ function buildSubstituent(ctx, chainAtom, attachAtom) {
   const nameKey = nameKeyFunction([...subsByChain.values()], ctx.lexicon);
   const numbering = numberParent(ctx.mol, chains, prefixesOf, { adj, freeValenceAtom: attachAtom, nameKey });
   const subs = subsByChain.get(chains[numbering.chainIndex]);
-  if (numbering.unsupported || subs.some((sub) => !sub.structure)) {
-    return null;
-  }
   const subtree = substituentSubtree(adj, chainAtom, attachAtom);
-  const shape = GROUP_SHAPES[rootedTreeKey(ctx.mol, attachAtom, chainAtom, adj)] || null;
-  const retained = (shape === 'isopropyl' && style === 'isopropil') || (shape === 'tert-butyl' && style !== 'substituted')
+  const singleShape = GROUP_SHAPES[rootedTreeKey(ctx.mol, attachAtom, chainAtom, adj)] || null;
+  const shape = order === 2 ? YLIDENE_SHAPES[singleShape] || null : singleShape;
+  const retained = ((shape === 'isopropyl' || shape === 'isopropylidene') && style === 'isopropil')
+    || (shape === 'tert-butyl' && style !== 'substituted')
     ? shape : null;
   return {
     chain: buildChainStructure(numbering.atoms, numbering.bonds, numbering.orders),
     prefixes: groupPrefixes(subs, numbering.atoms),
-    freeValence: { locant: numbering.atoms.indexOf(attachAtom) + 1, order: 1 },
+    freeValence: { locant: numbering.atoms.indexOf(attachAtom) + 1, order },
     retained,
     commonName: retained ? null : shape,
     atoms: subtree.atoms,
@@ -336,12 +360,12 @@ function buildSubstituent(ctx, chainAtom, attachAtom) {
  * @param {number} chainAtom - The carrying chain atom.
  * @param {number} attachAtom - The substituent atom bonded to it.
  * @param {string} [style] - Prefix style (default 'isopropil').
- * @returns {object|null} The SubstituentStructure, or null for a doubly-attached group (at any depth).
+ * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`), or null when the two atoms are not bonded.
  */
 export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLES[0]) {
   const ctx = createNamingContext(mol, style);
   const link = ctx.adj.get(chainAtom).find((n) => n.atom === attachAtom);
-  return link && link.order === 1 ? nameSubstituentIn(ctx, chainAtom, attachAtom) : null;
+  return link ? nameSubstituentIn(ctx, chainAtom, attachAtom, link.order) : null;
 }
 
 /**

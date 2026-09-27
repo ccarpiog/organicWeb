@@ -95,7 +95,8 @@ function token(text, kind) {
  * Tells whether a substituent prefix is enclosed in parentheses, i.e.
  * contains its own locants or its own substituents (design.md §4.5):
  * `(propan-2-il)`, `(prop-2-en-1-il)`, `(2-metilpropil)`. Unenclosed:
- * `metil`, `propil`, `etenil`, `etinil`, `isopropil`, `tert-butil`.
+ * `metil`, `propil`, `etenil`, `etinil`, `metiliden`, `etiliden`,
+ * `eteniliden`, `isopropil`, `isopropiliden`, `tert-butil`.
  * Enclosure does not decide the multiplier (see isCompoundPrefix()).
  *
  * @param {object} substituent - The substituent structure.
@@ -200,11 +201,13 @@ function locantTokens(locants) {
 /**
  * Tokens of a substituent prefix as cited inside a name, without its
  * enclosing marks and grouping multiplier (design.md §4.5): nested prefixes,
- * stem, unsaturation segments and the free valence — `propil`,
- * `propan-2-il`, `2-metilprop-1-en-1-il`, `etenil`, `buta-1,3-dien-1-il` —
- * or a retained prefix (`isopropil`, `tert-butil`). A saturated group with
- * the free valence at locant 1 uses the short form (`propil`,
- * `2-metilpropil`); one- and two-carbon groups cite no locant.
+ * stem, unsaturation segments and the free valence (`il` for a single
+ * attachment bond, `iliden` for a double one) — `propil`, `propan-2-il`,
+ * `2-metilprop-1-en-1-il`, `etenil`, `buta-1,3-dien-1-il`, `metiliden`,
+ * `propan-2-iliden`, `eteniliden` — or a retained prefix (`isopropil`,
+ * `isopropiliden`, `tert-butil`). A saturated group with the free valence at
+ * locant 1 uses the short form (`propil`, `propiliden`, `2-metilpropil`);
+ * one- and two-carbon groups cite no locant.
  *
  * @param {object} substituent - The substituent structure (structure.js SubstituentStructure).
  * @param {object} lexicon - The lexicon.
@@ -227,7 +230,7 @@ function substituentTokens(substituent, lexicon) {
   const segments = lexicon.segmentOrder
     .map((kind) => ({ kind, sites: chain[kind] }))
     .filter((segment) => segment.sites.length > 0);
-  const suffix = token(lexicon.freeValenceSuffix, 'ending');
+  const suffix = token(lexicon.freeValenceSuffix(freeValence.order), 'ending');
   if (segments.length === 0) {
     if (freeValence.locant === 1) {
       tokens.push(suffix);

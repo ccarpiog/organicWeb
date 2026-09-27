@@ -217,8 +217,27 @@ export function prefixForm(name) {
   return name.endsWith('o') ? name.slice(0, -1) : name;
 }
 
-/** Suffix of a singly attached substituent prefix (`propil`, `propan-2-il`). */
-export const FREE_VALENCE_SUFFIX = 'il';
+/**
+ * Suffixes of a substituent prefix by the order of its attachment bond:
+ * `il` for a single bond (`propil`, `propan-2-il`), `iliden` for a double
+ * bond (`metiliden`, `propan-2-iliden`) (IUPAC 2013 P-29.2).
+ */
+export const FREE_VALENCE_SUFFIXES = Object.freeze({ 1: 'il', 2: 'iliden' });
+
+/**
+ * Returns the suffix of a substituent prefix for its attachment bond order.
+ *
+ * @param {number} order - Attachment bond order: 1 or 2.
+ * @returns {string} 'il' or 'iliden'.
+ * @throws {RangeError} For any other order.
+ */
+export function freeValenceSuffix(order) {
+  const suffix = FREE_VALENCE_SUFFIXES[order];
+  if (!suffix) {
+    throw new RangeError(`freeValenceSuffix: unsupported attachment order ${order}`);
+  }
+  return suffix;
+}
 
 /** Infix between the stem and a cited free-valence locant of a saturated group (`propan-2-il`). */
 export const SATURATED_INFIX = 'an';
@@ -230,6 +249,7 @@ export const SATURATED_INFIX = 'an';
  */
 export const RETAINED_PREFIXES = Object.freeze({
   isopropyl: Object.freeze({ italic: '', text: 'isopropil' }),
+  isopropylidene: Object.freeze({ italic: '', text: 'isopropiliden' }),
   'tert-butyl': Object.freeze({ italic: 'tert-', text: 'butil' }),
 });
 
@@ -245,6 +265,11 @@ export const COMMON_GROUP_NAMES = Object.freeze({
   'sec-butyl': 'sec-butilo',
   isopropyl: 'isopropilo',
   'tert-butyl': 'tert-butilo',
+  vinylidene: 'vinilideno',
+  allylidene: 'alilideno',
+  isobutylidene: 'isobutilideno',
+  'sec-butylidene': 'sec-butilideno',
+  isopropylidene: 'isopropilideno',
 });
 
 /** Enclosing marks for compound prefixes, innermost first: ( ), then [ ], then { } (IUPAC 2013 P-16.5.4). */
@@ -276,7 +301,7 @@ export function substituentUnsaturationEnding(kind) {
 /**
  * Returns a retained substituent prefix.
  *
- * @param {string} id - Retained-name id ('isopropyl' or 'tert-butyl').
+ * @param {string} id - Retained-name id ('isopropyl', 'isopropylidene' or 'tert-butyl').
  * @returns {{italic: string, text: string}} The italic descriptor ('' if none) and the alphabetised text.
  * @throws {Error} For an unknown id.
  */
@@ -310,7 +335,7 @@ export function styleLabel(style) {
 
 /** The Spanish lexicon, as consumed by render.js. */
 export const lexiconEs = Object.freeze({
-  freeValenceSuffix: FREE_VALENCE_SUFFIX,
+  freeValenceSuffix,
   saturatedInfix: SATURATED_INFIX,
   enclosingMarks: ENCLOSING_MARKS,
   substituentUnsaturationEnding,

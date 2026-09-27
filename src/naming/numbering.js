@@ -12,7 +12,13 @@
  *   N2 double bonds;
  *   P4 most substituent prefixes (a chain-level count, direction-independent);
  *   N3 all substituent prefixes together;
- *   N4 prefixes in citation (alphanumerical) order, group by group;
+ *   N4 the prefix locants in citation (alphanumerical) order, flattened into
+ *      one sequence (not sorted) — the order in which they are written in
+ *      the name — compared term by term (IUPAC 2013 P-31.1.4.3.4). Candidates
+ *      from different chains may carry different prefix sets
+ *      (`5,6-di(butan-2-il)-3,7-dimetiliden…` gives 5,6,3,7 and beats
+ *      `5-(butan-2-il)-6-(but-1-en-2-il)-7-metil-3-metiliden…`, 5,6,7,3), so the
+ *      comparison is never group by group;
  *   N5 only when the survivors still give different names: the name that
  *      comes first in alphanumerical order, compared as a whole — all
  *      letters of the prefixes (multipliers included), then all locants
@@ -33,11 +39,13 @@ export const TIE_NOTE = 'Las dos opciones dan el mismo nombre.';
 
 /**
  * Compares two locant lists term by term, numerically, at the first point
- * of difference. Both lists must already be sorted ascending; repeated
- * locants are kept. If one list is a prefix of the other, the shorter wins.
+ * of difference. For N1–N3 both lists are sorted ascending; for N4 they are
+ * the prefix locants in citation order, deliberately not sorted (IUPAC 2013
+ * P-31.1.4.3.4). Repeated locants are kept. If one list is a prefix of the
+ * other, the shorter wins.
  *
- * @param {number[]} a - First sorted locant list.
- * @param {number[]} b - Second sorted locant list.
+ * @param {number[]} a - First locant list.
+ * @param {number[]} b - Second locant list.
  * @returns {number} Negative when `a` is lower, positive when `b` is lower, 0 when equal.
  */
 export function compareLocantLists(a, b) {
@@ -45,25 +53,6 @@ export function compareLocantLists(a, b) {
   for (let i = 0; i < n; i += 1) {
     if (a[i] !== b[i]) {
       return a[i] - b[i];
-    }
-  }
-  return a.length - b.length;
-}
-
-/**
- * Compares two lists of locant lists (N4): the first lists are compared with
- * compareLocantLists, then the second ones, … until a difference appears.
- *
- * @param {number[][]} a - First candidate's locant lists, in citation order.
- * @param {number[][]} b - Second candidate's locant lists, in citation order.
- * @returns {number} Negative when `a` is lower, positive when `b` is lower, 0 when equal.
- */
-export function compareLocantGroups(a, b) {
-  const n = Math.min(a.length, b.length);
-  for (let i = 0; i < n; i += 1) {
-    const diff = compareLocantLists(a[i], b[i]);
-    if (diff !== 0) {
-      return diff;
     }
   }
   return a.length - b.length;
@@ -120,7 +109,7 @@ function defaultNameKey(groups) {
  *
  * @param {string} rule - Rule id, e.g. 'N1'.
  * @param {object[]} candidates - Candidates `{atoms, direction, key}`.
- * @param {Array<number[]|number[][]>} values - Compared value of each candidate (same order).
+ * @param {Array<number[]|object[]>} values - Compared value of each candidate (same order).
  * @param {function(*, *): number} [compare] - Comparator (default: compareLocantLists).
  * @returns {{step: object, survivors: object[]}} The trace step and the surviving candidates.
  */
@@ -142,17 +131,13 @@ export function applyLocantRule(rule, candidates, values, compare = compareLocan
 } // End of function applyLocantRule()
 
 /**
- * Deep-copies a compared value (a locant list, a list of locant lists or a
- * list of citation keys).
+ * Deep-copies a compared value (a locant list or a list of citation keys).
  *
- * @param {Array<number|number[]|object>} value - The value.
- * @returns {Array<number|number[]|object>} An independent copy.
+ * @param {Array<number|object>} value - The value.
+ * @returns {Array<number|object>} An independent copy.
  */
 function copyValue(value) {
   return value.map((item) => {
-    if (Array.isArray(item)) {
-      return [...item];
-    }
     return item && typeof item === 'object' ? { ...item, numeric: [...item.numeric] } : item;
   });
 }
@@ -233,9 +218,9 @@ function bondLocants(orders, test) {
  * Locants of every prefix of a numbered candidate, grouped by identity and
  * ordered by citation (alphanumerical) order.
  *
- * @param {{atom: number, key: string, citation: object|null}[]} prefixes - The chain's prefixes.
+ * @param {{atom: number, key: string, citation: object}[]} prefixes - The chain's prefixes.
  * @param {Map<number, number>} locantOf - Atom id → locant in this candidate.
- * @returns {{all: number[], groups: {key: string, citation: object|null, locants: number[]}[]}} All prefix locants (sorted) and the groups in citation order.
+ * @returns {{all: number[], groups: {key: string, citation: object, locants: number[]}[]}} All prefix locants (sorted) and the groups in citation order.
  */
 function prefixLocants(prefixes, locantOf) {
   const byKey = new Map();
@@ -247,9 +232,7 @@ function prefixLocants(prefixes, locantOf) {
   }
   const groups = [...byKey.values()];
   groups.forEach((group) => group.locants.sort((p, q) => p - q));
-  if (groups.every((group) => group.citation)) {
-    groups.sort((g, h) => compareCitationKeys(g.citation, h.citation) || (g.key < h.key ? -1 : 1));
-  }
+  groups.sort((g, h) => compareCitationKeys(g.citation, h.citation) || (g.key < h.key ? -1 : 1));
   const all = prefixes.map((prefix) => locantOf.get(prefix.atom)).sort((p, q) => p - q);
   return { all, groups };
 } // End of function prefixLocants()
@@ -311,17 +294,13 @@ function applySubstituentCountRule(candidates, counts) {
  * keys from `options.nameKey` (called with a candidate's groups
  * `{key, citation, locants}` in citation order). With `freeValenceAtom`
  * (a substituent chain) the FV rule — lowest locant for that atom — comes
- * first.
- *
- * The result is `unsupported` when N4 must compare a prefix the engine cannot
- * name yet (no citation key), or when candidates left for the tie-break would
- * still give different names; the caller then reports `NOT_YET`.
+ * first. Candidates left for the tie-break give the same name.
  *
  * @param {object} mol - A validated acyclic hydrocarbon.
  * @param {number[][]} chains - The remaining chains (atom-id paths).
- * @param {function(number[]): {atom: number, key: string, citation: ({alpha: string, numeric: number[]}|null)}[]} [prefixesOf] - Prefixes of a chain (called with each array of `chains`): carrying atom, identity key and citation key (null when it cannot be named yet).
+ * @param {function(number[]): {atom: number, key: string, citation: {alpha: string, numeric: number[]}}[]} [prefixesOf] - Prefixes of a chain (called with each array of `chains`): carrying atom, identity key and citation key.
  * @param {{adj?: Map<number, object[]>, freeValenceAtom?: number, nameKey?: function(object[]): {alpha: string, numeric: number[]}}} [options] - Precomputed adjacency; attachment atom of a substituent chain (enables FV); complete-name key of a candidate's groups (N5).
- * @returns {{atoms: number[], bonds: number[], orders: number[], direction: string, key: string, chainIndex: number, trace: object[], unsupported: boolean}} The chosen numbering and its trace.
+ * @returns {{atoms: number[], bonds: number[], orders: number[], direction: string, key: string, chainIndex: number, trace: object[]}} The chosen numbering and its trace.
  */
 export function numberParent(mol, chains, prefixesOf = () => [], options = {}) {
   const adj = options.adj || adjacency(mol);
@@ -347,10 +326,9 @@ export function numberParent(mol, chains, prefixesOf = () => [], options = {}) {
     { rule: 'N2', value: (d) => bondLocants(d.orders, (order) => order === 2) },
     { rule: 'P4' },
     { rule: 'N3', value: (d) => d.all, skip: !hasPrefixes },
-    { rule: 'N4', value: (d) => d.groups.map((g) => g.locants), skip: !hasPrefixes, compare: compareLocantGroups },
+    { rule: 'N4', value: (d) => d.groups.flatMap((g) => g.locants), skip: !hasPrefixes },
   ];
   const trace = [];
-  let unsupported = false;
   for (const { rule, value, skip, compare } of rules) {
     if (candidates.length < 2 || skip) {
       continue;
@@ -363,10 +341,6 @@ export function numberParent(mol, chains, prefixesOf = () => [], options = {}) {
       }
       continue;
     }
-    if (rule === 'N4' && candidates.some((c) => data.get(c.key).groups.some((g) => !g.citation))) {
-      unsupported = true; // Citation order of a prefix not named yet.
-      break;
-    }
     const { step, survivors } = applyLocantRule(rule, candidates, candidates.map((c) => value(data.get(c.key))), compare);
     trace.push(step);
     candidates = survivors;
@@ -375,15 +349,14 @@ export function numberParent(mol, chains, prefixesOf = () => [], options = {}) {
     const first = data.get(candidates[0].key).groups;
     return candidates.some((c) => !sameGroups(data.get(c.key).groups, first));
   };
-  if (!unsupported && candidates.length > 1 && differ()) {
+  if (candidates.length > 1 && differ()) {
     const nameKey = options.nameKey || defaultNameKey;
     const values = candidates.map((c) => [nameKey(data.get(c.key).groups)]);
     const { step, survivors } = applyLocantRule('N5', candidates, values, (a, b) => compareCitationKeys(a[0], b[0]));
     trace.push(step);
     candidates = survivors;
   }
-  if (!unsupported && candidates.length > 1) {
-    unsupported = differ();
+  if (candidates.length > 1) {
     const { step, survivors } = applyLocantRule('TIE', candidates, candidates.map((c) => c.atoms));
     step.note = TIE_NOTE;
     trace.push(step);
@@ -399,6 +372,5 @@ export function numberParent(mol, chains, prefixesOf = () => [], options = {}) {
     key: chosen.key,
     chainIndex: chosen.chainIndex,
     trace,
-    unsupported,
   };
 } // End of function numberParent()

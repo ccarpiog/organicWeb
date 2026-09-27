@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T11:53:15Z",
+ "updated": "2026-09-27T12:13:49Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
@@ -52,8 +52,11 @@
   {
    "id": "I-6",
    "title": "Naming: ylidene groups and fixtures",
-   "status": "queued",
-   "summary": "Names double-bond-attached iliden substituents, removes NOT_YET paths and grows fixtures to 150+."
+   "status": "done",
+   "summary": "Names doubly attached -iliden substituents at any depth, removes every unsupported path and grows the fixture set to 176 justified rows.",
+   "risk": "high",
+   "review": "docs/reviews/I-6.md",
+   "narrative": "docs/progress-archive/i-6.md"
   },
   {
    "id": "I-7",

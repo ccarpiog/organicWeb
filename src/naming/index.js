@@ -11,9 +11,11 @@
  *
  * The prefix style (design.md §1.1) changes prefix names, hence citation
  * order and N4; each style is a full re-run of prefix naming and numbering,
- * never a text substitution. When the molecule contains an isopropyl group,
- * `alternatives` holds the names in the other two styles. Doubly-attached
- * (`-iliden`) substituents return a `NOT_YET` error until phase 060.
+ * never a text substitution. When the molecule contains an isopropyl or
+ * isopropylidene group, `alternatives` holds the names in the other two
+ * styles. Doubly-attached (`-iliden`) substituents are named at any depth
+ * (design.md §4.6): every valid acyclic hydrocarbon within the size caps
+ * gets a name.
  */
 
 import { validateForNaming } from '../model/validate.js';
@@ -25,26 +27,11 @@ import { buildChainStructure, buildNameStructure } from './structure.js';
 import { renderName } from './render.js';
 import { lexiconEs } from './lexicon.es.js';
 
-/** Error for input the engine cannot name yet (doubly-attached `-iliden` substituents). */
-export const NOT_YET_ERROR = Object.freeze({
-  code: 'NOT_YET',
-  message: 'Todavía no sé nombrar este tipo de rama. De momento no sé nombrar ramas unidas a la cadena por un doble enlace (como metiliden).',
-});
-
 /** Error for an unexpected engine failure (a bug); nameMolecule never throws. */
 export const INTERNAL_ERROR = Object.freeze({
   code: 'INTERNAL',
   message: 'Algo ha fallado al nombrar esta molécula. Prueba a dibujarla de nuevo.',
 });
-
-/**
- * Builds a failure result with the NOT_YET error.
- *
- * @returns {{ok: false, error: {code: string, message: string}}} The failure.
- */
-function notYet() {
-  return { ok: false, error: { ...NOT_YET_ERROR } };
-}
 
 /**
  * Names a molecule. Never throws: every input gets a name or a structured
@@ -67,12 +54,15 @@ export function nameMolecule(mol, options = {}) {
  * Tells whether a name structure cites a retained prefix, at any depth.
  *
  * @param {{prefixes: object[]}} structure - A name or substituent structure.
- * @param {string} id - Retained-name id, e.g. 'isopropyl'.
- * @returns {boolean} True when some prefix (or nested prefix) is that retained group.
+ * @param {string[]} ids - Retained-name ids, e.g. ['isopropyl', 'isopropylidene'].
+ * @returns {boolean} True when some prefix (or nested prefix) is one of those retained groups.
  */
-export function hasRetainedPrefix(structure, id) {
-  return structure.prefixes.some((group) => group.substituent.retained === id || hasRetainedPrefix(group.substituent, id));
+export function hasRetainedPrefix(structure, ids) {
+  return structure.prefixes.some((group) => ids.includes(group.substituent.retained) || hasRetainedPrefix(group.substituent, ids));
 }
+
+/** Retained prefixes whose presence triggers the alternative names (design.md §1.1). */
+const STYLE_DEPENDENT_PREFIXES = Object.freeze(['isopropyl', 'isopropylidene']);
 
 /**
  * Names a validated molecule under one prefix style: substituents,
@@ -82,7 +72,7 @@ export function hasRetainedPrefix(structure, id) {
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {{chains: number[][], trace: object[]}} selection - Result of selectParent().
  * @param {string} style - Prefix style.
- * @returns {object} The naming result without `alternatives`, or the NOT_YET failure.
+ * @returns {object} The naming result without `alternatives`.
  */
 function nameWithStyle(mol, adj, selection, style) {
   const ctx = createNamingContext(mol, style, lexiconEs, adj);
@@ -101,9 +91,6 @@ function nameWithStyle(mol, adj, selection, style) {
   const nameKey = nameKeyFunction([...substituentsByChain.values()], lexiconEs);
   const numbering = numberParent(mol, selection.chains, prefixesOf, { adj, nameKey });
   const substituents = substituentsByChain.get(selection.chains[numbering.chainIndex]);
-  if (numbering.unsupported || substituents.some((sub) => !sub.structure)) {
-    return notYet();
-  }
   const parent = buildChainStructure(numbering.atoms, numbering.bonds, numbering.orders);
   const structure = buildNameStructure({ parent, prefixes: groupPrefixes(substituents, numbering.atoms) });
   const { name, parts } = renderName(structure, lexiconEs);
@@ -120,10 +107,10 @@ function nameWithStyle(mol, adj, selection, style) {
 /**
  * Validates and names a molecule (the body of nameMolecule, which may throw
  * only on an internal bug). When the default-style name contains
- * `isopropil`, the names in the other two styles are added as
- * `alternatives`, each from its own run of prefix naming and numbering (a
- * style that would need a nested `-iliden` group is left out until phase
- * 060).
+ * `isopropil` or `isopropiliden`, the names in the other two styles are
+ * added as `alternatives`, each from its own run of prefix naming and
+ * numbering (a style may need a nested `-iliden` group that the others
+ * avoid: `1-metilidenbutil` vs `pent-1-en-2-il`).
  *
  * @param {object} mol - The molecule to name.
  * @param {object} options - Naming options (see nameMolecule).
@@ -142,9 +129,6 @@ function nameValidated(mol, options) {
   const adj = adjacency(mol);
   const selection = selectParent(mol);
   const main = nameWithStyle(mol, adj, selection, style);
-  if (!main.ok) {
-    return main;
-  }
   const byStyle = new Map([[style, main]]);
   const named = (s) => {
     if (!byStyle.has(s)) {
@@ -154,17 +138,11 @@ function nameValidated(mol, options) {
   };
   const alternatives = [];
   const reference = named(PREFIX_STYLES[0]);
-  if (reference.ok && hasRetainedPrefix(reference.structure, 'isopropyl')) {
+  if (hasRetainedPrefix(reference.structure, STYLE_DEPENDENT_PREFIXES)) {
     for (const other of PREFIX_STYLES.filter((s) => s !== style)) {
       const result = named(other);
-      if (!result.ok) {
-        // The 'substituted' style can need a nested -iliden group that the
-        // other styles avoid (`1-metilidenbutil` vs `pent-1-en-2-il`);
-        // -iliden groups are named from phase 060 on.
-        continue;
-      }
       alternatives.push({ style: other, label: lexiconEs.styleLabel(other), name: result.name, parts: result.parts });
     }
-  } // End of the alternatives for a molecule with an isopropyl group
+  } // End of the alternatives for a molecule with an isopropyl or isopropylidene group
   return { ...main, alternatives };
 } // End of function nameValidated()

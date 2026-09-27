@@ -13,7 +13,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-3 | Naming engine I: contracts, lexicon, unbranched chains | `autoclaude/processed/030-naming-linear.md` | done — `docs/progress-archive/i-3.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-3.md` |
 | I-4 | Naming engine II: parent selection and numbering | `autoclaude/processed/040-naming-parent.md` | done — `docs/progress-archive/i-4.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-4.md` |
 | I-5 | Naming engine III: recursive preferred substituents | `autoclaude/processed/050-naming-substituents.md` | done — `docs/progress-archive/i-5.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-5.md` |
-| I-6 | Naming engine IV: iliden substituents and fixture set | `autoclaude/processed/060-naming-iliden-fixtures.md` | queued | — | — |
+| I-6 | Naming engine IV: iliden substituents and fixture set | `autoclaude/processed/060-naming-iliden-fixtures.md` | done — `docs/progress-archive/i-6.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-6.md` |
 | I-7 | OPSIN oracle and graph-invariance checks | `autoclaude/processed/070-oracle.md` | queued | — | — |
 | I-8 | Editor core | `autoclaude/processed/080-editor-core.md` | queued | — | — |
 | I-9 | Editor extras | `autoclaude/processed/090-editor-extras.md` | queued | — | — |
@@ -37,12 +37,11 @@ All twelve plan items are now queued; the inbox holds no plan items.
 
 ## Next action
 
-Poll the inbox (phase boundary), then execute I-6 (iliden substituents and
-fixture set) per `autoclaude/processed/060-naming-iliden-fixtures.md`. I-6
-must remove the remaining `pending(I-6)` rows and the last `NOT_YET` path
-(doubly attached `-iliden` groups, at any depth), and restore the
-`substituted` alternative that I-5 omits when it would need a nested iliden
-group (e.g. `1-metilidenbutil`).
+Poll the inbox (phase boundary), then execute I-7 (OPSIN oracle and
+graph-invariance checks) per `autoclaude/processed/070-oracle.md`. I-7 should
+confirm the IUPAC calls made from memory in I-5 and I-6 (lists in
+`docs/progress-archive/i-5.md` and `docs/progress-archive/i-6.md`, section
+Decisions) and fix any fixture it refutes.
 
 ## Key paths
 
@@ -55,10 +54,10 @@ group (e.g. `1-metilidenbutil`).
 - Model: `src/model/{molecule,graph,validate,smiles}.js` — `canonicalTreeKey`
   in graph.js; `validateStructure` / `validateForNaming` in validate.js.
 
-## Verification (last phase, I-5)
+## Verification (last phase, I-6)
 
-- `npm test` 0 (226 pass) · `npm run check` 0 · `npm run build` 0 ·
-  `npm run e2e` 0 (3 pass).
+- `npm test` 0 (285 pass) · `npm run check` 0 · `npm run build` 0 ·
+  `npm run e2e` 0 (3 pass) · `rg "NOT_YET|pending\(I-6\)" src tests` empty.
 
 ## Open risks / deviations
 
@@ -72,10 +71,15 @@ group (e.g. `1-metilidenbutil`).
   whole-name alphabetical tie-break; `propil`/`tert-butil` IUPAC findings from
   memory, not checked online (I-7's OPSIN oracle should confirm).
 
+- I-6 decisions from memory (isopropiliden, eteniliden, metil-before-metiliden
+  order, propiliden, di(butan-2-iliden), nested iliden names): see
+  `docs/progress-archive/i-6.md`; I-7's oracle should confirm. I-6 review
+  finding (N4 must compare one flattened citation-order locant sequence) fixed.
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-4 `59e1f97`, pushed. I-5 committed and pushed right after this
+- I-5 `a617e92`, pushed. I-6 committed and pushed right after this
   checkpoint (see `git log`).

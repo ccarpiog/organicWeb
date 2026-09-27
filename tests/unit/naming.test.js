@@ -1,7 +1,7 @@
 /**
- * @file Unit tests for the naming engine: every fixture row (unbranched and
- * branched; rows marked `pending(I-n)` must still return NOT_YET), P and N
- * trace steps, name parts with prefixes, error results, and the
+ * @file Unit tests for the naming engine: every fixture row (unbranched,
+ * branched, `-iliden`), P and N trace steps, name parts with prefixes, error
+ * results, a seeded property test over random molecules, and the
  * no-coordinates / no-DOM purity rule for src/naming/.
  */
 
@@ -24,15 +24,17 @@ import { bundleModules } from '../../scripts/build.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FIXTURES = path.join(ROOT, 'tests', 'fixtures', 'names.tsv');
-/** Marker of a fixture row that a later phase will name. */
-const PENDING = /^pending\((I-\d+)\)\s/;
+/** Marker of a fixture row left for a later phase (none may remain after phase I-6). */
+const PENDING = /^pending\((I-\d+)\)/;
+/** Minimum number of fixture rows (design.md §4.8, phase I-6). */
+const MIN_FIXTURE_ROWS = 150;
 
 /**
  * Reads the fixture table (design.md §4.8). Lines starting with `#` are
  * section headings; the first line is the column header.
  *
- * A row whose `rule_tested` starts with `pending(I-n)` is future work: phase
- * I-n names it, and until then the engine must return NOT_YET for it.
+ * A row whose `rule_tested` starts with `pending(I-n)` was future work; since
+ * phase I-6 every valid molecule is named, so no such row may remain.
  *
  * @returns {Promise<{line: number, smiles: string, name: string, rule: string, justification: string, alternatives: string, pending: string|null}[]>} The rows.
  */
@@ -70,6 +72,15 @@ test('fixture file has the §4.8 header and well-formed rows', async () => {
   }
 });
 
+test('fixture set: at least 150 rows, each with a rule and a non-empty justification, none pending', () => {
+  assert.ok(fixtureRows.length >= MIN_FIXTURE_ROWS, `only ${fixtureRows.length} fixture rows`);
+  for (const row of fixtureRows) {
+    assert.ok(row.rule.trim().length > 0, `line ${row.line} has no rule`);
+    assert.ok(row.justification.trim().length > 0, `line ${row.line} has no justification`);
+    assert.equal(row.pending, null, `line ${row.line} is still pending (${row.pending})`);
+  }
+});
+
 /**
  * Parses the `alternatives` fixture column (`style=name` pairs separated by `;`).
  *
@@ -85,14 +96,6 @@ function parseAlternatives(text) {
 
 for (const row of fixtureRows) {
   const mol = parseSmiles(row.smiles);
-  if (row.pending) {
-    test(`fixture line ${row.line}: ${row.smiles} is still pending (${row.pending})`, () => {
-      const result = nameMolecule(mol);
-      assert.equal(result.ok, false, `now named ${result.name}: remove the pending marker`);
-      assert.equal(result.error.code, 'NOT_YET');
-    });
-    continue;
-  }
   test(`fixture line ${row.line}: ${row.smiles} → ${row.name}`, () => {
     const result = nameMolecule(mol);
     assert.equal(result.ok, true, JSON.stringify(result.error));
@@ -147,6 +150,36 @@ test('all acceptance names of phase I-4 are covered by fixtures', () => {
   }
   const branched = named.filter((row) => !isUnbranched(parseSmiles(row.smiles)));
   assert.ok(branched.length >= 19, `only ${branched.length} branched rows`);
+});
+
+test('all acceptance names of phase I-6 are covered by fixtures', () => {
+  const bySmiles = new Map(fixtureRows.map((row) => [row.smiles, row]));
+  const expect = [
+    ['CCC(=C)CCC', '3-metilidenhexano', ''],
+    ['CCCC(=CC)CCC', '4-etilidenheptano', ''],
+    ['C=C(CCC)CCC', '4-metilidenheptano', ''],
+    ['CCCCC(=C(C)C)CCCC', '5-isopropilidennonano', 'pin=5-(propan-2-iliden)nonano;substituted=5-(1-metiletiliden)nonano'],
+    ['CCCCCCC(CC(=C)CCC)CCCCCC', '7-(2-metilidenpentil)tridecano', ''],
+  ];
+  for (const [smiles, name, alternatives] of expect) {
+    assert.ok(bySmiles.has(smiles), `missing fixture ${smiles}`);
+    assert.equal(bySmiles.get(smiles).name, name);
+    assert.equal(bySmiles.get(smiles).alternatives, alternatives);
+  }
+  assert.ok(fixtureRows.some((row) => row.alternatives.includes('1-metilidenbutil')), 'a nested -iliden alternative');
+  // Every mandatory row of design.md §4.8.
+  const mandatory = [
+    ['C=CC', 'propeno'], ['CC(C)C', '2-metilpropano'], ['C=CC(CCC)CCC', '4-etenilheptano'],
+    ['C#CC(CCC)CCC', '4-etinilheptano'], ['C=CCC(CCCC)CCCC', '5-(prop-2-en-1-il)nonano'],
+    ['CCC(=C)CCC', '3-metilidenhexano'], ['CCCC(=CC)CCC', '4-etilidenheptano'],
+    ['CCCCC(C(C)C)CCCC', '5-isopropilnonano'], ['CCCC(C)CC(C(C)C)CCC', '4-isopropil-6-metilnonano'],
+    ['CCC(C(C)C)CC', '3-etil-2-metilpentano'], ['CCC(CC)C(C)CC', '3-etil-4-metilhexano'],
+    ['CC(C)(C)C', '2,2-dimetilpropano'], ['C=CC=C', 'buta-1,3-dieno'], ['C=C=CC', 'buta-1,2-dieno'],
+    ['C#CC=CC', 'pent-3-en-1-ino'], ['C=CC=CC#C', 'hexa-1,3-dien-5-ino'], ['C=CC#CC#C', 'hex-1-en-3,5-diino'],
+  ];
+  for (const [smiles, name] of mandatory) {
+    assert.equal(bySmiles.get(smiles)?.name, name, `mandatory row ${smiles}`);
+  }
 });
 
 test('all acceptance names of phase I-5 are covered by fixtures', () => {
@@ -243,9 +276,21 @@ test('substituent structures: chain, free valence, retained and common names', (
   assert.deepEqual(sub.freeValence, { locant: 1, order: 1 });
   assert.equal(sub.chain.length, 2);
   assert.equal(sub.prefixes.length, 1);
-  // Doubly attached groups, directly or nested, are not named yet.
+  // Doubly attached groups: free valence of order 2.
   const mol = parseSmiles('CCC(=C)CCC');
-  assert.equal(nameSubstituent(mol, 3, 4), null);
+  const methylidene = nameSubstituent(mol, 3, 4);
+  assert.deepEqual(methylidene.freeValence, { locant: 1, order: 2 });
+  assert.equal(methylidene.chain.length, 1);
+  assert.equal(nameSubstituent(mol, 1, 6), null); // not bonded
+  const ylidene = (smiles, style) => nameMolecule(parseSmiles(smiles), { prefixStyle: style }).structure.prefixes[0].substituent;
+  assert.equal(ylidene('CCCCC(=C(C)C)CCCC').retained, 'isopropylidene');
+  assert.equal(ylidene('CCCCC(=C(C)C)CCCC', 'pin').retained, null);
+  assert.equal(ylidene('CCCCC(=C(C)C)CCCC', 'pin').commonName, 'isopropylidene');
+  assert.equal(ylidene('CCCCC(=C=C)CCCC').commonName, 'vinylidene');
+  assert.equal(ylidene('CCCCC(=CC=C)CCCC').commonName, 'allylidene');
+  assert.equal(ylidene('CCCCCC(=C(C)CC)CCCCC').commonName, 'sec-butylidene');
+  assert.equal(commonGroupName('isopropylidene'), 'isopropilideno');
+  assert.equal(commonGroupName('vinylidene'), 'vinilideno');
 });
 
 test('substituent chain candidates contain the attachment atom', () => {
@@ -276,12 +321,43 @@ test('N5 compares complete names, all letters before locants', () => {
   assert.equal(n5.survivors.length, 1);
 });
 
-test('a requested style is kept when the default style cannot name the molecule', () => {
-  const mol = parseSmiles('CCCC(C(CCCCC)CCCCC)C(C=C)=CC');
-  assert.equal(nameMolecule(mol).error.code, 'NOT_YET'); // default style needs an -iliden group
+test('-iliden groups are named at any depth, in every style', () => {
+  const nested = nameMolecule(parseSmiles('CCCC(C(CCCCC)CCCCC)C(C=C)=CC'));
+  assert.equal(nested.name, '6-(3-etilidenhept-1-en-4-il)undecano');
+  // Substituted style: only arms from the free valence; N1 [2] picks the but-2-en arm over [3].
+  const arms = nameMolecule(parseSmiles('CCCC(C(CCCCC)CCCCC)C(C=C)=CC'), { prefixStyle: 'substituted' });
+  assert.equal(arms.name, '6-(2-etenil-1-propilbut-2-en-1-il)undecano');
+  // The substituted alternative that needs a nested -iliden group (omitted before phase I-6).
+  const mol = parseSmiles('CCCCCC(C(C)C)C(C(=C)CCC)CCCCC');
+  const result = nameMolecule(mol);
+  assert.equal(result.name, '6-isopropil-7-(pent-1-en-2-il)dodecano');
+  assert.deepEqual(result.alternatives.map(({ style, name }) => [style, name]), [
+    ['pin', '6-(pent-1-en-2-il)-7-(propan-2-il)dodecano'],
+    ['substituted', '6-(1-metiletil)-7-(1-metilidenbutil)dodecano'],
+  ]);
   const substituted = nameMolecule(mol, { prefixStyle: 'substituted' });
-  assert.equal(substituted.ok, true, JSON.stringify(substituted.error));
-  assert.deepEqual(substituted.alternatives, []);
+  assert.equal(substituted.name, '6-(1-metiletil)-7-(1-metilidenbutil)dodecano');
+  assert.deepEqual(substituted.alternatives.map((a) => a.style), ['isopropil', 'pin']);
+});
+
+test('-iliden parts: the connecting bond is highlighted with the prefix and never in the parent', () => {
+  const mol = parseSmiles('CCC(=C)CCC');
+  const result = nameMolecule(mol);
+  assert.deepEqual(result.parts.map((p) => [p.text, p.kind]), [
+    ['3', 'locant'], ['-', 'punct'], ['metiliden', 'prefix'], ['hex', 'stem'], ['ano', 'ending'],
+  ]);
+  const connecting = [...mol.bonds.values()].find((b) => b.order === 2).id;
+  assert.deepEqual(result.parts[2].bonds, [connecting]);
+  assert.deepEqual(result.parts[2].atoms, [4]);
+  assert.ok(!result.parent.bonds.includes(connecting));
+  assert.deepEqual(result.structure.parent.double, []);
+  assert.deepEqual(result.structure.prefixes[0].locants.map((l) => [l.locant, l.order]), [[3, 2]]);
+  // P2/P3 ignore the connecting bond; P4 counts the group once.
+  const p4 = nameMolecule(parseSmiles('CC(C)C(=C)C(C)C')).trace.find((step) => step.rule === 'P4');
+  assert.deepEqual(p4.values, [3, 3, 3, 3]); // two methyls + one metiliden on every 5-C chain
+  const selection = nameMolecule(parseSmiles('CCC(=C)C(CC)CC'));
+  const p2 = selection.trace.find((step) => step.rule === 'P2');
+  assert.deepEqual(p2.values, [0, 0]);
 });
 
 test('N5: when N4 ties but the names differ, the earlier prefixes win', () => {
@@ -294,7 +370,6 @@ test('N5: when N4 ties but the names differ, the earlier prefixes win', () => {
   const n5 = result.trace.find((step) => step.rule === 'N5');
   assert.ok(n5, 'N5 applied');
   assert.equal(result.chainIndex, 1);
-  assert.equal(result.unsupported, false);
   assert.equal(result.trace.at(-1).rule, 'TIE');
 });
 
@@ -329,8 +404,8 @@ test('N3 and N4 steps compare locant lists term by term', () => {
 
   const n4case = nameMolecule(parseSmiles('CCCC(CC)C(C)CCC'));
   const n4 = n4case.trace.find((step) => step.rule === 'N4');
-  // Groups in citation order: etil, then metil.
-  assert.deepEqual(n4.values, [[[4], [5]], [[5], [4]]]);
+  // Prefix locants in citation order (etil, then metil), flattened.
+  assert.deepEqual(n4.values, [[4, 5], [5, 4]]);
   assert.equal(n4.survivors.length, 1);
   assert.equal(n4case.trace.at(-1).rule, 'N4');
   assert.equal(n4case.name, '4-etil-5-metiloctano');
@@ -420,16 +495,9 @@ test('structure is language-neutral data', () => {
   assert.ok(leaves.every((value) => typeof value === 'number'), 'structure holds only numbers');
 });
 
-test('invalid input and unsupported substituents return an error result', () => {
+test('invalid input returns an error result', () => {
   assert.equal(nameMolecule(createMolecule()).error.code, 'EMPTY');
   assert.equal(nameMolecule(null).error.code, 'INVALID');
-  // Only doubly-attached (-iliden) groups, at any depth, are not named yet.
-  for (const smiles of ['CCC(=C)CCC', 'CCCC(=CC)CCC', 'CCCCCCC(CC(=C)CCC)CCCCCC']) {
-    const result = nameMolecule(parseSmiles(smiles));
-    assert.equal(result.ok, false, smiles);
-    assert.equal(result.error.code, 'NOT_YET');
-    assert.ok(result.error.message.length > 0);
-  }
 });
 
 test('more than 30 identical prefixes use composed multipliers', () => {
@@ -441,46 +509,60 @@ test('more than 30 identical prefixes use composed multipliers', () => {
   assert.match(biggest.name, /^2,2,3,3,.*,20,20-octatriacontametilhenicosano$/);
 });
 
-test('random valid trees get a name or NOT_YET (only with a double bond), never an exception', () => {
+/**
+ * Builds a random valid acyclic hydrocarbon (seeded, deterministic): each new
+ * atom bonds to an earlier one with room for the bond (25 % double, 7 %
+ * triple bonds when possible).
+ *
+ * @param {function(): number} random - Seeded generator in [0, 1).
+ * @param {number} size - Number of carbon atoms.
+ * @returns {object} The molecule.
+ */
+function randomTree(random, size) {
+  const mol = createMolecule();
+  const valence = [0];
+  for (let i = 1; i <= size; i += 1) {
+    addAtom(mol);
+    valence.push(0);
+    if (i > 1) {
+      const r = random();
+      let order = r < 0.25 ? 2 : r < 0.32 ? 3 : 1;
+      let free = valence.map((v, a) => a).filter((a) => a >= 1 && a < i && valence[a] + order <= 4);
+      if (free.length === 0) {
+        order = 1; // a leaf always has room for a single bond
+        free = valence.map((v, a) => a).filter((a) => a >= 1 && a < i && valence[a] <= 3);
+      }
+      const other = free[Math.floor(random() * free.length)];
+      addBond(mol, other, i, order);
+      valence[other] += order;
+      valence[i] += order;
+    }
+  } // End of the loop that adds one atom per step
+  return mol;
+} // End of function randomTree()
+
+test('property: 500 random valid molecules are always named, in every style', () => {
   let seed = 12345;
   const random = () => {
     seed = (seed * 1103515245 + 12345) % 2147483648;
     return seed / 2147483648;
   };
-  let named = 0;
-  for (let t = 0; t < 3000; t += 1) {
-    const mol = createMolecule();
-    const size = 2 + Math.floor(random() * 14);
-    const valence = [0];
-    for (let i = 1; i <= size; i += 1) {
-      addAtom(mol);
-      valence.push(0);
-      if (i > 1) {
-        const r = random();
-        let order = r < 0.1 ? 2 : r < 0.13 ? 3 : 1;
-        let free = valence.map((v, a) => a).filter((a) => a >= 1 && a < i && valence[a] + order <= 4);
-        if (free.length === 0) {
-          order = 1; // a leaf always has room for a single bond
-          free = valence.map((v, a) => a).filter((a) => a >= 1 && a < i && valence[a] <= 3);
-        }
-        const other = free[Math.floor(random() * free.length)];
-        addBond(mol, other, i, order);
-        valence[other] += order;
-        valence[i] += order;
-      }
-    }
-    const result = nameMolecule(mol);
-    assert.ok(result.ok || result.error.code === 'NOT_YET', JSON.stringify(result.error));
-    if (!result.ok) {
-      // NOT_YET is reserved for doubly-attached substituents.
-      assert.ok([...mol.bonds.values()].some((bond) => bond.order === 2), 'NOT_YET without a double bond');
-    } else {
+  let ylidene = 0;
+  for (let t = 0; t < 500; t += 1) {
+    const mol = randomTree(random, 2 + Math.floor(random() * 29));
+    for (const prefixStyle of ['isopropil', 'pin', 'substituted']) {
+      let result;
+      assert.doesNotThrow(() => {
+        result = nameMolecule(mol, { prefixStyle });
+      });
+      assert.equal(result.ok, true, JSON.stringify(result.error));
+      assert.ok(typeof result.name === 'string' && result.name.length > 0);
       assert.equal(result.parts.map((p) => p.text).join(''), result.name);
       result.alternatives.forEach((alt) => assert.notEqual(alt.name, result.name));
+      ylidene += prefixStyle === 'isopropil' && result.name.includes('iliden') ? 1 : 0;
     }
-    named += result.ok ? 1 : 0;
   } // End of the loop that builds and names random trees
-  assert.ok(named > 2500);
+  assert.ok(ylidene > 50, `only ${ylidene} names with an -iliden group`);
 });
 
 test('naming ignores atom coordinates', () => {
@@ -528,13 +610,13 @@ test('naming modules bundle and run in a classic script', async () => {
       [
         "import { parseSmiles } from './model/smiles.js';",
         "import { nameMolecule } from './naming/index.js';",
-        "globalThis.__result = ['C=CC=CC#C', 'CCCC', 'C=C=C', 'CCCC(C)CC(C(C)C)CCC'].map((s) => nameMolecule(parseSmiles(s)).name).join(' ');",
+        "globalThis.__result = ['C=CC=CC#C', 'CCCC', 'C=C=C', 'CCCC(C)CC(C(C)C)CCC', 'CCC(=C)CCC'].map((s) => nameMolecule(parseSmiles(s)).name).join(' ');",
       ].join('\n'),
     );
     const code = await bundleModules(path.join(dir, 'entry.js'), dir);
     const context = {};
     vm.runInNewContext(code, context);
-    assert.equal(context.__result, 'hexa-1,3-dien-5-ino butano propadieno 4-isopropil-6-metilnonano');
+    assert.equal(context.__result, 'hexa-1,3-dien-5-ino butano propadieno 4-isopropil-6-metilnonano 3-metilidenhexano');
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

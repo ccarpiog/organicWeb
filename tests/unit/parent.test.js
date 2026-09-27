@@ -9,7 +9,7 @@ import { parseSmiles } from '../../src/model/smiles.js';
 import { leafToLeafPaths, selectParent, chainKey } from '../../src/naming/parent.js';
 import { collectSubstituents } from '../../src/naming/substituent.js';
 import {
-  compareLocantLists, compareLocantGroups, compareCitationKeys, numberParent,
+  compareLocantLists, compareCitationKeys, numberParent,
 } from '../../src/naming/numbering.js';
 
 test('compareLocantLists: first point of difference, never sums', () => {
@@ -20,12 +20,6 @@ test('compareLocantLists: first point of difference, never sums', () => {
   assert.ok(compareLocantLists([2, 4, 4], [2, 2, 4]) > 0);
   assert.ok(compareLocantLists([3, 3], [3, 3, 3]) < 0); // prefix list is lower
   assert.equal(compareLocantLists([2, 2, 3], [2, 2, 3]), 0);
-});
-
-test('compareLocantGroups compares group by group in citation order', () => {
-  assert.ok(compareLocantGroups([[3], [4]], [[4], [3]]) < 0);
-  assert.ok(compareLocantGroups([[3], [5, 5]], [[3], [4, 6]]) > 0);
-  assert.equal(compareLocantGroups([[2, 2], [4]], [[2, 2], [4]]), 0);
 });
 
 test('compareCitationKeys orders letters, then numeric parts', () => {
@@ -116,16 +110,41 @@ test('numberParent without prefixes keeps the I-3 behaviour', () => {
   const result = numberParent(parseSmiles('C=CCC'), [[1, 2, 3, 4]]);
   assert.deepEqual(result.atoms, [1, 2, 3, 4]);
   assert.deepEqual(result.trace.map((s) => s.rule), ['N1']);
-  assert.equal(result.unsupported, false);
+  assert.equal('unsupported' in result, false); // every prefix has a citation key since phase I-6
 });
 
-test('numberParent reports unsupported when N4 meets a prefix without citation key', () => {
-  const mol = parseSmiles('CCC(C)C(C)CC'); // 3,4-dimethylhexane skeleton
+test('numberParent: an -iliden prefix counts once in N3 and N4', () => {
+  const mol = parseSmiles('CCC(=C)C(C)CC'); // 3-metiliden-4-metilhexane skeleton
   const prefixesOf = () => [
-    { atom: 3, key: 'a', citation: null },
-    { atom: 5, key: 'b', citation: { alpha: 'metil', numeric: [] } },
+    { atom: 3, key: '=C()', citation: { alpha: 'metiliden', numeric: [] } },
+    { atom: 5, key: '-C()', citation: { alpha: 'metil', numeric: [] } },
   ];
   const result = numberParent(mol, [[1, 2, 3, 5, 7, 8]], prefixesOf);
-  assert.equal(result.unsupported, true);
-  assert.deepEqual(result.trace.map((s) => s.rule), ['N1', 'N2', 'N3']);
+  assert.deepEqual(result.trace.map((s) => s.rule), ['N1', 'N2', 'N3', 'N4']);
+  assert.deepEqual(result.trace[2].values, [[3, 4], [3, 4]]);
+  // metil is cited before metiliden, so it gets the lower locant.
+  assert.deepEqual(result.atoms, [8, 7, 5, 3, 2, 1]);
+});
+
+test('numberParent: N4 compares one flat citation-order sequence across chains', () => {
+  // Two 9-carbon chains of CCC(=C)C=C(C(C)CC)C(C(C)CC)C(=C)CC tie up to N3
+  // ([3,5,6,7]) but carry different prefix sets. Chain A cites butan-2-il (5),
+  // but-1-en-2-il (6), metil (7), metiliden (3); chain B cites the grouped
+  // di(butan-2-il) (5,6) and dimetiliden (3,7). Group by group, [5] < [5,6]
+  // would wrongly pick A; the flat sequences 5,6,7,3 vs 5,6,3,7 pick B.
+  const mol = parseSmiles('CCC(=C)C=C(C(C)CC)C(C(C)CC)C(=C)CC');
+  const chainA = [1, 2, 3, 5, 6, 11, 12, 14, 15];
+  const chainB = [1, 2, 3, 5, 6, 11, 16, 18, 19];
+  const prefix = (atom, key, alpha) => ({ atom, key, citation: { alpha, numeric: [] } });
+  const prefixesOf = (chain) => (chain === chainA
+    ? [prefix(3, 'metiliden', 'metiliden'), prefix(6, 'butanil', 'butanil'),
+      prefix(11, 'butenil', 'butenil'), prefix(12, 'metil', 'metil')]
+    : [prefix(3, 'metiliden', 'metiliden'), prefix(6, 'butanil', 'butanil'),
+      prefix(11, 'butanil', 'butanil'), prefix(16, 'metiliden', 'metiliden')]);
+  const result = numberParent(mol, [chainA, chainB], prefixesOf);
+  const n4 = result.trace.find((s) => s.rule === 'N4');
+  assert.deepEqual(n4.values, [[5, 6, 7, 3], [5, 6, 3, 7]]);
+  assert.equal(n4.survivors.length, 1);
+  assert.deepEqual(result.atoms, chainB);
+  assert.equal(result.trace.at(-1).rule, 'N4');
 });
