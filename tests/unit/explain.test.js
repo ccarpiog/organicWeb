@@ -1,0 +1,257 @@
+/**
+ * @file Unit tests for the explanation layer (design.md §5): snapshot tests
+ * of explain() for ~20 fixtures (tests/fixtures/explain-snapshots.json),
+ * formula counts against the model for every fixture, glossary markup, the
+ * outside-unsaturation sentence, the isopropyl names, locant-omission notes,
+ * the numbering comparison and the purity of src/explain/.
+ *
+ * Regenerate the snapshots after a deliberate text change with
+ * `UPDATE_SNAPSHOTS=1 npm test`, then review the diff.
+ */
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parseSmiles } from '../../src/model/smiles.js';
+import { formula } from '../../src/model/molecule.js';
+import { nameMolecule } from '../../src/naming/index.js';
+import {
+  explain, parseMarkup, plainText, joinY, firstDifference, atomCounts, GLOSSARY, STEP_TITLES,
+} from '../../src/explain/explain.js';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const FIXTURES = path.join(ROOT, 'tests', 'fixtures', 'names.tsv');
+const SNAPSHOTS = path.join(ROOT, 'tests', 'fixtures', 'explain-snapshots.json');
+
+/** Snapshot molecules (all rows of names.tsv), chosen to cover every kind of step. */
+const SNAPSHOT_SMILES = [
+  'C', // metano: one carbon, no chain step
+  'CCCCCC', // hexano: linear
+  'C=CC', // propeno: omitted locant
+  'C=C=C', // propadieno: omitted locants
+  'C=CC=C', // buta-1,3-dieno: connecting a
+  'C#CC=CC', // pent-3-en-1-ino: N1, en before ino
+  'CC(C)C', // 2-metilpropano: locant kept
+  'CC(C)C(CC)CCC', // 3-etil-2-metilhexano: branched
+  'CCC(C(C)C)CC', // 3-etil-2-metilpentano: P4 tie-break
+  'CCC(CC)C(C)CC', // 3-etil-4-metilhexano: N4
+  'CC(C)(C)C', // 2,2-dimetilpropano: symmetry, di
+  'C=CC(CCC)CCC', // 4-etenilheptano: double bond outside the parent
+  'C#CC(CCC)CCC', // 4-etinilheptano: triple bond outside the parent
+  'C=CC(C#C)CCC', // 3-etinilhex-1-eno: P3 tie-break leaves the triple bond out
+  'CCC(=C)CCC', // 3-metilidenhexano: iliden
+  'CCCC(=CC)CCC', // 4-etilidenheptano: two-carbon iliden
+  'CCCCC(C(C)C)CCCC', // 5-isopropilnonano: alternatives
+  'CCCC(C)CC(C(C)C)CCC', // 4-isopropil-6-metilnonano: alternatives, order
+  'CCCCC(=C(C)C)CCCC', // 5-isopropilidennonano: iliden alternatives
+  'CCCCC(C(C)(C)C)CCCC', // 5-tert-butilnonano: retained tert-butil
+  'CCCCC(CC(C)C)CCCC', // 5-(2-metilpropil)nonano: compound prefix, common name
+  'CCCCC(CC(C)(C)C)(CC(C)(C)C)CCCC', // 5,5-bis(2,2-dimetilpropil)nonano: bis, inner multiplier
+  'CCC(=C)C=C(C(C)CC)C(C(C)CC)C(=C)CC', // N1 then N4 across two chains
+];
+
+/**
+ * Reads the fixture table as SMILES → expected name.
+ *
+ * @returns {Promise<Map<string, string>>} The rows.
+ */
+async function readFixtures() {
+  const lines = (await readFile(FIXTURES, 'utf8')).split('\n').slice(1);
+  const rows = new Map();
+  for (const line of lines) {
+    if (line.trim() === '' || line.startsWith('#')) {
+      continue;
+    }
+    const [smiles, name] = line.split('\t');
+    rows.set(smiles, name);
+  }
+  return rows;
+}
+
+/**
+ * Names a SMILES string and explains it.
+ *
+ * @param {string} smiles - The molecule.
+ * @returns {{mol: object, result: object, steps: object[]}} Molecule, result and steps.
+ */
+function run(smiles) {
+  const mol = parseSmiles(smiles);
+  const result = nameMolecule(mol);
+  return { mol, result, steps: explain(result) };
+}
+
+test('explain() snapshots for ~20 fixtures', async () => {
+  const fixtures = await readFixtures();
+  const actual = {};
+  for (const smiles of SNAPSHOT_SMILES) {
+    assert.ok(fixtures.has(smiles), `${smiles} must be a row of names.tsv`);
+    const { result, steps } = run(smiles);
+    assert.equal(result.name, fixtures.get(smiles), smiles);
+    actual[smiles] = { name: result.name, steps };
+  }
+  if (process.env.UPDATE_SNAPSHOTS) {
+    await writeFile(SNAPSHOTS, `${JSON.stringify(actual, null, 1)}\n`);
+  }
+  const expected = JSON.parse(await readFile(SNAPSHOTS, 'utf8'));
+  assert.deepEqual(Object.keys(expected), SNAPSHOT_SMILES);
+  for (const smiles of SNAPSHOT_SMILES) {
+    assert.deepEqual(JSON.parse(JSON.stringify(actual[smiles])), expected[smiles], `snapshot of ${smiles}`);
+  }
+});
+
+test('every fixture: steps are well-formed and the formula matches the model', async () => {
+  const fixtures = await readFixtures();
+  const order = Object.keys(STEP_TITLES);
+  for (const smiles of fixtures.keys()) {
+    const { mol, result, steps } = run(smiles);
+    const { carbons, hydrogens } = atomCounts(result.structure);
+    assert.equal(`C${carbons === 1 ? '' : carbons}H${hydrogens}`, formula(mol), smiles);
+    assert.equal(steps[0].id, 'count');
+    assert.equal(steps[steps.length - 1].id, 'assemble');
+    const ids = steps.map((s) => s.id);
+    assert.deepEqual([...ids].sort((a, b) => order.indexOf(a) - order.indexOf(b)), ids, `${smiles}: step order`);
+    for (const step of steps) {
+      assert.equal(step.title, STEP_TITLES[step.id]);
+      assert.ok(step.text.length > 0, `${smiles}: ${step.id} has text`);
+      const views = [step, ...(step.options || [])];
+      for (const view of views) {
+        for (const spec of view.highlight) {
+          spec.atoms.forEach((id) => assert.ok(mol.atoms.has(id), `${smiles}: atom ${id}`));
+          spec.bonds.forEach((id) => assert.ok(mol.bonds.has(id), `${smiles}: bond ${id}`));
+        }
+        (view.locants || []).forEach(([id]) => assert.ok(mol.atoms.has(id)));
+      }
+      for (const paragraph of [...step.text, ...(step.options || []).map((o) => o.text)]) {
+        for (const segment of parseMarkup(paragraph)) {
+          assert.ok(!segment.term || GLOSSARY[segment.term], `${smiles}: unknown glossary term ${segment.term}`);
+        }
+        assert.doesNotMatch(plainText(paragraph), /\[\[|\]\]|undefined|NaN|null/, `${smiles}: ${paragraph}`);
+      }
+    } // End of the loop over the steps
+    const last = steps[steps.length - 1];
+    assert.equal(last.parts.map((p) => p.text).join(''), result.name);
+    assert.ok(last.text.some((t) => t.includes(`«${result.name}»`)));
+  } // End of the loop over the fixtures
+});
+
+test('an unsaturation outside the parent is stated explicitly (IUPAC 2013 rule)', () => {
+  const chain = (smiles) => run(smiles).steps.find((s) => s.id === 'chain');
+  assert.match(chain('C=CC(CCC)CCC').text.join(' '), /El \[\[doble enlace\|enlace doble\]\] no está en la cadena principal: con las normas actuales de la IUPAC \(2013\) manda la longitud/);
+  assert.match(chain('C#CC(CCC)CCC').text.join(' '), /triple enlace.*no está en la cadena principal/);
+  assert.match(chain('CCC(=C)CCC').text.join(' '), /manda la longitud/);
+  // Equal length: the chain with the triple bond loses a tie-break, not on length.
+  const lost = chain('C=CC(C#C)CCC').text.join(' ');
+  assert.match(lost, /pierde en los desempates/);
+  assert.doesNotMatch(lost, /manda la longitud/);
+  assert.doesNotMatch(chain('CC(C)C(CC)CCC').text.join(' '), /no está en la cadena principal/);
+});
+
+test('isopropyl: the three accepted names are explained and alternatives listed', () => {
+  const { steps } = run('CCCCC(C(C)C)CCCC');
+  const subs = steps.find((s) => s.id === 'substituents').text.join(' ');
+  for (const name of ['«isopropil»', '«propan-2-il»', '«1-metiletil»']) {
+    assert.ok(subs.includes(name), name);
+  }
+  const assemble = steps.find((s) => s.id === 'assemble').text.join(' ');
+  assert.ok(assemble.includes('«5-(propan-2-il)nonano»: nombre preferido por la IUPAC (2013).'));
+  assert.ok(assemble.includes('«5-(1-metiletil)nonano»: forma sistemática clásica.'));
+});
+
+test('locant omission and kept locants get a note', () => {
+  const note = (smiles) => run(smiles).steps.find((s) => s.id === 'numbering').text.join(' ');
+  assert.match(note('C=CC'), /En «propeno» no hace falta el número: el doble enlace solo puede estar en el carbono 1/);
+  assert.match(note('C#C'), /En «etino» no hace falta el número/);
+  assert.match(note('C=C=C'), /propadieno/);
+  assert.match(note('CC(C)C'), /el número se escribe/);
+  assert.doesNotMatch(note('CCCCCC'), /propeno/);
+});
+
+test('numbering: side-by-side lists and first point of difference', () => {
+  const step = run('CCC(CC)C(C)CC').steps.find((s) => s.id === 'numbering');
+  assert.deepEqual(step.compare, {
+    labels: ['A', 'B'],
+    rows: [{ rule: 'N4', label: 'Sustituyentes en orden alfabético', lists: [[3, 4], [4, 3]], firstDifference: 0, marks: [[0], [0]], winners: [0] }],
+  });
+  assert.match(step.text.join(' '), /en el primer número distinto, 3 es menor que 4/);
+  assert.equal(step.options.length, 2);
+  assert.notDeepEqual(step.options[0].locants, step.options[1].locants);
+  assert.equal(firstDifference([[5, 6, 7, 3], [5, 6, 3, 7]]), 2);
+  assert.equal(firstDifference([[2, 2], [2, 2]]), -1);
+});
+
+test('numbering with 3+ options: each loser is compared with the winner at its own first difference', () => {
+  // A = [1, 7], B = [1, 5], C = [3, 7]: B beats A at the second number and C at the first.
+  const step = run('C=CCCC(CC=C)=CCC').steps.find((s) => s.id === 'numbering');
+  const text = step.text.join(' ');
+  assert.doesNotMatch(text, /1 es menor que 1/);
+  assert.match(text, /frente a la opción A, 5 es menor que 7/);
+  assert.match(text, /frente a la opción C, 1 es menor que 3/);
+  const row = step.compare.rows[0];
+  assert.deepEqual(row.lists, [[1, 7], [1, 5], [3, 7]]);
+  assert.deepEqual(row.winners, [1]);
+  assert.deepEqual(row.marks, [[1], [0, 1], [0]]);
+});
+
+test('tie-break: every rule keeps the option labels of the chain step', () => {
+  // P2 discards option 1; P3 then compares options 2 and 3 (never renamed 1 and 2).
+  const { steps } = run('CCC(C#C)(C=C)CCC');
+  const chain = steps.find((s) => s.id === 'chain');
+  const step = steps.find((s) => s.id === 'tiebreak');
+  const p3 = step.text.find((t) => t.startsWith('Si sigue el empate'));
+  assert.match(p3, /opción 2: 0 enlaces dobles; opción 3: 1 enlace doble\./);
+  assert.doesNotMatch(p3, /opción 1:/);
+  assert.deepEqual(step.options.map((o) => o.label), chain.options.slice(0, 3).map((o) => o.label));
+  assert.match(step.options[0].text, /Queda descartada/);
+  assert.match(step.options[1].text, /Queda descartada/);
+  assert.doesNotMatch(step.options[1].text, /Sigue en juego/);
+  assert.match(step.options[2].text, /Gana/);
+  assert.deepEqual(step.options.map((o) => o.highlight[0].style), ['candidate', 'candidate', 'parent']);
+});
+
+test('repeated unsaturated substituents: each occurrence is classified on its own', () => {
+  // 3,4-dietinilhept-1-eno: the ethynyl on C3 lies on the other 7-C chain
+  // (lost on tie-breaks); the one on C4 lies on no 7-C chain (length).
+  const text = run('C=CC(C#C)C(C#C)CCC').steps.find((s) => s.id === 'chain').text.join(' ');
+  assert.doesNotMatch(text, /Hay otra cadena igual de larga que los incluye/);
+  assert.match(text, /manda la longitud/);
+  assert.match(text, /Uno de ellos está en otra cadena igual de larga, que pierde en los desempates; el otro no está en ninguna cadena tan larga\./);
+});
+
+test('ordering explains the first differing letter and the ignored multipliers', () => {
+  const order = run('CCCC(C)CC(C(C)C)CCC').steps.find((s) => s.id === 'order').text;
+  assert.ok(order.includes('«isopropil» va antes que «metil» (i va antes que m).'));
+  assert.ok(order.includes('«iso» sí cuenta: «isopropil» se ordena por la i.'));
+  const bis = run('CCCCC(CC(C)(C)C)(CC(C)(C)C)CCCC').steps.find((s) => s.id === 'substituents').text.join(' ');
+  assert.match(bis, /«bis», «tris»/);
+});
+
+test('glossary markup helpers', () => {
+  assert.deepEqual(parseMarkup('La [[cadena principal]] y los [[localizadores|localizador]].'), [
+    { text: 'La ' },
+    { text: 'cadena principal', term: 'cadena principal' },
+    { text: ' y los ' },
+    { text: 'localizadores', term: 'localizador' },
+    { text: '.' },
+  ]);
+  assert.equal(plainText('Un [[enlace doble]].'), 'Un enlace doble.');
+  assert.equal(joinY([2]), '2');
+  assert.equal(joinY([2, 3]), '2 y 3');
+  assert.equal(joinY([2, 3, 4]), '2, 3 y 4');
+  for (const key of ['cadena principal', 'sustituyente', 'localizador', 'insaturación', 'enlace doble', 'enlace triple']) {
+    assert.ok(GLOSSARY[key], key);
+  }
+});
+
+test('a failed result has no steps', () => {
+  assert.deepEqual(explain({ ok: false, error: { code: 'EMPTY', message: '' } }), []);
+  assert.deepEqual(explain(null), []);
+});
+
+test('src/explain/ is pure: no DOM or browser globals, no coordinates', async () => {
+  const source = await readFile(path.join(ROOT, 'src', 'explain', 'explain.js'), 'utf8');
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  assert.doesNotMatch(code, /\b(document|window|globalThis|localStorage|navigator)\b/);
+  assert.doesNotMatch(code, /\.(x|y)\b/);
+});

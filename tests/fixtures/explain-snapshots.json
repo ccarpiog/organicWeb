@@ -1,0 +1,11467 @@
+{
+ "C": {
+  "name": "metano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 1 carbono y 4 hidrógenos (CH₄).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "El nombre completo es «metano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ]
+    ],
+    "legend": [
+     {
+      "text": "met",
+      "kind": "stem",
+      "meaning": "1 carbono en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "met",
+      "kind": "stem",
+      "atoms": [
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": []
+     }
+    ]
+   }
+  ]
+ },
+ "CCCCCC": {
+  "name": "hexano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 6 carbonos y 14 hidrógenos (C₆H₁₄).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 6 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      6,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "El nombre completo es «hexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      6,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C=CC": {
+  "name": "propeno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 3 carbonos y 6 hidrógenos (C₃H₆).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 3 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "En «propeno» no hace falta el número: el doble enlace solo puede estar en el carbono 1."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «propeno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ]
+    ],
+    "legend": [
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en la cadena principal"
+     },
+     {
+      "text": "-eno",
+      "kind": "ending",
+      "meaning": "hay un enlace doble"
+     }
+    ],
+    "parts": [
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": []
+     },
+     {
+      "text": "eno",
+      "kind": "ending",
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C=C=C": {
+  "name": "propadieno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 3 carbonos y 4 hidrógenos (C₃H₄).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 3 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "En «propadieno» no hacen falta números: los dos enlaces dobles solo pueden estar en los carbonos 1 y 2."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «propadieno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ]
+    ],
+    "legend": [
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en la cadena principal"
+     },
+     {
+      "text": "a",
+      "kind": "stem",
+      "meaning": "se añade para que suene bien antes de di-, tri-…"
+     },
+     {
+      "text": "-dieno",
+      "kind": "ending",
+      "meaning": "hay 2 enlaces dobles"
+     }
+    ],
+    "parts": [
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": []
+     },
+     {
+      "text": "a",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       1,
+       2,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ]
+     },
+     {
+      "text": "eno",
+      "kind": "ending",
+      "atoms": [
+       1,
+       2,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C=CC=C": {
+  "name": "buta-1,3-dieno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 4 carbonos y 6 hidrógenos (C₄H₆).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       2,
+       3
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 4 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 1, 3. Todas las formas dan el mismo nombre.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «buta-1,3-dieno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ]
+    ],
+    "legend": [
+     {
+      "text": "but",
+      "kind": "stem",
+      "meaning": "4 carbonos en la cadena principal"
+     },
+     {
+      "text": "a",
+      "kind": "stem",
+      "meaning": "se añade para que suene bien antes de di-, tri-…"
+     },
+     {
+      "text": "1,3",
+      "kind": "locant",
+      "meaning": "dónde están los enlaces dobles (el carbono con el número más bajo)"
+     },
+     {
+      "text": "-dieno",
+      "kind": "ending",
+      "meaning": "hay 2 enlaces dobles"
+     }
+    ],
+    "parts": [
+     {
+      "text": "but",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": []
+     },
+     {
+      "text": "a",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": []
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       3
+      ]
+     },
+     {
+      "text": "eno",
+      "kind": "ending",
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       3
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C#CC=CC": {
+  "name": "pent-3-en-1-ino",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 5 carbonos y 6 hidrógenos (C₅H₆).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 5 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Regla: los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 1, 3; opción B: 2, 4. Se comparan uno a uno: en el primer número distinto, 1 es menor que 2. Gana la opción A.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N1",
+       "label": "Enlaces dobles y triples",
+       "lists": [
+        [
+         1,
+         3
+        ],
+        [
+         2,
+         4
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         5
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        4,
+        4
+       ],
+       [
+        5,
+        5
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         4,
+         3,
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        2,
+        4
+       ],
+       [
+        1,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «pent-3-en-1-ino»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ]
+    ],
+    "legend": [
+     {
+      "text": "pent",
+      "kind": "stem",
+      "meaning": "5 carbonos en la cadena principal"
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "dónde está el enlace doble (el carbono con el número más bajo)"
+     },
+     {
+      "text": "-en",
+      "kind": "ending",
+      "meaning": "hay un enlace doble"
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "meaning": "dónde está el enlace triple (el carbono con el número más bajo)"
+     },
+     {
+      "text": "-ino",
+      "kind": "ending",
+      "meaning": "hay un enlace triple"
+     }
+    ],
+    "parts": [
+     {
+      "text": "pent",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "bonds": []
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "en",
+      "kind": "ending",
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "ino",
+      "kind": "ending",
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(C)C": {
+  "name": "2-metilpropano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 4 carbonos y 10 hidrógenos (C₄H₁₀).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       2,
+       3
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 3 carbonos. Hay 3 cadenas de 3. Pulsa cada opción para verlas."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 3",
+      "text": "Una cadena de 3 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 3",
+      "text": "Una cadena de 3 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4
+        ],
+        "bonds": [
+         1,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 3 de 3",
+      "text": "Una cadena de 3 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         2,
+         4
+        ],
+        "bonds": [
+         2,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 2. Todas las formas dan el mismo nombre.",
+     "Aunque aquí no hay otra posibilidad, el número se escribe. La IUPAC solo lo quita en unos pocos nombres, como «propeno» o «etino».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 2 hay un grupo metilo: se escribe «2-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "metil",
+      "text": "En el carbono 2 hay un grupo metilo: se escribe «2-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «2-metilpropano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ]
+    ],
+    "legend": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(C)C(CC)CCC": {
+  "name": "3-etil-2-metilhexano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos y 20 hidrógenos (C₉H₂₀).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       7,
+       8,
+       9,
+       5,
+       6,
+       3
+      ],
+      "bonds": [
+       1,
+       3,
+       6,
+       7,
+       8,
+       4,
+       5,
+       2
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 6 carbonos. Hay 3 cadenas de 6. Pulsa cada opción para verlas."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 3",
+      "text": "Una cadena de 6 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 3",
+      "text": "Una cadena de 6 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         2,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         2,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 3 de 3",
+      "text": "Una cadena de 6 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         4,
+         6,
+         7,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "tiebreak",
+    "title": "Desempates",
+    "text": [
+     "Varias cadenas son igual de largas. Hay que desempatar.",
+     "Gana la cadena con más [[sustituyentes|sustituyente]] (más ramas). opción 1: 2 sustituyentes; opción 2: 2 sustituyentes; opción 3: 1 sustituyente.",
+     "Mira la cadena ganadora en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 3",
+      "text": "2 sustituyentes. Gana: es la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 3",
+      "text": "2 sustituyentes. Empata en estos desempates.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         2,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         2,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 3 de 3",
+      "text": "1 sustituyente. Queda descartada.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         4,
+         6,
+         7,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Regla: los [[sustituyentes|sustituyente]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 2, 3; opción B: 4, 5. Se comparan uno a uno: en el primer número distinto, 2 es menor que 4. Gana la opción A.",
+     "Las opciones que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      7,
+      4
+     ],
+     [
+      8,
+      5
+     ],
+     [
+      9,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N3",
+       "label": "Sustituyentes",
+       "lists": [
+        [
+         2,
+         3
+        ],
+        [
+         4,
+         5
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        4,
+        3
+       ],
+       [
+        7,
+        4
+       ],
+       [
+        8,
+        5
+       ],
+       [
+        9,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         9,
+         8,
+         7,
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         8,
+         7,
+         6,
+         3,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        9,
+        1
+       ],
+       [
+        8,
+        2
+       ],
+       [
+        7,
+        3
+       ],
+       [
+        4,
+        4
+       ],
+       [
+        2,
+        5
+       ],
+       [
+        1,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 3 hay un grupo etilo: se escribe «3-etil».",
+     "«etil» es un grupo de 2 carbonos.",
+     "En el carbono 2 hay un grupo metilo: se escribe «2-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      3
+     ],
+     [
+      2,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "etil",
+      "text": "En el carbono 3 hay un grupo etilo: se escribe «3-etil». «etil» es un grupo de 2 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         5,
+         6
+        ],
+        "bonds": [
+         4,
+         5
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        3
+       ]
+      ]
+     },
+     {
+      "label": "metil",
+      "text": "En el carbono 2 hay un grupo metilo: se escribe «2-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         3
+        ],
+        "bonds": [
+         2
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "order",
+    "title": "Ordena alfabéticamente",
+    "text": [
+     "Los sustituyentes se escriben por orden alfabético: «etil» y «metil».",
+     "«etil» va antes que «metil» (e va antes que m)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «3-etil-2-metilhexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      7,
+      4
+     ],
+     [
+      8,
+      5
+     ],
+     [
+      9,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «etil»"
+     },
+     {
+      "text": "etil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo etilo (2 carbonos)"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "etil",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       3,
+       6,
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCC(C(C)C)CC": {
+  "name": "3-etil-2-metilpentano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 8 carbonos y 18 hidrógenos (C₈H₁₈).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       1,
+       7,
+       8,
+       6
+      ],
+      "bonds": [
+       4,
+       3,
+       2,
+       1,
+       6,
+       7,
+       5
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 5 carbonos. Hay 5 cadenas de 5. Pulsa cada opción para verlas."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 5",
+      "text": "Una cadena de 5 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         5
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 5",
+      "text": "Una cadena de 5 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         6
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 3 de 5",
+      "text": "Una cadena de 5 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         7,
+         8
+        ],
+        "bonds": [
+         1,
+         2,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 4 de 5",
+      "text": "Una cadena de 5 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3,
+         7,
+         8
+        ],
+        "bonds": [
+         4,
+         3,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 5 de 5",
+      "text": "Una cadena de 5 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         4,
+         3,
+         7,
+         8
+        ],
+        "bonds": [
+         5,
+         3,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "tiebreak",
+    "title": "Desempates",
+    "text": [
+     "Varias cadenas son igual de largas. Hay que desempatar.",
+     "Gana la cadena con más [[sustituyentes|sustituyente]] (más ramas). opción 1: 2 sustituyentes; opción 2: 2 sustituyentes; opción 3: 1 sustituyente; opción 4: 2 sustituyentes; opción 5: 2 sustituyentes.",
+     "Mira la cadena ganadora en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 5",
+      "text": "2 sustituyentes. Gana: es la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         5
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         4
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 5",
+      "text": "2 sustituyentes. Empata en estos desempates.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         6
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 3 de 5",
+      "text": "1 sustituyente. Queda descartada.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         7,
+         8
+        ],
+        "bonds": [
+         1,
+         2,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 4 de 5",
+      "text": "2 sustituyentes. Empata en estos desempates.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3,
+         7,
+         8
+        ],
+        "bonds": [
+         4,
+         3,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 5 de 5",
+      "text": "2 sustituyentes. Empata en estos desempates.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         4,
+         3,
+         7,
+         8
+        ],
+        "bonds": [
+         5,
+         3,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Regla: los [[sustituyentes|sustituyente]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 3, 4; opción B: 2, 3. Se comparan uno a uno: en el primer número distinto, 2 es menor que 3. Gana la opción B.",
+     "Las opciones que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      2,
+      4
+     ],
+     [
+      1,
+      5
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N3",
+       "label": "Sustituyentes",
+       "lists": [
+        [
+         3,
+         4
+        ],
+        [
+         2,
+         3
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         5
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        4,
+        4
+       ],
+       [
+        5,
+        5
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         4,
+         3,
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        2,
+        4
+       ],
+       [
+        1,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 3 hay un grupo etilo: se escribe «3-etil».",
+     "«etil» es un grupo de 2 carbonos.",
+     "En el carbono 2 hay un grupo metilo: se escribe «2-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "etil",
+      "text": "En el carbono 3 hay un grupo etilo: se escribe «3-etil». «etil» es un grupo de 2 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         4,
+         3,
+         2,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         7,
+         8
+        ],
+        "bonds": [
+         6,
+         7
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        3
+       ]
+      ]
+     },
+     {
+      "label": "metil",
+      "text": "En el carbono 2 hay un grupo metilo: se escribe «2-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         4,
+         3,
+         2,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         6
+        ],
+        "bonds": [
+         5
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "order",
+    "title": "Ordena alfabéticamente",
+    "text": [
+     "Los sustituyentes se escriben por orden alfabético: «etil» y «metil».",
+     "«etil» va antes que «metil» (e va antes que m)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «3-etil-2-metilpentano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      2,
+      4
+     ],
+     [
+      1,
+      5
+     ]
+    ],
+    "legend": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «etil»"
+     },
+     {
+      "text": "etil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo etilo (2 carbonos)"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "pent",
+      "kind": "stem",
+      "meaning": "5 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       3,
+       7
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "etil",
+      "kind": "prefix",
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       4,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "pent",
+      "kind": "stem",
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       4,
+       3,
+       2,
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCC(CC)C(C)CC": {
+  "name": "3-etil-4-metilhexano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos y 20 hidrógenos (C₉H₂₀).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       8,
+       9,
+       4,
+       5,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       7,
+       8,
+       3,
+       4,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 6 carbonos. Hay 2 cadenas de 6. Pulsa cada opción para verlas."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 2",
+      "text": "Una cadena de 6 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         6,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         2,
+         5,
+         7,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 2",
+      "text": "Una cadena de 6 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3,
+         6,
+         8,
+         9
+        ],
+        "bonds": [
+         4,
+         3,
+         5,
+         7,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Regla: si hay empate, el número más bajo es para el sustituyente que se escribe primero (por orden alfabético). Los números se leen en el orden en que se escriben los sustituyentes. Números: opción A: 3, 4; opción B: 4, 3. Se comparan uno a uno: en el primer número distinto, 3 es menor que 4. Gana la opción A.",
+     "Las opciones que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       7
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      6,
+      4
+     ],
+     [
+      8,
+      5
+     ],
+     [
+      9,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N4",
+       "label": "Sustituyentes en orden alfabético",
+       "lists": [
+        [
+         3,
+         4
+        ],
+        [
+         4,
+         3
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         6,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         2,
+         5,
+         7,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        8,
+        5
+       ],
+       [
+        9,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         9,
+         8,
+         6,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         8,
+         7,
+         5,
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        9,
+        1
+       ],
+       [
+        8,
+        2
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        3,
+        4
+       ],
+       [
+        2,
+        5
+       ],
+       [
+        1,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 3 hay un grupo etilo: se escribe «3-etil».",
+     "«etil» es un grupo de 2 carbonos.",
+     "En el carbono 4 hay un grupo metilo: se escribe «4-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       7
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      3
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    "options": [
+     {
+      "label": "etil",
+      "text": "En el carbono 3 hay un grupo etilo: se escribe «3-etil». «etil» es un grupo de 2 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         6,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         2,
+         5,
+         7,
+         8
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4,
+         5
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        3
+       ]
+      ]
+     },
+     {
+      "label": "metil",
+      "text": "En el carbono 4 hay un grupo metilo: se escribe «4-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         6,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         2,
+         5,
+         7,
+         8
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         7
+        ],
+        "bonds": [
+         6
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "order",
+    "title": "Ordena alfabéticamente",
+    "text": [
+     "Los sustituyentes se escriben por orden alfabético: «etil» y «metil».",
+     "«etil» va antes que «metil» (e va antes que m)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       7
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «3-etil-4-metilhexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       7
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      6,
+      4
+     ],
+     [
+      8,
+      5
+     ],
+     [
+      9,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «etil»"
+     },
+     {
+      "text": "etil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo etilo (2 carbonos)"
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "etil",
+      "kind": "prefix",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       6,
+       7
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       7
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       8,
+       9
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2,
+       5,
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(C)(C)C": {
+  "name": "2,2-dimetilpropano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 5 carbonos y 12 hidrógenos (C₅H₁₂).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 3 carbonos. Hay 6 cadenas de 3. Pulsa cada opción para verlas."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 6",
+      "text": "Una cadena de 3 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 6",
+      "text": "Una cadena de 3 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4
+        ],
+        "bonds": [
+         1,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 3 de 6",
+      "text": "Una cadena de 3 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         5
+        ],
+        "bonds": [
+         1,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 4 de 6",
+      "text": "Una cadena de 3 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         2,
+         4
+        ],
+        "bonds": [
+         2,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 5 de 6",
+      "text": "Una cadena de 3 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         2,
+         5
+        ],
+        "bonds": [
+         2,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 6 de 6",
+      "text": "Una cadena de 3 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2,
+         5
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 2, 2. Todas las formas dan el mismo nombre.",
+     "Aunque aquí no hay otra posibilidad, el número se escribe. La IUPAC solo lo quita en unos pocos nombres, como «propeno» o «etino».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 2 hay 2 grupos metilo: se escribe «2,2-dimetil». «di» significa 2; se pone un número por cada grupo, aunque se repita.",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      2
+     ],
+     [
+      2,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "metil",
+      "text": "En el carbono 2 hay 2 grupos metilo: se escribe «2,2-dimetil». «di» significa 2; se pone un número por cada grupo, aunque se repita. «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4,
+         5
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        2
+       ],
+       [
+        2,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «2,2-dimetilpropano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ]
+    ],
+    "legend": [
+     {
+      "text": "2,2",
+      "kind": "locant",
+      "meaning": "carbonos de la cadena principal donde está «metil»"
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "meaning": "hay 2 grupos iguales"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       2,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ]
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ]
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C=CC(CCC)CCC": {
+  "name": "4-etenilheptano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos y 18 hidrógenos (C₉H₁₈).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9,
+       2,
+       1
+      ],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 7 carbonos. Solo hay una así.",
+     "El [[doble enlace|enlace doble]] no está en la cadena principal: con las normas actuales de la IUPAC (2013) manda la longitud. Primero se busca la cadena más larga, aunque deje fuera una [[insaturación]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Fuera de la cadena",
+      "text": "Estas ramas tienen enlaces dobles o triples, pero no forman parte de la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5,
+         4,
+         3,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         4,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 4. Todas las formas dan el mismo nombre.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      6,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      3,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      9,
+      7
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 4 hay un grupo etenilo: se escribe «4-etenil».",
+     "«etenil» es un grupo de 2 carbonos.",
+     "Dentro del grupo hay un [[enlace doble]]: por eso lleva «en».",
+     "También se conoce como «vinilo», pero la IUPAC prefiere «etenilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      4
+     ]
+    ],
+    "options": [
+     {
+      "label": "etenil",
+      "text": "En el carbono 4 hay un grupo etenilo: se escribe «4-etenil». «etenil» es un grupo de 2 carbonos. Dentro del grupo hay un [[enlace doble]]: por eso lleva «en». También se conoce como «vinilo», pero la IUPAC prefiere «etenilo».",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5,
+         4,
+         3,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         4,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «4-etenilheptano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      6,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      3,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      9,
+      7
+     ]
+    ],
+    "legend": [
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «etenil»"
+     },
+     {
+      "text": "etenil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo etenilo (2 carbonos)"
+     },
+     {
+      "text": "hept",
+      "kind": "stem",
+      "meaning": "7 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       3,
+       2
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "etenil",
+      "kind": "prefix",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": "hept",
+      "kind": "stem",
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C#CC(CCC)CCC": {
+  "name": "4-etinilheptano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos y 16 hidrógenos (C₉H₁₆).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9,
+       2,
+       1
+      ],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 7 carbonos. Solo hay una así.",
+     "El [[triple enlace|enlace triple]] no está en la cadena principal: con las normas actuales de la IUPAC (2013) manda la longitud. Primero se busca la cadena más larga, aunque deje fuera una [[insaturación]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Fuera de la cadena",
+      "text": "Estas ramas tienen enlaces dobles o triples, pero no forman parte de la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5,
+         4,
+         3,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         4,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 4. Todas las formas dan el mismo nombre.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      6,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      3,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      9,
+      7
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 4 hay un grupo etinilo: se escribe «4-etinil».",
+     "«etinil» es un grupo de 2 carbonos.",
+     "Dentro del grupo hay un [[enlace triple]]: por eso lleva «in»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      4
+     ]
+    ],
+    "options": [
+     {
+      "label": "etinil",
+      "text": "En el carbono 4 hay un grupo etinilo: se escribe «4-etinil». «etinil» es un grupo de 2 carbonos. Dentro del grupo hay un [[enlace triple]]: por eso lleva «in».",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5,
+         4,
+         3,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         4,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «4-etinilheptano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      6,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      3,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      9,
+      7
+     ]
+    ],
+    "legend": [
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «etinil»"
+     },
+     {
+      "text": "etinil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo etinilo (2 carbonos)"
+     },
+     {
+      "text": "hept",
+      "kind": "stem",
+      "meaning": "7 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       3,
+       2
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "etinil",
+      "kind": "prefix",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": "hept",
+      "kind": "stem",
+      "atoms": [
+       6,
+       5,
+       4,
+       3,
+       7,
+       8,
+       9
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       5,
+       4,
+       3,
+       6,
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C=CC(C#C)CCC": {
+  "name": "3-etinilhex-1-eno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 8 carbonos y 12 hidrógenos (C₈H₁₂).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8,
+       4,
+       5
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       6,
+       7,
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 6 carbonos. Hay 2 cadenas de 6. Pulsa cada opción para verlas.",
+     "El [[triple enlace|enlace triple]] no está en la cadena principal. Hay otra cadena igual de larga que lo incluye, pero pierde en los desempates."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 2",
+      "text": "Una cadena de 6 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         1,
+         2,
+         5,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 2",
+      "text": "Una cadena de 6 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3,
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         4,
+         3,
+         5,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Fuera de la cadena",
+      "text": "Estas ramas tienen enlaces dobles o triples, pero no forman parte de la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         1,
+         2,
+         5,
+         6,
+         7
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4,
+         5
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "tiebreak",
+    "title": "Desempates",
+    "text": [
+     "Varias cadenas son igual de largas. Hay que desempatar.",
+     "Gana la cadena con más [[enlaces dobles|enlace doble]]. opción 1: 1 enlace doble; opción 2: 0 enlaces dobles.",
+     "Mira la cadena ganadora en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 2",
+      "text": "1 enlace doble. Gana: es la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         1,
+         2,
+         5,
+         6,
+         7
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 2",
+      "text": "0 enlaces dobles. Queda descartada.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3,
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         4,
+         3,
+         5,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Regla: los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 1; opción B: 5. Se comparan uno a uno: en el primer número distinto, 1 es menor que 5. Gana la opción A.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      6,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N1",
+       "label": "Enlaces dobles y triples",
+       "lists": [
+        [
+         1
+        ],
+        [
+         5
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         1,
+         2,
+         5,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        7,
+        5
+       ],
+       [
+        8,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         8,
+         7,
+         6,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         7,
+         6,
+         5,
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        8,
+        1
+       ],
+       [
+        7,
+        2
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        3,
+        4
+       ],
+       [
+        2,
+        5
+       ],
+       [
+        1,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 3 hay un grupo etinilo: se escribe «3-etinil».",
+     "«etinil» es un grupo de 2 carbonos.",
+     "Dentro del grupo hay un [[enlace triple]]: por eso lleva «in»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "etinil",
+      "text": "En el carbono 3 hay un grupo etinilo: se escribe «3-etinil». «etinil» es un grupo de 2 carbonos. Dentro del grupo hay un [[enlace triple]]: por eso lleva «in».",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         1,
+         2,
+         5,
+         6,
+         7
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4,
+         5
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «3-etinilhex-1-eno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      6,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «etinil»"
+     },
+     {
+      "text": "etinil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo etinilo (2 carbonos)"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en la cadena principal"
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "meaning": "dónde está el enlace doble (el carbono con el número más bajo)"
+     },
+     {
+      "text": "-eno",
+      "kind": "ending",
+      "meaning": "hay un enlace doble"
+     }
+    ],
+    "parts": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "etinil",
+      "kind": "prefix",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ],
+      "bonds": []
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "eno",
+      "kind": "ending",
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCC(=C)CCC": {
+  "name": "3-metilidenhexano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 7 carbonos y 14 hidrógenos (C₇H₁₄).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       7,
+       4
+      ],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       6,
+       3
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 6 carbonos. Solo hay una así.",
+     "El [[doble enlace|enlace doble]] no está en la cadena principal: con las normas actuales de la IUPAC (2013) manda la longitud. Primero se busca la cadena más larga, aunque deje fuera una [[insaturación]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Fuera de la cadena",
+      "text": "Estas ramas tienen enlaces dobles o triples, pero no forman parte de la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         1,
+         2,
+         4,
+         5,
+         6
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Regla: los [[sustituyentes|sustituyente]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 3; opción B: 4. Se comparan uno a uno: en el primer número distinto, 3 es menor que 4. Gana la opción A.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      7,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N3",
+       "label": "Sustituyentes",
+       "lists": [
+        [
+         3
+        ],
+        [
+         4
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         1,
+         2,
+         4,
+         5,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        5,
+        4
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        7,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         6,
+         5,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         6,
+         5,
+         4,
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        7,
+        1
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        5,
+        3
+       ],
+       [
+        3,
+        4
+       ],
+       [
+        2,
+        5
+       ],
+       [
+        1,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 3 hay un grupo metilideno: se escribe «3-metiliden».",
+     "«metiliden» es un grupo de 1 carbono.",
+     "Se une a la cadena principal con un [[enlace doble]]: por eso termina en «-iliden»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "metiliden",
+      "text": "En el carbono 3 hay un grupo metilideno: se escribe «3-metiliden». «metiliden» es un grupo de 1 carbono. Se une a la cadena principal con un [[enlace doble]]: por eso termina en «-iliden».",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         1,
+         2,
+         4,
+         5,
+         6
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «3-metilidenhexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      7,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metiliden»"
+     },
+     {
+      "text": "metiliden",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilideno (1 carbono)"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metiliden",
+      "kind": "prefix",
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       7
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       6
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCCC(=CC)CCC": {
+  "name": "4-etilidenheptano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos y 18 hidrógenos (C₉H₁₈).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       7,
+       8,
+       9,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8,
+       4,
+       5
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 7 carbonos. Solo hay una así.",
+     "El [[doble enlace|enlace doble]] no está en la cadena principal: con las normas actuales de la IUPAC (2013) manda la longitud. Primero se busca la cadena más larga, aunque deje fuera una [[insaturación]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Fuera de la cadena",
+      "text": "Estas ramas tienen enlaces dobles o triples, pero no forman parte de la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         5,
+         6
+        ],
+        "bonds": [
+         4,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 4. Todas las formas dan el mismo nombre.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      9,
+      7
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 4 hay un grupo etilideno: se escribe «4-etiliden».",
+     "«etiliden» es un grupo de 2 carbonos.",
+     "Se une a la cadena principal con un [[enlace doble]]: por eso termina en «-iliden»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      4
+     ]
+    ],
+    "options": [
+     {
+      "label": "etiliden",
+      "text": "En el carbono 4 hay un grupo etilideno: se escribe «4-etiliden». «etiliden» es un grupo de 2 carbonos. Se une a la cadena principal con un [[enlace doble]]: por eso termina en «-iliden».",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         6,
+         7,
+         8
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         5,
+         6
+        ],
+        "bonds": [
+         4,
+         5
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «4-etilidenheptano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ],
+     [
+      9,
+      7
+     ]
+    ],
+    "legend": [
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «etiliden»"
+     },
+     {
+      "text": "etiliden",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo etilideno (2 carbonos)"
+     },
+     {
+      "text": "hept",
+      "kind": "stem",
+      "meaning": "7 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "etiliden",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     },
+     {
+      "text": "hept",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       7,
+       8,
+       9
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2,
+       3,
+       6,
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCCCC(C(C)C)CCCC": {
+  "name": "5-isopropilnonano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 12 carbonos y 26 hidrógenos (C₁₂H₂₆).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11,
+       5,
+       6,
+       7
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 9 carbonos. Solo hay una así."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 5. Todas las formas dan el mismo nombre.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      9,
+      6
+     ],
+     [
+      10,
+      7
+     ],
+     [
+      11,
+      8
+     ],
+     [
+      12,
+      9
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 5 hay un grupo isopropilo: se escribe «5-isopropil».",
+     "Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos: «isopropil» es el nombre tradicional, que la IUPAC acepta (es el que usamos aquí); «propan-2-il» es el preferido por la IUPAC: una cadena de 3 carbonos (prop) unida por su carbono 2; «1-metiletil» toma una cadena de 2 carbonos (et) unida por su carbono 1, con un metil en ese mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      5
+     ]
+    ],
+    "options": [
+     {
+      "label": "isopropil",
+      "text": "En el carbono 5 hay un grupo isopropilo: se escribe «5-isopropil». Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos: «isopropil» es el nombre tradicional, que la IUPAC acepta (es el que usamos aquí); «propan-2-il» es el preferido por la IUPAC: una cadena de 3 carbonos (prop) unida por su carbono 2; «1-metiletil» toma una cadena de 2 carbonos (et) unida por su carbono 1, con un metil en ese mismo carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         5,
+         9,
+         10,
+         11,
+         12
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         4,
+         8,
+         9,
+         10,
+         11
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         5,
+         6,
+         7
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «5-isopropilnonano».",
+     "También son correctos:",
+     "«5-(propan-2-il)nonano»: nombre preferido por la IUPAC (2013).",
+     "«5-(1-metiletil)nonano»: forma sistemática clásica."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      9,
+      6
+     ],
+     [
+      10,
+      7
+     ],
+     [
+      11,
+      8
+     ],
+     [
+      12,
+      9
+     ]
+    ],
+    "legend": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «isopropil»"
+     },
+     {
+      "text": "isopropil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo isopropilo (3 carbonos)"
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "meaning": "9 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "isopropil",
+      "kind": "prefix",
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7
+      ]
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCCC(C)CC(C(C)C)CCC": {
+  "name": "4-isopropil-6-metilnonano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 13 carbonos y 28 hidrógenos (C₁₃H₂₈).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       13,
+       12,
+       11,
+       7,
+       6,
+       4,
+       3,
+       2,
+       1,
+       8,
+       9,
+       10,
+       5
+      ],
+      "bonds": [
+       12,
+       11,
+       10,
+       6,
+       5,
+       3,
+       2,
+       1,
+       7,
+       8,
+       9,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 9 carbonos. Solo hay una así."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       13,
+       12,
+       11,
+       7,
+       6,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       12,
+       11,
+       10,
+       6,
+       5,
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Regla: si hay empate, el número más bajo es para el sustituyente que se escribe primero (por orden alfabético). Los números se leen en el orden en que se escriben los sustituyentes. Números: opción A: 6, 4; opción B: 4, 6. Se comparan uno a uno: en el primer número distinto, 4 es menor que 6. Gana la opción B.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       13,
+       12,
+       11,
+       7,
+       6,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       12,
+       11,
+       10,
+       6,
+       5,
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      13,
+      1
+     ],
+     [
+      12,
+      2
+     ],
+     [
+      11,
+      3
+     ],
+     [
+      7,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      4,
+      6
+     ],
+     [
+      3,
+      7
+     ],
+     [
+      2,
+      8
+     ],
+     [
+      1,
+      9
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N4",
+       "label": "Sustituyentes en orden alfabético",
+       "lists": [
+        [
+         6,
+         4
+        ],
+        [
+         4,
+         6
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         6,
+         7,
+         11,
+         12,
+         13
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         10,
+         11,
+         12
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        4,
+        4
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        7,
+        6
+       ],
+       [
+        11,
+        7
+       ],
+       [
+        12,
+        8
+       ],
+       [
+        13,
+        9
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         13,
+         12,
+         11,
+         7,
+         6,
+         4,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         12,
+         11,
+         10,
+         6,
+         5,
+         3,
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        13,
+        1
+       ],
+       [
+        12,
+        2
+       ],
+       [
+        11,
+        3
+       ],
+       [
+        7,
+        4
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        4,
+        6
+       ],
+       [
+        3,
+        7
+       ],
+       [
+        2,
+        8
+       ],
+       [
+        1,
+        9
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 4 hay un grupo isopropilo: se escribe «4-isopropil».",
+     "Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos: «isopropil» es el nombre tradicional, que la IUPAC acepta (es el que usamos aquí); «propan-2-il» es el preferido por la IUPAC: una cadena de 3 carbonos (prop) unida por su carbono 2; «1-metiletil» toma una cadena de 2 carbonos (et) unida por su carbono 1, con un metil en ese mismo carbono.",
+     "En el carbono 6 hay un grupo metilo: se escribe «6-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       13,
+       12,
+       11,
+       7,
+       6,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       12,
+       11,
+       10,
+       6,
+       5,
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      7,
+      4
+     ],
+     [
+      4,
+      6
+     ]
+    ],
+    "options": [
+     {
+      "label": "isopropil",
+      "text": "En el carbono 4 hay un grupo isopropilo: se escribe «4-isopropil». Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos: «isopropil» es el nombre tradicional, que la IUPAC acepta (es el que usamos aquí); «propan-2-il» es el preferido por la IUPAC: una cadena de 3 carbonos (prop) unida por su carbono 2; «1-metiletil» toma una cadena de 2 carbonos (et) unida por su carbono 1, con un metil en ese mismo carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         13,
+         12,
+         11,
+         7,
+         6,
+         4,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         12,
+         11,
+         10,
+         6,
+         5,
+         3,
+         2,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         8,
+         9,
+         10
+        ],
+        "bonds": [
+         7,
+         8,
+         9
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        7,
+        4
+       ]
+      ]
+     },
+     {
+      "label": "metil",
+      "text": "En el carbono 6 hay un grupo metilo: se escribe «6-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         13,
+         12,
+         11,
+         7,
+         6,
+         4,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         12,
+         11,
+         10,
+         6,
+         5,
+         3,
+         2,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         5
+        ],
+        "bonds": [
+         4
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "order",
+    "title": "Ordena alfabéticamente",
+    "text": [
+     "Los sustituyentes se escriben por orden alfabético: «isopropil» y «metil».",
+     "«isopropil» va antes que «metil» (i va antes que m).",
+     "«iso» sí cuenta: «isopropil» se ordena por la i."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «4-isopropil-6-metilnonano».",
+     "También son correctos:",
+     "«4-metil-6-(propan-2-il)nonano»: nombre preferido por la IUPAC (2013).",
+     "«4-metil-6-(1-metiletil)nonano»: forma sistemática clásica."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       13,
+       12,
+       11,
+       7,
+       6,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       12,
+       11,
+       10,
+       6,
+       5,
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      13,
+      1
+     ],
+     [
+      12,
+      2
+     ],
+     [
+      11,
+      3
+     ],
+     [
+      7,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      4,
+      6
+     ],
+     [
+      3,
+      7
+     ],
+     [
+      2,
+      8
+     ],
+     [
+      1,
+      9
+     ]
+    ],
+    "legend": [
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «isopropil»"
+     },
+     {
+      "text": "isopropil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo isopropilo (3 carbonos)"
+     },
+     {
+      "text": "6",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "meaning": "9 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "isopropil",
+      "kind": "prefix",
+      "atoms": [
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       7,
+       8,
+       9
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "6",
+      "kind": "locant",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "atoms": [
+       13,
+       12,
+       11,
+       7,
+       6,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       12,
+       11,
+       10,
+       6,
+       5,
+       3,
+       2,
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCCCC(=C(C)C)CCCC": {
+  "name": "5-isopropilidennonano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 12 carbonos y 24 hidrógenos (C₁₂H₂₄).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11,
+       5,
+       6,
+       7
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 9 carbonos. Solo hay una así.",
+     "El [[doble enlace|enlace doble]] no está en la cadena principal: con las normas actuales de la IUPAC (2013) manda la longitud. Primero se busca la cadena más larga, aunque deje fuera una [[insaturación]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Fuera de la cadena",
+      "text": "Estas ramas tienen enlaces dobles o triples, pero no forman parte de la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         5,
+         9,
+         10,
+         11,
+         12
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         4,
+         8,
+         9,
+         10,
+         11
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         5,
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 5. Todas las formas dan el mismo nombre.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      9,
+      6
+     ],
+     [
+      10,
+      7
+     ],
+     [
+      11,
+      8
+     ],
+     [
+      12,
+      9
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 5 hay un grupo isopropilideno: se escribe «5-isopropiliden».",
+     "Es un grupo de 3 carbonos unido por el carbono del centro con un [[enlace doble]]. Tiene tres nombres válidos: «isopropiliden» (el tradicional, que usamos aquí), «propan-2-iliden» (el preferido por la IUPAC: cadena de 3 carbonos unida por su carbono 2) y «1-metiletiliden» (cadena de 2 carbonos con un metil en el carbono 1)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      5
+     ]
+    ],
+    "options": [
+     {
+      "label": "isopropiliden",
+      "text": "En el carbono 5 hay un grupo isopropilideno: se escribe «5-isopropiliden». Es un grupo de 3 carbonos unido por el carbono del centro con un [[enlace doble]]. Tiene tres nombres válidos: «isopropiliden» (el tradicional, que usamos aquí), «propan-2-iliden» (el preferido por la IUPAC: cadena de 3 carbonos unida por su carbono 2) y «1-metiletiliden» (cadena de 2 carbonos con un metil en el carbono 1).",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         5,
+         9,
+         10,
+         11,
+         12
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         4,
+         8,
+         9,
+         10,
+         11
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         5,
+         6,
+         7
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «5-isopropilidennonano».",
+     "También son correctos:",
+     "«5-(propan-2-iliden)nonano»: nombre preferido por la IUPAC (2013).",
+     "«5-(1-metiletiliden)nonano»: forma sistemática clásica."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      9,
+      6
+     ],
+     [
+      10,
+      7
+     ],
+     [
+      11,
+      8
+     ],
+     [
+      12,
+      9
+     ]
+    ],
+    "legend": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «isopropiliden»"
+     },
+     {
+      "text": "isopropiliden",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo isopropilideno (3 carbonos)"
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "meaning": "9 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "isopropiliden",
+      "kind": "prefix",
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7
+      ]
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       8,
+       9,
+       10,
+       11
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCCCC(C(C)(C)C)CCCC": {
+  "name": "5-tert-butilnonano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 13 carbonos y 28 hidrógenos (C₁₃H₂₈).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12,
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 9 carbonos. Solo hay una así."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 5. Todas las formas dan el mismo nombre.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      10,
+      6
+     ],
+     [
+      11,
+      7
+     ],
+     [
+      12,
+      8
+     ],
+     [
+      13,
+      9
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 5 hay un grupo tert-butilo: se escribe «5-tert-butil».",
+     "«tert-butil» es un nombre tradicional que la IUPAC acepta: un carbono unido a tres metilos. Su nombre sistemático es «1,1-dimetiletil»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      5
+     ]
+    ],
+    "options": [
+     {
+      "label": "tert-butil",
+      "text": "En el carbono 5 hay un grupo tert-butilo: se escribe «5-tert-butil». «tert-butil» es un nombre tradicional que la IUPAC acepta: un carbono unido a tres metilos. Su nombre sistemático es «1,1-dimetiletil».",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         5,
+         10,
+         11,
+         12,
+         13
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         4,
+         9,
+         10,
+         11,
+         12
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         6,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «5-tert-butilnonano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      10,
+      6
+     ],
+     [
+      11,
+      7
+     ],
+     [
+      12,
+      8
+     ],
+     [
+      13,
+      9
+     ]
+    ],
+    "legend": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «tert-butil»"
+     },
+     {
+      "text": "tert-butil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo tert-butilo (4 carbonos)"
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "meaning": "9 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "tert-butil",
+      "kind": "prefix",
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ]
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCCCC(CC(C)C)CCCC": {
+  "name": "5-(2-metilpropil)nonano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 13 carbonos y 28 hidrógenos (C₁₃H₂₈).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12,
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 9 carbonos. Solo hay una así."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 5. Todas las formas dan el mismo nombre.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      10,
+      6
+     ],
+     [
+      11,
+      7
+     ],
+     [
+      12,
+      8
+     ],
+     [
+      13,
+      9
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 5 hay un grupo 2-metilpropilo: se escribe «5-(2-metilpropil)».",
+     "«2-metilpropil» es un grupo de 4 carbonos.",
+     "Es una rama con sus propias ramas. Se nombra como una molécula pequeña: su cadena tiene 3 carbonos y se numera para que el carbono unido a la cadena principal lleve el número más bajo posible. En ella hay: «metil» en el carbono 2.",
+     "Va entre paréntesis porque tiene sus propios sustituyentes y números.",
+     "También se conoce como «isobutilo», pero la IUPAC prefiere «2-metilpropilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      5
+     ]
+    ],
+    "options": [
+     {
+      "label": "2-metilpropil",
+      "text": "En el carbono 5 hay un grupo 2-metilpropilo: se escribe «5-(2-metilpropil)». «2-metilpropil» es un grupo de 4 carbonos. Es una rama con sus propias ramas. Se nombra como una molécula pequeña: su cadena tiene 3 carbonos y se numera para que el carbono unido a la cadena principal lleve el número más bajo posible. En ella hay: «metil» en el carbono 2. Va entre paréntesis porque tiene sus propios sustituyentes y números. También se conoce como «isobutilo», pero la IUPAC prefiere «2-metilpropilo».",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         5,
+         10,
+         11,
+         12,
+         13
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         4,
+         9,
+         10,
+         11,
+         12
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         6,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «5-(2-metilpropil)nonano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      10,
+      6
+     ],
+     [
+      11,
+      7
+     ],
+     [
+      12,
+      8
+     ],
+     [
+      13,
+      9
+     ]
+    ],
+    "legend": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «2-metilpropil»"
+     },
+     {
+      "text": "2-metilpropil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo 2-metilpropilo (4 carbonos)"
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "meaning": "9 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2-metilpropil",
+      "kind": "prefix",
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       10,
+       11,
+       12,
+       13
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       9,
+       10,
+       11,
+       12
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCCCC(CC(C)(C)C)(CC(C)(C)C)CCCC": {
+  "name": "5,5-bis(2,2-dimetilpropil)nonano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 19 carbonos y 40 hidrógenos (C₁₉H₄₀).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       16,
+       17,
+       18,
+       19,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       15,
+       16,
+       17,
+       18,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 9 carbonos. Solo hay una así."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       16,
+       17,
+       18,
+       19
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       15,
+       16,
+       17,
+       18
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Empieces por donde empieces, salen los mismos números: 5, 5. Todas las formas dan el mismo nombre.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       16,
+       17,
+       18,
+       19
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       15,
+       16,
+       17,
+       18
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      16,
+      6
+     ],
+     [
+      17,
+      7
+     ],
+     [
+      18,
+      8
+     ],
+     [
+      19,
+      9
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 5 hay 2 grupos 2,2-dimetilpropilo: se escribe «5,5-bis(2,2-dimetilpropil)». «bis» significa 2; se pone un número por cada grupo, aunque se repita. Con grupos que tienen sus propias ramas se usa «bis», «tris»… en vez de «di» o «tri».",
+     "«2,2-dimetilpropil» es un grupo de 5 carbonos.",
+     "Es una rama con sus propias ramas. Se nombra como una molécula pequeña: su cadena tiene 3 carbonos y se numera para que el carbono unido a la cadena principal lleve el número más bajo posible. En ella hay: 2 grupos «metil» en el carbono 2.",
+     "Va entre paréntesis porque tiene sus propios sustituyentes y números."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       16,
+       17,
+       18,
+       19
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       15,
+       16,
+       17,
+       18
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      5
+     ],
+     [
+      5,
+      5
+     ]
+    ],
+    "options": [
+     {
+      "label": "2,2-dimetilpropil",
+      "text": "En el carbono 5 hay 2 grupos 2,2-dimetilpropilo: se escribe «5,5-bis(2,2-dimetilpropil)». «bis» significa 2; se pone un número por cada grupo, aunque se repita. Con grupos que tienen sus propias ramas se usa «bis», «tris»… en vez de «di» o «tri». «2,2-dimetilpropil» es un grupo de 5 carbonos. Es una rama con sus propias ramas. Se nombra como una molécula pequeña: su cadena tiene 3 carbonos y se numera para que el carbono unido a la cadena principal lleve el número más bajo posible. En ella hay: 2 grupos «metil» en el carbono 2. Va entre paréntesis porque tiene sus propios sustituyentes y números.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         4,
+         5,
+         16,
+         17,
+         18,
+         19
+        ],
+        "bonds": [
+         1,
+         2,
+         3,
+         4,
+         15,
+         16,
+         17,
+         18
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         6,
+         7,
+         8,
+         9,
+         10,
+         11,
+         12,
+         13,
+         14,
+         15
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         11,
+         12,
+         13,
+         14
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        5
+       ],
+       [
+        5,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El nombre completo es «5,5-bis(2,2-dimetilpropil)nonano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       16,
+       17,
+       18,
+       19
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       15,
+       16,
+       17,
+       18
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      16,
+      6
+     ],
+     [
+      17,
+      7
+     ],
+     [
+      18,
+      8
+     ],
+     [
+      19,
+      9
+     ]
+    ],
+    "legend": [
+     {
+      "text": "5,5",
+      "kind": "locant",
+      "meaning": "carbonos de la cadena principal donde está «2,2-dimetilpropil»"
+     },
+     {
+      "text": "bis",
+      "kind": "multiplier",
+      "meaning": "hay 2 grupos iguales"
+     },
+     {
+      "text": "2,2-dimetilpropil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo 2,2-dimetilpropilo (5 carbonos)"
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "meaning": "9 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "5",
+      "kind": "locant",
+      "atoms": [
+       5,
+       11
+      ],
+      "bonds": [
+       10
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "bis",
+      "kind": "multiplier",
+      "atoms": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ]
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2,2-dimetilpropil",
+      "kind": "prefix",
+      "atoms": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       16,
+       17,
+       18,
+       19
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       15,
+       16,
+       17,
+       18
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCC(=C)C=C(C(C)CC)C(C(C)CC)C(=C)CC": {
+  "name": "5,6-di(butan-2-il)-3,7-dimetilidennon-4-eno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 19 carbonos y 34 hidrógenos (C₁₉H₃₄).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       11,
+       16,
+       18,
+       19,
+       7,
+       8,
+       9,
+       10,
+       12,
+       13,
+       14,
+       15,
+       4,
+       17
+      ],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       10,
+       15,
+       17,
+       18,
+       6,
+       7,
+       8,
+       9,
+       11,
+       12,
+       13,
+       14,
+       3,
+       16
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "chain",
+    "title": "Busca la cadena más larga",
+    "text": [
+     "Busca la cadena de carbonos más larga: será la [[cadena principal]]. Puede ir en zigzag o doblarse; lo importante es que sea seguida.",
+     "La cadena más larga tiene 9 carbonos. Hay 2 cadenas de 9. Pulsa cada opción para verlas.",
+     "Los 2 [[dobles enlaces|enlace doble]] de las ramas no están en la cadena principal: con las normas actuales de la IUPAC (2013) manda la longitud. Primero se busca la cadena más larga, aunque deje fuera una [[insaturación]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       11,
+       16,
+       18,
+       19
+      ],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       10,
+       15,
+       17,
+       18
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 2",
+      "text": "Una cadena de 9 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         11,
+         12,
+         14,
+         15
+        ],
+        "bonds": [
+         1,
+         2,
+         4,
+         5,
+         10,
+         11,
+         13,
+         14
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 2",
+      "text": "Una cadena de 9 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         11,
+         16,
+         18,
+         19
+        ],
+        "bonds": [
+         1,
+         2,
+         4,
+         5,
+         10,
+         15,
+         17,
+         18
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Fuera de la cadena",
+      "text": "Estas ramas tienen enlaces dobles o triples, pero no forman parte de la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         11,
+         16,
+         18,
+         19
+        ],
+        "bonds": [
+         1,
+         2,
+         4,
+         5,
+         10,
+         15,
+         17,
+         18
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4,
+         17
+        ],
+        "bonds": [
+         3,
+         16
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Regla: los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 4; opción B: 5; opción C: 4. Se comparan uno a uno: en el primer número distinto, 4 es menor que 5. Empatan las opciones A y C: se pasa a la regla siguiente.",
+     "Regla: si hay empate, el número más bajo es para el sustituyente que se escribe primero (por orden alfabético). Los números se leen en el orden en que se escriben los sustituyentes. Números: opción A: 5, 6, 7, 3; opción C: 5, 6, 3, 7. Se comparan uno a uno: en el primer número distinto, 3 es menor que 7. Gana la opción C.",
+     "Las opciones usan cadenas distintas del mismo tamaño: estas reglas también eligen la cadena principal.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       11,
+       16,
+       18,
+       19
+      ],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       10,
+       15,
+       17,
+       18
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       17
+      ],
+      "bonds": [
+       3,
+       16
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      11,
+      6
+     ],
+     [
+      16,
+      7
+     ],
+     [
+      18,
+      8
+     ],
+     [
+      19,
+      9
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B",
+      "C"
+     ],
+     "rows": [
+      {
+       "rule": "N1",
+       "label": "Enlaces dobles y triples",
+       "lists": [
+        [
+         4
+        ],
+        [
+         5
+        ],
+        [
+         4
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0,
+        2
+       ]
+      },
+      {
+       "rule": "N4",
+       "label": "Sustituyentes en orden alfabético",
+       "lists": [
+        [
+         5,
+         6,
+         7,
+         3
+        ],
+        null,
+        [
+         5,
+         6,
+         3,
+         7
+        ]
+       ],
+       "firstDifference": 2,
+       "marks": [
+        [
+         2
+        ],
+        null,
+        [
+         2
+        ]
+       ],
+       "winners": [
+        2
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         11,
+         12,
+         14,
+         15
+        ],
+        "bonds": [
+         1,
+         2,
+         4,
+         5,
+         10,
+         11,
+         13,
+         14
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        5,
+        4
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        11,
+        6
+       ],
+       [
+        12,
+        7
+       ],
+       [
+        14,
+        8
+       ],
+       [
+        15,
+        9
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         15,
+         14,
+         12,
+         11,
+         6,
+         5,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         14,
+         13,
+         11,
+         10,
+         5,
+         4,
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        15,
+        1
+       ],
+       [
+        14,
+        2
+       ],
+       [
+        12,
+        3
+       ],
+       [
+        11,
+        4
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        5,
+        6
+       ],
+       [
+        3,
+        7
+       ],
+       [
+        2,
+        8
+       ],
+       [
+        1,
+        9
+       ]
+      ]
+     },
+     {
+      "label": "Opción C",
+      "text": "Numeración C: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         11,
+         16,
+         18,
+         19
+        ],
+        "bonds": [
+         1,
+         2,
+         4,
+         5,
+         10,
+         15,
+         17,
+         18
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        5,
+        4
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        11,
+        6
+       ],
+       [
+        16,
+        7
+       ],
+       [
+        18,
+        8
+       ],
+       [
+        19,
+        9
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En los carbonos 5 y 6 hay 2 grupos butan-2-ilo: se escribe «5,6-di(butan-2-il)». «di» significa 2; se pone un número por cada grupo, aunque se repita.",
+     "«butan-2-il» es un grupo de 4 carbonos.",
+     "El número 2 que va justo antes de «-il» dice por qué carbono del grupo se une a la cadena principal.",
+     "Va entre paréntesis porque tiene sus propios números.",
+     "También se conoce como «sec-butilo», pero la IUPAC prefiere «butan-2-ilo».",
+     "En los carbonos 3 y 7 hay 2 grupos metilideno: se escribe «3,7-dimetiliden». «di» significa 2; se pone un número por cada grupo, aunque se repita.",
+     "«metiliden» es un grupo de 1 carbono.",
+     "Se une a la cadena principal con un [[enlace doble]]: por eso termina en «-iliden»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       11,
+       16,
+       18,
+       19
+      ],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       10,
+       15,
+       17,
+       18
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       17
+      ],
+      "bonds": [
+       3,
+       16
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      6,
+      5
+     ],
+     [
+      11,
+      6
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      16,
+      7
+     ]
+    ],
+    "options": [
+     {
+      "label": "butan-2-il",
+      "text": "En los carbonos 5 y 6 hay 2 grupos butan-2-ilo: se escribe «5,6-di(butan-2-il)». «di» significa 2; se pone un número por cada grupo, aunque se repita. «butan-2-il» es un grupo de 4 carbonos. El número 2 que va justo antes de «-il» dice por qué carbono del grupo se une a la cadena principal. Va entre paréntesis porque tiene sus propios números. También se conoce como «sec-butilo», pero la IUPAC prefiere «butan-2-ilo».",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         11,
+         16,
+         18,
+         19
+        ],
+        "bonds": [
+         1,
+         2,
+         4,
+         5,
+         10,
+         15,
+         17,
+         18
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         7,
+         8,
+         9,
+         10,
+         12,
+         13,
+         14,
+         15
+        ],
+        "bonds": [
+         6,
+         7,
+         8,
+         9,
+         11,
+         12,
+         13,
+         14
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        5
+       ],
+       [
+        11,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "metiliden",
+      "text": "En los carbonos 3 y 7 hay 2 grupos metilideno: se escribe «3,7-dimetiliden». «di» significa 2; se pone un número por cada grupo, aunque se repita. «metiliden» es un grupo de 1 carbono. Se une a la cadena principal con un [[enlace doble]]: por eso termina en «-iliden».",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         3,
+         5,
+         6,
+         11,
+         16,
+         18,
+         19
+        ],
+        "bonds": [
+         1,
+         2,
+         4,
+         5,
+         10,
+         15,
+         17,
+         18
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4,
+         17
+        ],
+        "bonds": [
+         3,
+         16
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        3
+       ],
+       [
+        16,
+        7
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "order",
+    "title": "Ordena alfabéticamente",
+    "text": [
+     "Los sustituyentes se escriben por orden alfabético: «butan-2-il» y «metiliden».",
+     "«butan-2-il» va antes que «metiliden» (b va antes que m).",
+     "Los prefijos que dicen cuántos hay (di-, tri-, bis-…) no cuentan para el orden."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       17
+      ],
+      "bonds": [
+       3,
+       16
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «5,6-di(butan-2-il)-3,7-dimetilidennon-4-eno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       11,
+       16,
+       18,
+       19
+      ],
+      "bonds": [
+       1,
+       2,
+       4,
+       5,
+       10,
+       15,
+       17,
+       18
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       17
+      ],
+      "bonds": [
+       3,
+       16
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      11,
+      6
+     ],
+     [
+      16,
+      7
+     ],
+     [
+      18,
+      8
+     ],
+     [
+      19,
+      9
+     ]
+    ],
+    "legend": [
+     {
+      "text": "5,6",
+      "kind": "locant",
+      "meaning": "carbonos de la cadena principal donde está «butan-2-il»"
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "meaning": "hay 2 grupos iguales"
+     },
+     {
+      "text": "butan-2-il",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo butan-2-ilo (4 carbonos)"
+     },
+     {
+      "text": "3,7",
+      "kind": "locant",
+      "meaning": "carbonos de la cadena principal donde está «metiliden»"
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "meaning": "hay 2 grupos iguales"
+     },
+     {
+      "text": "metiliden",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilideno (1 carbono)"
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "meaning": "9 carbonos en la cadena principal"
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "dónde está el enlace doble (el carbono con el número más bajo)"
+     },
+     {
+      "text": "-eno",
+      "kind": "ending",
+      "meaning": "hay un enlace doble"
+     }
+    ],
+    "parts": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "atoms": [
+       6,
+       7
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "6",
+      "kind": "locant",
+      "atoms": [
+       11,
+       12
+      ],
+      "bonds": [
+       11
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       11,
+       12,
+       13,
+       14
+      ]
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "butan-2-il",
+      "kind": "prefix",
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       11,
+       12,
+       13,
+       14
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "7",
+      "kind": "locant",
+      "atoms": [
+       16,
+       17
+      ],
+      "bonds": [
+       16
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       4,
+       17
+      ],
+      "bonds": [
+       3,
+       16
+      ]
+     },
+     {
+      "text": "metiliden",
+      "kind": "prefix",
+      "atoms": [
+       4,
+       17
+      ],
+      "bonds": [
+       3,
+       16
+      ]
+     },
+     {
+      "text": "non",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       5,
+       6,
+       11,
+       16,
+       18,
+       19
+      ],
+      "bonds": []
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "eno",
+      "kind": "ending",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

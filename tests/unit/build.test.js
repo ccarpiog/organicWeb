@@ -35,7 +35,8 @@ async function makeTree(files) {
  * @returns {{document: object, nameButton: {disabled: boolean}}} The fake document.
  */
 function fakeDocument() {
-  const nameButton = { disabled: false };
+  // Starts disabled, as in index.html; only a real canvas (an editor) enables it.
+  const nameButton = { disabled: true };
   const document = {
     readyState: 'complete',
     documentElement: { dataset: {} },

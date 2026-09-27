@@ -206,7 +206,7 @@ function countBonds(adj, atoms, test) {
  * @param {object} ctx - Naming context (createNamingContext).
  * @param {number[]} chainAtoms - The chain's atom ids.
  * @param {number|null} [exclude] - An atom outside the chain that is not a substituent (the carrying atom of a substituent chain).
- * @returns {{chainAtom: number, attachAtom: number, bond: number, order: number, atoms: number[], bonds: number[], key: string, structure: object, citation: object}[]} One entry per substituent, in chain order then attachment-atom order.
+ * @returns {{chainAtom: number, attachAtom: number, bond: number, order: number, atoms: number[], bonds: number[], multipleBonds: number[], key: string, structure: object, citation: object}[]} One entry per substituent, in chain order then attachment-atom order.
  */
 export function substituentsOf(ctx, chainAtoms, exclude = null) {
   const inChain = new Set(chainAtoms);
@@ -217,6 +217,9 @@ export function substituentsOf(ctx, chainAtoms, exclude = null) {
         continue;
       }
       const subtree = substituentSubtree(ctx.adj, chainAtom, n.atom);
+      const inSubtree = new Set(subtree.bonds);
+      const multipleBonds = [...new Set(subtree.atoms.flatMap((atom) => ctx.adj.get(atom)
+        .filter((link) => link.order > 1 && inSubtree.has(link.bond)).map((link) => link.bond)))].sort((p, q) => p - q);
       const structure = nameSubstituentIn(ctx, chainAtom, n.atom, n.order);
       result.push({
         chainAtom,
@@ -225,6 +228,7 @@ export function substituentsOf(ctx, chainAtoms, exclude = null) {
         order: n.order,
         atoms: subtree.atoms,
         bonds: subtree.bonds,
+        multipleBonds,
         key: ATTACH_SYMBOL[n.order] + rootedTreeKey(ctx.mol, n.atom, chainAtom, ctx.adj),
         structure,
         citation: citationKey(structure, ctx.lexicon),
@@ -279,6 +283,7 @@ export function groupPrefixes(substituents, atoms) {
       order: sub.order,
       atoms: [...sub.atoms],
       bonds: [...sub.bonds],
+      multipleBonds: [...sub.multipleBonds],
     });
   }
   const groups = [...byKey.values()];

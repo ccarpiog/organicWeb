@@ -1,8 +1,8 @@
 /**
  * @file Application entry point: wires the editor, the toolbar, the canvas
  * bar (formula, display mode, Centrar), the autosave, the name button and the
- * results panel (design.md §9). The naming engine and the results panel are
- * connected in later phases.
+ * results panel with the naming engine and the step-by-step explanation
+ * (design.md §9, src/ui/results.js).
  *
  * For end-to-end tests the editor instance is published as `window.__editor`
  * (see the test API in src/editor/editor.js).
@@ -13,6 +13,7 @@ import { createEditor } from '../editor/editor.js';
 import { buildToolbar } from './toolbar.js';
 import { showToast, confirmDialog } from './feedback.js';
 import { buildCanvasBar } from './canvasbar.js';
+import { buildResults } from './results.js';
 import {
   getStorage, readItem, writeItem, restoreDrawing, startAutosave, MODE_KEY,
 } from './autosave.js';
@@ -25,10 +26,6 @@ import {
  */
 export function initApp(doc) {
   const nameButton = doc.getElementById('name-button');
-  if (nameButton) {
-    // Disabled until the naming engine is wired to the editor (phase 100).
-    nameButton.disabled = true;
-  }
   const canvas = doc.getElementById('canvas');
   let editor = null;
   if (canvas) {
@@ -53,6 +50,10 @@ export function initApp(doc) {
         initialMode: readItem(storage, MODE_KEY),
         onModeChange: (mode) => writeItem(storage, MODE_KEY, mode),
       });
+    }
+    const results = doc.getElementById('results');
+    if (results && nameButton) {
+      buildResults(results, editor, nameButton);
     }
     if (restored) {
       // The saved coordinates may lie far from the fresh identity view (the

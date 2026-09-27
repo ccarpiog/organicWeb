@@ -17,7 +17,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-7 | OPSIN oracle and graph-invariance checks | `autoclaude/processed/070-oracle.md` | done — `docs/progress-archive/i-7.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-7.md` |
 | I-8 | Editor core | `autoclaude/processed/080-editor-core.md` | done — `docs/progress-archive/i-8.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-8.md` |
 | I-9 | Editor extras | `autoclaude/processed/090-editor-extras.md` | done — `docs/progress-archive/i-9.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-9.md` |
-| I-10 | Explanations and results panel | `autoclaude/processed/100-explain-results.md` | queued | — | — |
+| I-10 | Explanations and results panel | `autoclaude/processed/100-explain-results.md` | done — `docs/progress-archive/i-10.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-10.md` |
 | I-11 | Redraw and examples | `autoclaude/processed/110-redraw-examples.md` | queued | — | — |
 | I-12 | Polish and release build | `autoclaude/processed/120-polish-release.md` | queued | — | — |
 
@@ -37,8 +37,8 @@ All twelve plan items are now queued; the inbox holds no plan items.
 
 ## Next action
 
-Poll the inbox (phase boundary), then execute I-10 (explanations and results
-panel) per `autoclaude/processed/100-explain-results.md`.
+Poll the inbox (phase boundary), then execute I-11 (redraw and examples) per
+`autoclaude/processed/110-redraw-examples.md`.
 
 ## Key paths
 
@@ -53,14 +53,17 @@ panel) per `autoclaude/processed/100-explain-results.md`.
 - Editor: `src/editor/{editor,geometry,history,render}.js` — DOM-free
   `createEditorCore()` + `createEditor(svg)`; test API `window.__editor`
   (see `editor.js` header); `onEdit({reason, kind})` with kind `chemical` /
-  `coordinates`. UI glue `src/ui/{app,toolbar,feedback,canvasbar,autosave}.js`.
+  `coordinates`. UI glue `src/ui/{app,toolbar,feedback,canvasbar,autosave,results}.js`.
+- Explanation: pure `explain()` in `src/explain/explain.js`; snapshots
+  `tests/fixtures/explain-snapshots.json` (`UPDATE_SNAPSHOTS=1 npm test`).
 - Model: `src/model/{molecule,graph,validate,smiles}.js` — `canonicalTreeKey`
   in graph.js; `validateStructure` / `validateForNaming` in validate.js.
 
-## Verification (last phase, I-9)
+## Verification (last phase, I-10)
 
-- `npm test` 0 (348 pass) · `npm run check` 0 · `npm run build` 0 ·
-  `npm run e2e` 0 (19 pass). Oracle not rerun (naming untouched).
+- `npm test` 0 (361 pass) · `npm run check` 0 · `npm run build` 0 ·
+  `npm run e2e` 0 (23 pass) · `npm run oracle -- --count 1000 --seed 4` 0
+  (1000 pass; naming trace extended additively).
 
 ## Open risks / deviations
 
@@ -88,10 +91,14 @@ panel) per `autoclaude/processed/100-explain-results.md`.
   undo step, and recentres the view. Pinch zoom has no e2e test. Review's two
   should-fix findings fixed with regressions (`docs/progress-archive/i-9.md`).
 
+- I-10: numbering options are "Opción A/B" (no coordinates); name button
+  always enabled; Spanish explanation texts not yet reviewed by a teacher.
+  Review's three should-fix findings fixed (`docs/progress-archive/i-10.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-8 `dcd818a`, pushed. I-9 committed and pushed right after this
+- I-9 `49c830d`, pushed. I-10 committed and pushed right after this
   checkpoint (see `git log`).

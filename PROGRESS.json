@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T13:05:46Z",
+ "updated": "2026-09-27T13:30:17Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
@@ -88,8 +88,11 @@
   {
    "id": "I-10",
    "title": "Explanation and results panel",
-   "status": "queued",
-   "summary": "Turns the naming trace into Spanish step-by-step explanations and adds the results panel with a stepper."
+   "status": "done",
+   "summary": "Turns the naming trace into Spanish step-by-step explanations and adds the results panel with a stepper, alternatives and friendly errors.",
+   "risk": "high",
+   "review": "docs/reviews/I-10.md",
+   "narrative": "docs/progress-archive/i-10.md"
   },
   {
    "id": "I-11",

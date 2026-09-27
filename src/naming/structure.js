@@ -41,6 +41,7 @@
  * @property {number} order - Order of the connecting bond (1 → `-il`, 2 → `-iliden`).
  * @property {number[]} atoms - Atoms of this occurrence's substituent subtree (for highlighting).
  * @property {number[]} bonds - Bonds of this occurrence's subtree (not the connecting bond).
+ * @property {number[]} multipleBonds - Double and triple bonds of this occurrence's subtree, ascending (not the connecting bond; for the explanation).
  */
 
 /**
@@ -97,6 +98,7 @@
  * @property {number[]} atoms - Chain atom ids, in locant order when `direction` is set.
  * @property {'forward'|'reverse'} [direction] - Numbering direction ('forward' starts at the chain end with the smaller atom id).
  * @property {string} key - Unique, stable identifier of the candidate.
+ * @property {number[]} [bonds] - Chain bond ids in the order of `atoms` (added by nameMolecule() for the explanation).
  */
 
 /**

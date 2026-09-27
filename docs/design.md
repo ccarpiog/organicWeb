@@ -121,7 +121,8 @@ src/
   editor/geometry.js    placement angles, snapping, bond length
   editor/render.js      SVG rendering (skeletal and condensed modes)
   layout/canonical.js   redraw: main chain horizontal zigzag, branches placed
-  ui/app.js             wires editor, name button, results panel, stepper
+  ui/app.js             wires editor, toolbar, canvas bar, autosave, results panel
+  ui/results.js         name button, coloured name, alternatives, errors, stepper
   ui/examples.js        example gallery
   ui/toolbar.js         drawing toolbar (tools, Deshacer/Rehacer/Limpiar)
   ui/feedback.js        in-page toast and confirmation dialog
@@ -130,6 +131,7 @@ src/
 tests/
   unit/*.test.js        node --test
   fixtures/names.tsv    SMILES <TAB> expected name <TAB> rule tested <TAB> justification
+  fixtures/explain-snapshots.json  explain() output for ~20 fixtures (UPDATE_SNAPSHOTS=1 regenerates)
   e2e/*.spec.js         Playwright
 scripts/
   build.mjs             inline everything into dist/index.html (no deps)
@@ -206,7 +208,9 @@ nameMolecule(mol) →
 ```
 
 `TraceStep = { rule, candidatesBefore, values, survivors, note? }` where each
-candidate is `{ atoms, direction?, key }` and `values` are the compared data
+candidate is `{ atoms, direction?, key, bonds }` (`bonds`: the chain's bond ids,
+added by `nameMolecule()` so the explanation can highlight every compared chain)
+and `values` are the compared data
 (counts for P1–P4, locant lists for N1–N3, the prefix locants flattened
 in citation order for N4, the citation keys for N5, the atom-id tuple for
 the tie-break). Trace order: P1, P2, P3, N1, N2, P4, N3, N4, N5, TIE (N5
@@ -418,8 +422,17 @@ The oracle (§8) is the second line of defence, not a replacement.
 
 ## 5. Explanation (Spanish, ESO level)
 
-`explain(result)` → array of steps
-`{ title, text, highlight: {atoms, bonds, style}, locants?, options? }`.
+`explain(result)` (`src/explain/explain.js`, pure) → array of steps
+`{ id, title, text: [paragraph…], highlight: [{atoms, bonds, style}…],
+locants: [[atomId, n]…] | null, options?, compare?, legend?, parts? }`.
+`options` are `{label, text, highlight, locants}` the student can click
+(each longest chain, each numbering, each substituent); `compare` is the
+side-by-side table of the numbering step (`{labels, rows: [{rule, label,
+lists, firstDifference, marks, winners}]}`; `marks[i]` are the positions
+shown in bold: each losing list's first difference with the winning list,
+and all of those points on the winning list); `legend` (`{text, kind, meaning}`) and
+`parts` (the coloured name) belong to the last step. Glossary terms are
+written `[[shown text|key]]` inside paragraphs (`parseMarkup()`, `GLOSSARY`).
 Steps, in order; a step that decided nothing is skipped (or one short line
 when instructive):
 
@@ -429,12 +442,17 @@ when instructive):
    de 3"). "La cadena más larga tiene 6 carbonos. Hay 2 cadenas de 6."
    When an unsaturation stays outside the parent, say so explicitly: "El doble
    enlace no está en la cadena principal: con las normas actuales de la IUPAC
-   manda la longitud."
+   manda la longitud." When an equally long chain holds it and loses a
+   tie-break (P2/P3), say that instead ("…pierde en los desempates").
 3. **Desempates** (multiple bonds / double bonds / substituents) — only when a
    tie existed, with counts per option.
-4. **Numera la cadena** — both directions side by side with their locant lists
-   and the first point of difference highlighted: "Por la izquierda: 2, 4. Por
-   la derecha: 3, 5. Gana la izquierda porque 2 es menor que 3."
+4. **Numera la cadena** — the numberings compared by a deciding rule (N1–N5)
+   side by side with their locant lists and the first point of difference
+   highlighted. The engine never reads coordinates, so the options are
+   labelled A, B… (each shows its numbers on the canvas) rather than "por la
+   izquierda / por la derecha": "Opción A: 2, 4; opción B: 3, 5. En el primer
+   número distinto, 2 es menor que 3. Gana la opción A." Numberings that give
+   identical lists are merged.
 5. **Nombra los sustituyentes** — each highlighted with its name; compound
    ones get a nested mini-explanation; common names as notes. For an
    isopropyl group, explain the three accepted names (`isopropil`,
@@ -586,13 +604,15 @@ preference, which the fixtures carry).
 Layout (desktop): toolbar | canvas | results panel (right; below the canvas
 on narrow screens).
 
-- Big button **"¿Cómo se llama?"**.
+- Big button **"¿Cómo se llama?"** (always enabled; on an empty canvas it
+  answers with the `EMPTY` message).
 - Results panel: the name (large, coloured parts); below it, when present,
   **"Otras formas válidas"** listing each alternative with its label (§1.1);
   then **"Ver paso a
   paso"**: a stepper with Anterior / Siguiente and progress dots, each step
   driving the canvas highlight.
-- Errors in friendly Spanish (§3.2).
+- Errors in friendly Spanish (§3.2), with a short hint for `EMPTY`, `CYCLE`
+  and `DISCONNECTED` (`src/ui/results.js`).
 - A chemical edit clears the result (stale names must never show);
   coordinate edits do not.
 - **Ejemplos** menu: 12–15 molecules from SMILES covering each feature,

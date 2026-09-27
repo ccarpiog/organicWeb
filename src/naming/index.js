@@ -22,7 +22,7 @@ import { validateForNaming } from '../model/validate.js';
 import { adjacency } from '../model/graph.js';
 import { selectParent } from './parent.js';
 import { createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, PREFIX_STYLES } from './substituent.js';
-import { numberParent } from './numbering.js';
+import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure } from './structure.js';
 import { renderName } from './render.js';
 import { lexiconEs } from './lexicon.es.js';
@@ -100,9 +100,28 @@ function nameWithStyle(mol, adj, selection, style) {
     parts,
     structure,
     parent: { atoms: [...parent.atoms], bonds: [...parent.bonds] },
-    trace: [...selection.trace, ...numbering.trace],
+    trace: withCandidateBonds([...selection.trace, ...numbering.trace], adj),
   };
 } // End of function nameWithStyle()
+
+/**
+ * Adds to every trace candidate the ids of its chain bonds, in the order of
+ * its atoms (`bonds`), so the explanation (src/explain/explain.js) can
+ * highlight each compared chain without the molecule. Additive only: the
+ * compared values and the chosen name are untouched.
+ *
+ * @param {object[]} trace - Trace steps (structure.js TraceStep).
+ * @param {Map<number, object[]>} adj - Adjacency map of the molecule.
+ * @returns {object[]} New trace steps whose candidates carry `bonds`.
+ */
+function withCandidateBonds(trace, adj) {
+  const add = (candidate) => ({ ...candidate, bonds: chainBonds(adj, candidate.atoms).bonds });
+  return trace.map((step) => ({
+    ...step,
+    candidatesBefore: step.candidatesBefore.map(add),
+    survivors: step.survivors.map(add),
+  }));
+}
 
 /**
  * Validates and names a molecule (the body of nameMolecule, which may throw
