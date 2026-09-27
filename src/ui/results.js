@@ -11,6 +11,13 @@
  * 90° view (design.md §6.3) the hint is hidden and arrange() is refused with
  * a message; the highlights follow the projected drawing.
  *
+ * The "Resaltar en el dibujo" switch (one inside the stepper, one under the
+ * name while the stepper is closed; both share one state) hides or shows
+ * every canvas mark of the result — highlights and locant numbers, in the
+ * normal and the 90° view, including the ordered drawing's parent chain —
+ * without touching the stepper, which keeps advancing its text. The choice
+ * is remembered through `options.initialMarks` / `options.onMarksChange`.
+ *
  * A chemical edit clears the result (a stale name must never show); a
  * coordinate-only edit keeps it, and the highlights follow the moved atoms.
  * The name and the text of the current step are announced to screen
@@ -48,6 +55,50 @@ export const CANNOT_ORDER = 'No he podido ordenar esta molécula sin que se cruc
 
 /** Message when "Ordenar dibujo" is asked for in the read-only 90° view. */
 export const READ_ONLY_ORDER = 'Desactiva los ángulos rectos para ordenar el dibujo.';
+
+/** Label of the switch that hides/shows the canvas marks. */
+export const MARKS_LABEL = 'Resaltar en el dibujo';
+
+/** Tooltip of that switch. */
+export const MARKS_TITLE = 'Mostrar u ocultar los colores y los números de la explicación en el dibujo';
+
+/**
+ * What the canvas shows for a view: its highlight and locants, or nothing
+ * when the marks are switched off. Pure.
+ *
+ * @param {{highlight?: object[], locants?: Array<[number, number]>|null}|null} view - The view to draw.
+ * @param {boolean} visible - True when the marks are switched on.
+ * @returns {{highlight: object[]|null, locants: Array<[number, number]>|null}} Arguments for
+ *   editor.highlight() and editor.showLocants().
+ */
+export function canvasMarks(view, visible) {
+  if (!visible || !view) {
+    return { highlight: null, locants: null };
+  }
+  return { highlight: view.highlight || null, locants: view.locants || null };
+}
+
+/**
+ * Builds a "Resaltar en el dibujo" switch: a toggle button whose
+ * `aria-pressed` tells whether the canvas marks are shown.
+ *
+ * @param {Document} doc - The document.
+ * @param {string} id - Id of the button.
+ * @param {boolean} on - Initial state.
+ * @param {function(): void} onToggle - Called on every press (click, Enter, Space).
+ * @returns {HTMLButtonElement} The button.
+ */
+export function makeMarksToggle(doc, id, on, onToggle) {
+  const button = doc.createElement('button');
+  button.type = 'button';
+  button.id = id;
+  button.className = 'marks-toggle';
+  button.textContent = MARKS_LABEL;
+  button.title = MARKS_TITLE;
+  button.setAttribute('aria-pressed', String(Boolean(on)));
+  button.addEventListener('click', onToggle);
+  return button;
+}
 
 /**
  * Creates an element with a class and optional text.
@@ -216,9 +267,12 @@ function renderCompare(doc, compare) {
  * @param {HTMLElement} panel - The `#results` element.
  * @param {object} editor - The editor (createEditor()).
  * @param {HTMLButtonElement} button - The "¿Cómo se llama?" button.
- * @param {{notify?: function(string): void}} [options] - `notify(message)` shows a Spanish toast.
+ * @param {{notify?: function(string): void, initialMarks?: boolean, onMarksChange?: function(boolean): void}} [options] -
+ *   `notify(message)` shows a Spanish toast; `initialMarks` (default true) tells whether the canvas
+ *   marks start switched on; `onMarksChange(on)` is called when the student flips the switch.
  * @returns {{nameCurrent: function(): object, clear: function(): void, getSteps: function(): object[],
- *   arrange: function(): object, isOrdered: function(): boolean}} Handles (also used by tests).
+ *   arrange: function(): object, isOrdered: function(): boolean, setMarksVisible: function(boolean): void,
+ *   marksVisible: function(): boolean}} Handles (also used by tests).
  */
 export function buildResults(panel, editor, button, options = {}) {
   const doc = panel.ownerDocument;
@@ -232,6 +286,7 @@ export function buildResults(panel, editor, button, options = {}) {
   let ordered = false; // True while the drawing shows exactly that layout.
   let lastView = null; // The step (or option) the canvas marks come from.
   let hint = null; // The redraw hint box.
+  let marksOn = options.initialMarks !== false; // "Resaltar en el dibujo".
   const announcer = doc.getElementById('announcer');
 
   /**
@@ -296,9 +351,38 @@ export function buildResults(panel, editor, button, options = {}) {
    */
   function showOnCanvas(view, isOption = false) {
     lastView = { view, isOption };
-    const shown = withOrderedMarks(view, isOption);
-    editor.highlight(shown && shown.highlight ? shown.highlight : null);
-    editor.showLocants(shown && shown.locants ? shown.locants : null);
+    const marks = canvasMarks(withOrderedMarks(view, isOption), marksOn);
+    editor.highlight(marks.highlight);
+    editor.showLocants(marks.locants);
+  }
+
+  /**
+   * Switches the canvas marks on or off: updates every switch and redraws
+   * the current view (the stepper stays where it is).
+   *
+   * @param {boolean} on - True to show the marks.
+   * @returns {void}
+   */
+  function setMarksVisible(on) {
+    marksOn = Boolean(on);
+    for (const button of body.querySelectorAll('.marks-toggle')) {
+      button.setAttribute('aria-pressed', String(marksOn));
+    }
+    if (lastView) {
+      showOnCanvas(lastView.view, lastView.isOption);
+    }
+  }
+
+  /**
+   * Handles a press on a "Resaltar en el dibujo" switch.
+   *
+   * @returns {void}
+   */
+  function toggleMarks() {
+    setMarksVisible(!marksOn);
+    if (options.onMarksChange) {
+      options.onMarksChange(marksOn);
+    }
   }
 
   /**
@@ -494,9 +578,11 @@ export function buildResults(panel, editor, button, options = {}) {
     root.setAttribute('aria-label', 'Paso a paso');
     root.hidden = true;
     const header = make(doc, 'div', 'step-header');
+    const top = make(doc, 'div', 'step-top');
     const count = make(doc, 'p', 'step-count');
+    top.append(count, makeMarksToggle(doc, 'stepper-marks-toggle', marksOn, toggleMarks));
     const title = make(doc, 'h3', 'step-title');
-    header.append(count, title);
+    header.append(top, title);
     const content = make(doc, 'div', 'step-content');
     const nav = make(doc, 'div', 'stepper-nav');
     const prev = make(doc, 'button', 'step-button', 'Anterior');
@@ -571,9 +657,13 @@ export function buildResults(panel, editor, button, options = {}) {
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-controls', 'stepper');
     const root = buildStepper();
+    // While the stepper is closed the canvas keeps the whole name's marks:
+    // this switch (same state as the stepper's) governs them.
+    const outerMarks = makeMarksToggle(doc, 'result-marks-toggle', marksOn, toggleMarks);
     toggle.addEventListener('click', () => {
       const open = root.hidden;
       root.hidden = !open;
+      outerMarks.hidden = open;
       toggle.setAttribute('aria-expanded', String(open));
       toggle.textContent = open ? 'Ocultar el paso a paso' : 'Ver paso a paso';
       if (open) {
@@ -582,7 +672,9 @@ export function buildResults(panel, editor, button, options = {}) {
         showOnCanvas(steps[steps.length - 1]);
       }
     });
-    nodes.push(toggle, root);
+    const controls = make(doc, 'div', 'result-controls');
+    controls.append(toggle, outerMarks);
+    nodes.push(controls, root);
     body.replaceChildren(...nodes);
     panel.dataset.state = 'result';
     showOnCanvas(steps[steps.length - 1]);
@@ -656,5 +748,7 @@ export function buildResults(panel, editor, button, options = {}) {
     }
   });
   clear();
-  return { nameCurrent, clear, getSteps: () => steps, arrange, isOrdered: () => ordered };
+  return {
+    nameCurrent, clear, getSteps: () => steps, arrange, isOrdered: () => ordered, setMarksVisible, marksVisible: () => marksOn,
+  };
 } // End of function buildResults()

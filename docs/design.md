@@ -571,7 +571,7 @@ Keyboard: `c` carbono, `1/2/3` bond tools (`h` also Enlace simple), `t` cambiar 
     "Desactiva los ángulos rectos para editar."; it becomes read-only as
     soon as an edit makes the molecule projectable, and editable again if
     undo returns to an unprojectable one. Stepper highlights and locants are
-    drawn on the projected positions.
+    drawn on the projected positions (unless "Resaltar en el dibujo" is off, §9).
 - Hover highlight on atoms and bonds. Highlight API for the stepper:
   `highlight({atoms, bonds, style})` with styles
   `parent|candidate|substituent|locant`, and `showLocants(Map atomId→n)`.
@@ -608,7 +608,8 @@ unchanged):
   persistently while the ordered drawing is shown (i.e. until an atom moves
   or undo restores other coordinates); locant numbers appear next to parent
   atoms from the numbering step on. A step's option views (Opción A/B,
-  chain candidates) are shown unchanged.
+  chain candidates) are shown unchanged. "Resaltar en el dibujo" off (§9)
+  hides these marks too.
 - After naming, a hint offers it: "¿Quieres ver la cadena principal
   ordenada?".
 - While the 90° drawing is shown (§6.3) "Ordenar dibujo" and its hint are disabled (the
@@ -675,6 +676,21 @@ on narrow screens).
   then **"Ver paso a
   paso"**: a stepper with Anterior / Siguiente and progress dots, each step
   driving the canvas highlight.
+- **"Resaltar en el dibujo"** switch (a toggle button with `aria-pressed`,
+  on by default): hides or shows every canvas mark of the result — the
+  parent / candidate / substituent / locant highlights and the locant
+  numbers — in the normal and the 90° view, including the persistent parent
+  highlight of the ordered drawing (§7). It sits in the stepper's header;
+  while the stepper is closed (when the canvas shows the whole name's marks)
+  a second switch with the same state sits next to "Ver paso a paso", so
+  exactly one is visible. Flipping it never leaves or resets the stepper;
+  moving to another step with the marks off keeps them off (the text still
+  advances), and switching back on shows the current step's marks. The hover
+  highlight is not affected. **Decision: the choice is remembered** in
+  `localStorage` (`organicWeb.highlights` = `on`|`off`, every access in
+  try/catch, missing means on), like the display mode and the 90° view, so a
+  student who prefers the plain drawing is not asked again; the switch is
+  always visible next to the text, so a forgotten "off" is easy to spot.
 - Errors in friendly Spanish (§3.2), with a short hint for `EMPTY`, `CYCLE`
   and `DISCONNECTED` (`src/ui/results.js`).
 - A chemical edit clears the result (stale names must never show);

@@ -1,7 +1,8 @@
 /**
  * @file Application entry point: wires the editor, the toolbar, the canvas
  * bar (formula, display mode, 90° view, Centrar), the autosave, the name button, the
- * results panel with the naming engine and the step-by-step explanation
+ * results panel with the naming engine, the step-by-step explanation and the
+ * remembered "Resaltar en el dibujo" switch
  * (design.md §9, src/ui/results.js), "Ordenar dibujo" (design.md §7), the
  * Ejemplos menu (src/ui/examples.js) and the Ayuda dialog (src/ui/help.js).
  *
@@ -17,7 +18,7 @@ import { buildCanvasBar } from './canvasbar.js';
 import { buildResults } from './results.js';
 import { buildHelp } from './help.js';
 import {
-  getStorage, readItem, writeItem, restoreDrawing, startAutosave, MODE_KEY, RIGHT_ANGLE_KEY,
+  getStorage, readItem, writeItem, restoreDrawing, startAutosave, MODE_KEY, RIGHT_ANGLE_KEY, MARKS_KEY,
 } from './autosave.js';
 
 /**
@@ -59,7 +60,11 @@ export function initApp(doc) {
     }
     const panel = doc.getElementById('results');
     if (panel && nameButton) {
-      results = buildResults(panel, editor, nameButton, { notify: (message) => showToast(doc, message) });
+      results = buildResults(panel, editor, nameButton, {
+        notify: (message) => showToast(doc, message),
+        initialMarks: readItem(storage, MARKS_KEY) !== 'off',
+        onMarksChange: (on) => writeItem(storage, MARKS_KEY, on ? 'on' : 'off'),
+      });
     }
     const headerActions = doc.getElementById('header-actions');
     if (headerActions) {

@@ -23,11 +23,11 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-13 | Visible carbon dots in skeletal mode | `autoclaude/processed/130-visible-carbons.md` | done — `docs/progress-archive/i-13.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-13.md` |
 | I-14 | Single-bond drag grows a chain | `autoclaude/processed/140-drag-chain-single-bond.md` | done — `docs/progress-archive/i-14.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-14.md` |
 | I-15 | 90° condensed-formula view toggle | `autoclaude/processed/150-right-angles.md` | done — `docs/progress-archive/i-15.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-15.md` |
-| I-16 | Toggle to hide stepper highlights | `autoclaude/processed/160-hide-highlights.md` | queued (next) | — | — |
-| I-17 | Editing in the 90° view | `autoclaude/processed/170-edit-in-carbons-view.md` | queued (after I-16) | — | — |
+| I-16 | Toggle to hide stepper highlights | `autoclaude/processed/160-hide-highlights.md` | done — `docs/progress-archive/i-16.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-16.md` |
+| I-17 | Editing in the 90° view | `autoclaude/processed/170-edit-in-carbons-view.md` | queued (next) | — | — |
 
-The twelve original plan items and user-feedback items I-13…I-15 are done;
-I-16 and I-17 (user feedback) are queued.
+The twelve original plan items and user-feedback items I-13…I-16 are done;
+I-17 (user feedback) is queued.
 
 ## Inbox
 
@@ -50,8 +50,8 @@ I-16 and I-17 (user feedback) are queued.
 
 ## Next action
 
-Execute I-16 (spec `autoclaude/processed/160-hide-highlights.md`), then
-I-17. Re-poll the inbox at each phase boundary (`180-author-credit.md` waits).
+Poll the inbox (`180-author-credit.md` waits), then execute I-17 (spec
+`autoclaude/processed/170-edit-in-carbons-view.md`).
 
 ## Key paths
 
@@ -81,12 +81,13 @@ I-17. Re-poll the inbox at each phase boundary (`180-author-credit.md` waits).
 - 90° view: pure projection in `src/layout/rightangle.js`; editor
   `shownMolecule()` / `isReadOnly()` / `refresh()` in `src/editor/editor.js`;
   toggle in `src/ui/canvasbar.js` (localStorage `organicWeb.rightAngles`).
+- Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
+  (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-15)
+## Verification (last phase, I-16)
 
-- `npm test` 0 (393 pass) · `npm run check` 0 · `npm run build` 0 ·
-  `npm run e2e` 0 (99 pass, source + dist). Oracle not rerun (naming engine
-  untouched).
+- `npm test` 0 (397 pass) · `npm run check` 0 · `npm run e2e` 0 (105 pass,
+  source + dist, includes build). Oracle not rerun (naming engine untouched).
 
 ## Open risks / deviations
 
@@ -141,10 +142,14 @@ I-17. Re-poll the inbox at each phase boundary (`180-author-credit.md` waits).
   (Mover live preview lost) fixed with an e2e regression
   (`docs/progress-archive/i-15.md`).
 
+- I-16: highlight switch persisted in `organicWeb.highlights`; a twin
+  switch outside the stepper covers the post-Ordenar highlight
+  (`docs/progress-archive/i-16.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-14 `66280ae`, pushed. I-15 committed and pushed right after this
-  checkpoint (see `git log`).
+- I-15 `adb1a4c`, pushed; triage `1d4a5a2`. I-16 committed and pushed right
+  after this checkpoint (see `git log`).

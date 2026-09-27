@@ -16,6 +16,9 @@ export const MODE_KEY = 'organicWeb.displayMode';
 /** localStorage key of the 90° view preference ('on' | 'off'), kept in both display modes. */
 export const RIGHT_ANGLE_KEY = 'organicWeb.rightAngles';
 
+/** localStorage key of the "Resaltar en el dibujo" preference ('on' | 'off'; missing means on). */
+export const MARKS_KEY = 'organicWeb.highlights';
+
 /**
  * The page's localStorage, or null when it cannot be used (reading the
  * property itself throws in some privacy modes).

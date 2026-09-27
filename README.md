@@ -22,7 +22,8 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles.
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
-  alphabetical order, assembly) that highlights each step on the drawing.
+  alphabetical order, assembly) that highlights each step on the drawing;
+  the remembered **Resaltar en el dibujo** switch hides or shows those marks.
   Key terms are underlined and show a short definition.
 - **Ordenar dibujo**: redraws the molecule with the main chain laid out left
   to right and numbered (one animated, undoable edit).

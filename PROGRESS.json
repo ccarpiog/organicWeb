@@ -1,143 +1,158 @@
 {
- "schema_version": 1,
- "updated": "2026-09-27T15:32:33Z",
- "plan": "PLAN.md",
- "goal": "Build a Spanish ESO web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with editor refinements from the inbox.",
- "phases": [
-  {
-   "id": "I-1",
-   "title": "Project scaffold",
-   "status": "done",
-   "risk": "routine",
-   "review": "docs/reviews/I-1.md",
-   "narrative": "docs/progress-archive/i-1.md",
-   "summary": "Creates the repo skeleton, HTML shell, CSS, single-file build and test tooling."
-  },
-  {
-   "id": "I-2",
-   "title": "Molecule model, validation, SMILES subset",
-   "status": "done",
-   "summary": "Adds the molecule graph model, validation messages, canonical tree key and SMILES parser.",
-   "risk": "routine",
-   "review": "docs/reviews/I-2.md",
-   "narrative": "docs/progress-archive/i-2.md"
-  },
-  {
-   "id": "I-3",
-   "title": "Naming engine I: unbranched chains",
-   "status": "done",
-   "summary": "Defines naming contracts and lexicon and names unbranched alkanes, alkenes and alkynes.",
-   "risk": "high",
-   "review": "docs/reviews/I-3.md",
-   "narrative": "docs/progress-archive/i-3.md"
-  },
-  {
-   "id": "I-4",
-   "title": "Naming engine II: parent chain",
-   "status": "done",
-   "summary": "Selects the parent chain and numbering (P1–P4, N1–N4) and names simple straight-chain substituents.",
-   "risk": "high",
-   "review": "docs/reviews/I-4.md",
-   "narrative": "docs/progress-archive/i-4.md"
-  },
-  {
-   "id": "I-5",
-   "title": "Naming engine III: substituents",
-   "status": "done",
-   "summary": "Names branched and unsaturated substituents recursively, with isopropil, PIN and substituted styles.",
-   "risk": "high",
-   "review": "docs/reviews/I-5.md",
-   "narrative": "docs/progress-archive/i-5.md"
-  },
-  {
-   "id": "I-6",
-   "title": "Naming: ylidene groups and fixtures",
-   "status": "done",
-   "summary": "Names doubly attached -iliden substituents at any depth, removes every unsupported path and grows the fixture set to 176 justified rows.",
-   "risk": "high",
-   "review": "docs/reviews/I-6.md",
-   "narrative": "docs/progress-archive/i-6.md"
-  },
-  {
-   "id": "I-7",
-   "title": "Naming oracle",
-   "status": "done",
-   "summary": "Adds an English renderer, an OPSIN round-trip oracle and graph-invariance tests; about 37,000 molecules checked with no naming bugs.",
-   "risk": "high",
-   "review": "docs/reviews/I-7.md",
-   "narrative": "docs/progress-archive/i-7.md"
-  },
-  {
-   "id": "I-8",
-   "title": "Editor core",
-   "status": "done",
-   "summary": "Builds the SVG drawing editor: carbons, bonds, erase, undo/redo, validation toasts, collision checks and a test API.",
-   "risk": "routine",
-   "review": "docs/reviews/I-8.md",
-   "narrative": "docs/progress-archive/i-8.md"
-  },
-  {
-   "id": "I-9",
-   "title": "Editor extras",
-   "status": "done",
-   "summary": "Adds chain tool, move/marquee, pan/zoom, label toggle, live formula, autosave with recentring, shortcuts and chemical vs coordinate edit events.",
-   "risk": "routine",
-   "review": "docs/reviews/I-9.md",
-   "narrative": "docs/progress-archive/i-9.md"
-  },
-  {
-   "id": "I-10",
-   "title": "Explanation and results panel",
-   "status": "done",
-   "summary": "Turns the naming trace into Spanish step-by-step explanations and adds the results panel with a stepper, alternatives and friendly errors.",
-   "risk": "high",
-   "review": "docs/reviews/I-10.md",
-   "narrative": "docs/progress-archive/i-10.md"
-  },
-  {
-   "id": "I-11",
-   "title": "Redraw and examples",
-   "status": "done",
-   "summary": "Adds the \"Ordenar dibujo\" canonical redraw with animation and undo, and an examples menu of 14 molecules.",
-   "risk": "routine",
-   "review": "docs/reviews/I-11.md",
-   "narrative": "docs/progress-archive/i-11.md"
-  },
-  {
-   "id": "I-12",
-   "title": "Polish and release",
-   "status": "done",
-   "summary": "Adds the Ayuda dialog, accessibility and phone layout polish, e2e on the self-contained build and the English README.",
-   "risk": "routine",
-   "review": "docs/reviews/I-12.md",
-   "narrative": "docs/progress-archive/i-12.md"
-  },
-  {
-   "id": "I-13",
-   "title": "Visible carbon dots in skeletal mode",
-   "status": "done",
-   "risk": "routine",
-   "summary": "Marks every carbon vertex with a dot in skeletal mode so carbons can be counted at a glance.",
-   "review": "docs/reviews/I-13.md",
-   "narrative": "docs/progress-archive/i-13.md"
-  },
-  {
-   "id": "I-14",
-   "title": "Single-bond drag grows a chain",
-   "status": "done",
-   "summary": "Dragging with the single-bond tool grows a chain carbon by carbon, like MolView.",
-   "risk": "routine",
-   "review": "docs/reviews/I-14.md",
-   "narrative": "docs/progress-archive/i-14.md"
-  },
-  {
-   "id": "I-15",
-   "title": "90-degree condensed-formula view toggle",
-   "status": "done",
-   "summary": "Adds a toggle that draws the labelled-carbons view with 90-degree angles in textbook style, read-only while shown.",
-   "risk": "high",
-   "review": "docs/reviews/I-15.md",
-   "narrative": "docs/progress-archive/i-15.md"
-  }
- ]
+  "schema_version": 1,
+  "updated": "2026-09-27T16:03:09Z",
+  "plan": "PLAN.md",
+  "goal": "Build a Spanish ESO web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with editor refinements from the inbox.",
+  "phases": [
+    {
+      "id": "I-1",
+      "title": "Project scaffold",
+      "status": "done",
+      "risk": "routine",
+      "review": "docs/reviews/I-1.md",
+      "narrative": "docs/progress-archive/i-1.md",
+      "summary": "Creates the repo skeleton, HTML shell, CSS, single-file build and test tooling."
+    },
+    {
+      "id": "I-2",
+      "title": "Molecule model, validation, SMILES subset",
+      "status": "done",
+      "summary": "Adds the molecule graph model, validation messages, canonical tree key and SMILES parser.",
+      "risk": "routine",
+      "review": "docs/reviews/I-2.md",
+      "narrative": "docs/progress-archive/i-2.md"
+    },
+    {
+      "id": "I-3",
+      "title": "Naming engine I: unbranched chains",
+      "status": "done",
+      "summary": "Defines naming contracts and lexicon and names unbranched alkanes, alkenes and alkynes.",
+      "risk": "high",
+      "review": "docs/reviews/I-3.md",
+      "narrative": "docs/progress-archive/i-3.md"
+    },
+    {
+      "id": "I-4",
+      "title": "Naming engine II: parent chain",
+      "status": "done",
+      "summary": "Selects the parent chain and numbering (P1–P4, N1–N4) and names simple straight-chain substituents.",
+      "risk": "high",
+      "review": "docs/reviews/I-4.md",
+      "narrative": "docs/progress-archive/i-4.md"
+    },
+    {
+      "id": "I-5",
+      "title": "Naming engine III: substituents",
+      "status": "done",
+      "summary": "Names branched and unsaturated substituents recursively, with isopropil, PIN and substituted styles.",
+      "risk": "high",
+      "review": "docs/reviews/I-5.md",
+      "narrative": "docs/progress-archive/i-5.md"
+    },
+    {
+      "id": "I-6",
+      "title": "Naming: ylidene groups and fixtures",
+      "status": "done",
+      "summary": "Names doubly attached -iliden substituents at any depth, removes every unsupported path and grows the fixture set to 176 justified rows.",
+      "risk": "high",
+      "review": "docs/reviews/I-6.md",
+      "narrative": "docs/progress-archive/i-6.md"
+    },
+    {
+      "id": "I-7",
+      "title": "Naming oracle",
+      "status": "done",
+      "summary": "Adds an English renderer, an OPSIN round-trip oracle and graph-invariance tests; about 37,000 molecules checked with no naming bugs.",
+      "risk": "high",
+      "review": "docs/reviews/I-7.md",
+      "narrative": "docs/progress-archive/i-7.md"
+    },
+    {
+      "id": "I-8",
+      "title": "Editor core",
+      "status": "done",
+      "summary": "Builds the SVG drawing editor: carbons, bonds, erase, undo/redo, validation toasts, collision checks and a test API.",
+      "risk": "routine",
+      "review": "docs/reviews/I-8.md",
+      "narrative": "docs/progress-archive/i-8.md"
+    },
+    {
+      "id": "I-9",
+      "title": "Editor extras",
+      "status": "done",
+      "summary": "Adds chain tool, move/marquee, pan/zoom, label toggle, live formula, autosave with recentring, shortcuts and chemical vs coordinate edit events.",
+      "risk": "routine",
+      "review": "docs/reviews/I-9.md",
+      "narrative": "docs/progress-archive/i-9.md"
+    },
+    {
+      "id": "I-10",
+      "title": "Explanation and results panel",
+      "status": "done",
+      "summary": "Turns the naming trace into Spanish step-by-step explanations and adds the results panel with a stepper, alternatives and friendly errors.",
+      "risk": "high",
+      "review": "docs/reviews/I-10.md",
+      "narrative": "docs/progress-archive/i-10.md"
+    },
+    {
+      "id": "I-11",
+      "title": "Redraw and examples",
+      "status": "done",
+      "summary": "Adds the \"Ordenar dibujo\" canonical redraw with animation and undo, and an examples menu of 14 molecules.",
+      "risk": "routine",
+      "review": "docs/reviews/I-11.md",
+      "narrative": "docs/progress-archive/i-11.md"
+    },
+    {
+      "id": "I-12",
+      "title": "Polish and release",
+      "status": "done",
+      "summary": "Adds the Ayuda dialog, accessibility and phone layout polish, e2e on the self-contained build and the English README.",
+      "risk": "routine",
+      "review": "docs/reviews/I-12.md",
+      "narrative": "docs/progress-archive/i-12.md"
+    },
+    {
+      "id": "I-13",
+      "title": "Visible carbon dots in skeletal mode",
+      "status": "done",
+      "risk": "routine",
+      "summary": "Marks every carbon vertex with a dot in skeletal mode so carbons can be counted at a glance.",
+      "review": "docs/reviews/I-13.md",
+      "narrative": "docs/progress-archive/i-13.md"
+    },
+    {
+      "id": "I-14",
+      "title": "Single-bond drag grows a chain",
+      "status": "done",
+      "summary": "Dragging with the single-bond tool grows a chain carbon by carbon, like MolView.",
+      "risk": "routine",
+      "review": "docs/reviews/I-14.md",
+      "narrative": "docs/progress-archive/i-14.md"
+    },
+    {
+      "id": "I-15",
+      "title": "90-degree condensed-formula view toggle",
+      "status": "done",
+      "summary": "Adds a toggle that draws the labelled-carbons view with 90-degree angles in textbook style, read-only while shown.",
+      "risk": "high",
+      "review": "docs/reviews/I-15.md",
+      "narrative": "docs/progress-archive/i-15.md"
+    },
+    {
+      "id": "I-16",
+      "title": "Toggle to hide stepper highlights",
+      "status": "done",
+      "risk": "routine",
+      "summary": "Adds a stepper switch that hides or shows the canvas highlights and locant numbers.",
+      "review": "Codex ship, 0 findings — docs/reviews/I-16.md",
+      "narrative": "docs/progress-archive/i-16.md"
+    },
+    {
+      "id": "I-17",
+      "title": "Editing in the 90° view",
+      "status": "queued",
+      "summary": "Makes every editing tool work while the 90° condensed drawing is shown."
+    }
+  ]
 }
