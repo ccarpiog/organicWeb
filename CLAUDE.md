@@ -1,0 +1,18 @@
+# organicWeb — Química orgánica para ESO
+
+Static web app: draw an acyclic hydrocarbon, get its IUPAC name in Spanish with
+a step-by-step explanation, and optionally redraw it so the main chain is clear.
+
+- **User-facing text: Spanish (Spain), ESO level.** Code, comments and docs: English.
+- **Nomenclature: IUPAC 2013 recommendations** (longest chain first, then
+  unsaturation; `hex-2-eno` style). Full rules and decisions: `docs/design.md`.
+- User decision: the `–CH(CH₃)₂` group is named `isopropil` by default; the
+  app also shows the `propan-2-il` (IUPAC preferred) and `1-metiletil` forms.
+- v1 scope: acyclic hydrocarbons only (no rings, benzene, heteroatoms, stereo).
+- Tech: vanilla JavaScript ES modules, no framework, no runtime dependencies.
+  Tests: `npm test` (`node --test`), end-to-end: `npm run e2e` (Playwright).
+  Single-file build: `npm run build` → `dist/index.html`.
+- The naming engine (`src/naming/`) is pure: it never reads atom coordinates or the DOM.
+- Never use `alert`/`confirm`/`prompt`; use in-page dialogs.
+- Work is planned in `docs/design.md` and delivered through the autoclaude inbox
+  (`autoclaude/inbox/`).
