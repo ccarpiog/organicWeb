@@ -33,7 +33,7 @@ from disk. Use the built file (below) for `file://`.
 npm test             # unit tests (node --test)
 npm run check        # syntax check of every .js/.mjs file + no alert/confirm/prompt
 npm run e2e          # Playwright end-to-end tests (Chromium)
-npm run oracle       # OPSIN cross-check (development only; not implemented yet)
+npm run oracle       # OPSIN cross-check (development only; see scripts/oracle/README.md)
 ```
 
 ## Build

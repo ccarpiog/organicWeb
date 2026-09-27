@@ -4,7 +4,7 @@
  * (§4.7), plus the builders that assemble a structure from a numbered chain.
  *
  * The name structure holds data only (lengths, locants, atom and bond ids);
- * never words. A lexicon (lexicon.es.js, later lexicon.en.js) and render.js
+ * never words. A lexicon (lexicon.es.js, or lexicon.en.js for the oracle) and render.js
  * turn it into text, so the same structure can be rendered in any language.
  * Later phases may extend these shapes; they must add fields, not redesign
  * existing ones.

@@ -1,0 +1,54 @@
+/**
+ * @file Graph-invariance tests (design.md §8): for seeded random molecules,
+ * renumbering atom ids and shuffling atom and bond insertion order (and bond
+ * ends) must not change the name, in any prefix style.
+ */
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { nameMolecule } from '../../src/naming/index.js';
+import { PREFIX_STYLES } from '../../src/naming/substituent.js';
+import { writeSmiles } from '../../src/model/smiles.js';
+import { generateMolecules, scrambleMolecule, seededRandom } from '../../scripts/oracle/generate.mjs';
+
+/**
+ * Summarises a naming result by what must be invariant: the name, its parts'
+ * texts and kinds, and the alternatives.
+ *
+ * @param {object} result - A naming result.
+ * @returns {object} The invariant summary.
+ */
+function summary(result) {
+  assert.equal(result.ok, true, JSON.stringify(result.error));
+  return {
+    name: result.name,
+    parts: result.parts.map((p) => `${p.kind}:${p.text}`),
+    alternatives: result.alternatives.map((alt) => `${alt.style}=${alt.name}`),
+  };
+}
+
+test('scrambled copies are the same graph with other ids and insertion order', () => {
+  const [mol] = generateMolecules({ count: 1, seed: 3, minSize: 12, maxSize: 12 });
+  const copy = scrambleMolecule(mol, seededRandom(4));
+  assert.equal(copy.atoms.size, mol.atoms.size);
+  assert.equal(copy.bonds.size, mol.bonds.size);
+  assert.notDeepEqual([...copy.atoms.keys()], [...mol.atoms.keys()]);
+});
+
+for (const [seed, minSize, maxSize] of [[101, 4, 14], [102, 10, 30], [103, 25, 60]]) {
+  test(`names are invariant under atom renumbering and bond order shuffling (seed ${seed}, ${minSize}–${maxSize} C)`, () => {
+    const random = seededRandom(seed * 7);
+    const molecules = generateMolecules({ count: 150, seed, minSize, maxSize });
+    assert.equal(molecules.length, 150);
+    for (const mol of molecules) {
+      const smiles = writeSmiles(mol);
+      for (const prefixStyle of PREFIX_STYLES) {
+        const expected = summary(nameMolecule(mol, { prefixStyle }));
+        for (let k = 0; k < 3; k += 1) {
+          const actual = summary(nameMolecule(scrambleMolecule(mol, random), { prefixStyle }));
+          assert.deepEqual(actual, expected, `${smiles} (${prefixStyle})`);
+        }
+      }
+    } // End of the loop over the random molecules
+  });
+} // End of the loop over the seeds and size ranges

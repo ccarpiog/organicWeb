@@ -1,6 +1,6 @@
 {
  "schema_version": 1,
- "updated": "2026-09-27T12:13:49Z",
+ "updated": "2026-09-27T12:27:09Z",
  "plan": "PLAN.md",
  "goal": "Build a Spanish-language web app that names drawn acyclic hydrocarbons by IUPAC 2013 rules, with explanations, for ESO students.",
  "phases": [
@@ -61,8 +61,11 @@
   {
    "id": "I-7",
    "title": "Naming oracle",
-   "status": "queued",
-   "summary": "Checks names against the OPSIN reference tool on random molecules and tests that atom order never changes a name."
+   "status": "done",
+   "summary": "Adds an English renderer, an OPSIN round-trip oracle and graph-invariance tests; about 37,000 molecules checked with no naming bugs.",
+   "risk": "high",
+   "review": "docs/reviews/I-7.md",
+   "narrative": "docs/progress-archive/i-7.md"
   },
   {
    "id": "I-8",

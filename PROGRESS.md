@@ -14,7 +14,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-4 | Naming engine II: parent selection and numbering | `autoclaude/processed/040-naming-parent.md` | done — `docs/progress-archive/i-4.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-4.md` |
 | I-5 | Naming engine III: recursive preferred substituents | `autoclaude/processed/050-naming-substituents.md` | done — `docs/progress-archive/i-5.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-5.md` |
 | I-6 | Naming engine IV: iliden substituents and fixture set | `autoclaude/processed/060-naming-iliden-fixtures.md` | done — `docs/progress-archive/i-6.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-6.md` |
-| I-7 | OPSIN oracle and graph-invariance checks | `autoclaude/processed/070-oracle.md` | queued | — | — |
+| I-7 | OPSIN oracle and graph-invariance checks | `autoclaude/processed/070-oracle.md` | done — `docs/progress-archive/i-7.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-7.md` |
 | I-8 | Editor core | `autoclaude/processed/080-editor-core.md` | queued | — | — |
 | I-9 | Editor extras | `autoclaude/processed/090-editor-extras.md` | queued | — | — |
 | I-10 | Explanations and results panel | `autoclaude/processed/100-explain-results.md` | queued | — | — |
@@ -37,11 +37,8 @@ All twelve plan items are now queued; the inbox holds no plan items.
 
 ## Next action
 
-Poll the inbox (phase boundary), then execute I-7 (OPSIN oracle and
-graph-invariance checks) per `autoclaude/processed/070-oracle.md`. I-7 should
-confirm the IUPAC calls made from memory in I-5 and I-6 (lists in
-`docs/progress-archive/i-5.md` and `docs/progress-archive/i-6.md`, section
-Decisions) and fix any fixture it refutes.
+Poll the inbox (phase boundary), then execute I-8 (editor core) per
+`autoclaude/processed/080-editor-core.md`.
 
 ## Key paths
 
@@ -51,13 +48,16 @@ Decisions) and fix any fixture it refutes.
 - Tests: `tests/unit/*.test.js` (node --test), `tests/e2e/*.spec.js`.
 - Naming: `src/naming/{structure,lexicon.es,render,parent,numbering,substituent,index}.js`;
   fixtures `tests/fixtures/names.tsv` (§4.8 format, `#` section lines).
+- Oracle: `npm run oracle -- --count 1000 --seed 1` (`scripts/oracle/`, OPSIN 2.9.0
+  jar in gitignored `scripts/oracle/vendor/`, `--download` fetches it).
 - Model: `src/model/{molecule,graph,validate,smiles}.js` — `canonicalTreeKey`
   in graph.js; `validateStructure` / `validateForNaming` in validate.js.
 
-## Verification (last phase, I-6)
+## Verification (last phase, I-7)
 
-- `npm test` 0 (285 pass) · `npm run check` 0 · `npm run build` 0 ·
-  `npm run e2e` 0 (3 pass) · `rg "NOT_YET|pending\(I-6\)" src tests` empty.
+- `npm test` 0 (300 pass) · `npm run check` 0 · `npm run build` 0 ·
+  `npm run e2e` 0 (3 pass) · `npm run oracle -- --count 1000 --seed 1` →
+  1000 passed, 0 failed, 0 skipped.
 
 ## Open risks / deviations
 
@@ -71,9 +71,10 @@ Decisions) and fix any fixture it refutes.
   whole-name alphabetical tie-break; `propil`/`tert-butil` IUPAC findings from
   memory, not checked online (I-7's OPSIN oracle should confirm).
 
-- I-6 decisions from memory (isopropiliden, eteniliden, metil-before-metiliden
-  order, propiliden, di(butan-2-iliden), nested iliden names): see
-  `docs/progress-archive/i-6.md`; I-7's oracle should confirm. I-6 review
+- I-5/I-6 decisions from memory (isopropiliden, eteniliden, propiliden,
+  tert-butil, di(propan-2-il), nested iliden): I-7's OPSIN oracle confirmed
+  them *structurally*; their *preference* rests on fixture justifications
+  (OPSIN cannot judge preference). ~37 000 molecules, no naming bugs. I-6 review
   finding (N4 must compare one flattened citation-order locant sequence) fixed.
 
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
@@ -81,5 +82,5 @@ Decisions) and fix any fixture it refutes.
 
 ## Git state
 
-- I-5 `a617e92`, pushed. I-6 committed and pushed right after this
+- I-6 `7e93bbb`, pushed. I-7 committed and pushed right after this
   checkpoint (see `git log`).

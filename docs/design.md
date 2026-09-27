@@ -558,6 +558,18 @@ the preferred ones. Fixtures (§4.8) remain the authority for those.
 Also: **graph-invariance tests** — for random molecules, renumber atom ids
 and shuffle bond insertion order; the name must not change.
 
+Decisions (phase I-7): the pinned jar is OPSIN 2.9.0 (CLI, runs on Java 8).
+Every molecule is checked in all three prefix styles (`isopropil`, `pin`,
+`substituted`) and passes only if all three names round-trip. Unreadable
+OPSIN SMILES is counted apart as an adapter failure; failures go to
+`scripts/oracle/logs/` (gitignored). The generator draws molecules distinct
+by canonical tree key and within the naming size caps; `--min`/`--max` widen
+the default 4–14 C range. Oracle runs over ~35 000 molecules (1–60 C) and the
+176 fixtures found no structural mismatch: OPSIN confirms the structures
+denoted by `isopropiliden`, `eteniliden`, `propiliden`, `tert-butil`,
+`di(propan-2-il)`, `bis(1-metiletil)` and nested `-iliden` groups (not their
+preference, which the fixtures carry).
+
 ---
 
 ## 9. UI

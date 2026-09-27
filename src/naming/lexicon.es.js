@@ -8,8 +8,8 @@
  *
  * Everything that depends on the language lives here; render.js only
  * assembles parts and punctuation. The exported `lexiconEs` object is the
- * interface render.js expects from any lexicon (lexicon.en.js in phase 070
- * must provide the same members).
+ * interface render.js expects from any lexicon (lexicon.en.js provides the
+ * same members).
  */
 
 /** Chain stems indexed by carbon count (index 0 unused). */
