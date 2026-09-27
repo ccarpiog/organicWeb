@@ -6,7 +6,9 @@
  * (`il`, `an`, retained `isopropil`/`tert-butil`, enclosing marks), common
  * group names for explanations and the prefix-style labels, and the retained
  * benzene words (`benceno`, the `fenil` prefix, the traditional names
- * `tolueno` and `estireno`, design.md §13.4 I-28).
+ * `tolueno` and `estireno`, design.md §13.4 I-28), and the suffixes,
+ * prefixes and family names of the characteristic groups (`-oico`, `-ol`,
+ * `hidroxi`, `cloro`…, design.md §13.6).
  *
  * Everything that depends on the language lives here; render.js only
  * assembles parts and punctuation. The exported `lexiconEs` object is the
@@ -427,6 +429,99 @@ export function traditionalLabel(id) {
   return TRADITIONAL_LABELS[id] || 'nombre tradicional';
 }
 
+/**
+ * Suffixes of the characteristic groups that can be cited as a suffix
+ * (design.md §13.4 I-29; IUPAC 2013 P-65…P-68), without the elided vowel:
+ * `ácido etanoico`, `etanoato de metilo`, `etanamida`, `etanonitrilo`,
+ * `etanal`, `propanona`, `etanol`, `etanamina`.
+ */
+export const GROUP_SUFFIXES = Object.freeze({
+  acid: 'oico', ester: 'oato', amide: 'amida', nitrile: 'nitrilo', aldehyde: 'al', ketone: 'ona', alcohol: 'ol', amine: 'amina',
+});
+
+/**
+ * Prefixes of the characteristic groups when they are not the principal
+ * group (IUPAC 2013 P-65…P-68, P-63.2.2): `carboxi`, `alcoxicarbonil`
+ * (e.g. `metoxicarbonil`), `carbamoil`, `ciano`, `oxo` (aldehyde whose
+ * carbon is in the parent chain, and ketone), `hidroxi`, `amino`, `alcoxi`
+ * (ether, e.g. `metoxi`). Halogens: HALOGEN_PREFIXES.
+ */
+export const GROUP_PREFIXES = Object.freeze({
+  acid: 'carboxi', ester: 'alcoxicarbonil', amide: 'carbamoil', nitrile: 'ciano', aldehyde: 'oxo', ketone: 'oxo',
+  alcohol: 'hidroxi', amine: 'amino', ether: 'alcoxi',
+});
+
+/** Prefix of an aldehyde whose carbon is outside the parent (`formil`, IUPAC 2013 P-66.6.1.2). */
+export const FORMYL_PREFIX = 'formil';
+
+/** Halogen prefixes (IUPAC 2013 P-61.3; never a suffix). */
+export const HALOGEN_PREFIXES = Object.freeze({ F: 'fluoro', Cl: 'cloro', Br: 'bromo', I: 'yodo' });
+
+/** Family names of the characteristic groups, for explanations (`phenol` = an OH on a benzene ring). */
+export const GROUP_FAMILY_NAMES = Object.freeze({
+  acid: 'ácido carboxílico',
+  ester: 'éster',
+  amide: 'amida',
+  nitrile: 'nitrilo',
+  aldehyde: 'aldehído',
+  ketone: 'cetona',
+  alcohol: 'alcohol',
+  phenol: 'fenol',
+  amine: 'amina',
+  ether: 'éter',
+  halide: 'halógeno',
+  unsupported: 'grupo desconocido',
+});
+
+/**
+ * Returns the suffix of a characteristic group kind, or null for a kind that
+ * is never a suffix (ether, halide).
+ *
+ * @param {string} kind - A group kind (groups.js GROUP_KINDS).
+ * @returns {string|null} The suffix, e.g. 'ol'.
+ */
+export function groupSuffix(kind) {
+  return Object.prototype.hasOwnProperty.call(GROUP_SUFFIXES, kind) ? GROUP_SUFFIXES[kind] : null;
+}
+
+/**
+ * Prefixes of an ester or amide bonded to the parent through its O or N
+ * (the acyl part hangs from the heteroatom: acetiloxi-, acetilamino-; IUPAC 2013 P-65.6.3 esters,
+ * P-66.1 amides). Bonded through the carbonyl carbon they take GROUP_PREFIXES.
+ */
+export const HETEROATOM_BOUND_PREFIXES = Object.freeze({ ester: 'aciloxi', amide: 'acilamino' });
+
+/**
+ * Returns the prefix of a characteristic group (halides by element), or null
+ * for an unsupported group. An ester or amide takes its heteroatom-bound
+ * form when `attachment` is 'heteroatom' (the parent side is on its O or N),
+ * else its carbonyl-bound form (GROUP_PREFIXES).
+ *
+ * @param {string} kind - A group kind (groups.js GROUP_KINDS).
+ * @param {string} [element] - Halogen symbol, for kind 'halide'.
+ * @param {'carbonyl'|'heteroatom'|null} [attachment] - Which end of an ester or amide faces the parent.
+ * @returns {string|null} The prefix.
+ */
+export function groupPrefix(kind, element, attachment = null) {
+  if (kind === 'halide') {
+    return HALOGEN_PREFIXES[element] || null;
+  }
+  if (attachment === 'heteroatom' && Object.prototype.hasOwnProperty.call(HETEROATOM_BOUND_PREFIXES, kind)) {
+    return HETEROATOM_BOUND_PREFIXES[kind];
+  }
+  return Object.prototype.hasOwnProperty.call(GROUP_PREFIXES, kind) ? GROUP_PREFIXES[kind] : null;
+}
+
+/**
+ * Returns the family name of a characteristic group kind.
+ *
+ * @param {string} kind - A group kind, or 'phenol'.
+ * @returns {string} The family name, e.g. 'alcohol'.
+ */
+export function groupFamilyName(kind) {
+  return GROUP_FAMILY_NAMES[kind] || kind;
+}
+
 /** The Spanish lexicon, as consumed by render.js. */
 export const lexiconEs = Object.freeze({
   freeValenceSuffix,
@@ -454,4 +549,8 @@ export const lexiconEs = Object.freeze({
   benzeneName: BENZENE_NAME,
   traditionalName,
   traditionalLabel,
+  groupSuffix,
+  groupPrefix,
+  groupFamilyName,
+  formylPrefix: FORMYL_PREFIX,
 });

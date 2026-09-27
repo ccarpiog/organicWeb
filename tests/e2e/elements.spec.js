@@ -309,7 +309,26 @@ test('naming a heteroatom molecule shows the "not yet" message; 90° view and Or
   const error = page.locator('#results .results-error');
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
   await expect(error).toContainText('Aún no sé nombrar este tipo de compuestos');
-  await expect(page.getByRole('button', { name: 'Ver paso a paso' })).toHaveCount(0);
+  // No name, but the group steps (I-29) are offered under the message; nothing marked until opened.
+  await expect(page.locator('#result-name')).toHaveCount(0);
+  await expect(page.locator('svg#canvas .hl')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Ver paso a paso' }).click();
+  const stepper = page.locator('#stepper');
+  const dots = stepper.locator('.step-dot');
+  const titles = [];
+  for (let i = 0; i < await dots.count(); i += 1) {
+    await dots.nth(i).click();
+    titles.push(await stepper.locator('.step-title').textContent());
+  }
+  expect(titles).toEqual(['Reconoce los grupos', 'Elige el principal', 'Sufijo o prefijo', 'Aún no sé nombrarla']);
+  await dots.nth(0).click();
+  await expect(stepper.locator('.step-content')).toContainText('1 alcohol: un grupo –OH unido a un carbono.');
+  await expect(page.locator('svg#canvas .hl-atom.hl-substituent')).toHaveCount(1);
+  await dots.nth(2).click();
+  await expect(stepper.locator('.step-content')).toContainText('El alcohol: sufijo «-ol»');
+  await expect(page.locator('svg#canvas .hl-atom.hl-parent')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
+  await expect(page.locator('svg#canvas .hl')).toHaveCount(0);
 
   // Ordenar dibujo: the drawing stays as it was, no crash.
   const before = await page.evaluate(() => window.__editor.getMoleculeJSON());

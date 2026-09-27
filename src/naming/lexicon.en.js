@@ -11,7 +11,9 @@
  * are shared with the Spanish lexicon; only words differ: `meth`/`eth`
  * stems, `-ane`/`-ene`/`-yne` endings, `-yl`/`-ylidene` free valences and
  * the retained `isopropyl`, `isopropylidene`, `tert-butyl`, `phenyl`
- * prefixes, `benzene` and the traditional `toluene` and `styrene`.
+ * prefixes, `benzene` and the traditional `toluene` and `styrene`, and the
+ * characteristic-group suffixes and prefixes (`-oic acid`, `-ol`, `hydroxy`,
+ * `chloro`…, design.md §13.6).
  */
 
 import {
@@ -233,6 +235,88 @@ export function traditionalLabel(id) {
   return id === 'toluene' ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
 }
 
+/** Suffixes of the characteristic groups (see lexicon.es.js GROUP_SUFFIXES): `ethanoic acid`, `methyl ethanoate`… */
+export const GROUP_SUFFIXES = Object.freeze({
+  acid: 'oic acid', ester: 'oate', amide: 'amide', nitrile: 'nitrile', aldehyde: 'al', ketone: 'one', alcohol: 'ol', amine: 'amine',
+});
+
+/** Prefixes of the characteristic groups when not principal (see lexicon.es.js GROUP_PREFIXES). */
+export const GROUP_PREFIXES = Object.freeze({
+  acid: 'carboxy', ester: 'alkoxycarbonyl', amide: 'carbamoyl', nitrile: 'cyano', aldehyde: 'oxo', ketone: 'oxo',
+  alcohol: 'hydroxy', amine: 'amino', ether: 'alkoxy',
+});
+
+/** Prefix of an aldehyde whose carbon is outside the parent. */
+export const FORMYL_PREFIX = 'formyl';
+
+/** Halogen prefixes (never a suffix). */
+export const HALOGEN_PREFIXES = Object.freeze({ F: 'fluoro', Cl: 'chloro', Br: 'bromo', I: 'iodo' });
+
+/** Family names of the characteristic groups (English, developer-facing only). */
+export const GROUP_FAMILY_NAMES = Object.freeze({
+  acid: 'carboxylic acid',
+  ester: 'ester',
+  amide: 'amide',
+  nitrile: 'nitrile',
+  aldehyde: 'aldehyde',
+  ketone: 'ketone',
+  alcohol: 'alcohol',
+  phenol: 'phenol',
+  amine: 'amine',
+  ether: 'ether',
+  halide: 'halide',
+  unsupported: 'unknown group',
+});
+
+/**
+ * Returns the suffix of a characteristic group kind, or null for a kind that
+ * is never a suffix (ether, halide).
+ *
+ * @param {string} kind - A group kind (groups.js GROUP_KINDS).
+ * @returns {string|null} The suffix, e.g. 'ol'.
+ */
+export function groupSuffix(kind) {
+  return Object.prototype.hasOwnProperty.call(GROUP_SUFFIXES, kind) ? GROUP_SUFFIXES[kind] : null;
+}
+
+/**
+ * Prefixes of an ester or amide bonded to the parent through its O or N
+ * (the acyl part hangs from the heteroatom: acetyloxy-, acetylamino-; IUPAC 2013 P-65.6.3 esters,
+ * P-66.1 amides). Bonded through the carbonyl carbon they take GROUP_PREFIXES.
+ */
+export const HETEROATOM_BOUND_PREFIXES = Object.freeze({ ester: 'acyloxy', amide: 'acylamino' });
+
+/**
+ * Returns the prefix of a characteristic group (halides by element), or null
+ * for an unsupported group. An ester or amide takes its heteroatom-bound
+ * form when `attachment` is 'heteroatom' (the parent side is on its O or N),
+ * else its carbonyl-bound form (GROUP_PREFIXES).
+ *
+ * @param {string} kind - A group kind (groups.js GROUP_KINDS).
+ * @param {string} [element] - Halogen symbol, for kind 'halide'.
+ * @param {'carbonyl'|'heteroatom'|null} [attachment] - Which end of an ester or amide faces the parent.
+ * @returns {string|null} The prefix.
+ */
+export function groupPrefix(kind, element, attachment = null) {
+  if (kind === 'halide') {
+    return HALOGEN_PREFIXES[element] || null;
+  }
+  if (attachment === 'heteroatom' && Object.prototype.hasOwnProperty.call(HETEROATOM_BOUND_PREFIXES, kind)) {
+    return HETEROATOM_BOUND_PREFIXES[kind];
+  }
+  return Object.prototype.hasOwnProperty.call(GROUP_PREFIXES, kind) ? GROUP_PREFIXES[kind] : null;
+}
+
+/**
+ * Returns the family name of a characteristic group kind.
+ *
+ * @param {string} kind - A group kind, or 'phenol'.
+ * @returns {string} The family name, e.g. 'alcohol'.
+ */
+export function groupFamilyName(kind) {
+  return GROUP_FAMILY_NAMES[kind] || kind;
+}
+
 /** The English lexicon, as consumed by render.js (same members as lexiconEs). */
 export const lexiconEn = Object.freeze({
   freeValenceSuffix,
@@ -260,4 +344,8 @@ export const lexiconEn = Object.freeze({
   benzeneName: BENZENE_NAME,
   traditionalName,
   traditionalLabel,
+  groupSuffix,
+  groupPrefix,
+  groupFamilyName,
+  formylPrefix: FORMYL_PREFIX,
 });

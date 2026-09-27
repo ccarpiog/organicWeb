@@ -27,6 +27,11 @@
  * The name and the text of the current step are announced to screen
  * readers through the page's `#announcer` live region.
  *
+ * A HETEROATOM refusal (design.md §13.4 I-29) shows its message and, under
+ * it, a stepper with the group steps (Reconoce los grupos, Elige el
+ * principal, Sufijo o prefijo, the refusal); nothing is highlighted while
+ * that stepper is closed.
+ *
  * The DOM is built with createElement/textContent only (never innerHTML
  * with text), so no name or message can inject markup.
  */
@@ -458,7 +463,8 @@ export function buildResults(panel, editor, button, options = {}) {
     if (hint) {
       hint.hidden = ordered || isProjected();
     }
-    if (current && lastView) {
+    // A refusal with group steps (current null) keeps its step marks too.
+    if ((current || steps.length > 0) && lastView) {
       showOnCanvas(lastView.view, lastView.isOption);
     }
   }
@@ -484,13 +490,18 @@ export function buildResults(panel, editor, button, options = {}) {
   }
 
   /**
-   * Shows a naming error in friendly Spanish.
+   * Shows a naming error in friendly Spanish. A refusal that comes with
+   * explanation steps (HETEROATOM with its groups, design.md §13.4 I-29)
+   * also gets the "Ver paso a paso" stepper under the message.
    *
    * @param {{code: string, message: string}} error - The error.
+   * @param {object[]} [errorSteps] - Explanation steps of the refusal (explain()).
    * @returns {void}
    */
-  function showError(error) {
-    steps = [];
+  function showError(error, errorSteps = []) {
+    steps = errorSteps;
+    stepIndex = 0;
+    optionIndex = -1;
     stepper = null;
     current = null;
     arranged = null;
@@ -507,7 +518,7 @@ export function buildResults(panel, editor, button, options = {}) {
     if (ERROR_HINTS[error.code]) {
       box.appendChild(make(doc, 'p', 'results-error-hint', ERROR_HINTS[error.code]));
     }
-    body.replaceChildren(box);
+    body.replaceChildren(box, ...(steps.length > 0 ? stepperNodes(false) : []));
     panel.dataset.state = 'error';
   } // End of function showError()
 
@@ -640,6 +651,47 @@ export function buildResults(panel, editor, button, options = {}) {
   } // End of function buildStepper()
 
   /**
+   * Builds the "Ver paso a paso" toggle, its controls row and the (hidden)
+   * stepper for the current steps. With `withMarks`, a "Resaltar en el
+   * dibujo" switch sits next to the toggle while the stepper is closed (the
+   * canvas then keeps the last step's marks); without it (a refusal with
+   * group steps, I-29) the closed stepper leaves the canvas unmarked.
+   *
+   * @param {boolean} withMarks - True for a named result.
+   * @returns {HTMLElement[]} The controls row and the stepper section.
+   */
+  function stepperNodes(withMarks) {
+    const toggle = make(doc, 'button', 'stepper-toggle', 'Ver paso a paso');
+    toggle.type = 'button';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', 'stepper');
+    const root = buildStepper();
+    // While the stepper is closed the canvas keeps the whole name's marks:
+    // this switch (same state as the stepper's) governs them.
+    const outerMarks = withMarks ? makeMarksToggle(doc, 'result-marks-toggle', marksOn, toggleMarks) : null;
+    toggle.addEventListener('click', () => {
+      const open = root.hidden;
+      root.hidden = !open;
+      if (outerMarks) {
+        outerMarks.hidden = open;
+      }
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.textContent = open ? 'Ocultar el paso a paso' : 'Ver paso a paso';
+      if (open) {
+        goTo(0);
+      } else {
+        showOnCanvas(withMarks ? steps[steps.length - 1] : null);
+      }
+    });
+    const controls = make(doc, 'div', 'result-controls');
+    controls.append(toggle);
+    if (outerMarks) {
+      controls.append(outerMarks);
+    }
+    return [controls, root];
+  } // End of function stepperNodes()
+
+  /**
    * Shows a successful result: coloured name, alternatives and the stepper toggle.
    *
    * @param {object} result - The naming result.
@@ -684,29 +736,7 @@ export function buildResults(panel, editor, button, options = {}) {
     hint.appendChild(redraw);
     hint.hidden = isProjected();
     nodes.push(hint);
-    const toggle = make(doc, 'button', 'stepper-toggle', 'Ver paso a paso');
-    toggle.type = 'button';
-    toggle.setAttribute('aria-expanded', 'false');
-    toggle.setAttribute('aria-controls', 'stepper');
-    const root = buildStepper();
-    // While the stepper is closed the canvas keeps the whole name's marks:
-    // this switch (same state as the stepper's) governs them.
-    const outerMarks = makeMarksToggle(doc, 'result-marks-toggle', marksOn, toggleMarks);
-    toggle.addEventListener('click', () => {
-      const open = root.hidden;
-      root.hidden = !open;
-      outerMarks.hidden = open;
-      toggle.setAttribute('aria-expanded', String(open));
-      toggle.textContent = open ? 'Ocultar el paso a paso' : 'Ver paso a paso';
-      if (open) {
-        goTo(0);
-      } else {
-        showOnCanvas(steps[steps.length - 1]);
-      }
-    });
-    const controls = make(doc, 'div', 'result-controls');
-    controls.append(toggle, outerMarks);
-    nodes.push(controls, root);
+    nodes.push(...stepperNodes(true));
     body.replaceChildren(...nodes);
     panel.dataset.state = 'result';
     showOnCanvas(steps[steps.length - 1]);
@@ -723,7 +753,7 @@ export function buildResults(panel, editor, button, options = {}) {
     if (result.ok) {
       showResult(result);
     } else {
-      showError(result.error);
+      showError(result.error, explain(result));
     }
     return result;
   }

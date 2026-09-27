@@ -1,0 +1,1452 @@
+{
+ "CCO": {
+  "code": "HETEROATOM",
+  "principal": "alcohol",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado este grupo:",
+     "1 alcohol: un grupo –OH unido a un carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el alcohol: es el único tipo de grupo que puede serlo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El alcohol: sufijo «-ol», como en «etanol»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "OC1=CC=CC=C1": {
+  "code": "HETEROATOM",
+  "principal": "alcohol",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado este grupo:",
+     "1 fenol: un grupo –OH unido a un carbono del [[benceno]].",
+     "Un –OH en un carbono del benceno se llama fenol. Se nombra como un alcohol, con «-ol»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el fenol: es el único tipo de grupo que puede serlo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El fenol: sufijo «-ol», como en «fenol», el nombre del benceno con un –OH."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "CC(=O)O": {
+  "code": "HETEROATOM",
+  "principal": "acid",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado este grupo:",
+     "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
+     "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona. Todo junto es un único grupo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el ácido carboxílico: es el único tipo de grupo que puede serlo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "CC(=O)OC": {
+  "code": "HETEROATOM",
+  "principal": "ester",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado este grupo:",
+     "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
+     "Cada átomo pertenece a un solo grupo: el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona. Todo junto es un único grupo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el éster: es el único tipo de grupo que puede serlo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El éster: sufijo «-oato», seguido de «de» y el nombre de la otra cadena acabado en «-ilo», como en «etanoato de metilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "CC(=O)NC": {
+  "code": "HETEROATOM",
+  "principal": "amide",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado este grupo:",
+     "1 amida: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno (–CONH₂, –CONH– o –CON–).",
+     "Cada átomo pertenece a un solo grupo: el nitrógeno de una amida no cuenta como amina ni su C=O como cetona. Todo junto es un único grupo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es la amida: es el único tipo de grupo que puede serlo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "La amida: sufijo «-amida», como en «etanamida»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "OCCC(=O)CC=O": {
+  "code": "HETEROATOM",
+  "principal": "aldehyde",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado estos grupos:",
+     "1 aldehído: un oxígeno unido por un [[enlace doble]] a un carbono que también tiene un hidrógeno (–CHO); por eso siempre está en un extremo.",
+     "1 cetona: un oxígeno unido por un [[enlace doble]] a un carbono que está entre otros dos carbonos (–CO–).",
+     "1 alcohol: un grupo –OH unido a un carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       4,
+       5,
+       1
+      ],
+      "bonds": [
+       7,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el aldehído: en la lista va antes que la cetona y el alcohol."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       1
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El aldehído: sufijo «-al», como en «etanal».",
+     "La cetona: prefijo «oxo-».",
+     "El alcohol: prefijo «hidroxi-»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       1
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       5,
+       8
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "NCC#N": {
+  "code": "HETEROATOM",
+  "principal": "nitrile",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado estos grupos:",
+     "1 nitrilo: un carbono unido a un nitrógeno por un [[enlace triple]] (–C≡N).",
+     "1 amina: un nitrógeno unido a carbonos solo con enlaces simples (–NH₂, –NH– o –N–)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       1
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el nitrilo: en la lista va antes que la amina."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El nitrilo: sufijo «-nitrilo», como en «etanonitrilo».",
+     "La amina: prefijo «amino-»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       4
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "ClCCOC": {
+  "code": "HETEROATOM",
+  "principal": null,
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado estos grupos:",
+     "1 éter: un oxígeno entre dos carbonos (–O–).",
+     "1 átomo de cloro (–Cl): un halógeno unido a un carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Los éteres y los halógenos nunca son el [[grupo principal]]: siempre se nombran delante, como las ramas.",
+     "Tu molécula no tiene otro grupo, así que no hay grupo principal: el nombre se forma como el de un hidrocarburo, con estos grupos delante."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "Sin grupo principal no hay [[sufijo]]: todos los grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El éter: prefijo «alcoxi-» (la cadena más corta acabada en «-oxi», como «metoxi-» o «etoxi-»).",
+     "El cloro: prefijo «cloro-»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       4
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "BrCC(Br)CO": {
+  "code": "HETEROATOM",
+  "principal": "alcohol",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado estos grupos:",
+     "1 alcohol: un grupo –OH unido a un carbono.",
+     "2 átomos de bromo (–Br): un halógeno unido a un carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       1,
+       4
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el alcohol: es el único tipo de grupo que puede serlo.",
+     "Los halógenos nunca son el grupo principal: siempre se nombran delante, como las ramas."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1,
+       4
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El alcohol: sufijo «-ol», como en «etanol».",
+     "El bromo: prefijo «bromo-»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1,
+       4
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       4,
+       6
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "CCOOC": {
+  "code": "HETEROATOM",
+  "principal": null,
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado este grupo:",
+     "1 grupo que no reconozco: hay átomos que no son carbono unidos entre sí (como O–O o N–O)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "No hay ningún grupo que yo reconozca, así que no puedo elegir el [[grupo principal]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "Sin grupo principal no hay [[sufijo]]: todos los grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El grupo que no reconozco no tiene sufijo ni prefijo entre los que conozco."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "CC(=O)OCC(=O)O": {
+  "code": "HETEROATOM",
+  "principal": "acid",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado estos grupos:",
+     "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
+     "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
+     "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona; el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona. Todo junto es un único grupo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       6,
+       7,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que el éster."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico».",
+     "El éster: prefijo «aciloxi-» (el nombre cambia según la cadena: «acetiloxi-», «propanoiloxi-»…), porque se une al grupo principal por su oxígeno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       7,
+       8
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "CCOC(=O)CC(=O)O": {
+  "code": "HETEROATOM",
+  "principal": "acid",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado estos grupos:",
+     "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
+     "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
+     "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona; el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona. Todo junto es un único grupo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       3,
+       4,
+       5
+      ],
+      "bonds": [
+       7,
+       8,
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que el éster."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico».",
+     "El éster: prefijo «alcoxicarbonil-» (el nombre cambia según la cadena: «metoxicarbonil-», «etoxicarbonil-»…), porque se une al grupo principal por su carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       4,
+       5
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       5,
+       8,
+       9
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "CC(=O)NCC(=O)O": {
+  "code": "HETEROATOM",
+  "principal": "acid",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado estos grupos:",
+     "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
+     "1 amida: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno (–CONH₂, –CONH– o –CON–).",
+     "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona; el nitrógeno de una amida no cuenta como amina ni su C=O como cetona. Todo junto es un único grupo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       6,
+       7,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que la amida."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico».",
+     "La amida: prefijo «acilamino-» (el nombre cambia según la cadena: «acetilamino-», «propanoilamino-»…), porque se une al grupo principal por su nitrógeno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       7,
+       8
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "NC(=O)CC(=O)O": {
+  "code": "HETEROATOM",
+  "principal": "acid",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado estos grupos:",
+     "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
+     "1 amida: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno (–CONH₂, –CONH– o –CON–).",
+     "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona; el nitrógeno de una amida no cuenta como amina ni su C=O como cetona. Todo junto es un único grupo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       5,
+       6,
+       1,
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que la amida."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico».",
+     "La amida: prefijo «carbamoil-», porque se une al grupo principal por su carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       3,
+       6,
+       7
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ }
+}

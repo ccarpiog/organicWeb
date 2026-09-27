@@ -24,6 +24,11 @@
  * most one substituent, validation refuses more) is named by aromatic.js:
  * `benceno`, `metilbenceno`, `isopropilbenceno` (I-28), with the traditional
  * `tolueno` / `estireno` as an extra alternative.
+ *
+ * A valid molecule with a heteroatom is still refused (`HETEROATOM`), but
+ * the refusal carries `groups`: its characteristic groups (groups.js), the
+ * principal group and the suffix/prefix classification (seniority.js,
+ * design.md §13.4 I-29). Hydrocarbon results never have `groups`.
  */
 
 import { validateForNaming } from '../model/validate.js';
@@ -35,6 +40,7 @@ import { buildChainStructure, buildNameStructure } from './structure.js';
 import { renderName } from './render.js';
 import { nameRingWithStyle } from './rings.js';
 import { hasBenzeneRing, nameBenzeneWithStyle, traditionalAlternative } from './aromatic.js';
+import { analyzeGroups } from './seniority.js';
 import { lexiconEs } from './lexicon.es.js';
 
 /** Error for an unexpected engine failure (a bug); nameMolecule never throws. */
@@ -134,6 +140,26 @@ function withCandidateBonds(trace, adj) {
 }
 
 /**
+ * Adds the characteristic-group analysis (seniority.js analyzeGroups(),
+ * design.md §13.4 I-29) to a `HETEROATOM` refusal as `groups`, so the
+ * explanation can show which groups there are, which one is principal and
+ * which are suffixes or prefixes. Detection never enables naming: the
+ * result stays a failure with the same error. Should detection itself fail
+ * (a bug), the refusal is returned unchanged, without `groups`.
+ *
+ * @param {{ok: false, error: object}} failure - The HETEROATOM failure.
+ * @param {object} mol - The validated-but-refused molecule.
+ * @returns {object} The failure, with `groups` when detection succeeded.
+ */
+function withGroups(failure, mol) {
+  try {
+    return { ...failure, groups: analyzeGroups(mol) };
+  } catch (err) {
+    return failure;
+  }
+}
+
+/**
  * Validates and names a molecule (the body of nameMolecule, which may throw
  * only on an internal bug). A molecule with one ring is named by rings.js
  * (aromatic.js for a benzene ring, which may add a traditional name as the
@@ -151,7 +177,7 @@ function withCandidateBonds(trace, adj) {
 function nameValidated(mol, options) {
   const error = validateForNaming(mol);
   if (error) {
-    return { ok: false, error };
+    return error.code === 'HETEROATOM' ? withGroups({ ok: false, error }, mol) : { ok: false, error };
   }
   const style = options.prefixStyle || PREFIX_STYLES[0];
   if (!PREFIX_STYLES.includes(style)) {

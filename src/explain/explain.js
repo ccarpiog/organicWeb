@@ -36,10 +36,20 @@
  * hexagon with alternating double bonds, the two equivalent Kekulé drawings,
  * why a single substituent needs no number, the ring senior to the chain),
  * substituents and assemble: nothing to number or order.
+ *
+ * A molecule refused with `HETEROATOM` (valid, but with atoms other than
+ * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
+ * GroupAnalysis); it gets groups ("Reconoce los grupos": each
+ * characteristic group, and why the atoms of an acid, ester or amide are not
+ * counted as alcohol, ether, amine or ketone), principal ("Elige el
+ * principal": the seniority order), affixes ("Sufijo o prefijo") and
+ * notYet (the refusal message). Every other failure gets no steps.
  */
 
 import { toSubscript } from '../model/molecule.js';
 import { lexiconEs, LOCANT_OMISSION } from '../naming/lexicon.es.js';
+import { SENIORITY } from '../naming/seniority.js';
+import { ELEMENT_NAMES_ES } from '../model/elements.js';
 import { substituentPrefix, citationKey, needsEnclosure, isCompoundPrefix, renderPrefixes } from '../naming/render.js';
 
 /** Glossary for the underlined terms (design.md §5): key → Spanish definition. */
@@ -52,6 +62,10 @@ export const GLOSSARY = Object.freeze({
   'enlace triple': 'Dos carbonos unidos por tres enlaces. Se dibuja con tres rayas.',
   anillo: 'Una cadena de carbonos cerrada: el último carbono está unido al primero.',
   benceno: 'Un anillo de 6 carbonos con tres enlaces dobles alternados (uno sí, uno no). Es muy estable y tiene nombre propio.',
+  'grupo funcional': 'Un grupo de átomos (con oxígeno, nitrógeno o un halógeno) que decide cómo se comporta la molécula y cómo se llama.',
+  'grupo principal': 'El grupo funcional más importante de la molécula. Da la terminación (el sufijo) del nombre.',
+  sufijo: 'Una terminación que se añade al final del nombre, como «-ol» en «etanol».',
+  prefijo: 'Una parte que se escribe delante del nombre, como «cloro-» en «clorometano».',
 });
 
 /** Titles of the steps (design.md §5). */
@@ -66,6 +80,10 @@ export const STEP_TITLES = Object.freeze({
   substituents: 'Nombra los sustituyentes',
   order: 'Ordena alfabéticamente',
   assemble: 'Monta el nombre',
+  groups: 'Reconoce los grupos',
+  principal: 'Elige el principal',
+  affixes: 'Sufijo o prefijo',
+  notYet: 'Aún no sé nombrarla',
 });
 
 /** Short Spanish statement of each numbering rule, for the comparison table. */
@@ -1454,14 +1472,332 @@ function assembleStep(result) {
   };
 } // End of function assembleStep()
 
+/** Spanish article of each group family name (`el alcohol`, `la cetona`). */
+const GROUP_ARTICLES = Object.freeze({
+  acid: 'el', ester: 'el', amide: 'la', nitrile: 'el', aldehyde: 'el', ketone: 'la', alcohol: 'el', phenol: 'el', amine: 'la', ether: 'el', halide: 'el',
+});
+
+/** Spanish plural of each group family name. */
+const GROUP_PLURALS = Object.freeze({
+  acid: 'ácidos carboxílicos',
+  ester: 'ésteres',
+  amide: 'amidas',
+  nitrile: 'nitrilos',
+  aldehyde: 'aldehídos',
+  ketone: 'cetonas',
+  alcohol: 'alcoholes',
+  phenol: 'fenoles',
+  amine: 'aminas',
+  ether: 'éteres',
+  halide: 'halógenos',
+});
+
+/** What each group looks like, for "Reconoce los grupos" (ESO level). */
+const GROUP_DESCRIPTIONS = Object.freeze({
+  acid: 'un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH)',
+  ester: 'un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–)',
+  amide: 'un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno (–CONH₂, –CONH– o –CON–)',
+  nitrile: 'un carbono unido a un nitrógeno por un [[enlace triple]] (–C≡N)',
+  aldehyde: 'un oxígeno unido por un [[enlace doble]] a un carbono que también tiene un hidrógeno (–CHO); por eso siempre está en un extremo',
+  ketone: 'un oxígeno unido por un [[enlace doble]] a un carbono que está entre otros dos carbonos (–CO–)',
+  alcohol: 'un grupo –OH unido a un carbono',
+  phenol: 'un grupo –OH unido a un carbono del [[benceno]]',
+  amine: 'un nitrógeno unido a carbonos solo con enlaces simples (–NH₂, –NH– o –N–)',
+  ether: 'un oxígeno entre dos carbonos (–O–)',
+  halide: 'un halógeno unido a un carbono',
+});
+
+/** Why a group is not recognised, by groups.js UNSUPPORTED_REASONS id. */
+const UNSUPPORTED_TEXTS = Object.freeze({
+  heteroatomBond: 'hay átomos que no son carbono unidos entre sí (como O–O o N–O)',
+  imine: 'hay un nitrógeno unido a un carbono por un [[enlace doble]] (C=N)',
+  noCarbon: 'hay un átomo que no está unido a ningún carbono',
+  carbonylDerivative: 'hay un carbono con un oxígeno doble o un nitrógeno triple rodeado de otros átomos de una forma que no conozco',
+});
+
+/** Example names for each suffix (the family key may be 'phenol'). */
+const SUFFIX_EXAMPLES = Object.freeze({
+  acid: 'y el nombre empieza por «ácido», como en «ácido etanoico»',
+  ester: 'seguido de «de» y el nombre de la otra cadena acabado en «-ilo», como en «etanoato de metilo»',
+  amide: 'como en «etanamida»',
+  nitrile: 'como en «etanonitrilo»',
+  aldehyde: 'como en «etanal»',
+  ketone: 'como en «propanona»',
+  alcohol: 'como en «etanol»',
+  phenol: 'como en «fenol», el nombre del benceno con un –OH',
+  amine: 'como en «metanamina»',
+});
+
+/** Extra remarks on some prefixes. */
+const PREFIX_NOTES = Object.freeze({
+  aldehyde: ` (o «${lexiconEs.formylPrefix}-» si su carbono no está en la cadena principal)`,
+  ester: ' (el nombre cambia según la cadena: «metoxicarbonil-», «etoxicarbonil-»…)',
+  'ester:heteroatom': ' (el nombre cambia según la cadena: «acetiloxi-», «propanoiloxi-»…)',
+  'amide:heteroatom': ' (el nombre cambia según la cadena: «acetilamino-», «propanoilamino-»…)',
+  ether: ' (la cadena más corta acabada en «-oxi», como «metoxi-» o «etoxi-»)',
+});
+
+/**
+ * Family key of a group for explanations: its kind, or 'phenol' for an OH
+ * on a benzene carbon.
+ *
+ * @param {object} group - A classified group record.
+ * @returns {string} The family key.
+ */
+function familyKey(group) {
+  return group.phenol ? 'phenol' : group.kind;
+}
+
+/**
+ * Family name of a key with its article: `el alcohol`, `la cetona`, `el cloro`.
+ *
+ * @param {string} key - A family key (or a halogen symbol for a halide line).
+ * @returns {string} The Spanish words.
+ */
+function familyWithArticle(key) {
+  if (ELEMENT_NAMES_ES[key]) {
+    return `el ${ELEMENT_NAMES_ES[key]}`;
+  }
+  return `${GROUP_ARTICLES[key]} ${lexiconEs.groupFamilyName(key)}`;
+}
+
+/**
+ * Capitalises the first letter of a sentence.
+ *
+ * @param {string} text - The text.
+ * @returns {string} The text with an upper-case first letter.
+ */
+function capitalise(text) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
+ * Groups the classified groups into lines: one per family (alcohol, phenol,
+ * each halogen, each unsupported reason), in the order of the records. With
+ * `byAttachment`, prefix esters and amides are also split by the end that
+ * faces the principal group (their prefixes differ).
+ *
+ * @param {object[]} items - Classified groups (result.groups.items).
+ * @param {boolean} [byAttachment] - True to split esters and amides by `attachment`.
+ * @returns {{key: string, items: object[]}[]} The lines, each with its groups.
+ */
+function groupLines(items, byAttachment = false) {
+  const lines = new Map();
+  for (const item of items) {
+    let key = familyKey(item);
+    if (item.kind === 'halide') {
+      key = item.element;
+    } else if (item.kind === 'unsupported') {
+      key = `unsupported:${item.reason}`;
+    }
+    const line = byAttachment && item.prefixes ? `${key}:${item.attachment}` : key;
+    if (!lines.has(line)) {
+      lines.set(line, { key, items: [] });
+    }
+    lines.get(line).items.push(item);
+  }
+  return [...lines.values()];
+} // End of function groupLines()
+
+/**
+ * Sentence giving the prefix of a group line for "Sufijo o prefijo". An
+ * ester or amide whose facing end is undecided gets both forms, with the
+ * condition for each.
+ *
+ * @param {string} key - The family key of the line.
+ * @param {object} group - The first group of the line.
+ * @returns {string} The sentence.
+ */
+function prefixSentence(key, group) {
+  const who = capitalise(familyWithArticle(key));
+  if (group.prefixes && !group.prefix) {
+    const through = group.kind === 'ester' ? 'el oxígeno' : 'el nitrógeno';
+    return `${who}: prefijo «${group.prefixes.carbonyl}-» si se une al resto por su carbono, o «${group.prefixes.heteroatom}-» si se une por ${through}.`;
+  }
+  const note = PREFIX_NOTES[group.attachment === 'heteroatom' ? `${group.kind}:heteroatom` : group.kind] || '';
+  if (group.attachment === 'heteroatom') {
+    const through = group.kind === 'ester' ? 'su oxígeno' : 'su nitrógeno';
+    return `${who}: prefijo «${group.prefix}-»${note}, porque se une al grupo principal por ${through}.`;
+  }
+  if (group.attachment === 'carbonyl') {
+    return `${who}: prefijo «${group.prefix}-»${note}, porque se une al grupo principal por su carbono.`;
+  }
+  return `${who}: prefijo «${group.prefix}-»${note}.`;
+} // End of function prefixSentence()
+
+/**
+ * Highlight spec of some groups.
+ *
+ * @param {object[]} items - Classified groups.
+ * @param {string} style - Highlight style.
+ * @returns {{atoms: number[], bonds: number[], style: string}} The spec.
+ */
+function groupSpec(items, style) {
+  return { atoms: items.flatMap((g) => g.atoms), bonds: items.flatMap((g) => g.bonds), style };
+}
+
+/**
+ * Highlight of the groups by role: principal (suffix) groups as the parent,
+ * the other recognised groups as substituents, unknown groups as candidates.
+ * Empty specs are left out.
+ *
+ * @param {object[]} items - Classified groups.
+ * @param {boolean} byRole - False to show every recognised group alike (as substituents).
+ * @returns {object[]} Highlight specs.
+ */
+function groupHighlight(items, byRole) {
+  const suffix = items.filter((g) => g.role === 'suffix');
+  const prefix = items.filter((g) => g.role === 'prefix');
+  const unknown = items.filter((g) => g.role === 'unsupported');
+  const specs = byRole
+    ? [groupSpec(suffix, 'parent'), groupSpec(prefix, 'substituent')]
+    : [groupSpec([...suffix, ...prefix], 'substituent')];
+  specs.push(groupSpec(unknown, 'candidate'));
+  return specs.filter((spec) => spec.atoms.length > 0);
+}
+
+/**
+ * Step "Reconoce los grupos" (design.md §13.4 I-29): every characteristic
+ * group, by family, and why the atoms of an acid, ester or amide are not
+ * also counted as alcohol, ether, amine or ketone.
+ *
+ * @param {object} result - A HETEROATOM failure with `groups`.
+ * @returns {object} The step.
+ */
+function groupsStep(result) {
+  const { items } = result.groups;
+  const text = ['Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.'];
+  text.push(items.length === 1 ? 'He encontrado este grupo:' : 'He encontrado estos grupos:');
+  for (const { key, items: list } of groupLines(items)) {
+    const n = list.length;
+    if (list[0].kind === 'unsupported') {
+      text.push(`${count(n, 'grupo que no reconozco', 'grupos que no reconozco')}: ${UNSUPPORTED_TEXTS[list[0].reason]}.`);
+    } else if (list[0].kind === 'halide') {
+      text.push(`${count(n, 'átomo', 'átomos')} de ${ELEMENT_NAMES_ES[key]} (–${key}): ${GROUP_DESCRIPTIONS.halide}.`);
+    } else {
+      const name = n === 1 ? `1 ${lexiconEs.groupFamilyName(key)}` : `${n} ${GROUP_PLURALS[key]}`;
+      text.push(`${name}: ${GROUP_DESCRIPTIONS[key]}.`);
+    }
+  } // End of the loop over the group lines
+  const kinds = new Set(items.map((g) => g.kind));
+  const whole = [];
+  if (kinds.has('acid')) {
+    whole.push('el –OH de un ácido no cuenta como alcohol ni su C=O como cetona');
+  }
+  if (kinds.has('ester')) {
+    whole.push('el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona');
+  }
+  if (kinds.has('amide')) {
+    whole.push('el nitrógeno de una amida no cuenta como amina ni su C=O como cetona');
+  }
+  if (whole.length > 0) {
+    text.push(`Cada átomo pertenece a un solo grupo: ${whole.join('; ')}. Todo junto es un único grupo.`);
+  }
+  if (items.some((g) => g.phenol)) {
+    text.push('Un –OH en un carbono del benceno se llama fenol. Se nombra como un alcohol, con «-ol».');
+  }
+  return { id: 'groups', title: STEP_TITLES.groups, text, highlight: groupHighlight(items, false), locants: null };
+} // End of function groupsStep()
+
+/**
+ * Step "Elige el principal": the seniority order of IUPAC 2013 and the
+ * principal group it picks; ethers and halogens are never principal.
+ *
+ * @param {object} result - A HETEROATOM failure with `groups`.
+ * @returns {object} The step.
+ */
+function principalStep(result) {
+  const { items, principal } = result.groups;
+  const order = SENIORITY.map((kind) => (kind === 'acid' ? 'ácido' : lexiconEs.groupFamilyName(kind))).join(' > ');
+  const text = [];
+  const prefixKinds = ['ether', 'halide'].filter((kind) => items.some((g) => g.kind === kind));
+  const prefixOnly = prefixKinds.length > 0;
+  const never = `${capitalise(joinY(prefixKinds.map((kind) => `los ${GROUP_PLURALS[kind]}`)))} nunca son el`;
+  if (principal) {
+    const chosen = items.filter((g) => g.kind === principal);
+    const key = chosen.every((g) => g.phenol) ? 'phenol' : principal;
+    text.push(`Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ${order}.`);
+    const others = [...new Set(items.filter((g) => g.canBeSuffix && g.kind !== principal).map((g) => g.kind))];
+    if (others.length > 0) {
+      text.push(`Aquí el grupo principal es ${familyWithArticle(key)}: en la lista va antes que ${joinY(others.map(familyWithArticle))}.`);
+    } else {
+      text.push(`Aquí el grupo principal es ${familyWithArticle(key)}: es el único tipo de grupo que puede serlo.`);
+    }
+    if (chosen.length > 1) {
+      text.push(`Hay ${chosen.length} grupos de este tipo: todos cuentan como principales.`);
+    }
+    if (prefixOnly) {
+      text.push(`${never} grupo principal: siempre se nombran delante, como las ramas.`);
+    }
+  } else if (prefixOnly) {
+    text.push(`${never} [[grupo principal]]: siempre se nombran delante, como las ramas.`);
+    text.push('Tu molécula no tiene otro grupo, así que no hay grupo principal: el nombre se forma como el de un hidrocarburo, con estos grupos delante.');
+  } else {
+    text.push('No hay ningún grupo que yo reconozca, así que no puedo elegir el [[grupo principal]].');
+  }
+  if (principal && result.groups.unsupported) {
+    text.push('Además hay un grupo que no reconozco: no sé dónde iría en la lista.');
+  }
+  return { id: 'principal', title: STEP_TITLES.principal, text, highlight: groupHighlight(items, true), locants: null };
+} // End of function principalStep()
+
+/**
+ * Step "Sufijo o prefijo": the principal group gives the suffix, the other
+ * groups become prefixes, with their Spanish forms.
+ *
+ * @param {object} result - A HETEROATOM failure with `groups`.
+ * @returns {object} The step.
+ */
+function affixesStep(result) {
+  const { items, principal } = result.groups;
+  const text = [principal
+    ? 'El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.'
+    : 'Sin grupo principal no hay [[sufijo]]: todos los grupos se nombran con un [[prefijo]] delante, igual que las ramas.'];
+  for (const { key, items: list } of groupLines(items, true)) {
+    const group = list[0];
+    if (group.role === 'unsupported') {
+      continue;
+    }
+    if (group.role === 'suffix') {
+      text.push(`${capitalise(familyWithArticle(key))}: sufijo «-${group.suffix}», ${SUFFIX_EXAMPLES[key]}.`);
+    } else {
+      text.push(prefixSentence(key, group));
+    }
+  } // End of the loop over the group lines
+  if (result.groups.unsupported) {
+    text.push('El grupo que no reconozco no tiene sufijo ni prefijo entre los que conozco.');
+  }
+  return { id: 'affixes', title: STEP_TITLES.affixes, text, highlight: groupHighlight(items, true), locants: null };
+} // End of function affixesStep()
+
+/**
+ * Last step of a HETEROATOM refusal: the "not nameable yet" message.
+ *
+ * @param {object} result - A HETEROATOM failure with `groups`.
+ * @returns {object} The step.
+ */
+function notYetStep(result) {
+  const atoms = result.error.atoms || [];
+  return {
+    id: 'notYet',
+    title: STEP_TITLES.notYet,
+    text: [result.error.message],
+    highlight: atoms.length > 0 ? [{ atoms: [...atoms], bonds: [], style: 'candidate' }] : [],
+    locants: null,
+  };
+}
+
 /**
  * Builds the step-by-step explanation of a naming result (design.md §5).
  *
  * @param {object} result - A naming result (nameMolecule()) with its trace.
- * @returns {object[]} The ordered steps; empty for a failed result.
+ * @returns {object[]} The ordered steps; for a failed result, the group steps of a HETEROATOM refusal carrying `groups`, else none.
  */
 export function explain(result) {
   if (!result || !result.ok) {
+    if (result && result.error && result.error.code === 'HETEROATOM' && result.groups) {
+      return [groupsStep(result), principalStep(result), affixesStep(result), notYetStep(result)];
+    }
     return [];
   }
   if (isBenzene(result)) {
@@ -1491,4 +1827,4 @@ export function explain(result) {
     orderStep(result),
     assembleStep(result),
   ].filter(Boolean);
-}
+} // End of function explain()

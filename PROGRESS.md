@@ -38,7 +38,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-27a | v2.7a Ring templates and inner double-bond lines (split from I-27) | same, §3.7 | done — `docs/progress-archive/i-27a.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-27a.md` |
 | I-27b | v2.7b Ordenar dibujo for rings (split from I-27) | same, §3.7 | done — `docs/progress-archive/i-27b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-27b.md` |
 | I-28 | v2.8 Benzene and hydrocarbon derivatives | same, §3.8 | done — `docs/progress-archive/i-28.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-28.md` |
-| I-29 | v2.9 Functional groups and seniority | same, §3.9 | queued | — | — |
+| I-29 | v2.9 Functional groups and seniority | same, §3.9 | done — `docs/progress-archive/i-29.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-29.md` |
 | I-30 | v2.10 Halogen derivatives | same, §3.10 | queued | — | — |
 | I-31 | v2.11 Alcohols | same, §3.11 | queued | — | — |
 | I-32 | v2.12 Aldehydes and ketones | same, §3.12 | queued | — | — |
@@ -53,7 +53,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-28 done; I-29…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-29 done; I-30…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
@@ -89,12 +89,12 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-29 (v2 §3.9 functional groups and seniority: new
-`src/naming/groups.js` and `seniority.js`; detect groups without overlaps; explain
-steps "Reconoce los grupos", "Elige el principal", "Sufijo o prefijo"; detection
-does not yet enable naming — heteroatom molecules keep `HETEROATOM`). Spec: design
-§13.4 row I-29 and `autoclaude/processed/215-rings-functional-groups-confirmed.md`
-§3 item 9. Deploying stays a manual user step.
+Poll the inbox, then run I-30 (v2 §3.10 halogen derivatives: prefixes fluoro-,
+cloro-, bromo-, yodo-; multipliers and alphabetical order; never a suffix; build on
+`src/naming/groups.js` `halide` records and `seniority.js`, and let halogen-only
+heteroatom molecules be named instead of refused). Spec: design §13.4 row I-30, §13.6,
+and `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 10.
+Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -151,14 +151,17 @@ does not yet enable naming — heteroatom molecules keep `HETEROATOM`). Spec: de
   `polysubstitutedBenzene` in `validate.js`; Benceno template in the ring tool
   (`editor.js`); explain step "Reconoce el benceno"; oracle kekulization in
   `scripts/oracle/smiles-full.mjs`.
+- Groups (I-29): pure `src/naming/groups.js` (detection, no overlaps) and
+  `seniority.js` (principal group, suffix/prefix, `attachmentTowards()`); the
+  `HETEROATOM` refusal carries `groups`; explain steps "Reconoce los grupos" …;
+  snapshots `tests/fixtures/explain-group-snapshots.json`; design §13.6.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-28)
+## Verification (last phase, I-29)
 
-- `npm test` 0 (603 pass) · `npm run check` 0 (89 files) · `npm run e2e` 0
-  (171 pass, source + dist) · `npm run oracle -- --count 300 --seed 1` 0 (491
-  pass incl. 30 benzenes, 0 adapter failures).
+- `npm test` 0 (615 pass) · `npm run check` 0 (92 files) · `npm run e2e` 0
+  (171 pass, source + dist). Oracle not run (no naming change).
 
 ## Open risks / deviations
 
@@ -280,10 +283,15 @@ does not yet enable naming — heteroatom molecules keep `HETEROATOM`). Spec: de
   buttons shrunk on wide pointer screens. Both review should-fix fixed with
   regressions (`docs/progress-archive/i-28.md`).
 
+- I-29: detection only; heteroatom molecules still `HETEROATOM`, now with
+  group steps. Review should-fix (ester/amide prefix direction) fixed with
+  regressions. `oxo-`/`formil-` forms and diesters left to I-35/I-39
+  (`docs/progress-archive/i-29.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-27b `b6e8eeb`, pushed. I-28 committed and pushed right after this
+- I-28 `2489a48`, pushed. I-29 committed and pushed right after this
   checkpoint (see `git log`).

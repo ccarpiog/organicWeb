@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T20:50:29Z",
+  "updated": "2026-09-27T21:18:19Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -268,8 +268,11 @@
     {
       "id": "I-29",
       "title": "v2.9 Functional groups and seniority",
-      "status": "queued",
-      "summary": "v2 plan phase 9: functional groups and seniority (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Detects functional groups without overlaps and picks the principal one by seniority; heteroatom molecules are explained but not named yet.",
+      "risk": "high",
+      "review": "docs/reviews/I-29.md",
+      "narrative": "docs/progress-archive/i-29.md"
     },
     {
       "id": "I-30",

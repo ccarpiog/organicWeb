@@ -260,7 +260,7 @@ Errors are codes with Spanish messages:
 | `RING_SYSTEM` | Out of scope (§13.1), one message per `ringKind`: `heterocycle` Este anillo tiene átomos que no son carbono: es un heterociclo. Los heterociclos quedan fuera de lo que sé nombrar. · `fused` Has dibujado anillos fusionados (dos anillos que comparten un enlace). Este tipo de moléculas queda fuera de lo que sé nombrar. · `bridged` Has dibujado anillos con puente (dos anillos que comparten más de dos átomos). … · `spiro` Has dibujado un compuesto espiro (dos anillos que comparten un solo átomo). … · `several` Esta molécula tiene varios anillos. De momento solo podré nombrar moléculas con un único anillo. (generic: Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.) |
 | `VALENCE` | Este carbono tendría más de 4 enlaces. — per element for the lowest-id offending atom: Este oxígeno tendría más de 2 enlaces. / Este nitrógeno tendría más de 3 enlaces. / Este cloro (flúor, bromo, yodo) tendría más de 1 enlace. (The editor's "full" refusal likewise: Este oxígeno ya tiene 2 enlaces.) |
 | `TOO_BIG` | La molécula es demasiado grande (máximo 60 carbonos, cadena de 30). — also a ring side chain above 30 carbons — heavy-atom cap: La molécula es demasiado grande (máximo 80 átomos sin contar los hidrógenos). — a ring above 30 carbons: El anillo es demasiado grande (máximo 30 carbonos en el anillo). |
-| `HETEROATOM` | Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos. (valid, not nameable yet; `atoms` lists the heteroatoms) |
+| `HETEROATOM` | Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos. (valid, not nameable yet; `atoms` lists the heteroatoms; since I-29 the naming result also carries `groups`, §4.1, §13.6) |
 | `INVALID` | Los datos de la molécula están dañados. Empieza un dibujo nuevo. (internal/corrupt data) |
 
 ---
@@ -280,8 +280,17 @@ nameMolecule(mol) →
     parent: { atoms: [id…] in locant order, bonds: [id…] },
     trace: [TraceStep…],
     alternatives: [{ style, label, name, parts }] }   // §1.1; empty if no isopropyl/isopropylidene group
-| { ok: false, error: { code, message } }
+| { ok: false, error: { code, message },
+    groups? }                       // HETEROATOM only: GroupAnalysis (§13.6)
 ```
+
+`groups` (I-29) is the characteristic-group analysis of a molecule refused
+with `HETEROATOM`: `{ items, principal, unsupported }`, where `items` are the
+group records of `naming/groups.js` plus `role` (`suffix`, `prefix`,
+`unsupported`), `suffix` and `prefix` (Spanish forms), `principal` is the
+most senior kind present (or null) and `unsupported` tells whether some
+group was not recognised. It never turns the refusal into a name; hydrocarbon
+results and other refusals have no `groups`.
 
 `TraceStep = { rule, candidatesBefore, values, survivors, note? }` where each
 candidate is `{ atoms, direction?, key, bonds }` (`bonds`: the chain's bond ids,
@@ -596,8 +605,20 @@ step, no locant labels.
 
 Where the locant-omission table applies, a note explains it ("En «propeno» no
 hace falta el número: el doble enlace solo puede estar en el carbono 1").
+A molecule refused with `HETEROATOM` (I-29) gets four steps instead of
+none: **Reconoce los grupos** (each characteristic group by family, with
+what it looks like; the atoms of an acid, ester or amide are one group, not
+alcohol/ether/amine plus ketone; an OH on benzene is a fenol), **Elige el
+principal** (the order ácido > éster > amida > nitrilo > aldehído > cetona >
+alcohol > amina; ethers and halogens are never principal), **Sufijo o
+prefijo** (the principal group's suffix with an example, the prefixes of
+the others) and **Aún no sé nombrarla** (the refusal message). The results
+panel shows the error message with a "Ver paso a paso" stepper under it;
+nothing is highlighted while that stepper is closed.
+
 Glossary tooltips on underlined terms: *cadena principal*, *sustituyente
-(radical)*, *localizador*, *insaturación*, *enlace doble/triple*, *anillo* (I-25). Tone: second
+(radical)*, *localizador*, *insaturación*, *enlace doble/triple*, *anillo* (I-25),
+*benceno* (I-28), *grupo funcional*, *grupo principal*, *sufijo*, *prefijo* (I-29). Tone: second
 person, short sentences, encouraging.
 
 Snapshot tests: `explain()` output for ~20 fixtures stored as JSON and
@@ -1025,8 +1046,13 @@ before being presented as validated IUPAC 2013 coverage.
   system gets `RING_SYSTEM` with an explicit message (§3.2).
 - **`NameStructure` and trace** gain parent kind (`parentKind`, since
   I-25; a `RING` trace step for a ring parent), functional groups,
-  principal group, suffixes, prefixes and locants on heteroatoms. The engine
-  stays pure; the explanation is derived only from the result.
+  principal group, suffixes, prefixes and locants on heteroatoms. Since
+  I-29 the groups, the principal group and each group's suffix/prefix role
+  are detected (`naming/groups.js`, `naming/seniority.js`, §13.6) and travel
+  as `groups` on the `HETEROATOM` refusal (§4.1); the phases that name
+  heteroatom molecules will put the same analysis on their results and add
+  locants on heteroatoms to the structure. The engine stays pure; the
+  explanation is derived only from the result.
 
 ### 13.3 v1 assumptions that break
 
@@ -1076,7 +1102,7 @@ certifies IUPAC preference or Spanish spelling.
 | I-26 | Substituted and unsaturated rings | `N/rings.js`, `parent.js`, `numbering.js`, `substituent.js`, E: every start/direction; unsaturation and substituent locants; explicit ring-vs-chain choice per the 2013 rules. | Symmetry, dienes, side chains; old school rules not carried over automatically. |
 | I-27 | Drawing and ordering rings | Split in two. **I-27a** (done): editor ring templates (Anillos tool, sizes 3–8: free, hung from an atom, fused on a bond; §6.1) and inner double-bond lines for ring bonds (§6.3). **I-27b** (done): new `layout/rings.js` and `canonical.js`: Ordenar dibujo by strategy for rings (regular polygon, locant 1 on top, numbering clockwise, side chains outwards; §7); `rightangle.js` unchanged: the 90° view keeps falling back to the normal drawing for rings. | Collisions, undo, locants; topology and editability kept. |
 | I-28 | Benzene and hydrocarbon derivatives | **Done.** New `N/aromatic.js`: benzene (exactly a six-carbon ring with alternating ring bonds) named `benceno`, monosubstituted benzenes without locant (`metilbenceno`, `isopropilbenceno` with the prefix-style alternatives), traditional `tolueno` / `estireno` (P-22.1.3) as a last alternative (no `cumeno`); polysubstituted → `CYCLE` `polysubstitutedBenzene`; retained `fenil`/`phenyl` prefix (`phenylSubstituent()`, unused by hydrocarbons); both lexicons; E step "Reconoce el benceno" (Kekulé drawings, no numbers, ring senior, `fenilo` form not preferred); Benceno button in Anillos (`a` cycle); Ordenar dibujo via the ring strategy; OPSIN adapter kekulizes aromatic SMILES, accepts either Kekulé drawing and generates benzene derivatives. | Both Kekulé forms; aromaticity never inferred from any alternation. |
-| I-29 | Functional groups and seniority | New `N/groups.js`, `seniority.js`; selection, structure, E: detect groups without overlaps; steps "Reconoce los grupos", "Elige el principal", "Sufijo o prefijo". | Acid/ester/amide vs alcohol/ketone; detection does not yet enable naming. |
+| I-29 | Functional groups and seniority | **Done.** New `N/groups.js`: clusters of heteroatoms and functional carbons (C=O, C=N, C≡N) matched whole against acid, ester, amide, nitrile, aldehyde, ketone, alcohol (`phenol` flag on benzene), ether, amine (primary/secondary/tertiary), halide; anything else (O–O, N–O, N–N, C=N, acyl halide, anhydride, carbonate, H₂O…) is one `unsupported` record; no atom in two groups (§13.6). New `N/seniority.js`: P-41 order, principal kind, suffix/prefix role; affix tables in both lexicons (`groupSuffix()`, `groupPrefix()`, `formylPrefix`, `groupFamilyName()`). The `HETEROATOM` refusal carries `groups` (§4.1); E steps "Reconoce los grupos", "Elige el principal", "Sufijo o prefijo", "Aún no sé nombrarla", shown by a stepper under the error. No heteroatom molecule is named yet. | Acid/ester/amide vs alcohol/ether/amine/ketone, aldehyde vs ketone, phenol; pair matrix; unsupported patterns; id invariance; snapshots `tests/fixtures/explain-group-snapshots.json`. |
 | I-30 | Halogen derivatives | Prefixes fluoro-, cloro-, bromo-, yodo-; multipliers and alphabetical order; never a suffix. | Several halogens and ties; ordering of translated prefixes. |
 | I-31 | Alcohols | `etanol`, `propan-2-ol`, diols; maximise suffix groups, lowest locants; show OH. | Branched and unsaturated; alcohol vs phenol vs carboxylic OH. |
 | I-32 | Aldehydes and ketones | `etanal`, `propanona` (acetona as "Otras formas válidas"); aldehyde carbon in the chain; explain -al/-ona. | Terminal/internal, several carbonyls; C=O is not a hydrocarbon unsaturation. |
@@ -1127,3 +1153,64 @@ numbering); the presentation tie-break (smallest atom-id tuple) picks one of
 several numberings that give the same name, so names never depend on atom
 ids, bond order or coordinates. A bare cycloalkane is not numbered.
 Locant omission for rings: §1.1.
+
+### 13.6 Characteristic groups and seniority (I-29)
+
+**Detection** (`naming/groups.js`, pure). A *functional carbon* has a double
+or triple bond to a heteroatom. The heteroatoms and functional carbons are
+split into *clusters*, joined by every bond that touches a heteroatom (two
+functional carbons bonded to each other stay apart: `O=CC=O` is two
+aldehydes). Each cluster is matched as a whole against one pattern, so the
+larger pattern always wins and no atom is in two groups:
+
+| Kind | Pattern (X functional carbon, R an outside carbon) | Suffix | Prefix |
+|---|---|---|---|
+| acid | X(=O)–OH, X with ≤ 1 R | ácido …-oico | carboxi- |
+| ester | X(=O)–O–R, X with ≤ 1 R | …-oato de …-ilo | alcoxicarbonil- (bonded through X) or aciloxi- (through the O) |
+| amide | X(=O)–N with 0–2 R | -amida | carbamoil- (bonded through X) or acilamino- (through the N) |
+| nitrile | X≡N, X with ≤ 1 R | -nitrilo | ciano- |
+| aldehyde | X=O, X with 0–1 R (so it has an H) | -al | oxo- (formil- when X is outside the parent) |
+| ketone | X=O, X with 2 R | -ona | oxo- |
+| alcohol | R–OH (`phenol` when R is a benzene carbon) | -ol | hidroxi- |
+| amine | N with 1–3 R, single bonds only | -amina | amino- |
+| ether | R–O–R | — | alcoxi- |
+| halide | R–F, R–Cl, R–Br, R–I | — | fluoro-, cloro-, bromo-, yodo- |
+
+Every other cluster is one `unsupported` record with a `reason`:
+`heteroatomBond` (O–O, N–O, N–N, a halogen on O or N…), `imine` (C=N),
+`noCarbon` (H₂O, NH₃, HX) or `carbonylDerivative` (acyl halide, anhydride,
+carbonate, imide, urea, ketene, CO₂, Cl–C≡N…). Each record lists `atoms`
+(heteroatoms plus X), inner `bonds`, `carbon` (X or null), `attachedTo`
+(the outside carbons), `canBeSuffix`, `roles` (atom ids by role) and the
+kind flags (`phenol`, `amineClass`, `substitution`, `element`, `reason`).
+Records are ordered by seniority, then by smallest atom id; the set found
+never depends on atom ids or bond order.
+
+**Where X belongs.** X is part of its group (so no other group can claim
+it) and also a skeleton carbon: for an acyclic parent IUPAC 2013 counts the
+carbon of -oico, -oato, -amida, -nitrilo and -al in the parent chain
+(P-65.1.2, P-66.1.1, P-66.5.1, P-66.6.1); a ketone carbon is always a chain
+or ring carbon. Only a group on a ring parent named with -carboxílico,
+-carbaldehído or -carbonitrilo (I-40), or cited as a prefix that includes
+X (carboxi-, formil-, ciano-…), leaves X outside the parent. The naming
+phases I-31…I-38 must therefore count `carbon` as a chain carbon.
+
+**Seniority** (`naming/seniority.js`, IUPAC 2013 P-41 restricted to the
+scope): ácido > éster > amida > nitrilo > aldehído > cetona > alcohol (and
+fenol) > amina. The principal group is the most senior kind present; every
+group of that kind is a suffix, every other recognised group a prefix;
+ethers and halides are always prefixes. A prefix ester or amide gets
+`attachment`: the end that faces the principal group, found by walking the
+graph from each end without crossing the group (`attachmentTowards()`):
+`carbonyl` → `alcoxicarbonil-` / `carbamoil-`, `heteroatom` → `aciloxi-` /
+`acilamino-` (`CC(=O)OCC(=O)O` is an acetiloxi acid, `CCOC(=O)CC(=O)O` an
+etoxicarbonil acid). When both ends or neither reach a principal group the
+end is undecided: `attachment` and `prefix` are null, `prefixes` holds both
+forms and the explanation states the condition for each. Unsupported groups get no role
+(`unsupported`); the principal is still chosen among the recognised groups
+so the explanation can show the reasoning.
+
+**Transport.** Detection does not enable naming: `validateForNaming()` still
+returns `HETEROATOM`, and `nameMolecule()` adds `groups` (`analyzeGroups()`)
+to that refusal only (a detection failure leaves the refusal without
+`groups`). The explanation reads nothing else (§5).

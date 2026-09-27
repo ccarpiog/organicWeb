@@ -155,6 +155,7 @@
  * @typedef {object} NamingFailure
  * @property {false} ok - Always false.
  * @property {{code: string, message: string}} error - Error code and Spanish message.
+ * @property {object} [groups] - Only on a `HETEROATOM` refusal: the characteristic groups, the principal group and each group's role and affixes (seniority.js GroupAnalysis, design.md §13.4 I-29). Detection never turns the refusal into a name.
  */
 
 /**
