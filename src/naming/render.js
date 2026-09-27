@@ -138,14 +138,15 @@ function token(text, kind) {
  * contains its own locants or its own substituents (design.md §4.5):
  * `(propan-2-il)`, `(prop-2-en-1-il)`, `(2-metilpropil)`. Unenclosed:
  * `metil`, `propil`, `etenil`, `etinil`, `metiliden`, `etiliden`,
- * `eteniliden`, `isopropil`, `isopropiliden`, `tert-butil`.
+ * `eteniliden`, `isopropil`, `isopropiliden`, `tert-butil`, and the halogen
+ * prefixes `fluoro`, `cloro`, `bromo`, `yodo`.
  * Enclosure does not decide the multiplier (see isCompoundPrefix()).
  *
  * @param {object} substituent - The substituent structure.
  * @returns {boolean} True when the prefix is enclosed.
  */
 export function needsEnclosure(substituent) {
-  if (substituent.retained) {
+  if (substituent.retained || substituent.halogen) {
     return false;
   }
   const { chain, prefixes, freeValence } = substituent;
@@ -163,7 +164,7 @@ export function needsEnclosure(substituent) {
  * @returns {boolean} True when the prefix is compound.
  */
 export function isCompoundPrefix(substituent) {
-  return !substituent.retained && substituent.prefixes.length > 0;
+  return !substituent.retained && !substituent.halogen && substituent.prefixes.length > 0;
 }
 
 /**
@@ -190,19 +191,26 @@ function enclosureLevel(substituent) {
  * follows it before an italic descriptor: `di-tert-butil`), enclosing marks
  * and the prefix words.
  *
+ * With `omitLocants` (a prefix inside a one-carbon group, which has a
+ * single position: `(clorometil)`, `(triclorometil)`, IUPAC 2013
+ * P-14.3.4.2(a)) the locants and their hyphen are left out.
+ *
  * @param {object} group - The prefix group (structure.js PrefixGroup).
  * @param {object} lexicon - The lexicon.
+ * @param {boolean} [omitLocants] - Leave out the locants (default false).
  * @returns {{text: string, kind: string}[]} The tokens.
  */
-function groupTokens(group, lexicon) {
+function groupTokens(group, lexicon, omitLocants = false) {
   const tokens = [];
-  group.locants.forEach((site, i) => {
-    if (i > 0) {
-      tokens.push(token(',', 'punct'));
-    }
-    tokens.push(token(String(site.locant), 'locant'));
-  });
-  tokens.push(token('-', 'punct'));
+  if (!omitLocants) {
+    group.locants.forEach((site, i) => {
+      if (i > 0) {
+        tokens.push(token(',', 'punct'));
+      }
+      tokens.push(token(String(site.locant), 'locant'));
+    });
+    tokens.push(token('-', 'punct'));
+  }
   const words = substituentTokens(group.substituent, lexicon);
   const enclosed = needsEnclosure(group.substituent);
   const count = group.locants.length;
@@ -247,7 +255,8 @@ function locantTokens(locants) {
  * attachment bond, `iliden` for a double one) — `propil`, `propan-2-il`,
  * `2-metilprop-1-en-1-il`, `etenil`, `buta-1,3-dien-1-il`, `metiliden`,
  * `propan-2-iliden`, `eteniliden` — or a retained prefix (`isopropil`,
- * `isopropiliden`, `tert-butil`, `fenil`). A saturated group with the free valence at
+ * `isopropiliden`, `tert-butil`, `fenil`), or a halogen prefix (`cloro`,
+ * design.md §13.4 I-30). A saturated group with the free valence at
  * locant 1 uses the short form (`propil`, `propiliden`, `2-metilpropil`);
  * one- and two-carbon groups cite no locant.
  *
@@ -256,17 +265,23 @@ function locantTokens(locants) {
  * @returns {{text: string, kind: string}[]} The tokens.
  */
 function substituentTokens(substituent, lexicon) {
+  if (substituent.halogen) {
+    return [token(lexicon.halogenPrefix(substituent.halogen), 'prefix')];
+  }
   if (substituent.retained) {
     const { italic, text } = lexicon.retainedPrefix(substituent.retained);
     return italic ? [token(italic, 'italic'), token(text, 'prefix')] : [token(text, 'prefix')];
   }
   const { chain, prefixes, freeValence } = substituent;
   const tokens = [];
+  // A one-carbon group cites no locants, so its prefixes run together
+  // (`bromoclorometil`), as in renderPrefixes.
+  const omitLocants = chain.length === 1;
   prefixes.forEach((group, g) => {
-    if (g > 0) {
+    if (g > 0 && !omitLocants) {
       tokens.push(token('-', 'punct'));
     }
-    tokens.push(...groupTokens(group, lexicon));
+    tokens.push(...groupTokens(group, lexicon, omitLocants));
   });
   tokens.push(token(lexicon.stem(chain.length), 'stem'));
   const segments = lexicon.segmentOrder
@@ -366,8 +381,10 @@ export function prefixNameKey(groups, lexicon = lexiconEs) {
  * part; nested prefixes are not split further.
  *
  * With `omitLocants` (a ring with a single substituent, lexicon
- * ringOmitsLocants()) the attachment locants and their hyphen are left out:
- * `metil` in `metilciclohexano`.
+ * ringOmitsLocants(); a one- or two-carbon chain or a fully halogenated
+ * parent, lexicon chainOmitsPrefixLocants()) the attachment locants and
+ * their hyphen are left out: `metil` in `metilciclohexano`, `tricloro` in
+ * `triclorometano`.
  *
  * @param {object[]} groups - The prefix groups (structure.js PrefixGroup), in citation order.
  * @param {object} lexicon - The lexicon.
@@ -377,7 +394,8 @@ export function prefixNameKey(groups, lexicon = lexiconEs) {
 export function renderPrefixes(groups, lexicon, omitLocants = false) {
   const parts = [];
   groups.forEach((group, g) => {
-    if (g > 0) {
+    if (g > 0 && !omitLocants) {
+      // Without locants, consecutive prefixes are written together: `clorotrifluorometano`.
       parts.push(part('-', 'punct'));
     }
     const atoms = group.locants.flatMap((site) => site.atoms);
@@ -420,6 +438,22 @@ export function renderPrefixes(groups, lexicon, omitLocants = false) {
 } // End of function renderPrefixes()
 
 /**
+ * Tells whether the attachment locants of a name's prefixes are omitted:
+ * ring rule (lexicon ringOmitsLocants()) for a ring parent, chain rule
+ * (lexicon chainOmitsPrefixLocants(): `clorometano`, `cloroetano`,
+ * `hexacloroetano`) for a chain.
+ *
+ * @param {object} structure - The name structure (structure.js NameStructure).
+ * @param {object} [lexicon] - The lexicon (default: Spanish; both share the rules).
+ * @returns {boolean} True when no prefix locant is written.
+ */
+export function omitsPrefixLocants(structure, lexicon = lexiconEs) {
+  return structure.parentKind === 'ring'
+    ? lexicon.ringOmitsLocants(structure.parent, structure.prefixes).prefixes
+    : lexicon.chainOmitsPrefixLocants(structure.parent, structure.prefixes);
+}
+
+/**
  * Renders a name structure to text and coloured parts (a chain parent, or
  * a ring parent when `parentKind` is 'ring').
  *
@@ -433,7 +467,7 @@ export function renderName(structure, lexicon = lexiconEs) {
   const parent = ring
     ? renderRingParent(structure.parent, lexicon, structure.prefixes)
     : renderParent(structure.parent, lexicon, hasPrefixes);
-  const omitPrefixLocants = ring && lexicon.ringOmitsLocants(structure.parent, structure.prefixes).prefixes;
+  const omitPrefixLocants = omitsPrefixLocants(structure, lexicon);
   const parts = [...renderPrefixes(structure.prefixes, lexicon, omitPrefixLocants), ...parent];
   return { name: parts.map((p) => p.text).join(''), parts };
 }

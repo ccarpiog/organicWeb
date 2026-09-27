@@ -26,6 +26,7 @@ import {
   needsConnectingVowel,
   omitsLocants,
   ringOmitsLocants,
+  chainOmitsPrefixLocants,
 } from './lexicon.es.js';
 
 /** Chain stems indexed by carbon count (index 0 unused). */
@@ -252,6 +253,20 @@ export const FORMYL_PREFIX = 'formyl';
 /** Halogen prefixes (never a suffix). */
 export const HALOGEN_PREFIXES = Object.freeze({ F: 'fluoro', Cl: 'chloro', Br: 'bromo', I: 'iodo' });
 
+/**
+ * Returns the substituent prefix of a halogen atom (see lexicon.es.js).
+ *
+ * @param {string} element - 'F', 'Cl', 'Br' or 'I'.
+ * @returns {string} 'fluoro', 'chloro', 'bromo' or 'iodo'.
+ * @throws {Error} For another element.
+ */
+export function halogenPrefix(element) {
+  if (!Object.prototype.hasOwnProperty.call(HALOGEN_PREFIXES, element)) {
+    throw new Error(`halogenPrefix: ${element} is not a halogen`);
+  }
+  return HALOGEN_PREFIXES[element];
+}
+
 /** Family names of the characteristic groups (English, developer-facing only). */
 export const GROUP_FAMILY_NAMES = Object.freeze({
   acid: 'carboxylic acid',
@@ -337,6 +352,8 @@ export const lexiconEn = Object.freeze({
   needsConnectingVowel,
   omitsLocants,
   ringOmitsLocants,
+  chainOmitsPrefixLocants,
+  halogenPrefix,
   alkylPrefix,
   groupName,
   prefixForm,

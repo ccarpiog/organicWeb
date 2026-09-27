@@ -87,7 +87,7 @@ test('every ring size from 3 to 30 is named ciclo + stem + ano, cyclo…ane in E
     assert.deepEqual(result.alternatives, []);
     assert.equal(englishName(result.structure), `cyclo${lexiconEn.stem(n)}ane`);
     assert.equal(formula(mol), `C${n}H${2 * n}`);
-    assert.deepEqual(atomCounts(result.structure), { carbons: n, hydrogens: 2 * n });
+    assert.deepEqual(atomCounts(result.structure), { carbons: n, hydrogens: 2 * n, halogens: {} });
   } // End of the loop over the ring sizes
   assert.equal(englishName(nameMolecule(parseSmiles('C1CCCCC1')).structure), 'cyclohexane');
   assert.equal(generateCycloalkanes({ minSize: 1, maxSize: 60 }).length, 28);

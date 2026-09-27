@@ -13,21 +13,24 @@
  *   multiple bonds — a benzene ring included, but only with at most one
  *   substituent (two or more: CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
  *   one gets TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps (≤ 60 carbons, ≤ 80 heavy atoms),
- *   only elements the engine can name yet (carbon), and longest chain ≤ 30
- *   (for a ring: every side chain ≤ 30).
+ *   only elements the engine can name yet (carbon, and halogens bonded to a
+ *   carbon — design.md §13.4 I-30), and longest carbon chain ≤ 30 (for a
+ *   ring: every side chain ≤ 30).
  *
  * Two kinds of failure are kept apart (design.md §13.1): an invalid structure
  * (INVALID, VALENCE — the drawing itself is wrong) and a valid molecule the
  * engine cannot name (CYCLE, RING_SYSTEM, HETEROATOM — see isNotNameableYet()).
+ * Halogens bonded to a carbon are named since I-30; any other heteroatom
+ * (O, N, a halogen on a heteroatom…) still gets HETEROATOM.
  *
  * Errors are `{code, message}` objects with the Spanish messages of the §3.2
  * table; some carry extra data (`detail` in English for developers, `atoms`
  * for highlighting). This module never reads coordinates or the DOM.
  */
 
-import { isConnected, hasCycle, longestChainLength, adjacency } from './graph.js';
+import { isConnected, hasCycle, longestChainLength, adjacency, carbonSkeleton } from './graph.js';
 import { classifyRings } from './rings.js';
-import { isSupportedElement, valenceOf, ELEMENT_NAMES_ES } from './elements.js';
+import { isSupportedElement, valenceOf, isHalogen, ELEMENT_NAMES_ES } from './elements.js';
 
 /** Maximum number of carbons in a molecule the app will name (design.md §1.1). */
 export const MAX_CARBONS = 60;
@@ -51,7 +54,8 @@ export const MESSAGES = Object.freeze({
   VALENCE: 'Este carbono tendría más de 4 enlaces.',
   TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
   HETEROATOM: 'Esta molécula tiene átomos que no son carbono ni hidrógeno. '
-    + 'Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos.',
+    + 'Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos '
+    + 'y derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono).',
   INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
 });
 
@@ -386,7 +390,8 @@ function ringError(mol) {
 
 /**
  * Longest chain of the side chains of a single-ring molecule: the largest
- * number of atoms on a path that avoids the ring atoms. Each side chain is
+ * number of carbons on a path that avoids the ring atoms (halogens are not
+ * chain atoms, so they are left out). Each side chain is
  * a tree hanging from one ring atom, so its longest path is found with two
  * breadth-first sweeps (farthest atom, then farthest from it).
  *
@@ -394,7 +399,7 @@ function ringError(mol) {
  * @returns {number} The longest side-chain path in atoms; 0 without side chains.
  */
 export function longestSideChain(mol) {
-  const adj = adjacency(mol);
+  const adj = adjacency(carbonSkeleton(mol));
   const ringAtoms = new Set(classifyRings(mol).perception.ringAtoms);
   const seen = new Set();
   /**
@@ -437,14 +442,35 @@ export function longestSideChain(mol) {
 } // End of function longestSideChain()
 
 /**
+ * Tells whether every non-carbon atom of a molecule is a halogen bonded to
+ * a carbon (a halogen derivative of a hydrocarbon, design.md §13.4 I-30):
+ * each such halogen is a substituent prefix (fluoro-, cloro-, bromo-,
+ * yodo-). A halogen bonded to another halogen (Cl–Cl), or a lone halogen
+ * (HCl), is not.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {number[]} hetero - Its non-carbon atom ids.
+ * @returns {boolean} True when every one of them is a halogen on a carbon.
+ */
+export function isHalogenDerivative(mol, hetero) {
+  const adj = adjacency(mol);
+  return hetero.every((id) => {
+    const links = adj.get(id);
+    return isHalogen(mol.atoms.get(id).element) && links.length === 1 && mol.atoms.get(links[0].atom).element === 'C';
+  });
+}
+
+/**
  * Structural checks plus the naming checks, in order: non-empty, connected,
  * ring scope (ringError(): a single carbocycle of at most 30 carbons
  * passes; TOO_BIG or RING_SYSTEM otherwise), carbon and heavy-atom caps,
- * carbon only (HETEROATOM: valid but not nameable yet), chain cap — the
- * longest chain of a tree, or the longest side chain of a ring (design.md
- * §3.2, §13.1). A molecule passing this is a hydrocarbon of at most 60
- * carbons that is either a tree whose longest chain has at most 30, or a
- * single carbocycle of 3 to 30 carbons whose side chains have at most 30.
+ * carbon and halogens on carbon only (HETEROATOM for any other atom: valid
+ * but not nameable yet), chain cap — the longest carbon chain of a tree,
+ * or the longest side chain of a ring (design.md §3.2, §13.1). A molecule
+ * passing this is a hydrocarbon (or a halogen derivative of one) of at most
+ * 60 carbons that is either a tree whose longest carbon chain has at most
+ * 30, or a single carbocycle of 3 to 30 carbons whose side chains have at
+ * most 30 carbons.
  *
  * @param {object} mol - The molecule (possibly corrupt).
  * @returns {{code: string, message: string}|null} The first error found, or null when the molecule can be named.
@@ -475,11 +501,11 @@ export function validateForNaming(mol) {
     return validationError('TOO_BIG', { message: TOO_MANY_ATOMS_MESSAGE, detail: `${mol.atoms.size} heavy atoms` });
   }
   const hetero = [...mol.atoms.values()].filter((atom) => atom.element !== 'C').map((atom) => atom.id).sort((p, q) => p - q);
-  if (hetero.length > 0) {
-    // A valid molecule, but the engine only names hydrocarbons so far.
+  if (hetero.length > 0 && !isHalogenDerivative(mol, hetero)) {
+    // A valid molecule, but the engine only names hydrocarbons and their halogen derivatives so far.
     return validationError('HETEROATOM', { atoms: hetero });
   }
-  const chain = cyclic ? longestSideChain(mol) : longestChainLength(mol);
+  const chain = cyclic ? longestSideChain(mol) : longestChainLength(carbonSkeleton(mol));
   if (chain > MAX_CHAIN) {
     return validationError('TOO_BIG', { detail: `${cyclic ? 'longest side chain' : 'longest chain'} has ${chain} carbons` });
   }

@@ -37,7 +37,8 @@ test('exact Spanish messages from the design table', () => {
     VALENCE: 'Este carbono tendría más de 4 enlaces.',
     TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
     HETEROATOM: 'Esta molécula tiene átomos que no son carbono ni hidrógeno. '
-      + 'Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos.',
+      + 'Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos '
+      + 'y derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono).',
     INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
   });
 });

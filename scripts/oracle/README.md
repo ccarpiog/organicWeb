@@ -20,7 +20,7 @@ refused (the run is reported as skipped).
 
 ```sh
 npm run oracle -- --download                 # once: fetch the pinned jar
-npm run oracle -- --count 1000 --seed 1      # 1000 random molecules + 500 monocycles + 100 benzenes + 11 cycloalkanes, 4–14 C
+npm run oracle -- --count 1000 --seed 1      # 1000 random molecules + 500 monocycles + 100 benzenes + 500 halogen derivatives + 11 cycloalkanes, 4–14 C
 npm run oracle -- --count 3000 --seed 6 --min 10 --max 30
 ```
 
@@ -45,7 +45,11 @@ Output: `passed: … failed: … skipped: … adapter failures: …`.
    random double/triple bonds in the ring and the chains (benzene rings
    drawn by chance are named too); `generateBenzenes()` draws a tenth as
    many benzene derivatives — benzene, then a Kekulé hexagon in either
-   drawing with one random side chain; and `generateCycloalkanes()` adds one
+   drawing with one random side chain; `generateHalogenated()` draws half as
+   many halogen derivatives — a random acyclic hydrocarbon (from 1 C, so
+   halomethanes and haloethanes too), monocycle or benzene whose hydrogens are
+   replaced at random by F, Cl, Br or I (`halogenate()`), kept when valid for
+   naming; and `generateCycloalkanes()` adds one
    cycloalkane per ring size in the carbon range (3–30 at most):
    `cyclopropane` … `cyclotriacontane`.
 2. Each molecule is named in every prefix style (`isopropil`, `pin`,
@@ -68,9 +72,12 @@ Output: `passed: … failed: … skipped: … adapter failures: …`.
    fail until they have a key. OPSIN SMILES that the parser cannot read is an
    **adapter failure**, counted apart from naming failures.
 
-The generator stays hydrocarbon-only: the naming engine does not name
-heteroatom compounds yet, but the comparison already handles them. Only
-single carbocycles are generated (polycycles are not named).
+Besides hydrocarbons, the generator draws halogen derivatives (named since
+I-30); oxygen and nitrogen compounds are not generated because the engine
+does not name them yet, although the comparison already handles them. Only
+single carbocycles are generated (polycycles are not named). The English
+names keep the Spanish citation order of the prefixes (`2-methyl-4-iodopentane`
+for `2-metil-4-yodopentano`); OPSIN reads them regardless.
 
 A round trip proves that a name denotes the right structure, not that the
 parent choice, numbering or spelling are the preferred ones; the fixtures

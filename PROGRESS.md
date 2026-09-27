@@ -39,7 +39,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-27b | v2.7b Ordenar dibujo for rings (split from I-27) | same, §3.7 | done — `docs/progress-archive/i-27b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-27b.md` |
 | I-28 | v2.8 Benzene and hydrocarbon derivatives | same, §3.8 | done — `docs/progress-archive/i-28.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-28.md` |
 | I-29 | v2.9 Functional groups and seniority | same, §3.9 | done — `docs/progress-archive/i-29.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-29.md` |
-| I-30 | v2.10 Halogen derivatives | same, §3.10 | queued | — | — |
+| I-30 | v2.10 Halogen derivatives | same, §3.10 | done — `docs/progress-archive/i-30.md` | high / opus | Codex ship-with-fixes, 1 fixed, 1 declined — `docs/reviews/I-30.md` |
 | I-31 | v2.11 Alcohols | same, §3.11 | queued | — | — |
 | I-32 | v2.12 Aldehydes and ketones | same, §3.12 | queued | — | — |
 | I-33 | v2.13 Carboxylic acids | same, §3.13 | queued | — | — |
@@ -53,7 +53,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-29 done; I-30…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-30 done; I-31…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
@@ -89,11 +89,11 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-30 (v2 §3.10 halogen derivatives: prefixes fluoro-,
-cloro-, bromo-, yodo-; multipliers and alphabetical order; never a suffix; build on
-`src/naming/groups.js` `halide` records and `seniority.js`, and let halogen-only
-heteroatom molecules be named instead of refused). Spec: design §13.4 row I-30, §13.6,
-and `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 10.
+Poll the inbox, then run I-31 (v2 §3.11 alcohols: suffix -ol, hidroxi- prefix when not
+principal, multipliers -diol/-triol, locant rules; build on `src/naming/groups.js` /
+`seniority.js` and I-30's heteroatom-admission path in `validate.js`; molecules with only
+alcohol + halogen groups become nameable). Spec: design §13.4 row I-31, §13.6, and
+`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 11.
 Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
@@ -155,13 +155,15 @@ Deploying stays a manual user step.
   `seniority.js` (principal group, suffix/prefix, `attachmentTowards()`); the
   `HETEROATOM` refusal carries `groups`; explain steps "Reconoce los grupos" …;
   snapshots `tests/fixtures/explain-group-snapshots.json`; design §13.6.
+- Halogens (I-30): halogen prefixes as `substituent.halogen` (render `substituentTokens()`),
+  admission in `validate.js`; tests `tests/unit/halogens.test.js`, `tests/e2e/halogens.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-29)
+## Verification (last phase, I-30)
 
-- `npm test` 0 (615 pass) · `npm run check` 0 (92 files) · `npm run e2e` 0
-  (171 pass, source + dist). Oracle not run (no naming change).
+- `npm test` 0 (689 pass) · `npm run check` 0 (94 files) · `npm run e2e` 0
+  (175 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (2111 pass).
 
 ## Open risks / deviations
 
@@ -288,10 +290,15 @@ Deploying stays a manual user step.
   regressions. `oxo-`/`formil-` forms and diesters left to I-35/I-39
   (`docs/progress-archive/i-29.md`).
 
+- I-30: alphabetical order by Spanish words (`2-metil-4-yodopentano`); locant
+  omission rules from memory (P-14.3.4); review should-fix `(bromo-clorometil)` fixed,
+  `2-cloroetenil` vs `2-cloroeten-1-il` declined with reasoning
+  (`docs/progress-archive/i-30.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-28 `2489a48`, pushed. I-29 committed and pushed right after this
+- I-29 `0d97826`, pushed. I-30 committed and pushed right after this
   checkpoint (see `git log`).

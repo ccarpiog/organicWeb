@@ -222,14 +222,17 @@ test('fenilo: the retained C6H5– prefix renders in both lexicons', () => {
   assert.equal(text([{ key: 'ph', substituent: phenyl, locants: [site] }], lexiconEs), '2-fenil');
   assert.equal(text([{ key: 'ph', substituent: phenyl, locants: [site, { ...site, locant: 3 }] }], lexiconEs), '2,3-difenil');
   assert.equal(text([{ key: 'ph', substituent: phenyl, locants: [site] }], lexiconEn), '2-phenyl');
-  // On a chain parent (not used for hydrocarbons, where the ring is always the parent).
+  // On a chain parent (not used for hydrocarbons, where the ring is always the parent). A
+  // monosubstituted two-carbon parent omits the locant (IUPAC 2013 P-14.3.4.2(b), as in cloroetano).
   const structure = {
     parentKind: 'chain',
     parent: { length: 2, atoms: [20, 21], bonds: [31], double: [], triple: [] },
     prefixes: [{ key: 'ph', substituent: phenyl, locants: [{ ...site, locant: 1 }] }],
   };
-  assert.equal(renderName(structure, lexiconEs).name, '1-feniletano');
-  assert.equal(renderName(structure, lexiconEn).name, '1-phenylethane');
+  assert.equal(renderName(structure, lexiconEs).name, 'feniletano');
+  assert.equal(renderName(structure, lexiconEn).name, 'phenylethane');
+  const propane = { ...structure, parent: { length: 3, atoms: [20, 21, 22], bonds: [31, 32], double: [], triple: [] } };
+  assert.equal(renderName(propane, lexiconEs).name, '1-fenilpropano');
 });
 
 test('the explanation recognises the benzene ring and the two Kekulé drawings', () => {

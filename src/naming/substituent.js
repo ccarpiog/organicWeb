@@ -27,10 +27,18 @@
  * `isopropiliden` in the 'isopropil' style. The connecting double bond is
  * never part of a chain, so it counts in no P2/P3/N1/N2 comparison; the
  * group is one prefix at one locant (P4, N3, N4).
+ *
+ * Halogen atoms (design.md §13.4 I-30) are substituents too, at any depth:
+ * a halogen bonded to a chain atom is one prefix (`fluoro`, `cloro`,
+ * `bromo`, `yodo`: a SubstituentStructure with `halogen` set and no chain),
+ * alphabetised with the others (Spanish order: bromo < cloro < etil <
+ * fluoro < metil < yodo) and counted by P4, N3 and N4 like any prefix; it is
+ * never part of a chain (`(clorometil)`, `2-cloroetil`).
  * Pure: topology only.
  */
 
 import { adjacency, rootedTreeKey } from '../model/graph.js';
+import { isHalogen } from '../model/elements.js';
 import { buildChainStructure } from './structure.js';
 import { numberParent, compareCitationKeys } from './numbering.js';
 import { citationKey, prefixNameKey } from './render.js';
@@ -125,16 +133,17 @@ export function substituentSubtree(adj, chainAtom, attachAtom) {
  * @param {number} chainAtom - The carrying atom (outside the subtree).
  * @param {number} attachAtom - The attachment atom.
  * @param {boolean} armsOnly - Whether only arms are candidates.
+ * @param {function(number): boolean} [skip] - Atoms that are never chain atoms (halogens); default none.
  * @returns {number[][]} The candidate chains as atom-id paths.
  */
-export function substituentChainCandidates(adj, chainAtom, attachAtom, armsOnly) {
+export function substituentChainCandidates(adj, chainAtom, attachAtom, armsOnly, skip = () => false) {
   const parent = new Map([[attachAtom, chainAtom]]);
   const branchOf = new Map();
   const queue = [attachAtom];
   const leafAtoms = [];
   for (let i = 0; i < queue.length; i += 1) {
     const atom = queue[i];
-    const children = adj.get(atom).filter((n) => n.atom !== parent.get(atom));
+    const children = adj.get(atom).filter((n) => n.atom !== parent.get(atom) && !skip(n.atom));
     for (const n of children) {
       parent.set(n.atom, atom);
       branchOf.set(n.atom, atom === attachAtom ? n.atom : branchOf.get(atom));
@@ -216,6 +225,23 @@ export function substituentsOf(ctx, chainAtoms, exclude = null) {
       if (inChain.has(n.atom) || n.atom === exclude) {
         continue;
       }
+      const element = ctx.mol.atoms.get(n.atom).element;
+      if (isHalogen(element)) {
+        const structure = halogenSubstituent(n.atom, element);
+        result.push({
+          chainAtom,
+          attachAtom: n.atom,
+          bond: n.bond,
+          order: n.order,
+          atoms: [n.atom],
+          bonds: [],
+          multipleBonds: [],
+          key: `${ATTACH_SYMBOL[n.order]}${element}()`,
+          structure,
+          citation: citationKey(structure, ctx.lexicon),
+        });
+        continue;
+      }
       const subtree = substituentSubtree(ctx.adj, chainAtom, n.atom);
       const inSubtree = new Set(subtree.bonds);
       const multipleBonds = [...new Set(subtree.atoms.flatMap((atom) => ctx.adj.get(atom)
@@ -237,6 +263,30 @@ export function substituentsOf(ctx, chainAtoms, exclude = null) {
   } // End of the loop over the chain atoms
   return result;
 } // End of function substituentsOf()
+
+/**
+ * The substituent structure of a halogen atom (design.md §13.4 I-30): the
+ * prefix `fluoro`, `cloro`, `bromo` or `yodo` (lexicon halogenPrefix()),
+ * simple (never enclosed; `di`, `tri`… when repeated), with no chain and no
+ * prefixes of its own. `freeValence` is the single bond to the carrying
+ * carbon.
+ *
+ * @param {number} atom - The halogen atom id.
+ * @param {string} element - 'F', 'Cl', 'Br' or 'I'.
+ * @returns {object} The SubstituentStructure (structure.js) with `halogen` set.
+ */
+export function halogenSubstituent(atom, element) {
+  return {
+    halogen: element,
+    chain: null,
+    prefixes: [],
+    freeValence: { locant: 1, order: 1 },
+    retained: null,
+    commonName: null,
+    atoms: [atom],
+    bonds: [],
+  };
+}
 
 /**
  * Builds the N5 complete-name key function for numberParent(): it renders a
@@ -331,7 +381,8 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
     throw new Error(`buildSubstituent: attachment bond of order ${order}`);
   }
   const { adj, style } = ctx;
-  let chains = substituentChainCandidates(adj, chainAtom, attachAtom, style === 'substituted');
+  const skip = (id) => isHalogen(ctx.mol.atoms.get(id).element);
+  let chains = substituentChainCandidates(adj, chainAtom, attachAtom, style === 'substituted', skip);
   chains = keepMax(chains, (c) => c.length);
   chains = keepMax(chains, (c) => countBonds(adj, c, (order) => order >= 2));
   chains = keepMax(chains, (c) => countBonds(adj, c, (order) => order === 2));
@@ -361,16 +412,20 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
  * Names one substituent on its own (a fresh context each call; use
  * substituentsOf() to name many).
  *
- * @param {object} mol - A validated acyclic hydrocarbon.
+ * @param {object} mol - A validated acyclic hydrocarbon or halogen derivative.
  * @param {number} chainAtom - The carrying chain atom.
  * @param {number} attachAtom - The substituent atom bonded to it.
  * @param {string} [style] - Prefix style (default 'isopropil').
- * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`), or null when the two atoms are not bonded.
+ * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom), or null when the two atoms are not bonded.
  */
 export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLES[0]) {
   const ctx = createNamingContext(mol, style);
   const link = ctx.adj.get(chainAtom).find((n) => n.atom === attachAtom);
-  return link ? nameSubstituentIn(ctx, chainAtom, attachAtom, link.order) : null;
+  if (!link) {
+    return null;
+  }
+  const element = mol.atoms.get(attachAtom).element;
+  return isHalogen(element) ? halogenSubstituent(attachAtom, element) : nameSubstituentIn(ctx, chainAtom, attachAtom, link.order);
 }
 
 /**

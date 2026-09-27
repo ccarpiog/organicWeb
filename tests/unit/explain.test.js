@@ -66,6 +66,18 @@ const SNAPSHOT_SMILES = [
   'CC1=CC=CC=C1', // metilbenceno: no locant, tolueno as a traditional name
   'CCCCCCCCCCC1=CC=CC=C1', // decilbenceno: ring senior to a longer chain
   'CC(C)C1=CC=CC=C1', // isopropilbenceno: alternatives on benzene
+  'CCl', // clorometano: halogen prefix on one carbon, no locant (I-30)
+  'ClC(Cl)Cl', // triclorometano: multiplier without locants
+  'CCCl', // cloroetano: omitted locant on a two-carbon parent
+  'ClC(Cl)(Cl)C(Cl)(Cl)Cl', // hexacloroetano: fully halogenated, no locants
+  'CC(Br)CCl', // 2-bromo-1-cloropropano: N3 before alphabetical order
+  'CC(Cl)CC(Br)C', // 2-bromo-4-cloropentano: N4 between halogens
+  'CC(I)CC(C)C', // 2-metil-4-yodopentano: Spanish order, yodo under y
+  'BrCC(C)C', // 1-bromo-2-metilpropano: halogens count in P4
+  'C=CCCl', // 3-cloroprop-1-eno: double bond before the halogen
+  'CCCC(CCl)CCCC', // 4-(clorometil)octano: halogen inside a substituent
+  'ClC1CCCC(C)C1', // 1-cloro-3-metilciclohexano: halogen on a ring, N4
+  'ClC1=CC=CC=C1', // clorobenceno: halogen on benzene
 ];
 
 /**
@@ -122,8 +134,10 @@ test('every fixture: steps are well-formed and the formula matches the model', a
   const order = Object.keys(STEP_TITLES);
   for (const smiles of fixtures.keys()) {
     const { mol, result, steps } = run(smiles);
-    const { carbons, hydrogens } = atomCounts(result.structure);
-    assert.equal(`C${carbons === 1 ? '' : carbons}H${hydrogens}`, formula(mol), smiles);
+    const { carbons, hydrogens, halogens } = atomCounts(result.structure);
+    const count = (symbol, n) => (n === 0 ? '' : `${symbol}${n === 1 ? '' : n}`);
+    const halogenPart = ['Br', 'Cl', 'F', 'I'].map((el) => count(el, halogens[el] || 0)).join('');
+    assert.equal(`${count('C', carbons)}${count('H', hydrogens)}${halogenPart}`, formula(mol), smiles);
     assert.equal(steps[0].id, 'count');
     assert.equal(steps[steps.length - 1].id, 'assemble');
     const ids = steps.map((s) => s.id);

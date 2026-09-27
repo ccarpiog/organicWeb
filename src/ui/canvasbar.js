@@ -41,7 +41,10 @@ export const FALLBACK_NOTES = Object.freeze({
 
 /**
  * The 90° projection of a molecule: names it (for its parent chain) and
- * lays it out with rightAngleLayout(). Pure (no DOM).
+ * lays it out with rightAngleLayout(). Pure (no DOM). A molecule with any
+ * atom other than carbon keeps the normal drawing (`HETEROATOM`), even a
+ * halogen derivative that has a name (design.md §13.4: the 90° view for
+ * heteroatoms is phase I-41).
  *
  * @param {object} mol - The molecule.
  * @returns {{ok: true, positions: Map<number, {x: number, y: number}>}|{ok: false, reason: string}}
@@ -55,6 +58,9 @@ export function projectRightAngles(mol) {
   const result = nameMolecule(mol);
   if (!result.ok) {
     return { ok: false, reason: (result.error && result.error.code) || 'OTHER' };
+  }
+  if ([...mol.atoms.values()].some((atom) => atom.element !== 'C')) {
+    return { ok: false, reason: 'HETEROATOM' };
   }
   return rightAngleLayout(mol, result);
 }

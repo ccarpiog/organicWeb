@@ -13,7 +13,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { parseSmiles } from '../../src/model/smiles.js';
-import { adjacency } from '../../src/model/graph.js';
+import { adjacency, carbonSkeleton } from '../../src/model/graph.js';
 import { createMolecule, addAtom, addBond } from '../../src/model/molecule.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { numberParent, compareCitationKeys } from '../../src/naming/numbering.js';
@@ -53,13 +53,14 @@ async function readFixtures() {
 }
 
 /**
- * Tells whether a molecule is unbranched (no atom with more than two neighbours).
+ * Tells whether a molecule is unbranched: no carbon bonded to more than two
+ * carbons (halogens are substituents, not branches of the carbon skeleton).
  *
  * @param {object} mol - The molecule.
  * @returns {boolean} True for an unbranched chain.
  */
 function isUnbranched(mol) {
-  return [...adjacency(mol).values()].every((list) => list.length <= 2);
+  return [...adjacency(carbonSkeleton(mol)).values()].every((list) => list.length <= 2);
 }
 
 const fixtureRows = await readFixtures();
@@ -122,10 +123,11 @@ for (const row of fixtureRows) {
     const p1 = result.trace[0];
     assert.equal(p1.rule, 'P1');
     assert.equal(result.parent.atoms.length, Math.max(...p1.values));
+    const carbons = carbonSkeleton(mol).atoms.size;
     if (isUnbranched(mol)) {
-      assert.equal(result.parent.atoms.length, mol.atoms.size);
+      assert.equal(result.parent.atoms.length, carbons);
     }
-    if (mol.atoms.size > 1) {
+    if (carbons > 1) {
       const n1 = result.trace.find((step) => step.rule === 'N1');
       assert.ok(n1, 'trace has an N1 step');
       assert.ok(n1.candidatesBefore.length >= 2);

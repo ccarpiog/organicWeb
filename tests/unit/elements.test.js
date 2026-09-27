@@ -242,9 +242,10 @@ test('a valid molecule with heteroatoms is "not nameable yet", never a crash or 
     build(['C', 'C', 'O'], [[1, 2], [2, 3, 2]]), // etanal
     build(['C', 'O', 'C'], [[1, 2], [2, 3]]), // metoximetano
     build(['C', 'C', 'N'], [[1, 2], [2, 3, 3]]), // etanonitrilo
-    build(['C', 'Cl', 'Cl', 'Cl', 'Cl'], [[1, 2], [1, 3], [1, 4], [1, 5]]), // tetraclorometano
+    build(['C', 'C', 'O', 'Cl'], [[1, 2], [2, 3], [1, 4]]), // 2-cloroetanol: a halogen does not lift the refusal
     build(['O']), // agua
-    build(['Br', 'Br'], [[1, 2]]),
+    build(['Br', 'Br'], [[1, 2]]), // a halogen bonded to no carbon
+    build(['Cl']),
   ];
   for (const mol of molecules) {
     assert.equal(validateStructure(mol), null, 'the structure itself is valid');
@@ -264,8 +265,10 @@ test('a valid molecule with heteroatoms is "not nameable yet", never a crash or 
   assert.equal(isNotNameableYet(validateForNaming(createMolecule())), false);
   assert.equal(isNotNameableYet(validateForNaming(build(['C', 'O']))), false);
   assert.equal(isNotNameableYet(null), false);
-  // Hydrocarbons are still named.
+  // Hydrocarbons are still named, and so are halogen derivatives (I-30).
   assert.equal(nameMolecule(parseSmiles('CC(C)C')).name, '2-metilpropano');
+  assert.equal(validateForNaming(build(['C', 'Cl', 'Cl', 'Cl', 'Cl'], [[1, 2], [1, 3], [1, 4], [1, 5]])), null);
+  assert.equal(nameMolecule(build(['C', 'Cl', 'Cl', 'Cl', 'Cl'], [[1, 2], [1, 3], [1, 4], [1, 5]])).name, 'tetraclorometano');
   // The SMILES writer keeps the element (never writes a heteroatom as C).
   assert.equal(writeSmiles(build(['C', 'O'], [[1, 2]])), 'CO');
 }); // End of test 'a valid molecule with heteroatoms is "not nameable yet", never a crash or a hydrocarbon name'
@@ -274,7 +277,7 @@ test('separate caps: carbons, heavy atoms and parent chain', () => {
   assert.equal(MAX_CARBONS, 60);
   assert.equal(MAX_HEAVY_ATOMS, 80);
   assert.equal(MAX_CHAIN, 30);
-  // 30 carbons + 50 chlorines = 80 heavy atoms: within the caps (not nameable yet).
+  // 30 carbons + 50 chlorines = 80 heavy atoms: within the caps (a halogen derivative, named since I-30).
   const mol = chain(30);
   let added = 0;
   for (let c = 1; c <= 30 && added < 50; c += 1) {
@@ -285,7 +288,7 @@ test('separate caps: carbons, heavy atoms and parent chain', () => {
     }
   }
   assert.equal(mol.atoms.size, 80);
-  assert.equal(validateForNaming(mol).code, 'HETEROATOM');
+  assert.equal(validateForNaming(mol), null);
   addBond(mol, 30, addAtom(mol, {}, 'Cl'));
   const tooMany = validateForNaming(mol);
   assert.equal(tooMany.code, 'TOO_BIG');

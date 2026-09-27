@@ -251,3 +251,67 @@ C=CCC1=CC=CC=C1	(prop-2-en-1-il)benceno	unsaturated substituent with locants on 
 CCCCCCCCCCC1=CC=CC=C1	decilbenceno	long chain on benzene, ring senior	A 10-carbon chain is longer than the ring but the ring stays the parent (P-44.1.2.2, P-52.2.8), not 1-fenildecano	
 C=C1C=CC=CC1	5-metilidenciclohexa-1,3-dieno	exocyclic double bond is not benzene	Only two ring double bonds plus an exocyclic one: not a benzene ring (aromaticity is never inferred from other alternations); named as a cyclohexadiene with a metiliden prefix (N1 [1,3], N3 [5])	
 C1=CC=C1	ciclobuta-1,3-dieno	cyclobutadiene is not benzene	A fully alternating four-membered ring is named as a cycloalkene (aromaticity is only recognised for the six-carbon benzene ring)	
+# Halogen derivatives (I-30): fluoro-, cloro-, bromo-, yodo- are always prefixes (IUPAC 2013 P-61.3.1), never a suffix; they count as substituents for the parent (P-45.2.1) and in the lowest-locant rules together with the alkyl prefixes (P-31.1.4.3.4), after the multiple bonds; ties go to the prefix cited first in Spanish alphabetical order (design §1.1); locants omitted on one-carbon parents, monosubstituted two-carbon parents, monosubstituted saturated rings and benzene, and parents fully substituted by one halogen (P-14.3.4)
+CCl	clorometano	one-carbon parent, halogen prefix	A halogen is always a prefix, never a suffix (IUPAC 2013 P-61.3.1): cloro + metano; substituted mononuclear parent, so no locant (P-14.3.4.2(a))	
+ClCCl	diclorometano	multiplier on a one-carbon parent	Two identical halogen prefixes take di (P-16.9.1); no locants on a mononuclear parent (P-14.3.4.2(a))	
+ClC(Cl)Cl	triclorometano	tri, no traditional name	Systematic name first; the design lists no traditional halogen names, so cloroformo is not offered	
+ClC(Cl)(Cl)Cl	tetraclorometano	every hydrogen replaced	Four chlorine prefixes, tetra; no locants on a mononuclear parent	
+FC(F)(F)Cl	clorotrifluorometano	two halogens without locants, alphabetical order	Prefixes in alphanumerical order ignoring multipliers: cloro (c) before trifluoro (f, P-14.5.2); without locants consecutive prefixes are written together	
+ClC(Br)(I)F	bromoclorofluoroyodometano	four different halogens, Spanish order	Spanish alphabetical order of the translated prefixes: bromo, cloro, fluoro, yodo (yodo under y; in English iodo sorts under i, still after fluoro); without locants the prefixes are written together	
+CCCl	cloroetano	monosubstituted two-carbon parent	Locant 1 omitted in a monosubstituted chain of two identical atoms (P-14.3.4.2(b))	
+CCBr	bromoetano	bromo prefix	Same rule as cloroetano: one substituent on ethane, no locant	
+CC(Cl)Cl	1,1-dicloroetano	two halogens on ethane keep locants	With two substituents the locants are needed (1,1 vs 1,2); lowest locants [1,1] beat [2,2]	
+ClCCCl	1,2-dicloroetano	symmetric dihalide	Both numberings give [1,2]; the locants are kept (two substituents)	
+ClCC(Cl)Cl	1,1,2-tricloroetano	lowest locants to all prefixes	N3: [1,1,2] beats [1,2,2] at the second term (P-31.1.4.3.4 first point of difference)	
+CC(Cl)(Cl)Cl	1,1,1-tricloroetano	three halogens on one carbon	N3: [1,1,1] beats [2,2,2]	
+ClC(Cl)C(Cl)Cl	1,1,2,2-tetracloroetano	symmetric tetrahalide	Both numberings give [1,1,2,2]; not every hydrogen is replaced, so the locants stay	
+ClC(Cl)(Cl)C(Cl)(Cl)Cl	hexacloroetano	fully halogenated parent, locants omitted	All substitutable positions carry the same halogen, so the locants are omitted (P-14.3.4: completely substituted parent); only one structure is possible	
+FC(F)(F)C(F)(F)C(F)(F)F	octafluoropropano	fully fluorinated chain	Every hydrogen of propane replaced by fluorine: octafluoro, no locants (same rule as hexacloroetano)	
+FC(F)(F)C(Cl)(Cl)Cl	1,1,1-tricloro-2,2,2-trifluoroetano	two halogens fully substituted keep locants, N4	With two different halogens the locants are needed (1,1,2-tricloro-1,2,2-trifluoro is another molecule); N3 ties [1,1,1,2,2,2]; N4 gives the lower locants to tricloro, cited first (c before f)	
+BrCCCl	1-bromo-2-cloroetano	alphabetical tie-break on halogens	N3 ties [1,2]; N4 gives 1 to the prefix cited first in alphanumerical order: bromo (b) before cloro (c) (P-31.1.4.3.4)	
+CC(Cl)Br	1-bromo-1-cloroetano	two different halogens on one carbon	N3 [1,1] beats [2,2]; bromo cited before cloro	
+CC(Cl)C	2-cloropropano	halogen locant kept on propane	Locant kept (design §1.1: only the listed parents omit locants); 1-cloropropano is a different molecule	
+CCCCl	1-cloropropano	terminal halogen	Lowest locant [1] beats [3]	
+CC(Br)(Br)C	2,2-dibromopropano	repeated locants	di with one locant per atom, repeated (2,2)	
+CC(Br)CCl	2-bromo-1-cloropropano	lowest locants before alphabetical order	N3 decides first: [1,2] (Cl at 1, Br at 2) beats [2,3]; the alphabetical rule N4 is only a tie-break, so bromo does not get 1	
+CC(Cl)CC(Br)C	2-bromo-4-cloropentano	N4 between two halogens	N3 ties [2,4]; N4 gives 2 to bromo, cited first (b before c)	
+CC(I)CC(C)C	2-metil-4-yodopentano	Spanish alphabetical order changes N4	N3 ties [2,4]; in Spanish yodo sorts under y, after metil, so metil is cited first and gets 2 (design §1.1: the Spanish name is alphabetised in Spanish; English 2-iodo-4-methylpentane sorts iodo under i)	
+CC(F)CC(C)C	2-fluoro-4-metilpentano	halogen and alkyl alphabetised together	N3 ties [2,4]; fluoro (f) before metil (m) in citation order, so fluoro gets 2 (P-31.1.4.3.4)	
+BrCC(C)C	1-bromo-2-metilpropano	halogens count as substituents for the parent	Three chains of 3 C; the two through the CH2Br carbon carry 2 prefixes (bromo + metil) and beat the one with a single bromometil prefix (P-45.2.1, P4); then N3 [1,2]	
+CC(C)(C)Cl	2-cloro-2-metilpropano	halogen and methyl on one carbon	Every numbering of the 3-C chains gives [2,2]; cloro before metil	
+CCC(Cl)C(C)CC	3-cloro-4-metilhexano	N4 cloro before metil	N3 ties [3,4]; N4 gives 3 to cloro (c before m)	
+CCC(CC)C(Cl)CC	3-cloro-4-etilhexano	N4 cloro before etil	N3 ties [3,4]; cloro (c) is cited before etil (e), so cloro gets 3	
+CC(Cl)C(C)(C)C	3-cloro-2,2-dimetilbutano	all prefixes together, then first difference	N3 [2,2,3] beats [2,3,3]; multipliers are ignored in alphabetical order (cloro before dimetil, sorted under m)	
+C=CCl	cloroeteno	halogen on ethene, no locants	Monosubstituted two-carbon parent (P-14.3.4.2(b)); eteno never cites its double-bond locant	
+ClC(Cl)=C	1,1-dicloroeteno	two halogens on ethene	The halogen locants are needed (1,1 vs 1,2); the double bond of eteno still has no locant	
+ClC=CCl	1,2-dicloroeteno	symmetric dihalide on ethene	[1,2] either way; no stereodescriptor (E/Z out of scope)	
+ClC(Cl)=C(Cl)Cl	tetracloroeteno	fully halogenated alkene	All hydrogens replaced by chlorine: no locants (P-14.3.4)	
+FC(F)=C(F)F	tetrafluoroeteno	fully fluorinated alkene	Same rule as tetracloroeteno	
+ClC#C	cloroetino	halogen on ethyne	Monosubstituted two-carbon parent, no locants	
+C=CCCl	3-cloroprop-1-eno	double bond before halogen	N1 gives the double bond 1 (P-31.1.4.2.4, before detachable prefixes), so chlorine gets 3; all locants kept with a prefix	
+C=C(Cl)C	2-cloroprop-1-eno	halogen on the double bond	N1 [1]; chlorine at 2	
+ClC=C=C	1-cloropropa-1,2-dieno	halogen on an allene	N1 [1,2] either way; N3 [1] beats [3]	
+CC(Cl)C#C	3-clorobut-1-ino	triple bond before halogen	N1 gives the triple bond 1; chlorine 3	
+ClCC=CCCl	1,4-diclorobut-2-eno	symmetric halogenated alkene	N1 [2] either way; N3 [1,4] either way	
+C=CC(Br)C=C	3-bromopenta-1,4-dieno	halogen between two double bonds	N1 [1,4] either way; bromo at 3; connecting a before the multiplied ene	
+ClC(Cl)(Cl)C=C(Cl)Cl	1,1,3,3,3-pentacloroprop-1-eno	double bond first, then halogens	N1 puts the double bond at 1 from the CCl2 end; not every hydrogen is replaced, so the locants are kept	
+ClC(Cl)=C(Cl)C(Cl)=C(Cl)Cl	hexaclorobuta-1,3-dieno	fully halogenated diene keeps ene locants	Prefix locants omitted (every hydrogen replaced by chlorine), but the diene locants stay: buta-1,2-dieno is another C4Cl6	
+CCCC(CCl)CCCC	4-(clorometil)octano	halogen inside a substituent	The halogen is a prefix of the substituent (clorometil), enclosed; a one-carbon group cites no inner locant (P-14.3.4.2(a))	
+CCCCC(CCCl)CCCCC	5-(2-cloroetil)decano	inner locant of a halogenated group	The group chain is numbered from the free valence (1), so the chlorine is on its carbon 2	
+CCCC(CCl)(CCl)CCC	4,4-bis(clorometil)heptano	bis for substituted groups	clorometil is a compound (substituted) prefix, so two of them take bis (P-16.9.2)	
+CCCCC(C(C)(C)Cl)CCCC	5-(2-cloropropan-2-il)nonano	no retained isopropil once substituted	A substituted isopropyl group cannot use the retained isopropil; it is named systematically: propan-2-il with cloro on its carbon 2	
+CCCCC(C(C)C)(Cl)CCCC	5-cloro-5-isopropilnonano	halogen with the prefix styles	cloro (c) before isopropil (i); the isopropyl group triggers the alternatives, where the order is unchanged (c before p, c before m)	pin=5-cloro-5-(propan-2-il)nonano;substituted=5-cloro-5-(1-metiletil)nonano
+ClC1CCCCC1	clorociclohexano	halogen on a ring, no locant	A saturated monocycle with one substituent omits its locant (P-14.3.4.2(c))	
+BrC1CC1	bromociclopropano	small ring, halogen	Same rule on cyclopropane	
+ClC1CCC(Cl)CC1	1,4-diclorociclohexano	two halogens on a ring	N3 [1,4] from either chlorine; no cis/trans (stereo out of scope)	
+ClC1CCCC(C)C1	1-cloro-3-metilciclohexano	N4 on a ring with a halogen	N3 ties [1,3]; N4 gives 1 to cloro, cited before metil	
+CC1CCC(Br)CC1	1-bromo-4-metilciclohexano	N4 bromo before metil on a ring	N3 [1,4] either way; bromo (b) gets 1	
+ClC1=CCCCC1	1-clorociclohex-1-eno	halogen on a ring double bond	N1 [1]; N3 [1] beats [2]; locants kept with a prefix (as 1-metilciclohex-1-eno)	
+ClC1CCC=CC1	4-clorociclohex-1-eno	ring double bond before the halogen	N1 [1] in two directions; N3 [4] beats [5]	
+FC1(F)C(F)(F)C(F)(F)C(F)(F)C(F)(F)C1(F)F	dodecafluorociclohexano	fully fluorinated ring	Every ring hydrogen replaced by fluorine: no locants (P-14.3.4)	
+ClCCCCCCCCCC1CC1	(9-clorononil)ciclopropano	ring senior to a longer halogenated chain	The ring is the parent (P-44.1.2.2); the chain with its chlorine is one substituent, (9-clorononil)	
+ClC1=CC=CC=C1	clorobenceno	halogen on benzene	Monosubstituted benzene: no locant (P-14.3.4.2(c)); the halogen is a prefix, never a suffix	
+FC1=CC=CC=C1	fluorobenceno	fluoro on benzene	Same rule as clorobenceno	
+BrC1=CC=CC=C1	bromobenceno	bromo on benzene	Same rule as clorobenceno	
+IC1=CC=CC=C1	yodobenceno	yodo on benzene	Spanish prefix yodo (English iodo); no locant	
+ClCC1=CC=CC=C1	(clorometil)benceno	halogenated side chain on benzene	The side chain is one substituent, clorometil (no inner locant on a one-carbon group); no ring locant	

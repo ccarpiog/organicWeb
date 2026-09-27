@@ -21,9 +21,12 @@ import { lexiconEs } from '../../src/naming/lexicon.es.js';
 import { lexiconEn, stem } from '../../src/naming/lexicon.en.js';
 import { parseFullSmiles, heavyAtomTree, OracleSmilesError } from '../../scripts/oracle/smiles-full.mjs';
 import { englishName, compareWithOpsin, kekuleKeys } from '../../scripts/oracle/compare.mjs';
-import { generateMolecules, generateMonocycles, generateBenzenes } from '../../scripts/oracle/generate.mjs';
+import {
+  generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, halogenate, seededRandom,
+} from '../../scripts/oracle/generate.mjs';
 import { perceiveRings } from '../../src/model/rings.js';
 import { isBenzeneRing } from '../../src/model/validate.js';
+import { formula } from '../../src/model/molecule.js';
 import { checkAvailability } from '../../scripts/oracle/opsin.mjs';
 import { main, parseArgs, evaluate } from '../../scripts/oracle/run.mjs';
 
@@ -200,6 +203,32 @@ test('the seeded monocycle generator is deterministic, distinct, valid and varie
   assert.ok(results.some((r) => r.structure.parent.triple.length > 0), 'some have ring triple bonds');
 }); // End of test 'the seeded monocycle generator…'
 
+test('the seeded halogen-derivative generator: valid, distinct, deterministic, with small parents (I-30)', () => {
+  const molecules = generateHalogenated({ count: 60, seed: 3 });
+  assert.equal(molecules.length, 60);
+  assert.deepEqual(generateHalogenated({ count: 60, seed: 3 }).map(writeSmiles), molecules.map(writeSmiles), 'deterministic');
+  assert.equal(new Set(molecules.map(canonicalKey)).size, 60, 'distinct');
+  const elements = new Set();
+  for (const mol of molecules) {
+    assert.equal(validateForNaming(mol), null, writeSmiles(mol));
+    const halogens = [...mol.atoms.values()].filter((a) => a.element !== 'C');
+    assert.ok(halogens.length > 0, 'at least one halogen');
+    halogens.forEach((a) => elements.add(a.element));
+    assert.equal(nameMolecule(mol).ok, true, writeSmiles(mol));
+  }
+  assert.deepEqual([...elements].sort(), ['Br', 'Cl', 'F', 'I']);
+  const carbons = (mol) => [...mol.atoms.values()].filter((a) => a.element === 'C').length;
+  assert.ok(molecules.some((mol) => carbons(mol) <= 2), 'halomethanes or haloethanes are drawn');
+  assert.ok(molecules.some((mol) => cyclomaticNumber(mol) === 1), 'halogenated rings are drawn');
+  // halogenate() never mutates its input and keeps every carbon.
+  const base = parseSmiles('CCC');
+  const copy = halogenate(base, seededRandom(1), 1);
+  assert.equal(writeSmiles(base), 'CCC');
+  assert.equal(copy.atoms.size, 11, 'rate 1: all 8 hydrogens replaced');
+  assert.match(formula(copy), /^C3(Br\d*)?(Cl\d*)?(F\d*)?(I\d*)?$/, 'no hydrogen left');
+  assert.equal(nameMolecule(copy).ok, true);
+}); // End of test 'the seeded halogen-derivative generator…'
+
 test('oracle options', () => {
   assert.equal(parseArgs(['--count', '1000', '--seed', '1']).count, 1000);
   assert.equal(parseArgs([]).seed, 1);
@@ -214,8 +243,8 @@ test('without the jar every molecule is skipped, never passed, with exit status 
   const status = await main(['--count', '5', '--seed', '1', '--jar', path.join(ROOT, 'scripts', 'oracle', 'vendor', 'missing.jar')]);
   assert.equal(status, 0);
   assert.ok(lines.some((line) => /^skipped: /.test(line)));
-  // 5 random molecules, 3 random monocycles, 1 benzene and the 11 cycloalkanes of the default 4–14 C range.
-  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 20  adapter failures: 0'), lines.join('\n'));
+  // 5 random molecules, 3 random monocycles, 1 benzene, 3 halogen derivatives and the 11 cycloalkanes of the default 4–14 C range.
+  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 23  adapter failures: 0'), lines.join('\n'));
   lines.length = 0;
   assert.equal(await main(['--count', '3', '--java', 'no-such-java-binary']), 0);
   assert.ok(lines.some((line) => /Java not available/.test(line)));
@@ -235,7 +264,7 @@ test('a jar whose checksum is not the pinned one is rejected at any path', async
   assert.match(availability.reason, /checksum/);
 }); // End of test 'a jar whose checksum is not the pinned one is rejected at any path'
 
-test('real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes and the cycloalkanes (skipped without Java or the jar)', async (t) => {
+test('real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes, 100 halogen derivatives and the cycloalkanes (skipped without Java or the jar)', async (t) => {
   const availability = await checkAvailability();
   if (!availability.ok) {
     t.skip(availability.reason);
@@ -245,8 +274,8 @@ test('real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzen
   t.mock.method(console, 'log', (text) => lines.push(text));
   const status = await main(['--count', '200', '--seed', '42']);
   assert.equal(status, 0, lines.join('\n'));
-  assert.ok(lines.includes('passed: 331  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
-}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes and the cycloalkanes'
+  assert.ok(lines.includes('passed: 431  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
+}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes, 100 halogen derivatives and the cycloalkanes'
 
 test('the English lexicon never reaches the app', async () => {
   const files = [];

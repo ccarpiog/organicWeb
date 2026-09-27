@@ -3,12 +3,15 @@
  * oracle and the graph-invariance tests (design.md §8), of valid
  * substituted and unsaturated monocycles (design.md §13.4 I-26), of
  * benzene and monosubstituted benzenes in either Kekulé drawing (I-28),
- * plus the list of cycloalkanes in a size range. Development only,
+ * of halogen derivatives of all of those (I-30: F, Cl, Br, I in place of
+ * random hydrogens, one- to three-carbon parents included), plus the list
+ * of cycloalkanes in a size range. Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
  */
 
-import { createMolecule, addAtom, addBond, bondOrderSum, CARBON_VALENCE } from '../../src/model/molecule.js';
+import { createMolecule, addAtom, addBond, bondOrderSum, cloneMolecule, CARBON_VALENCE } from '../../src/model/molecule.js';
+import { HALOGEN_ELEMENTS } from '../../src/model/elements.js';
 import { canonicalTreeKey, canonicalKey } from '../../src/model/graph.js';
 import { validateForNaming, MAX_CHAIN } from '../../src/model/validate.js';
 
@@ -276,6 +279,78 @@ export function generateBenzenes({ count, seed, minSize = 4, maxSize = 14 }) {
 } // End of function generateBenzenes()
 
 /**
+ * Copies a hydrocarbon and replaces some of its hydrogens by halogens: each
+ * hydrogen of each carbon becomes, with probability `rate`, a random F, Cl,
+ * Br or I atom bonded to that carbon (design.md §13.4 I-30).
+ *
+ * @param {object} mol - A hydrocarbon (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} rate - Probability of replacing each hydrogen.
+ * @returns {object} The halogenated copy (possibly without any halogen).
+ */
+export function halogenate(mol, random, rate) {
+  const copy = cloneMolecule(mol);
+  for (const id of [...copy.atoms.keys()]) {
+    const free = CARBON_VALENCE - bondOrderSum(copy, id);
+    for (let k = 0; k < free; k += 1) {
+      if (random() < rate) {
+        const element = HALOGEN_ELEMENTS[Math.floor(random() * HALOGEN_ELEMENTS.length)];
+        addBond(copy, id, addAtom(copy, {}, element), 1);
+      }
+    }
+  } // End of the loop over the carbons
+  return copy;
+} // End of function halogenate()
+
+/**
+ * Generates up to `count` distinct (by canonical key) halogen derivatives,
+ * each with at least one halogen: random acyclic hydrocarbons of 1 carbon
+ * up to `maxSize` (so halomethanes and haloethanes are drawn too), random
+ * monocycles and random benzenes (at most one substituent survives
+ * validation there), halogenated at random rates by halogenate(). Only
+ * molecules valid for naming are kept.
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C; acyclic ones may be smaller).
+ * @returns {object[]} The molecules.
+ */
+export function generateHalogenated({ count, seed, minSize = 4, maxSize = 14 }) {
+  const random = seededRandom(seed * 4099 + 30);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50) {
+    attempts += 1;
+    const kind = random();
+    let base;
+    if (kind < 0.6 || maxSize < 4) {
+      const size = randomInt(random, 1, maxSize);
+      base = randomHydrocarbon(random, { size, unsaturation: random() * 0.5, branchiness: 0.2 + random() * 0.8 });
+    } else if (kind < 0.9 || maxSize < 6) {
+      const size = randomInt(random, Math.max(minSize, 4), maxSize);
+      const ringSize = randomInt(random, 3, Math.min(10, size));
+      base = randomMonocycle(random, {
+        ringSize, extra: size - ringSize, unsaturation: random() * 0.4, branchiness: 0.2 + random() * 0.8,
+      });
+    } else {
+      const size = randomInt(random, Math.max(minSize, 6), maxSize);
+      base = randomBenzene(random, {
+        extra: size - 6, kekule: random() < 0.5 ? 1 : 2, unsaturation: random() * 0.5, branchiness: 0.2 + random() * 0.8,
+      });
+    } // End of the choice of the hydrocarbon to halogenate
+    const mol = halogenate(base, random, 0.05 + random() * 0.4);
+    if (mol.atoms.size === base.atoms.size || validateForNaming(mol)) {
+      continue; // No halogen drawn, or not valid for naming (e.g. a polysubstituted benzene).
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct halogen derivatives
+  return molecules;
+} // End of function generateHalogenated()
+
+/**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4
  * I-25) whose ring size lies in a carbon range, smallest first: one
  * molecule per size from max(3, minSize) to min(MAX_CHAIN, maxSize). Every
@@ -298,7 +373,8 @@ export function generateCycloalkanes({ minSize = 4, maxSize = 14 } = {}) {
 /**
  * Copies a molecule with renumbered atom ids and shuffled atom and bond
  * insertion order (and randomly swapped bond ends), for graph-invariance
- * checks: the copy is the same graph, so its name must not change.
+ * checks: the copy is the same graph (elements kept), so its name must not
+ * change.
  *
  * @param {object} mol - The molecule.
  * @param {function(): number} random - Seeded generator.
@@ -312,7 +388,7 @@ export function scrambleMolecule(mol, random) {
   const idMap = new Map();
   for (const old of oldIds) {
     copy.nextAtomId += randomInt(random, 0, 7);
-    idMap.set(old, addAtom(copy));
+    idMap.set(old, addAtom(copy, {}, mol.atoms.get(old).element));
   }
   for (const bond of shuffle([...mol.bonds.values()], random)) {
     const ends = random() < 0.5 ? [bond.a, bond.b] : [bond.b, bond.a];

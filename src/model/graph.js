@@ -45,6 +45,22 @@ export function adjacency(mol) {
 } // End of function adjacency()
 
 /**
+ * The carbon skeleton of a molecule: its carbon atoms and the bonds between
+ * two carbons, as a molecule-like `{atoms, bonds}` pair the functions of this
+ * module accept. Halogens are monovalent end atoms, so the skeleton of a
+ * connected hydrocarbon or halogen derivative stays connected; chain lengths
+ * (design.md §1.1 caps, §4.2 parent candidates) are measured on it.
+ *
+ * @param {object} mol - The molecule.
+ * @returns {{atoms: Map<number, object>, bonds: Map<number, object>}} The carbon atoms and C–C bonds (same objects, not copies).
+ */
+export function carbonSkeleton(mol) {
+  const atoms = new Map([...mol.atoms].filter(([, atom]) => atom.element === 'C'));
+  const bonds = new Map([...mol.bonds].filter(([, bond]) => atoms.has(bond.a) && atoms.has(bond.b)));
+  return { atoms, bonds };
+}
+
+/**
  * Breadth-first search from one atom.
  *
  * @param {Map<number, object[]>} adj - Adjacency from adjacency().

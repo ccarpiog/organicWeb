@@ -104,7 +104,7 @@ export function traditionalNameId(structure) {
   }
   const [group] = structure.prefixes;
   const sub = group.substituent;
-  if (group.locants.length !== 1 || sub.retained || sub.prefixes.length > 0 || sub.freeValence.order !== 1) {
+  if (group.locants.length !== 1 || sub.halogen || sub.retained || sub.prefixes.length > 0 || sub.freeValence.order !== 1) {
     return null;
   }
   const { chain } = sub;

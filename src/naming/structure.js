@@ -70,7 +70,8 @@
  * atom; `freeValence.locant` is the attachment atom's locant in it.
  *
  * @typedef {object} SubstituentStructure
- * @property {ChainStructure} chain - The substituent's own numbered chain.
+ * @property {ChainStructure|null} chain - The substituent's own numbered chain (null for a halogen).
+ * @property {string} [halogen] - Set on a halogen atom cited as a prefix (design.md §13.4 I-30): 'F', 'Cl', 'Br' or 'I' (`fluoro`, `cloro`, `bromo`, `yodo`); such a substituent has no chain and no prefixes, and `atoms` is the halogen atom.
  * @property {PrefixGroup[]} prefixes - Its own grouped prefixes, in citation order.
  * @property {{locant: number, order: number}} freeValence - Locant and order of the free valence (1 → `-il`, 2 → `-iliden`).
  * @property {string|null} [retained] - Retained-name id cited instead of the systematic prefix: 'isopropyl' or 'isopropylidene' (style 'isopropil' only) or 'tert-butyl' (styles 'isopropil' and 'pin'); the chain and prefixes still describe the systematic name. 'phenyl' (`fenil`, aromatic.js phenylSubstituent()) has a benzene RingStructure as its `chain`.

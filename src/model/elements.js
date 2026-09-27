@@ -41,3 +41,16 @@ export function isSupportedElement(value) {
 export function valenceOf(element) {
   return isSupportedElement(element) ? VALENCES[element] : 0;
 }
+
+/** Halogen element symbols (monovalent; named as prefixes fluoro-, cloro-, bromo-, yodo-). */
+export const HALOGEN_ELEMENTS = Object.freeze(['F', 'Cl', 'Br', 'I']);
+
+/**
+ * Tells whether a value is a halogen symbol (F, Cl, Br or I).
+ *
+ * @param {*} value - The value to test.
+ * @returns {boolean} True for a halogen.
+ */
+export function isHalogen(value) {
+  return typeof value === 'string' && HALOGEN_ELEMENTS.includes(value);
+}

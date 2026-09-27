@@ -14,10 +14,13 @@
  * cascade stops when one chain is left). P4 (most substituents) comes after
  * the unsaturation locants N1/N2, so it lives in numbering.js. The
  * leaf-to-leaf restriction is for the parent only, never for substituents.
+ * Paths run over the carbon skeleton only: a halogen (design.md §13.4 I-30)
+ * is never a chain atom, only a substituent, so it counts in P4 like any
+ * other prefix (chainCounts() on the whole graph).
  * Pure: reads topology only.
  */
 
-import { adjacency, leaves } from '../model/graph.js';
+import { adjacency, leaves, carbonSkeleton } from '../model/graph.js';
 
 /**
  * Orients a chain so that it starts at the end with the smaller atom id.
@@ -63,18 +66,21 @@ function bfsParents(adj, from) {
 }
 
 /**
- * Enumerates every leaf-to-leaf path of a tree molecule (design.md §4.2).
- * A lone atom (methane) gives the one-atom chain.
+ * Enumerates every leaf-to-leaf path of the carbon skeleton of a tree
+ * molecule (design.md §4.2; halogens are left out, so a carbon bearing a
+ * halogen can still be a chain end). A lone carbon (methane, clorometano)
+ * gives the one-atom chain.
  *
- * @param {object} mol - A validated acyclic hydrocarbon (a tree).
+ * @param {object} mol - A validated acyclic hydrocarbon or halogen derivative (a tree).
  * @returns {number[][]} Paths, each starting at its smaller end id, ordered by key.
  */
 export function leafToLeafPaths(mol) {
-  const adj = adjacency(mol);
+  const skeleton = carbonSkeleton(mol);
+  const adj = adjacency(skeleton);
   if (adj.size === 1) {
     return [[adj.keys().next().value]];
   }
-  const ends = leaves(mol);
+  const ends = leaves(skeleton);
   const paths = [];
   for (let i = 0; i < ends.length; i += 1) {
     const parent = bfsParents(adj, ends[i]);
@@ -91,7 +97,8 @@ export function leafToLeafPaths(mol) {
 
 /**
  * Counts, for one chain, the data compared by P1–P3 (and the substituent
- * count that numbering.js compares as P4).
+ * count that numbering.js compares as P4: every neighbour outside the chain,
+ * halogens included).
  *
  * @param {Map<number, {atom: number, bond: number, order: number}[]>} adj - Adjacency map.
  * @param {number[]} atoms - Chain atom ids in order.
@@ -171,7 +178,7 @@ function applyCountRule(rule, chains, values) {
  * chains that remain tied go, with both directions of each, to numbering
  * (numbering.js: N1, N2, then P4, N3, N4, §4.4).
  *
- * @param {object} mol - A validated acyclic hydrocarbon.
+ * @param {object} mol - A validated acyclic hydrocarbon or halogen derivative.
  * @returns {{chains: number[][], trace: object[]}} The remaining chains (each starting at its smaller end id) and the P-rule trace steps.
  * @throws {Error} When the invariant "no triple bond leaves a longest chain" is broken.
  */

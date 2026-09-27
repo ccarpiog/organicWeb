@@ -8,7 +8,9 @@
  * benzene words (`benceno`, the `fenil` prefix, the traditional names
  * `tolueno` and `estireno`, design.md §13.4 I-28), and the suffixes,
  * prefixes and family names of the characteristic groups (`-oico`, `-ol`,
- * `hidroxi`, `cloro`…, design.md §13.6).
+ * `hidroxi`, `cloro`…, design.md §13.6), with the halogen prefixes named
+ * since I-30 (`clorometano`, `2-bromo-1-cloropropano`) and the omission of
+ * their locants on one- and two-carbon and fully halogenated parents.
  *
  * Everything that depends on the language lives here; render.js only
  * assembles parts and punctuation. The exported `lexiconEs` object is the
@@ -199,14 +201,20 @@ export function needsConnectingVowel(chain) {
 }
 
 /**
- * Looks up the locant-omission table.
+ * Looks up the locant-omission table for the unsaturation locants of a
+ * parent chain. A chain of three or more carbons omits them only without
+ * prefixes (`propeno`, but `2-metilprop-1-eno`, `3-cloroprop-1-eno`); a
+ * one- or two-carbon parent never has a locant to cite for its multiple
+ * bond, prefixes or not (`eteno`, `cloroeteno`, `1,2-dicloroeteno`,
+ * `cloroetino`; only halogen derivatives put prefixes on them, design.md
+ * §13.4 I-30).
  *
  * @param {{length: number, double: {locant: number}[], triple: {locant: number}[]}} chain - The parent chain structure.
  * @param {boolean} hasPrefixes - Whether the parent carries substituent prefixes.
  * @returns {boolean} True when the parent's locants are omitted.
  */
 export function omitsLocants(chain, hasPrefixes) {
-  if (hasPrefixes) {
+  if (hasPrefixes && chain.length > 2) {
     return false;
   }
   const same = (sites, locants) => sites.length === locants.length && sites.every((s, i) => s.locant === locants[i]);
@@ -248,8 +256,67 @@ export function ringOmitsLocants(ring, prefixes) {
   const multiple = ring.double.length + ring.triple.length;
   return {
     parent: prefixes.length === 0 && multiple === 1,
-    prefixes: multiple === 0 && single,
+    prefixes: (multiple === 0 && single) || fullyHalogenated(ring, prefixes),
   };
+}
+
+/**
+ * Number of hydrogens of an unsubstituted parent hydride: CₙH₂ₙ₊₂ for a
+ * chain, CₙH₂ₙ for a ring, two fewer per double bond and four fewer per
+ * triple bond (a benzene ring: 6).
+ *
+ * @param {{kind?: string, length: number, double: object[], triple: object[]}} parent - The parent chain or ring structure.
+ * @returns {number} The hydrogen count.
+ */
+export function parentHydrogens(parent) {
+  const base = parent.kind === 'ring' ? 2 * parent.length : 2 * parent.length + 2;
+  return base - 2 * parent.double.length - 4 * parent.triple.length;
+}
+
+/**
+ * Tells whether every hydrogen of a parent is replaced by one and the same
+ * halogen, and nothing else is attached (`hexacloroetano`,
+ * `tetracloroeteno`, `dodecafluorociclohexano`). IUPAC 2013 (P-14.3.4)
+ * omits all the substituent locants of a completely substituted parent;
+ * the app applies it only when the prefixes cannot be placed in another way,
+ * i.e. with a single kind of halogen (with two halogens,
+ * `1,1,1-tricloro-2,2,2-trifluoroetano` and `1,1,2-tricloro-1,2,2-trifluoroetano`
+ * would read alike). The unsaturation locants follow their own rules
+ * (`hexaclorobuta-1,3-dieno`).
+ *
+ * @param {object} parent - The parent chain or ring structure.
+ * @param {{substituent: {halogen?: string}, locants: object[]}[]} prefixes - Its prefix groups.
+ * @returns {boolean} True for a parent completely substituted by one halogen.
+ */
+export function fullyHalogenated(parent, prefixes) {
+  return prefixes.length === 1 && Boolean(prefixes[0].substituent && prefixes[0].substituent.halogen)
+    && prefixes[0].locants.length === parentHydrogens(parent);
+}
+
+/**
+ * Locant omission for the substituent prefixes of a chain parent (design.md
+ * §1.1, §13.4 I-30), an explicit rule like the tables above. Hydrocarbon
+ * chains always cite them (`2-metilpropano`); only halogen derivatives can
+ * put prefixes on the parents concerned:
+ * - a one-carbon parent (IUPAC 2013 P-14.3.4.2(a), substituted mononuclear
+ *   parent hydride): `clorometano`, `diclorometano`, `triclorometano`,
+ *   `tetraclorometano`;
+ * - a two-carbon parent with exactly one substituent (P-14.3.4.2(b),
+ *   monosubstituted chain of two identical atoms): `cloroetano`,
+ *   `cloroeteno`, `cloroetino` (but `1,1-dicloroetano`, `1,2-dicloroetano`);
+ * - a parent completely substituted by one halogen (fullyHalogenated()):
+ *   `hexacloroetano`, `tetrafluoroeteno`, `octafluoropropano`.
+ *
+ * @param {{length: number, double: object[], triple: object[]}} chain - The parent chain structure.
+ * @param {{substituent: object, locants: object[]}[]} prefixes - Its prefix groups.
+ * @returns {boolean} True when the prefix locants are omitted.
+ */
+export function chainOmitsPrefixLocants(chain, prefixes) {
+  if (prefixes.length === 0) {
+    return false;
+  }
+  const occurrences = prefixes.reduce((sum, group) => sum + group.locants.length, 0);
+  return chain.length === 1 || (chain.length === 2 && occurrences === 1) || fullyHalogenated(chain, prefixes);
 }
 
 /**
@@ -454,8 +521,26 @@ export const GROUP_PREFIXES = Object.freeze({
 /** Prefix of an aldehyde whose carbon is outside the parent (`formil`, IUPAC 2013 P-66.6.1.2). */
 export const FORMYL_PREFIX = 'formil';
 
-/** Halogen prefixes (IUPAC 2013 P-61.3; never a suffix). */
+/**
+ * Halogen prefixes (IUPAC 2013 P-61.3.1; never a suffix). In Spanish names
+ * they are alphabetised as written: `yodo` under y (English `iodo` goes
+ * under i), design.md §1.1.
+ */
 export const HALOGEN_PREFIXES = Object.freeze({ F: 'fluoro', Cl: 'cloro', Br: 'bromo', I: 'yodo' });
+
+/**
+ * Returns the substituent prefix of a halogen atom (design.md §13.4 I-30).
+ *
+ * @param {string} element - 'F', 'Cl', 'Br' or 'I'.
+ * @returns {string} 'fluoro', 'cloro', 'bromo' or 'yodo'.
+ * @throws {Error} For another element.
+ */
+export function halogenPrefix(element) {
+  if (!Object.prototype.hasOwnProperty.call(HALOGEN_PREFIXES, element)) {
+    throw new Error(`halogenPrefix: ${element} is not a halogen`);
+  }
+  return HALOGEN_PREFIXES[element];
+}
 
 /** Family names of the characteristic groups, for explanations (`phenol` = an OH on a benzene ring). */
 export const GROUP_FAMILY_NAMES = Object.freeze({
@@ -542,6 +627,8 @@ export const lexiconEs = Object.freeze({
   needsConnectingVowel,
   omitsLocants,
   ringOmitsLocants,
+  chainOmitsPrefixLocants,
+  halogenPrefix,
   alkylPrefix,
   groupName,
   prefixForm,

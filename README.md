@@ -1,7 +1,7 @@
 # organicWeb — Química orgánica
 
 A static, offline web app for secondary-school students (ESO, Spain): draw an
-acyclic hydrocarbon or a hydrocarbon with one ring and get its IUPAC name **in Spanish**, with a
+acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative of one) and get its IUPAC name **in Spanish**, with a
 step-by-step explanation and a redraw that makes the main chain obvious. The
 user interface is in Spanish; code and documentation are in English. The
 design and phase plan live in [`docs/design.md`](docs/design.md).
@@ -25,7 +25,10 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `metilidenciclohexano`…; the ring is always the parent chain), and of
   benzene and monosubstituted benzenes in either Kekulé drawing (`benceno`,
   `metilbenceno`, `etenilbenceno`, `isopropilbenceno`…; benzenes with two or
-  more substituents get a clear refusal), with the name coloured by part
+  more substituents get a clear refusal), and of their halogen derivatives
+  (F, Cl, Br, I as prefixes: `clorometano`, `2-bromo-1-cloropropano`,
+  `2-metil-4-yodopentano`, `clorociclohexano`, `clorobenceno`,
+  `hexacloroetano`…), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles;
@@ -108,8 +111,9 @@ instance published by `src/ui/app.js` (test API documented in the header of
 
 ### Oracle
 
-`npm run oracle` generates random acyclic hydrocarbons and random
-substituted or unsaturated monocycles (plus the cycloalkanes of the size
+`npm run oracle` generates random acyclic hydrocarbons, random
+substituted or unsaturated monocycles, benzene derivatives and halogen
+derivatives of all of those (plus the cycloalkanes of the size
 range), names them with this
 engine and checks each name by parsing it back with
 [OPSIN](https://github.com/dan2097/opsin) (after rendering the name in
@@ -179,10 +183,13 @@ the Keychain account is the WebDAV user).
 
 ## Known limitations and future work
 
-- Hydrocarbons only, with at most one ring (a carbocycle); several rings,
-  fused, bridged and spiro rings, heterocycles, benzenes with two or more
-  substituents (no orto/meta/para), heteroatoms and functional groups
-  (planned), stereochemistry (E/Z, R/S), charges and radicals are not named.
+- Hydrocarbons and their halogen derivatives only, with at most one ring (a
+  carbocycle); several rings, fused, bridged and spiro rings, heterocycles,
+  benzenes with two or more substituents (no orto/meta/para), oxygen and
+  nitrogen compounds (functional groups, planned), stereochemistry (E/Z,
+  R/S), charges and radicals are not named. Traditional halogen names
+  (cloroformo…) are not given; the 90° view keeps the normal drawing for any
+  molecule with a heteroatom.
 - Parent chain up to 30 carbons, whole molecule up to 60.
 - Structure → name only; there is no name → structure.
 - Future (design §12, §13): functional groups,

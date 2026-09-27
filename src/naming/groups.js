@@ -2,8 +2,10 @@
  * @file Detection of characteristic (functional) groups on the molecule graph
  * (design.md §13.4 I-29). Pure: reads atom ids, elements and bonds only,
  * never coordinates or the DOM. Detection alone never enables naming: the
- * engine still refuses every molecule with a heteroatom (`HETEROATOM`), and
+ * engine still refuses every molecule with O or N (`HETEROATOM`), and
  * the groups found travel with that refusal (seniority.js, index.js).
+ * Halogen derivatives (only halides) are named since I-30 without this
+ * analysis (substituent.js cites each halogen as a prefix).
  *
  * Method. A carbon is a *functional carbon* when it has a double or triple
  * bond to a heteroatom (C=O, C=N, C≡N). The *clusters* are the connected

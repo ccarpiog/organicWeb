@@ -25,10 +25,17 @@
  * `benceno`, `metilbenceno`, `isopropilbenceno` (I-28), with the traditional
  * `tolueno` / `estireno` as an extra alternative.
  *
- * A valid molecule with a heteroatom is still refused (`HETEROATOM`), but
+ * Halogen derivatives (design.md §13.4 I-30) go through the same
+ * pipelines: a halogen bonded to a carbon is a substituent prefix
+ * (`fluoro`, `cloro`, `bromo`, `yodo`; substituent.js), never a chain atom
+ * (parent.js works on the carbon skeleton): `clorometano`,
+ * `2-bromo-1-cloropropano`, `clorociclohexano`, `clorobenceno`.
+ *
+ * Any other heteroatom (O, N) is still refused (`HETEROATOM`), but
  * the refusal carries `groups`: its characteristic groups (groups.js), the
  * principal group and the suffix/prefix classification (seniority.js,
- * design.md §13.4 I-29). Hydrocarbon results never have `groups`.
+ * design.md §13.4 I-29). Successful results (hydrocarbons and halogen
+ * derivatives) never have `groups`.
  */
 
 import { validateForNaming } from '../model/validate.js';
@@ -84,7 +91,7 @@ const STYLE_DEPENDENT_PREFIXES = Object.freeze(['isopropyl', 'isopropylidene']);
  * Names a validated molecule under one prefix style: substituents,
  * numbering, grouping and rendering.
  *
- * @param {object} mol - A validated acyclic hydrocarbon.
+ * @param {object} mol - A validated acyclic hydrocarbon or halogen derivative.
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {{chains: number[][], trace: object[]}} selection - Result of selectParent().
  * @param {string} style - Prefix style.
