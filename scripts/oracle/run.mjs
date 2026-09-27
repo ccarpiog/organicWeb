@@ -8,10 +8,12 @@
  * drawing), half as many halogen derivatives of such molecules (F, Cl, Br,
  * I; halomethanes and haloethanes included, design.md §13.4 I-30), half as
  * many alcohols (OH groups on chains or on ring carbons, phenol, some also
- * halogenated; I-31), adds
+ * halogenated; I-31), half as many aldehydes and ketones (C=O on chains or
+ * ring carbons, some with OH groups and halogens; I-32), adds
  * one cycloalkane per ring size in the carbon range, names
- * each one in every prefix style (plus its traditional name, `toluene` or
- * `styrene`, when it has one), renders the same name structures in English, lets OPSIN
+ * each one in every prefix style (plus its traditional name — `toluene`,
+ * `styrene`, `formaldehyde`, `acetaldehyde`, `acetone` — when it has one,
+ * and the `propan-2-one` form of `propanone`), renders the same name structures in English, lets OPSIN
  * turn the English names back into SMILES and checks that they denote the
  * original molecule (ring count, canonical key + formula). Prints passed / failed /
  * skipped. Without Java or the pinned jar every molecule is reported as
@@ -34,9 +36,12 @@ import { writeSmiles } from '../../src/model/smiles.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
 import { traditionalNameId } from '../../src/naming/aromatic.js';
+import { carbonylTraditionalId } from '../../src/naming/principal.js';
+import { renderName } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import {
-  generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, generateAlcohols, generateCycloalkanes,
+  generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
+  generateCycloalkanes,
 } from './generate.mjs';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
 import { englishName, compareWithOpsin } from './compare.mjs';
@@ -102,10 +107,16 @@ export function buildCases(molecules) {
         continue;
       }
       names.push({ style, spanish: result.name, english: englishName(result.structure), error: null });
-      const traditional = style === PREFIX_STYLES[0] ? traditionalNameId(result.structure) : null;
+      const first = style === PREFIX_STYLES[0];
+      const traditional = first ? traditionalNameId(result.structure) || carbonylTraditionalId(result.structure) : null;
       if (traditional) {
         const spanish = result.alternatives.find((a) => a.style === 'traditional').name;
         names.push({ style: 'traditional', spanish, english: lexiconEn.traditionalName(traditional), error: null });
+      }
+      const located = first ? result.alternatives.find((a) => a.style === 'locants') : null;
+      if (located) {
+        const english = renderName(result.structure, lexiconEn, { citeLocants: true }).name;
+        names.push({ style: 'locants', spanish: located.name, english, error: null });
       }
     } // End of the loop over the prefix styles
     return { mol, smiles: writeSmiles(mol), names };
@@ -222,10 +233,14 @@ export async function main(argv) {
   const alcohols = generateAlcohols({
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
+  const carbonyls = generateCarbonyls({
+    count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
+  });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
-  const molecules = [...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...rings];
+  const molecules = [...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...carbonyls, ...rings];
   console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes `
-    + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${rings.length} cycloalkanes, `
+    + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${carbonyls.length} aldehydes and ketones `
+    + `+ ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
   const availability = await checkAvailability(options.jar, options.java);
   if (!availability.ok) {

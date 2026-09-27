@@ -376,3 +376,46 @@ OC1C(O)CCCC=1	ciclohex-2-eno-1,2-diol	closure bond compared as n	N0 ties [1,2] i
 CC(C)C1CCC(O)CC1	4-isopropilciclohexan-1-ol	isopropyl on a cycloalkanol, alternatives	Prefix styles as for rings (design §1.1)	pin=4-(propan-2-il)ciclohexan-1-ol;substituted=4-(1-metiletil)ciclohexan-1-ol
 OC1=CC=CC=C1	fenol	phenol, retained name	An OH on benzene: phenol is the retained preferred IUPAC name (P-63.1.1.1); bencenol is not used; one substituent, no locant	
 OC1C=CC=CC=1	fenol	phenol, other Kekulé drawing	The same molecule with the ring double bonds on the other three sides: same name	
+# Aldehydes and ketones (I-32): the C=O is the principal characteristic group when present (seniority aldehído > cetona > alcohol, IUPAC 2013 P-41), cited as the suffix -al (-dial; aldehydes, P-66.6) or -ona (-diona; ketones, P-64); the C=O carbon is a skeleton carbon (the aldehyde carbon is always a chain end, locant 1, never cited: P-14.3.4.1); the parent carries the most principal groups before being the longest (P-44.1.1) and they get the lowest locants before multiple bonds and prefixes (P-31.1.4.2.4); C=O is never a hydrocarbon unsaturation (no -eno); a non-principal ketone is oxo-, a non-principal OH hidroxi- (prefixes of P-64 and P-63); propanona omits its locant (design §13.4 I-32; IUPAC 2013 writes propan-2-ona, offered as an alternative); formaldehído, acetaldehído and acetona only under Otras formas válidas; cycloalkanones brought forward from I-40 (tests/unit/carbonyls.test.js)
+C=O	metanal	one-carbon aldehyde	A single carbon carrying =O and two H: methanal (P-66.6); one carbon, no locant (P-14.3.4.2(a)); formaldehyde is retained by IUPAC 2013, offered as a traditional name	traditional=formaldehído
+CC=O	etanal	two-carbon aldehyde	The CHO carbon is chain carbon 1; aldehyde locants are never cited (P-14.3.4.1); acetaldehyde retained, offered as a traditional name	traditional=acetaldehído
+CCC=O	propanal	aldehyde carbon in the chain	Three carbons counting the CHO carbon; the o of propano is elided before -al (P-16.7.1); no locant (P-14.3.4.1)	
+CCCCC=O	pentanal	unbranched aldehyde	The CHO carbon is 1 and uncited	
+O=CC=O	etanodial	two-carbon dialdehyde	Both carbons are CHO; -dial with the o kept before a consonant (P-16.7.1); terminal locants never cited (P-14.3.4.1)	
+O=CCCC=O	butanodial	dialdehyde	The chain runs between the two CHO carbons (P-44.1.1); butanedial, no locants	
+CC(C)C=O	2-metilpropanal	branched aldehyde	N0 puts the CHO carbon at 1, so the methyl gets 2; the prefix locant is cited, the suffix one is not	
+CCC(C)CC=O	3-metilpentanal	aldehyde numbering from the CHO end	CHO at 1 (N0) fixes the direction; methyl at 3	
+CCCCC(CC)C=O	2-etilhexanal	longest chain through the CHO carbon	Of the chains carrying the CHO carbon, the longest has 6 carbons; the ethyl is a prefix	
+C=CC=O	prop-2-enal	unsaturated aldehyde, locant cited	With a suffix, the ene locant is cited (as in prop-2-en-1-ol); acrolein is not offered	
+C=CCC=O	but-3-enal	N0 before N1	CHO at 1 forces the double bond to 3 (not 1 from the other end), P-31.1.4.2.4	
+CC=CC=O	but-2-enal	ene locant after N0	CHO at 1, double bond at 2; E/Z out of scope	
+C#CC=O	prop-2-inal	aldehyde with a triple bond	-ino + -al: the o is elided; locant cited	
+ClCC=O	2-cloroetanal	halogen on an aldehyde	Two substituents on a two-carbon parent: the prefix locant is cited (as 2-cloroetan-1-ol); the aldehyde locant is not	
+ClC(Cl)(Cl)C=O	2,2,2-tricloroetanal	trihalogenated aldehyde	Chloral: every prefix locant cited (the suffix is not a halogen, so the fully-halogenated rule does not apply)	
+CC(C)=O	propanona	simplest ketone, no locant	Ketone -ona (P-64); the design and Spanish school books write propanona (a ketone in propane can only be on C2); IUPAC 2013 writes the locant in the PIN, propan-2-one, offered as an alternative; acetone for general nomenclature, offered as a traditional name	locants=propan-2-ona;traditional=acetona
+CCC(C)=O	butan-2-ona	ketone locant cited	Butanone: the ketone carbon gets 2 (N0) and the locant is cited from four carbons on	
+CCC(=O)CC	pentan-3-ona	symmetric ketone	Carbon 3 either way	
+CCCCC(C)=O	hexan-2-ona	ketone near one end	N0 gives the C=O carbon 2, not 5	
+CC(=O)CC(C)=O	pentano-2,4-diona	diketone	Two C=O in the chain: -diona, o kept before a consonant; [2,4] either way	
+CC(=O)C(C)=O	butano-2,3-diona	adjacent diketone	Two neighbouring ketone carbons: [2,3]	
+CC=CC(C)=O	pent-3-en-2-ona	N0 before N1 in a ketone	The C=O carbon gets 2 (not 4), then the double bond gets 3; the o of -eno is elided before -ona	
+C=CC(C)=O	but-3-en-2-ona	unsaturated ketone	N0: C=O at 2, so the double bond is at 3	
+CC(C)C(C)=O	3-metilbutan-2-ona	branched ketone	C=O at 2, methyl at 3	
+CC(C)(C)C(=O)CC(C)C	2,2,5-trimetilhexan-3-ona	ketone then prefixes	N0: C=O at 3 either way ([3] vs [4]); prefixes 2,2,5	
+ClCC(C)=O	1-cloropropan-2-ona	halogen on a ketone	C=O at 2 either way; N3 gives the chlorine 1	
+CC(=O)CCC=O	4-oxopentanal	aldehyde principal, ketone as oxo-	Aldehyde > ketone (P-41): the CHO is the suffix and at 1; the ketone C=O is the oxo prefix (P-64) at 4	
+CC(=O)C=O	2-oxopropanal	aldehyde and ketone on neighbours	CHO at 1, oxo at 2	
+CCC(C(C)=O)CC=O	3-etil-4-oxopentanal	oxo counts in P4	Two five-carbon chains carry the CHO; the one through the ketone carbon has more prefixes (ethyl + oxo vs acetyl), P-45.2.1	
+O=CCC(=O)CC=O	3-oxopentanodial	dialdehyde with a ketone	The chain joins both CHO; the ketone is oxo- at 3	
+CC(O)CC=O	3-hidroxibutanal	aldehyde principal, OH as hidroxi-	Aldehyde > alcohol: the OH is the hidroxi prefix (P-63)	
+OCC=O	2-hidroxietanal	two-carbon hydroxy aldehyde	Two substituents on ethane (suffix + prefix): the prefix locant is cited	
+CC(=O)CCO	4-hidroxibutan-2-ona	ketone principal, OH as hidroxi-	Ketone > alcohol: C=O at 2 by N0 (not 3), OH is hidroxi- at 4	
+CC(=O)CC(C)(C)O	4-hidroxi-4-metilpentan-2-ona	ketone with hidroxi and alkyl prefixes	Diacetone alcohol: C=O at 2; hidroxi (h) before metil (m)	
+OCC(=O)CO	1,3-dihidroxipropan-2-ona	ketone with two OH	Dihydroxyacetone: two substituents besides the ketone, so every locant is cited (the propanona omission applies only to the bare molecule)	
+CC(=O)CC(CC(C)=O)CC(C)=O	4-(2-oxopropil)heptano-2,6-diona	ketone left on a branch as oxo-	No chain carries all three ketones (P-44.1.1): two in the parent, the third in the 2-oxopropyl prefix	
+O=C1CCCCC1	ciclohexanona	cycloalkanone	The ketone carbon is a ring atom; one suffix on a saturated ring: no locant (P-14.3.4.2(c)); brought forward from I-40	
+O=C1CCC1	ciclobutanona	small cycloalkanone	As ciclohexanona	
+CC1CCCCC1=O	2-metilciclohexan-1-ona	ring N0 then N3	C=O carbon 1; with another substituent the 1 is cited	
+O=C1C=CCCC1	ciclohex-2-en-1-ona	ring ketone before the ring double bond	N0 gives the C=O carbon 1, then N1 the double bond 2	
+O=C1CCC(=O)CC1	ciclohexano-1,4-diona	ring diketone	[1,4]; the o of ciclohexano is kept before -diona	
+OC1CCC(=O)CC1	4-hidroxiciclohexan-1-ona	ring ketone with OH	Ketone > alcohol: C=O at 1, OH as hidroxi- at 4	

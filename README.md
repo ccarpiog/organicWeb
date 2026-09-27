@@ -1,7 +1,7 @@
 # organicWeb — Química orgánica
 
 A static, offline web app for secondary-school students (ESO, Spain): draw an
-acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative or alcohol of one) and get its IUPAC name **in Spanish**, with a
+acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative, alcohol, aldehyde or ketone of one) and get its IUPAC name **in Spanish**, with a
 step-by-step explanation and a redraw that makes the main chain obvious. The
 user interface is in Spanish; code and documentation are in English. The
 design and phase plan live in [`docs/design.md`](docs/design.md).
@@ -31,12 +31,17 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `hexacloroetano`…), and of alcohols (OH groups as the suffix `-ol`:
   `etanol`, `propan-2-ol`, `prop-2-en-1-ol`, `etano-1,2-diol`,
   `2-(hidroximetil)propano-1,3-diol`, `2-cloroetan-1-ol`, `ciclohexanol`,
-  `2-metilciclohexan-1-ol`, `fenol`…), with the name coloured by part
+  `2-metilciclohexan-1-ol`, `fenol`…), and of aldehydes and ketones (C=O as
+  the suffix `-al` / `-ona`, or the prefix `oxo-`: `metanal`, `etanal`,
+  `butanodial`, `propanona`, `butan-2-ona`, `pentano-2,4-diona`,
+  `4-oxopentanal`, `4-hidroxibutan-2-ona`, `ciclohexanona`…), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles;
   `tolueno` and `estireno` are listed as traditional names of
-  `metilbenceno` and `etenilbenceno`.
+  `metilbenceno` and `etenilbenceno`; `propanona` also lists `propan-2-ona`
+  (the IUPAC 2013 form) and `acetona`, `metanal` and `etanal` their
+  traditional `formaldehído` and `acetaldehído`.
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
   alphabetical order, assembly) that highlights each step on the drawing;
@@ -116,7 +121,7 @@ instance published by `src/ui/app.js` (test API documented in the header of
 
 `npm run oracle` generates random acyclic hydrocarbons, random
 substituted or unsaturated monocycles, benzene derivatives, halogen
-derivatives and alcohols of all of those (plus the cycloalkanes of the size
+derivatives, alcohols, aldehydes and ketones of all of those (plus the cycloalkanes of the size
 range), names them with this
 engine and checks each name by parsing it back with
 [OPSIN](https://github.com/dan2097/opsin) (after rendering the name in
@@ -186,13 +191,17 @@ the Keychain account is the WebDAV user).
 
 ## Known limitations and future work
 
-- Hydrocarbons, their halogen derivatives and alcohols only, with at most
-  one ring (a carbocycle; an OH must then be on a ring carbon); several
+- Hydrocarbons, their halogen derivatives, alcohols, aldehydes and ketones
+  only, with at most one ring (a carbocycle; an OH or a ketone C=O must then
+  be on a ring carbon, and aldehydes with a ring are refused); a C=O carbon
+  bonded to the main chain as a branch (acetilo…) and more than two
+  aldehyde groups on a chain are refused too; several
   rings, fused, bridged and spiro rings, heterocycles, benzenes with two or
   more substituents (no orto/meta/para), other oxygen and nitrogen compounds
   (functional groups, planned), stereochemistry (E/Z, R/S), charges and
   radicals are not named. Traditional halogen and alcohol names
-  (cloroformo, alcohol etílico, glicerina…) are not given; the 90° view keeps
+  (cloroformo, alcohol etílico, glicerina…) are not given (only `acetona`,
+  `formaldehído` and `acetaldehído` among the carbonyls); the 90° view keeps
   the normal drawing for any molecule with a heteroatom.
 - Parent chain up to 30 carbons, whole molecule up to 60.
 - Structure → name only; there is no name → structure.

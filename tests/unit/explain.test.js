@@ -91,6 +91,22 @@ const SNAPSHOT_SMILES = [
   'CC1CCCCC1O', // 2-metilciclohexan-1-ol: ring N0 then N3
   'OC1C=CCCC1', // ciclohex-2-en-1-ol: ring N0 then N1
   'OC1=CC=CC=C1', // fenol: retained name
+  'C=O', // metanal: one-carbon aldehyde, formaldehído (I-32)
+  'CC=O', // etanal: CHO carbon 1, uncited
+  'CC(C)C=O', // 2-metilpropanal: N0 for the CHO, prefix locant cited
+  'O=CCCC=O', // butanodial: -dial, o kept, no locants
+  'C=CCC=O', // but-3-enal: N0 before N1
+  'CC(C)=O', // propanona: omitted locant, propan-2-ona and acetona
+  'CCC(C)=O', // butan-2-ona: ketone locant
+  'CC(=O)CC(C)=O', // pentano-2,4-diona: -diona
+  'CC=CC(C)=O', // pent-3-en-2-ona: C=O before the double bond
+  'CC(=O)CCC=O', // 4-oxopentanal: aldehyde > ketone, oxo-
+  'CC(=O)CCO', // 4-hidroxibutan-2-ona: ketone > alcohol, hidroxi-
+  'CCC(C(C)=O)CC=O', // 3-etil-4-oxopentanal: oxo counts in P4
+  'CC(=O)CC(CC(C)=O)CC(C)=O', // 4-(2-oxopropil)heptano-2,6-diona: oxo inside a branch
+  'O=C1CCCCC1', // ciclohexanona: cycloalkanone, no locant
+  'CC1CCCCC1=O', // 2-metilciclohexan-1-ona: ring N0 then N3
+  'OC1CCC(=O)CC1', // 4-hidroxiciclohexan-1-ona: hidroxi- on a ring ketone
 ];
 
 /**

@@ -292,7 +292,7 @@ test('C=O and C≡N with the existing bond tools, valence by element', () => {
   };
   assert.equal(clickAt(editor, bondAt()).ok, true);
   assert.equal(editor.getMoleculeJSON().bonds[0].order, 2);
-  assert.equal(nameMolecule(editor.getMolecule()).error.code, 'HETEROATOM');
+  assert.equal(nameMolecule(editor.getMolecule()).name, 'metanal', 'a C=O is named since I-32');
   // Enlace triple on C=O: the oxygen would have 3 bonds.
   editor.setTool('triple');
   const refused = clickAt(editor, bondAt());

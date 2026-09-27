@@ -59,13 +59,13 @@ test('validation: an OH on a carbon is admitted; every other O and N group keeps
   for (const smiles of ['CO', 'OCCO', 'C=CO', 'C#CO', 'ClCCO', 'OC1CCCCC1', 'OC1=CC=CC=C1', 'OC(O)C', 'FC(F)(F)CO']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Carboxylic OH (acid), C=O, ethers, peroxides, water, amines, esters: refused as before.
-  for (const smiles of ['CC(=O)O', 'OCC(=O)O', 'CC=O', 'CC(C)=O', 'COC', 'CCOO', 'O', 'NCCO', 'CC(=O)OC', 'OCC=O', 'OCCOC']) {
+  // Carboxylic OH (acid), ethers, peroxides, water, amines, esters: refused as before (aldehydes and ketones are named since I-32).
+  for (const smiles of ['CC(=O)O', 'OCC(=O)O', 'COC', 'CCOO', 'O', 'NCCO', 'CC(=O)OC', 'OCCOC']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
   }
-  assert.match(MESSAGES.HETEROATOM, /y alcoholes \(con grupos –OH unidos a un carbono\)/);
+  assert.match(MESSAGES.HETEROATOM, /alcoholes \(con grupos –OH unidos a un carbono\)/);
   const mol = parseSmiles('CC(=O)O');
   const adj = adjacency(mol);
   const oxygens = [...mol.atoms.values()].filter((a) => a.element === 'O').map((a) => a.id);

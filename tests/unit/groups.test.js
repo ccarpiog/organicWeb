@@ -384,7 +384,7 @@ const GROUP_SNAPSHOT_SMILES = [
   'CC(=O)O', // acid: not alcohol + ketone
   'CC(=O)OC', // ester: not ether + ketone
   'CC(=O)NC', // amide: not amine + ketone
-  'OCCC(=O)CC=O', // aldehyde > ketone > alcohol
+  'NCC(O)CC(=O)CC=O', // aldehyde > ketone > alcohol > amine (the amine keeps the refusal since I-32)
   'NCC#N', // nitrile > amine
   'ClCCOC', // prefix-only groups
   'BrCC(Br)CN', // two bromine atoms and an amine
@@ -393,6 +393,8 @@ const GROUP_SNAPSHOT_SMILES = [
   'CCOC(=O)CC(=O)O', // ester bonded through its carbonyl carbon: alcoxicarbonil-
   'CC(=O)NCC(=O)O', // amide bonded through its N: acilamino-
   'NC(=O)CC(=O)O', // amide bonded through its carbonyl carbon: carbamoil-
+  'O=CC1CCCCC1', // aldehyde on a ring: -carbaldehído, refused until I-40 (I-32)
+  'CC(=O)C(C(C)=O)C(C)=O', // ketone bonded to the parent as an acyl branch: refused by the engine (I-32)
 ];
 
 test('explain() snapshots for heteroatom refusals', async () => {

@@ -6,8 +6,10 @@
  * of halogen derivatives of all of those (I-30: F, Cl, Br, I in place of
  * random hydrogens, one- to three-carbon parents included), of alcohols
  * (I-31: OH groups in place of random hydrogens — on ring carbons only for a
- * ring —, phenol, some with halogens too), plus the list of cycloalkanes in
- * a size range. Development only,
+ * ring —, phenol, some with halogens too), of aldehydes and ketones (I-32:
+ * =O in place of two hydrogens of a carbon — on ring carbons only for a
+ * ring —, some with OH groups and halogens too), plus the list of
+ * cycloalkanes in a size range. Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
  */
@@ -16,6 +18,7 @@ import { createMolecule, addAtom, addBond, bondOrderSum, cloneMolecule, CARBON_V
 import { HALOGEN_ELEMENTS } from '../../src/model/elements.js';
 import { canonicalTreeKey, canonicalKey } from '../../src/model/graph.js';
 import { validateForNaming, MAX_CHAIN } from '../../src/model/validate.js';
+import { nameMolecule } from '../../src/naming/index.js';
 
 /**
  * Creates a seeded pseudo-random generator (mulberry32).
@@ -429,6 +432,89 @@ export function generateAlcohols({ count, seed, minSize = 4, maxSize = 14 }) {
   } // End of the loop that draws distinct alcohols
   return molecules;
 } // End of function generateAlcohols()
+
+/**
+ * Copies a molecule and replaces pairs of hydrogens of its carbons by a
+ * double-bonded oxygen (design.md §13.4 I-32): each allowed carbon with at
+ * least two hydrogens becomes, with probability `rate`, a C=O carbon (an
+ * aldehyde at a chain end or on a lone carbon, a ketone between two
+ * carbons; a C=O on a carbon that already has a multiple bond is a ketene
+ * and fails validation later).
+ *
+ * @param {object} mol - A hydrocarbon (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} rate - Probability of turning each allowed carbon into a C=O.
+ * @param {Set<number>|null} [only] - The carbons that may carry the =O (default: every carbon).
+ * @returns {object} The copy (possibly without any C=O).
+ */
+export function carbonylate(mol, random, rate, only = null) {
+  const copy = cloneMolecule(mol);
+  for (const [id, atom] of [...copy.atoms]) {
+    if (atom.element !== 'C' || (only && !only.has(id))) {
+      continue;
+    }
+    if (CARBON_VALENCE - bondOrderSum(copy, id) >= 2 && random() < rate) {
+      addBond(copy, id, addAtom(copy, {}, 'O'), 2);
+    }
+  } // End of the loop over the carbons
+  return copy;
+} // End of function carbonylate()
+
+/**
+ * Generates up to `count` distinct (by canonical key) aldehydes and ketones,
+ * each with at least one C=O (design.md §13.4 I-32): random acyclic
+ * hydrocarbons of 1 carbon up to `maxSize` (methanal, ethanal, propanona…
+ * included) and random monocycles with the C=O on ring carbons only
+ * (cycloalkanones), a share of each with OH groups (hydroxylate(); on ring
+ * carbons only for a ring) and halogens (halogenate()) as well. Only
+ * molecules the engine names are kept: valid for naming, and without an
+ * acyl branch (a C=O carbon bonded to the parent as a branch, refused by
+ * the engine).
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C; acyclic ones may be smaller).
+ * @returns {object[]} The molecules.
+ */
+export function generateCarbonyls({ count, seed, minSize = 4, maxSize = 14 }) {
+  const random = seededRandom(seed * 6151 + 32);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50) {
+    attempts += 1;
+    let base;
+    let only = null;
+    if (random() < 0.7 || maxSize < 3) {
+      const size = randomInt(random, 1, maxSize);
+      base = randomHydrocarbon(random, { size, unsaturation: random() * 0.4, branchiness: 0.2 + random() * 0.8 });
+    } else {
+      const size = randomInt(random, Math.max(minSize, 3), Math.max(maxSize, 3));
+      const ringSize = randomInt(random, 3, Math.min(10, size));
+      base = randomMonocycle(random, {
+        ringSize, extra: size - ringSize, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8,
+      });
+      only = new Set([...base.atoms.keys()].slice(0, ringSize)); // randomMonocycle() adds the ring atoms first.
+    } // End of the choice of the parent molecule
+    let mol = carbonylate(base, random, 0.1 + random() * 0.3, only);
+    if (mol.atoms.size === base.atoms.size) {
+      continue; // No C=O drawn.
+    }
+    if (random() < 0.3) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.15, only);
+    }
+    if (random() < 0.25) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.2);
+    }
+    if (validateForNaming(mol) || !nameMolecule(mol).ok) {
+      continue; // Not valid for naming (a ketene, an acid…) or refused by the engine (an acyl branch).
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct aldehydes and ketones
+  return molecules;
+} // End of function generateCarbonyls()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

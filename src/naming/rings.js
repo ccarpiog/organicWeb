@@ -5,7 +5,10 @@
  * `ciclohexa-1,3-dieno`, `metilciclohexano`, `3-metilciclohex-1-eno`,
  * `etenilciclohexano`, `metilidenciclohexano`, and with OH groups on ring
  * carbons (design.md §13.4 I-31) `ciclohexanol`, `2-metilciclohexan-1-ol`,
- * `ciclohex-2-en-1-ol`: the OH carbon gets the lowest locant (N0).
+ * `ciclohex-2-en-1-ol`: the OH carbon gets the lowest locant (N0); and with
+ * a ketone C=O whose carbon is a ring atom (cycloalkanones, I-32, brought
+ * forward from I-40) `ciclohexanona`, `2-metilciclohexan-1-ona`,
+ * `3-hidroxiciclohexan-1-ona` (the ketone is principal, the OH a prefix).
  *
  * Ring vs chain (IUPAC 2013 P-44.1.2.2, P-52.2.8): a ring is senior to a
  * chain whatever the chain's length or unsaturation, so with one ring the
@@ -139,8 +142,10 @@ export function numberRing(mol, perceived, substituents, suffixAtoms = []) {
  * chains are its substituents, and the ring numbering is chosen among every
  * start and direction. The trace starts with a 'RING' step (the ring as the
  * only candidate, its size as the value) followed by the numbering rules
- * that were applied (none for a bare cycloalkane). OH groups on ring carbons
- * are the `-ol` suffix (`structure.suffix`) and are numbered first (N0).
+ * that were applied (none for a bare cycloalkane). The oxygen groups of
+ * the principal kind on ring carbons (OH, or the ketone C=O of a
+ * cycloalkanone) are the `-ol` / `-ona` suffix (`structure.suffix`) and are
+ * numbered first (N0); an OH beside a ring ketone is the `hidroxi` prefix.
  *
  * @param {object} mol - A molecule accepted by validateForNaming() that has a ring.
  * @param {string} [style] - Prefix style (default 'isopropil', design.md §1.1).
@@ -151,7 +156,7 @@ export function nameRingWithStyle(mol, style = PREFIX_STYLES[0]) {
   const adj = adjacency(mol);
   const ctx = createNamingContext(mol, style, lexiconEs, adj);
   const substituents = collectSubstituents(mol, perceived.atoms, ctx);
-  const sites = suffixSites(mol, adj, perceived.atoms);
+  const sites = suffixSites(mol, adj, perceived.atoms, ctx.principal);
   const saturated = perceived.double.length === 0 && perceived.triple.length === 0;
   let parent = perceived;
   let numberingTrace = [];
@@ -163,7 +168,7 @@ export function nameRingWithStyle(mol, style = PREFIX_STYLES[0]) {
   const structure = buildNameStructure({
     parent,
     prefixes: groupPrefixes(substituents, parent.atoms),
-    suffix: buildSuffix(sites, parent.atoms),
+    suffix: buildSuffix(sites, parent.atoms, ctx.principal),
   });
   const { name, parts } = renderName(structure, lexiconEs);
   const candidate = { atoms: [...perceived.atoms], bonds: [...perceived.bonds], key: 'ring' };

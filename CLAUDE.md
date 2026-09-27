@@ -1,6 +1,6 @@
 # organicWeb — Química orgánica para ESO
 
-Static web app: draw an acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative or alcohol of one), get its IUPAC name in Spanish with
+Static web app: draw an acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative, alcohol, aldehyde or ketone of one), get its IUPAC name in Spanish with
 a step-by-step explanation, and optionally redraw it so the main chain is clear.
 
 - **User-facing text: Spanish (Spain), ESO level.** Code, comments and docs: English.

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T22:30:20Z",
+  "updated": "2026-09-27T23:04:02Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -296,8 +296,11 @@
     {
       "id": "I-32",
       "title": "v2.12 Aldehydes and ketones",
-      "status": "queued",
-      "summary": "v2 plan phase 12: aldehydes and ketones (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Names aldehydes and ketones (etanal, propanona, oxo-/hidroxi- prefixes, cycloalkanones) and refuses out-of-scope carbonyls.",
+      "risk": "high",
+      "review": "docs/reviews/I-32.md",
+      "narrative": "docs/progress-archive/i-32.md"
     },
     {
       "id": "I-33",

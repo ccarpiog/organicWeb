@@ -166,7 +166,7 @@ test('loaded alcohols: suffix locants, OH before the double bond, rings and feno
   await askName(page);
   const error = page.locator('#results .results-error');
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('y alcoholes');
+  await expect(error).toContainText('alcoholes (con grupos –OH unidos a un carbono)');
   await expect(page.locator('#result-name')).toHaveCount(0);
 
   await loadSmiles(page, 'OCC1=CC=CC=C1');

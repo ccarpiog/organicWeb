@@ -48,8 +48,14 @@ export const BENZENE_NAME = 'benzene';
 /** Stem of the retained name `phenol` (phen + ol; IUPAC 2013 P-63.1.1.1, see lexicon.es.js). */
 export const PHENOL_STEM = 'phen';
 
-/** Traditional names of monosubstituted benzenes retained by IUPAC 2013 (P-22.1.3; see lexicon.es.js). */
-export const TRADITIONAL_NAMES = Object.freeze({ toluene: 'toluene', styrene: 'styrene' });
+/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3) and small carbonyl compounds (see lexicon.es.js). */
+export const TRADITIONAL_NAMES = Object.freeze({
+  toluene: 'toluene',
+  styrene: 'styrene',
+  formaldehyde: 'formaldehyde',
+  acetaldehyde: 'acetaldehyde',
+  acetone: 'acetone',
+});
 
 /** Endings of the parent name. */
 export const ENDINGS = Object.freeze({ saturated: 'ane', double: 'ene', triple: 'yne' });
@@ -88,6 +94,7 @@ export const STYLE_LABELS = Object.freeze({
   isopropil: 'accepted name with isopropyl',
   pin: 'IUPAC 2013 preferred name',
   substituted: 'classic substitutive name',
+  locants: 'with the locant, IUPAC 2013 preferred name',
 });
 
 /**
@@ -215,9 +222,9 @@ export function styleLabel(style) {
 }
 
 /**
- * Returns a traditional name of a monosubstituted benzene.
+ * Returns a traditional name (a monosubstituted benzene or a small carbonyl compound).
  *
- * @param {string} id - 'toluene' or 'styrene'.
+ * @param {string} id - A TRADITIONAL_NAMES id.
  * @returns {string} The English name.
  * @throws {Error} For an unknown id.
  */
@@ -232,7 +239,7 @@ export function traditionalName(id) {
 /**
  * Returns the label of a traditional name (English, developer-facing only).
  *
- * @param {string} id - 'toluene' or 'styrene'.
+ * @param {string} id - A TRADITIONAL_NAMES id.
  * @returns {string} The label.
  */
 export function traditionalLabel(id) {

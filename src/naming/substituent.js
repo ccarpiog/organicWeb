@@ -41,6 +41,16 @@
  * simple prefix of that group, `hidroxi` (hydroxySubstituent():
  * `(hidroximetil)`, `(2-hidroxietil)`), alphabetised under h. Substituent
  * chains, like the parent, run over carbons only.
+ *
+ * Aldehydes and ketones (design.md §13.4 I-32) follow the same scheme with
+ * the principal kind of the molecule (principal.js: aldehído > cetona >
+ * alcohol): the oxygen groups of that kind on the parent are the suffix
+ * (`-al`, `-ona`, `-ol`; suffixSites()), every other oxygen is a simple
+ * prefix, on the parent or inside a branch — `oxo` for a C=O
+ * (oxoSubstituent(): `4-oxopentanal`, `(2-oxopropil)`), `hidroxi` for an OH
+ * (`4-hidroxibutan-2-ona`). The C=O carbon itself is always a chain atom;
+ * when it is the attachment atom of a branch (an acyl group, `1-oxoetil`
+ * for acetilo), hasAcylPrefix() finds it and the engine refuses the name.
  * Pure: topology only.
  */
 
@@ -50,6 +60,7 @@ import { buildChainStructure } from './structure.js';
 import { numberParent, compareCitationKeys } from './numbering.js';
 import { citationKey, prefixNameKey } from './render.js';
 import { lexiconEs } from './lexicon.es.js';
+import { principalKindOf, isPrincipalOxygen } from './principal.js';
 
 /** Bond-order symbols that prefix a substituent identity key. */
 const ATTACH_SYMBOL = { 1: '-', 2: '=', 3: '#' };
@@ -94,14 +105,14 @@ const YLIDENE_SHAPES = Object.freeze({
  * @param {string} [style] - Prefix style: 'isopropil' (default), 'pin' or 'substituted'.
  * @param {object} [lexicon] - The lexicon (citation order depends on the prefix words).
  * @param {Map<number, object[]>} [adj] - Adjacency map (computed when omitted).
- * @returns {{mol: object, adj: Map<number, object[]>, style: string, lexicon: object, cache: Map<string, object>}} The context.
+ * @returns {{mol: object, adj: Map<number, object[]>, style: string, lexicon: object, cache: Map<string, object>, principal: string|null}} The context (`principal`: the principal oxygen kind, principal.js).
  * @throws {RangeError} For an unknown style.
  */
 export function createNamingContext(mol, style = PREFIX_STYLES[0], lexicon = lexiconEs, adj = adjacency(mol)) {
   if (!PREFIX_STYLES.includes(style)) {
     throw new RangeError(`unknown prefix style ${style}`);
   }
-  return { mol, adj, style, lexicon, cache: new Map() };
+  return { mol, adj, style, lexicon, cache: new Map(), principal: principalKindOf(mol, adj) };
 }
 
 /**
@@ -217,9 +228,11 @@ function countBonds(adj, atoms, test) {
 /**
  * Lists every substituent hanging from a chain (a parent chain, or the
  * chain of a substituent when `exclude` is its carrying atom), each named
- * recursively under the context's style. On a parent (`parent` true) an OH
- * is a suffix group (suffixSites()), not a substituent, and is left out; on
- * a substituent chain it is the `hidroxi` prefix (hydroxySubstituent()).
+ * recursively under the context's style. On a parent (`parent` true) an
+ * oxygen of the principal kind (an OH of `-ol`, the C=O of `-al` / `-ona`)
+ * is a suffix group (suffixSites()), not a substituent, and is left out;
+ * every other oxygen is a prefix: `hidroxi` for an OH
+ * (hydroxySubstituent()), `oxo` for a C=O (oxoSubstituent()).
  *
  * @param {object} ctx - Naming context (createNamingContext).
  * @param {number[]} chainAtoms - The chain's atom ids.
@@ -236,11 +249,14 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
         continue;
       }
       const element = ctx.mol.atoms.get(n.atom).element;
-      if (element === 'O' && parent) {
-        continue; // A suffix group of the parent (`-ol`), not a prefix.
+      if (parent && isPrincipalOxygen(ctx.mol, ctx.adj, n.atom, ctx.principal)) {
+        continue; // A suffix group of the parent (`-ol`, `-al`, `-ona`), not a prefix.
       }
       if (isHalogen(element) || element === 'O') {
-        const structure = element === 'O' ? hydroxySubstituent(n.atom) : halogenSubstituent(n.atom, element);
+        let structure = halogenSubstituent(n.atom, element);
+        if (element === 'O') {
+          structure = n.order === 2 ? oxoSubstituent(n.atom) : hydroxySubstituent(n.atom);
+        }
         result.push({
           chainAtom,
           attachAtom: n.atom,
@@ -257,8 +273,11 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
       }
       const subtree = substituentSubtree(ctx.adj, chainAtom, n.atom);
       const inSubtree = new Set(subtree.bonds);
-      const multipleBonds = [...new Set(subtree.atoms.flatMap((atom) => ctx.adj.get(atom)
-        .filter((link) => link.order > 1 && inSubtree.has(link.bond)).map((link) => link.bond)))].sort((p, q) => p - q);
+      // Carbon–carbon multiple bonds only: a C=O inside the branch is its `oxo` prefix, not an unsaturation.
+      const isCarbon = (id) => ctx.mol.atoms.get(id).element === 'C';
+      const multipleBonds = [...new Set(subtree.atoms.filter(isCarbon).flatMap((atom) => ctx.adj.get(atom)
+        .filter((link) => link.order > 1 && inSubtree.has(link.bond) && isCarbon(link.atom))
+        .map((link) => link.bond)))].sort((p, q) => p - q);
       const structure = nameSubstituentIn(ctx, chainAtom, n.atom, n.order);
       result.push({
         chainAtom,
@@ -325,21 +344,78 @@ export function hydroxySubstituent(atom) {
 } // End of function hydroxySubstituent()
 
 /**
- * The suffix groups of a parent (design.md §13.4 I-31): every OH bonded to
- * one of its atoms — the principal characteristic groups, cited as `-ol`.
- * Validation admits an oxygen only as an OH on a carbon, so every oxygen
- * neighbour of a parent atom is one.
+ * The substituent structure of a C=O oxygen cited as a prefix (design.md
+ * §13.4 I-32): `oxo` (lexicon groupPrefix('ketone')), a simple prefix like
+ * `hidroxi` (never enclosed; `di`, `tri`… when repeated), with no chain and
+ * no prefixes; the connecting bond is the double bond of the C=O
+ * (`freeValence.order` 2). Its carbon is a chain atom that carries it: a
+ * ketone when the aldehyde is principal (`4-oxopentanal`), or any C=O
+ * inside a branch (`(2-oxopropil)`).
+ *
+ * @param {number} atom - The oxygen atom id.
+ * @returns {object} The SubstituentStructure (structure.js) with `oxo` set.
+ */
+export function oxoSubstituent(atom) {
+  return {
+    oxo: true,
+    chain: null,
+    prefixes: [],
+    freeValence: { locant: 1, order: 2 },
+    retained: null,
+    commonName: null,
+    atoms: [atom],
+    bonds: [],
+  };
+} // End of function oxoSubstituent()
+
+/**
+ * Tells whether a name structure has an acyl branch at any depth: a branch
+ * whose attachment atom carries an `oxo` prefix, i.e. a C=O carbon bonded
+ * directly to the chain that carries the branch (`1-oxoetil`, acetilo).
+ * IUPAC 2013 names such branches with acyl prefixes (`acetil`,
+ * `propanoil`), which the app does not support yet (design.md §13.4 I-32),
+ * so the engine refuses these molecules (ACYL_SUBSTITUENT_MESSAGE).
+ *
+ * @param {{prefixes: object[]}} structure - A name or substituent structure.
+ * @returns {{atoms: number[], bonds: number[]}|null} The C=O atoms (carbon, oxygen) and bonds of the first acyl branch found, or null.
+ */
+export function hasAcylPrefix(structure) {
+  for (const group of structure.prefixes) {
+    const sub = group.substituent;
+    if (!sub.chain) {
+      continue;
+    }
+    const attach = sub.chain.atoms[sub.freeValence.locant - 1];
+    for (const inner of sub.prefixes) {
+      const site = inner.substituent.oxo ? inner.locants.find((l) => l.atom === attach) : null;
+      if (site) {
+        return { atoms: [site.atom, site.attachAtom], bonds: [site.bond] };
+      }
+    }
+    const nested = hasAcylPrefix(sub);
+    if (nested) {
+      return nested;
+    }
+  } // End of the loop over the prefix groups
+  return null;
+} // End of function hasAcylPrefix()
+
+/**
+ * The suffix groups of a parent (design.md §13.4 I-31, I-32): every oxygen
+ * of the principal kind bonded to one of its atoms — the OH of `-ol`, or the
+ * C=O of `-al` / `-ona`, whose carbon is the parent atom.
  *
  * @param {object} mol - A validated molecule.
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {number[]} atoms - The parent's atom ids.
- * @returns {{atom: number, attachAtom: number, bond: number}[]} One site per OH: carrying atom, oxygen, bond; in parent-atom order.
+ * @param {string|null} [principal] - The principal oxygen kind (default: principalKindOf() of the molecule).
+ * @returns {{atom: number, attachAtom: number, bond: number}[]} One site per group: carrying atom, oxygen, bond; in parent-atom order.
  */
-export function suffixSites(mol, adj, atoms) {
+export function suffixSites(mol, adj, atoms, principal = principalKindOf(mol, adj)) {
   const sites = [];
   for (const atom of atoms) {
     for (const n of adj.get(atom)) {
-      if (mol.atoms.get(n.atom).element === 'O') {
+      if (isPrincipalOxygen(mol, adj, n.atom, principal)) {
         sites.push({ atom, attachAtom: n.atom, bond: n.bond });
       }
     }
@@ -475,7 +551,7 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
  * @param {number} chainAtom - The carrying chain atom.
  * @param {number} attachAtom - The substituent atom bonded to it.
  * @param {string} [style] - Prefix style (default 'isopropil').
- * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH), or null when the two atoms are not bonded.
+ * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH, `oxo` for a C=O oxygen), or null when the two atoms are not bonded.
  */
 export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLES[0]) {
   const ctx = createNamingContext(mol, style);
@@ -485,15 +561,15 @@ export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLE
   }
   const element = mol.atoms.get(attachAtom).element;
   if (element === 'O') {
-    return hydroxySubstituent(attachAtom);
+    return link.order === 2 ? oxoSubstituent(attachAtom) : hydroxySubstituent(attachAtom);
   }
   return isHalogen(element) ? halogenSubstituent(attachAtom, element) : nameSubstituentIn(ctx, chainAtom, attachAtom, link.order);
 }
 
 /**
  * Lists every substituent hanging from a parent chain or ring, named under a
- * prefix style. The parent's OH groups are its suffix (suffixSites()), so
- * they are not listed.
+ * prefix style. The parent's oxygen groups of the principal kind are its
+ * suffix (suffixSites()), so they are not listed.
  *
  * @param {object} mol - A validated molecule.
  * @param {number[]} chainAtoms - The parent's atom ids.

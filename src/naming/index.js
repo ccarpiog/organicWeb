@@ -41,18 +41,30 @@
  * be on ring carbons (validation): `ciclohexanol`, `2-metilciclohexan-1-ol`,
  * and on benzene the retained `fenol`.
  *
- * Any other heteroatom (N, an O that is not an OH on a carbon) is still
+ * Aldehydes and ketones (design.md §13.4 I-32) go through the same
+ * machinery with the C=O as the principal group when present (aldehído >
+ * cetona > alcohol, principal.js): `etanal`, `butanodial`, `propanona`,
+ * `pentano-2,4-diona`, `4-oxopentanal`, `4-hidroxibutan-2-ona`,
+ * `ciclohexanona`. The C=O carbon is a chain (or ring) carbon; an
+ * aldehyde's locant is never cited. A C=O carbon that ends up bonded to the
+ * parent as a branch (an acyl group, `acetil`) is refused with
+ * `HETEROATOM` `acylSubstituent`, decided on the default-style name.
+ * `propanona` also gets `propan-2-ona` (the IUPAC 2013 form) and the
+ * traditional names `acetona`, `formaldehído`, `acetaldehído` are offered
+ * for the bare molecules.
+ *
+ * Any other heteroatom (N, an O of an acid, ester or ether) is still
  * refused (`HETEROATOM`), but the refusal carries `groups`: its
  * characteristic groups (groups.js), the principal group and the
  * suffix/prefix classification (seniority.js, design.md §13.4 I-29).
  * Successful results never have `groups`.
  */
 
-import { validateForNaming } from '../model/validate.js';
+import { validateForNaming, validationError, ACYL_SUBSTITUENT_MESSAGE } from '../model/validate.js';
 import { adjacency, hasCycle } from '../model/graph.js';
 import { selectParent } from './parent.js';
 import {
-  createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, suffixSites, PREFIX_STYLES,
+  createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, suffixSites, hasAcylPrefix, PREFIX_STYLES,
 } from './substituent.js';
 import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure, buildSuffix } from './structure.js';
@@ -61,6 +73,7 @@ import { nameRingWithStyle } from './rings.js';
 import { hasBenzeneRing, nameBenzeneWithStyle, traditionalAlternative } from './aromatic.js';
 import { analyzeGroups } from './seniority.js';
 import { lexiconEs } from './lexicon.es.js';
+import { carbonylTraditionalId } from './principal.js';
 
 /** Error for an unexpected engine failure (a bug); nameMolecule never throws. */
 export const INTERNAL_ERROR = Object.freeze({
@@ -103,7 +116,7 @@ const STYLE_DEPENDENT_PREFIXES = Object.freeze(['isopropyl', 'isopropylidene']);
  * Names a validated molecule under one prefix style: substituents,
  * numbering, grouping and rendering.
  *
- * @param {object} mol - A validated acyclic hydrocarbon, halogen derivative or alcohol.
+ * @param {object} mol - A validated acyclic hydrocarbon, halogen derivative, alcohol, aldehyde or ketone.
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {{chains: number[][], trace: object[]}} selection - Result of selectParent().
  * @param {string} style - Prefix style.
@@ -124,14 +137,14 @@ function nameWithStyle(mol, adj, selection, style) {
     citation: sub.citation,
   }));
   const nameKey = nameKeyFunction([...substituentsByChain.values()], lexiconEs);
-  const suffixesOf = (chain) => suffixSites(mol, adj, chain).map((site) => site.atom);
+  const suffixesOf = (chain) => suffixSites(mol, adj, chain, ctx.principal).map((site) => site.atom);
   const numbering = numberParent(mol, selection.chains, prefixesOf, { adj, nameKey, suffixesOf });
   const substituents = substituentsByChain.get(selection.chains[numbering.chainIndex]);
   const parent = buildChainStructure(numbering.atoms, numbering.bonds, numbering.orders);
   const structure = buildNameStructure({
     parent,
     prefixes: groupPrefixes(substituents, numbering.atoms),
-    suffix: buildSuffix(suffixSites(mol, adj, numbering.atoms), numbering.atoms),
+    suffix: buildSuffix(suffixSites(mol, adj, numbering.atoms, ctx.principal), numbering.atoms, ctx.principal),
   });
   const { name, parts } = renderName(structure, lexiconEs);
   return {
@@ -235,15 +248,82 @@ function nameValidated(mol, options) {
   };
   const alternatives = [];
   const reference = named(PREFIX_STYLES[0]);
-  if (hasRetainedPrefix(reference.structure, STYLE_DEPENDENT_PREFIXES)) {
-    for (const other of PREFIX_STYLES.filter((s) => s !== style)) {
-      const result = named(other);
-      alternatives.push({ style: other, label: lexiconEs.styleLabel(other), name: result.name, parts: result.parts });
+  const others = hasRetainedPrefix(reference.structure, STYLE_DEPENDENT_PREFIXES)
+    ? PREFIX_STYLES.filter((s) => s !== style)
+    : [];
+  // Every style that is emitted (main, reference, alternatives) is checked:
+  // each runs its own prefix naming, so one may need an acyl branch the
+  // others avoid.
+  for (const s of new Set([style, PREFIX_STYLES[0], ...others])) {
+    const acyl = hasAcylPrefix(named(s).structure);
+    if (acyl) {
+      return withGroups({ ok: false, error: acylError(acyl) }, mol);
     }
-  } // End of the alternatives for a molecule with an isopropyl or isopropylidene group
-  const traditional = benzene ? traditionalAlternative(main) : null;
+  }
+  const located = locantAlternative(main);
+  if (located) {
+    alternatives.push(located);
+  }
+  for (const other of others) {
+    const result = named(other);
+    alternatives.push({ style: other, label: lexiconEs.styleLabel(other), name: result.name, parts: result.parts });
+  }
+  const traditional = benzene ? traditionalAlternative(main) : carbonylAlternative(main);
   if (traditional) {
     alternatives.push(traditional);
   }
   return { ...main, alternatives };
 } // End of function nameValidated()
+
+/**
+ * The HETEROATOM refusal of a molecule whose default-style name has an acyl
+ * branch (substituent.js hasAcylPrefix(), design.md §13.4 I-32): a C=O
+ * carbon bonded directly to the chain that carries it, which IUPAC 2013
+ * names with acyl prefixes (`acetil`) the app does not support yet.
+ *
+ * @param {{atoms: number[], bonds: number[]}} acyl - The C=O atoms of the acyl branch.
+ * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
+ */
+function acylError(acyl) {
+  return validationError('HETEROATOM', { message: ACYL_SUBSTITUENT_MESSAGE, atoms: [...acyl.atoms], reason: 'acylSubstituent' });
+}
+
+/**
+ * The alternative that writes the locants the main name omits, when IUPAC
+ * 2013 cites them in the preferred name: `propan-2-ona` for `propanona`
+ * (lexicon.es.js chainOmitsPrefixLocants(), design.md §13.4 I-32); null for
+ * every other name.
+ *
+ * @param {object} result - The main naming result (NamingSuccess without alternatives).
+ * @returns {{style: string, label: string, name: string, parts: object[]}|null} The alternative.
+ */
+function locantAlternative(result) {
+  const { structure } = result;
+  if (structure.parentKind !== 'chain' || !structure.suffix || structure.suffix.kind !== 'ketone' || structure.parent.length !== 3) {
+    return null;
+  }
+  const cited = renderName(structure, lexiconEs, { citeLocants: true });
+  return cited.name === result.name ? null : { style: 'locants', label: lexiconEs.styleLabel('locants'), ...cited };
+}
+
+/**
+ * The traditional-name alternative of a small carbonyl compound (principal.js
+ * carbonylTraditionalId(): `formaldehído`, `acetaldehído`, `acetona`),
+ * listed last under "Otras formas válidas" (design.md §13.1), or null. Its
+ * one part refers to every atom and bond of the molecule, like a benzene's
+ * traditional name (aromatic.js traditionalAlternative()).
+ *
+ * @param {object} result - The main naming result.
+ * @returns {{style: string, label: string, name: string, parts: object[]}|null} The alternative.
+ */
+function carbonylAlternative(result) {
+  const id = carbonylTraditionalId(result.structure);
+  if (!id) {
+    return null;
+  }
+  const name = lexiconEs.traditionalName(id);
+  const { suffix } = result.structure;
+  const atoms = [...result.parent.atoms, ...suffix.locants.map((s) => s.attachAtom)];
+  const bonds = [...result.parent.bonds, ...suffix.locants.map((s) => s.bond)];
+  return { style: 'traditional', label: lexiconEs.traditionalLabel(id), name, parts: [{ text: name, kind: 'stem', atoms, bonds }] };
+} // End of function carbonylAlternative()

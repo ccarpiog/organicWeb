@@ -79,7 +79,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -252,7 +252,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -347,7 +347,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -442,7 +442,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -458,7 +458,7 @@
    }
   ]
  },
- "OCCC(=O)CC=O": {
+ "NCC(O)CC(=O)CC=O": {
   "code": "HETEROATOM",
   "principal": "aldehyde",
   "steps": [
@@ -470,20 +470,22 @@
      "He encontrado estos grupos:",
      "1 aldehído: un oxígeno unido por un [[enlace doble]] a un carbono que también tiene un hidrógeno (–CHO); por eso siempre está en un extremo.",
      "1 cetona: un oxígeno unido por un [[enlace doble]] a un carbono que está entre otros dos carbonos (–CO–).",
-     "1 alcohol: un grupo –OH unido a un carbono."
+     "1 alcohol: un grupo –OH unido a un carbono.",
+     "1 amina: un nitrógeno unido a carbonos solo con enlaces simples (–NH₂, –NH– o –N–)."
     ],
     "highlight": [
      {
       "atoms": [
+       9,
+       10,
+       6,
        7,
-       8,
        4,
-       5,
        1
       ],
       "bonds": [
-       7,
-       4
+       9,
+       6
       ],
       "style": "substituent"
      }
@@ -495,27 +497,28 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el aldehído: en la lista va antes que la cetona y el alcohol."
+     "Aquí el grupo principal es el aldehído: en la lista va antes que la cetona, el alcohol y la amina."
     ],
     "highlight": [
      {
       "atoms": [
-       7,
-       8
+       9,
+       10
       ],
       "bonds": [
-       7
+       9
       ],
       "style": "parent"
      },
      {
       "atoms": [
+       6,
+       7,
        4,
-       5,
        1
       ],
       "bonds": [
-       4
+       6
       ],
       "style": "substituent"
      }
@@ -529,27 +532,29 @@
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
      "El aldehído: sufijo «-al», como en «etanal».",
      "La cetona: prefijo «oxo-».",
-     "El alcohol: prefijo «hidroxi-»."
+     "El alcohol: prefijo «hidroxi-».",
+     "La amina: prefijo «amino-»."
     ],
     "highlight": [
      {
       "atoms": [
-       7,
-       8
+       9,
+       10
       ],
       "bonds": [
-       7
+       9
       ],
       "style": "parent"
      },
      {
       "atoms": [
+       6,
+       7,
        4,
-       5,
        1
       ],
       "bonds": [
-       4
+       6
       ],
       "style": "substituent"
      }
@@ -560,14 +565,15 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
       "atoms": [
        1,
-       5,
-       8
+       4,
+       7,
+       10
       ],
       "bonds": [],
       "style": "candidate"
@@ -666,7 +672,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -750,7 +756,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -850,7 +856,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -938,7 +944,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -1064,7 +1070,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -1192,7 +1198,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -1320,7 +1326,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -1448,7 +1454,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono) y alcoholes (con grupos –OH unidos a un carbono)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono) y aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O)."
     ],
     "highlight": [
      {
@@ -1457,6 +1463,200 @@
        3,
        6,
        7
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "O=CC1CCCCC1": {
+  "code": "HETEROATOM",
+  "principal": "aldehyde",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado este grupo:",
+     "1 aldehído: un oxígeno unido por un [[enlace doble]] a un carbono que también tiene un hidrógeno (–CHO); por eso siempre está en un extremo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el aldehído: es el único tipo de grupo que puede serlo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El aldehído: sufijo «-al», como en «etanal»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene un anillo y un grupo –CHO (un aldehído). Cuando el –CHO va unido a un anillo, el nombre acaba en «-carbaldehído» (como el ciclohexanocarbaldehído), y eso aún no sé nombrarlo. De momento, con anillo solo sé nombrar las cetonas cuyo C=O forma parte del anillo (como la ciclohexanona)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   }
+  ]
+ },
+ "CC(=O)C(C(C)=O)C(C)=O": {
+  "code": "HETEROATOM",
+  "principal": "ketone",
+  "steps": [
+   {
+    "id": "groups",
+    "title": "Reconoce los grupos",
+    "text": [
+     "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
+     "He encontrado estos grupos:",
+     "3 cetonas: un oxígeno unido por un [[enlace doble]] a un carbono que está entre otros dos carbonos (–CO–)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       5,
+       7,
+       8,
+       10
+      ],
+      "bonds": [
+       2,
+       6,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es la cetona: es el único tipo de grupo que puede serlo.",
+     "Hay 3 grupos de este tipo: todos cuentan como principales."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       5,
+       7,
+       8,
+       10
+      ],
+      "bonds": [
+       2,
+       6,
+       9
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "affixes",
+    "title": "Sufijo o prefijo",
+    "text": [
+     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "La cetona: sufijo «-ona», como en «propanona»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       5,
+       7,
+       8,
+       10
+      ],
+      "bonds": [
+       2,
+       6,
+       9
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "notYet",
+    "title": "Aún no sé nombrarla",
+    "text": [
+     "Esta molécula tiene un grupo C=O en una rama, con su carbono unido directamente a la cadena principal (un grupo acilo, como el acetilo, –CO–CH₃). Aún no sé nombrar estas ramas."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       10
       ],
       "bonds": [],
       "style": "candidate"

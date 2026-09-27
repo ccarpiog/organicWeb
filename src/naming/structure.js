@@ -77,7 +77,8 @@
  * @typedef {object} SubstituentStructure
  * @property {ChainStructure|null} chain - The substituent's own numbered chain (null for a halogen).
  * @property {string} [halogen] - Set on a halogen atom cited as a prefix (design.md §13.4 I-30): 'F', 'Cl', 'Br' or 'I' (`fluoro`, `cloro`, `bromo`, `yodo`); such a substituent has no chain and no prefixes, and `atoms` is the halogen atom.
- * @property {boolean} [hydroxy] - Set on an OH group cited as a prefix (`hidroxi`, design.md §13.4 I-31): an OH on a substituent chain, never on the parent (there it is the `-ol` suffix); no chain, no prefixes, `atoms` is the oxygen atom.
+ * @property {boolean} [hydroxy] - Set on an OH group cited as a prefix (`hidroxi`, design.md §13.4 I-31): an OH on a substituent chain, or on the parent when a C=O is the principal group (`4-hidroxibutan-2-ona`, I-32); no chain, no prefixes, `atoms` is the oxygen atom.
+ * @property {boolean} [oxo] - Set on a C=O oxygen cited as a prefix (`oxo`, design.md §13.4 I-32): a ketone on the parent when the aldehyde is principal (`4-oxopentanal`), or any C=O inside a branch (`(2-oxopropil)`); its carbon is the carrying chain atom, the connecting bond is the C=O double bond (`freeValence.order` 2); no chain, no prefixes, `atoms` is the oxygen atom.
  * @property {PrefixGroup[]} prefixes - Its own grouped prefixes, in citation order.
  * @property {{locant: number, order: number}} freeValence - Locant and order of the free valence (1 → `-il`, 2 → `-iliden`).
  * @property {string|null} [retained] - Retained-name id cited instead of the systematic prefix: 'isopropyl' or 'isopropylidene' (style 'isopropil' only) or 'tert-butyl' (styles 'isopropil' and 'pin'); the chain and prefixes still describe the systematic name. 'phenyl' (`fenil`, aromatic.js phenylSubstituent()) has a benzene RingStructure as its `chain`.
@@ -100,21 +101,25 @@
 
 /**
  * One principal characteristic group cited as a suffix: its carrying parent
- * atom and its heteroatom (design.md §13.4 I-31: the OH of `-ol`).
+ * atom and its heteroatom (design.md §13.4 I-31: the OH of `-ol`; I-32: the
+ * C=O of `-al` / `-ona`, whose carbon is the parent atom).
  *
  * @typedef {object} SuffixLocant
  * @property {number} locant - Locant of the carrying parent atom.
  * @property {number} atom - Id of the carrying parent atom (a carbon).
- * @property {number} attachAtom - Id of the group's heteroatom bonded to it (the O of an OH).
+ * @property {number} attachAtom - Id of the group's heteroatom bonded to it (the O of an OH or of a C=O).
  * @property {number} bond - Id of the bond between them.
  */
 
 /**
  * The principal characteristic groups of a name, cited as a suffix after the
- * parent's ending (`propan-2-ol`, `butano-1,4-diol`, `ciclohexanol`, `fenol`).
+ * parent's ending (`propan-2-ol`, `butano-1,4-diol`, `ciclohexanol`, `fenol`,
+ * `propanal`, `butanodial`, `pentano-2,4-diona`, `ciclohexanona`). An
+ * aldehyde's locants (always a chain end) are never cited (IUPAC 2013
+ * P-14.3.4.1).
  *
  * @typedef {object} SuffixStructure
- * @property {'alcohol'} kind - Group kind (groups.js GROUP_KINDS); only alcohols are named so far.
+ * @property {'alcohol'|'aldehyde'|'ketone'} kind - Group kind (groups.js GROUP_KINDS; principal.js OXYGEN_KINDS).
  * @property {SuffixLocant[]} locants - One entry per group, ascending locants (a carbon with two OH appears twice).
  */
 
@@ -125,7 +130,7 @@
  * @property {'chain'|'ring'} parentKind - Kind of parent: an open chain, or a ring (`ciclo…`; always the ring when there is one, design.md §13.5).
  * @property {ChainStructure|RingStructure} parent - The numbered parent chain or ring.
  * @property {PrefixGroup[]} prefixes - Grouped substituent prefixes in citation order (empty for an unbranched molecule).
- * @property {SuffixStructure|null} suffix - The principal characteristic groups cited as a suffix (`-ol`, design.md §13.4 I-31), or null (hydrocarbons and halogen derivatives).
+ * @property {SuffixStructure|null} suffix - The principal characteristic groups cited as a suffix (`-ol`, design.md §13.4 I-31; `-al`, `-ona`, I-32), or null (hydrocarbons and halogen derivatives).
  */
 
 /**
@@ -326,17 +331,18 @@ export function buildNameStructure(parts) {
 }
 
 /**
- * Builds the suffix of a numbered parent from its suffix sites (the OH
- * groups on parent atoms, substituent.js suffixSites()): one SuffixLocant per
- * group, ascending locants (then oxygen id); null without sites.
+ * Builds the suffix of a numbered parent from its suffix sites (the groups
+ * of the principal kind on parent atoms, substituent.js suffixSites()): one
+ * SuffixLocant per group, ascending locants (then oxygen id); null without
+ * sites.
  *
  * @param {{atom: number, attachAtom: number, bond: number}[]} sites - The suffix groups (carrying atom, heteroatom, bond).
  * @param {number[]} atoms - Parent atom ids in locant order.
- * @param {'alcohol'} [kind] - Group kind (default 'alcohol').
+ * @param {'alcohol'|'aldehyde'|'ketone'|null} [kind] - Group kind (default 'alcohol').
  * @returns {SuffixStructure|null} The suffix structure.
  */
 export function buildSuffix(sites, atoms, kind = 'alcohol') {
-  if (sites.length === 0) {
+  if (sites.length === 0 || !kind) {
     return null;
   }
   const locantOf = new Map(atoms.map((atom, i) => [atom, i + 1]));

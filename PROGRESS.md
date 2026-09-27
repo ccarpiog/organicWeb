@@ -41,7 +41,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-29 | v2.9 Functional groups and seniority | same, §3.9 | done — `docs/progress-archive/i-29.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-29.md` |
 | I-30 | v2.10 Halogen derivatives | same, §3.10 | done — `docs/progress-archive/i-30.md` | high / opus | Codex ship-with-fixes, 1 fixed, 1 declined — `docs/reviews/I-30.md` |
 | I-31 | v2.11 Alcohols | same, §3.11 | done — `docs/progress-archive/i-31.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-31.md` |
-| I-32 | v2.12 Aldehydes and ketones | same, §3.12 | queued | — | — |
+| I-32 | v2.12 Aldehydes and ketones | same, §3.12 | done — `docs/progress-archive/i-32.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-32.md` |
 | I-33 | v2.13 Carboxylic acids | same, §3.13 | queued | — | — |
 | I-34 | v2.14 Ethers | same, §3.14 | queued | — | — |
 | I-35 | v2.15 Esters | same, §3.15 | queued | — | — |
@@ -53,7 +53,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-31 done; I-32…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-32 done; I-33…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
@@ -89,13 +89,13 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-32 (v2 §3.12 aldehydes and ketones: `-al` / `-ona` suffixes,
-`oxo-` prefix when not principal, aldehyde carbon always locant 1 and uncited, ketone
-locants; seniority aldehído > cetona > alcohol with `hidroxi-`; build on I-31's
-principal-group chain choice and numbering in `parent.js` / `numbering.js` and admission in
-`validate.js`). Spec: design §13.4 row I-32, §13.6, and
-`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 12.
-Deploying stays a manual user step.
+Poll the inbox, then run I-33 (v2 §3.13 carboxylic acids: `ácido etanoico` with `ácido
+acético` as another valid form, simple diacids, the carboxyl carbon counted in the chain and
+locant 1; COOH as one group; seniority ácido > aldehído > cetona > alcohol, so C=O and OH
+become `oxo-`/`hidroxi-` prefixes; build on I-32's `src/naming/principal.js`, P0/N0 in
+`parent.js` / `numbering.js`, admission in `validate.js`, acyl/ring refusals). Spec: design
+§13.4 row I-33, §13.6, and `autoclaude/processed/215-rings-functional-groups-confirmed.md`
+§3 item 13. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -161,13 +161,17 @@ Deploying stays a manual user step.
 - Alcohols (I-31): principal-group chain choice and numbering in `parent.js` /
   `numbering.js`; suffix rendering and multiplier elision in `render.js`; ring closing-bond
   compound locant `1(n)`; tests `tests/unit/alcohols.test.js`, `tests/e2e/alcohols.spec.js`.
+- Carbonyls (I-32): `src/naming/principal.js` (oxygen/principal kind, traditional ids);
+  refusals `ringAldehyde` / `sideChainCarbonyl` / `manyAldehydes` / `acylSubstituent`
+  (`validate.js`, `nameValidated()` in `index.js`); tests `tests/unit/carbonyls.test.js`,
+  `tests/e2e/carbonyls.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-31)
+## Verification (last phase, I-32)
 
-- `npm test` 0 (764 pass) · `npm run check` 0 (96 files) · `npm run e2e` 0
-  (179 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (2611 pass).
+- `npm test` 0 (818 pass) · `npm run check` 0 (99 files) · `npm run e2e` 0
+  (183 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (3111 pass).
 
 ## Open risks / deviations
 
@@ -304,10 +308,16 @@ Deploying stays a manual user step.
   memory; ring closing bond ranks as n, rendered `1(n)` only when OH locants force it.
   Review should-fix (`tetrol`, closing-bond locant) fixed (`docs/progress-archive/i-31.md`).
 
+- I-32: cycloalkanones brought forward from I-40; CHO on rings, acyl-type branches and
+  3+ CHO refused; `propanona` (design) with the 2013 PIN `propan-2-ona` as an alternative;
+  `formaldehído`/`acetaldehído`/`acetona` offered; rule numbers from memory. Review
+  should-fix (acyl leaked through the pin style) fixed with a regression
+  (`docs/progress-archive/i-32.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-30 `521c7cc`, pushed. I-31 committed and pushed right after this
+- I-31 `49f114c`, pushed. I-32 committed and pushed right after this
   checkpoint (see `git log`).

@@ -168,7 +168,7 @@ export function nameBenzeneWithStyle(mol, style = PREFIX_STYLES[0]) {
   const adj = adjacency(mol);
   const ctx = createNamingContext(mol, style, lexiconEs, adj);
   const substituents = collectSubstituents(mol, perceived.atoms, ctx);
-  const sites = suffixSites(mol, adj, perceived.atoms);
+  const sites = suffixSites(mol, adj, perceived.atoms, ctx.principal);
   if (substituents.length + sites.length > 1) {
     throw new Error(`nameBenzeneWithStyle: ${substituents.length + sites.length} substituents (polysubstituted benzenes are refused)`);
   }
@@ -177,7 +177,7 @@ export function nameBenzeneWithStyle(mol, style = PREFIX_STYLES[0]) {
   const structure = buildNameStructure({
     parent,
     prefixes: groupPrefixes(substituents, parent.atoms),
-    suffix: buildSuffix(sites, parent.atoms),
+    suffix: buildSuffix(sites, parent.atoms, ctx.principal),
   });
   const { name, parts } = renderName(structure, lexiconEs);
   const candidate = { atoms: [...perceived.atoms], bonds: [...perceived.bonds], key: 'ring' };

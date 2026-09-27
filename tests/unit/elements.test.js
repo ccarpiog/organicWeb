@@ -239,7 +239,7 @@ test('corrupted saves: unknown elements, charges and radicals are never accepted
 test('a valid molecule with heteroatoms is "not nameable yet", never a crash or a hydrocarbon name', () => {
   const molecules = [
     build(['C', 'N'], [[1, 2]]), // metanamina
-    build(['C', 'C', 'O'], [[1, 2], [2, 3, 2]]), // etanal
+    build(['C', 'O', 'O'], [[1, 2, 2], [1, 3]]), // ácido metanoico (an aldehyde, etanal, is named since I-32)
     build(['C', 'O', 'C'], [[1, 2], [2, 3]]), // metoximetano
     build(['C', 'C', 'N'], [[1, 2], [2, 3, 3]]), // etanonitrilo
     build(['C', 'C', 'N', 'Cl'], [[1, 2], [2, 3], [1, 4]]), // 2-cloroetanamina: a halogen does not lift the refusal

@@ -80,12 +80,29 @@ export const PHENOL_STEM = 'fen';
  * nomenclature. Cumene, cymene and the like are no longer retained
  * (P-22.1.3), so `cumeno` is not offered.
  */
-export const TRADITIONAL_NAMES = Object.freeze({ toluene: 'tolueno', styrene: 'estireno' });
+export const TRADITIONAL_NAMES = Object.freeze({
+  toluene: 'tolueno',
+  styrene: 'estireno',
+  formaldehyde: 'formaldehído',
+  acetaldehyde: 'acetaldehído',
+  acetone: 'acetona',
+});
 
-/** Labels shown next to each traditional name (design.md §1.1 style labels). */
+/**
+ * Labels shown next to each traditional name (design.md §1.1 style labels).
+ * The carbonyl names (design.md §13.4 I-32; principal.js
+ * carbonylTraditionalId()) are offered for the bare molecules only:
+ * `formaldehído` (metanal) and `acetaldehído` (etanal) are retained by IUPAC
+ * 2013 (aldehydes, P-66.6), `acetona` (propanona) is kept for general
+ * nomenclature (ketones, P-64); all three are the everyday names found in
+ * Spanish school books.
+ */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   styrene: 'nombre tradicional, que la IUPAC (2013) acepta',
+  formaldehyde: 'nombre tradicional, que la IUPAC (2013) conserva',
+  acetaldehyde: 'nombre tradicional, que la IUPAC (2013) conserva',
+  acetone: 'nombre tradicional, que la IUPAC (2013) acepta',
 });
 
 /** Endings of the parent name. */
@@ -320,21 +337,33 @@ export function fullyHalogenated(parent, prefixes) {
  *   `etano-1,2-diol`, `2-cloroetan-1-ol`: with two substituents every locant
  *   is cited);
  * - a parent completely substituted by one halogen (fullyHalogenated(); no
- *   suffix): `hexacloroetano`, `tetrafluoroeteno`, `octafluoropropano`.
+ *   suffix): `hexacloroetano`, `tetrafluoroeteno`, `octafluoropropano`;
+ * - `propanona` (design.md §13.4 I-32): a bare three-carbon parent whose
+ *   only substituent is one ketone suffix. The name the design and Spanish
+ *   school books use; a ketone in propane can only be on carbon 2 (on
+ *   carbon 1 it would be the aldehyde propanal). IUPAC 2013 writes the
+ *   locant in the preferred name, `propan-2-ona`, which the app lists under
+ *   "Otras formas válidas". Longer ketones keep it: `butan-2-ona`.
+ * An aldehyde suffix never cites its locants on a chain, whatever this
+ * says (render.js renderParent(), IUPAC 2013 P-14.3.4.1); its prefixes
+ * follow this rule (`2-metilpropanal`, `2-cloroetanal`).
  *
  * @param {{length: number, double: object[], triple: object[]}} chain - The parent chain structure.
  * @param {{substituent: object, locants: object[]}[]} prefixes - Its prefix groups.
- * @param {number} [suffixCount] - Number of suffix groups on the parent (one per OH; default 0).
+ * @param {number} [suffixCount] - Number of suffix groups on the parent (one per group; default 0).
+ * @param {string|null} [suffixKind] - Kind of the suffix groups ('alcohol', 'aldehyde', 'ketone'), or null.
  * @returns {boolean} True when the prefix and suffix locants are omitted.
  */
-export function chainOmitsPrefixLocants(chain, prefixes, suffixCount = 0) {
+export function chainOmitsPrefixLocants(chain, prefixes, suffixCount = 0, suffixKind = null) {
   const occurrences = prefixes.reduce((sum, group) => sum + group.locants.length, 0) + suffixCount;
   if (occurrences === 0) {
     return false;
   }
-  return chain.length === 1 || (chain.length === 2 && occurrences === 1)
+  const propanone = suffixKind === 'ketone' && chain.length === 3 && occurrences === 1
+    && chain.double.length + chain.triple.length === 0;
+  return chain.length === 1 || (chain.length === 2 && occurrences === 1) || propanone
     || (suffixCount === 0 && fullyHalogenated(chain, prefixes));
-}
+} // End of function chainOmitsPrefixLocants()
 
 /**
  * Returns the prefix form of an unbranched saturated alkyl group attached by
@@ -439,6 +468,7 @@ export const STYLE_LABELS = Object.freeze({
   isopropil: 'forma aceptada con isopropil',
   pin: 'nombre preferido por la IUPAC (2013)',
   substituted: 'forma sistemática clásica',
+  locants: 'con el localizador, como la escribe la IUPAC (2013) en el nombre preferido',
 });
 
 /**
@@ -489,9 +519,10 @@ export function styleLabel(style) {
 }
 
 /**
- * Returns a traditional name of a monosubstituted benzene (TRADITIONAL_NAMES).
+ * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene
+ * or a small carbonyl compound.
  *
- * @param {string} id - 'toluene' or 'styrene'.
+ * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde' or 'acetone'.
  * @returns {string} The Spanish name.
  * @throws {Error} For an unknown id.
  */
@@ -506,7 +537,7 @@ export function traditionalName(id) {
 /**
  * Returns the label shown next to a traditional name.
  *
- * @param {string} id - 'toluene' or 'styrene'.
+ * @param {string} id - A TRADITIONAL_NAMES id.
  * @returns {string} The Spanish label.
  */
 export function traditionalLabel(id) {

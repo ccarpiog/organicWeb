@@ -7,9 +7,11 @@
  * it never loses a principal group either). They are compared,
  * direction-independently, by:
  *
- *   P0 most principal characteristic groups (OH groups on chain carbons,
- *      cited as `-ol`; IUPAC 2013 P-44.1.1, design.md §13.4 I-31) — only
- *      when the molecule has OH groups, and then always recorded;
+ *   P0 most principal characteristic groups (the groups of the principal
+ *      oxygen kind on chain carbons: OH groups cited as `-ol`, I-31, or the
+ *      C=O of aldehydes and ketones cited as `-al` / `-ona`, I-32; IUPAC
+ *      2013 P-44.1.1, design.md §13.4) — only when the molecule has such
+ *      groups, and then always recorded;
  *   P1 longest chain (carbon count);
  *   P2 most multiple bonds lying within the chain;
  *   P3 most double bonds within the chain.
@@ -21,12 +23,18 @@
  * leaf-to-leaf restriction is for the parent only, never for substituents.
  * Paths run over the carbon skeleton only: a halogen (design.md §13.4 I-30)
  * is never a chain atom, only a substituent, so it counts in P4 like any
- * other prefix (chainCounts() on the whole graph); nor is the O of an OH
- * (I-31), counted by P0 instead.
+ * other prefix (chainCounts() on the whole graph); nor is any oxygen: one
+ * of the principal kind is counted by P0, any other (a non-principal OH or
+ * C=O, cited `hidroxi-` / `oxo-`) is a prefix counted by P4. A C=O carbon
+ * is a skeleton carbon like any other (an aldehyde carbon is always a leaf,
+ * so it can end a chain; a ketone carbon has two carbon neighbours), and
+ * the C=O bond is never a chain bond, so it counts in no P2/P3 comparison
+ * (design.md §13.6 "Where X belongs").
  * Pure: reads topology only.
  */
 
 import { adjacency, leaves, carbonSkeleton } from '../model/graph.js';
+import { principalKindOf, isPrincipalOxygen } from './principal.js';
 
 /**
  * Orients a chain so that it starts at the end with the smaller atom id.
@@ -108,7 +116,7 @@ export function leafToLeafPaths(mol) {
  *
  * @param {Map<number, {atom: number, bond: number, order: number}[]>} adj - Adjacency map.
  * @param {number[]} atoms - Chain atom ids in order.
- * @param {function(number): boolean} [isSuffixAtom] - Tells whether a neighbour is a suffix group's heteroatom (an OH oxygen); default none.
+ * @param {function(number): boolean} [isSuffixAtom] - Tells whether a neighbour is a suffix group's heteroatom (an oxygen of the principal kind); default none.
  * @returns {{suffixes: number, length: number, multiple: number, double: number, substituents: number}} The counts.
  */
 export function chainCounts(adj, atoms, isSuffixAtom = () => false) {
@@ -190,19 +198,21 @@ function applyCountRule(rule, chains, values) {
  * the chain) is applied, and recorded, only when the molecule has OH groups
  * (an alcohol, design.md §13.4 I-31): IUPAC 2013 puts the principal
  * characteristic groups before the chain length (P-44.1.1), so a shorter
- * chain carrying more OH groups wins.
+ * chain carrying more OH groups wins. The same holds for aldehydes and
+ * ketones (I-32), whose C=O is the principal group when present (principal.js).
  *
- * @param {object} mol - A validated acyclic hydrocarbon, halogen derivative or alcohol.
+ * @param {object} mol - A validated acyclic hydrocarbon, halogen derivative, alcohol, aldehyde or ketone.
  * @returns {{chains: number[][], trace: object[]}} The remaining chains (each starting at its smaller end id) and the P-rule trace steps.
  * @throws {Error} When the invariant "no triple bond leaves a longest chain" is broken.
  */
 export function selectParent(mol) {
   const adj = adjacency(mol);
   let chains = leafToLeafPaths(mol);
-  const isOxygen = (id) => mol.atoms.get(id).element === 'O';
-  const counts = new Map(chains.map((chain) => [chain.join('-'), chainCounts(adj, chain, isOxygen)]));
+  const principal = principalKindOf(mol, adj);
+  const isSuffix = (id) => isPrincipalOxygen(mol, adj, id, principal);
+  const counts = new Map(chains.map((chain) => [chain.join('-'), chainCounts(adj, chain, isSuffix)]));
   const trace = [];
-  const alcohol = [...mol.atoms.values()].some((atom) => atom.element === 'O');
+  const hasPrincipal = principal !== null;
   const rules = [
     { rule: 'P0', field: 'suffixes' },
     { rule: 'P1', field: 'length' },
@@ -210,7 +220,7 @@ export function selectParent(mol) {
     { rule: 'P3', field: 'double' },
   ];
   for (const { rule, field } of rules) {
-    if (rule === 'P0' && !alcohol) {
+    if (rule === 'P0' && !hasPrincipal) {
       continue;
     }
     if (rule !== 'P0' && rule !== 'P1' && chains.length < 2) {
