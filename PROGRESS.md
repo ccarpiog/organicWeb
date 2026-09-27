@@ -14,9 +14,12 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-4 | Naming engine II: parent selection and numbering | `autoclaude/processed/040-naming-parent.md` | queued | — | — |
 | I-5 | Naming engine III: recursive preferred substituents | `autoclaude/processed/050-naming-substituents.md` | queued | — | — |
 | I-6 | Naming engine IV: iliden substituents and fixture set | `autoclaude/processed/060-naming-iliden-fixtures.md` | queued | — | — |
+| I-7 | OPSIN oracle and graph-invariance checks | `autoclaude/processed/070-oracle.md` | queued | — | — |
+| I-8 | Editor core | `autoclaude/processed/080-editor-core.md` | queued | — | — |
+| I-9 | Editor extras | `autoclaude/processed/090-editor-extras.md` | queued | — | — |
 
-Remaining plan items (070–120) are still in `autoclaude/inbox/` and will be
-queued as `I-7` … `I-12` at later phase boundaries.
+Remaining plan items (100–120) are still in `autoclaude/inbox/` and will be
+queued as `I-10` … `I-12` at later phase boundaries.
 
 ## Inbox
 
@@ -25,11 +28,12 @@ queued as `I-7` … `I-12` at later phase boundaries.
 - 2026-09-27 pickup 2 (after I-1): `040-naming-parent.md`,
   `050-naming-substituents.md`, `060-naming-iliden-fixtures.md` → queued as
   I-4, I-5, I-6.
+- 2026-09-27 pickup 3 (after I-2): `070-oracle.md`, `080-editor-core.md`,
+  `090-editor-extras.md` → queued as I-7, I-8, I-9.
 
 ## Next action
 
-Poll the inbox first (phase boundary; items 070–120 remain), then execute
-I-3 (naming engine I: contracts, lexicon, unbranched chains) per
+Execute I-3 (naming engine I: contracts, lexicon, unbranched chains) per
 `autoclaude/processed/030-naming-linear.md`.
 
 ## Key paths

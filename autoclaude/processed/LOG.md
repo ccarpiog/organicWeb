@@ -8,3 +8,6 @@ up. The item itself is in this directory, unchanged.
 - 2026-09-27 11:44 · 040-naming-parent.md · queued · phase I-4 — Naming engine II: parent selection and numbering
 - 2026-09-27 11:44 · 050-naming-substituents.md · queued · phase I-5 — Naming engine III: recursive preferred substituents
 - 2026-09-27 11:44 · 060-naming-iliden-fixtures.md · queued · phase I-6 — Naming engine IV: iliden substituents and fixture set
+- 2026-09-27 11:58 · 070-oracle.md · queued · phase I-7 — OPSIN oracle and graph-invariance checks
+- 2026-09-27 11:58 · 080-editor-core.md · queued · phase I-8 — Editor core
+- 2026-09-27 11:58 · 090-editor-extras.md · queued · phase I-9 — Editor extras
