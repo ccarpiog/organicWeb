@@ -130,10 +130,12 @@ scripts/
 docs/design.md          this file
 ```
 
-`package.json` scripts: `test` (`node --test tests/unit`), `e2e`
-(`playwright test`), `build` (`node scripts/build.mjs`), `serve`
-(`python3 -m http.server 8000`), `check` (`node --check` on every `.js`/`.mjs`
-file under `src/`, `tests/`, `scripts/`), `oracle` (§8).
+`package.json` scripts: `test` (`node --test "tests/unit/**/*.test.js"`),
+`e2e` (`playwright test`), `build` (`node scripts/build.mjs`), `serve`
+(`node scripts/serve.mjs`, zero-dependency static server on port 8000, also
+used by Playwright), `check` (`scripts/check.mjs`: `node --check` on every
+`.js`/`.mjs` file under the root, `src/`, `tests/`, `scripts/`, plus a scan
+for `alert`/`confirm`/`prompt` in app code), `oracle` (§8).
 
 ---
 

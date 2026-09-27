@@ -8,7 +8,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 
 | id | title | spec | status | risk / worker | review |
 |---|---|---|---|---|---|
-| I-1 | Project scaffold | `autoclaude/processed/010-scaffold.md` | queued | — | — |
+| I-1 | Project scaffold | `autoclaude/processed/010-scaffold.md` | done — `docs/progress-archive/i-1.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-1.md` |
 | I-2 | Molecule model, validation, SMILES subset | `autoclaude/processed/020-model.md` | queued | — | — |
 | I-3 | Naming engine I: contracts, lexicon, unbranched chains | `autoclaude/processed/030-naming-linear.md` | queued | — | — |
 
@@ -22,12 +22,26 @@ queued as `I-4` … `I-12` at later phase boundaries.
 
 ## Next action
 
-Execute I-1 (project scaffold) per `autoclaude/processed/010-scaffold.md`.
+Execute I-2 (molecule model, validation, SMILES) per
+`autoclaude/processed/020-model.md`. Poll the inbox first (phase boundary).
+
+## Key paths
+
+- Bundler: `scripts/build.mjs` — read its header for supported module syntax
+  before adding code to `src/` (no circular imports, no `import()`, no
+  multi-declarator or destructuring exports, bindings copied not live).
+- Tests: `tests/unit/*.test.js` (node --test), `tests/e2e/*.spec.js`.
+
+## Verification (last phase)
+
+- `npm test` 0 (30 pass) · `npm run check` 0 · `npm run build` 0 ·
+  `npm run e2e` 0 (3 pass).
 
 ## Open risks / deviations
 
-- None yet.
+- Bundler regex-literal detection is heuristic; duplicate `export *` names:
+  first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- Base: `97b4953` (design plan, rules, inbox).
+- I-1 commit: see `git log` (recorded after push in the next checkpoint).

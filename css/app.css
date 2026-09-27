@@ -1,0 +1,188 @@
+/*
+ * Química orgánica — application styles.
+ * Colour tokens live on :root; dark mode overrides them via prefers-color-scheme.
+ * Layout: toolbar | canvas | results; results drop below the canvas under 800px.
+ */
+
+:root {
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-text: #1d2330;
+  --color-text-muted: #5b6475;
+  --color-border: #d5d9e0;
+  --color-accent: #1f6feb;
+  --color-accent-text: #ffffff;
+  --color-accent-hover: #1858c4;
+  --color-disabled: #9aa3b2;
+  --color-focus: #f59e0b;
+  --color-canvas: #ffffff;
+  --color-bond: #1d2330;
+  --color-highlight: #fde68a;
+  /* Name part colours (used from phase 030 on). */
+  --color-part-locant: #7c3aed;
+  --color-part-prefix: #0f766e;
+  --color-part-parent: #1d4ed8;
+  --color-part-ending: #b91c1c;
+
+  --radius: 10px;
+  --gap: 1rem;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #11151c;
+    --color-surface: #1a1f29;
+    --color-text: #e6e9ef;
+    --color-text-muted: #9aa3b2;
+    --color-border: #2e3542;
+    --color-accent: #4c8dff;
+    --color-accent-text: #0b0f16;
+    --color-accent-hover: #74a7ff;
+    --color-disabled: #4a5263;
+    --color-canvas: #151a23;
+    --color-bond: #e6e9ef;
+    --color-highlight: #6b5a1e;
+    --color-part-locant: #c4a1ff;
+    --color-part-prefix: #5eead4;
+    --color-part-parent: #93b4ff;
+    --color-part-ending: #fca5a5;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-ui);
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.app-header {
+  padding: 0.75rem var(--gap);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.app-subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.app-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(18rem, 24rem);
+  grid-template-areas: "toolbar canvas results";
+  gap: var(--gap);
+  padding: var(--gap);
+  min-height: calc(100vh - 5rem);
+}
+
+.toolbar {
+  grid-area: toolbar;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 3.5rem;
+  padding: 0.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.canvas-area {
+  grid-area: canvas;
+  display: flex;
+  min-height: 20rem;
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.canvas {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  color: var(--color-bond);
+}
+
+.results {
+  grid-area: results;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: var(--gap);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.name-button {
+  padding: 0.9rem 1.25rem;
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-accent-text);
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.name-button:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.name-button:disabled {
+  background: var(--color-disabled);
+  cursor: not-allowed;
+}
+
+.results-hint {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+/* Narrow screens: toolbar becomes a row, results go below the canvas. */
+@media (max-width: 800px) {
+  .app-main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "toolbar"
+      "canvas"
+      "results";
+  }
+
+  .toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    min-height: 3.5rem;
+  }
+
+  .canvas-area {
+    min-height: 60vh;
+  }
+}

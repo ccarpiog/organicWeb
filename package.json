@@ -1,0 +1,22 @@
+{
+  "name": "organic-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Draw an acyclic hydrocarbon and get its IUPAC name in Spanish, with a step-by-step explanation (ESO level).",
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test \"tests/unit/**/*.test.js\"",
+    "check": "node scripts/check.mjs",
+    "e2e": "playwright test",
+    "build": "node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "oracle": "node scripts/oracle/run.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
+}

@@ -10,7 +10,8 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   app also shows the `propan-2-il` (IUPAC preferred) and `1-metiletil` forms.
 - v1 scope: acyclic hydrocarbons only (no rings, benzene, heteroatoms, stereo).
 - Tech: vanilla JavaScript ES modules, no framework, no runtime dependencies.
-  Tests: `npm test` (`node --test`), end-to-end: `npm run e2e` (Playwright).
+  Tests: `npm test` (`node --test`), static checks: `npm run check`,
+  end-to-end: `npm run e2e` (Playwright). Dev server: `npm run serve`.
   Single-file build: `npm run build` → `dist/index.html`.
 - The naming engine (`src/naming/`) is pure: it never reads atom coordinates or the DOM.
 - Never use `alert`/`confirm`/`prompt`; use in-page dialogs.

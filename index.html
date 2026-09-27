@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Química orgánica</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="src/ui/app.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Química orgánica</h1>
+    <p class="app-subtitle">Dibuja un hidrocarburo y descubre su nombre</p>
+  </header>
+
+  <main class="app-main">
+    <nav class="toolbar" id="toolbar" aria-label="Herramientas de dibujo">
+      <!-- Drawing tools are added in phase 080. -->
+    </nav>
+
+    <section class="canvas-area" aria-label="Zona de dibujo">
+      <svg id="canvas" class="canvas" role="img" aria-label="Lienzo de dibujo de la molécula"
+           xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid meet"></svg>
+    </section>
+
+    <aside class="results" id="results" aria-label="Resultado">
+      <button type="button" id="name-button" class="name-button" disabled>¿Cómo se llama?</button>
+      <div class="results-body" aria-live="polite">
+        <p class="results-hint">Dibuja una molécula en el lienzo y pulsa «¿Cómo se llama?».</p>
+      </div>
+    </aside>
+  </main>
+</body>
+</html>
