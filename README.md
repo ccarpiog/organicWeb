@@ -31,8 +31,8 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   the remembered **Resaltar en el dibujo** switch hides or shows those marks.
   Key terms are underlined and show a short definition.
 - **Ordenar dibujo**: redraws the molecule with the main chain laid out left
-  to right and numbered (one animated, undoable edit); rings are not
-  redrawn yet.
+  to right and numbered, or a ring as a regular polygon with locant 1 on top
+  and the numbering clockwise (one animated, undoable edit).
 - **Ejemplos**: a menu of 14 molecules, one per feature.
 - **Ayuda**: a short in-page guide to drawing, with illustrations, keyboard
   shortcuts and the glossary.

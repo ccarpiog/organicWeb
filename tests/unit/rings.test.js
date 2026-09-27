@@ -288,7 +288,10 @@ test('tree-only walkers refuse rings instead of looping', () => {
   assert.throws(() => rootedTreeKey(ring, 1, 2), /cycle/);
   assert.throws(() => canonicalTreeKey(ring), /not a tree/);
   const fake = { ok: true, parent: { atoms: [1, 2, 3, 4, 5, 6], bonds: [] } };
-  assert.throws(() => canonicalLayout(ring, fake), /not a connected tree/);
+  // Since I-27b a single ring given in ring order is laid out as a polygon; anything else is refused.
+  assert.equal(canonicalLayout(ring, fake).atoms.size, 6);
+  assert.throws(() => canonicalLayout(ring, { ok: true, parent: { atoms: [1, 3, 2, 4, 5, 6], bonds: [] } }), /not a connected tree/);
+  assert.throws(() => canonicalLayout(parseSmiles('C1CCC2CCCCC2C1'), fake), /not a connected tree/);
   assert.deepEqual(rightAngleLayout(ring, fake), { ok: false, reason: 'CYCLE' });
   assert.equal(projectRightAngles(ring).reason, 'CYCLE');
   assert.equal(projectRightAngles(parseSmiles('C1CCC2CCCCC2C1')).reason, 'RING_SYSTEM');

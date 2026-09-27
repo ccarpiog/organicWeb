@@ -10,9 +10,10 @@
  * step on (option views of a step are shown as they are). While the 90°
  * drawing is shown (design.md §6.3) the hint is hidden and arrange() is
  * refused with a message (the change would be invisible there); the
- * highlights follow the projected drawing. A named ring (a cycloalkane)
- * gets no hint and arrange() refuses it with a message until ring layouts
- * exist (phase I-27).
+ * highlights follow the projected drawing. A named ring (a single
+ * carbocycle) is ordered too (I-27b): its hint asks about the ring, and the
+ * ordered drawing keeps the ring (closure bond included) highlighted and,
+ * when its numbering step uses numbers, its locants shown.
  *
  * The "Resaltar en el dibujo" switch (one inside the stepper, one under the
  * name while the stepper is closed; both share one state) hides or shows
@@ -46,6 +47,9 @@ const IDLE_HINT = 'Dibuja una molécula en el lienzo y pulsa «¿Cómo se llama?
 /** Question offering the redraw after naming (design.md §7). */
 export const REDRAW_HINT = '¿Quieres ver la cadena principal ordenada?';
 
+/** Question offering the redraw after naming a ring (design.md §7). */
+export const REDRAW_HINT_RING = '¿Quieres ver el anillo ordenado?';
+
 /** Label of the redraw buttons. */
 export const REDRAW_LABEL = 'Ordenar dibujo';
 
@@ -55,18 +59,27 @@ export const ALREADY_ORDERED = 'El dibujo ya está ordenado.';
 /** Toast shown when no clear ordered drawing was found (the drawing is left as it is). */
 export const CANNOT_ORDER = 'No he podido ordenar esta molécula sin que se crucen enlaces. El dibujo se queda como estaba.';
 
-/** Message when "Ordenar dibujo" is asked for a ring (ring layouts come in phase I-27). */
-export const RING_ORDER = 'Todavía no sé ordenar el dibujo de un anillo. El dibujo se queda como estaba.';
-
 /**
- * Tells whether "Ordenar dibujo" can lay out a named molecule: only open
- * chains for now (canonicalLayout() refuses rings until phase I-27).
+ * Tells whether "Ordenar dibujo" can lay out a named molecule: every
+ * successful naming result can (open chains and, since I-27b, single
+ * carbocycles); a molecule that cannot be named shows its naming error.
  *
- * @param {object} result - A successful naming result.
+ * @param {object} result - A naming result.
  * @returns {boolean} True when the canonical layout applies.
  */
 export function canArrange(result) {
-  return Boolean(result && result.ok) && result.structure.parentKind !== 'ring';
+  return Boolean(result && result.ok && result.parent);
+}
+
+/**
+ * The redraw hint for a named molecule: about the ring for a ring parent,
+ * about the main chain otherwise.
+ *
+ * @param {object} result - A successful naming result.
+ * @returns {string} The Spanish question.
+ */
+export function redrawHint(result) {
+  return result && result.structure && result.structure.parentKind === 'ring' ? REDRAW_HINT_RING : REDRAW_HINT;
 }
 
 /** Message when "Ordenar dibujo" is asked for while the 90° drawing is shown. */
@@ -333,8 +346,9 @@ export function buildResults(panel, editor, button, options = {}) {
 
   /**
    * Adds the persistent marks of the ordered drawing to a step view: the
-   * parent chain highlight, and its locants from the numbering step on when
-   * the step shows none.
+   * parent highlight (chain, or ring with its closure bond), and its locants
+   * from the numbering step on when the step shows none. A ring whose
+   * numbering step shows no numbers (a bare ring) gets none.
    *
    * @param {object|null} view - The step view.
    * @param {boolean} isOption - True for an option view (shown unchanged).
@@ -350,9 +364,10 @@ export function buildResults(panel, editor, button, options = {}) {
     if (!highlight.some((spec) => spec.style === 'parent')) {
       next.highlight = [parent, ...highlight];
     }
-    const numbering = steps.findIndex((step) => step.id === 'numbering');
+    const numbering = steps.findIndex((step) => step.id === 'numbering' || step.id === 'ringNumbering');
     const at = stepper && !stepper.root.hidden ? stepIndex : steps.length - 1;
-    if (!view.locants && at >= numbering) {
+    const unnumbered = numbering >= 0 && steps[numbering].id === 'ringNumbering' && !steps[numbering].locants;
+    if (!view.locants && at >= numbering && !unnumbered) {
       next.locants = current.parent.atoms.map((id, i) => [id, i + 1]);
     }
     return next;
@@ -661,17 +676,13 @@ export function buildResults(panel, editor, button, options = {}) {
     } // End of the alternatives block
     hint = make(doc, 'div', 'redraw-hint');
     hint.id = 'redraw-hint';
-    hint.appendChild(make(doc, 'p', 'redraw-hint-text', REDRAW_HINT));
+    hint.appendChild(make(doc, 'p', 'redraw-hint-text', redrawHint(result)));
     const redraw = make(doc, 'button', 'redraw-hint-button', REDRAW_LABEL);
     redraw.type = 'button';
     redraw.addEventListener('click', () => arrange());
     hint.appendChild(redraw);
     hint.hidden = isProjected();
-    if (canArrange(result)) {
-      nodes.push(hint);
-    } else {
-      hint = null; // A ring: no redraw offered yet (I-27).
-    }
+    nodes.push(hint);
     const toggle = make(doc, 'button', 'stepper-toggle', 'Ver paso a paso');
     toggle.type = 'button';
     toggle.setAttribute('aria-expanded', 'false');
@@ -720,8 +731,9 @@ export function buildResults(panel, editor, button, options = {}) {
    * "Ordenar dibujo": names the molecule first when no name is shown, then
    * applies its canonical layout (design.md §7) as one animated, undoable
    * coordinate edit. The name stays on show. A layout with crossing bonds or
-   * atoms too close together (layoutProblems()) is refused with a message,
-   * and so is a ring (RING_ORDER; ring layouts come in phase I-27).
+   * atoms too close together (layoutProblems()) is refused with a message.
+   * Chains and single carbocycles are both laid out (canonicalLayout()
+   * picks the strategy); a molecule that cannot be named shows its error.
    *
    * @returns {object} The naming result on failure, else the edit outcome.
    */
@@ -739,10 +751,7 @@ export function buildResults(panel, editor, button, options = {}) {
       }
     }
     if (!canArrange(current)) {
-      if (options.notify) {
-        options.notify(RING_ORDER);
-      }
-      return { ok: false, message: RING_ORDER };
+      return current;
     }
     const laid = canonicalLayout(editor.getMolecule(), current);
     if (!layoutProblems(laid).ok) {

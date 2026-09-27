@@ -21,7 +21,7 @@ import { buildRingStructure, buildNameStructure } from '../../src/naming/structu
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import { explain, plainText, atomCounts } from '../../src/explain/explain.js';
 import { projectRightAngles } from '../../src/ui/canvasbar.js';
-import { canArrange } from '../../src/ui/results.js';
+import { canArrange, redrawHint } from '../../src/ui/results.js';
 import { englishName } from '../../scripts/oracle/compare.mjs';
 import { scrambleMolecule, seededRandom, generateCycloalkanes } from '../../scripts/oracle/generate.mjs';
 
@@ -205,11 +205,14 @@ test('explanation: closure, carbon count, CₙH₂ₙ, closure bond highlighted,
   assert.equal(steps.flatMap((s) => s.text).some((t) => /cadena principal/.test(t)), false, 'no parent-chain wording');
 }); // End of test 'explanation'
 
-test('Ordenar dibujo and the 90° view fall back for a named ring', () => {
+test('Ordenar dibujo lays out a named ring (I-27b); the 90° view falls back', () => {
   const mol = parseSmiles('C1CCCCC1');
   const result = nameMolecule(mol);
   assert.equal(result.ok, true);
-  assert.equal(canArrange(result), false);
+  assert.equal(canArrange(result), true);
+  assert.equal(redrawHint(result), '¿Quieres ver el anillo ordenado?');
+  assert.equal(redrawHint(nameMolecule(parseSmiles('CCCC'))), '¿Quieres ver la cadena principal ordenada?');
+  assert.equal(canArrange(nameMolecule(parseSmiles('C1=CC=CC=C1'))), false, 'benzene is not named yet');
   assert.equal(canArrange(nameMolecule(parseSmiles('CCCC'))), true);
   assert.deepEqual(projectRightAngles(mol), { ok: false, reason: 'CYCLE' });
 });

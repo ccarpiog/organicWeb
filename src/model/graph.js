@@ -386,7 +386,7 @@ export function canonicalTreeKey(mol) {
  *   the ring bond from `atoms[i]` to `atoms[(i + 1) % n]`.
  * @throws {Error} If the remaining atoms do not form a simple cycle (two bonds between the same pair).
  */
-function monocycleOrder(adj) {
+export function monocycleOrder(adj) {
   const degree = new Map([...adj].map(([id, list]) => [id, list.length]));
   const queue = [...adj.keys()].filter((id) => degree.get(id) <= 1);
   const removed = new Set();

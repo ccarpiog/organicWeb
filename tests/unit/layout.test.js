@@ -88,14 +88,14 @@ function checkLayout(smiles) {
   }
 } // End of function checkLayout()
 
-test('every acyclic fixture molecule gets a clear canonical layout; rings are refused (I-27)', async () => {
+test('every fixture molecule gets a clear canonical layout (rings: ring-layout.test.js)', async () => {
   const all = await fixtureSmiles();
   assert.ok(all.length >= 150);
   for (const smiles of all) {
     const mol = parseSmiles(smiles);
     if (hasCycle(mol)) {
-      // Cycloalkanes are named, but ring layouts come in phase I-27.
-      assert.throws(() => canonicalLayout(mol, nameMolecule(mol)), /not a connected tree/, smiles);
+      // Rings get the polygon strategy (I-27b), checked in detail in ring-layout.test.js.
+      assert.ok(layoutProblems(canonicalLayout(mol, nameMolecule(mol))).ok, smiles);
       continue;
     }
     checkLayout(smiles);

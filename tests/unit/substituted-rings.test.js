@@ -288,12 +288,12 @@ test('a benzene ring (Kekulé hexagon) is refused with CYCLE until I-28; other a
   assert.equal(named('C1=CC=CCC1').name, 'ciclohexa-1,3-dieno');
 }); // End of test 'a benzene ring…'
 
-test('Ordenar dibujo and the 90° view still fall back for substituted rings', () => {
+test('Ordenar dibujo lays out substituted rings (I-27b); the 90° view still falls back', () => {
   for (const smiles of ['CC1CCCCC1', 'CC1C=CCCC1', 'C=C1CCCCC1']) {
     const mol = parseSmiles(smiles);
     const result = nameMolecule(mol);
     assert.equal(result.ok, true);
-    assert.equal(canArrange(result), false, smiles);
+    assert.equal(canArrange(result), true, smiles);
     assert.deepEqual(projectRightAngles(mol), { ok: false, reason: 'CYCLE' }, smiles);
   }
 }); // End of test 'Ordenar dibujo and the 90° view…'

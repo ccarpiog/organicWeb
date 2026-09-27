@@ -137,6 +137,7 @@ src/
   editor/geometry.js    placement angles, snapping, bond length
   editor/render.js      SVG rendering (skeletal and condensed modes)
   layout/canonical.js   redraw: main chain horizontal zigzag, branches placed
+  layout/rings.js       redraw ring strategy: regular polygon, side-chain directions (§7)
   layout/rightangle.js  90° view: display-only right-angle projection (§6.3)
   ui/app.js             wires editor, toolbar, canvas bar, autosave, results panel
   ui/results.js         name button, coloured name, alternatives, errors, stepper
@@ -723,9 +724,23 @@ Keyboard: elements `c` carbono, `o` oxígeno, `n` nitrógeno, `f` flúor, `l` cl
 `canonicalLayout(mol, result)` → new coordinates only (ids and topology
 unchanged):
 
-- Parent as a horizontal zigzag, locant 1 on the left.
-- Substituents drawn away from the parent on the zigzag's free side,
-  recursively as zigzags; resolve collisions by flipping sides, then widening
+- Parent by strategy (`canonical.js`): an open chain as a horizontal
+  zigzag, locant 1 on the left; a named single carbocycle (I-27b,
+  `layout/rings.js`; bare, substituted or unsaturated, 3–30 carbons) as a
+  regular polygon with the standard bond length, **locant 1 at the top
+  vertex and the numbering running clockwise** on screen, in the order of
+  the naming result's ring numbering. Each side chain leaves its ring atom
+  outwards along the bisector of the exterior angle; two on one ring atom
+  are spread symmetrically inside the free exterior angle (± a sixth of it:
+  ±40° on a hexagon, ±50° on a triangle, ±32° on a 30-ring). The branches
+  of a ring atom (and of every side-chain atom) are taken in canonical-key
+  order, so the drawing does not depend on atom ids, insertion order or
+  input coordinates. The layout only walks the tree side chains (it checks
+  first that the molecule has exactly one ring and that it is the parent),
+  so it never loops on a cycle.
+- Substituents drawn away from the parent on the zigzag's free side (or
+  outwards from the ring), recursively as zigzags, by the same code for
+  chains and rings; resolve collisions by flipping sides, then widening
   angles. Tested on densely branched examples (no two atoms closer than 0.5
   bond lengths, no bond crossings). If no such layout is found, the drawing
   is left unchanged and a Spanish message says so. A press on the canvas
@@ -742,14 +757,16 @@ unchanged):
   normal drawing gets its restored view when it comes back. The naming result stays (when no name is shown,
   the toolbar button names the molecule first); the parent is highlighted
   persistently while the ordered drawing is shown (i.e. until an atom moves
-  or undo restores other coordinates); locant numbers appear next to parent
-  atoms from the numbering step on. A step's option views (Opción A/B,
+  or undo restores other coordinates; for a ring: all ring atoms and bonds,
+  closure bond included); locant numbers appear next to parent atoms from
+  the numbering step ("Numera la cadena" / "Numera el anillo") on, except
+  on a bare ring, whose numbering step uses no numbers. A step's option views (Opción A/B,
   chain candidates) are shown unchanged. "Resaltar en el dibujo" off (§9)
   hides these marks too.
 - After naming, a hint offers it: "¿Quieres ver la cadena principal
-  ordenada?". A named ring gets no hint, and the button answers "Todavía no
-  sé ordenar el dibujo de un anillo. El dibujo se queda como estaba." until
-  ring layouts exist (I-27b).
+  ordenada?", or for a named ring "¿Quieres ver el anillo ordenado?". A
+  molecule that cannot be named (benzene until I-28, ring systems,
+  heteroatoms…) gets no hint and the button shows its naming error.
 - While the 90° drawing is shown (§6.3) "Ordenar dibujo" and its hint are disabled (the
   change would be invisible there; the message "Desactiva los ángulos rectos
   para ordenar el dibujo." answers a call anyway). The 90° view already puts
@@ -994,13 +1011,12 @@ before being presented as validated IUPAC 2013 coverage.
 - Tree keys include elements but do not support cycles; since I-24
   `canonicalKey()` adds a monocycle key (polycycles still have none), and the
   OPSIN adapter keeps rings and compares them with it.
-- The 90° view and "Ordenar dibujo" assume branched chains; they need
-  specific strategies (I-27b). Until then both fall back safely: Ordenar
-  dibujo shows the naming error, or for any named ring (bare, substituted
-  or unsaturated) "Todavía no sé ordenar el dibujo de un anillo…" and offers
-  no hint; the 90° view draws the
-  normal drawing ("Hay un anillo…" / "Hay anillos…"); the layouts themselves
-  refuse a cyclic molecule instead of looping.
+- The 90° view and "Ordenar dibujo" assumed branched chains. Since I-27b
+  "Ordenar dibujo" has a ring strategy (§7): every named single carbocycle
+  is ordered as a regular polygon, and a molecule that cannot be named shows
+  its naming error. The 90° view still draws the normal drawing for rings
+  ("Hay un anillo…" / "Hay anillos…"); both layouts refuse any other cyclic
+  molecule instead of looping.
 - The explanation rebuilds counts from hydrocarbon structures: it must
   receive composition and groups from the engine.
 
@@ -1021,7 +1037,7 @@ certifies IUPAC preference or Spanish spelling.
 | I-24 | Ring infrastructure | New `model/rings.js`, `graph.js`, SMILES, oracle: ring closures in SMILES, structural identity for monocycles, scope messages. | Rotations, invalid closures, polycycles; no infinite recursion, no formula-only comparisons. |
 | I-25 | Simple cycloalkanes | New `N/rings.js`, `structure.js`, renderer, both lexicons, E: `ciclohexano`; explain the closure and carbon count. | Supported sizes, formulas; closure bond highlighted. |
 | I-26 | Substituted and unsaturated rings | `N/rings.js`, `parent.js`, `numbering.js`, `substituent.js`, E: every start/direction; unsaturation and substituent locants; explicit ring-vs-chain choice per the 2013 rules. | Symmetry, dienes, side chains; old school rules not carried over automatically. |
-| I-27 | Drawing and ordering rings | Split in two. **I-27a** (done): editor ring templates (Anillos tool, sizes 3–8: free, hung from an atom, fused on a bond; §6.1) and inner double-bond lines for ring bonds (§6.3). **I-27b**: new `layout/rings.js`, `canonical.js`, `rightangle.js`: Ordenar dibujo by strategy for rings; the 90° view keeps falling back to the normal drawing for rings. | Collisions, undo, locants; topology and editability kept. |
+| I-27 | Drawing and ordering rings | Split in two. **I-27a** (done): editor ring templates (Anillos tool, sizes 3–8: free, hung from an atom, fused on a bond; §6.1) and inner double-bond lines for ring bonds (§6.3). **I-27b** (done): new `layout/rings.js` and `canonical.js`: Ordenar dibujo by strategy for rings (regular polygon, locant 1 on top, numbering clockwise, side chains outwards; §7); `rightangle.js` unchanged: the 90° view keeps falling back to the normal drawing for rings. | Collisions, undo, locants; topology and editability kept. |
 | I-28 | Benzene and hydrocarbon derivatives | New `N/aromatic.js`, lexicons, editor, E, OPSIN adapter: benzene, monosubstituted alkylbenzenes, fenilo; hexagon template with alternating bonds; explain equivalent Kekulé drawings. | Both Kekulé forms; aromaticity never inferred from any alternation. |
 | I-29 | Functional groups and seniority | New `N/groups.js`, `seniority.js`; selection, structure, E: detect groups without overlaps; steps "Reconoce los grupos", "Elige el principal", "Sufijo o prefijo". | Acid/ester/amide vs alcohol/ketone; detection does not yet enable naming. |
 | I-30 | Halogen derivatives | Prefixes fluoro-, cloro-, bromo-, yodo-; multipliers and alphabetical order; never a suffix. | Several halogens and ties; ordering of translated prefixes. |

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T19:56:02Z",
+  "updated": "2026-09-27T20:13:32Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -250,9 +250,11 @@
     {
       "id": "I-27b",
       "title": "v2.7b Ordenar dibujo for rings",
-      "status": "queued",
+      "status": "done",
       "risk": "high",
-      "summary": "Ordenar dibujo lays out a named single ring as a regular polygon with side chains outside, locants and one undo step. Split from I-27."
+      "summary": "Ordenar dibujo lays out a named single ring as a regular polygon with side chains outside, locants and one undo step.",
+      "review": "docs/reviews/I-27b.md",
+      "narrative": "docs/progress-archive/i-27b.md"
     },
     {
       "id": "I-28",
