@@ -22,6 +22,7 @@ import {
   compoundMultiplier,
   needsConnectingVowel,
   omitsLocants,
+  ringOmitsLocants,
 } from './lexicon.es.js';
 
 /** Chain stems indexed by carbon count (index 0 unused). */
@@ -218,6 +219,7 @@ export const lexiconEn = Object.freeze({
   unsaturationEnding,
   needsConnectingVowel,
   omitsLocants,
+  ringOmitsLocants,
   alkylPrefix,
   groupName,
   prefixForm,

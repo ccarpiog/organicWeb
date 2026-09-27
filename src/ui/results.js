@@ -37,7 +37,6 @@ import { canonicalLayout, layoutProblems } from '../layout/canonical.js';
 /** Extra hints shown under an error message, by error code. */
 export const ERROR_HINTS = Object.freeze({
   EMPTY: 'Usa las herramientas de la izquierda para dibujar carbonos y enlaces.',
-  CYCLE: 'Quita las ramas y los enlaces dobles o triples del anillo, o borra un enlace del anillo para abrir la cadena.',
   DISCONNECTED: 'Une las piezas con un enlace o borra las que sobran.',
 });
 

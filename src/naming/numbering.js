@@ -27,7 +27,9 @@
  *
  * The same cascade numbers substituent chains (substituent.js); there an
  * FV rule (lowest locant for the free valence, IUPAC 2013 P-31.1.4.2.4)
- * comes before N1.
+ * comes before N1. Ring parents (rings.js) reuse it through
+ * runNumberingCascade() with every start atom and direction of the ring as
+ * candidates (design.md §13.5).
  *
  * The cascade stops as soon as one candidate remains. Pure: reads topology only.
  */
@@ -281,20 +283,103 @@ function applySubstituentCountRule(candidates, counts) {
 } // End of function applySubstituentCountRule()
 
 /**
- * Chooses the parent and its numbering among the given chains (both
- * directions of each), applying (FV,) N1, N2, P4, N3, N4, N5 and then the presentation tie-break
- * (smallest ordered atom-id tuple — not an IUPAC rule; it only stabilises
- * highlighting and redraw). The cascade stops as soon as one candidate
- * remains; each rule applied is recorded with the compared values. P4 is
- * skipped when the remaining candidates all come from one chain; N3 and N4
- * when no candidate carries prefixes (nothing to compare).
+ * Builds the data every numbering rule compares for one directed candidate:
+ * its bonds and bond orders in locant order, the free-valence locant (FV)
+ * and the prefix locants (all sorted, and grouped in citation order). Shared
+ * by chains (numberParent()) and rings (rings.js), whose candidates also
+ * list the closing bond last (locant n).
+ *
+ * @param {number[]} atoms - Candidate atom ids in locant order.
+ * @param {number[]} bonds - Bond ids in locant order.
+ * @param {number[]} orders - Order of each bond in `bonds`.
+ * @param {{atom: number, key: string, citation: object}[]} prefixes - The prefixes carried by the candidate's atoms.
+ * @param {number|null} [freeValenceAtom] - Attachment atom of a substituent chain (enables FV), or null.
+ * @returns {{bonds: number[], orders: number[], freeValence: number[], all: number[], groups: object[]}} The compared data.
+ */
+export function candidateData(atoms, bonds, orders, prefixes, freeValenceAtom = null) {
+  const locantOf = new Map(atoms.map((atom, i) => [atom, i + 1]));
+  return {
+    bonds: [...bonds],
+    orders: [...orders],
+    freeValence: freeValenceAtom === null || freeValenceAtom === undefined ? [] : [locantOf.get(freeValenceAtom)],
+    ...prefixLocants(prefixes, locantOf),
+  };
+}
+
+/**
+ * Runs the numbering cascade on prepared candidates: (FV,) N1, N2, P4, N3,
+ * N4, N5 and then the presentation tie-break (smallest ordered atom-id
+ * tuple — not an IUPAC rule; it only stabilises highlighting and redraw).
+ * The cascade stops as soon as one candidate remains; each rule applied is
+ * recorded with the compared values. P4 is skipped when the remaining
+ * candidates all come from one chain (always, for a ring); N3 and N4 when no
+ * candidate carries prefixes (nothing to compare).
  *
  * N5 is applied only when the candidates left after N4 would give different
  * names (different prefixes with the same locants); it compares complete-name
  * keys from `options.nameKey` (called with a candidate's groups
- * `{key, citation, locants}` in citation order). With `freeValenceAtom`
+ * `{key, citation, locants}` in citation order). Candidates left for the
+ * tie-break give the same name.
+ *
+ * @param {{atoms: number[], direction: string, key: string, chainIndex: number}[]} candidates - Directed candidates (unique keys).
+ * @param {Map<string, object>} data - candidateData() of each candidate, by key.
+ * @param {{prefixCounts: number[], hasFreeValence?: boolean, nameKey?: function(object[]): object}} options - Prefix count of each source chain (P4, by chainIndex); whether FV applies; complete-name key (N5).
+ * @returns {{chosen: object, trace: object[]}} The winning candidate and the trace steps.
+ */
+export function runNumberingCascade(candidates, data, options) {
+  const { prefixCounts } = options;
+  const hasPrefixes = prefixCounts.some((n) => n > 0);
+  let remaining = [...candidates];
+  const rules = [
+    { rule: 'FV', value: (d) => d.freeValence, skip: !options.hasFreeValence },
+    { rule: 'N1', value: (d) => bondLocants(d.orders, (order) => order >= 2) },
+    { rule: 'N2', value: (d) => bondLocants(d.orders, (order) => order === 2) },
+    { rule: 'P4' },
+    { rule: 'N3', value: (d) => d.all, skip: !hasPrefixes },
+    { rule: 'N4', value: (d) => d.groups.flatMap((g) => g.locants), skip: !hasPrefixes },
+  ];
+  const trace = [];
+  for (const { rule, value, skip } of rules) {
+    if (remaining.length < 2 || skip) {
+      continue;
+    }
+    if (rule === 'P4') {
+      if (new Set(remaining.map((c) => c.chainIndex)).size > 1) {
+        const { step, survivors } = applySubstituentCountRule(remaining, prefixCounts);
+        trace.push(step);
+        remaining = survivors;
+      }
+      continue;
+    }
+    const { step, survivors } = applyLocantRule(rule, remaining, remaining.map((c) => value(data.get(c.key))));
+    trace.push(step);
+    remaining = survivors;
+  } // End of the loop over the rules FV, N1, N2, P4, N3, N4
+  const differ = () => {
+    const first = data.get(remaining[0].key).groups;
+    return remaining.some((c) => !sameGroups(data.get(c.key).groups, first));
+  };
+  if (remaining.length > 1 && differ()) {
+    const nameKey = options.nameKey || defaultNameKey;
+    const values = remaining.map((c) => [nameKey(data.get(c.key).groups)]);
+    const { step, survivors } = applyLocantRule('N5', remaining, values, (a, b) => compareCitationKeys(a[0], b[0]));
+    trace.push(step);
+    remaining = survivors;
+  }
+  if (remaining.length > 1) {
+    const { step, survivors } = applyLocantRule('TIE', remaining, remaining.map((c) => c.atoms));
+    step.note = TIE_NOTE;
+    trace.push(step);
+    remaining = survivors;
+  }
+  return { chosen: remaining[0], trace };
+} // End of function runNumberingCascade()
+
+/**
+ * Chooses the parent and its numbering among the given chains (both
+ * directions of each), with runNumberingCascade(). With `freeValenceAtom`
  * (a substituent chain) the FV rule — lowest locant for that atom — comes
- * first. Candidates left for the tie-break give the same name.
+ * first.
  *
  * @param {object} mol - A validated acyclic hydrocarbon.
  * @param {number[][]} chains - The remaining chains (atom-id paths).
@@ -308,61 +393,16 @@ export function numberParent(mol, chains, prefixesOf = () => [], options = {}) {
   const hasFreeValence = fvAtom !== undefined && fvAtom !== null;
   const prefixesByChain = chains.map((chain) => prefixesOf(chain));
   const data = new Map();
-  let candidates = directedCandidates(chains);
+  const candidates = directedCandidates(chains);
   for (const candidate of candidates) {
-    const locantOf = new Map(candidate.atoms.map((atom, i) => [atom, i + 1]));
     const { bonds, orders } = chainBonds(adj, candidate.atoms);
-    data.set(candidate.key, {
-      bonds,
-      orders,
-      freeValence: hasFreeValence ? [locantOf.get(fvAtom)] : [],
-      ...prefixLocants(prefixesByChain[candidate.chainIndex], locantOf),
-    });
+    data.set(candidate.key, candidateData(candidate.atoms, bonds, orders, prefixesByChain[candidate.chainIndex], hasFreeValence ? fvAtom : null));
   }
-  const hasPrefixes = prefixesByChain.some((list) => list.length > 0);
-  const rules = [
-    { rule: 'FV', value: (d) => d.freeValence, skip: !hasFreeValence },
-    { rule: 'N1', value: (d) => bondLocants(d.orders, (order) => order >= 2) },
-    { rule: 'N2', value: (d) => bondLocants(d.orders, (order) => order === 2) },
-    { rule: 'P4' },
-    { rule: 'N3', value: (d) => d.all, skip: !hasPrefixes },
-    { rule: 'N4', value: (d) => d.groups.flatMap((g) => g.locants), skip: !hasPrefixes },
-  ];
-  const trace = [];
-  for (const { rule, value, skip, compare } of rules) {
-    if (candidates.length < 2 || skip) {
-      continue;
-    }
-    if (rule === 'P4') {
-      if (new Set(candidates.map((c) => c.chainIndex)).size > 1) {
-        const { step, survivors } = applySubstituentCountRule(candidates, prefixesByChain.map((list) => list.length));
-        trace.push(step);
-        candidates = survivors;
-      }
-      continue;
-    }
-    const { step, survivors } = applyLocantRule(rule, candidates, candidates.map((c) => value(data.get(c.key))), compare);
-    trace.push(step);
-    candidates = survivors;
-  } // End of the loop over the rules FV, N1, N2, P4, N3, N4
-  const differ = () => {
-    const first = data.get(candidates[0].key).groups;
-    return candidates.some((c) => !sameGroups(data.get(c.key).groups, first));
-  };
-  if (candidates.length > 1 && differ()) {
-    const nameKey = options.nameKey || defaultNameKey;
-    const values = candidates.map((c) => [nameKey(data.get(c.key).groups)]);
-    const { step, survivors } = applyLocantRule('N5', candidates, values, (a, b) => compareCitationKeys(a[0], b[0]));
-    trace.push(step);
-    candidates = survivors;
-  }
-  if (candidates.length > 1) {
-    const { step, survivors } = applyLocantRule('TIE', candidates, candidates.map((c) => c.atoms));
-    step.note = TIE_NOTE;
-    trace.push(step);
-    candidates = survivors;
-  }
-  const chosen = candidates[0];
+  const { chosen, trace } = runNumberingCascade(candidates, data, {
+    prefixCounts: prefixesByChain.map((list) => list.length),
+    hasFreeValence,
+    nameKey: options.nameKey,
+  });
   const { bonds, orders } = data.get(chosen.key);
   return {
     atoms: [...chosen.atoms],

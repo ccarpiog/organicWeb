@@ -14,14 +14,14 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
-import { canonicalTreeKey } from '../../src/model/graph.js';
+import { canonicalTreeKey, canonicalKey, cyclomaticNumber } from '../../src/model/graph.js';
 import { validateForNaming } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { lexiconEs } from '../../src/naming/lexicon.es.js';
 import { lexiconEn, stem } from '../../src/naming/lexicon.en.js';
 import { parseFullSmiles, heavyAtomTree, OracleSmilesError } from '../../scripts/oracle/smiles-full.mjs';
 import { englishName, compareWithOpsin } from '../../scripts/oracle/compare.mjs';
-import { generateMolecules } from '../../scripts/oracle/generate.mjs';
+import { generateMolecules, generateMonocycles } from '../../scripts/oracle/generate.mjs';
 import { checkAvailability } from '../../scripts/oracle/opsin.mjs';
 import { main, parseArgs, evaluate } from '../../scripts/oracle/run.mjs';
 
@@ -176,6 +176,24 @@ test('the seeded generator is deterministic, distinct and valid', () => {
   assert.ok(molecules.some((mol) => [...mol.bonds.values()].some((bond) => bond.order === 3)));
 }); // End of test 'the seeded generator is deterministic, distinct and valid'
 
+test('the seeded monocycle generator is deterministic, distinct, valid and varied (I-26)', () => {
+  const a = generateMonocycles({ count: 100, seed: 5 }).map(writeSmiles);
+  assert.deepEqual(a, generateMonocycles({ count: 100, seed: 5 }).map(writeSmiles));
+  assert.notDeepEqual(a, generateMonocycles({ count: 100, seed: 6 }).map(writeSmiles));
+  const molecules = generateMonocycles({ count: 100, seed: 5 });
+  assert.equal(molecules.length, 100);
+  assert.equal(new Set(molecules.map(canonicalKey)).size, 100);
+  for (const mol of molecules) {
+    assert.equal(validateForNaming(mol), null);
+    assert.equal(cyclomaticNumber(mol), 1);
+    assert.ok(mol.atoms.size >= 4 && mol.atoms.size <= 14);
+  }
+  const results = molecules.map((mol) => nameMolecule(mol));
+  assert.ok(results.some((r) => r.structure.prefixes.length > 0), 'some carry side chains');
+  assert.ok(results.some((r) => r.structure.parent.double.length > 0), 'some have ring double bonds');
+  assert.ok(results.some((r) => r.structure.parent.triple.length > 0), 'some have ring triple bonds');
+}); // End of test 'the seeded monocycle generator…'
+
 test('oracle options', () => {
   assert.equal(parseArgs(['--count', '1000', '--seed', '1']).count, 1000);
   assert.equal(parseArgs([]).seed, 1);
@@ -190,8 +208,8 @@ test('without the jar every molecule is skipped, never passed, with exit status 
   const status = await main(['--count', '5', '--seed', '1', '--jar', path.join(ROOT, 'scripts', 'oracle', 'vendor', 'missing.jar')]);
   assert.equal(status, 0);
   assert.ok(lines.some((line) => /^skipped: /.test(line)));
-  // 5 random molecules plus the 11 cycloalkanes of the default 4–14 C range.
-  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 16  adapter failures: 0'), lines.join('\n'));
+  // 5 random molecules, 3 random monocycles and the 11 cycloalkanes of the default 4–14 C range.
+  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 19  adapter failures: 0'), lines.join('\n'));
   lines.length = 0;
   assert.equal(await main(['--count', '3', '--java', 'no-such-java-binary']), 0);
   assert.ok(lines.some((line) => /Java not available/.test(line)));
@@ -211,7 +229,7 @@ test('a jar whose checksum is not the pinned one is rejected at any path', async
   assert.match(availability.reason, /checksum/);
 }); // End of test 'a jar whose checksum is not the pinned one is rejected at any path'
 
-test('real OPSIN round trip over 200 random molecules and the cycloalkanes (skipped without Java or the jar)', async (t) => {
+test('real OPSIN round trip over 200 random molecules, 100 monocycles and the cycloalkanes (skipped without Java or the jar)', async (t) => {
   const availability = await checkAvailability();
   if (!availability.ok) {
     t.skip(availability.reason);
@@ -221,8 +239,8 @@ test('real OPSIN round trip over 200 random molecules and the cycloalkanes (skip
   t.mock.method(console, 'log', (text) => lines.push(text));
   const status = await main(['--count', '200', '--seed', '42']);
   assert.equal(status, 0, lines.join('\n'));
-  assert.ok(lines.includes('passed: 211  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
-}); // End of test 'real OPSIN round trip over 200 random molecules and the cycloalkanes'
+  assert.ok(lines.includes('passed: 311  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
+}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles and the cycloalkanes'
 
 test('the English lexicon never reaches the app', async () => {
   const files = [];

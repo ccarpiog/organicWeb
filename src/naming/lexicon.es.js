@@ -189,6 +189,35 @@ export function omitsLocants(chain, hasPrefixes) {
 }
 
 /**
+ * Locant omission for a ring parent (design.md §1.1, §13.4 I-26), an
+ * explicit rule like the chain table above, never inferred from "only one
+ * structural possibility":
+ * - an unsubstituted monocycle with exactly one multiple bond omits its
+ *   locant: `ciclohexeno`, `ciclooctino` (every lowest-locant numbering puts
+ *   the bond at 1; IUPAC 2013 P-31.1.4.2.4 names these cyclohexene,
+ *   cyclooctyne);
+ * - a saturated monocycle with exactly one substituent omits that
+ *   substituent's locant: `metilciclohexano`, `metilidenciclohexano`
+ *   (IUPAC 2013 P-14.3.4.2(c): the locant 1 is omitted in a monosubstituted
+ *   parent hydride with only one kind of substitutable hydrogen);
+ * - everything else keeps all its locants, the 1 of a ring double bond
+ *   included: `3-metilciclohex-1-eno`, `1-metilciclohex-1-eno`,
+ *   `ciclohexa-1,3-dieno`, `1,1-dimetilciclohexano` (as `but-1-eno` and
+ *   `2-metilprop-1-eno` keep theirs).
+ *
+ * @param {{double: object[], triple: object[]}} ring - The ring structure.
+ * @param {{locants: object[]}[]} prefixes - Its prefix groups.
+ * @returns {{parent: boolean, prefixes: boolean}} Whether the ending locants and the prefix locants are omitted.
+ */
+export function ringOmitsLocants(ring, prefixes) {
+  const multiple = ring.double.length + ring.triple.length;
+  return {
+    parent: prefixes.length === 0 && multiple === 1,
+    prefixes: multiple === 0 && prefixes.length === 1 && prefixes[0].locants.length === 1,
+  };
+}
+
+/**
  * Returns the prefix form of an unbranched saturated alkyl group attached by
  * its end: `metil`, `etil`, `propil`… (`-iliden` for a double attachment).
  *
@@ -358,6 +387,7 @@ export const lexiconEs = Object.freeze({
   unsaturationEnding,
   needsConnectingVowel,
   omitsLocants,
+  ringOmitsLocants,
   alkylPrefix,
   groupName,
   prefixForm,

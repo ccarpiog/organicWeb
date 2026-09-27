@@ -11816,5 +11816,4824 @@
     ]
    }
   ]
+ },
+ "C1=CCCCC1": {
+  "name": "ciclohexeno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 6 carbonos y 10 hidrógenos (C₆H₁₀).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "Los 6 carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano». Si el anillo tiene enlaces dobles o triples, la terminación cambia como en las cadenas: «-eno», «-ino»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] del anillo llevan los [[localizadores|localizador]] más bajos (si empatan, los dobles).",
+     "Empieza a contar por un carbono del enlace doble y sigue por ese enlace: así sale el número 1, el más bajo posible. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "En «ciclohexeno» no hace falta el número: el enlace doble siempre queda entre los carbonos 1 y 2.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      6,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un anillo empieza por «ciclo-», que dice que la cadena está cerrada. Luego va la raíz, que dice cuántos carbonos tiene el anillo, y la terminación.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «ciclohexeno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "-eno",
+      "kind": "ending",
+      "meaning": "hay un enlace doble"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "eno",
+      "kind": "ending",
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C1=CC=CCC1": {
+  "name": "ciclohexa-1,3-dieno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 6 carbonos y 8 hidrógenos (C₆H₈).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "Los 6 carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano». Si el anillo tiene enlaces dobles o triples, la terminación cambia como en las cadenas: «-eno», «-ino»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] del anillo llevan los [[localizadores|localizador]] más bajos (si empatan, los dobles).",
+     "Las numeraciones cuyo primer número no es 1 pierden enseguida. Estas son las que quedan para comparar:",
+     "Regla: los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 1, 3; opción B: 1, 5. Se comparan uno a uno: en el primer número distinto, 3 es menor que 5. Gana la opción A.",
+     "Las opciones que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      6,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N1",
+       "label": "Enlaces dobles y triples",
+       "lists": [
+        [
+         1,
+         3
+        ],
+        [
+         1,
+         5
+        ]
+       ],
+       "firstDifference": 1,
+       "marks": [
+        [
+         1
+        ],
+        [
+         1
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3,
+         2,
+         1,
+         6,
+         5
+        ],
+        "bonds": [
+         3,
+         2,
+         1,
+         6,
+         5,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        3,
+        2
+       ],
+       [
+        2,
+        3
+       ],
+       [
+        1,
+        4
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        5,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         4,
+         5,
+         6,
+         1,
+         2
+        ],
+        "bonds": [
+         3,
+         4,
+         5,
+         6,
+         1,
+         2
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        5,
+        3
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        1,
+        5
+       ],
+       [
+        2,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un anillo empieza por «ciclo-», que dice que la cadena está cerrada. Luego va la raíz, que dice cuántos carbonos tiene el anillo, y la terminación.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «ciclohexa-1,3-dieno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      6,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "a",
+      "kind": "stem",
+      "meaning": "se añade para que suene bien antes de di-, tri-…"
+     },
+     {
+      "text": "1,3",
+      "kind": "locant",
+      "meaning": "dónde están los enlaces dobles (el carbono con el número más bajo)"
+     },
+     {
+      "text": "-dieno",
+      "kind": "ending",
+      "meaning": "hay 2 enlaces dobles"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "a",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       3
+      ]
+     },
+     {
+      "text": "eno",
+      "kind": "ending",
+      "atoms": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       3
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C1#CCCCCCC1": {
+  "name": "ciclooctino",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 8 carbonos y 12 hidrógenos (C₈H₁₂).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "Los 8 carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «octano» → «ciclooctano». Si el anillo tiene enlaces dobles o triples, la terminación cambia como en las cadenas: «-eno», «-ino»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] del anillo llevan los [[localizadores|localizador]] más bajos (si empatan, los dobles).",
+     "Empieza a contar por un carbono del enlace triple y sigue por ese enlace: así sale el número 1, el más bajo posible. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "En «ciclooctino» no hace falta el número: el enlace triple siempre queda entre los carbonos 1 y 2.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      4,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      6,
+      6
+     ],
+     [
+      7,
+      7
+     ],
+     [
+      8,
+      8
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un anillo empieza por «ciclo-», que dice que la cadena está cerrada. Luego va la raíz, que dice cuántos carbonos tiene el anillo, y la terminación.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «ciclooctino»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "oct",
+      "kind": "stem",
+      "meaning": "8 carbonos en el anillo"
+     },
+     {
+      "text": "-ino",
+      "kind": "ending",
+      "meaning": "hay un enlace triple"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       8
+      ]
+     },
+     {
+      "text": "oct",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ino",
+      "kind": "ending",
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC1CCCCC1": {
+  "name": "metilciclohexano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 7 carbonos y 14 hidrógenos (C₇H₁₄).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       1
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       7
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético).",
+     "Empieza a contar por el carbono que tiene el sustituyente: así sale el número 1, el más bajo posible. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Con un solo sustituyente y sin enlaces dobles ni triples en el anillo, su carbono es siempre el 1, así que el número no se escribe: «metilciclohexano».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      7,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el anillo hay un grupo metilo: se escribe «metil», sin número.",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ]
+    ],
+    "options": [
+     {
+      "label": "metil",
+      "text": "En el anillo hay un grupo metilo: se escribe «metil», sin número. «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         3,
+         4,
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         2,
+         3,
+         4,
+         5,
+         6,
+         7
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         1
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero va el sustituyente y al final el nombre del anillo, todo junto.",
+     "El nombre del anillo empieza por «ciclo-», que dice que la cadena está cerrada.",
+     "El nombre completo es «metilciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCCCCCCCCCC1CC1": {
+  "name": "decilciclopropano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 13 carbonos y 26 hidrógenos (C₁₃H₂₆).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       12,
+       13,
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       11,
+       12,
+       13,
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 3 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].",
+     "Aquí una rama tiene 10 carbonos y el anillo solo 3, pero aun así manda el anillo. Antes se enseñaba que ganaba la cadena más larga; con las normas actuales ya no es así.",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «propano» → «ciclopropano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       13
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético).",
+     "Empieza a contar por el carbono que tiene el sustituyente: así sale el número 1, el más bajo posible. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Con un solo sustituyente y sin enlaces dobles ni triples en el anillo, su carbono es siempre el 1, así que el número no se escribe: «decilciclopropano».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       11,
+       12,
+       13
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      11,
+      1
+     ],
+     [
+      12,
+      2
+     ],
+     [
+      13,
+      3
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el anillo hay un grupo decilo: se escribe «decil», sin número.",
+     "«decil» es un grupo de 10 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       11,
+       12,
+       13
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      11,
+      1
+     ]
+    ],
+    "options": [
+     {
+      "label": "decil",
+      "text": "En el anillo hay un grupo decilo: se escribe «decil», sin número. «decil» es un grupo de 10 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         11,
+         12,
+         13
+        ],
+        "bonds": [
+         11,
+         12,
+         13
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         10,
+         9,
+         8,
+         7,
+         6,
+         5,
+         4,
+         3,
+         2,
+         1
+        ],
+        "bonds": [
+         10,
+         1,
+         2,
+         3,
+         4,
+         5,
+         6,
+         7,
+         8,
+         9
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        11,
+        1
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero va el sustituyente y al final el nombre del anillo, todo junto.",
+     "El nombre del anillo empieza por «ciclo-», que dice que la cadena está cerrada.",
+     "El nombre completo es «decilciclopropano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       11,
+       12,
+       13
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "decil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo decilo (10 carbonos)"
+     },
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "decil",
+      "kind": "prefix",
+      "atoms": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       10,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ]
+     },
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       13
+      ]
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       11,
+       12,
+       13
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       11,
+       12,
+       13
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C=C1CCCCC1": {
+  "name": "metilidenciclohexano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 7 carbonos y 12 hidrógenos (C₇H₁₂).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       1
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].",
+     "Aunque una rama tenga enlaces dobles o triples, el anillo sigue siendo la cadena principal.",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       7
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético).",
+     "Empieza a contar por el carbono que tiene el sustituyente: así sale el número 1, el más bajo posible. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Con un solo sustituyente y sin enlaces dobles ni triples en el anillo, su carbono es siempre el 1, así que el número no se escribe: «metilidenciclohexano».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      7,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el anillo hay un grupo metilideno: se escribe «metiliden», sin número.",
+     "«metiliden» es un grupo de 1 carbono.",
+     "Se une al anillo con un [[enlace doble]]: por eso termina en «-iliden»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ]
+    ],
+    "options": [
+     {
+      "label": "metiliden",
+      "text": "En el anillo hay un grupo metilideno: se escribe «metiliden», sin número. «metiliden» es un grupo de 1 carbono. Se une al anillo con un [[enlace doble]]: por eso termina en «-iliden».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         3,
+         4,
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         2,
+         3,
+         4,
+         5,
+         6,
+         7
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         1
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero va el sustituyente y al final el nombre del anillo, todo junto.",
+     "El nombre del anillo empieza por «ciclo-», que dice que la cadena está cerrada.",
+     "El nombre completo es «metilidenciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "metiliden",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilideno (1 carbono)"
+     },
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "metiliden",
+      "kind": "prefix",
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC1C=CCCC1": {
+  "name": "3-metilciclohex-1-eno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 7 carbonos y 12 hidrógenos (C₇H₁₂).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       7,
+       6,
+       5,
+       1
+      ],
+      "bonds": [
+       3,
+       2,
+       7,
+       6,
+       5,
+       4,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano». Si el anillo tiene enlaces dobles o triples, la terminación cambia como en las cadenas: «-eno», «-ino»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       7,
+       6,
+       5
+      ],
+      "bonds": [
+       3,
+       2,
+       7,
+       6,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       4
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] del anillo llevan los [[localizadores|localizador]] más bajos (si empatan, los dobles) y después, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético).",
+     "Las numeraciones cuyo primer número no es 1 pierden enseguida. Estas son las que quedan para comparar:",
+     "Regla: los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 1; opción B: 1. Empatan las opciones A y B: se pasa a la regla siguiente.",
+     "Regla: los [[sustituyentes|sustituyente]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 3; opción B: 6. Se comparan uno a uno: en el primer número distinto, 3 es menor que 6. Gana la opción A.",
+     "Aquí se escriben todos los números, también el 1 del enlace doble, como en las cadenas («but-1-eno»). En algunos libros se quita ese 1.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       7,
+       6,
+       5
+      ],
+      "bonds": [
+       3,
+       2,
+       7,
+       6,
+       5,
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      7,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      5,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N1",
+       "label": "Enlaces dobles y triples",
+       "lists": [
+        [
+         1
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": -1,
+       "marks": [
+        [],
+        []
+       ],
+       "winners": [
+        0,
+        1
+       ]
+      },
+      {
+       "rule": "N3",
+       "label": "Sustituyentes",
+       "lists": [
+        [
+         3
+        ],
+        [
+         6
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3,
+         2,
+         7,
+         6,
+         5
+        ],
+        "bonds": [
+         3,
+         2,
+         7,
+         6,
+         5,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        3,
+        2
+       ],
+       [
+        2,
+        3
+       ],
+       [
+        7,
+        4
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        5,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         4,
+         5,
+         6,
+         7,
+         2
+        ],
+        "bonds": [
+         3,
+         4,
+         5,
+         6,
+         7,
+         2
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        5,
+        3
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        7,
+        5
+       ],
+       [
+        2,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 3 hay un grupo metilo: se escribe «3-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       7,
+       6,
+       5
+      ],
+      "bonds": [
+       3,
+       2,
+       7,
+       6,
+       5,
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "metil",
+      "text": "En el carbono 3 hay un grupo metilo: se escribe «3-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3,
+         2,
+         7,
+         6,
+         5
+        ],
+        "bonds": [
+         3,
+         2,
+         7,
+         6,
+         5,
+         4
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         1
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre del anillo.",
+     "Los números se separan entre sí con comas (1,2) y de las letras con guiones (1-metil). Los sustituyentes se escriben pegados al nombre del anillo.",
+     "El nombre del anillo empieza por «ciclo-», que dice que la cadena está cerrada.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «3-metilciclohex-1-eno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       7,
+       6,
+       5
+      ],
+      "bonds": [
+       3,
+       2,
+       7,
+       6,
+       5,
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      7,
+      4
+     ],
+     [
+      6,
+      5
+     ],
+     [
+      5,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono del anillo donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "meaning": "dónde está el enlace doble (el carbono con el número más bajo)"
+     },
+     {
+      "text": "-eno",
+      "kind": "ending",
+      "meaning": "hay un enlace doble"
+     }
+    ],
+    "parts": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       4,
+       3,
+       2,
+       7,
+       6,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       4,
+       3,
+       2,
+       7,
+       6,
+       5
+      ],
+      "bonds": []
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       4,
+       3
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "eno",
+      "kind": "ending",
+      "atoms": [
+       4,
+       3
+      ],
+      "bonds": [
+       3
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC1=CCCC1C": {
+  "name": "1,5-dimetilciclopent-1-eno",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 7 carbonos y 12 hidrógenos (C₇H₁₂).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       1,
+       7
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       1,
+       7
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 5 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «pentano» → «ciclopentano». Si el anillo tiene enlaces dobles o triples, la terminación cambia como en las cadenas: «-eno», «-ino»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       6
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       1,
+       7
+      ],
+      "bonds": [
+       1,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] del anillo llevan los [[localizadores|localizador]] más bajos (si empatan, los dobles) y después, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético).",
+     "Las numeraciones cuyo primer número no es 1 pierden enseguida. Estas son las que quedan para comparar:",
+     "Regla: los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 1; opción B: 1. Empatan las opciones A y B: se pasa a la regla siguiente.",
+     "Regla: los [[sustituyentes|sustituyente]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 1, 5; opción B: 2, 3. Se comparan uno a uno: en el primer número distinto, 1 es menor que 2. Gana la opción A.",
+     "Aquí se escriben todos los números, también el 1 del enlace doble, como en las cadenas («but-1-eno»). En algunos libros se quita ese 1.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1,
+       7
+      ],
+      "bonds": [
+       1,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      6,
+      5
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N1",
+       "label": "Enlaces dobles y triples",
+       "lists": [
+        [
+         1
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": -1,
+       "marks": [
+        [],
+        []
+       ],
+       "winners": [
+        0,
+        1
+       ]
+      },
+      {
+       "rule": "N3",
+       "label": "Sustituyentes",
+       "lists": [
+        [
+         1,
+         5
+        ],
+        [
+         2,
+         3
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         3,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         2,
+         3,
+         4,
+         5,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        3,
+        2
+       ],
+       [
+        4,
+        3
+       ],
+       [
+        5,
+        4
+       ],
+       [
+        6,
+        5
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         2,
+         6,
+         5,
+         4
+        ],
+        "bonds": [
+         2,
+         6,
+         5,
+         4,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        5,
+        4
+       ],
+       [
+        4,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En los carbonos 1 y 5 hay 2 grupos metilo: se escribe «1,5-dimetil». «di» significa 2; se pone un número por cada grupo, aunque se repita.",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1,
+       7
+      ],
+      "bonds": [
+       1,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      6,
+      5
+     ]
+    ],
+    "options": [
+     {
+      "label": "metil",
+      "text": "En los carbonos 1 y 5 hay 2 grupos metilo: se escribe «1,5-dimetil». «di» significa 2; se pone un número por cada grupo, aunque se repita. «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         3,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         2,
+         3,
+         4,
+         5,
+         6
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         1,
+         7
+        ],
+        "bonds": [
+         1,
+         7
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        6,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre del anillo.",
+     "Los números se separan entre sí con comas (1,2) y de las letras con guiones (1-metil). Los sustituyentes se escriben pegados al nombre del anillo.",
+     "El nombre del anillo empieza por «ciclo-», que dice que la cadena está cerrada.",
+     "La terminación dice qué enlaces hay: «-ano» si todos son simples, «-eno» si hay un [[enlace doble]], «-ino» si hay un [[enlace triple]]. Si hay los dos, «en» va antes que «ino».",
+     "El nombre completo es «1,5-dimetilciclopent-1-eno»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1,
+       7
+      ],
+      "bonds": [
+       1,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      6,
+      5
+     ]
+    ],
+    "legend": [
+     {
+      "text": "1,5",
+      "kind": "locant",
+      "meaning": "carbonos del anillo donde está «metil»"
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "meaning": "hay 2 grupos iguales"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "pent",
+      "kind": "stem",
+      "meaning": "5 carbonos en el anillo"
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "meaning": "dónde está el enlace doble (el carbono con el número más bajo)"
+     },
+     {
+      "text": "-eno",
+      "kind": "ending",
+      "meaning": "hay un enlace doble"
+     }
+    ],
+    "parts": [
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "5",
+      "kind": "locant",
+      "atoms": [
+       6,
+       7
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       1,
+       7
+      ],
+      "bonds": [
+       1,
+       7
+      ]
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       1,
+       7
+      ],
+      "bonds": [
+       1,
+       7
+      ]
+     },
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": "pent",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "eno",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCC1CCCC(C)C1": {
+  "name": "1-etil-3-metilciclohexano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos y 18 hidrógenos (C₉H₁₈).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       9,
+       7,
+       6,
+       5,
+       4,
+       2,
+       1,
+       8
+      ],
+      "bonds": [
+       9,
+       8,
+       6,
+       5,
+       4,
+       3,
+       2,
+       1,
+       7
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       9,
+       7,
+       6,
+       5,
+       4
+      ],
+      "bonds": [
+       9,
+       8,
+       6,
+       5,
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       3
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético).",
+     "Las numeraciones cuyo primer número no es 1 pierden enseguida. Estas son las que quedan para comparar:",
+     "Regla: los [[sustituyentes|sustituyente]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 1, 3; opción B: 1, 3; opción C: 1, 5. Se comparan uno a uno: en el primer número distinto, 3 es menor que 5. Empatan las opciones A y B: se pasa a la regla siguiente.",
+     "Regla: si hay empate, el número más bajo es para el sustituyente que se escribe primero (por orden alfabético). Los números se leen en el orden en que se escriben los sustituyentes. Números: opción A: 1, 3; opción B: 3, 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 3. Gana la opción A.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       9,
+       7,
+       6,
+       5,
+       4
+      ],
+      "bonds": [
+       9,
+       8,
+       6,
+       5,
+       4,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      1
+     ],
+     [
+      9,
+      2
+     ],
+     [
+      7,
+      3
+     ],
+     [
+      6,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      4,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B",
+      "C"
+     ],
+     "rows": [
+      {
+       "rule": "N3",
+       "label": "Sustituyentes",
+       "lists": [
+        [
+         1,
+         3
+        ],
+        [
+         1,
+         3
+        ],
+        [
+         1,
+         5
+        ]
+       ],
+       "firstDifference": 1,
+       "marks": [
+        [
+         1
+        ],
+        [
+         1
+        ],
+        [
+         1
+        ]
+       ],
+       "winners": [
+        0,
+        1
+       ]
+      },
+      {
+       "rule": "N4",
+       "label": "Sustituyentes en orden alfabético",
+       "lists": [
+        [
+         1,
+         3
+        ],
+        [
+         3,
+         1
+        ],
+        null
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ],
+        null
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         9,
+         7,
+         6,
+         5,
+         4
+        ],
+        "bonds": [
+         9,
+         8,
+         6,
+         5,
+         4,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        1
+       ],
+       [
+        9,
+        2
+       ],
+       [
+        7,
+        3
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        5,
+        5
+       ],
+       [
+        4,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         9,
+         3,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         8,
+         9,
+         3,
+         4,
+         5,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        7,
+        1
+       ],
+       [
+        9,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        4,
+        4
+       ],
+       [
+        5,
+        5
+       ],
+       [
+        6,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción C",
+      "text": "Numeración C: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         4,
+         5,
+         6,
+         7,
+         9
+        ],
+        "bonds": [
+         3,
+         4,
+         5,
+         6,
+         8,
+         9
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        5,
+        3
+       ],
+       [
+        6,
+        4
+       ],
+       [
+        7,
+        5
+       ],
+       [
+        9,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 1 hay un grupo etilo: se escribe «1-etil».",
+     "«etil» es un grupo de 2 carbonos.",
+     "En el carbono 3 hay un grupo metilo: se escribe «3-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       9,
+       7,
+       6,
+       5,
+       4
+      ],
+      "bonds": [
+       9,
+       8,
+       6,
+       5,
+       4,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      1
+     ],
+     [
+      7,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "etil",
+      "text": "En el carbono 1 hay un grupo etilo: se escribe «1-etil». «etil» es un grupo de 2 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         9,
+         7,
+         6,
+         5,
+         4
+        ],
+        "bonds": [
+         9,
+         8,
+         6,
+         5,
+         4,
+         3
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        1
+       ]
+      ]
+     },
+     {
+      "label": "metil",
+      "text": "En el carbono 3 hay un grupo metilo: se escribe «3-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         9,
+         7,
+         6,
+         5,
+         4
+        ],
+        "bonds": [
+         9,
+         8,
+         6,
+         5,
+         4,
+         3
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         8
+        ],
+        "bonds": [
+         7
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        7,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "order",
+    "title": "Ordena alfabéticamente",
+    "text": [
+     "Los sustituyentes se escriben por orden alfabético: «etil» y «metil».",
+     "«etil» va antes que «metil» (e va antes que m)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre del anillo.",
+     "Los números se separan entre sí con comas (1,2) y de las letras con guiones (1-metil). Los sustituyentes se escriben pegados al nombre del anillo.",
+     "El nombre del anillo empieza por «ciclo-», que dice que la cadena está cerrada.",
+     "El nombre completo es «1-etil-3-metilciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       9,
+       7,
+       6,
+       5,
+       4
+      ],
+      "bonds": [
+       9,
+       8,
+       6,
+       5,
+       4,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      1
+     ],
+     [
+      9,
+      2
+     ],
+     [
+      7,
+      3
+     ],
+     [
+      6,
+      4
+     ],
+     [
+      5,
+      5
+     ],
+     [
+      4,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "1",
+      "kind": "locant",
+      "meaning": "carbono del anillo donde está «etil»"
+     },
+     {
+      "text": "etil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo etilo (2 carbonos)"
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono del anillo donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       3,
+       2
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "etil",
+      "kind": "prefix",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       3,
+       9,
+       7,
+       6,
+       5,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       3,
+       9,
+       7,
+       6,
+       5,
+       4
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       9,
+       8,
+       6,
+       5,
+       4,
+       3
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(C)C1CCC(C)CC1": {
+  "name": "1-isopropil-4-metilciclohexano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 10 carbonos y 20 hidrógenos (C₁₀H₂₀).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       9,
+       10,
+       2,
+       1,
+       3,
+       8
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       8,
+       9,
+       10,
+       3,
+       1,
+       2,
+       7
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       9,
+       10
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       8,
+       9
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       10
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético).",
+     "Las numeraciones cuyo primer número no es 1 pierden enseguida. Estas son las que quedan para comparar:",
+     "Regla: los [[sustituyentes|sustituyente]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 1, 4; opción B: 1, 4. Empatan las opciones A y B: se pasa a la regla siguiente.",
+     "Regla: si hay empate, el número más bajo es para el sustituyente que se escribe primero (por orden alfabético). Los números se leen en el orden en que se escriben los sustituyentes. Números: opción A: 1, 4; opción B: 4, 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 4. Gana la opción A.",
+     "Las opciones que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       9,
+       10
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       8,
+       9,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      7,
+      4
+     ],
+     [
+      9,
+      5
+     ],
+     [
+      10,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N3",
+       "label": "Sustituyentes",
+       "lists": [
+        [
+         1,
+         4
+        ],
+        [
+         1,
+         4
+        ]
+       ],
+       "firstDifference": -1,
+       "marks": [
+        [],
+        []
+       ],
+       "winners": [
+        0,
+        1
+       ]
+      },
+      {
+       "rule": "N4",
+       "label": "Sustituyentes en orden alfabético",
+       "lists": [
+        [
+         1,
+         4
+        ],
+        [
+         4,
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         10,
+         9,
+         7,
+         6,
+         5
+        ],
+        "bonds": [
+         10,
+         9,
+         8,
+         6,
+         5,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        10,
+        2
+       ],
+       [
+        9,
+        3
+       ],
+       [
+        7,
+        4
+       ],
+       [
+        6,
+        5
+       ],
+       [
+        5,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         6,
+         5,
+         4,
+         10,
+         9
+        ],
+        "bonds": [
+         6,
+         5,
+         4,
+         10,
+         9,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        7,
+        1
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        5,
+        3
+       ],
+       [
+        4,
+        4
+       ],
+       [
+        10,
+        5
+       ],
+       [
+        9,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 1 hay un grupo isopropilo: se escribe «1-isopropil».",
+     "Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos: «isopropil» es el nombre tradicional, que la IUPAC acepta (es el que usamos aquí); «propan-2-il» es el preferido por la IUPAC: una cadena de 3 carbonos (prop) unida por su carbono 2; «1-metiletil» toma una cadena de 2 carbonos (et) unida por su carbono 1, con un metil en ese mismo carbono.",
+     "En el carbono 4 hay un grupo metilo: se escribe «4-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       9,
+       10
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       8,
+       9,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      7,
+      4
+     ]
+    ],
+    "options": [
+     {
+      "label": "isopropil",
+      "text": "En el carbono 1 hay un grupo isopropilo: se escribe «1-isopropil». Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos: «isopropil» es el nombre tradicional, que la IUPAC acepta (es el que usamos aquí); «propan-2-il» es el preferido por la IUPAC: una cadena de 3 carbonos (prop) unida por su carbono 2; «1-metiletil» toma una cadena de 2 carbonos (et) unida por su carbono 1, con un metil en ese mismo carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         5,
+         6,
+         7,
+         9,
+         10
+        ],
+        "bonds": [
+         4,
+         5,
+         6,
+         8,
+         9,
+         10
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         3,
+         1,
+         2
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ]
+      ]
+     },
+     {
+      "label": "metil",
+      "text": "En el carbono 4 hay un grupo metilo: se escribe «4-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         5,
+         6,
+         7,
+         9,
+         10
+        ],
+        "bonds": [
+         4,
+         5,
+         6,
+         8,
+         9,
+         10
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         8
+        ],
+        "bonds": [
+         7
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        7,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "order",
+    "title": "Ordena alfabéticamente",
+    "text": [
+     "Los sustituyentes se escriben por orden alfabético: «isopropil» y «metil».",
+     "«isopropil» va antes que «metil» (i va antes que m).",
+     "«iso» sí cuenta: «isopropil» se ordena por la i."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre del anillo.",
+     "Los números se separan entre sí con comas (1,2) y de las letras con guiones (1-metil). Los sustituyentes se escriben pegados al nombre del anillo.",
+     "El nombre del anillo empieza por «ciclo-», que dice que la cadena está cerrada.",
+     "El nombre completo es «1-isopropil-4-metilciclohexano».",
+     "También son correctos:",
+     "«1-metil-4-(propan-2-il)ciclohexano»: nombre preferido por la IUPAC (2013).",
+     "«1-metil-4-(1-metiletil)ciclohexano»: forma sistemática clásica."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       9,
+       10
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       8,
+       9,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      7,
+      4
+     ],
+     [
+      9,
+      5
+     ],
+     [
+      10,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "1",
+      "kind": "locant",
+      "meaning": "carbono del anillo donde está «isopropil»"
+     },
+     {
+      "text": "isopropil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo isopropilo (3 carbonos)"
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono del anillo donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       4,
+       2
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "isopropil",
+      "kind": "prefix",
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       8
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       9,
+       10
+      ],
+      "bonds": [
+       10
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       9,
+       10
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       4,
+       5,
+       6,
+       8,
+       9,
+       10
+      ]
+     }
+    ]
+   }
+  ]
  }
 }

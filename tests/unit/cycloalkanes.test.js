@@ -1,8 +1,8 @@
 /**
  * @file Unit tests for phase I-25, simple cycloalkanes (design.md §13.4):
  * naming of every supported ring size in Spanish and English, the formula
- * CₙH₂ₙ, the refusals (substituted, unsaturated, too big, heterocycles,
- * polycycles), invariance under ids, insertion order, ring rotation and
+ * CₙH₂ₙ, the refusals (too big, heterocycles, polycycles; substituted and
+ * unsaturated rings are named since I-26, see substituted-rings.test.js), invariance under ids, insertion order, ring rotation and
  * direction, and coordinates, the explanation (closure, carbon count,
  * closure bond highlighted, no numbering), and the fallbacks of "Ordenar
  * dibujo" and the 90° view.
@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { parseSmiles } from '../../src/model/smiles.js';
 import { createMolecule, addAtom, addBond, formula } from '../../src/model/molecule.js';
 import {
-  validateForNaming, isNotNameableYet, CYCLE_MESSAGES, RING_SYSTEM_MESSAGES, RING_TOO_BIG_MESSAGE,
+  validateForNaming, RING_SYSTEM_MESSAGES, RING_TOO_BIG_MESSAGE,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { renderName } from '../../src/naming/render.js';
@@ -115,38 +115,31 @@ test('the ring structure: ring order, closure bond last, every bond once', () =>
   assert.deepEqual(ciclo.bonds, [ringParent.closure]);
 }); // End of test 'the ring structure'
 
-test('ring structures and rendering are ready for I-26 but refuse what is not named yet', () => {
+test('ring structures render their unsaturation (I-26)', () => {
   assert.throws(() => buildRingStructure([1, 2], [1, 2], [1, 1]), /n ≥ 3/);
   const unsaturated = buildRingStructure([1, 2, 3, 4], [1, 2, 3, 4], [2, 1, 1, 1]);
   assert.deepEqual(unsaturated.double.map((s) => [s.locant, s.atoms]), [[1, [1, 2]]]);
   const closing = buildRingStructure([1, 2, 3, 4], [1, 2, 3, 4], [1, 1, 1, 2]);
   assert.deepEqual(closing.double.map((s) => [s.locant, s.atoms]), [[4, [4, 1]]]);
-  assert.throws(() => renderName(buildNameStructure({ parent: unsaturated })), /not supported yet/);
+  assert.equal(renderName(buildNameStructure({ parent: unsaturated })).name, 'ciclobuteno');
 });
 
-test('substituted and unsaturated rings are "not yet" with a precise Spanish message', () => {
+test('substituted and unsaturated rings are named since I-26 (no CYCLE refusal)', () => {
   const cases = [
-    ['CC1CCCCC1', 'substituted'], // metilciclohexano
-    ['C=C1CCCCC1', 'substituted'], // metilidenciclohexano
-    ['C1=CCCCC1', 'unsaturated'], // ciclohexeno
-    ['C1CCC=CC1', 'unsaturated'],
-    ['C1=CC=CCC1', 'unsaturated'], // a diene
-    ['C1#CCCCCCC1', 'unsaturated'], // ciclooctino
-    ['C1CCCCC#C1', 'unsaturated'], // a triple bond as the SMILES closure
-    ['CC1=CCCC1', 'substituted-unsaturated'],
+    ['CC1CCCCC1', 'metilciclohexano'],
+    ['C=C1CCCCC1', 'metilidenciclohexano'],
+    ['C1=CCCCC1', 'ciclohexeno'],
+    ['C1CCC=CC1', 'ciclohexeno'],
+    ['C1=CC=CCC1', 'ciclohexa-1,3-dieno'],
+    ['C1#CCCCCCC1', 'ciclooctino'],
+    ['C1CCCCC#C1', 'cicloheptino'],
+    ['CC1=CCCC1', '1-metilciclopent-1-eno'],
   ];
-  for (const [smiles, reason] of cases) {
-    const error = validateForNaming(parseSmiles(smiles));
-    assert.equal(error.code, 'CYCLE', smiles);
-    assert.equal(error.ringReason, reason, smiles);
-    assert.equal(error.message, CYCLE_MESSAGES[reason], smiles);
-    assert.match(error.message, /Aún no sé nombrar anillos/);
-    assert.ok(isNotNameableYet(error), smiles);
-    const result = nameMolecule(parseSmiles(smiles));
-    assert.equal(result.ok, false, smiles);
-    assert.equal(result.error.code, 'CYCLE', smiles);
-  } // End of the loop over the refused carbocycles
-}); // End of test 'substituted and unsaturated rings are "not yet" with a precise Spanish message'
+  for (const [smiles, name] of cases) {
+    assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
+    assert.equal(nameMolecule(parseSmiles(smiles)).name, name, smiles);
+  }
+}); // End of test 'substituted and unsaturated rings are named since I-26'
 
 test('heterocycles, polycycles and rings above 30 carbons are refused; never a crash', () => {
   for (const [smiles, kind] of [

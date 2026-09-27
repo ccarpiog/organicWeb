@@ -1,13 +1,14 @@
 /**
  * @file Seeded random generator of valid acyclic hydrocarbons for the OPSIN
- * oracle and the graph-invariance tests (design.md §8), plus the list of
- * cycloalkanes in a size range. Development only,
+ * oracle and the graph-invariance tests (design.md §8), of valid
+ * substituted and unsaturated monocycles (design.md §13.4 I-26), plus the
+ * list of cycloalkanes in a size range. Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
  */
 
 import { createMolecule, addAtom, addBond, bondOrderSum, CARBON_VALENCE } from '../../src/model/molecule.js';
-import { canonicalTreeKey } from '../../src/model/graph.js';
+import { canonicalTreeKey, canonicalKey } from '../../src/model/graph.js';
 import { validateForNaming, MAX_CHAIN } from '../../src/model/validate.js';
 
 /**
@@ -77,15 +78,7 @@ export function randomHydrocarbon(random, { size, unsaturation = 0.25, branchine
     addBond(mol, target, atom, 1);
     atoms.push(atom);
   } // End of the loop that grows the random tree
-  for (const bond of shuffle([...mol.bonds.values()], random)) {
-    if (random() >= unsaturation) {
-      continue;
-    }
-    const room = Math.min(CARBON_VALENCE - bondOrderSum(mol, bond.a), CARBON_VALENCE - bondOrderSum(mol, bond.b));
-    if (room > 0) {
-      bond.order += randomInt(random, 1, Math.min(room, 2));
-    }
-  } // End of the loop that raises random bonds to double or triple bonds
+  raiseRandomBonds(mol, random, unsaturation);
   return mol;
 } // End of function randomHydrocarbon()
 
@@ -121,6 +114,93 @@ export function generateMolecules({ count, seed, minSize = 4, maxSize = 14 }) {
   } // End of the loop that draws distinct molecules
   return molecules;
 } // End of function generateMolecules()
+
+/**
+ * Raises random bonds of a molecule to double or triple bonds where both
+ * carbons have room (each bond tried with probability `unsaturation`).
+ *
+ * @param {object} mol - The molecule (mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} unsaturation - Probability of trying to raise a bond.
+ * @returns {void}
+ */
+function raiseRandomBonds(mol, random, unsaturation) {
+  for (const bond of shuffle([...mol.bonds.values()], random)) {
+    if (random() >= unsaturation) {
+      continue;
+    }
+    const room = Math.min(CARBON_VALENCE - bondOrderSum(mol, bond.a), CARBON_VALENCE - bondOrderSum(mol, bond.b));
+    if (room > 0) {
+      bond.order += randomInt(random, 1, Math.min(room, 2));
+    }
+  }
+}
+
+/**
+ * Builds one random monocycle: a ring of `ringSize` carbons, `extra` more
+ * carbons grown as side chains (each bonded to a random carbon with a free
+ * valence, favouring the last one added unless `branchiness` says
+ * otherwise), then random bonds — ring or side chain — raised to double or
+ * triple bonds where both carbons have room.
+ *
+ * @param {function(): number} random - Seeded generator.
+ * @param {{ringSize: number, extra: number, unsaturation?: number, branchiness?: number}} options - Ring size, side-chain carbons, probability of raising a bond, branching probability.
+ * @returns {object} The molecule (may still fail validation, e.g. a benzene ring).
+ */
+export function randomMonocycle(random, { ringSize, extra, unsaturation = 0.25, branchiness = 0.5 }) {
+  const mol = createMolecule();
+  const ring = Array.from({ length: ringSize }, () => addAtom(mol));
+  ring.forEach((id, i) => addBond(mol, id, ring[(i + 1) % ringSize], 1));
+  const atoms = [...ring];
+  for (let i = 0; i < extra; i += 1) {
+    const free = atoms.filter((id) => bondOrderSum(mol, id) < CARBON_VALENCE);
+    const last = atoms[atoms.length - 1];
+    const target = random() >= branchiness && free.includes(last) ? last : free[Math.floor(random() * free.length)];
+    const atom = addAtom(mol);
+    addBond(mol, target, atom, 1);
+    atoms.push(atom);
+  } // End of the loop that grows the side chains
+  raiseRandomBonds(mol, random, unsaturation);
+  return mol;
+} // End of function randomMonocycle()
+
+/**
+ * Generates `count` distinct random monocycles (distinct by canonical key)
+ * with 3–10 ring carbons and a total size in [max(minSize, 4), maxSize],
+ * from a seed; most carry side chains and/or ring multiple bonds. Only
+ * molecules valid for naming are kept (benzene rings and other refusals are
+ * redrawn). Stops early, with fewer molecules, if too many are redrawn.
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C).
+ * @returns {object[]} The molecules.
+ */
+export function generateMonocycles({ count, seed, minSize = 4, maxSize = 14 }) {
+  const random = seededRandom(seed * 7919 + 26);
+  const seen = new Set();
+  const molecules = [];
+  const low = Math.max(minSize, 4);
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50 && low <= maxSize) {
+    attempts += 1;
+    const size = randomInt(random, low, maxSize);
+    const ringSize = randomInt(random, 3, Math.min(10, size));
+    const mol = randomMonocycle(random, {
+      ringSize,
+      extra: size - ringSize,
+      unsaturation: random() * 0.4,
+      branchiness: 0.2 + random() * 0.8,
+    });
+    if (validateForNaming(mol)) {
+      continue; // A benzene ring (not named yet) or beyond a cap.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct monocycles
+  return molecules;
+} // End of function generateMonocycles()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

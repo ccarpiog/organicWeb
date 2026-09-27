@@ -31,13 +31,12 @@
  */
 
 /**
- * A numbered ring: the parent of a cycloalkane name (design.md §13.4 I-25).
+ * A numbered ring: the parent of a ring name (design.md §13.4 I-25, I-26).
  * Same fields as a ChainStructure plus `kind` and `closure`, so code that
  * reads `length`, `atoms`, `bonds`, `double` and `triple` works on both;
  * the ring has as many bonds as atoms. Unsaturation sites use the lower
  * locant of the bond as in a chain (the closure bond, joining the last
- * atom to the first, gets locant `length`); ring unsaturation is named
- * from phase I-26.
+ * atom to the first, gets locant `length`).
  *
  * @typedef {object} RingStructure
  * @property {'ring'} kind - Always 'ring'.
@@ -95,7 +94,7 @@
  * The language-neutral name structure (design.md §4.7).
  *
  * @typedef {object} NameStructure
- * @property {'chain'|'ring'} parentKind - Kind of parent: an open chain, or a ring (`ciclo…`).
+ * @property {'chain'|'ring'} parentKind - Kind of parent: an open chain, or a ring (`ciclo…`; always the ring when there is one, design.md §13.5).
  * @property {ChainStructure|RingStructure} parent - The numbered parent chain or ring.
  * @property {PrefixGroup[]} prefixes - Grouped substituent prefixes in citation order (empty for an unbranched molecule).
  */
@@ -129,7 +128,7 @@
  * (N5), or the atom-id tuple (tie-break).
  *
  * @typedef {object} TraceStep
- * @property {string} rule - Rule id: 'P1'…'P4', 'N1'…'N5', 'TIE', or 'RING' (the ring parent of a cycloalkane: one candidate, its size as value).
+ * @property {string} rule - Rule id: 'P1'…'P4', 'N1'…'N5', 'TIE', or 'RING' (a ring parent: one candidate, its size as value; ring numbering steps N1–N4/TIE may follow).
  * @property {TraceCandidate[]} candidatesBefore - Candidates entering the rule.
  * @property {Array<number|number[]|object[]>} values - Compared values, aligned with candidatesBefore.
  * @property {TraceCandidate[]} survivors - Candidates left after the rule.

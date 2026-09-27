@@ -17,7 +17,7 @@ import {
   createMolecule, addAtom, addBond, moleculeToJSON, moleculeFromJSON, formula,
 } from '../../src/model/molecule.js';
 import {
-  validateForNaming, isNotNameableYet, RING_SYSTEM_MESSAGES, CYCLE_MESSAGES, RING_TOO_BIG_MESSAGE,
+  validateForNaming, isNotNameableYet, RING_SYSTEM_MESSAGES, RING_TOO_BIG_MESSAGE,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { canonicalLayout } from '../../src/layout/canonical.js';
@@ -233,15 +233,9 @@ test('classification: acyclic, carbocycle, heterocycle, fused, bridged, spiro, s
   assert.equal(perceiveRings(parseSmiles('C1CCC2(C1)CCCC2')).blocks.length, 2);
 }); // End of test 'classification…'
 
-test('validation: a substituted carbocycle is "not yet", other ring systems are out of scope; naming never crashes', () => {
-  const ring = validateForNaming(parseSmiles('CC1CCCCC1'));
-  assert.equal(ring.code, 'CYCLE');
-  assert.equal(ring.message, CYCLE_MESSAGES.substituted);
-  assert.equal(ring.ringReason, 'substituted');
-  assert.match(ring.message, /Aún no sé nombrar anillos con ramas/);
-  assert.equal(ring.ringKind, 'carbocycle');
-  assert.deepEqual(ring.atoms, [2, 3, 4, 5, 6, 7]);
-  assert.ok(isNotNameableYet(ring));
+test('validation: a substituted carbocycle is nameable (I-26), other ring systems are out of scope; naming never crashes', () => {
+  assert.equal(validateForNaming(parseSmiles('CC1CCCCC1')), null);
+  assert.equal(nameMolecule(parseSmiles('CC1CCCCC1')).name, 'metilciclohexano');
   const cases = [
     ['C1CCOCC1', 'heterocycle', /heterociclo/],
     ['C1CCC2CCCCC2C1', 'fused', /fusionados/],
@@ -285,6 +279,7 @@ test('no unbounded recursion: large rings and long chains', () => {
   const tailed = carbonPath(6000, false);
   addBond(tailed, 1, 6);
   assert.match(canonicalKey(tailed), /^%R6:/);
+  assert.equal(validateForNaming(tailed).code, 'TOO_BIG');
 }); // End of test 'no unbounded recursion…'
 
 test('tree-only walkers refuse rings instead of looping', () => {

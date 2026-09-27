@@ -51,18 +51,33 @@ function locantParts(sites) {
  * @returns {object[]} The parts.
  */
 export function renderParent(chain, lexicon, hasPrefixes) {
-  const parts = [part(lexicon.stem(chain.length), 'stem', chain.atoms)];
+  return [
+    part(lexicon.stem(chain.length), 'stem', chain.atoms),
+    ...renderEnding(chain, lexicon, lexicon.omitsLocants(chain, hasPrefixes)),
+  ];
+}
+
+/**
+ * Renders what follows the stem of a parent chain or ring: the connecting
+ * vowel, the unsaturation segments with their locants (unless omitted) and
+ * multipliers, and the ending (`ano`; `a-1,3-dieno`; `-3-en-1-ino`).
+ *
+ * @param {object} parent - The chain or ring structure.
+ * @param {object} lexicon - The lexicon.
+ * @param {boolean} omit - Whether the unsaturation locants are omitted.
+ * @returns {object[]} The parts.
+ */
+function renderEnding(parent, lexicon, omit) {
   const segments = lexicon.segmentOrder
-    .map((kind) => ({ kind, sites: chain[kind] }))
+    .map((kind) => ({ kind, sites: parent[kind] }))
     .filter((segment) => segment.sites.length > 0);
   if (segments.length === 0) {
-    parts.push(part(lexicon.endings.saturated, 'ending', [], chain.bonds));
-    return parts;
+    return [part(lexicon.endings.saturated, 'ending', [], parent.bonds)];
   }
-  if (lexicon.needsConnectingVowel(chain)) {
-    parts.push(part(lexicon.connectingVowel, 'stem', chain.atoms));
+  const parts = [];
+  if (lexicon.needsConnectingVowel(parent)) {
+    parts.push(part(lexicon.connectingVowel, 'stem', parent.atoms));
   }
-  const omit = lexicon.omitsLocants(chain, hasPrefixes);
   segments.forEach((segment, i) => {
     const atoms = segment.sites.flatMap((site) => site.atoms);
     const bonds = segment.sites.map((site) => site.bond);
@@ -76,31 +91,29 @@ export function renderParent(chain, lexicon, hasPrefixes) {
     parts.push(part(lexicon.unsaturationEnding(segment.kind, i === segments.length - 1), 'ending', atoms, bonds));
   });
   return parts;
-} // End of function renderParent()
+} // End of function renderEnding()
 
 /**
- * Renders a numbered ring as a parent name (design.md §13.4 I-25): the
- * nondetachable ring prefix (`ciclo`, which refers to the ring and its
- * closure bond), the stem and the ending — `ciclohexano`. A saturated,
- * unsubstituted ring needs no locant. Rings with multiple bonds or
- * prefixes are named from phase I-26; validation refuses them before.
+ * Renders a numbered ring as a parent name (design.md §13.4 I-25, I-26):
+ * the nondetachable ring prefix (`ciclo`, which refers to the ring and its
+ * closure bond), the stem, then the ending exactly as for a chain —
+ * connecting `a`, unsaturation locants and multipliers: `ciclohexano`,
+ * `ciclohexeno`, `ciclohexa-1,3-dieno`, `ciclohex-1-eno` (after prefixes).
+ * The ring locant-omission rule (lexicon ringOmitsLocants()) decides
+ * whether the unsaturation locants are written.
  *
  * @param {object} ring - The ring structure (structure.js RingStructure).
  * @param {object} lexicon - The lexicon.
- * @param {boolean} hasPrefixes - Whether prefixes precede the parent.
+ * @param {object[]} prefixes - The prefix groups of the name (they change the omission rule).
  * @returns {object[]} The parts.
- * @throws {Error} For a ring with multiple bonds or prefixes (not supported yet).
  */
-export function renderRingParent(ring, lexicon, hasPrefixes) {
-  if (hasPrefixes || ring.double.length > 0 || ring.triple.length > 0) {
-    throw new Error('renderRingParent: substituted or unsaturated rings are not supported yet');
-  }
+export function renderRingParent(ring, lexicon, prefixes) {
   return [
     part(lexicon.ringPrefix, 'stem', ring.atoms, [ring.closure]),
     part(lexicon.stem(ring.length), 'stem', ring.atoms),
-    part(lexicon.endings.saturated, 'ending', [], ring.bonds),
+    ...renderEnding(ring, lexicon, lexicon.ringOmitsLocants(ring, prefixes).parent),
   ];
-} // End of function renderRingParent()
+}
 
 /**
  * Creates one token of a substituent prefix. Tokens are finer than name
@@ -347,11 +360,16 @@ export function prefixNameKey(groups, lexicon = lexiconEs) {
  * enclosed, compound prefixes multiplied with bis/tris). Each group's prefix words form one `prefix`
  * part; nested prefixes are not split further.
  *
+ * With `omitLocants` (a ring with a single substituent, lexicon
+ * ringOmitsLocants()) the attachment locants and their hyphen are left out:
+ * `metil` in `metilciclohexano`.
+ *
  * @param {object[]} groups - The prefix groups (structure.js PrefixGroup), in citation order.
  * @param {object} lexicon - The lexicon.
+ * @param {boolean} [omitLocants] - Leave out the attachment locants (default false).
  * @returns {object[]} The parts.
  */
-export function renderPrefixes(groups, lexicon) {
+export function renderPrefixes(groups, lexicon, omitLocants = false) {
   const parts = [];
   groups.forEach((group, g) => {
     if (g > 0) {
@@ -363,11 +381,18 @@ export function renderPrefixes(groups, lexicon) {
     let i = 0;
     for (const site of group.locants) {
       if (i > 0) {
-        parts.push(part(',', 'punct'));
+        if (!omitLocants) {
+          parts.push(part(',', 'punct'));
+        }
         i += 1;
       }
-      parts.push(part(tokens[i].text, 'locant', [site.atom, site.attachAtom], [site.bond]));
+      if (!omitLocants) {
+        parts.push(part(tokens[i].text, 'locant', [site.atom, site.attachAtom], [site.bond]));
+      }
       i += 1;
+    }
+    if (omitLocants) {
+      i += 1; // Skip the hyphen after the omitted locants.
     }
     // Remaining tokens: hyphen, multiplier, enclosing marks and the prefix words (one part).
     let words = '';
@@ -399,9 +424,11 @@ export function renderPrefixes(groups, lexicon) {
  */
 export function renderName(structure, lexicon = lexiconEs) {
   const hasPrefixes = structure.prefixes.length > 0;
-  const parent = structure.parentKind === 'ring'
-    ? renderRingParent(structure.parent, lexicon, hasPrefixes)
+  const ring = structure.parentKind === 'ring';
+  const parent = ring
+    ? renderRingParent(structure.parent, lexicon, structure.prefixes)
     : renderParent(structure.parent, lexicon, hasPrefixes);
-  const parts = [...renderPrefixes(structure.prefixes, lexicon), ...parent];
+  const omitPrefixLocants = ring && lexicon.ringOmitsLocants(structure.parent, structure.prefixes).prefixes;
+  const parts = [...renderPrefixes(structure.prefixes, lexicon, omitPrefixLocants), ...parent];
   return { name: parts.map((p) => p.text).join(''), parts };
 }

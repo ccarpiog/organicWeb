@@ -52,6 +52,16 @@ const SNAPSHOT_SMILES = [
   'CCC(=C)C=C(C(C)CC)C(C(C)CC)C(=C)CC', // N1 then N4 across two chains
   'C1CC1', // ciclopropano: smallest ring, closure bond
   'C1CCCCC1', // ciclohexano: ring steps, CₙH₂ₙ
+  'C1=CCCCC1', // ciclohexeno: ring ene, omitted locant, single numbering option
+  'C1=CC=CCC1', // ciclohexa-1,3-dieno: ring N1 options, connecting a
+  'C1#CCCCCCC1', // ciclooctino: ring yne
+  'CC1CCCCC1', // metilciclohexano: one substituent, omitted locant
+  'CCCCCCCCCCC1CC1', // decilciclopropano: ring vs chain, longer chain
+  'C=C1CCCCC1', // metilidenciclohexano: iliden on a ring
+  'CC1C=CCCC1', // 3-metilciclohex-1-eno: N1 then N3, locant 1 kept
+  'CC1=CCCC1C', // 1,5-dimetilciclopent-1-eno: first point of difference
+  'CCC1CCCC(C)C1', // 1-etil-3-metilciclohexano: ring N3 then N4
+  'CC(C)C1CCC(C)CC1', // 1-isopropil-4-metilciclohexano: alternatives on a ring
 ];
 
 /**

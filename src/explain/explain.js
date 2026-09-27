@@ -28,7 +28,10 @@
  * never gets the ring steps; a cycloalkane (`parentKind` 'ring', design.md
  * §13.4 I-25) gets count, ring, ringNumbering and assemble: the chain that
  * closes on itself (its closure bond highlighted apart), the carbon count,
- * the formula CₙH₂ₙ and why no number is needed.
+ * the formula CₙH₂ₙ and why no number is needed. A substituted or
+ * unsaturated ring (I-26) gets count, ring (plus the ring-vs-chain rule),
+ * ringNumbering (every start and direction, options compared like a
+ * chain's), substituents, order and assemble.
  */
 
 import { toSubscript } from '../model/molecule.js';
@@ -69,6 +72,21 @@ const RULE_LABELS = Object.freeze({
 
 /** Letters used to label the numbering options. */
 const OPTION_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+/**
+ * Unique spreadsheet-style label for the i-th numbering option: A…Z, AA, AB…
+ * (large rings can have more than 26 options).
+ *
+ * @param {number} i - Zero-based option index.
+ * @returns {string} The option label.
+ */
+function optionLabel(i) {
+  let label = '';
+  for (let n = i + 1; n > 0; n = Math.floor((n - 1) / OPTION_LETTERS.length)) {
+    label = OPTION_LETTERS[(n - 1) % OPTION_LETTERS.length] + label;
+  }
+  return label;
+}
 
 /**
  * Splits a paragraph into plain text and glossary terms.
@@ -148,6 +166,45 @@ function listText(list) {
  */
 function q(text) {
   return `«${text}»`;
+}
+
+/** How the parent is named in sentences: a chain, or a ring (Spanish contractions al/del). */
+const PARENT_WORDS = Object.freeze({
+  chain: Object.freeze({ the: 'la cadena principal', to: 'a la cadena principal', of: 'de la cadena principal' }),
+  ring: Object.freeze({ the: 'el anillo', to: 'al anillo', of: 'del anillo' }),
+});
+
+/**
+ * The words used for the parent of a result in sentences.
+ *
+ * @param {object} result - The naming result.
+ * @returns {{the: string, to: string, of: string}} `la cadena principal` / `el anillo` and their forms after a, de.
+ */
+function parentWords(result) {
+  return result.structure.parentKind === 'ring' ? PARENT_WORDS.ring : PARENT_WORDS.chain;
+}
+
+/**
+ * Tells whether a result is a bare cycloalkane (a ring without prefixes or
+ * ring multiple bonds, design.md §13.4 I-25), explained without numbering.
+ *
+ * @param {object} result - The naming result.
+ * @returns {boolean} True for a cycloalkane.
+ */
+function isBareRing(result) {
+  const { parentKind, parent, prefixes } = result.structure;
+  return parentKind === 'ring' && prefixes.length === 0 && parent.double.length + parent.triple.length === 0;
+}
+
+/**
+ * Whether the ring locants of a ring result are omitted (lexicon ringOmitsLocants()).
+ *
+ * @param {object} result - The naming result.
+ * @returns {{parent: boolean, prefixes: boolean}} Omission of the ending locants and of the prefix locants (both false for a chain).
+ */
+function ringOmission(result) {
+  const { parentKind, parent, prefixes } = result.structure;
+  return parentKind === 'ring' ? lexiconEs.ringOmitsLocants(parent, prefixes) : { parent: false, prefixes: false };
 }
 
 /**
@@ -453,25 +510,44 @@ function ringSpecs(result) {
 
 /**
  * Step 2 for a ring parent, "Busca el anillo": the chain that closes on
- * itself, its closure bond and the `ciclo-` prefix.
+ * itself, its closure bond and the `ciclo-` prefix. With side chains it
+ * also states the ring-vs-chain rule (IUPAC 2013 P-44.1.2.2, design.md
+ * §13.5): the ring is the parent even when a side chain is longer, and the
+ * side chains are substituents.
  *
  * @param {object} result - A naming result with a ring parent.
  * @returns {object} The step.
  */
 function ringStep(result) {
-  const { parent } = result.structure;
+  const { parent, prefixes } = result.structure;
   const n = parent.length;
   const open = `${lexiconEs.stem(n)}${lexiconEs.endings.saturated}`;
   const ring = `${lexiconEs.ringPrefix}${open}`;
+  const text = [
+    `${prefixes.length > 0 ? `En tu molécula, ${n} de los carbonos` : `Los ${n} carbonos`} forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].`,
+    'El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.',
+  ];
+  if (prefixes.length > 0) {
+    text.push('Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].');
+    const longest = Math.max(...prefixes.flatMap((g) => g.locants.map((site) => site.atoms.length)));
+    if (longest > n) {
+      text.push(`Aquí una rama tiene ${longest} carbonos y el anillo solo ${n}, pero aun así manda el anillo. Antes se enseñaba que ganaba la cadena más larga; con las normas actuales ya no es así.`);
+    }
+    const outside = prefixes.some((g) => g.locants.some((site) => site.order === 2 || site.multipleBonds.length > 0));
+    if (outside) {
+      text.push('Aunque una rama tenga enlaces dobles o triples, el anillo sigue siendo la cadena principal.');
+    }
+  } // End of the ring-vs-chain sentences
+  let naming = `Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «${lexiconEs.ringPrefix}-»: ${q(open)} → ${q(ring)}.`;
+  if (parent.double.length + parent.triple.length > 0) {
+    naming += ' Si el anillo tiene enlaces dobles o triples, la terminación cambia como en las cadenas: «-eno», «-ino».';
+  }
+  text.push(naming);
   return {
     id: 'ring',
     title: STEP_TITLES.ring,
-    text: [
-      `Los ${n} carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].`,
-      'El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.',
-      `Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «${lexiconEs.ringPrefix}-»: ${q(open)} → ${q(ring)}.`,
-    ],
-    highlight: ringSpecs(result),
+    text,
+    highlight: [...ringSpecs(result), ...substituentSpecs(result)],
     locants: null,
   };
 } // End of function ringStep()
@@ -484,6 +560,9 @@ function ringStep(result) {
  * @returns {object} The step.
  */
 function ringNumberingStep(result) {
+  if (!isBareRing(result)) {
+    return ringNumberingChoice(result);
+  }
   return {
     id: 'ringNumbering',
     title: STEP_TITLES.ringNumbering,
@@ -495,6 +574,155 @@ function ringNumberingStep(result) {
     locants: null,
   };
 } // End of function ringNumberingStep()
+
+/**
+ * Note on the ring locant-omission rule (design.md §1.1, lexicon
+ * ringOmitsLocants()), if it matters for this name.
+ *
+ * @param {object} result - A naming result with a ring parent.
+ * @returns {string|null} The note.
+ */
+function ringOmissionNote(result) {
+  const { parent, prefixes } = result.structure;
+  const omission = ringOmission(result);
+  const multiple = parent.double.length + parent.triple.length;
+  const kind = parent.double.length > 0 ? 'doble' : 'triple';
+  if (omission.parent) {
+    return `En ${q(result.name)} no hace falta el número: el enlace ${kind} siempre queda entre los carbonos 1 y 2.`;
+  }
+  if (omission.prefixes) {
+    return `Con un solo sustituyente y sin enlaces dobles ni triples en el anillo, su carbono es siempre el 1, así que el número no se escribe: ${q(result.name)}.`;
+  }
+  if (multiple === 1 && prefixes.length > 0) {
+    return `Aquí se escriben todos los números, también el 1 del enlace ${kind}, como en las cadenas («but-1-eno»). En algunos libros se quita ese 1.`;
+  }
+  return null;
+} // End of function ringOmissionNote()
+
+/**
+ * Sentence for a ring numbering decided by a single option: where the 1
+ * goes and why the other starts lose.
+ *
+ * @param {object} rule - The first deciding rule.
+ * @param {number[]} value - The compared locants of the winning option.
+ * @param {{double: object[], triple: object[]}} ring - The ring structure (which multiple bonds it has).
+ * @returns {string} The sentence.
+ */
+function singleRingOption(rule, value, ring) {
+  let what = new Set(value).size === 1 ? 'por el carbono que tiene los sustituyentes' : 'por un carbono con sustituyente';
+  if (value.length === 1) {
+    what = 'por el carbono que tiene el sustituyente';
+  }
+  if (rule.rule === 'N1' || rule.rule === 'N2') {
+    const kind = ring.triple.length === 0 ? 'doble' : (ring.double.length === 0 ? 'triple' : 'doble o triple');
+    what = `por un carbono del enlace ${kind} y sigue por ese enlace`;
+  }
+  const numbers = value.length === 1 ? `sale el número ${value[0]}, el más bajo posible` : `salen los números ${listText(value)}, los más bajos posibles`;
+  return `Empieza a contar ${what}: así ${numbers}. Empezando en cualquier otro sitio salen números más altos.`;
+} // End of function singleRingOption()
+
+/**
+ * Orders ring numbering options by their compared values, rule by rule
+ * (lowest first, so the winner is option A), so the labels never depend on
+ * atom ids or drawing order.
+ *
+ * @param {{values: Array<Array|null>}} a - First group.
+ * @param {{values: Array<Array|null>}} b - Second group.
+ * @returns {number} Negative when `a` goes first.
+ */
+function compareGroupValues(a, b) {
+  for (let i = 0; i < a.values.length; i += 1) {
+    const x = a.values[i];
+    const y = b.values[i];
+    if (x === null || y === null) {
+      if (x !== y) {
+        return x === null ? 1 : -1;
+      }
+      continue;
+    }
+    for (let k = 0; k < Math.min(x.length, y.length); k += 1) {
+      if (x[k] !== y[k]) {
+        return x[k] - y[k];
+      }
+    }
+    if (x.length !== y.length) {
+      return x.length - y.length;
+    }
+  } // End of the loop over the deciding rules
+  return 0;
+} // End of function compareGroupValues()
+
+/**
+ * "Numera el anillo" for a substituted or unsaturated ring: a ring has no
+ * ends, so every start atom and both directions are compared by the same
+ * lowest-locant rules as a chain (IUPAC 2013 P-31.1.4: multiple bonds, then
+ * double bonds, then all prefixes, then citation order). The options shown
+ * are the numberings entering the first deciding rule that start with its
+ * lowest first number (the others lose at once; for N4 all are shown),
+ * merged when every rule gives them the same values and ordered by those
+ * values.
+ *
+ * @param {object} result - A naming result with a substituted or unsaturated ring parent.
+ * @returns {object} The step.
+ */
+function ringNumberingChoice(result) {
+  const { parent, prefixes } = result.structure;
+  const text = ['En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.'];
+  const step = {
+    id: 'ringNumbering',
+    title: STEP_TITLES.ringNumbering,
+    text,
+    highlight: [parentSpec(result), ...substituentSpecs(result)],
+    locants: parentLocants(result),
+  };
+  const multiple = parent.double.length + parent.triple.length > 0;
+  const rules = [];
+  if (multiple) {
+    rules.push('primero, los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] del anillo llevan los [[localizadores|localizador]] más bajos (si empatan, los dobles)');
+  }
+  if (prefixes.length > 0) {
+    rules.push(`${multiple ? 'después' : 'primero'}, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético)`);
+  }
+  text.push(`Las reglas son las mismas que en una cadena, por orden: ${joinY(rules)}.`);
+  const deciding = result.trace.filter((s) => /^N[1-5]$/.test(s.rule) && decided(s));
+  const tie = result.trace.some((s) => s.rule === 'TIE');
+  if (deciding.length > 0) {
+    const first = deciding[0];
+    let shown = first.candidatesBefore;
+    let lowest = null;
+    if (first.rule !== 'N4' && first.rule !== 'N5') {
+      lowest = Math.min(...first.values.map((v) => (v.length > 0 ? v[0] : Infinity)));
+      shown = first.candidatesBefore.filter((_, i) => first.values[i].length > 0 && first.values[i][0] === lowest);
+    }
+    const groups = signatureGroups(deciding, shown).sort(compareGroupValues);
+    if (groups.length === 1) {
+      text.push(singleRingOption(first, groups[0].values[0], parent));
+      if (tie) {
+        text.push('Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.');
+      }
+    } else {
+      if (shown.length < first.candidatesBefore.length) {
+        text.push(`Las numeraciones cuyo primer número no es ${lowest} pierden enseguida. Estas son las que quedan para comparar:`);
+      }
+      const comparison = compareNumberings(deciding, groups);
+      text.push(...comparison.paragraphs);
+      step.compare = comparison.compare;
+      step.options = comparison.options;
+      if (tie) {
+        text.push('Las opciones que quedan dan el mismo nombre, así que da igual cuál elijas.');
+      }
+    } // End of the comparison of several options
+  } else {
+    const numbers = result.parts.filter((p) => p.kind === 'locant').map((p) => Number(p.text)).sort((a, b) => a - b);
+    text.push(`Empieces por donde empieces, salen los mismos números${numbers.length > 0 ? `: ${numbers.join(', ')}` : ''}. Todas las formas dan el mismo nombre.`);
+  } // End of the deciding-rules explanation
+  const note = ringOmissionNote(result);
+  if (note) {
+    text.push(note);
+  }
+  text.push('Mira los números en el dibujo.');
+  return step;
+} // End of function ringNumberingChoice()
 
 /** How each count rule of the tie-break step is explained. */
 const COUNT_RULES = Object.freeze({
@@ -705,6 +933,79 @@ function omissionNote(result) {
 } // End of function omissionNote()
 
 /**
+ * Compared value of a candidate in a rule step.
+ *
+ * @param {object} step - A trace step.
+ * @param {string} key - Candidate key.
+ * @returns {Array|null} The value, or null when the candidate did not enter the rule.
+ */
+function valueOf(step, key) {
+  const i = step.candidatesBefore.findIndex((c) => c.key === key);
+  return i < 0 ? null : step.values[i];
+}
+
+/**
+ * Merges candidates that every deciding rule treats alike (same compared
+ * values: symmetric numberings) into one displayed option, keeping the
+ * first candidate of each group, in the given order.
+ *
+ * @param {object[]} deciding - The numbering rules that decided something.
+ * @param {object[]} candidates - The candidates to show.
+ * @returns {{signature: string, values: Array<Array|null>, candidate: object}[]} The option groups.
+ */
+function signatureGroups(deciding, candidates) {
+  const groups = [];
+  for (const candidate of candidates) {
+    const values = deciding.map((s) => valueOf(s, candidate.key));
+    const signature = JSON.stringify(values);
+    if (!groups.some((g) => g.signature === signature)) {
+      groups.push({ signature, values, candidate });
+    }
+  }
+  return groups;
+}
+
+/**
+ * Explains the deciding numbering rules over the displayed options: one
+ * paragraph per rule (numberingRuleText()), the side-by-side comparison
+ * table and one clickable option per group (labelled A, B…).
+ *
+ * @param {object[]} deciding - The numbering rules that decided something.
+ * @param {{candidate: object}[]} groups - The option groups (signatureGroups()), in display order.
+ * @returns {{labels: string[], paragraphs: string[], compare: object, options: object[]}} The pieces of the step.
+ */
+function compareNumberings(deciding, groups) {
+  const labels = groups.map((_, i) => optionLabel(i));
+  const paragraphs = [];
+  const rows = [];
+  for (const rule of deciding) {
+    const present = groups.map((g) => rule.candidatesBefore.some((c) => c.key === g.candidate.key));
+    const idx = groups.map((_, i) => i).filter((i) => present[i]);
+    const lists = idx.map((i) => valueOf(rule, groups[i].candidate.key));
+    const wins = idx.map((i) => rule.survivors.some((c) => c.key === groups[i].candidate.key));
+    paragraphs.push(numberingRuleText(rule.rule, idx.map((i) => labels[i]), lists, wins));
+    if (rule.rule !== 'N5') {
+      const { marks } = pairwiseDifferences(lists, wins);
+      rows.push({
+        rule: rule.rule,
+        label: RULE_LABELS[rule.rule],
+        lists: groups.map((g, i) => (present[i] ? valueOf(rule, g.candidate.key) : null)),
+        firstDifference: firstDifference(lists),
+        marks: groups.map((_, i) => (present[i] ? marks[idx.indexOf(i)] : null)),
+        winners: idx.filter((_, j) => wins[j]),
+      });
+    }
+  } // End of the loop over the deciding numbering rules
+  const options = groups.map((g, i) => ({
+    label: `Opción ${labels[i]}`,
+    text: `Numeración ${labels[i]}: mira dónde queda el 1 en el dibujo.`,
+    highlight: [candidateSpec(g.candidate, 'candidate')],
+    locants: candidateLocants(g.candidate),
+  }));
+  return { labels, paragraphs, compare: { labels, rows }, options };
+} // End of function compareNumberings()
+
+/**
  * Step 4, "Numera la cadena": the numbering rules N1–N5 that decided, side
  * by side, with the first point of difference, or one short line when the
  * name has no locants.
@@ -738,55 +1039,14 @@ function numberingStep(result) {
   if (deciding.length > 0) {
     // Options: the candidates entering the first deciding rule, merged when
     // every deciding rule gives them the same values (symmetric numberings).
-    const first = deciding[0].candidatesBefore;
-    /**
-     * Compared value of a candidate in a rule step.
-     *
-     * @param {object} step - A trace step.
-     * @param {string} key - Candidate key.
-     * @returns {Array|null} The value, or null when the candidate did not enter the rule.
-     */
-    const valueOf = (step, key) => {
-      const i = step.candidatesBefore.findIndex((c) => c.key === key);
-      return i < 0 ? null : step.values[i];
-    };
-    const groups = [];
-    for (const candidate of first) {
-      const signature = JSON.stringify(deciding.map((s) => valueOf(s, candidate.key)));
-      if (!groups.some((g) => g.signature === signature)) {
-        groups.push({ signature, candidate });
-      }
-    }
-    const labels = groups.map((_, i) => OPTION_LETTERS[i % OPTION_LETTERS.length]);
-    const rows = [];
-    for (const rule of deciding) {
-      const present = groups.map((g) => rule.candidatesBefore.some((c) => c.key === g.candidate.key));
-      const idx = groups.map((_, i) => i).filter((i) => present[i]);
-      const lists = idx.map((i) => valueOf(rule, groups[i].candidate.key));
-      const wins = idx.map((i) => rule.survivors.some((c) => c.key === groups[i].candidate.key));
-      text.push(numberingRuleText(rule.rule, idx.map((i) => labels[i]), lists, wins));
-      if (rule.rule !== 'N5') {
-        const { marks } = pairwiseDifferences(lists, wins);
-        rows.push({
-          rule: rule.rule,
-          label: RULE_LABELS[rule.rule],
-          lists: groups.map((g, i) => (present[i] ? valueOf(rule, g.candidate.key) : null)),
-          firstDifference: firstDifference(lists),
-          marks: groups.map((_, i) => (present[i] ? marks[idx.indexOf(i)] : null)),
-          winners: idx.filter((_, j) => wins[j]),
-        });
-      }
-    } // End of the loop over the deciding numbering rules
+    const groups = signatureGroups(deciding, deciding[0].candidatesBefore);
+    const comparison = compareNumberings(deciding, groups);
+    text.push(...comparison.paragraphs);
     if (new Set(groups.map((g) => chainIdentity(g.candidate))).size > 1) {
       text.push('Las opciones usan cadenas distintas del mismo tamaño: estas reglas también eligen la cadena principal.');
     }
-    step.compare = { labels, rows };
-    step.options = groups.map((g, i) => ({
-      label: `Opción ${labels[i]}`,
-      text: `Numeración ${labels[i]}: mira dónde queda el 1 en el dibujo.`,
-      highlight: [candidateSpec(g.candidate, 'candidate')],
-      locants: candidateLocants(g.candidate),
-    }));
+    step.compare = comparison.compare;
+    step.options = comparison.options;
   } else {
     const numbers = result.parts.filter((p) => p.kind === 'locant').map((p) => Number(p.text)).sort((a, b) => a - b);
     text.push(`Empieces por donde empieces, salen los mismos números: ${numbers.join(', ')}. Todas las formas dan el mismo nombre.`);
@@ -817,10 +1077,11 @@ function groupNameOf(sub) {
  * multiplier (`2,3-dimetil`, `5-(propan-2-il)`).
  *
  * @param {object} group - A prefix group.
+ * @param {boolean} [omitLocants] - Leave out the locants (a ring with a single substituent).
  * @returns {string} The cited text.
  */
-function citedGroup(group) {
-  return renderPrefixes([group], lexiconEs).map((p) => p.text).join('');
+function citedGroup(group, omitLocants = false) {
+  return renderPrefixes([group], lexiconEs, omitLocants).map((p) => p.text).join('');
 }
 
 /**
@@ -829,9 +1090,10 @@ function citedGroup(group) {
  * marks, retained and common names.
  *
  * @param {object} sub - A substituent structure.
+ * @param {{to: string}} [words] - How the parent is named (parentWords(); default: the parent chain).
  * @returns {string[]} Sentences.
  */
-function describeSubstituent(sub) {
+function describeSubstituent(sub, words = PARENT_WORDS.chain) {
   const prefix = substituentPrefix(sub, lexiconEs);
   const out = [];
   if (sub.retained === 'isopropyl') {
@@ -851,7 +1113,7 @@ function describeSubstituent(sub) {
   const n = sub.atoms.length;
   out.push(`${q(prefix)} es un grupo de ${count(n, 'carbono', 'carbonos')}.`);
   if (freeValence.order === 2) {
-    out.push('Se une a la cadena principal con un [[enlace doble]]: por eso termina en «-iliden».');
+    out.push(`Se une ${words.to} con un [[enlace doble]]: por eso termina en «-iliden».`);
   }
   if (chain.double.length > 0) {
     out.push(`Dentro del grupo hay ${chain.double.length === 1 ? 'un [[enlace doble]]' : `${chain.double.length} [[enlaces dobles|enlace doble]]`}: por eso lleva «en».`);
@@ -866,11 +1128,11 @@ function describeSubstituent(sub) {
       const what = q(substituentPrefix(g.substituent, lexiconEs));
       return g.locants.length === 1 ? `${what} ${where}` : `${g.locants.length} grupos ${what} ${where}`;
     });
-    out.push(`Es una rama con sus propias ramas. Se nombra como una molécula pequeña: su cadena tiene ${count(chain.length, 'carbono', 'carbonos')} y se numera para que el carbono unido a la cadena principal lleve el número más bajo posible. En ella hay: ${joinY(inner)}.`);
+    out.push(`Es una rama con sus propias ramas. Se nombra como una molécula pequeña: su cadena tiene ${count(chain.length, 'carbono', 'carbonos')} y se numera para que el carbono unido ${words.to} lleve el número más bajo posible. En ella hay: ${joinY(inner)}.`);
   }
   const unsaturated = chain.double.length + chain.triple.length > 0;
   if (freeValence.locant > 1 || (unsaturated && chain.length > 2)) {
-    out.push(`El número ${freeValence.locant} que va justo antes de «-${lexiconEs.freeValenceSuffix(freeValence.order)}» dice por qué carbono del grupo se une a la cadena principal.`);
+    out.push(`El número ${freeValence.locant} que va justo antes de «-${lexiconEs.freeValenceSuffix(freeValence.order)}» dice por qué carbono del grupo se une ${words.to}.`);
   }
   if (needsEnclosure(sub)) {
     out.push(`Va entre paréntesis porque tiene sus propios ${sub.prefixes.length > 0 ? 'sustituyentes y números' : 'números'}.`);
@@ -896,15 +1158,17 @@ function substituentsStep(result) {
   if (groups.length === 0) {
     return null;
   }
-  const text = ['Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).'];
+  const words = parentWords(result);
+  const omit = ringOmission(result).prefixes;
+  const text = [`Las ramas que salen ${words.of} son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).`];
   const options = [];
   for (const group of groups) {
     const sub = group.substituent;
     const k = group.locants.length;
     const places = [...new Set(group.locants.map((s) => s.locant))];
-    const where = places.length === 1 ? `En el carbono ${places[0]}` : `En los carbonos ${joinY(places)}`;
+    const where = omit ? 'En el anillo' : (places.length === 1 ? `En el carbono ${places[0]}` : `En los carbonos ${joinY(places)}`);
     const what = k === 1 ? `hay un grupo ${groupNameOf(sub)}` : `hay ${k} grupos ${groupNameOf(sub)}`;
-    let line = `${where} ${what}: se escribe ${q(citedGroup(group))}.`;
+    let line = `${where} ${what}: se escribe ${q(citedGroup(group, omit))}${omit ? ', sin número' : ''}.`;
     if (k > 1) {
       const mult = isCompoundPrefix(sub) ? lexiconEs.compoundMultiplier(k) : lexiconEs.multiplier(k);
       line += ` «${mult}» significa ${k}; se pone un número por cada grupo, aunque se repita.`;
@@ -912,7 +1176,7 @@ function substituentsStep(result) {
         line += ' Con grupos que tienen sus propias ramas se usa «bis», «tris»… en vez de «di» o «tri».';
       }
     }
-    const details = describeSubstituent(sub);
+    const details = describeSubstituent(sub, words);
     text.push(line);
     options.push({
       label: substituentPrefix(sub, lexiconEs),
@@ -1005,15 +1269,19 @@ function orderStep(result) {
  */
 function nameLegend(result) {
   const { parent, prefixes } = result.structure;
+  const words = parentWords(result);
+  const omission = ringOmission(result);
   const legend = [];
   for (const group of prefixes) {
     const sub = group.substituent;
     const k = group.locants.length;
-    legend.push({
-      text: group.locants.map((s) => s.locant).join(','),
-      kind: 'locant',
-      meaning: `${k === 1 ? 'carbono' : 'carbonos'} de la cadena principal donde está ${q(substituentPrefix(sub, lexiconEs))}`,
-    });
+    if (!omission.prefixes) {
+      legend.push({
+        text: group.locants.map((s) => s.locant).join(','),
+        kind: 'locant',
+        meaning: `${k === 1 ? 'carbono' : 'carbonos'} ${words.of} donde está ${q(substituentPrefix(sub, lexiconEs))}`,
+      });
+    }
     if (k > 1) {
       const mult = isCompoundPrefix(sub) ? lexiconEs.compoundMultiplier(k) : lexiconEs.multiplier(k);
       legend.push({ text: mult, kind: 'multiplier', meaning: `hay ${k} grupos iguales` });
@@ -1038,7 +1306,7 @@ function nameLegend(result) {
   if (lexiconEs.needsConnectingVowel(parent)) {
     legend.push({ text: lexiconEs.connectingVowel, kind: 'stem', meaning: 'se añade para que suene bien antes de di-, tri-…' });
   }
-  const omit = lexiconEs.omitsLocants(parent, prefixes.length > 0);
+  const omit = result.structure.parentKind === 'ring' ? omission.parent : lexiconEs.omitsLocants(parent, prefixes.length > 0);
   segments.forEach((segment, i) => {
     const n = segment.sites.length;
     const word = segment.kind === 'double' ? 'doble' : 'triple';
@@ -1068,12 +1336,24 @@ function nameLegend(result) {
  */
 function assembleStep(result) {
   const { prefixes } = result.structure;
+  const ring = result.structure.parentKind === 'ring';
+  const hasLocants = result.parts.some((p) => p.kind === 'locant');
   const text = [];
-  if (prefixes.length > 0) {
+  if (prefixes.length > 0 && !ring) {
     text.push('Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.');
     text.push('Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.');
-  } else if (result.structure.parentKind === 'ring') {
+  } else if (prefixes.length > 0) {
+    text.push(ringOmission(result).prefixes
+      ? 'Primero va el sustituyente y al final el nombre del anillo, todo junto.'
+      : 'Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre del anillo.');
+    if (hasLocants) {
+      text.push('Los números se separan entre sí con comas (1,2) y de las letras con guiones (1-metil). Los sustituyentes se escriben pegados al nombre del anillo.');
+    }
+    text.push(`El nombre del anillo empieza por «${lexiconEs.ringPrefix}-», que dice que la cadena está cerrada.`);
+  } else if (isBareRing(result)) {
     text.push(`El nombre de un anillo empieza por «${lexiconEs.ringPrefix}-», que dice que la cadena está cerrada. Luego va la raíz, que dice cuántos carbonos tiene el anillo, y la terminación «-${lexiconEs.endings.saturated}», porque todos los enlaces son simples.`);
+  } else if (ring) {
+    text.push(`El nombre de un anillo empieza por «${lexiconEs.ringPrefix}-», que dice que la cadena está cerrada. Luego va la raíz, que dice cuántos carbonos tiene el anillo, y la terminación.`);
   } else {
     text.push('El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.');
   }
@@ -1094,8 +1374,8 @@ function assembleStep(result) {
     title: STEP_TITLES.assemble,
     text,
     highlight: [parentSpec(result), ...substituentSpecs(result)],
-    // An unsubstituted ring is not numbered: no locant labels on it.
-    locants: result.structure.parentKind === 'ring' ? null : parentLocants(result),
+    // A ring whose name has no locant (ciclohexano, metilciclohexano) shows no locant labels.
+    locants: ring && !hasLocants ? null : parentLocants(result),
     legend: nameLegend(result),
     parts: result.parts.map((p) => ({ text: p.text, kind: p.kind, atoms: [...p.atoms], bonds: [...p.bonds] })),
   };
@@ -1112,7 +1392,14 @@ export function explain(result) {
     return [];
   }
   if (result.structure.parentKind === 'ring') {
-    return [countStep(result), ringStep(result), ringNumberingStep(result), assembleStep(result)];
+    return [
+      countStep(result),
+      ringStep(result),
+      ringNumberingStep(result),
+      substituentsStep(result),
+      orderStep(result),
+      assembleStep(result),
+    ].filter(Boolean);
   }
   return [
     countStep(result),

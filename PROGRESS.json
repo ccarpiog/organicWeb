@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T19:11:22Z",
+  "updated": "2026-09-27T19:40:08Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -232,8 +232,11 @@
     {
       "id": "I-26",
       "title": "v2.6 Substituted and unsaturated rings",
-      "status": "queued",
-      "summary": "v2 plan phase 6: substituted and unsaturated rings (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Names single carbocycles with side chains and ring double or triple bonds; the ring is always the parent.",
+      "risk": "high",
+      "review": "docs/reviews/I-26.md",
+      "narrative": "docs/progress-archive/i-26.md"
     },
     {
       "id": "I-27",

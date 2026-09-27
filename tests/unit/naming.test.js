@@ -103,10 +103,20 @@ for (const row of fixtureRows) {
     assert.equal(result.parts.map((p) => p.text).join(''), result.name);
     assert.deepEqual(result.alternatives.map(({ style, name }) => ({ style, name })), parseAlternatives(row.alternatives));
     if (result.structure.parentKind === 'ring') {
-      // A cycloalkane: the whole molecule is the ring, recorded by one RING trace step.
-      assert.deepEqual(result.trace.map((step) => step.rule), ['RING']);
-      assert.equal(result.parent.atoms.length, mol.atoms.size);
-      assert.equal(result.parent.bonds.length, mol.bonds.size);
+      // A ring parent: one RING trace step (the ring is the parent, whatever
+      // the side chains), then the ring numbering rules when there is
+      // anything to number; a bare cycloalkane has the RING step only.
+      assert.equal(result.trace[0].rule, 'RING');
+      assert.equal(result.parent.atoms.length, result.parent.bonds.length);
+      assert.equal(result.parent.atoms.length, result.structure.parent.length);
+      const bare = result.structure.prefixes.length === 0
+        && result.structure.parent.double.length + result.structure.parent.triple.length === 0;
+      if (bare) {
+        assert.deepEqual(result.trace.map((step) => step.rule), ['RING']);
+        assert.equal(result.parent.atoms.length, mol.atoms.size);
+      } else {
+        assert.ok(result.trace.slice(1).every((step) => /^(N[1-4]|TIE)$/.test(step.rule)), 'ring numbering rules only');
+      }
       return;
     }
     const p1 = result.trace[0];

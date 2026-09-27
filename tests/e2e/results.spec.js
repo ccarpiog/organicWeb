@@ -204,7 +204,7 @@ test('a chemical edit clears the result; a coordinate-only move keeps it', async
   await expect(page.locator('svg#canvas .locant')).toHaveCount(0);
 });
 
-test('a ring with a side chain shows the friendly CYCLE message; an empty canvas asks to draw', async ({ page }) => {
+test('an empty canvas asks to draw; a ring with a side chain is named (I-26)', async ({ page }) => {
   await openApp(page);
   const button = page.getByRole('button', { name: '¿Cómo se llama?' });
   await button.click();
@@ -217,11 +217,9 @@ test('a ring with a side chain shows the friendly CYCLE message; an empty canvas
   const to = await page.evaluate(() => window.__editor.atomClientPoint(1));
   await drag(page, from, to);
   expect(await page.evaluate(() => window.__editor.getMoleculeJSON().bonds.length)).toBe(3);
-  // A bare ring is named (ciclopropano); a side chain on it is not yet.
+  // A side chain on the ring: the ring is the parent, the chain a substituent.
   await clickAtom(page, 2);
   await button.click();
-  const alert = page.getByRole('alert');
-  await expect(alert).toContainText('Este anillo tiene ramas (sustituyentes). Aún no sé nombrar anillos con ramas');
-  await expect(alert).toContainText('Quita las ramas y los enlaces dobles o triples del anillo, o borra un enlace del anillo');
-  await expect(page.locator('#result-name')).toHaveCount(0);
+  await expect(page.locator('#result-name')).toHaveText('metilciclopropano');
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });

@@ -1,7 +1,7 @@
 # organicWeb — Química orgánica
 
 A static, offline web app for secondary-school students (ESO, Spain): draw an
-acyclic hydrocarbon or a simple cycloalkane and get its IUPAC name **in Spanish**, with a
+acyclic hydrocarbon or a hydrocarbon with one ring and get its IUPAC name **in Spanish**, with a
 step-by-step explanation and a redraw that makes the main chain obvious. The
 user interface is in Spanish; code and documentation are in English. The
 design and phase plan live in [`docs/design.md`](docs/design.md).
@@ -17,9 +17,10 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   live molecular formula, keyboard shortcuts, and autosave in the browser.
 - **Naming** of every valid acyclic hydrocarbon (alkanes, alkenes, alkynes;
   any branching; branched, unsaturated and nested substituents; doubly
-  attached `-iliden` substituents) and of simple cycloalkanes (a single
-  saturated ring without side chains, 3–30 carbons: `ciclopropano`,
-  `ciclohexano`…), with the name coloured by part
+  attached `-iliden` substituents) and of hydrocarbons with a single
+  carbocycle of 3–30 carbons, with side chains and ring double or triple
+  bonds (`ciclohexano`, `ciclohexa-1,3-dieno`, `3-metilciclohex-1-eno`,
+  `metilidenciclohexano`…; the ring is always the parent chain), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles.
@@ -34,7 +35,7 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 - **Ejemplos**: a menu of 14 molecules, one per feature.
 - **Ayuda**: a short in-page guide to drawing, with illustrations, keyboard
   shortcuts and the glossary.
-- Friendly Spanish messages for rings that cannot be named yet, disconnected pieces, an empty canvas
+- Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles), disconnected pieces, an empty canvas
   and impossible bonds. Light and dark theme following the system.
 - Accessible: every control is reachable with the keyboard and has a visible
   focus ring and an accessible name; the name and the current explanation
@@ -100,8 +101,9 @@ instance published by `src/ui/app.js` (test API documented in the header of
 
 ### Oracle
 
-`npm run oracle` generates random acyclic hydrocarbons (plus the
-cycloalkanes of the size range), names them with this
+`npm run oracle` generates random acyclic hydrocarbons and random
+substituted or unsaturated monocycles (plus the cycloalkanes of the size
+range), names them with this
 engine and checks each name by parsing it back with
 [OPSIN](https://github.com/dan2097/opsin) (after rendering the name in
 English) and comparing the structures. It needs Java and downloads the OPSIN jar on
@@ -170,14 +172,14 @@ the Keychain account is the WebDAV user).
 
 ## Known limitations and future work
 
-- Acyclic hydrocarbons only: rings (the editor can draw one; naming then
-  explains that rings are not supported yet), benzene, heteroatoms and
-  functional groups, stereochemistry (E/Z, R/S), charges and radicals are
-  out of scope.
+- Hydrocarbons only, with at most one ring (a carbocycle); several rings,
+  fused, bridged and spiro rings, heterocycles, benzene (planned),
+  heteroatoms and functional groups (planned), stereochemistry (E/Z, R/S),
+  charges and radicals are not named.
 - Parent chain up to 30 carbons, whole molecule up to 60.
 - Structure → name only; there is no name → structure.
-- Future (design §12): rings and benzene, E/Z, a quiz mode ("¿Cómo se
-  llama?" in reverse: read a name, draw it) and functional groups.
+- Future (design §12, §13): benzene, functional groups, redrawing rings,
+  E/Z and a quiz mode ("¿Cómo se llama?" in reverse: read a name, draw it).
 
 ## Author
 
