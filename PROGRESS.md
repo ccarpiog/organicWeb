@@ -27,9 +27,10 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-17 | Editing in the 90° view | `autoclaude/processed/170-edit-in-carbons-view.md` | done — `docs/progress-archive/i-17.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-17.md` |
 | I-18 | Author credit footer | `autoclaude/processed/180-author-credit.md` | queued (next) | — | — |
 | I-19 | Undo after "Ordenar dibujo" (bug) | `autoclaude/processed/190-undo-ordenar-dibujo.md` | queued (after I-18) | — | — |
+| I-20 | `npm run deploy` to Fastmail Files + docs | `autoclaude/processed/200-deploy-fastmail.md` | queued (after I-19) | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-17 are done;
-I-18 and I-19 (user feedback) are queued.
+I-18, I-19 and I-20 (user feedback) are queued.
 
 ## Inbox
 
@@ -51,11 +52,24 @@ I-18 and I-19 (user feedback) are queued.
   was not ready (still settling); next boundary.
 - 2026-09-27 pickup 7 (after I-16): `180-author-credit.md`,
   `190-undo-ordenar-dibujo.md` → queued as I-18, I-19.
+- 2026-09-27 pickup 8 (before I-18): `200-deploy-fastmail.md` → queued as
+  I-20; `210-rings-functional-groups.md` → deferred (see Decisions needed).
 
 ## Next action
 
 Poll the inbox, then execute I-18 (spec `autoclaude/processed/180-author-credit.md`),
-then I-19 (`autoclaude/processed/190-undo-ordenar-dibujo.md`).
+then I-19 (`autoclaude/processed/190-undo-ordenar-dibujo.md`), then I-20
+(`autoclaude/processed/200-deploy-fastmail.md`; the loop never runs the real
+deploy).
+
+## Decisions needed (user)
+
+- `autoclaude/processed/210-rings-functional-groups.md` (v2: cyclic
+  hydrocarbons + functional groups, ~21 phases) was **deferred**: it lifts the
+  CLAUDE.md constraint "v1 scope: acyclic hydrocarbons only", which an inbox
+  item cannot change, and its §4 leaves level / displayed-name / benzene-scope
+  decisions to the user. To start it, update the scope line in `CLAUDE.md`
+  (or confirm the v2 scope) and re-drop the item.
 
 ## Key paths
 

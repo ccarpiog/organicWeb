@@ -21,3 +21,5 @@ up. The item itself is in this directory, unchanged.
 - 2026-09-27 16:56 · 170-edit-in-carbons-view.md · queued · phase I-17 — Editing in the 90° view
 - 2026-09-27 17:03 · 180-author-credit.md · queued · phase I-18 — Author credit footer
 - 2026-09-27 17:03 · 190-undo-ordenar-dibujo.md · queued · phase I-19 — Undo after Ordenar dibujo
+- 2026-09-27 17:23 · 200-deploy-fastmail.md · queued · phase I-20 — npm run deploy to Fastmail Files + docs
+- 2026-09-27 17:23 · 210-rings-functional-groups.md · deferred · lifts CLAUDE.md v1 scope (acyclic hydrocarbons only) and has open user decisions (§4); needs the user to confirm the v2 scope change
