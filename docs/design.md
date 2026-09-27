@@ -114,6 +114,7 @@ src/
   naming/parent.js      parent-chain candidates and selection cascade
   naming/numbering.js   locant-list comparison, numbering cascade
   naming/substituent.js recursive substituent naming
+  naming/rings.js       ring parents: cycloalkanes (ciclo + stem + ano, §13.4 I-25)
   naming/structure.js   the language-neutral "name structure" (§4.7)
   naming/render.js      name structure + lexicon → string and coloured parts
   naming/index.js       nameMolecule(mol) → result (§4.1)
@@ -206,8 +207,12 @@ for `alert`/`confirm`/`prompt` in app code), `oracle` (§8).
 self-bonds; no duplicate bonds between the same pair; orders ∈ {1,2,3};
 supported elements only, with no charge/radical fields; Σ order ≤ the
 element's neutral valence; then, for naming only: non-empty, connected,
-acyclic (a ring is classified by `model/rings.js`: a single carbocycle →
-`CYCLE`, any other ring system → `RING_SYSTEM` with `ringKind`; both carry
+ring scope (a ring is classified by `model/rings.js`: a single saturated
+carbocycle without side chains and with at most 30 carbons — a cycloalkane —
+passes (I-25); a single carbocycle with side chains or ring multiple bonds →
+`CYCLE` with `ringReason` `substituted`, `unsaturated` or
+`substituted-unsaturated` (named from I-26); a bare ring above 30 carbons →
+`TOO_BIG`; any other ring system → `RING_SYSTEM` with `ringKind`; all carry
 the ring atoms in `atoms`), size caps (≤ 60 carbons `MAX_CARBONS`, ≤ 80 heavy atoms
 `MAX_HEAVY_ATOMS`), carbon only (`HETEROATOM`), parent chain ≤ 30
 (`MAX_CHAIN`). The same checks guard editor transactions, JSON restoration
@@ -222,10 +227,10 @@ Errors are codes with Spanish messages:
 |---|---|
 | `EMPTY` | Dibuja primero una molécula. |
 | `DISCONNECTED` | Hay piezas sueltas: todas las partes deben estar unidas. |
-| `CYCLE` | Has dibujado un anillo. Aún no sé nombrar anillos, pero pronto aprenderé: de momento solo nombro cadenas abiertas. (a single carbocycle, nameable from I-25) |
+| `CYCLE` | A single carbocycle that is not a bare cycloalkane (valid, not nameable yet; named from I-26), one message per `ringReason`: `substituted` Este anillo tiene ramas (sustituyentes). Aún no sé nombrar anillos con ramas, pero pronto aprenderé: de momento solo nombro anillos sin ramas y con todos los enlaces simples, como el ciclohexano. · `unsaturated` Este anillo tiene algún enlace doble o triple. Aún no sé nombrar anillos así, pero pronto aprenderé: … · `substituted-unsaturated` Este anillo tiene ramas (sustituyentes) y algún enlace doble o triple. Aún no sé nombrar anillos así, pero pronto aprenderé: … (generic: Has dibujado un anillo con ramas o con enlaces dobles o triples. Aún no sé nombrar este tipo de anillos, pero pronto aprenderé: de momento solo nombro anillos sin ramas y con todos los enlaces simples, como el ciclohexano.) Hint: Quita las ramas y los enlaces dobles o triples del anillo, o borra un enlace del anillo para abrir la cadena. |
 | `RING_SYSTEM` | Out of scope (§13.1), one message per `ringKind`: `heterocycle` Este anillo tiene átomos que no son carbono: es un heterociclo. Los heterociclos quedan fuera de lo que sé nombrar. · `fused` Has dibujado anillos fusionados (dos anillos que comparten un enlace). Este tipo de moléculas queda fuera de lo que sé nombrar. · `bridged` Has dibujado anillos con puente (dos anillos que comparten más de dos átomos). … · `spiro` Has dibujado un compuesto espiro (dos anillos que comparten un solo átomo). … · `several` Esta molécula tiene varios anillos. De momento solo podré nombrar moléculas con un único anillo. (generic: Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.) |
 | `VALENCE` | Este carbono tendría más de 4 enlaces. — per element for the lowest-id offending atom: Este oxígeno tendría más de 2 enlaces. / Este nitrógeno tendría más de 3 enlaces. / Este cloro (flúor, bromo, yodo) tendría más de 1 enlace. (The editor's "full" refusal likewise: Este oxígeno ya tiene 2 enlaces.) |
-| `TOO_BIG` | La molécula es demasiado grande (máximo 60 carbonos, cadena de 30). — heavy-atom cap: La molécula es demasiado grande (máximo 80 átomos sin contar los hidrógenos). |
+| `TOO_BIG` | La molécula es demasiado grande (máximo 60 carbonos, cadena de 30). — heavy-atom cap: La molécula es demasiado grande (máximo 80 átomos sin contar los hidrógenos). — a bare ring above 30 carbons: El anillo es demasiado grande (máximo 30 carbonos en el anillo). |
 | `HETEROATOM` | Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos. (valid, not nameable yet; `atoms` lists the heteroatoms) |
 | `INVALID` | Los datos de la molécula están dañados. Empieza un dibujo nuevo. (internal/corrupt data) |
 
@@ -255,7 +260,8 @@ added by `nameMolecule()` so the explanation can highlight every compared chain)
 and `values` are the compared data
 (counts for P1–P4, locant lists for N1–N3, the prefix locants flattened
 in citation order for N4, the citation keys for N5, the atom-id tuple for
-the tie-break). Trace order: P1, P2, P3, N1, N2, P4, N3, N4, N5, TIE (N5
+the tie-break). A cycloalkane (I-25) has a single `RING` step instead: the
+ring as the only candidate, its size as the value. Trace order: P1, P2, P3, N1, N2, P4, N3, N4, N5, TIE (N5
 only when the candidates left after N4 would give different names). Rules stop at the first one that leaves
 a single candidate; P1 is always recorded, and N3/N4 are skipped when no
 candidate carries prefixes. The explanation layer (§5) consumes only the trace
@@ -412,9 +418,13 @@ first when the letters coincide), and `etenil` precedes `etiliden`.
 
 ### 4.7 Name structure and rendering
 
-The engine produces a **language-neutral name structure** (parent length,
-unsaturation locant lists, grouped prefixes each with locants and a nested
-structure). `render.js` turns it into the Spanish string and coloured parts
+The engine produces a **language-neutral name structure** (parent kind —
+`parentKind` `chain` or `ring` —, parent length, unsaturation locant lists,
+grouped prefixes each with locants and a nested structure). A ring parent
+(`naming/rings.js`, I-25) holds the ring atoms in ring order and its bonds
+with the closure bond (from `perceiveRings()`) last; it renders as the
+nondetachable prefix `ciclo`/`cyclo` + stem + `ano`/`ane` (IUPAC 2013
+P-22.1.1), with no locant. `render.js` turns it into the Spanish string and coloured parts
 using `lexicon.es.js`; the oracle (§8) renders the same structure with
 `lexicon.en.js`. No name is ever produced by substring translation.
 
@@ -456,7 +466,8 @@ no open questions. Mandatory rows (from the Codex review):
 Plus: C1–C30 straight alkanes; `eteno`, `etino`, `propino`, `propadieno`,
 `but-1-eno`, `but-2-eno`, `2-metilprop-1-eno`, `pent-1-en-4-ino`,
 `hexa-1,3,5-trieno`; `tert-butil`, `di(…)` and `bis(…)` cases; alphabetisation of a
-compound prefix under its inner multiplier; N4 cases; symmetric molecules.
+compound prefix under its inner multiplier; N4 cases; symmetric molecules;
+cycloalkanes of several ring sizes (`ciclopropano` … `ciclotriacontano`, I-25).
 
 The oracle (§8) is the second line of defence, not a replacement.
 
@@ -504,10 +515,17 @@ when instructive):
 7. **Monta el nombre** — built piece by piece, coloured by part kind, with a
    legend: "hex = 6 carbonos, -eno = hay un doble enlace".
 
+A cycloalkane (I-25) gets four steps: **Cuenta los carbonos** (plus why the
+formula is CₙH₂ₙ, two hydrogens fewer than the open chain), **Busca el
+anillo** (the chain closes on itself; the ring in the parent colour and the
+closure bond apart; "hexano → ciclohexano"), **Numera el anillo** (all ring
+carbons are equivalent: no numbers) and **Monta el nombre** (legend
+`ciclo-`, stem, `-ano`; no locant labels on the canvas).
+
 Where the locant-omission table applies, a note explains it ("En «propeno» no
 hace falta el número: el doble enlace solo puede estar en el carbono 1").
 Glossary tooltips on underlined terms: *cadena principal*, *sustituyente
-(radical)*, *localizador*, *insaturación*, *enlace doble/triple*. Tone: second
+(radical)*, *localizador*, *insaturación*, *enlace doble/triple*, *anillo* (I-25). Tone: second
 person, short sentences, encouraging.
 
 Snapshot tests: `explain()` output for ~20 fixtures stored as JSON and
@@ -676,7 +694,9 @@ unchanged):
   chain candidates) are shown unchanged. "Resaltar en el dibujo" off (§9)
   hides these marks too.
 - After naming, a hint offers it: "¿Quieres ver la cadena principal
-  ordenada?".
+  ordenada?". A named ring gets no hint, and the button answers "Todavía no
+  sé ordenar el dibujo de un anillo. El dibujo se queda como estaba." until
+  ring layouts exist (I-27).
 - While the 90° drawing is shown (§6.3) "Ordenar dibujo" and its hint are disabled (the
   change would be invisible there; the message "Desactiva los ángulos rectos
   para ordenar el dibujo." answers a call anyway). The 90° view already puts
@@ -694,7 +714,8 @@ OPSIN (open-source name→structure, Java) reads English IUPAC names.
    `-ino`→`-yne`, `-il`→`-yl`, `-iliden`→`-ylidene`, retained prefixes,
    punctuation) — never substring translation.
 2. A seeded random generator produces valid acyclic hydrocarbons (4–14 C,
-   random branching and unsaturation within valence).
+   random branching and unsaturation within valence), plus one cycloalkane
+   per ring size in the carbon range (I-25).
 3. name → English → OPSIN → SMILES → a **dev-only fuller SMILES parser**
    (bracket atoms, explicit H) → hydrogen-suppressed molecule keeping every
    heavy atom and its element (I-22), rings kept (I-24) → compare with the
@@ -760,7 +781,7 @@ on narrow screens).
   student who prefers the plain drawing is not asked again; the switch is
   always visible next to the text, so a forgotten "off" is easy to spot.
 - Errors in friendly Spanish (§3.2), with a short hint for `EMPTY`, `CYCLE`
-  and `DISCONNECTED` (`src/ui/results.js`); `RING_SYSTEM` has no hint.
+  and `DISCONNECTED` (`src/ui/results.js`); `RING_SYSTEM` and `TOO_BIG` have no hint.
 - A chemical edit clears the result (stale names must never show);
   coordinate edits do not.
 - **Ejemplos** menu: 12–15 molecules from SMILES covering each feature,
@@ -887,10 +908,13 @@ before being presented as validated IUPAC 2013 coverage.
   assemblies, rings joined by a chain), in that precedence over every ring
   block, so mixed systems do not depend on atom ids (fused + bridged blocks
   → `bridged`; a polycyclic block plus other rings → `fused`/`bridged`).
-  SMILES ring labels are ring numbers (`1` ≡ `%01`). A single carbocycle gets `CYCLE`
-  (named from I-25); every other ring system gets `RING_SYSTEM` with an
-  explicit message (§3.2).
-- **`NameStructure` and trace** gain parent kind, functional groups,
+  SMILES ring labels are ring numbers (`1` ≡ `%01`). A bare cycloalkane
+  (3–30 C) is named since I-25 (`naming/rings.js`: `ciclopropano` …
+  `ciclotriacontano`); a single carbocycle with side chains or ring multiple
+  bonds gets `CYCLE` (named from I-26); every other ring system gets
+  `RING_SYSTEM` with an explicit message (§3.2).
+- **`NameStructure` and trace** gain parent kind (`parentKind`, since
+  I-25; a `RING` trace step for a ring parent), functional groups,
   principal group, suffixes, prefixes and locants on heteroatoms. The engine
   stays pure; the explanation is derived only from the result.
 
@@ -912,10 +936,11 @@ before being presented as validated IUPAC 2013 coverage.
   `canonicalKey()` adds a monocycle key (polycycles still have none), and the
   OPSIN adapter keeps rings and compares them with it.
 - The 90° view and "Ordenar dibujo" assume branched chains; they need
-  specific strategies (I-27). Until then both fall back safely: naming
-  refuses rings, so Ordenar dibujo only shows the ring message and the 90°
-  view draws the normal drawing ("Hay un anillo…" / "Hay anillos…"); the
-  layouts themselves refuse a cyclic molecule instead of looping.
+  specific strategies (I-27). Until then both fall back safely: Ordenar
+  dibujo shows the naming error, or for a named cycloalkane "Todavía no sé
+  ordenar el dibujo de un anillo…" and offers no hint; the 90° view draws the
+  normal drawing ("Hay un anillo…" / "Hay anillos…"); the layouts themselves
+  refuse a cyclic molecule instead of looping.
 - The explanation rebuilds counts from hydrocarbon structures: it must
   receive composition and groups from the engine.
 

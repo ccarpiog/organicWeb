@@ -1,13 +1,14 @@
 /**
  * @file Seeded random generator of valid acyclic hydrocarbons for the OPSIN
- * oracle and the graph-invariance tests (design.md §8). Development only,
+ * oracle and the graph-invariance tests (design.md §8), plus the list of
+ * cycloalkanes in a size range. Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
  */
 
 import { createMolecule, addAtom, addBond, bondOrderSum, CARBON_VALENCE } from '../../src/model/molecule.js';
 import { canonicalTreeKey } from '../../src/model/graph.js';
-import { validateForNaming } from '../../src/model/validate.js';
+import { validateForNaming, MAX_CHAIN } from '../../src/model/validate.js';
 
 /**
  * Creates a seeded pseudo-random generator (mulberry32).
@@ -120,6 +121,26 @@ export function generateMolecules({ count, seed, minSize = 4, maxSize = 14 }) {
   } // End of the loop that draws distinct molecules
   return molecules;
 } // End of function generateMolecules()
+
+/**
+ * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4
+ * I-25) whose ring size lies in a carbon range, smallest first: one
+ * molecule per size from max(3, minSize) to min(MAX_CHAIN, maxSize). Every
+ * ring size is one molecule, so they are listed rather than drawn at random.
+ *
+ * @param {{minSize?: number, maxSize?: number}} [options] - Carbon range (default 4–14 C, as generateMolecules()).
+ * @returns {object[]} The molecules.
+ */
+export function generateCycloalkanes({ minSize = 4, maxSize = 14 } = {}) {
+  const molecules = [];
+  for (let size = Math.max(3, minSize); size <= Math.min(MAX_CHAIN, maxSize); size += 1) {
+    const mol = createMolecule();
+    const ids = Array.from({ length: size }, () => addAtom(mol));
+    ids.forEach((id, i) => addBond(mol, id, ids[(i + 1) % size]));
+    molecules.push(mol);
+  }
+  return molecules;
+} // End of function generateCycloalkanes()
 
 /**
  * Copies a molecule with renumbered atom ids and shuffled atom and bond

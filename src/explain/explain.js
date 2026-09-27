@@ -20,11 +20,15 @@
  * `[[key]]`); `parseMarkup()` splits them and `GLOSSARY` holds the
  * definitions shown as tooltips. Names are quoted with «…».
  *
- * Step ids, in order: count, chain, tiebreak, numbering, substituents,
- * order, assemble. A step that decided nothing is skipped (tiebreak without
- * a deciding rule, substituents without prefixes, order with fewer than two
- * prefix groups) or reduced to one short line (numbering when the name has
- * no locants).
+ * Step ids, in order: count, ring, chain, tiebreak, numbering,
+ * ringNumbering, substituents, order, assemble. A step that decided
+ * nothing is skipped (tiebreak without a deciding rule, substituents
+ * without prefixes, order with fewer than two prefix groups) or reduced to
+ * one short line (numbering when the name has no locants). A chain parent
+ * never gets the ring steps; a cycloalkane (`parentKind` 'ring', design.md
+ * §13.4 I-25) gets count, ring, ringNumbering and assemble: the chain that
+ * closes on itself (its closure bond highlighted apart), the carbon count,
+ * the formula CₙH₂ₙ and why no number is needed.
  */
 
 import { toSubscript } from '../model/molecule.js';
@@ -39,14 +43,17 @@ export const GLOSSARY = Object.freeze({
   'insaturación': 'Un enlace doble o triple entre dos carbonos.',
   'enlace doble': 'Dos carbonos unidos por dos enlaces. Se dibuja con dos rayas.',
   'enlace triple': 'Dos carbonos unidos por tres enlaces. Se dibuja con tres rayas.',
+  anillo: 'Una cadena de carbonos cerrada: el último carbono está unido al primero.',
 });
 
 /** Titles of the steps (design.md §5). */
 export const STEP_TITLES = Object.freeze({
   count: 'Cuenta los carbonos',
+  ring: 'Busca el anillo',
   chain: 'Busca la cadena más larga',
   tiebreak: 'Desempates',
   numbering: 'Numera la cadena',
+  ringNumbering: 'Numera el anillo',
   substituents: 'Nombra los sustituyentes',
   order: 'Ordena alfabéticamente',
   assemble: 'Monta el nombre',
@@ -162,7 +169,7 @@ function substituentPi(sub) {
 
 /**
  * Counts the carbons and hydrogens of the named molecule from its structure
- * (an acyclic hydrocarbon: H = 2C + 2 − 2·π).
+ * (a hydrocarbon: H = 2C + 2 − 2·π − 2·rings; one ring for a ring parent).
  *
  * @param {object} structure - The name structure.
  * @returns {{carbons: number, hydrogens: number}} The counts.
@@ -177,7 +184,8 @@ export function atomCounts(structure) {
       pi += substituentPi(group.substituent) + (site.order - 1);
     }
   }
-  return { carbons, hydrogens: 2 * carbons + 2 - 2 * pi };
+  const rings = structure.parentKind === 'ring' ? 1 : 0;
+  return { carbons, hydrogens: 2 * carbons + 2 - 2 * pi - 2 * rings };
 } // End of function atomCounts()
 
 /**
@@ -275,13 +283,18 @@ function countStep(result) {
   const formula = toSubscript(`C${carbons === 1 ? '' : carbons}H${hydrogens === 1 ? '' : hydrogens}`);
   const atoms = [...result.parent.atoms, ...result.structure.prefixes.flatMap((g) => groupIds(g).atoms)];
   const bonds = [...result.parent.bonds, ...result.structure.prefixes.flatMap((g) => groupIds(g).bonds)];
+  const text = [
+    `Tu molécula tiene ${count(carbons, 'carbono', 'carbonos')} y ${count(hydrogens, 'hidrógeno', 'hidrógenos')} (${formula}).`,
+    'En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces.',
+  ];
+  if (result.structure.parentKind === 'ring' && result.structure.prefixes.length === 0 && hydrogens === 2 * carbons) {
+    const open = toSubscript(`C${carbons}H${hydrogens + 2}`);
+    text.push(`En un anillo sin ramas ni enlaces dobles, cada carbono está unido a otros dos carbonos y a 2 hidrógenos: por eso hay el doble de hidrógenos que de carbonos (CₙH₂ₙ). La cadena abierta con los mismos carbonos tiene 2 hidrógenos más (${open}), porque sus dos extremos no están unidos entre sí.`);
+  }
   return {
     id: 'count',
     title: STEP_TITLES.count,
-    text: [
-      `Tu molécula tiene ${count(carbons, 'carbono', 'carbonos')} y ${count(hydrogens, 'hidrógeno', 'hidrógenos')} (${formula}).`,
-      'En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces.',
-    ],
+    text,
     highlight: [{ atoms, bonds, style: 'candidate' }],
     locants: null,
   };
@@ -422,6 +435,66 @@ function chainStep(result) {
   }
   return step;
 } // End of function chainStep()
+
+/**
+ * Highlight specs of a ring parent: the ring atoms and bonds as the parent,
+ * and its closure bond apart (the bond that closes the chain on itself).
+ *
+ * @param {object} result - A naming result with a ring parent.
+ * @returns {{atoms: number[], bonds: number[], style: string}[]} The specs.
+ */
+function ringSpecs(result) {
+  const { closure } = result.structure.parent;
+  return [
+    { atoms: [...result.parent.atoms], bonds: result.parent.bonds.filter((id) => id !== closure), style: 'parent' },
+    { atoms: [], bonds: [closure], style: 'candidate' },
+  ];
+}
+
+/**
+ * Step 2 for a ring parent, "Busca el anillo": the chain that closes on
+ * itself, its closure bond and the `ciclo-` prefix.
+ *
+ * @param {object} result - A naming result with a ring parent.
+ * @returns {object} The step.
+ */
+function ringStep(result) {
+  const { parent } = result.structure;
+  const n = parent.length;
+  const open = `${lexiconEs.stem(n)}${lexiconEs.endings.saturated}`;
+  const ring = `${lexiconEs.ringPrefix}${open}`;
+  return {
+    id: 'ring',
+    title: STEP_TITLES.ring,
+    text: [
+      `Los ${n} carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].`,
+      'El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.',
+      `Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «${lexiconEs.ringPrefix}-»: ${q(open)} → ${q(ring)}.`,
+    ],
+    highlight: ringSpecs(result),
+    locants: null,
+  };
+} // End of function ringStep()
+
+/**
+ * Step for a ring parent, "Numera el anillo": an unsubstituted, saturated
+ * ring needs no numbers.
+ *
+ * @param {object} result - A naming result with a ring parent.
+ * @returns {object} The step.
+ */
+function ringNumberingStep(result) {
+  return {
+    id: 'ringNumbering',
+    title: STEP_TITLES.ringNumbering,
+    text: [
+      'Aquí no hace falta numerar: el nombre no lleva números.',
+      'En un anillo sin ramas y con todos los enlaces simples, todos los carbonos son iguales. Da igual por cuál empieces a contar y hacia qué lado sigas: no hay nada que [[localizar|localizador]].',
+    ],
+    highlight: [parentSpec(result)],
+    locants: null,
+  };
+} // End of function ringNumberingStep()
 
 /** How each count rule of the tie-break step is explained. */
 const COUNT_RULES = Object.freeze({
@@ -951,7 +1024,12 @@ function nameLegend(result) {
       meaning: `sustituyente: grupo ${groupNameOf(sub)} (${count(sub.atoms.length, 'carbono', 'carbonos')})`,
     });
   } // End of the loop over the prefix groups
-  legend.push({ text: lexiconEs.stem(parent.length), kind: 'stem', meaning: `${count(parent.length, 'carbono', 'carbonos')} en la cadena principal` });
+  if (result.structure.parentKind === 'ring') {
+    legend.push({ text: `${lexiconEs.ringPrefix}-`, kind: 'stem', meaning: 'la cadena se cierra: es un anillo' });
+    legend.push({ text: lexiconEs.stem(parent.length), kind: 'stem', meaning: `${count(parent.length, 'carbono', 'carbonos')} en el anillo` });
+  } else {
+    legend.push({ text: lexiconEs.stem(parent.length), kind: 'stem', meaning: `${count(parent.length, 'carbono', 'carbonos')} en la cadena principal` });
+  }
   const segments = lexiconEs.segmentOrder.map((kind) => ({ kind, sites: parent[kind] })).filter((s) => s.sites.length > 0);
   if (segments.length === 0) {
     legend.push({ text: `-${lexiconEs.endings.saturated}`, kind: 'ending', meaning: 'todos los enlaces son simples' });
@@ -994,6 +1072,8 @@ function assembleStep(result) {
   if (prefixes.length > 0) {
     text.push('Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.');
     text.push('Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.');
+  } else if (result.structure.parentKind === 'ring') {
+    text.push(`El nombre de un anillo empieza por «${lexiconEs.ringPrefix}-», que dice que la cadena está cerrada. Luego va la raíz, que dice cuántos carbonos tiene el anillo, y la terminación «-${lexiconEs.endings.saturated}», porque todos los enlaces son simples.`);
   } else {
     text.push('El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.');
   }
@@ -1014,7 +1094,8 @@ function assembleStep(result) {
     title: STEP_TITLES.assemble,
     text,
     highlight: [parentSpec(result), ...substituentSpecs(result)],
-    locants: parentLocants(result),
+    // An unsubstituted ring is not numbered: no locant labels on it.
+    locants: result.structure.parentKind === 'ring' ? null : parentLocants(result),
     legend: nameLegend(result),
     parts: result.parts.map((p) => ({ text: p.text, kind: p.kind, atoms: [...p.atoms], bonds: [...p.bonds] })),
   };
@@ -1029,6 +1110,9 @@ function assembleStep(result) {
 export function explain(result) {
   if (!result || !result.ok) {
     return [];
+  }
+  if (result.structure.parentKind === 'ring') {
+    return [countStep(result), ringStep(result), ringNumberingStep(result), assembleStep(result)];
   }
   return [
     countStep(result),

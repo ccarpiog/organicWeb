@@ -8,8 +8,10 @@
  *   self-bonds, no duplicate bonds, orders 1–3, neutral valence per element:
  *   C 4, N 3, O 2, halogens 1);
  * - validateForNaming(): the structural checks, then non-empty, connected,
- *   acyclic (rings are classified by rings.js: a single carbocycle gets
- *   CYCLE, any other ring system RING_SYSTEM with its kind), size caps
+ *   the ring scope (rings are classified by rings.js: a single saturated,
+ *   unsubstituted carbocycle of at most 30 carbons is nameable; a single
+ *   carbocycle with side chains or multiple bonds gets CYCLE, a larger one
+ *   TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps
  *   (≤ 60 carbons, ≤ 80 heavy atoms), only elements the engine can name yet
  *   (carbon), and longest chain ≤ 30.
  *
@@ -42,7 +44,8 @@ export const NOT_NAMEABLE_YET = Object.freeze(['CYCLE', 'RING_SYSTEM', 'HETEROAT
 export const MESSAGES = Object.freeze({
   EMPTY: 'Dibuja primero una molécula.',
   DISCONNECTED: 'Hay piezas sueltas: todas las partes deben estar unidas.',
-  CYCLE: 'Has dibujado un anillo. Aún no sé nombrar anillos, pero pronto aprenderé: de momento solo nombro cadenas abiertas.',
+  CYCLE: 'Has dibujado un anillo con ramas o con enlaces dobles o triples. Aún no sé nombrar este tipo de anillos, '
+    + 'pero pronto aprenderé: de momento solo nombro anillos sin ramas y con todos los enlaces simples, como el ciclohexano.',
   RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
   VALENCE: 'Este carbono tendría más de 4 enlaces.',
   TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
@@ -66,6 +69,23 @@ export const RING_SYSTEM_MESSAGES = Object.freeze({
     + 'Este tipo de moléculas queda fuera de lo que sé nombrar.',
   several: 'Esta molécula tiene varios anillos. De momento solo podré nombrar moléculas con un único anillo.',
 });
+
+/**
+ * CYCLE messages by `ringReason`: a single carbocycle the engine cannot name
+ * yet because it carries side chains (substituents) or multiple bonds
+ * (named from phase I-26). MESSAGES.CYCLE is the generic form.
+ */
+export const CYCLE_MESSAGES = Object.freeze({
+  substituted: 'Este anillo tiene ramas (sustituyentes). Aún no sé nombrar anillos con ramas, pero pronto aprenderé: '
+    + 'de momento solo nombro anillos sin ramas y con todos los enlaces simples, como el ciclohexano.',
+  unsaturated: 'Este anillo tiene algún enlace doble o triple. Aún no sé nombrar anillos así, pero pronto aprenderé: '
+    + 'de momento solo nombro anillos sin ramas y con todos los enlaces simples, como el ciclohexano.',
+  'substituted-unsaturated': 'Este anillo tiene ramas (sustituyentes) y algún enlace doble o triple. Aún no sé nombrar '
+    + 'anillos así, pero pronto aprenderé: de momento solo nombro anillos sin ramas y con todos los enlaces simples, como el ciclohexano.',
+});
+
+/** TOO_BIG message for a ring larger than the parent-size cap (MAX_CHAIN). */
+export const RING_TOO_BIG_MESSAGE = 'El anillo es demasiado grande (máximo 30 carbonos en el anillo).';
 
 /** TOO_BIG message when the heavy-atom cap (not the carbon cap) is exceeded. */
 export const TOO_MANY_ATOMS_MESSAGE = 'La molécula es demasiado grande (máximo 80 átomos sin contar los hidrógenos).';
@@ -291,28 +311,45 @@ export function validateStructure(mol) {
 } // End of function validateStructure()
 
 /**
- * The "not nameable" error for a molecule with rings: CYCLE for a single
- * carbocycle (nameable in a later phase), RING_SYSTEM with `ringKind` for a
+ * The scope check for a molecule with rings. A single carbocycle is
+ * nameable (null) when it is saturated, carries no side chain and has at
+ * most MAX_CHAIN carbons (a cycloalkane, design.md §13.4 I-25). Otherwise:
+ * CYCLE with `ringReason` ('substituted', 'unsaturated' or both) for a
+ * single carbocycle with side chains or ring multiple bonds (named from
+ * I-26), TOO_BIG for a larger ring, and RING_SYSTEM with `ringKind` for a
  * heterocycle, fused, bridged or spiro system, or several rings (out of
  * scope, design.md §13.1). `atoms` lists every ring atom, for highlighting.
  *
  * @param {object} mol - A structurally valid, connected molecule with at least one ring.
- * @returns {{code: string, message: string, atoms: number[], ringKind: string}} The error.
+ * @returns {{code: string, message: string, atoms: number[], ringKind: string}|null} The error, or null
+ *   for a nameable cycloalkane.
  */
 function ringError(mol) {
   const { kind, perception } = classifyRings(mol);
   const atoms = perception.ringAtoms;
-  if (kind === 'carbocycle') {
-    return validationError('CYCLE', { atoms, ringKind: kind });
+  if (kind !== 'carbocycle') {
+    return validationError('RING_SYSTEM', { message: RING_SYSTEM_MESSAGES[kind], atoms, ringKind: kind });
   }
-  return validationError('RING_SYSTEM', { message: RING_SYSTEM_MESSAGES[kind], atoms, ringKind: kind });
+  const substituted = perception.attachments.length > 0;
+  const unsaturated = perception.ringBonds.some((id) => mol.bonds.get(id).order !== 1);
+  if (substituted || unsaturated) {
+    const ringReason = [substituted && 'substituted', unsaturated && 'unsaturated'].filter(Boolean).join('-');
+    return validationError('CYCLE', { message: CYCLE_MESSAGES[ringReason], atoms, ringKind: kind, ringReason });
+  }
+  if (atoms.length > MAX_CHAIN) {
+    return validationError('TOO_BIG', { message: RING_TOO_BIG_MESSAGE, detail: `ring of ${atoms.length} carbons`, atoms });
+  }
+  return null;
 } // End of function ringError()
 
 /**
  * Structural checks plus the naming checks, in order: non-empty, connected,
- * acyclic (CYCLE for a single carbocycle, RING_SYSTEM otherwise), carbon and heavy-atom caps, carbon only (HETEROATOM: valid but not
- * nameable yet), chain cap (design.md §3.2, §13.1). A molecule passing this
- * is a hydrocarbon tree of at most 60 carbons whose longest chain has at most 30.
+ * ring scope (ringError(): a cycloalkane passes; CYCLE, TOO_BIG or
+ * RING_SYSTEM otherwise), carbon and heavy-atom caps, carbon only
+ * (HETEROATOM: valid but not nameable yet), chain cap (design.md §3.2,
+ * §13.1). A molecule passing this is either a hydrocarbon tree of at most
+ * 60 carbons whose longest chain has at most 30, or a single saturated,
+ * unsubstituted carbocycle of 3 to 30 carbons.
  *
  * @param {object} mol - The molecule (possibly corrupt).
  * @returns {{code: string, message: string}|null} The first error found, or null when the molecule can be named.
@@ -329,6 +366,8 @@ export function validateForNaming(mol) {
     return validationError('DISCONNECTED');
   }
   if (hasCycle(mol)) {
+    // Either an out-of-scope ring error, or null: a cycloalkane, which has
+    // no heteroatom and is within every cap (≤ MAX_CHAIN carbons).
     return ringError(mol);
   }
   const carbons = [...mol.atoms.values()].filter((atom) => atom.element === 'C').length;

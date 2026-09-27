@@ -1,7 +1,7 @@
 # organicWeb — Química orgánica
 
 A static, offline web app for secondary-school students (ESO, Spain): draw an
-acyclic hydrocarbon and get its IUPAC name **in Spanish**, with a
+acyclic hydrocarbon or a simple cycloalkane and get its IUPAC name **in Spanish**, with a
 step-by-step explanation and a redraw that makes the main chain obvious. The
 user interface is in Spanish; code and documentation are in English. The
 design and phase plan live in [`docs/design.md`](docs/design.md).
@@ -17,7 +17,9 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   live molecular formula, keyboard shortcuts, and autosave in the browser.
 - **Naming** of every valid acyclic hydrocarbon (alkanes, alkenes, alkynes;
   any branching; branched, unsaturated and nested substituents; doubly
-  attached `-iliden` substituents), with the name coloured by part
+  attached `-iliden` substituents) and of simple cycloalkanes (a single
+  saturated ring without side chains, 3–30 carbons: `ciclopropano`,
+  `ciclohexano`…), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles.
@@ -27,11 +29,12 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   the remembered **Resaltar en el dibujo** switch hides or shows those marks.
   Key terms are underlined and show a short definition.
 - **Ordenar dibujo**: redraws the molecule with the main chain laid out left
-  to right and numbered (one animated, undoable edit).
+  to right and numbered (one animated, undoable edit); rings are not
+  redrawn yet.
 - **Ejemplos**: a menu of 14 molecules, one per feature.
 - **Ayuda**: a short in-page guide to drawing, with illustrations, keyboard
   shortcuts and the glossary.
-- Friendly Spanish messages for rings, disconnected pieces, an empty canvas
+- Friendly Spanish messages for rings that cannot be named yet, disconnected pieces, an empty canvas
   and impossible bonds. Light and dark theme following the system.
 - Accessible: every control is reachable with the keyboard and has a visible
   focus ring and an accessible name; the name and the current explanation
@@ -97,7 +100,8 @@ instance published by `src/ui/app.js` (test API documented in the header of
 
 ### Oracle
 
-`npm run oracle` generates random acyclic hydrocarbons, names them with this
+`npm run oracle` generates random acyclic hydrocarbons (plus the
+cycloalkanes of the size range), names them with this
 engine and checks each name by parsing it back with
 [OPSIN](https://github.com/dan2097/opsin) (after rendering the name in
 English) and comparing the structures. It needs Java and downloads the OPSIN jar on

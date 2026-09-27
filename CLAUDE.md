@@ -1,6 +1,6 @@
 # organicWeb — Química orgánica para ESO
 
-Static web app: draw an acyclic hydrocarbon, get its IUPAC name in Spanish with
+Static web app: draw an acyclic hydrocarbon or a simple cycloalkane, get its IUPAC name in Spanish with
 a step-by-step explanation, and optionally redraw it so the main chain is clear.
 
 - **User-facing text: Spanish (Spain), ESO level.** Code, comments and docs: English.

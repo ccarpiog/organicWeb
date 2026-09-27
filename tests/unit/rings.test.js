@@ -16,7 +16,9 @@ import { parseSmiles, writeSmiles, SmilesError } from '../../src/model/smiles.js
 import {
   createMolecule, addAtom, addBond, moleculeToJSON, moleculeFromJSON, formula,
 } from '../../src/model/molecule.js';
-import { validateForNaming, isNotNameableYet, MESSAGES, RING_SYSTEM_MESSAGES } from '../../src/model/validate.js';
+import {
+  validateForNaming, isNotNameableYet, RING_SYSTEM_MESSAGES, CYCLE_MESSAGES, RING_TOO_BIG_MESSAGE,
+} from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { canonicalLayout } from '../../src/layout/canonical.js';
 import { rightAngleLayout } from '../../src/layout/rightangle.js';
@@ -231,11 +233,12 @@ test('classification: acyclic, carbocycle, heterocycle, fused, bridged, spiro, s
   assert.equal(perceiveRings(parseSmiles('C1CCC2(C1)CCCC2')).blocks.length, 2);
 }); // End of test 'classification…'
 
-test('validation: a carbocycle is "not yet", other ring systems are out of scope; naming never crashes', () => {
+test('validation: a substituted carbocycle is "not yet", other ring systems are out of scope; naming never crashes', () => {
   const ring = validateForNaming(parseSmiles('CC1CCCCC1'));
   assert.equal(ring.code, 'CYCLE');
-  assert.equal(ring.message, MESSAGES.CYCLE);
-  assert.match(ring.message, /Aún no sé nombrar anillos/);
+  assert.equal(ring.message, CYCLE_MESSAGES.substituted);
+  assert.equal(ring.ringReason, 'substituted');
+  assert.match(ring.message, /Aún no sé nombrar anillos con ramas/);
   assert.equal(ring.ringKind, 'carbocycle');
   assert.deepEqual(ring.atoms, [2, 3, 4, 5, 6, 7]);
   assert.ok(isNotNameableYet(ring));
@@ -258,9 +261,10 @@ test('validation: a carbocycle is "not yet", other ring systems are out of scope
     assert.equal(result.ok, false);
     assert.equal(result.error.code, 'RING_SYSTEM');
   } // End of the loop over the out-of-scope ring systems
-  assert.equal(nameMolecule(parseSmiles('C1CCCCC1')).error.code, 'CYCLE');
-  // A ring bigger than the caps is still reported as a ring first.
-  assert.equal(validateForNaming(carbonPath(70, true)).code, 'CYCLE');
+  assert.equal(nameMolecule(parseSmiles('C1CCCCC1')).name, 'ciclohexano');
+  // A bare ring bigger than the parent-size cap gets the ring-size message.
+  assert.equal(validateForNaming(carbonPath(70, true)).code, 'TOO_BIG');
+  assert.equal(validateForNaming(carbonPath(70, true)).message, RING_TOO_BIG_MESSAGE);
 }); // End of test 'validation…'
 
 test('no unbounded recursion: large rings and long chains', () => {

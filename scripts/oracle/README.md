@@ -20,7 +20,7 @@ refused (the run is reported as skipped).
 
 ```sh
 npm run oracle -- --download                 # once: fetch the pinned jar
-npm run oracle -- --count 1000 --seed 1      # 1000 molecules, 4–14 C
+npm run oracle -- --count 1000 --seed 1      # 1000 random molecules + 11 cycloalkanes, 4–14 C
 npm run oracle -- --count 3000 --seed 6 --min 10 --max 30
 ```
 
@@ -39,7 +39,9 @@ Output: `passed: … failed: … skipped: … adapter failures: …`.
 ## How it works
 
 1. `generate.mjs` draws distinct (by canonical tree key) random acyclic
-   hydrocarbons from a seed (mulberry32), within the naming size caps.
+   hydrocarbons from a seed (mulberry32), within the naming size caps, and
+   `generateCycloalkanes()` adds one cycloalkane per ring size in the carbon
+   range (3–30 at most): `cyclopropane` … `cyclotriacontane`.
 2. Each molecule is named in every prefix style (`isopropil`, `pin`,
    `substituted`); the same name structures are rendered in English with
    `src/naming/lexicon.en.js` (`compare.mjs`).
@@ -59,7 +61,9 @@ Output: `passed: … failed: … skipped: … adapter failures: …`.
    **adapter failure**, counted apart from naming failures.
 
 The generator stays hydrocarbon-only: the naming engine does not name
-heteroatom compounds yet, but the comparison already handles them.
+heteroatom compounds yet, but the comparison already handles them. Rings
+other than the bare cycloalkanes (substituted or unsaturated rings) are not
+generated until the engine names them.
 
 A round trip proves that a name denotes the right structure, not that the
 parent choice, numbering or spelling are the preferred ones; the fixtures

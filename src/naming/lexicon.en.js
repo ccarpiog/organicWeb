@@ -31,6 +31,12 @@ const STEMS = Object.freeze([
   'henicos', 'docos', 'tricos', 'tetracos', 'pentacos', 'hexacos', 'heptacos', 'octacos', 'nonacos', 'triacont',
 ]);
 
+/**
+ * Nondetachable prefix of a ring parent: `cyclo` + chain stem + ending
+ * (cyclohexane; IUPAC 2013 P-22.1.1: the nondetachable prefix cyclo + the name of the unbranched saturated chain with as many carbons).
+ */
+export const RING_PREFIX = 'cyclo';
+
 /** Endings of the parent name. */
 export const ENDINGS = Object.freeze({ saturated: 'ane', double: 'ene', triple: 'yne' });
 
@@ -215,4 +221,5 @@ export const lexiconEn = Object.freeze({
   alkylPrefix,
   groupName,
   prefixForm,
+  ringPrefix: RING_PREFIX,
 });

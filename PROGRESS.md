@@ -33,7 +33,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-22 | v2.2 Multi-element SMILES and oracle | same, §3.2 | done — `docs/progress-archive/i-22.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-22.md` |
 | I-23 | v2.3 Element palette | same, §3.3 | done — `docs/progress-archive/i-23.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-23.md` |
 | I-24 | v2.4 Ring infrastructure | same, §3.4 | done — `docs/progress-archive/i-24.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-24.md` |
-| I-25 | v2.5 Simple cycloalkanes | same, §3.5 | queued | — | — |
+| I-25 | v2.5 Simple cycloalkanes | same, §3.5 | done — `docs/progress-archive/i-25.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-25.md` |
 | I-26 | v2.6 Substituted and unsaturated rings | same, §3.6 | queued | — | — |
 | I-27 | v2.7 Drawing and ordering rings | same, §3.7 | queued | — | — |
 | I-28 | v2.8 Benzene and hydrocarbon derivatives | same, §3.8 | queued | — | — |
@@ -52,7 +52,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-24 done; I-25…I-41 queued in order;
+v2 plan (user-confirmed scope): I-21…I-25 done; I-26…I-41 queued in order;
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
 
@@ -87,14 +87,16 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-25 (v2 §3.5 simple cycloalkanes: new
-`src/naming/rings.js`, `structure.js`, renderer, both lexicons, explain —
-`ciclohexano`; explain the closure and carbon count; name hand-drawn rings;
-closure bond highlighted). Ring perception is `src/model/rings.js`; a single
-carbocycle currently gets the `CYCLE` "aún no sé nombrar anillos" error in
-`src/model/validate.js`, which I-25 lifts for unsubstituted rings. Spec:
-design §13.4 row I-25 and
-`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.5.
+Poll the inbox, then run I-26 (v2 §3.6 substituted and unsaturated rings:
+`src/naming/{rings,parent,numbering,substituent}.js`, explain — every
+start/direction of ring numbering; unsaturation and substituent locants;
+explicit ring-vs-chain parent choice per IUPAC 2013 (P-44.1.2.2: a ring is
+senior to a chain; confirm against design §13 before coding). Since I-25 a bare saturated ring
+is named via `src/naming/rings.js` (`NameStructure` parent kind `ring`, closure
+bond stored); rings with side chains or ring multiple bonds still get `CYCLE`
+with `ringReason` in `src/model/validate.js`, which I-26 lifts. Spec: design
+§13.4 row I-26 and
+`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 6.
 Deploying (`npm run deploy`, `scripts/deploy.mjs`) stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
@@ -137,17 +139,19 @@ Deploying (`npm run deploy`, `scripts/deploy.mjs`) stays a manual user step.
   `tests/unit/deploy.test.js`; docs README "Deployment", design §10.1.
 - Element palette: toolbar `src/ui/toolbar.js`; DOM-free label sizing
   `src/editor/labels.js`; heteroatom hit boxes `onHeteroLabel()` in `geometry.js`.
+- Ring naming: `src/naming/rings.js` (bare cycloalkanes, I-25); explain steps
+  "Busca el anillo" / `ringNumbering` in `src/explain/explain.js`.
 - Rings: pure perception/classification `src/model/rings.js`; `canonicalKey()`
   (trees + monocycles) in `graph.js`; errors `CYCLE` / `RING_SYSTEM` (`ringKind`)
   in `validate.js`; SMILES ring closures in `smiles.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-24)
+## Verification (last phase, I-25)
 
-- After the review fix: `npm test` 0 (473 pass) · `npm run check` 0 (80 files)
-  · `npm run e2e` 0 (153 pass, source + dist) · `npm run oracle -- --count 200
-  --seed 1` 0 (200 pass, 0 adapter failures).
+- `npm test` 0 (492 pass) · `npm run check` 0 (82 files) · `npm run e2e` 0
+  (157 pass, source + dist) · `npm run oracle -- --count 200 --seed 1` 0 (211
+  pass incl. 11 cycloalkanes, 0 adapter failures).
 
 ## Open risks / deviations
 
@@ -242,10 +246,15 @@ Deploying (`npm run deploy`, `scripts/deploy.mjs`) stays a manual user step.
   oracle cannot compare molecules with 2+ rings. Review's two should-fix fixed
   with regressions (`docs/progress-archive/i-24.md`).
 
+- I-25: bare rings 3–30 C named; > 30 C → `TOO_BIG`; `CYCLE` keeps a
+  `ringReason` (side chains / unsaturation / both). Closure bond chosen from
+  atom ids, not drawing order. Ordenar dibujo refuses rings with a message
+  until I-27 (`docs/progress-archive/i-25.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-22 `7fb4a83`, I-23 `61ae2f1`, pushed. I-24 committed and pushed right
+- I-23 `61ae2f1`, I-24 `d2e07e3`, pushed. I-25 committed and pushed right
   after this checkpoint (see `git log`).

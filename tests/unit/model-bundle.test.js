@@ -41,7 +41,8 @@ test('model modules bundle and run in a classic script', async () => {
         '  restored: back.ok && writeSmiles(back.mol),',
         "  ring: canonicalKey(parseSmiles('CC1CCCC1')) === canonicalKey(parseSmiles('C1CCC(C)C1')),",
         "  kind: classifyRings(parseSmiles('C1CCC2CCCCC2C1')).kind,",
-        "  code: validate(parseSmiles('C1CCCCC1')).error.code,",
+        "  code: validate(parseSmiles('CC1CCCCC1')).error.code,",
+        "  cycloalkane: validate(parseSmiles('C1CCCCC1')).ok,",
         '};',
       ].join('\n'),
     );
@@ -49,7 +50,7 @@ test('model modules bundle and run in a classic script', async () => {
     const context = {};
     vm.runInNewContext(code, context);
     assert.deepEqual({ ...context.__result }, {
-      formula: 'C₅H₁₂', same: true, valid: true, restored: 'CC(C)CC', ring: true, kind: 'fused', code: 'CYCLE',
+      formula: 'C₅H₁₂', same: true, valid: true, restored: 'CC(C)CC', ring: true, kind: 'fused', code: 'CYCLE', cycloalkane: true,
     });
   } finally {
     await rm(dir, { recursive: true, force: true });

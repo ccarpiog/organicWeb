@@ -102,6 +102,13 @@ for (const row of fixtureRows) {
     assert.equal(result.name, row.name);
     assert.equal(result.parts.map((p) => p.text).join(''), result.name);
     assert.deepEqual(result.alternatives.map(({ style, name }) => ({ style, name })), parseAlternatives(row.alternatives));
+    if (result.structure.parentKind === 'ring') {
+      // A cycloalkane: the whole molecule is the ring, recorded by one RING trace step.
+      assert.deepEqual(result.trace.map((step) => step.rule), ['RING']);
+      assert.equal(result.parent.atoms.length, mol.atoms.size);
+      assert.equal(result.parent.bonds.length, mol.bonds.size);
+      return;
+    }
     const p1 = result.trace[0];
     assert.equal(p1.rule, 'P1');
     assert.equal(result.parent.atoms.length, Math.max(...p1.values));
@@ -484,15 +491,23 @@ test('structure is language-neutral data', () => {
   assert.deepEqual(structure.parent.triple.map((s) => s.locant), [1]);
   assert.deepEqual(structure.prefixes, []);
   // No words anywhere: every leaf value of the structure is a number.
-  const leaves = [];
-  JSON.stringify(structure, (key, value) => {
-    if (value === null || typeof value !== 'object') {
-      leaves.push(value);
-    }
-    return value;
-  });
-  assert.ok(leaves.length > 0);
-  assert.ok(leaves.every((value) => typeof value === 'number'), 'structure holds only numbers');
+  // (`parentKind` and a ring's `kind` are identifiers, 'chain' or 'ring', not words.)
+  assert.equal(structure.parentKind, 'chain');
+  for (const other of [structure, nameMolecule(parseSmiles('C1CCCCC1')).structure]) {
+    const leaves = [];
+    JSON.stringify(other, (key, value) => {
+      if (key === 'parentKind' || key === 'kind') {
+        assert.ok(['chain', 'ring'].includes(value));
+        return undefined;
+      }
+      if (value === null || typeof value !== 'object') {
+        leaves.push(value);
+      }
+      return value;
+    });
+    assert.ok(leaves.length > 0);
+    assert.ok(leaves.every((value) => typeof value === 'number'), 'structure holds only numbers');
+  } // End of the loop over a chain and a ring structure
 });
 
 test('invalid input returns an error result', () => {

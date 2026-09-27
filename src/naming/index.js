@@ -15,16 +15,18 @@
  * isopropylidene group, `alternatives` holds the names in the other two
  * styles. Doubly-attached (`-iliden`) substituents are named at any depth
  * (design.md §4.6): every valid acyclic hydrocarbon within the size caps
- * gets a name.
+ * gets a name. A molecule with a ring that passes validation is a
+ * cycloalkane, named by rings.js (`ciclohexano`, design.md §13.4 I-25).
  */
 
 import { validateForNaming } from '../model/validate.js';
-import { adjacency } from '../model/graph.js';
+import { adjacency, hasCycle } from '../model/graph.js';
 import { selectParent } from './parent.js';
 import { createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, PREFIX_STYLES } from './substituent.js';
 import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure } from './structure.js';
 import { renderName } from './render.js';
+import { nameRingMolecule } from './rings.js';
 import { lexiconEs } from './lexicon.es.js';
 
 /** Error for an unexpected engine failure (a bug); nameMolecule never throws. */
@@ -125,7 +127,7 @@ function withCandidateBonds(trace, adj) {
 
 /**
  * Validates and names a molecule (the body of nameMolecule, which may throw
- * only on an internal bug). When the default-style name contains
+ * only on an internal bug). A cycloalkane is named by rings.js. When the default-style name contains
  * `isopropil` or `isopropiliden`, the names in the other two styles are
  * added as `alternatives`, each from its own run of prefix naming and
  * numbering (a style may need a nested `-iliden` group that the others
@@ -144,6 +146,10 @@ function nameValidated(mol, options) {
   const style = options.prefixStyle || PREFIX_STYLES[0];
   if (!PREFIX_STYLES.includes(style)) {
     throw new RangeError(`unknown prefix style ${style}`);
+  }
+  if (hasCycle(mol)) {
+    // Validation lets through only cycloalkanes (no prefixes, so no prefix style matters).
+    return nameRingMolecule(mol, lexiconEs);
   }
   const adj = adjacency(mol);
   const selection = selectParent(mol);

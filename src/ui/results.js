@@ -10,7 +10,9 @@
  * step on (option views of a step are shown as they are). While the 90°
  * drawing is shown (design.md §6.3) the hint is hidden and arrange() is
  * refused with a message (the change would be invisible there); the
- * highlights follow the projected drawing.
+ * highlights follow the projected drawing. A named ring (a cycloalkane)
+ * gets no hint and arrange() refuses it with a message until ring layouts
+ * exist (phase I-27).
  *
  * The "Resaltar en el dibujo" switch (one inside the stepper, one under the
  * name while the stepper is closed; both share one state) hides or shows
@@ -35,7 +37,7 @@ import { canonicalLayout, layoutProblems } from '../layout/canonical.js';
 /** Extra hints shown under an error message, by error code. */
 export const ERROR_HINTS = Object.freeze({
   EMPTY: 'Usa las herramientas de la izquierda para dibujar carbonos y enlaces.',
-  CYCLE: 'Borra un enlace del anillo para abrir la cadena.',
+  CYCLE: 'Quita las ramas y los enlaces dobles o triples del anillo, o borra un enlace del anillo para abrir la cadena.',
   DISCONNECTED: 'Une las piezas con un enlace o borra las que sobran.',
 });
 
@@ -53,6 +55,20 @@ export const ALREADY_ORDERED = 'El dibujo ya está ordenado.';
 
 /** Toast shown when no clear ordered drawing was found (the drawing is left as it is). */
 export const CANNOT_ORDER = 'No he podido ordenar esta molécula sin que se crucen enlaces. El dibujo se queda como estaba.';
+
+/** Message when "Ordenar dibujo" is asked for a ring (ring layouts come in phase I-27). */
+export const RING_ORDER = 'Todavía no sé ordenar el dibujo de un anillo. El dibujo se queda como estaba.';
+
+/**
+ * Tells whether "Ordenar dibujo" can lay out a named molecule: only open
+ * chains for now (canonicalLayout() refuses rings until phase I-27).
+ *
+ * @param {object} result - A successful naming result.
+ * @returns {boolean} True when the canonical layout applies.
+ */
+export function canArrange(result) {
+  return Boolean(result && result.ok) && result.structure.parentKind !== 'ring';
+}
 
 /** Message when "Ordenar dibujo" is asked for while the 90° drawing is shown. */
 export const RIGHT_ANGLE_ORDER = 'Desactiva los ángulos rectos para ordenar el dibujo.';
@@ -652,7 +668,11 @@ export function buildResults(panel, editor, button, options = {}) {
     redraw.addEventListener('click', () => arrange());
     hint.appendChild(redraw);
     hint.hidden = isProjected();
-    nodes.push(hint);
+    if (canArrange(result)) {
+      nodes.push(hint);
+    } else {
+      hint = null; // A ring: no redraw offered yet (I-27).
+    }
     const toggle = make(doc, 'button', 'stepper-toggle', 'Ver paso a paso');
     toggle.type = 'button';
     toggle.setAttribute('aria-expanded', 'false');
@@ -701,7 +721,8 @@ export function buildResults(panel, editor, button, options = {}) {
    * "Ordenar dibujo": names the molecule first when no name is shown, then
    * applies its canonical layout (design.md §7) as one animated, undoable
    * coordinate edit. The name stays on show. A layout with crossing bonds or
-   * atoms too close together (layoutProblems()) is refused with a message.
+   * atoms too close together (layoutProblems()) is refused with a message,
+   * and so is a ring (RING_ORDER; ring layouts come in phase I-27).
    *
    * @returns {object} The naming result on failure, else the edit outcome.
    */
@@ -717,6 +738,12 @@ export function buildResults(panel, editor, button, options = {}) {
       if (!result.ok) {
         return result;
       }
+    }
+    if (!canArrange(current)) {
+      if (options.notify) {
+        options.notify(RING_ORDER);
+      }
+      return { ok: false, message: RING_ORDER };
     }
     const laid = canonicalLayout(editor.getMolecule(), current);
     if (!layoutProblems(laid).ok) {

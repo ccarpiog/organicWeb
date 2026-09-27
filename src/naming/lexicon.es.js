@@ -43,6 +43,12 @@ const SMALL_MULTIPLIERS = Object.freeze(['', '', 'di', 'tri', 'tetra']);
 /** Compound (parenthesised-prefix) multipliers that are not multiplier + `kis`. */
 const SMALL_COMPOUND_MULTIPLIERS = Object.freeze(['', '', 'bis', 'tris']);
 
+/**
+ * Nondetachable prefix of a ring parent: `ciclo` + chain stem + ending
+ * (ciclohexano; IUPAC 2013 P-22.1.1: the nondetachable prefix cyclo + the name of the unbranched saturated chain with as many carbons).
+ */
+export const RING_PREFIX = 'ciclo';
+
 /** Endings of the parent name. */
 export const ENDINGS = Object.freeze({ saturated: 'ano', double: 'eno', triple: 'ino' });
 
@@ -355,4 +361,5 @@ export const lexiconEs = Object.freeze({
   alkylPrefix,
   groupName,
   prefixForm,
+  ringPrefix: RING_PREFIX,
 });

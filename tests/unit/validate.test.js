@@ -31,7 +31,8 @@ test('exact Spanish messages from the design table', () => {
   assert.deepEqual(MESSAGES, {
     EMPTY: 'Dibuja primero una molécula.',
     DISCONNECTED: 'Hay piezas sueltas: todas las partes deben estar unidas.',
-    CYCLE: 'Has dibujado un anillo. Aún no sé nombrar anillos, pero pronto aprenderé: de momento solo nombro cadenas abiertas.',
+    CYCLE: 'Has dibujado un anillo con ramas o con enlaces dobles o triples. Aún no sé nombrar este tipo de anillos, '
+      + 'pero pronto aprenderé: de momento solo nombro anillos sin ramas y con todos los enlaces simples, como el ciclohexano.',
     RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
     VALENCE: 'Este carbono tendría más de 4 enlaces.',
     TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
@@ -66,11 +67,14 @@ test('DISCONNECTED', () => {
   assert.equal(validateMolecule(mol).error.message, MESSAGES.DISCONNECTED);
 });
 
-test('CYCLE', () => {
-  const mol = parseSmiles('CCC');
+test('CYCLE: a single carbocycle with a side chain or a ring multiple bond; a bare saturated ring is nameable', () => {
+  const mol = parseSmiles('CCCC');
   addBond(mol, 1, 3);
   assert.equal(validateStructure(mol), null);
   assert.equal(validateForNaming(mol).code, 'CYCLE');
+  const triangle = parseSmiles('CCC');
+  addBond(triangle, 1, 3);
+  assert.equal(validateForNaming(triangle), null, 'ciclopropano');
 });
 
 test('VALENCE (structural, reports the offending atoms)', () => {

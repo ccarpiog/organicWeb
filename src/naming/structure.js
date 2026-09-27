@@ -31,6 +31,25 @@
  */
 
 /**
+ * A numbered ring: the parent of a cycloalkane name (design.md §13.4 I-25).
+ * Same fields as a ChainStructure plus `kind` and `closure`, so code that
+ * reads `length`, `atoms`, `bonds`, `double` and `triple` works on both;
+ * the ring has as many bonds as atoms. Unsaturation sites use the lower
+ * locant of the bond as in a chain (the closure bond, joining the last
+ * atom to the first, gets locant `length`); ring unsaturation is named
+ * from phase I-26.
+ *
+ * @typedef {object} RingStructure
+ * @property {'ring'} kind - Always 'ring'.
+ * @property {number} length - Number of ring carbons (3–30).
+ * @property {number[]} atoms - Atom ids in locant order (atoms[i] has locant i + 1), in ring order.
+ * @property {number[]} bonds - Bond ids in ring order: bonds[i] joins atoms[i] and atoms[i + 1]; the last joins the last atom back to the first.
+ * @property {number} closure - Id of the bond that closes the ring (the last of `bonds`).
+ * @property {UnsaturationSite[]} double - Double bonds of the ring, ascending locants.
+ * @property {UnsaturationSite[]} triple - Triple bonds of the ring, ascending locants.
+ */
+
+/**
  * One occurrence of a substituent: its attachment to the chain that carries it.
  *
  * @typedef {object} PrefixLocant
@@ -76,7 +95,8 @@
  * The language-neutral name structure (design.md §4.7).
  *
  * @typedef {object} NameStructure
- * @property {ChainStructure} parent - The numbered parent chain.
+ * @property {'chain'|'ring'} parentKind - Kind of parent: an open chain, or a ring (`ciclo…`).
+ * @property {ChainStructure|RingStructure} parent - The numbered parent chain or ring.
  * @property {PrefixGroup[]} prefixes - Grouped substituent prefixes in citation order (empty for an unbranched molecule).
  */
 
@@ -109,7 +129,7 @@
  * (N5), or the atom-id tuple (tie-break).
  *
  * @typedef {object} TraceStep
- * @property {string} rule - Rule id: 'P1'…'P4', 'N1'…'N5', 'TIE'.
+ * @property {string} rule - Rule id: 'P1'…'P4', 'N1'…'N5', 'TIE', or 'RING' (the ring parent of a cycloalkane: one candidate, its size as value).
  * @property {TraceCandidate[]} candidatesBefore - Candidates entering the rule.
  * @property {Array<number|number[]|object[]>} values - Compared values, aligned with candidatesBefore.
  * @property {TraceCandidate[]} survivors - Candidates left after the rule.
@@ -171,11 +191,49 @@ export function buildChainStructure(atoms, bonds, orders) {
 } // End of function buildChainStructure()
 
 /**
- * Assembles the language-neutral name structure.
+ * Builds the structure of a numbered ring from its atoms, bonds and bond
+ * orders, all in ring (locant) order: bonds[i] joins atoms[i] and
+ * atoms[i + 1], and the last bond closes the ring.
  *
- * @param {{parent: ChainStructure, prefixes?: PrefixGroup[]}} parts - The numbered parent and its grouped prefixes (citation order).
+ * @param {number[]} atoms - Atom ids in locant order (at least 3).
+ * @param {number[]} bonds - Bond ids in ring order (as many as atoms; the last one is the closure).
+ * @param {number[]} orders - Order of each bond in `bonds` (1, 2 or 3).
+ * @returns {RingStructure} The ring structure.
+ * @throws {Error} When the arrays have inconsistent lengths or an order is invalid.
+ */
+export function buildRingStructure(atoms, bonds, orders) {
+  if (atoms.length < 3 || bonds.length !== atoms.length || orders.length !== bonds.length) {
+    throw new Error('buildRingStructure: need n ≥ 3 atoms, n bonds and n orders');
+  }
+  const n = atoms.length;
+  const double = [];
+  const triple = [];
+  orders.forEach((order, i) => {
+    const site = { locant: i + 1, bond: bonds[i], atoms: [atoms[i], atoms[(i + 1) % n]] };
+    if (order === 2) {
+      double.push(site);
+    } else if (order === 3) {
+      triple.push(site);
+    } else if (order !== 1) {
+      throw new Error(`buildRingStructure: invalid bond order ${order}`);
+    }
+  });
+  return {
+    kind: 'ring', length: n, atoms: [...atoms], bonds: [...bonds], closure: bonds[n - 1], double, triple,
+  };
+} // End of function buildRingStructure()
+
+/**
+ * Assembles the language-neutral name structure. The parent kind is taken
+ * from the parent: 'ring' for a RingStructure, else 'chain'.
+ *
+ * @param {{parent: ChainStructure|RingStructure, prefixes?: PrefixGroup[]}} parts - The numbered parent and its grouped prefixes (citation order).
  * @returns {NameStructure} The name structure.
  */
 export function buildNameStructure(parts) {
-  return { parent: parts.parent, prefixes: parts.prefixes ? [...parts.prefixes] : [] };
+  return {
+    parentKind: parts.parent.kind === 'ring' ? 'ring' : 'chain',
+    parent: parts.parent,
+    prefixes: parts.prefixes ? [...parts.prefixes] : [],
+  };
 }

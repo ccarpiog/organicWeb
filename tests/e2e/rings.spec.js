@@ -1,9 +1,11 @@
 /**
- * @file Ring e2e (design.md §3.2, §13 I-24): a ring drawn by bonding back to
- * an atom gets the Spanish "not nameable yet" message; a ring with an
- * oxygen, fused and spiro rings get their out-of-scope messages; "Ordenar
- * dibujo" and the 90° view fall back safely; a ring survives the autosave
- * restore. Runs on the dev server and on dist/index.html.
+ * @file Ring e2e (design.md §3.2, §13 I-24, I-25): a ring drawn by bonding
+ * back to an atom is named (ciclopropano, ciclohexano) and its stepper
+ * highlights the closure bond; a ring with a side chain gets the Spanish
+ * "not nameable yet" message; a ring with an oxygen, fused and spiro rings
+ * get their out-of-scope messages; "Ordenar dibujo" and the 90° view fall
+ * back safely; a ring survives the autosave restore. Runs on the dev server
+ * and on dist/index.html.
  */
 
 import { test, expect } from '@playwright/test';
@@ -101,20 +103,23 @@ async function drawTriangle(page) {
   expect(await page.evaluate(() => window.__editor.getMoleculeJSON().bonds.length)).toBe(3);
 }
 
-test('a drawn ring gets the "not yet" message; Ordenar dibujo, 90° view and reload fall back safely', async ({ page }) => {
+test('a drawn ring is named ciclopropano; Ordenar dibujo, 90° view and reload fall back safely', async ({ page }) => {
   const errors = await openApp(page);
   await drawTriangle(page);
   const nameButton = page.getByRole('button', { name: '¿Cómo se llama?' });
   await nameButton.click();
-  const error = page.locator('#results .results-error');
-  await expect(error).toHaveAttribute('data-code', 'CYCLE');
-  await expect(error).toContainText('Aún no sé nombrar anillos');
-  await expect(page.locator('#result-name')).toHaveCount(0);
+  await expect(page.locator('#result-name')).toHaveText('ciclopropano');
+  await expect(page.locator('#results .results-error')).toHaveCount(0);
+  await expect(page.locator('#redraw-hint')).toHaveCount(0);
+  // No locant numbers on an unnumbered ring.
+  await expect(page.locator('svg#canvas .locant')).toHaveCount(0);
 
-  // Ordenar dibujo leaves the drawing as it is.
+  // Ordenar dibujo leaves the drawing as it is, and says why.
   const before = await page.evaluate(() => window.__editor.getMoleculeJSON());
   await page.locator('#toolbar [data-action="arrange"]').click();
+  await expect(page.locator('#toast')).toHaveText('Todavía no sé ordenar el dibujo de un anillo. El dibujo se queda como estaba.');
   expect(await page.evaluate(() => window.__editor.getMoleculeJSON())).toEqual(before);
+  await expect(page.locator('#result-name')).toHaveText('ciclopropano');
 
   // The 90° view falls back to the normal drawing, with a note.
   await page.getByRole('button', { name: 'Con carbonos' }).click();
@@ -122,14 +127,71 @@ test('a drawn ring gets the "not yet" message; Ordenar dibujo, 90° view and rel
   expect(await page.evaluate(() => window.__editor.isProjected())).toBe(false);
   await expect(page.locator('#right-angle-note')).toHaveText('Hay un anillo: se ve el dibujo normal.');
 
-  // The ring survives the autosave restore and still gets the same message.
+  // The ring survives the autosave restore and is still named.
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
   expect(await page.evaluate(() => window.__editor.getMoleculeJSON().bonds.length)).toBe(3);
   await nameButton.click();
-  await expect(error).toHaveAttribute('data-code', 'CYCLE');
+  await expect(page.locator('#result-name')).toHaveText('ciclopropano');
   expect(errors).toEqual([]);
-}); // End of test 'a drawn ring gets the "not yet" message…'
+}); // End of test 'a drawn ring is named ciclopropano…'
+
+test('a hand-drawn hexagon is ciclohexano; the stepper highlights the closure bond', async ({ page }) => {
+  const errors = await openApp(page);
+  // Six carbons by clicks (each click on the last carbon adds one), then close the ring.
+  await clickCanvas(page, 0.35, 0.5);
+  for (const id of [2, 3, 4, 5]) {
+    await clickAtom(page, id);
+  }
+  expect(await page.evaluate(() => window.__editor.getMoleculeJSON().atoms.length)).toBe(6);
+  const from = await page.evaluate(() => window.__editor.atomClientPoint(6));
+  const to = await page.evaluate(() => window.__editor.atomClientPoint(1));
+  await drag(page, from, to);
+  expect(await page.evaluate(() => window.__editor.getMoleculeJSON().bonds.length)).toBe(6);
+  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+  await expect(page.locator('#result-name')).toHaveText('ciclohexano');
+
+  await page.getByRole('button', { name: 'Ver paso a paso' }).click();
+  const stepper = page.locator('#stepper');
+  const titles = [];
+  const dots = stepper.locator('.step-dot');
+  const total = await dots.count();
+  for (let i = 0; i < total; i += 1) {
+    await dots.nth(i).click();
+    titles.push(await stepper.locator('.step-title').textContent());
+  }
+  expect(titles).toEqual(['Cuenta los carbonos', 'Busca el anillo', 'Numera el anillo', 'Monta el nombre']);
+  await dots.nth(0).click();
+  await expect(stepper.locator('.step-content')).toContainText('(C₆H₁₂)');
+  await dots.nth(1).click();
+  await expect(stepper.locator('.step-content')).toContainText('se cierra sobre sí misma');
+  // Five ring bonds in the parent colour, the closure bond apart, six ring atoms.
+  await expect(page.locator('svg#canvas .hl-bond.hl-candidate')).toHaveCount(1);
+  await expect(page.locator('svg#canvas .hl-bond.hl-parent')).toHaveCount(5);
+  await expect(page.locator('svg#canvas .hl-atom.hl-parent')).toHaveCount(6);
+  await dots.nth(3).click();
+  await expect(stepper.locator('.step-content')).toContainText('El nombre completo es «ciclohexano».');
+  await expect(page.locator('svg#canvas .locant')).toHaveCount(0);
+  expect(errors).toEqual([]);
+}); // End of test 'a hand-drawn hexagon is ciclohexano…'
+
+test('a ring with a side chain gets the "not yet" message', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawTriangle(page);
+  await clickAtom(page, 1); // A methyl on the ring.
+  expect(await page.evaluate(() => window.__editor.getMoleculeJSON().atoms.length)).toBe(4);
+  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+  const error = page.locator('#results .results-error');
+  await expect(error).toHaveAttribute('data-code', 'CYCLE');
+  await expect(error).toContainText('Aún no sé nombrar anillos con ramas');
+  await expect(error).toContainText('borra un enlace del anillo');
+  await expect(page.locator('#result-name')).toHaveCount(0);
+  // Ordenar dibujo leaves the drawing as it is.
+  const before = await page.evaluate(() => window.__editor.getMoleculeJSON());
+  await page.locator('#toolbar [data-action="arrange"]').click();
+  expect(await page.evaluate(() => window.__editor.getMoleculeJSON())).toEqual(before);
+  expect(errors).toEqual([]);
+});
 
 test('a ring with an oxygen is a heterocycle: out of scope', async ({ page }) => {
   const errors = await openApp(page);

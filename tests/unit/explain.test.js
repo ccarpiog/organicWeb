@@ -50,6 +50,8 @@ const SNAPSHOT_SMILES = [
   'CCCCC(CC(C)C)CCCC', // 5-(2-metilpropil)nonano: compound prefix, common name
   'CCCCC(CC(C)(C)C)(CC(C)(C)C)CCCC', // 5,5-bis(2,2-dimetilpropil)nonano: bis, inner multiplier
   'CCC(=C)C=C(C(C)CC)C(C(C)CC)C(=C)CC', // N1 then N4 across two chains
+  'C1CC1', // ciclopropano: smallest ring, closure bond
+  'C1CCCCC1', // ciclohexano: ring steps, CₙH₂ₙ
 ];
 
 /**

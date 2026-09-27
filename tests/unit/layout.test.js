@@ -16,6 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseSmiles } from '../../src/model/smiles.js';
 import { moleculeToJSON } from '../../src/model/molecule.js';
+import { hasCycle } from '../../src/model/graph.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { canonicalLayout, closestApproach, spreadInGap, layoutProblems } from '../../src/layout/canonical.js';
 import { listExamples, exampleMolecule } from '../../src/ui/examples.js';
@@ -87,10 +88,16 @@ function checkLayout(smiles) {
   }
 } // End of function checkLayout()
 
-test('every fixture molecule gets a clear canonical layout', async () => {
+test('every acyclic fixture molecule gets a clear canonical layout; rings are refused (I-27)', async () => {
   const all = await fixtureSmiles();
   assert.ok(all.length >= 150);
   for (const smiles of all) {
+    const mol = parseSmiles(smiles);
+    if (hasCycle(mol)) {
+      // Cycloalkanes are named, but ring layouts come in phase I-27.
+      assert.throws(() => canonicalLayout(mol, nameMolecule(mol)), /not a connected tree/, smiles);
+      continue;
+    }
     checkLayout(smiles);
   }
 });

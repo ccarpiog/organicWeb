@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T18:54:05Z",
+  "updated": "2026-09-27T19:10:53Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -223,8 +223,11 @@
     {
       "id": "I-25",
       "title": "v2.5 Simple cycloalkanes",
-      "status": "queued",
-      "summary": "v2 plan phase 5: simple cycloalkanes (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Names bare saturated rings of 3 to 30 carbons (ciclopropano, ciclohexano…) and explains the ring closure.",
+      "risk": "high",
+      "review": "docs/reviews/I-25.md",
+      "narrative": "docs/progress-archive/i-25.md"
     },
     {
       "id": "I-26",

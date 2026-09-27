@@ -2,10 +2,10 @@
  * @file OPSIN oracle cross-check (design.md §8). Development only, never
  * bundled.
  *
- * Generates seeded random acyclic hydrocarbons, names each one in every
- * prefix style, renders the same name structures in English, lets OPSIN
+ * Generates seeded random acyclic hydrocarbons, adds one cycloalkane per
+ * ring size in the carbon range, names each one in every prefix style, renders the same name structures in English, lets OPSIN
  * turn the English names back into SMILES and checks that they denote the
- * original molecule (canonical tree key + formula). Prints passed / failed /
+ * original molecule (ring count, canonical key + formula). Prints passed / failed /
  * skipped. Without Java or the pinned jar every molecule is reported as
  * skipped (never passed) and the exit status is 0. Failures are written to a
  * log with the seed, SMILES, Spanish and English names, OPSIN version and
@@ -25,7 +25,7 @@ import { fileURLToPath } from 'node:url';
 import { writeSmiles } from '../../src/model/smiles.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
-import { generateMolecules } from './generate.mjs';
+import { generateMolecules, generateCycloalkanes } from './generate.mjs';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
 import { englishName, compareWithOpsin } from './compare.mjs';
 
@@ -188,8 +188,11 @@ export async function main(argv) {
       console.error(`oracle: ${err.message}`);
     }
   }
-  const molecules = generateMolecules({ count: options.count, seed: options.seed, minSize: options.min, maxSize: options.max });
-  console.log(`OPSIN oracle: ${molecules.length} molecules, seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
+  const random = generateMolecules({ count: options.count, seed: options.seed, minSize: options.min, maxSize: options.max });
+  const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
+  const molecules = [...random, ...rings];
+  console.log(`OPSIN oracle: ${random.length} molecules + ${rings.length} cycloalkanes, seed ${options.seed}, `
+    + `${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
   const availability = await checkAvailability(options.jar, options.java);
   if (!availability.ok) {
     console.log(`skipped: ${availability.reason}`);

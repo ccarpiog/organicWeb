@@ -79,6 +79,30 @@ export function renderParent(chain, lexicon, hasPrefixes) {
 } // End of function renderParent()
 
 /**
+ * Renders a numbered ring as a parent name (design.md §13.4 I-25): the
+ * nondetachable ring prefix (`ciclo`, which refers to the ring and its
+ * closure bond), the stem and the ending — `ciclohexano`. A saturated,
+ * unsubstituted ring needs no locant. Rings with multiple bonds or
+ * prefixes are named from phase I-26; validation refuses them before.
+ *
+ * @param {object} ring - The ring structure (structure.js RingStructure).
+ * @param {object} lexicon - The lexicon.
+ * @param {boolean} hasPrefixes - Whether prefixes precede the parent.
+ * @returns {object[]} The parts.
+ * @throws {Error} For a ring with multiple bonds or prefixes (not supported yet).
+ */
+export function renderRingParent(ring, lexicon, hasPrefixes) {
+  if (hasPrefixes || ring.double.length > 0 || ring.triple.length > 0) {
+    throw new Error('renderRingParent: substituted or unsaturated rings are not supported yet');
+  }
+  return [
+    part(lexicon.ringPrefix, 'stem', ring.atoms, [ring.closure]),
+    part(lexicon.stem(ring.length), 'stem', ring.atoms),
+    part(lexicon.endings.saturated, 'ending', [], ring.bonds),
+  ];
+} // End of function renderRingParent()
+
+/**
  * Creates one token of a substituent prefix. Tokens are finer than name
  * parts: they remember whether a piece is an italic descriptor (`tert-`),
  * which alphanumerical ordering ignores.
@@ -366,7 +390,8 @@ export function renderPrefixes(groups, lexicon) {
 } // End of function renderPrefixes()
 
 /**
- * Renders a name structure to text and coloured parts.
+ * Renders a name structure to text and coloured parts (a chain parent, or
+ * a ring parent when `parentKind` is 'ring').
  *
  * @param {object} structure - The name structure (structure.js NameStructure).
  * @param {object} [lexicon] - The lexicon to use (default: Spanish).
@@ -374,9 +399,9 @@ export function renderPrefixes(groups, lexicon) {
  */
 export function renderName(structure, lexicon = lexiconEs) {
   const hasPrefixes = structure.prefixes.length > 0;
-  const parts = [
-    ...renderPrefixes(structure.prefixes, lexicon),
-    ...renderParent(structure.parent, lexicon, hasPrefixes),
-  ];
+  const parent = structure.parentKind === 'ring'
+    ? renderRingParent(structure.parent, lexicon, hasPrefixes)
+    : renderParent(structure.parent, lexicon, hasPrefixes);
+  const parts = [...renderPrefixes(structure.prefixes, lexicon), ...parent];
   return { name: parts.map((p) => p.text).join(''), parts };
 }

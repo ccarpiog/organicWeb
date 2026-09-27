@@ -11463,5 +11463,358 @@
     ]
    }
   ]
+ },
+ "C1CC1": {
+  "name": "ciclopropano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 3 carbonos y 6 hidrógenos (C₃H₆).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces.",
+     "En un anillo sin ramas ni enlaces dobles, cada carbono está unido a otros dos carbonos y a 2 hidrógenos: por eso hay el doble de hidrógenos que de carbonos (CₙH₂ₙ). La cadena abierta con los mismos carbonos tiene 2 hidrógenos más (C₃H₈), porque sus dos extremos no están unidos entre sí."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       1,
+       2
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "Los 3 carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «propano» → «ciclopropano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       1,
+       2
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       2
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "En un anillo sin ramas y con todos los enlaces simples, todos los carbonos son iguales. Da igual por cuál empieces a contar y hacia qué lado sigas: no hay nada que [[localizar|localizador]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       1,
+       2
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un anillo empieza por «ciclo-», que dice que la cadena está cerrada. Luego va la raíz, que dice cuántos carbonos tiene el anillo, y la terminación «-ano», porque todos los enlaces son simples.",
+     "El nombre completo es «ciclopropano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       1,
+       2
+      ],
+      "bonds": [
+       3,
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       3,
+       1,
+       2
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       3,
+       1,
+       2
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       1,
+       2
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "C1CCCCC1": {
+  "name": "ciclohexano",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 6 carbonos y 12 hidrógenos (C₆H₁₂).",
+     "En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces.",
+     "En un anillo sin ramas ni enlaces dobles, cada carbono está unido a otros dos carbonos y a 2 hidrógenos: por eso hay el doble de hidrógenos que de carbonos (CₙH₂ₙ). La cadena abierta con los mismos carbonos tiene 2 hidrógenos más (C₆H₁₄), porque sus dos extremos no están unidos entre sí."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       6,
+       5
+      ],
+      "bonds": [
+       3,
+       2,
+       1,
+       6,
+       5,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "Los 6 carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       6,
+       5
+      ],
+      "bonds": [
+       3,
+       2,
+       1,
+       6,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "En un anillo sin ramas y con todos los enlaces simples, todos los carbonos son iguales. Da igual por cuál empieces a contar y hacia qué lado sigas: no hay nada que [[localizar|localizador]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       6,
+       5
+      ],
+      "bonds": [
+       3,
+       2,
+       1,
+       6,
+       5,
+       4
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un anillo empieza por «ciclo-», que dice que la cadena está cerrada. Luego va la raíz, que dice cuántos carbonos tiene el anillo, y la terminación «-ano», porque todos los enlaces son simples.",
+     "El nombre completo es «ciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       6,
+       5
+      ],
+      "bonds": [
+       3,
+       2,
+       1,
+       6,
+       5,
+       4
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       6,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       6,
+       5
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       2,
+       1,
+       6,
+       5,
+       4
+      ]
+     }
+    ]
+   }
+  ]
  }
 }
