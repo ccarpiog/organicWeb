@@ -16,7 +16,11 @@
  * before a consonant (`ano` + `diol`), IUPAC 2013 P-16.7.1. An ester
  * (design.md §13.4 I-35) is two words: the acid part (`etanoato`, suffix
  * `oato`, locant never cited) and its O-bound group (`metilo`), assembled
- * in the lexicon's order (`etanoato de metilo`, `methyl ethanoate`). An
+ * in the lexicon's order (`etanoato de metilo`, `methyl ethanoate`); a
+ * diester (I-39c) cites both O-bound groups (`butanodioato de dimetilo`,
+ * `propanodioato de etilo y metilo`). An ester beside an acid (I-39c) is
+ * the prefix `alcoxicarbonil` (`metoxicarbonil`) or `aciloxi`
+ * (`acetiloxi`), or `alcoxi` + `oxo` on its carbon. An
  * amine (design.md §13.4 I-36) takes the suffix `amina` (`etanamina`,
  * `propan-2-amina`, `butano-1,4-diamina`, `bencenamina`); the groups on its
  * nitrogen are prefixes with the locant `N` (`N-metiletanamina`,
@@ -30,7 +34,8 @@
  */
 
 import { lexiconEs } from './lexicon.es.js';
-import { siteLocantText, locantText, locantValue, N_LOCANT } from './structure.js';
+import { siteLocantText, locantText, locantValue, N_LOCANT, esterParts } from './structure.js';
+import { compareCitationKeys } from './numbering.js';
 
 /**
  * Creates one name part.
@@ -283,15 +288,23 @@ function token(text, kind) {
  * makes a compound prefix, IUPAC 2013 P-16.5.1). An acyl prefix
  * (design.md §13.4 I-39b) is unenclosed without prefixes or locants of
  * its own (`formil`, `acetil`, `propanoil`, `butanoil`) and enclosed
- * otherwise (`(2-metilpropanoil)`, `(but-2-enoil)`).
+ * otherwise (`(2-metilpropanoil)`, `(but-2-enoil)`). The ester prefixes
+ * (I-39c) are always enclosed: `(metoxicarbonil)`, `(acetiloxi)`.
  * Enclosure does not decide the multiplier (see isCompoundPrefix()).
  *
  * @param {object} substituent - The substituent structure.
  * @returns {boolean} True when the prefix is enclosed.
  */
 export function needsEnclosure(substituent) {
+  if (substituent.alkoxycarbonyl) {
+    return true; // `(metoxicarbonil)`, `[(propan-2-iloxi)carbonil]` (design.md §13.4 I-39c).
+  }
   if (substituent.retained || substituent.halogen || substituent.hydroxy || substituent.oxo || substituent.cyano) {
     return false;
+  }
+  if (substituent.alkoxy) {
+    // Checked before `acyl`: an acyloxy group (I-39c) keeps the acyl flag of its acyl part, and is always enclosed.
+    return substituent.prefixes.length > 0 || !isContractedAlkoxy(substituent);
   }
   if (substituent.acyl) {
     // `formil`, `acetil`, `propanoil`, but `(2-metilpropanoil)`, `(but-2-enoil)` (design.md §13.4 I-39b).
@@ -300,9 +313,6 @@ export function needsEnclosure(substituent) {
   }
   if (substituent.amino) {
     return substituent.prefixes.length > 0; // `amino`, but `(metilamino)`, `(dimetilamino)`.
-  }
-  if (substituent.alkoxy) {
-    return substituent.prefixes.length > 0 || !isContractedAlkoxy(substituent);
   }
   const { chain, prefixes, freeValence } = substituent;
   const unsaturated = chain.double.length > 0 || chain.triple.length > 0;
@@ -315,12 +325,16 @@ export function needsEnclosure(substituent) {
  * bis/tris. A simple prefix that is enclosed only because of its own
  * locants still takes di/tri: `di(propan-2-il)` (IUPAC 2013 P-16.9). An
  * alkoxy prefix is compound when it has prefixes or is written alkyl +
- * `oxi` (`bis(pentiloxi)`); `dimetoxi`, `diisopropoxi` are simple.
+ * `oxi` (`bis(pentiloxi)`, `bis(acetiloxi)`); `dimetoxi`, `diisopropoxi`
+ * are simple. An `alcoxicarbonil` prefix (I-39c) is always compound.
  *
  * @param {object} substituent - The substituent structure.
  * @returns {boolean} True when the prefix is compound.
  */
 export function isCompoundPrefix(substituent) {
+  if (substituent.alkoxycarbonyl) {
+    return true; // `bis(metoxicarbonil)` (design.md §13.4 I-39c).
+  }
   if (substituent.amino) {
     return substituent.prefixes.length > 0; // `diamino`, but `bis(metilamino)`.
   }
@@ -362,12 +376,17 @@ export const MAX_CONTRACTED_ALKOXY = 4;
  * `2-methylpropoxy`, `1-methylethoxy`): a saturated alkyl chain of one to
  * four carbons bonded to the O by its carbon 1; or a retained group
  * (`isopropoxi`, `tert-butoxi`). Every other alkoxy group is its alkyl
- * prefix + `oxi`: `pentiloxi`, `propan-2-iloxi`, `eteniloxi`.
+ * prefix + `oxi`: `pentiloxi`, `propan-2-iloxi`, `eteniloxi`, and the
+ * acyloxy prefixes (design.md §13.4 I-39c; IUPAC 2013 prefers `acetiloxi`
+ * to `acetoxi`, from memory): `acetiloxi`, `formiloxi`, `propanoiloxi`.
  *
  * @param {object} substituent - An alkoxy substituent structure (`alkoxy` true).
  * @returns {boolean} True for the short form.
  */
 export function isContractedAlkoxy(substituent) {
+  if (substituent.acyl) {
+    return false; // An acyloxy prefix is acyl + `oxi`: `acetiloxi`, not `acetoxi` (design.md §13.4 I-39c).
+  }
   if (substituent.retained) {
     return true;
   }
@@ -384,6 +403,16 @@ export function isContractedAlkoxy(substituent) {
  * @returns {number} The level.
  */
 function enclosureLevel(substituent) {
+  if (substituent.alkoxycarbonyl) {
+    // The alkoxy part is enclosed inside when it needs it: `[(propan-2-iloxi)carbonil]` (design.md §13.4 I-39c).
+    const alkoxy = alkoxycarbonylAlkoxy(substituent);
+    return needsEnclosure(alkoxy) ? enclosureLevel(alkoxy) + 1 : 0;
+  }
+  if (substituent.alkoxy && substituent.acyl) {
+    // An acyloxy prefix encloses its acyl part when that needs it: `[(3-metilbutanoil)oxi]` (I-39c).
+    const acylPart = { ...substituent, alkoxy: false };
+    return needsEnclosure(acylPart) ? enclosureLevel(acylPart) + 1 : enclosureLevel(acylPart);
+  }
   let level = 0;
   // Inside a one-carbon group the locants are omitted, so an alkoxy prefix beside another prefix is enclosed too.
   const prefixes = citedPrefixes(substituent);
@@ -500,7 +529,9 @@ function locantTokens(locants) {
  * or `ciano` (a nitrile not cited as the suffix, I-39a), or an acyl
  * prefix (a C=O carbon as the attachment atom, I-39b: `formil`, `acetil`,
  * `propanoil`, `2-metilpropanoil`, `but-2-enoil`; acylEndingTokens()),
- * or an alkoxy group (an ether, I-34: alkoxyTokens()). A saturated group with the free valence at
+ * or an alkoxy group (an ether, I-34: alkoxyTokens(); an acyloxy group,
+ * I-39c: `acetiloxi`), or an `alcoxicarbonil` group (an ester bonded
+ * through its C=O carbon, I-39c: alkoxycarbonylTokens()). A saturated group with the free valence at
  * locant 1 uses the short form (`propil`, `propiliden`, `2-metilpropil`);
  * one- and two-carbon groups cite no locant.
  *
@@ -509,6 +540,9 @@ function locantTokens(locants) {
  * @returns {{text: string, kind: string}[]} The tokens.
  */
 function substituentTokens(substituent, lexicon) {
+  if (substituent.alkoxycarbonyl) {
+    return alkoxycarbonylTokens(substituent, lexicon);
+  }
   if (substituent.halogen) {
     return [token(lexicon.halogenPrefix(substituent.halogen), 'prefix')];
   }
@@ -617,20 +651,66 @@ function acylEndingTokens(chain, segments, lexicon) {
 } // End of function acylEndingTokens()
 
 /**
+ * The alkoxy group of an `alcoxicarbonil` substituent (design.md §13.4
+ * I-39c): the prefix on its one carbon X that is not the C=O `oxo`.
+ *
+ * @param {object} substituent - A substituent structure with `alkoxycarbonyl` set.
+ * @returns {object} The alkoxy substituent structure (`alkoxy` true).
+ */
+export function alkoxycarbonylAlkoxy(substituent) {
+  return substituent.prefixes.find((group) => group.substituent.alkoxy).substituent;
+}
+
+/**
+ * Tokens of an ester prefix bonded through its C=O carbon X (design.md
+ * §13.4 I-39c; IUPAC 2013 P-65.6.3.3, from memory): the alkoxy prefix of
+ * its O-bound group, enclosed when that prefix needs it, then the
+ * lexicon's `carbonil` (X and its C=O): `metoxicarbonil`,
+ * `isopropoxicarbonil`, `tert-butoxicarbonil`, `(pentiloxi)carbonil`,
+ * `(propan-2-iloxi)carbonil`, `(2-cloroetoxi)carbonil`. The structure is
+ * X alone as a one-carbon chain whose prefixes are the `oxo` and the
+ * `alcoxi` (so counts and highlights need no change); neither is cited
+ * as a prefix.
+ *
+ * @param {object} substituent - A substituent structure with `alkoxycarbonyl` set.
+ * @param {object} lexicon - The lexicon (`alkoxycarbonylEnding`: `carbonil` / `carbonyl`).
+ * @returns {{text: string, kind: string}[]} The tokens.
+ */
+function alkoxycarbonylTokens(substituent, lexicon) {
+  const alkoxy = alkoxycarbonylAlkoxy(substituent);
+  const words = substituentTokens(alkoxy, lexicon);
+  const ending = token(lexicon.alkoxycarbonylEnding, 'ending');
+  if (!needsEnclosure(alkoxy)) {
+    return [...words, ending];
+  }
+  const [open, close] = lexicon.enclosingMarks[enclosureLevel(alkoxy) % lexicon.enclosingMarks.length];
+  return [token(open, 'punct'), ...words, token(close, 'punct'), ending];
+} // End of function alkoxycarbonylTokens()
+
+/**
  * Tokens of an alkoxy prefix (design.md §13.4 I-34): the tokens of its
  * alkyl group (the same structure without `alkoxy`) with the free-valence
  * ending `il` replaced by `oxi` in the short forms (isContractedAlkoxy():
  * `met` + `oxi`, `2-metilprop` + `oxi`, `isoprop` + `oxi`, `tert-but` +
  * `oxi`) and followed by `oxi` otherwise (`pentil` + `oxi`,
- * `propan-2-il` + `oxi`).
+ * `propan-2-il` + `oxi`). An acyloxy prefix (design.md §13.4 I-39c) is
+ * its acyl prefix + `oxi`, the acyl prefix enclosed when it would be as a
+ * prefix of its own: `acetiloxi`, `formiloxi`, `propanoiloxi`,
+ * `(2-metilpropanoil)oxi`, `(prop-2-enoil)oxi`.
  *
  * @param {object} substituent - An alkoxy substituent structure.
  * @param {object} lexicon - The lexicon (`alkoxyEnding`: `oxi` / `oxy`).
  * @returns {{text: string, kind: string}[]} The tokens.
  */
 function alkoxyTokens(substituent, lexicon) {
-  const tokens = substituentTokens({ ...substituent, alkoxy: false }, lexicon);
+  const alkyl = { ...substituent, alkoxy: false };
+  const tokens = substituentTokens(alkyl, lexicon);
   const ending = token(lexicon.alkoxyEnding, 'ending');
+  if (substituent.acyl && needsEnclosure(alkyl)) {
+    // An acyloxy prefix (design.md §13.4 I-39c) whose acyl part is enclosed as a prefix: `(3-metilbutanoil)oxi`.
+    const [open, close] = lexicon.enclosingMarks[enclosureLevel(alkyl) % lexicon.enclosingMarks.length];
+    return [token(open, 'punct'), ...tokens, token(close, 'punct'), ending];
+  }
   if (!isContractedAlkoxy(substituent)) {
     return [...tokens, ending];
   }
@@ -848,22 +928,67 @@ export function esterAlkylName(alkyl, lexicon = lexiconEs) {
 }
 
 /**
- * Assembles the two words of an ester name (design.md §13.4 I-35): the
- * acid part and the O-bound group, in the lexicon's order — Spanish acid
- * part, ` de `, group (`etanoato de metilo`); English group, space, acid
- * part (`methyl ethanoate`). The group's part refers to its atoms (not the
- * bridge O, which belongs to the `-oato` suffix) and its bonds, the O–C
- * bond included.
+ * The words of the O-bound groups of an ester name (design.md §13.4 I-35,
+ * I-39c), one part each: a single group (`metilo`); two identical groups
+ * as one multiplied part (`dimetilo`, `diisopropilo`, `di-tert-butilo`,
+ * `di(propan-2-ilo)`, `bis(2-cloroetilo)`: `di` for a simple group, `bis`
+ * for a substituted one, enclosed as it would be as a prefix, IUPAC 2013
+ * P-65.6.3.2.1, from memory); two different groups in alphabetical order
+ * of their prefix names, joined by the lexicon's `esterAlkylJoin`
+ * (`etilo y metilo`, `ethyl methyl`). Each part refers to its group's
+ * atoms (not the bridge O, which belongs to the `-oato` suffix) and bonds,
+ * the O–C bond included.
+ *
+ * @param {object[]} esters - The O-bound groups (structure.js EsterPart), in suffix order.
+ * @param {object} lexicon - The lexicon.
+ * @returns {object[]} The parts.
+ */
+function esterAlkylParts(esters, lexicon) {
+  const refs = (group) => [group.alkyl.atoms.filter((id) => id !== group.oxygen), group.alkyl.bonds];
+  const names = esters.map((group) => esterAlkylName(group.alkyl, lexicon));
+  if (esters.length === 1) {
+    return [part(names[0], 'prefix', ...refs(esters[0]))];
+  }
+  if (names.every((name) => name === names[0])) {
+    const alkyl = { ...esters[0].alkyl, alkoxy: false };
+    const compound = isCompoundPrefix(alkyl);
+    const mult = compound ? lexicon.compoundMultiplier(esters.length) : lexicon.multiplier(esters.length);
+    const words = substituentTokens(alkyl, lexicon);
+    let text = `${words.map((t) => t.text).join('')}${lexicon.esterAlkylEnding}`;
+    if (compound || needsEnclosure(alkyl)) {
+      const [open, close] = lexicon.enclosingMarks[enclosureLevel(alkyl) % lexicon.enclosingMarks.length];
+      text = `${open}${text}${close}`;
+    } else if (words[0].kind === 'italic') {
+      text = `-${text}`; // `di-tert-butilo`.
+    }
+    const atoms = esters.flatMap((group) => refs(group)[0]);
+    const bonds = esters.flatMap((group) => refs(group)[1]);
+    return [part(mult, 'multiplier', atoms, bonds), part(text, 'prefix', atoms, bonds)];
+  }
+  const order = esters.map((group, i) => ({ group, name: names[i], key: citationKey({ ...group.alkyl, alkoxy: false }, lexicon) }))
+    .sort((a, b) => compareCitationKeys(a.key, b.key));
+  return order.flatMap(({ group, name }, i) => [
+    ...(i > 0 ? [part(lexicon.esterAlkylJoin, 'punct')] : []),
+    part(name, 'prefix', ...refs(group)),
+  ]);
+} // End of function esterAlkylParts()
+
+/**
+ * Assembles the words of an ester name (design.md §13.4 I-35, I-39c): the
+ * acid part and the O-bound groups (esterAlkylParts()), in the lexicon's
+ * order — Spanish acid part, ` de `, groups (`etanoato de metilo`,
+ * `butanodioato de dimetilo`, `propanodioato de etilo y metilo`); English
+ * groups, space, acid part (`methyl ethanoate`, `dimethyl butanedioate`).
  *
  * @param {object[]} acidParts - The parts of the acid part (`etanoato`).
- * @param {object} ester - The O-bound group (structure.js EsterPart).
- * @param {object} lexicon - The lexicon (`esterAlkylFirst`, `esterLink`, `esterAlkylEnding`).
+ * @param {object[]} esters - The O-bound groups (structure.js EsterPart), in suffix order.
+ * @param {object} lexicon - The lexicon (`esterAlkylFirst`, `esterLink`, `esterAlkylEnding`, `esterAlkylJoin`).
  * @returns {object[]} The parts of the whole name.
  */
-export function assembleEster(acidParts, ester, lexicon) {
-  const alkyl = part(esterAlkylName(ester.alkyl, lexicon), 'prefix', ester.alkyl.atoms.filter((id) => id !== ester.oxygen), ester.alkyl.bonds);
+export function assembleEster(acidParts, esters, lexicon) {
+  const alkyl = esterAlkylParts(esters, lexicon);
   const link = part(lexicon.esterLink, 'punct');
-  return lexicon.esterAlkylFirst ? [alkyl, link, ...acidParts] : [...acidParts, link, alkyl];
+  return lexicon.esterAlkylFirst ? [...alkyl, link, ...acidParts] : [...acidParts, link, ...alkyl];
 }
 
 /**
@@ -895,7 +1020,7 @@ export function renderName(structure, lexicon = lexiconEs, options = {}) {
     const group = suffixGroupIds(structure.suffix);
     const atoms = [...new Set([...structure.parent.atoms, ...group.atoms])];
     const acid = [part(lexicon.traditionalName(options.traditional), 'stem', atoms, [...structure.parent.bonds, ...group.bonds])];
-    const parts = assembleEster(acid, structure.ester, lexicon);
+    const parts = assembleEster(acid, esterParts(structure), lexicon);
     return { name: parts.map((p) => p.text).join(''), parts };
   }
   const hasPrefixes = structure.prefixes.length > 0;
@@ -920,6 +1045,6 @@ export function renderName(structure, lexicon = lexiconEs, options = {}) {
     lead.push(part(classWord, 'ending', atoms, bonds), part(' ', 'punct'));
   }
   const acid = [...lead, ...renderPrefixes(structure.prefixes, lexicon, omitGroupLocants), ...parent];
-  const parts = structure.ester ? assembleEster(acid, structure.ester, lexicon) : acid;
+  const parts = structure.ester ? assembleEster(acid, esterParts(structure), lexicon) : acid;
   return { name: parts.map((p) => p.text).join(''), parts };
 } // End of function renderName()

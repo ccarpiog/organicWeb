@@ -286,7 +286,7 @@ test('refusals: symmetric halves with the principal group, a ring with the OH on
   assert.equal(ring.error.reason, 'sideChainAlcohol');
   assert.equal(ring.error.message, SIDE_CHAIN_ALCOHOL_MESSAGE);
   assert.equal(named('CC(=O)OC').name, 'etanoato de metilo', 'an ester O is not an ether O: esters are named since I-35');
-  assert.equal(named('CC(=O)OCC(=O)OC').error.reason, 'manyEsters');
+  assert.equal(named('CC(=O)OCC(=O)OC').error.reason, 'esterPrefix', 'an ester inside the O-bound group of another (I-39c)');
   // Two rings joined by an O: several rings, out of scope.
   assert.equal(named('C1CCCCC1OC1CCCCC1').error.code, 'RING_SYSTEM');
 }); // End of test 'refusals: symmetric halves with the principal group, a ri…'

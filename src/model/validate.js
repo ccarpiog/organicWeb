@@ -22,8 +22,9 @@
  *   molecule with a ring, only OH groups on ring carbons and ketone C=O
  *   whose carbon is a ring atom, no acid, no ester, no amide, no nitrile, and, when the amine is
  *   the principal group, every amine N on a ring carbon; on a chain, at most two
- *   aldehydes per carbon piece when the aldehyde is principal (I-39b), at most two acids, at most one ester, never an acid with
- *   an ester, never an amide with an acid or ester, at most two amides, both
+ *   aldehydes per carbon piece when the aldehyde is principal (I-39b), at most two acids; without an acid at most two
+ *   esters, both on one carbon piece and, with different O-bound groups, on an acid part that is the same seen from
+ *   either end (I-39c; beside an acid any ester is a prefix), never an amide with an acid or ester, at most two amides, both
  *   on one carbon piece and, when there are two, with no group on their N;
  *   never a nitrile with an acid, ester or amide, at most two nitriles, both
  *   on one carbon piece), and
@@ -49,7 +50,7 @@
  */
 
 import {
-  isConnected, hasCycle, longestChainLength, adjacency, carbonSkeleton, connectedComponents,
+  isConnected, hasCycle, longestChainLength, adjacency, carbonSkeleton, connectedComponents, rootedTreeKey,
 } from './graph.js';
 import { classifyRings } from './rings.js';
 import { isSupportedElement, valenceOf, isHalogen, ELEMENT_NAMES_ES } from './elements.js';
@@ -228,23 +229,46 @@ export const RING_ESTER_MESSAGE = 'Esta molécula tiene un anillo y un grupo –
   + 'los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos.';
 
 /**
- * HETEROATOM message for an open chain with more than one ester group
- * (design.md §13.4 I-35): a diester such as `butanodioato de dimetilo`, or
- * an ester inside the O-bound group of another, needs rules the app does
- * not support yet (I-39).
+ * HETEROATOM message for an open chain with more than two ester groups
+ * (design.md §13.4 I-35, narrowed by I-39c): an ester carbon is always a
+ * chain end, so a third –COO– would be a branch, and IUPAC 2013 cites every
+ * principal group as a suffix when it can (`propano-1,2,3-tricarboxilato
+ * de trimetilo`), which the app does not support.
  */
-export const MANY_ESTERS_MESSAGE = 'Esta molécula tiene más de un grupo –COO– (éster). '
-  + 'De momento solo sé nombrar los ésteres con un único grupo –COO– (como el etanoato de metilo).';
+export const MANY_ESTERS_MESSAGE = 'Esta molécula tiene más de dos grupos –COO– (éster). '
+  + 'El carbono de un –COO– siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos, '
+  + 'así que alguno quedaría en una rama. Estos compuestos se nombran con «-carboxilato» '
+  + '(como el propano-1,2,3-tricarboxilato de trimetilo), y eso aún no sé hacerlo. '
+  + 'Sí sé nombrar los ésteres con uno o dos grupos –COO– (como el etanoato de metilo o el butanodioato de dimetilo).';
 
 /**
- * HETEROATOM message for a molecule with a carboxyl group and an ester
- * group (design.md §13.4 I-35): the acid is the principal group (ácido >
- * éster), so the ester would be a prefix, `alcoxicarbonil-` (bonded through
- * its carbon) or `aciloxi-` (bonded through its O); I-39 names them.
+ * HETEROATOM message for a molecule with two ester groups and no acid
+ * whose C=O carbons lie on different carbon pieces, with an O or an N
+ * between them (design.md §13.4 I-39c, reason `esterPrefix`): a diol diester
+ * (`diacetato de etano-1,2-diilo`: IUPAC 2013 multiplies the acid part) or
+ * an ester inside the O-bound group of another (`3-(acetiloxi)propanoato de
+ * metilo`): one ester would be a prefix of the other, or the name needs a
+ * multiplied acid part, and the app does not choose between them.
  */
-export const ESTER_PREFIX_MESSAGE = 'Esta molécula tiene un grupo –COOH (ácido) y un grupo –COO– (éster). '
-  + 'El ácido va antes que el éster, así que el éster se nombraría con un prefijo '
-  + '(«alcoxicarbonil-», como «metoxicarbonil-», o «aciloxi-», como «acetiloxi-»), y eso aún no sé hacerlo.';
+export const ESTER_PREFIX_MESSAGE = 'Esta molécula tiene dos grupos –COO– (éster) que no están en la misma '
+  + 'cadena de carbonos: entre ellos hay un oxígeno o un nitrógeno que corta la cadena (como en el diacetato de etano-1,2-diilo, o cuando un éster '
+  + 'está dentro del grupo unido al oxígeno del otro). Entonces uno de los dos se nombraría con un prefijo '
+  + '(«aciloxi-», como «acetiloxi-», o «alcoxicarbonil-», como «metoxicarbonil-») o con un nombre especial, '
+  + 'y eso aún no sé hacerlo. Sí sé nombrar los diésteres con los dos grupos –COO– en la misma cadena '
+  + '(como el butanodioato de dimetilo) y los ésteres junto a un ácido (como el ácido 4-metoxi-4-oxobutanoico).';
+
+/**
+ * HETEROATOM message for a diester (design.md §13.4 I-39c, reason
+ * `mixedDiester`) whose two O-bound groups differ and whose acid part is
+ * not the same seen from either end: the name would need locants for the
+ * groups (`2-metilbutanodioato de 1-etilo y 4-metilo`), whose IUPAC 2013
+ * rules the app does not implement (decided: refused, not guessed).
+ */
+export const MIXED_DIESTER_MESSAGE = 'Esta molécula tiene dos grupos –COO– (éster) con grupos distintos unidos '
+  + 'al oxígeno, y los dos extremos de la cadena no son iguales. Habría que decir con localizadores en qué extremo '
+  + 'está cada grupo (como en el 2-metilbutanodioato de 1-etilo y 4-metilo), y eso aún no sé hacerlo. Sí sé nombrar '
+  + 'los diésteres con los dos grupos iguales (como el 2-metilbutanodioato de dimetilo) o con una cadena que es igual '
+  + 'vista desde los dos extremos (como el propanodioato de etilo y metilo).';
 
 /**
  * HETEROATOM message for a molecule with a ring whose principal group is
@@ -297,7 +321,7 @@ export const RING_AMIDE_MESSAGE = 'Esta molécula tiene un anillo y un grupo ami
  * > éster > amida), or with a second amide on another carbon piece (joined
  * through an N or an O), the amide would be a prefix, `carbamoil-` (bonded
  * through its carbon) or `acilamino-` (bonded through its N, such as
- * `acetilamino-`); I-39 names them.
+ * `acetilamino-`); I-39d names them.
  */
 export const AMIDE_PREFIX_MESSAGE = 'Esta molécula tiene un grupo amida (–CONH₂, –CONH– o –CON–) que no puede ser el grupo principal: '
   + 'o hay un grupo que va antes que la amida (un ácido –COOH o un éster –COO–), o la amida queda en una rama, '
@@ -1299,15 +1323,101 @@ function manyAldehydesError(mol, hetero, senior) {
 } // End of function manyAldehydesError()
 
 /**
+ * The atoms of the O-bound group of an ester (design.md §13.4 I-35): the
+ * subtree beyond its bridge O, seen from that O (the O itself excluded).
+ *
+ * @param {Map<number, object[]>} adj - Adjacency map of the molecule.
+ * @param {number} bridge - The bridge O.
+ * @param {number} far - The carbon bonded to the bridge O on the far side.
+ * @returns {number[]} The atom ids of the group.
+ */
+function sideAtoms(adj, bridge, far) {
+  const seen = new Set([bridge, far]);
+  const atoms = [far];
+  for (let i = 0; i < atoms.length; i += 1) {
+    for (const n of adj.get(atoms[i])) {
+      if (!seen.has(n.atom)) {
+        seen.add(n.atom);
+        atoms.push(n.atom);
+      }
+    }
+  }
+  return atoms;
+} // End of function sideAtoms()
+
+/**
+ * Tells whether a diester needs locants for its O-bound groups (design.md
+ * §13.4 I-39c): its two groups differ (rooted tree keys seen from their
+ * bridge O) and its acid part — the molecule without the two O-bound
+ * groups, both bridge O kept — is not the same seen from either ester
+ * carbon (rooted tree keys from each carbon differ: in a tree, equal keys
+ * mean a symmetry that swaps the two ends). `propanodioato de etilo y
+ * metilo` needs none; `2-metilbutanodioato de 1-etilo y 4-metilo` does.
+ *
+ * @param {object} mol - A validated acyclic molecule.
+ * @param {number[]} esters - Its two ester carbons, on one carbon piece.
+ * @returns {boolean} True when locants would be needed.
+ */
+export function diesterNeedsLocants(mol, esters) {
+  const adj = adjacency(mol);
+  const cut = new Set();
+  const keys = esters.map((carbon) => {
+    const bridge = adj.get(carbon).find((n) => n.order === 1 && mol.atoms.get(n.atom).element === 'O').atom;
+    const far = adj.get(bridge).find((n) => n.atom !== carbon).atom;
+    sideAtoms(adj, bridge, far).forEach((id) => cut.add(id));
+    return rootedTreeKey(mol, far, bridge, adj);
+  });
+  if (keys[0] === keys[1]) {
+    return false;
+  }
+  const part = new Map([...adj].filter(([id]) => !cut.has(id)).map(([id, links]) => [id, links.filter((n) => !cut.has(n.atom))]));
+  return rootedTreeKey(mol, esters[0], null, part) !== rootedTreeKey(mol, esters[1], null, part);
+} // End of function diesterNeedsLocants()
+
+/**
+ * The refusal of an open-chain molecule without an acid whose ester groups
+ * cannot all be cited as the suffix (design.md §13.4 I-35, I-39c), or
+ * null: more than two esters (`manyEsters`: a third would need
+ * `-carboxilato`); two whose C=O carbons lie on different carbon pieces
+ * (`esterPrefix`: a diol diester such as `diacetato de etano-1,2-diilo`,
+ * or an ester inside the O-bound group of another — one would be a
+ * prefix); two with different O-bound groups on an acid part that differs
+ * seen from each end (`mixedDiester`: locants for the groups,
+ * diesterNeedsLocants()). Two esters on one carbon piece are both chain
+ * ends of the parent (`butanodioato de dimetilo`, `propanodioato de etilo
+ * y metilo`). `esters` lists the ester carbons.
+ *
+ * @param {object} mol - A validated acyclic molecule whose heteroatoms are nameable.
+ * @param {number[]} hetero - Its non-carbon atom ids.
+ * @param {number[]} esters - Its ester carbons (esterCarbons()).
+ * @returns {{code: string, message: string}|null} The HETEROATOM error, or null.
+ */
+function esterPlacementError(mol, hetero, esters) {
+  const refuse = (message, reason) => validationError('HETEROATOM', { message, atoms: hetero, reason, esters });
+  if (esters.length > 2) {
+    return refuse(MANY_ESTERS_MESSAGE, 'manyEsters');
+  }
+  if (esters.length < 2) {
+    return null;
+  }
+  const pieces = connectedComponents(carbonSkeleton(mol));
+  if (!pieces.some((piece) => piece.includes(esters[0]) && piece.includes(esters[1]))) {
+    return refuse(ESTER_PREFIX_MESSAGE, 'esterPrefix');
+  }
+  return diesterNeedsLocants(mol, esters) ? refuse(MIXED_DIESTER_MESSAGE, 'mixedDiester') : null;
+} // End of function esterPlacementError()
+
+/**
  * The refusal of a nameable-heteroatom molecule whose oxygen groups the
  * engine cannot place yet (design.md §13.4 I-31, I-32, I-33, I-35), or null.
  * With a ring: a carboxyl group (`ringAcid`), an ester group (`ringEster`), an aldehyde
  * (`ringAldehyde`), a ketone C=O on a side chain (`sideChainCarbonyl`) or
  * an OH on a side chain (`sideChainAlcohol`), in that order. Without a
  * ring: more than two carboxyl groups (`manyAcids`, whose third –COOH
- * would be a `carboxi-` branch), an acid with an ester (`esterPrefix`: the
- * ester would be an `alcoxicarbonil-` / `aciloxi-` prefix, I-39), more than
- * one ester group (`manyEsters`), then the amides (amidePlacementError():
+ * would be a `carboxi-` branch), then, without an acid (with one, every
+ * ester is a prefix: `alcoxi…oxo`, `alcoxicarbonil-`, `aciloxi-`, I-39c),
+ * the esters that cannot all be the suffix (esterPlacementError():
+ * `manyEsters`, `esterPrefix`, `mixedDiester`), then the amides (amidePlacementError():
  * `ringAmide`, `amidePrefix`, `manyAmides`, `substitutedPolyamide`), then
  * the nitriles (nitrilePlacementError(): `ringNitrile`, `carbonocyanidic`,
  * `manyNitriles`), then more than two aldehyde groups on one carbon piece
@@ -1332,11 +1442,9 @@ function oxygenPlacementError(mol, cyclic, hetero) {
   if (acids.length > 2) {
     return validationError('HETEROATOM', { message: MANY_ACIDS_MESSAGE, atoms: hetero, reason: 'manyAcids', acids });
   }
-  if (acids.length > 0 && esters.length > 0) {
-    return validationError('HETEROATOM', { message: ESTER_PREFIX_MESSAGE, atoms: hetero, reason: 'esterPrefix', acids, esters });
-  }
-  if (esters.length > 1) {
-    return validationError('HETEROATOM', { message: MANY_ESTERS_MESSAGE, atoms: hetero, reason: 'manyEsters', esters });
+  const diester = acids.length === 0 ? esterPlacementError(mol, hetero, esters) : null;
+  if (diester) {
+    return diester;
   }
   const amide = amidePlacementError(mol, cyclic, hetero, acids.length + esters.length > 0);
   if (amide) {
@@ -1373,7 +1481,7 @@ function oxygenPlacementError(mol, cyclic, hetero) {
  * engine cannot place (design.md §13.4 I-37), or null. In order: any amide
  * with a ring (`ringAmide`: `-carboxamida`, `N-fenil…`, I-40); an amide
  * with an acid or an ester (`amidePrefix`: ácido > éster > amida, so the
- * amide would be a `carbamoil-` / `acilamino-` prefix, I-39); more than two
+ * amide would be a `carbamoil-` / `acilamino-` prefix, I-39d); more than two
  * amides (`manyAmides`: an amide carbon is always a chain end); two amides
  * whose carbons lie on different carbon pieces, joined through an N or an
  * O (`amidePrefix`: one of them would be a branch of the other's chain);
@@ -1499,8 +1607,8 @@ function aminePlacementError(mol, hetero) {
  * C=O, carboxyl groups, ether C–O–C, ester –COO–, amine N, amide –CONH₂ and nitrile –C≡N only (HETEROATOM for any other atom: valid but
  * not nameable yet, with the `imide` reason for an imide N; also for an OH, a ketone C=O or any aldehyde on a ring
  * molecule outside the ring, any acid with a ring, and for more than two
- * principal aldehydes on one carbon piece or more than two acids, more than one ester or an ester with an acid on a
- * chain, any ester with a ring, and the amide and nitrile placements of
+ * principal aldehydes on one carbon piece or more than two acids, and, without an acid, more than two esters, two
+ * esters on different carbon pieces or a mixed diester that would need locants on a chain, any ester with a ring, and the amide and nitrile placements of
  * amidePlacementError() and nitrilePlacementError(): oxygenPlacementError(); and a ring whose
  * principal amine has an N off the ring: aminePlacementError()), chain cap — the
  * longest carbon chain of a tree, or the longest side chain of a ring

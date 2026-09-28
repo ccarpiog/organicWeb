@@ -305,10 +305,11 @@ test('a prefix ester or amide takes the prefix of the end that faces the princip
   const both = analyzeGroups(parseSmiles('OC(=O)CC(=O)OCC(=O)O')).items.find((g) => g.kind === 'ester');
   assert.deepEqual([both.attachment, both.prefix], [null, null]);
   // The explanation says which end and why, or gives both forms when undecided.
+  // Refused molecules (a ring acid, I-40): open-chain ester prefixes are named since I-39c.
   const affixes = (smiles) => explain(nameMolecule(parseSmiles(smiles)))[2].text.map(plainText).join(' ');
-  assert.match(affixes('CC(=O)OCC(=O)O'), /El éster: prefijo «aciloxi-».*por su oxígeno/);
-  assert.doesNotMatch(affixes('CC(=O)OCC(=O)O'), /alcoxicarbonil/);
-  assert.match(affixes('CCOC(=O)CC(=O)O'), /El éster: prefijo «alcoxicarbonil-».*por su carbono/);
+  assert.match(affixes('CC(=O)OC1CCC(C(=O)O)CC1'), /El éster: prefijo «aciloxi-».*por su oxígeno/);
+  assert.doesNotMatch(affixes('CC(=O)OC1CCC(C(=O)O)CC1'), /alcoxicarbonil/);
+  assert.match(affixes('CCOC(=O)C1CCC(C(=O)O)CC1'), /El éster: prefijo «alcoxicarbonil-».*por su carbono/);
   assert.match(affixes('CC(=O)NCC(=O)O'), /La amida: prefijo «acilamino-».*por su nitrógeno/);
   assert.match(affixes('NC(=O)CC(=O)O'), /La amida: prefijo «carbamoil-», porque se une al grupo principal por su carbono/);
   assert.match(affixes('OC(=O)CC(=O)OCC(=O)O'), /«alcoxicarbonil-» si se une al resto por su carbono, o «aciloxi-» si se une por el oxígeno/);
@@ -384,15 +385,15 @@ const GROUP_SNAPSHOT_SMILES = [
   'NCC(O)OO', // alcohol > amine, with an unsupported hydroperoxide (`2-aminoetan-1-ol` is named since I-36)
   'OCC1=CC=CC=C1', // alcohol on the side chain of a benzene: its own message
   'NCC(OO)C(=O)O', // acid with an amine and a hydroperoxide: the acid is not alcohol + ketone (amino acids are named since I-36)
-  'COC(=O)CCC(=O)OC', // two esters (each not ether + ketone): refused as manyEsters since I-35
+  'CC(=O)OCCOC(C)=O', // two esters (each not ether + ketone) on different carbon pieces: refused as esterPrefix since I-39c (`butanodioato de dimetilo` is named since I-39c)
   'NC(=O)C1CCCCC1', // amide on a ring: not amine + ketone; refused (ringAmide) until I-40 (open-chain amides are named since I-37)
   'NCC(O)CC(=O)C(OO)C=O', // aldehyde > ketone > alcohol > amine, with a hydroperoxide (amines are named since I-36)
   'N#CC(=O)O', // a nitrile on the acid's carbon: a carbonic acid derivative, refused (carbonocyanidic; `ácido 3-cianopropanoico` is named since I-39a)
   'ClCCOCCOOC', // prefix-only groups (ether and halide, named since I-34) with an unsupported peroxide
   'BrCC(Br)CNO', // two bromine atoms and an N–O bond (`2,3-dibromopropan-1-amina` is named since I-36)
   'CCOOC', // unsupported peroxide
-  'CC(=O)OCC(=O)O', // ester bonded through its O: aciloxi-
-  'CCOC(=O)CC(=O)O', // ester bonded through its carbonyl carbon: alcoxicarbonil-
+  'CC(=O)OC1CCC(C(=O)O)CC1', // ester bonded through its O: aciloxi- (refused for its ring acid, ringAcid; `ácido 2-(acetiloxi)etanoico` is named since I-39c)
+  'CCOC(=O)C1CCC(C(=O)O)CC1', // ester bonded through its carbonyl carbon: alcoxicarbonil- (ringAcid; open-chain ester prefixes are named since I-39c)
   'CC(=O)NCC(=O)O', // amide bonded through its N: acilamino-
   'NC(=O)CC(=O)O', // amide bonded through its carbonyl carbon: carbamoil-
   'O=CC1CCCCC1', // aldehyde on a ring: -carbaldehído, refused until I-40 (I-32)

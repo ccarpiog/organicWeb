@@ -44,9 +44,10 @@
  *
  * The principal kind is the most senior one present (ácido > éster > amida >
  * nitrilo > aldehído > cetona > alcohol > amina, seniority.js SENIORITY; validation never
- * lets an acid, an ester, an amide or a nitrile meet): its groups on the parent are the
+ * lets an amide meet an acid or an ester): its groups on the parent are the
  * suffix (`ácido …oico`, `…oato de …ilo`, `-amida`, `-nitrilo`, `-al`, `-ona`, `-ol`, `-amina`), every other
- * group is a prefix (`oxo-`, `hidroxi-`, `amino-`, `ciano-`). The carbon X of a C=O or a COOH
+ * group is a prefix (`oxo-`, `hidroxi-`, `amino-`, `ciano-`; since I-39c an ester beside an acid:
+ * `alcoxi` + `oxo` on its carbon, `alcoxicarbonil-`, `aciloxi-`, substituent.js esterAttachment()). The carbon X of a C=O or a COOH
  * is always a skeleton carbon (a chain or ring atom; design.md §13.6
  * "Where X belongs"); a C=O carbon off the chain that carries it is the
  * first carbon of an acyl branch (`formil`, `acetil`, `propanoil`, I-39b). A carboxyl group
@@ -272,7 +273,8 @@ export function carbonylTraditionalId(structure) {
     return null;
   }
   if (suffix.kind === 'ester') {
-    return { 1: 'formate', 2: 'acetate' }[parent.length] || null;
+    // A monoester only: a diester (I-39c) of ethanedioic acid is no acetate.
+    return suffix.locants.length === 1 ? { 1: 'formate', 2: 'acetate' }[parent.length] || null : null;
   }
   if (suffix.kind === 'acid') {
     const ids = suffix.locants.length === 1 ? { 1: 'formicAcid', 2: 'aceticAcid' } : { 2: 'oxalicAcid' };

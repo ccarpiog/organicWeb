@@ -44,7 +44,11 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `metoxibenceno`…), and of esters (the acid part with `-oato` and the
   O-bound group as a separate word: `etanoato de metilo`, `propanoato de
   etilo`, `butanoato de isopropilo`, `2-metilpropanoato de tert-butilo`,
-  `3-oxobutanoato de etilo`, `etanoato de 2-hidroxietilo`…), and of amines
+  `3-oxobutanoato de etilo`, `etanoato de 2-hidroxietilo`…; diesters on one
+  chain: `butanodioato de dimetilo`, `propanodioato de etilo y metilo`;
+  beside an acid the ester is a prefix: `ácido 4-metoxi-4-oxobutanoico`,
+  `ácido 3-(metoxicarbonil)pentanodioico`, `ácido 2-(acetiloxi)etanoico`),
+  and of amines
   (the N never in the chain, `-amina` with its locants, the other groups on
   the N as `N-` prefixes, `amino-` below a more senior group: `metanamina`,
   `propan-2-amina`, `butano-1,4-diamina`, `N-metiletanamina`,
@@ -232,7 +236,11 @@ the Keychain account is the WebDAV user).
   esters, amides and nitriles with a ring are refused); more than two
   aldehyde groups on a chain when the aldehyde is the principal group
   (`-carbaldehído`), more than two –COOH groups on a chain, a –CO–C≡N
-  branch (`carbonocianidoil-`), more than one ester group, an acid with an ester, an
+  branch (`carbonocianidoil-`), more than two ester groups without an acid,
+  two esters on different carbon pieces (a diol diester such as
+  `diacetato de etano-1,2-diilo`, or an ester inside the O-bound group of
+  another), a diester with two different O-bound groups whose chain would
+  need locants for them (`2-metilbutanodioato de 1-etilo y 4-metilo`), an
   ether or amine whose identical parts each carry the
   principal group (multiplicative names, `oxidi-`, `azanodiil-`), and
   several amine groups on the main chain when some N carries other groups

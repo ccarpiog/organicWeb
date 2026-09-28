@@ -155,6 +155,10 @@ const SNAPSHOT_SMILES = [
   'N#CCCC(=O)O', // ácido 3-cianopropanoico: acid > nitrile, ciano- with its carbon outside the chain (I-39a)
   'N#CCCOCC#N', // 3-(cianometoxi)propanonitrilo: a nitrile on a branch piece is ciano- (I-39a)
   'CC(=O)OCC#N', // etanoato de cianometilo: ciano- in the O-bound group (I-39a)
+  'COC(=O)CCC(=O)O', // ácido 4-metoxi-4-oxobutanoico: acid > ester, the ester carbon in the chain (I-39c)
+  'OC(=O)CC(C(=O)OC)CC(=O)O', // ácido 3-(metoxicarbonil)pentanodioico: alcoxicarbonil (I-39c)
+  'CC(=O)OCC(=O)O', // ácido 2-(acetiloxi)etanoico: aciloxi (I-39c)
+  'COC(=O)CC(=O)OCC', // propanodioato de etilo y metilo: a diester with two different groups (I-39c)
 ];
 
 /**

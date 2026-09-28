@@ -356,7 +356,7 @@
    }
   ]
  },
- "COC(=O)CCC(=O)OC": {
+ "CC(=O)OCCOC(C)=O": {
   "code": "HETEROATOM",
   "principal": "ester",
   "steps": [
@@ -377,13 +377,13 @@
        4,
        7,
        8,
-       9
+       10
       ],
       "bonds": [
        2,
        3,
        7,
-       8
+       9
       ],
       "style": "substituent"
      }
@@ -406,13 +406,13 @@
        4,
        7,
        8,
-       9
+       10
       ],
       "bonds": [
        2,
        3,
        7,
-       8
+       9
       ],
       "style": "parent"
      }
@@ -434,13 +434,13 @@
        4,
        7,
        8,
-       9
+       10
       ],
       "bonds": [
        2,
        3,
        7,
-       8
+       9
       ],
       "style": "parent"
      }
@@ -451,15 +451,15 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene más de un grupo –COO– (éster). De momento solo sé nombrar los ésteres con un único grupo –COO– (como el etanoato de metilo)."
+     "Esta molécula tiene dos grupos –COO– (éster) que no están en la misma cadena de carbonos: entre ellos hay un oxígeno o un nitrógeno que corta la cadena (como en el diacetato de etano-1,2-diilo, o cuando un éster está dentro del grupo unido al oxígeno del otro). Entonces uno de los dos se nombraría con un prefijo («aciloxi-», como «acetiloxi-», o «alcoxicarbonil-», como «metoxicarbonil-») o con un nombre especial, y eso aún no sé hacerlo. Sí sé nombrar los diésteres con los dos grupos –COO– en la misma cadena (como el butanodioato de dimetilo) y los ésteres junto a un ácido (como el ácido 4-metoxi-4-oxobutanoico)."
     ],
     "highlight": [
      {
       "atoms": [
-       2,
+       3,
        4,
-       8,
-       9
+       7,
+       10
       ],
       "bonds": [],
       "style": "candidate"
@@ -1166,7 +1166,7 @@
    }
   ]
  },
- "CC(=O)OCC(=O)O": {
+ "CC(=O)OC1CCC(C(=O)O)CC1": {
   "code": "HETEROATOM",
   "principal": "acid",
   "steps": [
@@ -1183,16 +1183,16 @@
     "highlight": [
      {
       "atoms": [
-       6,
-       7,
-       8,
+       9,
+       10,
+       11,
        2,
        3,
        4
       ],
       "bonds": [
-       6,
-       7,
+       9,
+       10,
        2,
        3
       ],
@@ -1211,13 +1211,13 @@
     "highlight": [
      {
       "atoms": [
-       6,
-       7,
-       8
+       9,
+       10,
+       11
       ],
       "bonds": [
-       6,
-       7
+       9,
+       10
       ],
       "style": "parent"
      },
@@ -1247,13 +1247,13 @@
     "highlight": [
      {
       "atoms": [
-       6,
-       7,
-       8
+       9,
+       10,
+       11
       ],
       "bonds": [
-       6,
-       7
+       9,
+       10
       ],
       "style": "parent"
      },
@@ -1276,15 +1276,15 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un grupo –COOH (ácido) y un grupo –COO– (éster). El ácido va antes que el éster, así que el éster se nombraría con un prefijo («alcoxicarbonil-», como «metoxicarbonil-», o «aciloxi-», como «acetiloxi-»), y eso aún no sé hacerlo."
+     "Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico)."
     ],
     "highlight": [
      {
       "atoms": [
        3,
        4,
-       7,
-       8
+       10,
+       11
       ],
       "bonds": [],
       "style": "candidate"
@@ -1294,7 +1294,7 @@
    }
   ]
  },
- "CCOC(=O)CC(=O)O": {
+ "CCOC(=O)C1CCC(C(=O)O)CC1": {
   "code": "HETEROATOM",
   "principal": "acid",
   "steps": [
@@ -1311,16 +1311,16 @@
     "highlight": [
      {
       "atoms": [
-       7,
-       8,
-       9,
+       10,
+       11,
+       12,
        3,
        4,
        5
       ],
       "bonds": [
-       7,
-       8,
+       10,
+       11,
        3,
        4
       ],
@@ -1339,13 +1339,13 @@
     "highlight": [
      {
       "atoms": [
-       7,
-       8,
-       9
+       10,
+       11,
+       12
       ],
       "bonds": [
-       7,
-       8
+       10,
+       11
       ],
       "style": "parent"
      },
@@ -1375,13 +1375,13 @@
     "highlight": [
      {
       "atoms": [
-       7,
-       8,
-       9
+       10,
+       11,
+       12
       ],
       "bonds": [
-       7,
-       8
+       10,
+       11
       ],
       "style": "parent"
      },
@@ -1404,15 +1404,15 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un grupo –COOH (ácido) y un grupo –COO– (éster). El ácido va antes que el éster, así que el éster se nombraría con un prefijo («alcoxicarbonil-», como «metoxicarbonil-», o «aciloxi-», como «acetiloxi-»), y eso aún no sé hacerlo."
+     "Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico)."
     ],
     "highlight": [
      {
       "atoms": [
        3,
        5,
-       8,
-       9
+       11,
+       12
       ],
       "bonds": [],
       "style": "candidate"

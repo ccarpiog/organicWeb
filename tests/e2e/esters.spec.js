@@ -10,9 +10,11 @@
  * (propanoato de etilo, butanoato de isopropilo with propan-2-ilo and
  * 1-metiletilo, 2-metilpropanoato de tert-butilo, metanoato de metilo with
  * formiato de metilo, 3-oxobutanoato de etilo, etanoato de 2-hidroxietilo);
- * "Ordenar dibujo" lays out an ester; two esters, an ester with a ring and
- * an acid with an ester are refused with their messages. Runs on the dev
- * server and on dist/index.html.
+ * "Ordenar dibujo" lays out an ester; two esters on different carbon pieces,
+ * an ester with a ring and a mixed diester that would need locants are
+ * refused with their messages (a diester on one chain and an ester beside
+ * an acid are named since I-39c, tests/e2e/ester-prefixes.spec.js). Runs on
+ * the dev server and on dist/index.html.
  */
 
 import { test, expect } from '@playwright/test';
@@ -212,10 +214,10 @@ test('loaded esters: branched groups on both sides, oxo- and hidroxi-, formiato;
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
   const error = page.locator('#results .results-error');
-  await loadSmiles(page, 'COC(=O)CCC(=O)OC');
+  await loadSmiles(page, 'CC(=O)OCCOC(C)=O');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('más de un grupo –COO–');
+  await expect(error).toContainText('diacetato de etano-1,2-diilo');
   await expect(page.locator('#result-name')).toHaveCount(0);
 
   await loadSmiles(page, 'CC(=O)OC1=CC=CC=C1');
@@ -223,9 +225,9 @@ test('loaded esters: branched groups on both sides, oxo- and hidroxi-, formiato;
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
   await expect(error).toContainText('los ésteres con anillo');
 
-  await loadSmiles(page, 'CC(=O)OCC(=O)O');
+  await loadSmiles(page, 'COC(=O)CC(C)C(=O)OCC');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('«aciloxi-»');
+  await expect(error).toContainText('Habría que decir con localizadores');
   expect(errors).toEqual([]);
 }); // End of test 'loaded esters…'

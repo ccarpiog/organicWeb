@@ -50,14 +50,15 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-38 | v2.18 Nitriles | same, §3.18 | done — `docs/progress-archive/i-38.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-38.md` |
 | I-39a | v2.19a `ciano-` prefix (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-39a.md` |
 | I-39b | v2.19b Acyl prefixes `formil-`/`acetil-` (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-39b.md` |
-| I-39c | v2.19c Ester/amide prefixes, pair matrix (split from I-39) | same, §3.19 | queued | — | — |
+| I-39c | v2.19c Ester prefixes and diesters (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39c.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-39c.md` |
+| I-39d | v2.19d Amide prefixes and pair matrix (split from I-39c) | same, §3.19 | queued | — | — |
 | I-40 | v2.20 Functions on rings | same, §3.20 | queued | — | — |
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-39b done; I-39c…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-39c done; I-39d…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo; I-39 into I-39a `ciano-`,
-I-39b acyl prefixes, I-39c ester/amide prefixes + pair matrix);
+I-39b acyl prefixes, I-39c ester prefixes + diesters, I-39d amide prefixes + pair matrix);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
 
@@ -92,12 +93,12 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-39c (ester/amide prefixes `alcoxicarbonil-`/`aciloxi-`/`carbamoil-`/
-`acilamino-`, diesters, pair matrix with counter-examples; lift `esterPrefix` / `manyEsters` /
-`amidePrefix` only where covered). Spec: design §13.4 row I-39c, §13.6; the acyl-branch machinery
-of I-39b (`docs/progress-archive/i-39b.md`: acyl flag in `buildSubstituent()`, `-oil` endings)
-is what `aciloxi-` / `acilamino-` build on. Consider splitting I-39c (esters vs amides) at
-selection. Then I-40, I-41. Deploying stays a manual user step.
+Poll the inbox, then run I-39d (amide beside an acid or ester, or on another carbon piece:
+`carbamoil-` / `acilamino-`, lifting `amidePrefix` only where covered; complete the pair matrix
+of ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina with counter-examples).
+Spec: design §13.4 row I-39d, §13.6; build on I-39c's ester-prefix machinery
+(`docs/progress-archive/i-39c.md`: `alcoxi…oxo` vs `alcoxicarbonil`, `aciloxi` via the I-39b
+acyl `-oil` prefixes). Then I-40, I-41. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -191,14 +192,16 @@ selection. Then I-40, I-41. Deploying stays a manual user step.
 - Acyl prefixes (I-39b): acyl branches flagged in `buildSubstituent()` (`substituent.js`), X a
   normal skeleton carbon (not in `outsideCarbons()`); endings `acylEndingTokens()` in `render.js`;
   `unnamedAcyl()` safety net (`index.js`); tests `tests/unit/acyl.test.js`, `tests/e2e/acyl.spec.js`.
+- Ester prefixes (I-39c): refusals in `validate.js`, prefixes in `substituent.js` / `render.js`,
+  explain step `diester`; tests `tests/unit/ester-prefixes.test.js`, `tests/e2e/ester-prefixes.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-39b)
+## Verification (last phase, I-39c)
 
-- After the review fix, run by the orchestrator: `npm test` 0 (1184 pass) · `npm run check` 0
-  (115 files) · `npm run e2e` 0 (217 pass, source + dist) · `npm run oracle -- --count 1000
-  --seed 1` 0 (7111 pass, 500 acyl).
+- Run by the orchestrator: `npm test` 0 (1229 pass) · `npm run check` 0 (117 files) ·
+  `npm run e2e` 0 (223 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0
+  (7611 pass, 500 ester-prefix).
 
 ## Open risks / deviations
 
@@ -219,60 +222,11 @@ selection. Then I-40, I-41. Deploying stays a manual user step.
   (OPSIN cannot judge preference). ~37 000 molecules, no naming bugs. I-6 review
   finding (N4 must compare one flattened citation-order locant sequence) fixed.
 
-- I-8: Borrar on a bond now keeps both carbons (design §6.1 changed to
-  match; see `docs/progress-archive/i-8.md`). Drag from empty space makes a
-  two-carbon fragment (spec silent).
-
-- I-9: restore validates structure only (loose fragments allowed), is not an
-  undo step, and recentres the view. Pinch zoom has no e2e test. Review's two
-  should-fix findings fixed with regressions (`docs/progress-archive/i-9.md`).
-
-- I-10: numbering options are "Opción A/B" (no coordinates); name button
-  always enabled; Spanish explanation texts not yet reviewed by a teacher.
-  Review's three should-fix findings fixed (`docs/progress-archive/i-10.md`).
-
-- I-11: layouts that still fail clearance/crossing checks after restarts
-  leave the drawing unchanged with a message (~1/800 random molecules up to
-  40 C; none up to 20 C). Review's blocker and should-fix fixed with
-  regressions (`docs/progress-archive/i-11.md`).
-
-- I-12: review's two should-fix findings (help focus on phones, Esc on a
-  hovered tooltip) fixed with e2e regressions (`docs/progress-archive/i-12.md`).
-  Spanish help text not yet reviewed by a teacher.
-
-- I-13: CH₄ label sits below its dot in Esqueleto; `hitTest()` maps the
-  label box to the carbon (review should-fix, fixed). A bond drag snapping onto
-  that box joins methane (`docs/progress-archive/i-13.md`).
-
-- I-14: Cadena tool removed (`h` selects Enlace simple); release over an
-  atom is always a one-bond drag to it; double/triple drags make one bond.
-  Preview jumps from straight bond to zigzag at the chain threshold
-  (`docs/progress-archive/i-14.md`).
-
-- I-15: 90° view is a display-only projection (editable since I-17);
-  fallbacks (empty, loose pieces, unplaceable) draw the normal layout. Review should-fix
-  (Mover live preview lost) fixed with an e2e regression
-  (`docs/progress-archive/i-15.md`).
-
-- I-16: highlight switch persisted in `organicWeb.highlights`; a twin
-  switch outside the stepper covers the post-Ordenar highlight
-  (`docs/progress-archive/i-16.md`).
-
-- I-17: 90° view is editable; Mover and Ordenar dibujo disabled there; drag
-  direction ignored for model placement. Review's two should-fix fixed with
-  regressions (`docs/progress-archive/i-17.md`).
-
-- I-18: author footer sits below the fold on desktop (main area fills the
-  viewport); reachable by scrolling (`docs/progress-archive/i-18.md`).
-
-- I-19: root cause was the fit-to-view zoom living outside the undo step;
-  history now carries the view (held while the 90° view is shown). Ejemplos
-  load has the same unrestored-view issue, out of scope
-  (`docs/progress-archive/i-19.md`).
-
-- I-20: deploy is https-only and never follows redirects (review blocker and
-  should-fix, fixed with regressions); `--dry-run` never reads the Keychain;
-  non-2xx errors omit the response body (`docs/progress-archive/i-20.md`).
+- I-8…I-20 (v1 editor, explanations, redraw, 90° view, deploy): per-phase deviations and
+  review resolutions live in `docs/progress-archive/i-8.md` … `i-20.md`. Still relevant:
+  Spanish help/explanation texts not reviewed by a teacher; ~1/800 random molecules up to 40 C
+  fail Ordenar dibujo checks (drawing kept, message shown); Ejemplos load leaves the view
+  unrestored on undo; deploy https-only, `--dry-run` never reads the Keychain.
 
 - I-21: element table `src/model/elements.js`; heteroatom molecules get the
   `HETEROATOM` "aún no sé nombrar" error; heteroatom labels and "carbono" wording in some
@@ -387,10 +341,16 @@ selection. Then I-40, I-41. Deploying stays a manual user step.
   prefix words from memory. Review should-fix (acyl root O counted as `oxo` in the branch
   tie-break) fixed with a regression (`docs/progress-archive/i-39b.md`).
 
+- I-39c: acid + ester named (ester C in the chain → `R-oxi…-oxo`, else `alcoxicarbonil-`;
+  O-bound → `aciloxi-`, `acetiloxi`); diesters on one chain (`butanodioato de dimetilo`,
+  `… de etilo y metilo`); still refused: 3+ esters, esters on separate pieces (`esterPrefix`),
+  diesters needing locants (new `mixedDiester`). Those three word choices from memory
+  (`docs/progress-archive/i-39c.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-39a `2f6cd40`, pushed. I-39b committed and pushed right after this checkpoint (see
+- I-39b `623da84`, pushed. I-39c committed and pushed right after this checkpoint (see
   `git log`).

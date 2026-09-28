@@ -71,6 +71,7 @@
  * @property {number[]} multipleBonds - Double and triple bonds of this occurrence's subtree, ascending (not the connecting bond; for the explanation).
  * @property {number} [etherCarbon] - Alkoxy prefixes only (design.md §13.4 I-34): the carbon on the other side of the ether O (`attachAtom`).
  * @property {number} [etherBond] - Alkoxy prefixes only: the bond between the O and `etherCarbon` (in `bonds`).
+ * @property {boolean} [ester] - Set on the `oxo` and the `alcoxi` occurrence of a non-principal ester whose C=O carbon is the carrying chain atom (design.md §13.4 I-39c: `4-metoxi-4-oxo`): its C=O and its bridge O with the O-bound group.
  */
 
 /**
@@ -150,8 +151,23 @@
  * @property {ChainStructure|RingStructure} parent - The numbered parent chain or ring.
  * @property {PrefixGroup[]} prefixes - Grouped substituent prefixes in citation order (empty for an unbranched molecule).
  * @property {SuffixStructure|null} suffix - The principal characteristic groups cited as a suffix (`-ol`, design.md §13.4 I-31; `-al`, `-ona`, I-32), or null (hydrocarbons and halogen derivatives).
- * @property {EsterPart} [ester] - Only when the suffix is an ester (design.md §13.4 I-35): its O-bound group, cited as its own word (`etanoato de metilo`, `methyl ethanoate`).
+ * @property {EsterPart} [ester] - Only when the suffix is an ester (design.md §13.4 I-35): its O-bound group, cited as its own word (`etanoato de metilo`, `methyl ethanoate`); for a diester, the group of the first suffix site.
+ * @property {EsterPart[]} [esters] - Only for a diester (design.md §13.4 I-39c): the O-bound group of every suffix site, in suffix order (`butanodioato de dimetilo`, `propanodioato de etilo y metilo`).
  */
+
+/**
+ * Every O-bound group of an ester name structure (design.md §13.4 I-35,
+ * I-39c): `esters` for a diester, else `[ester]`, else none.
+ *
+ * @param {{ester?: EsterPart, esters?: EsterPart[]}} structure - A name structure.
+ * @returns {EsterPart[]} The groups, in suffix order.
+ */
+export function esterParts(structure) {
+  if (structure.esters) {
+    return structure.esters;
+  }
+  return structure.ester ? [structure.ester] : [];
+}
 
 /**
  * The O-bound group of an ester (design.md §13.4 I-35; substituent.js
@@ -374,9 +390,10 @@ export function buildRingStructure(atoms, bonds, orders) {
 /**
  * Assembles the language-neutral name structure. The parent kind is taken
  * from the parent: 'ring' for a RingStructure, else 'chain'. `ester` is
- * set only when given (an ester's O-bound group, design.md §13.4 I-35).
+ * set only when given (an ester's O-bound group, design.md §13.4 I-35),
+ * `esters` only for a diester (every O-bound group, I-39c).
  *
- * @param {{parent: ChainStructure|RingStructure, prefixes?: PrefixGroup[], suffix?: SuffixStructure|null, ester?: EsterPart}} parts - The numbered parent, its grouped prefixes (citation order), its suffix groups and an ester's O-bound group.
+ * @param {{parent: ChainStructure|RingStructure, prefixes?: PrefixGroup[], suffix?: SuffixStructure|null, ester?: EsterPart, esters?: EsterPart[]}} parts - The numbered parent, its grouped prefixes (citation order), its suffix groups and an ester's O-bound group (or, for a diester, all of them).
  * @returns {NameStructure} The name structure.
  */
 export function buildNameStructure(parts) {
@@ -388,6 +405,9 @@ export function buildNameStructure(parts) {
   };
   if (parts.ester) {
     structure.ester = parts.ester;
+  }
+  if (parts.esters && parts.esters.length > 1) {
+    structure.esters = [...parts.esters];
   }
   return structure;
 } // End of function buildNameStructure()

@@ -76,7 +76,15 @@
  * Esters (design.md §13.4 I-35): the –COO– is the principal group, its C=O
  * carbon a parent atom (suffixSites() carries the bridge O), and the group
  * on the far side of the bridge O is named like an alkoxy group's alkyl
- * (esterAlkyl()), cited as its own word (`de metilo`), never as a prefix.
+ * (esterAlkyl()), cited as its own word (`de metilo`; two of them for a
+ * diester, I-39c). Beside an acid (I-39c) an ester is a prefix: its C=O
+ * carbon X is an ordinary skeleton carbon, so on a chain that reaches it X
+ * carries an `oxo` and an `alcoxi` prefix (substituentsOf() flags both
+ * occurrences `ester`: `4-metoxi-4-oxo`); as the attachment atom of a
+ * branch from a carbon X alone is an `alcoxicarbonil` group
+ * (`alkoxycarbonyl` set: `metoxicarbonil`), and seen from its bridge O it
+ * starts the acyl group of an `aciloxi` prefix (an alkoxy group whose
+ * group is `acyl`: `acetiloxi`); esterAttachment() tells them apart.
  *
  * Amines (design.md §13.4 I-36): like an ether O, an amine N is never a
  * chain atom. When the amine is principal, each N bonded to the parent is a
@@ -110,7 +118,7 @@
 
 import { adjacency, rootedTreeKey } from '../model/graph.js';
 import { isHalogen } from '../model/elements.js';
-import { isNitrileCarbon, carbonylKind } from '../model/validate.js';
+import { isNitrileCarbon, carbonylKind, isEsterCarbon } from '../model/validate.js';
 import { buildChainStructure } from './structure.js';
 import { numberParent, compareCitationKeys } from './numbering.js';
 import { citationKey, prefixNameKey } from './render.js';
@@ -294,7 +302,7 @@ function countBonds(adj, atoms, test) {
  * @param {number[]} chainAtoms - The chain's atom ids.
  * @param {number|null} [exclude] - An atom outside the chain that is not a substituent (the carrying atom of a substituent chain).
  * @param {boolean} [parent] - True for the parent chain or ring, whose OH groups are suffixes (default false).
- * @returns {{chainAtom: number, attachAtom: number, bond: number, order: number, atoms: number[], bonds: number[], multipleBonds: number[], key: string, structure: object, citation: object, etherCarbon?: number, etherBond?: number}[]} One entry per substituent, in chain order then attachment-atom order (an alkoxy entry also has the carbon on the other side of its O and that O–C bond).
+ * @returns {{chainAtom: number, attachAtom: number, bond: number, order: number, atoms: number[], bonds: number[], multipleBonds: number[], key: string, structure: object, citation: object, etherCarbon?: number, etherBond?: number, ester?: boolean}[]} One entry per substituent, in chain order then attachment-atom order (an alkoxy entry also has the carbon on the other side of its O and that O–C bond; `ester` marks the C=O `oxo` and the bridge-O `alcoxi` of a non-principal ester whose carbon is the chain atom, design.md §13.4 I-39c).
  */
 export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) {
   const inChain = new Set(chainAtoms);
@@ -312,12 +320,16 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
         result.push(cyanoEntry(ctx, chainAtom, n));
         continue;
       }
+      // The C=O and the bridge O of a non-principal ester whose carbon X is this chain atom (I-39c):
+      // cited `oxo` and `alcoxi` at X's locant (`4-metoxi-4-oxobutanoico`); the entry says so (`ester`).
+      const ester = element === 'O' && isEsterCarbon(ctx.mol, ctx.adj, chainAtom) ? { ester: true } : {};
       if (isHalogen(element) || (element === 'O' && ctx.adj.get(n.atom).length === 1)) {
         let structure = halogenSubstituent(n.atom, element);
         if (element === 'O') {
           structure = n.order === 2 ? oxoSubstituent(n.atom) : hydroxySubstituent(n.atom);
         }
         result.push({
+          ...ester,
           chainAtom,
           attachAtom: n.atom,
           bond: n.bond,
@@ -331,7 +343,7 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
         });
         continue;
       }
-      result.push(branchEntry(ctx, chainAtom, n));
+      result.push({ ...branchEntry(ctx, chainAtom, n), ...ester });
     } // End of the loop over the neighbours of one chain atom
   } // End of the loop over the chain atoms
   return result;
@@ -677,6 +689,7 @@ export function groupPrefixes(substituents, atoms) {
       bonds: [...sub.bonds],
       multipleBonds: [...sub.multipleBonds],
       ...(sub.etherCarbon === undefined ? {} : { etherCarbon: sub.etherCarbon, etherBond: sub.etherBond }),
+      ...(sub.ester ? { ester: true } : {}),
     });
   }
   const groups = [...byKey.values()];
@@ -829,7 +842,10 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
   // An acyl group (design.md §13.4 I-39b): the C=O oxygen of X is cited by the acyl ending, not as a
   // prefix, so it takes no part in the choice and numbering of the acyl chain (P4, N3, N4, N5); it
   // stays in the structure's prefixes (counts, highlights) and render.js citedPrefixes() hides it.
-  const acylOxygen = acylOxygenOf(ctx, attachAtom);
+  // An ester carbon X (I-39c) seen from its bridge O is an acyl group too (the acyl of `aciloxi`);
+  // seen from a carbon it is an `alcoxicarbonil` group (X alone, its `oxo` and `alcoxi` kept as prefixes).
+  const esterSide = esterAttachment(ctx, chainAtom, attachAtom);
+  const acylOxygen = esterSide === 'bridge' ? esterOxoOf(ctx, attachAtom) : acylOxygenOf(ctx, attachAtom);
   const prefixesOf = (chain) => subsByChain.get(chain)
     .filter((sub) => sub.attachAtom !== acylOxygen)
     .map((sub) => ({ atom: sub.chainAtom, key: sub.key, citation: sub.citation }));
@@ -853,8 +869,41 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
     atoms: subtree.atoms,
     bonds: subtree.bonds,
     ...(acyl ? { acyl: true } : {}),
+    ...(esterSide === 'carbon' ? { alkoxycarbonyl: true } : {}),
   };
 } // End of function buildSubstituent()
+
+/**
+ * How a branch reaches an ester carbon X (design.md §13.4 I-39c): 'bridge'
+ * when the carrying atom is X's bridge O (X starts the acyl group of an
+ * `aciloxi` prefix: `acetiloxi`, `formiloxi`, `propanoiloxi`), 'carbon'
+ * when it is a carbon (X alone, with its C=O and its O-bound group, is an
+ * `alcoxicarbonil` prefix: `metoxicarbonil`), null when X is not an ester
+ * carbon. Only a non-principal ester is ever a branch: validation keeps
+ * every principal ester on the parent.
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {number} chainAtom - The carrying atom.
+ * @param {number} attachAtom - The attachment atom.
+ * @returns {'bridge'|'carbon'|null} The side.
+ */
+export function esterAttachment(ctx, chainAtom, attachAtom) {
+  if (!isEsterCarbon(ctx.mol, ctx.adj, attachAtom)) {
+    return null;
+  }
+  return ctx.mol.atoms.get(chainAtom).element === 'O' ? 'bridge' : 'carbon';
+}
+
+/**
+ * The C=O oxygen of an ester carbon (validate.js isEsterCarbon()).
+ *
+ * @param {object} ctx - Naming context, or any object with `mol` and `adj`.
+ * @param {number} carbon - An ester carbon.
+ * @returns {number} The oxygen id.
+ */
+export function esterOxoOf(ctx, carbon) {
+  return ctx.adj.get(carbon).find((n) => n.order === 2 && ctx.mol.atoms.get(n.atom).element === 'O').atom;
+}
 
 /**
  * Names one substituent on its own (a fresh context each call; use

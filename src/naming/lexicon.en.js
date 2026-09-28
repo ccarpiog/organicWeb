@@ -405,6 +405,12 @@ export const ESTER_LINK = ' ';
 /** Ending added to the prefix form of an ester's O-bound group (none in English: `methyl`). */
 export const ESTER_ALKYL_ENDING = '';
 
+/** Text between the two different O-bound groups of a diester (`ethyl methyl propanedioate`; see lexicon.es.js ESTER_ALKYL_JOIN). */
+export const ESTER_ALKYL_JOIN = ' ';
+
+/** Last word of an ester prefix bonded through its C=O carbon: `methoxycarbonyl` (see lexicon.es.js ALKOXYCARBONYL_ENDING). */
+export const ALKOXYCARBONYL_ENDING = 'carbonyl';
+
 export const lexiconEn = Object.freeze({
   etherClassWord: ETHER_CLASS_WORD,
   amineClassWord: AMINE_CLASS_WORD,
@@ -412,6 +418,8 @@ export const lexiconEn = Object.freeze({
   esterAlkylFirst: ESTER_ALKYL_FIRST,
   esterLink: ESTER_LINK,
   esterAlkylEnding: ESTER_ALKYL_ENDING,
+  esterAlkylJoin: ESTER_ALKYL_JOIN,
+  alkoxycarbonylEnding: ALKOXYCARBONYL_ENDING,
   freeValenceSuffix,
   saturatedInfix: SATURATED_INFIX,
   enclosingMarks: ENCLOSING_MARKS,

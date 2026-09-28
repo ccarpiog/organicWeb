@@ -85,7 +85,7 @@
  * with multiplicative nomenclature (`oxidi-`), not supported.
  *
  * Esters (design.md §13.4 I-35) come after acids (ácido > éster >
- * aldehído…; validation never lets both meet, `esterPrefix`): the –COO–
+ * aldehído…): the –COO–
  * carbon is a chain end of the parent like an acid's, locant 1, never
  * cited, suffix `-oato`; the group on the far side of the bridge O is named
  * like an alkoxy group's alkyl (substituent.js esterAlkyl()) and cited as
@@ -94,8 +94,20 @@
  * `butanoato de isopropilo` (with `propan-2-ilo` and `1-metiletilo` in the
  * other styles), `2-metilpropanoato de tert-butilo`, `3-oxobutanoato de
  * etilo`, `etanoato de 2-hidroxietilo`. A bare metanoato or etanoato also
- * gets `formiato de …` / `acetato de …`. Validation refuses more than one
- * ester (`manyEsters`) and any ester with a ring (`ringEster`).
+ * gets `formiato de …` / `acetato de …`. A diester (I-39c) whose two
+ * –COO– lie on one carbon piece has both carbons as the parent's ends
+ * (`butanodioato de dimetilo`, `propanodioato de etilo y metilo`;
+ * structure `esters`, render.js assembleEster()). Beside an acid an ester
+ * is a prefix (I-39c): its carbon stays a chain carbon with `alcoxi` and
+ * `oxo` prefixes when the chain reaches it (`ácido 4-metoxi-4-oxobutanoico`),
+ * else it is `alcoxicarbonil` (`ácido 3-(metoxicarbonil)pentanodioico`);
+ * bonded through its O it is `aciloxi` (`ácido 2-(acetiloxi)etanoico`;
+ * substituent.js esterAttachment()). Validation refuses more than two
+ * esters (`manyEsters`), two on different carbon pieces without an acid
+ * (`esterPrefix`), a mixed diester that would need locants for its groups
+ * (`mixedDiester`) and any ester with a ring (`ringEster`); an ester left
+ * out of the suffix without an acid is refused here as a safety net
+ * (`esterPrefix`).
  *
  * Amines (design.md §13.4 I-36) are the least senior group (… alcohol >
  * amina): the N is never a chain atom (like an ether O, it splits the
@@ -162,7 +174,8 @@
 import {
   validateForNaming, validationError, carboxylCarbons, etherOxygens, amineNitrogens, ACYL_SUBSTITUENT_MESSAGE,
   CARBOXY_SUBSTITUENT_MESSAGE, SYMMETRIC_ETHER_MESSAGE, SYMMETRIC_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE,
-  amideCarbons, AMIDE_PREFIX_MESSAGE, nitrileCarbons, CYANO_PREFIX_MESSAGE, isAmineNitrogen,
+  amideCarbons, AMIDE_PREFIX_MESSAGE, nitrileCarbons, CYANO_PREFIX_MESSAGE, isAmineNitrogen, esterCarbons,
+  ESTER_PREFIX_MESSAGE,
 } from '../model/validate.js';
 import { adjacency, hasCycle, rootedTreeKey } from '../model/graph.js';
 import { selectParent } from './parent.js';
@@ -171,7 +184,7 @@ import {
   substituentSubtree, nameSubstituent, esterAlkyl, numberingPrefix,
 } from './substituent.js';
 import { numberParent, chainBonds } from './numbering.js';
-import { buildChainStructure, buildNameStructure, buildSuffix } from './structure.js';
+import { buildChainStructure, buildNameStructure, buildSuffix, esterParts } from './structure.js';
 import { renderName, suffixCount, suffixGroupIds, hasNitrogenLocants } from './render.js';
 import { nameRingWithStyle } from './rings.js';
 import { hasBenzeneRing, nameBenzeneWithStyle, traditionalAlternative } from './aromatic.js';
@@ -213,7 +226,7 @@ export function nameMolecule(mol, options = {}) {
  * @returns {boolean} True when some prefix (or nested prefix) is one of those retained groups.
  */
 export function hasRetainedPrefix(structure, ids) {
-  if (structure.ester && (ids.includes(structure.ester.alkyl.retained) || hasRetainedPrefix(structure.ester.alkyl, ids))) {
+  if (esterParts(structure).some((part) => ids.includes(part.alkyl.retained) || hasRetainedPrefix(part.alkyl, ids))) {
     return true;
   }
   return structure.prefixes.some((group) => ids.includes(group.substituent.retained) || hasRetainedPrefix(group.substituent, ids));
@@ -248,13 +261,15 @@ function nameWithStyle(mol, adj, selection, style) {
   const substituents = substituentsByChain.get(selection.chains[numbering.chainIndex]);
   const parent = buildChainStructure(numbering.atoms, numbering.bonds, numbering.orders);
   const suffix = buildSuffix(suffixSites(mol, adj, numbering.atoms, ctx.principal), numbering.atoms, ctx.principal);
-  // An ester's O-bound group (design.md §13.4 I-35): one –COO– (validation), its carbon on the parent.
-  const ester = suffix && suffix.kind === 'ester' ? esterAlkyl(ctx, suffix.locants[0].atom, suffix.locants[0].esterOxygen) : null;
+  // The O-bound group of each ester (design.md §13.4 I-35, I-39c): one or two –COO– (validation), carbons on the parent.
+  const esters = suffix && suffix.kind === 'ester'
+    ? suffix.locants.map((site) => esterAlkyl(ctx, site.atom, site.esterOxygen))
+    : [];
   const structure = buildNameStructure({
     parent,
     prefixes: groupPrefixes(substituents, numbering.atoms),
     suffix,
-    ...(ester ? { ester } : {}),
+    ...(esters.length > 0 ? { ester: esters[0], esters } : {}),
   });
   const { name, parts } = renderName(structure, lexiconEs);
   return {
@@ -371,15 +386,20 @@ function nameValidated(mol, options) {
   const acids = carboxylCarbons(mol);
   const amides = amideCarbons(mol);
   const nitriles = nitrileCarbons(mol);
+  const esters = acids.length === 0 ? esterCarbons(mol) : [];
   for (const s of new Set([style, PREFIX_STYLES[0], ...others])) {
     const { structure } = named(s);
     // An acyl branch without an acyl prefix (–CO–C≡N) on the parent, or inside an ester's O-bound group.
-    const acyl = unnamedAcyl(structure) || (structure.ester ? unnamedAcyl(structure.ester.alkyl) : null);
+    const acyl = [structure, ...esterParts(structure).map((part) => part.alkyl)].map(unnamedAcyl).find(Boolean) || null;
     if (acyl) {
       return withGroups({ ok: false, error: acylError(acyl) }, mol);
     }
     if (acids.length > 0 && suffixCount(structure) !== acids.length) {
       return withGroups({ ok: false, error: carboxyError(acids) }, mol);
+    }
+    if (esters.length > 0 && suffixCount(structure) !== esters.length) {
+      // Safety net (I-39c): without an acid every ester is a suffix group (validation, esterPlacementError()).
+      return withGroups({ ok: false, error: esterPrefixError(esters) }, mol);
     }
     if (amides.length > 0 && (!structure.suffix || structure.suffix.kind !== 'amide' || suffixCount(structure) !== amides.length)) {
       return withGroups({ ok: false, error: amidePrefixError(amides) }, mol);
@@ -557,6 +577,20 @@ function carboxyError(acids) {
 }
 
 /**
+ * The HETEROATOM refusal of a molecule without an acid whose name would
+ * leave an ester out of the parent's suffix (an `alcoxicarbonil-` or
+ * `aciloxi-` prefix beside a principal ester, design.md §13.4 I-39c). A
+ * safety net: validation already refuses every molecule where this can
+ * happen (`esterPrefix`, `manyEsters`).
+ *
+ * @param {number[]} esters - The ester carbons of the molecule.
+ * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
+ */
+function esterPrefixError(esters) {
+  return validationError('HETEROATOM', { message: ESTER_PREFIX_MESSAGE, atoms: [...esters], reason: 'esterPrefix' });
+}
+
+/**
  * The HETEROATOM refusal of a molecule whose name would leave an amide out
  * of the parent's suffix (a `carbamoil-` or `acilamino-` prefix, design.md
  * §13.4 I-37). A safety net: validation already refuses every molecule
@@ -580,7 +614,7 @@ function amidePrefixError(amides) {
 export function cyanoCount(structure) {
   const own = structure.prefixes.reduce((sum, group) => sum
     + (group.substituent.cyano ? group.locants.length : group.locants.length * cyanoCount(group.substituent)), 0);
-  return own + (structure.ester ? cyanoCount(structure.ester.alkyl) : 0);
+  return own + esterParts(structure).reduce((sum, part) => sum + cyanoCount(part.alkyl), 0);
 }
 
 /**

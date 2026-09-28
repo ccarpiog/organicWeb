@@ -92,22 +92,23 @@ test('validation: an ester –COO– is admitted; anhydrides, carbonates, peroxy
   assert.equal(hasNameableHeteroatoms(mol, [3, 4]), true);
 });
 
-test('refusals: two esters, an ester with an acid, an ester with a ring on either side', () => {
-  const two = named('COC(=O)CCC(=O)OC');
-  assert.equal(two.ok, false);
-  assert.equal(two.error.code, 'HETEROATOM');
-  assert.equal(two.error.reason, 'manyEsters');
-  assert.equal(two.error.message, MANY_ESTERS_MESSAGE);
-  assert.deepEqual(two.error.esters, [3, 7]);
-  assert.equal(two.groups.principal, 'ester', 'the refusal still explains the groups');
-  assert.equal(named('CC(=O)OCCOC(C)=O').error.reason, 'manyEsters', 'a diester of a diol');
-  assert.equal(named('CC(=O)OCC(=O)OC').error.reason, 'manyEsters', 'an ester inside the O-bound group of another');
-  for (const smiles of ['CC(=O)OCC(=O)O', 'CCOC(=O)CC(=O)O']) {
-    const both = named(smiles);
-    assert.equal(both.error.reason, 'esterPrefix', smiles);
-    assert.equal(both.error.message, ESTER_PREFIX_MESSAGE);
-    assert.match(both.error.message, /alcoxicarbonil-.*aciloxi-/);
-  }
+test('refusals: two esters on different carbon pieces, three esters, an ester with a ring on either side', () => {
+  // Since I-39c a diester on one chain and an ester beside an acid are named (tests/unit/ester-prefixes.test.js).
+  assert.equal(named('COC(=O)CCC(=O)OC').name, 'butanodioato de dimetilo');
+  assert.equal(named('CC(=O)OCC(=O)O').name, 'ácido 2-(acetiloxi)etanoico');
+  assert.equal(named('CCOC(=O)CC(=O)O').name, 'ácido 3-etoxi-3-oxopropanoico');
+  const diol = named('CC(=O)OCCOC(C)=O');
+  assert.equal(diol.ok, false);
+  assert.equal(diol.error.code, 'HETEROATOM');
+  assert.equal(diol.error.reason, 'esterPrefix', 'a diester of a diol');
+  assert.equal(diol.error.message, ESTER_PREFIX_MESSAGE);
+  assert.deepEqual(diol.error.esters, [2, 8]);
+  assert.equal(diol.groups.principal, 'ester', 'the refusal still explains the groups');
+  assert.equal(named('CC(=O)OCC(=O)OC').error.reason, 'esterPrefix', 'an ester inside the O-bound group of another');
+  assert.match(ESTER_PREFIX_MESSAGE, /aciloxi-.*alcoxicarbonil-/);
+  const three = named('COC(=O)CC(C(=O)OC)CC(=O)OC');
+  assert.equal(three.error.reason, 'manyEsters');
+  assert.equal(three.error.message, MANY_ESTERS_MESSAGE);
   for (const smiles of ['CC(=O)OC1CCCCC1', 'COC(=O)C1CCCCC1', 'CC(=O)OC1=CC=CC=C1', 'COC(=O)C1=CC=CC=C1', 'CC(=O)OCC1CCCCC1', 'COC(=O)CC1CCCCC1']) {
     const ring = named(smiles);
     assert.equal(ring.error.reason, 'ringEster', smiles);

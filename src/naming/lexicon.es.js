@@ -559,6 +559,24 @@ export const ESTER_LINK = ' de ';
 export const ESTER_ALKYL_ENDING = 'o';
 
 /**
+ * Text between the two O-bound groups of a diester whose groups differ
+ * (design.md §13.4 I-39c; render.js assembleEster()): they are cited in
+ * alphabetical order joined by ` y ` (`propanodioato de etilo y metilo`);
+ * identical groups take a multiplier instead (`butanodioato de dimetilo`).
+ */
+export const ESTER_ALKYL_JOIN = ' y ';
+
+/**
+ * Last word of an ester cited as a prefix through its C=O carbon
+ * (design.md §13.4 I-39c; IUPAC 2013 P-65.6.3.3, from memory): the
+ * alkoxy prefix of its O-bound group, then `carbonil` —
+ * `metoxicarbonil`, `(propan-2-iloxi)carbonil`. Used only when the chain
+ * misses the ester carbon; otherwise the carbon is a chain carbon with
+ * `alcoxi` and `oxo` prefixes (`ácido 4-metoxi-4-oxobutanoico`).
+ */
+export const ALKOXYCARBONYL_ENDING = 'carbonil';
+
+/**
  * Returns the ending of one unsaturation segment inside a substituent
  * prefix, where it is always followed by the free-valence locant and `il`,
  * so the final `o` is dropped: `prop-2-en-1-il`, `but-3-in-1-il`.
@@ -789,6 +807,8 @@ export const lexiconEs = Object.freeze({
   esterAlkylFirst: ESTER_ALKYL_FIRST,
   esterLink: ESTER_LINK,
   esterAlkylEnding: ESTER_ALKYL_ENDING,
+  esterAlkylJoin: ESTER_ALKYL_JOIN,
+  alkoxycarbonylEnding: ALKOXYCARBONYL_ENDING,
   freeValenceSuffix,
   saturatedInfix: SATURATED_INFIX,
   enclosingMarks: ENCLOSING_MARKS,

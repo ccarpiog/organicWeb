@@ -22,8 +22,10 @@
  * small alkyl groups on its N; some with C=O, OH groups, amines, ether
  * oxygens and halogens too), of nitriles and `ciano-` prefixes (I-38,
  * I-39a), of acyl prefixes (I-39b: `formil`, `acetil`, `propanoil`… on
- * any carbon beside any principal group; generateAcyl()), plus the list of
- * cycloalkanes in a size range.
+ * any carbon beside any principal group; generateAcyl()), of ester
+ * prefixes and diesters (I-39c: `alcoxicarbonil`, `…-oxi…-oxo`, `aciloxi`
+ * beside an acid, half esters and diesters; generateEsterPrefixes()),
+ * plus the list of cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
@@ -1351,6 +1353,145 @@ export function generateAcyl({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct acyl molecules
   return molecules;
 } // End of function generateAcyl()
+
+/**
+ * Copies a molecule and bonds new ester groups to some of its carbons
+ * (design.md §13.4 I-39c): each hydrogen of a carbon in `only` (default:
+ * every carbon) is replaced, with probability `rate`, by an ester group in
+ * one of its two orientations — bonded through its C=O carbon X (X, its
+ * C=O and a bridge O carrying a random acyclic hydrocarbon of 1 to 4
+ * carbons: `metoxicarbonil`, or `…-oxi…-oxo` when a chain reaches X) or
+ * through its bridge O (O, then X with its C=O, alone or with a random
+ * hydrocarbon of 1 to 4 carbons: `formiloxi`, `acetiloxi`,
+ * `propanoiloxi`…); at least one when `rate` hits none and some carbon has
+ * a hydrogen.
+ *
+ * @param {object} mol - A molecule (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} rate - Probability of replacing each hydrogen.
+ * @param {Set<number>|null} [only] - The carbons that may carry an ester group (default: every carbon).
+ * @returns {object} The copy.
+ */
+export function esterGraft(mol, random, rate, only = null) {
+  const copy = cloneMolecule(mol);
+  const sites = [];
+  for (const [id, atom] of [...copy.atoms]) {
+    if (atom.element !== 'C' || (only && !only.has(id))) {
+      continue;
+    }
+    for (let k = CARBON_VALENCE - bondOrderSum(copy, id); k > 0; k -= 1) {
+      sites.push(id);
+    }
+  } // End of the loop over the carbons
+  let chosen = sites.filter(() => random() < rate);
+  if (chosen.length === 0 && sites.length > 0) {
+    chosen = [sites[Math.floor(random() * sites.length)]];
+  }
+  /**
+   * Grafts a random hydrocarbon of 1 to 4 carbons onto an atom, bonded by one of its carbons with a free valence.
+   *
+   * @param {number} atom - The atom that carries it.
+   * @returns {void}
+   */
+  const graftTail = (atom) => {
+    const tail = randomHydrocarbon(random, { size: randomInt(random, 1, 4), unsaturation: random() * 0.2, branchiness: random() });
+    const ids = new Map([...tail.atoms.keys()].map((old) => [old, addAtom(copy)]));
+    for (const b of tail.bonds.values()) {
+      addBond(copy, ids.get(b.a), ids.get(b.b), b.order);
+    }
+    const free = [...ids.values()].filter((id) => CARBON_VALENCE - bondOrderSum(copy, id) >= 1);
+    addBond(copy, atom, free[Math.floor(random() * free.length)], 1);
+  };
+  for (const id of chosen) {
+    if (random() < 0.5) {
+      // Through the C=O carbon: C–X(=O)–O–R.
+      const carbon = addAtom(copy, {}, 'C');
+      addBond(copy, id, carbon, 1);
+      addBond(copy, carbon, addAtom(copy, {}, 'O'), 2);
+      const bridge = addAtom(copy, {}, 'O');
+      addBond(copy, carbon, bridge, 1);
+      graftTail(bridge);
+    } else {
+      // Through the bridge O: C–O–X(=O)(–R).
+      const bridge = addAtom(copy, {}, 'O');
+      addBond(copy, id, bridge, 1);
+      const carbon = addAtom(copy, {}, 'C');
+      addBond(copy, bridge, carbon, 1);
+      addBond(copy, carbon, addAtom(copy, {}, 'O'), 2);
+      if (random() < 0.8) {
+        graftTail(carbon); // Otherwise a formate (`formiloxi`).
+      }
+    }
+  } // End of the loop that bonds the ester groups
+  return copy;
+} // End of function esterGraft()
+
+/**
+ * Generates up to `count` distinct (by canonical key) molecules with ester
+ * prefixes or two esters (design.md §13.4 I-39c): a random acyclic
+ * hydrocarbon of 1 carbon up to `maxSize` − 4 given either one or two
+ * –COOH (carboxylate()) and then ester groups on any carbon (esterGraft():
+ * `alcoxicarbonil`, `…-oxi…-oxo`, `aciloxi`), or two –COOH of which one
+ * (a half ester, `ácido 4-metoxi-4-oxobutanoico`) or both (a diester,
+ * `butanodioato de dimetilo`, `propanodioato de etilo y metilo`) are
+ * esterified (esterify(): the same group or two different ones), a share
+ * of them also with C=O, OH groups and halogens. Only molecules that the
+ * engine names in every prefix style are kept (valid for naming — a mixed
+ * diester whose chain differs seen from its two ends, two esters on
+ * different carbon pieces and a third ester are refused — and not refused
+ * by the engine).
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateEsterPrefixes({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 8629 + 53);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60) {
+    attempts += 1;
+    const size = randomInt(random, 1, Math.max(1, maxSize - 4));
+    const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8 });
+    const kind = ['prefix', 'prefix', 'half', 'diester'][Math.floor(random() * 4)];
+    let mol = carboxylate(base, random, kind === 'prefix' && random() < 0.7 ? 1 : 2);
+    if (mol.atoms.size === base.atoms.size) {
+      continue; // No end carbon could take a –COOH.
+    }
+    const alkyl = () => randomHydrocarbon(random, { size: randomInt(random, 1, 4), unsaturation: random() * 0.2, branchiness: random() });
+    if (kind === 'prefix') {
+      mol = esterGraft(mol, random, 0.02 + random() * 0.08, new Set(base.atoms.keys()));
+    } else {
+      const first = alkyl();
+      mol = esterify(mol, random, first);
+      if (kind === 'diester') {
+        mol = esterify(mol, random, random() < 0.5 ? first : alkyl());
+      }
+    }
+    const carbons = new Set([...mol.atoms].filter(([, atom]) => atom.element === 'C').map(([id]) => id));
+    if (random() < 0.15) {
+      mol = carbonylate(mol, random, 0.05 + random() * 0.1, carbons);
+    }
+    if (random() < 0.15) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.1, carbons);
+    }
+    if (random() < 0.15) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.15);
+    }
+    if (validateForNaming(mol) || esterCarbons(mol).length === 0) {
+      continue; // Not valid for naming (a mixed diester that needs locants, an anhydride…), or no ester left.
+    }
+    if (!PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
+      continue; // Refused by the engine in some style (a –COOH on a branch piece…).
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct ester-prefix molecules
+  return molecules;
+} // End of function generateEsterPrefixes()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

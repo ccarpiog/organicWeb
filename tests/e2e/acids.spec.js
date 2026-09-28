@@ -8,8 +8,9 @@
  * canvas; molecules loaded through the editor test API get their names
  * (ácido metanoico, ácido 2-metilpropanoico, ácido but-2-enoico, ácido
  * butanodioico, ácido 4-oxopentanoico, ácido 2-hidroxipropanoico, ácido
- * 3-oxopropanoico); "Ordenar dibujo" lays out an acid; three –COOH, an acid
- * with a ring and an acid with an ester are refused with their messages. Runs on the dev
+ * 3-oxopropanoico); "Ordenar dibujo" lays out an acid; three –COOH and an
+ * acid with a ring are refused with their messages, and an acid with an
+ * ester is named with the ester as a prefix (since I-39c). Runs on the dev
  * server and on dist/index.html.
  */
 
@@ -197,10 +198,10 @@ test('loaded acids: ácido …oico, -dioico, oxo-, hidroxi-, ácido fórmico; ou
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
   await expect(error).toContainText('-carboxílico');
 
-  // An acid with an ester (esters are named since I-35): the ester would be a prefix.
+  // An acid with an ester: the ester is a prefix, named since I-39c (tests/e2e/ester-prefixes.spec.js).
   await loadSmiles(page, 'CC(=O)OCC(=O)O');
   await askName(page);
-  await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('el éster se nombraría con un prefijo');
+  await expect(page.locator('#result-name')).toHaveText('ácido 2-(acetiloxi)etanoico');
+  await expect(error).toHaveCount(0);
   expect(errors).toEqual([]);
 }); // End of test 'loaded acids…'

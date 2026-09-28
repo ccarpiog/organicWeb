@@ -182,11 +182,11 @@ test('refusals that stay: a nitrile on an acid, ester or amide carbon, many nitr
   // Three nitriles on one piece with the nitrile principal: -tricarbonitrilo, refused; below an acid, all ciano-.
   assert.equal(nameOf('N#CCC(C#N)CC#N'), 'HETEROATOM manyNitriles');
   assert.equal(nameOf('N#CCC(C#N)C(C#N)C(=O)O'), 'ácido 2,3,4-tricianobutanoico');
-  // Unchanged refusals beside a nitrile (I-39b, I-39c, I-40).
+  // Unchanged refusals beside a nitrile (I-39d, I-40); ester prefixes and diesters are named since I-39c.
   assert.equal(nameOf('N#CC1CCCCC1'), 'HETEROATOM ringNitrile');
   assert.equal(nameOf('N#CC1CCC(C(=O)O)CC1'), 'HETEROATOM ringAcid');
-  assert.equal(nameOf('N#CCC(=O)OCC(=O)O'), 'HETEROATOM esterPrefix');
-  assert.equal(nameOf('COC(=O)CC(C#N)CC(=O)OC'), 'HETEROATOM manyEsters');
+  assert.equal(nameOf('N#CCC(=O)OCC(=O)O'), 'ácido 2-[(2-cianoetanoil)oxi]etanoico');
+  assert.equal(nameOf('COC(=O)CC(C#N)CC(=O)OC'), '3-cianopentanodioato de dimetilo');
   assert.equal(nameOf('N#CCC(=O)NCC(=O)O'), 'HETEROATOM amidePrefix');
   assert.equal(nameOf('CC(=O)C(C#N)C(C)=O'), '2-acetil-3-oxobutanonitrilo', 'acyl prefixes, I-39b');
   // Identical halves each with the principal nitrile: multiplicative names.
