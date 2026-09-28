@@ -123,8 +123,8 @@ test('refusals: more than two –COOH, an acid with a ring, the carboxi- safety 
     }
   }
   assert.equal(named('OC(=O)C(CCCCC)C(=O)O').name, 'ácido 2-pentilpropanodioico', 'the chain joins both –COOH, not the longest');
-  // An acyl branch next to an acid is still refused by the engine.
-  assert.equal(named('CC(=O)C(C(=O)O)C(C)=O').error.reason, 'acylSubstituent');
+  // An acyl branch next to an acid is named since I-39b (refused as `acylSubstituent` before).
+  assert.equal(named('CC(=O)C(C(=O)O)C(C)=O').name, 'ácido 2-acetil-3-oxobutanoico');
 }); // End of test 'refusals'
 
 test('acids and diacids in both lexicons', () => {

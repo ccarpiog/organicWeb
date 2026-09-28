@@ -229,9 +229,10 @@ the Keychain account is the WebDAV user).
   carboxylic acids, ethers, esters, amines, amides and nitriles only, with at most one ring (a carbocycle; an
   OH or a ketone C=O must then be on a ring carbon, a principal amine's N
   bonded to a ring carbon, and aldehydes, acids,
-  esters, amides and nitriles with a ring are refused); a C=O carbon bonded to the main chain as a
-  branch (acetilo…), more than two aldehyde or more than two –COOH groups
-  on a chain, more than one ester group, an acid with an ester, an
+  esters, amides and nitriles with a ring are refused); more than two
+  aldehyde groups on a chain when the aldehyde is the principal group
+  (`-carbaldehído`), more than two –COOH groups on a chain, a –CO–C≡N
+  branch (`carbonocianidoil-`), more than one ester group, an acid with an ester, an
   ether or amine whose identical parts each carry the
   principal group (multiplicative names, `oxidi-`, `azanodiil-`), and
   several amine groups on the main chain when some N carries other groups
@@ -241,7 +242,9 @@ the Keychain account is the WebDAV user).
   carbon of an acid, ester or amide (`ácido carbonocianídico`) and more
   than two nitriles on one chain when the nitrile is the principal group
   (`-carbonitrilo`); a nitrile below an acid, ester or amide, or on a
-  branch, is named with the `ciano-` prefix;
+  branch, is named with the `ciano-` prefix, and a C=O carbon bonded to
+  its chain as a branch with an acyl prefix (`formil-`, `acetil-`,
+  `propanoil-`…);
   salts, ammonium ions and other acid derivatives are not named yet; several
   rings, fused, bridged and spiro rings, heterocycles, benzenes with two or
   more substituents (no orto/meta/para), other oxygen and nitrogen compounds,

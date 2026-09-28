@@ -20,7 +20,10 @@
  * ester, C=O, OH groups, ether oxygens and halogens too), of amides (I-37:
  * one or two –CONH₂ at chain ends of acyclic molecules, a single one with
  * small alkyl groups on its N; some with C=O, OH groups, amines, ether
- * oxygens and halogens too), plus the list of cycloalkanes in a size range.
+ * oxygens and halogens too), of nitriles and `ciano-` prefixes (I-38,
+ * I-39a), of acyl prefixes (I-39b: `formil`, `acetil`, `propanoil`… on
+ * any carbon beside any principal group; generateAcyl()), plus the list of
+ * cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
@@ -486,9 +489,8 @@ export function carbonylate(mol, random, rate, only = null) {
  * included) and random monocycles with the C=O on ring carbons only
  * (cycloalkanones), a share of each with OH groups (hydroxylate(); on ring
  * carbons only for a ring) and halogens (halogenate()) as well. Only
- * molecules the engine names are kept: valid for naming, and without an
- * acyl branch (a C=O carbon bonded to the parent as a branch, refused by
- * the engine).
+ * molecules the engine names are kept (valid for naming; acyl branches are
+ * named since I-39b, generateAcyl() covers them on purpose).
  *
  * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C; acyclic ones may be smaller).
  * @returns {object[]} The molecules.
@@ -524,7 +526,7 @@ export function generateCarbonyls({ count, seed, minSize = 4, maxSize = 14 }) {
       mol = halogenate(mol, random, 0.05 + random() * 0.2);
     }
     if (validateForNaming(mol) || !nameMolecule(mol).ok || carboxylCarbons(mol).length > 0) {
-      // Not valid for naming (a ketene…), refused by the engine (an acyl branch), or an acid
+      // Not valid for naming (a ketene…), refused by the engine, or an acid
       // (an OH drawn on an aldehyde carbon: generateAcids() covers those).
       continue;
     }
@@ -570,9 +572,8 @@ export function carboxylate(mol, random, max) {
  * (carbonylate(): ketones, or an aldehyde at the other end, cited `oxo-`),
  * OH groups (hydroxylate(), `hidroxi-`) and halogens (halogenate()). Only
  * molecules the engine names in every prefix style are kept (valid for
- * naming — no ring, at most two –COOH — and without an acyl branch in any
- * style: the 'substituted' style may need a `formil` branch that the
- * others avoid, which the engine refuses).
+ * naming — no ring, at most two –COOH — and not refused by the engine in
+ * any style; acyl branches such as `formil` are named since I-39b).
  *
  * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default up to 14 C; the minimum is ignored: small acids are the common ones).
  * @returns {object[]} The molecules.
@@ -602,7 +603,7 @@ export function generateAcids({ count, seed, maxSize = 14 }) {
     }
     if (validateForNaming(mol) || carboxylCarbons(mol).length === 0
       || !PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
-      continue; // Not valid for naming, the –COOH was spoilt, or refused by the engine in some style (an acyl branch).
+      continue; // Not valid for naming, the –COOH was spoilt, or refused by the engine in some style (a –CO–C≡N…).
     }
     const key = canonicalKey(mol);
     if (!seen.has(key)) {
@@ -652,8 +653,8 @@ export function esterify(mol, random, alkyl) {
  * C=O (carbonylate(): `oxo-`), OH groups (hydroxylate(): `hidroxi-`) and
  * halogens (halogenate()) on either part. Only molecules with exactly one
  * ester group that the engine names in every prefix style are kept (a C=O
- * next to the bridge O makes an anhydride, which validation refuses; an
- * acyl branch in some style is refused by the engine).
+ * next to the bridge O makes an anhydride, which validation refuses; acyl
+ * branches are named since I-39b).
  *
  * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
  * @returns {object[]} The molecules.
@@ -686,7 +687,7 @@ export function generateEsters({ count, seed, maxSize = 14 }) {
     }
     if (validateForNaming(mol) || esterCarbons(mol).length !== 1
       || !PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
-      continue; // Not valid for naming (an anhydride…), or refused by the engine in some style (an acyl branch).
+      continue; // Not valid for naming (an anhydride…), or refused by the engine in some style (a –CO–C≡N…).
     }
     const key = canonicalKey(mol);
     if (!seen.has(key)) {
@@ -732,7 +733,7 @@ export function etherify(mol, random, max) {
  * OH groups (on ring carbons only for a ring) and halogens. Only molecules
  * the engine names in every prefix style are kept (valid for naming — no
  * ester, no OH or C=O on a ring's side chain… — and not refused by the
- * engine: no acyl branch, no symmetric ether with the principal group on
+ * engine: no –CO–C≡N branch, no symmetric ether with the principal group on
  * both halves).
  *
  * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C; acyclic ones may be smaller).
@@ -861,7 +862,7 @@ export function aminate(mol, random, { rate = 0, insert = 0, graft = 0, only = n
  * molecules with at least one amine N that the engine names in every prefix
  * style are kept (valid for naming — no amide, no side-chain N on a ring
  * amine… — and not refused by the engine: no substituted polyamine, no
- * symmetric amine, no acyl branch).
+ * symmetric amine, no –CO–C≡N branch).
  *
  * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C; acyclic ones may be smaller).
  * @returns {object[]} The molecules.
@@ -989,7 +990,7 @@ export function amidate(mol, random, max, graft = 0) {
  * `alcoxi-`) and halogens (halogenate()). Only molecules with at least one
  * amide that the engine names in every prefix style are kept (valid for
  * naming — no imide, the amides on one carbon piece… — and not refused by
- * the engine: no acyl branch, no symmetric amine).
+ * the engine: no –CO–C≡N branch, no symmetric amine).
  *
  * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
  * @returns {object[]} The molecules.
@@ -1069,7 +1070,7 @@ export function nitrilate(mol, random, max) {
  * (aminate(): `amino-`), an ether O (etherify(): `alcoxi-`) and halogens
  * (halogenate()). Only molecules with at least one nitrile that the engine
  * names in every prefix style are kept (valid for naming — the nitriles on
- * one carbon piece… — and not refused by the engine: no acyl branch, no
+ * one carbon piece… — and not refused by the engine: no –CO–C≡N branch, no
  * symmetric amine or ether).
  *
  * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
@@ -1168,7 +1169,7 @@ export function cyanate(mol, random, rate, only = null) {
  * molecules the engine names in every prefix style with some `ciano` in
  * the name are kept (valid for naming — no nitrile on an acid, ester or
  * amide carbon, at most two nitriles per carbon piece with a principal
- * nitrile — and not refused by the engine: no acyl branch, no symmetric
+ * nitrile — and not refused by the engine: no –CO–C≡N branch, no symmetric
  * ether or amine).
  *
  * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
@@ -1228,6 +1229,128 @@ export function generateCyano({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct ciano- molecules
   return molecules;
 } // End of function generateCyano()
+
+/**
+ * Copies a molecule and bonds new acyl groups to some of its carbons
+ * (design.md §13.4 I-39b): each hydrogen of a carbon in `only` (default:
+ * every carbon) is replaced, with probability `rate`, by a new C=O carbon
+ * X; X alone is a –CHO (`formil`), or X carries a random acyclic
+ * hydrocarbon of 1 to 4 carbons bonded by a random carbon with a free
+ * valence (`acetil`, `propanoil`, `2-metilpropanoil`, `but-2-enoil`…); at
+ * least one when `rate` hits none and some carbon has a hydrogen.
+ *
+ * @param {object} mol - A molecule (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} rate - Probability of replacing each hydrogen.
+ * @param {Set<number>|null} [only] - The carbons that may carry an acyl group (default: every carbon).
+ * @returns {object} The copy.
+ */
+export function acylate(mol, random, rate, only = null) {
+  const copy = cloneMolecule(mol);
+  const sites = [];
+  for (const [id, atom] of [...copy.atoms]) {
+    if (atom.element !== 'C' || (only && !only.has(id))) {
+      continue;
+    }
+    for (let k = CARBON_VALENCE - bondOrderSum(copy, id); k > 0; k -= 1) {
+      sites.push(id);
+    }
+  } // End of the loop over the carbons
+  let chosen = sites.filter(() => random() < rate);
+  if (chosen.length === 0 && sites.length > 0) {
+    chosen = [sites[Math.floor(random() * sites.length)]];
+  }
+  for (const id of chosen) {
+    const carbon = addAtom(copy, {}, 'C');
+    addBond(copy, id, carbon, 1);
+    addBond(copy, carbon, addAtom(copy, {}, 'O'), 2);
+    if (random() < 0.25) {
+      continue; // A formyl group.
+    }
+    const tail = randomHydrocarbon(random, { size: randomInt(random, 1, 4), unsaturation: random() * 0.3, branchiness: random() });
+    const ids = new Map([...tail.atoms.keys()].map((old) => [old, addAtom(copy)]));
+    for (const b of tail.bonds.values()) {
+      addBond(copy, ids.get(b.a), ids.get(b.b), b.order);
+    }
+    const free = [...ids.values()].filter((atom) => CARBON_VALENCE - bondOrderSum(copy, atom) >= 1);
+    addBond(copy, carbon, free[Math.floor(random() * free.length)], 1);
+  } // End of the loop that bonds the acyl groups
+  return copy;
+} // End of function acylate()
+
+/**
+ * Generates up to `count` distinct (by canonical key) molecules with an
+ * acyl prefix (design.md §13.4 I-39b): a random acyclic hydrocarbon of 1
+ * carbon up to `maxSize` − 4 given a principal group — a –COOH
+ * (carboxylate()), an ester (carboxylate() then esterify(), the O-bound
+ * group of 1 to 4 carbons), an amide (amidate()), a nitrile (nitrilate()),
+ * or C=O groups (carbonylate(): aldehydes and ketones) — then one or more
+ * acyl groups on any carbon (acylate(): on the parent, in branches, in an
+ * ester's O-bound group or on an amide's N groups), a share of them also
+ * with OH groups, amines, ether oxygens and halogens. Only molecules that
+ * the engine names in every prefix style with some acyl prefix in the
+ * name (`formil`, `acetil`, `…anoil`, `…enoil`, `…inoil`) are kept (valid
+ * for naming and not refused by the engine: no –CO–C≡N, no symmetric ether
+ * or amine…).
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateAcyl({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 8543 + 47);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60) {
+    attempts += 1;
+    const size = randomInt(random, 1, Math.max(1, maxSize - 4));
+    const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8 });
+    const kind = ['acid', 'ester', 'amide', 'nitrile', 'carbonyl', 'carbonyl'][Math.floor(random() * 6)];
+    let mol = base;
+    if (kind === 'acid') {
+      mol = carboxylate(base, random, random() < 0.3 ? 2 : 1);
+    } else if (kind === 'ester') {
+      const alkyl = randomHydrocarbon(random, { size: randomInt(random, 1, 4), unsaturation: random() * 0.2, branchiness: random() });
+      mol = esterify(carboxylate(base, random, 1), random, alkyl);
+    } else if (kind === 'amide') {
+      mol = amidate(base, random, random() < 0.2 ? 2 : 1, random() * 0.5);
+    } else if (kind === 'nitrile') {
+      mol = nitrilate(base, random, random() < 0.3 ? 2 : 1);
+    } else {
+      mol = carbonylate(base, random, 0.1 + random() * 0.3);
+    }
+    if (mol.atoms.size === base.atoms.size) {
+      continue; // No carbon could take the principal group.
+    }
+    const carbons = new Set([...mol.atoms].filter(([, atom]) => atom.element === 'C').map(([id]) => id));
+    mol = acylate(mol, random, 0.02 + random() * 0.08, carbons);
+    if (random() < 0.15) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.1, carbons);
+    }
+    if (random() < 0.1) {
+      mol = aminate(mol, random, { rate: 0.05 + random() * 0.1, graft: random() * 0.5, only: carbons });
+    }
+    if (random() < 0.1) {
+      mol = etherify(mol, random, 1);
+    }
+    if (random() < 0.15) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.15);
+    }
+    if (validateForNaming(mol)) {
+      continue; // Not valid for naming (a ketene, three aldehydes on one piece…).
+    }
+    const names = PREFIX_STYLES.map((prefixStyle) => nameMolecule(mol, { prefixStyle }));
+    if (!names.every((result) => result.ok) || !/formil|acetil|[aei]noil/.test(names[0].name)) {
+      continue; // Refused by the engine in some style, or every C=O ended up in a chain.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct acyl molecules
+  return molecules;
+} // End of function generateAcyl()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

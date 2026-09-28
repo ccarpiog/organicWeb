@@ -8,8 +8,8 @@
  * the prefix itself (substituent.js cyanoSubstituent(), render.js), the
  * alphabetical order, both lexicons, the refusals that stay (a nitrile on
  * an acid, ester or amide carbon: `carbonocyanidic`; `manyNitriles`,
- * `ringNitrile`, `esterPrefix`, `manyEsters`, `amidePrefix`,
- * `acylSubstituent`), the explanation, id invariance, Ordenar dibujo and the
+ * `ringNitrile`, `esterPrefix`, `manyEsters`, `amidePrefix`; an acetyl
+ * beside a nitrile is named since I-39b), the explanation, id invariance, Ordenar dibujo and the
  * oracle generator. The names themselves are also checked row by row in
  * tests/fixtures/names.tsv.
  */
@@ -188,7 +188,7 @@ test('refusals that stay: a nitrile on an acid, ester or amide carbon, many nitr
   assert.equal(nameOf('N#CCC(=O)OCC(=O)O'), 'HETEROATOM esterPrefix');
   assert.equal(nameOf('COC(=O)CC(C#N)CC(=O)OC'), 'HETEROATOM manyEsters');
   assert.equal(nameOf('N#CCC(=O)NCC(=O)O'), 'HETEROATOM amidePrefix');
-  assert.equal(nameOf('CC(=O)C(C#N)C(C)=O'), 'HETEROATOM acylSubstituent');
+  assert.equal(nameOf('CC(=O)C(C#N)C(C)=O'), '2-acetil-3-oxobutanonitrilo', 'acyl prefixes, I-39b');
   // Identical halves each with the principal nitrile: multiplicative names.
   assert.equal(nameOf('N#CCOCC#N'), 'HETEROATOM symmetricEther');
   assert.equal(nameOf('N#CCNCC#N'), 'HETEROATOM symmetricAmine');

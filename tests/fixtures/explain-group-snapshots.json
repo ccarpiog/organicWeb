@@ -1765,9 +1765,9 @@
    }
   ]
  },
- "CC(=O)C(C(C)=O)C(C)=O": {
+ "OC(=O)C(C(=O)C#N)CC": {
   "code": "HETEROATOM",
-  "principal": "ketone",
+  "principal": "acid",
   "steps": [
    {
     "id": "groups",
@@ -1775,22 +1775,27 @@
     "text": [
      "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
      "He encontrado estos grupos:",
-     "3 cetonas: un oxígeno unido por un [[enlace doble]] a un carbono que está entre otros dos carbonos (–CO–)."
+     "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
+     "1 nitrilo: un carbono unido a un nitrógeno por un [[enlace triple]] (–C≡N).",
+     "1 cetona: un oxígeno unido por un [[enlace doble]] a un carbono que está entre otros dos carbonos (–CO–).",
+     "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona; el enlace triple de un nitrilo (C≡N) no es el de un alquino y su nitrógeno no cuenta como amina. Todo junto es un único grupo."
     ],
     "highlight": [
      {
       "atoms": [
+       1,
        2,
        3,
-       5,
        7,
        8,
-       10
+       5,
+       6
       ],
       "bonds": [
+       1,
        2,
-       6,
-       9
+       7,
+       5
       ],
       "style": "substituent"
      }
@@ -1802,25 +1807,33 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es la cetona: es el único tipo de grupo que puede serlo.",
-     "Hay 3 grupos de este tipo: todos cuentan como principales."
+     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que el nitrilo y la cetona."
     ],
     "highlight": [
      {
       "atoms": [
+       1,
        2,
-       3,
-       5,
-       7,
-       8,
-       10
+       3
       ],
       "bonds": [
-       2,
-       6,
-       9
+       1,
+       2
       ],
       "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       5,
+       6
+      ],
+      "bonds": [
+       7,
+       5
+      ],
+      "style": "substituent"
      }
     ],
     "locants": null
@@ -1830,24 +1843,35 @@
     "title": "Sufijo o prefijo",
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
-     "La cetona: sufijo «-ona», como en «propanona»."
+     "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico».",
+     "El nitrilo: prefijo «ciano-».",
+     "La cetona: prefijo «oxo-»."
     ],
     "highlight": [
      {
       "atoms": [
+       1,
        2,
-       3,
-       5,
-       7,
-       8,
-       10
+       3
       ],
       "bonds": [
-       2,
-       6,
-       9
+       1,
+       2
       ],
       "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       5,
+       6
+      ],
+      "bonds": [
+       7,
+       5
+      ],
+      "style": "substituent"
      }
     ],
     "locants": null
@@ -1856,13 +1880,13 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un grupo C=O en una rama, con su carbono unido directamente a la cadena principal (un grupo acilo, como el acetilo, –CO–CH₃). Aún no sé nombrar estas ramas."
+     "Esta molécula tiene una rama –CO–C≡N: un grupo C=O unido a la cadena y, a la vez, a un grupo –C≡N. Esa rama no se nombra con «formil-» ni con «ciano-»: la IUPAC le da un nombre especial («carbonocianidoil-»), y eso aún no sé hacerlo. Sí sé nombrar las otras ramas con C=O (como «formil-», «acetil-» o «propanoil-»)."
     ],
     "highlight": [
      {
       "atoms": [
-       8,
-       10
+       5,
+       6
       ],
       "bonds": [],
       "style": "candidate"

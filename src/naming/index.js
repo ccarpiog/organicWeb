@@ -47,8 +47,12 @@
  * `pentano-2,4-diona`, `4-oxopentanal`, `4-hidroxibutan-2-ona`,
  * `ciclohexanona`. The C=O carbon is a chain (or ring) carbon; an
  * aldehyde's locant is never cited. A C=O carbon that ends up bonded to the
- * parent as a branch (an acyl group, `acetil`) is refused with
- * `HETEROATOM` `acylSubstituent`, decided on the default-style name.
+ * parent (or to a branch chain) as the attachment atom of a branch is an
+ * acyl group, cited with an acyl prefix (design.md §13.4 I-39b: `formil`,
+ * `acetil`, `propanoil`, `(2-metilpropanoil)`: `3-acetilpentano-2,4-diona`,
+ * `ácido 3-formilpentanodioico`); only a one-carbon acyl carrying a `ciano`
+ * (–CO–C≡N) is refused with `HETEROATOM` `acylSubstituent`, checked on
+ * every emitted style.
  * `propanona` also gets `propan-2-ona` (the IUPAC 2013 form) and the
  * traditional names `acetona`, `formaldehído`, `acetaldehído` are offered
  * for the bare molecules.
@@ -163,7 +167,7 @@ import {
 import { adjacency, hasCycle, rootedTreeKey } from '../model/graph.js';
 import { selectParent } from './parent.js';
 import {
-  createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, suffixSites, hasAcylPrefix, PREFIX_STYLES,
+  createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, suffixSites, unnamedAcyl, PREFIX_STYLES,
   substituentSubtree, nameSubstituent, esterAlkyl, numberingPrefix,
 } from './substituent.js';
 import { numberParent, chainBonds } from './numbering.js';
@@ -362,15 +366,15 @@ function nameValidated(mol, options) {
     ? PREFIX_STYLES.filter((s) => s !== style)
     : [];
   // Every style that is emitted (main, reference, alternatives) is checked:
-  // each runs its own prefix naming, so one may need an acyl branch the
-  // others avoid.
+  // each runs its own prefix naming, so one may need a branch the others
+  // avoid (an unnamed acyl, a `ciano`…).
   const acids = carboxylCarbons(mol);
   const amides = amideCarbons(mol);
   const nitriles = nitrileCarbons(mol);
   for (const s of new Set([style, PREFIX_STYLES[0], ...others])) {
     const { structure } = named(s);
-    // An acyl branch on the parent, or inside an ester's O-bound group.
-    const acyl = hasAcylPrefix(structure) || (structure.ester ? hasAcylPrefix(structure.ester.alkyl) : null);
+    // An acyl branch without an acyl prefix (–CO–C≡N) on the parent, or inside an ester's O-bound group.
+    const acyl = unnamedAcyl(structure) || (structure.ester ? unnamedAcyl(structure.ester.alkyl) : null);
     if (acyl) {
       return withGroups({ ok: false, error: acylError(acyl) }, mol);
     }
@@ -526,10 +530,11 @@ export function amineClassName(mol, structure, lexicon = lexiconEs) {
 } // End of function amineClassName()
 
 /**
- * The HETEROATOM refusal of a molecule whose default-style name has an acyl
- * branch (substituent.js hasAcylPrefix(), design.md §13.4 I-32): a C=O
- * carbon bonded directly to the chain that carries it, which IUPAC 2013
- * names with acyl prefixes (`acetil`) the app does not support yet.
+ * The HETEROATOM refusal of a molecule whose name (in some emitted style)
+ * has an acyl branch without an acyl prefix (substituent.js unnamedAcyl(),
+ * design.md §13.4 I-32, I-39b): a one-carbon acyl group carrying a
+ * `ciano`, –CO–C≡N, which IUPAC 2013 names `carbonocianidoil` (from
+ * memory), not supported.
  *
  * @param {{atoms: number[], bonds: number[]}} acyl - The C=O atoms of the acyl branch.
  * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.

@@ -396,7 +396,7 @@ const GROUP_SNAPSHOT_SMILES = [
   'CC(=O)NCC(=O)O', // amide bonded through its N: acilamino-
   'NC(=O)CC(=O)O', // amide bonded through its carbonyl carbon: carbamoil-
   'O=CC1CCCCC1', // aldehyde on a ring: -carbaldehído, refused until I-40 (I-32)
-  'CC(=O)C(C(C)=O)C(C)=O', // ketone bonded to the parent as an acyl branch: refused by the engine (I-32)
+  'OC(=O)C(C(=O)C#N)CC', // –CO–C≡N branch: the one acyl without an acyl prefix, refused by the engine (acylSubstituent; `3-acetilpentano-2,4-diona` is named since I-39b)
 ];
 
 test('explain() snapshots for heteroatom refusals', async () => {

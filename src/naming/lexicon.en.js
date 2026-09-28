@@ -275,8 +275,14 @@ export const GROUP_PREFIXES = Object.freeze({
   alcohol: 'hydroxy', amine: 'amino', ether: 'alkoxy',
 });
 
-/** Prefix of an aldehyde whose carbon is outside the parent. */
+/** Prefix of an aldehyde whose carbon is outside the parent (the acyl prefix of HCO–, design.md §13.4 I-39b). */
 export const FORMYL_PREFIX = 'formyl';
+
+/** Acyl prefix of the unsubstituted CH₃–CO– group (see lexicon.es.js ACETYL_PREFIX). */
+export const ACETYL_PREFIX = 'acetyl';
+
+/** Ending of an acyl prefix: `propanoyl`, `but-2-enoyl` (see lexicon.es.js ACYL_ENDING). */
+export const ACYL_ENDING = 'oyl';
 
 /** Halogen prefixes (never a suffix). */
 export const HALOGEN_PREFIXES = Object.freeze({ F: 'fluoro', Cl: 'chloro', Br: 'bromo', I: 'iodo' });
@@ -439,4 +445,6 @@ export const lexiconEn = Object.freeze({
   groupPrefix,
   groupFamilyName,
   formylPrefix: FORMYL_PREFIX,
+  acetylPrefix: ACETYL_PREFIX,
+  acylEnding: ACYL_ENDING,
 });

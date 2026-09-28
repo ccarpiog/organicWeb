@@ -280,7 +280,10 @@ function token(text, kind) {
  * forms without prefixes of its own (`metoxi`, `etoxi`, `propoxi`,
  * `butoxi`, `isopropoxi`, `tert-butoxi`); `(pentiloxi)`,
  * `(propan-2-iloxi)`, `(2-metilpropoxi)` are enclosed (prefix + `oxi`
- * makes a compound prefix, IUPAC 2013 P-16.5.1).
+ * makes a compound prefix, IUPAC 2013 P-16.5.1). An acyl prefix
+ * (design.md §13.4 I-39b) is unenclosed without prefixes or locants of
+ * its own (`formil`, `acetil`, `propanoil`, `butanoil`) and enclosed
+ * otherwise (`(2-metilpropanoil)`, `(but-2-enoil)`).
  * Enclosure does not decide the multiplier (see isCompoundPrefix()).
  *
  * @param {object} substituent - The substituent structure.
@@ -289,6 +292,11 @@ function token(text, kind) {
 export function needsEnclosure(substituent) {
   if (substituent.retained || substituent.halogen || substituent.hydroxy || substituent.oxo || substituent.cyano) {
     return false;
+  }
+  if (substituent.acyl) {
+    // `formil`, `acetil`, `propanoil`, but `(2-metilpropanoil)`, `(but-2-enoil)` (design.md §13.4 I-39b).
+    const { chain } = substituent;
+    return citedPrefixes(substituent).length > 0 || chain.double.length + chain.triple.length > 0;
   }
   if (substituent.amino) {
     return substituent.prefixes.length > 0; // `amino`, but `(metilamino)`, `(dimetilamino)`.
@@ -320,8 +328,29 @@ export function isCompoundPrefix(substituent) {
     return substituent.prefixes.length > 0 || (!substituent.retained && !isContractedAlkoxy(substituent));
   }
   return !substituent.retained && !substituent.halogen && !substituent.hydroxy && !substituent.oxo && !substituent.cyano
-    && substituent.prefixes.length > 0;
+    && citedPrefixes(substituent).length > 0;
 }
+
+/**
+ * The prefix groups of a substituent as cited in its name: all of them,
+ * except for an acyl group (design.md §13.4 I-39b, `acyl` set), whose C=O
+ * oxygen on X (the attachment atom, chain carbon 1) is kept in the
+ * structure as an `oxo` prefix but is cited by the acyl ending (`oil`,
+ * `formil`, `acetil`): that occurrence is left out, and its group too when
+ * nothing else is left (`3-oxobutanoil` keeps the `oxo` at 3).
+ *
+ * @param {object} substituent - The substituent structure.
+ * @returns {object[]} The prefix groups to cite.
+ */
+export function citedPrefixes(substituent) {
+  if (!substituent.acyl) {
+    return substituent.prefixes;
+  }
+  const x = substituent.chain.atoms[0];
+  return substituent.prefixes
+    .map((group) => (group.substituent.oxo ? { ...group, locants: group.locants.filter((site) => site.atom !== x) } : group))
+    .filter((group) => group.locants.length > 0);
+} // End of function citedPrefixes()
 
 /** Longest alkyl group whose alkoxy prefix is contracted (`butoxi`; IUPAC 2013 P-63.2.2.2). */
 export const MAX_CONTRACTED_ALKOXY = 4;
@@ -357,8 +386,9 @@ export function isContractedAlkoxy(substituent) {
 function enclosureLevel(substituent) {
   let level = 0;
   // Inside a one-carbon group the locants are omitted, so an alkoxy prefix beside another prefix is enclosed too.
-  const crowded = Boolean(substituent.chain) && substituent.chain.length === 1 && substituent.prefixes.length > 1;
-  substituent.prefixes.forEach((group, g) => {
+  const prefixes = citedPrefixes(substituent);
+  const crowded = Boolean(substituent.chain) && substituent.chain.length === 1 && prefixes.length > 1;
+  prefixes.forEach((group, g) => {
     // In an amino prefix every group after the first is enclosed (`etil(metil)amino`).
     if (enclosedInName(group.substituent, crowded) || (substituent.amino && g > 0)) {
       level = Math.max(level, enclosureLevel(group.substituent) + 1);
@@ -467,7 +497,9 @@ function locantTokens(locants) {
  * `propan-2-iliden`, `eteniliden` — or a retained prefix (`isopropil`,
  * `isopropiliden`, `tert-butil`, `fenil`), or a halogen prefix (`cloro`,
  * design.md §13.4 I-30), or `hidroxi` (an OH not cited as the suffix, I-31), or `oxo` (a C=O not cited as the suffix, I-32),
- * or `ciano` (a nitrile not cited as the suffix, I-39a),
+ * or `ciano` (a nitrile not cited as the suffix, I-39a), or an acyl
+ * prefix (a C=O carbon as the attachment atom, I-39b: `formil`, `acetil`,
+ * `propanoil`, `2-metilpropanoil`, `but-2-enoil`; acylEndingTokens()),
  * or an alkoxy group (an ether, I-34: alkoxyTokens()). A saturated group with the free valence at
  * locant 1 uses the short form (`propil`, `propiliden`, `2-metilpropil`);
  * one- and two-carbon groups cite no locant.
@@ -501,7 +533,12 @@ function substituentTokens(substituent, lexicon) {
     const { italic, text } = lexicon.retainedPrefix(substituent.retained);
     return italic ? [token(italic, 'italic'), token(text, 'prefix')] : [token(text, 'prefix')];
   }
-  const { chain, prefixes, freeValence } = substituent;
+  const { chain, freeValence } = substituent;
+  const prefixes = citedPrefixes(substituent);
+  if (substituent.acyl && chain.length <= 2 && prefixes.length === 0) {
+    // The retained acyl prefixes (design.md §13.4 I-39b): HCO– `formil`, CH₃CO– `acetil`.
+    return [token(chain.length === 1 ? lexicon.formylPrefix : lexicon.acetylPrefix, 'prefix')];
+  }
   const tokens = [];
   // A one-carbon group cites no locants, so its prefixes run together
   // (`bromoclorometil`), as in renderPrefixes.
@@ -516,6 +553,9 @@ function substituentTokens(substituent, lexicon) {
   const segments = lexicon.segmentOrder
     .map((kind) => ({ kind, sites: chain[kind] }))
     .filter((segment) => segment.sites.length > 0);
+  if (substituent.acyl) {
+    return [...tokens, ...acylEndingTokens(chain, segments, lexicon)];
+  }
   const suffix = token(lexicon.freeValenceSuffix(freeValence.order), 'ending');
   if (segments.length === 0) {
     if (freeValence.locant === 1) {
@@ -543,6 +583,38 @@ function substituentTokens(substituent, lexicon) {
   tokens.push(token('-', 'punct'), ...locantTokens([freeValence.locant]), suffix);
   return tokens;
 } // End of function substituentTokens()
+
+/**
+ * Tokens that follow the stem of an acyl prefix (design.md §13.4 I-39b):
+ * the chain's ending as in a parent name, with the unsaturation locants
+ * always cited and the final vowel elided before the acyl ending `oil`
+ * (IUPAC 2013 P-65.1.7: the acid's `-oico` becomes `-oil`; the free
+ * valence is on carbon 1, never cited): `prop` + `an` + `oil`, `but` +
+ * `-2-` + `en` + `oil`, `buta` + `-2,3-` + `dien` + `oil`.
+ *
+ * @param {object} chain - The acyl group's chain (ChainStructure).
+ * @param {{kind: string, sites: object[]}[]} segments - Its unsaturation segments, in lexicon order.
+ * @param {object} lexicon - The lexicon (`acylEnding`: `oil` / `oyl`).
+ * @returns {{text: string, kind: string}[]} The tokens.
+ */
+function acylEndingTokens(chain, segments, lexicon) {
+  const ending = token(lexicon.acylEnding, 'ending');
+  if (segments.length === 0) {
+    return [token(lexicon.saturatedInfix, 'ending'), ending];
+  }
+  const tokens = lexicon.needsConnectingVowel(chain) ? [token(lexicon.connectingVowel, 'stem')] : [];
+  segments.forEach((segment, i) => {
+    tokens.push(token('-', 'punct'), ...locantTokens(segment.sites.map(siteLocantText)));
+    const mult = lexicon.multiplier(segment.sites.length);
+    if (mult) {
+      tokens.push(token(mult, 'multiplier'));
+    }
+    const last = i === segments.length - 1;
+    const text = lexicon.unsaturationEnding(segment.kind, last);
+    tokens.push(token(last ? text.slice(0, -1) : text, 'ending'));
+  });
+  return [...tokens, ending];
+} // End of function acylEndingTokens()
 
 /**
  * Tokens of an alkoxy prefix (design.md §13.4 I-34): the tokens of its

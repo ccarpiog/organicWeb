@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T03:03:22Z",
+  "updated": "2026-09-28T03:58:36Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -370,8 +370,11 @@
     {
       "id": "I-39b",
       "title": "v2.19b Acyl prefixes formil-/acetil- (split from I-39)",
-      "status": "queued",
-      "summary": "Names a C=O carbon hung from its chain as a branch with formil-, acetil- and similar acyl prefixes."
+      "status": "done",
+      "risk": "high",
+      "summary": "Names a C=O carbon hung from its chain as a branch with formil-, acetil- and similar acyl prefixes.",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-39b.md",
+      "narrative": "docs/progress-archive/i-39b.md"
     },
     {
       "id": "I-39c",

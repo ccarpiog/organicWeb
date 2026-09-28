@@ -659,3 +659,36 @@ CC(=O)NCC#N	N-(cianometil)etanamida	ciano- in a group on the amide N	The group o
 N#CCCOCC#N	3-(cianometoxi)propanonitrilo	two nitriles on different carbon pieces	The parent carries one nitrile (P0 ties), then the longer side wins (P1); the other nitrile is ciano- inside the alkoxy prefix	
 N#CCC(OCC#N)CC#N	3-(cianometoxi)pentanodinitrilo	three nitriles on two pieces	The piece with two nitriles carries the suffix (P0); the third is ciano- on the other side of the O	
 N#CCN(C)CCC#N	3-[(cianometil)(metil)amino]propanonitrilo	ciano- in a group on an amino N	The longer side of the N carries the suffix; the amino prefix lists its groups alphabetically, the second enclosed	
+# Acyl prefixes (I-39b): a C=O carbon bonded to its chain as a branch starts an acyl branch (its chain starts at that carbon, locant 1): formil (a –CHO off the chain, P-66.6.1.2), acetil (CH3–CO–, retained preferred prefix P-65.1.7.2.1), else the acid name with -oico changed to -oil (propanoil, 2-metilpropanoil, but-2-enoil; P-65.1.7); the C=O carbon is an ordinary skeleton carbon for the parent choice (4-oxo…, never 3-acetil… when the ketone can be in the chain), so the acyl only appears when the chain misses it; unenclosed without prefixes or locants of its own, alphabetised by its complete name (tests/unit/acyl.test.js)
+CC(=O)C(C(C)=O)C(C)=O	3-acetilpentano-2,4-diona	acetil on a dione	Three ketones: a chain carries at most two (P0); the third C=O carbon is bonded to C3 and starts a branch, the acyl prefix acetil (retained, P-65.1.7.2.1)	
+CC(=O)C(C(C)=O)(C(C)=O)C(C)=O	3,3-diacetilpentano-2,4-diona	diacetil	Two identical acyl branches on one carbon: di (a simple prefix)	
+CC(=O)CC(C(C)=O)CC(=O)C	4-acetilheptano-2,6-diona	acetil, the longest dione chain	The chain with two ketones through the CH2 arms has 7 carbons; through the acetyl carbon only 6	
+OC(=O)CC(C=O)CC(=O)O	ácido 3-formilpentanodioico	formil on a diacid	Both COOH on the parent (P0); the CHO carbon cannot be in it, so it is formil- (P-66.6.1.2), whose carbon is not a chain carbon	
+OC(=O)C(C=O)CC	ácido 2-formilbutanoico	formil vs a shorter chain through the CHO	Through the CHO the chain has 3 carbons, through the ethyl 4: the longer chain wins and the CHO is formil	
+OC(=O)CC(C)C=O	ácido 3-metil-4-oxobutanoico	CHO kept in the chain on a tie	Both chains have 4 carbons; through the CHO there are two prefixes (metil, oxo) against one (formil): more substituents win (P-45.2.1)	
+O=CCC(C=O)CC(=O)O	ácido 3-formil-5-oxopentanoico	oxo and formil beside an acid	The terminal CHO is in the chain (oxo); the other CHO carbon is off it (formil); acids are senior, so manyAldehydes does not apply	
+OC(=O)C(C(C)=O)CCCC	ácido 2-acetilhexanoico	acetil beside an acid	The butyl arm is longer than the acetyl arm; the ketone carbon starts the acyl branch	
+OC(=O)C(C(=O)CC)CCCCC	ácido 2-propanoilheptanoico	propanoil	A three-carbon acyl: the acid name with -oico changed to -oil (P-65.1.7), unenclosed	
+OC(=O)C(C(=O)CCC)CCCCCC	ácido 2-butanoiloctanoico	butanoil	A four-carbon acyl, unenclosed	
+OC(=O)C(C(=O)C(C)C)CCCCCC	ácido 2-(2-metilpropanoil)octanoico	substituted acyl	The acyl chain starts at the C=O carbon (locant 1); its methyl is on 2; enclosed, alphabetised under m	
+OC(=O)C(C(=O)CC(C)C)CCCCCC	ácido 2-(3-metilbutanoil)octanoico	substituted acyl, longer	The acyl chain is the longest from the C=O carbon	
+OC(=O)C(C(=O)C=CC)CCCCCC	ácido 2-(but-2-enoil)octanoico	unsaturated acyl	The C=C of the acyl chain is cited with its locant; enclosed	
+OC(=O)C(C(=O)C#CC)CCCCCC	ácido 2-(but-2-inoil)octanoico	acyl with a triple bond	The C≡C of the acyl chain: -inoil	
+OC(=O)C(C(=O)CCl)CCCC	ácido 2-(2-cloroetanoil)hexanoico	substituted two-carbon acyl	A substituted CH3CO- is named systematically (etanoil), as the app names ácido 2-cloroetanoico	
+OC(=O)C(C(=O)CC(C)=O)CCCCCCC	ácido 2-(3-oxobutanoil)nonanoico	oxo inside an acyl	The acyl C=O on carbon 1 is its ending; the other C=O is oxo on 3	
+OC(=O)C(C(=O)C(C)=O)CCCC	ácido 2-(2-oxopropanoil)hexanoico	two adjacent C=O in an acyl	The second C=O is oxo on carbon 2 of the acyl chain	
+OC(=O)C(C(C)=O)C(C)=O	ácido 2-acetil-3-oxobutanoico	acetil and oxo on an acid	One ketone is in the four-carbon chain (oxo); the other starts a branch (acetil)	
+OC(=O)C(C(=O)C)(C(=O)C)CCCC	ácido 2,2-diacetilhexanoico	diacetil beside an acid	Two acetyl branches on C2	
+CC(Cl)C(C(C)=O)C(=O)O	ácido 2-acetil-3-clorobutanoico	acetil vs 1-cloroetil on a tie	Both chains have 4 carbons, two prefixes and locants 2,3; the name that is alphanumerically first wins (P-45.5): acetil before cloroetil	
+OC(=O)CC(C(=O)CC)C(=O)CCC	ácido 4-oxo-3-propanoilheptanoico	acyl and oxo, the longer ketone arm	The longer ketone arm is in the chain (oxo); the other ketone starts a propanoil branch	
+OC(=O)CCC(CC(C(C)=O)CCC)CCC	ácido 6-acetil-4-propilnonanoico	acetil on a long acid	The longest chain from the COOH; the acetyl branch on 6	
+CCOC(=O)CC(C=O)CC	3-formilpentanoato de etilo	formil on an ester	The acid part is the longest chain from the ester carbon; the CHO is formil	
+CC(=O)OCC(C=O)CC	etanoato de 2-formilbutilo	formil in the O-bound group	The O-bound group is named like a branch: its CHO carbon is off its chain, formil	traditional=acetato de 2-formilbutilo
+CC(=O)OCC(C(C)=O)CCCC	etanoato de 2-acetilhexilo	acetil in the O-bound group	The longest chain from the O-bound carbon runs through the butyl arm	traditional=acetato de 2-acetilhexilo
+NC(=O)C(C(C)=O)CCC	2-acetilpentanamida	acetil on an amide	amida > cetona: the ketone off the chain is acetil	
+N#CC(C(C)=O)CCC	2-acetilpentanonitrilo	acetil on a nitrile	nitrilo > cetona	
+N#CCC(C(=O)CCC)CC#N	3-butanoilpentanodinitrilo	butanoil on a dinitrile	Both nitriles in the parent (P0); the ketone starts a butanoil branch	
+CCCC(C(C)=O)CC=O	3-acetilhexanal	acetil on an aldehyde	aldehído > cetona: the chain from the CHO through the propyl arm is longer	
+CC(C(C(C)=O)(C)C=O)C	2-acetil-2,3-dimetilbutanal	acetil vs isopropil on a tie	Both chains have 4 carbons and three prefixes with locants 2,2,3; acetil is alphanumerically first (P-45.5), in every prefix style	
+O=CCC(C=O)OCC(C=O)CC	2-(2-formilbutoxi)butanodial	formil inside an alkoxy group	Three aldehydes on two carbon pieces: the piece with two carries the suffix; the third is formil inside the alkoxy prefix	
+OC(=O)C(C(=O)C(C(=O)C)C(Cl)C)CCCCCC	ácido 2-(2-acetil-3-clorobutanoil)octanoico	acyl chain choice ignores the C=O of X	Inside the acyl group both 4-carbon chains from X tie; the C=O of X is its ending, not an oxo prefix, so it does not count: acetil before cloroetil (P-45.5) picks the chain through the CHCl (review I-39b)	

@@ -9,7 +9,8 @@
  * cycloalkanones; `propanona` with `propan-2-ona` and `acetona`, and
  * `formaldehído` / `acetaldehído`; the refusals (esters and other C=O
  * derivatives, an aldehyde with a ring, a ketone on a ring's side chain,
- * more than two aldehydes on a chain, an acyl branch); both lexicons; id
+ * more than two aldehydes on a chain; acyl branches, named since I-39b,
+ * are covered in tests/unit/acyl.test.js); both lexicons; id
  * invariance; the explanation steps; the oracle generator. The names
  * themselves are checked row by row in tests/fixtures/names.tsv.
  */
@@ -25,7 +26,7 @@ import {
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { oxygenKind, principalKindOf, carbonylTraditionalId } from '../../src/naming/principal.js';
-import { oxoSubstituent, nameSubstituent, suffixSites, hasAcylPrefix, PREFIX_STYLES } from '../../src/naming/substituent.js';
+import { oxoSubstituent, nameSubstituent, suffixSites, unnamedAcyl, PREFIX_STYLES } from '../../src/naming/substituent.js';
 import { citationKey, substituentPrefix, needsEnclosure, isCompoundPrefix, suffixWords, renderName } from '../../src/naming/render.js';
 import { lexiconEs, chainOmitsPrefixLocants } from '../../src/naming/lexicon.es.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
@@ -85,7 +86,7 @@ test('validation: aldehyde and ketone C=O are admitted; other C=O derivatives ke
   assert.equal(hasNameableHeteroatoms(parseSmiles('OCC(C)=O'), [1, 5]), true, 'an OH and a ketone');
 });
 
-test('refusals: an aldehyde with a ring, a ketone on a ring side chain, three aldehydes, an acyl branch', () => {
+test('refusals: an aldehyde with a ring, a ketone on a ring side chain, three aldehydes; acyl branches named since I-39b', () => {
   const ring = named('O=CC1CCCCC1');
   assert.equal(ring.ok, false);
   assert.equal(ring.error.code, 'HETEROATOM');
@@ -107,31 +108,33 @@ test('refusals: an aldehyde with a ring, a ketone on a ring side chain, three al
   assert.equal(three.error.message, MANY_ALDEHYDES_MESSAGE);
   assert.deepEqual(three.error.aldehydes, aldehydeOxygens(parseSmiles('O=CCC(C=O)CC=O')));
   assert.equal(named('O=CCCC=O').ok, true, 'two aldehydes: both ends of the chain');
-  // A ketone carbon bonded to the parent as a branch (acetyl): refused by the engine, after validation.
+  // A ketone carbon bonded to the parent as a branch is an acyl prefix since I-39b (was `acylSubstituent`).
   const acyl = parseSmiles('CC(=O)C(C(C)=O)C(C)=O');
   assert.equal(validateForNaming(acyl), null);
-  const result = nameMolecule(acyl);
+  assert.equal(nameMolecule(acyl).name, '3-acetilpentano-2,4-diona');
+  assert.equal(named('CCCC(C(C)=O)CC=O').name, '3-acetilhexanal', 'an aldehyde with an acetyl branch off a longer chain');
+  assert.equal(named('CC(C(C)=O)CC=O').name, '3-metil-4-oxopentanal', 'as long through the ketone: P4 keeps it in the chain');
+  // A ketone that can be in the chain stays there (oxo-), in every style.
+  for (const smiles of ['CC(=O)CC(CC(C)=O)CC(C)=O', 'CCC(C(C)=O)CC=O']) {
+    for (const style of PREFIX_STYLES) {
+      const { structure } = nameMolecule(parseSmiles(smiles), { prefixStyle: style });
+      assert.ok(structure.prefixes.every((g) => !g.substituent.acyl), `${smiles} ${style}`);
+    }
+  }
+  // Review I-32: the pin style once needed an acyl here (1-oxoetil); now every style names it.
+  for (const style of PREFIX_STYLES) {
+    assert.equal(nameMolecule(parseSmiles('CC(C(C(C)=O)(C)C=O)C'), { prefixStyle: style }).name, '2-acetil-2,3-dimetilbutanal', style);
+  }
+  // Only –CO–C≡N (a one-carbon acyl with a ciano) keeps the refusal.
+  const cyanoFormyl = parseSmiles('OC(=O)C(C(=O)C#N)CC');
+  const result = nameMolecule(cyanoFormyl);
   assert.equal(result.ok, false);
   assert.equal(result.error.code, 'HETEROATOM');
   assert.equal(result.error.reason, 'acylSubstituent');
   assert.equal(result.error.message, ACYL_SUBSTITUENT_MESSAGE);
-  assert.deepEqual([...result.error.atoms].sort((p, q) => p - q).map((id) => acyl.atoms.get(id).element).sort(), ['C', 'O']);
-  assert.equal(result.groups.principal, 'ketone');
-  assert.equal(named('CCCC(C(C)=O)CC=O').error.reason, 'acylSubstituent', 'an aldehyde with an acetyl branch off a longer chain');
-  assert.equal(named('CC(C(C)=O)CC=O').name, '3-metil-4-oxopentanal', 'as long through the ketone: P4 keeps it in the chain');
-  // Never an acyl in any prefix style of a named molecule.
-  for (const smiles of ['CC(=O)CC(CC(C)=O)CC(C)=O', 'CCC(C(C)=O)CC=O']) {
-    for (const style of ['isopropil', 'pin']) {
-      assert.equal(hasAcylPrefix(nameMolecule(parseSmiles(smiles), { prefixStyle: style }).structure), null, `${smiles} ${style}`);
-    }
-  }
-  // Review I-32: the default style avoids the acyl (isopropil) but the pin
-  // alternative needs one (1-oxoetil): refused in every style.
-  for (const style of PREFIX_STYLES) {
-    const refused = nameMolecule(parseSmiles('CC(C(C(C)=O)(C)C=O)C'), { prefixStyle: style });
-    assert.equal(refused.ok, false, style);
-    assert.equal(refused.error.reason, 'acylSubstituent', style);
-  }
+  assert.deepEqual([...result.error.atoms].map((id) => cyanoFormyl.atoms.get(id).element).sort(), ['C', 'O']);
+  assert.equal(result.groups.principal, 'acid');
+  assert.equal(unnamedAcyl(named('CC(=O)C(C(C)=O)C(C)=O').structure), null);
 }); // End of test 'refusals'
 
 test('terminal and internal carbonyls, several carbonyls, in both lexicons', () => {

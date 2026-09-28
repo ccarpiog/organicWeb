@@ -653,8 +653,28 @@ export const GROUP_PREFIXES = Object.freeze({
   alcohol: 'hidroxi', amine: 'amino', ether: 'alcoxi',
 });
 
-/** Prefix of an aldehyde whose carbon is outside the parent (`formil`, IUPAC 2013 P-66.6.1.2). */
+/**
+ * Prefix of an aldehyde whose carbon is outside the parent (`formil`,
+ * IUPAC 2013 P-66.6.1.2): the acyl prefix of HCO– (design.md §13.4
+ * I-39b; retained preferred prefix, from memory, P-65.1.7.2.1).
+ */
 export const FORMYL_PREFIX = 'formil';
+
+/**
+ * Acyl prefix of the unsubstituted CH₃–CO– group (design.md §13.4 I-39b):
+ * `acetil`, the retained preferred prefix (IUPAC 2013 P-65.1.7.2.1, from
+ * memory), used instead of `etanoil`; a substituted two-carbon acyl is
+ * named systematically (`(2-cloroetanoil)`), as the app names the acid
+ * (`ácido 2-cloroetanoico`, never `ácido cloroacético`).
+ */
+export const ACETYL_PREFIX = 'acetil';
+
+/**
+ * Ending of an acyl prefix (design.md §13.4 I-39b; IUPAC 2013 P-65.1.7):
+ * the acid's `-oico` becomes `-oil` (`propanoil`, `butanoil`,
+ * `but-2-enoil`); render.js acylEndingTokens().
+ */
+export const ACYL_ENDING = 'oil';
 
 /**
  * Halogen prefixes (IUPAC 2013 P-61.3.1; never a suffix). In Spanish names
@@ -802,4 +822,6 @@ export const lexiconEs = Object.freeze({
   groupPrefix,
   groupFamilyName,
   formylPrefix: FORMYL_PREFIX,
+  acetylPrefix: ACETYL_PREFIX,
+  acylEnding: ACYL_ENDING,
 });

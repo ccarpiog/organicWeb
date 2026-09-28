@@ -245,8 +245,8 @@ test('ester principal: oxo-, hidroxi-, halogen and alkoxy prefixes on either par
   for (const [smiles, name] of pairs) {
     assert.equal(named(smiles).name, name, smiles);
   }
-  // A C=O carbon bonded directly to the chain of the O-bound group (a formyl branch) is refused, as on the parent (I-32).
-  assert.equal(named('CC(=O)OCC(C=O)CC').error.reason, 'acylSubstituent');
+  // A C=O carbon bonded directly to the chain of the O-bound group is a formyl branch, named since I-39b.
+  assert.equal(named('CC(=O)OCC(C=O)CC').name, 'etanoato de 2-formilbutilo');
   assert.equal(named('CC(=O)OCC(C(C)=O)CC').name, 'etanoato de 2-etil-3-oxobutilo', 'a C=O inside the group chain is oxo-');
   assert.equal(named('CC(=O)C(C)C(=O)OC').name, '2-metil-3-oxobutanoato de metilo');
 });

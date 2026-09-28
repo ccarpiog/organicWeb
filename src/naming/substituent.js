@@ -48,9 +48,19 @@
  * (`-al`, `-ona`, `-ol`; suffixSites()), every other oxygen is a simple
  * prefix, on the parent or inside a branch — `oxo` for a C=O
  * (oxoSubstituent(): `4-oxopentanal`, `(2-oxopropil)`), `hidroxi` for an OH
- * (`4-hidroxibutan-2-ona`). The C=O carbon itself is always a chain atom;
- * when it is the attachment atom of a branch (an acyl group, `1-oxoetil`
- * for acetilo), hasAcylPrefix() finds it and the engine refuses the name.
+ * (`4-hidroxibutan-2-ona`). The C=O carbon itself is always a chain atom
+ * of the parent or of a branch. When it is the attachment atom X of a
+ * branch (design.md §13.4 I-39b), the branch is an acyl group: its chain
+ * starts at X (locant 1, the only possible end: X has at most one other
+ * carbon) and it is cited with an acyl prefix (`acyl` set on the
+ * structure, render.js): `formil` (X alone), `acetil` (CH₃–CO–, retained),
+ * else the chain name + `oil` (`propanoil`, `(2-metilpropanoil)`,
+ * `(but-2-enoil)`). The C=O oxygen of X stays in the structure as an `oxo`
+ * prefix at locant 1 (so counts and highlights see it), but the acyl
+ * ending cites it: render.js citedPrefixes() leaves it out of the name.
+ * A one-carbon acyl with a prefix of its own (–CO–C≡N, whose `ciano`
+ * carbon is never a chain atom) has no acyl prefix here; unnamedAcyl()
+ * finds it and the engine refuses the name (`acylSubstituent`).
  *
  * Ethers (design.md §13.4 I-34): an ether oxygen bonded to a chain atom
  * roots an alkoxy substituent (alkoxySubstituent()): the O plus the alkyl
@@ -100,7 +110,7 @@
 
 import { adjacency, rootedTreeKey } from '../model/graph.js';
 import { isHalogen } from '../model/elements.js';
-import { isNitrileCarbon } from '../model/validate.js';
+import { isNitrileCarbon, carbonylKind } from '../model/validate.js';
 import { buildChainStructure } from './structure.js';
 import { numberParent, compareCitationKeys } from './numbering.js';
 import { citationKey, prefixNameKey } from './render.js';
@@ -532,34 +542,46 @@ export function oxoSubstituent(atom) {
 } // End of function oxoSubstituent()
 
 /**
- * Tells whether a name structure has an acyl branch at any depth: a branch
- * whose attachment atom carries an `oxo` prefix, i.e. a C=O carbon bonded
- * directly to the chain that carries the branch (`1-oxoetil`, acetilo).
- * IUPAC 2013 names such branches with acyl prefixes (`acetil`,
- * `propanoil`), which the app does not support yet (design.md §13.4 I-32),
- * so the engine refuses these molecules (ACYL_SUBSTITUENT_MESSAGE).
+ * The C=O oxygen of a carbon that is an aldehyde or ketone carbon
+ * (validate.js carbonylKind()), or null: when such a carbon is the
+ * attachment atom of a branch, the branch is an acyl group (design.md
+ * §13.4 I-39b).
+ *
+ * @param {object} ctx - Naming context (createNamingContext), or any object with `mol` and `adj`.
+ * @param {number} carbon - A carbon atom id.
+ * @returns {number|null} The oxygen id, or null.
+ */
+export function acylOxygenOf(ctx, carbon) {
+  const link = ctx.adj.get(carbon).find((n) => carbonylKind(ctx.mol, ctx.adj, n.atom) !== null);
+  return link ? link.atom : null;
+}
+
+/**
+ * Finds an acyl branch that has no acyl prefix, at any depth (design.md
+ * §13.4 I-39b): a one-carbon acyl group (X alone in its chain) that
+ * carries a prefix of its own, which can only be a `ciano` (–CO–C≡N: the
+ * nitrile carbon is never a chain atom). IUPAC 2013 names it
+ * `carbonocianidoil` (from memory), which the app does not support, so the
+ * engine refuses the molecule (ACYL_SUBSTITUENT_MESSAGE). Every other acyl
+ * branch is named (`formil`, `acetil`, `propanoil`…).
  *
  * @param {{prefixes: object[]}} structure - A name or substituent structure.
- * @returns {{atoms: number[], bonds: number[]}|null} The C=O atoms (carbon, oxygen) and bonds of the first acyl branch found, or null.
+ * @returns {{atoms: number[], bonds: number[]}|null} The C=O atoms (carbon, oxygen) and bond of the first such branch, or null.
  */
-export function hasAcylPrefix(structure) {
+export function unnamedAcyl(structure) {
   for (const group of structure.prefixes) {
     const sub = group.substituent;
-    // A chainless prefix (a halogen, hidroxi, oxo) has no branches; an amino prefix has its N's groups.
-    const attach = sub.chain ? sub.chain.atoms[sub.freeValence.locant - 1] : null;
-    for (const inner of sub.prefixes) {
-      const site = attach !== null && inner.substituent.oxo ? inner.locants.find((l) => l.atom === attach) : null;
-      if (site) {
-        return { atoms: [site.atom, site.attachAtom], bonds: [site.bond] };
-      }
+    if (sub.acyl && sub.chain.length === 1 && sub.prefixes.some((inner) => !inner.substituent.oxo)) {
+      const site = sub.prefixes.find((inner) => inner.substituent.oxo).locants[0];
+      return { atoms: [site.atom, site.attachAtom], bonds: [site.bond] };
     }
-    const nested = hasAcylPrefix(sub);
+    const nested = unnamedAcyl(sub);
     if (nested) {
       return nested;
     }
   } // End of the loop over the prefix groups
   return null;
-} // End of function hasAcylPrefix()
+} // End of function unnamedAcyl()
 
 /**
  * The suffix groups of a parent (design.md §13.4 I-31, I-32, I-33, I-35):
@@ -779,7 +801,9 @@ export function esterAlkyl(ctx, carbon, oxygen) {
  * Builds the structure of a substituent (the body of nameSubstituentIn):
  * chooses its chain (P1–P3, then the numbering cascade with the free
  * valence first), groups its own substituents and flags retained and common
- * names. The connecting bond is outside the subtree, so it never counts as
+ * names, and acyl groups (`acyl`: the attachment atom is a C=O carbon,
+ * design.md §13.4 I-39b; always chain carbon 1, since it has at most one
+ * other carbon, so the chain is the acid chain the acyl prefix names). The connecting bond is outside the subtree, so it never counts as
  * a multiple bond of the substituent chain; its order is the order of the
  * free valence (2 → `-iliden`).
  *
@@ -802,7 +826,13 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
   chains = keepMax(chains, (c) => countBonds(adj, c, (order) => order >= 2));
   chains = keepMax(chains, (c) => countBonds(adj, c, (order) => order === 2));
   const subsByChain = new Map(chains.map((chain) => [chain, substituentsOf(ctx, chain, chainAtom)]));
-  const prefixesOf = (chain) => subsByChain.get(chain).map((sub) => ({ atom: sub.chainAtom, key: sub.key, citation: sub.citation }));
+  // An acyl group (design.md §13.4 I-39b): the C=O oxygen of X is cited by the acyl ending, not as a
+  // prefix, so it takes no part in the choice and numbering of the acyl chain (P4, N3, N4, N5); it
+  // stays in the structure's prefixes (counts, highlights) and render.js citedPrefixes() hides it.
+  const acylOxygen = acylOxygenOf(ctx, attachAtom);
+  const prefixesOf = (chain) => subsByChain.get(chain)
+    .filter((sub) => sub.attachAtom !== acylOxygen)
+    .map((sub) => ({ atom: sub.chainAtom, key: sub.key, citation: sub.citation }));
   const nameKey = nameKeyFunction([...subsByChain.values()], ctx.lexicon);
   const numbering = numberParent(ctx.mol, chains, prefixesOf, { adj, freeValenceAtom: attachAtom, nameKey });
   const subs = subsByChain.get(chains[numbering.chainIndex]);
@@ -812,6 +842,8 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
   const retained = ((shape === 'isopropyl' || shape === 'isopropylidene') && style === 'isopropil')
     || (shape === 'tert-butyl' && style !== 'substituted')
     ? shape : null;
+  // An acyl group (design.md §13.4 I-39b): X, the C=O carbon, is the attachment atom and chain carbon 1.
+  const acyl = acylOxygen !== null;
   return {
     chain: buildChainStructure(numbering.atoms, numbering.bonds, numbering.orders),
     prefixes: groupPrefixes(subs, numbering.atoms),
@@ -820,6 +852,7 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
     commonName: retained ? null : shape,
     atoms: subtree.atoms,
     bonds: subtree.bonds,
+    ...(acyl ? { acyl: true } : {}),
   };
 } // End of function buildSubstituent()
 

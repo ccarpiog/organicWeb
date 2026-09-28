@@ -49,13 +49,13 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-37 | v2.17 Amides | same, §3.17 | done — `docs/progress-archive/i-37.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-37.md` |
 | I-38 | v2.18 Nitriles | same, §3.18 | done — `docs/progress-archive/i-38.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-38.md` |
 | I-39a | v2.19a `ciano-` prefix (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-39a.md` |
-| I-39b | v2.19b Acyl prefixes `formil-`/`acetil-` (split from I-39) | same, §3.19 | queued | — | — |
+| I-39b | v2.19b Acyl prefixes `formil-`/`acetil-` (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-39b.md` |
 | I-39c | v2.19c Ester/amide prefixes, pair matrix (split from I-39) | same, §3.19 | queued | — | — |
 | I-40 | v2.20 Functions on rings | same, §3.20 | queued | — | — |
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-39a done; I-39b…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-39b done; I-39c…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo; I-39 into I-39a `ciano-`,
 I-39b acyl prefixes, I-39c ester/amide prefixes + pair matrix);
 phases may be split as they are selected. The v2 plan now lives in
@@ -92,14 +92,12 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-39b (acyl prefixes: a C=O carbon bonded to its chain as a branch,
-today refused as `acylSubstituent` since I-32 — `formil-`, `acetil-`, `propanoil-`…; the
-acyl carbon joins `outsideCarbons()` in `src/naming/principal.js` like the I-39a `ciano-`
-carbons, or is the attachment atom of an acyl branch — decide and record). Spec: design
-§13.4 row I-39b, §13.6 "Where X belongs"; I-39a narrative `docs/progress-archive/i-39a.md`.
-Then I-39c (ester/amide prefixes `alcoxicarbonil-`/`aciloxi-`/`carbamoil-`/`acilamino-`,
-diesters, pair matrix with counter-examples; enable only covered pairs). Deploying stays a
-manual user step.
+Poll the inbox, then run I-39c (ester/amide prefixes `alcoxicarbonil-`/`aciloxi-`/`carbamoil-`/
+`acilamino-`, diesters, pair matrix with counter-examples; lift `esterPrefix` / `manyEsters` /
+`amidePrefix` only where covered). Spec: design §13.4 row I-39c, §13.6; the acyl-branch machinery
+of I-39b (`docs/progress-archive/i-39b.md`: acyl flag in `buildSubstituent()`, `-oil` endings)
+is what `aciloxi-` / `acilamino-` build on. Consider splitting I-39c (esters vs amides) at
+selection. Then I-40, I-41. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -190,14 +188,17 @@ manual user step.
 - `ciano-` (I-39a): `outsideCarbons()` in `principal.js` (carbons never in a chain), parent
   skeleton without them in `parent.js`; refusal `carbonocyanidic`, `manyNitriles` narrowed; oracle
   `generateCyano()`; tests `tests/unit/cyano.test.js`, `tests/e2e/cyano.spec.js`.
+- Acyl prefixes (I-39b): acyl branches flagged in `buildSubstituent()` (`substituent.js`), X a
+  normal skeleton carbon (not in `outsideCarbons()`); endings `acylEndingTokens()` in `render.js`;
+  `unnamedAcyl()` safety net (`index.js`); tests `tests/unit/acyl.test.js`, `tests/e2e/acyl.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-39a)
+## Verification (last phase, I-39b)
 
-- `npm test` 0 (1143 pass) · `npm run check` 0 (113 files) · `npm run e2e` 0 (213 pass,
-  source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (6611 pass, 500 ciano-; run
-  before the explanation-only review fix; unit, check and e2e re-run 0 after it).
+- After the review fix, run by the orchestrator: `npm test` 0 (1184 pass) · `npm run check` 0
+  (115 files) · `npm run e2e` 0 (217 pass, source + dist) · `npm run oracle -- --count 1000
+  --seed 1` 0 (7111 pass, 500 acyl).
 
 ## Open risks / deviations
 
@@ -379,10 +380,17 @@ manual user step.
   `ácido 2-cianoetanoico` keeps its locant. Review should-fix (chain step said the chain ends
   at the cyano carbon) fixed with a regression (`docs/progress-archive/i-39a.md`).
 
+- I-39b: acyl carbon X stays a chain carbon (ketone in the chain when possible), an acyl branch
+  only when the chain misses it; `acetil` retained, substituted two-carbon acyls systematic
+  (`(2-cloroetanoil)`); `manyAldehydes` narrowed to 3+ principal –CHO on one piece
+  (`-carbaldehído`); `acylSubstituent` only for –CO–C≡N; acyl on rings still refused (I-40);
+  prefix words from memory. Review should-fix (acyl root O counted as `oxo` in the branch
+  tie-break) fixed with a regression (`docs/progress-archive/i-39b.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-38 `bcd8b06`, pushed. I-39a committed and pushed right after this checkpoint (see
+- I-39a `2f6cd40`, pushed. I-39b committed and pushed right after this checkpoint (see
   `git log`).

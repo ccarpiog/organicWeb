@@ -47,8 +47,9 @@
  * lets an acid, an ester, an amide or a nitrile meet): its groups on the parent are the
  * suffix (`ácido …oico`, `…oato de …ilo`, `-amida`, `-nitrilo`, `-al`, `-ona`, `-ol`, `-amina`), every other
  * group is a prefix (`oxo-`, `hidroxi-`, `amino-`, `ciano-`). The carbon X of a C=O or a COOH
- * is always a skeleton carbon (a chain or ring atom), never part of a
- * prefix by itself (design.md §13.6 "Where X belongs"). A carboxyl group
+ * is always a skeleton carbon (a chain or ring atom; design.md §13.6
+ * "Where X belongs"); a C=O carbon off the chain that carries it is the
+ * first carbon of an acyl branch (`formil`, `acetil`, `propanoil`, I-39b). A carboxyl group
  * has two oxygens but is one suffix group: its C=O oxygen stands for it
  * (isSuffixOxygen(), SuffixLocant `attachAtom`), its OH oxygen travels with
  * it (SuffixLocant `hydroxyAtom`). An ester group likewise: its C=O oxygen
@@ -169,9 +170,11 @@ export function principalKindOf(mol, adj) {
  * NC–CH₂–CH₂–COOH, has a three-carbon parent). With a principal nitrile
  * every nitrile carbon may end the parent (P0 picks the chain with the
  * most of them); one left on a branch is cited `ciano-` there
- * (substituent.js). Kept as a list of carbons, not a nitrile test, so a
- * later family whose carbon is outside the parent (acyl prefixes, I-39b)
- * can join it.
+ * (substituent.js). The acyl prefixes (I-39b: `formil`, `acetil`,
+ * `propanoil`) do not join it: an aldehyde or ketone carbon stays a
+ * skeleton carbon, in the chain whenever the chain rules put it there
+ * (`ácido 4-oxopentanoico`), and is the attachment atom of an acyl branch
+ * only when the chain misses it (substituent.js `acyl`).
  *
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, object[]>} adj - Its adjacency map.

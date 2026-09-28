@@ -140,6 +140,16 @@
  * that the chain stops at the carbon bonded to it, and the substituents
  * step and the legend describe it; it is highlighted whole (C and N).
  *
+ * An acyl branch (design.md §13.4 I-39b, `acyl` substituents: a C=O carbon
+ * bonded to its chain as a branch, cited `formil`, `acetil`, `propanoil`…)
+ * keeps its C=O oxygen as an `oxo` prefix in the structure (so the count
+ * step counts it like any C=O), but it is never described as `oxo-`: the
+ * group steps list it apart (acylWords(), acylHow(), acylCarbonSentence():
+ * the prefix includes the C=O carbon, not counted in the chain), the chain
+ * step says its carbon is outside the chain, and the substituents step
+ * explains the prefix (formil, acetil, the acid's `-oico` → `-oil`); it is
+ * highlighted whole (the branch with its C=O).
+ *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
  * GroupAnalysis); it gets groups ("Reconoce los grupos": each
@@ -156,7 +166,7 @@ import { ELEMENT_NAMES_ES } from '../model/elements.js';
 import {
   substituentPrefix, citationKey, needsEnclosure, isCompoundPrefix, renderPrefixes, omitsPrefixLocants,
   suffixWords, suffixCount, suffixGroupIds, isContractedAlkoxy, MAX_CONTRACTED_ALKOXY, TERMINAL_SUFFIXES,
-  esterAlkylName, renderName, carbonLocantPrefixes, hasNitrogenLocants,
+  esterAlkylName, renderName, carbonLocantPrefixes, hasNitrogenLocants, citedPrefixes,
 } from '../naming/render.js';
 import { locantText, siteLocantText, N_LOCANT } from '../naming/structure.js';
 
@@ -920,6 +930,133 @@ function cyanoCarbonSentence(result) {
 } // End of function cyanoCarbonSentence()
 
 /**
+ * Number of acyl groups inside a substituent, itself included (design.md
+ * §13.4 I-39b): branches whose attachment atom is a C=O carbon, cited
+ * `formil`, `acetil`, `propanoil`…
+ *
+ * @param {object} sub - A substituent structure.
+ * @returns {number} The count.
+ */
+function acylTotal(sub) {
+  let n = sub.acyl ? 1 : 0;
+  for (const group of sub.prefixes) {
+    n += group.locants.length * acylTotal(group.substituent);
+  }
+  return n;
+}
+
+/**
+ * Collects the acyl groups inside a substituent, itself included, one entry
+ * per occurrence (design.md §13.4 I-39b).
+ *
+ * @param {object} sub - A substituent structure.
+ * @param {object[]} into - The list to add to.
+ * @returns {object[]} The list.
+ */
+function collectAcyls(sub, into) {
+  if (sub.acyl) {
+    into.push(sub);
+  }
+  for (const group of sub.prefixes) {
+    group.locants.forEach(() => collectAcyls(group.substituent, into));
+  }
+  return into;
+}
+
+/**
+ * The acyl groups of a name (design.md §13.4 I-39b): how many are cited on
+ * the parent itself, how many in all (in branches and in an ester's O-bound
+ * group too), how many are `formil` (a –CHO), and their distinct prefixes
+ * in Spanish, in order of appearance.
+ *
+ * @param {object} result - The naming result.
+ * @returns {{parent: number, total: number, formyl: number, names: string[]}} The counts and prefixes.
+ */
+function acylCounts(result) {
+  const found = [];
+  for (const group of result.structure.prefixes) {
+    group.locants.forEach(() => collectAcyls(group.substituent, found));
+  }
+  const alkyl = esterGroup(result);
+  if (alkyl) {
+    collectAcyls(alkyl, found);
+  }
+  const parent = result.structure.prefixes.filter((g) => g.substituent.acyl).reduce((sum, g) => sum + g.locants.length, 0);
+  return {
+    parent,
+    total: found.length,
+    formyl: found.filter((sub) => sub.chain.length === 1).length,
+    names: [...new Set(found.map((sub) => substituentPrefix(sub, lexiconEs)))],
+  };
+} // End of function acylCounts()
+
+/**
+ * Words for the acyl groups of a name, for the "También tiene…" lists of
+ * the group steps (design.md §13.4 I-39b): the `formil` ones as –CHO
+ * groups off the chain, the others as C=O groups that start a branch.
+ *
+ * @param {object} result - The naming result.
+ * @returns {string[]} Zero, one or two items.
+ */
+function acylWords(result) {
+  const { total, formyl } = acylCounts(result);
+  const other = total - formyl;
+  const items = [];
+  if (formyl > 0) {
+    items.push(formyl === 1
+      ? 'un grupo –CHO cuyo carbono no está en la cadena (un aldehído)'
+      : `${formyl} grupos –CHO cuyo carbono no está en la cadena (aldehídos)`);
+  }
+  if (other > 0) {
+    items.push(other === 1
+      ? 'un grupo C=O que forma una rama que empieza en su carbono (un grupo acilo, de una cetona)'
+      : `${other} grupos C=O que forman ramas que empiezan en su carbono (grupos acilo, de cetonas)`);
+  }
+  return items;
+} // End of function acylWords()
+
+/**
+ * The "Aquí manda…" items of a group step for the acyl groups of a name
+ * (design.md §13.4 I-39b): a –CHO off the chain is `formil-`, any other
+ * branch that starts at a C=O carbon takes a prefix ending in `-oil`.
+ *
+ * @param {object} result - The naming result.
+ * @returns {string[]} Zero, one or two items.
+ */
+function acylHow(result) {
+  const { total, formyl, names } = acylCounts(result);
+  const items = [];
+  if (formyl > 0) {
+    items.push('cada –CHO cuyo carbono no está en la cadena se nombra con el [[prefijo]] «formil-»');
+  }
+  if (total > formyl) {
+    const examples = names.filter((name) => name !== lexiconEs.formylPrefix).map((name) => q(`${name}-`));
+    items.push(`cada rama que empieza en el carbono de un C=O (un grupo acilo) se nombra con su propio [[prefijo]] (aquí, ${joinY(examples)})`);
+  }
+  return items;
+} // End of function acylHow()
+
+/**
+ * The sentence on the carbon of the acyl groups of a name (design.md §13.4
+ * I-39b): the acyl prefix includes the C=O carbon, which is carbon 1 of
+ * the branch, not a carbon of the chain that carries it; '' without acyl
+ * groups.
+ *
+ * @param {object} result - The naming result.
+ * @returns {string} The sentence, or ''.
+ */
+function acylCarbonSentence(result) {
+  const { total, formyl } = acylCounts(result);
+  if (total === 0) {
+    return '';
+  }
+  const group = formyl === total ? '–CHO' : 'C=O';
+  return total === 1
+    ? `El carbono de ese ${group} no se cuenta en la [[cadena principal]]: es el primer carbono de la rama, y el prefijo ya lo incluye. Por eso su C=O no se nombra con «oxo-».`
+    : `El carbono de cada uno de esos ${group} no se cuenta en la [[cadena principal]]: es el primer carbono de su rama, y el prefijo ya lo incluye. Por eso esos C=O no se nombran con «oxo-».`;
+} // End of function acylCarbonSentence()
+
+/**
  * Sum of a per-substituent count over every occurrence of the prefixes of a name.
  *
  * @param {object} result - The naming result.
@@ -944,8 +1081,9 @@ function hydroxylsIn(result) {
 /**
  * Groups of the principal kind that are cited as prefixes because no chain
  * can carry them all (design.md §13.4 I-31, I-32): OH groups (`hidroxi-`)
- * for an alcohol, C=O oxygens (`oxo-`) on branches for a ketone; none for
- * an aldehyde or an acid (validation keeps every –CHO and –COOH on the
+ * for an alcohol, C=O oxygens (`oxo-`) on branches for a ketone (not the
+ * C=O of an acyl branch, cited by its acyl prefix, I-39b); none for an
+ * aldehyde or an acid (validation keeps every –CHO and –COOH on the
  * parent).
  *
  * @param {object} result - The naming result.
@@ -959,7 +1097,8 @@ function principalInBranches(result) {
   if (suffix.kind === 'amine') {
     return prefixSum(result, aminoTotal); // `(aminometil)` on a diamine (design.md §13.4 I-36).
   }
-  return prefixSum(result, suffix.kind === 'alcohol' ? hydroxyTotal : oxoTotal);
+  // An acyl branch's C=O is cited by its acyl prefix, not `oxo-` (design.md §13.4 I-39b, acylCounts()).
+  return suffix.kind === 'alcohol' ? prefixSum(result, hydroxyTotal) : prefixSum(result, oxoTotal) - prefixSum(result, acylTotal);
 }
 
 /**
@@ -1791,6 +1930,7 @@ function amideGroupStep(result) {
   if (branchCo > 0) {
     others.push(branchCo === 1 ? 'un grupo C=O en una rama' : `${branchCo} grupos C=O en ramas`);
   }
+  others.push(...acylWords(result));
   if (oh > 0) {
     others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
   }
@@ -1810,6 +1950,7 @@ function amideGroupStep(result) {
         ? 'cada C=O que no es de la amida se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
         : 'cada C=O que no es de la amida se nombra con el [[prefijo]] «oxo-»');
     }
+    how.push(...acylHow(result));
     if (oh > 0) {
       how.push(how.length > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
     }
@@ -1817,6 +1958,10 @@ function amideGroupStep(result) {
       how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda la amida, así que ${joinY(how)}, delante del nombre.`);
+    const acylCarbon = acylCarbonSentence(result);
+    if (acylCarbon) {
+      text.push(acylCarbon);
+    }
     if (cyano > 0) {
       text.push(cyanoCarbonSentence(result));
     }
@@ -1892,6 +2037,7 @@ function nitrileGroupStep(result) {
   if (branchCo > 0) {
     others.push(branchCo === 1 ? 'un grupo C=O en una rama' : `${branchCo} grupos C=O en ramas`);
   }
+  others.push(...acylWords(result));
   if (oh > 0) {
     others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
   }
@@ -1907,6 +2053,7 @@ function nitrileGroupStep(result) {
         ? 'cada C=O se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
         : 'cada C=O se nombra con el [[prefijo]] «oxo-»');
     }
+    how.push(...acylHow(result));
     if (oh > 0) {
       how.push(how.length > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
     }
@@ -1914,6 +2061,10 @@ function nitrileGroupStep(result) {
       how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda el nitrilo, así que ${joinY(how)}, delante del nombre.`);
+    const acylCarbon = acylCarbonSentence(result);
+    if (acylCarbon) {
+      text.push(acylCarbon);
+    }
   } // End of the seniority sentences
   const traditional = (result.alternatives || []).find((a) => a.style === 'traditional');
   if (traditional) {
@@ -1948,7 +2099,10 @@ function carbonylGroupStep(result) {
   const words = groupWords(result);
   const n = suffix.locants.length;
   const branch = principalInBranches(result);
-  const total = n + branch;
+  const acyl = acylCounts(result);
+  // Ketone C=O of acyl branches (design.md §13.4 I-39b) are C=O groups of the principal kind too.
+  const acylKetones = suffix.kind === 'ketone' ? acyl.total : 0;
+  const total = n + branch + acylKetones;
   const ring = parentKind === 'ring';
   const where = ring ? 'el [[anillo]]' : 'la [[cadena principal]]';
   const ending = lexiconEs.groupSuffix(suffix.kind);
@@ -1978,11 +2132,22 @@ function carbonylGroupStep(result) {
       ? 'Un C=O queda en una rama, fuera de la cadena principal: ese no va en el sufijo, sino con el [[prefijo]] «oxo-» delante del nombre.'
       : `${branch} grupos C=O quedan en ramas, fuera de la cadena principal: esos no van en el sufijo, sino con el [[prefijo]] «oxo-» delante del nombre.`);
   }
+  if (acylKetones > 0) {
+    const names = joinY(acyl.names.map((name) => q(`${name}-`)));
+    const with_ = acyl.names.length === 1 ? `el [[prefijo]] ${names}` : `los [[prefijos|prefijo]] ${names}`;
+    text.push(acylKetones === 1
+      ? `Otro C=O queda fuera de la cadena principal, con su carbono unido a ella o a una rama: forma una rama que empieza en ese carbono (un grupo acilo). Ese no va en el sufijo: se nombra con ${with_}.`
+      : `Otros ${acylKetones} C=O quedan fuera de la cadena principal, con su carbono unido a ella o a una rama: cada uno forma una rama que empieza en ese carbono (un grupo acilo). Esos no van en el sufijo: se nombran con ${with_}.`);
+    text.push(acylCarbonSentence(result));
+  }
   const { oh } = oxygenGroups(result);
-  const ketones = suffix.kind === 'aldehyde' ? prefixSum(result, oxoTotal) : 0;
+  const ketones = suffix.kind === 'aldehyde' ? prefixSum(result, oxoTotal) - prefixSum(result, acylTotal) : 0;
   const others = [];
   if (ketones > 0) {
     others.push(ketones === 1 ? 'un grupo C=O entre dos carbonos (una cetona)' : `${ketones} grupos C=O entre dos carbonos (cetonas)`);
+  }
+  if (suffix.kind === 'aldehyde') {
+    others.push(...acylWords(result));
   }
   if (oh > 0) {
     others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
@@ -1997,13 +2162,19 @@ function carbonylGroupStep(result) {
     if (ketones > 0) {
       how.push('cada C=O de cetona se nombra con el [[prefijo]] «oxo-»');
     }
+    if (suffix.kind === 'aldehyde') {
+      how.push(...acylHow(result));
+    }
     if (oh > 0) {
-      how.push(ketones > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
+      how.push(how.length > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
     }
     if (amines > 0) {
       how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda ${suffix.kind === 'aldehyde' ? 'el aldehído' : 'la cetona'}, así que ${joinY(how)}, delante del nombre.`);
+    if (suffix.kind === 'aldehyde' && acyl.total > 0) {
+      text.push(acylCarbonSentence(result));
+    }
   } // End of the seniority sentences
   if (halogensIn(result).length > 0) {
     text.push('Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]].');
@@ -2021,8 +2192,8 @@ function carbonylGroupStep(result) {
  * The other oxygen groups of an acid, all cited as prefixes (design.md
  * §13.4 I-33): the –CHO at the other end of the parent chain (an `oxo`
  * prefix on its last carbon), the ketone C=O on the parent (`oxo` on an
- * inner carbon), the C=O inside branches (`oxo` there) and every OH
- * (`hidroxi`).
+ * inner carbon), the C=O inside branches (`oxo` there, not those of acyl
+ * branches, acylCounts()) and every OH (`hidroxi`).
  *
  * @param {object} result - A naming result whose suffix is an acid.
  * @returns {{aldehyde: number, ketone: number, branchCo: number, oh: number}} The counts.
@@ -2032,7 +2203,9 @@ function acidCompanions(result) {
   const sites = prefixes.filter((g) => g.substituent.oxo).flatMap((g) => g.locants);
   const aldehyde = sites.filter((site) => site.locant === parent.length).length;
   const ketone = sites.length - aldehyde;
-  return { aldehyde, ketone, branchCo: prefixSum(result, oxoTotal) - sites.length, oh: prefixSum(result, hydroxyTotal) };
+  // The C=O of an acyl branch is counted apart (acylCounts(), design.md §13.4 I-39b).
+  const branchCo = prefixSum(result, oxoTotal) - sites.length - prefixSum(result, acylTotal);
+  return { aldehyde, ketone, branchCo, oh: prefixSum(result, hydroxyTotal) };
 }
 
 /**
@@ -2283,6 +2456,7 @@ function acidGroupStep(result) {
   if (branchCo > 0) {
     others.push(branchCo === 1 ? 'un grupo C=O en una rama' : `${branchCo} grupos C=O en ramas`);
   }
+  others.push(...acylWords(result));
   if (oh > 0) {
     others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
   }
@@ -2302,6 +2476,7 @@ function acidGroupStep(result) {
         ? 'cada C=O que no es del ácido se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
         : 'cada C=O que no es del ácido se nombra con el [[prefijo]] «oxo-»');
     }
+    how.push(...acylHow(result));
     if (oh > 0) {
       how.push(how.length > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH que no es del ácido se nombra con el [[prefijo]] «hidroxi-»');
     }
@@ -2309,6 +2484,10 @@ function acidGroupStep(result) {
       how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda el ácido, así que ${joinY(how)}, delante del nombre.`);
+    const acylCarbon = acylCarbonSentence(result);
+    if (acylCarbon) {
+      text.push(acylCarbon);
+    }
     if (cyano > 0) {
       text.push(cyanoCarbonSentence(result));
     }
@@ -2363,7 +2542,7 @@ function esterGroupStep(result) {
     : 'El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.');
   text.push(`El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-${ending}» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»).`);
   const { aldehyde, ketone, branchCo } = acidCompanions(result);
-  const otherCo = ketone + branchCo + oxoTotal(alkyl);
+  const otherCo = ketone + branchCo + oxoTotal(alkyl) - acylTotal(alkyl);
   const { oh } = oxygenGroups(result);
   const others = [];
   if (aldehyde > 0) {
@@ -2375,6 +2554,7 @@ function esterGroupStep(result) {
   if (otherCo - ketone > 0) {
     others.push(otherCo - ketone === 1 ? 'un grupo C=O en una rama' : `${otherCo - ketone} grupos C=O en ramas`);
   }
+  others.push(...acylWords(result));
   if (oh > 0) {
     others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
   }
@@ -2394,6 +2574,7 @@ function esterGroupStep(result) {
         ? 'cada C=O que no es del éster se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
         : 'cada C=O que no es del éster se nombra con el [[prefijo]] «oxo-»');
     }
+    how.push(...acylHow(result));
     if (oh > 0) {
       how.push(how.length > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
     }
@@ -2401,6 +2582,10 @@ function esterGroupStep(result) {
       how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda el éster, así que ${joinY(how)}, delante del nombre de la parte en la que está.`);
+    const acylCarbon = acylCarbonSentence(result);
+    if (acylCarbon) {
+      text.push(acylCarbon);
+    }
     if (cyano > 0) {
       text.push(cyanoCarbonSentence(result));
     }
@@ -2683,6 +2868,11 @@ function groupChainSentences(result, p0, p1, step) {
   if (principalInBranches(result) > 0) {
     text.push(`Ninguna cadena puede llevar todos los ${words.many}: el que queda en una rama se nombra con el [[prefijo]] «${words.prefix}-».`);
   }
+  const acyl = acylCounts(result);
+  if (result.structure.suffix && result.structure.suffix.kind === 'ketone' && acyl.total > 0) {
+    // Design.md §13.4 I-39b: a ketone C=O whose carbon starts a branch is an acyl prefix.
+    text.push(`Ninguna cadena puede llevar todos los ${words.many}: ${acyl.total === 1 ? 'el que queda fuera tiene su carbono unido a la cadena, así que forma una rama que empieza en él (un grupo acilo), y se nombra con' : 'los que quedan fuera tienen su carbono unido a una cadena, así que forman ramas que empiezan en él (grupos acilo), y se nombran con'} ${joinY(acyl.names.map((name) => q(`${name}-`)))}.`);
+  }
   if (isAmine(result)) {
     amineSideSentences(result, step);
   }
@@ -2846,6 +3036,15 @@ function chainStep(result) {
     text.push(cyano.parent === 1
       ? 'El carbono del –C≡N que se nombra con el [[prefijo]] «ciano-» no forma parte de la cadena: el prefijo ya lo incluye.'
       : 'Los carbonos de los –C≡N que se nombran con el [[prefijo]] «ciano-» no forman parte de la cadena: el prefijo ya los incluye.');
+  }
+  const acyl = acylCounts(result);
+  // With a ketone suffix groupChainSentences() already says it (design.md §13.4 I-39b).
+  if (acyl.parent > 0 && !(result.structure.suffix && result.structure.suffix.kind === 'ketone')) {
+    // Design.md §13.4 I-39b: the C=O carbon of an acyl branch on the parent is the branch's carbon 1.
+    const on = result.structure.prefixes.filter((g) => g.substituent.acyl).map((g) => q(substituentPrefix(g.substituent, lexiconEs)));
+    text.push(acyl.parent === 1
+      ? `El carbono del C=O de la rama ${on[0]} no forma parte de la cadena: es el primer carbono de esa rama (un grupo acilo), y el prefijo ya lo incluye.`
+      : `Los carbonos de los C=O de las ramas ${joinY([...new Set(on)])} no forman parte de la cadena: cada uno es el primer carbono de su rama (un grupo acilo), y el prefijo ya lo incluye.`);
   }
   const outside = outsideUnsaturation(result);
   if (outside.double + outside.triple > 0) {
@@ -3799,6 +3998,49 @@ function citedGroup(group, omitLocants = false, crowded = false) {
 }
 
 /**
+ * The first sentences on an acyl prefix (design.md §13.4 I-39b): a branch
+ * that starts at the carbon of a C=O bonded to the chain; why it is not the
+ * principal group; and how the prefix is formed — `formil` for a –CHO
+ * (the prefix includes its carbon), `acetil` for CH₃–CO– (the retained
+ * name IUPAC 2013 prefers to `etanoil`), else the name of the acid with the
+ * same chain with `-oico` changed to `-oil` (`ácido propanoico` →
+ * `propanoil`).
+ *
+ * @param {object} sub - An acyl substituent structure (`acyl` set).
+ * @param {{to: string}} words - How the chain that carries it is named (parentWords()).
+ * @param {string|null} principal - The principal group kind of the name, or null.
+ * @returns {string[]} Sentences.
+ */
+function acylIntro(sub, words, principal) {
+  const prefix = substituentPrefix(sub, lexiconEs);
+  const { chain } = sub;
+  const formyl = chain.length === 1;
+  const kind = formyl ? 'aldehyde' : 'ketone';
+  let reason = '';
+  if (principal === kind) {
+    reason = formyl
+      ? ' Es un aldehído, como el [[grupo principal]], pero su carbono no está en la cadena principal, así que no puede ir en el sufijo «-al».'
+      : ' Es una cetona, como el [[grupo principal]], pero su carbono no está en la cadena principal, así que no puede ir en el sufijo «-ona».';
+  } else if (principal) {
+    reason = ` No es el [[grupo principal]]: ${familyWithArticle(principal)} va antes que ${formyl ? 'el aldehído' : 'la cetona'}.`;
+  }
+  if (formyl) {
+    return [`${q(prefix)} es el [[prefijo]] de un grupo –CHO (un aldehído) cuyo carbono no está en la cadena: se une ${words.to} por ese carbono.${reason} El prefijo incluye el carbono del –CHO, así que ese carbono no se cuenta en la cadena.`];
+  }
+  const out = [`${q(prefix)} es el [[prefijo]] de un grupo acilo: una rama de ${count(substituentCarbons(sub), 'carbono', 'carbonos')} que se une ${words.to} por el carbono de un C=O.${reason} Ese carbono es el carbono 1 de la rama, no de la cadena a la que se une.`];
+  if (chain.length === 2 && citedPrefixes(sub).length === 0) {
+    out.push('Con 2 carbonos (CH₃–CO–) se llama «acetil»: es un nombre tradicional que la IUPAC (2013) prefiere a «etanoil».');
+  } else {
+    const bare = chain.length === 2
+      ? `${lexiconEs.stem(2)}${lexiconEs.saturatedInfix}${lexiconEs.acylEnding}`
+      : substituentPrefix({ ...sub, prefixes: sub.prefixes.filter((g) => g.substituent.oxo).map((g) => ({ ...g, locants: g.locants.filter((site) => site.atom === chain.atoms[0]) })) }, lexiconEs);
+    const acid = `ácido ${bare.slice(0, -lexiconEs.acylEnding.length)}oico`;
+    out.push(`Se nombra como el ácido de su misma cadena, cambiando «-oico» por «-oil»: del ${q(acid)} sale ${q(bare)}.`);
+  }
+  return out;
+} // End of function acylIntro()
+
+/**
  * Explains why a substituent prefix is written as it is: attachment,
  * unsaturation, own locants, nested prefixes (mini-explanation), enclosing
  * marks, retained and common names.
@@ -3870,7 +4112,13 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
   }
   const { chain, freeValence } = sub;
   const n = substituentCarbons(sub);
-  out.push(`${q(prefix)} es un grupo de ${count(n, 'carbono', 'carbonos')}.`);
+  // An acyl group (design.md §13.4 I-39b): its C=O on carbon 1 is cited by the prefix, not as `oxo`.
+  const prefixes = citedPrefixes(sub);
+  if (sub.acyl) {
+    out.push(...acylIntro(sub, words, principal));
+  } else {
+    out.push(`${q(prefix)} es un grupo de ${count(n, 'carbono', 'carbonos')}.`);
+  }
   if (freeValence.order === 2) {
     out.push(`Se une ${words.to} con un [[enlace doble]]: por eso termina en «-iliden».`);
   }
@@ -3880,9 +4128,9 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
   if (chain.triple.length > 0) {
     out.push(`Dentro del grupo hay ${chain.triple.length === 1 ? 'un [[enlace triple]]' : `${chain.triple.length} [[enlaces triples|enlace triple]]`}: por eso lleva «in».`);
   }
-  if (sub.prefixes.length > 0) {
+  if (prefixes.length > 0) {
     const one = chain.length === 1;
-    const inner = sub.prefixes.map((g) => {
+    const inner = prefixes.map((g) => {
       const places = [...new Set(g.locants.map((s) => s.locant))];
       const where = places.length === 1 ? `en el carbono ${places[0]}` : `en los carbonos ${joinY(places)}`;
       const what = q(substituentPrefix(g.substituent, lexiconEs));
@@ -3890,25 +4138,27 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
       const text = g.locants.length === 1 ? what : `${g.locants.length} ${many} ${what}`;
       return one ? text : `${text} ${where}`;
     });
-    const allHalogens = sub.prefixes.every((g) => g.substituent.halogen);
-    const amino = sub.prefixes.some((g) => g.substituent.amino);
-    const hydroxy = sub.prefixes.some((g) => g.substituent.hydroxy);
-    const oxo = sub.prefixes.some((g) => g.substituent.oxo);
-    const cyano = sub.prefixes.some((g) => g.substituent.cyano);
-    const atomsOnly = sub.prefixes.every(isAtomPrefix);
+    const allHalogens = prefixes.every((g) => g.substituent.halogen);
+    const amino = prefixes.some((g) => g.substituent.amino);
+    const hydroxy = prefixes.some((g) => g.substituent.hydroxy);
+    const oxo = prefixes.some((g) => g.substituent.oxo);
+    const cyano = prefixes.some((g) => g.substituent.cyano);
+    const atomsOnly = prefixes.every(isAtomPrefix);
     let kind = allHalogens ? 'Es una rama con halógenos' : 'Es una rama con sus propias ramas';
-    if (cyano && sub.prefixes.every((g) => g.substituent.cyano)) {
+    if (cyano && prefixes.every((g) => g.substituent.cyano)) {
       kind = cyanoTotal(sub) === 1 ? 'Es una rama con un grupo –C≡N' : 'Es una rama con grupos –C≡N';
     } else if (hydroxy && !oxo && atomsOnly) {
       kind = hydroxyTotal(sub) === 1 ? 'Es una rama con un grupo –OH' : 'Es una rama con grupos –OH';
     } else if (oxo && !hydroxy && atomsOnly) {
-      kind = oxoTotal(sub) === 1 ? 'Es una rama con un grupo C=O' : 'Es una rama con grupos C=O';
+      kind = oxoTotal(sub) - acylTotal(sub) === 1 ? 'Es una rama con un grupo C=O' : 'Es una rama con grupos C=O';
     } else if (oxo && atomsOnly) {
       kind = 'Es una rama con grupos –OH y C=O';
-    } else if (amino && sub.prefixes.every((g) => g.substituent.amino)) {
+    } else if (amino && prefixes.every((g) => g.substituent.amino)) {
       kind = aminoTotal(sub) === 1 ? 'Es una rama con un grupo amino' : 'Es una rama con grupos amino';
     }
-    if (one) {
+    if (sub.acyl) {
+      out.push(`Además, la rama lleva sus propios [[sustituyentes|sustituyente]]. Su cadena tiene ${count(chain.length, 'carbono', 'carbonos')} y se numera desde el carbono del C=O, que es el 1. En ella hay: ${joinY(inner)}.`);
+    } else if (one) {
       out.push(`${kind}. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: ${joinY(inner)}.`);
     } else {
       out.push(`${kind}. Se nombra como una molécula pequeña: su cadena tiene ${count(chain.length, 'carbono', 'carbonos')} y se numera para que el carbono unido ${words.to} lleve el número más bajo posible. En ella hay: ${joinY(inner)}.`);
@@ -3934,12 +4184,12 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
     }
   } // End of the nested prefixes
   const unsaturated = chain.double.length + chain.triple.length > 0;
-  if (freeValence.locant > 1 || (unsaturated && chain.length > 2)) {
+  if (!sub.acyl && (freeValence.locant > 1 || (unsaturated && chain.length > 2))) {
     out.push(`El número ${freeValence.locant} que va justo antes de «-${lexiconEs.freeValenceSuffix(freeValence.order)}» dice por qué carbono del grupo se une ${words.to}.`);
   }
   if (needsEnclosure(sub)) {
     let own = 'números';
-    if (sub.prefixes.length > 0) {
+    if (prefixes.length > 0) {
       own = chain.length === 1 ? 'sustituyentes' : 'sustituyentes y números';
     }
     out.push(`Va entre paréntesis porque tiene sus propios ${own}.`);
@@ -4000,6 +4250,10 @@ function substituentsStep(result) {
   const text = [];
   if (branches.length > 0) {
     text.push(`Las ramas que salen ${words.of} son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).`);
+  }
+  if (groups.some((g) => g.substituent.acyl)) {
+    // Acyl branches (design.md §13.4 I-39b).
+    text.push(`Una rama que se une ${words.to} por el carbono de un C=O es un grupo acilo: su nombre acaba en «-oil» (como «propanoil»), salvo «formil» (un –CHO, 1 carbono) y «acetil» (CH₃–CO–, 2 carbonos).`);
   }
   if (hasNitrogenLocants(groups)) {
     text.push(`Los grupos de carbonos unidos al nitrógeno del grupo ${isAmide(result) ? 'amida' : 'amino'}${branches.length > 0 ? ' también' : ''} son [[sustituyentes|sustituyente]]: se nombran igual que las ramas («metil», «etil»…), pero su [[localizador]] es la letra «N», porque van unidos al nitrógeno y no a un carbono.`);

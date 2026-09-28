@@ -8,7 +8,7 @@
  * and acetona under "Otras formas válidas", etanal, butanodial,
  * pentano-2,4-diona, pent-3-en-2-ona, 4-oxopentanal, 4-hidroxibutan-2-ona,
  * ciclohexanona, 2-metilciclohexan-1-ona); "Ordenar dibujo" lays out a
- * carbonyl; an aldehyde on a ring, an acyl branch and an anhydride are refused
+ * carbonyl; an aldehyde on a ring, a –CO–C≡N branch and an anhydride are refused
  * with their messages. Runs on the dev server and on dist/index.html.
  */
 
@@ -189,10 +189,11 @@ test('loaded aldehydes and ketones: -al, -ona, oxo-, hidroxi-, rings, propanona 
   await expect(error).toContainText('carbaldehído');
   await expect(page.locator('#result-name')).toHaveCount(0);
 
-  await loadSmiles(page, 'CC(=O)C(C(C)=O)C(C)=O');
+  // An acyl branch is named since I-39b (tests/e2e/acyl.spec.js); only –CO–C≡N keeps the refusal.
+  await loadSmiles(page, 'OC(=O)C(C(=O)C#N)CC');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('un grupo acilo');
+  await expect(error).toContainText('carbonocianidoil');
 
   // An anhydride (acids are named since I-33, esters since I-35).
   await loadSmiles(page, 'CC(=O)OC(C)=O');
