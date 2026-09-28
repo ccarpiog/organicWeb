@@ -113,6 +113,17 @@
  * substituents step and named in the seniority sentences (… > alcohol >
  * amina).
  *
+ * Amides (design.md §13.4 I-37, `structure.suffix.kind` 'amide') get the
+ * acid's steps in their own words and the amine's `N` machinery: the count
+ * step draws the C=O as O and the N as NH₂, NH or N and adds N to the
+ * formula; the group step (amideGroupStep()) shows the C=O and the N as one
+ * group (never a ketone and an amine), its carbon a chain end counted in
+ * the chain (carbon 1), the suffix `-amida` (`-diamida`), the groups on the
+ * N cited with the locant `N`, the seniority ácido > éster > amida >
+ * aldehído… with the other groups as prefixes, and `formamida` /
+ * `acetamida`; the numbering step says why the amide's locant is never
+ * written (terminalGroupNote()).
+ *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
  * GroupAnalysis); it gets groups ("Reconoce los grupos": each
@@ -420,6 +431,18 @@ function isAmine(result) {
 }
 
 /**
+ * Tells whether a result's principal group is an amide (design.md §13.4
+ * I-37, suffix `-amida`).
+ *
+ * @param {object} result - The naming result.
+ * @returns {boolean} True for `…amida`.
+ */
+function isAmide(result) {
+  const { suffix } = result.structure;
+  return Boolean(suffix) && suffix.kind === 'amide';
+}
+
+/**
  * Number of amine nitrogens inside a substituent, nested ones included (an
  * `amino` prefix counts its own N plus those of its own groups, design.md
  * §13.4 I-36).
@@ -448,9 +471,10 @@ function aminoPrefixCount(result) {
 }
 
 /**
- * Every amine nitrogen of a name, classified by how many carbons it is
- * bonded to (1: –NH₂, 2: –NH–, 3: N without hydrogen): the nitrogens of the
- * suffix (their carbon plus the groups cited with `N`) and those of the
+ * Every amine or amide nitrogen of a name, classified by how many carbons
+ * it is bonded to (1: –NH₂, 2: –NH–, 3: N without hydrogen): the nitrogens
+ * of the suffix (their carbon plus the groups cited with `N`; an amide's N,
+ * SuffixLocant `amideNitrogen`, design.md §13.4 I-37) and those of the
  * `amino` prefixes at any depth (design.md §13.4 I-36).
  *
  * @param {object} result - The naming result.
@@ -458,10 +482,11 @@ function aminoPrefixCount(result) {
  */
 function nitrogenKinds(result) {
   const kinds = { 1: 0, 2: 0, 3: 0 };
-  if (isAmine(result)) {
+  if (isAmine(result) || isAmide(result)) {
     const sites = nitrogenSites(result);
     for (const s of result.structure.suffix.locants) {
-      kinds[1 + sites.filter(({ site }) => site.atom === s.attachAtom).length] += 1;
+      const nitrogen = s.amideNitrogen === undefined ? s.attachAtom : s.amideNitrogen;
+      kinds[1 + sites.filter(({ site }) => site.atom === nitrogen).length] += 1;
     }
   }
   /**
@@ -505,7 +530,7 @@ function aminoPrefixSpecs(result) {
 
 /**
  * How the principal group of each suffix kind is called in sentences
- * (design.md §5; alcohols I-31, aldehydes and ketones I-32, acids I-33, esters I-35, amines I-36): `the` / `one` /
+ * (design.md §5; alcohols I-31, aldehydes and ketones I-32, acids I-33, esters I-35, amines I-36, amides I-37): `the` / `one` /
  * `many` for the group, `art` for its short form with the article, `group`
  * without article, `carbonWith` / `carbonThe` / `carbonA` for its carbon,
  * `label` for the N0 row of the comparison table, `prefix` for the prefix
@@ -541,6 +566,21 @@ const SUFFIX_GROUP_WORDS = Object.freeze({
     label: 'Grupos –COO–',
     prefix: 'alcoxicarbonil',
     family: 'éster',
+    ringExample: '',
+  }),
+  amide: Object.freeze({
+    the: 'el grupo amida',
+    one: 'un grupo amida',
+    many: 'grupos amida',
+    group: 'grupo amida',
+    art: 'la amida',
+    short: 'grupos amida',
+    carbonWith: 'el carbono de la amida',
+    carbonThe: 'el carbono del grupo amida',
+    carbonA: 'un carbono de un grupo amida',
+    label: 'Grupos amida',
+    prefix: 'carbamoil',
+    family: 'amida',
     ringExample: '',
   }),
   alcohol: Object.freeze({
@@ -988,7 +1028,8 @@ function substituentPi(sub) {
  * and changes no hydrogen count; an ester –COO– is one C=O and, with its
  * O-bound group, an O between two carbons like an ether's, I-35; each
  * amine N — of the `-amina` suffix or of an `amino-` prefix — has three
- * bonds, so it adds one hydrogen to the count, I-36).
+ * bonds, so it adds one hydrogen to the count, I-36; an amide –CONH₂ is one
+ * C=O, one O and one such N, I-37).
  *
  * @param {object} structure - The name structure.
  * @returns {{carbons: number, hydrogens: number, halogens: Object<string, number>, nitrogens?: number, oxygens: number}} The counts (halogens by element; empty for a hydrocarbon; `nitrogens` only when positive).
@@ -1000,9 +1041,9 @@ export function atomCounts(structure) {
   const kind = structure.suffix ? structure.suffix.kind : null;
   const amine = kind === 'amine';
   let oxygens = amine ? 0 : suffixCount(structure) * (kind === 'acid' ? 2 : 1);
-  let nitrogens = amine ? suffixCount(structure) : 0;
+  let nitrogens = amine || kind === 'amide' ? suffixCount(structure) : 0;
   if (kind && kind !== 'alcohol' && !amine) {
-    pi += suffixCount(structure); // Each C=O of `-al` / `-ona` / `-oico` / `-oato`.
+    pi += suffixCount(structure); // Each C=O of `-al` / `-ona` / `-oico` / `-oato` / `-amida`.
   }
   const halogens = {};
   // The prefixes, then an ester's O-bound group (its bridge O counted by etherTotal(), like an ether O).
@@ -1152,8 +1193,25 @@ function etherDrawingSentences(result, oh, co, ethers, halogens) {
       ? ' En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono.'
       : ' En cada grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono.';
   }
-  return drawing;
+  return drawing + amideDrawingSentence(result);
 } // End of function etherDrawingSentences()
+
+/**
+ * The count-step sentence on the amide group (design.md §13.4 I-37): its
+ * C=O oxygen and its nitrogen sit on the same carbon; '' for any other
+ * result.
+ *
+ * @param {object} result - The naming result.
+ * @returns {string} The sentence, starting with a space, or ''.
+ */
+function amideDrawingSentence(result) {
+  if (!isAmide(result)) {
+    return '';
+  }
+  return suffixCount(result.structure) === 1
+    ? ' En el grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono.'
+    : ' En cada grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono.';
+}
 
 /**
  * The count-step sentences on how the oxygens of an ester are drawn
@@ -1312,6 +1370,7 @@ function countStep(result) {
           ? ' En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono.'
           : ' En cada grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono.';
       }
+      drawing += amideDrawingSentence(result);
     } // End of the oxygen sentences
     if (nitrogens > 0) {
       drawing += nitrogenDrawingSentences(nitrogenKinds(result));
@@ -1357,6 +1416,9 @@ function groupStep(result) {
   }
   if (isAmine(result)) {
     return amineGroupStep(result);
+  }
+  if (isAmide(result)) {
+    return amideGroupStep(result);
   }
   const { suffix: n, branch } = hydroxylsIn(result);
   const total = n + branch;
@@ -1497,6 +1559,107 @@ function amineGroupStep(result) {
     locants: null,
   };
 } // End of function amineGroupStep()
+
+/**
+ * Step "Reconoce el grupo funcional" for an amide (design.md §13.4 I-37):
+ * the –CONH₂ group (a carbon with an O on a double bond and a nitrogen; one
+ * group: its C=O is not a ketone, its N not an amine), its carbon always a
+ * chain end counted in the chain (carbon 1), the suffix `-amida`
+ * (`-diamida`), the groups on the N cited as prefixes with the locant `N`
+ * (the N never in the chain), the seniority ácido > éster > amida >
+ * aldehído > cetona > alcohol > amina when other groups are present (they
+ * become `oxo-`, `hidroxi-`, `amino-` prefixes), the traditional
+ * `formamida` / `acetamida`, and halogens as prefixes. The group is
+ * highlighted whole (carbon, O and N), the groups on the N as substituents.
+ *
+ * @param {object} result - A naming result whose suffix is an amide.
+ * @returns {object} The step.
+ */
+function amideGroupStep(result) {
+  const { suffix, parent } = result.structure;
+  const n = suffix.locants.length;
+  const ending = lexiconEs.groupSuffix('amide');
+  const sites = nitrogenSites(result);
+  const text = [];
+  if (n === 1) {
+    const what = {
+      0: 'un grupo –CONH₂: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno con dos hidrógenos',
+      1: 'un grupo –CONH–: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno que lleva además un grupo de carbonos y un hidrógeno',
+      2: 'un grupo –CON–: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno que lleva además dos grupos de carbonos, sin hidrógenos',
+    }[sites.length];
+    text.push(`Tu molécula tiene ${what}. Es un [[grupo funcional]]: la molécula es una amida.`);
+  } else {
+    text.push(`Tu molécula tiene ${n} grupos –CONH₂ (cada uno, un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno). Son [[grupos funcionales|grupo funcional]]: la molécula es una amida con ${n} grupos amida.`);
+  }
+  text.push('El C=O y el nitrógeno forman un solo grupo: el C=O de una amida no es una cetona, ni su nitrógeno una [[amina]].');
+  if (parent.length === 1) {
+    text.push('Aquí el carbono de la amida es el único carbono de la [[cadena principal]].');
+  } else {
+    text.push(n === 1
+      ? 'El carbono de la amida solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.'
+      : 'El carbono de cada amida solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Esos carbonos son carbonos de la cadena: se cuentan al buscarla y al numerarla.');
+  }
+  text.push(`El grupo amida es el [[grupo principal]]: se nombra con el [[sufijo]] «-${ending}», al final del nombre (como en «etanamida»).`);
+  if (n > 1) {
+    const { multiplier: mult } = suffixWords(suffix, lexiconEs);
+    text.push(`Aquí hay ${n} grupos amida, uno en cada extremo de la cadena principal, así que el sufijo dice cuántos: «-${mult}${ending}» («di» = 2).`);
+  }
+  if (sites.length > 0) {
+    text.push(sites.length === 1
+      ? 'El grupo de carbonos unido al nitrógeno no está en la cadena principal (la cadena no puede atravesar el nitrógeno): es un [[sustituyente]] y se nombra delante, como las ramas, pero con la letra «N» en vez de un número (como en «N-metiletanamida»). La N dice que el grupo va unido al nitrógeno, no a un carbono.'
+      : 'Los 2 grupos de carbonos unidos al nitrógeno no están en la cadena principal (la cadena no puede atravesar el nitrógeno): son [[sustituyentes|sustituyente]] y se nombran delante, como las ramas, pero con la letra «N» en vez de un número (como en «N,N-dimetiletanamida»). La N dice que el grupo va unido al nitrógeno, no a un carbono.');
+  }
+  const { aldehyde, ketone, branchCo, oh } = acidCompanions(result);
+  const otherCo = ketone + branchCo;
+  const others = [];
+  if (aldehyde > 0) {
+    others.push('un grupo –CHO en el otro extremo (un aldehído)');
+  }
+  if (ketone > 0) {
+    others.push(ketone === 1 ? 'un grupo C=O entre dos carbonos (una cetona)' : `${ketone} grupos C=O entre dos carbonos (cetonas)`);
+  }
+  if (branchCo > 0) {
+    others.push(branchCo === 1 ? 'un grupo C=O en una rama' : `${branchCo} grupos C=O en ramas`);
+  }
+  if (oh > 0) {
+    others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
+  }
+  const amines = aminoPrefixCount(result);
+  if (amines > 0) {
+    others.push(aminoWords(amines));
+  }
+  if (others.length > 0) {
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > amida > aldehído > cetona > alcohol > amina.`);
+    const how = [];
+    if (aldehyde + otherCo > 0) {
+      how.push(aldehyde > 0
+        ? 'cada C=O que no es de la amida se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
+        : 'cada C=O que no es de la amida se nombra con el [[prefijo]] «oxo-»');
+    }
+    if (oh > 0) {
+      how.push(how.length > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
+    }
+    if (amines > 0) {
+      how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
+    }
+    text.push(`Aquí manda la amida, así que ${joinY(how)}, delante del nombre.`);
+  } // End of the seniority sentences
+  const traditional = (result.alternatives || []).find((a) => a.style === 'traditional');
+  if (traditional) {
+    text.push(`La IUPAC (2013) conserva también el nombre tradicional ${q(traditional.name)}: lo verás en «Otras formas válidas».`);
+  }
+  if (halogensIn(result).length > 0) {
+    text.push('Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]].');
+  }
+  return {
+    id: 'group',
+    title: STEP_TITLES.group,
+    text,
+    highlight: [suffixSpec(result), ...sites.map(({ site }) => ({ atoms: [...site.atoms], bonds: [site.bond, ...site.bonds], style: 'substituent' })),
+      ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result)],
+    locants: null,
+  };
+} // End of function amideGroupStep()
 
 /**
  * Step "Reconoce el grupo funcional" for an aldehyde or ketone (design.md
@@ -2173,6 +2336,10 @@ function groupChainSentences(result, p0, p1, step) {
     text.push('El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.');
   } else if (isEster(result)) {
     text.push('El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».');
+  } else if (isAmide(result)) {
+    text.push(nitrogenSites(result).length > 0
+      ? 'El carbono de la amida forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Su oxígeno y su nitrógeno no forman parte de ella, y la cadena no puede atravesar el nitrógeno: los grupos de carbonos unidos al nitrógeno se nombran aparte, con la letra «N».'
+      : 'El carbono de cada grupo amida forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Su oxígeno y su nitrógeno no forman parte de ella.');
   }
   if (decided(p0)) {
     const lengths = p0.candidatesBefore.map((c) => c.atoms.length);
@@ -2797,7 +2964,7 @@ function tiebreakStep(result) {
     if (step.rule === 'P4' && oxygenPrefixes) {
       rule = { ...COUNT_RULES.P4, rule: `Gana la cadena con más [[sustituyentes|sustituyente]]: cuentan las ramas${halogens ? ', los halógenos' : ''} y también los grupos que van como [[prefijo]] («hidroxi-», «oxo-»).` };
     }
-    if (step.rule === 'P4' && isAmine(result)) {
+    if (step.rule === 'P4' && (isAmine(result) || (isAmide(result) && nitrogenSites(result).length > 0))) {
       rule = { ...COUNT_RULES.P4, rule: `Gana la cadena con más [[sustituyentes|sustituyente]]: cuentan las ramas${halogens ? ', los halógenos' : ''} y también los grupos unidos al nitrógeno.` };
     }
     const lines = step.candidatesBefore.map((c, i) => `opción ${labelOf(c)}: ${rule.value(step.values[i])}`);
@@ -2985,8 +3152,8 @@ function prefixOmissionNote(result) {
     return `En ${q(result.name)} no hacen falta números: todos los hidrógenos se han cambiado por ${element}, así que no hay que decir dónde está cada uno.`;
   }
   const { suffix } = result.structure;
-  if (suffix && TERMINAL_SUFFIXES.includes(suffix.kind) && prefixes.length === 0) {
-    return null; // terminalGroupNote() explains it.
+  if (suffix && TERMINAL_SUFFIXES.includes(suffix.kind) && carbonLocantPrefixes(prefixes).length === 0) {
+    return null; // terminalGroupNote() explains it (groups on an amide N, locant `N`, are no carbon prefixes).
   }
   if (suffix && suffix.kind === 'ketone' && parent.length === 3) {
     const cited = (result.alternatives || []).find((a) => a.style === 'locants');
@@ -3225,8 +3392,8 @@ function nitrogenNote(result) {
 }
 
 /**
- * Note on the uncited locant of an aldehyde, an acid or an ester on a chain
- * (design.md §13.4 I-32, I-33, I-35; IUPAC 2013 P-14.3.4.1): the –CHO, –COOH or –COO–
+ * Note on the uncited locant of an aldehyde, an acid, an ester or an amide on a chain
+ * (design.md §13.4 I-32, I-33, I-35, I-37; IUPAC 2013 P-14.3.4.1): the –CHO, –COOH, –COO– or amide
  * carbon is always a chain end, so it is always carbon 1 (with two, the
  * first and the last) and its number is never written.
  *
@@ -3238,12 +3405,12 @@ function terminalGroupNote(result) {
   if (!suffix || !TERMINAL_SUFFIXES.includes(suffix.kind)) {
     return null;
   }
-  const { short } = groupWords(result);
+  const words = groupWords(result);
   if (suffix.locants.length === 1) {
     const never = `-1-${lexiconEs.groupSuffix(suffix.kind)}`;
-    return `El carbono del grupo ${short} siempre es el 1, así que su número no se escribe: ${q(result.name)}, nunca ${q(never)}.`;
+    return `El carbono del ${words.group} siempre es el 1, así que su número no se escribe: ${q(result.name)}, nunca ${q(never)}.`;
   }
-  return `Los dos grupos ${short} están en los extremos, en los carbonos 1 y ${parent.length}. Siempre es así, de modo que sus números no se escriben: ${q(result.name)}.`;
+  return `Los dos ${words.many} están en los extremos, en los carbonos 1 y ${parent.length}. Siempre es así, de modo que sus números no se escriben: ${q(result.name)}.`;
 } // End of function terminalGroupNote()
 
 /**
@@ -3337,14 +3504,18 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
     if (principal === 'ester') {
       return [`${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el éster (–COO–) va antes que el alcohol.`];
     }
+    if (principal === 'amide') {
+      return [`${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: la amida va antes que el alcohol.`];
+    }
     return [principal === 'acid'
       ? `${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el ácido (–COOH) va antes que el alcohol.`
       : `${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el grupo C=O va antes que el –OH.`];
   }
   if (sub.oxo) {
     // Only when an aldehyde or an acid is principal can a C=O be cited on the parent itself.
-    if (principal === 'ester') {
-      return [`${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el éster va antes que el aldehído y la cetona.`];
+    if (principal === 'ester' || principal === 'amide') {
+      const senior = principal === 'ester' ? 'el éster' : 'la amida';
+      return [`${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: ${senior} va antes que el aldehído y la cetona.`];
     }
     return [principal === 'acid'
       ? `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona.`
@@ -3499,7 +3670,7 @@ function substituentsStep(result) {
     text.push(`Las ramas que salen ${words.of} son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).`);
   }
   if (hasNitrogenLocants(groups)) {
-    text.push(`Los grupos de carbonos unidos al nitrógeno del grupo amino${branches.length > 0 ? ' también' : ''} son [[sustituyentes|sustituyente]]: se nombran igual que las ramas («metil», «etil»…), pero su [[localizador]] es la letra «N», porque van unidos al nitrógeno y no a un carbono.`);
+    text.push(`Los grupos de carbonos unidos al nitrógeno del grupo ${isAmide(result) ? 'amida' : 'amino'}${branches.length > 0 ? ' también' : ''} son [[sustituyentes|sustituyente]]: se nombran igual que las ramas («metil», «etil»…), pero su [[localizador]] es la letra «N», porque van unidos al nitrógeno y no a un carbono.`);
   }
   if (amino.length > 0) {
     const also = branches.length > 0 || alkoxy.length > 0 ? ' también' : '';
@@ -4046,6 +4217,11 @@ function suffixSentences(result) {
   }
   if (suffix.kind === 'ester') {
     text.push('El –COO– no lleva número: su carbono siempre es el 1.');
+  }
+  if (suffix.kind === 'amide') {
+    text.push(suffix.locants.length === 1
+      ? 'El grupo amida no lleva número: su carbono siempre es el 1.'
+      : 'Los grupos amida no llevan número: sus carbonos siempre son los dos extremos.');
   }
   if (suffix.kind === 'amine' && !omitted) {
     text.push(suffix.locants.length === 1

@@ -71,7 +71,7 @@ test('validation: an ester –COO– is admitted; anhydrides, carbonates, peroxy
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
   }
-  assert.match(MESSAGES.HETEROATOM, /, ésteres \(con el grupo –COO– entre dos cadenas de carbonos\) y aminas/);
+  assert.match(MESSAGES.HETEROATOM, /, ésteres \(con el grupo –COO– entre dos cadenas de carbonos\), aminas/);
   // A lactone is a heterocycle: out of scope.
   for (const smiles of ['O=C1CCCO1', 'O=C1CCCCO1']) {
     const error = validateForNaming(parseSmiles(smiles));

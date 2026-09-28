@@ -17,8 +17,10 @@
  * –NH₂ in place of random hydrogens and/or an N put into C–C single bonds,
  * some N carrying small alkyl groups — primary, secondary and tertiary —;
  * on ring carbons only for a ring, anilines included; some with –COOH,
- * ester, C=O, OH groups, ether oxygens and halogens too), plus the list of
- * cycloalkanes in a size range.
+ * ester, C=O, OH groups, ether oxygens and halogens too), of amides (I-37:
+ * one or two –CONH₂ at chain ends of acyclic molecules, a single one with
+ * small alkyl groups on its N; some with C=O, OH groups, amines, ether
+ * oxygens and halogens too), plus the list of cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
@@ -31,7 +33,7 @@ import { perceiveRings } from '../../src/model/rings.js';
 import { HALOGEN_ELEMENTS } from '../../src/model/elements.js';
 import { canonicalTreeKey, canonicalKey, adjacency } from '../../src/model/graph.js';
 import {
-  validateForNaming, carboxylCarbons, carboxylRole, esterCarbons, etherOxygens, amineNitrogens, MAX_CHAIN,
+  validateForNaming, carboxylCarbons, carboxylRole, esterCarbons, etherOxygens, amineNitrogens, amideCarbons, MAX_CHAIN,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
@@ -930,6 +932,108 @@ export function generateAmines({ count, seed, minSize = 4, maxSize = 14 }) {
   } // End of the loop that draws distinct amines
   return molecules;
 } // End of function generateAmines()
+
+/**
+ * Copies a hydrocarbon and turns chain ends into amide groups (design.md
+ * §13.4 I-37): like carboxylate(), each carbon with at most one carbon
+ * neighbour on a single bond and three hydrogens gets a double-bonded O and
+ * an N (–CONH₂); at most `max` of them, chosen in random order. With a
+ * single amide, its N then gets, with probability `graft` per free valence,
+ * a random saturated alkyl group of 1 to 4 carbons bonded by a random
+ * carbon (`N`-substituents: –CONH–R, –CON–R₂); a diamide never does
+ * (validation refuses it: `substitutedPolyamide`).
+ *
+ * @param {object} mol - A hydrocarbon (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} max - The most amide groups to add (1 or 2).
+ * @param {number} [graft] - Probability of grafting an alkyl per free N valence (default 0).
+ * @returns {object} The copy (possibly without any amide).
+ */
+export function amidate(mol, random, max, graft = 0) {
+  const copy = cloneMolecule(mol);
+  const ends = [...copy.atoms.keys()].filter((id) => {
+    const bonds = [...copy.bonds.values()].filter((b) => b.a === id || b.b === id);
+    return bonds.length <= 1 && bonds.every((b) => b.order === 1) && CARBON_VALENCE - bondOrderSum(copy, id) >= 3;
+  });
+  const nitrogens = [];
+  for (const id of shuffle(ends, random).slice(0, max)) {
+    addBond(copy, id, addAtom(copy, {}, 'O'), 2);
+    const nitrogen = addAtom(copy, {}, 'N');
+    addBond(copy, id, nitrogen, 1);
+    nitrogens.push(nitrogen);
+  }
+  if (nitrogens.length === 1) {
+    const [nitrogen] = nitrogens;
+    while (bondOrderSum(copy, nitrogen) < NITROGEN_VALENCE && random() < graft) {
+      const alkyl = randomHydrocarbon(random, { size: randomInt(random, 1, 4), unsaturation: 0, branchiness: random() });
+      const ids = new Map([...alkyl.atoms.keys()].map((id) => [id, addAtom(copy)]));
+      for (const b of alkyl.bonds.values()) {
+        addBond(copy, ids.get(b.a), ids.get(b.b), b.order);
+      }
+      const keys = [...ids.values()];
+      addBond(copy, nitrogen, keys[Math.floor(random() * keys.length)], 1);
+    }
+  } // End of the grafting of alkyl groups onto the N of a monoamide
+  return copy;
+} // End of function amidate()
+
+/**
+ * Generates up to `count` distinct (by canonical key) amides (design.md
+ * §13.4 I-37): random acyclic hydrocarbons of 1 carbon up to `maxSize` − 1
+ * (methanamide, ethanamide, ethanediamide… included) with one or two
+ * –CONH₂ at chain ends (amidate()), a single one often with alkyl groups
+ * on its N (N-substituted and N,N-disubstituted amides), a share of them
+ * also with C=O (carbonylate(): `oxo-`), OH groups (hydroxylate():
+ * `hidroxi-`), amines (aminate(): `amino-`), an ether O (etherify():
+ * `alcoxi-`) and halogens (halogenate()). Only molecules with at least one
+ * amide that the engine names in every prefix style are kept (valid for
+ * naming — no imide, the amides on one carbon piece… — and not refused by
+ * the engine: no acyl branch, no symmetric amine).
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateAmides({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 8111 + 37);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50) {
+    attempts += 1;
+    const size = randomInt(random, 1, Math.max(1, maxSize - 1));
+    const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.4, branchiness: 0.2 + random() * 0.8 });
+    let mol = amidate(base, random, random() < 0.25 ? 2 : 1, random() * 0.7);
+    if (amideCarbons(mol).length === 0) {
+      continue; // No end carbon could take an amide.
+    }
+    const carbons = new Set([...base.atoms.keys()]);
+    if (random() < 0.2) {
+      mol = carbonylate(mol, random, 0.05 + random() * 0.15, carbons);
+    }
+    if (random() < 0.2) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.15, carbons);
+    }
+    if (random() < 0.15) {
+      mol = aminate(mol, random, { rate: 0.05 + random() * 0.15, graft: random() * 0.5, only: carbons });
+    }
+    if (random() < 0.1) {
+      mol = etherify(mol, random, 1);
+    }
+    if (random() < 0.2) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.2);
+    }
+    if (validateForNaming(mol) || amideCarbons(mol).length === 0
+      || !PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
+      continue; // Not valid for naming (an imide…), the amide was spoilt, or refused by the engine in some style.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct amides
+  return molecules;
+} // End of function generateAmides()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

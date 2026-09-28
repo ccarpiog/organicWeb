@@ -93,6 +93,8 @@ export const TRADITIONAL_NAMES = Object.freeze({
   acetate: 'acetato',
   anisole: 'anisol',
   aniline: 'anilina',
+  formamide: 'formamida',
+  acetamide: 'acetamida',
 });
 
 /**
@@ -118,6 +120,11 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * `anilina` (design.md §13.4 I-36) replaces `bencenamina`, also after
  * groups on its nitrogen (`N-metilanilina`): IUPAC 2013 retains `aniline`
  * as the preferred name (P-62.2.1.1.1), so it is labelled like `tolueno`.
+ * `formamida` and `acetamida` (design.md §13.4 I-37) replace a bare
+ * `metanamida` / `etanamida`, also after groups on the N
+ * (`N,N-dimetilformamida`, `N-metilacetamida`): IUPAC 2013 retains formamide
+ * and acetamide as preferred names (P-66.1.1.1.1; status from memory), so
+ * they are labelled like `tolueno`; no other amide name (propionamida…).
  */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
@@ -132,6 +139,8 @@ export const TRADITIONAL_LABELS = Object.freeze({
   acetate: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   anisole: 'nombre tradicional, que la IUPAC (2013) acepta',
   aniline: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
+  formamide: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
+  acetamide: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
 });
 
 /** Endings of the parent name. */
@@ -592,7 +601,7 @@ export function styleLabel(style) {
  * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene,
  * a small carbonyl compound or a small acid.
  *
- * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole' or 'aniline'.
+ * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide' or 'acetamide'.
  * @returns {string} The Spanish name.
  * @throws {Error} For an unknown id.
  */

@@ -61,10 +61,10 @@ test('validation: aldehyde and ketone C=O are admitted; other C=O derivatives ke
   for (const smiles of ['C=O', 'CC=O', 'O=CC=O', 'CC(C)=O', 'CC(=O)CC(C)=O', 'OCC=O', 'ClCC=O', 'O=C1CCCCC1', 'OC1CCC(=O)CC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Anhydride, acyl chloride, amide, ketene, CO₂, carbonic acid: the C=O carbon has another heteroatom or a C=C (acids are named
-  // since I-33, esters since I-35).
+  // Anhydride, acyl chloride, urea, ketene, CO₂, carbonic acid: the C=O carbon has another heteroatom or a C=C (acids are named
+  // since I-33, esters since I-35, amides since I-37).
   // An aldehyde with a nitrile keeps the refusal (with an amine, `2-aminoetanal`, it is named since I-36).
-  for (const smiles of ['CC(=O)OC(C)=O', 'CC(=O)Cl', 'CC(N)=O', 'C=C=O', 'O=C=O', 'OC(=O)O', 'N#CCC=O']) {
+  for (const smiles of ['CC(=O)OC(C)=O', 'CC(=O)Cl', 'NC(=O)N', 'C=C=O', 'O=C=O', 'OC(=O)O', 'N#CCC=O']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);

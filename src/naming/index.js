@@ -113,7 +113,23 @@
  * name (`metilamina`, `dimetilamina`, `trimetilamina`, `etilmetilamina`;
  * amineClassAlternative()).
  *
- * Any other heteroatom (an N of an amide, imine or nitrile, an O of an anhydride or carbonate, a peroxide) is
+ * Amides (design.md §13.4 I-37) sit between esters and aldehydes (ácido >
+ * éster > amida > aldehído…): the –CONH₂ carbon is a chain end of the
+ * parent like an acid's, locant 1, never cited, suffix `-amida`; the C=O
+ * and the N are one group (never a ketone and an amine), and the groups on
+ * the N are prefixes with the locant `N`, as for amines
+ * (substituent.js nitrogenSubstituents()): `metanamida`, `etanamida`,
+ * `2-metilpropanamida`, `prop-2-enamida`, `butanodiamida`,
+ * `N-metiletanamida`, `N,N-dimetiletanamida`, `N-etil-N-metilpropanamida`,
+ * `4-oxopentanamida`, `2-aminopropanamida`. Validation refuses amides with
+ * a ring (`ringAmide`), with an acid or ester or on another carbon piece
+ * (`amidePrefix`), more than two (`manyAmides`), diamides with groups on an
+ * N (`substitutedPolyamide`) and imides (`imide`); an amide left out of the
+ * suffix is refused here as a safety net (`amidePrefix`). The bare (or
+ * N-substituted) metanamida and etanamida also get `formamida` /
+ * `acetamida` (`N,N-dimetilformamida`).
+ *
+ * Any other heteroatom (an N of an imide, imine or nitrile, an O of an anhydride or carbonate, a peroxide) is
  * still refused (`HETEROATOM`), but the refusal carries `groups`: its
  * characteristic groups (groups.js), the principal group and the
  * suffix/prefix classification (seniority.js, design.md §13.4 I-29).
@@ -123,6 +139,7 @@
 import {
   validateForNaming, validationError, carboxylCarbons, etherOxygens, amineNitrogens, ACYL_SUBSTITUENT_MESSAGE,
   CARBOXY_SUBSTITUENT_MESSAGE, SYMMETRIC_ETHER_MESSAGE, SYMMETRIC_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE,
+  amideCarbons, AMIDE_PREFIX_MESSAGE,
 } from '../model/validate.js';
 import { adjacency, hasCycle, rootedTreeKey } from '../model/graph.js';
 import { selectParent } from './parent.js';
@@ -329,6 +346,7 @@ function nameValidated(mol, options) {
   // each runs its own prefix naming, so one may need an acyl branch the
   // others avoid.
   const acids = carboxylCarbons(mol);
+  const amides = amideCarbons(mol);
   for (const s of new Set([style, PREFIX_STYLES[0], ...others])) {
     const { structure } = named(s);
     // An acyl branch on the parent, or inside an ester's O-bound group.
@@ -338,6 +356,9 @@ function nameValidated(mol, options) {
     }
     if (acids.length > 0 && suffixCount(structure) !== acids.length) {
       return withGroups({ ok: false, error: carboxyError(acids) }, mol);
+    }
+    if (amides.length > 0 && (!structure.suffix || structure.suffix.kind !== 'amide' || suffixCount(structure) !== amides.length)) {
+      return withGroups({ ok: false, error: amidePrefixError(amides) }, mol);
     }
     if (structure.suffix && structure.suffix.kind === 'amine' && suffixCount(structure) > 1 && hasNitrogenLocants(structure.prefixes)) {
       return withGroups({ ok: false, error: polyamineError(structure) }, mol);
@@ -504,6 +525,19 @@ function carboxyError(acids) {
 }
 
 /**
+ * The HETEROATOM refusal of a molecule whose name would leave an amide out
+ * of the parent's suffix (a `carbamoil-` or `acilamino-` prefix, design.md
+ * §13.4 I-37). A safety net: validation already refuses every molecule
+ * where this can happen (`amidePrefix`, `manyAmides`, `ringAmide`).
+ *
+ * @param {number[]} amides - The amide carbons of the molecule.
+ * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
+ */
+function amidePrefixError(amides) {
+  return validationError('HETEROATOM', { message: AMIDE_PREFIX_MESSAGE, atoms: [...amides], reason: 'amidePrefix' });
+}
+
+/**
  * The alternative that writes the locants the main name omits, when IUPAC
  * 2013 cites them in the preferred name: `propan-2-ona` for `propanona`
  * (lexicon.es.js chainOmitsPrefixLocants(), design.md §13.4 I-32); null for
@@ -529,7 +563,8 @@ function locantAlternative(result) {
  * one part refers to every atom and bond of the molecule, like a benzene's
  * traditional name (aromatic.js traditionalAlternative()). For an ester
  * (design.md §13.4 I-35) only the acid part is traditional: `formiato de
- * metilo`, `acetato de isopropilo` (render.js renderName() `traditional`).
+ * metilo`, `acetato de isopropilo` (render.js renderName() `traditional`);
+ * for an amide (I-37) the groups on its N stay too: `N-metilacetamida`.
  *
  * @param {object} result - The main naming result.
  * @returns {{style: string, label: string, name: string, parts: object[]}|null} The alternative.
@@ -539,8 +574,8 @@ function carbonylAlternative(result) {
   if (!id) {
     return null;
   }
-  if (result.structure.ester) {
-    // `acetato de etilo`: the acid part is the traditional word, the O-bound group stays (render.js).
+  if (result.structure.ester || result.structure.suffix.kind === 'amide') {
+    // `acetato de etilo`, `N-metilacetamida`: the traditional word, with the O-bound group or the N groups (render.js).
     return { style: 'traditional', label: lexiconEs.traditionalLabel(id), ...renderName(result.structure, lexiconEs, { traditional: id }) };
   }
   const name = lexiconEs.traditionalName(id);

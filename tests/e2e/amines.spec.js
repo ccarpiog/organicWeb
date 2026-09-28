@@ -11,7 +11,7 @@
  * N-metilanilina, 2-aminoetan-1-ol, 2-(dimetilamino)etan-1-ol, ácido
  * 2-aminopropanoico); "Ordenar dibujo" lays out an amine; side-chain amines
  * on a ring, N-substituted polyamines and symmetric amines are refused with
- * their messages, an amide and a nitrile keep the generic HETEROATOM
+ * their messages, a urea and a nitrile keep the generic HETEROATOM
  * refusal, and an N in a ring is a heterocycle (RING_SYSTEM). Runs on the
  * dev server and on dist/index.html.
  */
@@ -261,8 +261,8 @@ test('out-of-scope amines and other nitrogen compounds are refused with their me
     ['NCCNC', 'localizadores como N¹ y N²'],
     // Equal halves joined by the N, each with the principal group (symmetricAmine).
     ['OCCNCCO', 'partes iguales unidas por un nitrógeno'],
-    // An amide and a nitrile: the generic message, which now lists the amines.
-    ['CC(N)=O', 'y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂).'],
+    // A urea and a nitrile: the generic message, which lists the amines (and, since I-37, the amides).
+    ['NC(=O)N', 'aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂) y amidas'],
     ['CCC#N', 'Aún no sé nombrar este tipo de compuestos'],
   ]) {
     await loadSmiles(page, smiles);

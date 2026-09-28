@@ -48,7 +48,7 @@ export const BENZENE_NAME = 'benzene';
 /** Stem of the retained name `phenol` (phen + ol; IUPAC 2013 P-63.1.1.1, see lexicon.es.js). */
 export const PHENOL_STEM = 'phen';
 
-/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3), anisole, small carbonyl compounds and acids (P-65.1.1.1) and the acid part of their esters (P-65.6.3.2; see lexicon.es.js). */
+/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3), anisole, aniline, small carbonyl compounds and acids (P-65.1.1.1), the acid part of their esters (P-65.6.3.2) and formamide / acetamide (P-66.1.1.1.1, I-37; see lexicon.es.js). */
 export const TRADITIONAL_NAMES = Object.freeze({
   toluene: 'toluene',
   styrene: 'styrene',
@@ -62,6 +62,8 @@ export const TRADITIONAL_NAMES = Object.freeze({
   acetate: 'acetate',
   anisole: 'anisole',
   aniline: 'aniline',
+  formamide: 'formamide',
+  acetamide: 'acetamide',
 });
 
 /** Endings of the parent name. */
@@ -258,7 +260,7 @@ export function traditionalName(id) {
  * @returns {string} The label.
  */
 export function traditionalLabel(id) {
-  return ['toluene', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'aniline'].includes(id) ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
+  return ['toluene', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'aniline', 'formamide', 'acetamide'].includes(id) ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
 }
 
 /** Suffixes of the characteristic groups (see lexicon.es.js GROUP_SUFFIXES): `ethanoic acid`, `methyl ethanoate`… */

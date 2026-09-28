@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T01:42:14Z",
+  "updated": "2026-09-28T02:05:47Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -342,8 +342,11 @@
     {
       "id": "I-37",
       "title": "v2.17 Amides",
-      "status": "queued",
-      "summary": "v2 plan phase 17: amides (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Names open-chain amides (-amida, N-locants, formamida/acetamida) and refuses ring amides, imides and amide prefixes.",
+      "risk": "high",
+      "review": "docs/reviews/I-37.md",
+      "narrative": "docs/progress-archive/i-37.md"
     },
     {
       "id": "I-38",

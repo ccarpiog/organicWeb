@@ -385,7 +385,7 @@ const GROUP_SNAPSHOT_SMILES = [
   'OCC1=CC=CC=C1', // alcohol on the side chain of a benzene: its own message
   'NCC(OO)C(=O)O', // acid with an amine and a hydroperoxide: the acid is not alcohol + ketone (amino acids are named since I-36)
   'COC(=O)CCC(=O)OC', // two esters (each not ether + ketone): refused as manyEsters since I-35
-  'CC(=O)NC', // amide: not amine + ketone
+  'NC(=O)C1CCCCC1', // amide on a ring: not amine + ketone; refused (ringAmide) until I-40 (open-chain amides are named since I-37)
   'NCC(O)CC(=O)C(OO)C=O', // aldehyde > ketone > alcohol > amine, with a hydroperoxide (amines are named since I-36)
   'NCC#N', // nitrile > amine
   'ClCCOCCOOC', // prefix-only groups (ether and halide, named since I-34) with an unsupported peroxide

@@ -122,6 +122,8 @@
  * @property {number} [hydroxyBond] - For a –COOH only: id of the bond between the carbon and that OH oxygen.
  * @property {number} [esterOxygen] - For an ester –COO– only (design.md §13.4 I-35): id of its bridge O (between the C=O carbon and the O-bound group), part of the same group.
  * @property {number} [esterBond] - For an ester only: id of the bond between the C=O carbon and the bridge O.
+ * @property {number} [amideNitrogen] - For an amide –CONH₂ only (design.md §13.4 I-37): id of its N, part of the same group (the groups on it are prefixes with the locant `N`).
+ * @property {number} [amideBond] - For an amide only: id of the bond between the C=O carbon and the N.
  */
 
 /**
@@ -133,7 +135,7 @@
  * cited (IUPAC 2013 P-14.3.4.1).
  *
  * @typedef {object} SuffixStructure
- * @property {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'|'amine'} kind - Group kind (groups.js GROUP_KINDS; principal.js NAMED_KINDS).
+ * @property {'acid'|'ester'|'amide'|'alcohol'|'aldehyde'|'ketone'|'amine'} kind - Group kind (groups.js GROUP_KINDS; principal.js NAMED_KINDS).
  * @property {SuffixLocant[]} locants - One entry per group, ascending locants (a carbon with two OH appears twice).
  */
 
@@ -393,9 +395,9 @@ export function buildNameStructure(parts) {
  * SuffixLocant per group, ascending locants (then oxygen id); null without
  * sites.
  *
- * @param {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number, esterOxygen?: number, esterBond?: number}[]} sites - The suffix groups (carrying atom, heteroatom, bond; the OH of a –COOH; the bridge O of an ester).
+ * @param {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number, esterOxygen?: number, esterBond?: number, amideNitrogen?: number, amideBond?: number}[]} sites - The suffix groups (carrying atom, heteroatom, bond; the OH of a –COOH; the bridge O of an ester; the N of an amide).
  * @param {number[]} atoms - Parent atom ids in locant order.
- * @param {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'|null} [kind] - Group kind (default 'alcohol').
+ * @param {'acid'|'ester'|'amide'|'alcohol'|'aldehyde'|'ketone'|'amine'|null} [kind] - Group kind (default 'alcohol').
  * @returns {SuffixStructure|null} The suffix structure.
  */
 export function buildSuffix(sites, atoms, kind = 'alcohol') {
@@ -410,6 +412,7 @@ export function buildSuffix(sites, atoms, kind = 'alcohol') {
     bond: site.bond,
     ...(site.hydroxyAtom === undefined ? {} : { hydroxyAtom: site.hydroxyAtom, hydroxyBond: site.hydroxyBond }),
     ...(site.esterOxygen === undefined ? {} : { esterOxygen: site.esterOxygen, esterBond: site.esterBond }),
+    ...(site.amideNitrogen === undefined ? {} : { amideNitrogen: site.amideNitrogen, amideBond: site.amideBond }),
   }));
   locants.sort((p, q) => p.locant - q.locant || p.attachAtom - q.attachAtom);
   return { kind, locants };

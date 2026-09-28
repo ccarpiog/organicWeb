@@ -23,16 +23,20 @@
  *
  * Validation also admits a nitrogen bonded by single bonds to one, two or
  * three carbons that are not functional carbons (validate.js
- * isAmineNitrogen(), design.md §13.4 I-36), so every nitrogen of a
- * validated molecule is an 'amine' (groupKindOf()): the least senior kind
- * that can be a suffix (`-amina`), else the prefix `amino-`. The functions
+ * isAmineNitrogen(), design.md §13.4 I-36), an 'amine' (groupKindOf()):
+ * the least senior kind that can be a suffix (`-amina`), else the prefix
+ * `amino-`; and the amide group X(=O)–N (validate.js isAmideCarbon(),
+ * I-37), whose C=O oxygen and N are both 'amide' (`-amida`; validation
+ * refuses every molecule where an amide would be a prefix). The functions
  * below that speak of "oxygens" take such a nitrogen too: the N of a
- * principal amine is its suffix group's heteroatom.
+ * principal amine is its suffix group's heteroatom; an amide's C=O oxygen
+ * stands for its group and its N travels with it (SuffixLocant
+ * `amideNitrogen`).
  *
- * The principal kind is the most senior one present (ácido > éster >
+ * The principal kind is the most senior one present (ácido > éster > amida >
  * aldehído > cetona > alcohol > amina, seniority.js SENIORITY; validation never
- * lets an acid and an ester meet): its groups on the parent are the
- * suffix (`ácido …oico`, `…oato de …ilo`, `-al`, `-ona`, `-ol`, `-amina`), every other
+ * lets an acid, an ester or an amide meet): its groups on the parent are the
+ * suffix (`ácido …oico`, `…oato de …ilo`, `-amida`, `-al`, `-ona`, `-ol`, `-amina`), every other
  * group is a prefix (`oxo-`, `hidroxi-`, `amino-`). The carbon X of a C=O or a COOH
  * is always a skeleton carbon (a chain or ring atom), never part of a
  * prefix by itself (design.md §13.6 "Where X belongs"). A carboxyl group
@@ -42,26 +46,29 @@
  * stands for it, its bridge O travels with it (SuffixLocant `esterOxygen`).
  *
  * Also the traditional names of the smallest carbonyl compounds, acids and
- * esters that the app offers under "Otras formas válidas" (`acetona`,
+ * esters and amides that the app offers under "Otras formas válidas" (`acetona`,
  * `formaldehído`, `acetaldehído`, `ácido fórmico`, `ácido acético`,
- * `ácido oxálico`, `formiato de …`, `acetato de …`). Pure: reads topology only.
+ * `ácido oxálico`, `formiato de …`, `acetato de …`, `formamida`,
+ * `acetamida`). Pure: reads topology only.
  */
 
 import { seniorityRank } from './seniority.js';
-import { isCarboxylCarbon, isEsterCarbon } from '../model/validate.js';
+import { N_LOCANT } from './structure.js';
+import { isCarboxylCarbon, isEsterCarbon, isAmideCarbon, amideRole } from '../model/validate.js';
 
 /** Kinds of oxygen group the engine names, most senior first. */
 export const OXYGEN_KINDS = Object.freeze(['acid', 'ester', 'aldehyde', 'ketone', 'alcohol']);
 
-/** Every kind of group the engine can cite as a suffix, most senior first (the amine, I-36, last). */
-export const NAMED_KINDS = Object.freeze([...OXYGEN_KINDS, 'amine']);
+/** Every kind of group the engine can cite as a suffix, most senior first (the amide, I-37, after the ester; the amine, I-36, last). */
+export const NAMED_KINDS = Object.freeze(['acid', 'ester', 'amide', 'aldehyde', 'ketone', 'alcohol', 'amine']);
 
 /**
  * Kind of the group an oxygen of a validated molecule belongs to: either
  * oxygen of an ester group (validate.js isEsterCarbon(): the C=O oxygen
  * and the bridge O) is 'ester'; any other oxygen bonded to two atoms is an
  * 'ether' (validation admits no other such oxygen); either oxygen of a
- * carboxyl group (validate.js isCarboxylCarbon()) is 'acid';
+ * carboxyl group (validate.js isCarboxylCarbon()) is 'acid'; the C=O
+ * oxygen of an amide –CONH₂ (validate.js isAmideCarbon(), I-37) is 'amide';
  * any other OH (single bond to its carbon) is 'alcohol'; any other C=O is
  * 'aldehyde' when its carbon has at most one carbon neighbour (so it keeps
  * a hydrogen) and 'ketone' when it has two.
@@ -69,7 +76,7 @@ export const NAMED_KINDS = Object.freeze([...OXYGEN_KINDS, 'amine']);
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, {atom: number, order: number}[]>} adj - Its adjacency map.
  * @param {number} oxygen - An oxygen atom id.
- * @returns {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'|'ether'} The kind.
+ * @returns {'acid'|'ester'|'amide'|'alcohol'|'aldehyde'|'ketone'|'ether'} The kind.
  */
 export function oxygenKind(mol, adj, oxygen) {
   const links = adj.get(oxygen);
@@ -83,6 +90,9 @@ export function oxygenKind(mol, adj, oxygen) {
   if (isEsterCarbon(mol, adj, link.atom)) {
     return 'ester';
   }
+  if (isAmideCarbon(mol, adj, link.atom)) {
+    return 'amide';
+  }
   if (link.order === 1) {
     return 'alcohol';
   }
@@ -93,32 +103,33 @@ export function oxygenKind(mol, adj, oxygen) {
 /**
  * Kind of the group a heteroatom of a validated molecule belongs to, for
  * the atoms that can stand for a suffix group: an oxygen's kind
- * (oxygenKind()), 'amine' for a nitrogen (validation admits only amine
- * nitrogens, design.md §13.4 I-36), null for any other atom (a carbon, a
- * halogen).
+ * (oxygenKind()), 'amide' for the N of an amide group (design.md §13.4
+ * I-37; validate.js amideRole()), 'amine' for any other nitrogen
+ * (validation admits only amine and amide nitrogens, I-36), null for any
+ * other atom (a carbon, a halogen).
  *
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {number} atom - Any atom id.
- * @returns {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'|'ether'|'amine'|null} The kind.
+ * @returns {'acid'|'ester'|'amide'|'alcohol'|'aldehyde'|'ketone'|'ether'|'amine'|null} The kind.
  */
 export function groupKindOf(mol, adj, atom) {
   const element = mol.atoms.get(atom).element;
   if (element === 'N') {
-    return 'amine';
+    return amideRole(mol, adj, atom) === null ? 'amine' : 'amide';
   }
   return element === 'O' ? oxygenKind(mol, adj, atom) : null;
 }
 
 /**
  * The principal kind of a validated molecule: the most senior kind among
- * its oxygen groups and amine nitrogens (ácido > éster > aldehído > cetona
- * > alcohol > amina), or null without such a group (a hydrocarbon, a
+ * its oxygen groups and amine nitrogens (ácido > éster > amida > aldehído >
+ * cetona > alcohol > amina), or null without such a group (a hydrocarbon, a
  * halogen derivative or an ether: an ether oxygen is never principal).
  *
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, object[]>} adj - Its adjacency map.
- * @returns {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'|'amine'|null} The principal kind.
+ * @returns {'acid'|'ester'|'amide'|'alcohol'|'aldehyde'|'ketone'|'amine'|null} The principal kind.
  */
 export function principalKindOf(mol, adj) {
   let best = null;
@@ -140,9 +151,9 @@ export function principalKindOf(mol, adj) {
 /**
  * Tells whether an oxygen neighbour of a parent atom belongs to one of its
  * suffix groups (an oxygen of the principal kind; for an acid, both oxygens
- * of each –COOH; for an ester, both oxygens of the –COO–), or, when the
- * amine is principal, whether the atom is an amine nitrogen (design.md
- * §13.4 I-36).
+ * of each –COOH; for an ester, both oxygens of the –COO–; for an amide,
+ * its C=O oxygen and its N, I-37), or, when the amine is principal,
+ * whether the atom is an amine nitrogen (design.md §13.4 I-36).
  *
  * @param {object} mol - A validated molecule.
  * @param {Map<number, object[]>} adj - Its adjacency map.
@@ -157,8 +168,9 @@ export function isPrincipalOxygen(mol, adj, atom, principal) {
 /**
  * Tells whether an oxygen stands for one suffix group, so that each group
  * is counted once (P0, N0, suffix sites): an oxygen of the principal kind,
- * except the OH oxygen of a –COOH and the bridge O of an ester, which
- * belong to the same group as its C=O oxygen (design.md §13.4 I-33, I-35).
+ * except the OH oxygen of a –COOH, the bridge O of an ester and the N of
+ * an amide, which belong to the same group as its C=O oxygen (design.md
+ * §13.4 I-33, I-35, I-37).
  *
  * @param {object} mol - A validated molecule.
  * @param {Map<number, object[]>} adj - Its adjacency map.
@@ -171,8 +183,8 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
     return false;
   }
   const links = adj.get(atom);
-  // An amine's N, an OH, a C=O stand for their group; a –COOH or –COO– is represented by its C=O oxygen.
-  return (principal !== 'acid' && principal !== 'ester') || (links.length === 1 && links[0].order === 2);
+  // An amine's N, an OH, a C=O stand for their group; a –COOH, –COO– or –CONH₂ is represented by its C=O oxygen.
+  return !['acid', 'ester', 'amide'].includes(principal) || (links.length === 1 && links[0].order === 2);
 }
 
 /**
@@ -185,6 +197,11 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * otherwise. For an ester (design.md §13.4 I-35) the id names its bare
  * acid part, whatever its O-bound group: 'formate' for a metanoato
  * (`formiato de metilo`), 'acetate' for an etanoato (`acetato de etilo`).
+ * For a monoamide (design.md §13.4 I-37) 'formamide' for metanamida,
+ * 'acetamide' for etanamida, also when the only prefixes are groups on
+ * its N (`N-metilacetamida`, `N,N-dimetilformamida`; render.js renders the
+ * prefixes before the word, as for `N-metilanilina`); IUPAC 2013 retains
+ * formamide and acetamide as preferred names (P-66.1.1.1.1, from memory).
  * IUPAC 2013 retains formaldehyde and acetaldehyde (aldehydes,
  * P-66.6), acetone for general nomenclature (ketones, P-64), and formic,
  * acetic and oxalic acid as preferred names (acids, P-65.1.1.1), hence
@@ -192,10 +209,15 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * (design.md §13.1), never as the main name.
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
- * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|null} The id.
+ * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|null} The id.
  */
 export function carbonylTraditionalId(structure) {
   const { parentKind, parent, prefixes, suffix } = structure;
+  const onNitrogen = prefixes.every((group) => group.locants.every((site) => site.locant === N_LOCANT));
+  if (parentKind === 'chain' && suffix && suffix.kind === 'amide' && onNitrogen && suffix.locants.length === 1
+    && parent.double.length + parent.triple.length === 0) {
+    return { 1: 'formamide', 2: 'acetamide' }[parent.length] || null;
+  }
   if (parentKind !== 'chain' || prefixes.length > 0 || !suffix
     || parent.double.length + parent.triple.length > 0) {
     return null;

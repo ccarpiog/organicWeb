@@ -46,14 +46,14 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-34 | v2.14 Ethers | same, §3.14 | done — `docs/progress-archive/i-34.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-34.md` |
 | I-35 | v2.15 Esters | same, §3.15 | done — `docs/progress-archive/i-35.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-35.md` |
 | I-36 | v2.16 Amines | same, §3.16 | done — `docs/progress-archive/i-36.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-36.md` |
-| I-37 | v2.17 Amides | same, §3.17 | queued | — | — |
+| I-37 | v2.17 Amides | same, §3.17 | done — `docs/progress-archive/i-37.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-37.md` |
 | I-38 | v2.18 Nitriles | same, §3.18 | queued | — | — |
 | I-39 | v2.19 Functional combinations | same, §3.19 | queued | — | — |
 | I-40 | v2.20 Functions on rings | same, §3.20 | queued | — | — |
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-36 done; I-37…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-37 done; I-38…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
@@ -89,13 +89,13 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-37 (v2 §3.17 amides: `etanamida`, simple N-substitution
-(`N-metiletanamida`, `N,N-dimetil…`); C(=O)N treated as one unit). Build on I-36 (amine kind
-and `N` locants in `principal.js` / `numbering.js` / `render.js`, refusals in `validate.js`)
-and I-33 (acid chain-end suffix). Amides are still refused in `validate.js`. Seniority per
-design §13.6 (amide sits between ester and nitrile/aldehyde). Spec: design §13.4 row I-37,
-§13.6, and `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 17.
-Deploying stays a manual user step.
+Poll the inbox, then run I-38 (v2 §3.18 nitriles: `etanonitrilo`, `propanonitrilo`, the C≡N
+carbon is chain locant 1 like the acid/amide end; `ciano-` prefix below a more senior group;
+seniority per design §13.6: nitrile sits between amide and aldehyde). Build on I-37 (amide
+kind in `principal.js`, chain-end suffix, refusals in `validate.js`) and I-33 (acid
+chain-end suffix). Nitriles are still refused in `validate.js` (`HETEROATOM`). Spec: design
+§13.4 row I-38, §13.6, and `autoclaude/processed/215-rings-functional-groups-confirmed.md`
+§3 item 18. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -176,13 +176,16 @@ Deploying stays a manual user step.
 - Amines (I-36): amine kind in `principal.js`, `N` locants in `numbering.js` / `render.js`,
   refusals `sideChainAmine` / `substitutedPolyamine` / `symmetricAmine` in `validate.js`;
   tests `tests/unit/amines.test.js`, `tests/e2e/amines.spec.js`.
+- Amides (I-37): amide kind in `principal.js` (C(=O)N one group, `N` locants from I-36),
+  refusals `ringAmide` / `amidePrefix` / `manyAmides` / `substitutedPolyamide` / `imide` in
+  `validate.js`; oracle `generateAmides()`; tests `tests/unit/amides.test.js`, `tests/e2e/amides.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-36)
+## Verification (last phase, I-37)
 
-- `npm test` 0 (1038 pass) · `npm run check` 0 (107 files) · `npm run e2e` 0
-  (201 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (5111 pass, 500 amines).
+- `npm test` 0 (1077 pass) · `npm run check` 0 (109 files) · `npm run e2e` 0
+  (205 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (5611 pass, 500 amides).
 
 ## Open risks / deviations
 
@@ -346,10 +349,16 @@ Deploying stays a manual user step.
   substituted polyamines (N¹/N²) and symmetric amines refused; decisions from memory listed in
   `docs/progress-archive/i-36.md`. `scripts/oracle/README.md` stale since I-31.
 
+- I-37: open-chain amides only; ring amides (incl. `N-fenil…`), amide beside acid/ester or
+  two amides on separate pieces (`amidePrefix`, no multiplicative names), 3+ amides,
+  N-substituted diamides and imides refused; `formamida`/`acetamida` retained status from
+  memory. `scripts/oracle/README.md` still stale; seed 7 keeps 2 pre-existing carbonyl
+  generator failures (`docs/progress-archive/i-37.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-35 `037413b`, pushed. I-36 committed and pushed right after this
+- I-36 `336fc98`, pushed. I-37 committed and pushed right after this
   checkpoint (see `git log`).

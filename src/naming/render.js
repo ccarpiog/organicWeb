@@ -21,7 +21,11 @@
  * `propan-2-amina`, `butano-1,4-diamina`, `bencenamina`); the groups on its
  * nitrogen are prefixes with the locant `N` (`N-metiletanamina`,
  * `N,N-dimetilmetanamina`), always cited; an amine that is not principal
- * is the prefix `amino` (`(metilamino)`, `[etil(metil)amino]`). No
+ * is the prefix `amino` (`(metilamino)`, `[etil(metil)amino]`). An amide
+ * (design.md §13.4 I-37) takes the suffix `amida` with its locants never
+ * cited, like an acid (`etanamida`, `2-metilpropanamida`,
+ * `butanodiamida`, `prop-2-enamida`), and the groups on its N the locant
+ * `N` (`N,N-dimetiletanamida`). No
  * name is ever produced by substring translation.
  */
 
@@ -59,7 +63,7 @@ function locantParts(sites) {
 }
 
 /** Suffix kinds whose carbon is always a chain end, so their locant is never cited on a chain (IUPAC 2013 P-14.3.4.1). */
-export const TERMINAL_SUFFIXES = Object.freeze(['aldehyde', 'acid', 'ester']);
+export const TERMINAL_SUFFIXES = Object.freeze(['aldehyde', 'acid', 'ester', 'amide']);
 
 /**
  * Renders a numbered chain as a parent name: stem + connecting vowel +
@@ -103,8 +107,9 @@ export function suffixWords(suffix, lexicon) {
 /**
  * The atoms and bonds of the suffix groups: each carrying atom and its
  * heteroatom with their bond, plus the OH oxygen of a –COOH and its bond
- * (SuffixLocant `hydroxyAtom`, design.md §13.4 I-33) or the bridge O of an
- * ester and its bond to the C=O carbon (`esterOxygen`, I-35).
+ * (SuffixLocant `hydroxyAtom`, design.md §13.4 I-33), the bridge O of an
+ * ester and its bond to the C=O carbon (`esterOxygen`, I-35) or the N of
+ * an amide and its bond to the C=O carbon (`amideNitrogen`, I-37).
  *
  * @param {{locants: object[]}} suffix - The suffix structure.
  * @returns {{atoms: number[], bonds: number[]}} The ids.
@@ -114,11 +119,13 @@ export function suffixGroupIds(suffix) {
     site.atom, site.attachAtom,
     ...(site.hydroxyAtom === undefined ? [] : [site.hydroxyAtom]),
     ...(site.esterOxygen === undefined ? [] : [site.esterOxygen]),
+    ...(site.amideNitrogen === undefined ? [] : [site.amideNitrogen]),
   ]);
   const bonds = suffix.locants.flatMap((site) => [
     site.bond,
     ...(site.hydroxyBond === undefined ? [] : [site.hydroxyBond]),
     ...(site.esterBond === undefined ? [] : [site.esterBond]),
+    ...(site.amideBond === undefined ? [] : [site.amideBond]),
   ]);
   return { atoms, bonds };
 } // End of function suffixGroupIds()
@@ -794,8 +801,9 @@ export function assembleEster(acidParts, ester, lexicon) {
  * with `traditional` (a lexicon TRADITIONAL_NAMES id, `acetate`, from
  * principal.js carbonylTraditionalId()) its acid part is that one word
  * (`acetato de etilo`), referring to the parent and the –COO–; for a
- * benzene amine (`aniline`, design.md §13.4 I-36) the parent and its
- * suffix are that one word, after the N prefixes (`N-metilanilina`).
+ * benzene amine (`aniline`, design.md §13.4 I-36) or a small amide
+ * (`formamide`, `acetamide`, I-37) the parent and its suffix are that one
+ * word, after the N prefixes (`N-metilanilina`, `N,N-dimetilformamida`).
  * Prefix locants are never omitted when a prefix has the locant `N`
  * (`1-cloro-N-metilmetanamina`); the suffix locants follow the omission
  * rule without the N groups (`N-metiletanamina`).
@@ -818,9 +826,9 @@ export function renderName(structure, lexicon = lexiconEs, options = {}) {
   const suffix = structure.suffix || null;
   const omitPrefixLocants = !(options.citeLocants && !ring) && omitsPrefixLocants(structure, lexicon);
   const omitGroupLocants = omitPrefixLocants && !hasNitrogenLocants(structure.prefixes);
-  if (options.traditional === 'aniline') {
+  if (['aniline', 'formamide', 'acetamide'].includes(options.traditional)) {
     const group = suffixGroupIds(suffix);
-    const word = part(lexicon.traditionalName('aniline'), 'stem', [...new Set([...structure.parent.atoms, ...group.atoms])],
+    const word = part(lexicon.traditionalName(options.traditional), 'stem', [...new Set([...structure.parent.atoms, ...group.atoms])],
       [...structure.parent.bonds, ...group.bonds]);
     const parts = [...renderPrefixes(structure.prefixes, lexicon, omitGroupLocants), word];
     return { name: parts.map((p) => p.text).join(''), parts };

@@ -59,24 +59,25 @@ function nameOf(smiles) {
   return result.ok ? result.name : `${result.error.code} ${result.error.reason || ''}`.trim();
 }
 
-test('validation: amine nitrogens are admitted; amides, nitriles, imines, NH₃, N–N, N–O and N–halogen keep the refusal', () => {
+test('validation: amine nitrogens are admitted; ureas, hydrazides, nitriles, imines, NH₃, N–N, N–O and N–halogen keep the refusal', () => {
   for (const smiles of ['CN', 'CNC', 'CN(C)C', 'NCCN', 'C=CN', 'ClCCN', 'NCCO', 'CN(C)CCO', 'CC(N)C(=O)O', 'NCC(=O)OC',
     'CC(=O)OCCN', 'COCCN', 'NCCCC=O', 'NC1CCCCC1', 'NC1=CC=CC=C1', 'CN(C)C1=CC=CC=C1', 'NC1CCCCC1O', 'OC1CCC(CN)CC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Amide, nitrile, imine, ammonia, hydrazine, hydroxylamine, N-chloro amine, an N on a C=O carbon of a carbamate.
-  for (const smiles of ['CC(N)=O', 'CC(=O)NC', 'CC#N', 'CC=NC', 'N', 'CNN', 'CNO', 'CNCl', 'COC(N)=O']) {
+  // Urea, hydrazide, nitrile, imine, ammonia, hydrazine, hydroxylamine, N-chloro amine, an N on a C=O carbon of a carbamate
+  // (amides are named since I-37, tests/unit/amides.test.js).
+  for (const smiles of ['NC(=O)N', 'CC(=O)NN', 'CC#N', 'CC=NC', 'N', 'CNN', 'CNO', 'CNCl', 'COC(N)=O']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
   }
-  assert.match(MESSAGES.HETEROATOM, / y aminas \(con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂\)\.$/);
+  assert.match(MESSAGES.HETEROATOM, /, aminas \(con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂\) y amidas/);
   const mol = parseSmiles('CC(=O)NCCN');
   const adj = adjacency(mol);
   const nitrogens = [...mol.atoms.keys()].filter((id) => mol.atoms.get(id).element === 'N');
   assert.deepEqual(nitrogens.map((id) => isAmineNitrogen(mol, adj, id)), [false, true], 'an amide N is not an amine N');
   assert.deepEqual(amineNitrogens(mol), [nitrogens[1]]);
-  assert.equal(hasNameableHeteroatoms(mol, [...nitrogens, 3]), false);
+  assert.equal(hasNameableHeteroatoms(mol, [...nitrogens, 3]), true, 'the amide N and O are nameable since I-37');
 });
 
 test('ammonium and heterocycles are excluded: a charge is invalid, a fourth bond is a valence error, an N in a ring is RING_SYSTEM', () => {
@@ -141,7 +142,7 @@ test('refusals: side-chain amine on a ring, N-substituted polyamines, symmetric 
 });
 
 test('principal kind: the amine is the least senior suffix group', () => {
-  assert.deepEqual(NAMED_KINDS, ['acid', 'ester', 'aldehyde', 'ketone', 'alcohol', 'amine']);
+  assert.deepEqual(NAMED_KINDS, ['acid', 'ester', 'amide', 'aldehyde', 'ketone', 'alcohol', 'amine']);
   const mol = parseSmiles('NCCO');
   const adj = adjacency(mol);
   const [n, , , o] = [...mol.atoms.keys()];

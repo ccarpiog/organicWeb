@@ -78,6 +78,14 @@
  * `amino` prefix (aminoSubstituent()): the N plus its other groups, cited
  * without locants (`amino`, `(metilamino)`, `(dimetilamino)`,
  * `[etil(metil)amino]`).
+ *
+ * Amides (design.md §13.4 I-37): the –CONH₂ is the principal group, its C=O
+ * carbon a parent atom (a chain end, like an acid's), its C=O oxygen the
+ * suffix site and its N carried along (suffixSites() `amideNitrogen`); the
+ * groups on the N are prefixes with the locant `N`, exactly as for a
+ * principal amine (nitrogenSubstituents(): `N-metiletanamida`,
+ * `N,N-dimetiletanamida`). Validation refuses every amide that would be a
+ * prefix (`carbamoil-`, `acilamino-`).
  * Pure: topology only.
  */
 
@@ -349,25 +357,26 @@ function branchEntry(ctx, chainAtom, n) {
 
 /**
  * The groups on the nitrogens of the principal amine groups of a parent
- * (design.md §13.4 I-36): for each N of the principal kind bonded to a
- * parent atom, every other neighbour of that N roots a branch, named like
- * any branch whose carrying atom is the N (branchEntry()) and flagged
- * `nitrogen`: it is cited with the locant `N` (`N-metiletanamina`,
- * `N,N-dimetilmetanamina`). Empty unless the amine is principal.
+ * (design.md §13.4 I-36), or of its principal amide groups (I-37): for
+ * each N of the principal kind bonded to a parent atom, every other
+ * neighbour of that N roots a branch, named like any branch whose carrying
+ * atom is the N (branchEntry()) and flagged `nitrogen`: it is cited with
+ * the locant `N` (`N-metiletanamina`, `N,N-dimetilmetanamina`,
+ * `N-metiletanamida`). Empty unless the amine or the amide is principal.
  *
  * @param {object} ctx - Naming context (createNamingContext).
  * @param {number[]} chainAtoms - The parent's atom ids.
  * @returns {object[]} Entries as substituentsOf() returns them, plus `nitrogen: true`; `chainAtom` is the N.
  */
 export function nitrogenSubstituents(ctx, chainAtoms) {
-  if (ctx.principal !== 'amine') {
+  if (ctx.principal !== 'amine' && ctx.principal !== 'amide') {
     return [];
   }
   const inChain = new Set(chainAtoms);
   const result = [];
   for (const chainAtom of chainAtoms) {
     for (const n of ctx.adj.get(chainAtom)) {
-      if (!isPrincipalOxygen(ctx.mol, ctx.adj, n.atom, ctx.principal)) {
+      if (!isPrincipalOxygen(ctx.mol, ctx.adj, n.atom, ctx.principal) || ctx.mol.atoms.get(n.atom).element !== 'N') {
         continue;
       }
       for (const m of ctx.adj.get(n.atom)) {
@@ -490,13 +499,15 @@ export function hasAcylPrefix(structure) {
  * oxygen as `hydroxyAtom` / `hydroxyBond`; an ester –COO– (`…oato de
  * …ilo`) likewise, carrying its bridge O as `esterOxygen` / `esterBond`;
  * an amine (`-amina`, I-36) is one site per N (its other groups are
- * nitrogenSubstituents()).
+ * nitrogenSubstituents()); an amide –CONH₂ (`-amida`, I-37) is one site,
+ * its C=O oxygen, carrying its N as `amideNitrogen` / `amideBond` (the
+ * groups on that N are nitrogenSubstituents()).
  *
  * @param {object} mol - A validated molecule.
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {number[]} atoms - The parent's atom ids.
  * @param {string|null} [principal] - The principal oxygen kind (default: principalKindOf() of the molecule).
- * @returns {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number, esterOxygen?: number, esterBond?: number}[]} One site per group: carrying atom, oxygen, bond (and the OH of a –COOH, or the bridge O of an ester); in parent-atom order.
+ * @returns {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number, esterOxygen?: number, esterBond?: number, amideNitrogen?: number, amideBond?: number}[]} One site per group: carrying atom, oxygen, bond (and the OH of a –COOH, the bridge O of an ester or the N of an amide); in parent-atom order.
  */
 export function suffixSites(mol, adj, atoms, principal = principalKindOf(mol, adj)) {
   const sites = [];
@@ -514,6 +525,10 @@ export function suffixSites(mol, adj, atoms, principal = principalKindOf(mol, ad
         const bridge = adj.get(atom).find((m) => m.order === 1 && isPrincipalOxygen(mol, adj, m.atom, principal));
         site.esterOxygen = bridge.atom;
         site.esterBond = bridge.bond;
+      } else if (principal === 'amide') {
+        const nitrogen = adj.get(atom).find((m) => mol.atoms.get(m.atom).element === 'N');
+        site.amideNitrogen = nitrogen.atom;
+        site.amideBond = nitrogen.bond;
       }
       sites.push(site);
     }

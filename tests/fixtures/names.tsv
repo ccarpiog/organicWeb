@@ -586,3 +586,30 @@ NCC(=O)OC	2-aminoetanoato de metilo	amino ester	Ester > amine: the amine on the 
 CC(=O)OCCN	etanoato de 2-aminoetilo	amine on the O-bound group	The amino group is a prefix inside the O-bound group: 2-aminoetilo; acetato under Otras formas válidas	traditional=acetato de 2-aminoetilo
 CC(=O)OCCN(C)C	etanoato de 2-(dimetilamino)etilo	substituted amino on the O-bound group	(dimetilamino) inside the O-bound group name	traditional=acetato de 2-(dimetilamino)etilo
 CCCCN(CC)C(C)C	N-etil-N-isopropilbutan-1-amina	tertiary amine, isopropyl on N, three styles	Butane is the longest side; N-etil and N-isopropil in alphabetical order; the isopropyl group has the three prefix styles	pin=N-etil-N-(propan-2-il)butan-1-amina;substituted=N-etil-N-(1-metiletil)butan-1-amina;amineClass=butiletilisopropilamina
+# Amides (I-37): the amide –C(=O)–N is one characteristic group (never a ketone and an amine), below acids and esters (ácido > éster > amida > aldehído > cetona > alcohol > amina, IUPAC 2013 P-41), cited as the suffix -amida (-diamida; P-66.1.1.1); its C=O carbon is a chain carbon, always a chain end, locant 1, never cited (P-14.3.4.1); the groups on its N are prefixes with the locant N, cited always and before numbers (P-66.1.1.3, P-14.3.5), and do not count for locant omission; other groups are prefixes (oxo-, hidroxi-, amino-); formamida and acetamida (retained PINs, also N-substituted) only under Otras formas válidas; amides with a ring, with an acid or ester, on another carbon piece, more than two, N-substituted diamides and imides are refused (tests/unit/amides.test.js)
+NC=O	metanamida	smallest amide	IUPAC 2013 P-66.1.1.1: amide = parent hydride + suffix amide (Spanish -amida), the final o of metano elided before a vowel (P-16.7.1); formamida (retained PIN) only under Otras formas válidas	traditional=formamida
+CC(N)=O	etanamida	two-carbon amide	The amide carbon is carbon 1 of the chain, never cited (P-14.3.4.1); acetamida (retained PIN) only under Otras formas válidas	traditional=acetamida
+CCC(N)=O	propanamida	amide locant never cited	The CONH2 carbon is a chain end, locant 1, not written	
+CC(C)C(N)=O	2-metilpropanamida	branched amide	Chain of 3 carbons through the amide carbon (P-44.1.1, P-44.3); methyl at 2	
+CC(C)(C)C(N)=O	2,2-dimetilpropanamida	two methyls on carbon 2	Both methyls on carbon 2 of the propanamide chain	
+CC(=O)NC	N-metiletanamida	N-substituted amide	The methyl on the N is a prefix with the locant N (P-66.1.1.3); the N is never a chain atom; N-metilacetamida only under Otras formas válidas	traditional=N-metilacetamida
+CC(=O)N(C)C	N,N-dimetiletanamida	two identical groups on N	One N per group: N,N-dimetil (P-14.3.5)	traditional=N,N-dimetilacetamida
+CCC(=O)N(C)CC	N-etil-N-metilpropanamida	two different groups on N	N-etil before N-metil (alphabetical order; the locant N does not count)	
+CN(C)C=O	N,N-dimetilmetanamida	N,N-dimethylformamide	One-carbon parent; the retained formamida keeps the N groups: N,N-dimetilformamida only under Otras formas válidas	traditional=N,N-dimetilformamida
+CC(C)C(=O)NC	N,2-dimetilpropanamida	methyl on N and on carbon 2	N sorts before every number (P-14.3.5): N,2-dimetil	
+CCCCN(C)C(C)=O	N-butil-N-metiletanamida	a longer group on N	The parent must carry the amide (P-44.1.1): the butyl on the N is longer but is a prefix	traditional=N-butil-N-metilacetamida
+CCC(=O)NC(C)C	N-isopropilpropanamida	isopropyl on N, three styles	The group on the N follows the prefix styles	pin=N-(propan-2-il)propanamida;substituted=N-(1-metiletil)propanamida
+NC(=O)C(N)=O	etanodiamida	diamide of two carbons	Both carbons are amide carbons; -diamida keeps the o of etano before a consonant (P-16.7.1)	
+NC(=O)CCC(N)=O	butanodiamida	diamide, both chain ends	Two CONH2 groups at the chain ends, locants never cited	
+C=CC(N)=O	prop-2-enamida	unsaturated amide	The amide carbon is 1, the double bond 2; eno loses its o before -amida	
+CC=CC(N)=O	but-2-enamida	unsaturated amide, locant 2	Numbering from the amide carbon	
+C#CC(N)=O	prop-2-inamida	triple bond	The amide carbon is 1, the triple bond 2	
+CC(=O)CCC(N)=O	4-oxopentanamida	amide > ketone	The ketone C=O is oxo- (P-64.6)	
+O=CCC(N)=O	3-oxopropanamida	amide > aldehyde	The terminal CHO whose carbon is in the parent is oxo-	
+CC(O)CC(N)=O	3-hidroxibutanamida	amide > alcohol	The OH is hidroxi-	
+CC(N)C(N)=O	2-aminopropanamida	amide > amine	The amine NH2 is amino-; the amide N is part of the amide group	
+NCCC(=O)NC	3-amino-N-metilpropanamida	amino and N-methyl	amino- on carbon 3 and metil on N, alphabetical order	
+ClCC(N)=O	2-cloroetanamida	halogen on an amide	Two substituents on ethane (the amide and the chlorine): locants cited	
+NC(=O)CCOC	3-metoxipropanamida	ether prefix on an amide	The ether O is a metoxi- prefix	
+CC(=O)NCCO	N-(2-hidroxietil)etanamida	substituted group on N	The group on the N is named like a branch, with its own locants and parentheses	traditional=N-(2-hidroxietil)acetamida
+CCC(C)C(=O)N(CC)CC	N,N-dietil-2-metilbutanamida	N,N-diethyl and a branch	dietil before metil (multipliers ignored); N,N before 2	
