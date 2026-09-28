@@ -59,7 +59,10 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `N-` prefixes: `metanamida`, `etanamida`, `2-metilpropanamida`,
   `butanodiamida`, `prop-2-enamida`, `N-metiletanamida`,
   `N,N-dimetiletanamida`, `N-etil-N-metilpropanamida`, `4-oxopentanamida`,
-  `2-aminopropanamida`…), and of open-chain nitriles (the –C≡N one group,
+  `2-aminopropanamida`…; beside an acid, an ester or another amide the
+  amide is a prefix: `ácido 4-amino-4-oxobutanoico`, `ácido
+  3-(metilcarbamoil)pentanodioico`, `ácido 2-(acetilamino)etanoico`,
+  `2-(acetilamino)etanamida`), and of open-chain nitriles (the –C≡N one group,
   never an alkyne, `-nitrilo` with the nitrile carbon as carbon 1:
   `metanonitrilo`, `etanonitrilo`, `2-metilpropanonitrilo`,
   `butanodinitrilo`, `prop-2-enonitrilo`, `4-oxopentanonitrilo`,
@@ -244,9 +247,8 @@ the Keychain account is the WebDAV user).
   ether or amine whose identical parts each carry the
   principal group (multiplicative names, `oxidi-`, `azanodiil-`), and
   several amine groups on the main chain when some N carries other groups
-  (N¹/N² locants) are refused too, and so are an amide with an acid or an
-  ester or on a branch (`carbamoil-`, `acilamino-`), more than two amides,
-  a diamide with groups on an N and imides, and a nitrile bonded to the
+  (N¹/N² locants) are refused too, and so are more than two amides on one
+  chain (`-carboxamida`), a diamide with groups on an N and imides, and a nitrile bonded to the
   carbon of an acid, ester or amide (`ácido carbonocianídico`) and more
   than two nitriles on one chain when the nitrile is the principal group
   (`-carbonitrilo`); a nitrile below an acid, ester or amide, or on a

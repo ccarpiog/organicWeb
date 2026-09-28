@@ -1422,7 +1422,7 @@
    }
   ]
  },
- "CC(=O)NCC(=O)O": {
+ "CC(=O)NC1CCC(C(=O)O)CC1": {
   "code": "HETEROATOM",
   "principal": "acid",
   "steps": [
@@ -1439,16 +1439,16 @@
     "highlight": [
      {
       "atoms": [
-       6,
-       7,
-       8,
+       9,
+       10,
+       11,
        2,
        3,
        4
       ],
       "bonds": [
-       6,
-       7,
+       9,
+       10,
        2,
        3
       ],
@@ -1467,13 +1467,13 @@
     "highlight": [
      {
       "atoms": [
-       6,
-       7,
-       8
+       9,
+       10,
+       11
       ],
       "bonds": [
-       6,
-       7
+       9,
+       10
       ],
       "style": "parent"
      },
@@ -1503,13 +1503,13 @@
     "highlight": [
      {
       "atoms": [
-       6,
-       7,
-       8
+       9,
+       10,
+       11
       ],
       "bonds": [
-       6,
-       7
+       9,
+       10
       ],
       "style": "parent"
      },
@@ -1532,15 +1532,15 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un grupo amida (–CONH₂, –CONH– o –CON–) que no puede ser el grupo principal: o hay un grupo que va antes que la amida (un ácido –COOH o un éster –COO–), o la amida queda en una rama, fuera de la cadena principal. Entonces la amida se nombraría con un prefijo («carbamoil-» o «acilamino-», como «acetilamino-»), y eso aún no sé hacerlo."
+     "Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico)."
     ],
     "highlight": [
      {
       "atoms": [
        3,
        4,
-       7,
-       8
+       10,
+       11
       ],
       "bonds": [],
       "style": "candidate"
@@ -1550,7 +1550,7 @@
    }
   ]
  },
- "NC(=O)CC(=O)O": {
+ "NC(=O)C1CCC(C(=O)O)CC1": {
   "code": "HETEROATOM",
   "principal": "acid",
   "steps": [
@@ -1567,16 +1567,16 @@
     "highlight": [
      {
       "atoms": [
-       5,
-       6,
-       7,
+       8,
+       9,
+       10,
        1,
        2,
        3
       ],
       "bonds": [
-       5,
-       6,
+       8,
+       9,
        1,
        2
       ],
@@ -1595,13 +1595,13 @@
     "highlight": [
      {
       "atoms": [
-       5,
-       6,
-       7
+       8,
+       9,
+       10
       ],
       "bonds": [
-       5,
-       6
+       8,
+       9
       ],
       "style": "parent"
      },
@@ -1631,13 +1631,13 @@
     "highlight": [
      {
       "atoms": [
-       5,
-       6,
-       7
+       8,
+       9,
+       10
       ],
       "bonds": [
-       5,
-       6
+       8,
+       9
       ],
       "style": "parent"
      },
@@ -1660,15 +1660,15 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un grupo amida (–CONH₂, –CONH– o –CON–) que no puede ser el grupo principal: o hay un grupo que va antes que la amida (un ácido –COOH o un éster –COO–), o la amida queda en una rama, fuera de la cadena principal. Entonces la amida se nombraría con un prefijo («carbamoil-» o «acilamino-», como «acetilamino-»), y eso aún no sé hacerlo."
+     "Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico)."
     ],
     "highlight": [
      {
       "atoms": [
        1,
        3,
-       6,
-       7
+       9,
+       10
       ],
       "bonds": [],
       "style": "candidate"

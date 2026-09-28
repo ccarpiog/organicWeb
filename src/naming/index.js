@@ -137,11 +137,18 @@
  * (substituent.js nitrogenSubstituents()): `metanamida`, `etanamida`,
  * `2-metilpropanamida`, `prop-2-enamida`, `butanodiamida`,
  * `N-metiletanamida`, `N,N-dimetiletanamida`, `N-etil-N-metilpropanamida`,
- * `4-oxopentanamida`, `2-aminopropanamida`. Validation refuses amides with
- * a ring (`ringAmide`), with an acid or ester or on another carbon piece
- * (`amidePrefix`), more than two (`manyAmides`), diamides with groups on an
- * N (`substitutedPolyamide`) and imides (`imide`); an amide left out of the
- * suffix is refused here as a safety net (`amidePrefix`). The bare (or
+ * `4-oxopentanamida`, `2-aminopropanamida`. Beside an acid or an ester,
+ * or on another carbon piece, an amide is a prefix (I-39d): `amino` +
+ * `oxo` on its carbon when the chain reaches it (`ácido
+ * 4-amino-4-oxobutanoico`), else `carbamoil` (`ácido
+ * 3-(metilcarbamoil)pentanodioico`), or `acilamino` bonded through its N
+ * (`ácido 2-(acetilamino)etanoico`, `2-(acetilamino)etanamida`; P4 counts
+ * only the prefixes on the chain, numbering.js). Validation refuses
+ * amides with a ring (`ringAmide`), more than two on one carbon piece
+ * with the amide principal (`manyAmides`), diamides with groups on an N
+ * (`substitutedPolyamide`) and imides (`imide`); an amide cited neither as
+ * a suffix nor as a prefix is refused here as a safety net (`amidePrefix`,
+ * amidePrefixCount()). The bare (or
  * N-substituted) metanamida and etanamida also get `formamida` /
  * `acetamida` (`N,N-dimetilformamida`).
  *
@@ -401,7 +408,9 @@ function nameValidated(mol, options) {
       // Safety net (I-39c): without an acid every ester is a suffix group (validation, esterPlacementError()).
       return withGroups({ ok: false, error: esterPrefixError(esters) }, mol);
     }
-    if (amides.length > 0 && (!structure.suffix || structure.suffix.kind !== 'amide' || suffixCount(structure) !== amides.length)) {
+    const amideSuffixes = structure.suffix && structure.suffix.kind === 'amide' ? suffixCount(structure) : 0;
+    if (amides.length > 0 && amideSuffixes + amidePrefixCount(structure) !== amides.length) {
+      // Safety net (I-39d): every amide is a suffix group or one prefix (`amino…oxo`, `carbamoil`, `acilamino`).
       return withGroups({ ok: false, error: amidePrefixError(amides) }, mol);
     }
     const nitrileSuffixes = structure.suffix && structure.suffix.kind === 'nitrile' ? suffixCount(structure) : 0;
@@ -601,6 +610,27 @@ function esterPrefixError(esters) {
  */
 function amidePrefixError(amides) {
   return validationError('HETEROATOM', { message: AMIDE_PREFIX_MESSAGE, atoms: [...amides], reason: 'amidePrefix' });
+}
+
+/**
+ * The number of amide groups cited as prefixes in a name structure, at
+ * any depth, the O-bound group of an ester included (design.md §13.4
+ * I-39d): each amide N cited as an `amino` on its own carbon (an amide
+ * carbon in a chain, `4-amino-4-oxo…`, or the one carbon of a `carbamoil`
+ * group; the occurrence is flagged `amide`) and each acyl group seen from
+ * an amide's N (`amideAcyl`: the acyl of `acetilamino`). Every amide that
+ * is not a suffix group should be one.
+ *
+ * @param {{prefixes: object[], ester?: {alkyl: object}}} structure - A name or substituent structure.
+ * @returns {number} The count.
+ */
+export function amidePrefixCount(structure) {
+  const own = structure.prefixes.reduce((sum, group) => {
+    const sub = group.substituent;
+    const here = group.locants.filter((site) => (sub.amino && site.amide) || sub.amideAcyl).length;
+    return sum + here + group.locants.length * amidePrefixCount(sub);
+  }, 0);
+  return own + esterParts(structure).reduce((sum, part) => sum + amidePrefixCount(part.alkyl), 0);
 }
 
 /**

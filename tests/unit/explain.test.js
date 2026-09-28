@@ -159,6 +159,10 @@ const SNAPSHOT_SMILES = [
   'OC(=O)CC(C(=O)OC)CC(=O)O', // ácido 3-(metoxicarbonil)pentanodioico: alcoxicarbonil (I-39c)
   'CC(=O)OCC(=O)O', // ácido 2-(acetiloxi)etanoico: aciloxi (I-39c)
   'COC(=O)CC(=O)OCC', // propanodioato de etilo y metilo: a diester with two different groups (I-39c)
+  'CNC(=O)CCC(=O)O', // ácido 4-(metilamino)-4-oxobutanoico: acid > amide, the amide carbon in the chain (I-39d)
+  'OC(=O)CC(C(=O)NC)CC(=O)O', // ácido 3-(metilcarbamoil)pentanodioico: carbamoil (I-39d)
+  'CC(=O)N(C)CC(=O)O', // ácido 2-[acetil(metil)amino]etanoico: acilamino (I-39d)
+  'CC(=O)NCC(=O)N', // 2-(acetilamino)etanamida: two amides on different pieces, P4 (I-39d)
 ];
 
 /**

@@ -9,7 +9,7 @@
  * piece are both chain ends of the parent (`butanodioato de dimetilo`,
  * `propanodioato de etilo y metilo`). Covers the names in every style and
  * both lexicons, enclosure and multipliers, the refusals that stay
- * (`esterPrefix`, `manyEsters`, `mixedDiester`, rings, amides), the
+ * (`esterPrefix`, `manyEsters`, `mixedDiester`, rings), the
  * explanation, id invariance, Ordenar dibujo and the oracle generator. The
  * names themselves are also checked row by row in tests/fixtures/names.tsv.
  */
@@ -20,7 +20,6 @@ import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
 import { canonicalKey } from '../../src/model/graph.js';
 import {
   validateForNaming, diesterNeedsLocants, esterCarbons, ESTER_PREFIX_MESSAGE, MANY_ESTERS_MESSAGE, MIXED_DIESTER_MESSAGE,
-  AMIDE_PREFIX_MESSAGE,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { carbonylTraditionalId } from '../../src/naming/principal.js';
@@ -217,13 +216,11 @@ test('refusals that stay: esters on different pieces, three esters, a mixed dies
   assert.equal(diesterNeedsLocants(parseSmiles('COC(=O)CC(C)C(=O)OC'), esterCarbons(parseSmiles('COC(=O)CC(C)C(=O)OC'))), false);
   // A symmetric acid part with a substituent on the middle carbon needs no locants either.
   assert.equal(nameOf('COC(=O)CC(C)CC(=O)OCC'), '3-metilpentanodioato de etilo y metilo');
-  // Rings keep ringEster / ringAcid; amides beside an ester or acid keep amidePrefix (I-39d).
+  // Rings keep ringEster / ringAcid; amides beside an ester or acid are prefixes since I-39d.
   assert.equal(nameOf('COC(=O)C1CCC(C(=O)O)CC1'), 'HETEROATOM ringAcid');
   assert.equal(nameOf('COC(=O)CC1CCC(CC(=O)OC)CC1'), 'HETEROATOM ringEster');
-  const amide = named('NC(=O)CC(=O)OC');
-  assert.equal(amide.error.reason, 'amidePrefix');
-  assert.equal(amide.error.message, AMIDE_PREFIX_MESSAGE);
-  assert.equal(nameOf('NC(=O)CCC(=O)OCC(=O)O'), 'HETEROATOM amidePrefix');
+  assert.equal(nameOf('NC(=O)CC(=O)OC'), '3-amino-3-oxopropanoato de metilo');
+  assert.equal(nameOf('NC(=O)CCC(=O)OCC(=O)O'), 'ácido 2-[(4-amino-4-oxobutanoil)oxi]etanoico');
   // Two acids on different pieces joined by an ester: a carboxi- branch, refused by the engine.
   assert.equal(nameOf('OC(=O)CC(=O)OCC(=O)O'), 'HETEROATOM carboxySubstituent');
 }); // End of test 'refusals that stay…'

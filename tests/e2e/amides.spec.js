@@ -10,7 +10,7 @@
  * editor test API get their names (metanamida, N,N-dimetiletanamida,
  * N-etil-N-metilpropanamida, 2-metilpropanamida, butanodiamida,
  * 4-oxopentanamida, 2-aminopropanamida); "Ordenar dibujo" lays out an
- * amide; an amide with a ring, an amide with an acid, an N-substituted
+ * amide; an amide with a ring, three amides on one chain, an N-substituted
  * diamide and an imide are refused with their messages. Runs on the dev
  * server and on dist/index.html.
  */
@@ -215,7 +215,7 @@ test('loaded amides: N-groups, diamide, branches, other groups as prefixes; out-
   const error = page.locator('#results .results-error');
   for (const [smiles, text] of [
     ['NC(=O)C1CCCCC1', 'las amidas con anillo'],
-    ['NC(=O)CC(=O)O', '«carbamoil-» o «acilamino-»'],
+    ['NC(=O)CC(C(N)=O)CC(N)=O', '«-carboxamida»'],
     ['CNC(=O)CCC(N)=O', 'localizadores como N¹ y N⁴'],
     ['CC(=O)NC(C)=O', 'Eso es una imida'],
   ]) {

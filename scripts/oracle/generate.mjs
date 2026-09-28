@@ -24,7 +24,9 @@
  * I-39a), of acyl prefixes (I-39b: `formil`, `acetil`, `propanoil`… on
  * any carbon beside any principal group; generateAcyl()), of ester
  * prefixes and diesters (I-39c: `alcoxicarbonil`, `…-oxi…-oxo`, `aciloxi`
- * beside an acid, half esters and diesters; generateEsterPrefixes()),
+ * beside an acid, half esters and diesters; generateEsterPrefixes()), of
+ * amide prefixes (I-39d: `carbamoil`, `…-amino…-oxo`, `acilamino` beside
+ * an acid, an ester or another amide; generateAmidePrefixes()),
  * plus the list of cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
@@ -1492,6 +1494,150 @@ export function generateEsterPrefixes({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct ester-prefix molecules
   return molecules;
 } // End of function generateEsterPrefixes()
+
+/**
+ * Copies a molecule and bonds new amide groups to some of its carbons
+ * (design.md §13.4 I-39d): each hydrogen of a carbon in `only` (default:
+ * every carbon) is replaced, with probability `rate`, by an amide group in
+ * one of its two orientations — bonded through its C=O carbon X (X, its
+ * C=O and an N carrying none, one or two random saturated hydrocarbons of
+ * 1 to 3 carbons: `carbamoil`, `metilcarbamoil`, or `amino…oxo` when a
+ * chain reaches X) or through its N (the N, maybe with one such group,
+ * then X with its C=O, alone or with a random hydrocarbon of 1 to 4
+ * carbons: `formilamino`, `acetilamino`, `[acetil(metil)amino]`…); at
+ * least one when `rate` hits none and some carbon has a hydrogen.
+ *
+ * @param {object} mol - A molecule (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} rate - Probability of replacing each hydrogen.
+ * @param {Set<number>|null} [only] - The carbons that may carry an amide group (default: every carbon).
+ * @returns {object} The copy.
+ */
+export function amideGraft(mol, random, rate, only = null) {
+  const copy = cloneMolecule(mol);
+  const sites = [];
+  for (const [id, atom] of [...copy.atoms]) {
+    if (atom.element !== 'C' || (only && !only.has(id))) {
+      continue;
+    }
+    for (let k = CARBON_VALENCE - bondOrderSum(copy, id); k > 0; k -= 1) {
+      sites.push(id);
+    }
+  } // End of the loop over the carbons
+  let chosen = sites.filter(() => random() < rate);
+  if (chosen.length === 0 && sites.length > 0) {
+    chosen = [sites[Math.floor(random() * sites.length)]];
+  }
+  /**
+   * Grafts a random saturated or unsaturated hydrocarbon onto an atom, bonded by one of its carbons with a free valence.
+   *
+   * @param {number} atom - The atom that carries it.
+   * @param {number} most - The largest carbon count.
+   * @param {number} unsaturation - Unsaturation of the hydrocarbon.
+   * @returns {void}
+   */
+  const graftTail = (atom, most, unsaturation) => {
+    const tail = randomHydrocarbon(random, { size: randomInt(random, 1, most), unsaturation, branchiness: random() });
+    const ids = new Map([...tail.atoms.keys()].map((old) => [old, addAtom(copy)]));
+    for (const b of tail.bonds.values()) {
+      addBond(copy, ids.get(b.a), ids.get(b.b), b.order);
+    }
+    const free = [...ids.values()].filter((id) => CARBON_VALENCE - bondOrderSum(copy, id) >= 1);
+    addBond(copy, atom, free[Math.floor(random() * free.length)], 1);
+  };
+  for (const id of chosen) {
+    const carbon = addAtom(copy, {}, 'C');
+    const nitrogen = addAtom(copy, {}, 'N');
+    addBond(copy, carbon, addAtom(copy, {}, 'O'), 2);
+    addBond(copy, carbon, nitrogen, 1);
+    if (random() < 0.5) {
+      // Through the C=O carbon: C–X(=O)–N(R)0..2.
+      addBond(copy, id, carbon, 1);
+      for (let k = 0; k < 2 && random() < 0.4; k += 1) {
+        graftTail(nitrogen, 3, 0);
+      }
+    } else {
+      // Through the N: C–N(R?)–X(=O)(–R?).
+      addBond(copy, id, nitrogen, 1);
+      if (random() < 0.3) {
+        graftTail(nitrogen, 3, 0);
+      }
+      if (random() < 0.8) {
+        graftTail(carbon, 4, random() * 0.2); // Otherwise a formyl (`formilamino`).
+      }
+    }
+  } // End of the loop that bonds the amide groups
+  return copy;
+} // End of function amideGraft()
+
+/**
+ * Generates up to `count` distinct (by canonical key) molecules with amide
+ * prefixes (design.md §13.4 I-39d): a random acyclic hydrocarbon of 1
+ * carbon up to `maxSize` − 4 given one or two –COOH (carboxylate()), a
+ * –COOH turned into an ester (esterify()), or a –CONH₂ (amidate(), the
+ * amide then principal), and then amide groups on its carbons
+ * (amideGraft(): `carbamoil`, `amino…oxo`, `acilamino`); or one –COOH and
+ * one –CONH₂ at chain ends (`ácido 4-amino-4-oxobutanoico`); a share of
+ * them also with C=O, OH groups and halogens. Only molecules with an amide
+ * prefix that the engine names in every prefix style are kept (valid for
+ * naming — a third amide on the principal piece, a diamide with a group on
+ * its N… are refused — and not refused by the engine).
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateAmidePrefixes({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 8807 + 61);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60) {
+    attempts += 1;
+    const size = randomInt(random, 1, Math.max(1, maxSize - 4));
+    const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8 });
+    const kind = ['acid', 'acid', 'ester', 'amide', 'half'][Math.floor(random() * 5)];
+    let mol;
+    if (kind === 'amide') {
+      mol = amidate(base, random, 1, random() * 0.5);
+    } else if (kind === 'half') {
+      mol = carboxylate(amidate(base, random, 1, random() * 0.5), random, 1);
+    } else {
+      mol = carboxylate(base, random, random() < 0.7 ? 1 : 2);
+      if (kind === 'ester' && mol.atoms.size > base.atoms.size) {
+        mol = esterify(mol, random, randomHydrocarbon(random, { size: randomInt(random, 1, 3), unsaturation: 0, branchiness: random() }));
+      }
+    }
+    if (mol.atoms.size === base.atoms.size) {
+      continue; // No end carbon could take the principal group.
+    }
+    if (kind !== 'half') {
+      mol = amideGraft(mol, random, 0.02 + random() * 0.08, new Set(base.atoms.keys()));
+    }
+    const carbons = new Set([...mol.atoms].filter(([, atom]) => atom.element === 'C').map(([id]) => id));
+    if (random() < 0.15) {
+      mol = carbonylate(mol, random, 0.05 + random() * 0.1, carbons);
+    }
+    if (random() < 0.15) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.1, carbons);
+    }
+    if (random() < 0.15) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.15);
+    }
+    if (validateForNaming(mol) || amideCarbons(mol).length === 0) {
+      continue; // Not valid for naming (an imide, a diamide with a group on its N…), or no amide left.
+    }
+    const names = PREFIX_STYLES.map((prefixStyle) => nameMolecule(mol, { prefixStyle }));
+    if (!names.every((result) => result.ok) || !/carbamoil|amino/.test(names[0].name)) {
+      continue; // Refused by the engine in some style, or every amide ended up as a suffix.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct amide-prefix molecules
+  return molecules;
+} // End of function generateAmidePrefixes()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

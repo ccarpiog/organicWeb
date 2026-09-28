@@ -51,12 +51,12 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-39a | v2.19a `ciano-` prefix (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-39a.md` |
 | I-39b | v2.19b Acyl prefixes `formil-`/`acetil-` (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-39b.md` |
 | I-39c | v2.19c Ester prefixes and diesters (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39c.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-39c.md` |
-| I-39d | v2.19d Amide prefixes and pair matrix (split from I-39c) | same, §3.19 | queued | — | — |
+| I-39d | v2.19d Amide prefixes and pair matrix (split from I-39c) | same, §3.19 | done — `docs/progress-archive/i-39d.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-39d.md` |
 | I-40 | v2.20 Functions on rings | same, §3.20 | queued | — | — |
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-39c done; I-39d…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-39d done; I-40, I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo; I-39 into I-39a `ciano-`,
 I-39b acyl prefixes, I-39c ester prefixes + diesters, I-39d amide prefixes + pair matrix);
 phases may be split as they are selected. The v2 plan now lives in
@@ -93,12 +93,11 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-39d (amide beside an acid or ester, or on another carbon piece:
-`carbamoil-` / `acilamino-`, lifting `amidePrefix` only where covered; complete the pair matrix
-of ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina with counter-examples).
-Spec: design §13.4 row I-39d, §13.6; build on I-39c's ester-prefix machinery
-(`docs/progress-archive/i-39c.md`: `alcoxi…oxo` vs `alcoxicarbonil`, `aciloxi` via the I-39b
-acyl `-oil` prefixes). Then I-40, I-41. Deploying stays a manual user step.
+Poll the inbox, then run I-40 (functions on rings: lift `ringAcid`, `ringEster`, `ringAmide`,
+`ringNitrile`, `ringAldehyde`, `sideChainAlcohol`, `sideChainCarbonyl`, `sideChainAmine` where
+the design covers them — `-carboxílico`, `-carbaldehído`, `-carbonitrilo`, `-carboxamida`, …).
+Spec: design §13.4 row I-40, §13.6; likely large — split it at selection (e.g. suffixes on the ring
+vs groups on a ring's side chain). Then I-41. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -194,14 +193,16 @@ acyl `-oil` prefixes). Then I-40, I-41. Deploying stays a manual user step.
   `unnamedAcyl()` safety net (`index.js`); tests `tests/unit/acyl.test.js`, `tests/e2e/acyl.spec.js`.
 - Ester prefixes (I-39c): refusals in `validate.js`, prefixes in `substituent.js` / `render.js`,
   explain step `diester`; tests `tests/unit/ester-prefixes.test.js`, `tests/e2e/ester-prefixes.spec.js`.
+- Amide prefixes (I-39d): `carbamoil`/`acilamino` in `substituent.js` / `render.js`, P4 tweak in
+  `numbering.js`; tests `tests/unit/amide-prefixes.test.js`, `tests/e2e/amide-prefixes.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-39c)
+## Verification (last phase, I-39d)
 
-- Run by the orchestrator: `npm test` 0 (1229 pass) · `npm run check` 0 (117 files) ·
-  `npm run e2e` 0 (223 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0
-  (7611 pass, 500 ester-prefix).
+- Run by the orchestrator: `npm test` 0 (1275 pass) · `npm run check` 0 (119 files) ·
+  `npm run e2e` 0 (229 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0
+  (8111 pass, 500 amide-prefix).
 
 ## Open risks / deviations
 
@@ -347,10 +348,15 @@ acyl `-oil` prefixes). Then I-40, I-41. Deploying stays a manual user step.
   diesters needing locants (new `mixedDiester`). Those three word choices from memory
   (`docs/progress-archive/i-39c.md`).
 
+- I-39d: amides as prefixes beside an acid/ester (`amino…oxo`, `carbamoil-`, `acilamino-`) and on
+  a second carbon piece (`2-(acetilamino)etanamida`); `acilamino` chosen over `acetamido` from
+  memory; chain rule P4 no longer counts groups on the suffix N; still refused: 3+ amides on one
+  chain, substituted diamides, imides, rings (`docs/progress-archive/i-39d.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-39b `623da84`, pushed. I-39c committed and pushed right after this checkpoint (see
+- I-39c `4352393`, pushed. I-39d committed and pushed right after this checkpoint (see
   `git log`).

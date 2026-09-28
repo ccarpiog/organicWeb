@@ -102,8 +102,16 @@
  * suffix site and its N carried along (suffixSites() `amideNitrogen`); the
  * groups on the N are prefixes with the locant `N`, exactly as for a
  * principal amine (nitrogenSubstituents(): `N-metiletanamida`,
- * `N,N-dimetiletanamida`). Validation refuses every amide that would be a
- * prefix (`carbamoil-`, `acilamino-`).
+ * `N,N-dimetiletanamida`). An amide that is not principal (beside an acid
+ * or an ester, or on another carbon piece, I-39d) is a prefix, like an
+ * ester beside an acid: on a chain that reaches its carbon X, X carries an
+ * `oxo` and an `amino` prefix (the N with its groups; substituentsOf()
+ * flags both `amide`: `4-amino-4-oxo`); as the attachment atom of a branch
+ * from a carbon, X alone is a `carbamoil` group (`carbamoyl` set); seen
+ * from its N, X starts the acyl group of an `acilamino` prefix (an amino
+ * group whose acyl group is `amideAcyl`: `acetilamino`);
+ * amideAttachment() tells them apart. Only the amides whose carbon is a
+ * parent atom are suffix groups (principal.js isSuffixGroupAtomOf()).
  *
  * Nitriles (design.md §13.4 I-38): a principal –C≡N on the parent has its
  * carbon as a parent atom (a chain end) and its N as the suffix site
@@ -118,12 +126,12 @@
 
 import { adjacency, rootedTreeKey } from '../model/graph.js';
 import { isHalogen } from '../model/elements.js';
-import { isNitrileCarbon, carbonylKind, isEsterCarbon } from '../model/validate.js';
+import { isNitrileCarbon, carbonylKind, isEsterCarbon, isAmideCarbon } from '../model/validate.js';
 import { buildChainStructure } from './structure.js';
 import { numberParent, compareCitationKeys } from './numbering.js';
 import { citationKey, prefixNameKey } from './render.js';
 import { lexiconEs } from './lexicon.es.js';
-import { principalKindOf, isPrincipalOxygen, isSuffixOxygen } from './principal.js';
+import { principalKindOf, isPrincipalOxygen, isSuffixOxygen, isSuffixGroupAtomOf } from './principal.js';
 import { N_LOCANT } from './structure.js';
 
 /** Bond-order symbols that prefix a substituent identity key. */
@@ -313,7 +321,7 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
         continue;
       }
       const element = ctx.mol.atoms.get(n.atom).element;
-      if (parent && isPrincipalOxygen(ctx.mol, ctx.adj, n.atom, ctx.principal)) {
+      if (parent && isSuffixGroupAtomOf(ctx.mol, ctx.adj, chainAtom, n.atom, ctx.principal)) {
         continue; // A suffix group of the parent (`-ol`, `-al`, `-ona`), not a prefix.
       }
       if (isNitrileCarbon(ctx.mol, ctx.adj, n.atom)) {
@@ -322,14 +330,18 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
       }
       // The C=O and the bridge O of a non-principal ester whose carbon X is this chain atom (I-39c):
       // cited `oxo` and `alcoxi` at X's locant (`4-metoxi-4-oxobutanoico`); the entry says so (`ester`).
-      const ester = element === 'O' && isEsterCarbon(ctx.mol, ctx.adj, chainAtom) ? { ester: true } : {};
+      // Likewise the C=O and the N of a non-principal amide (I-39d): `oxo` and `amino` (`4-amino-4-oxobutanoico`).
+      let flag = element === 'O' && isEsterCarbon(ctx.mol, ctx.adj, chainAtom) ? { ester: true } : {};
+      if ((element === 'O' || element === 'N') && isAmideCarbon(ctx.mol, ctx.adj, chainAtom)) {
+        flag = { amide: true };
+      }
       if (isHalogen(element) || (element === 'O' && ctx.adj.get(n.atom).length === 1)) {
         let structure = halogenSubstituent(n.atom, element);
         if (element === 'O') {
           structure = n.order === 2 ? oxoSubstituent(n.atom) : hydroxySubstituent(n.atom);
         }
         result.push({
-          ...ester,
+          ...flag,
           chainAtom,
           attachAtom: n.atom,
           bond: n.bond,
@@ -343,7 +355,7 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
         });
         continue;
       }
-      result.push({ ...branchEntry(ctx, chainAtom, n), ...ester });
+      result.push({ ...branchEntry(ctx, chainAtom, n), ...flag });
     } // End of the loop over the neighbours of one chain atom
   } // End of the loop over the chain atoms
   return result;
@@ -468,7 +480,7 @@ export function nitrogenSubstituents(ctx, chainAtoms) {
   const result = [];
   for (const chainAtom of chainAtoms) {
     for (const n of ctx.adj.get(chainAtom)) {
-      if (!isPrincipalOxygen(ctx.mol, ctx.adj, n.atom, ctx.principal) || ctx.mol.atoms.get(n.atom).element !== 'N') {
+      if (!isSuffixGroupAtomOf(ctx.mol, ctx.adj, chainAtom, n.atom, ctx.principal) || ctx.mol.atoms.get(n.atom).element !== 'N') {
         continue;
       }
       for (const m of ctx.adj.get(n.atom)) {
@@ -690,6 +702,7 @@ export function groupPrefixes(substituents, atoms) {
       multipleBonds: [...sub.multipleBonds],
       ...(sub.etherCarbon === undefined ? {} : { etherCarbon: sub.etherCarbon, etherBond: sub.etherBond }),
       ...(sub.ester ? { ester: true } : {}),
+      ...(sub.amide ? { amide: true } : {}),
     });
   }
   const groups = [...byKey.values()];
@@ -845,7 +858,10 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
   // An ester carbon X (I-39c) seen from its bridge O is an acyl group too (the acyl of `aciloxi`);
   // seen from a carbon it is an `alcoxicarbonil` group (X alone, its `oxo` and `alcoxi` kept as prefixes).
   const esterSide = esterAttachment(ctx, chainAtom, attachAtom);
-  const acylOxygen = esterSide === 'bridge' ? esterOxoOf(ctx, attachAtom) : acylOxygenOf(ctx, attachAtom);
+  // An amide carbon X (I-39d) seen from its N is the acyl group of an `acilamino` prefix (`acetilamino`);
+  // seen from a carbon it is a `carbamoil` group (X alone, its `oxo` and `amino` kept as prefixes).
+  const amideSide = amideAttachment(ctx, chainAtom, attachAtom);
+  const acylOxygen = esterSide === 'bridge' || amideSide === 'nitrogen' ? esterOxoOf(ctx, attachAtom) : acylOxygenOf(ctx, attachAtom);
   const prefixesOf = (chain) => subsByChain.get(chain)
     .filter((sub) => sub.attachAtom !== acylOxygen)
     .map((sub) => ({ atom: sub.chainAtom, key: sub.key, citation: sub.citation }));
@@ -870,8 +886,30 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
     bonds: subtree.bonds,
     ...(acyl ? { acyl: true } : {}),
     ...(esterSide === 'carbon' ? { alkoxycarbonyl: true } : {}),
+    ...(amideSide === 'nitrogen' ? { amideAcyl: true } : {}),
+    ...(amideSide === 'carbon' ? { carbamoyl: true } : {}),
   };
 } // End of function buildSubstituent()
+
+/**
+ * How a branch reaches an amide carbon X (design.md §13.4 I-39d):
+ * 'nitrogen' when the carrying atom is X's N (X starts the acyl group of
+ * an `acilamino` prefix: `acetilamino`, `formilamino`, `propanoilamino`),
+ * 'carbon' when it is a carbon (X alone, with its C=O and its N, is a
+ * `carbamoil` prefix: `carbamoil`, `metilcarbamoil`), null when X is not
+ * an amide carbon. A principal amide on the parent is never a branch.
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {number} chainAtom - The carrying atom.
+ * @param {number} attachAtom - The attachment atom.
+ * @returns {'nitrogen'|'carbon'|null} The side.
+ */
+export function amideAttachment(ctx, chainAtom, attachAtom) {
+  if (!isAmideCarbon(ctx.mol, ctx.adj, attachAtom)) {
+    return null;
+  }
+  return ctx.mol.atoms.get(chainAtom).element === 'N' ? 'nitrogen' : 'carbon';
+}
 
 /**
  * How a branch reaches an ester carbon X (design.md §13.4 I-39c): 'bridge'

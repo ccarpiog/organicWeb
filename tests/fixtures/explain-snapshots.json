@@ -57960,5 +57960,2405 @@
     ]
    }
   ]
+ },
+ "CNC(=O)CCC(=O)O": {
+  "name": "ácido 4-(metilamino)-4-oxobutanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 5 carbonos, 9 hidrógenos, 1 átomo de nitrógeno y 3 átomos de oxígeno (C₅H₉NO₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono. En el grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono. El nitrógeno unido a dos carbonos se ve como NH: lleva un hidrógeno. Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno. El nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       6,
+       5,
+       3,
+       2,
+       1,
+       4,
+       8,
+       9
+      ],
+      "bonds": [
+       6,
+       5,
+       4,
+       2,
+       1,
+       3,
+       7,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo amida (–CONH₂, –CONH– o –CON–). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > amida > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que la amida se nombra con dos [[prefijos|prefijo]], delante del nombre.",
+     "El carbono de la amida está en la [[cadena principal]] (en un extremo), y la cadena lo cuenta como un carbono más. Entonces su C=O se nombra con «oxo-», y su nitrógeno, junto con los grupos unidos a él, con el [[prefijo]] «amino-» (aquí, «metilamino»), los dos con el número de ese carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Las cadenas que llevan menos grupos –COOH quedan descartadas.",
+     "Solo una cadena lleva el grupo –COOH: tiene 4 carbonos.",
+     "El carbono de la amida que se nombra con «4-metilamino» y «4-oxo» sí forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Pero la cadena no puede atravesar el nitrógeno de una amida: los grupos unidos a él van en el [[prefijo]] «amino-»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       6,
+       5,
+       3
+      ],
+      "bonds": [
+       6,
+       5,
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 4; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 4. Gana la opción B.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 4-(metilamino)-4-oxobutanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       6,
+       5,
+       3
+      ],
+      "bonds": [
+       6,
+       5,
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      7,
+      1
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      3,
+      4
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         4
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         4,
+         5,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        1
+       ],
+       [
+        5,
+        2
+       ],
+       [
+        6,
+        3
+       ],
+       [
+        7,
+        4
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         6,
+         5,
+         3
+        ],
+        "bonds": [
+         6,
+         5,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        7,
+        1
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        5,
+        3
+       ],
+       [
+        3,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las amidas que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y «amino-» con el mismo número; unidas por su carbono, «carbamoil-» (como «metilcarbamoil»); unidas por su nitrógeno, «acilamino-» (como «acetilamino»).",
+     "En el carbono 4 está el nitrógeno de una amida: se escribe «4-(metilamino)».",
+     "En el carbono 4, «metilamino» no es una amina: es el nitrógeno de una amida cuyo carbono está en la [[cadena principal]], con los grupos unidos a él. El C=O de ese mismo carbono se nombra con «oxo-»: «4-metilamino» y «4-oxo» juntos describen la amida.",
+     "Se nombra como una amina pequeña: primero los grupos unidos al nitrógeno, sin números (todos van en el nitrógeno), y después «amino», todo junto: «metilamino».",
+     "En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo con sus propios sustituyentes.",
+     "En el carbono 4 hay un oxígeno unido con un enlace doble (C=O): se escribe «4-oxo».",
+     "El C=O del carbono 4 es el de una amida: su carbono está en la [[cadena principal]], así que la amida se nombra con dos prefijos con el mismo número, «oxo-» para su C=O y «amino-» para su nitrógeno, con los grupos unidos a él."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       6,
+       5,
+       3
+      ],
+      "bonds": [
+       6,
+       5,
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      4
+     ],
+     [
+      3,
+      4
+     ]
+    ],
+    "options": [
+     {
+      "label": "metilamino",
+      "text": "En el carbono 4 está el nitrógeno de una amida: se escribe «4-(metilamino)». En el carbono 4, «metilamino» no es una amina: es el nitrógeno de una amida cuyo carbono está en la [[cadena principal]], con los grupos unidos a él. El C=O de ese mismo carbono se nombra con «oxo-»: «4-metilamino» y «4-oxo» juntos describen la amida. Se nombra como una amina pequeña: primero los grupos unidos al nitrógeno, sin números (todos van en el nitrógeno), y después «amino», todo junto: «metilamino». En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo con sus propios sustituyentes.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         6,
+         5,
+         3
+        ],
+        "bonds": [
+         6,
+         5,
+         4
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        4
+       ]
+      ]
+     },
+     {
+      "label": "oxo",
+      "text": "En el carbono 4 hay un oxígeno unido con un enlace doble (C=O): se escribe «4-oxo». El C=O del carbono 4 es el de una amida: su carbono está en la [[cadena principal]], así que la amida se nombra con dos prefijos con el mismo número, «oxo-» para su C=O y «amino-» para su nitrógeno, con los grupos unidos a él.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         6,
+         5,
+         3
+        ],
+        "bonds": [
+         6,
+         5,
+         4
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "order",
+    "title": "Ordena alfabéticamente",
+    "text": [
+     "Los sustituyentes se escriben por orden alfabético: «metilamino» y «oxo».",
+     "«metilamino» va antes que «oxo» (m va antes que o).",
+     "Los prefijos de las amidas también se ordenan por su nombre completo: «carbamoil» va por la c, «metilcarbamoil» por la m, «acetilamino» por la a; y «amino» y «oxo», aunque describan la misma amida, se ordenan cada uno por su letra.",
+     "Un prefijo de amina con grupos en su nitrógeno se ordena por su nombre completo, con di- incluido: «metilamino» va por la m."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La amida que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 4-(metilamino)-4-oxobutanoico».",
+     "El nombre completo es «ácido 4-(metilamino)-4-oxobutanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       6,
+       5,
+       3
+      ],
+      "bonds": [
+       6,
+       5,
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      7,
+      1
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      3,
+      4
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metilamino»"
+     },
+     {
+      "text": "metilamino",
+      "kind": "prefix",
+      "meaning": "sustituyente, parte de una amida cuyo carbono está en la cadena principal: su nitrógeno, con los grupos unidos a él"
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «oxo»"
+     },
+     {
+      "text": "oxo",
+      "kind": "prefix",
+      "meaning": "sustituyente, parte de una amida cuyo carbono está en la cadena principal: su C=O"
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "meaning": "4 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       3,
+       2
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metilamino",
+      "kind": "prefix",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       3,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "oxo",
+      "kind": "prefix",
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "atoms": [
+       7,
+       6,
+       5,
+       3
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       6,
+       5,
+       4
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "OC(=O)CC(C(=O)NC)CC(=O)O": {
+  "name": "ácido 3-(metilcarbamoil)pentanodioico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 7 carbonos, 11 hidrógenos, 1 átomo de nitrógeno y 5 átomos de oxígeno (C₇H₁₁NO₅).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno de un grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En cada grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono. En el grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono. El nitrógeno unido a dos carbonos se ve como NH: lleva un hidrógeno. Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno. El nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       10,
+       11,
+       6,
+       7,
+       8,
+       9,
+       3,
+       1,
+       12,
+       13
+      ],
+      "bonds": [
+       3,
+       4,
+       9,
+       10,
+       5,
+       6,
+       7,
+       8,
+       2,
+       1,
+       11,
+       12
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 2 grupos –COOH (cada uno, un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH). Son [[grupos funcionales|grupo funcional]]: la molécula es un ácido carboxílico con 2 grupos ácido.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono de cada –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Esos carbonos son carbonos de la cadena: se cuentan al buscarla y al numerarla.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "Aquí hay 2 grupos –COOH, uno en cada extremo de la cadena principal, así que el sufijo dice cuántos: «-dioico» («di» = 2).",
+     "También tiene un grupo amida (–CONH₂, –CONH– o –CON–). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > amida > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que la amida se nombra con un [[prefijo]], delante del nombre.",
+     "La amida tiene su carbono fuera de la [[cadena principal]]: la amida está unida a la cadena por ese carbono y se nombra con un solo [[prefijo]] que lo incluye todo, «carbamoil-» (el C=O con su nitrógeno); si el nitrógeno lleva grupos de carbonos, sus nombres van delante, sin números (aquí, «metilcarbamoil»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       1,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       2,
+       1,
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Las cadenas que llevan menos grupos –COOH quedan descartadas.",
+     "Solo una cadena lleva los 2 grupos –COOH: tiene 5 carbonos.",
+     "La [[cadena principal]] elegida con las reglas de siempre no pasa por el carbono de la amida de «metilcarbamoil»: ese carbono queda fuera de la cadena y el [[prefijo]] ya lo incluye."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       10,
+       11
+      ],
+      "bonds": [
+       3,
+       4,
+       9,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       2,
+       1,
+       11,
+       12
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Empieces por donde empieces, salen los mismos números: 3. Todas las formas dan el mismo nombre.",
+     "Los dos grupos –COOH están en los extremos, en los carbonos 1 y 5. Siempre es así, de modo que sus números no se escriben: «ácido 3-(metilcarbamoil)pentanodioico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       10,
+       11
+      ],
+      "bonds": [
+       3,
+       4,
+       9,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      10,
+      4
+     ],
+     [
+      11,
+      5
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las amidas que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y «amino-» con el mismo número; unidas por su carbono, «carbamoil-» (como «metilcarbamoil»); unidas por su nitrógeno, «acilamino-» (como «acetilamino»).",
+     "En el carbono 3 hay una amida unida por su carbono: se escribe «3-(metilcarbamoil)».",
+     "«metilcarbamoil» es el [[prefijo]] de una amida unida a la cadena principal por el carbono de su C=O. No es el [[grupo principal]]: el ácido carboxílico va antes que la amida. Ese carbono no está en la cadena, así que el prefijo lo incluye: «carbamoil» es el grupo –CO–NH₂ entero, el C=O con su nitrógeno.",
+     "El nitrógeno lleva además un grupo metilo: ese grupo se escribe delante de «carbamoil», sin números (todos van en el nitrógeno), todo junto: «metilcarbamoil».",
+     "En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo con sus propios sustituyentes."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       10,
+       11
+      ],
+      "bonds": [
+       3,
+       4,
+       9,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "metilcarbamoil",
+      "text": "En el carbono 3 hay una amida unida por su carbono: se escribe «3-(metilcarbamoil)». «metilcarbamoil» es el [[prefijo]] de una amida unida a la cadena principal por el carbono de su C=O. No es el [[grupo principal]]: el ácido carboxílico va antes que la amida. Ese carbono no está en la cadena, así que el prefijo lo incluye: «carbamoil» es el grupo –CO–NH₂ entero, el C=O con su nitrógeno. El nitrógeno lleva además un grupo metilo: ese grupo se escribe delante de «carbamoil», sin números (todos van en el nitrógeno), todo junto: «metilcarbamoil». En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo con sus propios sustituyentes.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         5,
+         10,
+         11
+        ],
+        "bonds": [
+         3,
+         4,
+         9,
+         10
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         6,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La amida que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-dioico», sin número.",
+     "«di» quiere decir que hay 2 grupos –COOH en la cadena principal.",
+     "Los –COOH no llevan número: sus carbonos siempre son los dos extremos.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se queda delante de «-dioico», porque empieza por consonante: «ácido 3-(metilcarbamoil)pentanodioico».",
+     "El nombre completo es «ácido 3-(metilcarbamoil)pentanodioico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       10,
+       11
+      ],
+      "bonds": [
+       3,
+       4,
+       9,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       2,
+       1,
+       11,
+       12
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      10,
+      4
+     ],
+     [
+      11,
+      5
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metilcarbamoil»"
+     },
+     {
+      "text": "metilcarbamoil",
+      "kind": "prefix",
+      "meaning": "sustituyente: una amida unida por el carbono de su C=O, con un grupo metilo en su nitrógeno"
+     },
+     {
+      "text": "pent",
+      "kind": "stem",
+      "meaning": "5 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     },
+     {
+      "text": "-dioico",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       2,
+       1,
+       11,
+       12
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metilcarbamoil",
+      "kind": "prefix",
+      "atoms": [
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "pent",
+      "kind": "stem",
+      "atoms": [
+       2,
+       4,
+       5,
+       10,
+       11
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       4,
+       9,
+       10
+      ]
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       2,
+       3,
+       1,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       2,
+       1,
+       11,
+       12
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1,
+       11,
+       12,
+       13
+      ],
+      "bonds": [
+       2,
+       1,
+       11,
+       12
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)N(C)CC(=O)O": {
+  "name": "ácido 2-[acetil(metil)amino]etanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 5 carbonos, 9 hidrógenos, 1 átomo de nitrógeno y 3 átomos de oxígeno (C₅H₉NO₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono. En el grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono. El nitrógeno unido a tres carbonos se ve como N, sin hidrógenos. Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno. El nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       6,
+       4,
+       2,
+       5,
+       1,
+       3,
+       8,
+       9
+      ],
+      "bonds": [
+       6,
+       5,
+       1,
+       2,
+       3,
+       4,
+       7,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo amida (–CONH₂, –CONH– o –CON–). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > amida > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que la amida se nombra con un [[prefijo]], delante del nombre.",
+     "La amida está unida a la cadena por su nitrógeno: el carbono del C=O queda del otro lado y empieza un grupo acilo (como «acetil»). Esa amida se nombra con el [[prefijo]] «acilamino-»: el nombre del grupo acilo más «amino», que es el nitrógeno (aquí, «acetil(metil)amino»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       5,
+       1,
+       3
+      ],
+      "bonds": [
+       5,
+       1,
+       2,
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Las cadenas que llevan menos grupos –COOH quedan descartadas.",
+     "Solo una cadena lleva el grupo –COOH: tiene 2 carbonos.",
+     "La cadena no puede atravesar el nitrógeno de una amida: el carbono del C=O de «acetil(metil)amino» queda al otro lado, y el [[prefijo]] ya lo incluye."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       6
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 2; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 2. Gana la opción B.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-[acetil(metil)amino]etanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       6
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       5,
+       1,
+       3
+      ],
+      "bonds": [
+       5,
+       1,
+       2,
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      7,
+      1
+     ],
+     [
+      6,
+      2
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         2
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         7
+        ],
+        "bonds": [
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        1
+       ],
+       [
+        7,
+        2
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         6
+        ],
+        "bonds": [
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        7,
+        1
+       ],
+       [
+        6,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las amidas que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y «amino-» con el mismo número; unidas por su carbono, «carbamoil-» (como «metilcarbamoil»); unidas por su nitrógeno, «acilamino-» (como «acetilamino»).",
+     "En el carbono 2 hay una amida unida por su nitrógeno: se escribe «2-[acetil(metil)amino]».",
+     "«acetil(metil)amino» es el [[prefijo]] de una amida unida a la cadena principal por su nitrógeno. No es el [[grupo principal]]: el ácido carboxílico va antes que la amida. Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, «acetil». El prefijo es el nombre del grupo acilo más «amino», que es el nitrógeno.",
+     "Con 2 carbonos (CH₃–CO–) se llama «acetil»: es un nombre tradicional que la IUPAC (2013) prefiere a «etanoil».",
+     "El nitrógeno lleva además un grupo metilo. Los grupos unidos al nitrógeno van por orden alfabético, sin números, y cada uno después del primero va entre paréntesis: «acetil(metil)amino».",
+     "En el nombre va entre corchetes [ ], porque es un prefijo compuesto y ya lleva paréntesis dentro."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       6
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       5,
+       1,
+       3
+      ],
+      "bonds": [
+       5,
+       1,
+       2,
+       3,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      6,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "acetil(metil)amino",
+      "text": "En el carbono 2 hay una amida unida por su nitrógeno: se escribe «2-[acetil(metil)amino]». «acetil(metil)amino» es el [[prefijo]] de una amida unida a la cadena principal por su nitrógeno. No es el [[grupo principal]]: el ácido carboxílico va antes que la amida. Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, «acetil». El prefijo es el nombre del grupo acilo más «amino», que es el nitrógeno. Con 2 carbonos (CH₃–CO–) se llama «acetil»: es un nombre tradicional que la IUPAC (2013) prefiere a «etanoil». El nitrógeno lleva además un grupo metilo. Los grupos unidos al nitrógeno van por orden alfabético, sin números, y cada uno después del primero va entre paréntesis: «acetil(metil)amino». En el nombre va entre corchetes [ ], porque es un prefijo compuesto y ya lleva paréntesis dentro.",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         6
+        ],
+        "bonds": [
+         6
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4,
+         2,
+         5,
+         1,
+         3
+        ],
+        "bonds": [
+         5,
+         1,
+         2,
+         3,
+         4
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La amida que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 2-[acetil(metil)amino]etanoico».",
+     "El nombre completo es «ácido 2-[acetil(metil)amino]etanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       6
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       5,
+       1,
+       3
+      ],
+      "bonds": [
+       5,
+       1,
+       2,
+       3,
+       4
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      7,
+      1
+     ],
+     [
+      6,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «acetil(metil)amino»"
+     },
+     {
+      "text": "acetil(metil)amino",
+      "kind": "prefix",
+      "meaning": "sustituyente: una amida unida por su nitrógeno: el grupo acilo («-oil», «formil», «acetil») más «amino»"
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       6,
+       4
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "[",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "acetil(metil)amino",
+      "kind": "prefix",
+      "atoms": [
+       4,
+       2,
+       5,
+       1,
+       3
+      ],
+      "bonds": [
+       5,
+       1,
+       2,
+       3,
+       4
+      ]
+     },
+     {
+      "text": "]",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       7,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)NCC(=O)N": {
+  "name": "2-(acetilamino)etanamida",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 4 carbonos, 8 hidrógenos, 2 átomos de nitrógeno y 2 átomos de oxígeno (C₄H₈N₂O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces, y cada oxígeno con enlace doble ocupa el sitio de dos. En cada grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono. Un nitrógeno unido a un solo carbono se ve como NH₂: lleva dos hidrógenos. Un nitrógeno unido a dos carbonos se ve como NH: lleva un hidrógeno. Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno. Cada nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5,
+       4,
+       2,
+       1,
+       3,
+       7,
+       8
+      ],
+      "bonds": [
+       5,
+       4,
+       1,
+       2,
+       3,
+       6,
+       7
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –CONH₂: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno con dos hidrógenos. Es un [[grupo funcional]]: la molécula es una amida.",
+     "El C=O y el nitrógeno forman un solo grupo: el C=O de una amida no es una cetona, ni su nitrógeno una [[amina]].",
+     "El carbono de la amida solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo amida es el [[grupo principal]]: se nombra con el [[sufijo]] «-amida», al final del nombre (como en «etanamida»).",
+     "Tiene además otro grupo amida, que no está en la [[cadena principal]]: las dos amidas están en partes de la molécula separadas por un nitrógeno o un oxígeno, que la cadena no puede atravesar. Solo la amida de la cadena principal va en el sufijo; la otra se nombra con un [[prefijo]].",
+     "La amida está unida a la cadena por su nitrógeno: el carbono del C=O queda del otro lado y empieza un grupo acilo (como «acetil»). Esa amida se nombra con el [[prefijo]] «acilamino-»: el nombre del grupo acilo más «amino», que es el nitrógeno (aquí, «acetilamino»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos amida, porque la amida es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos amida, gana la más larga.",
+     "El carbono de cada grupo amida forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Su oxígeno y su nitrógeno no forman parte de ella.",
+     "De las cadenas que llevan el grupo amida, la más larga tiene 2 carbonos. Hay 2 cadenas de 2. Pulsa cada opción para verlas.",
+     "La cadena no puede atravesar el nitrógeno de una amida: el carbono del C=O de «acetilamino» queda al otro lado, y el [[prefijo]] ya lo incluye."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 2",
+      "text": "Una cadena de 2 carbonos con el grupo amida.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 2",
+      "text": "Una cadena de 2 carbonos con el grupo amida.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6
+        ],
+        "bonds": [
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "tiebreak",
+    "title": "Desempates",
+    "text": [
+     "Varias cadenas son igual de largas. Hay que desempatar.",
+     "Gana la cadena con más [[sustituyentes|sustituyente]]: cuentan las ramas, pero no los grupos unidos al nitrógeno del grupo amida principal (los de la letra «N»): van unidos a ese nitrógeno, no a la cadena. opción 1: 0 sustituyentes; opción 2: 1 sustituyente.",
+     "Mira la cadena ganadora en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 2",
+      "text": "0 sustituyentes. Queda descartada.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 2",
+      "text": "1 sustituyente. Gana: es la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6
+        ],
+        "bonds": [
+         5
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono de la amida tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos amida (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 2; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 2. Gana la opción B.",
+     "El carbono del grupo amida siempre es el 1, así que su número no se escribe: «2-(acetilamino)etanamida», nunca «-1-amida».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      6,
+      1
+     ],
+     [
+      5,
+      2
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos amida",
+       "lists": [
+        [
+         2
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        1,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las amidas que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y «amino-» con el mismo número; unidas por su carbono, «carbamoil-» (como «metilcarbamoil»); unidas por su nitrógeno, «acilamino-» (como «acetilamino»).",
+     "En el carbono 2 hay una amida unida por su nitrógeno: se escribe «2-(acetilamino)».",
+     "«acetilamino» es el [[prefijo]] de una amida unida a la cadena principal por su nitrógeno. Es una amida, como el [[grupo principal]], pero su carbono no está en la cadena principal, así que no puede ir en el sufijo «-amida». Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, «acetil». El prefijo es el nombre del grupo acilo más «amino», que es el nitrógeno.",
+     "Con 2 carbonos (CH₃–CO–) se llama «acetil»: es un nombre tradicional que la IUPAC (2013) prefiere a «etanoil».",
+     "En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo más «amino»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "acetilamino",
+      "text": "En el carbono 2 hay una amida unida por su nitrógeno: se escribe «2-(acetilamino)». «acetilamino» es el [[prefijo]] de una amida unida a la cadena principal por su nitrógeno. Es una amida, como el [[grupo principal]], pero su carbono no está en la cadena principal, así que no puede ir en el sufijo «-amida». Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, «acetil». El prefijo es el nombre del grupo acilo más «amino», que es el nitrógeno. Con 2 carbonos (CH₃–CO–) se llama «acetil»: es un nombre tradicional que la IUPAC (2013) prefiere a «etanoil». En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo más «amino».",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5
+        ],
+        "bonds": [
+         5
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4,
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         4,
+         1,
+         2,
+         3
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La amida que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-amida», sin número.",
+     "El grupo amida no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-amida», porque empieza por vocal: «2-(acetilamino)etanamida».",
+     "El nombre completo es «2-(acetilamino)etanamida»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       5
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      6,
+      1
+     ],
+     [
+      5,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «acetilamino»"
+     },
+     {
+      "text": "acetilamino",
+      "kind": "prefix",
+      "meaning": "sustituyente: una amida unida por su nitrógeno: el grupo acilo («-oil», «formil», «acetil») más «amino»"
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-amida»)"
+     },
+     {
+      "text": "-amida",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo amida (amida)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       5,
+       4
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "acetilamino",
+      "kind": "prefix",
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       6,
+       5
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "amida",
+      "kind": "ending",
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ]
+     }
+    ]
+   }
+  ]
  }
 }

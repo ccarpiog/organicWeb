@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T04:37:09Z",
+  "updated": "2026-09-28T05:12:07Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -388,8 +388,11 @@
     {
       "id": "I-39d",
       "title": "v2.19d Amide prefixes and pair matrix (split from I-39)",
-      "status": "queued",
-      "summary": "Names an amide beside an acid or ester with carbamoil-/acilamino- prefixes and completes the functional pair matrix."
+      "status": "done",
+      "risk": "high",
+      "summary": "Names an amide beside an acid or ester with carbamoil-/acilamino- prefixes and completes the functional pair matrix.",
+      "review": "Codex ship, 0 findings — docs/reviews/I-39d.md",
+      "narrative": "docs/progress-archive/i-39d.md"
     },
     {
       "id": "I-40",

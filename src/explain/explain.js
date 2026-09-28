@@ -150,6 +150,17 @@
  * explains the prefix (formil, acetil, the acid's `-oico` → `-oil`); it is
  * highlighted whole (the branch with its C=O).
  *
+ * An amide cited as a prefix (design.md §13.4 I-39d: beside an acid or an
+ * ester, or a second amide on another carbon piece; amidePrefixes()) keeps
+ * its C=O as an `oxo` and its N as an `amino` in the structure (so the
+ * counts see them), but it is never described as a ketone, an aldehyde or
+ * an amine: the group steps list it apart and say how it is cited
+ * (`amino` + `oxo` on its carbon, `carbamoil`, `acilamino`;
+ * amidePrefixSentences()), the chain step says whether its carbon is a
+ * chain carbon, the substituents step explains each form, the tie-break
+ * says P4 leaves out the groups on the suffix N, and it is highlighted
+ * whole (amidePrefixSpecs()).
+ *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
  * GroupAnalysis); it gets groups ("Reconoce los grupos": each
@@ -166,7 +177,7 @@ import { ELEMENT_NAMES_ES } from '../model/elements.js';
 import {
   substituentPrefix, citationKey, needsEnclosure, isCompoundPrefix, renderPrefixes, omitsPrefixLocants,
   suffixWords, suffixCount, suffixGroupIds, isContractedAlkoxy, MAX_CONTRACTED_ALKOXY, TERMINAL_SUFFIXES,
-  esterAlkylName, renderName, carbonLocantPrefixes, hasNitrogenLocants, citedPrefixes, alkoxycarbonylAlkoxy,
+  esterAlkylName, renderName, carbonLocantPrefixes, hasNitrogenLocants, citedPrefixes, alkoxycarbonylAlkoxy, carbamoylAmino,
 } from '../naming/render.js';
 import { locantText, siteLocantText, N_LOCANT, esterParts } from '../naming/structure.js';
 
@@ -505,7 +516,8 @@ function aminoTotal(sub) {
  * @returns {number} The count.
  */
 function aminoPrefixCount(result) {
-  return prefixSum(result, aminoTotal) + esterGroupSum(result, aminoTotal);
+  // The N of an amide cited as a prefix is no amine (design.md §13.4 I-39d).
+  return prefixSum(result, aminoTotal) + esterGroupSum(result, aminoTotal) - amidePrefixes(result).length;
 }
 
 /**
@@ -560,8 +572,9 @@ function nitrogenKinds(result) {
  * @returns {{atoms: number[], bonds: number[], style: string}[]} The specs.
  */
 function aminoPrefixSpecs(result) {
+  // Not the N of an amide cited as a prefix (design.md §13.4 I-39d: amidePrefixSpecs()).
   return result.structure.prefixes
-    .filter((g) => aminoTotal(g.substituent) > 0)
+    .filter((g) => g.locants.some((site) => trueAminoTotal(g.substituent, site) > 0))
     .map((g) => ({ ...groupIds(g), style: 'substituent' }));
 }
 
@@ -968,6 +981,19 @@ function cyanoCarbonSentence(result) {
 } // End of function cyanoCarbonSentence()
 
 /**
+ * Tells whether a substituent is an acyl branch of its own (design.md
+ * §13.4 I-39b: `formil`, `acetil`, `propanoil`…): an acyl group that is
+ * not the acyl part of an ester's `aciloxi` prefix (I-39c) nor of an
+ * amide's `acilamino` prefix (I-39d).
+ *
+ * @param {object} sub - A substituent structure.
+ * @returns {boolean} True for an acyl branch.
+ */
+function isKetoneAcyl(sub) {
+  return Boolean(sub.acyl) && !sub.alkoxy && !sub.amideAcyl;
+}
+
+/**
  * Number of acyl groups inside a substituent, itself included (design.md
  * §13.4 I-39b): branches whose attachment atom is a C=O carbon, cited
  * `formil`, `acetil`, `propanoil`… (not the acyl part of an `aciloxi`
@@ -977,8 +1003,9 @@ function cyanoCarbonSentence(result) {
  * @returns {number} The count.
  */
 function acylTotal(sub) {
-  // The acyl part of an `aciloxi` prefix (design.md §13.4 I-39c) belongs to an ester, counted apart (esterPrefixTotal()).
-  let n = sub.acyl && !sub.alkoxy ? 1 : 0;
+  // The acyl part of an `aciloxi` prefix (design.md §13.4 I-39c) belongs to an ester, counted apart (esterPrefixTotal());
+  // that of an `acilamino` prefix (I-39d) to an amide (amidePrefixTotal()).
+  let n = isKetoneAcyl(sub) ? 1 : 0;
   for (const group of sub.prefixes) {
     n += group.locants.length * acylTotal(group.substituent);
   }
@@ -994,7 +1021,7 @@ function acylTotal(sub) {
  * @returns {object[]} The list.
  */
 function collectAcyls(sub, into) {
-  if (sub.acyl && !sub.alkoxy) {
+  if (isKetoneAcyl(sub)) {
     into.push(sub);
   }
   for (const group of sub.prefixes) {
@@ -1020,7 +1047,7 @@ function acylCounts(result) {
   for (const alkyl of esterGroups(result)) {
     collectAcyls(alkyl, found);
   }
-  const parent = result.structure.prefixes.filter((g) => g.substituent.acyl && !g.substituent.alkoxy).reduce((sum, g) => sum + g.locants.length, 0);
+  const parent = result.structure.prefixes.filter((g) => isKetoneAcyl(g.substituent)).reduce((sum, g) => sum + g.locants.length, 0);
   return {
     parent,
     total: found.length,
@@ -1202,6 +1229,149 @@ function chainEsterIds(result, site) {
 }
 
 /**
+ * Tells whether a substituent is an `acilamino` prefix (design.md §13.4
+ * I-39d): an amino group with an acyl group on its N that is the rest of
+ * an amide (`acetilamino`, `[acetil(metil)amino]`).
+ *
+ * @param {object} sub - A substituent structure.
+ * @returns {boolean} True for an acylamino prefix.
+ */
+function isAcylamino(sub) {
+  return Boolean(sub.amino) && sub.prefixes.some((g) => g.substituent.amideAcyl);
+}
+
+/**
+ * Number of amides cited as prefixes inside a substituent, itself
+ * included (design.md §13.4 I-39d): a `carbamoil` group, the acyl group of
+ * an `acilamino` prefix, and every amide whose C=O carbon is a carbon of
+ * the substituent's chain (its `oxo` and `amino` occurrences carry
+ * `amide`; counted once, by the `amino`). Each has one C=O and one N,
+ * which oxoTotal() and aminoTotal() also count.
+ *
+ * @param {object} sub - A substituent structure.
+ * @returns {number} The count.
+ */
+function amidePrefixTotal(sub) {
+  let n = sub.carbamoyl || sub.amideAcyl ? 1 : 0;
+  for (const group of sub.prefixes) {
+    // The `amino` of a `carbamoil` group is that same amide, already counted.
+    const inChain = sub.carbamoyl ? 0 : group.locants.filter((site) => site.amide && group.substituent.amino).length;
+    n += inChain + group.locants.length * amidePrefixTotal(group.substituent);
+  }
+  return n;
+} // End of function amidePrefixTotal()
+
+/**
+ * The amides of a name cited as prefixes (design.md §13.4 I-39d: beside an
+ * acid or an ester, or a second amide off the parent), one entry per
+ * amide, wherever it is: `form` 'chain' (its C=O carbon is a carbon of the
+ * parent, cited `amino` + `oxo` at that carbon: `4-amino-4-oxo`),
+ * 'carbonyl' (`carbamoil`: the parent misses its carbon), 'nitrogen'
+ * (`acilamino`: bonded through its N), or 'nested' (inside a branch, a
+ * group on an N or an ester's O-bound group). `site` / `group` are the
+ * occurrence on the parent (the `amino` one for 'chain'; null for
+ * 'nested'), `prefix` the words cited (`amino`, `metilamino` for 'chain').
+ *
+ * @param {object} result - The naming result.
+ * @returns {{form: string, group: object|null, site: object|null, prefix: string}[]} The amides.
+ */
+function amidePrefixes(result) {
+  const found = [];
+  for (const group of result.structure.prefixes) {
+    const sub = group.substituent;
+    for (const site of group.locants) {
+      let form = null;
+      if (site.amide && sub.amino) {
+        form = 'chain';
+      } else if (sub.carbamoyl) {
+        form = 'carbonyl';
+      } else if (isAcylamino(sub)) {
+        form = 'nitrogen';
+      }
+      if (form) {
+        found.push({ form, group, site, prefix: substituentPrefix(sub, lexiconEs) });
+      }
+      const inner = amidePrefixTotal(sub) - (form === 'carbonyl' || form === 'nitrogen' ? 1 : 0);
+      for (let i = 0; i < inner; i += 1) {
+        found.push({ form: 'nested', group, site: null, prefix: substituentPrefix(sub, lexiconEs) });
+      }
+    } // End of the loop over the occurrences of one prefix group
+  } // End of the loop over the prefix groups
+  for (const alkyl of esterGroups(result)) {
+    for (let i = 0; i < amidePrefixTotal(alkyl); i += 1) {
+      found.push({ form: 'nested', group: null, site: null, prefix: esterAlkylName(alkyl, lexiconEs) });
+    }
+  }
+  return found;
+} // End of function amidePrefixes()
+
+/**
+ * Highlight specs of the amides cited as prefixes (amidePrefixes()), as
+ * substituents: an `amino…oxo` amide on the parent whole (its carbon, its
+ * C=O and its N with the groups on it), a `carbamoil` or `acilamino`
+ * group whole (its occurrence), and a branch that holds one.
+ *
+ * @param {object} result - The naming result.
+ * @param {object[]} [entries] - Some of its amidePrefixes() (default: all).
+ * @returns {{atoms: number[], bonds: number[], style: string}[]} The specs.
+ */
+function amidePrefixSpecs(result, entries = amidePrefixes(result)) {
+  const specs = [];
+  for (const entry of entries) {
+    if (entry.form === 'chain') {
+      specs.push({ ...chainAmideIds(result, entry.site), style: 'substituent' });
+    } else if (entry.site) {
+      specs.push({ atoms: [...entry.site.atoms], bonds: [entry.site.bond, ...entry.site.bonds], style: 'substituent' });
+    } else if (entry.group) {
+      specs.push({ ...groupIds(entry.group), style: 'substituent' });
+    }
+  } // End of the loop over the amide prefixes
+  return specs;
+} // End of function amidePrefixSpecs()
+
+/**
+ * The atoms and bonds of an amide whose C=O carbon is a parent carbon
+ * (design.md §13.4 I-39d, form 'chain'): that carbon, its C=O (the `oxo`
+ * occurrence at the same carbon) and its N with the groups on it (the
+ * `amino` occurrence), with their connecting bonds.
+ *
+ * @param {object} result - The naming result.
+ * @param {object} site - The `amino` occurrence (with `amide`).
+ * @returns {{atoms: number[], bonds: number[]}} The ids.
+ */
+function chainAmideIds(result, site) {
+  const oxo = result.structure.prefixes.filter((g) => g.substituent.oxo)
+    .flatMap((g) => g.locants).find((other) => other.atom === site.atom && other.amide);
+  return {
+    atoms: [site.atom, ...(oxo ? [oxo.attachAtom] : []), ...site.atoms],
+    bonds: [...(oxo ? [oxo.bond] : []), site.bond, ...site.bonds],
+  };
+}
+
+/**
+ * Number of true amines (not the N of an amide, design.md §13.4 I-39d)
+ * cited as `amino-` prefixes in one occurrence of a prefix group.
+ *
+ * @param {object} sub - A substituent structure.
+ * @param {object|null} [site] - Its occurrence on the parent (an `amino` flagged `amide` is an amide's N).
+ * @returns {number} The count.
+ */
+function trueAminoTotal(sub, site = null) {
+  return aminoTotal(sub) - amidePrefixTotal(sub) - (site && site.amide && sub.amino ? 1 : 0);
+}
+
+/**
+ * The number of amide groups of a name (design.md §13.4 I-37, I-39d):
+ * those of the suffix and those cited as prefixes (amidePrefixes()).
+ *
+ * @param {object} result - The naming result.
+ * @returns {number} The count.
+ */
+function amideTotal(result) {
+  return (isAmide(result) ? suffixCount(result.structure) : 0) + amidePrefixes(result).length;
+}
+
+/**
  * Sum of a per-substituent count over every occurrence of the prefixes of a name.
  *
  * @param {object} result - The naming result.
@@ -1303,9 +1473,11 @@ function suffixSpec(result) {
  */
 function oxygenPrefixSpecs(result) {
   // The C=O of an ester cited as a prefix is highlighted with its ester (esterPrefixSpecs(), design.md §13.4 I-39c).
+  // So is the C=O of an amide cited as a prefix (amidePrefixSpecs(), I-39d).
   return result.structure.prefixes
-    .map((g) => ({ ...g, locants: g.locants.filter((site) => !site.ester) }))
-    .filter((g) => g.locants.length > 0 && hydroxyTotal(g.substituent) + oxoTotal(g.substituent) - esterPrefixTotal(g.substituent) > 0)
+    .map((g) => ({ ...g, locants: g.locants.filter((site) => !site.ester && !site.amide) }))
+    .filter((g) => g.locants.length > 0
+      && hydroxyTotal(g.substituent) + oxoTotal(g.substituent) - esterPrefixTotal(g.substituent) - amidePrefixTotal(g.substituent) > 0)
     .map((g) => {
       const ids = groupIds(g);
       const direct = g.substituent.hydroxy || g.substituent.oxo;
@@ -1621,18 +1793,19 @@ function etherDrawingSentences(result, oh, co, ethers, halogens) {
 } // End of function etherDrawingSentences()
 
 /**
- * The count-step sentence on the amide group (design.md §13.4 I-37): its
- * C=O oxygen and its nitrogen sit on the same carbon; '' for any other
- * result.
+ * The count-step sentence on the amide groups (design.md §13.4 I-37,
+ * I-39d: as the suffix or as prefixes): its C=O oxygen and its nitrogen
+ * sit on the same carbon; '' without amides.
  *
  * @param {object} result - The naming result.
  * @returns {string} The sentence, starting with a space, or ''.
  */
 function amideDrawingSentence(result) {
-  if (!isAmide(result)) {
+  const amides = amideTotal(result);
+  if (amides === 0) {
     return '';
   }
-  return suffixCount(result.structure) === 1
+  return amides === 1
     ? ' En el grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono.'
     : ' En cada grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono.';
 }
@@ -1695,7 +1868,7 @@ function esterDrawingSentences(result, oh, co, halogens) {
       ? ' En el grupo –COOH están el O con enlace doble y el OH, en el mismo carbono.'
       : ' En cada grupo –COOH están el O con enlace doble y el OH, en el mismo carbono.';
   }
-  return drawing;
+  return drawing + amideDrawingSentence(result);
 } // End of function esterDrawingSentences()
 
 /**
@@ -2075,6 +2248,14 @@ function amideGroupStep(result) {
       : 'El carbono de cada amida solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Esos carbonos son carbonos de la cadena: se cuentan al buscarla y al numerarla.');
   }
   text.push(`El grupo amida es el [[grupo principal]]: se nombra con el [[sufijo]] «-${ending}», al final del nombre (como en «etanamida»).`);
+  const amides = amidePrefixes(result);
+  if (amides.length > 0) {
+    // A second amide on another carbon piece (design.md §13.4 I-39d): a prefix.
+    text.push(amides.length === 1
+      ? 'Tiene además otro grupo amida, que no está en la [[cadena principal]]: las dos amidas están en partes de la molécula separadas por un nitrógeno o un oxígeno, que la cadena no puede atravesar. Solo la amida de la cadena principal va en el sufijo; la otra se nombra con un [[prefijo]].'
+      : `Tiene además otros ${amides.length} grupos amida, que no están en la [[cadena principal]]: están en partes de la molécula separadas por nitrógenos u oxígenos, que la cadena no puede atravesar. Solo las amidas de la cadena principal van en el sufijo; las otras se nombran con [[prefijos|prefijo]].`);
+    text.push(...amidePrefixSentences(amides));
+  }
   if (n > 1) {
     const { multiplier: mult } = suffixWords(suffix, lexiconEs);
     text.push(`Aquí hay ${n} grupos amida, uno en cada extremo de la cadena principal, así que el sufijo dice cuántos: «-${mult}${ending}» («di» = 2).`);
@@ -2144,7 +2325,8 @@ function amideGroupStep(result) {
     title: STEP_TITLES.group,
     text,
     highlight: [suffixSpec(result), ...sites.map(({ site }) => ({ atoms: [...site.atoms], bonds: [site.bond, ...site.bonds], style: 'substituent' })),
-      ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result), ...cyanoPrefixSpecs(result)],
+      ...oxygenPrefixSpecs(result), ...amidePrefixSpecs(result, amides.filter((e) => !e.group || !onNitrogen(e.group))),
+      ...aminoPrefixSpecs(result), ...cyanoPrefixSpecs(result)],
     locants: null,
   };
 } // End of function amideGroupStep()
@@ -2368,12 +2550,14 @@ function carbonylGroupStep(result) {
 function acidCompanions(result) {
   const { parent, prefixes } = result.structure;
   const all = prefixes.filter((g) => g.substituent.oxo).flatMap((g) => g.locants);
-  // The C=O of an ester whose carbon is a parent carbon (`4-metoxi-4-oxo`) is the ester's (I-39c).
-  const sites = all.filter((site) => !site.ester);
+  // The C=O of an ester (or an amide) whose carbon is a parent carbon (`4-metoxi-4-oxo`, `4-amino-4-oxo`) is the ester's (I-39c, I-39d).
+  const sites = all.filter((site) => !site.ester && !site.amide);
   const aldehyde = sites.filter((site) => site.locant === parent.length).length;
   const ketone = sites.length - aldehyde;
-  // The C=O of an acyl branch and of an ester prefix are counted apart (acylCounts(), esterPrefixes(); I-39b, I-39c).
-  const branchCo = prefixSum(result, oxoTotal) - all.length - prefixSum(result, acylTotal) - prefixSum(result, esterPrefixTotal);
+  // The C=O of an acyl branch, of an ester prefix and of an amide prefix are counted apart (acylCounts(), esterPrefixes(),
+  // amidePrefixes(); I-39b, I-39c, I-39d).
+  const branchCo = prefixSum(result, oxoTotal) - all.length - prefixSum(result, acylTotal) - prefixSum(result, esterPrefixTotal)
+    - prefixSum(result, amidePrefixTotal);
   return { aldehyde, ketone, branchCo, oh: prefixSum(result, hydroxyTotal) };
 }
 
@@ -2652,13 +2836,17 @@ function acidGroupStep(result) {
   if (cyano > 0) {
     others.unshift(cyanoWords(cyano));
   }
+  const amides = amidePrefixes(result);
+  if (amides.length > 0) {
+    others.unshift(amideWords(amides.length));
+  }
   const esters = esterPrefixes(result);
   if (esters.length > 0) {
     others.unshift(esters.length === 1 ? 'un grupo –COO– (un éster)' : `${esters.length} grupos –COO– (ésteres)`);
   }
   if (others.length > 0) {
-    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > ${esters.length > 0 ? 'éster > ' : ''}${cyano > 0 ? 'nitrilo > ' : ''}aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
-    const how = [...esterHow(esters), ...cyanoHow(cyano)];
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > ${esters.length > 0 ? 'éster > ' : ''}${amides.length > 0 ? 'amida > ' : ''}${cyano > 0 ? 'nitrilo > ' : ''}aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
+    const how = [...esterHow(esters), ...amideHow(amides), ...cyanoHow(cyano)];
     if (aldehyde + otherCo > 0) {
       how.push(aldehyde > 0
         ? 'cada C=O que no es del ácido se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
@@ -2672,7 +2860,7 @@ function acidGroupStep(result) {
       how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda el ácido, así que ${joinY(how)}, delante del nombre.`);
-    text.push(...esterPrefixSentences(esters));
+    text.push(...esterPrefixSentences(esters), ...amidePrefixSentences(amides));
     const acylCarbon = acylCarbonSentence(result);
     if (acylCarbon) {
       text.push(acylCarbon);
@@ -2688,11 +2876,91 @@ function acidGroupStep(result) {
     id: 'group',
     title: STEP_TITLES.group,
     text,
-    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...esterPrefixSpecs(result), ...aminoPrefixSpecs(result),
-      ...cyanoPrefixSpecs(result)],
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...esterPrefixSpecs(result), ...amidePrefixSpecs(result),
+      ...aminoPrefixSpecs(result), ...cyanoPrefixSpecs(result)],
     locants: null,
   };
 } // End of function acidGroupStep()
+
+/**
+ * Words for some amides cited as prefixes, for the "También tiene…" lists
+ * of the group steps (design.md §13.4 I-39d).
+ *
+ * @param {number} n - How many (at least 1).
+ * @returns {string} `un grupo amida (–CONH₂, –CONH– o –CON–)` / `2 grupos amida`.
+ */
+function amideWords(n) {
+  return n === 1 ? 'un grupo amida (–CONH₂, –CONH– o –CON–)' : `${n} grupos amida (–CONH₂, –CONH– o –CON–)`;
+}
+
+/**
+ * The first item of the "Aquí manda…" list when some amides are cited as
+ * prefixes (design.md §13.4 I-39d).
+ *
+ * @param {object[]} amides - The amides cited as prefixes (amidePrefixes()).
+ * @returns {string[]} One item, or none.
+ */
+function amideHow(amides) {
+  if (amides.length === 0) {
+    return [];
+  }
+  if (amides.every((e) => e.form === 'nested')) {
+    return [amides.length === 1 ? 'la amida se nombra con prefijos dentro de una rama' : 'las amidas se nombran con prefijos dentro de sus ramas'];
+  }
+  if (amides.length > 1) {
+    return ['cada amida se nombra con [[prefijos|prefijo]]'];
+  }
+  return [amides[0].form === 'chain' ? 'la amida se nombra con dos [[prefijos|prefijo]]' : 'la amida se nombra con un [[prefijo]]'];
+} // End of function amideHow()
+
+/**
+ * The group-step sentences on how each form of amide prefix is built
+ * (design.md §13.4 I-39d; like the ester prefixes of I-39c, from memory),
+ * one per form present: the amide carbon in the main chain (`oxo-` for its
+ * C=O and `amino-` for its N with the groups on it, both with that
+ * carbon's number: `4-amino-4-oxo`, `4-(metilamino)-4-oxo`), off the chain
+ * and bonded through its carbon (`carbamoil-`: `carbamoil`,
+ * `metilcarbamoil`), bonded through its N (`acilamino-`: `acetilamino`),
+ * or inside a branch.
+ *
+ * @param {object[]} amides - The amides cited as prefixes (amidePrefixes()).
+ * @returns {string[]} The sentences.
+ */
+function amidePrefixSentences(amides) {
+  const text = [];
+  const examples = (form) => joinY([...new Set(amides.filter((e) => e.form === form).map((e) => q(e.prefix)))]);
+  const count = (form) => amides.filter((e) => e.form === form).length;
+  /**
+   * The subject of a sentence about the amides of one form: the only one, one of several, or several.
+   *
+   * @param {string} form - The form.
+   * @returns {string} `La amida`, `Una de las amidas` or `Algunas amidas`.
+   */
+  const which = (form) => {
+    if (count(form) > 1) {
+      return 'Algunas amidas';
+    }
+    return amides.length === 1 ? 'La amida' : 'Una de las amidas';
+  };
+  if (count('chain') > 0) {
+    text.push(`${count('chain') === 1 ? 'El carbono de la amida está' : 'Aquí el carbono de algunas amidas está'} en la [[cadena principal]] (en un extremo), y la cadena lo cuenta como un carbono más. Entonces su C=O se nombra con «oxo-», y su nitrógeno, junto con los grupos unidos a él, con el [[prefijo]] «amino-» (aquí, ${examples('chain')}), los dos con el número de ese carbono.`);
+  }
+  if (count('carbonyl') > 0) {
+    text.push(`${which('carbonyl')} ${count('carbonyl') === 1 ? 'tiene' : 'tienen'} su carbono fuera de la [[cadena principal]]: la amida está unida a la cadena por ese carbono y se nombra con un solo [[prefijo]] que lo incluye todo, «carbamoil-» (el C=O con su nitrógeno); si el nitrógeno lleva grupos de carbonos, sus nombres van delante, sin números (aquí, ${examples('carbonyl')}).`);
+  }
+  if (count('nitrogen') > 0) {
+    text.push(`${which('nitrogen')} ${count('nitrogen') === 1 ? 'está unida' : 'están unidas'} a la cadena por su nitrógeno: el carbono del C=O queda del otro lado y empieza un grupo acilo (como «acetil»). Esa amida se nombra con el [[prefijo]] «acilamino-»: el nombre del grupo acilo más «amino», que es el nitrógeno (aquí, ${examples('nitrogen')}).`);
+  }
+  if (count('nested') > 0) {
+    const other = count('nested') < amides.length;
+    if (count('nested') === 1) {
+      text.push(`${other ? 'Otra amida' : 'La amida'} está dentro de una rama: se nombra con sus [[prefijos|prefijo]] dentro del nombre de esa rama.`);
+    } else {
+      text.push(`${other ? 'Otras amidas están' : 'Las amidas están'} dentro de ramas: cada una se nombra con sus [[prefijos|prefijo]] dentro del nombre de su rama.`);
+    }
+  }
+  return text;
+} // End of function amidePrefixSentences()
 
 /**
  * The first item of the "Aquí manda el ácido…" list when some esters are
@@ -2812,7 +3080,7 @@ function esterGroupStep(result) {
     text.push(`El grupo –COO– es el [[grupo principal]]: el nombre tiene dos partes unidas por «de». La primera termina con el [[sufijo]] «-${mult}${ending}» («di» = 2: hay un –COO– en cada extremo de la cadena principal) y después van los nombres de los grupos unidos a los otros oxígenos, acabados en «-ilo» (como en «butanodioato de dimetilo»).`);
   }
   const { aldehyde, ketone, branchCo } = acidCompanions(result);
-  const otherCo = ketone + branchCo + esterGroupSum(result, oxoTotal) - esterGroupSum(result, acylTotal);
+  const otherCo = ketone + branchCo + esterGroupSum(result, oxoTotal) - esterGroupSum(result, acylTotal) - esterGroupSum(result, amidePrefixTotal);
   const { oh } = oxygenGroups(result);
   const others = [];
   if (aldehyde > 0) {
@@ -2836,9 +3104,13 @@ function esterGroupStep(result) {
   if (cyano > 0) {
     others.unshift(cyanoWords(cyano));
   }
+  const amides = amidePrefixes(result);
+  if (amides.length > 0) {
+    others.unshift(amideWords(amides.length));
+  }
   if (others.length > 0) {
-    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > ${cyano > 0 ? 'nitrilo > ' : ''}aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
-    const how = cyanoHow(cyano);
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > ${amides.length > 0 ? 'amida > ' : ''}${cyano > 0 ? 'nitrilo > ' : ''}aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
+    const how = [...amideHow(amides), ...cyanoHow(cyano)];
     if (aldehyde + otherCo > 0) {
       how.push(aldehyde > 0
         ? 'cada C=O que no es del éster se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
@@ -2852,6 +3124,7 @@ function esterGroupStep(result) {
       how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda el éster, así que ${joinY(how)}, delante del nombre de la parte en la que está.`);
+    text.push(...amidePrefixSentences(amides));
     const acylCarbon = acylCarbonSentence(result);
     if (acylCarbon) {
       text.push(acylCarbon);
@@ -2869,7 +3142,8 @@ function esterGroupStep(result) {
     id: 'group',
     title: STEP_TITLES.group,
     text,
-    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result), ...alkylAmino, ...cyanoPrefixSpecs(result)],
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...amidePrefixSpecs(result), ...aminoPrefixSpecs(result), ...alkylAmino,
+      ...cyanoPrefixSpecs(result)],
     locants: null,
   };
 } // End of function esterGroupStep()
@@ -3442,9 +3716,12 @@ function chainStep(result) {
     text.push('La cadena no puede atravesar el oxígeno de un éter: solo cuentan las cadenas de carbonos seguidos, a un lado o al otro del O.');
   }
   text.push(...esterChainSentences(esters));
-  if (prefixSum(result, aminoTotal) > 0) {
+  const amides = amidePrefixes(result).filter((e) => e.group);
+  // The N of an amide cited as a prefix is no amine (design.md §13.4 I-39d): amideChainSentences().
+  if (prefixSum(result, aminoTotal) - amides.length > 0) {
     text.push('El nitrógeno de un grupo amino no forma parte de la cadena: la cadena solo tiene carbonos seguidos y no puede atravesarlo.');
   }
+  text.push(...amideChainSentences(amides));
   if (cyano.parent > 0 && all.length > 1) {
     // Design.md §13.4 I-39a: the carbon of a `ciano-` nitrile is never a chain carbon.
     text.push(cyano.parent === 1
@@ -3507,6 +3784,41 @@ function esterChainSentences(esters) {
   }
   return text;
 } // End of function esterChainSentences()
+
+/**
+ * The chain-step sentences on the amides cited as prefixes (design.md
+ * §13.4 I-39d), one per form present among those on the parent: an amide
+ * carbon in the chain (a chain carbon like any other, at an end; the chain
+ * stops at its N), a `carbamoil` amide (the chain rules chose a chain
+ * without its carbon, which goes in the prefix), an `acilamino` amide
+ * (bonded through its N: its C=O carbon is on the other side), or one
+ * inside a branch or a group on an N.
+ *
+ * @param {object[]} amides - The amides cited as prefixes on the parent or in its branches (amidePrefixes() with a `group`).
+ * @returns {string[]} The sentences.
+ */
+function amideChainSentences(amides) {
+  const text = [];
+  const of = (form) => amides.filter((e) => e.form === form);
+  if (of('chain').length > 0) {
+    const names = of('chain').map((e) => `${q(`${locantText(e.site.locant)}-${e.prefix}`)} y ${q(`${locantText(e.site.locant)}-oxo`)}`);
+    text.push(`${of('chain').length === 1 ? 'El carbono de la amida que se nombra con' : 'Los carbonos de las amidas que se nombran con'} ${joinY(names)} ${of('chain').length === 1 ? 'sí forma' : 'sí forman'} parte de la cadena, en un extremo: se cuenta${of('chain').length === 1 ? '' : 'n'} como los demás carbonos. Pero la cadena no puede atravesar el nitrógeno de una amida: los grupos unidos a él van en el [[prefijo]] «amino-».`);
+  }
+  if (of('carbonyl').length > 0) {
+    const names = joinY([...new Set(of('carbonyl').map((e) => q(e.prefix)))]);
+    text.push(`La [[cadena principal]] elegida con las reglas de siempre no pasa por el carbono de la amida de ${names}: ese carbono queda fuera de la cadena y el [[prefijo]] ya lo incluye.`);
+  }
+  if (of('nitrogen').length > 0) {
+    const names = joinY([...new Set(of('nitrogen').map((e) => q(e.prefix)))]);
+    text.push(`La cadena no puede atravesar el nitrógeno de una amida: el carbono del C=O de ${names} queda al otro lado, y el [[prefijo]] ya lo incluye.`);
+  }
+  if (of('nested').length > 0) {
+    text.push(of('nested').length === 1
+      ? 'La amida que está dentro de un sustituyente tampoco cuenta para la cadena principal: va dentro del nombre de ese sustituyente.'
+      : 'Las amidas que están dentro de sustituyentes tampoco cuentan para la cadena principal: van dentro del nombre de esos sustituyentes.');
+  }
+  return text;
+} // End of function amideChainSentences()
 
 /**
  * Highlight specs of a ring parent: the ring atoms and bonds as the parent,
@@ -3926,8 +4238,9 @@ function tiebreakStep(result) {
     if (step.rule === 'P4' && oxygenPrefixes) {
       rule = { ...COUNT_RULES.P4, rule: `Gana la cadena con más [[sustituyentes|sustituyente]]: cuentan las ramas${halogens ? ', los halógenos' : ''} y también los grupos que van como [[prefijo]] («hidroxi-», «oxo-»).` };
     }
-    if (step.rule === 'P4' && (isAmine(result) || (isAmide(result) && nitrogenSites(result).length > 0))) {
-      rule = { ...COUNT_RULES.P4, rule: `Gana la cadena con más [[sustituyentes|sustituyente]]: cuentan las ramas${halogens ? ', los halógenos' : ''} y también los grupos unidos al nitrógeno.` };
+    if (step.rule === 'P4' && (isAmine(result) || isAmide(result))) {
+      // Design.md §13.4 I-39d: a group on the N of the principal group substitutes that group, not the chain (numbering.js P4).
+      rule = { ...COUNT_RULES.P4, rule: `Gana la cadena con más [[sustituyentes|sustituyente]]: cuentan las ramas${halogens ? ', los halógenos' : ''}${oxygenPrefixes ? ' y los grupos que van como [[prefijo]]' : ''}, pero no los grupos unidos al nitrógeno del ${isAmide(result) ? 'grupo amida' : 'grupo amino'} principal (los de la letra «N»): van unidos a ese nitrógeno, no a la cadena.` };
     }
     const lines = step.candidatesBefore.map((c, i) => `opción ${labelOf(c)}: ${rule.value(step.values[i])}`);
     const sentence = k > 0 ? `Si sigue el empate, ${rule.rule[0].toLowerCase()}${rule.rule.slice(1)}` : rule.rule;
@@ -4539,6 +4852,12 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
   if (sub.alkoxycarbonyl) {
     return alkoxycarbonylDescription(sub, words, principal);
   }
+  if (sub.carbamoyl) {
+    return carbamoylDescription(sub, words, principal);
+  }
+  if (isAcylamino(sub)) {
+    return acylaminoDescription(sub, words, principal);
+  }
   if (sub.alkoxy && sub.acyl) {
     return acyloxyDescription(sub, words, principal);
   }
@@ -4593,9 +4912,11 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
       return one ? text : `${text} ${where}`;
     });
     const allHalogens = prefixes.every((g) => g.substituent.halogen);
-    const amino = prefixes.some((g) => g.substituent.amino);
+    // The `oxo` and `amino` of an amide whose carbon is in this branch's chain are that amide's (design.md §13.4 I-39d).
+    const notAmide = (g) => g.locants.some((site) => !site.amide);
+    const amino = prefixes.some((g) => g.substituent.amino && notAmide(g) && !isAcylamino(g.substituent));
     const hydroxy = prefixes.some((g) => g.substituent.hydroxy);
-    const oxo = prefixes.some((g) => g.substituent.oxo);
+    const oxo = prefixes.some((g) => g.substituent.oxo && notAmide(g));
     const cyano = prefixes.some((g) => g.substituent.cyano);
     const atomsOnly = prefixes.every(isAtomPrefix);
     let kind = allHalogens ? 'Es una rama con halógenos' : 'Es una rama con sus propias ramas';
@@ -4609,6 +4930,8 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
       kind = 'Es una rama con grupos –OH y C=O';
     } else if (amino && prefixes.every((g) => g.substituent.amino)) {
       kind = aminoTotal(sub) === 1 ? 'Es una rama con un grupo amino' : 'Es una rama con grupos amino';
+    } else if (prefixes.every((g) => g.substituent.carbamoyl || isAcylamino(g.substituent))) {
+      kind = amidePrefixTotal(sub) === 1 ? 'Es una rama con un grupo amida' : 'Es una rama con grupos amida';
     }
     if (sub.acyl) {
       out.push(`Además, la rama lleva sus propios [[sustituyentes|sustituyente]]. Su cadena tiene ${count(chain.length, 'carbono', 'carbonos')} y se numera desde el carbono del C=O, que es el 1. En ella hay: ${joinY(inner)}.`);
@@ -4631,6 +4954,24 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
     for (const group of prefixes.filter((g) => g.substituent.alkoxy)) {
       for (const site of group.locants.filter((other) => other.ester)) {
         out.push(`El carbono ${site.locant} de la rama es el carbono de un éster (–COO–): su C=O se nombra «oxo» y su oxígeno del medio, con el grupo unido a él, ${q(substituentPrefix(group.substituent, lexiconEs))}, los dos con el número ${site.locant}.`);
+      }
+    }
+    // An amide bonded to this branch by its carbon or its N (design.md §13.4 I-39d): `carbamoil`, `acilamino`.
+    const amideForms = [...new Set(prefixes.filter((g) => g.substituent.carbamoyl || isAcylamino(g.substituent))
+      .map((g) => (g.substituent.carbamoyl ? 'carbonyl' : 'nitrogen')))];
+    for (const form of amideForms) {
+      const names = joinY([...new Set(prefixes.filter((g) => (form === 'carbonyl' ? g.substituent.carbamoyl : isAcylamino(g.substituent)))
+        .map((g) => q(substituentPrefix(g.substituent, lexiconEs))))]);
+      out.push(form === 'carbonyl'
+        ? `Una amida unida a la rama por el carbono de su C=O se nombra con el prefijo «carbamoil-», que incluye ese carbono (aquí, ${names}).`
+        : `Una amida unida a la rama por su nitrógeno se nombra con el prefijo «acilamino-»: el grupo acilo más «amino» (aquí, ${names}).`);
+    }
+    // An amide whose carbon is a carbon of this branch's chain (design.md §13.4 I-39d): `2-amino-2-oxoetil`.
+    for (const group of prefixes.filter((g) => g.substituent.amino)) {
+      for (const site of group.locants.filter((other) => other.amide)) {
+        const where = chain.length === 1 ? 'El carbono de la rama' : `El carbono ${site.locant} de la rama`;
+        const number = chain.length === 1 ? '' : `, los dos con el número ${site.locant}`;
+        out.push(`${where} es el carbono de una amida: su C=O se nombra «oxo» y su nitrógeno, con los grupos unidos a él, ${q(substituentPrefix(group.substituent, lexiconEs))}${number}.`);
       }
     }
     if (amino) {
@@ -4727,6 +5068,108 @@ function alkoxycarbonylDescription(sub, words, principal) {
 } // End of function alkoxycarbonylDescription()
 
 /**
+ * The sentence of an amide prefix saying why it is not the principal
+ * group (design.md §13.4 I-39d): below an acid or an ester, or an amide
+ * like the principal one whose carbon is not in the main chain; '' without
+ * a principal group.
+ *
+ * @param {string|null} principal - The principal group kind of the name, or null.
+ * @returns {string} The sentence, starting with a space, or ''.
+ */
+function amideNotPrincipal(principal) {
+  if (principal === 'amide') {
+    return ' Es una amida, como el [[grupo principal]], pero su carbono no está en la cadena principal, así que no puede ir en el sufijo «-amida».';
+  }
+  return principal ? ` No es el [[grupo principal]]: ${familyWithArticle(principal)} va antes que la amida.` : '';
+}
+
+/**
+ * Explains a `carbamoil` prefix (design.md §13.4 I-39d; IUPAC 2013, from
+ * memory): an amide bonded through the carbon of its C=O, a carbon the
+ * chain does not include, so the prefix includes it: `carbamoil` is the
+ * –CO–NH₂; the groups on its N go in front, without locants
+ * (`metilcarbamoil`, `dimetilcarbamoil`, `etil(metil)carbamoil`), and then
+ * it is enclosed, a compound prefix.
+ *
+ * @param {object} sub - A substituent structure with `carbamoyl` set.
+ * @param {{to: string}} words - How the parent is named (parentWords()).
+ * @param {string|null} principal - The principal group kind of the name, or null.
+ * @returns {string[]} Sentences.
+ */
+function carbamoylDescription(sub, words, principal) {
+  const prefix = substituentPrefix(sub, lexiconEs);
+  const word = lexiconEs.groupPrefix('amide');
+  const amino = carbamoylAmino(sub);
+  const out = [`${q(prefix)} es el [[prefijo]] de una amida unida ${words.to} por el carbono de su C=O.${amideNotPrincipal(principal)} Ese carbono no está en la cadena, así que el prefijo lo incluye: «${word}» es el grupo –CO–NH₂ entero, el C=O con su nitrógeno.`];
+  if (amino.prefixes.length > 0) {
+    out.push(`El nitrógeno lleva además ${aminoGroupsWords(amino)}: ${amino.prefixes.length === 1 && amino.prefixes[0].locants.length === 1 ? 'ese grupo se escribe' : 'esos grupos se escriben'} delante de «${word}», sin números (todos van en el nitrógeno), todo junto: ${q(prefix)}.`);
+    if (amino.prefixes.length > 1) {
+      out.push('Los grupos distintos van por orden alfabético, y cada uno después del primero va entre paréntesis.');
+    }
+    out.push(prefix.includes('(')
+      ? 'En el nombre va entre corchetes [ ], porque es un prefijo compuesto y ya lleva paréntesis dentro.'
+      : 'En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo con sus propios sustituyentes.');
+  }
+  return out;
+} // End of function carbamoylDescription()
+
+/**
+ * Explains an `acilamino` prefix (design.md §13.4 I-39d; decided from
+ * memory: the acyl prefix + `amino`, `acetilamino`, rather than IUPAC
+ * 2013's `acetamido` form): an amide bonded through its N, whose C=O
+ * carbon starts an acyl group on the other side of the N; the prefix is
+ * the acyl prefix + `amino`, with the other groups on the N, in
+ * parentheses; then how the acyl prefix is formed (formil, acetil, the
+ * acid's `-oico` → `-oil`) and its own prefixes.
+ *
+ * @param {object} sub - An amino substituent structure with an acyl group on its N (isAcylamino()).
+ * @param {{to: string}} words - How the parent is named (parentWords()).
+ * @param {string|null} principal - The principal group kind of the name, or null.
+ * @returns {string[]} Sentences.
+ */
+function acylaminoDescription(sub, words, principal) {
+  const prefix = substituentPrefix(sub, lexiconEs);
+  const acyl = sub.prefixes.find((g) => g.substituent.amideAcyl).substituent;
+  const part = substituentPrefix(acyl, lexiconEs);
+  const amino = lexiconEs.groupPrefix('amine');
+  const out = [`${q(prefix)} es el [[prefijo]] de una amida unida ${words.to} por su nitrógeno.${amideNotPrincipal(principal)} Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, ${q(part)}. El prefijo es el nombre del grupo acilo más «${amino}», que es el nitrógeno.`];
+  if (acyl.chain.length === 1) {
+    out.push(`Con 1 carbono (H–CO–, el de un –CHO) el grupo acilo se llama «${lexiconEs.formylPrefix}».`);
+  } else {
+    // acylIntro() via describeSubstituent(), without its first sentence (said above): acetil, or the acid's `-oico` → `-oil`.
+    out.push(...describeSubstituent(acyl, NITROGEN_WORDS, principal).slice(1));
+  }
+  const others = sub.prefixes.filter((g) => !g.substituent.amideAcyl);
+  if (others.length > 0) {
+    out.push(`El nitrógeno lleva además ${aminoGroupsWords({ prefixes: others })}. Los grupos unidos al nitrógeno van por orden alfabético, sin números, y cada uno después del primero va entre paréntesis: ${q(prefix)}.`);
+  }
+  out.push(prefix.startsWith('(') || prefix.includes('(')
+    ? 'En el nombre va entre corchetes [ ], porque es un prefijo compuesto y ya lleva paréntesis dentro.'
+    : 'En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo más «amino».');
+  return out;
+} // End of function acylaminoDescription()
+
+/**
+ * The substituents-step note on the `oxo` or `amino` occurrences of a
+ * prefix group that belong to an amide whose C=O carbon is a parent carbon
+ * (design.md §13.4 I-39d, `amide` sites: `4-amino-4-oxo`): the two
+ * prefixes together describe the amide of that carbon.
+ *
+ * @param {object} group - An `oxo` or `amino` prefix group with some `amide` sites.
+ * @param {object[]} sites - Those sites.
+ * @returns {string} The sentence.
+ */
+function chainAmideNote(group, sites) {
+  const places = [...new Set(sites.map((site) => site.locant))];
+  if (group.substituent.oxo) {
+    return `El C=O ${places.length === 1 ? `del carbono ${places[0]}` : `de los carbonos ${joinY(places)}`} es el de una amida: su carbono está en la [[cadena principal]], así que la amida se nombra con dos prefijos con el mismo número, «oxo-» para su C=O y «amino-» para su nitrógeno, con los grupos unidos a él.`;
+  }
+  const where = places.length === 1 ? `el carbono ${places[0]}` : `los carbonos ${joinY(places)}`;
+  const prefix = substituentPrefix(group.substituent, lexiconEs);
+  return `En ${where}, ${q(prefix)} no es una amina: es el nitrógeno de una amida cuyo carbono está en la [[cadena principal]], con los grupos unidos a él. El C=O de ese mismo carbono se nombra con «oxo-»: ${q(`${places[0]}-${prefix}`)} y ${q(`${places[0]}-oxo`)} juntos describen la amida.`;
+} // End of function chainAmideNote()
+
+/**
  * Explains an `aciloxi` prefix (design.md §13.4 I-39c; IUPAC 2013 prefers
  * `acetiloxi` to `acetoxi`, from memory): an ester bonded through its
  * middle O, whose C=O carbon starts an acyl group on the other side; the
@@ -4794,11 +5237,13 @@ function substituentsStep(result) {
   const omit = prefixLocantsOmitted(result);
   const halogens = halogenGroups(result);
   const branches = groups.filter((g) => !isAtomPrefix(g) && !g.substituent.alkoxy && !g.substituent.amino && !g.substituent.alkoxycarbonyl
-    && !onNitrogen(g));
+    && !g.substituent.carbamoyl && !onNitrogen(g));
   // Ethers only: not the `aciloxi` prefixes nor the `alcoxi` of an ester whose carbon is in the chain (I-39c).
   const alkoxy = groups.filter((g) => g.substituent.alkoxy && !g.substituent.acyl && g.locants.some((site) => !site.ester));
-  const amino = groups.filter((g) => g.substituent.amino);
+  // Amines only: not the N of an amide (the `amino` of an amide whose carbon is in the chain, an `acilamino`; I-39d).
+  const amino = groups.filter((g) => g.substituent.amino && !isAcylamino(g.substituent) && g.locants.some((site) => !site.amide));
   const esters = esterPrefixes(result).filter((e) => e.site);
+  const amides = amidePrefixes(result).filter((e) => e.site);
   const text = [];
   if (branches.length > 0) {
     text.push(`Las ramas que salen ${words.of} son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).`);
@@ -4825,6 +5270,10 @@ function substituentsStep(result) {
     // Esters cited as prefixes (design.md §13.4 I-39c).
     text.push(`Los ésteres (–COO–) que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y un prefijo «-oxi» con el mismo número; unidos por su carbono, «alcoxicarbonil-» (como «metoxicarbonil»); unidos por su oxígeno, «aciloxi-» (como «acetiloxi»).`);
   }
+  if (amides.length > 0) {
+    // Amides cited as prefixes (design.md §13.4 I-39d).
+    text.push(`Las amidas que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y «amino-» con el mismo número; unidas por su carbono, «carbamoil-» (como «metilcarbamoil»); unidas por su nitrógeno, «acilamino-» (como «acetilamino»).`);
+  }
   if (halogens.length > 0) {
     const also = halogens.length < groups.length ? ' también' : '';
     text.push(`Los átomos de halógeno unidos ${words.to}${also} son [[sustituyentes|sustituyente]]. Se nombran con un [[prefijo]]: «fluoro-» (F), «cloro-» (Cl), «bromo-» (Br) o «yodo-» (I). Un halógeno nunca va al final del nombre: siempre es un prefijo.`);
@@ -4835,7 +5284,8 @@ function substituentsStep(result) {
   }
   const hydroxyOn = groups.some((g) => g.substituent.hydroxy);
   // The C=O of an ester whose carbon is in the chain belongs to the ester (I-39c).
-  const oxoOn = groups.some((g) => g.substituent.oxo && g.locants.some((site) => !site.ester));
+  // So does the C=O of an amide whose carbon is in the chain (I-39d).
+  const oxoOn = groups.some((g) => g.substituent.oxo && g.locants.some((site) => !site.ester && !site.amide));
   if (hydroxyOn || oxoOn) {
     const kinds = [...(hydroxyOn ? ['–OH'] : []), ...(oxoOn ? ['C=O'] : [])];
     const forms = [...(hydroxyOn ? ['«hidroxi-» el –OH'] : []), ...(oxoOn ? ['«oxo-» el C=O'] : [])];
@@ -4851,7 +5301,12 @@ function substituentsStep(result) {
     const k = group.locants.length;
     const where = omit ? omitted : placesText(group);
     let what = k === 1 ? `hay un grupo ${groupNameOf(sub)}` : `hay ${k} grupos ${groupNameOf(sub)}`;
-    if (sub.amino && sub.prefixes.length > 0) {
+    if (sub.carbamoyl || isAcylamino(sub)) {
+      const by = sub.carbamoyl ? 'por su carbono' : 'por su nitrógeno';
+      what = k === 1 ? `hay una amida unida ${by}` : `hay ${k} amidas unidas ${by}`;
+    } else if (sub.amino && group.locants.every((site) => site.amide)) {
+      what = k === 1 ? 'está el nitrógeno de una amida' : `están los nitrógenos de ${k} amidas`;
+    } else if (sub.amino && sub.prefixes.length > 0) {
       what = k === 1
         ? `hay un grupo amino cuyo nitrógeno lleva ${aminoGroupsWords(sub)}`
         : `hay ${k} grupos amino; cada nitrógeno lleva ${aminoGroupsWords(sub)}`;
@@ -4887,6 +5342,17 @@ function substituentsStep(result) {
       const only = esterSites.length === group.locants.length;
       if (only && sub.alkoxy) {
         details = [note, ...alkoxyDescription(sub, words, principal).slice(1)];
+      } else {
+        details = only ? [note] : [...details, note];
+      }
+    }
+    const amideSites = group.locants.filter((site) => site.amide);
+    if (amideSites.length > 0) {
+      // The C=O and the N of an amide whose carbon is in the chain (design.md §13.4 I-39d).
+      const note = chainAmideNote(group, amideSites);
+      const only = amideSites.length === group.locants.length;
+      if (only && sub.amino) {
+        details = [note, ...aminoDescription(sub, words, principal).slice(1)];
       } else {
         details = only ? [note] : [...details, note];
       }
@@ -5002,10 +5468,14 @@ function orderStep(result) {
   if (esterPrefixes(result).some((e) => e.site)) {
     text.push('Los prefijos de los ésteres también se ordenan por su nombre completo: «metoxicarbonil» va por la m, «acetiloxi» por la a; y «metoxi» y «oxo», aunque describan el mismo éster, se ordenan cada uno por su letra.');
   }
+  if (amidePrefixes(result).some((e) => e.site)) {
+    // Design.md §13.4 I-39d.
+    text.push('Los prefijos de las amidas también se ordenan por su nombre completo: «carbamoil» va por la c, «metilcarbamoil» por la m, «acetilamino» por la a; y «amino» y «oxo», aunque describan la misma amida, se ordenan cada uno por su letra.');
+  }
   if (subs.some((s) => !s.amino && isCompoundPrefix(s) && s.prefixes.some((g) => g.locants.length > 1))) {
     text.push('Dentro de un paréntesis todo cuenta, también di-, tri-…: «(2,2-dimetilpropil)» se ordena por la d.');
   }
-  for (const sub of subs.filter((s) => s.amino && s.prefixes.length > 0)) {
+  for (const sub of subs.filter((s) => s.amino && s.prefixes.length > 0 && !isAcylamino(s))) {
     const prefix = substituentPrefix(sub, lexiconEs);
     text.push(`Un prefijo de amina con grupos en su nitrógeno se ordena por su nombre completo, con di- incluido: ${q(prefix)} va por la ${citationKey(sub, lexiconEs).alpha[0]}.`);
   }
@@ -5072,6 +5542,12 @@ function nameLegend(result) {
       meaning = 'sustituyente: grupo –C≡N (un nitrilo), que aquí no es el grupo principal; su carbono va en el prefijo, no en la cadena';
     } else if (sub.alkoxycarbonyl) {
       meaning = 'sustituyente: un éster (–COO–) unido por el carbono de su C=O: el grupo del oxígeno («-oxi») más «carbonil»';
+    } else if (sub.carbamoyl) {
+      meaning = carbamoylAmino(sub).prefixes.length === 0
+        ? 'sustituyente: una amida (–CONH₂) unida por el carbono de su C=O; «carbamoil» incluye ese carbono'
+        : `sustituyente: una amida unida por el carbono de su C=O, con ${aminoGroupsWords(carbamoylAmino(sub))} en su nitrógeno`;
+    } else if (isAcylamino(sub)) {
+      meaning = 'sustituyente: una amida unida por su nitrógeno: el grupo acilo («-oil», «formil», «acetil») más «amino»';
     } else if (sub.alkoxy && sub.acyl) {
       meaning = `sustituyente: un éster (–COO–) unido por su oxígeno: el grupo acilo («-oil», «formil», «acetil») más «oxi»`;
     } else if (sub.alkoxy) {
@@ -5080,6 +5556,14 @@ function nameLegend(result) {
       meaning = sub.prefixes.length === 0
         ? 'sustituyente: grupo amino (–NH₂), una amina que aquí no es el grupo principal'
         : `sustituyente: grupo amino con ${aminoGroupsWords(sub)} en su nitrógeno, una amina que aquí no es el grupo principal`;
+    }
+    const amideSites = group.locants.filter((site) => site.amide);
+    if (amideSites.length > 0 && (sub.oxo || sub.amino)) {
+      // An amide whose carbon is in the chain: its C=O is `oxo`, its N with its groups `amino` (I-39d).
+      const own = `parte de una amida cuyo carbono está en la cadena principal: ${sub.oxo ? 'su C=O' : 'su nitrógeno, con los grupos unidos a él'}`;
+      meaning = amideSites.length === group.locants.length
+        ? `sustituyente, ${own}`
+        : `${meaning}; en el carbono ${joinY([...new Set(amideSites.map((site) => site.locant))])}, ${own}`;
     }
     const esterSites = group.locants.filter((site) => site.ester);
     if (esterSites.length > 0 && (sub.oxo || sub.alkoxy)) {
@@ -5300,7 +5784,11 @@ function assembleStep(result) {
   if (esterPrefixes(result).length > 0) {
     text.push('El éster que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.');
   }
-  if (prefixes.some((g) => aminoTotal(g.substituent) > 0)) {
+  if (amidePrefixes(result).length > 0) {
+    text.push('La amida que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.');
+  }
+  // The N of an amide cited as a prefix is no amine (design.md §13.4 I-39d).
+  if (prefixes.some((g) => g.locants.some((site) => trueAminoTotal(g.substituent, site) > 0))) {
     text.push('La amina que no es el grupo principal va delante como prefijo («amino»), igual que las ramas: no cambia la terminación del nombre.');
   }
   const nitrogen = nitrogenAssembleSentence(result);

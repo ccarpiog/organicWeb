@@ -26,8 +26,9 @@
  * isAmineNitrogen(), design.md §13.4 I-36), an 'amine' (groupKindOf()):
  * the least senior kind that can be a suffix (`-amina`), else the prefix
  * `amino-`; and the amide group X(=O)–N (validate.js isAmideCarbon(),
- * I-37), whose C=O oxygen and N are both 'amide' (`-amida`; validation
- * refuses every molecule where an amide would be a prefix). The functions
+ * I-37), whose C=O oxygen and N are both 'amide' (`-amida`; since I-39d a
+ * non-principal amide, or one on another carbon piece, is a prefix:
+ * `amino…oxo`, `carbamoil-`, `acilamino-`). The functions
  * below that speak of "oxygens" take such a nitrogen too: the N of a
  * principal amine is its suffix group's heteroatom; an amide's C=O oxygen
  * stands for its group and its N travels with it (SuffixLocant
@@ -43,11 +44,12 @@
  * carbon kept out of the parent; design.md §13.6 "Where X belongs").
  *
  * The principal kind is the most senior one present (ácido > éster > amida >
- * nitrilo > aldehído > cetona > alcohol > amina, seniority.js SENIORITY; validation never
- * lets an amide meet an acid or an ester): its groups on the parent are the
+ * nitrilo > aldehído > cetona > alcohol > amina, seniority.js SENIORITY): its groups on the parent are the
  * suffix (`ácido …oico`, `…oato de …ilo`, `-amida`, `-nitrilo`, `-al`, `-ona`, `-ol`, `-amina`), every other
  * group is a prefix (`oxo-`, `hidroxi-`, `amino-`, `ciano-`; since I-39c an ester beside an acid:
- * `alcoxi` + `oxo` on its carbon, `alcoxicarbonil-`, `aciloxi-`, substituent.js esterAttachment()). The carbon X of a C=O or a COOH
+ * `alcoxi` + `oxo` on its carbon, `alcoxicarbonil-`, `aciloxi-`, substituent.js esterAttachment(); since I-39d an amide
+ * beside an acid or an ester, or on another carbon piece: `amino` + `oxo`, `carbamoil-`, `acilamino-`,
+ * substituent.js amideAttachment()). The carbon X of a C=O or a COOH
  * is always a skeleton carbon (a chain or ring atom; design.md §13.6
  * "Where X belongs"); a C=O carbon off the chain that carries it is the
  * first carbon of an acyl branch (`formil`, `acetil`, `propanoil`, I-39b). A carboxyl group
@@ -205,6 +207,26 @@ export function outsideCarbons(mol, adj, principal) {
  */
 export function isPrincipalOxygen(mol, adj, atom, principal) {
   return principal !== null && groupKindOf(mol, adj, atom) === principal;
+}
+
+/**
+ * Tells whether a neighbour of a parent atom belongs to a suffix group
+ * carried by that atom: an oxygen (or nitrogen) of the principal kind
+ * (isPrincipalOxygen()), and, for a principal amide, one of the amide
+ * whose carbon is that atom. Another amide's N bonded to a parent carbon
+ * (design.md §13.4 I-39d: `CH₃CO–NH–` on `2-(acetilamino)etanamida`) is
+ * the `acilamino` prefix, not a suffix group, nor are the groups on it
+ * N-prefixes of the parent.
+ *
+ * @param {object} mol - A validated molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} carrier - The parent atom.
+ * @param {number} atom - A neighbour of it.
+ * @param {string|null} principal - The principal kind (principalKindOf()).
+ * @returns {boolean} True when the neighbour is part of a suffix group of `carrier`.
+ */
+export function isSuffixGroupAtomOf(mol, adj, carrier, atom, principal) {
+  return isPrincipalOxygen(mol, adj, atom, principal) && (principal !== 'amide' || isAmideCarbon(mol, adj, carrier));
 }
 
 /**

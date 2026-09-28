@@ -433,6 +433,11 @@ export function runNumberingCascade(candidates, data, options) {
  * first; with `suffixesOf` (a parent carrying OH groups, design.md §13.4
  * I-31) the N0 rule — lowest locants for the suffix groups — comes before N1.
  *
+ * P4 counts the prefixes carried by the chain only: a prefix with a fixed
+ * `locant` (a group on the N of the suffix, N_LOCANT) is left out
+ * (design.md §13.4 I-39d: it substitutes the amine or amide, not the
+ * chain; `2-(acetilamino)etanamida`); N3 and N4 still compare it.
+ *
  * @param {object} mol - A validated acyclic molecule.
  * @param {number[][]} chains - The remaining chains (atom-id paths).
  * @param {function(number[]): {atom: number, key: string, citation: {alpha: string, numeric: number[]}}[]} [prefixesOf] - Prefixes of a chain (called with each array of `chains`): carrying atom, identity key and citation key.
@@ -455,7 +460,9 @@ export function numberParent(mol, chains, prefixesOf = () => [], options = {}) {
     ));
   }
   const { chosen, trace } = runNumberingCascade(candidates, data, {
-    prefixCounts: prefixesByChain.map((list) => list.length),
+    // P4 counts the prefixes of the parent hydride: a group on the N of the suffix (fixed `locant`, N_LOCANT) substitutes
+    // the characteristic group, not the chain (design.md §13.4 I-39d; as for locant omission, render.js carbonLocantPrefixes()).
+    prefixCounts: prefixesByChain.map((list) => list.filter((prefix) => prefix.locant === undefined).length),
     hasFreeValence,
     hasSuffix: suffixesByChain.some((list) => list.length > 0),
     nameKey: options.nameKey,

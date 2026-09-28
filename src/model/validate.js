@@ -24,8 +24,9 @@
  *   the principal group, every amine N on a ring carbon; on a chain, at most two
  *   aldehydes per carbon piece when the aldehyde is principal (I-39b), at most two acids; without an acid at most two
  *   esters, both on one carbon piece and, with different O-bound groups, on an acid part that is the same seen from
- *   either end (I-39c; beside an acid any ester is a prefix), never an amide with an acid or ester, at most two amides, both
- *   on one carbon piece and, when there are two, with no group on their N;
+ *   either end (I-39c; beside an acid any ester is a prefix); without an acid or ester at most two amides per carbon
+ *   piece and, on a piece with two, no group on their N (beside an acid or ester, or on other pieces, amides are
+ *   prefixes, I-39d);
  *   never a nitrile with an acid, ester or amide, at most two nitriles, both
  *   on one carbon piece), and
  *   longest carbon chain ≤ 30 (for a ring: every side chain ≤ 30; with
@@ -316,29 +317,29 @@ export const RING_AMIDE_MESSAGE = 'Esta molécula tiene un anillo y un grupo ami
   + 'las amidas con anillo, como la benzamida, la ciclohexanocarboxamida o la N-feniletanamida, aún no sé nombrarlas.';
 
 /**
- * HETEROATOM message for a molecule whose amide group cannot be the
- * principal group (design.md §13.4 I-37): with an acid or an ester (ácido
- * > éster > amida), or with a second amide on another carbon piece (joined
- * through an N or an O), the amide would be a prefix, `carbamoil-` (bonded
- * through its carbon) or `acilamino-` (bonded through its N, such as
- * `acetilamino-`); I-39d names them.
+ * HETEROATOM message for an amide the naming engine could cite neither as
+ * the suffix `-amida` nor as a prefix (design.md §13.4 I-37, I-39d: `amino`
+ * + `oxo` on its carbon, `carbamoil-` bonded through its carbon,
+ * `acilamino-` bonded through its N). A safety net (naming/index.js,
+ * reason `amidePrefix`): validation and the chain machinery make it
+ * unreachable.
  */
-export const AMIDE_PREFIX_MESSAGE = 'Esta molécula tiene un grupo amida (–CONH₂, –CONH– o –CON–) que no puede ser el grupo principal: '
-  + 'o hay un grupo que va antes que la amida (un ácido –COOH o un éster –COO–), o la amida queda en una rama, '
-  + 'fuera de la cadena principal. Entonces la amida se nombraría con un prefijo («carbamoil-» o «acilamino-», '
-  + 'como «acetilamino-»), y eso aún no sé hacerlo.';
+export const AMIDE_PREFIX_MESSAGE = 'Esta molécula tiene un grupo amida (–CONH₂, –CONH– o –CON–) que no sé situar en el nombre: '
+  + 'ni como grupo principal (con la terminación «-amida», como en la etanamida) ni con prefijos («amino-» y «oxo-», '
+  + '«carbamoil-» o «acilamino-», como en el ácido 4-amino-4-oxobutanoico), así que aún no sé nombrarla.';
 
 /**
- * HETEROATOM message for an open chain with more than two amide groups
- * (design.md §13.4 I-37): the C of a –CONH₂ is always a chain end and the
- * chain has only two ends, so one amide would be a branch (`carbamoil-`)
- * or IUPAC 2013 names every group with `-carboxamida` on a smaller parent;
- * neither is supported yet.
+ * HETEROATOM message for more than two amide groups on one carbon piece
+ * when the amide is the principal group (design.md §13.4 I-37, I-39d): the
+ * C of a –CONH₂ is always a chain end and the chain has only two ends;
+ * IUPAC 2013 then names every group with `-carboxamida` on a smaller
+ * parent (`propano-1,2,3-tricarboxamida`), not supported yet. Beside an
+ * acid or an ester, or on other carbon pieces, any number of amides is
+ * named with prefixes.
  */
-export const MANY_AMIDES_MESSAGE = 'Esta molécula tiene más de dos grupos amida. '
-  + 'El carbono de una amida siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos, '
-  + 'así que alguna amida quedaría en una rama. Estos compuestos se nombran con el prefijo «carbamoil-» '
-  + 'o con «-carboxamida», y eso aún no sé hacerlo.';
+export const MANY_AMIDES_MESSAGE = 'Esta molécula tiene más de dos grupos amida en la misma cadena de carbonos. '
+  + 'El carbono de una amida siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos. '
+  + 'Estos compuestos se nombran con «-carboxamida» (como la propano-1,2,3-tricarboxamida), y eso aún no sé hacerlo.';
 
 /**
  * HETEROATOM message for a diamide where some amide nitrogen carries other
@@ -1418,7 +1419,7 @@ function esterPlacementError(mol, hetero, esters) {
  * ester is a prefix: `alcoxi…oxo`, `alcoxicarbonil-`, `aciloxi-`, I-39c),
  * the esters that cannot all be the suffix (esterPlacementError():
  * `manyEsters`, `esterPrefix`, `mixedDiester`), then the amides (amidePlacementError():
- * `ringAmide`, `amidePrefix`, `manyAmides`, `substitutedPolyamide`), then
+ * `ringAmide`, `manyAmides`, `substitutedPolyamide`), then
  * the nitriles (nitrilePlacementError(): `ringNitrile`, `carbonocyanidic`,
  * `manyNitriles`), then more than two aldehyde groups on one carbon piece
  * with the aldehyde principal (manyAldehydesError(), `manyAldehydes`). The error lists the heteroatoms (`atoms`) and the
@@ -1478,16 +1479,19 @@ function oxygenPlacementError(mol, cyclic, hetero) {
 
 /**
  * The refusal of a nameable-heteroatom molecule whose amide groups the
- * engine cannot place (design.md §13.4 I-37), or null. In order: any amide
- * with a ring (`ringAmide`: `-carboxamida`, `N-fenil…`, I-40); an amide
- * with an acid or an ester (`amidePrefix`: ácido > éster > amida, so the
- * amide would be a `carbamoil-` / `acilamino-` prefix, I-39d); more than two
- * amides (`manyAmides`: an amide carbon is always a chain end); two amides
- * whose carbons lie on different carbon pieces, joined through an N or an
- * O (`amidePrefix`: one of them would be a branch of the other's chain);
- * two amides where some N carries other groups (`substitutedPolyamide`:
- * N¹/N⁴ locants). The error lists the heteroatoms (`atoms`) and the amide
- * carbons (`amides`).
+ * engine cannot place (design.md §13.4 I-37, I-39d), or null. In order:
+ * any amide with a ring (`ringAmide`: `-carboxamida`, `N-fenil…`, I-40);
+ * beside an acid or an ester (ácido > éster > amida) every amide is a
+ * prefix and is named (`amino…oxo`, `carbamoil-`, `acilamino-`, I-39d);
+ * otherwise more than two amides on one carbon piece (`manyAmides`: an
+ * amide carbon is always a chain end, a third would need
+ * `-carboxamida`); a piece with two amides, which then carries the suffix
+ * (P0), where some of their N carries other groups (`substitutedPolyamide`:
+ * N¹/N⁴ locants, also when that group holds another amide). Amides on
+ * other carbon pieces (joined through an N or an O) are named: the parent
+ * carries the most (P0), the others are prefixes (`2-(acetilamino)etanamida`).
+ * The error lists the heteroatoms (`atoms`) and the amide carbons
+ * (`amides`).
  *
  * @param {object} mol - A validated molecule whose heteroatoms are nameable.
  * @param {boolean} cyclic - Whether it has a ring.
@@ -1505,18 +1509,18 @@ function amidePlacementError(mol, cyclic, hetero, senior) {
     return refuse(RING_AMIDE_MESSAGE, 'ringAmide');
   }
   if (senior) {
-    return refuse(AMIDE_PREFIX_MESSAGE, 'amidePrefix');
+    return null; // Beside an acid or an ester every amide is a prefix (I-39d): `amino…oxo`, `carbamoil-`, `acilamino-`.
   }
-  if (amides.length > 2) {
+  const pieces = connectedComponents(carbonSkeleton(mol)).map((piece) => amides.filter((carbon) => piece.includes(carbon)));
+  if (pieces.some((onPiece) => onPiece.length > 2)) {
     return refuse(MANY_AMIDES_MESSAGE, 'manyAmides');
   }
-  if (amides.length === 2) {
-    const pieces = connectedComponents(carbonSkeleton(mol));
-    if (!pieces.some((piece) => piece.includes(amides[0]) && piece.includes(amides[1]))) {
-      return refuse(AMIDE_PREFIX_MESSAGE, 'amidePrefix');
-    }
+  const most = Math.max(...pieces.map((onPiece) => onPiece.length));
+  const candidates = pieces.filter((onPiece) => onPiece.length === most);
+  if (most === 2) {
     const adj = adjacency(mol);
-    if (amides.some((carbon) => adj.get(amideNitrogenOf(mol, adj, carbon)).length > 1)) {
+    // A diamide that could carry the suffix with a group on some N (another amide's piece included): N¹/N⁴ locants.
+    if (candidates.flat().some((carbon) => adj.get(amideNitrogenOf(mol, adj, carbon)).length > 1)) {
       return refuse(SUBSTITUTED_POLYAMIDE_MESSAGE, 'substitutedPolyamide');
     }
   }

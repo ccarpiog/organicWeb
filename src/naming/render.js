@@ -29,7 +29,10 @@
  * (design.md §13.4 I-37) takes the suffix `amida` with its locants never
  * cited, like an acid (`etanamida`, `2-metilpropanamida`,
  * `butanodiamida`, `prop-2-enamida`), and the groups on its N the locant
- * `N` (`N,N-dimetiletanamida`). No
+ * `N` (`N,N-dimetiletanamida`); an amide that is not principal (I-39d)
+ * is `amino` + `oxo` on its carbon, or the prefix `carbamoil`
+ * (`metilcarbamoil`: carbamoylAmino()), or `acilamino` (an amino prefix
+ * whose N carries the acyl group: `acetilamino`). No
  * name is ever produced by substring translation.
  */
 
@@ -289,13 +292,20 @@ function token(text, kind) {
  * (design.md §13.4 I-39b) is unenclosed without prefixes or locants of
  * its own (`formil`, `acetil`, `propanoil`, `butanoil`) and enclosed
  * otherwise (`(2-metilpropanoil)`, `(but-2-enoil)`). The ester prefixes
- * (I-39c) are always enclosed: `(metoxicarbonil)`, `(acetiloxi)`.
+ * (I-39c) are always enclosed: `(metoxicarbonil)`, `(acetiloxi)`. A
+ * `carbamoil` prefix (I-39d) is enclosed when its N carries groups
+ * (`(metilcarbamoil)`, `(dimetilcarbamoil)`); an `acilamino` prefix is an
+ * amino prefix with an acyl group on its N, always enclosed
+ * (`(acetilamino)`, `[acetil(metil)amino]`).
  * Enclosure does not decide the multiplier (see isCompoundPrefix()).
  *
  * @param {object} substituent - The substituent structure.
  * @returns {boolean} True when the prefix is enclosed.
  */
 export function needsEnclosure(substituent) {
+  if (substituent.carbamoyl) {
+    return carbamoylAmino(substituent).prefixes.length > 0; // `carbamoil`, but `(metilcarbamoil)` (design.md §13.4 I-39d).
+  }
   if (substituent.alkoxycarbonyl) {
     return true; // `(metoxicarbonil)`, `[(propan-2-iloxi)carbonil]` (design.md §13.4 I-39c).
   }
@@ -326,12 +336,17 @@ export function needsEnclosure(substituent) {
  * locants still takes di/tri: `di(propan-2-il)` (IUPAC 2013 P-16.9). An
  * alkoxy prefix is compound when it has prefixes or is written alkyl +
  * `oxi` (`bis(pentiloxi)`, `bis(acetiloxi)`); `dimetoxi`, `diisopropoxi`
- * are simple. An `alcoxicarbonil` prefix (I-39c) is always compound.
+ * are simple. An `alcoxicarbonil` prefix (I-39c) is always compound; a
+ * `carbamoil` prefix (I-39d) when its N carries groups (`dicarbamoil`,
+ * `bis(metilcarbamoil)`).
  *
  * @param {object} substituent - The substituent structure.
  * @returns {boolean} True when the prefix is compound.
  */
 export function isCompoundPrefix(substituent) {
+  if (substituent.carbamoyl) {
+    return carbamoylAmino(substituent).prefixes.length > 0;
+  }
   if (substituent.alkoxycarbonyl) {
     return true; // `bis(metoxicarbonil)` (design.md §13.4 I-39c).
   }
@@ -403,6 +418,10 @@ export function isContractedAlkoxy(substituent) {
  * @returns {number} The level.
  */
 function enclosureLevel(substituent) {
+  if (substituent.carbamoyl) {
+    // The groups on the N, as in an amino prefix: `(metilcarbamoil)`, `[etil(metil)carbamoil]` (design.md §13.4 I-39d).
+    return enclosureLevel(carbamoylAmino(substituent));
+  }
   if (substituent.alkoxycarbonyl) {
     // The alkoxy part is enclosed inside when it needs it: `[(propan-2-iloxi)carbonil]` (design.md §13.4 I-39c).
     const alkoxy = alkoxycarbonylAlkoxy(substituent);
@@ -531,7 +550,9 @@ function locantTokens(locants) {
  * `propanoil`, `2-metilpropanoil`, `but-2-enoil`; acylEndingTokens()),
  * or an alkoxy group (an ether, I-34: alkoxyTokens(); an acyloxy group,
  * I-39c: `acetiloxi`), or an `alcoxicarbonil` group (an ester bonded
- * through its C=O carbon, I-39c: alkoxycarbonylTokens()). A saturated group with the free valence at
+ * through its C=O carbon, I-39c: alkoxycarbonylTokens()), or a `carbamoil`
+ * group (an amide bonded through its C=O carbon, I-39d: the groups on its
+ * N, then `carbamoil`). A saturated group with the free valence at
  * locant 1 uses the short form (`propil`, `propiliden`, `2-metilpropil`);
  * one- and two-carbon groups cite no locant.
  *
@@ -542,6 +563,11 @@ function locantTokens(locants) {
 function substituentTokens(substituent, lexicon) {
   if (substituent.alkoxycarbonyl) {
     return alkoxycarbonylTokens(substituent, lexicon);
+  }
+  if (substituent.carbamoyl) {
+    // The groups on the N without locants, every one after the first enclosed, then `carbamoil` (I-39d).
+    const tokens = carbamoylAmino(substituent).prefixes.flatMap((group, g) => groupTokens(group, lexicon, true, false, g > 0));
+    return [...tokens, token(lexicon.groupPrefix('amide'), 'prefix')];
   }
   if (substituent.halogen) {
     return [token(lexicon.halogenPrefix(substituent.halogen), 'prefix')];
@@ -659,6 +685,18 @@ function acylEndingTokens(chain, segments, lexicon) {
  */
 export function alkoxycarbonylAlkoxy(substituent) {
   return substituent.prefixes.find((group) => group.substituent.alkoxy).substituent;
+}
+
+/**
+ * The amino group of a `carbamoil` substituent (design.md §13.4 I-39d):
+ * the prefix on its one carbon X that is not the C=O `oxo` (the amide's N
+ * with the groups on it).
+ *
+ * @param {object} substituent - A substituent structure with `carbamoyl` set.
+ * @returns {object} The amino substituent structure (`amino` true).
+ */
+export function carbamoylAmino(substituent) {
+  return substituent.prefixes.find((group) => group.substituent.amino).substituent;
 }
 
 /**

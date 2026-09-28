@@ -310,8 +310,9 @@ test('a prefix ester or amide takes the prefix of the end that faces the princip
   assert.match(affixes('CC(=O)OC1CCC(C(=O)O)CC1'), /El éster: prefijo «aciloxi-».*por su oxígeno/);
   assert.doesNotMatch(affixes('CC(=O)OC1CCC(C(=O)O)CC1'), /alcoxicarbonil/);
   assert.match(affixes('CCOC(=O)C1CCC(C(=O)O)CC1'), /El éster: prefijo «alcoxicarbonil-».*por su carbono/);
-  assert.match(affixes('CC(=O)NCC(=O)O'), /La amida: prefijo «acilamino-».*por su nitrógeno/);
-  assert.match(affixes('NC(=O)CC(=O)O'), /La amida: prefijo «carbamoil-», porque se une al grupo principal por su carbono/);
+  // Open-chain amide prefixes are named since I-39d; a ring acid keeps them refused (ringAcid, I-40).
+  assert.match(affixes('CC(=O)NC1CCC(C(=O)O)CC1'), /La amida: prefijo «acilamino-».*por su nitrógeno/);
+  assert.match(affixes('NC(=O)C1CCC(C(=O)O)CC1'), /La amida: prefijo «carbamoil-», porque se une al grupo principal por su carbono/);
   assert.match(affixes('OC(=O)CC(=O)OCC(=O)O'), /«alcoxicarbonil-» si se une al resto por su carbono, o «aciloxi-» si se une por el oxígeno/);
 });
 
@@ -394,8 +395,8 @@ const GROUP_SNAPSHOT_SMILES = [
   'CCOOC', // unsupported peroxide
   'CC(=O)OC1CCC(C(=O)O)CC1', // ester bonded through its O: aciloxi- (refused for its ring acid, ringAcid; `ácido 2-(acetiloxi)etanoico` is named since I-39c)
   'CCOC(=O)C1CCC(C(=O)O)CC1', // ester bonded through its carbonyl carbon: alcoxicarbonil- (ringAcid; open-chain ester prefixes are named since I-39c)
-  'CC(=O)NCC(=O)O', // amide bonded through its N: acilamino-
-  'NC(=O)CC(=O)O', // amide bonded through its carbonyl carbon: carbamoil-
+  'CC(=O)NC1CCC(C(=O)O)CC1', // amide bonded through its N: acilamino- (ringAcid; `ácido 2-(acetilamino)etanoico` is named since I-39d)
+  'NC(=O)C1CCC(C(=O)O)CC1', // amide bonded through its carbonyl carbon: carbamoil- (ringAcid; open-chain amide prefixes are named since I-39d)
   'O=CC1CCCCC1', // aldehyde on a ring: -carbaldehído, refused until I-40 (I-32)
   'OC(=O)C(C(=O)C#N)CC', // –CO–C≡N branch: the one acyl without an acyl prefix, refused by the engine (acylSubstituent; `3-acetilpentano-2,4-diona` is named since I-39b)
 ];
