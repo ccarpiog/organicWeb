@@ -55,6 +55,23 @@ test('Ayuda opens an in-page dialog with illustrations and the glossary; Esc clo
   await expect(dialog.locator('.help-glossary')).toContainText('Cadena principal');
   await expect(dialog.locator('.help-glossary')).toContainText('Anillo');
   await expect(dialog.locator('.help-glossary')).toContainText('Grupo funcional');
+  // v2 content (I-41c): the named families with rings, what is out of scope,
+  // the ring tool, the heteroatom palette, the 90° view and the CHO/COOH toggle.
+  const families = dialog.locator('#help-families li');
+  await expect(families).toHaveCount(10);
+  for (const phrase of ['Derivados halogenados', 'Alcoholes', 'Aldehídos', 'cetonas', 'Ácidos carboxílicos', 'Éteres',
+    'Ésteres', 'Aminas', 'Amidas', 'Nitrilos', 'ciclohexanol', 'ácido benzoico', 'benzonitrilo']) {
+    await expect(dialog.locator('#help-families')).toContainText(phrase);
+  }
+  const outOfScope = dialog.locator('#help-out-of-scope');
+  for (const phrase of ['estereoquímica', 'cargas', 'heterociclos', 'fusionados', 'benceno con dos o más sustituyentes',
+    'imidas']) {
+    await expect(outOfScope).toContainText(phrase);
+  }
+  for (const phrase of ['«Anillos»', '«Benceno»', 'O (oxígeno), N (nitrógeno)', '«Ángulos rectos (90°)»',
+    'también con oxígeno, nitrógeno y halógenos', '«Abreviar CHO y COOH»']) {
+    await expect(dialog).toContainText(phrase);
+  }
   // The focus starts on the heading, at the top of the dialog.
   await expect(dialog.getByRole('heading', { name: 'Cómo se usa' })).toBeFocused();
   // Editor shortcuts are off while the dialog is open.

@@ -66211,7 +66211,7 @@
     "id": "benzene",
     "title": "Reconoce el benceno",
     "text": [
-     "Los 6 carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
      "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
      "El grupo –CHO unido al anillo es el [[grupo principal]]. Su carbono no es del anillo. Un benceno con un grupo –CHO tiene nombre propio: «benzaldehído».",
      "Con un solo –CHO no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono del anillo unido al –CHO es siempre el 1 y el número no se escribe."
@@ -66434,7 +66434,7 @@
     "id": "ring",
     "title": "Busca el anillo",
     "text": [
-     "Los 6 carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
      "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
      "Los grupos –COOH unidos al anillo no forman parte de él: ni sus carbonos ni sus oxígenos se cuentan en el anillo. Son el [[grupo principal]] y dan la terminación «-dicarboxílico», que ya incluye esos carbonos.",
      "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
@@ -67436,7 +67436,7 @@
     "text": [
      "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
      "En el carbono 2 hay un grupo carboximetilo: se escribe «2-(carboximetil)».",
-     "«carboximetil» es un grupo de 2 carbonos.",
+     "«carboximetil» es un grupo de 2 carbonos, contando el del –COOH.",
      "Es una rama con un grupo –COOH. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: «carboxi».",
      "Un –COOH que está en una rama, y no en la cadena principal, no va en el sufijo: se nombra con el prefijo «carboxi-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama.",
      "Va entre paréntesis porque tiene sus propios sustituyentes."
@@ -67486,7 +67486,7 @@
     "options": [
      {
       "label": "carboximetil",
-      "text": "En el carbono 2 hay un grupo carboximetilo: se escribe «2-(carboximetil)». «carboximetil» es un grupo de 2 carbonos. Es una rama con un grupo –COOH. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: «carboxi». Un –COOH que está en una rama, y no en la cadena principal, no va en el sufijo: se nombra con el prefijo «carboxi-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama. Va entre paréntesis porque tiene sus propios sustituyentes.",
+      "text": "En el carbono 2 hay un grupo carboximetilo: se escribe «2-(carboximetil)». «carboximetil» es un grupo de 2 carbonos, contando el del –COOH. Es una rama con un grupo –COOH. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: «carboxi». Un –COOH que está en una rama, y no en la cadena principal, no va en el sufijo: se nombra con el prefijo «carboxi-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama. Va entre paréntesis porque tiene sus propios sustituyentes.",
       "highlight": [
        {
         "atoms": [
@@ -73528,7 +73528,7 @@
     "id": "ring",
     "title": "Busca el anillo",
     "text": [
-     "Los 6 carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
      "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
      "Los grupos amida unidos al anillo no forman parte de él: ni sus carbonos ni sus oxígenos ni sus nitrógenos se cuentan en el anillo. Son el [[grupo principal]] y dan la terminación «-dicarboxamida», que ya incluye esos carbonos.",
      "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
@@ -75299,7 +75299,7 @@
     "text": [
      "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
      "En el carbono 4 hay un grupo cianometilo: se escribe «4-(cianometil)».",
-     "«cianometil» es un grupo de 2 carbonos.",
+     "«cianometil» es un grupo de 2 carbonos, contando el del –C≡N.",
      "Es una rama con un grupo –C≡N. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: «ciano».",
      "Un –C≡N que está en una rama, y no en la cadena principal, no va en el sufijo «-nitrilo»: se nombra con el prefijo «ciano-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama.",
      "Va entre paréntesis porque tiene sus propios sustituyentes."
@@ -75347,7 +75347,7 @@
     "options": [
      {
       "label": "cianometil",
-      "text": "En el carbono 4 hay un grupo cianometilo: se escribe «4-(cianometil)». «cianometil» es un grupo de 2 carbonos. Es una rama con un grupo –C≡N. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: «ciano». Un –C≡N que está en una rama, y no en la cadena principal, no va en el sufijo «-nitrilo»: se nombra con el prefijo «ciano-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama. Va entre paréntesis porque tiene sus propios sustituyentes.",
+      "text": "En el carbono 4 hay un grupo cianometilo: se escribe «4-(cianometil)». «cianometil» es un grupo de 2 carbonos, contando el del –C≡N. Es una rama con un grupo –C≡N. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: «ciano». Un –C≡N que está en una rama, y no en la cadena principal, no va en el sufijo «-nitrilo»: se nombra con el prefijo «ciano-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama. Va entre paréntesis porque tiene sus propios sustituyentes.",
       "highlight": [
        {
         "atoms": [

@@ -419,6 +419,34 @@ test('amines: formula with N, N locants, -amina suffix and amino prefixes (I-36)
   assert.match(all(step('NC1CCCCC1', 'ringNumbering')), /el número no se escribe: «ciclohexanamina»/);
 });
 
+test('ring count sentence: a principal-group carbon outside the ring is not one of the ring carbons (I-41c)', () => {
+  const ringText = (smiles) => {
+    const steps = run(smiles).steps;
+    const s = steps.find((x) => x.id === 'ring' || x.id === 'benzene');
+    return plainText(s.text[0]);
+  };
+  // The –COOH / –C≡N / –CONH₂ / –CHO carbon lies outside the ring: the molecule has 7 carbons.
+  for (const smiles of ['OC(=O)C1CCCCC1', 'N#CC1CCCCC1', 'NC(=O)C1CCCCC1', 'O=CC1CCCCC1',
+    'OC(=O)C1=CC=CC=C1', 'N#CC1=CC=CC=C1', 'NC(=O)C1=CC=CC=C1', 'O=CC1=CC=CC=C1']) {
+    assert.match(ringText(smiles), /^En tu molécula, 6 de los carbonos forman/, smiles);
+  }
+  // All carbons are in the ring: unchanged wording.
+  for (const smiles of ['C1CCCCC1', 'OC1CCCCC1', 'OC1=CC=CC=C1', 'ClC1=CC=CC=C1', 'NC1CCCCC1']) {
+    assert.match(ringText(smiles), /^Los 6 carbonos forman/, smiles);
+  }
+});
+
+test('a branch with a ciano- or carboxi- prefix counts that carbon apart from its chain (I-41c)', () => {
+  const groupText = (smiles) => plainText(run(smiles).steps.find((s) => s.id === 'substituents').text.join(' '));
+  const cyano = groupText('N#CCC1CCC(CC1)C#N');
+  assert.match(cyano, /«cianometil» es un grupo de 2 carbonos, contando el del –C≡N\. .*su cadena tiene 1 carbono/);
+  assert.match(groupText('CCC(CC#N)C(O)=O'), /«cianometil» es un grupo de 2 carbonos, contando el del –C≡N\./);
+  assert.match(groupText('OC(=O)CC1CCC(CC1)C(O)=O'), /«carboximetil» es un grupo de 2 carbonos, contando el del –COOH\./);
+  assert.match(groupText('N#CCC(C#N)C1CCC(CC1)C(O)=O'), /es un grupo de 4 carbonos, contando los 2 de los –C≡N\./);
+  // Other branches keep the plain count.
+  assert.match(groupText('CCC(CC)CCC(O)=O'), /«etil» es un grupo de 2 carbonos\./);
+});
+
 test('glossary markup helpers', () => {
   assert.deepEqual(parseMarkup('La [[cadena principal]] y los [[localizadores|localizador]].'), [
     { text: 'La ' },

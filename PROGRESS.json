@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T08:22:21Z",
+  "updated": "2026-09-28T08:35:50Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -451,8 +451,11 @@
     {
       "id": "I-41c",
       "title": "v2.21c Ayuda, examples and docs wrap-up (split from I-41)",
-      "status": "queued",
-      "summary": "Updates help, examples and documentation for rings and functional groups and closes the v2 plan."
+      "status": "done",
+      "risk": "routine",
+      "summary": "Help, grouped examples and docs now cover rings and functional groups; the v2 plan is complete.",
+      "review": "docs/reviews/I-41c.md",
+      "narrative": "docs/progress-archive/i-41c.md"
     }
   ]
 }

@@ -19,7 +19,7 @@ import { moleculeToJSON } from '../../src/model/molecule.js';
 import { hasCycle } from '../../src/model/graph.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { canonicalLayout, closestApproach, spreadInGap, layoutProblems } from '../../src/layout/canonical.js';
-import { listExamples, exampleMolecule } from '../../src/ui/examples.js';
+import { listExamples, listExampleGroups, exampleMolecule } from '../../src/ui/examples.js';
 import { createEditorCore } from '../../src/editor/editor.js';
 import { BOND_LENGTH, isLinearCentre } from '../../src/editor/geometry.js';
 import { neighbours } from '../../src/model/molecule.js';
@@ -160,18 +160,33 @@ test('spreadInGap spreads new bonds inside the largest free gap', () => {
   assert.equal(two.length, 2);
 });
 
-test('the Ejemplos list covers every required feature with 12–15 nameable molecules', () => {
+test('the Ejemplos list covers every required feature with nameable, well-laid-out molecules', () => {
   const examples = listExamples();
-  assert.ok(examples.length >= 12 && examples.length <= 15);
+  const groups = listExampleGroups();
+  assert.ok(examples.length >= 25 && examples.length <= 40);
   assert.equal(new Set(examples.map((e) => e.id)).size, examples.length);
+  // Every example belongs to a group, the groups are contiguous and in menu order.
+  const order = groups.map((g) => g.id);
+  let last = 0;
+  for (const example of examples) {
+    const at = order.indexOf(example.group);
+    assert.ok(at >= last, `${example.id} is in a known group, in order`);
+    last = at;
+  }
   for (const example of examples) {
     assert.ok(example.label.length > 0);
     const result = nameMolecule(parseSmiles(example.smiles));
     assert.ok(result.ok, example.smiles);
     assert.equal(result.name, example.name, `${example.smiles} is named ${example.name}`);
     const mol = exampleMolecule(example);
-    assert.ok(closestApproach(mol) >= 0.5 * BOND_LENGTH);
-  }
+    assert.ok(closestApproach(mol) >= 0.5 * BOND_LENGTH, `${example.id}: no crowded atoms`);
+    assert.ok(layoutProblems(mol).ok, `${example.id}: no crossing bonds or clashes`);
+    // The canonical layout keeps the molecule: same name, every atom placed.
+    assert.equal(nameMolecule(mol).name, example.name, `${example.id}: laid out, same name`);
+    for (const atom of mol.atoms.values()) {
+      assert.ok(Number.isFinite(atom.x) && Number.isFinite(atom.y), `${example.id}: atom ${atom.id} placed`);
+    }
+  } // End of the loop over the examples
   const names = examples.map((e) => e.name);
   for (const required of ['2-metilpropano', '4-etenilheptano', '3-metilidenhexano']) {
     assert.ok(names.includes(required), required);
@@ -181,6 +196,41 @@ test('the Ejemplos list covers every required feature with 12–15 nameable mole
   assert.ok(names.some((n) => /-\d+(,\d+)*-dieno$/.test(n)), 'a diene');
   assert.ok(names.some((n) => /-en-\d+-ino$/.test(n)), 'an en-yne');
   assert.ok(names.some((n) => /^[a-z]+ano$/.test(n)), 'an unbranched alkane');
+});
+
+test('the Ejemplos list has at least 10 ring and functional-group examples (I-41c)', () => {
+  const byName = new Map(listExamples().map((e) => [e.name, e]));
+  const expected = {
+    'C1CCCCC1': 'ciclohexano',
+    'C1=CCCCC1': 'ciclohexeno',
+    'CC1CCCCC1': 'metilciclohexano',
+    'C1=CC=CC=C1': 'benceno',
+    'CC1=CC=CC=C1': 'metilbenceno',
+    'CC(Cl)C': '2-cloropropano',
+    'CCC(C)O': 'butan-2-ol',
+    'CCC=O': 'propanal',
+    'CCC(C)=O': 'butan-2-ona',
+    'CC(=O)O': 'ácido etanoico',
+    'CCOCC': 'etoxietano',
+    'CC(=O)OCC': 'etanoato de etilo',
+    'CCCN': 'propan-1-amina',
+    'CC(N)=O': 'etanamida',
+    'CCC#N': 'propanonitrilo',
+    'OC1CCCCC1': 'ciclohexanol',
+    'ClC1=CC=CC=C1': 'clorobenceno',
+    'OC(=O)C1=CC=CC=C1': 'ácido benzoico',
+  };
+  for (const [smiles, name] of Object.entries(expected)) {
+    const example = byName.get(name);
+    assert.ok(example, `${name} is an example`);
+    assert.equal(example.smiles, smiles);
+    assert.equal(nameMolecule(parseSmiles(smiles)).name, name);
+    assert.notEqual(example.group, 'cadena', `${name} is not in the open-chain hydrocarbon group`);
+  }
+  // The traditional names stay available as alternatives.
+  const alternatives = (smiles) => (nameMolecule(parseSmiles(smiles)).alternatives || []).map((a) => a.name);
+  assert.ok(alternatives('CC1=CC=CC=C1').includes('tolueno'));
+  assert.ok(alternatives('CC(=O)O').includes('ácido acético'));
 });
 
 test('setCoordinates is one undoable coordinate edit', () => {

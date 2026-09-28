@@ -58,10 +58,10 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-40d | v2.20d Ring esters (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40d.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40d.md` |
 | I-41a | v2.21a 90° view for acyclic heteroatom molecules (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-41a.md` |
 | I-41b | v2.21b CHO/COOH optional abbreviations (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-41b.md` |
-| I-41c | v2.21c Ayuda, examples and docs wrap-up (split from I-41) | same, §3.21 | queued | — | — |
+| I-41c | v2.21c Ayuda, examples and docs wrap-up (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41c.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-41c.md` |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-41b done; I-41c queued
+v2 plan (user-confirmed scope): I-21…I-41c all done — the plan is complete
 (I-41 split into I-41a 90° view for heteroatoms, I-41b CHO/COOH abbreviations, I-41c wrap-up;
 I-27 split into I-27a editor drawing and I-27b Ordenar dibujo; I-39 into I-39a `ciano-`,
 I-39b acyl prefixes, I-39c ester prefixes + diesters, I-39d amide prefixes + pair matrix;
@@ -101,13 +101,9 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-41c (Ayuda, examples, docs wrap-up — the last v2 phase): read design
-§13.4 row I-41 and `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.21. Fold in
-the Ayuda text for the 90° view with heteroatoms (I-41a) and the "Abreviar CHO y COOH" toggle
-(I-41b), examples for rings and functional groups (`src/ui/examples.js`), the pre-existing
-"Los 6 carbonos" wording for ring acids/nitriles/amides (`docs/progress-archive/i-40d.md`, open
-points), the `cianometil` "grupo de 2 carbonos" wording (I-40c) and the stale
-`scripts/oracle/README.md`. Deploying stays a manual user step.
+Plan complete: all phases I-1…I-41c are done and reviewed. Poll the inbox
+(`~/.claude/scripts/autoclaude-inbox.sh list`); if empty there is nothing to do. Deploying
+(`npm run deploy`) stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -229,13 +225,16 @@ points), the `cianometil` "grupo de 2 carbonos" wording (I-40c) and the stale
   / `src/editor/labels.js` / `render.js`, label hit box in `geometry.js`, toggle in
   `src/ui/canvasbar.js` (localStorage `organicWeb.abbreviations`); tests
   `tests/unit/abbreviations.test.js`, `tests/e2e/abbreviations.spec.js`.
+- Wrap-up (I-41c): Ayuda text in `index.html` (`src/ui/help.js`), grouped examples in
+  `src/ui/examples.js` (tests in `tests/unit/layout.test.js`, `tests/e2e/redraw.spec.js`),
+  oracle generators documented in `scripts/oracle/README.md`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-41b)
+## Verification (last phase, I-41c)
 
-- Run by the orchestrator: `npm test` 0 (1499 pass) · `npm run check` 0 (131 files) · `npm run e2e`
-  0 (267 pass, source + dist). Oracle not rerun (naming engine untouched).
+- Run by the orchestrator: `npm test` 0 (1502 pass) · `npm run check` 0 (131 files) · `npm run e2e`
+  0 (269 pass, source + dist). Oracle not rerun (naming engine untouched).
 
 ## Open risks / deviations
 
@@ -383,9 +382,13 @@ points), the `cianometil` "grupo de 2 carbonos" wording (I-40c) and the stale
   labels centred on the carbon (vertical bond meets the middle of "COOH"); SVG `role="img"` hides
   per-label aria from screen readers (`docs/progress-archive/i-41b.md`).
 
+- I-41c: examples ring group named «Hidrocarburos con un anillo» (toolbar already has «Anillos»);
+  Ayuda/example wording not teacher-reviewed; still open from I-40d: the ring step calls an ester
+  prefix on the ring «una rama» (`docs/progress-archive/i-41c.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-41a `3425e44`, pushed. I-41b committed and pushed right after this checkpoint (see `git log`).
+- I-41b `67c6787`, pushed. I-41c committed and pushed right after this checkpoint (see `git log`).

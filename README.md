@@ -1,7 +1,7 @@
 # organicWeb — Química orgánica
 
 A static, offline web app for secondary-school students (ESO, Spain): draw an
-acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative, alcohol, aldehyde, ketone or carboxylic acid of one) and get its IUPAC name **in Spanish**, with a
+acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester, amine, amide or nitrile of one) and get its IUPAC name **in Spanish**, with a
 step-by-step explanation and a redraw that makes the main chain obvious. The
 user interface is in Spanish; code and documentation are in English. The
 design and phase plan live in [`docs/design.md`](docs/design.md).
@@ -15,7 +15,10 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   alternating double bonds: on empty space, hung from an atom or fused on a
   bond), Cambiar enlace, Borrar, Mover (marquee selection), undo/redo, Limpiar
   (with an in-page confirmation), pan (Space + drag, middle drag, two
-  fingers) and zoom (wheel, pinch), Centrar, skeletal or condensed display,
+  fingers) and zoom (wheel, pinch), Centrar, skeletal or condensed display
+  (in condensed mode, an editable «Ángulos rectos (90°)» view of the
+  semi-developed formula for open-chain molecules, heteroatoms included, with
+  an optional «Abreviar CHO y COOH» toggle),
   live molecular formula, keyboard shortcuts, and autosave in the browser.
 - **Naming** of every valid acyclic hydrocarbon (alkanes, alkenes, alkynes;
   any branching; branched, unsaturated and nested substituents; doubly
@@ -127,9 +130,12 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 - **Ordenar dibujo**: redraws the molecule with the main chain laid out left
   to right and numbered, or a ring as a regular polygon with locant 1 on top
   and the numbering clockwise (one animated, undoable edit).
-- **Ejemplos**: a menu of 14 molecules, one per feature.
-- **Ayuda**: a short in-page guide to drawing, with illustrations, keyboard
-  shortcuts and the glossary.
+- **Ejemplos**: a menu of 32 molecules, one per feature, in four groups:
+  open-chain hydrocarbons, hydrocarbons with a ring, functional groups (one
+  per family) and rings with a functional group.
+- **Ayuda**: a short in-page guide: the families the app names and what is
+  out of scope, how to draw (elements, rings, the 90° view with heteroatoms
+  and the «Abreviar CHO y COOH» toggle), keyboard shortcuts and the glossary.
 - Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles, benzenes with two or more substituents), disconnected pieces, an empty canvas
   and impossible bonds. Light and dark theme following the system.
 - Accessible: every control is reachable with the keyboard and has a visible
@@ -307,8 +313,7 @@ the Keychain account is the WebDAV user).
   the normal drawing for any molecule with a ring.
 - Parent chain up to 30 carbons, whole molecule up to 60.
 - Structure → name only; there is no name → structure.
-- Future (design §12, §13): functional groups,
-  E/Z and a quiz mode ("¿Cómo se llama?" in reverse: read a name, draw it).
+- Future (design §12): E/Z and a quiz mode ("¿Cómo se llama?" in reverse: read a name, draw it).
 
 ## Author
 

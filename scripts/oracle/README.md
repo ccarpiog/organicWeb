@@ -20,74 +20,96 @@ refused (the run is reported as skipped).
 
 ```sh
 npm run oracle -- --download                 # once: fetch the pinned jar
-npm run oracle -- --count 1000 --seed 1      # 1000 random molecules + 500 monocycles + 100 benzenes + 500 halogen derivatives + 500 alcohols + 11 cycloalkanes, 4–14 C
-npm run oracle -- --count 3000 --seed 6 --min 10 --max 30
+npm run oracle -- --count 1000 --seed 1      # the usual run (about 10 000 molecules, see below)
+npm run oracle -- --count 2000 --seed 7 --min 1 --max 20
 ```
 
 Options: `--count N` (default 1000), `--seed S` (default 1), `--min`/`--max`
 carbon count (default 4–14), `--jar path`, `--java path`, `--log path`.
 
-Output: `passed: … failed: … skipped: … adapter failures: …`.
+The first output line lists how many molecules of each family were drawn;
+the last one is `passed: … failed: … skipped: … adapter failures: …`.
 
 - Without Java or the jar every molecule is **skipped** (never passed) and
   the exit status is 0.
-- Exit status 1 on any failure; failures are written to
-  `scripts/oracle/logs/failures-seed-S.log` (gitignored) with the seed,
-  SMILES, Spanish and English names, the OPSIN version, OPSIN's output and
-  its diagnostics.
+- Exit status 1 on any naming or adapter failure, 2 on bad arguments.
+  Failures are written to `scripts/oracle/logs/failures-seed-S.log`
+  (gitignored) with the seed, SMILES, Spanish and English names, the OPSIN
+  version, OPSIN's output and its diagnostics.
+
+## Generated families
+
+`generate.mjs` draws distinct (by canonical key) random molecules from the
+seed (mulberry32), within the naming size caps, and keeps only those the
+engine can name. With `--count N`, `run.mjs` draws N acyclic hydrocarbons,
+N/10 benzenes, one cycloalkane per ring size in the carbon range, and N/2 of
+every other family:
+
+| Generator | Family (design.md §13.4 phase) |
+|---|---|
+| `generateMolecules()` | acyclic hydrocarbons: alkanes, alkenes, alkynes, branched (v1) |
+| `generateMonocycles()` | one ring of 3–10 C with side chains and ring/chain unsaturation (I-26) |
+| `generateBenzenes()` | benzene and monosubstituted benzenes, either Kekulé drawing (I-28) |
+| `generateCycloalkanes()` | one cycloalkane per ring size, `cyclopropane` … `cyclotriacontane` |
+| `generateHalogenated()` | F, Cl, Br, I in place of random hydrogens, halomethanes included (I-30) |
+| `generateAlcohols()` | OH groups on chains or ring carbons, phenol (I-31) |
+| `generateCarbonyls()` | aldehydes and ketones (I-32) |
+| `generateAcids()` | one or two –COOH at chain ends (I-33) |
+| `generateEthers()` | an O put into one or two C–C bonds (I-34) |
+| `generateEsters()` | one –COO– between two acyclic pieces (I-35) |
+| `generateAmines()` | primary, secondary and tertiary amines, anilines, `amino-` prefixes (I-36) |
+| `generateAmides()` | one or two –CONH₂, N-substituted (I-37) |
+| `generateNitriles()` | one or two –C≡N at chain ends (I-38) |
+| `generateCyano()` | a nitrile cited as `ciano-` (I-39a) |
+| `generateAcyl()` | acyl prefixes: `formil`, `acetil`, `propanoil`… (I-39b) |
+| `generateEsterPrefixes()` | `alcoxicarbonil`, `…-oxi…-oxo`, `aciloxi`, diesters (I-39c) |
+| `generateAmidePrefixes()` | `carbamoil`, `…-amino…-oxo`, `acilamino` (I-39d) |
+| `generateRingSubstituents()` | a ring as a prefix of a chain carrying the principal group: `ciclohexil`, `fenil`, `fenoxi` (I-40a) |
+| `generateRingAcids()` | `-carboxílico`, `-carbaldehído`, `ácido benzoico`, `carboxi-`, `benzoil` (I-40b) |
+| `generateRingNitrilesAmides()` | `-carbonitrilo`, `-carboxamida`, `benzonitrilo`, `benzamida`, `N-feniletanamida` (I-40c) |
+| `generateRingEsters()` | `-carboxilato`, `benzoato`, `etanoato de fenilo`, `benzoato de fenilo` (I-40d) |
+
+Most families also mix in other groups at random (OH, C=O, halogens, ethers,
+amines…), so the seniority rules and the prefix forms are exercised together.
+Out-of-scope structures (stereo, charges, heterocycles, fused/bridged/spiro
+rings, polysubstituted benzenes) are never generated.
 
 ## How it works
 
-1. `generate.mjs` draws distinct (by canonical tree key) random acyclic
-   hydrocarbons from a seed (mulberry32), within the naming size caps;
-   `generateMonocycles()` draws half as many distinct (by canonical key)
-   random monocycles — a ring of 3–10 carbons with random side chains and
-   random double/triple bonds in the ring and the chains (benzene rings
-   drawn by chance are named too); `generateBenzenes()` draws a tenth as
-   many benzene derivatives — benzene, then a Kekulé hexagon in either
-   drawing with one random side chain; `generateHalogenated()` draws half as
-   many halogen derivatives — a random acyclic hydrocarbon (from 1 C, so
-   halomethanes and haloethanes too), monocycle or benzene whose hydrogens are
-   replaced at random by F, Cl, Br or I (`halogenate()`), kept when valid for
-   naming; `generateAlcohols()` draws half as many alcohols — a random
-   acyclic hydrocarbon (from 1 C) or monocycle whose hydrogens become OH
-   groups at random (`hydroxylate()`, on ring carbons only for a ring),
-   phenol, some halogenated as well, kept when valid for naming; and
-   `generateCycloalkanes()` adds one
-   cycloalkane per ring size in the carbon range (3–30 at most):
-   `cyclopropane` … `cyclotriacontane`.
-2. Each molecule is named in every prefix style (`isopropil`, `pin`,
-   `substituted`), plus its traditional name when it has one (`toluene`,
-   `styrene`); the same name structures are rendered in English with
-   `src/naming/lexicon.en.js` (`compare.mjs`).
+1. `generate.mjs` draws the molecules (above).
+2. `run.mjs` names each one in every prefix style (`isopropil`, `pin`,
+   `substituted`), plus, when there is one, its traditional name (`toluene`,
+   `acetic acid`, `methyl acetate`, `aniline`, `acetamide`, `acetonitrile`,
+   `benzoic acid`…), its `locants` form, its systematic benzene form
+   (`benzenecarboxylic acid`) and the functional-class name of a simple amine
+   (`ethylmethylamine`). The same name structures are rendered in English
+   with `src/naming/lexicon.en.js` (`englishName()` in `compare.mjs`) — never
+   a translation of the Spanish string.
 3. `opsin.mjs` sends all English names to OPSIN in one batch (`-osmi`).
 4. `smiles-full.mjs` (a fuller SMILES parser: bracket atoms, explicit H,
-   rings, aromatic atoms — kekulized by `kekulize()` —, charges) turns OPSIN's SMILES into a
-   hydrogen-suppressed model molecule that keeps every heavy atom with its
-   element (`heavyAtomTree()`), plus a Hill formula counted from the SMILES.
-   Rings are kept. Structures the model cannot hold (unsupported elements,
-   charged atoms, several fragments, radicals) are naming failures.
-5. A molecule passes when, for every style, the number of rings, the
-   canonical key (`canonicalKey()` in `src/model/graph.js`: the tree key, or
-   the monocycle key for one ring; elements, bond orders and ring closures,
+   rings, aromatic atoms — kekulized by `kekulize()` —, charges) turns
+   OPSIN's SMILES into a hydrogen-suppressed model molecule that keeps every
+   heavy atom with its element (`heavyAtomTree()`), plus a Hill formula
+   counted from the SMILES. Structures the model cannot hold (unsupported
+   elements, charged atoms, several fragments, radicals) are naming failures.
+5. A molecule passes when, for every name, the number of rings, the
+   canonical key (`canonicalKey()` in `src/model/graph.js`: the tree key, the
+   monocycle key for one ring, or the key of two separate rings for a ring
+   ester with a ring on each side; elements, bond orders and ring closures,
    so ethanol and dimethyl ether, or cyclohexane and hex-1-ene, differ; a
-   benzene ring matches in either Kekulé drawing, `kekuleKeys()`) and
-   the formula match the original — never the formula alone; polycycles
-   fail until they have a key. OPSIN SMILES that the parser cannot read is an
-   **adapter failure**, counted apart from naming failures.
+   benzene ring matches in either Kekulé drawing, `kekuleKeys()`) and the
+   formula match the original — never the formula alone. OPSIN SMILES that
+   the parser cannot read is an **adapter failure**, counted apart from
+   naming failures.
 
-Besides hydrocarbons, the generator draws halogen derivatives (named since
-I-30) and alcohols (I-31); other oxygen and nitrogen compounds are not
-generated because the engine does not name them yet, although the
-comparison already handles them. Only
-single carbocycles are generated (polycycles are not named). The English
-names keep the Spanish citation order of the prefixes (`2-methyl-4-iodopentane`
-for `2-metil-4-yodopentano`); OPSIN reads them regardless.
+The English names keep the Spanish citation order of the prefixes
+(`2-methyl-4-iodopentane` for `2-metil-4-yodopentano`); OPSIN reads them
+regardless.
 
 A round trip proves that a name denotes the right structure, not that the
 parent choice, numbering or spelling are the preferred ones; the fixtures
 (`tests/fixtures/names.tsv`) remain the authority for those.
 
-`tests/unit/oracle.test.js` runs a 200-molecule round trip when Java and the
-jar are present (skipped otherwise); `tests/unit/invariance.test.js` checks
-that renumbering atoms and shuffling bonds never changes a name.
+`tests/unit/oracle.test.js` runs a small round trip when Java and the jar are
+present (skipped otherwise); `tests/unit/invariance.test.js` checks that
+renumbering atoms and shuffling bonds never changes a name.

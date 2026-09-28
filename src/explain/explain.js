@@ -997,6 +997,29 @@ function cyanoTotal(sub) {
 }
 
 /**
+ * The clause that says which carbons of a substituent sit in its `ciano-`
+ * or `carboxi-` prefixes (I-39a, I-40b): those carbons are counted in the
+ * group but are not in the chain of the branch, so the sentence that
+ * follows («su cadena tiene 1 carbono») does not contradict the count
+ * (`cianometil`: «un grupo de 2 carbonos, contando el del –C≡N»).
+ *
+ * @param {object} sub - A substituent structure (not itself a ciano or carboxi prefix).
+ * @returns {string} The clause, starting with a comma, or '' when there is none.
+ */
+function outerPrefixCarbons(sub) {
+  const parts = [];
+  const cyano = cyanoTotal(sub);
+  const carboxy = carboxyTotal(sub);
+  if (cyano > 0) {
+    parts.push(cyano === 1 ? 'el del –C≡N' : `los ${cyano} de los –C≡N`);
+  }
+  if (carboxy > 0) {
+    parts.push(carboxy === 1 ? 'el del –COOH' : `los ${carboxy} de los –COOH`);
+  }
+  return parts.length > 0 ? `, contando ${joinY(parts)}` : '';
+}
+
+/**
  * Number of –COOH cited as `carboxi-` prefixes inside a substituent
  * (nested ones included; design.md §13.4 I-40b).
  *
@@ -4516,8 +4539,10 @@ function ringStep(result) {
   const ring = `${lexiconEs.ringPrefix}${open}`;
   // Groups on the amine N and amino prefixes are not side chains of the ring (design.md §13.4 I-36).
   const branches = prefixes.filter((g) => !isAtomPrefix(g) && !g.substituent.amino && !onNitrogen(g));
-  // An ester's carbons outside the ring (its C=O carbon, its O-bound group, design.md §13.4 I-40d) count too.
-  const outer = branches.length > 0 || prefixes.some((g) => substituentCarbons(g.substituent) > 0) || isEster(result);
+  // An ester's carbons outside the ring (its C=O carbon, its O-bound group, design.md §13.4 I-40d) count too,
+  // and so does the carbon of a `-carboxílico` / `-carbaldehído` / `-carbonitrilo` / `-carboxamida` suffix (I-40b, I-40c).
+  const outer = branches.length > 0 || prefixes.some((g) => substituentCarbons(g.substituent) > 0)
+    || isEster(result) || isOutsideSuffix(result);
   const text = [
     `${outer ? `En tu molécula, ${n} de los carbonos` : `Los ${n} carbonos`} forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].`,
     'El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.',
@@ -4637,7 +4662,7 @@ function benzeneStep(result) {
   const outside = isOutsideSuffix(result);
   const phenol = Boolean(result.structure.suffix) && !amine && !outside;
   const text = [
-    `${(prefixes.length > 0 && !halogen) || isEster(result) ? 'En tu molécula, 6 de los carbonos' : 'Los 6 carbonos'} forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, ${q(lexiconEs.benzeneName)}. No se llama «ciclohexatrieno».`,
+    `${(prefixes.length > 0 && !halogen) || isEster(result) || outside ? 'En tu molécula, 6 de los carbonos' : 'Los 6 carbonos'} forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, ${q(lexiconEs.benzeneName)}. No se llama «ciclohexatrieno».`,
     'El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.',
   ];
   if (amine) {
@@ -5630,7 +5655,7 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
   if (sub.acyl) {
     out.push(...acylIntro(sub, words, principal));
   } else {
-    out.push(`${q(prefix)} es un grupo de ${count(n, 'carbono', 'carbonos')}.`);
+    out.push(`${q(prefix)} es un grupo de ${count(n, 'carbono', 'carbonos')}${outerPrefixCarbons(sub)}.`);
   }
   if (freeValence.order === 2) {
     out.push(`Se une ${words.to} con un [[enlace doble]]: por eso termina en «-iliden».`);

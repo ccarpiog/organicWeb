@@ -174,6 +174,44 @@ test('the Ejemplos menu works from the keyboard and loading clears a shown name'
   expect(errors).toEqual([]);
 }); // End of test 'the Ejemplos menu works from the keyboard…'
 
+test('the grouped Ejemplos menu loads ring and functional-group examples, named and ordered (I-41c)', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.getByRole('button', { name: 'Ejemplos' }).click();
+  const menu = page.locator('#examples-menu');
+  for (const group of ['Hidrocarburos de cadena abierta', 'Hidrocarburos con un anillo', 'Grupos funcionales',
+    'Anillos con un grupo funcional']) {
+    await expect(menu.getByRole('group', { name: group, exact: true })).toBeVisible();
+  }
+  await expect(menu.getByRole('group', { name: 'Grupos funcionales', exact: true }).getByRole('menuitem')).toHaveCount(10);
+  await page.keyboard.press('Escape');
+  const cases = [
+    ['Benceno con una rama', 'metilbenceno'],
+    ['Cicloalqueno (anillo con un enlace doble)', 'ciclohexeno'],
+    ['Éster (grupo –COO–)', 'etanoato de etilo'],
+    ['Amida (grupo –CONH₂)', 'etanamida'],
+    ['Nitrilo (grupo –C≡N)', 'propanonitrilo'],
+    ['Benceno con un grupo –COOH', 'ácido benzoico'],
+  ];
+  for (const [label, name] of cases) {
+    await loadExample(page, label);
+    await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+    await expect(page.locator('#result-name')).toHaveText(name);
+    // Ordenar dibujo keeps the name.
+    await page.locator('#toolbar [data-action="arrange"]').click();
+    await expect(page.locator('#result-name')).toHaveText(name);
+  } // End of the loop over the examples
+  // The keyboard walks across the groups: End reaches the last example.
+  const button = page.getByRole('button', { name: 'Ejemplos' });
+  await button.focus();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('End');
+  await expect(page.getByRole('menuitem', { name: 'Benceno con un grupo –COOH' })).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('menuitem', { name: 'Alcano de cadena recta' })).toBeFocused();
+  await page.keyboard.press('Escape');
+  expect(errors).toEqual([]);
+}); // End of test 'the grouped Ejemplos menu loads ring and functional-group examples…'
+
 test('a click during the redraw animation ends it and edits nothing', async ({ page }) => {
   const errors = await openApp(page);
   await loadExample(page, 'Alcano ramificado');

@@ -1,8 +1,12 @@
 /**
  * @file Ayuda dialog (design.md §9): the header button that opens the
- * in-page `#help-dialog` (how to draw, the element palette, the Anillos ring
- * tool and the keyboard shortcuts, with small inline SVG illustrations, written in index.html) and its "Palabras clave" list, filled from the
- * explanation glossary so the definitions live in one place.
+ * in-page `#help-dialog` and its "Palabras clave" list, filled from the
+ * explanation glossary so the definitions live in one place. The dialog
+ * text is written in index.html: what the app names (the families, with
+ * rings) and what is out of scope, how to draw (the element palette, the
+ * Anillos ring tool, the 90° view with heteroatoms and the "Abreviar CHO
+ * y COOH" toggle) and the keyboard shortcuts, with small inline SVG
+ * illustrations.
  */
 
 import { GLOSSARY } from '../explain/explain.js';
