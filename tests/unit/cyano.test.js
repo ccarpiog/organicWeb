@@ -184,7 +184,7 @@ test('refusals that stay: a nitrile on an acid, ester or amide carbon, many nitr
   assert.equal(nameOf('N#CCC(C#N)C(C#N)C(=O)O'), 'ácido 2,3,4-tricianobutanoico');
   // Unchanged refusals beside a nitrile (I-40); ester prefixes and diesters are named since I-39c, amide prefixes since I-39d.
   assert.equal(nameOf('N#CC1CCCCC1'), 'HETEROATOM ringNitrile');
-  assert.equal(nameOf('N#CC1CCC(C(=O)O)CC1'), 'HETEROATOM ringAcid');
+  assert.equal(nameOf('N#CC1CCC(C(=O)O)CC1'), 'HETEROATOM ringNitrile', 'ring acids are named since I-40b, ring nitriles wait for I-40c');
   assert.equal(nameOf('N#CCC(=O)OCC(=O)O'), 'ácido 2-[(2-cianoetanoil)oxi]etanoico');
   assert.equal(nameOf('COC(=O)CC(C#N)CC(=O)OC'), '3-cianopentanodioato de dimetilo');
   assert.equal(nameOf('N#CCC(=O)NCC(=O)O'), 'ácido 2-[(2-cianoetanoil)amino]etanoico', 'amide prefixes, I-39d');

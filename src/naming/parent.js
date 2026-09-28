@@ -43,16 +43,20 @@
  * Ring or chain (design.md §13.5, §13.4 I-40a): with one ring and a
  * principal group, ringOrChain() compares the ring with the chains
  * (P-44.1.1 first: the most principal groups; P-44.1.2.2 on a tie: the
- * ring is senior). When a chain carries more principal groups than the
- * ring, the chain is the parent and selectParent() runs on the skeleton
- * without the ring atoms (a ring carbon is never a chain carbon), so the
- * ring is a substituent (`ciclohexil`, `fenil`); the carbon bearing it can
- * end a chain and P4 counts the ring as one substituent.
+ * ring is senior). A –COOH or –CHO bonded directly to a ring atom counts
+ * for the ring (I-40b: `-carboxílico`, `-carbaldehído`; principal.js
+ * isRingGroupCarbon()), never as a one-carbon chain. When a chain carries
+ * more principal groups than the ring, the chain is the parent and
+ * selectParent() runs on the skeleton without the ring atoms (a ring
+ * carbon is never a chain carbon) and without those group carbons, so the
+ * ring is a substituent (`ciclohexil`, `fenil`, `(4-carboxiciclohexil)`);
+ * the carbon bearing it can end a chain and P4 counts the ring as one
+ * substituent.
  * Pure: reads topology only.
  */
 
 import { adjacency, leaves, carbonSkeleton, connectedComponents, cycleCore } from '../model/graph.js';
-import { principalKindOf, isPrincipalOxygen, isSuffixOxygen, outsideCarbons } from './principal.js';
+import { principalKindOf, isPrincipalOxygen, isSuffixOxygen, outsideCarbons, ringGroupCarbons } from './principal.js';
 
 /**
  * Orients a chain so that it starts at the end with the smaller atom id.
@@ -249,8 +253,11 @@ function applyCountRule(rule, chains, values) {
 export function selectParent(mol) {
   const adj = adjacency(mol);
   const principal = principalKindOf(mol, adj);
-  // Ring atoms (design.md §13.4 I-40a: a chain parent of a ring molecule) are never chain atoms.
-  let chains = leafToLeafPaths(mol, new Set([...outsideCarbons(mol, adj, principal), ...cycleCore(adj)]));
+  // Ring atoms (design.md §13.4 I-40a: a chain parent of a ring molecule) are never chain atoms, nor is the
+  // carbon of a –COOH or –CHO bonded to the ring (I-40b: a `carboxi` / `formil` prefix of the ring prefix).
+  const ring = cycleCore(adj);
+  const exclude = [...outsideCarbons(mol, adj, principal), ...ring, ...ringGroupCarbons(mol, adj, principal, ring)];
+  let chains = leafToLeafPaths(mol, new Set(exclude));
   const isSuffix = (id) => isSuffixOxygen(mol, adj, id, principal);
   const isGroup = (id) => isPrincipalOxygen(mol, adj, id, principal);
   const counts = new Map(chains.map((chain) => [chain.join('-'), chainCounts(adj, chain, isSuffix, isGroup)]));
@@ -284,9 +291,10 @@ export function selectParent(mol) {
  * Compares the ring of a single-ring molecule with its chains for the
  * parent (design.md §13.5, §13.4 I-40a; IUPAC 2013 P-44.1.1, then
  * P-44.1.2.2): the number of principal groups on ring atoms (each suffix
- * group once: an OH, a ketone C=O, an amine N bonded to a ring carbon)
- * against the most on one chain of the skeleton without the ring atoms
- * (chainCounts() P0). The chain is the parent only when it carries more;
+ * group once: an OH, a ketone C=O, an amine N bonded to a ring carbon; a
+ * –COOH or –CHO bonded to a ring carbon, I-40b) against the most on one
+ * chain of the skeleton without the ring atoms and those –COOH / –CHO
+ * carbons (chainCounts() P0). The chain is the parent only when it carries more;
  * on a tie the ring is senior. Null without a ring or without a principal
  * group (a hydrocarbon, halogen derivative or ether: the ring is always
  * the parent). The result is also the trace step `RINGCHAIN` (ring
@@ -305,10 +313,13 @@ export function ringOrChain(mol, ring) {
   }
   const isSuffix = (id) => isSuffixOxygen(mol, adj, id, principal);
   const isGroup = (id) => isPrincipalOxygen(mol, adj, id, principal);
-  const onRing = new Set(ring.atoms.flatMap((atom) => adj.get(atom).filter((n) => isSuffix(n.atom)).map((n) => n.atom)));
+  // A –COOH or –CHO bonded to a ring atom (I-40b) is the ring's group (`-carboxílico`, `-carbaldehído`): its C=O counts.
+  const groupCarbons = ringGroupCarbons(mol, adj, principal, new Set(ring.atoms));
+  const carriers = [...ring.atoms, ...groupCarbons];
+  const onRing = new Set(carriers.flatMap((atom) => adj.get(atom).filter((n) => isSuffix(n.atom)).map((n) => n.atom)));
   const ringCount = onRing.size;
   const offRing = [...mol.atoms.keys()].filter((id) => isSuffix(id) && !onRing.has(id)).length;
-  const exclude = new Set([...outsideCarbons(mol, adj, principal), ...ring.atoms]);
+  const exclude = new Set([...outsideCarbons(mol, adj, principal), ...ring.atoms, ...groupCarbons]);
   const chains = leafToLeafPaths(mol, exclude);
   const counts = chains.map((chain) => chainCounts(adj, chain, isSuffix, isGroup).suffixes);
   const chainCount = counts.length > 0 ? Math.max(...counts) : 0;

@@ -8,7 +8,9 @@
  * ring and a chain with as many groups each keep the ring as the parent;
  * the traditional names are listed under "Otras formas válidas"; "Ordenar
  * dibujo" lays a ring prefix out; two identical principal branches on a
- * ring and an acyl group on the ring are refused with their messages.
+ * ring and a nitrile with a ring are refused with their messages (an acyl
+ * group on the ring and aldehydes are named since I-40b,
+ * tests/e2e/ring-acids.spec.js).
  * Runs on the dev server and on dist/index.html.
  */
 
@@ -139,7 +141,7 @@ test('ketones and amines beside a benzene, with their traditional names; a tie k
   expect(errors).toEqual([]);
 }); // End of test 'ketones and amines beside a benzene…'
 
-test('loaded ring-prefix molecules are named; identical principal branches and a ring acyl are refused', async ({ page }) => {
+test('loaded ring-prefix molecules are named; identical principal branches and a ring nitrile are refused', async ({ page }) => {
   const errors = await openApp(page);
   for (const [smiles, name] of [
     ['CC(O)C1=CC=CC=C1', '1-feniletan-1-ol'],
@@ -165,13 +167,9 @@ test('loaded ring-prefix molecules are named; identical principal branches and a
   await expect(error).toContainText('ciclohexano-1,4-diildimetanol');
   await expect(page.locator('#result-name')).toHaveCount(0);
 
-  await loadSmiles(page, 'CC(=O)C(C(=O)C1=CC=CC=C1)C(C)=O');
+  await loadSmiles(page, 'N#CCC1CCCCC1');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('benzoil');
-
-  await loadSmiles(page, 'O=CCC1CCCCC1');
-  await askName(page);
-  await expect(error).toContainText('carbaldehído');
+  await expect(error).toContainText('carbonitrilo');
   expect(errors).toEqual([]);
 }); // End of test 'loaded ring-prefix molecules…'

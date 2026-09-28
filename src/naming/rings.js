@@ -8,7 +8,13 @@
  * `ciclohex-2-en-1-ol`: the OH carbon gets the lowest locant (N0); and with
  * a ketone C=O whose carbon is a ring atom (cycloalkanones, I-32, brought
  * forward from I-40) `ciclohexanona`, `2-metilciclohexan-1-ona`,
- * `3-hidroxiciclohexan-1-ona` (the ketone is principal, the OH a prefix).
+ * `3-hidroxiciclohexan-1-ona` (the ketone is principal, the OH a prefix);
+ * and with a –COOH or –CHO bonded to a ring carbon (design.md §13.4 I-40b)
+ * `ácido ciclohexanocarboxílico`, `ciclohexanocarbaldehído`,
+ * `ácido 2-metilciclohexano-1-carboxílico`,
+ * `ácido ciclohexano-1,2-dicarboxílico`: the group's carbon is outside the
+ * ring, the ring atom bonded to it is numbered first (N0) and the suffix
+ * includes the carbon (suffixSites(…, ring = true), render.js).
  *
  * Ring vs chain (IUPAC 2013 P-44.1.2.2, P-52.2.8): a ring is senior to a
  * chain whatever the chain's length or unsaturation, so without a
@@ -141,7 +147,7 @@ export function nameRingWithStyle(mol, style = PREFIX_STYLES[0]) {
   const adj = adjacency(mol);
   const ctx = createNamingContext(mol, style, lexiconEs, adj);
   const substituents = collectSubstituents(mol, perceived.atoms, ctx);
-  const sites = suffixSites(mol, adj, perceived.atoms, ctx.principal);
+  const sites = suffixSites(mol, adj, perceived.atoms, ctx.principal, true);
   const saturated = perceived.double.length === 0 && perceived.triple.length === 0;
   let parent = perceived;
   let numberingTrace = [];

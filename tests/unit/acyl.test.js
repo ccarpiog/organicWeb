@@ -217,9 +217,9 @@ test('refusals that stay: –CO–C≡N, three aldehydes with the aldehyde princ
   assert.equal(nameOf('O=CCC(C=O)CC(=O)O'), 'ácido 3-formil-5-oxopentanoico');
   assert.equal(nameOf('O=CCC(C=O)CC#N'), '3-formil-5-oxopentanonitrilo');
   assert.equal(nameOf('O=CCC(C=O)OCC(C=O)CC'), '2-(2-formilbutoxi)butanodial');
-  // Ketones on a ring's side chain are named since I-40a (the ring a prefix); aldehydes with a ring wait for I-40b.
+  // Ketones on a ring's side chain are named since I-40a (the ring a prefix); aldehydes with a ring since I-40b.
   assert.equal(nameOf('CC(=O)C1CCCCC1'), '1-ciclohexiletan-1-ona');
-  assert.equal(nameOf('O=CC1CCCCC1'), 'HETEROATOM ringAldehyde');
+  assert.equal(nameOf('O=CC1CCCCC1'), 'ciclohexanocarbaldehído');
   assert.equal(nameOf('CC(=O)C(C1CCCCC1)C(C)=O'), '3-ciclohexilpentano-2,4-diona');
   assert.equal(nameOf('CC(=O)C1CCC(=O)CC1'), '4-acetilciclohexan-1-ona', 'a ring ketone with an acyl branch');
 }); // End of test 'refusals that stay…'

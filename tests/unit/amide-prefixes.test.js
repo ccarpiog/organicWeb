@@ -284,13 +284,14 @@ test('refusals that stay, with their counter-examples', () => {
   const others = [
     ['CC(=O)NC(C)=O', 'imide'],
     ['CC(=O)NC1CCCCC1', 'ringAmide'],
-    ['NC(=O)C1CCC(C(=O)O)CC1', 'ringAcid'],
+    ['NC(=O)C1CCC(C(=O)O)CC1', 'ringAmide'],
     ['N#CC(=O)NCC(=O)O', 'carbonocyanidic'],
     ['NC(=O)CNCC(N)=O', 'symmetricAmine'],
     ['NC(=O)CCOCCC(N)=O', 'symmetricEther'],
     ['CC(=O)OCCOC(C)=O', 'esterPrefix'],
-    ['OC(=O)CC(=O)OCC(=O)O', 'carboxySubstituent'],
   ];
+  // A –COOH on the O side of an ester beside an acid is `carboxi-` since I-40b.
+  assert.equal(nameOf('OC(=O)CC(=O)OCC(=O)O'), 'ácido 3-(carboximetoxi)-3-oxopropanoico');
   for (const [smiles, reason] of others) {
     assert.equal(nameOf(smiles), `HETEROATOM ${reason}`, smiles);
   }

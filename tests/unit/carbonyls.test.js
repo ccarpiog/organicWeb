@@ -22,7 +22,7 @@ import { formula } from '../../src/model/molecule.js';
 import { adjacency } from '../../src/model/graph.js';
 import {
   validateForNaming, carbonylKind, hasNameableHeteroatoms, sideChainCarbonyls, aldehydeOxygens, MESSAGES,
-  RING_ALDEHYDE_MESSAGE, MANY_ALDEHYDES_MESSAGE, ACYL_SUBSTITUENT_MESSAGE,
+  MANY_ALDEHYDES_MESSAGE, ACYL_SUBSTITUENT_MESSAGE,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { oxygenKind, principalKindOf, carbonylTraditionalId } from '../../src/naming/principal.js';
@@ -86,16 +86,11 @@ test('validation: aldehyde and ketone C=O are admitted; other C=O derivatives ke
   assert.equal(hasNameableHeteroatoms(parseSmiles('OCC(C)=O'), [1, 5]), true, 'an OH and a ketone');
 });
 
-test('refusals: an aldehyde with a ring, three aldehydes; ring side-chain ketones named since I-40a, acyl branches since I-39b', () => {
-  const ring = named('O=CC1CCCCC1');
-  assert.equal(ring.ok, false);
-  assert.equal(ring.error.code, 'HETEROATOM');
-  assert.equal(ring.error.reason, 'ringAldehyde');
-  assert.equal(ring.error.message, RING_ALDEHYDE_MESSAGE);
-  assert.match(ring.error.message, /carbaldehído/);
-  assert.equal(ring.groups.principal, 'aldehyde', 'the refusal still explains the groups');
-  assert.equal(named('O=CCC1CCCCC1').error.reason, 'ringAldehyde', 'an aldehyde on a side chain too');
-  assert.equal(named('O=CC1=CC=CC=C1').error.reason, 'ringAldehyde', 'benzaldehyde waits for I-40');
+test('refusals: three aldehydes; ring side-chain ketones named since I-40a, acyl branches since I-39b, ring aldehydes since I-40b', () => {
+  // Aldehydes with a ring (design.md §13.4 I-40b): `-carbaldehído`, `benzaldehído`, the ring as a prefix.
+  assert.equal(named('O=CC1CCCCC1').name, 'ciclohexanocarbaldehído');
+  assert.equal(named('O=CCC1CCCCC1').name, '2-ciclohexiletanal', 'an aldehyde on a side chain');
+  assert.equal(named('O=CC1=CC=CC=C1').name, 'benzaldehído');
   // A ketone on a ring's side chain is named since I-40a: the chain carries the principal group, the ring is a prefix.
   assert.equal(named('CC(=O)C1CCCCC1').name, '1-ciclohexiletan-1-ona');
   assert.deepEqual(sideChainCarbonyls(parseSmiles('CC(=O)C1CCC(=O)CC1')), [{ atom: 3, kind: 'ketone' }]);
@@ -366,7 +361,7 @@ test('explanation: the C=O group, -al / -ona, the uncited aldehyde locant, oxo- 
   const oxo = result.structure.prefixes[0].locants[0];
   assert.deepEqual(group.highlight[1], { atoms: [oxo.atom, oxo.attachAtom], bonds: [oxo.bond], style: 'substituent' });
   // The refusals get the group steps and their own message.
-  const refused = explain(named('O=CC1CCCCC1'));
+  const refused = explain(named('O=CCC(C=O)CC=O'));
   assert.deepEqual(refused.map((s) => s.id), ['groups', 'principal', 'affixes', 'notYet']);
   assert.match(refused[3].text[0], /carbaldehído/);
 }); // End of test 'explanation'

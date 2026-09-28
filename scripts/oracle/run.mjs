@@ -31,7 +31,9 @@
  * `4-amino-4-oxo`, `acetilamino`; generateAmidePrefixes(), I-39d) and half
  * as many ring molecules whose side chains carry the principal group
  * (`ciclohexil`, `fenil`, `fenoxi` prefixes, ring and chain tied;
- * generateRingSubstituents(), I-40a), adds
+ * generateRingSubstituents(), I-40a) and half as many ring acids,
+ * aldehydes and ring acyl prefixes (`-carboxílico`, `-carbaldehído`,
+ * `benzoil`; generateRingAcids(), I-40b), adds
  * one cycloalkane per ring size in the carbon range, names
  * each one in every prefix style (plus its traditional name — `toluene`,
  * `styrene`, `formaldehyde`, `acetaldehyde`, `acetone`, `formic acid`,
@@ -68,7 +70,7 @@ import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import {
   generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
   generateAcids, generateEthers, generateEsters, generateAmines, generateAmides, generateNitriles, generateCyano, generateAcyl,
-  generateEsterPrefixes, generateAmidePrefixes, generateRingSubstituents, generateCycloalkanes,
+  generateEsterPrefixes, generateAmidePrefixes, generateRingSubstituents, generateRingAcids, generateCycloalkanes,
 } from './generate.mjs';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
 import { englishName, compareWithOpsin } from './compare.mjs';
@@ -127,7 +129,9 @@ export function parseArgs(argv) {
  * `N,N-dimethylformamide`, I-37) and `acetonitrile` (I-38). A simple amine's traditional alkylamine alternative
  * (`etilmetilamina`, style 'amineClass') is checked too, rendered in
  * English by naming/index.js amineClassName() with the English lexicon
- * (`ethylmethylamine`).
+ * (`ethylmethylamine`), and so is the systematic form of benzoic acid and
+ * benzaldehyde (style 'benzeneSystematic', I-40b: `benzenecarboxylic acid`,
+ * `benzenecarbaldehyde`).
  *
  * @param {object[]} molecules - The molecules.
  * @returns {{mol: object, smiles: string, names: {style: string, spanish: string, english: string|null, error: string|null}[]}[]} One case per molecule.
@@ -157,6 +161,12 @@ export function buildCases(molecules) {
       if (located) {
         const english = renderName(result.structure, lexiconEn, { citeLocants: true }).name;
         names.push({ style: 'locants', spanish: located.name, english, error: null });
+      }
+      const systematic = first ? result.alternatives.find((a) => a.style === 'benzeneSystematic') : null;
+      if (systematic) {
+        // `ácido bencenocarboxílico` / `benzenecarboxylic acid` (design.md §13.4 I-40b).
+        const english = renderName(result.structure, lexiconEn, { systematic: true }).name;
+        names.push({ style: 'benzeneSystematic', spanish: systematic.name, english, error: null });
       }
       const amineClass = first ? result.alternatives.find((a) => a.style === 'amineClass') : null;
       if (amineClass) {
@@ -295,14 +305,15 @@ export async function main(argv) {
   const esterPrefixes = generateEsterPrefixes({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
   const amidePrefixes = generateAmidePrefixes({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
   const ringPrefixes = generateRingSubstituents({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
+  const ringAcids = generateRingAcids({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
   const molecules = [
     ...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...amines,
-    ...amides, ...nitriles, ...cyano, ...acyl, ...esterPrefixes, ...amidePrefixes, ...ringPrefixes, ...rings,
+    ...amides, ...nitriles, ...cyano, ...acyl, ...esterPrefixes, ...amidePrefixes, ...ringPrefixes, ...ringAcids, ...rings,
   ];
   console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes `
     + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${carbonyls.length} aldehydes and ketones `
-    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${nitriles.length} nitriles + ${cyano.length} ciano- molecules + ${acyl.length} acyl molecules + ${esterPrefixes.length} ester-prefix molecules + ${amidePrefixes.length} amide-prefix molecules + ${ringPrefixes.length} ring-prefix molecules + ${rings.length} cycloalkanes, `
+    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${nitriles.length} nitriles + ${cyano.length} ciano- molecules + ${acyl.length} acyl molecules + ${esterPrefixes.length} ester-prefix molecules + ${amidePrefixes.length} amide-prefix molecules + ${ringPrefixes.length} ring-prefix molecules + ${ringAcids.length} ring acids and aldehydes + ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
   const availability = await checkAvailability(options.jar, options.java);
   if (!availability.ok) {

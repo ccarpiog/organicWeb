@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T05:52:07Z",
+  "updated": "2026-09-28T06:36:17Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -405,13 +405,22 @@
     },
     {
       "id": "I-40b",
-      "title": "v2.20b Acids, aldehydes, nitriles and amides with a ring (split from I-40)",
-      "status": "queued",
-      "summary": "Names -carboxílico, -carbaldehído, -carbonitrilo and -carboxamida on a ring and those groups on a ring's side chain."
+      "title": "v2.20b Acids and aldehydes with a ring, ring acyl prefixes (split from I-40)",
+      "status": "done",
+      "risk": "high",
+      "summary": "Names -carboxílico/-carbaldehído on a ring (ácido benzoico, benzaldehído), those groups beside a ring, and benzoil-type prefixes.",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-40b.md",
+      "narrative": "docs/progress-archive/i-40b.md"
     },
     {
       "id": "I-40c",
-      "title": "v2.20c Ring esters (split from I-40)",
+      "title": "v2.20c Nitriles and amides with a ring (split from I-40)",
+      "status": "queued",
+      "summary": "Names -carbonitrilo/-carboxamida on a ring (benzonitrilo, benzamida), N-fenil amides and those groups beside a ring."
+    },
+    {
+      "id": "I-40d",
+      "title": "v2.20d Ring esters (split from I-40)",
       "status": "queued",
       "summary": "Names esters with a ring on the acid side (-carboxilato, benzoato) or the O side (…ato de fenilo/ciclohexilo)."
     },

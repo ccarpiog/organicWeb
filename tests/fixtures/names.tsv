@@ -801,3 +801,47 @@ NC(C)C1CCCCC1	1-ciclohexiletan-1-amina	secondary carbon amine with a ring	P-44.1
 OC(C#C)C1=CC=CC=C1	1-fenilprop-2-in-1-ol	unsaturated chain with fenil	N0 (OH at 1) before the multiple bond	
 OCC1CCC(O)C(O)C1	4-(hidroximetil)ciclohexano-1,2-diol	ring with more principal groups than the branch	P-44.1.1: the ring carries 2 OH, the chain 1; the ring is the parent and the chain OH is hidroxi	
 OCC1(CO)CCC(C(O)Cl)CC1	[4,4-bis(hidroximetil)ciclohexil]clorometanol	three OH branches on a ring, one different	Every branch carries one OH; P4 picks the CH(OH)Cl chain (more substituents), so the two CH2OH branches are prefixes of the ring prefix, no multiplicative refusal (review I-40a)	
+# Ring acids, aldehydes and ring acyl prefixes (I-40b): a –COOH or –CHO bonded to a ring carbon is the ring's group (P-44.1.1 counts it for the ring, never as a one-carbon chain; ring senior on a tie, P-44.1.2.2), cited with a suffix that includes its carbon: -carboxílico / -carbaldehído after the full ring name (P-65.1.2, P-66.6.1.1), the ring atom bonded to it locant 1; benzoic acid and benzaldehyde retained (preferred names, from memory); on a side chain the chain is the parent and the ring a prefix (I-40a); a –COOH that is not a suffix group is carboxi- (its carbon included, P-65.1.2); a C=O off the chain bonded to the ring is benzoil / (cicloalcanocarbonil) (P-65.1.7, from memory) (tests/unit/ring-acids.test.js)
+OC(=O)C1CCCCC1	ácido ciclohexanocarboxílico	-carboxílico on a cycloalkane	The –COOH carbon is outside the ring: the ring carries the group with the suffix carboxylic acid (P-65.1.2); one substituent on a saturated ring, locant omitted (P-14.3.4.2(c))	
+OC(=O)C1CCCC1	ácido ciclopentanocarboxílico	-carboxílico on a five-membered ring	As above	
+OC(=O)C1=CC=CC=C1	ácido benzoico	benzoic acid	Retained preferred name (P-65.1.1.1, from memory); the systematic benzenecarboxylic acid as another form (used in school books)	benzeneSystematic=ácido bencenocarboxílico
+O=CC1CCCCC1	ciclohexanocarbaldehído	-carbaldehído on a cycloalkane	The –CHO carbon is outside the ring: suffix carbaldehyde (P-66.6.1.1)	
+O=CC1=CC=CC=C1	benzaldehído	benzaldehyde	Retained preferred name (from memory); benzenecarbaldehyde as another form	benzeneSystematic=bencenocarbaldehído
+OC(=O)C1CCCCC1C	ácido 2-metilciclohexano-1-carboxílico	substituted ring acid	N0: the ring carbon bonded to the –COOH is 1; then the methyl lowest (2); the 1 is cited once there is a prefix	
+O=CC1CCCC(Cl)C1	3-clorociclohexano-1-carbaldehído	substituted ring aldehyde	N0 then N3 (3 < 5)	
+OC(=O)C1CCCCC1C(=O)O	ácido ciclohexano-1,2-dicarboxílico	two –COOH on a ring	Both groups are suffix groups of the ring (P-65.1.2): -dicarboxílico, locants 1,2 (no elision before a consonant)	
+OC(=O)C1(C(=O)O)CCCCC1	ácido ciclohexano-1,1-dicarboxílico	two –COOH on one ring carbon	Locant repeated for each group	
+OC(=O)C1CC(C(=O)O)CC(C(=O)O)C1	ácido ciclohexano-1,3,5-tricarboxílico	three –COOH on a ring	Any number of ring groups are suffix groups (P-44.1.1); a third –COOH on an open chain is refused instead (manyAcids)	
+O=CC1CCC(C=O)CC1	ciclohexano-1,4-dicarbaldehído	two –CHO on a ring	-dicarbaldehído, locants 1,4	
+OC(=O)C1C=CCCC1	ácido ciclohex-2-eno-1-carboxílico	ring acid with a ring double bond	N0 first (the –COOH at 1), then N1 (the double bond at 2); the ending keeps its o before carboxílico	
+OC(=O)C1=CCCCC1	ácido ciclohex-1-eno-1-carboxílico	double bond at the attachment carbon	N0 then N1 (1)	
+OC(=O)C1CCC(O)CC1	ácido 4-hidroxiciclohexano-1-carboxílico	acid and OH on a ring	Acid > alcohol (P-41): hidroxi	
+OC(=O)C1CCC(=O)CC1	ácido 4-oxociclohexano-1-carboxílico	acid and ring ketone	Acid > ketone: oxo on the ring carbon	
+NC1CCC(C(=O)O)CC1	ácido 4-aminociclohexano-1-carboxílico	acid and amine on a ring	Acid > amine: amino	
+OCC1CCC(C(=O)O)CC1	ácido 4-(hidroximetil)ciclohexano-1-carboxílico	acid on the ring, OH on a branch	The ring carries the acid (1), the chain none	
+CC(=O)C1CCC(C(=O)O)CC1	ácido 4-acetilciclohexano-1-carboxílico	acid on the ring, acyl branch	The ring carries the acid; the ketone C=O carbon starts the acetil branch (I-39b)	
+OC(=O)C1CCC(C=O)CC1	ácido 4-formilciclohexano-1-carboxílico	acid and aldehyde on a ring	Acid > aldehyde; the –CHO carbon is outside the ring, so it is formil (P-66.6.1.2), not oxo	
+OC(=O)C1CCC(C(C)C)CC1	ácido 4-isopropilciclohexano-1-carboxílico	prefix styles on a ring acid	isopropil (default), propan-2-il (PIN), 1-metiletil	pin=ácido 4-(propan-2-il)ciclohexano-1-carboxílico;substituted=ácido 4-(1-metiletil)ciclohexano-1-carboxílico
+OC(=O)CC1=CC=CC=C1	ácido 2-feniletanoico	acid on a ring side chain	P-44.1.1: the chain carries the –COOH, the ring none; phenylacetic acid accepted (acetic acid keeps its retained name with a phenyl, from memory; the app names acids systematically, as ácido 2-cloroetanoico)	traditional=ácido fenilacético
+OC(=O)CC1CCCCC1	ácido 2-ciclohexiletanoico	acid chain with a cycloalkyl prefix	P-44.1.1	
+O=CCC1=CC=CC=C1	2-feniletanal	aldehyde on a ring side chain	P-44.1.1; phenylacetaldehyde accepted (from memory)	traditional=fenilacetaldehído
+O=CCC1CCCCC1	2-ciclohexiletanal	aldehyde chain with a cycloalkyl prefix	P-44.1.1	
+O=CCCC1=CC=CC=C1	3-fenilpropanal	aldehyde chain with fenil	P-44.1.1; the aldehyde locant is never cited	
+OC(=O)C1CCCCC1CC(=O)O	ácido 2-(carboximetil)ciclohexano-1-carboxílico	acid on the ring and on a branch	P-44.1.1 ties (one –COOH each); P-44.1.2.2 ring senior; the branch –COOH is carboxi, its carbon not in the branch chain (carboxymethyl)	
+OC(=O)C1CC(CC(=O)O)CC(CC(=O)O)C1	ácido 3,5-bis(carboximetil)ciclohexano-1-carboxílico	two equal branches beside a ring acid	The ring carries one –COOH, each branch one: tie, ring senior; no multiplicative name since the ring is the parent	
+OC(=O)C(C(=O)O)C1CCC(C(=O)O)CC1	ácido 2-(4-carboxiciclohexil)propanodioico	chain with more –COOH than the ring	P-44.1.1: propanedioic acid carries 2, the ring 1; the ring –COOH is carboxi on the ring prefix	
+OC(=O)CC(C(=O)O)C1CCC(C(=O)O)CC1	ácido 2-(4-carboxiciclohexil)butanodioico	diacid chain with a carboxy ring	As above	
+OC(=O)CC1CCC(C=O)CC1	ácido 2-(4-formilciclohexil)etanoico	–CHO on a ring prefix	The chain carries the acid; the ring –CHO is formil on the ring prefix	
+O=CC1CCCCC1CC=O	2-(2-oxoetil)ciclohexano-1-carbaldehído	aldehyde on the ring and on a branch	Tie, ring senior; the branch –CHO carbon is a branch chain carbon, so it is oxo (P-66.6.1.2)	
+O=CC(C=O)C1CCC(C=O)CC1	2-(4-formilciclohexil)propanodial	dialdehyde chain with a formyl ring	P-44.1.1: the chain carries 2 –CHO, the ring 1	
+OC(=O)COCCC(=O)O	ácido 3-(carboximetoxi)propanoico	–COOH beyond an ether O	Two –COOH on two carbon pieces: the longer piece is the parent (P-44.3), the other –COOH is carboxi in the alkoxy prefix	
+OC(=O)COC(C(=O)O)C(=O)O	ácido 2-(carboximetoxi)propanodioico	a third –COOH on another piece	P-44.1.1: the propanedioic piece carries 2; the third –COOH is carboxi (only three on one piece are refused)	
+OC(=O)CC(=O)OCC(=O)O	ácido 3-(carboximetoxi)-3-oxopropanoico	–COOH on the O side of an ester prefix	The ester beside the acid is alcoxi + oxo on its carbon (I-39c); the far –COOH is carboxi	
+OC(=O)C(CC)C(=O)C1=CC=CC=C1	ácido 2-benzoilbutanoico	benzoyl prefix	The C=O carbon is off the longest chain: an acyl branch bonded to the benzene, benzoil (retained acyl prefix, from memory)	
+OC(=O)C(CC(C)C)C(=O)C1=CC=CC=C1	ácido 2-benzoil-4-metilpentanoico	benzoil in alphabetical order	b (benzoil) < m (metil)	
+OC(=O)C(C(=O)C1C=CCCC1)CC	ácido 2-(ciclohex-2-eno-1-carbonil)butanoico	unsaturated cycloalkanecarbonyl	The ring acid is ciclohex-2-eno-1-carboxílico, so its acyl prefix is ciclohex-2-eno-1-carbonil (P-65.1.7, from memory); enclosed	
+CC(=O)C(C(=O)C1CCCCC1)C(C)=O	3-(ciclohexanocarbonil)pentano-2,4-diona	cyclohexanecarbonyl prefix	A third C=O off the chain bonded to the ring: acyl prefix from ciclohexanocarboxílico; enclosed (app decision)	
+CC(=O)C(C(=O)C1CCCCC1C)C(C)=O	3-(2-metilciclohexano-1-carbonil)pentano-2,4-diona	substituted cycloalkanecarbonyl	The ring numbered from the carbon bonded to the C=O (1), its methyl at 2	
+CC(=O)C(C(=O)C1=CC=CC=C1)C(C)=O	3-benzoilpentano-2,4-diona	benzoyl on a diketone	As above with benzene: benzoil, unenclosed	
+OC(=O)CCCC(=O)C1=CC=CC=C1	ácido 5-fenil-5-oxopentanoico	C=O between the chain and the ring, in the chain	The C=O carbon is a leaf of the skeleton without the ring, so the longest chain reaches it: oxo in the chain and a phenyl prefix, not 4-benzoilbutanoico (design §13.6 Where X belongs)	
+OC(=O)C(=O)C1=CC=CC=C1	ácido 2-fenil-2-oxoetanoico	ring ketone acid	As above: the chain ends at the C=O carbon	

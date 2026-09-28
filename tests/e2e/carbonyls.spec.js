@@ -183,11 +183,16 @@ test('loaded aldehydes and ketones: -al, -ona, oxo-, hidroxi-, rings, propanona 
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
   const error = page.locator('#results .results-error');
-  await loadSmiles(page, 'O=CC1CCCCC1');
+  await loadSmiles(page, 'O=CCC(C=O)CC=O');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
   await expect(error).toContainText('carbaldehído');
   await expect(page.locator('#result-name')).toHaveCount(0);
+
+  // An aldehyde on a ring is named since I-40b (tests/e2e/ring-acids.spec.js).
+  await loadSmiles(page, 'O=CC1CCCCC1');
+  await askName(page);
+  await expect(page.locator('#result-name')).toHaveText('ciclohexanocarbaldehído');
 
   // An acyl branch is named since I-39b (tests/e2e/acyl.spec.js); only –CO–C≡N keeps the refusal.
   await loadSmiles(page, 'OC(=O)C(C(=O)C#N)CC');

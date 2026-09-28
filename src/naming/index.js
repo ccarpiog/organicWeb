@@ -68,10 +68,18 @@
  * `ácido`: `ácido etanoico`, `ácido 2-metilpropanoico`, `ácido
  * but-2-enoico`, `ácido butanodioico`, `ácido 4-oxopentanoico`, `ácido
  * 2-hidroxipropanoico`, `ácido 3-oxopropanoico` (an aldehyde end beside
- * the acid is `oxo-`). Validation refuses more than two –COOH (`manyAcids`)
- * and any acid with a ring (`ringAcid`); a –COOH left out of the suffix (a
- * `carboxi-` branch) is refused here as a safety net
- * (`carboxySubstituent`). The traditional `ácido fórmico`, `ácido acético`
+ * the acid is `oxo-`). Validation refuses more than two –COOH on one carbon
+ * piece (`manyAcids`); a –COOH on another piece is the prefix `carboxi-`
+ * (I-40b: `ácido 3-(carboximetoxi)propanoico`), and one cited neither way is
+ * refused here as a safety net (`carboxySubstituent`). With a ring
+ * (I-40b), a –COOH or –CHO bonded to a ring carbon is the ring's group:
+ * `ácido ciclohexanocarboxílico`, `ciclohexano-1,2-dicarboxílico`,
+ * `ciclohexanocarbaldehído`, the retained `ácido benzoico` / `benzaldehído`
+ * (with `ácido bencenocarboxílico` / `bencenocarbaldehído` as
+ * alternatives, benzeneSystematicAlternative()); on a side chain the chain
+ * may be the parent (`ácido 2-feniletanoico`, with `ácido fenilacético`);
+ * a C=O carbon bonded to the ring off the chain is `benzoil` /
+ * `(ciclohexanocarbonil)` (render.js ringCarbonylTokens()). The traditional `ácido fórmico`, `ácido acético`
  * and `ácido oxálico` are offered for the bare molecules.
  *
  * Ethers (design.md §13.4 I-34) are never a suffix: the O is not a chain
@@ -187,7 +195,7 @@ import {
   validateForNaming, validationError, carboxylCarbons, etherOxygens, amineNitrogens, ACYL_SUBSTITUENT_MESSAGE,
   CARBOXY_SUBSTITUENT_MESSAGE, SYMMETRIC_ETHER_MESSAGE, SYMMETRIC_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE,
   amideCarbons, AMIDE_PREFIX_MESSAGE, nitrileCarbons, CYANO_PREFIX_MESSAGE, isAmineNitrogen, esterCarbons,
-  ESTER_PREFIX_MESSAGE, SYMMETRIC_RING_MESSAGE, RING_ACYL_MESSAGE,
+  ESTER_PREFIX_MESSAGE, SYMMETRIC_RING_MESSAGE,
 } from '../model/validate.js';
 import { adjacency, hasCycle, rootedBranchKey, cycleCore } from '../model/graph.js';
 import { selectParent, ringOrChain } from './parent.js';
@@ -419,7 +427,7 @@ function nameValidated(mol, options) {
     if (acyl) {
       return withGroups({ ok: false, error: acylError(acyl) }, mol);
     }
-    if (acids.length > 0 && suffixCount(structure) !== acids.length) {
+    if (acids.length > 0 && suffixCount(structure) + carboxyCount(structure) !== acids.length) {
       return withGroups({ ok: false, error: carboxyError(acids) }, mol);
     }
     if (esters.length > 0 && suffixCount(structure) !== esters.length) {
@@ -446,6 +454,10 @@ function nameValidated(mol, options) {
   for (const other of others) {
     const result = named(other);
     alternatives.push({ style: other, label: lexiconEs.styleLabel(other), name: result.name, parts: result.parts });
+  }
+  const systematic = benzene ? benzeneSystematicAlternative(main) : null;
+  if (systematic) {
+    alternatives.push(systematic);
   }
   const traditional = benzene ? traditionalAlternative(main) : carbonylAlternative(main);
   if (traditional) {
@@ -581,26 +593,21 @@ export function amineClassName(mol, structure, lexicon = lexiconEs) {
  * has an acyl branch without an acyl prefix (substituent.js unnamedAcyl(),
  * design.md §13.4 I-32, I-39b): a one-carbon acyl group carrying a
  * `ciano`, –CO–C≡N, which IUPAC 2013 names `carbonocianidoil` (from
- * memory), not supported; or, since I-40a, a one-carbon acyl group bonded
- * to the ring (`ringAcyl`: `ciclohexanocarbonil`, `benzoil`, named with the
- * `-carbonil` forms of I-40b).
+ * memory), not supported. A one-carbon acyl group bonded to the ring is
+ * named since I-40b (`benzoil`, `(ciclohexanocarbonil)`).
  *
- * @param {{atoms: number[], bonds: number[], ring?: boolean}} acyl - The C=O atoms of the acyl branch.
+ * @param {{atoms: number[], bonds: number[]}} acyl - The C=O atoms of the acyl branch.
  * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
  */
 function acylError(acyl) {
-  if (acyl.ring) {
-    // X bonded to the ring (design.md §13.4 I-40a): `ciclohexanocarbonil`, `benzoil`, with the -carbonyl names of I-40b.
-    return validationError('HETEROATOM', { message: RING_ACYL_MESSAGE, atoms: [...acyl.atoms], reason: 'ringAcyl' });
-  }
   return validationError('HETEROATOM', { message: ACYL_SUBSTITUENT_MESSAGE, atoms: [...acyl.atoms], reason: 'acylSubstituent' });
 }
 
 /**
- * The HETEROATOM refusal of a molecule whose name would leave a –COOH out
- * of the parent's suffix (a `carboxi-` prefix, design.md §13.4 I-33). A
- * safety net: validation already refuses every molecule where this can
- * happen (`manyAcids`, `ringAcid`).
+ * The HETEROATOM refusal of a molecule whose name would cite a –COOH
+ * neither in the parent's suffix nor as a `carboxi-` prefix (design.md
+ * §13.4 I-33, I-40b). A safety net: validation (`manyAcids`) and the chain
+ * machinery make it unreachable.
  *
  * @param {number[]} acids - The carboxyl carbons of the molecule.
  * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
@@ -672,6 +679,20 @@ export function cyanoCount(structure) {
 }
 
 /**
+ * The number of `carboxi` prefixes cited in a name structure, at any depth,
+ * the O-bound group of an ester and the groups on an N included (design.md
+ * §13.4 I-40b): every –COOH that is not a suffix group should be one.
+ *
+ * @param {{prefixes: object[], ester?: {alkyl: object}}} structure - A name or substituent structure.
+ * @returns {number} The count.
+ */
+export function carboxyCount(structure) {
+  const own = structure.prefixes.reduce((sum, group) => sum
+    + (group.substituent.carboxy ? group.locants.length : group.locants.length * carboxyCount(group.substituent)), 0);
+  return own + esterParts(structure).reduce((sum, part) => sum + carboxyCount(part.alkyl), 0);
+}
+
+/**
  * The HETEROATOM refusal of a molecule whose name neither cites a nitrile
  * as a suffix group nor as a `ciano` prefix (design.md §13.4 I-38, I-39a).
  * A safety net that validation and the chain machinery make unreachable
@@ -733,6 +754,26 @@ function carbonylAlternative(result) {
   const bonds = [...result.parent.bonds, ...group.bonds, ...sites.flatMap((site) => [site.bond, ...site.bonds])];
   return { style: 'traditional', label: lexiconEs.traditionalLabel(id), name, parts: [{ text: name, kind: 'stem', atoms, bonds }] };
 } // End of function carbonylAlternative()
+
+/**
+ * The systematic alternative of `ácido benzoico` and `benzaldehído`
+ * (design.md §13.4 I-40b): the benzene name with the `-carboxílico` /
+ * `-carbaldehído` suffix, `ácido bencenocarboxílico`,
+ * `bencenocarbaldehído`, which some school books use; IUPAC 2013 prefers
+ * the retained names (from memory), so this one is listed under "Otras
+ * formas válidas". Null for any other name.
+ *
+ * @param {object} result - The main naming result.
+ * @returns {{style: string, label: string, name: string, parts: object[]}|null} The alternative.
+ */
+function benzeneSystematicAlternative(result) {
+  const { structure } = result;
+  if (structure.parentKind !== 'ring' || structure.parent.retained !== 'benzene' || !structure.suffix || !structure.suffix.outside) {
+    return null;
+  }
+  const rendered = renderName(structure, lexiconEs, { systematic: true });
+  return { style: 'benzeneSystematic', label: lexiconEs.styleLabel('benzeneSystematic'), ...rendered };
+}
 
 /**
  * The HETEROATOM refusal of an acyclic ether whose two sides are identical

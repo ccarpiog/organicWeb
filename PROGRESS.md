@@ -53,16 +53,17 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-39c | v2.19c Ester prefixes and diesters (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39c.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-39c.md` |
 | I-39d | v2.19d Amide prefixes and pair matrix (split from I-39c) | same, §3.19 | done — `docs/progress-archive/i-39d.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-39d.md` |
 | I-40a | v2.20a Rings as substituents of a functional chain (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40a.md` |
-| I-40b | v2.20b Acids, aldehydes, nitriles, amides with a ring (split from I-40) | same, §3.20 | queued | — | — |
-| I-40c | v2.20c Ring esters (split from I-40) | same, §3.20 | queued | — | — |
+| I-40b | v2.20b Acids and aldehydes with a ring, ring acyl prefixes (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40b.md` |
+| I-40c | v2.20c Nitriles and amides with a ring (split from I-40) | same, §3.20 | queued | — | — |
+| I-40d | v2.20d Ring esters (split from I-40) | same, §3.20 | queued | — | — |
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-40a done; I-40b, I-40c, I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-40b done; I-40c, I-40d, I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo; I-39 into I-39a `ciano-`,
 I-39b acyl prefixes, I-39c ester prefixes + diesters, I-39d amide prefixes + pair matrix;
-I-40 into I-40a ring prefixes on a functional chain, I-40b acids/aldehydes/nitriles/amides
-with a ring, I-40c ring esters);
+I-40 into I-40a ring prefixes on a functional chain, I-40b acids/aldehydes + ring acyl
+prefixes, I-40c nitriles/amides with a ring, I-40d ring esters);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
 
@@ -97,13 +98,13 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-40b: lift `ringAcid`, `ringAldehyde`, `ringNitrile`, `ringAmide` and
-the I-40a stopgap `ringAcyl` (C=O carbon bonded to a ring: `benzoil`, `ciclohexanocarbonil`) —
-suffixes on the ring (`ácido ciclohexanocarboxílico`, `ácido benzoico`, `-carbaldehído`,
-`benzaldehído`, `-carbonitrilo`, `benzonitrilo`, `-carboxamida`, `benzamida`, `N-fenil…`) and those
-groups on a chain beside a ring (reuse I-40a's ring prefixes and ring-vs-chain count, `parent.js`).
-Spec: design §13.4 rows I-40a/b/c, §13.6; split again at selection if large. Then I-40c (ring
-esters, `ringEster`), then I-41. Deploying stays a manual user step.
+Poll the inbox, then run I-40c: lift `ringNitrile` and `ringAmide` — suffixes on the ring
+(`ciclohexanocarbonitrilo`, `benzonitrilo`, `ciclohexanocarboxamida`, `benzamida`), amides with a
+ring on the N (`N-fenil…amida`, `N-ciclohexil…`), those groups on a chain beside a ring (I-40a ring
+prefixes), and the prefix forms beside a senior group (`ciano-`, `carbamoil-` on rings). Reuse
+I-40b's `-carboxílico`/`-carbaldehído` machinery (`principal.js`, `rings.js`, `render.js`).
+Spec: design §13.4 row I-40, §13.6; archives `i-40a.md`, `i-40b.md`. Then I-40d (ring esters,
+`ringEster`), then I-41. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -205,14 +206,18 @@ esters, `ringEster`), then I-41. Deploying stays a manual user step.
   (`ciclohexil`, `fenil`, `fenoxi`, …) in `substituent.js` / `render.js`, refusals `symmetricRing` /
   `ringAcyl` (`validate.js`, `index.js`), explain step «Anillo o cadena»; tests
   `tests/unit/ring-substituents.test.js`, `tests/e2e/ring-substituents.spec.js`.
+- Ring acids (I-40b): `-carboxílico`/`-carbaldehído` on rings, `carboxi-`, `benzoil` /
+  `(ciclohexanocarbonil)` in `principal.js` / `rings.js` / `substituent.js` / `render.js`;
+  explain `acidCompanions()`; oracle `generateRingAcids()`; tests `tests/unit/ring-acids.test.js`,
+  `tests/e2e/ring-acids.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-40a)
+## Verification (last phase, I-40b)
 
-- Run by the orchestrator after the review fixes: `npm test` 0 (1325 pass) · `npm run check` 0
-  (121 files) · `npm run e2e` 0 (235 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1`
-  0 (8611 pass, 500 ring-prefix).
+- Run by the orchestrator after the review fix: `npm test` 0 (1381 pass) · `npm run check` 0
+  (123 files) · `npm run e2e` 0 (241 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1`
+  0 (9111 pass, 500 ring-acid).
 
 ## Open risks / deviations
 
@@ -372,10 +377,17 @@ esters, `ringEster`), then I-41. Deploying stays a manual user step.
   (`symmetricRing` atom-order dependence, tie wording in explanations) fixed with regressions
   (`docs/progress-archive/i-40a.md`).
 
+- I-40b: `ácido benzoico` / `benzaldehído` preferred with `bencenocarboxílico` /
+  `bencenocarbaldehído` as other forms; `ácido fenilacético`, `benzoil` status from memory; ring
+  acyl prefixes parenthesised except `benzoil`; C=O between ring and chain stays a chain `oxo`
+  when reachable; `carboxi-` prefix also names some acyclic molecules once refused as
+  `carboxySubstituent`; `manyAcids` now per carbon piece. Review should-fix (ring-adjacent ketone
+  explained as an aldehyde) fixed with regressions (`docs/progress-archive/i-40b.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-39d `d2574a1`, pushed. I-40a committed and pushed right after this checkpoint (see
+- I-40a `4620f72`, pushed. I-40b committed and pushed right after this checkpoint (see
   `git log`).

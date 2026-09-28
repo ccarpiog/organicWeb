@@ -8,7 +8,8 @@
  * `(ciclohexilamino)` — while on a tie the ring is senior (P-44.1.2.2).
  * Covers the lifted refusals (`sideChainAlcohol`, `sideChainCarbonyl`,
  * `sideChainAmine`), the refusals that stay or are new (`symmetricRing`,
- * `ringAcyl`, and the I-40b/I-40c ones), the ring-or-chain comparison
+ * and the I-40c/I-40d ones; `ringAcyl` is lifted by I-40b,
+ * tests/unit/ring-acids.test.js), the ring-or-chain comparison
  * (parent.js ringOrChain(), the `RINGCHAIN` trace step), the ring prefix
  * itself (substituent.js ringSubstituent(), render.js), the ring-aware
  * branch keys (graph.js rootedBranchKey()), both lexicons, the traditional
@@ -21,7 +22,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
 import { adjacency, canonicalKey, rootedBranchKey, rootedTreeKey, cycleCore } from '../../src/model/graph.js';
-import { validateForNaming, SYMMETRIC_RING_MESSAGE, RING_ACYL_MESSAGE, RING_ALDEHYDE_MESSAGE } from '../../src/model/validate.js';
+import { validateForNaming, SYMMETRIC_RING_MESSAGE } from '../../src/model/validate.js';
 import { perceiveRings } from '../../src/model/rings.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { ringOrChain } from '../../src/naming/parent.js';
@@ -102,15 +103,15 @@ test('the examples of the phase are named, in Spanish and in English', () => {
   }
 });
 
-test('the side-chain refusals are lifted; aldehydes, acids, esters, amides and nitriles with a ring stay refused', () => {
+test('the side-chain refusals are lifted; esters, amides and nitriles with a ring stay refused', () => {
   for (const smiles of ['OCC1=CC=CC=C1', 'CC(=O)C1CCCCC1', 'NCC1=CC=CC=C1', 'OCCOC1CCCCC1', 'CNCC1CCCCC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // I-40b / I-40c: -carbaldehído, -carboxílico, -carbonitrilo, -carboxamida, ring esters.
+  // Aldehydes and acids with a ring are named since I-40b; I-40c / I-40d: -carbonitrilo, -carboxamida, ring esters.
+  for (const smiles of ['O=CCC1CCCCC1', 'O=CC1=CC=CC=C1', 'OC(=O)CC1CCCCC1']) {
+    assert.equal(named(smiles).ok, true, smiles);
+  }
   const kept = [
-    ['O=CCC1CCCCC1', 'ringAldehyde'],
-    ['O=CC1=CC=CC=C1', 'ringAldehyde'],
-    ['OC(=O)CC1CCCCC1', 'ringAcid'],
     ['N#CCC1CCCCC1', 'ringNitrile'],
     ['NC(=O)CC1CCCCC1', 'ringAmide'],
     ['CC(=O)OCC1CCCCC1', 'ringEster'],
@@ -118,7 +119,6 @@ test('the side-chain refusals are lifted; aldehydes, acids, esters, amides and n
   for (const [smiles, reason] of kept) {
     assert.equal(nameOf(smiles), `HETEROATOM ${reason}`, smiles);
   }
-  assert.doesNotMatch(RING_ALDEHYDE_MESSAGE, /solo sé nombrar las cetonas cuyo/, 'the message no longer says side-chain ketones are refused');
 });
 
 test('ring or chain: the principal groups first (P-44.1.1), the ring on a tie (P-44.1.2.2)', () => {
@@ -165,7 +165,7 @@ test('hydrocarbons, halogen derivatives, ethers and ring-borne groups keep the r
   }
 });
 
-test('refusals: identical principal branches on a ring (multiplicative), an acyl carbon on the ring', () => {
+test('refusals: identical principal branches on a ring (multiplicative); an acyl carbon on the ring is named since I-40b', () => {
   for (const smiles of ['OCC1CCC(CO)CC1', 'OCC1(CO)CCCCC1', 'NCC1CCC(CN)CC1', 'OCOC1CCC(OCO)CC1']) {
     const result = named(smiles);
     assert.equal(result.ok, false, smiles);
@@ -177,17 +177,12 @@ test('refusals: identical principal branches on a ring (multiplicative), an acyl
   // Different branches, or identical ones without the parent, are named.
   assert.equal(nameOf('OCC1CCC(CCO)CC1'), '2-[4-(hidroximetil)ciclohexil]etan-1-ol');
   assert.equal(nameOf('OC(CO)C1CCC(C)C(C)C1'), '1-(3,4-dimetilciclohexil)etano-1,2-diol');
-  // A C=O carbon bonded to the ring as an acyl branch: -carbonil (I-40b).
-  for (const smiles of ['CC(=O)C(C(=O)C1CCCCC1)C(C)=O', 'CC(=O)C(C(=O)C1=CC=CC=C1)C(C)=O']) {
-    const result = named(smiles);
-    assert.equal(result.error.reason, 'ringAcyl', smiles);
-    assert.equal(result.error.message, RING_ACYL_MESSAGE);
-  }
+  // A C=O carbon bonded to the ring as an acyl branch: `-carbonil`, `benzoil` (I-40b; `ringAcyl` lifted).
+  assert.equal(nameOf('CC(=O)C(C(=O)C1CCCCC1)C(C)=O'), '3-(ciclohexanocarbonil)pentano-2,4-diona');
+  assert.equal(nameOf('CC(=O)C(C(=O)C1=CC=CC=C1)C(C)=O'), '3-benzoilpentano-2,4-diona');
   assert.equal(nameOf('CC(=O)C(C(=O)CC1CCCCC1)C(C)=O'), '3-acetil-1-ciclohexilpentano-2,4-diona');
-  for (const message of [SYMMETRIC_RING_MESSAGE, RING_ACYL_MESSAGE]) {
-    assert.match(message, /^Esta molécula tiene /);
-    assert.match(message, /\.$/);
-  }
+  assert.match(SYMMETRIC_RING_MESSAGE, /^Esta molécula tiene /);
+  assert.match(SYMMETRIC_RING_MESSAGE, /\.$/);
 });
 
 test('the ring prefix: attachment atom 1, its own groups, enclosure, alkoxy and alphabetical order', () => {

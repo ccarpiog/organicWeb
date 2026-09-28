@@ -122,6 +122,15 @@
  * outsideCarbons()) nor of a branch (buildSubstituent() skips it):
  * `ácido 3-cianopropanoico`, `3-(cianometoxi)propanonitrilo`.
  *
+ * Carboxyl groups (design.md §13.4 I-40b): a –COOH that is not a suffix
+ * group (on a branch beyond an ether O or an amine N, on a side chain of a
+ * ring parent that carries its own –COOH, or on a ring prefix) is the
+ * simple prefix `carboxi` (carboxySubstituent()), its carbon never a chain
+ * atom of a branch: `(carboximetil)`, `(carboximetoxi)`,
+ * `(4-carboxiciclohexil)`. On a ring parent a –COOH or –CHO bonded to a
+ * ring atom is a suffix group of that atom (suffixSites(…, ring = true):
+ * `-carboxílico`, `-carbaldehído`), not a substituent.
+ *
  * Rings as substituents (design.md §13.4 I-40a): when a chain is the
  * parent of a molecule with a ring (the chain carries more principal
  * groups than the ring, IUPAC 2013 P-44.1.1), the ring atoms are never
@@ -132,21 +141,27 @@
  * as locant 1 (`ciclohexil`, `ciclopropil`, `(2-metilciclohexil)`,
  * `(4-hidroxiciclohexil)`, `(ciclohex-2-en-1-il)`, `ciclohexiliden` on a
  * double bond), its own prefixes numbered by the ring cascade. The branch
- * identity keys see the ring whole (graph.js rootedBranchKey()).
+ * identity keys see the ring whole (graph.js rootedBranchKey()). An acyl
+ * carbon bonded to the ring beyond it (I-40b) makes the acyl group of the
+ * ring acid (`ringCarbonyl`: `benzoil`, `(ciclohexanocarbonil)`).
  * Pure: topology only.
  */
 
 import { adjacency, rootedBranchKey, cycleCore } from '../model/graph.js';
 import { isHalogen } from '../model/elements.js';
 import { perceiveRings } from '../model/rings.js';
-import { isNitrileCarbon, carbonylKind, isEsterCarbon, isAmideCarbon, isBenzeneRing } from '../model/validate.js';
+import {
+  isNitrileCarbon, carbonylKind, isEsterCarbon, isAmideCarbon, isBenzeneRing, isCarboxylCarbon,
+} from '../model/validate.js';
 import { buildChainStructure, buildRingStructure } from './structure.js';
 import {
   numberParent, compareCitationKeys, ringCandidates, candidateData, runNumberingCascade,
 } from './numbering.js';
 import { citationKey, prefixNameKey } from './render.js';
 import { lexiconEs } from './lexicon.es.js';
-import { principalKindOf, isPrincipalOxygen, isSuffixOxygen, isSuffixGroupAtomOf } from './principal.js';
+import {
+  principalKindOf, isPrincipalOxygen, isSuffixOxygen, isSuffixGroupAtomOf, isRingGroupCarbon,
+} from './principal.js';
 import { N_LOCANT } from './structure.js';
 
 /** Bond-order symbols that prefix a substituent identity key. */
@@ -344,8 +359,15 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
       if (parent && isSuffixGroupAtomOf(ctx.mol, ctx.adj, chainAtom, n.atom, ctx.principal)) {
         continue; // A suffix group of the parent (`-ol`, `-al`, `-ona`), not a prefix.
       }
+      if (parent && ctx.ringAtoms.has(chainAtom) && isRingGroupCarbon(ctx.mol, ctx.adj, n.atom, ctx.principal, ctx.ringAtoms)) {
+        continue; // The –COOH / –CHO of a ring parent (`-carboxílico`, `-carbaldehído`, I-40b): a suffix group.
+      }
       if (isNitrileCarbon(ctx.mol, ctx.adj, n.atom)) {
         result.push(cyanoEntry(ctx, chainAtom, n));
+        continue;
+      }
+      if (isCarboxylCarbon(ctx.mol, ctx.adj, n.atom)) {
+        result.push(carboxyEntry(ctx, chainAtom, n));
         continue;
       }
       // The C=O and the bridge O of a non-principal ester whose carbon X is this chain atom (I-39c):
@@ -436,6 +458,69 @@ export function cyanoSubstituent(ctx, carbon) {
     bonds: [triple.bond],
   };
 } // End of function cyanoSubstituent()
+
+/**
+ * The substituentsOf() entry of a carboxyl group bonded to a chain (or
+ * ring) atom but not part of it (design.md §13.4 I-40b): the prefix
+ * `carboxi` (carboxySubstituent()), whose atoms are the carboxyl carbon and
+ * its two oxygens and whose bonds are the C=O and the C–OH; the connecting
+ * bond is the single bond from the carrying atom to the carboxyl carbon.
+ * Like `ciano` it has no chain, so it adds no multiple bond to any chain
+ * count.
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {number} chainAtom - The carrying atom.
+ * @param {{atom: number, bond: number, order: number}} n - The link to the carboxyl carbon.
+ * @returns {object} The entry.
+ */
+function carboxyEntry(ctx, chainAtom, n) {
+  const structure = carboxySubstituent(ctx, n.atom);
+  return {
+    chainAtom,
+    attachAtom: n.atom,
+    bond: n.bond,
+    order: n.order,
+    atoms: [...structure.atoms],
+    bonds: [...structure.bonds],
+    multipleBonds: [],
+    key: ATTACH_SYMBOL[n.order] + rootedBranchKey(ctx.mol, n.atom, chainAtom, ctx.adj),
+    structure,
+    citation: citationKey(structure, ctx.lexicon),
+  };
+} // End of function carboxyEntry()
+
+/**
+ * The substituent structure of a carboxyl group cited as a prefix
+ * (design.md §13.4 I-40b): `carboxi` (lexicon groupPrefix('acid')), a
+ * simple prefix like `ciano` (never enclosed; `dicarboxi`), with no chain
+ * and no prefixes. IUPAC 2013 (P-65.1.2) counts the carboxyl carbon in the
+ * prefix, never in a chain: HOOC–CH₂– is `carboximetil`, not
+ * `2-hidroxi-2-oxoetil`. It is used for every –COOH that is not a suffix
+ * group: on a side chain of a ring parent that carries its own –COOH
+ * (`ácido 2-(carboximetil)ciclohexano-1-carboxílico`), on a ring prefix
+ * (`(4-carboxiciclohexil)`) and on a branch beyond an ether O or an amine N
+ * (`ácido 3-(carboximetoxi)propanoico`). `atoms` are the carbon, the C=O
+ * oxygen and the OH oxygen; `bonds` the C=O and the C–OH.
+ *
+ * @param {object} ctx - Naming context (createNamingContext), or any object with `mol` and `adj`.
+ * @param {number} carbon - The carboxyl carbon (validate.js isCarboxylCarbon()).
+ * @returns {object} The SubstituentStructure (structure.js) with `carboxy` set.
+ */
+export function carboxySubstituent(ctx, carbon) {
+  const oxygens = ctx.adj.get(carbon).filter((n) => ctx.mol.atoms.get(n.atom).element === 'O');
+  const oxo = oxygens.find((n) => n.order === 2);
+  const hydroxy = oxygens.find((n) => n.order === 1);
+  return {
+    carboxy: true,
+    chain: null,
+    prefixes: [],
+    freeValence: { locant: 1, order: 1 },
+    retained: null,
+    commonName: null,
+    atoms: [carbon, oxo.atom, hydroxy.atom],
+    bonds: [oxo.bond, hydroxy.bond],
+  };
+} // End of function carboxySubstituent()
 
 /**
  * The substituentsOf() entry of the branch rooted at one neighbour of a
@@ -603,25 +688,23 @@ export function acylOxygenOf(ctx, carbon) {
 /**
  * Finds an acyl branch that has no acyl prefix, at any depth (design.md
  * §13.4 I-39b): a one-carbon acyl group (X alone in its chain) that
- * carries a prefix of its own: a `ciano` (–CO–C≡N: the nitrile carbon is
- * never a chain atom; IUPAC 2013 names it `carbonocianidoil`, from memory,
- * ACYL_SUBSTITUENT_MESSAGE) or, since I-40a, a ring (X bonded to the ring:
- * `ciclohexanocarbonil`, `benzoil`, flagged `ring`, RING_ACYL_MESSAGE),
- * which the app does not support, so the engine refuses the molecule.
- * Every other acyl branch is named (`formil`, `acetil`, `propanoil`,
- * `(2-ciclohexiletanoil)`…).
+ * carries a `ciano` (–CO–C≡N: the nitrile carbon is never a chain atom;
+ * IUPAC 2013 names it `carbonocianidoil`, from memory,
+ * ACYL_SUBSTITUENT_MESSAGE), which the app does not support, so the engine
+ * refuses the molecule. Every other acyl branch is named (`formil`,
+ * `acetil`, `propanoil`, `(2-ciclohexiletanoil)`…; X bonded to a ring is
+ * `ciclohexanocarbonil` / `benzoil` since I-40b, `ringCarbonyl`).
  *
  * @param {{prefixes: object[]}} structure - A name or substituent structure.
- * @returns {{atoms: number[], bonds: number[], ring?: boolean}|null} The C=O atoms (carbon, oxygen) and bond of the first such branch (`ring` when X carries the ring), or null.
+ * @returns {{atoms: number[], bonds: number[]}|null} The C=O atoms (carbon, oxygen) and bond of the first such branch, or null.
  */
 export function unnamedAcyl(structure) {
   for (const group of structure.prefixes) {
     const sub = group.substituent;
-    if (sub.acyl && sub.chain.length === 1 && sub.prefixes.some((inner) => !inner.substituent.oxo)) {
+    // A ring on X itself is named since I-40b (`ciclohexanocarbonil`, `benzoil`: `ringCarbonyl`).
+    if (sub.acyl && !sub.ringCarbonyl && sub.chain.length === 1 && sub.prefixes.some((inner) => !inner.substituent.oxo)) {
       const site = sub.prefixes.find((inner) => inner.substituent.oxo).locants[0];
-      // A ring on X itself (design.md §13.4 I-40a): `ciclohexanocarbonil`, `benzoil` (I-40b).
-      const ring = sub.prefixes.some((inner) => inner.substituent.ring);
-      return { atoms: [site.atom, site.attachAtom], bonds: [site.bond], ...(ring ? { ring: true } : {}) };
+      return { atoms: [site.atom, site.attachAtom], bonds: [site.bond] };
     }
     const nested = unnamedAcyl(sub);
     if (nested) {
@@ -642,39 +725,73 @@ export function unnamedAcyl(structure) {
  * nitrogenSubstituents()); an amide –CONH₂ (`-amida`, I-37) is one site,
  * its C=O oxygen, carrying its N as `amideNitrogen` / `amideBond` (the
  * groups on that N are nitrogenSubstituents()).
+ * On a ring parent (`ring` true) a –COOH or –CHO bonded to a ring atom is a
+ * suffix group of that atom too (design.md §13.4 I-40b: `-carboxílico`,
+ * `-carbaldehído`; principal.js isRingGroupCarbon()): its site also has
+ * the group's carbon X (`carbon`) and the ring–X bond (`carbonBond`).
  *
  * @param {object} mol - A validated molecule.
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {number[]} atoms - The parent's atom ids.
  * @param {string|null} [principal] - The principal oxygen kind (default: principalKindOf() of the molecule).
- * @returns {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number, esterOxygen?: number, esterBond?: number, amideNitrogen?: number, amideBond?: number}[]} One site per group: carrying atom, oxygen, bond (and the OH of a –COOH, the bridge O of an ester or the N of an amide); in parent-atom order.
+ * @param {boolean} [ring] - Whether the parent is the ring (default false).
+ * @returns {{atom: number, attachAtom: number, bond: number, carbon?: number, carbonBond?: number, hydroxyAtom?: number, hydroxyBond?: number, esterOxygen?: number, esterBond?: number, amideNitrogen?: number, amideBond?: number}[]} One site per group: carrying atom, oxygen, bond (and the carbon outside a ring, the OH of a –COOH, the bridge O of an ester or the N of an amide); in parent-atom order.
  */
-export function suffixSites(mol, adj, atoms, principal = principalKindOf(mol, adj)) {
+export function suffixSites(mol, adj, atoms, principal = principalKindOf(mol, adj), ring = false) {
   const sites = [];
+  const ringAtoms = new Set(ring ? atoms : []);
   for (const atom of atoms) {
-    for (const n of adj.get(atom)) {
-      if (!isSuffixOxygen(mol, adj, n.atom, principal)) {
-        continue;
+    // On a ring parent, a –COOH or –CHO bonded to the ring atom (I-40b): its carbon X carries the C=O.
+    const carriers = [
+      { carbon: atom, link: null },
+      ...adj.get(atom).filter((n) => ring && isRingGroupCarbon(mol, adj, n.atom, principal, ringAtoms))
+        .map((n) => ({ carbon: n.atom, link: n })),
+    ];
+    for (const { carbon, link } of carriers) {
+      for (const n of adj.get(carbon)) {
+        if (!isSuffixOxygen(mol, adj, n.atom, principal)) {
+          continue;
+        }
+        sites.push(suffixSite(mol, adj, principal, atom, n, carbon, link));
       }
-      const site = { atom, attachAtom: n.atom, bond: n.bond };
-      if (principal === 'acid') {
-        const hydroxy = adj.get(atom).find((m) => m.order === 1 && isPrincipalOxygen(mol, adj, m.atom, principal));
-        site.hydroxyAtom = hydroxy.atom;
-        site.hydroxyBond = hydroxy.bond;
-      } else if (principal === 'ester') {
-        const bridge = adj.get(atom).find((m) => m.order === 1 && isPrincipalOxygen(mol, adj, m.atom, principal));
-        site.esterOxygen = bridge.atom;
-        site.esterBond = bridge.bond;
-      } else if (principal === 'amide') {
-        const nitrogen = adj.get(atom).find((m) => mol.atoms.get(m.atom).element === 'N');
-        site.amideNitrogen = nitrogen.atom;
-        site.amideBond = nitrogen.bond;
-      }
-      sites.push(site);
     }
   } // End of the loop over the parent atoms
   return sites;
 } // End of function suffixSites()
+
+/**
+ * One suffix site of suffixSites(): the carrying parent atom, the oxygen
+ * (or N) that stands for the group and its bond, plus the other atoms of
+ * the group (the OH of a –COOH, the bridge O of an ester, the N of an
+ * amide) and, for a –COOH or –CHO bonded to a ring parent (design.md §13.4
+ * I-40b), its carbon X (`carbon`) and the ring–X bond (`carbonBond`).
+ *
+ * @param {object} mol - A validated molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {string} principal - The principal kind.
+ * @param {number} atom - The parent atom that carries the group.
+ * @param {{atom: number, bond: number}} n - The link from the group's carbon to the oxygen (or N) that stands for it.
+ * @param {number} carbon - The group's carbon: `atom` itself, or X outside the ring.
+ * @param {{atom: number, bond: number}|null} link - The link from `atom` to X, or null when the carbon is `atom`.
+ * @returns {object} The site.
+ */
+function suffixSite(mol, adj, principal, atom, n, carbon, link) {
+  const site = { atom, attachAtom: n.atom, bond: n.bond, ...(link ? { carbon, carbonBond: link.bond } : {}) };
+  if (principal === 'acid') {
+    const hydroxy = adj.get(carbon).find((m) => m.order === 1 && isPrincipalOxygen(mol, adj, m.atom, principal));
+    site.hydroxyAtom = hydroxy.atom;
+    site.hydroxyBond = hydroxy.bond;
+  } else if (principal === 'ester') {
+    const bridge = adj.get(carbon).find((m) => m.order === 1 && isPrincipalOxygen(mol, adj, m.atom, principal));
+    site.esterOxygen = bridge.atom;
+    site.esterBond = bridge.bond;
+  } else if (principal === 'amide') {
+    const nitrogen = adj.get(carbon).find((m) => mol.atoms.get(m.atom).element === 'N');
+    site.amideNitrogen = nitrogen.atom;
+    site.amideBond = nitrogen.bond;
+  }
+  return site;
+} // End of function suffixSite()
 
 /**
  * Builds the N5 complete-name key function for numberParent(): it renders a
@@ -872,8 +989,10 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
   if (ctx.ringAtoms.has(attachAtom)) {
     return ringSubstituent(ctx, chainAtom, attachAtom, order); // `ciclohexil`, `fenil` (design.md §13.4 I-40a).
   }
-  // Heteroatoms, nitrile carbons (a `ciano` prefix of the branch, I-39a) and ring atoms (a ring prefix, I-40a) are never chain atoms.
-  const skip = (id) => ctx.mol.atoms.get(id).element !== 'C' || isNitrileCarbon(ctx.mol, adj, id) || ctx.ringAtoms.has(id);
+  // Heteroatoms, nitrile carbons (a `ciano` prefix of the branch, I-39a), carboxyl carbons (a `carboxi` prefix, I-40b)
+  // and ring atoms (a ring prefix, I-40a) are never chain atoms.
+  const skip = (id) => ctx.mol.atoms.get(id).element !== 'C' || isNitrileCarbon(ctx.mol, adj, id)
+    || isCarboxylCarbon(ctx.mol, adj, id) || ctx.ringAtoms.has(id);
   let chains = substituentChainCandidates(adj, chainAtom, attachAtom, style === 'substituted', skip);
   chains = keepMax(chains, (c) => c.length);
   chains = keepMax(chains, (c) => countBonds(adj, c, (order) => order >= 2));
@@ -903,6 +1022,9 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
     ? shape : null;
   // An acyl group (design.md §13.4 I-39b): X, the C=O carbon, is the attachment atom and chain carbon 1.
   const acyl = acylOxygen !== null;
+  // X bonded to a ring beyond it (I-40b): the acyl group of a ring acid, `ciclohexanocarbonil`, `benzoil`
+  // (a –CHO hanging from a ring atom that carries it is a plain `formil`).
+  const ringCarbonyl = acyl && adj.get(attachAtom).some((n) => n.atom !== chainAtom && ctx.ringAtoms.has(n.atom));
   return {
     chain: buildChainStructure(numbering.atoms, numbering.bonds, numbering.orders),
     prefixes: groupPrefixes(subs, numbering.atoms),
@@ -912,6 +1034,7 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
     atoms: subtree.atoms,
     bonds: subtree.bonds,
     ...(acyl ? { acyl: true } : {}),
+    ...(ringCarbonyl ? { ringCarbonyl: true } : {}),
     ...(esterSide === 'carbon' ? { alkoxycarbonyl: true } : {}),
     ...(amideSide === 'nitrogen' ? { amideAcyl: true } : {}),
     ...(amideSide === 'carbon' ? { carbamoyl: true } : {}),
@@ -1028,7 +1151,7 @@ export function esterOxoOf(ctx, carbon) {
  * @param {number} chainAtom - The carrying chain atom.
  * @param {number} attachAtom - The substituent atom bonded to it.
  * @param {string} [style] - Prefix style (default 'isopropil').
- * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH, `oxo` for a C=O oxygen, an alkoxy group for an ether oxygen, an amino group for an amine nitrogen, `ciano` for a nitrile carbon), or null when the two atoms are not bonded.
+ * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH, `oxo` for a C=O oxygen, an alkoxy group for an ether oxygen, an amino group for an amine nitrogen, `ciano` for a nitrile carbon, `carboxi` for a carboxyl carbon), or null when the two atoms are not bonded.
  */
 export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLES[0]) {
   const ctx = createNamingContext(mol, style);
@@ -1042,6 +1165,9 @@ export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLE
   }
   if (isNitrileCarbon(mol, ctx.adj, attachAtom)) {
     return cyanoSubstituent(ctx, attachAtom);
+  }
+  if (isCarboxylCarbon(mol, ctx.adj, attachAtom)) {
+    return carboxySubstituent(ctx, attachAtom);
   }
   return isHalogen(element) ? halogenSubstituent(attachAtom, element) : nameSubstituentIn(ctx, chainAtom, attachAtom, link.order);
 }

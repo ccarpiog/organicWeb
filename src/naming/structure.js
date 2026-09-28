@@ -120,6 +120,8 @@
  * @property {number} atom - Id of the carrying parent atom (a carbon).
  * @property {number} attachAtom - Id of the group's heteroatom bonded to it (the O of an OH or of a C=O; for a –COOH, the O of its C=O; the N of an amine, I-36).
  * @property {number} bond - Id of the bond between them.
+ * @property {number} [carbon] - For a –COOH or –CHO bonded to a ring parent only (design.md §13.4 I-40b: `-carboxílico`, `-carbaldehído`): id of the group's carbon X, outside the ring (`atom` is the ring atom bonded to it).
+ * @property {number} [carbonBond] - With `carbon`: id of the bond between the ring atom and X.
  * @property {number} [hydroxyAtom] - For a –COOH only (design.md §13.4 I-33): id of its OH oxygen, part of the same group.
  * @property {number} [hydroxyBond] - For a –COOH only: id of the bond between the carbon and that OH oxygen.
  * @property {number} [esterOxygen] - For an ester –COO– only (design.md §13.4 I-35): id of its bridge O (between the C=O carbon and the O-bound group), part of the same group.
@@ -141,6 +143,7 @@
  * @typedef {object} SuffixStructure
  * @property {'acid'|'ester'|'amide'|'nitrile'|'alcohol'|'aldehyde'|'ketone'|'amine'} kind - Group kind (groups.js GROUP_KINDS; principal.js NAMED_KINDS).
  * @property {SuffixLocant[]} locants - One entry per group, ascending locants (a carbon with two OH appears twice).
+ * @property {boolean} [outside] - Set on a ring parent whose –COOH or –CHO carbons are outside the ring (design.md §13.4 I-40b): cited `-carboxílico` / `-carbaldehído` (`ácido ciclohexanocarboxílico`), or with the retained `ácido benzoico` / `benzaldehído` on benzene.
  */
 
 /**
@@ -433,10 +436,12 @@ export function buildSuffix(sites, atoms, kind = 'alcohol') {
     atom: site.atom,
     attachAtom: site.attachAtom,
     bond: site.bond,
+    ...(site.carbon === undefined ? {} : { carbon: site.carbon, carbonBond: site.carbonBond }),
     ...(site.hydroxyAtom === undefined ? {} : { hydroxyAtom: site.hydroxyAtom, hydroxyBond: site.hydroxyBond }),
     ...(site.esterOxygen === undefined ? {} : { esterOxygen: site.esterOxygen, esterBond: site.esterBond }),
     ...(site.amideNitrogen === undefined ? {} : { amideNitrogen: site.amideNitrogen, amideBond: site.amideBond }),
   }));
   locants.sort((p, q) => p.locant - q.locant || p.attachAtom - q.attachAtom);
-  return { kind, locants };
+  // A –COOH or –CHO bonded to a ring parent (design.md §13.4 I-40b): `-carboxílico`, `-carbaldehído`.
+  return locants.some((site) => site.carbon !== undefined) ? { kind, locants, outside: true } : { kind, locants };
 } // End of function buildSuffix()

@@ -40,6 +40,12 @@
  * `aniline` as the preferred name (P-62.2.1.1.1); like `tolueno` it is
  * offered as an alternative (`anilina`, `N-metilanilina`).
  *
+ * A –COOH or –CHO on the ring (design.md §13.4 I-40b) is the ring's suffix
+ * group with its carbon outside the ring, rendered as the retained
+ * preferred `ácido benzoico` / `benzaldehído` (render.js; the systematic
+ * `ácido bencenocarboxílico` / `bencenocarbaldehído` are alternatives,
+ * naming/index.js).
+ *
  * Traditional names retained by IUPAC 2013 for monosubstituted benzenes
  * (P-22.1.3) — `tolueno` (even the preferred IUPAC name) and `estireno`
  * (general nomenclature) — are offered as alternatives only (design.md
@@ -196,7 +202,7 @@ export function nameBenzeneWithStyle(mol, style = PREFIX_STYLES[0]) {
   const adj = adjacency(mol);
   const ctx = createNamingContext(mol, style, lexiconEs, adj);
   const substituents = collectSubstituents(mol, perceived.atoms, ctx);
-  const sites = suffixSites(mol, adj, perceived.atoms, ctx.principal);
+  const sites = suffixSites(mol, adj, perceived.atoms, ctx.principal, true);
   // Groups on an amine N (`N-metilbencenamina`) are not ring substituents.
   const onRing = substituents.filter((sub) => !sub.nitrogen).length + sites.length;
   if (onRing > 1) {

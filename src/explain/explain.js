@@ -168,6 +168,19 @@
  * (`ciclohexil`, `fenil`; ringDescription(), `fenoxi`), its carbons out of
  * the chain and its ring counted in the formula (atomCounts()).
  *
+ * A –COOH or –CHO bonded to a ring (design.md §13.4 I-40b,
+ * `structure.suffix.outside`) is described with the ring carbon bonded to
+ * it (OUTSIDE_GROUP_WORDS): the group step (ringGroupSentences()) says its
+ * carbon is neither a ring carbon nor a chain of its own and that
+ * `-carboxílico` / `-carbaldehído` includes it (`ácido benzoico`,
+ * `benzaldehído` on benzene); the count step counts that carbon; the ring,
+ * ring-numbering, benzene and assemble steps say it is not in the ring
+ * and has no number. `carboxi-` prefixes (carboxySentence(),
+ * carboxyTotal()), a –CHO at a branch end (branchAldehydeTotal(): an
+ * aldehyde cited `oxo-`, never a ketone), groups bonded to the ring in
+ * «Anillo o cadena» (ringGroupCount()) and ring acyl prefixes
+ * (ringCarbonylDescription(): `benzoil`, `…carbonil`) are explained too.
+ *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
  * GroupAnalysis); it gets groups ("Reconoce los grupos": each
@@ -185,6 +198,7 @@ import {
   substituentPrefix, citationKey, needsEnclosure, isCompoundPrefix, renderPrefixes, omitsPrefixLocants,
   suffixWords, suffixCount, suffixGroupIds, isContractedAlkoxy, MAX_CONTRACTED_ALKOXY, TERMINAL_SUFFIXES,
   esterAlkylName, renderName, carbonLocantPrefixes, hasNitrogenLocants, citedPrefixes, alkoxycarbonylAlkoxy, carbamoylAmino,
+  ringCarbonylRing,
 } from '../naming/render.js';
 import { locantText, siteLocantText, N_LOCANT, esterParts } from '../naming/structure.js';
 
@@ -727,7 +741,43 @@ const SUFFIX_GROUP_WORDS = Object.freeze({
  */
 function groupWords(result) {
   const { suffix } = result.structure;
-  return SUFFIX_GROUP_WORDS[suffix ? suffix.kind : 'alcohol'];
+  const words = SUFFIX_GROUP_WORDS[suffix ? suffix.kind : 'alcohol'];
+  // A –COOH or –CHO bonded to a ring parent (design.md §13.4 I-40b): its carbon is outside the ring.
+  return suffix && suffix.outside ? { ...words, ...OUTSIDE_GROUP_WORDS[suffix.kind] } : words;
+}
+
+/**
+ * The words of SUFFIX_GROUP_WORDS that change when the carbon of a –COOH
+ * or –CHO is outside a ring parent (design.md §13.4 I-40b: `-carboxílico`,
+ * `-carbaldehído`): the numbered carbon is the ring carbon bonded to the
+ * group, not the group's own carbon.
+ */
+const OUTSIDE_GROUP_WORDS = Object.freeze({
+  acid: Object.freeze({
+    carbonWith: 'el carbono del anillo unido al –COOH',
+    carbonThe: 'el carbono del anillo unido al grupo –COOH',
+    carbonA: 'un carbono del anillo unido a un grupo –COOH',
+    ringExample: 'ácido ciclohexanocarboxílico',
+  }),
+  aldehyde: Object.freeze({
+    carbonWith: 'el carbono del anillo unido al –CHO',
+    carbonThe: 'el carbono del anillo unido al grupo –CHO',
+    carbonA: 'un carbono del anillo unido a un grupo –CHO',
+    ringExample: 'ciclohexanocarbaldehído',
+  }),
+});
+
+/**
+ * Tells whether a result's principal groups are a –COOH or –CHO bonded to
+ * a ring parent, whose carbon is outside the ring (design.md §13.4 I-40b:
+ * `ácido ciclohexanocarboxílico`, `benzaldehído`).
+ *
+ * @param {object} result - The naming result.
+ * @returns {boolean} True for such a suffix.
+ */
+function isOutsideSuffix(result) {
+  const { suffix } = result.structure;
+  return Boolean(suffix && suffix.outside);
 }
 
 /**
@@ -853,7 +903,7 @@ function esterAlkylSpecs(result) {
  * cited `oxo-` (`oxo`).
  *
  * @param {object} sub - A substituent structure.
- * @param {'hydroxy'|'oxo'|'cyano'|'ring'} flag - Which prefix (`ring`: a ring prefix, design.md §13.4 I-40a).
+ * @param {'hydroxy'|'oxo'|'cyano'|'carboxy'|'ring'} flag - Which prefix (`ring`: a ring prefix, design.md §13.4 I-40a; `carboxy`, I-40b).
  * @returns {number} The count (1 for such a prefix itself).
  */
 function prefixTotal(sub, flag) {
@@ -914,6 +964,17 @@ function etherTotal(sub) {
  */
 function cyanoTotal(sub) {
   return prefixTotal(sub, 'cyano');
+}
+
+/**
+ * Number of –COOH cited as `carboxi-` prefixes inside a substituent
+ * (nested ones included; design.md §13.4 I-40b).
+ *
+ * @param {object} sub - A substituent structure.
+ * @returns {number} The count (1 for a carboxy prefix itself).
+ */
+function carboxyTotal(sub) {
+  return prefixTotal(sub, 'carboxy');
 }
 
 /**
@@ -1105,7 +1166,7 @@ function acylCounts(result) {
   return {
     parent,
     total: found.length,
-    formyl: found.filter((sub) => sub.chain.length === 1).length,
+    formyl: found.filter((sub) => sub.chain.length === 1 && !sub.ringCarbonyl).length,
     names: [...new Set(found.map((sub) => substituentPrefix(sub, lexiconEs)))],
   };
 } // End of function acylCounts()
@@ -1122,10 +1183,12 @@ function acylWords(result) {
   const { total, formyl } = acylCounts(result);
   const other = total - formyl;
   const items = [];
+  // On a ring parent (design.md §13.4 I-40b) a –CHO bonded to the ring is `formil-` too.
+  const where = result.structure.parentKind === 'ring' ? 'el anillo' : 'la cadena';
   if (formyl > 0) {
     items.push(formyl === 1
-      ? 'un grupo –CHO cuyo carbono no está en la cadena (un aldehído)'
-      : `${formyl} grupos –CHO cuyo carbono no está en la cadena (aldehídos)`);
+      ? `un grupo –CHO cuyo carbono no está en ${where} (un aldehído)`
+      : `${formyl} grupos –CHO cuyo carbono no está en ${where} (aldehídos)`);
   }
   if (other > 0) {
     items.push(other === 1
@@ -1147,7 +1210,7 @@ function acylHow(result) {
   const { total, formyl, names } = acylCounts(result);
   const items = [];
   if (formyl > 0) {
-    items.push('cada –CHO cuyo carbono no está en la cadena se nombra con el [[prefijo]] «formil-»');
+    items.push(`cada –CHO cuyo carbono no está en ${result.structure.parentKind === 'ring' ? 'el anillo' : 'la cadena'} se nombra con el [[prefijo]] «formil-»`);
   }
   if (total > formyl) {
     const examples = names.filter((name) => name !== lexiconEs.formylPrefix).map((name) => q(`${name}-`));
@@ -1171,6 +1234,12 @@ function acylCarbonSentence(result) {
     return '';
   }
   const group = formyl === total ? '–CHO' : 'C=O';
+  if (result.structure.parentKind === 'ring' && acylCounts(result).parent === total) {
+    // Acyl groups bonded to a ring parent (design.md §13.4 I-40b: `ácido 4-formilciclohexano-1-carboxílico`).
+    return total === 1
+      ? `El carbono de ese ${group} no es del [[anillo]]: el prefijo ya lo incluye. Por eso su C=O no se nombra con «oxo-».`
+      : `El carbono de cada uno de esos ${group} no es del [[anillo]]: el prefijo ya lo incluye. Por eso esos C=O no se nombran con «oxo-».`;
+  }
   return total === 1
     ? `El carbono de ese ${group} no se cuenta en la [[cadena principal]]: es el primer carbono de la rama, y el prefijo ya lo incluye. Por eso su C=O no se nombra con «oxo-».`
     : `El carbono de cada uno de esos ${group} no se cuenta en la [[cadena principal]]: es el primer carbono de su rama, y el prefijo ya lo incluye. Por eso esos C=O no se nombran con «oxo-».`;
@@ -1588,13 +1657,15 @@ function halogenTotal(sub) {
  * Number of carbons of one occurrence of a substituent (its subtree atoms
  * minus its halogen atoms, oxygens, ether oxygens included, amine
  * nitrogens and nitrile nitrogens; 0 for a halogen, hydroxy, oxo or plain
- * amino prefix, 1 for a `ciano` prefix, whose carbon belongs to it, I-39a).
+ * amino prefix, 1 for a `ciano` prefix, whose carbon belongs to it, I-39a,
+ * and 1 for a `carboxi` prefix, whose two oxygens are not carbons, I-40b).
  *
  * @param {object} sub - A substituent structure.
  * @returns {number} The carbon count.
  */
 function substituentCarbons(sub) {
-  return sub.atoms.length - halogenTotal(sub) - hydroxyTotal(sub) - oxoTotal(sub) - etherTotal(sub) - aminoTotal(sub) - cyanoTotal(sub);
+  return sub.atoms.length - halogenTotal(sub) - hydroxyTotal(sub) - oxoTotal(sub) - etherTotal(sub) - aminoTotal(sub) - cyanoTotal(sub)
+    - 2 * carboxyTotal(sub);
 }
 
 /**
@@ -1647,6 +1718,9 @@ function substituentPi(sub) {
   if (sub.cyano) {
     return 2; // The C≡N of a `ciano` prefix.
   }
+  if (sub.carboxy) {
+    return 1; // The C=O of a `carboxi` prefix (design.md §13.4 I-40b).
+  }
   if (!sub.chain && !sub.amino) {
     return 0; // A halogen, hydroxy or oxo prefix.
   }
@@ -1677,14 +1751,17 @@ function substituentPi(sub) {
  * C=O, one O and one such N, I-37; a nitrile –C≡N is one N and two π
  * bonds, the triple bond taking the place of three hydrogens on its carbon
  * and the N adding one, I-38; a `ciano-` prefix likewise, its carbon
- * counted with the prefix, I-39a).
+ * counted with the prefix, I-39a; a `carboxi-` prefix is one carbon, two
+ * oxygens and one π bond, and the carbon of a `-carboxílico` /
+ * `-carbaldehído` suffix is outside the ring, I-40b).
  *
  * @param {object} structure - The name structure.
  * @returns {{carbons: number, hydrogens: number, halogens: Object<string, number>, nitrogens?: number, oxygens: number}} The counts (halogens by element; empty for a hydrocarbon; `nitrogens` only when positive).
  */
 export function atomCounts(structure) {
   const { parent, prefixes } = structure;
-  let carbons = parent.length;
+  // The carbon of each –COOH / –CHO outside a ring parent (`-carboxílico`, `-carbaldehído`, design.md §13.4 I-40b).
+  let carbons = parent.length + (structure.suffix && structure.suffix.outside ? suffixCount(structure) : 0);
   let pi = parent.double.length + 2 * parent.triple.length;
   const kind = structure.suffix ? structure.suffix.kind : null;
   const amine = kind === 'amine';
@@ -1704,7 +1781,7 @@ export function atomCounts(structure) {
   for (const { sub, order } of occurrences) {
     carbons += substituentCarbons(sub);
     substituentHalogens(sub, halogens);
-    oxygens += hydroxyTotal(sub) + oxoTotal(sub) + etherTotal(sub);
+    oxygens += hydroxyTotal(sub) + oxoTotal(sub) + etherTotal(sub) + 2 * carboxyTotal(sub);
     nitrogens += aminoTotal(sub) + cyanoTotal(sub);
     pi += substituentPi(sub) + (order - 1);
   }
@@ -2514,9 +2591,13 @@ function carbonylGroupStep(result) {
     text.push(n === 1
       ? 'Tu molécula tiene un grupo –CHO: un carbono con un oxígeno unido por un [[enlace doble]] y un hidrógeno. Es un [[grupo funcional]]: la molécula es un aldehído.'
       : `Tu molécula tiene ${n} grupos –CHO (cada uno, un carbono con un oxígeno unido por un [[enlace doble]] y un hidrógeno). Son [[grupos funcionales|grupo funcional]]: la molécula es un aldehído.`);
-    text.push(result.structure.parent.length === 1
-      ? 'Aquí el carbono del –CHO es el único carbono de la molécula.'
-      : 'El carbono del –CHO solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla.');
+    if (suffix.outside) {
+      text.push(...ringGroupSentences(result)); // `ciclohexanocarbaldehído`, `benzaldehído` (design.md §13.4 I-40b).
+    } else {
+      text.push(result.structure.parent.length === 1
+        ? 'Aquí el carbono del –CHO es el único carbono de la molécula.'
+        : 'El carbono del –CHO solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla.');
+    }
   } else {
     const on = ring ? 'a un carbono del [[anillo]]' : 'a un carbono que está entre otros dos carbonos';
     text.push(total === 1
@@ -2524,8 +2605,10 @@ function carbonylGroupStep(result) {
       : `Tu molécula tiene ${total} grupos C=O (cada uno, un oxígeno unido por un [[enlace doble]] ${on}). Son [[grupos funcionales|grupo funcional]]: la molécula es una cetona.`);
     text.push(`El carbono del C=O es un carbono más ${ring ? 'del anillo' : 'de la cadena'}: se cuenta al buscar${ring ? 'lo' : 'la'} y al numerar${ring ? 'lo' : 'la'}. El oxígeno no forma parte de ${ring ? 'él' : 'ella'}.`);
   } // End of the sentences on the principal group itself
-  text.push(`${capitalise(words.the)} es el [[grupo principal]]: se nombra con el [[sufijo]] «-${ending}», al final del nombre (como en «${suffix.kind === 'aldehyde' ? 'etanal' : 'propanona'}»).`);
-  if (n > 1) {
+  if (!suffix.outside) {
+    text.push(`${capitalise(words.the)} es el [[grupo principal]]: se nombra con el [[sufijo]] «-${ending}», al final del nombre (como en «${suffix.kind === 'aldehyde' ? 'etanal' : 'propanona'}»).`);
+  }
+  if (n > 1 && !suffix.outside) {
     const { multiplier: mult } = suffixWords(suffix, lexiconEs);
     const each = suffix.kind === 'aldehyde' ? ', uno en cada extremo de la cadena principal,' : ` en ${where},`;
     text.push(`Aquí hay ${n} ${words.many}${each} así que el sufijo dice cuántos: «-${mult}${ending}» («di» = 2, «tri» = 3).`);
@@ -2544,7 +2627,15 @@ function carbonylGroupStep(result) {
     text.push(acylCarbonSentence(result));
   }
   const { oh } = oxygenGroups(result);
-  const ketones = suffix.kind === 'aldehyde' ? prefixSum(result, oxoTotal) - prefixSum(result, acylTotal) : 0;
+  // A –CHO at the end of a branch (design.md §13.4 I-39b, I-40b: `2-(2-oxoetil)…carbaldehído`) is an aldehyde, not a ketone.
+  const branchAldehydes = suffix.kind === 'aldehyde' ? prefixSum(result, branchAldehydeTotal) : 0;
+  const ketones = suffix.kind === 'aldehyde' ? prefixSum(result, oxoTotal) - prefixSum(result, acylTotal) - branchAldehydes : 0;
+  if (branchAldehydes > 0) {
+    const holder = parentKind === 'ring' ? 'unido directamente al [[anillo]]' : 'en la [[cadena principal]]';
+    text.push(branchAldehydes === 1
+      ? `Otro grupo –CHO está al final de una rama, no ${holder}: ese no va en el sufijo. Su carbono es el último carbono de la rama, así que se nombra con el [[prefijo]] «oxo-» dentro de la rama.`
+      : `Otros ${branchAldehydes} grupos –CHO están al final de ramas, no ${holder}: esos no van en el sufijo. El carbono de cada uno es el último carbono de su rama, así que se nombran con el [[prefijo]] «oxo-» dentro de la rama.`);
+  }
   const others = [];
   if (ketones > 0) {
     others.push(ketones === 1 ? 'un grupo C=O entre dos carbonos (una cetona)' : `${ketones} grupos C=O entre dos carbonos (cetonas)`);
@@ -2594,7 +2685,8 @@ function carbonylGroupStep(result) {
 /**
  * The other oxygen groups of an acid, all cited as prefixes (design.md
  * §13.4 I-33): the –CHO at the other end of the parent chain (an `oxo`
- * prefix on its last carbon), the ketone C=O on the parent (`oxo` on an
+ * prefix on its last carbon when nothing else is bonded to that carbon;
+ * with a ring prefix or a branch there it is a ketone, review I-40b), the ketone C=O on the parent (`oxo` on an
  * inner carbon), the C=O inside branches (`oxo` there, not those of acyl
  * branches, acylCounts(), nor those of esters cited as prefixes,
  * esterPrefixes(), design.md §13.4 I-39c) and every OH (`hidroxi`).
@@ -2607,7 +2699,12 @@ function acidCompanions(result) {
   const all = prefixes.filter((g) => g.substituent.oxo).flatMap((g) => g.locants);
   // The C=O of an ester (or an amide) whose carbon is a parent carbon (`4-metoxi-4-oxo`, `4-amino-4-oxo`) is the ester's (I-39c, I-39d).
   const sites = all.filter((site) => !site.ester && !site.amide);
-  const aldehyde = sites.filter((site) => site.locant === parent.length).length;
+  // An aldehyde C=O is on the last carbon of the chain and that carbon carries nothing else (review I-40b: a ring
+  // prefix or a branch there makes it a ketone, `ácido 5-fenil-5-oxopentanoico`); on a ring parent (I-40b) every
+  // C=O cited `oxo-` is a ketone of the ring, a ring carbon having two carbons.
+  const carriesOther = (site) => prefixes.some((g) => g.locants.some((other) => other.atom === site.atom && other !== site));
+  const aldehyde = result.structure.parentKind === 'ring' || parent.length < 2 ? 0
+    : sites.filter((site) => site.locant === parent.length && !carriesOther(site)).length;
   const ketone = sites.length - aldehyde;
   // The C=O of an acyl branch, of an ester prefix and of an amide prefix are counted apart (acylCounts(), esterPrefixes(),
   // amidePrefixes(); I-39b, I-39c, I-39d).
@@ -2885,17 +2982,26 @@ function acidGroupStep(result) {
     ? 'Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.'
     : `Tu molécula tiene ${n} grupos –COOH (cada uno, un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH). Son [[grupos funcionales|grupo funcional]]: la molécula es un ácido carboxílico con ${n} grupos ácido.`);
   text.push('Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.');
-  if (parent.length === 1) {
+  if (suffix.outside) {
+    // A –COOH bonded to a ring parent (design.md §13.4 I-40b): `-carboxílico`, the retained `ácido benzoico`.
+    text.push(...ringGroupSentences(result));
+  } else if (parent.length === 1) {
     text.push('Aquí el carbono del –COOH es el único carbono de la molécula.');
   } else {
     text.push(n === 1
       ? 'El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.'
       : 'El carbono de cada –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Esos carbonos son carbonos de la cadena: se cuentan al buscarla y al numerarla.');
   }
-  text.push(`El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «${word}» y termina con el [[sufijo]] «-${ending}» (como en «${word} etanoico»).`);
-  if (n > 1) {
+  if (!suffix.outside) {
+    text.push(`El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «${word}» y termina con el [[sufijo]] «-${ending}» (como en «${word} etanoico»).`);
+  }
+  if (n > 1 && !suffix.outside) {
     const { multiplier: mult } = suffixWords(suffix, lexiconEs);
     text.push(`Aquí hay ${n} grupos –COOH, uno en cada extremo de la cadena principal, así que el sufijo dice cuántos: «-${mult}${ending}» («di» = 2).`);
+  }
+  const carboxy = carboxySentence(result);
+  if (carboxy) {
+    text.push(carboxy);
   }
   const { aldehyde, ketone, branchCo, oh } = acidCompanions(result);
   const otherCo = ketone + branchCo;
@@ -2966,6 +3072,91 @@ function acidGroupStep(result) {
     locants: null,
   };
 } // End of function acidGroupStep()
+
+/**
+ * The group-step sentences on a –COOH or –CHO bonded to a ring parent
+ * (design.md §13.4 I-40b, `suffix.outside`): its carbon is not a ring
+ * carbon, nor a chain of its own; the ring carries the group with the
+ * suffix `-carboxílico` / `-carbaldehído`, which includes that carbon
+ * (`ácido ciclohexanocarboxílico`, `ciclohexano-1,2-dicarboxílico`); on
+ * benzene the retained `ácido benzoico` / `benzaldehído`.
+ *
+ * @param {object} result - A naming result whose suffix is outside a ring parent.
+ * @returns {string[]} The sentences.
+ */
+function ringGroupSentences(result) {
+  const { suffix } = result.structure;
+  const n = suffix.locants.length;
+  const words = groupWords(result);
+  const acid = suffix.kind === 'acid';
+  const { multiplier: mult, word } = suffixWords(suffix, lexiconEs);
+  const example = acid ? 'ácido ciclohexanocarboxílico' : 'ciclohexanocarbaldehído';
+  const text = [n === 1
+    ? `${capitalise(words.art)} está unido directamente a un carbono del [[anillo]]. Su carbono no forma parte del anillo (solo puede unirse a un carbono más, el del anillo) y tampoco forma una cadena aparte: el anillo es la [[cadena principal]] y lleva el grupo.`
+    : `Los ${n} ${words.many} están unidos directamente a carbonos del [[anillo]]. Sus carbonos no forman parte del anillo (cada uno solo puede unirse a un carbono más, el del anillo) y tampoco forman cadenas aparte: el anillo es la [[cadena principal]] y lleva los grupos.`];
+  if (isBenzene(result)) {
+    const retained = acid ? 'ácido benzoico' : 'benzaldehído';
+    const systematic = acid ? 'ácido bencenocarboxílico' : 'bencenocarbaldehído';
+    text.push(`${capitalise(words.the)} es el [[grupo principal]]. El benceno con ${words.one} tiene nombre propio, ${q(retained)}, que la IUPAC (2013) conserva como preferido. También se puede formar como en los demás anillos, con el [[sufijo]] «-${word}», que incluye el carbono del grupo: ${q(systematic)}.`);
+    return text;
+  }
+  const lead = acid ? `el nombre empieza por la palabra «${lexiconEs.suffixClassWord('acid')}» y termina` : 'el nombre termina';
+  text.push(`${capitalise(words.the)} es el [[grupo principal]]: ${lead} con el [[sufijo]] «-${word}» (como en ${q(example)}). Ese sufijo ya incluye el carbono del ${words.short}, así que ese carbono no se cuenta en el nombre del anillo.`);
+  if (n > 1) {
+    text.push(`Aquí hay ${n} ${words.many} en el anillo, así que el sufijo dice cuántos: «-${mult}${word}» («di» = 2, «tri» = 3).`);
+  }
+  return text;
+} // End of function ringGroupSentences()
+
+/**
+ * The group-step sentence on the –COOH groups cited as `carboxi-` prefixes
+ * (design.md §13.4 I-40b): they are acids too, but the parent cannot carry
+ * them (they are on a branch, on the ring prefix, or beyond an ether O or
+ * an amine N), so they go in front with the prefix `carboxi-`, which
+ * includes their carbon. '' without such groups.
+ *
+ * @param {object} result - A naming result whose suffix is an acid.
+ * @returns {string} The sentence, or ''.
+ */
+function carboxySentence(result) {
+  const total = prefixSum(result, carboxyTotal);
+  if (total === 0) {
+    return '';
+  }
+  const parentWord = result.structure.parentKind === 'ring' ? 'en el [[anillo]]' : 'en la [[cadena principal]]';
+  return total === 1
+    ? `Otro grupo –COOH no está ${parentWord}: ese no va en el sufijo, sino delante, con el [[prefijo]] «carboxi-». El prefijo incluye su carbono, que no se cuenta en ninguna cadena.`
+    : `Otros ${total} grupos –COOH no están ${parentWord}: esos no van en el sufijo, sino delante, con el [[prefijo]] «carboxi-». El prefijo incluye su carbono, que no se cuenta en ninguna cadena.`;
+} // End of function carboxySentence()
+
+/**
+ * Number of –CHO groups cited as `oxo-` at the end of a branch inside a
+ * substituent, nested ones included (design.md §13.4 I-39b, I-40b:
+ * `(2-oxoetil)`, `(2-oxoetoxi)`): an `oxo` on the last carbon of a chain
+ * of two or more carbons that is not its attachment carbon and carries
+ * nothing else (an aldehyde carbon has at most one carbon neighbour). A
+ * ring prefix and an acyl group never have one.
+ *
+ * @param {object} sub - A substituent structure.
+ * @returns {number} The count.
+ */
+function branchAldehydeTotal(sub) {
+  let n = 0;
+  const { chain } = sub;
+  if (chain && !sub.ring && !sub.acyl && chain.length > 1) {
+    const ends = [1, chain.length].filter((locant) => locant !== sub.freeValence.locant);
+    for (const locant of ends) {
+      const here = sub.prefixes.filter((group) => group.locants.some((site) => site.locant === locant));
+      if (here.length === 1 && here[0].substituent.oxo && here[0].locants.filter((site) => site.locant === locant).length === 1) {
+        n += 1;
+      }
+    }
+  }
+  for (const group of sub.prefixes) {
+    n += group.locants.length * branchAldehydeTotal(group.substituent);
+  }
+  return n;
+} // End of function branchAldehydeTotal()
 
 /**
  * Words for some amides cited as prefixes, for the "También tiene…" lists
@@ -3791,6 +3982,13 @@ function ringChainStep(result) {
     `Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de ${words.many}. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.`,
   ];
   const onRing = ringCount === 0 ? `El anillo no lleva ningún ${words.group}` : `El anillo lleva ${groups(ringCount)}`;
+  const attached = ringGroupCount(result);
+  if (attached > 0) {
+    // A –COOH / –CHO bonded to the ring (design.md §13.4 I-40b) counts for the ring, never as a one-carbon chain.
+    text.push(attached === 1
+      ? `${capitalise(words.art)} unido directamente al anillo cuenta como grupo del anillo: su carbono no es del anillo, pero tampoco forma una cadena aparte.`
+      : `Los ${words.many} unidos directamente al anillo cuentan como grupos del anillo: sus carbonos no son del anillo, pero tampoco forman cadenas aparte.`);
+  }
   if (chainParent) {
     text.push(`${onRing} y la mejor cadena abierta lleva ${groups(chainCount)}: gana la cadena.`);
     text.push(`Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra ${ringPrefixWords(prefix)}. Los carbonos del anillo nunca forman parte de la cadena principal.`);
@@ -3829,6 +4027,32 @@ function ringChainStep(result) {
     ],
   };
 } // End of function ringChainStep()
+
+/**
+ * The number of principal –COOH or –CHO groups bonded directly to the ring
+ * (design.md §13.4 I-40b), which parent.js ringOrChain() counts for the
+ * ring: the `-carboxílico` / `-carbaldehído` suffix groups of a ring
+ * parent, or, with a chain parent, the `carboxi` / `formil` groups on the
+ * ring prefix.
+ *
+ * @param {object} result - The naming result.
+ * @returns {number} The count.
+ */
+function ringGroupCount(result) {
+  const { suffix, parentKind } = result.structure;
+  if (!suffix || (suffix.kind !== 'acid' && suffix.kind !== 'aldehyde')) {
+    return 0;
+  }
+  if (parentKind === 'ring') {
+    return suffix.outside ? suffix.locants.length : 0;
+  }
+  const ring = ringPrefixOf(result.structure);
+  if (!ring) {
+    return 0;
+  }
+  const own = (sub) => (suffix.kind === 'acid' ? Boolean(sub.carboxy) : isKetoneAcyl(sub) && sub.chain.length === 1 && !sub.ringCarbonyl);
+  return ring.prefixes.filter((group) => own(group.substituent)).reduce((sum, group) => sum + group.locants.length, 0);
+} // End of function ringGroupCount()
 
 /**
  * Step 2, "Busca la cadena más larga", from the P1 trace step; for an
@@ -4045,6 +4269,14 @@ function ringStep(result) {
         ? 'El grupo de carbonos unido al nitrógeno tampoco es del anillo. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y ese grupo es un [[sustituyente]] del nitrógeno, que se escribe con la letra «N».'
         : 'Los grupos de carbonos unidos al nitrógeno tampoco son del anillo. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y esos grupos son [[sustituyentes|sustituyente]] del nitrógeno, que se escriben con la letra «N».');
     }
+  } else if (isOutsideSuffix(result)) {
+    // A –COOH / –CHO bonded to the ring (design.md §13.4 I-40b): `-carboxílico`, `-carbaldehído`.
+    const words = groupWords(result);
+    const { multiplier: mult, word } = suffixWords(result.structure.suffix, lexiconEs);
+    const oxygens = result.structure.suffix.kind === 'acid' ? 'sus oxígenos' : 'su oxígeno';
+    text.push(suffixCount(result.structure) === 1
+      ? `${capitalise(words.the)} unido al anillo no forma parte de él: ni su carbono ni ${oxygens} se cuentan en el anillo. Es el [[grupo principal]] y da la terminación «-${word}», que ya incluye ese carbono.`
+      : `Los ${words.many} unidos al anillo no forman parte de él: ni sus carbonos ni sus oxígenos se cuentan en el anillo. Son el [[grupo principal]] y dan la terminación «-${mult}${word}», que ya incluye esos carbonos.`);
   } else if (result.structure.suffix && isCarbonyl(result)) {
     text.push(suffixCount(result.structure) === 1
       ? 'El oxígeno unido al anillo con un [[enlace doble]] no forma parte de él, pero su carbono sí: el grupo C=O es el [[grupo principal]] y da la terminación «-ona».'
@@ -4054,15 +4286,22 @@ function ringStep(result) {
       ? 'El grupo –OH unido al anillo no forma parte de él: es el [[grupo principal]] y da la terminación «-ol».'
       : 'Los grupos –OH unidos al anillo no forman parte de él: son el [[grupo principal]] y dan la terminación «-ol».');
   }
+  const senior = result.structure.suffix ? familyWithArticle(result.structure.suffix.kind) : '';
   const ringHydroxyls = prefixes.filter((g) => g.substituent.hydroxy).reduce((sum, g) => sum + g.locants.length, 0);
   if (ringHydroxyls > 0) {
     text.push(ringHydroxyls === 1
-      ? 'El grupo –OH unido al anillo no es el [[grupo principal]] (la cetona va antes que el alcohol): se nombra con el [[prefijo]] «hidroxi-».'
-      : 'Los grupos –OH unidos al anillo no son el [[grupo principal]] (la cetona va antes que el alcohol): se nombran con el [[prefijo]] «hidroxi-».');
+      ? `El grupo –OH unido al anillo no es el [[grupo principal]] (${senior} va antes que el alcohol): se nombra con el [[prefijo]] «hidroxi-».`
+      : `Los grupos –OH unidos al anillo no son el [[grupo principal]] (${senior} va antes que el alcohol): se nombran con el [[prefijo]] «hidroxi-».`);
+  }
+  const ringOxo = prefixes.filter((g) => g.substituent.oxo).reduce((sum, g) => sum + g.locants.length, 0);
+  if (ringOxo > 0) {
+    // A ring C=O below an acid or an aldehyde (design.md §13.4 I-40b): `ácido 4-oxociclohexano-1-carboxílico`.
+    text.push(ringOxo === 1
+      ? `El oxígeno unido al anillo con un [[enlace doble]] no forma parte de él, pero su carbono sí. Ese C=O (una cetona) no es el [[grupo principal]] (${senior} va antes que la cetona): se nombra con el [[prefijo]] «oxo-».`
+      : `Los oxígenos unidos al anillo con [[enlaces dobles|enlace doble]] no forman parte de él, pero sus carbonos sí. Esos C=O (cetonas) no son el [[grupo principal]] (${senior} va antes que la cetona): se nombran con el [[prefijo]] «oxo-».`);
   }
   const ringAmino = prefixes.filter((g) => g.substituent.amino).reduce((sum, g) => sum + g.locants.length, 0);
   if (ringAmino > 0 && result.structure.suffix) {
-    const senior = familyWithArticle(result.structure.suffix.kind);
     text.push(ringAmino === 1
       ? `El grupo amino unido al anillo no es el [[grupo principal]] (${senior} va antes que la amina): se nombra con el [[prefijo]] «amino-».`
       : `Los grupos amino unidos al anillo no son el [[grupo principal]] (${senior} va antes que la amina): se nombran con el [[prefijo]] «amino-».`);
@@ -4116,7 +4355,8 @@ function benzeneStep(result) {
   const doubles = parent.double.map((site) => site.bond);
   const halogen = prefixes.length > 0 && prefixes[0].substituent.halogen;
   const amine = isAmine(result);
-  const phenol = Boolean(result.structure.suffix) && !amine;
+  const outside = isOutsideSuffix(result);
+  const phenol = Boolean(result.structure.suffix) && !amine && !outside;
   const text = [
     `${prefixes.length > 0 && !halogen ? 'En tu molécula, 6 de los carbonos' : 'Los 6 carbonos'} forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, ${q(lexiconEs.benzeneName)}. No se llama «ciclohexatrieno».`,
     'El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.',
@@ -4128,6 +4368,11 @@ function benzeneStep(result) {
       text.push('Los grupos de carbonos unidos al nitrógeno no están en el anillo: van delante, con la letra «N» (como en «N-metil»). El anillo sigue teniendo un solo sustituyente, el grupo amino.');
     }
     text.push('Con un solo grupo en el anillo no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono unido al nitrógeno es siempre el 1 y el número no se escribe.');
+  } else if (outside) {
+    // `ácido benzoico`, `benzaldehído` (design.md §13.4 I-40b).
+    const words = groupWords(result);
+    text.push(`${capitalise(words.the)} unido al anillo es el [[grupo principal]]. Su carbono no es del anillo. Un benceno con ${words.one} tiene nombre propio: ${q(result.name)}.`);
+    text.push(`Con un solo ${words.short} no hace falta numerar: todos los carbonos del benceno son iguales, así que ${words.carbonWith} es siempre el 1 y el número no se escribe.`);
   } else if (phenol) {
     text.push('El grupo –OH unido al anillo es el [[grupo principal]]. Un benceno con un –OH se llama «fenol»: es un nombre propio.');
     text.push('Con un solo –OH no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono del –OH es siempre el 1 y el número no se escribe.');
@@ -4203,6 +4448,15 @@ function ringOmissionNote(result) {
   }
   if (result.structure.suffix) {
     const words = groupWords(result);
+    if (isOutsideSuffix(result)) {
+      // design.md §13.4 I-40b: the ring carbon bonded to the –COOH / –CHO is carbon 1.
+      if (omission.prefixes) {
+        return `Con un solo ${words.group} y nada más en el anillo, ${words.carbonWith} es siempre el 1, así que el número no se escribe: ${q(result.name)}.`;
+      }
+      return suffixCount(result.structure) === 1
+        ? `${capitalise(words.carbonThe)} es el 1, y aquí ese 1 se escribe (${q(result.name)}): solo se quita cuando ${words.art} es lo único que hay en un anillo sin enlaces dobles ni triples, como en ${q(words.ringExample)}.`
+        : `Con varios ${words.many} en el anillo se escriben los números de todos los carbonos del anillo unidos a ellos, para decir dónde está cada uno: ${q(result.name)}.`;
+    }
     if (omission.prefixes) {
       return `Con un solo ${words.group} y nada más en el anillo, su carbono es siempre el 1, así que el número no se escribe: ${q(result.name)}.`;
     }
@@ -4303,7 +4557,15 @@ function ringNumberingChoice(result) {
   const multiple = parent.double.length + parent.triple.length > 0;
   const rules = [];
   if (result.structure.suffix) {
-    rules.push(`${groupWords(result).the} (el [[grupo principal]]) lleva el número más bajo, así que su carbono es el 1`);
+    const words = groupWords(result);
+    // Outside the ring (design.md §13.4 I-40b) the numbered carbon is the ring carbon bonded to the group.
+    let rule = `${words.the} (el [[grupo principal]]) lleva el número más bajo, así que su carbono es el 1`;
+    if (isOutsideSuffix(result)) {
+      rule = suffixCount(result.structure) === 1
+        ? `${words.the} (el [[grupo principal]]) lleva el número más bajo, así que ${words.carbonWith} es el 1`
+        : `los ${words.many} (el [[grupo principal]]) llevan los números más bajos, así que ${words.carbonA} es el 1`;
+    }
+    rules.push(rule);
   }
   if (multiple) {
     rules.push('los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] del anillo llevan los [[localizadores|localizador]] más bajos (si empatan, los dobles)');
@@ -4964,7 +5226,9 @@ function acylIntro(sub, words, principal) {
     reason = ` No es el [[grupo principal]]: ${familyWithArticle(principal)} va antes que ${formyl ? 'el aldehído' : 'la cetona'}.`;
   }
   if (formyl) {
-    return [`${q(prefix)} es el [[prefijo]] de un grupo –CHO (un aldehído) cuyo carbono no está en la cadena: se une ${words.to} por ese carbono.${reason} El prefijo incluye el carbono del –CHO, así que ese carbono no se cuenta en la cadena.`];
+    // On a ring (design.md §13.4 I-40b) the carbon of the –CHO is not a ring carbon.
+    const where = words === PARENT_WORDS.ring ? 'el anillo' : 'la cadena';
+    return [`${q(prefix)} es el [[prefijo]] de un grupo –CHO (un aldehído) cuyo carbono no está en ${where}: se une ${words.to} por ese carbono.${reason} El prefijo incluye el carbono del –CHO, así que ese carbono no se cuenta en ${where}.`];
   }
   const out = [`${q(prefix)} es el [[prefijo]] de un grupo acilo: una rama de ${count(substituentCarbons(sub), 'carbono', 'carbonos')} que se une ${words.to} por el carbono de un C=O.${reason} Ese carbono es el carbono 1 de la rama, no de la cadena a la que se une.`];
   if (chain.length === 2 && citedPrefixes(sub).length === 0) {
@@ -5016,8 +5280,10 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
       const senior = { ester: 'el éster', amide: 'la amida', nitrile: 'el nitrilo' }[principal];
       return [`${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: ${senior} va antes que el aldehído y la cetona.`];
     }
+    // On a ring (design.md §13.4 I-40b) a C=O cited `oxo-` is always a ketone.
+    const which = words === PARENT_WORDS.ring ? 'de una cetona' : 'de un aldehído o de una cetona';
     return [principal === 'acid'
-      ? `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona.`
+      ? `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O ${which}). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona.`
       : `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de una cetona). No es el [[grupo principal]]: el aldehído va antes que la cetona.`];
   }
   if (sub.cyano) {
@@ -5026,6 +5292,13 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
       ? ` No es el [[grupo principal]]: ${familyWithArticle(principal)} va antes que el nitrilo.`
       : '';
     return [`${q(prefix)} es el [[prefijo]] de un grupo –C≡N (un nitrilo) unido ${words.to}.${reason} El prefijo incluye el carbono del –C≡N, así que ese carbono no se cuenta en la cadena.`];
+  }
+  if (sub.carboxy) {
+    // A –COOH cited `carboxi-` (design.md §13.4 I-40b): on a branch or on the ring prefix, never on the parent.
+    return [`${q(prefix)} es el [[prefijo]] de un grupo –COOH (un ácido carboxílico) unido ${words.to}. Es un ácido, como el [[grupo principal]], pero no está en la cadena principal ni unido al anillo principal, así que no puede ir en el sufijo. El prefijo incluye el carbono del –COOH, así que ese carbono no se cuenta en ninguna cadena.`];
+  }
+  if (sub.ringCarbonyl) {
+    return ringCarbonylDescription(sub, words, principal);
   }
   if (sub.alkoxycarbonyl) {
     return alkoxycarbonylDescription(sub, words, principal);
@@ -5099,10 +5372,13 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
     const hydroxy = prefixes.some((g) => g.substituent.hydroxy);
     const oxo = prefixes.some((g) => g.substituent.oxo && notAmide(g));
     const cyano = prefixes.some((g) => g.substituent.cyano);
+    const carboxy = prefixes.some((g) => g.substituent.carboxy);
     const atomsOnly = prefixes.every(isAtomPrefix);
     let kind = allHalogens ? 'Es una rama con halógenos' : 'Es una rama con sus propias ramas';
     if (cyano && prefixes.every((g) => g.substituent.cyano)) {
       kind = cyanoTotal(sub) === 1 ? 'Es una rama con un grupo –C≡N' : 'Es una rama con grupos –C≡N';
+    } else if (carboxy && prefixes.every((g) => g.substituent.carboxy)) {
+      kind = carboxyTotal(sub) === 1 ? 'Es una rama con un grupo –COOH' : 'Es una rama con grupos –COOH';
     } else if (hydroxy && !oxo && atomsOnly) {
       kind = hydroxyTotal(sub) === 1 ? 'Es una rama con un grupo –OH' : 'Es una rama con grupos –OH';
     } else if (oxo && !hydroxy && atomsOnly) {
@@ -5163,6 +5439,10 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
     if (cyano) {
       const suffix = principal === 'nitrile' ? ', y no en la cadena principal, no va en el sufijo «-nitrilo»:' : '';
       out.push(`Un –C≡N que está en una rama${suffix} se nombra con el prefijo «ciano-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama.`);
+    }
+    if (carboxy) {
+      // design.md §13.4 I-40b: `(carboximetil)`, `(2-carboxietil)`.
+      out.push('Un –COOH que está en una rama, y no en la cadena principal, no va en el sufijo: se nombra con el prefijo «carboxi-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama.');
     }
   } // End of the nested prefixes
   const unsaturated = chain.double.length + chain.triple.length > 0;
@@ -5230,12 +5510,66 @@ function ringDescription(sub, words, principal) {
         out.push(`Un grupo ${group} que está en el anillo${suffix}se nombra con el prefijo «${lexiconEs.groupPrefix(kind)}-».`);
       }
     }
+    // A –COOH or –CHO bonded to the ring prefix (design.md §13.4 I-40b): `(4-carboxiciclohexil)`, `(4-formilciclohexil)`.
+    if (prefixes.some((g) => g.substituent.carboxy)) {
+      const suffix = principal === 'acid' ? ', y no a la cadena principal, no va en el sufijo: ' : ': ';
+      out.push(`Un grupo –COOH unido al anillo${suffix}se nombra con el prefijo «carboxi-», que incluye su carbono.`);
+    }
+    if (prefixes.some((g) => isKetoneAcyl(g.substituent) && g.substituent.chain.length === 1 && !g.substituent.ringCarbonyl)) {
+      const suffix = principal === 'aldehyde' ? ', y no a la cadena principal, no va en el sufijo: ' : ': ';
+      out.push(`Un grupo –CHO unido al anillo${suffix}se nombra con el prefijo «formil-», que incluye su carbono.`);
+    }
   }
   if (needsEnclosure(sub)) {
     out.push(`Va entre paréntesis porque tiene sus propios ${prefixes.length > 0 ? 'sustituyentes y números' : 'números'}.`);
   }
   return out;
 } // End of function ringDescription()
+
+/**
+ * Explains a ring acyl prefix (design.md §13.4 I-40b, `ringCarbonyl`): a
+ * C=O bonded to the chain by its carbon and, on its other side, to a ring
+ * (a ketone C=O cut off the chain); named from the ring acid, `benzoil`
+ * from `ácido benzoico`, `ciclohexanocarbonil` from `ácido
+ * ciclohexanocarboxílico` (`-carboxílico` → `-carbonil`); the ring
+ * numbered from the carbon bonded to the C=O (1); why it is enclosed.
+ *
+ * @param {object} sub - A substituent structure with `ringCarbonyl` set.
+ * @param {{to: string}} words - How the chain that carries it is named (parentWords()).
+ * @param {string|null} principal - The principal group kind of the name, or null.
+ * @returns {string[]} Sentences.
+ */
+function ringCarbonylDescription(sub, words, principal) {
+  const ring = ringCarbonylRing(sub);
+  const prefix = substituentPrefix(sub, lexiconEs);
+  const benzene = ring.retained === 'phenyl';
+  let reason = '';
+  if (principal === 'ketone') {
+    reason = ' Es una cetona, como el [[grupo principal]], pero su carbono no está en la cadena principal, así que no puede ir en el sufijo «-ona».';
+  } else if (principal) {
+    reason = ` No es el [[grupo principal]]: ${familyWithArticle(principal)} va antes que la cetona.`;
+  }
+  const out = [`${q(prefix)} es el [[prefijo]] de un grupo acilo: un C=O unido ${words.to} por su carbono y, por el otro lado, a un [[anillo]]${benzene ? ' de [[benceno]]' : ''}.${reason} El prefijo incluye el carbono del C=O, que no es de la cadena ni del anillo.`];
+  if (benzene) {
+    out.push('Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil».');
+    return out;
+  }
+  const acid = `ácido ${prefix.replace(/^\(|\)$/g, '').slice(0, -lexiconEs.ringCarbonylEnding.length)}${lexiconEs.ringGroupSuffix('acid')}`;
+  out.push(`Se nombra como el ácido del anillo, cambiando «-carboxílico» por «-carbonil»: del ${q(acid)} sale ${q(prefix)}.`);
+  const unsaturated = ring.chain.double.length + ring.chain.triple.length > 0;
+  if (unsaturated || ring.prefixes.length > 0) {
+    const inner = ring.prefixes.map((g) => {
+      const places = [...new Set(g.locants.map((site) => site.locant))];
+      const where = places.length === 1 ? `en el carbono ${places[0]}` : `en los carbonos ${joinY(places)}`;
+      return `${q(substituentPrefix(g.substituent, lexiconEs))} ${where}`;
+    });
+    out.push(`Los carbonos del anillo se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo en el sentido que da los números más bajos${unsaturated ? ' a los enlaces dobles y triples y luego' : ''} a sus [[sustituyentes|sustituyente]]${inner.length > 0 ? `: ${joinY(inner)}` : ''}.`);
+  }
+  out.push(ring.prefixes.length > 0 || unsaturated
+    ? 'Va entre paréntesis porque tiene sus propios números.'
+    : 'Va entre paréntesis porque su nombre lleva dentro el nombre de un anillo con su terminación («-ano»): así se lee separado del resto.');
+  return out;
+} // End of function ringCarbonylDescription()
 
 /**
  * Explains an alkoxy prefix (design.md §13.4 I-34): an ether, the O plus
@@ -5488,7 +5822,10 @@ function substituentsStep(result) {
   }
   if (groups.some((g) => g.substituent.acyl && !g.substituent.alkoxy)) {
     // Acyl branches (design.md §13.4 I-39b).
-    text.push(`Una rama que se une ${words.to} por el carbono de un C=O es un grupo acilo: su nombre acaba en «-oil» (como «propanoil»), salvo «formil» (un –CHO, 1 carbono) y «acetil» (CH₃–CO–, 2 carbonos).`);
+    const ringAcyl = groups.some((g) => g.substituent.ringCarbonyl && !ringCarbonylRing(g.substituent).retained);
+    // A C=O bonded to a ring (design.md §13.4 I-40b): `ciclohexanocarbonil`.
+    const carbonyl = ringAcyl ? ', o en «-carbonil» si su C=O está unido a un anillo (como «ciclohexanocarbonil»)' : '';
+    text.push(`Una rama que se une ${words.to} por el carbono de un C=O es un grupo acilo: su nombre acaba en «-oil» (como «propanoil»)${carbonyl}, salvo «formil» (un –CHO, 1 carbono) y «acetil» (CH₃–CO–, 2 carbonos).`);
   }
   if (hasNitrogenLocants(groups)) {
     text.push(`Los grupos de carbonos unidos al nitrógeno del grupo ${isAmide(result) ? 'amida' : 'amino'}${branches.length > 0 ? ' también' : ''} son [[sustituyentes|sustituyente]]: se nombran igual que las ramas («metil», «etil»…), pero su [[localizador]] es la letra «N», porque van unidos al nitrógeno y no a un carbono.`);
@@ -5930,6 +6267,10 @@ function suffixLegend(result) {
     if (suffix.kind === 'amine') {
       carbons = n === 1 ? 'carbono unido al nitrógeno del grupo amino' : 'carbonos unidos a los nitrógenos de los grupos amino';
     }
+    if (suffix.outside) {
+      // design.md §13.4 I-40b: the ring carbons bonded to the –COOH / –CHO.
+      carbons = n === 1 ? `carbono del anillo unido al ${words.group}` : `carbonos del anillo unidos a los ${words.many}`;
+    }
     legend.push({ text: suffix.locants.map((s) => s.locant).join(','), kind: 'locant', meaning: carbons });
   }
   const { multiplier: mult, word } = suffixWords(suffix, lexiconEs);
@@ -5976,6 +6317,11 @@ function assembleStep(result) {
     text.push(prefixes.length > 0
       ? `Primero van los grupos unidos al nitrógeno, cada uno con su «N», y después el nombre del anillo sin su «o» final, ${q(stem)}, más la terminación «-amina», todo junto. El anillo no lleva números: solo tiene un grupo.`
       : `El nombre es el del anillo sin su «o» final, ${q(stem)}, más la terminación del grupo principal, «-amina». No lleva números: el anillo solo tiene un grupo.`);
+  } else if (benzene && isOutsideSuffix(result)) {
+    // design.md §13.4 I-40b: `ácido benzoico` = `ácido` + `benz` + `oico`; `benzaldehído` = `benz` + `aldehído`.
+    const words = groupWords(result);
+    const [stem, ending] = result.parts.filter((p) => p.kind !== 'punct').map((p) => p.text).slice(-2);
+    text.push(`El benceno con ${words.one} tiene nombre propio: ${q(result.name)}. No lleva números: ${q(stem)} es el anillo y ${q(`-${ending}`)}, ${words.the}${isAcid(result) ? `, y el nombre empieza por la palabra ${q(lexiconEs.suffixClassWord('acid'))}, como el de cualquier ácido carboxílico` : ''}.`);
   } else if (benzene && result.structure.suffix) {
     text.push(`El benceno con un grupo –OH tiene nombre propio: ${q(result.name)}. No lleva números: «fen» es el anillo y «-ol», el grupo –OH.`);
   } else if (benzene) {
@@ -6115,6 +6461,12 @@ function suffixSentences(result) {
   if (!omitted && suffix.locants.length > 1) {
     where = 'con los números de sus carbonos justo delante';
   }
+  if (!omitted && suffix.outside) {
+    // design.md §13.4 I-40b: the number is the ring carbon's, the group's own carbon has none.
+    where = suffix.locants.length > 1
+      ? 'con los números de los carbonos del anillo unidos a los grupos justo delante'
+      : 'con el número del carbono del anillo unido al grupo justo delante';
+  }
   text.push(isEster(result)
     ? `La primera palabra acaba con el [[sufijo]] del grupo principal, ${q(`-${mult}${word}`)}, ${where}.`
     : `Al final va el [[sufijo]] del grupo principal, ${q(`-${mult}${word}`)}, ${where}.`);
@@ -6148,10 +6500,17 @@ function suffixSentences(result) {
       ? 'El número del sufijo es el del carbono unido al nitrógeno: el nitrógeno no tiene número en la cadena.'
       : 'Los números del sufijo son los de los carbonos unidos a los nitrógenos: los nitrógenos no tienen número en la cadena.');
   }
-  if (suffix.kind === 'acid') {
+  if (suffix.kind === 'acid' && !suffix.outside) {
     text.push(suffix.locants.length === 1
       ? 'El –COOH no lleva número: su carbono siempre es el 1.'
       : 'Los –COOH no llevan número: sus carbonos siempre son los dos extremos.');
+  }
+  if (suffix.outside) {
+    text.push(suffix.locants.length === 1
+      ? `El carbono del ${groupWords(result).short} no tiene número: no es del anillo, y el sufijo «-${word}» ya lo incluye.`
+      : `Los carbonos de los ${groupWords(result).short} no tienen número: no son del anillo, y el sufijo «-${mult}${word}» ya los incluye.`);
+  }
+  if (suffix.kind === 'acid') {
     text.push(`Delante de todo va la palabra ${q(lexiconEs.suffixClassWord('acid'))}, separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.`);
   }
   const segments = lexiconEs.segmentOrder.filter((kind) => parent[kind].length > 0);

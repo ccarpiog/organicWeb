@@ -1289,7 +1289,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico)."
+     "Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos."
     ],
     "highlight": [
      {
@@ -1417,7 +1417,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico)."
+     "Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos."
     ],
     "highlight": [
      {
@@ -1545,7 +1545,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico)."
+     "Esta molécula tiene un anillo y un grupo amida (–CONH₂, –CONH– o –CON–). De momento solo sé nombrar las amidas de cadena abierta (como la etanamida o la N-metiletanamida): las amidas con anillo, como la benzamida, la ciclohexanocarboxamida o la N-feniletanamida, aún no sé nombrarlas."
     ],
     "highlight": [
      {
@@ -1673,7 +1673,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico)."
+     "Esta molécula tiene un anillo y un grupo amida (–CONH₂, –CONH– o –CON–). De momento solo sé nombrar las amidas de cadena abierta (como la etanamida o la N-metiletanamida): las amidas con anillo, como la benzamida, la ciclohexanocarboxamida o la N-feniletanamida, aún no sé nombrarlas."
     ],
     "highlight": [
      {
@@ -1691,9 +1691,9 @@
    }
   ]
  },
- "O=CC1CCCCC1": {
+ "N#CC1CCCCC1": {
   "code": "HETEROATOM",
-  "principal": "aldehyde",
+  "principal": "nitrile",
   "steps": [
    {
     "id": "groups",
@@ -1701,7 +1701,8 @@
     "text": [
      "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
      "He encontrado este grupo:",
-     "1 aldehído: un oxígeno unido por un [[enlace doble]] a un carbono que también tiene un hidrógeno (–CHO); por eso siempre está en un extremo."
+     "1 nitrilo: un carbono unido a un nitrógeno por un [[enlace triple]] (–C≡N).",
+     "Cada átomo pertenece a un solo grupo: el enlace triple de un nitrilo (C≡N) no es el de un alquino y su nitrógeno no cuenta como amina. Todo junto es un único grupo."
     ],
     "highlight": [
      {
@@ -1722,7 +1723,7 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el aldehído: es el único tipo de grupo que puede serlo."
+     "Aquí el grupo principal es el nitrilo: es el único tipo de grupo que puede serlo."
     ],
     "highlight": [
      {
@@ -1743,7 +1744,7 @@
     "title": "Sufijo o prefijo",
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
-     "El aldehído: sufijo «-al», como en «etanal»."
+     "El nitrilo: sufijo «-nitrilo», como en «etanonitrilo»."
     ],
     "highlight": [
      {
@@ -1763,7 +1764,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –CHO (un aldehído). Cuando el –CHO va unido a un anillo, el nombre acaba en «-carbaldehído» (como el ciclohexanocarbaldehído), y eso aún no sé nombrarlo. De momento, con anillo sé nombrar las cetonas (como la ciclohexanona o la 1-feniletan-1-ona), pero no los aldehídos."
+     "Esta molécula tiene un anillo y un grupo –C≡N (un nitrilo). Cuando el –C≡N va unido a un anillo, el nombre acaba en «-carbonitrilo» (como el ciclohexanocarbonitrilo o el benzonitrilo), y eso aún no sé nombrarlo. De momento solo sé nombrar los nitrilos de cadena abierta (como el etanonitrilo)."
     ],
     "highlight": [
      {

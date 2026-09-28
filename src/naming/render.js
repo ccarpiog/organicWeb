@@ -100,13 +100,17 @@ export function renderParent(chain, lexicon, hasPrefixes, suffix = null, omitSuf
  * that starts with a vowel (P-16.7.1(c)): `tetr` + `ol`, `pent` + `ol`
  * (`butano-1,2,3,4-tetrol`); `di`, `tri` are unchanged. Only suffix
  * multipliers do this; prefix multipliers keep their `a` (`tetrametil`).
+ * A suffix whose carbon is outside a ring parent (`outside`, design.md
+ * §13.4 I-40b) is `carboxílico` / `carbaldehído`, which starts with a
+ * consonant: `ciclohexanocarboxílico`, `ciclohexano-1,2-dicarboxílico`.
  *
- * @param {{kind: string, locants: object[]}} suffix - The suffix structure.
+ * @param {{kind: string, locants: object[], outside?: boolean}} suffix - The suffix structure.
  * @param {object} lexicon - The lexicon.
  * @returns {{multiplier: string, word: string, elides: boolean}} The pieces.
  */
 export function suffixWords(suffix, lexicon) {
-  const word = lexicon.groupSuffix(suffix.kind);
+  // A –COOH / –CHO whose carbon is outside a ring parent (design.md §13.4 I-40b): `carboxílico`, `carbaldehído`.
+  const word = suffix.outside ? lexicon.ringGroupSuffix(suffix.kind) : lexicon.groupSuffix(suffix.kind);
   const full = lexicon.multiplier(suffix.locants.length);
   const mult = full.endsWith('a') && /^[aeiou]/.test(word) ? full.slice(0, -1) : full;
   return { multiplier: mult, word, elides: /^[aeiou]/.test(`${mult}${word}`) };
@@ -117,7 +121,9 @@ export function suffixWords(suffix, lexicon) {
  * heteroatom with their bond, plus the OH oxygen of a –COOH and its bond
  * (SuffixLocant `hydroxyAtom`, design.md §13.4 I-33), the bridge O of an
  * ester and its bond to the C=O carbon (`esterOxygen`, I-35) or the N of
- * an amide and its bond to the C=O carbon (`amideNitrogen`, I-37).
+ * an amide and its bond to the C=O carbon (`amideNitrogen`, I-37), and
+ * the carbon of a –COOH or –CHO outside a ring parent with its bond to the
+ * ring (`carbon`, I-40b).
  *
  * @param {{locants: object[]}} suffix - The suffix structure.
  * @returns {{atoms: number[], bonds: number[]}} The ids.
@@ -125,12 +131,14 @@ export function suffixWords(suffix, lexicon) {
 export function suffixGroupIds(suffix) {
   const atoms = suffix.locants.flatMap((site) => [
     site.atom, site.attachAtom,
+    ...(site.carbon === undefined ? [] : [site.carbon]),
     ...(site.hydroxyAtom === undefined ? [] : [site.hydroxyAtom]),
     ...(site.esterOxygen === undefined ? [] : [site.esterOxygen]),
     ...(site.amideNitrogen === undefined ? [] : [site.amideNitrogen]),
   ]);
   const bonds = suffix.locants.flatMap((site) => [
     site.bond,
+    ...(site.carbonBond === undefined ? [] : [site.carbonBond]),
     ...(site.hydroxyBond === undefined ? [] : [site.hydroxyBond]),
     ...(site.esterBond === undefined ? [] : [site.esterBond]),
     ...(site.amideBond === undefined ? [] : [site.amideBond]),
@@ -233,18 +241,34 @@ function renderEnding(parent, lexicon, omit, suffix = null, omitSuffixLocants = 
  * P-22.1.2), referring to every ring atom and bond; with an OH suffix it is
  * the retained `fenol` (P-63.1.1.1), written as the stem `fen` and the
  * suffix `ol` so that `ol` points at the OH group. The suffix groups (`-ol`)
- * follow the ending: `ciclohexanol`, `ciclohex-2-en-1-ol`.
+ * follow the ending: `ciclohexanol`, `ciclohex-2-en-1-ol`. A –COOH or –CHO
+ * outside the ring (design.md §13.4 I-40b) follows the full ending:
+ * `ciclohexanocarboxílico`, `ciclohex-2-eno-1-carbaldehído`; on benzene it
+ * gives the retained `benzoico` / `benzaldehído` (the systematic
+ * `bencenocarboxílico` / `bencenocarbaldehído` with `systematic`).
  *
  * @param {object} ring - The ring structure (structure.js RingStructure).
  * @param {object} lexicon - The lexicon.
  * @param {object[]} prefixes - The prefix groups of the name (they change the omission rule).
  * @param {object|null} [suffix] - The suffix groups (structure.js SuffixStructure), or null.
+ * @param {boolean} [systematic] - On benzene, the systematic name instead of the retained one (default false).
  * @returns {object[]} The parts.
  */
-export function renderRingParent(ring, lexicon, prefixes, suffix = null) {
+export function renderRingParent(ring, lexicon, prefixes, suffix = null, systematic = false) {
   const suffixCount = suffix ? suffix.locants.length : 0;
   const omission = lexicon.ringOmitsLocants(ring, carbonLocantPrefixes(prefixes), suffixCount);
   if (ring.retained === 'benzene') {
+    const retained = suffix && suffix.outside && !systematic ? lexicon.benzeneGroupName(suffix.kind) : null;
+    if (retained) {
+      // `ácido benzoico`, `benzaldehído` (design.md §13.4 I-40b): the stem is the ring, the ending the group.
+      const { atoms, bonds } = suffixGroupIds(suffix);
+      return [part(retained.stem, 'stem', ring.atoms, ring.bonds), part(retained.ending, 'ending', atoms, bonds)];
+    }
+    if (suffix && suffix.outside) {
+      // `ácido bencenocarboxílico`, `bencenocarbaldehído`: the systematic alternatives.
+      const { atoms, bonds } = suffixGroupIds(suffix);
+      return [part(lexicon.benzeneName, 'stem', ring.atoms, ring.bonds), part(suffixWords(suffix, lexicon).word, 'ending', atoms, bonds)];
+    }
     if (suffix) {
       const [site] = suffix.locants;
       // `fenol` (retained, OH); any other suffix on the benzene name, its final vowel elided: `bencenamina`.
@@ -296,7 +320,11 @@ function token(text, kind) {
  * `carbamoil` prefix (I-39d) is enclosed when its N carries groups
  * (`(metilcarbamoil)`, `(dimetilcarbamoil)`); an `acilamino` prefix is an
  * amino prefix with an acyl group on its N, always enclosed
- * (`(acetilamino)`, `[acetil(metil)amino]`).
+ * (`(acetilamino)`, `[acetil(metil)amino]`). `carboxi` (I-40b) is simple;
+ * a ring acyl prefix (I-40b) is unenclosed as `benzoil` and always
+ * enclosed otherwise, like a prefix built on a parent name with its own
+ * ending (`(ciclohexanocarbonil)`, `(2-metilciclohexano-1-carbonil)`,
+ * `(ciclohex-2-eno-1-carbonil)`; app decision for readability).
  * Enclosure does not decide the multiplier (see isCompoundPrefix()).
  *
  * @param {object} substituent - The substituent structure.
@@ -309,12 +337,17 @@ export function needsEnclosure(substituent) {
   if (substituent.alkoxycarbonyl) {
     return true; // `(metoxicarbonil)`, `[(propan-2-iloxi)carbonil]` (design.md §13.4 I-39c).
   }
-  if (substituent.retained || substituent.halogen || substituent.hydroxy || substituent.oxo || substituent.cyano) {
+  if (substituent.retained || substituent.halogen || substituent.hydroxy || substituent.oxo || substituent.cyano
+    || substituent.carboxy) {
     return false;
   }
   if (substituent.alkoxy) {
     // Checked before `acyl`: an acyloxy group (I-39c) keeps the acyl flag of its acyl part, and is always enclosed.
     return substituent.prefixes.length > 0 || !isContractedAlkoxy(substituent);
+  }
+  if (substituent.ringCarbonyl) {
+    // `benzoil`, but `(ciclohexanocarbonil)`, `(2-metilciclohexano-1-carbonil)`, `(ciclohex-2-eno-1-carbonil)` (I-40b).
+    return !ringCarbonylRing(substituent).retained;
   }
   if (substituent.acyl) {
     // `formil`, `acetil`, `propanoil`, but `(2-metilpropanoil)`, `(but-2-enoil)` (design.md §13.4 I-39b).
@@ -356,8 +389,11 @@ export function isCompoundPrefix(substituent) {
   if (substituent.alkoxy) {
     return substituent.prefixes.length > 0 || (!substituent.retained && !isContractedAlkoxy(substituent));
   }
+  if (substituent.ringCarbonyl) {
+    return ringCarbonylRing(substituent).prefixes.length > 0; // `benzoil`, `(ciclohexanocarbonil)` simple; `(2-metilciclohexano-1-carbonil)` compound (I-40b).
+  }
   return !substituent.retained && !substituent.halogen && !substituent.hydroxy && !substituent.oxo && !substituent.cyano
-    && citedPrefixes(substituent).length > 0;
+    && !substituent.carboxy && citedPrefixes(substituent).length > 0;
 }
 
 /**
@@ -430,6 +466,10 @@ function enclosureLevel(substituent) {
     // The alkoxy part is enclosed inside when it needs it: `[(propan-2-iloxi)carbonil]` (design.md §13.4 I-39c).
     const alkoxy = alkoxycarbonylAlkoxy(substituent);
     return needsEnclosure(alkoxy) ? enclosureLevel(alkoxy) + 1 : 0;
+  }
+  if (substituent.ringCarbonyl && !substituent.alkoxy) {
+    // The marks around the ring's own prefixes: `(2-metilciclohexano-1-carbonil)`, `[2-(propan-2-il)…]` (I-40b).
+    return enclosureLevel(ringCarbonylRing(substituent));
   }
   if (substituent.alkoxy && substituent.acyl) {
     // An acyloxy prefix encloses its acyl part when that needs it: `[(3-metilbutanoil)oxi]` (I-39c).
@@ -561,7 +601,9 @@ function locantTokens(locants) {
  * I-39c: `acetiloxi`), or an `alcoxicarbonil` group (an ester bonded
  * through its C=O carbon, I-39c: alkoxycarbonylTokens()), or a `carbamoil`
  * group (an amide bonded through its C=O carbon, I-39d: the groups on its
- * N, then `carbamoil`), or a ring (design.md §13.4 I-40a: `ciclo` + stem,
+ * N, then `carbamoil`), or `carboxi` (a –COOH not cited as the suffix,
+ * I-40b), or a ring acyl prefix (I-40b: `benzoil`, `ciclohexanocarbonil`;
+ * ringCarbonylTokens()), or a ring (design.md §13.4 I-40a: `ciclo` + stem,
  * the attachment atom as locant 1 — `ciclohexil`, `(2-metilciclohexil)`,
  * `(ciclohex-2-en-1-il)`; the benzene ring is the retained `fenil`). A
  * saturated group with the free valence at
@@ -593,8 +635,14 @@ function substituentTokens(substituent, lexicon) {
   if (substituent.cyano) {
     return [token(lexicon.groupPrefix('nitrile'), 'prefix')];
   }
+  if (substituent.carboxy) {
+    return [token(lexicon.groupPrefix('acid'), 'prefix')]; // `carboxi` (design.md §13.4 I-40b).
+  }
   if (substituent.alkoxy) {
     return alkoxyTokens(substituent, lexicon);
+  }
+  if (substituent.ringCarbonyl) {
+    return ringCarbonylTokens(substituent, lexicon);
   }
   if (substituent.amino) {
     // The groups on the N without locants, every one after the first enclosed, then `amino`.
@@ -690,6 +738,72 @@ function acylEndingTokens(chain, segments, lexicon) {
   });
   return [...tokens, ending];
 } // End of function acylEndingTokens()
+
+/**
+ * The ring of a ring acyl prefix (design.md §13.4 I-40b, `ringCarbonyl`):
+ * the ring substituent on its one carbon X (the prefix group that is not
+ * the C=O `oxo`), numbered from the atom bonded to X (locant 1).
+ *
+ * @param {object} substituent - A substituent structure with `ringCarbonyl` set.
+ * @returns {object} The ring substituent structure (`ring` true).
+ */
+export function ringCarbonylRing(substituent) {
+  return substituent.prefixes.find((group) => group.substituent.ring).substituent;
+}
+
+/**
+ * Tokens of the acyl prefix of an acid named with `-carboxílico` (design.md
+ * §13.4 I-40b; IUPAC 2013 P-65.1.7, from memory): the retained `benzoil`
+ * for benzene; otherwise the ring's own prefixes with their locants, the
+ * ring name with its full ending (`ciclohexano`, `ciclohex-2-eno`), the
+ * locant 1 of the attachment atom when the ring name cites locants (the
+ * same omission rule as a ring parent with one suffix group,
+ * lexicon.ringOmitsLocants()) and `carbonil`: `ciclohexanocarbonil`,
+ * `2-metilciclohexano-1-carbonil`, `ciclohex-2-eno-1-carbonil`. The
+ * structure is X alone as a one-carbon acyl chain whose prefixes are the
+ * `oxo` (hidden by the ending) and the ring.
+ *
+ * @param {object} substituent - A substituent structure with `ringCarbonyl` set.
+ * @param {object} lexicon - The lexicon (`benzoylPrefix`, `ringCarbonylEnding`).
+ * @returns {{text: string, kind: string}[]} The tokens.
+ */
+function ringCarbonylTokens(substituent, lexicon) {
+  const ring = ringCarbonylRing(substituent);
+  if (ring.retained) {
+    return [token(lexicon.benzoylPrefix, 'prefix')];
+  }
+  const { chain, prefixes } = ring;
+  const tokens = [];
+  prefixes.forEach((group, g) => {
+    if (g > 0) {
+      tokens.push(token('-', 'punct'));
+    }
+    tokens.push(...groupTokens(group, lexicon, false, false, false, g === 0));
+  });
+  tokens.push(token(lexicon.ringPrefix, 'stem'), token(lexicon.stem(chain.length), 'stem'));
+  const segments = lexicon.segmentOrder
+    .map((kind) => ({ kind, sites: chain[kind] }))
+    .filter((segment) => segment.sites.length > 0);
+  if (segments.length === 0) {
+    tokens.push(token(lexicon.endings.saturated, 'ending'));
+  } else {
+    if (lexicon.needsConnectingVowel(chain)) {
+      tokens.push(token(lexicon.connectingVowel, 'stem'));
+    }
+    segments.forEach((segment, i) => {
+      tokens.push(token('-', 'punct'), ...locantTokens(segment.sites.map(siteLocantText)));
+      const mult = lexicon.multiplier(segment.sites.length);
+      if (mult) {
+        tokens.push(token(mult, 'multiplier'));
+      }
+      tokens.push(token(lexicon.unsaturationEnding(segment.kind, i === segments.length - 1), 'ending'));
+    });
+  }
+  if (!lexicon.ringOmitsLocants(chain, prefixes, 1).prefixes) {
+    tokens.push(token('-', 'punct'), ...locantTokens([1]));
+  }
+  return [...tokens, token(lexicon.ringCarbonylEnding, 'ending')];
+} // End of function ringCarbonylTokens()
 
 /**
  * The alkoxy group of an `alcoxicarbonil` substituent (design.md §13.4
@@ -1065,7 +1179,7 @@ export function assembleEster(acidParts, esters, lexicon) {
  *
  * @param {object} structure - The name structure (structure.js NameStructure).
  * @param {object} [lexicon] - The lexicon to use (default: Spanish).
- * @param {{citeLocants?: boolean, traditional?: string}} [options] - Rendering options.
+ * @param {{citeLocants?: boolean, traditional?: string, systematic?: boolean}} [options] - Rendering options (`systematic`: `ácido bencenocarboxílico` instead of `ácido benzoico`, design.md §13.4 I-40b).
  * @returns {{name: string, parts: object[]}} The rendered name and its parts.
  */
 export function renderName(structure, lexicon = lexiconEs, options = {}) {
@@ -1089,7 +1203,7 @@ export function renderName(structure, lexicon = lexiconEs, options = {}) {
     return { name: parts.map((p) => p.text).join(''), parts };
   }
   const parent = ring
-    ? renderRingParent(structure.parent, lexicon, structure.prefixes, suffix)
+    ? renderRingParent(structure.parent, lexicon, structure.prefixes, suffix, Boolean(options.systematic))
     : renderParent(structure.parent, lexicon, hasPrefixes, suffix, omitPrefixLocants);
   const classWord = suffix && lexicon.suffixClassWord ? lexicon.suffixClassWord(suffix.kind) : null;
   const lead = [];

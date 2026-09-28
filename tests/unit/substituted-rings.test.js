@@ -255,7 +255,8 @@ test('validation left for rings: heteroatoms, polycycles, heterocycles and the s
   assert.equal(validateForNaming(parseSmiles('ClC1=CCCCC1')), null, 'halogen derivatives are named since I-30');
   assert.equal(validateForNaming(parseSmiles('ClC1CCC(O)CC1')), null, 'cycloalkanols are named since I-31');
   assert.equal(validateForNaming(parseSmiles('OCC1CCCCC1')), null, 'an OH on a side chain is named since I-40a');
-  assert.equal(validateForNaming(parseSmiles('O=CCC1CCCCC1')).code, 'HETEROATOM', 'an aldehyde with a ring waits for I-40b');
+  assert.equal(validateForNaming(parseSmiles('O=CCC1CCCCC1')), null, 'an aldehyde with a ring is named since I-40b');
+  assert.equal(validateForNaming(parseSmiles('N#CCC1CCCCC1')).code, 'HETEROATOM', 'a nitrile with a ring waits for I-40c');
   assert.equal(validateForNaming(parseSmiles('CC1CCOCC1')).code, 'RING_SYSTEM');
   assert.equal(validateForNaming(parseSmiles('CC1CCC2CCCCC2C1')).code, 'RING_SYSTEM');
   assert.equal(validateForNaming(parseSmiles('C1CC1CC1CC1')).code, 'RING_SYSTEM');

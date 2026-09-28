@@ -50,9 +50,14 @@
  * `alcoxi` + `oxo` on its carbon, `alcoxicarbonil-`, `aciloxi-`, substituent.js esterAttachment(); since I-39d an amide
  * beside an acid or an ester, or on another carbon piece: `amino` + `oxo`, `carbamoil-`, `acilamino-`,
  * substituent.js amideAttachment()). The carbon X of a C=O or a COOH
- * is always a skeleton carbon (a chain or ring atom; design.md §13.6
+ * is a skeleton carbon (a chain or ring atom; design.md §13.6
  * "Where X belongs"); a C=O carbon off the chain that carries it is the
- * first carbon of an acyl branch (`formil`, `acetil`, `propanoil`, I-39b). A carboxyl group
+ * first carbon of an acyl branch (`formil`, `acetil`, `propanoil`, I-39b;
+ * `benzoil`, `(ciclohexanocarbonil)` when bonded to the ring, I-40b). The
+ * exception (I-40b): a principal –COOH or –CHO bonded to a ring carbon
+ * (isRingGroupCarbon()) is the ring's group, `-carboxílico` /
+ * `-carbaldehído`, and its carbon is never a chain carbon; a –COOH that is
+ * not a suffix group is `carboxi-`, which includes its carbon. A carboxyl group
  * has two oxygens but is one suffix group: its C=O oxygen stands for it
  * (isSuffixOxygen(), SuffixLocant `attachAtom`), its OH oxygen travels with
  * it (SuffixLocant `hydroxyAtom`). An ester group likewise: its C=O oxygen
@@ -67,7 +72,9 @@
 
 import { seniorityRank } from './seniority.js';
 import { N_LOCANT } from './structure.js';
-import { isCarboxylCarbon, isEsterCarbon, isAmideCarbon, amideRole, isNitrileNitrogen, isNitrileCarbon } from '../model/validate.js';
+import {
+  isCarboxylCarbon, isEsterCarbon, isAmideCarbon, amideRole, isNitrileNitrogen, isNitrileCarbon, carbonylKind,
+} from '../model/validate.js';
 
 /** Kinds of oxygen group the engine names, most senior first. */
 export const OXYGEN_KINDS = Object.freeze(['acid', 'ester', 'aldehyde', 'ketone', 'alcohol']);
@@ -192,6 +199,51 @@ export function outsideCarbons(mol, adj, principal) {
 }
 
 /**
+ * Tells whether a carbon is the carbon X of a principal group that a ring
+ * parent cites with a suffix whose carbon is outside the ring (design.md
+ * §13.4 I-40b, §13.6 "Where X belongs"; IUPAC 2013 P-65.1.2, P-66.6.1.1):
+ * the carbon of a –COOH (`-carboxílico`, `ácido ciclohexanocarboxílico`)
+ * or of a –CHO (`-carbaldehído`, `ciclohexanocarbaldehído`) bonded directly
+ * to a ring atom, when that kind is the principal one. X is then never a
+ * chain carbon: with at most one carbon neighbour, the ring atom, it would
+ * be a one-carbon chain, and the ring carries its group instead
+ * (parent.js ringOrChain() counts it for the ring). An aldehyde or acid
+ * carbon anywhere else is an ordinary skeleton carbon.
+ *
+ * @param {object} mol - A molecule accepted by validateForNaming().
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} carbon - Any atom id.
+ * @param {string|null} principal - The principal kind (principalKindOf()).
+ * @param {Set<number>} ringAtoms - The atoms of the one ring (graph.js cycleCore()); empty for a tree.
+ * @returns {boolean} True for such a carbon.
+ */
+export function isRingGroupCarbon(mol, adj, carbon, principal, ringAtoms) {
+  if ((principal !== 'acid' && principal !== 'aldehyde') || ringAtoms.has(carbon) || mol.atoms.get(carbon).element !== 'C'
+    || !adj.get(carbon).some((n) => ringAtoms.has(n.atom))) {
+    return false;
+  }
+  if (principal === 'acid') {
+    return isCarboxylCarbon(mol, adj, carbon);
+  }
+  return adj.get(carbon).some((n) => carbonylKind(mol, adj, n.atom) === 'aldehyde');
+} // End of function isRingGroupCarbon()
+
+/**
+ * The carbons of a molecule that a ring parent cites with a suffix whose
+ * carbon is outside the ring (isRingGroupCarbon(): `-carboxílico`,
+ * `-carbaldehído`, design.md §13.4 I-40b), ascending.
+ *
+ * @param {object} mol - A molecule accepted by validateForNaming().
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {string|null} principal - The principal kind (principalKindOf()).
+ * @param {Set<number>} ringAtoms - The atoms of the one ring; empty for a tree.
+ * @returns {number[]} The carbon ids.
+ */
+export function ringGroupCarbons(mol, adj, principal, ringAtoms) {
+  return [...mol.atoms.keys()].filter((id) => isRingGroupCarbon(mol, adj, id, principal, ringAtoms)).sort((p, q) => p - q);
+}
+
+/**
  * Tells whether an oxygen neighbour of a parent atom belongs to one of its
  * suffix groups (an oxygen of the principal kind; for an acid, both oxygens
  * of each –COOH; for an ester, both oxygens of the –COO–; for an amide,
@@ -275,7 +327,10 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * 'acetophenone' for 1-feniletan-1-ona, 'benzylAlcohol' for fenilmetanol,
  * 'benzylamine' for fenilmetanamina; IUPAC 2013 accepts acetophenone,
  * benzyl alcohol and benzylamine in general nomenclature, not as
- * preferred names (from memory).
+ * preferred names (from memory). Likewise (design.md §13.4 I-40b)
+ * 'phenylaceticAcid' for ácido 2-feniletanoico and 'phenylacetaldehyde'
+ * for 2-feniletanal (acetic acid and acetaldehyde keep their retained
+ * names with a phenyl on the CH₃; status from memory, offered as accepted).
  * IUPAC 2013 retains formaldehyde and acetaldehyde (aldehydes,
  * P-66.6), acetone for general nomenclature (ketones, P-64), and formic,
  * acetic and oxalic acid as preferred names (acids, P-65.1.1.1), hence
@@ -283,7 +338,7 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * (design.md §13.1), never as the main name.
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
- * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|null} The id.
+ * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|'phenylaceticAcid'|'phenylacetaldehyde'|null} The id.
  */
 export function carbonylTraditionalId(structure) {
   const { parentKind, parent, prefixes, suffix } = structure;
@@ -291,8 +346,14 @@ export function carbonylTraditionalId(structure) {
     && prefixes[0].locants.length === 1 && prefixes[0].substituent.retained === 'phenyl' && !prefixes[0].substituent.alkoxy
     && parent.double.length + parent.triple.length === 0;
   if (phenylOnly) {
-    // C₆H₅–CO–CH₃, C₆H₅–CH₂OH, C₆H₅–CH₂NH₂ (design.md §13.4 I-40a).
-    const ids = { ketone: { 2: 'acetophenone' }, alcohol: { 1: 'benzylAlcohol' }, amine: { 1: 'benzylamine' } }[suffix.kind];
+    // C₆H₅–CO–CH₃, C₆H₅–CH₂OH, C₆H₅–CH₂NH₂ (design.md §13.4 I-40a); C₆H₅–CH₂–COOH, C₆H₅–CH₂–CHO (I-40b).
+    const ids = {
+      ketone: { 2: 'acetophenone' },
+      alcohol: { 1: 'benzylAlcohol' },
+      amine: { 1: 'benzylamine' },
+      acid: { 2: 'phenylaceticAcid' },
+      aldehyde: { 2: 'phenylacetaldehyde' },
+    }[suffix.kind];
     return (ids && ids[parent.length]) || null;
   }
   if (parentKind === 'chain' && suffix && suffix.kind === 'nitrile') {

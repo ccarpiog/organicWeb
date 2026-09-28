@@ -19,7 +19,7 @@ import { formula, createMolecule, addAtom, addBond } from '../../src/model/molec
 import { adjacency } from '../../src/model/graph.js';
 import {
   validateForNaming, isCarboxylCarbon, carboxylRole, carboxylCarbons, hasNameableHeteroatoms, MESSAGES,
-  RING_ACID_MESSAGE, MANY_ACIDS_MESSAGE, CARBOXY_SUBSTITUENT_MESSAGE,
+  MANY_ACIDS_MESSAGE, CARBOXY_SUBSTITUENT_MESSAGE,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import {
@@ -96,24 +96,24 @@ test('validation: a –COOH is admitted; esters, acyl halides, anhydrides and ot
   assert.equal(hasNameableHeteroatoms(acetic, [3, 4]), true);
 }); // End of test 'validation'
 
-test('refusals: more than two –COOH, an acid with a ring, the carboxi- safety net', () => {
+test('refusals: more than two –COOH on one piece, the carboxi- safety net; ring acids are named since I-40b', () => {
   const three = named('OC(=O)CC(CC(=O)O)C(=O)O');
   assert.equal(three.ok, false);
   assert.equal(three.error.code, 'HETEROATOM');
   assert.equal(three.error.reason, 'manyAcids');
   assert.equal(three.error.message, MANY_ACIDS_MESSAGE);
-  assert.match(three.error.message, /carboxi-/);
+  assert.match(three.error.message, /tricarboxílico/);
   assert.deepEqual(three.error.acids, carboxylCarbons(parseSmiles('OC(=O)CC(CC(=O)O)C(=O)O')));
   assert.equal(three.groups.principal, 'acid', 'the refusal still explains the groups');
   assert.equal(named('OC(=O)CC(O)(CC(=O)O)C(=O)O').error.reason, 'manyAcids', 'citric acid waits');
-  const ring = named('OC(=O)C1CCCCC1');
-  assert.equal(ring.error.reason, 'ringAcid');
-  assert.equal(ring.error.message, RING_ACID_MESSAGE);
-  assert.match(ring.error.message, /carboxílico/);
-  assert.equal(named('OC(=O)C1=CC=CC=C1').error.reason, 'ringAcid', 'benzoic acid waits for I-40');
-  assert.equal(named('OC(=O)CC1CCCCC1').error.reason, 'ringAcid', 'an acid on a ring side chain');
-  assert.equal(named('OC(=O)CCC1CCC(=O)CC1').error.reason, 'ringAcid', 'before the ring ketone check');
-  // Two –COOH are always both chain ends of the parent, so the safety net never fires on a validated molecule.
+  // Acids with a ring (design.md §13.4 I-40b): `-carboxílico`, `ácido benzoico`, the ring as a prefix.
+  assert.equal(named('OC(=O)C1CCCCC1').name, 'ácido ciclohexanocarboxílico');
+  assert.equal(named('OC(=O)C1=CC=CC=C1').name, 'ácido benzoico');
+  assert.equal(named('OC(=O)CC1CCCCC1').name, 'ácido 2-ciclohexiletanoico');
+  assert.equal(named('OC(=O)CCC1CCC(=O)CC1').name, 'ácido 3-(4-oxociclohexil)propanoico');
+  // A third –COOH on another carbon piece is `carboxi-` (I-40b), not a refusal.
+  assert.equal(named('OC(=O)COC(C(=O)O)C(=O)O').name, 'ácido 2-(carboximetoxi)propanodioico');
+  // Two –COOH on one piece are always both chain ends of the parent, so the safety net never fires on a validated molecule.
   assert.match(CARBOXY_SUBSTITUENT_MESSAGE, /carboxi-/);
   for (const smiles of ['OC(=O)CC(CC)(CC)CC(=O)O', 'OC(=O)C(CCCCC)C(=O)O', 'OC(=O)C(C(=O)O)(CCCCC)CCCCC']) {
     for (const prefixStyle of PREFIX_STYLES) {
@@ -313,9 +313,9 @@ test('explanation: the –COOH group, ácido …oico, the uncited locant, oxo- a
   const oxo = result.structure.prefixes[0].locants[0];
   assert.deepEqual(group.highlight[1], { atoms: [oxo.atom, oxo.attachAtom], bonds: [oxo.bond], style: 'substituent' });
   // The refusals get the group steps and their own message.
-  const refused = explain(named('OC(=O)C1CCCCC1'));
+  const refused = explain(named('OC(=O)CC(CC(=O)O)C(=O)O'));
   assert.deepEqual(refused.map((s) => s.id), ['groups', 'principal', 'affixes', 'notYet']);
-  assert.match(refused[3].text[0], /carboxílico/);
+  assert.match(refused[3].text[0], /tricarboxílico/);
 }); // End of test 'explanation'
 
 test('Ordenar dibujo lays out acids', () => {

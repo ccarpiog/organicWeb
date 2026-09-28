@@ -68,6 +68,8 @@ export const TRADITIONAL_NAMES = Object.freeze({
   acetophenone: 'acetophenone',
   benzylAlcohol: 'benzyl alcohol',
   benzylamine: 'benzylamine',
+  phenylaceticAcid: 'phenylacetic acid',
+  phenylacetaldehyde: 'phenylacetaldehyde',
 });
 
 /** Endings of the parent name. */
@@ -110,6 +112,7 @@ export const STYLE_LABELS = Object.freeze({
   locants: 'with the locant, IUPAC 2013 preferred name',
   functionalClass: 'functional class name, accepted by IUPAC 2013',
   amineClass: 'traditional alkylamine name',
+  benzeneSystematic: 'systematic name with the ring name (benzene)',
 });
 
 /** Class word of the functional-class name of an ether (`ethyl methyl ether`; see lexicon.es.js). */
@@ -271,6 +274,43 @@ export function traditionalLabel(id) {
 export const GROUP_SUFFIXES = Object.freeze({
   acid: 'oic acid', ester: 'oate', amide: 'amide', nitrile: 'nitrile', aldehyde: 'al', ketone: 'one', alcohol: 'ol', amine: 'amine',
 });
+
+/** Suffixes of a principal group whose carbon is outside a ring parent (see lexicon.es.js RING_GROUP_SUFFIXES): `cyclohexanecarboxylic acid`, `cyclohexanecarbaldehyde`. */
+export const RING_GROUP_SUFFIXES = Object.freeze({ acid: 'carboxylic acid', aldehyde: 'carbaldehyde' });
+
+/**
+ * Returns the suffix of a principal group whose carbon is outside a ring
+ * parent (RING_GROUP_SUFFIXES), or null for another kind.
+ *
+ * @param {string} kind - A group kind.
+ * @returns {string|null} The suffix, e.g. 'carboxylic acid'.
+ */
+export function ringGroupSuffix(kind) {
+  return Object.prototype.hasOwnProperty.call(RING_GROUP_SUFFIXES, kind) ? RING_GROUP_SUFFIXES[kind] : null;
+}
+
+/** Retained names of benzene with a –COOH or a –CHO (see lexicon.es.js BENZENE_GROUP_NAMES): `benzoic acid`, `benzaldehyde`. */
+export const BENZENE_GROUP_NAMES = Object.freeze({
+  acid: Object.freeze({ stem: 'benz', ending: 'oic acid' }),
+  aldehyde: Object.freeze({ stem: 'benz', ending: 'aldehyde' }),
+});
+
+/**
+ * Returns the retained name of benzene with a group of a kind
+ * (BENZENE_GROUP_NAMES), or null for another kind.
+ *
+ * @param {string} kind - A group kind.
+ * @returns {{stem: string, ending: string}|null} The stem and the ending.
+ */
+export function benzeneGroupName(kind) {
+  return Object.prototype.hasOwnProperty.call(BENZENE_GROUP_NAMES, kind) ? BENZENE_GROUP_NAMES[kind] : null;
+}
+
+/** Acyl prefix of C₆H₅–CO– (see lexicon.es.js BENZOYL_PREFIX). */
+export const BENZOYL_PREFIX = 'benzoyl';
+
+/** Ending of the acyl prefix of a ring acid: `cyclohexanecarbonyl` (see lexicon.es.js RING_CARBONYL_ENDING). */
+export const RING_CARBONYL_ENDING = 'carbonyl';
 
 /** Prefixes of the characteristic groups when not principal (see lexicon.es.js GROUP_PREFIXES). */
 export const GROUP_PREFIXES = Object.freeze({
@@ -458,4 +498,8 @@ export const lexiconEn = Object.freeze({
   formylPrefix: FORMYL_PREFIX,
   acetylPrefix: ACETYL_PREFIX,
   acylEnding: ACYL_ENDING,
+  ringGroupSuffix,
+  benzeneGroupName,
+  benzoylPrefix: BENZOYL_PREFIX,
+  ringCarbonylEnding: RING_CARBONYL_ENDING,
 });

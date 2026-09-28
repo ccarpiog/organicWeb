@@ -171,6 +171,16 @@ const SNAPSHOT_SMILES = [
   'OCCC1C=CCCC1', // 2-(ciclohex-2-en-1-il)etan-1-ol: an unsaturated ring prefix (I-40a)
   'OCCOC1=CC=CC=C1', // 2-fenoxietan-1-ol: the ring on the other side of an ether O (I-40a)
   'OCC1CCC(O)C(O)C1', // 4-(hidroximetil)ciclohexano-1,2-diol: the ring carries more OH than the branch, no tie (I-40a review)
+  'OC(=O)C1CCCCC1C', // ácido 2-metilciclohexano-1-carboxílico: the –COOH carbon outside the ring, -carboxílico (I-40b)
+  'O=CC1=CC=CC=C1', // benzaldehído: retained name, bencenocarbaldehído as another form (I-40b)
+  'OC(=O)C1CCCCC1C(=O)O', // ácido ciclohexano-1,2-dicarboxílico: two ring groups (I-40b)
+  'OC(=O)C1CCCCC1CC(=O)O', // ácido 2-(carboximetil)ciclohexano-1-carboxílico: ring and chain tie, carboxi- (I-40b)
+  'OC(=O)C(C(=O)O)C1CCC(C(=O)O)CC1', // ácido 2-(4-carboxiciclohexil)propanodioico: the ring –COOH counts for the ring, the chain wins (I-40b)
+  'OC(=O)CC1=CC=CC=C1', // ácido 2-feniletanoico: acid on a side chain, ácido fenilacético (I-40b)
+  'O=CC1CCCCC1CC=O', // 2-(2-oxoetil)ciclohexano-1-carbaldehído: a –CHO at the end of a branch is oxo, not a ketone (I-40b)
+  'OC(=O)C(CC)C(=O)C1=CC=CC=C1', // ácido 2-benzoilbutanoico: ring acyl prefix (I-40b)
+  'CC(=O)C(C(=O)C1CCCCC1C)C(C)=O', // 3-(2-metilciclohexano-1-carbonil)pentano-2,4-diona: -carbonil prefix (I-40b)
+  'OC(=O)CCCC(=O)C1=CC=CC=C1', // ácido 5-fenil-5-oxopentanoico: the C=O at the chain end next to the ring is a ketone (review I-40b)
 ];
 
 /**

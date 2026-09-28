@@ -99,6 +99,8 @@ export const TRADITIONAL_NAMES = Object.freeze({
   acetophenone: 'acetofenona',
   benzylAlcohol: 'alcohol bencílico',
   benzylamine: 'bencilamina',
+  phenylaceticAcid: 'ácido fenilacético',
+  phenylacetaldehyde: 'fenilacetaldehído',
 });
 
 /**
@@ -140,6 +142,11 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * fenilmetanamina: IUPAC 2013 accepts them in general nomenclature, not as
  * preferred names (status from memory), so they are labelled like
  * `acetona`; no other name built on `bencil` or `fenetil` is offered.
+ * `ácido fenilacético` and `fenilacetaldehído` (design.md §13.4 I-40b)
+ * replace the bare ácido 2-feniletanoico and 2-feniletanal: acetic acid and
+ * acetaldehyde keep their retained names with a phenyl group on the CH₃
+ * (status from memory; the app says only that they are accepted, as it
+ * names `ácido 2-cloroetanoico` without `cloroacético`).
  */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
@@ -160,6 +167,8 @@ export const TRADITIONAL_LABELS = Object.freeze({
   acetophenone: 'nombre tradicional, que la IUPAC (2013) acepta',
   benzylAlcohol: 'nombre tradicional, que la IUPAC (2013) acepta',
   benzylamine: 'nombre tradicional, que la IUPAC (2013) acepta',
+  phenylaceticAcid: 'nombre tradicional, que la IUPAC (2013) acepta',
+  phenylacetaldehyde: 'nombre tradicional, que la IUPAC (2013) acepta',
 });
 
 /** Endings of the parent name. */
@@ -536,6 +545,8 @@ export const STYLE_LABELS = Object.freeze({
   locants: 'con el localizador, como la escribe la IUPAC (2013) en el nombre preferido',
   functionalClass: 'nombre de clase funcional (los dos grupos y la palabra «éter»), que la IUPAC (2013) acepta',
   amineClass: 'nombre tradicional (los grupos unidos al nitrógeno y la palabra «amina»), muy usado en los libros',
+  benzeneSystematic: 'forma sistemática, con el nombre del anillo (benceno), que usan algunos libros; '
+    + 'la IUPAC (2013) prefiere el nombre tradicional',
 });
 
 /**
@@ -638,7 +649,7 @@ export function styleLabel(style) {
  * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene,
  * a small carbonyl compound or a small acid.
  *
- * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide', 'acetamide', 'acetonitrile', 'acetophenone', 'benzylAlcohol' or 'benzylamine'.
+ * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide', 'acetamide', 'acetonitrile', 'acetophenone', 'benzylAlcohol', 'benzylamine', 'phenylaceticAcid' or 'phenylacetaldehyde'.
  * @returns {string} The Spanish name.
  * @throws {Error} For an unknown id.
  */
@@ -669,6 +680,65 @@ export function traditionalLabel(id) {
 export const GROUP_SUFFIXES = Object.freeze({
   acid: 'oico', ester: 'oato', amide: 'amida', nitrile: 'nitrilo', aldehyde: 'al', ketone: 'ona', alcohol: 'ol', amine: 'amina',
 });
+
+/**
+ * Suffixes of a principal group whose carbon is outside a ring parent
+ * (design.md §13.4 I-40b; IUPAC 2013 P-65.1.2, P-66.6.1.1): the ring name
+ * keeps its final vowel and the suffix names the carbon too —
+ * `ácido ciclohexanocarboxílico`, `ciclohexano-1,2-dicarboxílico`,
+ * `ciclohexanocarbaldehído`, `ciclohex-2-eno-1-carbaldehído`.
+ */
+export const RING_GROUP_SUFFIXES = Object.freeze({ acid: 'carboxílico', aldehyde: 'carbaldehído' });
+
+/**
+ * Returns the suffix of a principal group whose carbon is outside a ring
+ * parent (RING_GROUP_SUFFIXES), or null for another kind.
+ *
+ * @param {string} kind - A group kind.
+ * @returns {string|null} The suffix, e.g. 'carboxílico'.
+ */
+export function ringGroupSuffix(kind) {
+  return Object.prototype.hasOwnProperty.call(RING_GROUP_SUFFIXES, kind) ? RING_GROUP_SUFFIXES[kind] : null;
+}
+
+/**
+ * Retained names of benzene with a –COOH or a –CHO (design.md §13.4
+ * I-40b; IUPAC 2013 P-65.1.1.1 benzoic acid, P-66.6.1.1.1 benzaldehyde,
+ * both preferred names, from memory), as a stem that refers to the ring
+ * and an ending that refers to the group: `benz` + `oico` (after the class
+ * word `ácido`: `ácido benzoico`), `benz` + `aldehído`. The systematic
+ * `ácido bencenocarboxílico` / `bencenocarbaldehído` are offered as
+ * alternatives (naming/index.js).
+ */
+export const BENZENE_GROUP_NAMES = Object.freeze({
+  acid: Object.freeze({ stem: 'benz', ending: 'oico' }),
+  aldehyde: Object.freeze({ stem: 'benz', ending: 'aldehído' }),
+});
+
+/**
+ * Returns the retained name of benzene with a group of a kind
+ * (BENZENE_GROUP_NAMES), or null for another kind.
+ *
+ * @param {string} kind - A group kind.
+ * @returns {{stem: string, ending: string}|null} The stem and the ending.
+ */
+export function benzeneGroupName(kind) {
+  return Object.prototype.hasOwnProperty.call(BENZENE_GROUP_NAMES, kind) ? BENZENE_GROUP_NAMES[kind] : null;
+}
+
+/**
+ * Acyl prefix of C₆H₅–CO– (design.md §13.4 I-40b): the retained `benzoil`
+ * (IUPAC 2013 P-65.1.7.2.1, from memory), from `ácido benzoico`.
+ */
+export const BENZOYL_PREFIX = 'benzoil';
+
+/**
+ * Ending of the acyl prefix of an acid named with `-carboxílico` (design.md
+ * §13.4 I-40b; IUPAC 2013 P-65.1.7.3, from memory): the ring name, then
+ * `carbonil` — `ciclohexanocarbonil`, `(2-metilciclohexano-1-carbonil)`,
+ * `(ciclohex-2-eno-1-carbonil)`.
+ */
+export const RING_CARBONYL_ENDING = 'carbonil';
 
 /**
  * Prefixes of the characteristic groups when they are not the principal
@@ -855,4 +925,8 @@ export const lexiconEs = Object.freeze({
   formylPrefix: FORMYL_PREFIX,
   acetylPrefix: ACETYL_PREFIX,
   acylEnding: ACYL_ENDING,
+  ringGroupSuffix,
+  benzeneGroupName,
+  benzoylPrefix: BENZOYL_PREFIX,
+  ringCarbonylEnding: RING_CARBONYL_ENDING,
 });

@@ -34,10 +34,15 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `2-metilciclohexan-1-ol`, `fenol`…), and of aldehydes and ketones (C=O as
   the suffix `-al` / `-ona`, or the prefix `oxo-`: `metanal`, `etanal`,
   `butanodial`, `propanona`, `butan-2-ona`, `pentano-2,4-diona`,
-  `4-oxopentanal`, `4-hidroxibutan-2-ona`, `ciclohexanona`…), and of
+  `4-oxopentanal`, `4-hidroxibutan-2-ona`, `ciclohexanona`…; on a ring
+  `-carbaldehído`: `ciclohexanocarbaldehído`, `benzaldehído`), and of
   carboxylic acids (–COOH as `ácido …oico`: `ácido etanoico`,
   `ácido 2-metilpropanoico`, `ácido but-2-enoico`, `ácido butanodioico`,
-  `ácido 4-oxopentanoico`, `ácido 2-hidroxipropanoico`…), and of ethers
+  `ácido 4-oxopentanoico`, `ácido 2-hidroxipropanoico`…; on a ring
+  `-carboxílico`: `ácido ciclohexanocarboxílico`, `ácido
+  2-metilciclohexano-1-carboxílico`, `ácido ciclohexano-1,2-dicarboxílico`,
+  `ácido benzoico`; a –COOH off the suffix as `carboxi-`: `ácido
+  2-(carboximetil)ciclohexano-1-carboxílico`), and of ethers
   (the O and the other side as an `alcoxi-` prefix, the chain never
   running through the O: `metoxietano`, `etoxietano`, `1-isopropoxibutano`,
   `2-metoxietan-1-ol`, `ácido 2-metoxietanoico`, `metoxiciclohexano`,
@@ -67,10 +72,13 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `metanonitrilo`, `etanonitrilo`, `2-metilpropanonitrilo`,
   `butanodinitrilo`, `prop-2-enonitrilo`, `4-oxopentanonitrilo`,
   `2-aminopropanonitrilo`…), and, when the principal group (an OH, a
-  ketone or an amine) is on a chain rather than on the ring, of the chain
-  with the ring as a prefix (`2-ciclohexiletan-1-ol`, `fenilmetanol`,
-  `1-feniletan-1-ona`, `fenilmetanamina`, `2-fenoxietan-1-ol`,
-  `2-(ciclohexilamino)etan-1-ol`…), with the name coloured by part
+  ketone, an amine, an acid or an aldehyde) is on a chain rather than on
+  the ring, of the chain with the ring as a prefix (`2-ciclohexiletan-1-ol`,
+  `fenilmetanol`, `1-feniletan-1-ona`, `fenilmetanamina`,
+  `2-fenoxietan-1-ol`, `2-(ciclohexilamino)etan-1-ol`, `ácido
+  2-feniletanoico`, `3-fenilpropanal`…) or, when a C=O bonded to the ring is
+  off the chain, a ring acyl prefix (`ácido 2-benzoilbutanoico`,
+  `3-(ciclohexanocarbonil)pentano-2,4-diona`), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles;
@@ -88,7 +96,10 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `acetamida`, also with groups on the N (`N,N-dimetilformamida`), and
   `etanonitrilo` lists `acetonitrilo`; `1-feniletan-1-ona`,
   `fenilmetanol` and `fenilmetanamina` list `acetofenona`, `alcohol
-  bencílico` and `bencilamina`.
+  bencílico` and `bencilamina`; `ácido benzoico` and `benzaldehído` list
+  the systematic `ácido bencenocarboxílico` and `bencenocarbaldehído`, and
+  `ácido 2-feniletanoico` and `2-feniletanal` list `ácido fenilacético`
+  and `fenilacetaldehído`.
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
   alphabetical order, assembly) that highlights each step on the drawing;
@@ -240,11 +251,10 @@ the Keychain account is the WebDAV user).
 
 - Hydrocarbons, their halogen derivatives, alcohols, aldehydes, ketones,
   carboxylic acids, ethers, esters, amines, amides and nitriles only, with at most one ring (a carbocycle; an
-  OH or a ketone C=O must then be on a ring carbon, a principal amine's N
-  bonded to a ring carbon, and aldehydes, acids,
-  esters, amides and nitriles with a ring are refused); more than two
+  ester, an amide or a nitrile with a ring is refused); more than two
   aldehyde groups on a chain when the aldehyde is the principal group
-  (`-carbaldehído`), more than two –COOH groups on a chain, a –CO–C≡N
+  (`-carbaldehído`), more than two –COOH groups on a chain
+  (`-tricarboxílico`), a –CO–C≡N
   branch (`carbonocianidoil-`), more than two ester groups without an acid,
   two esters on different carbon pieces (a diol diester such as
   `diacetato de etano-1,2-diilo`, or an ester inside the O-bound group of

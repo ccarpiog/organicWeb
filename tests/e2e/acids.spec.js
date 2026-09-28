@@ -191,12 +191,14 @@ test('loaded acids: ácido …oico, -dioico, oxo-, hidroxi-, ácido fórmico; ou
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
   await expect(error).toContainText('más de dos grupos –COOH');
+  await expect(error).toContainText('-carboxílico');
   await expect(page.locator('#result-name')).toHaveCount(0);
 
+  // An acid on a ring is named since I-40b (tests/e2e/ring-acids.spec.js).
   await loadSmiles(page, 'OC(=O)C1CCCCC1');
   await askName(page);
-  await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('-carboxílico');
+  await expect(page.locator('#result-name')).toHaveText('ácido ciclohexanocarboxílico');
+  await expect(error).toHaveCount(0);
 
   // An acid with an ester: the ester is a prefix, named since I-39c (tests/e2e/ester-prefixes.spec.js).
   await loadSmiles(page, 'CC(=O)OCC(=O)O');

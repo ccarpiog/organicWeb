@@ -30,7 +30,9 @@
  * rings as prefixes of a chain carrying the principal group (I-40a: an OH,
  * a ketone or an amine on a ring's side chain, `ciclohexil`, `fenil`,
  * `fenoxi`, `(ciclohexilamino)`, and ring and chain tied;
- * generateRingSubstituents()),
+ * generateRingSubstituents()), of ring acids, aldehydes and ring acyl
+ * prefixes (I-40b: `-carboxílico`, `-carbaldehído`, `ácido benzoico`,
+ * `carboxi-`, `benzoil`, `(ciclohexanocarbonil)`; generateRingAcids()),
  * plus the list of cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
@@ -1707,7 +1709,7 @@ export function generateRingSubstituents({ count, seed, maxSize = 14 }) {
       mol = halogenate(mol, random, 0.05 + random() * 0.15);
     }
     if (validateForNaming(mol)) {
-      continue; // Not valid for naming (an aldehyde with a ring, a polysubstituted benzene…).
+      continue; // Not valid for naming (a polysubstituted benzene, an ester or a nitrile with a ring…).
     }
     const results = PREFIX_STYLES.map((prefixStyle) => nameMolecule(mol, { prefixStyle }));
     if (!results.every((result) => result.ok) || !results[0].trace.some((step) => step.rule === 'RINGCHAIN')) {
@@ -1721,6 +1723,162 @@ export function generateRingSubstituents({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct ring-prefix molecules
   return molecules;
 } // End of function generateRingSubstituents()
+
+/**
+ * Copies a molecule and bonds new –COOH or –CHO groups directly to some of
+ * its ring carbons (design.md §13.4 I-40b: `-carboxílico`,
+ * `-carbaldehído`): up to `max` ring carbons with a hydrogen, in random
+ * order, each get a new carbon X with a double-bonded O (and an OH for an
+ * acid).
+ *
+ * @param {object} mol - A molecule (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {'acid'|'aldehyde'} kind - Which group.
+ * @param {number} max - The most groups to add.
+ * @param {Set<number>} ring - The ring carbons that may carry a group.
+ * @returns {object} The copy (possibly without any new group).
+ */
+export function ringGroupGraft(mol, random, kind, max, ring) {
+  const copy = cloneMolecule(mol);
+  const sites = shuffle([...ring].filter((id) => CARBON_VALENCE - bondOrderSum(copy, id) >= 1), random).slice(0, max);
+  for (const id of sites) {
+    const carbon = addAtom(copy, {}, 'C');
+    addBond(copy, id, carbon, 1);
+    addBond(copy, carbon, addAtom(copy, {}, 'O'), 2);
+    if (kind === 'acid') {
+      addBond(copy, carbon, addAtom(copy, {}, 'O'), 1);
+    }
+  }
+  return copy;
+} // End of function ringGroupGraft()
+
+/**
+ * Copies a molecule and bonds to one of its carbons (in `only`, with a
+ * hydrogen) a C=O carbon X whose other side is a new ring (design.md §13.4
+ * I-40b): a cycloalkane of 3 to 7 carbons, sometimes with a double bond,
+ * or a benzene ring; so X is a ketone carbon between the chain and the
+ * ring, cited `oxo` in the chain, or, off the chain, `benzoil` /
+ * `(ciclohexanocarbonil)`.
+ *
+ * @param {object} mol - An acyclic molecule (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {Set<number>} only - The carbons that may carry X.
+ * @returns {object} The copy (unchanged when no carbon has room).
+ */
+export function ringAcylGraft(mol, random, only) {
+  const copy = cloneMolecule(mol);
+  const sites = [...only].filter((id) => copy.atoms.get(id).element === 'C' && CARBON_VALENCE - bondOrderSum(copy, id) >= 1);
+  if (sites.length === 0) {
+    return copy;
+  }
+  const carbon = addAtom(copy, {}, 'C');
+  addBond(copy, sites[Math.floor(random() * sites.length)], carbon, 1);
+  addBond(copy, carbon, addAtom(copy, {}, 'O'), 2);
+  const benzene = random() < 0.4;
+  const size = benzene ? 6 : randomInt(random, 3, 7);
+  const ring = Array.from({ length: size }, () => addAtom(copy));
+  ring.forEach((id, i) => {
+    let order = 1;
+    if (benzene) {
+      order = i % 2 === 0 ? 2 : 1;
+    } else if (i === 1 && size > 4 && random() < 0.3) {
+      order = 2;
+    }
+    addBond(copy, id, ring[(i + 1) % size], order);
+  });
+  addBond(copy, carbon, ring[0], 1);
+  return copy;
+} // End of function ringAcylGraft()
+
+/**
+ * Generates up to `count` distinct (by canonical key) molecules with a ring
+ * and an acid or aldehyde, or a ring acyl prefix (design.md §13.4 I-40b):
+ * a random monocycle (3–10 ring carbons) or benzene with one or two –COOH
+ * or –CHO bonded to ring carbons (ringGroupGraft(): `ácido
+ * ciclohexanocarboxílico`, `ciclohexano-1,2-dicarboxílico`, `ácido
+ * benzoico`, `benzaldehído`; on benzene only without a side chain), or at
+ * side-chain ends (`ácido 2-ciclohexiletanoico`, `3-fenilpropanal`), or
+ * both (`ácido 2-(carboximetil)ciclohexano-1-carboxílico`, the ring prefix
+ * `(4-carboxiciclohexil)`, `(4-formilciclohexil)`); or a random acyclic
+ * acid or ketone with a C=O carbon bonded to a new ring (ringAcylGraft():
+ * `benzoil`, `(ciclohexanocarbonil)`). A share also carry OH groups, ring
+ * C=O, amines and halogens. Only molecules the engine names in every
+ * prefix style with an acid or aldehyde principal, or a ring acyl prefix,
+ * are kept.
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateRingAcids({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 9173 + 53);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60) {
+    attempts += 1;
+    const kind = ['ring', 'ring', 'side', 'both', 'acyl'][Math.floor(random() * 5)];
+    const group = random() < 0.6 ? 'acid' : 'aldehyde';
+    let mol;
+    if (kind === 'acyl') {
+      const size = randomInt(random, 1, Math.max(1, maxSize - 8));
+      const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.3, branchiness: 0.3 + random() * 0.7 });
+      const principal = random() < 0.7 ? carboxylate(base, random, random() < 0.3 ? 2 : 1) : carbonylate(base, random, 0.3);
+      mol = ringAcylGraft(principal, random, new Set(base.atoms.keys()));
+    } else {
+      const benzene = random() < 0.35 && maxSize >= 7;
+      const plain = benzene && kind === 'ring';
+      let base;
+      let ringSize = 6;
+      if (benzene) {
+        const extra = plain ? 0 : randomInt(random, 1, Math.max(1, Math.min(5, maxSize - 7)));
+        base = randomBenzene(random, { extra, kekule: random() < 0.5 ? 1 : 2, unsaturation: random() * 0.3 });
+      } else {
+        const size = randomInt(random, 3, Math.max(3, maxSize - 2));
+        ringSize = randomInt(random, 3, Math.min(10, size));
+        base = randomMonocycle(random, {
+          ringSize, extra: size - ringSize, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8,
+        });
+      } // End of the choice of the ring molecule
+      const ids = [...base.atoms.keys()];
+      const ring = new Set(ids.slice(0, ringSize)); // randomMonocycle() and randomBenzene() add the ring atoms first.
+      const side = new Set(ids.filter((id) => !ring.has(id)));
+      mol = base;
+      if (kind === 'ring' || kind === 'both') {
+        mol = ringGroupGraft(mol, random, group, benzene ? 1 : (random() < 0.7 ? 1 : 2), ring);
+      }
+      if (kind === 'side' || kind === 'both') {
+        mol = group === 'acid'
+          ? carboxylate(mol, random, random() < 0.3 ? 2 : 1)
+          : carbonylate(mol, random, 0.2 + random() * 0.3, side);
+      }
+      if (!benzene && random() < 0.2) {
+        mol = random() < 0.5 ? hydroxylate(mol, random, 0.05 + random() * 0.15, ring) : carbonylate(mol, random, 0.1, ring);
+      }
+      if (random() < 0.1) {
+        mol = aminate(mol, random, { rate: 0.1, only: benzene ? side : null });
+      }
+    } // End of the choice of the kind of molecule
+    if (random() < 0.15) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.15);
+    }
+    if (validateForNaming(mol) || perceiveRings(mol).rings.length !== 1) {
+      continue; // Not valid for naming (a polysubstituted benzene, three –COOH on one chain…), or no ring drawn.
+    }
+    const results = PREFIX_STYLES.map((prefixStyle) => nameMolecule(mol, { prefixStyle }));
+    const [first] = results;
+    const wanted = first.ok && (['acid', 'aldehyde'].includes(first.structure.suffix && first.structure.suffix.kind)
+      || /benzoil|carbonil/.test(first.name));
+    if (!results.every((result) => result.ok) || !wanted) {
+      continue; // Refused by the engine in some style, or neither an acid, an aldehyde nor a ring acyl prefix.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct ring-acid molecules
+  return molecules;
+} // End of function generateRingAcids()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4
