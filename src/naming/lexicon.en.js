@@ -70,6 +70,8 @@ export const TRADITIONAL_NAMES = Object.freeze({
   benzylamine: 'benzylamine',
   phenylaceticAcid: 'phenylacetic acid',
   phenylacetaldehyde: 'phenylacetaldehyde',
+  phenylacetamide: '2-phenylacetamide',
+  phenylacetonitrile: 'phenylacetonitrile',
 });
 
 /** Endings of the parent name. */
@@ -275,8 +277,10 @@ export const GROUP_SUFFIXES = Object.freeze({
   acid: 'oic acid', ester: 'oate', amide: 'amide', nitrile: 'nitrile', aldehyde: 'al', ketone: 'one', alcohol: 'ol', amine: 'amine',
 });
 
-/** Suffixes of a principal group whose carbon is outside a ring parent (see lexicon.es.js RING_GROUP_SUFFIXES): `cyclohexanecarboxylic acid`, `cyclohexanecarbaldehyde`. */
-export const RING_GROUP_SUFFIXES = Object.freeze({ acid: 'carboxylic acid', aldehyde: 'carbaldehyde' });
+/** Suffixes of a principal group whose carbon is outside a ring parent (see lexicon.es.js RING_GROUP_SUFFIXES): `cyclohexanecarboxylic acid`, `cyclohexanecarbaldehyde`, `cyclohexanecarboxamide`, `cyclohexanecarbonitrile`. */
+export const RING_GROUP_SUFFIXES = Object.freeze({
+  acid: 'carboxylic acid', aldehyde: 'carbaldehyde', amide: 'carboxamide', nitrile: 'carbonitrile',
+});
 
 /**
  * Returns the suffix of a principal group whose carbon is outside a ring
@@ -289,10 +293,12 @@ export function ringGroupSuffix(kind) {
   return Object.prototype.hasOwnProperty.call(RING_GROUP_SUFFIXES, kind) ? RING_GROUP_SUFFIXES[kind] : null;
 }
 
-/** Retained names of benzene with a –COOH or a –CHO (see lexicon.es.js BENZENE_GROUP_NAMES): `benzoic acid`, `benzaldehyde`. */
+/** Retained names of benzene with a –COOH, a –CHO, an amide or a nitrile (see lexicon.es.js BENZENE_GROUP_NAMES): `benzoic acid`, `benzaldehyde`, `benzamide`, `benzonitrile`. */
 export const BENZENE_GROUP_NAMES = Object.freeze({
   acid: Object.freeze({ stem: 'benz', ending: 'oic acid' }),
   aldehyde: Object.freeze({ stem: 'benz', ending: 'aldehyde' }),
+  amide: Object.freeze({ stem: 'benz', ending: 'amide' }),
+  nitrile: Object.freeze({ stem: 'benz', ending: 'onitrile' }),
 });
 
 /**

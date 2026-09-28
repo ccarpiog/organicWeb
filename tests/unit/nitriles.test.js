@@ -8,7 +8,7 @@
  * final «o» (`etanonitrilo`, `prop-2-enonitrilo`, `butanodinitrilo`); other
  * groups are prefixes (`4-oxopentanonitrilo`, `3-hidroxibutanonitrilo`,
  * `2-aminopropanonitrilo`, `3-cloropropanonitrilo`); `acetonitrilo` under
- * "Otras formas válidas"; the refusals (`ringNitrile`, `manyNitriles`,
+ * "Otras formas válidas"; the refusals (`manyNitriles`,
  * `carbonocyanidic`; `ciano-` is tested in cyano.test.js); both lexicons; the explanation;
  * id invariance and Ordenar dibujo; the oracle generator. The names
  * themselves are also checked row by row in tests/fixtures/names.tsv.
@@ -20,7 +20,7 @@ import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
 import { adjacency, canonicalKey } from '../../src/model/graph.js';
 import {
   validateForNaming, isNitrileCarbon, isNitrileNitrogen, nitrileCarbons, isAmineNitrogen, hasNameableHeteroatoms, MESSAGES,
-  RING_NITRILE_MESSAGE, MANY_NITRILES_MESSAGE, CYANO_PREFIX_MESSAGE, CARBONOCYANIDIC_MESSAGE,
+  MANY_NITRILES_MESSAGE, CYANO_PREFIX_MESSAGE, CARBONOCYANIDIC_MESSAGE,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { selectParent } from '../../src/naming/parent.js';
@@ -189,12 +189,8 @@ test('simple and branched nitriles, dinitriles and unsaturated nitriles: the nit
   assert.equal(nameOf('N#CCC(CCCCC)CC#N'), '3-pentilpentanodinitrilo');
 });
 
-test('refusals: rings, three or more nitriles on one piece, a nitrile on an acid, ester or amide carbon', () => {
+test('refusals: three or more nitriles on one piece, a nitrile on an acid, ester or amide carbon (rings named since I-40c)', () => {
   const refusals = [
-    ['N#CC1CCCCC1', 'ringNitrile', RING_NITRILE_MESSAGE],
-    ['N#CC1=CC=CC=C1', 'ringNitrile', RING_NITRILE_MESSAGE],
-    ['N#CCC1CC1', 'ringNitrile', RING_NITRILE_MESSAGE],
-    ['OC1CCC(CC#N)CC1', 'ringNitrile', RING_NITRILE_MESSAGE],
     ['N#CCC(C#N)CC#N', 'manyNitriles', MANY_NITRILES_MESSAGE],
     ['N#CC(C#N)(C#N)C#N', 'manyNitriles', MANY_NITRILES_MESSAGE],
     ['N#CC(=O)O', 'carbonocyanidic', CARBONOCYANIDIC_MESSAGE],
@@ -215,19 +211,22 @@ test('refusals: rings, three or more nitriles on one piece, a nitrile on an acid
   assert.equal(nameOf('N#CCOCC#N'), 'HETEROATOM symmetricEther');
   assert.equal(nameOf('N#CCNCC#N'), 'HETEROATOM symmetricAmine');
   // Every message is Spanish, names the group and says why.
-  for (const message of [RING_NITRILE_MESSAGE, MANY_NITRILES_MESSAGE, CARBONOCYANIDIC_MESSAGE]) {
+  for (const message of [MANY_NITRILES_MESSAGE, CARBONOCYANIDIC_MESSAGE]) {
     assert.match(message, /–C≡N/);
     assert.match(message, /sé (nombrar|hacerlo)/);
   }
-  assert.match(RING_NITRILE_MESSAGE, /ciclohexanocarbonitrilo/);
-  assert.match(RING_NITRILE_MESSAGE, /benzonitrilo/);
+  // Nitriles with a ring are named since I-40c (tests/unit/ring-nitriles-amides.test.js).
+  assert.equal(nameOf('N#CC1CCCCC1'), 'ciclohexanocarbonitrilo');
+  assert.equal(nameOf('N#CC1=CC=CC=C1'), 'benzonitrilo');
+  assert.equal(nameOf('N#CCC1CC1'), '2-ciclopropiletanonitrilo');
+  assert.equal(nameOf('OC1CCC(CC#N)CC1'), '2-(4-hidroxiciclohexil)etanonitrilo');
   assert.match(MANY_NITRILES_MESSAGE, /tricarbonitrilo/);
   assert.match(CARBONOCYANIDIC_MESSAGE, /carbonocianídico/);
   assert.match(CYANO_PREFIX_MESSAGE, /«ciano-»/);
 });
 
 test('refusals are explained in the stepper like the others', () => {
-  for (const smiles of ['N#CC1CCCCC1', 'N#CCC(C#N)CC#N', 'N#CC(=O)O']) {
+  for (const smiles of ['N#CCC(C#N)CC#N', 'N#CC(=O)O']) {
     const result = named(smiles);
     const steps = explain(result);
     assert.deepEqual(steps.map((s) => s.id), ['groups', 'principal', 'affixes', 'notYet'], smiles);

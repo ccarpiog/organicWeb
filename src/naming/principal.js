@@ -199,16 +199,27 @@ export function outsideCarbons(mol, adj, principal) {
 }
 
 /**
+ * Kinds of principal group whose carbon X, bonded to a ring atom, a ring
+ * parent cites with a suffix that includes X (design.md §13.4 I-40b,
+ * I-40c): `-carboxílico`, `-carbaldehído`, `-carboxamida`, `-carbonitrilo`.
+ */
+export const RING_GROUP_KINDS = Object.freeze(['acid', 'aldehyde', 'amide', 'nitrile']);
+
+/**
  * Tells whether a carbon is the carbon X of a principal group that a ring
  * parent cites with a suffix whose carbon is outside the ring (design.md
- * §13.4 I-40b, §13.6 "Where X belongs"; IUPAC 2013 P-65.1.2, P-66.6.1.1):
- * the carbon of a –COOH (`-carboxílico`, `ácido ciclohexanocarboxílico`)
- * or of a –CHO (`-carbaldehído`, `ciclohexanocarbaldehído`) bonded directly
- * to a ring atom, when that kind is the principal one. X is then never a
+ * §13.4 I-40b, I-40c, §13.6 "Where X belongs"; IUPAC 2013 P-65.1.2,
+ * P-66.6.1.1, P-66.1.1.4, P-66.5.1.1): the carbon of a –COOH
+ * (`-carboxílico`, `ácido ciclohexanocarboxílico`), of a –CHO
+ * (`-carbaldehído`, `ciclohexanocarbaldehído`), of an amide –CONH₂, –CONH–,
+ * –CON– (`-carboxamida`, `ciclohexanocarboxamida`, I-40c) or of a –C≡N
+ * (`-carbonitrilo`, `ciclohexanocarbonitrilo`, I-40c) bonded directly to a
+ * ring atom, when that kind is the principal one. X is then never a
  * chain carbon: with at most one carbon neighbour, the ring atom, it would
  * be a one-carbon chain, and the ring carries its group instead
- * (parent.js ringOrChain() counts it for the ring). An aldehyde or acid
- * carbon anywhere else is an ordinary skeleton carbon.
+ * (parent.js ringOrChain() counts it for the ring). Such a carbon anywhere
+ * else is an ordinary skeleton carbon (a nitrile carbon below a senior
+ * group is outside every chain anyway, outsideCarbons()).
  *
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, object[]>} adj - Its adjacency map.
@@ -218,12 +229,18 @@ export function outsideCarbons(mol, adj, principal) {
  * @returns {boolean} True for such a carbon.
  */
 export function isRingGroupCarbon(mol, adj, carbon, principal, ringAtoms) {
-  if ((principal !== 'acid' && principal !== 'aldehyde') || ringAtoms.has(carbon) || mol.atoms.get(carbon).element !== 'C'
+  if (!RING_GROUP_KINDS.includes(principal) || ringAtoms.has(carbon) || mol.atoms.get(carbon).element !== 'C'
     || !adj.get(carbon).some((n) => ringAtoms.has(n.atom))) {
     return false;
   }
   if (principal === 'acid') {
     return isCarboxylCarbon(mol, adj, carbon);
+  }
+  if (principal === 'amide') {
+    return isAmideCarbon(mol, adj, carbon); // `-carboxamida`, `benzamida` (I-40c).
+  }
+  if (principal === 'nitrile') {
+    return isNitrileCarbon(mol, adj, carbon); // `-carbonitrilo`, `benzonitrilo` (I-40c).
   }
   return adj.get(carbon).some((n) => carbonylKind(mol, adj, n.atom) === 'aldehyde');
 } // End of function isRingGroupCarbon()
@@ -231,7 +248,8 @@ export function isRingGroupCarbon(mol, adj, carbon, principal, ringAtoms) {
 /**
  * The carbons of a molecule that a ring parent cites with a suffix whose
  * carbon is outside the ring (isRingGroupCarbon(): `-carboxílico`,
- * `-carbaldehído`, design.md §13.4 I-40b), ascending.
+ * `-carbaldehído`, design.md §13.4 I-40b; `-carboxamida`, `-carbonitrilo`,
+ * I-40c), ascending.
  *
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, object[]>} adj - Its adjacency map.
@@ -330,7 +348,11 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * preferred names (from memory). Likewise (design.md §13.4 I-40b)
  * 'phenylaceticAcid' for ácido 2-feniletanoico and 'phenylacetaldehyde'
  * for 2-feniletanal (acetic acid and acetaldehyde keep their retained
- * names with a phenyl on the CH₃; status from memory, offered as accepted).
+ * names with a phenyl on the CH₃; status from memory, offered as accepted),
+ * and (I-40c) 'phenylacetamide' for 2-feniletanamida (`2-fenilacetamida`)
+ * and 'phenylacetonitrile' for 2-feniletanonitrilo (`fenilacetonitrilo`);
+ * a phenyl on an amide N is not one of these: `N-feniletanamida` gives
+ * 'acetamide' (`N-fenilacetamida`).
  * IUPAC 2013 retains formaldehyde and acetaldehyde (aldehydes,
  * P-66.6), acetone for general nomenclature (ketones, P-64), and formic,
  * acetic and oxalic acid as preferred names (acids, P-65.1.1.1), hence
@@ -338,21 +360,25 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * (design.md §13.1), never as the main name.
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
- * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|'phenylaceticAcid'|'phenylacetaldehyde'|null} The id.
+ * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|'phenylaceticAcid'|'phenylacetaldehyde'|'phenylacetamide'|'phenylacetonitrile'|null} The id.
  */
 export function carbonylTraditionalId(structure) {
   const { parentKind, parent, prefixes, suffix } = structure;
   const phenylOnly = parentKind === 'chain' && suffix && suffix.locants.length === 1 && prefixes.length === 1
-    && prefixes[0].locants.length === 1 && prefixes[0].substituent.retained === 'phenyl' && !prefixes[0].substituent.alkoxy
+    && prefixes[0].locants.length === 1 && prefixes[0].locants[0].locant !== N_LOCANT
+    && prefixes[0].substituent.retained === 'phenyl' && !prefixes[0].substituent.alkoxy
     && parent.double.length + parent.triple.length === 0;
   if (phenylOnly) {
-    // C₆H₅–CO–CH₃, C₆H₅–CH₂OH, C₆H₅–CH₂NH₂ (design.md §13.4 I-40a); C₆H₅–CH₂–COOH, C₆H₅–CH₂–CHO (I-40b).
+    // C₆H₅–CO–CH₃, C₆H₅–CH₂OH, C₆H₅–CH₂NH₂ (design.md §13.4 I-40a); C₆H₅–CH₂–COOH, C₆H₅–CH₂–CHO (I-40b);
+    // C₆H₅–CH₂–CONH₂, C₆H₅–CH₂–C≡N (I-40c). A phenyl on an amide N is `N-fenilacetamida` (below).
     const ids = {
       ketone: { 2: 'acetophenone' },
       alcohol: { 1: 'benzylAlcohol' },
       amine: { 1: 'benzylamine' },
       acid: { 2: 'phenylaceticAcid' },
       aldehyde: { 2: 'phenylacetaldehyde' },
+      amide: { 2: 'phenylacetamide' },
+      nitrile: { 2: 'phenylacetonitrile' },
     }[suffix.kind];
     return (ids && ids[parent.length]) || null;
   }

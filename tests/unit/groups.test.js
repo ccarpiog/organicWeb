@@ -310,9 +310,9 @@ test('a prefix ester or amide takes the prefix of the end that faces the princip
   assert.match(affixes('CC(=O)OC1CCC(C(=O)O)CC1'), /El éster: prefijo «aciloxi-».*por su oxígeno/);
   assert.doesNotMatch(affixes('CC(=O)OC1CCC(C(=O)O)CC1'), /alcoxicarbonil/);
   assert.match(affixes('CCOC(=O)C1CCC(C(=O)O)CC1'), /El éster: prefijo «alcoxicarbonil-».*por su carbono/);
-  // Open-chain amide prefixes are named since I-39d; with a ring they stay refused (ringAmide, I-40c).
-  assert.match(affixes('CC(=O)NC1CCC(C(=O)O)CC1'), /La amida: prefijo «acilamino-».*por su nitrógeno/);
-  assert.match(affixes('NC(=O)C1CCC(C(=O)O)CC1'), /La amida: prefijo «carbamoil-», porque se une al grupo principal por su carbono/);
+  // Amide prefixes are named since I-39d (on a ring since I-40c); beside a ring ester they stay refused (ringEster, I-40d).
+  assert.match(affixes('CC(=O)NC1CCC(C(=O)OC)CC1'), /La amida: prefijo «acilamino-».*por su nitrógeno/);
+  assert.match(affixes('NC(=O)C1CCC(C(=O)OC)CC1'), /La amida: prefijo «carbamoil-», porque se une al grupo principal por su carbono/);
   // Principal groups on both sides of the ester (a ring ester keeps it refused, ringEster, I-40d).
   assert.match(affixes('OC(=O)CC(=O)OC1CCC(C(=O)O)CC1'), /«alcoxicarbonil-» si se une al resto por su carbono, o «aciloxi-» si se une por el oxígeno/);
 });
@@ -344,9 +344,10 @@ test('lexicons: suffix and prefix forms of every group kind', () => {
 
 test('a heteroatom molecule is still refused with HETEROATOM, carrying its groups', () => {
   // Amines are named since I-36, nitriles since I-38 (ciano- since I-39a), ring side-chain OH and amines since I-40a,
-  // ring aldehydes and acids since I-40b: a nitrile on an acid's carbon (carbonocyanidic), an N–O bond, a nitrile with a
-  // ring (ringNitrile, I-40c) and a ring with two identical principal branches (symmetricRing) keep the refusal.
-  for (const smiles of ['N#CC(=O)O', 'ONCC(=O)O', 'ClCCOCCOOC', 'N#CCC1=CC=CC=C1', 'NCC1CCC(CN)CC1', 'COOC', 'O']) {
+  // ring aldehydes and acids since I-40b, ring nitriles and amides since I-40c: a nitrile on an acid's carbon
+  // (carbonocyanidic), an N–O bond, a nitrile beside a ring ester (ringEster, I-40d) and a ring with two identical
+  // principal branches (symmetricRing) keep the refusal.
+  for (const smiles of ['N#CC(=O)O', 'ONCC(=O)O', 'ClCCOCCOOC', 'N#CC1CCC(C(=O)OC)CC1', 'NCC1CCC(CN)CC1', 'COOC', 'O']) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(result.ok, false, smiles);
     assert.equal(result.error.code, 'HETEROATOM', smiles);
@@ -390,7 +391,7 @@ const GROUP_SNAPSHOT_SMILES = [
   'OCC1CCC(CO)CC1', // two identical CH₂OH branches on a ring: multiplicative, refused by the engine (symmetricRing; `fenilmetanol` is named since I-40a)
   'NCC(OO)C(=O)O', // acid with an amine and a hydroperoxide: the acid is not alcohol + ketone (amino acids are named since I-36)
   'CC(=O)OCCOC(C)=O', // two esters (each not ether + ketone) on different carbon pieces: refused as esterPrefix since I-39c (`butanodioato de dimetilo` is named since I-39c)
-  'NC(=O)C1CCCCC1', // amide on a ring: not amine + ketone; refused (ringAmide) until I-40 (open-chain amides are named since I-37)
+  'CNC(=O)C1CCC(C(=O)NC)CC1', // two amides on a ring with groups on their N: not amine + ketone; N¹/N⁴ locants, refused (substitutedPolyamide; `ciclohexanocarboxamida` is named since I-40c)
   'NCC(O)CC(=O)C(OO)C=O', // aldehyde > ketone > alcohol > amine, with a hydroperoxide (amines are named since I-36)
   'N#CC(=O)O', // a nitrile on the acid's carbon: a carbonic acid derivative, refused (carbonocyanidic; `ácido 3-cianopropanoico` is named since I-39a)
   'ClCCOCCOOC', // prefix-only groups (ether and halide, named since I-34) with an unsupported peroxide
@@ -398,9 +399,9 @@ const GROUP_SNAPSHOT_SMILES = [
   'CCOOC', // unsupported peroxide
   'CC(=O)OC1CCC(C(=O)O)CC1', // ester bonded through its O: aciloxi- (refused for its ring ester, ringEster; `ácido 2-(acetiloxi)etanoico` is named since I-39c)
   'CCOC(=O)C1CCC(C(=O)O)CC1', // ester bonded through its carbonyl carbon: alcoxicarbonil- (ringEster; open-chain ester prefixes are named since I-39c)
-  'CC(=O)NC1CCC(C(=O)O)CC1', // amide bonded through its N: acilamino- (ringAmide; `ácido 2-(acetilamino)etanoico` is named since I-39d)
-  'NC(=O)C1CCC(C(=O)O)CC1', // amide bonded through its carbonyl carbon: carbamoil- (ringAmide; open-chain amide prefixes are named since I-39d)
-  'N#CC1CCCCC1', // nitrile on a ring: -carbonitrilo, refused until I-40c (`ciclohexanocarbaldehído` is named since I-40b)
+  'CC(=O)NC1CCC(C(=O)OC)CC1', // amide bonded through its N: acilamino- (ringEster; the ring acid `ácido 4-(acetilamino)ciclohexano-1-carboxílico` is named since I-40c)
+  'NC(=O)C1CCC(C(=O)OC)CC1', // amide bonded through its carbonyl carbon: carbamoil- (ringEster; `ácido 4-carbamoilciclohexano-1-carboxílico` is named since I-40c)
+  'N#CC1CCC(C(=O)OC)CC1', // nitrile on a ring below an ester: ciano- (ringEster; `ciclohexanocarbonitrilo` is named since I-40c)
   'OC(=O)C(C(=O)C#N)CC', // –CO–C≡N branch: the one acyl without an acyl prefix, refused by the engine (acylSubstituent; `3-acetilpentano-2,4-diona` is named since I-39b)
 ];
 

@@ -10,8 +10,9 @@
  * editor test API get their names (metanamida, N,N-dimetiletanamida,
  * N-etil-N-metilpropanamida, 2-metilpropanamida, butanodiamida,
  * 4-oxopentanamida, 2-aminopropanamida); "Ordenar dibujo" lays out an
- * amide; an amide with a ring, three amides on one chain, an N-substituted
- * diamide and an imide are refused with their messages. Runs on the dev
+ * amide; three amides on one chain, an N-substituted diamide and an imide
+ * are refused with their messages (amides with a ring are named since
+ * I-40c, ring-nitriles-amides.spec.js). Runs on the dev
  * server and on dist/index.html.
  */
 
@@ -214,7 +215,6 @@ test('loaded amides: N-groups, diamide, branches, other groups as prefixes; out-
 
   const error = page.locator('#results .results-error');
   for (const [smiles, text] of [
-    ['NC(=O)C1CCCCC1', 'las amidas con anillo'],
     ['NC(=O)CC(C(N)=O)CC(N)=O', '«-carboxamida»'],
     ['CNC(=O)CCC(N)=O', 'localizadores como N¹ y N⁴'],
     ['CC(=O)NC(C)=O', 'Eso es una imida'],
@@ -227,7 +227,7 @@ test('loaded amides: N-groups, diamide, branches, other groups as prefixes; out-
   } // End of the loop over the refused amides
 
   // A refused amide still offers the group steps: the stepper ends with "Aún no sé nombrarla".
-  await loadSmiles(page, 'NC(=O)C1CCCCC1');
+  await loadSmiles(page, 'NC(=O)CC(C(N)=O)CC(N)=O');
   await askName(page);
   await page.getByRole('button', { name: 'Ver paso a paso' }).click();
   const stepper = page.locator('#stepper');
@@ -236,7 +236,7 @@ test('loaded amides: N-groups, diamide, branches, other groups as prefixes; out-
   await expect(stepper.locator('.step-content')).toContainText('amida');
   await dots.nth(await dots.count() - 1).click();
   await expect(stepper.locator('.step-title')).toHaveText('Aún no sé nombrarla');
-  await expect(stepper.locator('.step-content')).toContainText('las amidas con anillo');
+  await expect(stepper.locator('.step-content')).toContainText('propano-1,2,3-tricarboxamida');
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
   expect(errors).toEqual([]);
 }); // End of test 'loaded amides…'

@@ -120,7 +120,7 @@
  * @property {number} atom - Id of the carrying parent atom (a carbon).
  * @property {number} attachAtom - Id of the group's heteroatom bonded to it (the O of an OH or of a C=O; for a –COOH, the O of its C=O; the N of an amine, I-36).
  * @property {number} bond - Id of the bond between them.
- * @property {number} [carbon] - For a –COOH or –CHO bonded to a ring parent only (design.md §13.4 I-40b: `-carboxílico`, `-carbaldehído`): id of the group's carbon X, outside the ring (`atom` is the ring atom bonded to it).
+ * @property {number} [carbon] - For a –COOH, –CHO, amide or –C≡N bonded to a ring parent only (design.md §13.4 I-40b: `-carboxílico`, `-carbaldehído`; I-40c: `-carboxamida`, `-carbonitrilo`): id of the group's carbon X, outside the ring (`atom` is the ring atom bonded to it).
  * @property {number} [carbonBond] - With `carbon`: id of the bond between the ring atom and X.
  * @property {number} [hydroxyAtom] - For a –COOH only (design.md §13.4 I-33): id of its OH oxygen, part of the same group.
  * @property {number} [hydroxyBond] - For a –COOH only: id of the bond between the carbon and that OH oxygen.
@@ -143,7 +143,7 @@
  * @typedef {object} SuffixStructure
  * @property {'acid'|'ester'|'amide'|'nitrile'|'alcohol'|'aldehyde'|'ketone'|'amine'} kind - Group kind (groups.js GROUP_KINDS; principal.js NAMED_KINDS).
  * @property {SuffixLocant[]} locants - One entry per group, ascending locants (a carbon with two OH appears twice).
- * @property {boolean} [outside] - Set on a ring parent whose –COOH or –CHO carbons are outside the ring (design.md §13.4 I-40b): cited `-carboxílico` / `-carbaldehído` (`ácido ciclohexanocarboxílico`), or with the retained `ácido benzoico` / `benzaldehído` on benzene.
+ * @property {boolean} [outside] - Set on a ring parent whose –COOH, –CHO, amide or –C≡N carbons are outside the ring (design.md §13.4 I-40b, I-40c): cited `-carboxílico` / `-carbaldehído` / `-carboxamida` / `-carbonitrilo` (`ácido ciclohexanocarboxílico`), or with the retained `ácido benzoico` / `benzaldehído` / `benzamida` / `benzonitrilo` on benzene.
  */
 
 /**

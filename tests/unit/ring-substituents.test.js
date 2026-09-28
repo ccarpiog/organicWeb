@@ -103,17 +103,15 @@ test('the examples of the phase are named, in Spanish and in English', () => {
   }
 });
 
-test('the side-chain refusals are lifted; esters, amides and nitriles with a ring stay refused', () => {
+test('the side-chain refusals are lifted; esters with a ring stay refused', () => {
   for (const smiles of ['OCC1=CC=CC=C1', 'CC(=O)C1CCCCC1', 'NCC1=CC=CC=C1', 'OCCOC1CCCCC1', 'CNCC1CCCCC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Aldehydes and acids with a ring are named since I-40b; I-40c / I-40d: -carbonitrilo, -carboxamida, ring esters.
-  for (const smiles of ['O=CCC1CCCCC1', 'O=CC1=CC=CC=C1', 'OC(=O)CC1CCCCC1']) {
+  // Aldehydes and acids with a ring are named since I-40b, nitriles and amides since I-40c; ring esters wait for I-40d.
+  for (const smiles of ['O=CCC1CCCCC1', 'O=CC1=CC=CC=C1', 'OC(=O)CC1CCCCC1', 'N#CCC1CCCCC1', 'NC(=O)CC1CCCCC1']) {
     assert.equal(named(smiles).ok, true, smiles);
   }
   const kept = [
-    ['N#CCC1CCCCC1', 'ringNitrile'],
-    ['NC(=O)CC1CCCCC1', 'ringAmide'],
     ['CC(=O)OCC1CCCCC1', 'ringEster'],
   ];
   for (const [smiles, reason] of kept) {

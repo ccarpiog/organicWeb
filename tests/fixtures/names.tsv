@@ -845,3 +845,45 @@ CC(=O)C(C(=O)C1CCCCC1C)C(C)=O	3-(2-metilciclohexano-1-carbonil)pentano-2,4-diona
 CC(=O)C(C(=O)C1=CC=CC=C1)C(C)=O	3-benzoilpentano-2,4-diona	benzoyl on a diketone	As above with benzene: benzoil, unenclosed	
 OC(=O)CCCC(=O)C1=CC=CC=C1	ácido 5-fenil-5-oxopentanoico	C=O between the chain and the ring, in the chain	The C=O carbon is a leaf of the skeleton without the ring, so the longest chain reaches it: oxo in the chain and a phenyl prefix, not 4-benzoilbutanoico (design §13.6 Where X belongs)	
 OC(=O)C(=O)C1=CC=CC=C1	ácido 2-fenil-2-oxoetanoico	ring ketone acid	As above: the chain ends at the C=O carbon	
+# Ring nitriles and amides (I-40c): a –C≡N or an amide bonded to a ring carbon is the ring's group like the –COOH of I-40b (P-44.1.1 counts it for the ring, never as a one-carbon chain; ring senior on a tie, P-44.1.2.2), cited with a suffix that includes its carbon: -carbonitrilo / -carboxamida after the full ring name (P-66.5.1.1, P-66.1.1.4, from memory), the ring atom bonded to it locant 1; benzonitrile and benzamide retained (preferred names, from memory); groups on the amide N take the locant N; a ring on an amide N is a prefix of the N (N-fenil, N-ciclohexil); on a side chain the chain is the parent and the ring a prefix (I-40a); below an acid the ring groups are ciano- / carbamoil- (tests/unit/ring-nitriles-amides.test.js)
+N#CC1CCCCC1	ciclohexanocarbonitrilo	-carbonitrilo on a cycloalkane	The –C≡N carbon is outside the ring: the ring carries the group with the suffix carbonitrile (P-66.5.1.1, from memory); one substituent on a saturated ring, locant omitted	
+N#CC1CCCC1	ciclopentanocarbonitrilo	-carbonitrilo on a five-membered ring	As above	
+N#CC1=CC=CC=C1	benzonitrilo	benzonitrile	Retained preferred name (P-66.5.1.1.2, from memory); the systematic benzenecarbonitrile as another form	benzeneSystematic=bencenocarbonitrilo
+NC(=O)C1CCCCC1	ciclohexanocarboxamida	-carboxamida on a cycloalkane	The amide carbon is outside the ring: suffix carboxamide (P-66.1.1.4, from memory)	
+NC(=O)C1=CC=CC=C1	benzamida	benzamide	Retained preferred name (P-66.1.1.1.2, from memory); benzenecarboxamide as another form	benzeneSystematic=bencenocarboxamida
+NC(=O)C1CC1	ciclopropanocarboxamida	-carboxamida on a three-membered ring	As above	
+N#CC1CCCCC1C	2-metilciclohexano-1-carbonitrilo	substituted ring nitrile	N0: the ring carbon bonded to the –C≡N is 1; then the methyl lowest (2); the 1 is cited once there is a prefix	
+NC(=O)C1CCC(Cl)CC1	4-clorociclohexano-1-carboxamida	halogen on a ring amide	N0 then the halogen (4)	
+N#CC1C=CCCC1	ciclohex-2-eno-1-carbonitrilo	ring nitrile with a ring double bond	N0 first, then N1 (the double bond at 2); the ending keeps its o before carbonitrilo	
+O=C(N)C1=CCCCC1	ciclohex-1-eno-1-carboxamida	double bond at the attachment carbon	N0 then N1 (1)	
+N#CC1CCCCC1C#N	ciclohexano-1,2-dicarbonitrilo	two –C≡N on a ring	Both groups are suffix groups of the ring: -dicarbonitrilo, locants 1,2	
+NC(=O)C1CCC(C(N)=O)CC1	ciclohexano-1,4-dicarboxamida	two amides on a ring	-dicarboxamida, locants 1,4; no group on the N (with one, N¹/N⁴ locants: refused, substitutedPolyamide)	
+N#CC1CC(C#N)CC(C#N)C1	ciclohexano-1,3,5-tricarbonitrilo	three –C≡N on a ring	Any number of ring groups are suffix groups (P-44.1.1); three on an open chain are refused instead (manyNitriles)	
+CNC(=O)C1CCCCC1	N-metilciclohexanocarboxamida	group on the N of a ring amide	The N-methyl is a prefix with the locant N; the ring carries the only other group, so the ring locant is omitted	
+CNC(=O)C1=CC=CC=C1	N-metilbenzamida	group on the N of benzamide	Benzamide retained with its N-substituent; the benzene stays monosubstituted (the N group is not on the ring)	benzeneSystematic=N-metilbencenocarboxamida
+CN(C)C(=O)C1=CC=CC=C1	N,N-dimetilbenzamida	two groups on the N of benzamide	N,N-dimetil	benzeneSystematic=N,N-dimetilbencenocarboxamida
+CCNC(=O)C1CCCCC1C	N-etil-2-metilciclohexano-1-carboxamida	N group and ring prefix	Alphabetical order e (etil) < m (metil); the ring locants are cited	
+CC(=O)NC1=CC=CC=C1	N-feniletanamida	phenyl on an amide N	P-44.1.1: the chain carries the amide, the ring none, so the chain is the parent and the benzene a fenil prefix of the N; acetamide retained (P-66.1.1.1.1, from memory): N-fenilacetamida as another form (acetanilide not offered)	traditional=N-fenilacetamida
+CC(=O)NC1CCCCC1	N-ciclohexiletanamida	cyclohexyl on an amide N	As above with ciclohexil	traditional=N-ciclohexilacetamida
+CCC(=O)NC1=CC=CC=C1	N-fenilpropanamida	phenyl on a propanamide N	As above; no traditional name	
+CC(=O)N(C)C1=CC=CC=C1	N-fenil-N-metiletanamida	phenyl and methyl on the N	Alphabetical order f < m	traditional=N-fenil-N-metilacetamida
+N#CCC1=CC=CC=C1	2-feniletanonitrilo	nitrile on a ring side chain	P-44.1.1: the chain carries the –C≡N; phenylacetonitrile accepted (acetonitrile keeps its retained name with a phenyl, from memory)	traditional=fenilacetonitrilo
+N#CCC1CCCCC1	2-ciclohexiletanonitrilo	nitrile chain with a cycloalkyl prefix	P-44.1.1	
+NC(=O)CC1=CC=CC=C1	2-feniletanamida	amide on a ring side chain	P-44.1.1; 2-phenylacetamide accepted (the 2 tells it from N-phenylacetamide, from memory)	traditional=2-fenilacetamida
+NC(=O)CCC1CCCCC1	3-ciclohexilpropanamida	amide chain with a cycloalkyl prefix	P-44.1.1	
+CNC(=O)CC1=CC=CC=C1	2-fenil-N-metiletanamida	phenyl on the chain, methyl on the N	Alphabetical order f < m; no traditional name with two prefixes	
+N#CCC1CCC(C#N)CC1	4-(cianometil)ciclohexano-1-carbonitrilo	nitrile on the ring and on a branch	Tie (one –C≡N each), ring senior (P-44.1.2.2); the branch –C≡N is ciano, its carbon not in the branch chain	
+N#CC1CCC(O)CC1	4-hidroxiciclohexano-1-carbonitrilo	nitrile and OH on a ring	Nitrile > alcohol (P-41): hidroxi	
+N#CC1CCC(=O)CC1	4-oxociclohexano-1-carbonitrilo	nitrile and ring ketone	Nitrile > ketone: oxo on the ring carbon	
+NC(=O)C1CCC(N)CC1	4-aminociclohexano-1-carboxamida	amide and amine on a ring	Amide > amine: amino	
+NC(=O)C1CCC(C#N)CC1	4-cianociclohexano-1-carboxamida	amide and nitrile on a ring	Amide > nitrile (P-41): the ring –C≡N is ciano	
+OCCNC(=O)C1CCCCC1	N-(2-hidroxietil)ciclohexanocarboxamida	OH on an N group of a ring amide	The ring carries the amide; the OH is in the N prefix	
+OC(=O)C1CCC(C#N)CC1	ácido 4-cianociclohexano-1-carboxílico	ciano on a ring acid	Acid > nitrile: the ring –C≡N is ciano (P-66.5, its carbon included)	
+OC(=O)C1CCC(C(N)=O)CC1	ácido 4-carbamoilciclohexano-1-carboxílico	carbamoil on a ring acid	Acid > amide: the amide bonded to the ring by its carbon is carbamoil (I-39d)	
+OC(=O)C1CCC(C(=O)NC)CC1	ácido 4-(metilcarbamoil)ciclohexano-1-carboxílico	substituted carbamoil on a ring	The N group goes inside the enclosed carbamoil prefix	
+OC(=O)C1CCC(NC(C)=O)CC1	ácido 4-(acetilamino)ciclohexano-1-carboxílico	acilamino on a ring acid	The amide bonded to the ring by its N is acetilamino (I-39d)	
+OC(=O)C(C(=O)O)C1CCC(C#N)CC1	ácido 2-(4-cianociclohexil)propanodioico	ciano on a ring prefix	P-44.1.1: the chain carries 2 –COOH, the ring none	
+NC(=O)CC(C(N)=O)C1CCC(C(N)=O)CC1	2-(4-carbamoilciclohexil)butanodiamida	chain with more amides than the ring	P-44.1.1: the chain carries 2 amides, the ring 1; the ring amide is carbamoil on the ring prefix	
+OC(=O)CNC(=O)C1=CC=CC=C1	ácido 2-(benzoilamino)etanoico	benzoil on an acilamino prefix	The amide below the acid is bonded to the chain by its N; its acyl part is the benzoyl group (I-40b)	
+OC(=O)CNC(=O)C1CCCCC1	ácido 2-[(ciclohexanocarbonil)amino]etanoico	cycloalkanecarbonyl on an acilamino prefix	As above with ciclohexanocarbonil, enclosed inside the amino prefix	
+CC(C)C1CCC(C#N)CC1	4-isopropilciclohexano-1-carbonitrilo	prefix styles on a ring nitrile	isopropil (default), propan-2-il (PIN), 1-metiletil	pin=4-(propan-2-il)ciclohexano-1-carbonitrilo;substituted=4-(1-metiletil)ciclohexano-1-carbonitrilo

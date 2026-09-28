@@ -360,7 +360,7 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
         continue; // A suffix group of the parent (`-ol`, `-al`, `-ona`), not a prefix.
       }
       if (parent && ctx.ringAtoms.has(chainAtom) && isRingGroupCarbon(ctx.mol, ctx.adj, n.atom, ctx.principal, ctx.ringAtoms)) {
-        continue; // The –COOH / –CHO of a ring parent (`-carboxílico`, `-carbaldehído`, I-40b): a suffix group.
+        continue; // The –COOH / –CHO / amide / –C≡N of a ring parent (`-carboxílico`…, I-40b, I-40c): a suffix group.
       }
       if (isNitrileCarbon(ctx.mol, ctx.adj, n.atom)) {
         result.push(cyanoEntry(ctx, chainAtom, n));
@@ -571,7 +571,10 @@ function branchEntry(ctx, chainAtom, n) {
  * neighbour of that N roots a branch, named like any branch whose carrying
  * atom is the N (branchEntry()) and flagged `nitrogen`: it is cited with
  * the locant `N` (`N-metiletanamina`, `N,N-dimetilmetanamina`,
- * `N-metiletanamida`). Empty unless the amine or the amide is principal.
+ * `N-metiletanamida`). On a ring parent the N of an amide bonded to the
+ * ring (design.md §13.4 I-40c) is on the carbon X outside the ring:
+ * `N-metilciclohexanocarboxamida`, `N-metilbenzamida`. Empty unless the
+ * amine or the amide is principal.
  *
  * @param {object} ctx - Naming context (createNamingContext).
  * @param {number[]} chainAtoms - The parent's atom ids.
@@ -582,8 +585,11 @@ export function nitrogenSubstituents(ctx, chainAtoms) {
     return [];
   }
   const inChain = new Set(chainAtoms);
+  // On a ring parent, an amide bonded to a ring atom (I-40c: `-carboxamida`) has its N on the carbon X outside the ring.
+  const outside = chainAtoms.flatMap((atom) => (ctx.ringAtoms.has(atom) ? ctx.adj.get(atom) : [])
+    .filter((n) => isRingGroupCarbon(ctx.mol, ctx.adj, n.atom, ctx.principal, ctx.ringAtoms)).map((n) => n.atom));
   const result = [];
-  for (const chainAtom of chainAtoms) {
+  for (const chainAtom of [...chainAtoms, ...outside]) {
     for (const n of ctx.adj.get(chainAtom)) {
       if (!isSuffixGroupAtomOf(ctx.mol, ctx.adj, chainAtom, n.atom, ctx.principal) || ctx.mol.atoms.get(n.atom).element !== 'N') {
         continue;
@@ -727,7 +733,8 @@ export function unnamedAcyl(structure) {
  * groups on that N are nitrogenSubstituents()).
  * On a ring parent (`ring` true) a –COOH or –CHO bonded to a ring atom is a
  * suffix group of that atom too (design.md §13.4 I-40b: `-carboxílico`,
- * `-carbaldehído`; principal.js isRingGroupCarbon()): its site also has
+ * `-carbaldehído`; an amide or a –C≡N since I-40c: `-carboxamida`,
+ * `-carbonitrilo`; principal.js isRingGroupCarbon()): its site also has
  * the group's carbon X (`carbon`) and the ring–X bond (`carbonBond`).
  *
  * @param {object} mol - A validated molecule.
@@ -741,7 +748,7 @@ export function suffixSites(mol, adj, atoms, principal = principalKindOf(mol, ad
   const sites = [];
   const ringAtoms = new Set(ring ? atoms : []);
   for (const atom of atoms) {
-    // On a ring parent, a –COOH or –CHO bonded to the ring atom (I-40b): its carbon X carries the C=O.
+    // On a ring parent, a –COOH, –CHO, amide or –C≡N bonded to the ring atom (I-40b, I-40c): its carbon X carries the group.
     const carriers = [
       { carbon: atom, link: null },
       ...adj.get(atom).filter((n) => ring && isRingGroupCarbon(mol, adj, n.atom, principal, ringAtoms))

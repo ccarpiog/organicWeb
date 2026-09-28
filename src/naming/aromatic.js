@@ -40,11 +40,14 @@
  * `aniline` as the preferred name (P-62.2.1.1.1); like `tolueno` it is
  * offered as an alternative (`anilina`, `N-metilanilina`).
  *
- * A –COOH or –CHO on the ring (design.md §13.4 I-40b) is the ring's suffix
- * group with its carbon outside the ring, rendered as the retained
- * preferred `ácido benzoico` / `benzaldehído` (render.js; the systematic
- * `ácido bencenocarboxílico` / `bencenocarbaldehído` are alternatives,
- * naming/index.js).
+ * A –COOH or –CHO on the ring (design.md §13.4 I-40b), or an amide or a
+ * –C≡N (I-40c), is the ring's suffix group with its carbon outside the
+ * ring, rendered as the retained preferred `ácido benzoico` /
+ * `benzaldehído` / `benzamida` / `benzonitrilo` (render.js; the systematic
+ * `ácido bencenocarboxílico` / `bencenocarbaldehído` /
+ * `bencenocarboxamida` / `bencenocarbonitrilo` are alternatives,
+ * naming/index.js). The groups on a benzamide N are N prefixes, not ring
+ * substituents (`N-metilbenzamida`: the benzene stays monosubstituted).
  *
  * Traditional names retained by IUPAC 2013 for monosubstituted benzenes
  * (P-22.1.3) — `tolueno` (even the preferred IUPAC name) and `estireno`
@@ -129,6 +132,9 @@ export function traditionalNameId(structure) {
   }
   if (structure.suffix && structure.suffix.kind === 'amine') {
     return 'aniline'; // Any groups are on the N (`N-metilanilina`).
+  }
+  if (structure.suffix) {
+    return null; // `fenol`, `ácido benzoico`, `N-metilbenzamida` (I-40c: its `metil` is on the N, no `tolueno`).
   }
   if (structure.prefixes.length !== 1) {
     return null;

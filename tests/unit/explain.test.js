@@ -181,6 +181,14 @@ const SNAPSHOT_SMILES = [
   'OC(=O)C(CC)C(=O)C1=CC=CC=C1', // ácido 2-benzoilbutanoico: ring acyl prefix (I-40b)
   'CC(=O)C(C(=O)C1CCCCC1C)C(C)=O', // 3-(2-metilciclohexano-1-carbonil)pentano-2,4-diona: -carbonil prefix (I-40b)
   'OC(=O)CCCC(=O)C1=CC=CC=C1', // ácido 5-fenil-5-oxopentanoico: the C=O at the chain end next to the ring is a ketone (review I-40b)
+  'N#CC1CCCCC1C', // 2-metilciclohexano-1-carbonitrilo: the –C≡N carbon outside the ring, -carbonitrilo (I-40c)
+  'CNC(=O)C1=CC=CC=C1', // N-metilbenzamida: retained name, the N group apart, bencenocarboxamida as another form (I-40c)
+  'NC(=O)C1CCC(C(N)=O)CC1', // ciclohexano-1,4-dicarboxamida: two ring amides (I-40c)
+  'CC(=O)NC1=CC=CC=C1', // N-feniletanamida: a ring on the amide N, N-fenilacetamida (I-40c)
+  'N#CCC1=CC=CC=C1', // 2-feniletanonitrilo: nitrile on a side chain, fenilacetonitrilo (I-40c)
+  'N#CCC1CCC(C#N)CC1', // 4-(cianometil)ciclohexano-1-carbonitrilo: ring and chain tie, ciano- on the branch (I-40c)
+  'OC(=O)C1CCC(C(N)=O)CC1', // ácido 4-carbamoilciclohexano-1-carboxílico: carbamoil- on a ring below an acid (I-40c)
+  'OC(=O)C1CCC(C#N)CC1', // ácido 4-cianociclohexano-1-carboxílico: ciano- on a ring below an acid (I-40c)
 ];
 
 /**

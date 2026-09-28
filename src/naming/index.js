@@ -156,10 +156,16 @@
  * 4-amino-4-oxobutanoico`), else `carbamoil` (`ácido
  * 3-(metilcarbamoil)pentanodioico`), or `acilamino` bonded through its N
  * (`ácido 2-(acetilamino)etanoico`, `2-(acetilamino)etanamida`; P4 counts
- * only the prefixes on the chain, numbering.js). Validation refuses
- * amides with a ring (`ringAmide`), more than two on one carbon piece
- * with the amide principal (`manyAmides`), diamides with groups on an N
- * (`substitutedPolyamide`) and imides (`imide`); an amide cited neither as
+ * only the prefixes on the chain, numbering.js). With a ring (I-40c) an
+ * amide bonded to a ring carbon is the ring's group, `-carboxamida`
+ * (`ciclohexanocarboxamida`, `N-metilciclohexanocarboxamida`, the
+ * retained `benzamida` with `bencenocarboxamida` as an alternative); a
+ * ring on the N is an N prefix (`N-feniletanamida`, with
+ * `N-fenilacetamida`); on a side chain the chain may be the parent
+ * (`2-feniletanamida`, with `2-fenilacetamida`). Validation refuses more
+ * than two amides on one carbon piece with the amide principal
+ * (`manyAmides`), diamides with groups on an N (`substitutedPolyamide`,
+ * also two or more on a ring) and imides (`imide`); an amide cited neither as
  * a suffix nor as a prefix is refused here as a safety net (`amidePrefix`,
  * amidePrefixCount()). The bare (or
  * N-substituted) metanamida and etanamida also get `formamida` /
@@ -171,10 +177,13 @@
  * is never a chain atom and the C≡N is never an `-ino` unsaturation:
  * `metanonitrilo`, `etanonitrilo`, `2-metilpropanonitrilo`,
  * `prop-2-enonitrilo`, `butanodinitrilo`, `4-oxopentanonitrilo`,
- * `2-aminopropanonitrilo`. Validation refuses nitriles with a ring
- * (`ringNitrile`) and more than two on one carbon piece when the nitrile
- * is principal (`manyNitriles`). The bare etanonitrilo also gets
- * `acetonitrilo`. A nitrile that is not principal (an acid, ester or amide
+ * `2-aminopropanonitrilo`. With a ring (I-40c) a nitrile bonded to a ring
+ * carbon is the ring's group, `-carbonitrilo` (`ciclohexanocarbonitrilo`,
+ * the retained `benzonitrilo` with `bencenocarbonitrilo`); on a side chain
+ * the chain may be the parent (`2-feniletanonitrilo`, with
+ * `fenilacetonitrilo`). Validation refuses more than two nitriles on one
+ * carbon piece when the nitrile is principal (`manyNitriles`). The bare
+ * etanonitrilo also gets `acetonitrilo`. A nitrile that is not principal (an acid, ester or amide
  * beside it) or that lies on a branch (I-39a) is the prefix `ciano-`,
  * whose carbon is outside the chain (principal.js outsideCarbons(),
  * substituent.js cyanoSubstituent()): `ácido 3-cianopropanoico`,
@@ -634,7 +643,7 @@ function esterPrefixError(esters) {
  * The HETEROATOM refusal of a molecule whose name would leave an amide out
  * of the parent's suffix (a `carbamoil-` or `acilamino-` prefix, design.md
  * §13.4 I-37). A safety net: validation already refuses every molecule
- * where this can happen (`amidePrefix`, `manyAmides`, `ringAmide`).
+ * where this can happen (`amidePrefix`, `manyAmides`).
  *
  * @param {number[]} amides - The amide carbons of the molecule.
  * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
@@ -696,7 +705,7 @@ export function carboxyCount(structure) {
  * The HETEROATOM refusal of a molecule whose name neither cites a nitrile
  * as a suffix group nor as a `ciano` prefix (design.md §13.4 I-38, I-39a).
  * A safety net that validation and the chain machinery make unreachable
- * (`manyNitriles`, `ringNitrile`, `carbonocyanidic`).
+ * (`manyNitriles`, `carbonocyanidic`).
  *
  * @param {number[]} nitriles - The nitrile carbons of the molecule.
  * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
@@ -742,13 +751,13 @@ function carbonylAlternative(result) {
   if (!id) {
     return null;
   }
-  if (result.structure.ester || result.structure.suffix.kind === 'amide') {
+  if (result.structure.ester || id === 'formamide' || id === 'acetamide') {
     // `acetato de etilo`, `N-metilacetamida`: the traditional word, with the O-bound group or the N groups (render.js).
     return { style: 'traditional', label: lexiconEs.traditionalLabel(id), ...renderName(result.structure, lexiconEs, { traditional: id }) };
   }
   const name = lexiconEs.traditionalName(id);
   const group = suffixGroupIds(result.structure.suffix);
-  // The `fenil` group of `acetofenona`, `alcohol bencílico`, `bencilamina` (I-40a) is part of the word too.
+  // The `fenil` group of `acetofenona`, `alcohol bencílico`, `bencilamina` (I-40a), `fenilacetonitrilo` (I-40c) is part of the word too.
   const sites = result.structure.prefixes.flatMap((g) => g.locants);
   const atoms = [...new Set([...result.parent.atoms, ...group.atoms, ...sites.flatMap((site) => site.atoms)])];
   const bonds = [...result.parent.bonds, ...group.bonds, ...sites.flatMap((site) => [site.bond, ...site.bonds])];
@@ -757,9 +766,11 @@ function carbonylAlternative(result) {
 
 /**
  * The systematic alternative of `ácido benzoico` and `benzaldehído`
- * (design.md §13.4 I-40b): the benzene name with the `-carboxílico` /
- * `-carbaldehído` suffix, `ácido bencenocarboxílico`,
- * `bencenocarbaldehído`, which some school books use; IUPAC 2013 prefers
+ * (design.md §13.4 I-40b), `benzamida` and `benzonitrilo` (I-40c): the
+ * benzene name with the `-carboxílico` / `-carbaldehído` / `-carboxamida` /
+ * `-carbonitrilo` suffix, `ácido bencenocarboxílico`,
+ * `bencenocarbaldehído`, `N-metilbencenocarboxamida`,
+ * `bencenocarbonitrilo`, which some school books use; IUPAC 2013 prefers
  * the retained names (from memory), so this one is listed under "Otras
  * formas válidas". Null for any other name.
  *

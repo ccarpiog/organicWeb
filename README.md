@@ -59,7 +59,7 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `propan-2-amina`, `butano-1,4-diamina`, `N-metiletanamina`,
   `N,N-dimetilmetanamina`, `N,2-dimetilpropan-1-amina`, `ciclohexanamina`,
   `bencenamina`, `2-aminoetan-1-ol`, `2-(dimetilamino)etan-1-ol`, `ácido
-  2-aminopropanoico`…), and of open-chain amides (the C=O and the N one
+  2-aminopropanoico`…), and of amides (the C=O and the N one
   group, `-amida` with the amide carbon as carbon 1, the groups on the N as
   `N-` prefixes: `metanamida`, `etanamida`, `2-metilpropanamida`,
   `butanodiamida`, `prop-2-enamida`, `N-metiletanamida`,
@@ -67,16 +67,23 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `2-aminopropanamida`…; beside an acid, an ester or another amide the
   amide is a prefix: `ácido 4-amino-4-oxobutanoico`, `ácido
   3-(metilcarbamoil)pentanodioico`, `ácido 2-(acetilamino)etanoico`,
-  `2-(acetilamino)etanamida`), and of open-chain nitriles (the –C≡N one group,
+  `2-(acetilamino)etanamida`; on a ring `-carboxamida`:
+  `ciclohexanocarboxamida`, `N-metilciclohexanocarboxamida`, `benzamida`,
+  `N-metilbenzamida`; a ring on the N: `N-feniletanamida`,
+  `N-ciclohexiletanamida`), and of nitriles (the –C≡N one group,
   never an alkyne, `-nitrilo` with the nitrile carbon as carbon 1:
   `metanonitrilo`, `etanonitrilo`, `2-metilpropanonitrilo`,
   `butanodinitrilo`, `prop-2-enonitrilo`, `4-oxopentanonitrilo`,
-  `2-aminopropanonitrilo`…), and, when the principal group (an OH, a
-  ketone, an amine, an acid or an aldehyde) is on a chain rather than on
+  `2-aminopropanonitrilo`…; on a ring `-carbonitrilo`:
+  `ciclohexanocarbonitrilo`, `ciclohexano-1,2-dicarbonitrilo`,
+  `benzonitrilo`; below an acid `ciano-` / `carbamoil-` on the ring: `ácido
+  4-cianociclohexano-1-carboxílico`), and, when the principal group (an OH, a
+  ketone, an amine, an acid, an aldehyde, an amide or a nitrile) is on a chain rather than on
   the ring, of the chain with the ring as a prefix (`2-ciclohexiletan-1-ol`,
   `fenilmetanol`, `1-feniletan-1-ona`, `fenilmetanamina`,
   `2-fenoxietan-1-ol`, `2-(ciclohexilamino)etan-1-ol`, `ácido
-  2-feniletanoico`, `3-fenilpropanal`…) or, when a C=O bonded to the ring is
+  2-feniletanoico`, `3-fenilpropanal`, `2-feniletanonitrilo`,
+  `3-ciclohexilpropanamida`…) or, when a C=O bonded to the ring is
   off the chain, a ring acyl prefix (`ácido 2-benzoilbutanoico`,
   `3-(ciclohexanocarbonil)pentano-2,4-diona`), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
@@ -97,9 +104,12 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `etanonitrilo` lists `acetonitrilo`; `1-feniletan-1-ona`,
   `fenilmetanol` and `fenilmetanamina` list `acetofenona`, `alcohol
   bencílico` and `bencilamina`; `ácido benzoico` and `benzaldehído` list
-  the systematic `ácido bencenocarboxílico` and `bencenocarbaldehído`, and
-  `ácido 2-feniletanoico` and `2-feniletanal` list `ácido fenilacético`
-  and `fenilacetaldehído`.
+  the systematic `ácido bencenocarboxílico` and `bencenocarbaldehído`
+  (`benzamida` and `benzonitrilo` likewise `bencenocarboxamida` and
+  `bencenocarbonitrilo`), and `ácido 2-feniletanoico`, `2-feniletanal`,
+  `2-feniletanonitrilo` and `2-feniletanamida` list `ácido fenilacético`,
+  `fenilacetaldehído`, `fenilacetonitrilo` and `2-fenilacetamida`
+  (`N-feniletanamida` lists `N-fenilacetamida`).
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
   alphabetical order, assembly) that highlights each step on the drawing;
@@ -251,7 +261,7 @@ the Keychain account is the WebDAV user).
 
 - Hydrocarbons, their halogen derivatives, alcohols, aldehydes, ketones,
   carboxylic acids, ethers, esters, amines, amides and nitriles only, with at most one ring (a carbocycle; an
-  ester, an amide or a nitrile with a ring is refused); more than two
+  ester with a ring is refused); more than two
   aldehyde groups on a chain when the aldehyde is the principal group
   (`-carbaldehído`), more than two –COOH groups on a chain
   (`-tricarboxílico`), a –CO–C≡N
@@ -264,7 +274,8 @@ the Keychain account is the WebDAV user).
   principal group (multiplicative names, `oxidi-`, `azanodiil-`), and
   several amine groups on the main chain when some N carries other groups
   (N¹/N² locants) are refused too, and so are more than two amides on one
-  chain (`-carboxamida`), a diamide with groups on an N and imides, and a nitrile bonded to the
+  chain (`-carboxamida`), a diamide with groups on an N (on a chain or on
+  a ring) and imides, and a nitrile bonded to the
   carbon of an acid, ester or amide (`ácido carbonocianídico`) and more
   than two nitriles on one chain when the nitrile is the principal group
   (`-carbonitrilo`); a nitrile below an acid, ester or amide, or on a

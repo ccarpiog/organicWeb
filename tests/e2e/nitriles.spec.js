@@ -10,9 +10,10 @@
  * (metanonitrilo, propanonitrilo, 2-metilpropanonitrilo, butanodinitrilo,
  * prop-2-enonitrilo, 4-oxopentanonitrilo, 3-hidroxibutanonitrilo,
  * 2-aminopropanonitrilo, 3-cloropropanonitrilo); "Ordenar dibujo" lays out
- * a nitrile; a nitrile with a ring, three nitriles and a nitrile on an
- * acid's carbon (carbonocyanidic) are refused with their messages (the
- * `ciano-` prefix is covered by cyano.spec.js). Runs on the dev server and
+ * a nitrile; three nitriles on one chain and a nitrile on an acid's carbon
+ * (carbonocyanidic) are refused with their messages (the `ciano-` prefix
+ * is covered by cyano.spec.js; nitriles with a ring are named since I-40c,
+ * ring-nitriles-amides.spec.js). Runs on the dev server and
  * on dist/index.html.
  */
 
@@ -196,7 +197,6 @@ test('loaded nitriles: branches, dinitrile, other groups as prefixes; out-of-sco
 
   const error = page.locator('#results .results-error');
   for (const [smiles, text] of [
-    ['N#CC1CCCCC1', '«-carbonitrilo»'],
     ['N#CCC(C#N)CC#N', 'más de dos grupos –C≡N'],
     ['N#CC(=O)O', 'ácido carbonocianídico'],
   ]) {
@@ -208,16 +208,16 @@ test('loaded nitriles: branches, dinitrile, other groups as prefixes; out-of-sco
   } // End of the loop over the refused nitriles
 
   // A refused nitrile still offers the group steps: the stepper ends with "Aún no sé nombrarla".
-  await loadSmiles(page, 'N#CC1CCCCC1');
+  await loadSmiles(page, 'N#CCC(C#N)CC#N');
   await askName(page);
   await page.getByRole('button', { name: 'Ver paso a paso' }).click();
   const stepper = page.locator('#stepper');
   const dots = stepper.locator('.step-dot');
   await dots.nth(0).click();
-  await expect(stepper.locator('.step-content')).toContainText('1 nitrilo');
+  await expect(stepper.locator('.step-content')).toContainText('3 nitrilo');
   await dots.nth(await dots.count() - 1).click();
   await expect(stepper.locator('.step-title')).toHaveText('Aún no sé nombrarla');
-  await expect(stepper.locator('.step-content')).toContainText('ciclohexanocarbonitrilo');
+  await expect(stepper.locator('.step-content')).toContainText('propano-1,2,3-tricarbonitrilo');
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
   expect(errors).toEqual([]);
 }); // End of test 'loaded nitriles…'

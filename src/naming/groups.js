@@ -44,9 +44,10 @@
  * parent chain when the group is cited as a suffix (-oico, -oato, -amida,
  * -nitrilo, -al: P-65.1.2, P-66.1.1, P-66.5.1, P-66.6.1; the ketone carbon
  * is always a chain or ring carbon), so later phases must count `carbon` as
- * a chain carbon. Only when the group hangs from a ring parent (I-40:
- * -carboxílico, -carbaldehído, -carbonitrilo) or is cited as a prefix that
- * includes it (carboxi-, formil-, ciano-) is it outside the parent.
+ * a chain carbon. Only when the group hangs from a ring parent (I-40b,
+ * I-40c: -carboxílico, -carbaldehído, -carboxamida, -carbonitrilo) or is
+ * cited as a prefix that includes it (carboxi-, formil-, carbamoil-,
+ * ciano-) is it outside the parent.
  */
 
 import { adjacency } from '../model/graph.js';

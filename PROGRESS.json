@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T06:36:17Z",
+  "updated": "2026-09-28T07:09:00Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -415,8 +415,11 @@
     {
       "id": "I-40c",
       "title": "v2.20c Nitriles and amides with a ring (split from I-40)",
-      "status": "queued",
-      "summary": "Names -carbonitrilo/-carboxamida on a ring (benzonitrilo, benzamida), N-fenil amides and those groups beside a ring."
+      "status": "done",
+      "summary": "Names -carbonitrilo/-carboxamida on rings (benzonitrilo, benzamida), N-fenil amides, and ciano-/carbamoil- on rings.",
+      "risk": "high",
+      "review": "docs/reviews/I-40c.md",
+      "narrative": "docs/progress-archive/i-40c.md"
     },
     {
       "id": "I-40d",

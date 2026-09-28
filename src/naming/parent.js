@@ -44,8 +44,10 @@
  * principal group, ringOrChain() compares the ring with the chains
  * (P-44.1.1 first: the most principal groups; P-44.1.2.2 on a tie: the
  * ring is senior). A –COOH or –CHO bonded directly to a ring atom counts
- * for the ring (I-40b: `-carboxílico`, `-carbaldehído`; principal.js
- * isRingGroupCarbon()), never as a one-carbon chain. When a chain carries
+ * for the ring (I-40b: `-carboxílico`, `-carbaldehído`; an amide or a
+ * –C≡N since I-40c: `-carboxamida`, `-carbonitrilo`; principal.js
+ * isRingGroupCarbon()), never as a one-carbon chain; a ring on an amide N
+ * counts for nothing (`N-feniletanamida`: the chain is the parent). When a chain carries
  * more principal groups than the ring, the chain is the parent and
  * selectParent() runs on the skeleton without the ring atoms (a ring
  * carbon is never a chain carbon) and without those group carbons, so the
@@ -254,7 +256,8 @@ export function selectParent(mol) {
   const adj = adjacency(mol);
   const principal = principalKindOf(mol, adj);
   // Ring atoms (design.md §13.4 I-40a: a chain parent of a ring molecule) are never chain atoms, nor is the
-  // carbon of a –COOH or –CHO bonded to the ring (I-40b: a `carboxi` / `formil` prefix of the ring prefix).
+  // carbon of a principal –COOH, –CHO, amide or –C≡N bonded to the ring (I-40b, I-40c: a `carboxi` / `formil` /
+  // `carbamoil` / `ciano` prefix of the ring prefix).
   const ring = cycleCore(adj);
   const exclude = [...outsideCarbons(mol, adj, principal), ...ring, ...ringGroupCarbons(mol, adj, principal, ring)];
   let chains = leafToLeafPaths(mol, new Set(exclude));
@@ -292,9 +295,9 @@ export function selectParent(mol) {
  * parent (design.md §13.5, §13.4 I-40a; IUPAC 2013 P-44.1.1, then
  * P-44.1.2.2): the number of principal groups on ring atoms (each suffix
  * group once: an OH, a ketone C=O, an amine N bonded to a ring carbon; a
- * –COOH or –CHO bonded to a ring carbon, I-40b) against the most on one
- * chain of the skeleton without the ring atoms and those –COOH / –CHO
- * carbons (chainCounts() P0). The chain is the parent only when it carries more;
+ * –COOH or –CHO bonded to a ring carbon, I-40b; an amide or a –C≡N
+ * bonded to a ring carbon, I-40c) against the most on one chain of the
+ * skeleton without the ring atoms and those group carbons (chainCounts() P0). The chain is the parent only when it carries more;
  * on a tie the ring is senior. Null without a ring or without a principal
  * group (a hydrocarbon, halogen derivative or ether: the ring is always
  * the parent). The result is also the trace step `RINGCHAIN` (ring
@@ -313,7 +316,7 @@ export function ringOrChain(mol, ring) {
   }
   const isSuffix = (id) => isSuffixOxygen(mol, adj, id, principal);
   const isGroup = (id) => isPrincipalOxygen(mol, adj, id, principal);
-  // A –COOH or –CHO bonded to a ring atom (I-40b) is the ring's group (`-carboxílico`, `-carbaldehído`): its C=O counts.
+  // A –COOH, –CHO, amide or –C≡N bonded to a ring atom (I-40b, I-40c) is the ring's group (`-carboxílico`…): its C=O / N counts.
   const groupCarbons = ringGroupCarbons(mol, adj, principal, new Set(ring.atoms));
   const carriers = [...ring.atoms, ...groupCarbons];
   const onRing = new Set(carriers.flatMap((atom) => adj.get(atom).filter((n) => isSuffix(n.atom)).map((n) => n.atom)));

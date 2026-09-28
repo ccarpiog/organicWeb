@@ -12,7 +12,7 @@
  * `(carboximetoxi)`); a C=O between the chain and the ring off the chain is
  * `benzoil` / `(ciclohexanocarbonil)` (the lifted `ringAcyl`). Covers the
  * lifted refusals (`ringAcid`, `ringAldehyde`, `ringAcyl`), the ones that
- * stay (`ringNitrile`, `ringAmide`, `ringEster`, `manyAcids` and
+ * stay (`ringEster`, `manyAcids` and
  * `manyAldehydes` per carbon piece), the ring-or-chain count, both
  * lexicons, the explanation, atom-order invariance (refusals included),
  * Ordenar dibujo and the oracle generator. The names are also checked row
@@ -23,7 +23,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
 import { canonicalKey } from '../../src/model/graph.js';
-import { validateForNaming, MANY_ACIDS_MESSAGE, MANY_ALDEHYDES_MESSAGE, RING_NITRILE_MESSAGE } from '../../src/model/validate.js';
+import { validateForNaming, MANY_ACIDS_MESSAGE, MANY_ALDEHYDES_MESSAGE } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { ringOrChain } from '../../src/naming/parent.js';
 import { ringParent } from '../../src/naming/rings.js';
@@ -116,25 +116,21 @@ test('the examples of the phase are named, in Spanish and in English', () => {
   }
 });
 
-test('the ring refusals of I-40b are lifted; nitriles, amides and esters with a ring stay refused', () => {
+test('the ring refusals of I-40b are lifted; esters with a ring stay refused (nitriles and amides named since I-40c)', () => {
   for (const smiles of ['OC(=O)C1CCCCC1', 'O=CC1CCCCC1', 'OC(=O)CC1CCCCC1', 'O=CCC1=CC=CC=C1', 'OC(=O)C1=CC=CC=C1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
   for (const [smiles, reason] of [
-    ['N#CC1CCCCC1', 'ringNitrile'],
-    ['N#CCC1=CC=CC=C1', 'ringNitrile'],
-    ['NC(=O)C1CCCCC1', 'ringAmide'],
-    ['CC(=O)NC1CCCCC1', 'ringAmide'],
     ['COC(=O)C1CCCCC1', 'ringEster'],
     ['CC(=O)OC1=CC=CC=C1', 'ringEster'],
-    // With an acid too: the ring nitrile, amide or ester decides.
-    ['N#CC1CCC(C(=O)O)CC1', 'ringNitrile'],
-    ['NC(=O)C1CCC(C(=O)O)CC1', 'ringAmide'],
+    // With an acid too: the ring ester decides.
     ['COC(=O)C1CCC(C(=O)O)CC1', 'ringEster'],
   ]) {
     assert.equal(nameOf(smiles), `HETEROATOM ${reason}`, smiles);
   }
-  assert.match(RING_NITRILE_MESSAGE, /carbonitrilo/);
+  // Beside an acid a ring nitrile or amide is a prefix since I-40c (tests/unit/ring-nitriles-amides.test.js).
+  assert.equal(nameOf('N#CC1CCC(C(=O)O)CC1'), 'ácido 4-cianociclohexano-1-carboxílico');
+  assert.equal(nameOf('NC(=O)C1CCC(C(=O)O)CC1'), 'ácido 4-carbamoilciclohexano-1-carboxílico');
   // A benzene with a –COOH and another group is still a polysubstituted benzene.
   assert.equal(nameOf('OC(=O)C1=CC=C(C)C=C1'), 'CYCLE');
 });
@@ -159,8 +155,8 @@ test('more than two –COOH or –CHO on one carbon piece: refused; on the ring 
 test('refusals and names never depend on atom ids or drawing order', () => {
   const random = seededRandom(97);
   const refusals = [
-    'OC(=O)CC(C(=O)O)C(C(=O)O)C1CCCCC1', 'O=CCC(C=O)C(C=O)C1CCCCC1', 'N#CC1CCC(C(=O)O)CC1',
-    'NC(=O)C1CCC(C(=O)O)CC1', 'COC(=O)C1CCC(C(=O)O)CC1', 'OC(=O)CC1CCC(CC(=O)O)CC1',
+    'OC(=O)CC(C(=O)O)C(C(=O)O)C1CCCCC1', 'O=CCC(C=O)C(C=O)C1CCCCC1',
+    'COC(=O)C1CCC(C(=O)O)CC1', 'OC(=O)CC1CCC(CC(=O)O)CC1',
   ];
   for (const smiles of refusals) {
     const reference = nameOf(smiles);

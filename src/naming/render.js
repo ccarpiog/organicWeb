@@ -101,15 +101,16 @@ export function renderParent(chain, lexicon, hasPrefixes, suffix = null, omitSuf
  * (`butano-1,2,3,4-tetrol`); `di`, `tri` are unchanged. Only suffix
  * multipliers do this; prefix multipliers keep their `a` (`tetrametil`).
  * A suffix whose carbon is outside a ring parent (`outside`, design.md
- * §13.4 I-40b) is `carboxílico` / `carbaldehído`, which starts with a
- * consonant: `ciclohexanocarboxílico`, `ciclohexano-1,2-dicarboxílico`.
+ * §13.4 I-40b, I-40c) is `carboxílico` / `carbaldehído` / `carboxamida` /
+ * `carbonitrilo`, which starts with a consonant: `ciclohexanocarboxílico`,
+ * `ciclohexano-1,2-dicarboxílico`, `ciclohexano-1,2-dicarbonitrilo`.
  *
  * @param {{kind: string, locants: object[], outside?: boolean}} suffix - The suffix structure.
  * @param {object} lexicon - The lexicon.
  * @returns {{multiplier: string, word: string, elides: boolean}} The pieces.
  */
 export function suffixWords(suffix, lexicon) {
-  // A –COOH / –CHO whose carbon is outside a ring parent (design.md §13.4 I-40b): `carboxílico`, `carbaldehído`.
+  // A –COOH / –CHO / amide / –C≡N whose carbon is outside a ring parent (design.md §13.4 I-40b, I-40c): `carboxílico`…
   const word = suffix.outside ? lexicon.ringGroupSuffix(suffix.kind) : lexicon.groupSuffix(suffix.kind);
   const full = lexicon.multiplier(suffix.locants.length);
   const mult = full.endsWith('a') && /^[aeiou]/.test(word) ? full.slice(0, -1) : full;
@@ -245,7 +246,9 @@ function renderEnding(parent, lexicon, omit, suffix = null, omitSuffixLocants = 
  * outside the ring (design.md §13.4 I-40b) follows the full ending:
  * `ciclohexanocarboxílico`, `ciclohex-2-eno-1-carbaldehído`; on benzene it
  * gives the retained `benzoico` / `benzaldehído` (the systematic
- * `bencenocarboxílico` / `bencenocarbaldehído` with `systematic`).
+ * `bencenocarboxílico` / `bencenocarbaldehído` with `systematic`); so do an
+ * amide or a –C≡N (I-40c): `ciclohexanocarboxamida`, `benzamida`,
+ * `benzonitrilo` (`bencenocarboxamida`, `bencenocarbonitrilo`).
  *
  * @param {object} ring - The ring structure (structure.js RingStructure).
  * @param {object} lexicon - The lexicon.
@@ -260,7 +263,7 @@ export function renderRingParent(ring, lexicon, prefixes, suffix = null, systema
   if (ring.retained === 'benzene') {
     const retained = suffix && suffix.outside && !systematic ? lexicon.benzeneGroupName(suffix.kind) : null;
     if (retained) {
-      // `ácido benzoico`, `benzaldehído` (design.md §13.4 I-40b): the stem is the ring, the ending the group.
+      // `ácido benzoico`, `benzaldehído`, `benzamida`, `benzonitrilo` (design.md §13.4 I-40b, I-40c): the stem is the ring, the ending the group.
       const { atoms, bonds } = suffixGroupIds(suffix);
       return [part(retained.stem, 'stem', ring.atoms, ring.bonds), part(retained.ending, 'ending', atoms, bonds)];
     }

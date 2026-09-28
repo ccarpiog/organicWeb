@@ -482,7 +482,7 @@
    }
   ]
  },
- "NC(=O)C1CCCCC1": {
+ "CNC(=O)C1CCC(C(=O)NC)CC1": {
   "code": "HETEROATOM",
   "principal": "amide",
   "steps": [
@@ -491,20 +491,25 @@
     "title": "Reconoce los grupos",
     "text": [
      "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
-     "He encontrado este grupo:",
-     "1 amida: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno (–CONH₂, –CONH– o –CON–).",
+     "He encontrado estos grupos:",
+     "2 amidas: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno (–CONH₂, –CONH– o –CON–).",
      "Cada átomo pertenece a un solo grupo: el nitrógeno de una amida no cuenta como amina ni su C=O como cetona. Todo junto es un único grupo."
     ],
     "highlight": [
      {
       "atoms": [
-       1,
        2,
-       3
+       3,
+       4,
+       9,
+       10,
+       11
       ],
       "bonds": [
-       1,
-       2
+       2,
+       3,
+       9,
+       10
       ],
       "style": "substituent"
      }
@@ -516,18 +521,24 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es la amida: es el único tipo de grupo que puede serlo."
+     "Aquí el grupo principal es la amida: es el único tipo de grupo que puede serlo.",
+     "Hay 2 grupos de este tipo: todos cuentan como principales."
     ],
     "highlight": [
      {
       "atoms": [
-       1,
        2,
-       3
+       3,
+       4,
+       9,
+       10,
+       11
       ],
       "bonds": [
-       1,
-       2
+       2,
+       3,
+       9,
+       10
       ],
       "style": "parent"
      }
@@ -544,13 +555,18 @@
     "highlight": [
      {
       "atoms": [
-       1,
        2,
-       3
+       3,
+       4,
+       9,
+       10,
+       11
       ],
       "bonds": [
-       1,
-       2
+       2,
+       3,
+       9,
+       10
       ],
       "style": "parent"
      }
@@ -561,13 +577,15 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo amida (–CONH₂, –CONH– o –CON–). De momento solo sé nombrar las amidas de cadena abierta (como la etanamida o la N-metiletanamida): las amidas con anillo, como la benzamida, la ciclohexanocarboxamida o la N-feniletanamida, aún no sé nombrarlas."
+     "Esta molécula tiene dos grupos amida y alguno de sus nitrógenos lleva otros grupos unidos. Para decir en qué nitrógeno está cada grupo harían falta localizadores como N¹ y N⁴, y eso aún no sé hacerlo. Sí sé nombrar las diamidas sin grupos en el nitrógeno (como la butanodiamida) y las amidas con un solo nitrógeno (como la N-metiletanamida)."
     ],
     "highlight": [
      {
       "atoms": [
-       1,
-       3
+       2,
+       4,
+       10,
+       11
       ],
       "bonds": [],
       "style": "candidate"
@@ -1435,9 +1453,9 @@
    }
   ]
  },
- "CC(=O)NC1CCC(C(=O)O)CC1": {
+ "CC(=O)NC1CCC(C(=O)OC)CC1": {
   "code": "HETEROATOM",
-  "principal": "acid",
+  "principal": "ester",
   "steps": [
    {
     "id": "groups",
@@ -1445,9 +1463,9 @@
     "text": [
      "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
      "He encontrado estos grupos:",
-     "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
+     "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
      "1 amida: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno (–CONH₂, –CONH– o –CON–).",
-     "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona; el nitrógeno de una amida no cuenta como amina ni su C=O como cetona. Todo junto es un único grupo."
+     "Cada átomo pertenece a un solo grupo: el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona; el nitrógeno de una amida no cuenta como amina ni su C=O como cetona. Todo junto es un único grupo."
     ],
     "highlight": [
      {
@@ -1475,7 +1493,7 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que la amida."
+     "Aquí el grupo principal es el éster: en la lista va antes que la amida."
     ],
     "highlight": [
      {
@@ -1510,7 +1528,7 @@
     "title": "Sufijo o prefijo",
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
-     "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico».",
+     "El éster: sufijo «-oato», seguido de «de» y el nombre de la otra cadena acabado en «-ilo», como en «etanoato de metilo».",
      "La amida: prefijo «acilamino-» (el nombre cambia según la cadena: «acetilamino-», «propanoilamino-»…), porque se une al grupo principal por su nitrógeno."
     ],
     "highlight": [
@@ -1545,7 +1563,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo amida (–CONH₂, –CONH– o –CON–). De momento solo sé nombrar las amidas de cadena abierta (como la etanamida o la N-metiletanamida): las amidas con anillo, como la benzamida, la ciclohexanocarboxamida o la N-feniletanamida, aún no sé nombrarlas."
+     "Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos."
     ],
     "highlight": [
      {
@@ -1563,9 +1581,9 @@
    }
   ]
  },
- "NC(=O)C1CCC(C(=O)O)CC1": {
+ "NC(=O)C1CCC(C(=O)OC)CC1": {
   "code": "HETEROATOM",
-  "principal": "acid",
+  "principal": "ester",
   "steps": [
    {
     "id": "groups",
@@ -1573,9 +1591,9 @@
     "text": [
      "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
      "He encontrado estos grupos:",
-     "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
+     "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
      "1 amida: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno (–CONH₂, –CONH– o –CON–).",
-     "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona; el nitrógeno de una amida no cuenta como amina ni su C=O como cetona. Todo junto es un único grupo."
+     "Cada átomo pertenece a un solo grupo: el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona; el nitrógeno de una amida no cuenta como amina ni su C=O como cetona. Todo junto es un único grupo."
     ],
     "highlight": [
      {
@@ -1603,7 +1621,7 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que la amida."
+     "Aquí el grupo principal es el éster: en la lista va antes que la amida."
     ],
     "highlight": [
      {
@@ -1638,7 +1656,7 @@
     "title": "Sufijo o prefijo",
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
-     "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico».",
+     "El éster: sufijo «-oato», seguido de «de» y el nombre de la otra cadena acabado en «-ilo», como en «etanoato de metilo».",
      "La amida: prefijo «carbamoil-», porque se une al grupo principal por su carbono."
     ],
     "highlight": [
@@ -1673,7 +1691,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo amida (–CONH₂, –CONH– o –CON–). De momento solo sé nombrar las amidas de cadena abierta (como la etanamida o la N-metiletanamida): las amidas con anillo, como la benzamida, la ciclohexanocarboxamida o la N-feniletanamida, aún no sé nombrarlas."
+     "Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos."
     ],
     "highlight": [
      {
@@ -1691,20 +1709,59 @@
    }
   ]
  },
- "N#CC1CCCCC1": {
+ "N#CC1CCC(C(=O)OC)CC1": {
   "code": "HETEROATOM",
-  "principal": "nitrile",
+  "principal": "ester",
   "steps": [
    {
     "id": "groups",
     "title": "Reconoce los grupos",
     "text": [
      "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
-     "He encontrado este grupo:",
+     "He encontrado estos grupos:",
+     "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
      "1 nitrilo: un carbono unido a un nitrógeno por un [[enlace triple]] (–C≡N).",
-     "Cada átomo pertenece a un solo grupo: el enlace triple de un nitrilo (C≡N) no es el de un alquino y su nitrógeno no cuenta como amina. Todo junto es un único grupo."
+     "Cada átomo pertenece a un solo grupo: el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona; el enlace triple de un nitrilo (C≡N) no es el de un alquino y su nitrógeno no cuenta como amina. Todo junto es un único grupo."
     ],
     "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       1,
+       2
+      ],
+      "bonds": [
+       7,
+       8,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "principal",
+    "title": "Elige el principal",
+    "text": [
+     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
+     "Aquí el grupo principal es el éster: en la lista va antes que el nitrilo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     },
      {
       "atoms": [
        1,
@@ -1719,34 +1776,26 @@
     "locants": null
    },
    {
-    "id": "principal",
-    "title": "Elige el principal",
-    "text": [
-     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el nitrilo: es el único tipo de grupo que puede serlo."
-    ],
-    "highlight": [
-     {
-      "atoms": [
-       1,
-       2
-      ],
-      "bonds": [
-       1
-      ],
-      "style": "parent"
-     }
-    ],
-    "locants": null
-   },
-   {
     "id": "affixes",
     "title": "Sufijo o prefijo",
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
-     "El nitrilo: sufijo «-nitrilo», como en «etanonitrilo»."
+     "El éster: sufijo «-oato», seguido de «de» y el nombre de la otra cadena acabado en «-ilo», como en «etanoato de metilo».",
+     "El nitrilo: prefijo «ciano-»."
     ],
     "highlight": [
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "parent"
+     },
      {
       "atoms": [
        1,
@@ -1755,7 +1804,7 @@
       "bonds": [
        1
       ],
-      "style": "parent"
+      "style": "substituent"
      }
     ],
     "locants": null
@@ -1764,12 +1813,14 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –C≡N (un nitrilo). Cuando el –C≡N va unido a un anillo, el nombre acaba en «-carbonitrilo» (como el ciclohexanocarbonitrilo o el benzonitrilo), y eso aún no sé nombrarlo. De momento solo sé nombrar los nitrilos de cadena abierta (como el etanonitrilo)."
+     "Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos."
     ],
     "highlight": [
      {
       "atoms": [
-       1
+       1,
+       8,
+       9
       ],
       "bonds": [],
       "style": "candidate"

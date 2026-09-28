@@ -19,8 +19,8 @@
  *   ether oxygens C–O–C, I-34, ester groups –C(=O)–O–R, I-35, amine
  *   nitrogens bonded to one to three carbons, I-36, amide groups
  *   –C(=O)–N, I-37, and nitrile groups –C≡N, I-38; on a
- *   molecule with a ring, no ester, no amide, no nitrile (acids and aldehydes, on the ring or on a side chain, are
- *   named since I-40b); at most two
+ *   molecule with a ring, no ester (acids and aldehydes, on the ring or on a side chain, are named since I-40b,
+ *   amides and nitriles since I-40c); at most two
  *   aldehydes per carbon piece when the aldehyde is principal (I-39b), at most two acids per carbon piece (I-40b; ring
  *   atoms left out of the pieces); without an acid at most two
  *   esters, both on one carbon piece and, with different O-bound groups, on an acid part that is the same seen from
@@ -41,10 +41,11 @@
  * amines since I-36, amides since I-37, nitriles since I-38; any
  * other heteroatom (an N of an imide, imine or cyanamide, NH₃, an O of an
  * anhydride or carbonate, a peroxide, a halogen on a heteroatom or on a C=O carbon…) still
- * gets HETEROATOM, and so do an ester, amide or nitrile with a ring, and a
- * carbon piece with more than two principal aldehydes or more than two
- * acids (OH, ketone and amine groups on a ring's side chain are named since
- * I-40a, acids and aldehydes with a ring since I-40b).
+ * gets HETEROATOM, and so do an ester with a ring, and a carbon piece with
+ * more than two principal aldehydes or more than two acids (OH, ketone and
+ * amine groups on a ring's side chain are named since I-40a, acids and
+ * aldehydes with a ring since I-40b, amides and nitriles with a ring since
+ * I-40c).
  *
  * Errors are `{code, message}` objects with the Spanish messages of the §3.2
  * table; some carry extra data (`detail` in English for developers, `atoms`
@@ -268,17 +269,6 @@ export const SYMMETRIC_AMINE_MESSAGE = 'Esta molécula tiene partes iguales unid
   + '(como el 2,2′-azanodiildietanol), y eso aún no sé hacerlo.';
 
 /**
- * HETEROATOM message for a molecule with a ring and an amide group
- * –C(=O)–N (design.md §13.4 I-37): the ring would carry the group as
- * `-carboxamida` (`ciclohexanocarboxamida`, `benzamida`), be a group on
- * its N (`N-feniletanamida`) or on a side chain; the ring functions wait
- * for I-40c.
- */
-export const RING_AMIDE_MESSAGE = 'Esta molécula tiene un anillo y un grupo amida (–CONH₂, –CONH– o –CON–). '
-  + 'De momento solo sé nombrar las amidas de cadena abierta (como la etanamida o la N-metiletanamida): '
-  + 'las amidas con anillo, como la benzamida, la ciclohexanocarboxamida o la N-feniletanamida, aún no sé nombrarlas.';
-
-/**
  * HETEROATOM message for an amide the naming engine could cite neither as
  * the suffix `-amida` nor as a prefix (design.md §13.4 I-37, I-39d: `amino`
  * + `oxo` on its carbon, `carbamoil-` bonded through its carbon,
@@ -321,18 +311,6 @@ export const SUBSTITUTED_POLYAMIDE_MESSAGE = 'Esta molécula tiene dos grupos am
  */
 export const IMIDE_MESSAGE = 'Esta molécula tiene un nitrógeno unido a dos grupos C=O (–CO–NH–CO–). '
   + 'Eso es una imida, no una amida con un grupo en el nitrógeno, y las imidas quedan fuera de lo que sé nombrar.';
-
-/**
- * HETEROATOM message for a molecule with a ring and a nitrile group –C≡N
- * (design.md §13.4 I-38): a –C≡N carbon can never be a ring atom, so the
- * group is either bonded to the ring, named with the suffix
- * `-carbonitrilo` (`ciclohexanocarbonitrilo`, `benzonitrilo`), or on a
- * side chain, which then carries the principal group; both wait for I-40c.
- */
-export const RING_NITRILE_MESSAGE = 'Esta molécula tiene un anillo y un grupo –C≡N (un nitrilo). '
-  + 'Cuando el –C≡N va unido a un anillo, el nombre acaba en «-carbonitrilo» (como el ciclohexanocarbonitrilo '
-  + 'o el benzonitrilo), y eso aún no sé nombrarlo. De momento solo sé nombrar los nitrilos de cadena abierta '
-  + '(como el etanonitrilo).';
 
 /**
  * HETEROATOM message for more than two nitrile groups on one carbon piece
@@ -1387,9 +1365,9 @@ function esterPlacementError(mol, hetero, esters) {
  * ester is a prefix: `alcoxi…oxo`, `alcoxicarbonil-`, `aciloxi-`, I-39c),
  * the esters that cannot all be the suffix (esterPlacementError():
  * `manyEsters`, `esterPrefix`, `mixedDiester`), then the amides (amidePlacementError():
- * `ringAmide`, `manyAmides`, `substitutedPolyamide`), then
- * the nitriles (nitrilePlacementError(): `ringNitrile`, `carbonocyanidic`,
- * `manyNitriles`), then more than two aldehyde groups on one carbon piece
+ * `manyAmides`, `substitutedPolyamide`; with a ring since I-40c), then
+ * the nitriles (nitrilePlacementError(): `carbonocyanidic`,
+ * `manyNitriles`; with a ring since I-40c), then more than two aldehyde groups on one carbon piece
  * with the aldehyde principal (manyAldehydesError(), `manyAldehydes`). The error lists the heteroatoms (`atoms`) and the
  * offending groups (`acids`: the carboxyl carbons; `esters`: the ester
  * carbons; `aldehydes`: oxygens).
@@ -1413,11 +1391,11 @@ function oxygenPlacementError(mol, cyclic, hetero) {
   if (diester) {
     return diester;
   }
-  const amide = amidePlacementError(mol, cyclic, hetero, acids.length + esters.length > 0);
+  const amide = amidePlacementError(mol, hetero, acids.length + esters.length > 0);
   if (amide) {
     return amide;
   }
-  const nitrile = nitrilePlacementError(mol, cyclic, hetero, acids.length + esters.length + amideCarbons(mol).length > 0);
+  const nitrile = nitrilePlacementError(mol, hetero, acids.length + esters.length + amideCarbons(mol).length > 0);
   if (nitrile) {
     return nitrile;
   }
@@ -1442,92 +1420,95 @@ function chainPieces(mol) {
 
 /**
  * The refusal of a nameable-heteroatom molecule whose amide groups the
- * engine cannot place (design.md §13.4 I-37, I-39d), or null. In order:
- * any amide with a ring (`ringAmide`: `-carboxamida`, `N-fenil…`, I-40c);
- * beside an acid or an ester (ácido > éster > amida) every amide is a
- * prefix and is named (`amino…oxo`, `carbamoil-`, `acilamino-`, I-39d);
- * otherwise more than two amides on one carbon piece (`manyAmides`: an
- * amide carbon is always a chain end, a third would need
- * `-carboxamida`); a piece with two amides, which then carries the suffix
- * (P0), where some of their N carries other groups (`substitutedPolyamide`:
- * N¹/N⁴ locants, also when that group holds another amide). Amides on
- * other carbon pieces (joined through an N or an O) are named: the parent
- * carries the most (P0), the others are prefixes (`2-(acetilamino)etanamida`).
- * The error lists the heteroatoms (`atoms`) and the amide carbons
- * (`amides`).
+ * engine cannot place (design.md §13.4 I-37, I-39d, I-40c), or null. In
+ * order: beside an acid or an ester (ácido > éster > amida) every amide is
+ * a prefix and is named (`amino…oxo`, `carbamoil-`, `acilamino-`, I-39d);
+ * otherwise more than two amides on one carbon piece (chainPieces(), ring
+ * atoms left out; `manyAmides`: an amide carbon is always a chain end, a
+ * third would need `-carboxamida`); then the parent's amides where some of
+ * their N carries other groups (`substitutedPolyamide`: N¹/N⁴ locants,
+ * also when that group holds another amide): two on the piece that carries
+ * the most (P0) or, when the ring carries at least as many (it wins the
+ * tie, I-40c), two or more bonded to the ring (`-dicarboxamida`). Any
+ * number of amides bonded to the ring is otherwise named
+ * (`ciclohexano-1,2-dicarboxamida`), and so is a ring on an amide N
+ * (`N-feniletanamida`, I-40c). Amides on other carbon pieces (joined
+ * through an N or an O) are named: the parent carries the most (P0), the
+ * others are prefixes (`2-(acetilamino)etanamida`). The error lists the
+ * heteroatoms (`atoms`) and the amide carbons (`amides`).
  *
  * @param {object} mol - A validated molecule whose heteroatoms are nameable.
- * @param {boolean} cyclic - Whether it has a ring.
  * @param {number[]} hetero - Its non-carbon atom ids.
  * @param {boolean} senior - Whether it has an acid or an ester group.
  * @returns {{code: string, message: string}|null} The HETEROATOM error, or null.
  */
-function amidePlacementError(mol, cyclic, hetero, senior) {
+function amidePlacementError(mol, hetero, senior) {
   const amides = amideCarbons(mol);
   if (amides.length === 0) {
     return null;
   }
   const refuse = (message, reason) => validationError('HETEROATOM', { message, atoms: hetero, reason, amides });
-  if (cyclic) {
-    return refuse(RING_AMIDE_MESSAGE, 'ringAmide');
-  }
   if (senior) {
     return null; // Beside an acid or an ester every amide is a prefix (I-39d): `amino…oxo`, `carbamoil-`, `acilamino-`.
   }
-  const pieces = connectedComponents(carbonSkeleton(mol)).map((piece) => amides.filter((carbon) => piece.includes(carbon)));
+  const adj = adjacency(mol);
+  const ring = cycleCore(adj);
+  // Amides bonded to the ring (I-40c: `-carboxamida`) are pieces of one carbon; they are counted for the ring.
+  const onRing = amides.filter((carbon) => adj.get(carbon).some((n) => ring.has(n.atom)));
+  const pieces = chainPieces(mol)
+    .map((piece) => amides.filter((carbon) => piece.includes(carbon) && !onRing.includes(carbon)));
   if (pieces.some((onPiece) => onPiece.length > 2)) {
     return refuse(MANY_AMIDES_MESSAGE, 'manyAmides');
   }
   const most = Math.max(...pieces.map((onPiece) => onPiece.length));
+  const substituted = (carbon) => adj.get(amideNitrogenOf(mol, adj, carbon)).length > 1;
+  if (onRing.length >= most) {
+    // The ring is the parent (I-40c): two or more amides on it with a group on some N would need N¹/N² locants.
+    return onRing.length >= 2 && onRing.some(substituted) ? refuse(SUBSTITUTED_POLYAMIDE_MESSAGE, 'substitutedPolyamide') : null;
+  }
   const candidates = pieces.filter((onPiece) => onPiece.length === most);
-  if (most === 2) {
-    const adj = adjacency(mol);
-    // A diamide that could carry the suffix with a group on some N (another amide's piece included): N¹/N⁴ locants.
-    if (candidates.flat().some((carbon) => adj.get(amideNitrogenOf(mol, adj, carbon)).length > 1)) {
-      return refuse(SUBSTITUTED_POLYAMIDE_MESSAGE, 'substitutedPolyamide');
-    }
+  // A diamide that could carry the suffix with a group on some N (another amide's piece included): N¹/N⁴ locants.
+  if (most === 2 && candidates.flat().some(substituted)) {
+    return refuse(SUBSTITUTED_POLYAMIDE_MESSAGE, 'substitutedPolyamide');
   }
   return null;
 } // End of function amidePlacementError()
 
 /**
  * The refusal of a nameable-heteroatom molecule whose nitrile groups the
- * engine cannot place (design.md §13.4 I-38, I-39a), or null. In order: any
- * nitrile with a ring (`ringNitrile`: `-carbonitrilo`, `benzonitrilo`, or
- * a ring on the chain that carries it, I-40c); beside an acid, an ester or
- * an amide (ácido > éster > amida > nitrilo) every nitrile is the prefix
- * `ciano-` (I-39a), except one bonded directly to the carbon of such a
- * group (`carbonocyanidic`: NC–COOH is a carbonic acid derivative for
- * IUPAC 2013); with the nitrile principal, more than two nitrile carbons
- * on one carbon piece (`manyNitriles`: a nitrile carbon is always a chain
- * end, so a third would need `-carbonitrilo`). Nitriles on other carbon
- * pieces (joined through an O or an N) are named: the parent carries the
- * most (P0), the others are `ciano-` inside a branch. The error lists the
- * heteroatoms (`atoms`) and the nitrile carbons (`nitriles`).
+ * engine cannot place (design.md §13.4 I-38, I-39a, I-40c), or null. In
+ * order: beside an acid, an ester or an amide (ácido > éster > amida >
+ * nitrilo) every nitrile is the prefix `ciano-` (I-39a; on a ring too,
+ * I-40c), except one bonded directly to the carbon of such a group
+ * (`carbonocyanidic`: NC–COOH is a carbonic acid derivative for IUPAC
+ * 2013); with the nitrile principal, more than two nitrile carbons on one
+ * carbon piece (chainPieces(), ring atoms left out; `manyNitriles`: a
+ * nitrile carbon is always a chain end, so a third would need
+ * `-carbonitrilo`). Any number of nitriles bonded to the ring is named
+ * (`-carbonitrilo`, `benzonitrilo`, `ciclohexano-1,2-dicarbonitrilo`,
+ * I-40c). Nitriles on other carbon pieces (joined through an O or an N, or
+ * through the ring) are named: the parent carries the most (P0), the
+ * others are `ciano-`. The error lists the heteroatoms (`atoms`) and the
+ * nitrile carbons (`nitriles`).
  *
  * @param {object} mol - A validated molecule whose heteroatoms are nameable.
- * @param {boolean} cyclic - Whether it has a ring.
  * @param {number[]} hetero - Its non-carbon atom ids.
  * @param {boolean} senior - Whether it has an acid, an ester or an amide group.
  * @returns {{code: string, message: string}|null} The HETEROATOM error, or null.
  */
-function nitrilePlacementError(mol, cyclic, hetero, senior) {
+function nitrilePlacementError(mol, hetero, senior) {
   const nitriles = nitrileCarbons(mol);
   if (nitriles.length === 0) {
     return null;
   }
   const refuse = (message, reason) => validationError('HETEROATOM', { message, atoms: hetero, reason, nitriles });
-  if (cyclic) {
-    return refuse(RING_NITRILE_MESSAGE, 'ringNitrile');
-  }
   const adj = adjacency(mol);
   if (senior) {
     const functional = (id) => isCarboxylCarbon(mol, adj, id) || isEsterCarbon(mol, adj, id) || isAmideCarbon(mol, adj, id);
     const onFunctional = nitriles.some((carbon) => adj.get(carbon).some((n) => functional(n.atom)));
     return onFunctional ? refuse(CARBONOCYANIDIC_MESSAGE, 'carbonocyanidic') : null;
   }
-  const pieces = connectedComponents(carbonSkeleton(mol));
-  if (pieces.some((piece) => nitriles.filter((carbon) => piece.includes(carbon)).length > 2)) {
+  if (chainPieces(mol).some((piece) => nitriles.filter((carbon) => piece.includes(carbon)).length > 2)) {
     return refuse(MANY_NITRILES_MESSAGE, 'manyNitriles');
   }
   return null;

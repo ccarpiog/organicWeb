@@ -8,7 +8,7 @@
  * `N,N-dimetiletanamida`, `N-etil-N-metilpropanamida`); other groups are
  * prefixes (`4-oxopentanamida`, `3-hidroxibutanamida`, `2-aminopropanamida`);
  * `formamida` / `acetamida` under "Otras formas válidas"; the refusals
- * (`ringAmide`, `manyAmides`, `substitutedPolyamide`, `imide`; the amide
+ * (`manyAmides`, `substitutedPolyamide`, `imide`; rings are named since I-40c; the amide
  * prefixes of `amidePrefix` are named since I-39d,
  * tests/unit/amide-prefixes.test.js); both lexicons; the explanation; id invariance and Ordenar dibujo;
  * the oracle generator. The names themselves are also checked row by row in
@@ -21,7 +21,7 @@ import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
 import { adjacency, canonicalKey } from '../../src/model/graph.js';
 import {
   validateForNaming, isAmideCarbon, amideRole, amideCarbons, imideNitrogens, isAmineNitrogen, carbonylKind,
-  hasNameableHeteroatoms, MESSAGES, RING_AMIDE_MESSAGE, AMIDE_PREFIX_MESSAGE, MANY_AMIDES_MESSAGE,
+  hasNameableHeteroatoms, MESSAGES, AMIDE_PREFIX_MESSAGE, MANY_AMIDES_MESSAGE,
   SUBSTITUTED_POLYAMIDE_MESSAGE, IMIDE_MESSAGE, SYMMETRIC_AMINE_MESSAGE,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
@@ -201,13 +201,8 @@ test('N-substitution: groups on the N are prefixes with the locant N, never chai
   assert.equal(named('CCC(=O)NC(C)C', 'substituted').name, 'N-(1-metiletil)propanamida');
 });
 
-test('refusals: rings, amide prefixes, more than two amides, N-substituted diamides and imides', () => {
+test('refusals: amide prefixes, more than two amides, N-substituted diamides and imides (rings named since I-40c)', () => {
   const refusals = [
-    ['NC(=O)C1CCCCC1', 'ringAmide', RING_AMIDE_MESSAGE],
-    ['NC(=O)C1=CC=CC=C1', 'ringAmide', RING_AMIDE_MESSAGE],
-    ['CC(=O)NC1=CC=CC=C1', 'ringAmide', RING_AMIDE_MESSAGE],
-    ['CC(=O)NC1CCCCC1', 'ringAmide', RING_AMIDE_MESSAGE],
-    ['NC(=O)CCC1CC1', 'ringAmide', RING_AMIDE_MESSAGE],
     // Amide prefixes are named since I-39d; two amides joined by an amine N into equal halves are multiplicative.
     ['NC(=O)CNCC(N)=O', 'symmetricAmine', SYMMETRIC_AMINE_MESSAGE],
     ['NC(=O)CC(C(N)=O)CC(N)=O', 'manyAmides', MANY_AMIDES_MESSAGE],
@@ -229,7 +224,11 @@ test('refusals: rings, amide prefixes, more than two amides, N-substituted diami
   assert.deepEqual(validateForNaming(parseSmiles('CC(=O)NC(C)=O')).imides, [4]);
   assert.deepEqual(imideNitrogens(parseSmiles('CC(=O)NC')), []);
   // Every message is Spanish, names the group and says why.
-  for (const message of [RING_AMIDE_MESSAGE, AMIDE_PREFIX_MESSAGE, MANY_AMIDES_MESSAGE, SUBSTITUTED_POLYAMIDE_MESSAGE, IMIDE_MESSAGE]) {
+  // Amides with a ring are named since I-40c (tests/unit/ring-nitriles-amides.test.js).
+  assert.equal(named('NC(=O)C1CCCCC1').name, 'ciclohexanocarboxamida');
+  assert.equal(named('CC(=O)NC1=CC=CC=C1').name, 'N-feniletanamida');
+  assert.equal(named('NC(=O)CCC1CC1').name, '3-ciclopropilpropanamida');
+  for (const message of [AMIDE_PREFIX_MESSAGE, MANY_AMIDES_MESSAGE, SUBSTITUTED_POLYAMIDE_MESSAGE, IMIDE_MESSAGE]) {
     assert.match(message, /amida|imida/);
     assert.match(message, /sé (nombrar|hacerlo)/);
   }
@@ -238,7 +237,7 @@ test('refusals: rings, amide prefixes, more than two amides, N-substituted diami
 });
 
 test('refusals are explained in the stepper like the others', () => {
-  for (const smiles of ['NC(=O)C1CCCCC1', 'NC(=O)CC(C(N)=O)CC(N)=O', 'CNC(=O)CCC(N)=O', 'CC(=O)NC(C)=O']) {
+  for (const smiles of ['NC(=O)CC(C(N)=O)CC(N)=O', 'CNC(=O)CCC(N)=O', 'CC(=O)NC(C)=O']) {
     const result = named(smiles);
     const steps = explain(result);
     assert.ok(steps.length > 0, smiles);

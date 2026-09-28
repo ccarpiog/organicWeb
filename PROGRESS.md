@@ -54,12 +54,12 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-39d | v2.19d Amide prefixes and pair matrix (split from I-39c) | same, §3.19 | done — `docs/progress-archive/i-39d.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-39d.md` |
 | I-40a | v2.20a Rings as substituents of a functional chain (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40a.md` |
 | I-40b | v2.20b Acids and aldehydes with a ring, ring acyl prefixes (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40b.md` |
-| I-40c | v2.20c Nitriles and amides with a ring (split from I-40) | same, §3.20 | queued | — | — |
+| I-40c | v2.20c Nitriles and amides with a ring (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40c.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40c.md` |
 | I-40d | v2.20d Ring esters (split from I-40) | same, §3.20 | queued | — | — |
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-40b done; I-40c, I-40d, I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-40c done; I-40d, I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo; I-39 into I-39a `ciano-`,
 I-39b acyl prefixes, I-39c ester prefixes + diesters, I-39d amide prefixes + pair matrix;
 I-40 into I-40a ring prefixes on a functional chain, I-40b acids/aldehydes + ring acyl
@@ -98,13 +98,13 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-40c: lift `ringNitrile` and `ringAmide` — suffixes on the ring
-(`ciclohexanocarbonitrilo`, `benzonitrilo`, `ciclohexanocarboxamida`, `benzamida`), amides with a
-ring on the N (`N-fenil…amida`, `N-ciclohexil…`), those groups on a chain beside a ring (I-40a ring
-prefixes), and the prefix forms beside a senior group (`ciano-`, `carbamoil-` on rings). Reuse
-I-40b's `-carboxílico`/`-carbaldehído` machinery (`principal.js`, `rings.js`, `render.js`).
-Spec: design §13.4 row I-40, §13.6; archives `i-40a.md`, `i-40b.md`. Then I-40d (ring esters,
-`ringEster`), then I-41. Deploying stays a manual user step.
+Poll the inbox, then run I-40d: lift `ringEster` — esters with a ring on either side
+(`benzoato de metilo`, `ciclohexanocarboxilato de etilo`, `acetato de fenilo`, `etanoato de
+ciclohexilo`), ring esters on a chain beside a ring (I-40a prefixes) and ester prefixes on rings
+beside a senior group (`alcoxicarbonil-`, `aciloxi-`). Reuse I-40b/I-40c's ring-suffix machinery
+(`principal.js`, `rings.js`, `render.js`) and I-35/I-39c ester code (`esterAlkylName()`,
+`esterSpecs()`). Spec: design §13.4 row I-40, §13.6; archives `i-40b.md`, `i-40c.md`, `i-35.md`,
+`i-39c.md`. Then I-41. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -210,14 +210,19 @@ Spec: design §13.4 row I-40, §13.6; archives `i-40a.md`, `i-40b.md`. Then I-40
   `(ciclohexanocarbonil)` in `principal.js` / `rings.js` / `substituent.js` / `render.js`;
   explain `acidCompanions()`; oracle `generateRingAcids()`; tests `tests/unit/ring-acids.test.js`,
   `tests/e2e/ring-acids.spec.js`.
+- Ring nitriles/amides (I-40c): `-carbonitrilo`/`-carboxamida` on rings, `N-fenil…amida`, `ciano-` /
+  `carbamoil-` on rings in `principal.js` / `rings.js` / `substituent.js` / `render.js`; explain
+  `branchAmideHow()`; oracle `generateRingNitrilesAmides()`; tests
+  `tests/unit/ring-nitriles-amides.test.js`, `tests/e2e/ring-nitriles-amides.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-40b)
+## Verification (last phase, I-40c)
 
-- Run by the orchestrator after the review fix: `npm test` 0 (1381 pass) · `npm run check` 0
-  (123 files) · `npm run e2e` 0 (241 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1`
-  0 (9111 pass, 500 ring-acid).
+- Run by the orchestrator: `npm test` 0 (1432 pass) · `npm run check` 0 (125 files) · `npm run e2e`
+  0 (247 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (9611 pass, 500 ring
+  nitriles/amides). After the review fix: `npm test` 0 (1433 pass) · `npm run check` 0 ·
+  `npm run e2e` 0 (247 pass).
 
 ## Open risks / deviations
 
@@ -384,10 +389,16 @@ Spec: design §13.4 row I-40, §13.6; archives `i-40a.md`, `i-40b.md`. Then I-40
   `carboxySubstituent`; `manyAcids` now per carbon piece. Review should-fix (ring-adjacent ketone
   explained as an aldehyde) fixed with regressions (`docs/progress-archive/i-40b.md`).
 
+- I-40c: `benzonitrilo`/`benzamida` preferred with `benceno…` forms as alternatives;
+  `N-feniletanamida` first (systematic-first rule) with `N-fenilacetamida`; `2-fenilacetamida`,
+  `fenilacetonitrilo` "la IUPAC acepta" — all from memory (P-66.1, P-66.5). Ring diamides with an
+  N-substituent refused (N¹/N⁴ message); four refusal snapshots swapped for still-refused molecules.
+  Pre-existing: `cianometil` branch explained as "un grupo de 2 carbonos". Review should-fix
+  (amide prefix form in «Anillo o cadena») fixed with a regression (`docs/progress-archive/i-40c.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-40a `4620f72`, pushed. I-40b committed and pushed right after this checkpoint (see
-  `git log`).
+- I-40b `cdbe7fb`, pushed. I-40c committed and pushed right after this checkpoint (see `git log`).

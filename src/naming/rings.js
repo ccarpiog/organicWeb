@@ -14,7 +14,9 @@
  * `ácido 2-metilciclohexano-1-carboxílico`,
  * `ácido ciclohexano-1,2-dicarboxílico`: the group's carbon is outside the
  * ring, the ring atom bonded to it is numbered first (N0) and the suffix
- * includes the carbon (suffixSites(…, ring = true), render.js).
+ * includes the carbon (suffixSites(…, ring = true), render.js); likewise
+ * an amide or a –C≡N (I-40c): `ciclohexanocarboxamida`,
+ * `N-metilciclohexanocarboxamida`, `2-metilciclohexano-1-carbonitrilo`.
  *
  * Ring vs chain (IUPAC 2013 P-44.1.2.2, P-52.2.8): a ring is senior to a
  * chain whatever the chain's length or unsaturation, so without a

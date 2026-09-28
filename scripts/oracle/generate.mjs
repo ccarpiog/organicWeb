@@ -32,7 +32,10 @@
  * `fenoxi`, `(ciclohexilamino)`, and ring and chain tied;
  * generateRingSubstituents()), of ring acids, aldehydes and ring acyl
  * prefixes (I-40b: `-carboxílico`, `-carbaldehído`, `ácido benzoico`,
- * `carboxi-`, `benzoil`, `(ciclohexanocarbonil)`; generateRingAcids()),
+ * `carboxi-`, `benzoil`, `(ciclohexanocarbonil)`; generateRingAcids()), of
+ * ring nitriles and amides (I-40c: `-carbonitrilo`, `-carboxamida`,
+ * `benzonitrilo`, `benzamida`, `N-feniletanamida`, `ciano-` / `carbamoil-`
+ * on a ring; generateRingNitrilesAmides()),
  * plus the list of cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
@@ -1729,11 +1732,13 @@ export function generateRingSubstituents({ count, seed, maxSize = 14 }) {
  * its ring carbons (design.md §13.4 I-40b: `-carboxílico`,
  * `-carbaldehído`): up to `max` ring carbons with a hydrogen, in random
  * order, each get a new carbon X with a double-bonded O (and an OH for an
- * acid).
+ * acid); since I-40c also amides (X with a double-bonded O and an N,
+ * `-carboxamida`) and nitriles (X with an N on a triple bond,
+ * `-carbonitrilo`).
  *
  * @param {object} mol - A molecule (not mutated).
  * @param {function(): number} random - Seeded generator.
- * @param {'acid'|'aldehyde'} kind - Which group.
+ * @param {'acid'|'aldehyde'|'amide'|'nitrile'} kind - Which group.
  * @param {number} max - The most groups to add.
  * @param {Set<number>} ring - The ring carbons that may carry a group.
  * @returns {object} The copy (possibly without any new group).
@@ -1744,11 +1749,17 @@ export function ringGroupGraft(mol, random, kind, max, ring) {
   for (const id of sites) {
     const carbon = addAtom(copy, {}, 'C');
     addBond(copy, id, carbon, 1);
+    if (kind === 'nitrile') {
+      addBond(copy, carbon, addAtom(copy, {}, 'N'), 3);
+      continue;
+    }
     addBond(copy, carbon, addAtom(copy, {}, 'O'), 2);
     if (kind === 'acid') {
       addBond(copy, carbon, addAtom(copy, {}, 'O'), 1);
+    } else if (kind === 'amide') {
+      addBond(copy, carbon, addAtom(copy, {}, 'N'), 1);
     }
-  }
+  } // End of the loop over the chosen ring carbons
   return copy;
 } // End of function ringGroupGraft()
 
@@ -1774,6 +1785,20 @@ export function ringAcylGraft(mol, random, only) {
   const carbon = addAtom(copy, {}, 'C');
   addBond(copy, sites[Math.floor(random() * sites.length)], carbon, 1);
   addBond(copy, carbon, addAtom(copy, {}, 'O'), 2);
+  addBond(copy, carbon, addRandomRing(copy, random), 1);
+  return copy;
+} // End of function ringAcylGraft()
+
+/**
+ * Adds a new ring to a molecule, in place, unbonded to the rest (design.md
+ * §13.4 I-40b, I-40c): a cycloalkane of 3 to 7 carbons, sometimes with a
+ * double bond, or a benzene ring (40 %).
+ *
+ * @param {object} copy - The molecule to extend (mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @returns {number} The id of its first ring atom, which has a hydrogen to spare.
+ */
+function addRandomRing(copy, random) {
   const benzene = random() < 0.4;
   const size = benzene ? 6 : randomInt(random, 3, 7);
   const ring = Array.from({ length: size }, () => addAtom(copy));
@@ -1786,9 +1811,8 @@ export function ringAcylGraft(mol, random, only) {
     }
     addBond(copy, id, ring[(i + 1) % size], order);
   });
-  addBond(copy, carbon, ring[0], 1);
-  return copy;
-} // End of function ringAcylGraft()
+  return ring[0];
+} // End of function addRandomRing()
 
 /**
  * Generates up to `count` distinct (by canonical key) molecules with a ring
@@ -1879,6 +1903,140 @@ export function generateRingAcids({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct ring-acid molecules
   return molecules;
 } // End of function generateRingAcids()
+
+/**
+ * Grafts random saturated alkyl groups of 1 to 3 carbons onto a nitrogen,
+ * in place (design.md §13.4 I-40c: `N-metilbenzamida`,
+ * `N,N-dimetilciclohexanocarboxamida`): while the N has a free valence,
+ * one more with probability `graft`.
+ *
+ * @param {object} copy - The molecule (mutated).
+ * @param {number} nitrogen - The N atom id.
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} graft - Probability of each further group.
+ */
+function alkylateNitrogen(copy, nitrogen, random, graft) {
+  while (bondOrderSum(copy, nitrogen) < NITROGEN_VALENCE && random() < graft) {
+    const alkyl = randomHydrocarbon(random, { size: randomInt(random, 1, 3), unsaturation: 0, branchiness: random() });
+    const ids = new Map([...alkyl.atoms.keys()].map((id) => [id, addAtom(copy)]));
+    for (const b of alkyl.bonds.values()) {
+      addBond(copy, ids.get(b.a), ids.get(b.b), b.order);
+    }
+    const keys = [...ids.values()];
+    addBond(copy, nitrogen, keys[Math.floor(random() * keys.length)], 1);
+  }
+} // End of function alkylateNitrogen()
+
+/**
+ * The N atoms of the amide groups of a molecule that have a hydrogen to
+ * spare (only one carbon, the amide carbon, bonded to them).
+ *
+ * @param {object} mol - A molecule.
+ * @returns {number[]} The N ids.
+ */
+function freeAmideNitrogens(mol) {
+  const adj = adjacency(mol);
+  return amideCarbons(mol)
+    .map((carbon) => adj.get(carbon).find((n) => mol.atoms.get(n.atom).element === 'N').atom)
+    .filter((nitrogen) => bondOrderSum(mol, nitrogen) < NITROGEN_VALENCE);
+}
+
+/**
+ * Generates up to `count` distinct (by canonical key) molecules with a ring
+ * and a nitrile or an amide (design.md §13.4 I-40c): a random monocycle
+ * (3–10 ring carbons) or benzene with one or two –C≡N or –CONH₂ bonded to
+ * ring carbons (ringGroupGraft(): `ciclohexanocarbonitrilo`,
+ * `ciclohexano-1,2-dicarboxamida`, `benzonitrilo`, `benzamida`; on benzene
+ * only without a side chain; a single amide sometimes with alkyl groups on
+ * its N, `N-metilbenzamida`), or at side-chain ends (nitrilate(),
+ * amidate(): `2-ciclohexiletanonitrilo`, `3-fenilpropanamida`), or both
+ * (`4-(cianometil)ciclohexano-1-carbonitrilo`); an acyclic amide with a
+ * new ring on its N (addRandomRing(): `N-feniletanamida`,
+ * `N-ciclohexil-N-metilpropanamida`); or a ring acid beside a ring nitrile
+ * or amide, cited `ciano-` / `carbamoil-` (`ácido
+ * 4-cianociclohexano-1-carboxílico`). A share also carry OH groups, ring
+ * C=O, amines and halogens. Only molecules with one ring and a nitrile or
+ * an amide that the engine names in every prefix style are kept.
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateRingNitrilesAmides({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 9209 + 59);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60) {
+    attempts += 1;
+    const kind = ['ring', 'ring', 'side', 'both', 'nitrogen', 'prefix'][Math.floor(random() * 6)];
+    const group = random() < 0.5 ? 'nitrile' : 'amide';
+    let mol;
+    if (kind === 'nitrogen') {
+      const size = randomInt(random, 1, Math.max(1, maxSize - 8));
+      const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.3, branchiness: 0.3 + random() * 0.7 });
+      mol = amidate(base, random, 1);
+      const [nitrogen] = freeAmideNitrogens(mol);
+      if (nitrogen === undefined) {
+        continue; // No end carbon could take an amide.
+      }
+      addBond(mol, nitrogen, addRandomRing(mol, random), 1);
+      alkylateNitrogen(mol, nitrogen, random, 0.3);
+    } else {
+      const benzene = random() < 0.35 && maxSize >= 7 && kind !== 'prefix';
+      const plain = benzene && kind === 'ring';
+      let base;
+      let ringSize = 6;
+      if (benzene) {
+        const extra = plain ? 0 : randomInt(random, 1, Math.max(1, Math.min(5, maxSize - 7)));
+        base = randomBenzene(random, { extra, kekule: random() < 0.5 ? 1 : 2, unsaturation: random() * 0.3 });
+      } else {
+        const size = randomInt(random, 3, Math.max(3, maxSize - 3));
+        ringSize = randomInt(random, 3, Math.min(10, size));
+        base = randomMonocycle(random, {
+          ringSize, extra: size - ringSize, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8,
+        });
+      } // End of the choice of the ring molecule
+      const ids = [...base.atoms.keys()];
+      const ring = new Set(ids.slice(0, ringSize)); // randomMonocycle() and randomBenzene() add the ring atoms first.
+      mol = base;
+      if (kind === 'prefix') {
+        mol = ringGroupGraft(mol, random, 'acid', 1, ring);
+      }
+      if (kind === 'ring' || kind === 'both' || kind === 'prefix') {
+        mol = ringGroupGraft(mol, random, group, benzene || kind === 'prefix' || random() < 0.7 ? 1 : 2, ring);
+      }
+      if (kind === 'side' || kind === 'both') {
+        mol = group === 'nitrile' ? nitrilate(mol, random, random() < 0.3 ? 2 : 1) : amidate(mol, random, 1);
+      }
+      const free = freeAmideNitrogens(mol);
+      if (free.length === 1 && random() < 0.5) {
+        alkylateNitrogen(mol, free[0], random, 0.6);
+      }
+      if (!benzene && random() < 0.2) {
+        mol = random() < 0.5 ? hydroxylate(mol, random, 0.05 + random() * 0.15, ring) : carbonylate(mol, random, 0.1, ring);
+      }
+      if (random() < 0.1) {
+        mol = aminate(mol, random, { rate: 0.1, only: benzene ? new Set(ids.filter((id) => !ring.has(id))) : null });
+      }
+    } // End of the choice of the kind of molecule
+    if (random() < 0.15) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.15);
+    }
+    if (validateForNaming(mol) || perceiveRings(mol).rings.length !== 1
+      || amideCarbons(mol).length + nitrileCarbons(mol).length === 0) {
+      continue; // Not valid for naming (a polysubstituted benzene, an N-substituted ring diamide…), no ring, or no group.
+    }
+    if (!PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
+      continue; // Refused by the engine in some style (symmetricRing…).
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct ring nitrile and amide molecules
+  return molecules;
+} // End of function generateRingNitrilesAmides()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

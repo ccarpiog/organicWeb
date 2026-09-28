@@ -101,6 +101,8 @@ export const TRADITIONAL_NAMES = Object.freeze({
   benzylamine: 'bencilamina',
   phenylaceticAcid: 'ácido fenilacético',
   phenylacetaldehyde: 'fenilacetaldehído',
+  phenylacetamide: '2-fenilacetamida',
+  phenylacetonitrile: 'fenilacetonitrilo',
 });
 
 /**
@@ -146,7 +148,10 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * replace the bare ácido 2-feniletanoico and 2-feniletanal: acetic acid and
  * acetaldehyde keep their retained names with a phenyl group on the CH₃
  * (status from memory; the app says only that they are accepted, as it
- * names `ácido 2-cloroetanoico` without `cloroacético`).
+ * names `ácido 2-cloroetanoico` without `cloroacético`). Likewise (I-40c)
+ * `2-fenilacetamida` and `fenilacetonitrilo` for the bare 2-feniletanamida
+ * and 2-feniletanonitrilo; the amide keeps the locant 2, since its N could
+ * carry the phenyl too (`N-fenilacetamida`; from memory).
  */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
@@ -169,6 +174,8 @@ export const TRADITIONAL_LABELS = Object.freeze({
   benzylamine: 'nombre tradicional, que la IUPAC (2013) acepta',
   phenylaceticAcid: 'nombre tradicional, que la IUPAC (2013) acepta',
   phenylacetaldehyde: 'nombre tradicional, que la IUPAC (2013) acepta',
+  phenylacetamide: 'nombre tradicional, que la IUPAC (2013) acepta',
+  phenylacetonitrile: 'nombre tradicional, que la IUPAC (2013) acepta',
 });
 
 /** Endings of the parent name. */
@@ -649,7 +656,7 @@ export function styleLabel(style) {
  * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene,
  * a small carbonyl compound or a small acid.
  *
- * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide', 'acetamide', 'acetonitrile', 'acetophenone', 'benzylAlcohol', 'benzylamine', 'phenylaceticAcid' or 'phenylacetaldehyde'.
+ * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide', 'acetamide', 'acetonitrile', 'acetophenone', 'benzylAlcohol', 'benzylamine', 'phenylaceticAcid', 'phenylacetaldehyde', 'phenylacetamide' or 'phenylacetonitrile'.
  * @returns {string} The Spanish name.
  * @throws {Error} For an unknown id.
  */
@@ -686,9 +693,14 @@ export const GROUP_SUFFIXES = Object.freeze({
  * (design.md §13.4 I-40b; IUPAC 2013 P-65.1.2, P-66.6.1.1): the ring name
  * keeps its final vowel and the suffix names the carbon too —
  * `ácido ciclohexanocarboxílico`, `ciclohexano-1,2-dicarboxílico`,
- * `ciclohexanocarbaldehído`, `ciclohex-2-eno-1-carbaldehído`.
+ * `ciclohexanocarbaldehído`, `ciclohex-2-eno-1-carbaldehído`; for amides and
+ * nitriles (I-40c; P-66.1.1.4, P-66.5.1.1, from memory) `ciclohexanocarboxamida`,
+ * `N-metilciclohexanocarboxamida`, `ciclohexanocarbonitrilo`,
+ * `ciclohexano-1,2-dicarbonitrilo`.
  */
-export const RING_GROUP_SUFFIXES = Object.freeze({ acid: 'carboxílico', aldehyde: 'carbaldehído' });
+export const RING_GROUP_SUFFIXES = Object.freeze({
+  acid: 'carboxílico', aldehyde: 'carbaldehído', amide: 'carboxamida', nitrile: 'carbonitrilo',
+});
 
 /**
  * Returns the suffix of a principal group whose carbon is outside a ring
@@ -708,11 +720,17 @@ export function ringGroupSuffix(kind) {
  * and an ending that refers to the group: `benz` + `oico` (after the class
  * word `ácido`: `ácido benzoico`), `benz` + `aldehído`. The systematic
  * `ácido bencenocarboxílico` / `bencenocarbaldehído` are offered as
- * alternatives (naming/index.js).
+ * alternatives (naming/index.js). Likewise (I-40c) `benz` + `amida`
+ * (`benzamida`, `N-metilbenzamida`; P-66.1.1.1.2) and `benz` + `onitrilo`
+ * (`benzonitrilo`; P-66.5.1.1.2), retained preferred names derived from
+ * benzoic acid (from memory), with `bencenocarboxamida` /
+ * `bencenocarbonitrilo` as alternatives.
  */
 export const BENZENE_GROUP_NAMES = Object.freeze({
   acid: Object.freeze({ stem: 'benz', ending: 'oico' }),
   aldehyde: Object.freeze({ stem: 'benz', ending: 'aldehído' }),
+  amide: Object.freeze({ stem: 'benz', ending: 'amida' }),
+  nitrile: Object.freeze({ stem: 'benz', ending: 'onitrilo' }),
 });
 
 /**
