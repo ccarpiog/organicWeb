@@ -32,13 +32,20 @@
  * through a label, no crossing or overlapping bonds); the caller refuses a
  * drawing it rejects.
  *
+ * Optional CHO/COOH abbreviations (`abbreviate`): an aldehyde or acid group
+ * whose carbon has one other (carbon) neighbour (abbreviationGroups() in
+ * editor/labels.js) is laid out as one leaf atom, its carbon, labelled `CHO`
+ * / `COOH`; the group's O atoms get the carbon's position and are neither
+ * placed on the grid nor checked (they are drawn inside the label).
+ *
  * Pure: no DOM, never mutates the molecule; returns positions only, so the
  * model's own coordinates (and undo, autosave) are untouched.
  */
 
 import { adjacency, hasCycle } from '../model/graph.js';
 import { BOND_LENGTH } from '../editor/geometry.js';
-import { atomLabel, labelSize, RIGHT_ANGLE_PAD } from '../editor/render.js';
+import { labelSize, RIGHT_ANGLE_PAD } from '../editor/render.js';
+import { abbreviationGroups, sizedLabel } from '../editor/labels.js';
 
 /** Shortest visible bond stroke between two labels, in drawing units. */
 export const MIN_STROKE = 16;
@@ -450,15 +457,22 @@ function gridLayout(mol, adj, chain) {
  * Grid steps of the drawing: a column step that fits the widest label on
  * both sides of a visible bond stroke, and a row step that does the same
  * for the label height. Never shorter than a bond of the normal drawing.
+ * With abbreviations, their O atoms have no label of their own and the
+ * group's carbon is sized by its `CHO` / `COOH` text (sizedLabel()).
  *
  * @param {object} mol - The molecule.
+ * @param {Map<number, object>|null} [groups] - Abbreviations in force (abbreviationGroups()), or none.
  * @returns {{col: number, row: number}} Steps in drawing units.
  */
-export function gridSteps(mol) {
+export function gridSteps(mol, groups = null) {
+  const away = hiddenAtoms(groups);
   let width = 0;
   let height = 0;
   for (const id of mol.atoms.keys()) {
-    const size = labelSize(atomLabel(mol, id));
+    if (away.has(id)) {
+      continue;
+    }
+    const size = labelSize(sizedLabel(mol, id, groups));
     width = Math.max(width, size.width);
     height = Math.max(height, size.height);
   }
@@ -469,15 +483,79 @@ export function gridSteps(mol) {
 } // End of function gridSteps()
 
 /**
+ * The atoms drawn inside an abbreviation's label (the O atoms of every group).
+ *
+ * @param {Map<number, object>|null} groups - Abbreviations in force, or none.
+ * @returns {Set<number>} Their ids (empty without abbreviations).
+ */
+function hiddenAtoms(groups) {
+  const away = new Set();
+  for (const group of groups ? groups.values() : []) {
+    group.atoms.filter((id) => id !== group.carbon).forEach((id) => away.add(id));
+  }
+  return away;
+}
+
+/**
+ * Places a molecule on the grid, with or without abbreviations, and turns
+ * the cells into centred drawing positions (an abbreviated O at its
+ * carbon's position); checks the result with rightAngleProblems().
+ *
+ * @param {object} mol - The molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency.
+ * @param {number[]} chain - Parent atoms in locant order.
+ * @param {Map<number, object>|null} groups - Abbreviations in force, or none.
+ * @param {{x: number, y: number}} target - Point the drawing is centred on.
+ * @returns {{ok: true, positions: Map<number, {x: number, y: number}>}|{ok: false, reason: string}} The drawing.
+ */
+function placeDrawing(mol, adj, chain, groups, target) {
+  const away = hiddenAtoms(groups);
+  let tree = adj;
+  if (away.size > 0) {
+    // The abbreviated groups' O atoms leave the tree: their carbon becomes a leaf.
+    tree = new Map();
+    for (const [id, links] of adj) {
+      if (!away.has(id)) {
+        tree.set(id, links.filter((n) => !away.has(n.atom)));
+      }
+    }
+  }
+  const grid = gridLayout(mol, tree, chain);
+  if (!grid || grid.size !== mol.atoms.size - away.size) {
+    return { ok: false, reason: 'NO_ROOM' };
+  }
+  const step = gridSteps(mol, groups);
+  const cols = [...grid.values()].map((c) => c.col);
+  const rows = [...grid.values()].map((c) => c.row);
+  const mid = { col: (Math.min(...cols) + Math.max(...cols)) / 2, row: (Math.min(...rows) + Math.max(...rows)) / 2 };
+  const positions = new Map();
+  for (const [id, c] of grid) {
+    positions.set(id, { x: target.x + (c.col - mid.col) * step.col, y: target.y + (c.row - mid.row) * step.row });
+  }
+  for (const group of groups ? groups.values() : []) {
+    for (const id of group.atoms) {
+      positions.set(id, { ...positions.get(group.carbon) });
+    }
+  }
+  if (rightAngleProblems(mol, positions, groups).length > 0) {
+    return { ok: false, reason: 'NO_ROOM' };
+  }
+  return { ok: true, positions };
+} // End of function placeDrawing()
+
+/**
  * Computes the 90° view of a named molecule.
  *
  * @param {object} mol - The molecule (not mutated).
  * @param {object} result - Its successful naming result (nameMolecule()); only `parent.atoms` is read.
- * @param {{center?: {x: number, y: number}}} [options] - Point the drawing is centred on (default: the
- *   centre of the molecule's current bounding box, so the view does not jump).
- * @returns {{ok: true, positions: Map<number, {x: number, y: number}>}|{ok: false, reason: string}}
- *   The projected positions, or `NO_ROOM` when no collision-free drawing was found (`CYCLE` for a
- *   molecule with a ring, which the grid walk cannot place).
+ * @param {{center?: {x: number, y: number}, abbreviate?: boolean}} [options] - Point the drawing is
+ *   centred on (default: the centre of the molecule's current bounding box, so the view does not jump);
+ *   `abbreviate`: draw every CHO/COOH group of abbreviationGroups() as one label (if that drawing
+ *   does not fit, the per-atom drawing is returned instead).
+ * @returns {{ok: true, positions: Map<number, {x: number, y: number}>, abbreviations?: Map<number, object>}|
+ *   {ok: false, reason: string}} The projected positions (every atom; an abbreviated O at its carbon's
+ *   position) and, when abbreviations were drawn, their groups; or `NO_ROOM` when no collision-free
+ *   drawing was found (`CYCLE` for a molecule with a ring, which the grid walk cannot place).
  * @throws {Error} When the result is not a successful naming of this molecule.
  */
 export function rightAngleLayout(mol, result, options = {}) {
@@ -493,39 +571,35 @@ export function rightAngleLayout(mol, result, options = {}) {
   if (chain.length === 0 || chain.some((id) => !adj.has(id))) {
     throw new Error('rightAngleLayout: the parent chain does not belong to this molecule');
   }
-  const grid = gridLayout(mol, adj, chain);
-  if (!grid || grid.size !== mol.atoms.size) {
-    return { ok: false, reason: 'NO_ROOM' };
-  }
-  const step = gridSteps(mol);
   const atoms = [...mol.atoms.values()];
   const target = options.center || {
     x: (Math.min(...atoms.map((a) => a.x)) + Math.max(...atoms.map((a) => a.x))) / 2,
     y: (Math.min(...atoms.map((a) => a.y)) + Math.max(...atoms.map((a) => a.y))) / 2,
   };
-  const cols = [...grid.values()].map((c) => c.col);
-  const rows = [...grid.values()].map((c) => c.row);
-  const mid = { col: (Math.min(...cols) + Math.max(...cols)) / 2, row: (Math.min(...rows) + Math.max(...rows)) / 2 };
-  const positions = new Map();
-  for (const [id, c] of grid) {
-    positions.set(id, { x: target.x + (c.col - mid.col) * step.col, y: target.y + (c.row - mid.row) * step.row });
+  if (options.abbreviate) {
+    const groups = abbreviationGroups(mol);
+    if (groups.size > 0) {
+      const drawing = placeDrawing(mol, adj, chain, groups, target);
+      if (drawing.ok) {
+        return { ...drawing, abbreviations: groups };
+      }
+    }
   }
-  if (rightAngleProblems(mol, positions).length > 0) {
-    return { ok: false, reason: 'NO_ROOM' };
-  }
-  return { ok: true, positions };
+  return placeDrawing(mol, adj, chain, null, target);
 } // End of function rightAngleLayout()
 
 /**
- * Label box of an atom at a position (its condensed label, labelSize()).
+ * Label box of an atom at a position (its condensed label, or its
+ * abbreviation's text: sizedLabel(), labelSize()).
  *
  * @param {object} mol - The molecule.
  * @param {number} id - The atom.
  * @param {{x: number, y: number}} p - Its displayed position.
+ * @param {Map<number, object>|null} groups - Abbreviations in force, or none.
  * @returns {{x1: number, y1: number, x2: number, y2: number}} The box.
  */
-function labelBox(mol, id, p) {
-  const size = labelSize(atomLabel(mol, id));
+function labelBox(mol, id, p, groups) {
+  const size = labelSize(sizedLabel(mol, id, groups));
   return { x1: p.x - size.width / 2, y1: p.y - size.height / 2, x2: p.x + size.width / 2, y2: p.y + size.height / 2 };
 }
 
@@ -547,16 +621,21 @@ function overlaps(a1, a2, b1, b2, eps = 1e-6) {
  * Checks a 90° drawing: every bond horizontal or vertical, no two labels
  * overlapping (with RIGHT_ANGLE_PAD between them), no bond passing through
  * a label other than its own two, no two bonds crossing or overlapping, and
- * every bond long enough to show MIN_STROKE between its labels.
+ * every bond long enough to show MIN_STROKE between its labels. With
+ * abbreviations, the group's carbon has the box of its `CHO` / `COOH` text
+ * and the group's O atoms and inner bonds, drawn inside it, are not checked.
  *
  * @param {object} mol - The molecule.
  * @param {Map<number, {x: number, y: number}>} positions - Atom id → displayed position.
+ * @param {Map<number, object>|null} [groups] - Abbreviations in force (abbreviationGroups()), or none.
  * @returns {string[]} Problems found (English, for developers); empty when the drawing is clean.
  */
-export function rightAngleProblems(mol, positions) {
+export function rightAngleProblems(mol, positions, groups = null) {
   const problems = [];
   const eps = 1e-6;
-  const boxes = new Map([...mol.atoms.keys()].map((id) => [id, labelBox(mol, id, positions.get(id))]));
+  const away = hiddenAtoms(groups);
+  const shown = [...mol.atoms.keys()].filter((id) => !away.has(id));
+  const boxes = new Map(shown.map((id) => [id, labelBox(mol, id, positions.get(id), groups)]));
   const ids = [...boxes.keys()];
   for (let i = 0; i < ids.length; i += 1) {
     for (let j = i + 1; j < ids.length; j += 1) {
@@ -568,7 +647,8 @@ export function rightAngleProblems(mol, positions) {
       }
     }
   } // End of the loop over label pairs
-  const bonds = [...mol.bonds.values()].map((b) => ({ id: b.id, a: b.a, b: b.b, p: positions.get(b.a), q: positions.get(b.b) }));
+  const bonds = [...mol.bonds.values()].filter((b) => !away.has(b.a) && !away.has(b.b))
+    .map((b) => ({ id: b.id, a: b.a, b: b.b, p: positions.get(b.a), q: positions.get(b.b) }));
   for (const bond of bonds) {
     const horizontal = Math.abs(bond.p.y - bond.q.y) < eps;
     const vertical = Math.abs(bond.p.x - bond.q.x) < eps;

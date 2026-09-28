@@ -18,7 +18,7 @@ import { buildCanvasBar } from './canvasbar.js';
 import { buildResults } from './results.js';
 import { buildHelp } from './help.js';
 import {
-  getStorage, readItem, writeItem, restoreDrawing, startAutosave, MODE_KEY, RIGHT_ANGLE_KEY, MARKS_KEY,
+  getStorage, readItem, writeItem, restoreDrawing, startAutosave, MODE_KEY, RIGHT_ANGLE_KEY, ABBREVIATION_KEY, MARKS_KEY,
 } from './autosave.js';
 
 /**
@@ -56,6 +56,8 @@ export function initApp(doc) {
         onModeChange: (mode) => writeItem(storage, MODE_KEY, mode),
         initialRightAngles: readItem(storage, RIGHT_ANGLE_KEY) === 'on',
         onRightAnglesChange: (on) => writeItem(storage, RIGHT_ANGLE_KEY, on ? 'on' : 'off'),
+        initialAbbreviations: readItem(storage, ABBREVIATION_KEY) === 'on',
+        onAbbreviationsChange: (on) => writeItem(storage, ABBREVIATION_KEY, on ? 'on' : 'off'),
       });
     }
     const panel = doc.getElementById('results');

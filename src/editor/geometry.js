@@ -9,7 +9,7 @@
  */
 
 import { neighbours } from '../model/molecule.js';
-import { atomLabel, labelSize } from './labels.js';
+import { atomLabel, labelSize, abbreviationOf, isAbbreviatedAway, ABBREVIATION_TEXTS } from './labels.js';
 
 /** Bond length in drawing units (40 px at zoom 1). */
 export const BOND_LENGTH = 40;
@@ -355,22 +355,26 @@ export function onLoneLabel(mol, atom, point) {
  * Hit box of a heteroatom's label (`OH`, `O`, `NH₂`, `Cl`, `H₂O`…), which every
  * display mode draws centred on the atom: the label's estimated box
  * (labelSize() of atomLabel(), so `O` is narrower than `NH₂`) plus
- * HETERO_LABEL_HIT_PAD on every side. Pure: the text width is estimated.
+ * HETERO_LABEL_HIT_PAD on every side. The carbon of an abbreviated CHO/COOH
+ * group of the 90° view (`mol.abbreviations`) gets the box of its
+ * abbreviation's text the same way. Pure: the text width is estimated.
  *
  * @param {object} mol - The molecule.
  * @param {object} atom - The atom.
- * @returns {{halfWidth: number, halfHeight: number}|null} Half sizes around the atom, or null for carbon.
+ * @returns {{halfWidth: number, halfHeight: number}|null} Half sizes around the atom, or null for a plain carbon.
  */
 export function heteroLabelBox(mol, atom) {
-  if (atom.element === 'C') {
+  const group = abbreviationOf(mol, atom.id);
+  const abbreviated = group !== null && group.carbon === atom.id;
+  if (atom.element === 'C' && !abbreviated) {
     return null;
   }
-  const size = labelSize(atomLabel(mol, atom.id));
+  const size = labelSize(abbreviated ? ABBREVIATION_TEXTS[group.kind][0] : atomLabel(mol, atom.id));
   return {
     halfWidth: size.width / 2 + HETERO_LABEL_HIT_PAD,
     halfHeight: size.height / 2 + HETERO_LABEL_HIT_PAD,
   };
-}
+} // End of function heteroLabelBox()
 
 /**
  * Tells whether a point lies on the label of a heteroatom (heteroLabelBox()),
@@ -379,7 +383,7 @@ export function heteroLabelBox(mol, atom) {
  * @param {object} mol - The molecule.
  * @param {object} atom - The atom.
  * @param {{x: number, y: number}} point - The point in drawing units.
- * @returns {boolean} True when the atom is not carbon and the point is on its label.
+ * @returns {boolean} True when the atom has a label box (a heteroatom or an abbreviated carbon) and the point is on it.
  */
 export function onHeteroLabel(mol, atom, point) {
   const box = heteroLabelBox(mol, atom);
@@ -399,6 +403,9 @@ function nearestBond(mol, point) {
   let best = null;
   let bestDistance = BOND_HIT_DISTANCE;
   for (const bond of mol.bonds.values()) {
+    if (isAbbreviatedAway(mol, bond.a) || isAbbreviatedAway(mol, bond.b)) {
+      continue; // A bond inside a CHO/COOH label is not drawn.
+    }
     const d = distanceToSegment(point, mol.atoms.get(bond.a), mol.atoms.get(bond.b));
     if (d <= bestDistance) {
       best = { type: 'bond', id: bond.id };
@@ -406,7 +413,7 @@ function nearestBond(mol, point) {
     }
   }
   return best;
-}
+} // End of function nearestBond()
 
 /**
  * Finds what lies under a point: the nearest atom within ATOM_HIT_RADIUS,
@@ -417,7 +424,10 @@ function nearestBond(mol, point) {
  * gives way to a bond stroke outside the label box: the visible part of a
  * bond between two close labels (e.g. O–O or N–Cl 30 units apart) stays a
  * bond, while the label text always stands for the atom. With `atomsOnly`
- * bonds are ignored, so the hit circle applies in full.
+ * bonds are ignored, so the hit circle applies in full. In the 90° view with
+ * abbreviations (`mol.abbreviations`) the O atoms and inner bonds of a
+ * CHO/COOH group are never hit (they are drawn inside the label), and the
+ * whole label stands for the group's carbon, like a heteroatom's label.
  *
  * @param {object} mol - The molecule.
  * @param {{x: number, y: number}} point - The point in drawing units.
@@ -425,7 +435,10 @@ function nearestBond(mol, point) {
  * @returns {{type: 'atom'|'bond', id: number}|null} The hit, or null.
  */
 export function hitTest(mol, point, options = {}) {
-  const exclude = options.exclude || [];
+  const exclude = [...(options.exclude || [])];
+  if (mol.abbreviations) {
+    exclude.push(...[...mol.atoms.keys()].filter((id) => isAbbreviatedAway(mol, id)));
+  }
   const bond = options.atomsOnly ? null : nearestBond(mol, point);
   let best = null;
   let bestDistance = ATOM_HIT_RADIUS;
@@ -434,8 +447,8 @@ export function hitTest(mol, point, options = {}) {
     if (d > bestDistance || exclude.includes(atom.id)) {
       continue;
     }
-    if (bond && atom.element !== 'C' && !onHeteroLabel(mol, atom, point)) {
-      continue; // Off the heteroatom's label, on a bond stroke: the bond wins.
+    if (bond && heteroLabelBox(mol, atom) && !onHeteroLabel(mol, atom, point)) {
+      continue; // Off the heteroatom's (or abbreviation's) label, on a bond stroke: the bond wins.
     }
     best = { type: 'atom', id: atom.id };
     bestDistance = d;

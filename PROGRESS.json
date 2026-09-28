@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T08:04:34Z",
+  "updated": "2026-09-28T08:22:21Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -442,8 +442,11 @@
     {
       "id": "I-41b",
       "title": "v2.21b CHO/COOH optional abbreviations (split from I-41)",
-      "status": "queued",
-      "summary": "Adds an optional display that shortens aldehyde and acid groups to CHO/COOH labels without changing the molecule."
+      "status": "done",
+      "summary": "An optional toggle in the 90° view shortens aldehyde and acid groups to CHO/COOH labels without changing the molecule.",
+      "risk": "high",
+      "review": "docs/reviews/I-41b.md",
+      "narrative": "docs/progress-archive/i-41b.md"
     },
     {
       "id": "I-41c",

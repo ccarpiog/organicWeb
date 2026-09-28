@@ -5,7 +5,9 @@
  * shown in every mode, with the bond strokes stopped short of them), the 90° view's `=` / `≡` strokes that
  * stop short of the labels (labelSize(), rightAngleSegments()), hover
  * highlight, selection, the drag previews (bond, chain with its "N C"
- * counter, the Anillos ring, marquee), double bonds of a ring drawn with
+ * counter, the Anillos ring, marquee), the 90° view's optional CHO/COOH
+ * labels (abbreviationLabel(); one label, hover box, highlight and flash
+ * for all the atoms of the group), double bonds of a ring drawn with
  * their second stroke inside the ring (ringBondCentres()), the pan/zoom view
  * transform, and the highlight API used by the stepper (`highlight`,
  * `showLocants`).
@@ -19,7 +21,10 @@
 import { neighbours } from '../model/molecule.js';
 import { perceiveRings } from '../model/rings.js';
 import { cross, LONE_LABEL_OFFSET } from './geometry.js';
-import { atomLabel, labelSize, LABEL_HEIGHT } from './labels.js';
+import {
+  atomLabel, labelSize, LABEL_HEIGHT, sizedLabel, abbreviationOf, isAbbreviatedAway, ABBREVIATION_TEXTS,
+  ABBREVIATION_DESCRIPTIONS,
+} from './labels.js';
 
 // The label text and size live in labels.js (shared with the DOM-free hit-testing
 // of geometry.js); re-exported here for the existing callers.
@@ -176,7 +181,8 @@ export function rightAngleCut(label, horizontal) {
 /**
  * Strokes of a bond in the 90° view: one line, two (`=`) or three (`≡`)
  * parallel lines of equal length centred on the bond axis, each stopped
- * short of the two atom labels (rightAngleCut()).
+ * short of the two atom labels (rightAngleCut(); an abbreviated carbon's
+ * label is its `CHO` / `COOH` text, sizedLabel()).
  *
  * @param {object} mol - The molecule (at its displayed coordinates).
  * @param {number} bondId - The bond.
@@ -187,8 +193,8 @@ export function rightAngleSegments(mol, bondId) {
   const a = mol.atoms.get(bond.a);
   const b = mol.atoms.get(bond.b);
   const horizontal = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y);
-  const cutA = rightAngleCut(atomLabel(mol, bond.a), horizontal);
-  const cutB = rightAngleCut(atomLabel(mol, bond.b), horizontal);
+  const cutA = rightAngleCut(sizedLabel(mol, bond.a), horizontal);
+  const cutB = rightAngleCut(sizedLabel(mol, bond.b), horizontal);
   const offsets = bond.order === 3 ? [-BOND_SPACING, 0, BOND_SPACING]
     : bond.order === 2 ? [-BOND_SPACING / 2, BOND_SPACING / 2] : [0];
   return offsets.map((offset) => trimSegment(shifted(a, b, offset, 0), cutA, cutB));
@@ -199,13 +205,18 @@ export function rightAngleSegments(mol, bondId) {
  * heteroatom end with hydrogens whose only bond comes from its right is
  * written hydrogens first, as in a textbook (`HO–CH₂–`, `H₂N–CO–`), so the
  * bond meets the heteroatom's symbol. Same characters, so the same
- * labelSize() box.
+ * labelSize() box. The carbon of an abbreviated group gets its
+ * abbreviation (abbreviationLabel()).
  *
  * @param {object} mol - The molecule (at its displayed coordinates).
  * @param {number} atomId - The atom.
  * @returns {string} The label with Unicode subscripts.
  */
 export function rightAngleLabel(mol, atomId) {
+  const group = abbreviationOf(mol, atomId);
+  if (group && group.carbon === atomId) {
+    return abbreviationLabel(mol, group);
+  }
   const label = atomLabel(mol, atomId);
   const atom = mol.atoms.get(atomId);
   const links = neighbours(mol, atomId);
@@ -218,6 +229,35 @@ export function rightAngleLabel(mol, atomId) {
   }
   return `${label.slice(atom.element.length)}${atom.element}`;
 } // End of function rightAngleLabel()
+
+/**
+ * Text of an abbreviated CHO/COOH group in the 90° view: `CHO` / `COOH`,
+ * mirrored to `OHC` / `HOOC` when the group's bond comes from its right
+ * (ABBREVIATION_TEXTS), so the bond meets the C as in `HOOC–CH₂–`.
+ *
+ * @param {object} mol - The drawn molecule.
+ * @param {{kind: string, carbon: number, anchor: number}} group - The group (abbreviationGroups()).
+ * @returns {string} The label text.
+ */
+export function abbreviationLabel(mol, group) {
+  const carbon = mol.atoms.get(group.carbon);
+  const anchor = mol.atoms.get(group.anchor);
+  const fromRight = Boolean(anchor) && Math.abs(anchor.y - carbon.y) < 1e-6 && anchor.x > carbon.x;
+  return ABBREVIATION_TEXTS[group.kind][fromRight ? 1 : 0];
+}
+
+/**
+ * Parts of an abbreviation's text with their element colour: the carbon's
+ * `C` (with its `H` in `CHO`) plain, the oxygen part (`O`, `OOH`, `OH`,
+ * `HOO`) coloured like an O label.
+ *
+ * @param {string} label - The abbreviation text (`CHO`, `OHC`, `COOH`, `HOOC`).
+ * @returns {{text: string, element: string}[]} The parts, in writing order.
+ */
+export function abbreviationParts(label) {
+  const parts = { CHO: [['CH', 'C'], ['O', 'O']], OHC: [['OH', 'O'], ['C', 'C']], COOH: [['C', 'C'], ['OOH', 'O']], HOOC: [['HOO', 'O'], ['C', 'C']] }[label];
+  return (parts || [[label, 'C']]).map(([text, element]) => ({ text, element }));
+}
 
 /**
  * Position of a locant number in the 90° view: up and to the right of the
@@ -634,6 +674,44 @@ export function createRenderer(svg) {
   }
 
   /**
+   * The abbreviation an atom of the last drawing belongs to, when the 90°
+   * view draws it as one CHO/COOH label (null otherwise).
+   *
+   * @param {number} atomId - The atom.
+   * @returns {{kind: string, carbon: number, atoms: number[]}|null} The group.
+   */
+  function drawnGroup(atomId) {
+    return lastRightAngle && lastMol ? abbreviationOf(lastMol, atomId) : null;
+  }
+
+  /**
+   * Draws a rounded box around an abbreviation's label (hover, highlight and
+   * flash marks of the group), a few units larger than the text.
+   *
+   * @param {object} mol - The drawn molecule.
+   * @param {{kind: string, carbon: number}} group - The group.
+   * @param {string} cls - CSS class.
+   * @param {Element} parent - Where to append it.
+   * @param {number} [pad] - Margin around the text box.
+   * @returns {SVGRectElement} The box.
+   */
+  function groupBox(mol, group, cls, parent, pad = 4) {
+    const atom = mol.atoms.get(group.carbon);
+    const size = labelSize(ABBREVIATION_TEXTS[group.kind][0]);
+    const node = el('rect', {
+      class: cls,
+      x: atom.x - size.width / 2 - pad,
+      y: atom.y - size.height / 2 - pad,
+      width: size.width + 2 * pad,
+      height: size.height + 2 * pad,
+      rx: 6,
+    }, parent);
+    node.dataset.atomId = String(group.carbon);
+    node.dataset.groupAtoms = group.atoms.join(' ');
+    return node;
+  }
+
+  /**
    * Redraws the highlight layer from the stored specs.
    *
    * @returns {void}
@@ -644,8 +722,12 @@ export function createRenderer(svg) {
       return;
     }
     for (const spec of highlights) {
+      const boxed = new Set(); // Abbreviations of this spec already marked (one box per label).
       for (const id of spec.bonds) {
         const bond = lastMol.bonds.get(id);
+        if (bond && drawnGroup(bond.a) && drawnGroup(bond.a) === drawnGroup(bond.b)) {
+          continue; // A bond inside a CHO/COOH label: the label's box marks it.
+        }
         if (bond) {
           const a = lastMol.atoms.get(bond.a);
           const b = lastMol.atoms.get(bond.b);
@@ -655,6 +737,15 @@ export function createRenderer(svg) {
       }
       for (const id of spec.atoms) {
         const atom = lastMol.atoms.get(id);
+        const group = atom ? drawnGroup(id) : null;
+        if (group) {
+          // Any atom of an abbreviated group lights the whole label.
+          if (!boxed.has(group)) {
+            boxed.add(group);
+            groupBox(lastMol, group, `hl hl-atom hl-abbr hl-${spec.style}`, layers.highlight);
+          }
+          continue;
+        }
         if (atom) {
           const node = el('circle', { class: `hl hl-atom hl-${spec.style}`, cx: atom.x, cy: atom.y, r: 11 }, layers.highlight);
           node.dataset.atomId = String(id);
@@ -674,7 +765,8 @@ export function createRenderer(svg) {
       return;
     }
     for (const [id, number] of locants) {
-      if (lastMol.atoms.has(id)) {
+      const group = drawnGroup(id);
+      if (lastMol.atoms.has(id) && !(group && group.carbon !== id)) {
         const where = lastRightAngle ? rightAngleLocantPosition(lastMol, id) : locantPosition(lastMol, id);
         const node = text('locant', where, String(number), layers.locants);
         node.dataset.atomId = String(id);
@@ -806,7 +898,11 @@ export function createRenderer(svg) {
     layers.bonds.replaceChildren();
     layers.atoms.replaceChildren();
     const centres = lastRightAngle ? null : ringBondCentres(mol);
+    const abbreviated = lastRightAngle && Boolean(mol.abbreviations);
     for (const bond of mol.bonds.values()) {
+      if (abbreviated && (isAbbreviatedAway(mol, bond.a) || isAbbreviatedAway(mol, bond.b))) {
+        continue; // Drawn inside a CHO/COOH label.
+      }
       const group = el('g', { class: 'bond' }, layers.bonds);
       group.dataset.bondId = String(bond.id);
       group.dataset.order = String(bond.order);
@@ -828,6 +924,13 @@ export function createRenderer(svg) {
       }
     } // End of the loop that draws the bonds
     for (const atom of mol.atoms.values()) {
+      const abbreviation = abbreviated ? abbreviationOf(mol, atom.id) : null;
+      if (abbreviation) {
+        if (abbreviation.carbon === atom.id) {
+          drawAbbreviation(mol, abbreviation, hover);
+        }
+        continue; // The group's O atoms are part of its label.
+      }
       const node = el('circle', { class: 'atom', cx: atom.x, cy: atom.y, r: 9 }, layers.atoms);
       node.dataset.atomId = String(atom.id);
       if (hover && hover.type === 'atom' && hover.id === atom.id) {
@@ -850,6 +953,39 @@ export function createRenderer(svg) {
     drawHighlights();
     drawLocants();
   } // End of function render()
+
+  /**
+   * Draws an abbreviated CHO/COOH group of the 90° view: a hover box sized to
+   * the label (class `atom atom-abbr`, standing for the group's carbon) and
+   * the label itself in a `g.abbr-label` carrying a Spanish description
+   * (`aria-label` and a `<title>` tooltip) and the ids of every atom it
+   * stands for (`data-group-atoms`).
+   *
+   * @param {object} mol - The drawn molecule.
+   * @param {{kind: string, carbon: number, atoms: number[]}} group - The group.
+   * @param {{type: string, id: number}|null} hover - The hovered item.
+   * @returns {void}
+   */
+  function drawAbbreviation(mol, group, hover) {
+    const box = groupBox(mol, group, 'atom atom-abbr', layers.atoms, 2);
+    if (hover && hover.type === 'atom' && hover.id === group.carbon) {
+      box.classList.add('is-hover');
+    }
+    const atom = mol.atoms.get(group.carbon);
+    const label = abbreviationLabel(mol, group);
+    const wrap = el('g', { class: 'abbr-label', role: 'img', 'aria-label': ABBREVIATION_DESCRIPTIONS[group.kind] }, layers.atoms);
+    wrap.dataset.atomId = String(group.carbon);
+    wrap.dataset.groupAtoms = group.atoms.join(' ');
+    wrap.dataset.kind = group.kind;
+    el('title', {}, wrap).textContent = ABBREVIATION_DESCRIPTIONS[group.kind];
+    const node = text('atom-label abbr-text', atom, '', wrap);
+    for (const part of abbreviationParts(label)) {
+      el('tspan', part.element === 'O' ? { class: 'element-O' } : {}, node).textContent = part.text;
+    }
+    node.dataset.atomId = String(group.carbon);
+    node.dataset.element = 'C';
+    node.dataset.abbreviation = group.kind;
+  } // End of function drawAbbreviation()
 
   /**
    * Highlights atoms and bonds (the stepper's API). Replaces any previous
@@ -897,8 +1033,18 @@ export function createRenderer(svg) {
   function flash(atomIds, options = {}) {
     layers.flash.replaceChildren();
     const className = options.className || 'reject-ring';
+    const boxed = new Set();
     for (const id of atomIds || []) {
       const atom = lastMol && lastMol.atoms.get(id);
+      const group = atom ? drawnGroup(id) : null;
+      if (group) {
+        // Any atom of an abbreviated group rings the whole label.
+        if (!boxed.has(group)) {
+          boxed.add(group);
+          groupBox(lastMol, group, className, layers.flash, 5);
+        }
+        continue;
+      }
       if (atom) {
         el('circle', { class: className, cx: atom.x, cy: atom.y, r: 12 }, layers.flash);
       }

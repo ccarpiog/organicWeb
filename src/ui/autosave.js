@@ -16,6 +16,9 @@ export const MODE_KEY = 'organicWeb.displayMode';
 /** localStorage key of the 90° view preference ('on' | 'off'), kept in both display modes. */
 export const RIGHT_ANGLE_KEY = 'organicWeb.rightAngles';
 
+/** localStorage key of the CHO/COOH abbreviation preference of the 90° view ('on' | 'off'; missing means off). */
+export const ABBREVIATION_KEY = 'organicWeb.abbreviations';
+
 /** localStorage key of the "Resaltar en el dibujo" preference ('on' | 'off'; missing means on). */
 export const MARKS_KEY = 'organicWeb.highlights';
 

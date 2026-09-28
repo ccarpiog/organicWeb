@@ -37,7 +37,11 @@
  * projected carbon would change nothing visible. When the projector falls
  * back (empty drawing, loose pieces, no clean placement…) the normal drawing
  * is shown, and the first edit that makes the molecule projectable switches
- * to the projection by itself.
+ * to the projection by itself. A projection may abbreviate CHO/COOH groups
+ * (`abbreviations` in its result, copied onto the drawn copy as
+ * `mol.abbreviations`, never onto the model): their label hit-tests as the
+ * group's carbon, every tool acts on that carbon, and Borrar on it removes
+ * the whole group (one undo step).
  *
  * Element tool (design.md §6.1): tool 'carbon' places and changes atoms of
  * the palette element picked with setElement() (carbon after setTool('carbon')).
@@ -83,6 +87,7 @@ import {
 import {
   createRenderer, rectFromCorners, moleculeBounds, zoomView, panView, fitView, IDENTITY_VIEW,
 } from './render.js';
+import { abbreviationOf } from './labels.js';
 
 /**
  * Tool ids, in toolbar order (design.md §6.1). 'carbon' is the element tool
@@ -833,6 +838,13 @@ export function createEditorCore(options = {}) {
     }
     if (tool === 'cycle' && target && target.type === 'bond') {
       return transact('cycle bond order', (d) => cycleOrder(d, target.id));
+    }
+    const group = display && target && target.type === 'atom' ? abbreviationOf(display, target.id) : null;
+    if (tool === 'erase' && group) {
+      // Borrar on a CHO/COOH label removes every atom the label stands for.
+      return transact('erase group', (d) => {
+        group.atoms.forEach((id) => removeAtom(d, id));
+      });
     }
     if (tool === 'erase' && target) {
       return transact(`erase ${target.type}`, (d) => {
@@ -1747,6 +1759,10 @@ export function createEditor(svg, options = {}) {
           for (const [id, p] of result.positions) {
             shown.atoms.get(id).x = p.x;
             shown.atoms.get(id).y = p.y;
+          }
+          if (result.abbreviations instanceof Map && result.abbreviations.size > 0) {
+            // Display only: the drawn copy says which atoms each CHO/COOH label stands for.
+            shown.abbreviations = result.abbreviations;
           }
         } else {
           result = { ok: false, reason: 'ERROR' };

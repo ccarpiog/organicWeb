@@ -277,6 +277,7 @@ body {
 
 /* 90° view toggle and its note (src/ui/canvasbar.js), Con carbonos only. */
 .right-angle-toggle[hidden],
+.abbreviation-toggle[hidden],
 .right-angle-note[hidden] {
   display: none;
 }

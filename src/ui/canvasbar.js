@@ -2,8 +2,9 @@
  * @file Bar under the canvas (design.md §6.1, §6.3): the live molecular
  * formula ("Fórmula: C₅H₁₂"), the Esqueleto / Con carbonos display toggle,
  * the "Ángulos rectos (90°)" toggle (shown in Con carbonos only; the stored
- * preference survives a switch to Esqueleto), its note, and the "Centrar"
- * button.
+ * preference survives a switch to Esqueleto), the "Abreviar CHO y COOH"
+ * toggle (shown only while the 90° view is on; off by default), the 90°
+ * note, and the "Centrar" button.
  *
  * The 90° view is a display projection (src/layout/rightangle.js) handed to
  * the editor with setProjector(): the projection never changes the
@@ -21,6 +22,9 @@ export const MODE_LABELS = Object.freeze({ skeletal: 'Esqueleto', condensed: 'Co
 
 /** Label of the 90° view toggle. */
 export const RIGHT_ANGLE_LABEL = 'Ángulos rectos (90°)';
+
+/** Label of the CHO/COOH abbreviation toggle of the 90° view. */
+export const ABBREVIATION_LABEL = 'Abreviar CHO y COOH';
 
 /** Note shown while the 90° drawing is shown (Mover and Ordenar dibujo are off there). */
 export const RIGHT_ANGLE_HINT = 'Puedes dibujar aquí. Para mover átomos u ordenar el dibujo, desactiva los ángulos rectos.';
@@ -48,11 +52,12 @@ export const FALLBACK_NOTES = Object.freeze({
  * the reason, and one with a ring gets `CYCLE` from the layout.
  *
  * @param {object} mol - The molecule.
- * @returns {{ok: true, positions: Map<number, {x: number, y: number}>}|{ok: false, reason: string}}
- *   The positions, or the reason for falling back (`EMPTY`, `DISCONNECTED`, `CYCLE`, `RING_SYSTEM`, `HETEROATOM`,
- *   `NO_ROOM`, or another naming error code).
+ * @param {{abbreviate?: boolean}} [options] - `abbreviate`: draw CHO/COOH groups as one label each.
+ * @returns {{ok: true, positions: Map<number, {x: number, y: number}>, abbreviations?: Map<number, object>}|
+ *   {ok: false, reason: string}} The positions (and the abbreviated groups), or the reason for falling back
+ *   (`EMPTY`, `DISCONNECTED`, `CYCLE`, `RING_SYSTEM`, `HETEROATOM`, `NO_ROOM`, or another naming error code).
  */
-export function projectRightAngles(mol) {
+export function projectRightAngles(mol, options = {}) {
   if (mol.atoms.size === 0) {
     return { ok: false, reason: 'EMPTY' };
   }
@@ -60,7 +65,19 @@ export function projectRightAngles(mol) {
   if (!result.ok) {
     return { ok: false, reason: (result.error && result.error.code) || 'OTHER' };
   }
-  return rightAngleLayout(mol, result);
+  return rightAngleLayout(mol, result, { abbreviate: Boolean(options.abbreviate) });
+}
+
+/**
+ * The 90° projection with the CHO/COOH abbreviations on (the projector
+ * handed to the editor while "Abreviar CHO y COOH" is pressed). Display
+ * only: the molecule is never changed.
+ *
+ * @param {object} mol - The molecule.
+ * @returns {object} As projectRightAngles().
+ */
+export function projectAbbreviated(mol) {
+  return projectRightAngles(mol, { abbreviate: true });
 }
 
 /**
@@ -94,10 +111,12 @@ export function formulaText(mol) {
  * @param {HTMLElement} container - The `#canvas-bar` element.
  * @param {object} editor - The editor (createEditor()).
  * @param {{initialMode?: string, onModeChange?: function(string): void, initialRightAngles?: boolean,
- *   onRightAnglesChange?: function(boolean): void}} [options] - Starting display mode and 90° preference,
- *   and listeners for their changes (used to remember the choices).
- * @returns {{sync: function(): void, setRightAngles: function(boolean): void}} `sync()` refreshes the
- *   formula and the note; `setRightAngles(on)` changes the 90° preference.
+ *   onRightAnglesChange?: function(boolean): void, initialAbbreviations?: boolean,
+ *   onAbbreviationsChange?: function(boolean): void}} [options] - Starting display mode, 90° and
+ *   abbreviation preferences, and listeners for their changes (used to remember the choices).
+ * @returns {{sync: function(): void, setRightAngles: function(boolean): void,
+ *   setAbbreviations: function(boolean): void}} `sync()` refreshes the formula and the note;
+ *   `setRightAngles(on)` / `setAbbreviations(on)` change the preferences.
  */
 export function buildCanvasBar(container, editor, options = {}) {
   const doc = container.ownerDocument;
@@ -135,6 +154,16 @@ export function buildCanvasBar(container, editor, options = {}) {
   rightAngle.addEventListener('mousedown', (event) => event.preventDefault());
   container.appendChild(rightAngle);
 
+  const abbreviate = doc.createElement('button');
+  abbreviate.type = 'button';
+  abbreviate.className = 'bar-button abbreviation-toggle';
+  abbreviate.id = 'abbreviation-button';
+  abbreviate.textContent = ABBREVIATION_LABEL;
+  abbreviate.title = 'Escribir cada grupo aldehído como CHO y cada grupo ácido como COOH';
+  abbreviate.addEventListener('click', () => setAbbreviations(!abbreviations));
+  abbreviate.addEventListener('mousedown', (event) => event.preventDefault());
+  container.appendChild(abbreviate);
+
   const center = doc.createElement('button');
   center.type = 'button';
   center.className = 'bar-button';
@@ -154,10 +183,13 @@ export function buildCanvasBar(container, editor, options = {}) {
 
   let mode = 'skeletal';
   let rightAngles = Boolean(options.initialRightAngles);
+  let abbreviations = Boolean(options.initialAbbreviations);
 
   /**
    * Hands the projection to the editor when the 90° view applies (Con
-   * carbonos and the toggle on), removes it otherwise, and updates the toggle.
+   * carbonos and the toggle on; with the abbreviations when that toggle is
+   * pressed too), removes it otherwise, and updates the toggles (the
+   * abbreviation toggle is shown only while the 90° view is on).
    *
    * @returns {void}
    */
@@ -165,8 +197,26 @@ export function buildCanvasBar(container, editor, options = {}) {
     const active = mode === 'condensed' && rightAngles;
     rightAngle.hidden = mode !== 'condensed';
     rightAngle.setAttribute('aria-pressed', String(rightAngles));
-    editor.setProjector(active ? projectRightAngles : null);
+    abbreviate.hidden = !active;
+    abbreviate.setAttribute('aria-pressed', String(abbreviations));
+    const projector = abbreviations ? projectAbbreviated : projectRightAngles;
+    editor.setProjector(active ? projector : null);
     sync();
+  }
+
+  /**
+   * Changes the CHO/COOH abbreviation preference (display only: the
+   * molecule, its undo history and its name never change).
+   *
+   * @param {boolean} on - True to abbreviate.
+   * @returns {void}
+   */
+  function setAbbreviations(on) {
+    abbreviations = Boolean(on);
+    applyRightAngles();
+    if (options.onAbbreviationsChange) {
+      options.onAbbreviationsChange(abbreviations);
+    }
   }
 
   /**
@@ -219,5 +269,5 @@ export function buildCanvasBar(container, editor, options = {}) {
   selectMode(DISPLAY_MODES.includes(options.initialMode) ? options.initialMode : 'skeletal');
   editor.onChange(sync);
   sync();
-  return { sync, setRightAngles };
+  return { sync, setRightAngles, setAbbreviations };
 } // End of function buildCanvasBar()
