@@ -1,19 +1,15 @@
 /**
- * @file Nitriles e2e (design.md §13.4 I-38): a nitrile drawn with the
- * existing tools (C–C–C, the last carbon turned into Nitrógeno, then Enlace
- * triple on the C–N bond; the N labelled N, without hydrogen) is named
- * etanonitrilo with acetonitrilo under "Otras formas válidas", never as an
- * alkyne; the stepper explains the –C≡N group (its carbon is carbon 1, the
- * N is not a chain atom, the triple bond is no «-ino»), the «-nitrilo»
- * suffix and the formula with N, with the whole group (C and N)
- * highlighted; molecules loaded through the editor test API get their names
- * (metanonitrilo, propanonitrilo, 2-metilpropanonitrilo, butanodinitrilo,
- * prop-2-enonitrilo, 4-oxopentanonitrilo, 3-hidroxibutanonitrilo,
- * 2-aminopropanonitrilo, 3-cloropropanonitrilo); "Ordenar dibujo" lays out
- * a nitrile; a nitrile with a ring, three nitriles and a nitrile on an
- * acid's carbon (carbonocyanidic) are refused with their messages (the
- * `ciano-` prefix is covered by cyano.spec.js). Runs on the dev server and
- * on dist/index.html.
+ * @file ciano- e2e (design.md §13.4 I-39a): a nitrile beside an acid, drawn
+ * with the existing tools (a –COOH on a C–C, then a C–C≡N on its other
+ * carbon), is named ácido 2-cianoetanoico, never as a dinitrile or an
+ * alkyne; the stepper says the nitrile is not the principal group, that
+ * «ciano-» includes its carbon (not a chain carbon: the chain has 2
+ * carbons), counts its C and N in the formula and highlights the –C≡N whole
+ * as a substituent; molecules loaded through the editor test API get their
+ * ciano- names (acid, ester, amide, ester O-bound group, amide N group, a
+ * nitrile on a branch piece of a nitrile); "Ordenar dibujo" lays one out; a
+ * nitrile on the acid's carbon is refused with its message. Runs on the dev
+ * server and on dist/index.html.
  */
 
 import { test, expect } from '@playwright/test';
@@ -114,26 +110,33 @@ function label(page, id) {
   return page.locator(`svg#canvas .atom-label[data-atom-id="${id}"]`);
 }
 
-test('a nitrile drawn with the tools is named, and the stepper explains the –C≡N group', async ({ page }) => {
+test('a nitrile drawn beside an acid is named with ciano-, and the stepper explains why', async ({ page }) => {
   const errors = await openApp(page);
   const tools = page.locator('#toolbar');
-  // C–C from the empty canvas, one more carbon on the second one, Nitrógeno on it, then Enlace triple on the C–N bond.
+  // C–C from the empty canvas, two carbons on the second one turned into O (one C=O): a –COOH on carbon 2.
   await clickCanvas(page, 0.4, 0.5);
   await clickAtom(page, 2);
-  await tools.getByRole('button', { name: 'Nitrógeno', exact: true }).click();
+  await clickAtom(page, 2);
+  await tools.getByRole('button', { name: 'Oxígeno', exact: true }).click();
   await clickAtom(page, 3);
-  await expect(label(page, 3)).toHaveText('NH₂');
-  await tools.getByRole('button', { name: 'Enlace triple' }).click();
+  await clickAtom(page, 4);
+  await tools.getByRole('button', { name: 'Enlace doble' }).click();
   await clickBond(page, 2);
+  // Then C–C on carbon 1, the last carbon turned into Nitrógeno and the C–N bond made triple: a –C≡N on carbon 1.
+  await tools.getByRole('button', { name: 'Enlace simple' }).click();
+  await clickAtom(page, 1);
+  await clickAtom(page, 5);
+  await tools.getByRole('button', { name: 'Nitrógeno', exact: true }).click();
+  await clickAtom(page, 6);
+  await tools.getByRole('button', { name: 'Enlace triple' }).click();
+  await clickBond(page, 5);
   const json = await page.evaluate(() => window.__editor.getMoleculeJSON());
-  expect(json.atoms.map((a) => a.element)).toEqual(['C', 'C', 'N']);
-  expect(json.bonds.map((b) => b.order)).toEqual([1, 3]);
-  // The nitrile N has no hydrogen left: labelled N.
-  await expect(label(page, 3)).toHaveText('N');
+  expect(json.atoms.map((a) => a.element)).toEqual(['C', 'C', 'O', 'O', 'C', 'N']);
+  expect(json.bonds.map((b) => b.order)).toEqual([1, 2, 1, 1, 3]);
+  await expect(label(page, 6)).toHaveText('N');
   await askName(page);
-  await expect(page.locator('#result-name')).toHaveText('etanonitrilo');
+  await expect(page.locator('#result-name')).toHaveText('ácido 2-cianoetanoico');
   await expect(page.locator('#results .results-error')).toHaveCount(0);
-  await expect(page.locator('#alternatives')).toContainText('acetonitrilo');
 
   await page.getByRole('button', { name: 'Ver paso a paso' }).click();
   const stepper = page.locator('#stepper');
@@ -146,21 +149,21 @@ test('a nitrile drawn with the tools is named, and the stepper explains the –C
     texts.push(await stepper.locator('.step-content').textContent());
   } // End of the loop over the stepper steps
   expect(titles).toEqual(['Cuenta los carbonos', 'Reconoce el grupo funcional', 'Busca la cadena principal',
-    'Numera la cadena', 'Monta el nombre']);
-  expect(texts[0]).toContain('2 carbonos, 3 hidrógenos y 1 átomo de nitrógeno (C₂H₃N)');
-  expect(texts[0]).toContain('se ve como N: sus 3 enlaces van a ese carbono');
-  expect(texts[1]).toContain('la molécula es un nitrilo');
-  expect(texts[1]).toContain('Ese enlace triple no es el de un alquino');
-  expect(texts[1]).toContain('se nombra con el sufijo «-nitrilo»');
-  expect(texts[1]).toContain('«acetonitrilo»');
-  expect(texts[3]).toContain('El carbono del grupo –C≡N siempre es el 1');
-  expect(texts[4]).toContain('La «o» final de «-ano» se queda delante de «-nitrilo»');
-  expect(texts[4]).toContain('El nombre completo es «etanonitrilo»');
-
-  // "Reconoce el grupo funcional": the whole –C≡N (C and N, the triple bond) as the principal group.
+    'Numera la cadena', 'Nombra los sustituyentes', 'Monta el nombre']);
+  expect(texts[0]).toContain('3 carbonos, 3 hidrógenos, 1 átomo de nitrógeno y 2 átomos de oxígeno (C₃H₃NO₂)');
+  expect(texts[1]).toContain('También tiene un grupo –C≡N (un nitrilo)');
+  expect(texts[1]).toContain('ácido > nitrilo > aldehído');
+  expect(texts[1]).toContain('cada –C≡N se nombra con el prefijo «ciano-»');
+  expect(texts[1]).toContain('ese carbono no se cuenta en la cadena principal ni se numera');
+  expect(texts[2]).toContain('Sin contar el carbono del –C≡N, que va en el prefijo «ciano-»');
+  expect(texts[2]).toContain('tiene 2 carbonos');
+  expect(texts[4]).toContain('En el carbono 2 hay un grupo –C≡N: se escribe «2-ciano»');
+  expect(texts[5]).toContain('El nombre completo es «ácido 2-cianoetanoico»');
+  // "Reconoce el grupo funcional": the –COOH as the principal group, the –C≡N whole (C, N and both bonds) as a substituent.
   await dots.nth(1).click();
-  await expect(page.locator('svg#canvas .hl-atom.hl-parent')).toHaveCount(2);
-  await expect(page.locator('svg#canvas .hl-bond.hl-parent')).toHaveCount(1);
+  await expect(page.locator('svg#canvas .hl-atom.hl-parent')).toHaveCount(3);
+  await expect(page.locator('svg#canvas .hl-atom.hl-substituent')).toHaveCount(2);
+  await expect(page.locator('svg#canvas .hl-bond.hl-substituent')).toHaveCount(2);
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
   // Ordenar dibujo lays it out (one undoable edit), keeping the atoms and bonds.
@@ -169,55 +172,33 @@ test('a nitrile drawn with the tools is named, and the stepper explains the –C
   await expect.poll(() => page.evaluate(() => window.__editor.isAnimating())).toBe(false);
   const after = await page.evaluate(() => window.__editor.getMoleculeJSON());
   expect(after.bonds).toEqual(before.bonds);
-  expect(after.atoms.map((a) => a.element)).toEqual(['C', 'C', 'N']);
   await askName(page);
-  await expect(page.locator('#result-name')).toHaveText('etanonitrilo');
+  await expect(page.locator('#result-name')).toHaveText('ácido 2-cianoetanoico');
   expect(errors).toEqual([]);
-}); // End of test 'a nitrile drawn with the tools is named…'
+}); // End of test 'a nitrile drawn beside an acid is named with ciano-…'
 
-test('loaded nitriles: branches, dinitrile, other groups as prefixes; out-of-scope nitriles refused', async ({ page }) => {
+test('loaded ciano- molecules are named; a nitrile on the acid carbon is refused', async ({ page }) => {
   const errors = await openApp(page);
   for (const [smiles, name] of [
-    ['C#N', 'metanonitrilo'],
-    ['CCC#N', 'propanonitrilo'],
-    ['CC(C)C#N', '2-metilpropanonitrilo'],
-    ['N#CCCC#N', 'butanodinitrilo'],
-    ['C=CC#N', 'prop-2-enonitrilo'],
-    ['CC(=O)CCC#N', '4-oxopentanonitrilo'],
-    ['CC(O)CC#N', '3-hidroxibutanonitrilo'],
-    ['CC(N)C#N', '2-aminopropanonitrilo'],
-    ['ClCCC#N', '3-cloropropanonitrilo'],
+    ['N#CCCC(=O)O', 'ácido 3-cianopropanoico'],
+    ['CCC(C#N)C(=O)O', 'ácido 2-cianobutanoico'],
+    ['N#CCC(=O)OC', '2-cianoetanoato de metilo'],
+    ['CC(=O)OCC#N', 'etanoato de cianometilo'],
+    ['N#CCCC(N)=O', '3-cianopropanamida'],
+    ['CC(=O)NCC#N', 'N-(cianometil)etanamida'],
+    ['N#CCCOCC#N', '3-(cianometoxi)propanonitrilo'],
   ]) {
     await loadSmiles(page, smiles);
     await askName(page);
     await expect(page.locator('#result-name')).toHaveText(name);
     await expect(page.locator('#results .results-error')).toHaveCount(0);
-  } // End of the loop over the loaded nitriles
+  } // End of the loop over the loaded molecules
 
-  const error = page.locator('#results .results-error');
-  for (const [smiles, text] of [
-    ['N#CC1CCCCC1', '«-carbonitrilo»'],
-    ['N#CCC(C#N)CC#N', 'más de dos grupos –C≡N'],
-    ['N#CC(=O)O', 'ácido carbonocianídico'],
-  ]) {
-    await loadSmiles(page, smiles);
-    await askName(page);
-    await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-    await expect(error).toContainText(text);
-    await expect(page.locator('#result-name')).toHaveCount(0);
-  } // End of the loop over the refused nitriles
-
-  // A refused nitrile still offers the group steps: the stepper ends with "Aún no sé nombrarla".
-  await loadSmiles(page, 'N#CC1CCCCC1');
+  await loadSmiles(page, 'N#CC(=O)O');
   await askName(page);
-  await page.getByRole('button', { name: 'Ver paso a paso' }).click();
-  const stepper = page.locator('#stepper');
-  const dots = stepper.locator('.step-dot');
-  await dots.nth(0).click();
-  await expect(stepper.locator('.step-content')).toContainText('1 nitrilo');
-  await dots.nth(await dots.count() - 1).click();
-  await expect(stepper.locator('.step-title')).toHaveText('Aún no sé nombrarla');
-  await expect(stepper.locator('.step-content')).toContainText('ciclohexanocarbonitrilo');
-  await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
+  const error = page.locator('#results .results-error');
+  await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
+  await expect(error).toContainText('ácido carbonocianídico');
+  await expect(page.locator('#result-name')).toHaveCount(0);
   expect(errors).toEqual([]);
-}); // End of test 'loaded nitriles…'
+}); // End of test 'loaded ciano- molecules…'

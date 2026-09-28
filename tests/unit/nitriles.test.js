@@ -9,7 +9,7 @@
  * groups are prefixes (`4-oxopentanonitrilo`, `3-hidroxibutanonitrilo`,
  * `2-aminopropanonitrilo`, `3-cloropropanonitrilo`); `acetonitrilo` under
  * "Otras formas válidas"; the refusals (`ringNitrile`, `manyNitriles`,
- * `cyanoPrefix`: `ciano-` waits for I-39); both lexicons; the explanation;
+ * `carbonocyanidic`; `ciano-` is tested in cyano.test.js); both lexicons; the explanation;
  * id invariance and Ordenar dibujo; the oracle generator. The names
  * themselves are also checked row by row in tests/fixtures/names.tsv.
  */
@@ -20,7 +20,7 @@ import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
 import { adjacency, canonicalKey } from '../../src/model/graph.js';
 import {
   validateForNaming, isNitrileCarbon, isNitrileNitrogen, nitrileCarbons, isAmineNitrogen, hasNameableHeteroatoms, MESSAGES,
-  RING_NITRILE_MESSAGE, MANY_NITRILES_MESSAGE, CYANO_PREFIX_MESSAGE,
+  RING_NITRILE_MESSAGE, MANY_NITRILES_MESSAGE, CYANO_PREFIX_MESSAGE, CARBONOCYANIDIC_MESSAGE,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { selectParent } from '../../src/naming/parent.js';
@@ -189,7 +189,7 @@ test('simple and branched nitriles, dinitriles and unsaturated nitriles: the nit
   assert.equal(nameOf('N#CCC(CCCCC)CC#N'), '3-pentilpentanodinitrilo');
 });
 
-test('refusals: rings, three or more nitriles, ciano- (below an acid, ester or amide, or on another piece)', () => {
+test('refusals: rings, three or more nitriles on one piece, a nitrile on an acid, ester or amide carbon', () => {
   const refusals = [
     ['N#CC1CCCCC1', 'ringNitrile', RING_NITRILE_MESSAGE],
     ['N#CC1=CC=CC=C1', 'ringNitrile', RING_NITRILE_MESSAGE],
@@ -197,13 +197,9 @@ test('refusals: rings, three or more nitriles, ciano- (below an acid, ester or a
     ['OC1CCC(CC#N)CC1', 'ringNitrile', RING_NITRILE_MESSAGE],
     ['N#CCC(C#N)CC#N', 'manyNitriles', MANY_NITRILES_MESSAGE],
     ['N#CC(C#N)(C#N)C#N', 'manyNitriles', MANY_NITRILES_MESSAGE],
-    ['N#CCCC(=O)O', 'cyanoPrefix', CYANO_PREFIX_MESSAGE],
-    ['N#CCC(=O)OC', 'cyanoPrefix', CYANO_PREFIX_MESSAGE],
-    ['CC(=O)OCC#N', 'cyanoPrefix', CYANO_PREFIX_MESSAGE],
-    ['N#CCCC(N)=O', 'cyanoPrefix', CYANO_PREFIX_MESSAGE],
-    ['N#CCOCCC#N', 'cyanoPrefix', CYANO_PREFIX_MESSAGE],
-    ['N#CCOCC#N', 'cyanoPrefix', CYANO_PREFIX_MESSAGE],
-    ['N#CCNCC#N', 'cyanoPrefix', CYANO_PREFIX_MESSAGE],
+    ['N#CC(=O)O', 'carbonocyanidic', CARBONOCYANIDIC_MESSAGE],
+    ['N#CC(=O)OC', 'carbonocyanidic', CARBONOCYANIDIC_MESSAGE],
+    ['NC(=O)C#N', 'carbonocyanidic', CARBONOCYANIDIC_MESSAGE],
   ];
   for (const [smiles, reason, message] of refusals) {
     const result = named(smiles);
@@ -215,18 +211,23 @@ test('refusals: rings, three or more nitriles, ciano- (below an acid, ester or a
     assert.ok(result.groups.items.some((g) => g.kind === 'nitrile'), `${smiles}: the nitrile is recognised`);
   }
   assert.deepEqual(validateForNaming(parseSmiles('N#CCC(C#N)CC#N')).nitriles, [2, 5, 8]);
+  // Two nitriles on different carbon pieces with identical halves: multiplicative names, refused by the engine.
+  assert.equal(nameOf('N#CCOCC#N'), 'HETEROATOM symmetricEther');
+  assert.equal(nameOf('N#CCNCC#N'), 'HETEROATOM symmetricAmine');
   // Every message is Spanish, names the group and says why.
-  for (const message of [RING_NITRILE_MESSAGE, MANY_NITRILES_MESSAGE, CYANO_PREFIX_MESSAGE]) {
+  for (const message of [RING_NITRILE_MESSAGE, MANY_NITRILES_MESSAGE, CARBONOCYANIDIC_MESSAGE]) {
     assert.match(message, /–C≡N/);
     assert.match(message, /sé (nombrar|hacerlo)/);
   }
   assert.match(RING_NITRILE_MESSAGE, /ciclohexanocarbonitrilo/);
   assert.match(RING_NITRILE_MESSAGE, /benzonitrilo/);
+  assert.match(MANY_NITRILES_MESSAGE, /tricarbonitrilo/);
+  assert.match(CARBONOCYANIDIC_MESSAGE, /carbonocianídico/);
   assert.match(CYANO_PREFIX_MESSAGE, /«ciano-»/);
 });
 
 test('refusals are explained in the stepper like the others', () => {
-  for (const smiles of ['N#CC1CCCCC1', 'N#CCC(C#N)CC#N', 'N#CCCC(=O)O']) {
+  for (const smiles of ['N#CC1CCCCC1', 'N#CCC(C#N)CC#N', 'N#CC(=O)O']) {
     const result = named(smiles);
     const steps = explain(result);
     assert.deepEqual(steps.map((s) => s.id), ['groups', 'principal', 'affixes', 'notYet'], smiles);
@@ -235,7 +236,7 @@ test('refusals are explained in the stepper like the others', () => {
     assert.match(text, /nitrilo/);
     assert.match(text, /el enlace triple de un nitrilo \(C≡N\) no es el de un alquino/);
   }
-  assert.match(explanationText('N#CCCC(=O)O'), /El nitrilo: prefijo «ciano-»/);
+  assert.match(explanationText('N#CC(=O)O'), /El nitrilo: prefijo «ciano-»/);
 });
 
 test('traditional names: acetonitrilo for the bare etanonitrilo only', () => {

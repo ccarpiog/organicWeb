@@ -132,6 +132,13 @@
  * not an alkyne's, its carbon a chain end counted in the chain (carbon 1),
  * the N outside the chain, the suffix `-nitrilo` (`-dinitrilo`), the full
  * seniority order with the other groups as prefixes, and `acetonitrilo`.
+ * A nitrile cited as the prefix `ciano-` (design.md §13.4 I-39a, `cyano`
+ * substituents: below an acid, ester or amide, or on a branch) is one N,
+ * one carbon and two π bonds in the count step, whose carbon is never a
+ * chain carbon: the group steps say it is not the principal group and
+ * that `ciano-` includes its carbon (cyanoSentences()), the chain step
+ * that the chain stops at the carbon bonded to it, and the substituents
+ * step and the legend describe it; it is highlighted whole (C and N).
  *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
@@ -828,6 +835,91 @@ function etherTotal(sub) {
 }
 
 /**
+ * Number of nitriles cited as `ciano-` prefixes inside a substituent
+ * (nested ones included; design.md §13.4 I-39a).
+ *
+ * @param {object} sub - A substituent structure.
+ * @returns {number} The count (1 for a cyano prefix itself).
+ */
+function cyanoTotal(sub) {
+  return prefixTotal(sub, 'cyano');
+}
+
+/**
+ * Nitriles cited as `ciano-` prefixes in a name: on the parent, in
+ * branches, or in an ester's O-bound group (design.md §13.4 I-39a).
+ *
+ * @param {object} result - The naming result.
+ * @returns {{parent: number, branch: number, total: number}} Those cited on the parent itself, those inside branches, and both.
+ */
+function cyanoPrefixCounts(result) {
+  const alkyl = esterGroup(result);
+  const parent = result.structure.prefixes.filter((g) => g.substituent.cyano).reduce((sum, g) => sum + g.locants.length, 0);
+  const total = prefixSum(result, cyanoTotal) + (alkyl ? cyanoTotal(alkyl) : 0);
+  return { parent, branch: total - parent, total };
+}
+
+/**
+ * Highlight specs of the prefix groups that are or carry a `ciano-` prefix
+ * (the –C≡N whole, its carbon and N; or the branch that carries it), and
+ * of an ester's O-bound group that carries one, as substituents (design.md
+ * §13.4 I-39a); a group on the N of an amide or amine is left out.
+ *
+ * @param {object} result - The naming result.
+ * @returns {{atoms: number[], bonds: number[], style: string}[]} The specs.
+ */
+function cyanoPrefixSpecs(result) {
+  // A group on an amide's N is highlighted with the N already (amideGroupStep()).
+  const specs = result.structure.prefixes
+    .filter((g) => cyanoTotal(g.substituent) > 0 && !onNitrogen(g))
+    .map((g) => ({ ...groupIds(g), style: 'substituent' }));
+  const alkyl = esterGroup(result);
+  return alkyl && cyanoTotal(alkyl) > 0 ? [...specs, esterSpecs(result).alkyl] : specs;
+}
+
+/**
+ * Words for some nitriles cited `ciano-`, for the "También tiene…" lists
+ * of the group steps (design.md §13.4 I-39a).
+ *
+ * @param {number} n - How many.
+ * @returns {string} `un grupo –C≡N (un nitrilo)` / `2 grupos –C≡N (nitrilos)`.
+ */
+function cyanoWords(n) {
+  return n === 1 ? 'un grupo –C≡N (un nitrilo)' : `${n} grupos –C≡N (nitrilos)`;
+}
+
+/**
+ * The first items of the "Aquí manda…" list of a group step when some
+ * nitriles are cited `ciano-` (design.md §13.4 I-39a).
+ *
+ * @param {number} n - How many nitriles are cited `ciano-`.
+ * @returns {string[]} `['cada –C≡N se nombra con el prefijo «ciano-»']`, or none.
+ */
+function cyanoHow(n) {
+  return n > 0 ? ['cada –C≡N se nombra con el [[prefijo]] «ciano-»'] : [];
+}
+
+/**
+ * The group-step sentence on the carbon of the nitriles cited `ciano-`
+ * (design.md §13.4 I-39a): the prefix includes the carbon of the –C≡N
+ * (IUPAC 2013), so that carbon is not a chain carbon, neither of the
+ * parent nor of a branch, and is not numbered; `ciano` goes on the carbon
+ * it is bonded to. '' without such nitriles.
+ *
+ * @param {object} result - The naming result.
+ * @returns {string} The sentence, or ''.
+ */
+function cyanoCarbonSentence(result) {
+  const { branch, total } = cyanoPrefixCounts(result);
+  if (total === 0) {
+    return '';
+  }
+  const the = total === 1 ? 'el carbono del –C≡N' : 'el carbono de cada –C≡N';
+  const where = branch === 0 ? 'en la [[cadena principal]]' : 'en ninguna cadena (ni en la principal ni en la de una rama)';
+  return `El [[prefijo]] «ciano-» incluye ${the}: ese carbono no se cuenta ${where} ni se numera, y «ciano» se escribe con el número del carbono al que está unido.`;
+} // End of function cyanoCarbonSentence()
+
+/**
  * Sum of a per-substituent count over every occurrence of the prefixes of a name.
  *
  * @param {object} result - The naming result.
@@ -938,14 +1030,14 @@ function oxygenPrefixSpecs(result) {
 
 /**
  * Tells whether a prefix group is an atom group cited on its own rather than
- * a branch: a halogen, `hidroxi-` or `oxo-`.
+ * a branch: a halogen, `hidroxi-`, `oxo-` or `ciano-` (design.md §13.4 I-39a).
  *
  * @param {object} group - A prefix group.
- * @returns {boolean} True for a halogen, OH or C=O prefix.
+ * @returns {boolean} True for a halogen, OH, C=O or C≡N prefix.
  */
 function isAtomPrefix(group) {
   const sub = group.substituent;
-  return Boolean(sub.halogen || sub.hydroxy || sub.oxo);
+  return Boolean(sub.halogen || sub.hydroxy || sub.oxo || sub.cyano);
 }
 
 /** Order in which halogens are listed in a formula (Hill order after C and H) and in sentences. */
@@ -983,14 +1075,15 @@ function halogenTotal(sub) {
 
 /**
  * Number of carbons of one occurrence of a substituent (its subtree atoms
- * minus its halogen atoms, oxygens, ether oxygens included, and amine
- * nitrogens; 0 for a halogen, hydroxy, oxo or plain amino prefix).
+ * minus its halogen atoms, oxygens, ether oxygens included, amine
+ * nitrogens and nitrile nitrogens; 0 for a halogen, hydroxy, oxo or plain
+ * amino prefix, 1 for a `ciano` prefix, whose carbon belongs to it, I-39a).
  *
  * @param {object} sub - A substituent structure.
  * @returns {number} The carbon count.
  */
 function substituentCarbons(sub) {
-  return sub.atoms.length - halogenTotal(sub) - hydroxyTotal(sub) - oxoTotal(sub) - etherTotal(sub) - aminoTotal(sub);
+  return sub.atoms.length - halogenTotal(sub) - hydroxyTotal(sub) - oxoTotal(sub) - etherTotal(sub) - aminoTotal(sub) - cyanoTotal(sub);
 }
 
 /**
@@ -1033,12 +1126,16 @@ function halogenAtoms(n, element) {
 /**
  * Multiple-bond count of a substituent (a double bond counts 1, a triple 2),
  * nested prefixes and their connecting bonds included (the C=O of an `oxo`
- * prefix counts 1: it takes the place of two hydrogens).
+ * prefix counts 1: it takes the place of two hydrogens; the C≡N of a
+ * `ciano` prefix counts 2, design.md §13.4 I-39a).
  *
  * @param {object} sub - A substituent structure.
  * @returns {number} Number of π bonds inside the group.
  */
 function substituentPi(sub) {
+  if (sub.cyano) {
+    return 2; // The C≡N of a `ciano` prefix.
+  }
   if (!sub.chain && !sub.amino) {
     return 0; // A halogen, hydroxy or oxo prefix.
   }
@@ -1068,7 +1165,8 @@ function substituentPi(sub) {
  * bonds, so it adds one hydrogen to the count, I-36; an amide –CONH₂ is one
  * C=O, one O and one such N, I-37; a nitrile –C≡N is one N and two π
  * bonds, the triple bond taking the place of three hydrogens on its carbon
- * and the N adding one, I-38).
+ * and the N adding one, I-38; a `ciano-` prefix likewise, its carbon
+ * counted with the prefix, I-39a).
  *
  * @param {object} structure - The name structure.
  * @returns {{carbons: number, hydrogens: number, halogens: Object<string, number>, nitrogens?: number, oxygens: number}} The counts (halogens by element; empty for a hydrocarbon; `nitrogens` only when positive).
@@ -1096,7 +1194,7 @@ export function atomCounts(structure) {
     carbons += substituentCarbons(sub);
     substituentHalogens(sub, halogens);
     oxygens += hydroxyTotal(sub) + oxoTotal(sub) + etherTotal(sub);
-    nitrogens += aminoTotal(sub);
+    nitrogens += aminoTotal(sub) + cyanoTotal(sub);
     pi += substituentPi(sub) + (order - 1);
   }
   const rings = structure.parentKind === 'ring' ? 1 : 0;
@@ -1330,7 +1428,7 @@ function nitrogenDrawingSentences(kinds, others = 0) {
 
 /**
  * The count-step sentences on every nitrogen of a name: the N of each
- * nitrile –C≡N (design.md §13.4 I-38), drawn N (its three bonds go to its
+ * nitrile –C≡N (design.md §13.4 I-38; a `ciano-` one too, I-39a), drawn N (its three bonds go to its
  * carbon, so it has no hydrogen; the triple bond takes the place of three
  * hydrogens on that carbon), then the amine and amide nitrogens
  * (nitrogenDrawingSentences()); '' without nitrogens.
@@ -1341,7 +1439,8 @@ function nitrogenDrawingSentences(kinds, others = 0) {
 function allNitrogenSentences(result) {
   const kinds = nitrogenKinds(result);
   const amines = kinds[1] + kinds[2] + kinds[3];
-  const nitriles = isNitrile(result) ? suffixCount(result.structure) : 0;
+  // The nitriles of the suffix and those cited `ciano-` (design.md §13.4 I-39a) are drawn alike.
+  const nitriles = (isNitrile(result) ? suffixCount(result.structure) : 0) + cyanoPrefixCounts(result).total;
   let drawing = '';
   if (nitriles > 0) {
     drawing += nitriles === 1
@@ -1699,9 +1798,13 @@ function amideGroupStep(result) {
   if (amines > 0) {
     others.push(aminoWords(amines));
   }
+  const cyano = cyanoPrefixCounts(result).total;
+  if (cyano > 0) {
+    others.unshift(cyanoWords(cyano));
+  }
   if (others.length > 0) {
-    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > amida > aldehído > cetona > alcohol > amina.`);
-    const how = [];
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > amida > ${cyano > 0 ? 'nitrilo > ' : ''}aldehído > cetona > alcohol > amina.`);
+    const how = cyanoHow(cyano);
     if (aldehyde + otherCo > 0) {
       how.push(aldehyde > 0
         ? 'cada C=O que no es de la amida se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
@@ -1714,6 +1817,9 @@ function amideGroupStep(result) {
       how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda la amida, así que ${joinY(how)}, delante del nombre.`);
+    if (cyano > 0) {
+      text.push(cyanoCarbonSentence(result));
+    }
   } // End of the seniority sentences
   const traditional = (result.alternatives || []).find((a) => a.style === 'traditional');
   if (traditional) {
@@ -1727,7 +1833,7 @@ function amideGroupStep(result) {
     title: STEP_TITLES.group,
     text,
     highlight: [suffixSpec(result), ...sites.map(({ site }) => ({ atoms: [...site.atoms], bonds: [site.bond, ...site.bonds], style: 'substituent' })),
-      ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result)],
+      ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result), ...cyanoPrefixSpecs(result)],
     locants: null,
   };
 } // End of function amideGroupStep()
@@ -1767,6 +1873,13 @@ function nitrileGroupStep(result) {
   if (n > 1) {
     const { multiplier: mult } = suffixWords(suffix, lexiconEs);
     text.push(`Aquí hay ${n} grupos –C≡N, uno en cada extremo de la cadena principal, así que el sufijo dice cuántos: «-${mult}${ending}» («di» = 2).`);
+  }
+  const cyano = cyanoPrefixCounts(result).total;
+  if (cyano > 0) {
+    text.push(cyano === 1
+      ? 'Otro –C≡N queda en una rama, fuera de la cadena principal: ese no va en el sufijo, sino con el [[prefijo]] «ciano-», dentro del nombre de la rama.'
+      : `Otros ${cyano} grupos –C≡N quedan en ramas, fuera de la cadena principal: esos no van en el sufijo, sino con el [[prefijo]] «ciano-», dentro del nombre de su rama.`);
+    text.push(cyanoCarbonSentence(result));
   }
   const { aldehyde, ketone, branchCo, oh } = acidCompanions(result);
   const others = [];
@@ -1813,7 +1926,7 @@ function nitrileGroupStep(result) {
     id: 'group',
     title: STEP_TITLES.group,
     text,
-    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result)],
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result), ...cyanoPrefixSpecs(result)],
     locants: null,
   };
 } // End of function nitrileGroupStep()
@@ -2177,21 +2290,28 @@ function acidGroupStep(result) {
   if (amines > 0) {
     others.push(aminoWords(amines));
   }
+  const cyano = cyanoPrefixCounts(result).total;
+  if (cyano > 0) {
+    others.unshift(cyanoWords(cyano));
+  }
   if (others.length > 0) {
-    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
-    const how = [];
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > ${cyano > 0 ? 'nitrilo > ' : ''}aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
+    const how = cyanoHow(cyano);
     if (aldehyde + otherCo > 0) {
       how.push(aldehyde > 0
         ? 'cada C=O que no es del ácido se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
         : 'cada C=O que no es del ácido se nombra con el [[prefijo]] «oxo-»');
     }
     if (oh > 0) {
-      how.push(aldehyde + otherCo > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH que no es del ácido se nombra con el [[prefijo]] «hidroxi-»');
+      how.push(how.length > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH que no es del ácido se nombra con el [[prefijo]] «hidroxi-»');
     }
     if (amines > 0) {
       how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda el ácido, así que ${joinY(how)}, delante del nombre.`);
+    if (cyano > 0) {
+      text.push(cyanoCarbonSentence(result));
+    }
   } // End of the seniority sentences
   if (halogensIn(result).length > 0) {
     text.push('Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]].');
@@ -2200,7 +2320,7 @@ function acidGroupStep(result) {
     id: 'group',
     title: STEP_TITLES.group,
     text,
-    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result)],
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result), ...cyanoPrefixSpecs(result)],
     locants: null,
   };
 } // End of function acidGroupStep()
@@ -2262,31 +2382,38 @@ function esterGroupStep(result) {
   if (amines > 0) {
     others.push(aminoWords(amines));
   }
+  const cyano = cyanoPrefixCounts(result).total;
+  if (cyano > 0) {
+    others.unshift(cyanoWords(cyano));
+  }
   if (others.length > 0) {
-    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
-    const how = [];
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > ${cyano > 0 ? 'nitrilo > ' : ''}aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
+    const how = cyanoHow(cyano);
     if (aldehyde + otherCo > 0) {
       how.push(aldehyde > 0
         ? 'cada C=O que no es del éster se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
         : 'cada C=O que no es del éster se nombra con el [[prefijo]] «oxo-»');
     }
     if (oh > 0) {
-      how.push(aldehyde + otherCo > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
+      how.push(how.length > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
     }
     if (amines > 0) {
       how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda el éster, así que ${joinY(how)}, delante del nombre de la parte en la que está.`);
+    if (cyano > 0) {
+      text.push(cyanoCarbonSentence(result));
+    }
   } // End of the seniority sentences
   if (halogensIn(result).length + Object.keys(esterGroupHalogens(result)).length > 0) {
     text.push('Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]].');
   }
-  const alkylAmino = alkyl && aminoTotal(alkyl) > 0 ? [esterSpecs(result).alkyl] : [];
+  const alkylAmino = alkyl && aminoTotal(alkyl) > 0 && cyanoTotal(alkyl) === 0 ? [esterSpecs(result).alkyl] : [];
   return {
     id: 'group',
     title: STEP_TITLES.group,
     text,
-    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result), ...alkylAmino],
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result), ...alkylAmino, ...cyanoPrefixSpecs(result)],
     locants: null,
   };
 } // End of function esterGroupStep()
@@ -2679,7 +2806,11 @@ function chainStep(result) {
   const id = p0 ? 'groupChain' : 'chain';
   const step = { id, title: STEP_TITLES[id], text, highlight: [parentSpec(result)], locants: null };
   const all = p0 ? p0.candidatesBefore : p1.candidatesBefore;
-  if (all.length === 1) {
+  const cyano = cyanoPrefixCounts(result);
+  if (all.length === 1 && cyano.parent > 0) {
+    const the = cyano.parent === 1 ? 'el carbono del –C≡N' : 'los carbonos de los –C≡N';
+    text.push(`Sin contar ${the}, que va${cyano.parent === 1 ? '' : 'n'} en el [[prefijo]] «ciano-», los demás carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene ${length} carbonos.`);
+  } else if (all.length === 1) {
     text.push(`Todos los carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene ${length} carbonos.`);
   } else if (p0) {
     groupChainSentences(result, p0, p1, step);
@@ -2709,6 +2840,12 @@ function chainStep(result) {
   }
   if (prefixSum(result, aminoTotal) > 0) {
     text.push('El nitrógeno de un grupo amino no forma parte de la cadena: la cadena solo tiene carbonos seguidos y no puede atravesarlo.');
+  }
+  if (cyano.parent > 0 && all.length > 1) {
+    // Design.md §13.4 I-39a: the carbon of a `ciano-` nitrile is never a chain carbon.
+    text.push(cyano.parent === 1
+      ? 'El carbono del –C≡N que se nombra con el [[prefijo]] «ciano-» no forma parte de la cadena: el prefijo ya lo incluye.'
+      : 'Los carbonos de los –C≡N que se nombran con el [[prefijo]] «ciano-» no forman parte de la cadena: el prefijo ya los incluye.');
   }
   const outside = outsideUnsaturation(result);
   if (outside.double + outside.triple > 0) {
@@ -3600,8 +3737,8 @@ function terminalGroupNote(result) {
  * @returns {string} The standalone group name.
  */
 function groupNameOf(sub) {
-  // An alkoxy or amino group is called by its prefix (`grupo metoxi`, `grupo amino`, design.md §13.4 I-34, I-36).
-  return sub.alkoxy || sub.amino ? substituentPrefix(sub, lexiconEs) : lexiconEs.groupName(substituentPrefix(sub, lexiconEs));
+  // An alkoxy, amino or cyano group is called by its prefix (`grupo metoxi`, `grupo amino`, `grupo ciano`, design.md §13.4 I-34, I-36, I-39a).
+  return sub.alkoxy || sub.amino || sub.cyano ? substituentPrefix(sub, lexiconEs) : lexiconEs.groupName(substituentPrefix(sub, lexiconEs));
 }
 
 /**
@@ -3702,6 +3839,13 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
       ? `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona.`
       : `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de una cetona). No es el [[grupo principal]]: el aldehído va antes que la cetona.`];
   }
+  if (sub.cyano) {
+    // A nitrile cited `ciano-` (design.md §13.4 I-39a): below a more senior group, or on a branch.
+    const reason = principal && principal !== 'nitrile'
+      ? ` No es el [[grupo principal]]: ${familyWithArticle(principal)} va antes que el nitrilo.`
+      : '';
+    return [`${q(prefix)} es el [[prefijo]] de un grupo –C≡N (un nitrilo) unido ${words.to}.${reason} El prefijo incluye el carbono del –C≡N, así que ese carbono no se cuenta en la cadena.`];
+  }
   if (sub.alkoxy) {
     return alkoxyDescription(sub, words, principal);
   }
@@ -3750,9 +3894,12 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
     const amino = sub.prefixes.some((g) => g.substituent.amino);
     const hydroxy = sub.prefixes.some((g) => g.substituent.hydroxy);
     const oxo = sub.prefixes.some((g) => g.substituent.oxo);
+    const cyano = sub.prefixes.some((g) => g.substituent.cyano);
     const atomsOnly = sub.prefixes.every(isAtomPrefix);
     let kind = allHalogens ? 'Es una rama con halógenos' : 'Es una rama con sus propias ramas';
-    if (hydroxy && !oxo && atomsOnly) {
+    if (cyano && sub.prefixes.every((g) => g.substituent.cyano)) {
+      kind = cyanoTotal(sub) === 1 ? 'Es una rama con un grupo –C≡N' : 'Es una rama con grupos –C≡N';
+    } else if (hydroxy && !oxo && atomsOnly) {
       kind = hydroxyTotal(sub) === 1 ? 'Es una rama con un grupo –OH' : 'Es una rama con grupos –OH';
     } else if (oxo && !hydroxy && atomsOnly) {
       kind = oxoTotal(sub) === 1 ? 'Es una rama con un grupo C=O' : 'Es una rama con grupos C=O';
@@ -3780,6 +3927,10 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
       out.push(principal === 'amine'
         ? 'Un grupo amino que está en una rama, y no en la cadena principal, no va en el sufijo «-amina»: se nombra con el prefijo «amino-».'
         : 'Un grupo amino que está en una rama se nombra con el prefijo «amino-».');
+    }
+    if (cyano) {
+      const suffix = principal === 'nitrile' ? ', y no en la cadena principal, no va en el sufijo «-nitrilo»:' : '';
+      out.push(`Un –C≡N que está en una rama${suffix} se nombra con el prefijo «ciano-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama.`);
     }
   } // End of the nested prefixes
   const unsaturated = chain.double.length + chain.triple.length > 0;
@@ -3868,6 +4019,10 @@ function substituentsStep(result) {
     const also = halogens.length < groups.length ? ' también' : '';
     text.push(`Los átomos de halógeno unidos ${words.to}${also} son [[sustituyentes|sustituyente]]. Se nombran con un [[prefijo]]: «fluoro-» (F), «cloro-» (Cl), «bromo-» (Br) o «yodo-» (I). Un halógeno nunca va al final del nombre: siempre es un prefijo.`);
   }
+  if (groups.some((g) => g.substituent.cyano)) {
+    // Nitriles cited `ciano-` on the parent (design.md §13.4 I-39a).
+    text.push(`Los grupos –C≡N unidos ${words.to} que no son el [[grupo principal]] también son [[sustituyentes|sustituyente]]: se nombran con el [[prefijo]] «ciano-», que incluye el carbono del –C≡N.`);
+  }
   const hydroxyOn = groups.some((g) => g.substituent.hydroxy);
   const oxoOn = groups.some((g) => g.substituent.oxo);
   if (hydroxyOn || oxoOn) {
@@ -3895,6 +4050,8 @@ function substituentsStep(result) {
       what = k === 1 ? 'hay un grupo –OH' : `hay ${k} grupos –OH`;
     } else if (sub.oxo) {
       what = k === 1 ? 'hay un oxígeno unido con un enlace doble (C=O)' : `hay ${k} oxígenos unidos con enlaces dobles (C=O)`;
+    } else if (sub.cyano) {
+      what = k === 1 ? 'hay un grupo –C≡N' : `hay ${k} grupos –C≡N`;
     }
     let line = `${where} ${what}: se escribe ${q(citedGroup(group, omit, omit && groups.length > 1))}${omit ? `, sin ${k === 1 ? 'número' : 'números'}` : ''}.`;
     if (k > 1) {
@@ -4085,6 +4242,8 @@ function nameLegend(result) {
       meaning = 'sustituyente: grupo –OH, que aquí no es el grupo principal';
     } else if (sub.oxo) {
       meaning = 'sustituyente: oxígeno unido con un enlace doble (C=O), que aquí no es el grupo principal';
+    } else if (sub.cyano) {
+      meaning = 'sustituyente: grupo –C≡N (un nitrilo), que aquí no es el grupo principal; su carbono va en el prefijo, no en la cadena';
     } else if (sub.alkoxy) {
       meaning = `sustituyente: un éter, el oxígeno y el grupo de ${count(substituentCarbons(sub), 'carbono', 'carbonos')} unido a él («-oxi»)`;
     } else if (sub.amino) {

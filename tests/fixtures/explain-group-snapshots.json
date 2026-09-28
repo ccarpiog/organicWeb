@@ -724,7 +724,7 @@
    }
   ]
  },
- "N#CCCC(=O)O": {
+ "N#CC(=O)O": {
   "code": "HETEROATOM",
   "principal": "acid",
   "steps": [
@@ -741,15 +741,15 @@
     "highlight": [
      {
       "atoms": [
+       3,
+       4,
        5,
-       6,
-       7,
        1,
        2
       ],
       "bonds": [
-       5,
-       6,
+       3,
+       4,
        1
       ],
       "style": "substituent"
@@ -767,13 +767,13 @@
     "highlight": [
      {
       "atoms": [
-       5,
-       6,
-       7
+       3,
+       4,
+       5
       ],
       "bonds": [
-       5,
-       6
+       3,
+       4
       ],
       "style": "parent"
      },
@@ -801,13 +801,13 @@
     "highlight": [
      {
       "atoms": [
-       5,
-       6,
-       7
+       3,
+       4,
+       5
       ],
       "bonds": [
-       5,
-       6
+       3,
+       4
       ],
       "style": "parent"
      },
@@ -828,14 +828,14 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un grupo –C≡N (nitrilo) que no puede ser el grupo principal: o hay un grupo que va antes que el nitrilo (un ácido –COOH, un éster –COO– o una amida), o el nitrilo queda en una rama, fuera de la cadena principal. Entonces el nitrilo se nombraría con el prefijo «ciano-» (como en el ácido 3-cianopropanoico), y eso aún no sé hacerlo."
+     "Esta molécula tiene un grupo –C≡N (nitrilo) unido directamente al carbono de un grupo –COOH, –COO– o amida. La IUPAC no la nombra con el prefijo «ciano-»: la considera un derivado del ácido carbónico (como el ácido carbonocianídico, NC–COOH), y eso aún no sé nombrarlo."
     ],
     "highlight": [
      {
       "atoms": [
        1,
-       6,
-       7
+       4,
+       5
       ],
       "bonds": [],
       "style": "candidate"

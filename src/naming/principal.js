@@ -36,14 +36,17 @@
  * Since I-38 validation also admits the N of a nitrile –C≡N (validate.js
  * isNitrileNitrogen()), kind 'nitrile' (`-nitrilo`): it stands for its
  * group like an amine's N; its carbon X is a chain end of the parent.
- * Validation refuses every molecule where a nitrile would be the prefix
- * `ciano-` (an acid, ester or amide beside it; a nitrile on a branch).
+ * Since I-39a a nitrile that is not principal (an acid, ester or amide
+ * beside it) or that lies off the parent (on a branch) is the prefix
+ * `ciano-`, which includes its carbon (IUPAC 2013 P-66.5): that carbon
+ * is then outside the skeleton (outsideCarbons(), the first functional
+ * carbon kept out of the parent; design.md §13.6 "Where X belongs").
  *
  * The principal kind is the most senior one present (ácido > éster > amida >
  * nitrilo > aldehído > cetona > alcohol > amina, seniority.js SENIORITY; validation never
  * lets an acid, an ester, an amide or a nitrile meet): its groups on the parent are the
  * suffix (`ácido …oico`, `…oato de …ilo`, `-amida`, `-nitrilo`, `-al`, `-ona`, `-ol`, `-amina`), every other
- * group is a prefix (`oxo-`, `hidroxi-`, `amino-`). The carbon X of a C=O or a COOH
+ * group is a prefix (`oxo-`, `hidroxi-`, `amino-`, `ciano-`). The carbon X of a C=O or a COOH
  * is always a skeleton carbon (a chain or ring atom), never part of a
  * prefix by itself (design.md §13.6 "Where X belongs"). A carboxyl group
  * has two oxygens but is one suffix group: its C=O oxygen stands for it
@@ -60,7 +63,7 @@
 
 import { seniorityRank } from './seniority.js';
 import { N_LOCANT } from './structure.js';
-import { isCarboxylCarbon, isEsterCarbon, isAmideCarbon, amideRole, isNitrileNitrogen } from '../model/validate.js';
+import { isCarboxylCarbon, isEsterCarbon, isAmideCarbon, amideRole, isNitrileNitrogen, isNitrileCarbon } from '../model/validate.js';
 
 /** Kinds of oxygen group the engine names, most senior first. */
 export const OXYGEN_KINDS = Object.freeze(['acid', 'ester', 'aldehyde', 'ketone', 'alcohol']);
@@ -157,6 +160,30 @@ export function principalKindOf(mol, adj) {
   }
   return best;
 } // End of function principalKindOf()
+
+/**
+ * The functional carbons X that are never skeleton carbons of the parent
+ * (design.md §13.6 "Where X belongs", §13.4 I-39a): the carbon of every
+ * nitrile when the nitrile is not the principal group, since the prefix
+ * `ciano-` includes it (IUPAC 2013 P-66.5: `ácido 3-cianopropanoico`,
+ * NC–CH₂–CH₂–COOH, has a three-carbon parent). With a principal nitrile
+ * every nitrile carbon may end the parent (P0 picks the chain with the
+ * most of them); one left on a branch is cited `ciano-` there
+ * (substituent.js). Kept as a list of carbons, not a nitrile test, so a
+ * later family whose carbon is outside the parent (acyl prefixes, I-39b)
+ * can join it.
+ *
+ * @param {object} mol - A molecule accepted by validateForNaming().
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {string|null} principal - The principal kind (principalKindOf()).
+ * @returns {Set<number>} The carbon ids kept out of the parent skeleton.
+ */
+export function outsideCarbons(mol, adj, principal) {
+  if (principal === 'nitrile') {
+    return new Set();
+  }
+  return new Set([...mol.atoms.keys()].filter((id) => isNitrileCarbon(mol, adj, id)));
+}
 
 /**
  * Tells whether an oxygen neighbour of a parent atom belongs to one of its

@@ -1118,6 +1118,118 @@ export function generateNitriles({ count, seed, maxSize = 14 }) {
 } // End of function generateNitriles()
 
 /**
+ * Copies a molecule and bonds new nitrile groups –C≡N to some of its carbons
+ * (design.md §13.4 I-39a): each hydrogen of a carbon in `only` (default:
+ * every carbon) is replaced, with probability `rate`, by a new carbon
+ * carrying an N on a triple bond; at least one when `rate` hits none and
+ * some carbon has a hydrogen. The new nitrile carbon is outside every
+ * chain: the engine cites it `ciano-` unless it can be principal.
+ *
+ * @param {object} mol - A molecule (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} rate - Probability of replacing each hydrogen.
+ * @param {Set<number>|null} [only] - The carbons that may carry a –C≡N (default: every carbon).
+ * @returns {object} The copy.
+ */
+export function cyanate(mol, random, rate, only = null) {
+  const copy = cloneMolecule(mol);
+  const sites = [];
+  for (const [id, atom] of [...copy.atoms]) {
+    if (atom.element !== 'C' || (only && !only.has(id))) {
+      continue;
+    }
+    for (let k = CARBON_VALENCE - bondOrderSum(copy, id); k > 0; k -= 1) {
+      sites.push(id);
+    }
+  } // End of the loop over the carbons
+  let chosen = sites.filter(() => random() < rate);
+  if (chosen.length === 0 && sites.length > 0) {
+    chosen = [sites[Math.floor(random() * sites.length)]];
+  }
+  for (const id of chosen) {
+    const carbon = addAtom(copy, {}, 'C');
+    addBond(copy, id, carbon, 1);
+    addBond(copy, carbon, addAtom(copy, {}, 'N'), 3);
+  }
+  return copy;
+} // End of function cyanate()
+
+/**
+ * Generates up to `count` distinct (by canonical key) molecules with a
+ * nitrile cited `ciano-` (design.md §13.4 I-39a): a random acyclic
+ * hydrocarbon of 1 carbon up to `maxSize` − 3 given a principal group — a
+ * –COOH (carboxylate()), an ester (carboxylate() then esterify(), the
+ * O-bound group of 1 to 4 carbons), an amide (amidate(), sometimes with
+ * groups on its N) or one or two nitriles at chain ends with an ether O
+ * put into a C–C bond (nitrilate(), etherify(): the other piece becomes a
+ * branch) — then one to three –C≡N on any carbon (cyanate(): on the
+ * parent, in branches, in an ester's O-bound group or on an amide's N
+ * groups), a share of them also with C=O, OH, amines and halogens. Only
+ * molecules the engine names in every prefix style with some `ciano` in
+ * the name are kept (valid for naming — no nitrile on an acid, ester or
+ * amide carbon, at most two nitriles per carbon piece with a principal
+ * nitrile — and not refused by the engine: no acyl branch, no symmetric
+ * ether or amine).
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateCyano({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 8237 + 43);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50) {
+    attempts += 1;
+    const size = randomInt(random, 1, Math.max(1, maxSize - 3));
+    const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8 });
+    const kind = ['acid', 'ester', 'amide', 'nitrile'][Math.floor(random() * 4)];
+    let mol = base;
+    if (kind === 'acid') {
+      mol = carboxylate(base, random, random() < 0.2 ? 2 : 1);
+    } else if (kind === 'ester') {
+      const alkyl = randomHydrocarbon(random, { size: randomInt(random, 1, 4), unsaturation: random() * 0.2, branchiness: random() });
+      mol = esterify(carboxylate(base, random, 1), random, alkyl);
+    } else if (kind === 'amide') {
+      mol = amidate(base, random, random() < 0.2 ? 2 : 1, random() * 0.5);
+    } else {
+      mol = etherify(nitrilate(base, random, random() < 0.3 ? 2 : 1), random, 1);
+    }
+    if (mol.atoms.size === base.atoms.size) {
+      continue; // No end carbon could take the principal group.
+    }
+    // The nitriles to cite `ciano-` go on any carbon, the ester's O-bound group and the amide's N groups included.
+    const carbons = new Set([...mol.atoms].filter(([, atom]) => atom.element === 'C').map(([id]) => id));
+    mol = cyanate(mol, random, 0.02 + random() * 0.1, carbons);
+    if (random() < 0.15) {
+      mol = carbonylate(mol, random, 0.05 + random() * 0.1, carbons);
+    }
+    if (random() < 0.15) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.1, carbons);
+    }
+    if (random() < 0.1) {
+      mol = aminate(mol, random, { rate: 0.05 + random() * 0.1, graft: random() * 0.5, only: carbons });
+    }
+    if (random() < 0.15) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.15);
+    }
+    if (validateForNaming(mol)) {
+      continue; // Not valid for naming (a nitrile on the acid's carbon, three nitriles on one piece…).
+    }
+    const names = PREFIX_STYLES.map((prefixStyle) => nameMolecule(mol, { prefixStyle }));
+    if (!names.every((result) => result.ok) || !/ciano/.test(names[0].name)) {
+      continue; // Refused by the engine in some style, or no nitrile cited `ciano-`.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct ciano- molecules
+  return molecules;
+} // End of function generateCyano()
+
+/**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4
  * I-25) whose ring size lies in a carbon range, smallest first: one
  * molecule per size from max(3, minSize) to min(MAX_CHAIN, maxSize). Every

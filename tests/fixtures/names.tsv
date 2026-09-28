@@ -613,7 +613,7 @@ ClCC(N)=O	2-cloroetanamida	halogen on an amide	Two substituents on ethane (the a
 NC(=O)CCOC	3-metoxipropanamida	ether prefix on an amide	The ether O is a metoxi- prefix	
 CC(=O)NCCO	N-(2-hidroxietil)etanamida	substituted group on N	The group on the N is named like a branch, with its own locants and parentheses	traditional=N-(2-hidroxietil)acetamida
 CCC(C)C(=O)N(CC)CC	N,N-dietil-2-metilbutanamida	N,N-diethyl and a branch	dietil before metil (multipliers ignored); N,N before 2	
-# Nitriles (I-38): the nitrile –C≡N is one characteristic group (its N never an amine, its triple bond never an alkyne -ino), below amides and above aldehydes (ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina, IUPAC 2013 P-41), cited as the suffix -nitrilo (-dinitrilo; P-66.5.1.1); its carbon is a chain carbon, always a chain end, locant 1, never cited (P-14.3.4.1); the N is not a chain atom; the final o of -ano/-eno is kept before the consonant of -nitrilo (P-16.7.1: etanonitrilo, prop-2-enonitrilo; English prop-2-enenitrile); other groups are prefixes (oxo-, hidroxi-, amino-, alcoxi-, halogens); acetonitrilo (retained PIN) only under Otras formas válidas; nitriles with a ring (-carbonitrilo), more than two, and any nitrile that would be ciano- (below an acid, ester or amide, or on another carbon piece) are refused (tests/unit/nitriles.test.js)
+# Nitriles (I-38): the nitrile –C≡N is one characteristic group (its N never an amine, its triple bond never an alkyne -ino), below amides and above aldehydes (ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina, IUPAC 2013 P-41), cited as the suffix -nitrilo (-dinitrilo; P-66.5.1.1); its carbon is a chain carbon, always a chain end, locant 1, never cited (P-14.3.4.1); the N is not a chain atom; the final o of -ano/-eno is kept before the consonant of -nitrilo (P-16.7.1: etanonitrilo, prop-2-enonitrilo; English prop-2-enenitrile); other groups are prefixes (oxo-, hidroxi-, amino-, alcoxi-, halogens); acetonitrilo (retained PIN) only under Otras formas válidas; nitriles with a ring (-carbonitrilo) and more than two on one carbon piece are refused (tests/unit/nitriles.test.js); a nitrile below an acid, ester or amide, or on another carbon piece, is ciano- (next section)
 C#N	metanonitrilo	one-carbon nitrile	HC≡N: the nitrile carbon is the only chain carbon (P-66.5.1.1.1 systematic form); no locant; formonitrilo / cianuro de hidrógeno not offered	
 CC#N	etanonitrilo	two-carbon nitrile	The C≡N carbon is chain carbon 1, never cited (P-14.3.4.1); the o of etano is kept before -nitrilo; acetonitrilo (retained PIN, P-66.5.1.1.1) only under Otras formas válidas	traditional=acetonitrilo
 CCC#N	propanonitrilo	three-carbon nitrile	The C≡N is never an -ino: no triple bond in the parent	
@@ -633,3 +633,29 @@ CN(C)CC#N	2-(dimetilamino)etanonitrilo	substituted amino prefix on a nitrile	The
 COCC#N	2-metoxietanonitrilo	ether on a nitrile	The ether O is a metoxi- prefix; two substituents on ethane: the locant is cited	
 ClCCC#N	3-cloropropanonitrilo	halogen on a nitrile	The chlorine is a prefix on carbon 3	
 ClCC#N	2-cloroetanonitrilo	halogen on a two-carbon nitrile	Suffix + prefix on ethane: the prefix locant is cited (as in ácido 2-cloroetanoico)	
+# Cyano prefix (I-39a): a nitrile that is not the principal group (ácido > éster > amida > nitrilo, IUPAC 2013 P-41) or that lies on a branch is the prefix ciano- (P-66.5), which includes the nitrile carbon: that carbon is never a chain carbon (not counted by the chain length, not numbered); ciano is alphabetised under c (ciano < cloro); a nitrile on the carbon of an acid, ester or amide is refused (carbonocyanidic; tests/unit/cyano.test.js)
+N#CCCC(=O)O	ácido 3-cianopropanoico	acid > nitrile	NC–CH2–CH2–COOH: the parent is the three-carbon acid; the CN carbon belongs to the ciano- prefix, on carbon 3	
+N#CCC(=O)O	ácido 2-cianoetanoico	ciano- on a two-carbon acid	Two substituents on ethane (suffix + prefix): the prefix locant is cited, as in ácido 2-cloroetanoico	
+CCC(C#N)C(=O)O	ácido 2-cianobutanoico	ciano- on an inner carbon	The chain runs through the CH that carries the CN; the CN carbon is not a chain carbon	
+N#CC(C#N)C(=O)O	ácido 2,2-dicianoetanoico	two ciano- on one carbon	diciano: one locant per group	
+N#CC(C#N)CC(=O)O	ácido 3,3-dicianopropanoico	two ciano- at the far end	Counting the CN carbons would make butanedinitrile-like chains; they are prefixes, the parent has 3 carbons	
+CCCCC(C#N)CCC(=O)O	ácido 4-cianooctanoico	ciano- on a long acid	The longest chain carrying the COOH; the CN carbon never extends it	
+OC(=O)CC(CCC#N)CCC	ácido 3-(2-cianoetil)hexanoico	the CN carbon counts in no chain length	Without the CN carbon the propyl arm (3 C) is longer than the CH2CH2 arm (2 C): the chain goes through the propyl	
+CC(C)C(C#N)C(=O)O	ácido 2-ciano-3-metilbutanoico	ciano- beside a branch	ciano before metil (alphabetical order)	
+C=CC(C#N)C(=O)O	ácido 2-cianobut-3-enoico	ciano- on an unsaturated acid	The C≡N is not a chain unsaturation: only the C=C is cited (-en-)	
+ClC(C#N)C(=O)O	ácido 2-ciano-2-cloroetanoico	ciano and cloro alphabetised	ciano before cloro (i before l)	
+N#CC(O)C(=O)O	ácido 2-ciano-2-hidroxietanoico	ciano and hidroxi	Both prefixes of the acid, in alphabetical order	
+NCCC(C#N)C(=O)O	ácido 4-amino-2-cianobutanoico	amino and ciano	amino before ciano	
+N#CCC(=O)CC(=O)O	ácido 4-ciano-3-oxobutanoico	ciano and oxo on an acid	ácido > nitrilo > cetona: both are prefixes	
+N#CCC(CC#N)C(=O)O	ácido 3-ciano-2-(cianometil)propanoico	ciano- on the parent and in a branch	Without the CN carbons both arms of C2 are one carbon long; the other one is the branch (cianometil)	
+OC(=O)CCOCC#N	ácido 3-(cianometoxi)propanoico	ciano- inside an alkoxy prefix	The nitrile is on the other side of the ether O: cianometoxi	
+N#CCC(=O)OC	2-cianoetanoato de metilo	ester > nitrile	The ciano- prefix goes on the acid part; two substituents on ethane, so the locant is cited	
+CC(C)(C#N)C(=O)OC	2-ciano-2-metilpropanoato de metilo	ciano- and a methyl on the same carbon	ciano before metil	
+CC(=O)OCC#N	etanoato de cianometilo	ciano- in the O-bound group of an ester	The O-bound group is named like a branch: cianometilo; acetato de cianometilo only under Otras formas válidas	traditional=acetato de cianometilo
+CC(C#N)OC(=O)C	etanoato de 1-cianoetilo	ciano- on the O-bound carbon	The O-bound group is numbered from the carbon bonded to the O	traditional=acetato de 1-cianoetilo
+N#CCCC(N)=O	3-cianopropanamida	amide > nitrile	The parent is the three-carbon amide; the CN carbon belongs to ciano-	
+N#CCC(=O)N(C)C	2-ciano-N,N-dimetiletanamida	ciano- and N groups on an amide	N-locants before the number (N,N-dimetil after ciano alphabetically: c before d… m)	
+CC(=O)NCC#N	N-(cianometil)etanamida	ciano- in a group on the amide N	The group on the N is named like a branch	traditional=N-(cianometil)acetamida
+N#CCCOCC#N	3-(cianometoxi)propanonitrilo	two nitriles on different carbon pieces	The parent carries one nitrile (P0 ties), then the longer side wins (P1); the other nitrile is ciano- inside the alkoxy prefix	
+N#CCC(OCC#N)CC#N	3-(cianometoxi)pentanodinitrilo	three nitriles on two pieces	The piece with two nitriles carries the suffix (P0); the third is ciano- on the other side of the O	
+N#CCN(C)CCC#N	3-[(cianometil)(metil)amino]propanonitrilo	ciano- in a group on an amino N	The longer side of the N carries the suffix; the amino prefix lists its groups alphabetically, the second enclosed	

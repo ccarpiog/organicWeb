@@ -35,12 +35,15 @@
  * the C=O bond is never a chain bond, so it counts in no P2/P3 comparison
  * (design.md §13.6 "Where X belongs"). The same holds for a nitrile
  * carbon (I-38: a leaf, its C≡N never a chain bond, never an `-ino`); its
- * N, like an amine's, is counted by P0.
+ * N, like an amine's, is counted by P0. A nitrile that is not the
+ * principal group is the prefix `ciano-` (I-39a), whose carbon is not a
+ * skeleton carbon (principal.js outsideCarbons()): no path runs through it,
+ * so it counts in no P1 length, and it is one substituent in P4.
  * Pure: reads topology only.
  */
 
 import { adjacency, leaves, carbonSkeleton, connectedComponents } from '../model/graph.js';
-import { principalKindOf, isPrincipalOxygen, isSuffixOxygen } from './principal.js';
+import { principalKindOf, isPrincipalOxygen, isSuffixOxygen, outsideCarbons } from './principal.js';
 
 /**
  * Orients a chain so that it starts at the end with the smaller atom id.
@@ -94,13 +97,16 @@ function bfsParents(adj, from) {
  * side: a carbon chain never runs through an O, and the paths of every
  * piece compete for the parent with the usual rules (the side that carries
  * the principal groups, then the longest chain…); a piece that is a lone
- * carbon (the CH₃ of a methoxy group) gives its one-atom chain.
+ * carbon (the CH₃ of a methoxy group) gives its one-atom chain. The
+ * `exclude` carbons (a `ciano-` carbon, design.md §13.4 I-39a) are left
+ * out of the skeleton, so the carbon bearing one can end a chain.
  *
  * @param {object} mol - A validated acyclic molecule (a tree).
+ * @param {Set<number>} [exclude] - Carbons that are never chain atoms (principal.js outsideCarbons(); default none).
  * @returns {number[][]} Paths, each starting at its smaller end id, piece by piece (pieces by smallest atom id).
  */
-export function leafToLeafPaths(mol) {
-  const skeleton = carbonSkeleton(mol);
+export function leafToLeafPaths(mol, exclude = new Set()) {
+  const skeleton = carbonSkeleton(mol, exclude);
   const adj = adjacency(skeleton);
   const allEnds = leaves(skeleton);
   const paths = [];
@@ -230,8 +236,8 @@ function applyCountRule(rule, chains, values) {
  */
 export function selectParent(mol) {
   const adj = adjacency(mol);
-  let chains = leafToLeafPaths(mol);
   const principal = principalKindOf(mol, adj);
+  let chains = leafToLeafPaths(mol, outsideCarbons(mol, adj, principal));
   const isSuffix = (id) => isSuffixOxygen(mol, adj, id, principal);
   const isGroup = (id) => isPrincipalOxygen(mol, adj, id, principal);
   const counts = new Map(chains.map((chain) => [chain.join('-'), chainCounts(adj, chain, isSuffix, isGroup)]));

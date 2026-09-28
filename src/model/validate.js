@@ -337,29 +337,38 @@ export const RING_NITRILE_MESSAGE = 'Esta molécula tiene un anillo y un grupo �
   + '(como el etanonitrilo).';
 
 /**
- * HETEROATOM message for an open chain with more than two nitrile groups
- * (design.md §13.4 I-38): the C of a –C≡N is always a chain end and the
- * chain has only two ends, so one nitrile would be a branch (`ciano-`) or
- * IUPAC 2013 names every group with `-carbonitrilo` on a smaller parent
- * (`propano-1,2,3-tricarbonitrilo`); neither is supported yet.
+ * HETEROATOM message for more than two nitrile groups on one carbon piece
+ * when the nitrile is the principal group (design.md §13.4 I-38, I-39a):
+ * the C of a –C≡N is always a chain end and the chain has only two ends;
+ * IUPAC 2013 then names every group with `-carbonitrilo` on a smaller
+ * parent (`propano-1,2,3-tricarbonitrilo`), not supported yet. Below an
+ * acid, ester or amide, or on other carbon pieces, any number of nitriles
+ * is named with `ciano-`.
  */
-export const MANY_NITRILES_MESSAGE = 'Esta molécula tiene más de dos grupos –C≡N (nitrilo). '
-  + 'El carbono de un –C≡N siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos, '
-  + 'así que alguno quedaría en una rama. Estos compuestos se nombran con el prefijo «ciano-» '
-  + 'o con «-carbonitrilo», y eso aún no sé hacerlo.';
+export const MANY_NITRILES_MESSAGE = 'Esta molécula tiene más de dos grupos –C≡N (nitrilo) en la misma cadena de carbonos. '
+  + 'El carbono de un –C≡N siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos. '
+  + 'Estos compuestos se nombran con «-carbonitrilo» (como el propano-1,2,3-tricarbonitrilo), y eso aún no sé hacerlo.';
 
 /**
- * HETEROATOM message for a molecule whose nitrile group cannot be the
- * principal group (design.md §13.4 I-38): with an acid, an ester or an
- * amide (ácido > éster > amida > nitrilo), or with a second nitrile on
- * another carbon piece (joined through an O or an N), the nitrile would
- * be the prefix `ciano-`, whose carbon is not a chain carbon; I-39 names
- * it (`ácido 3-cianopropanoico`).
+ * HETEROATOM message for a nitrile the naming engine could cite neither as
+ * the suffix `-nitrilo` nor as the prefix `ciano-` (design.md §13.4 I-38,
+ * I-39a). A safety net (naming/index.js): validation and the chain
+ * machinery make it unreachable.
  */
-export const CYANO_PREFIX_MESSAGE = 'Esta molécula tiene un grupo –C≡N (nitrilo) que no puede ser el grupo principal: '
-  + 'o hay un grupo que va antes que el nitrilo (un ácido –COOH, un éster –COO– o una amida), '
-  + 'o el nitrilo queda en una rama, fuera de la cadena principal. Entonces el nitrilo se nombraría con el prefijo '
-  + '«ciano-» (como en el ácido 3-cianopropanoico), y eso aún no sé hacerlo.';
+export const CYANO_PREFIX_MESSAGE = 'Esta molécula tiene un grupo –C≡N (nitrilo) que no sé situar en el nombre: '
+  + 'ni como grupo principal (con la terminación «-nitrilo», como en el etanonitrilo) '
+  + 'ni con el prefijo «ciano-» (como en el ácido 3-cianopropanoico).';
+
+/**
+ * HETEROATOM message for a nitrile bonded directly to the carbon of an
+ * acid, an ester or an amide (design.md §13.4 I-39a, `carbonocyanidic`):
+ * NC–COOH is not `ácido cianometanoico` for IUPAC 2013 but a derivative of
+ * carbonic acid, `ácido carbonocianídico` (P-65.2.1, from memory), a
+ * family out of scope.
+ */
+export const CARBONOCYANIDIC_MESSAGE = 'Esta molécula tiene un grupo –C≡N (nitrilo) unido directamente al carbono '
+  + 'de un grupo –COOH, –COO– o amida. La IUPAC no la nombra con el prefijo «ciano-»: la considera un derivado '
+  + 'del ácido carbónico (como el ácido carbonocianídico, NC–COOH), y eso aún no sé nombrarlo.';
 
 /** TOO_BIG message for a ring larger than the parent-size cap (MAX_CHAIN). */
 export const RING_TOO_BIG_MESSAGE = 'El anillo es demasiado grande (máximo 30 carbonos en el anillo).';
@@ -1260,7 +1269,7 @@ export function aldehydeOxygens(mol) {
  * ester would be an `alcoxicarbonil-` / `aciloxi-` prefix, I-39), more than
  * one ester group (`manyEsters`), then the amides (amidePlacementError():
  * `ringAmide`, `amidePrefix`, `manyAmides`, `substitutedPolyamide`), then
- * the nitriles (nitrilePlacementError(): `ringNitrile`, `cyanoPrefix`,
+ * the nitriles (nitrilePlacementError(): `ringNitrile`, `carbonocyanidic`,
  * `manyNitriles`), then more than two aldehyde groups (`manyAldehydes`). The error lists the heteroatoms (`atoms`) and the
  * offending groups (`acids`: the carboxyl carbons; `esters`: the ester
  * carbons; `sideChain` or `aldehydes`: oxygens).
@@ -1370,17 +1379,18 @@ function amidePlacementError(mol, cyclic, hetero, senior) {
 
 /**
  * The refusal of a nameable-heteroatom molecule whose nitrile groups the
- * engine cannot place (design.md §13.4 I-38), or null. In order: any
+ * engine cannot place (design.md §13.4 I-38, I-39a), or null. In order: any
  * nitrile with a ring (`ringNitrile`: `-carbonitrilo`, `benzonitrilo`, or
- * a ring on the chain that carries it, I-40); a nitrile with an acid, an
- * ester or an amide (`cyanoPrefix`: ácido > éster > amida > nitrilo, so
- * the nitrile would be the `ciano-` prefix, I-39); more than two nitriles
- * (`manyNitriles`: a nitrile carbon is always a chain end); two nitriles
- * whose carbons lie on different carbon pieces, joined through an O or an
- * N (`cyanoPrefix`: one of them would be on a branch of the other's
- * chain). With at most two nitriles on one carbon piece, both are ends of
- * the parent chain (P0). The error lists the heteroatoms (`atoms`) and the
- * nitrile carbons (`nitriles`).
+ * a ring on the chain that carries it, I-40); beside an acid, an ester or
+ * an amide (ácido > éster > amida > nitrilo) every nitrile is the prefix
+ * `ciano-` (I-39a), except one bonded directly to the carbon of such a
+ * group (`carbonocyanidic`: NC–COOH is a carbonic acid derivative for
+ * IUPAC 2013); with the nitrile principal, more than two nitrile carbons
+ * on one carbon piece (`manyNitriles`: a nitrile carbon is always a chain
+ * end, so a third would need `-carbonitrilo`). Nitriles on other carbon
+ * pieces (joined through an O or an N) are named: the parent carries the
+ * most (P0), the others are `ciano-` inside a branch. The error lists the
+ * heteroatoms (`atoms`) and the nitrile carbons (`nitriles`).
  *
  * @param {object} mol - A validated molecule whose heteroatoms are nameable.
  * @param {boolean} cyclic - Whether it has a ring.
@@ -1397,17 +1407,15 @@ function nitrilePlacementError(mol, cyclic, hetero, senior) {
   if (cyclic) {
     return refuse(RING_NITRILE_MESSAGE, 'ringNitrile');
   }
+  const adj = adjacency(mol);
   if (senior) {
-    return refuse(CYANO_PREFIX_MESSAGE, 'cyanoPrefix');
+    const functional = (id) => isCarboxylCarbon(mol, adj, id) || isEsterCarbon(mol, adj, id) || isAmideCarbon(mol, adj, id);
+    const onFunctional = nitriles.some((carbon) => adj.get(carbon).some((n) => functional(n.atom)));
+    return onFunctional ? refuse(CARBONOCYANIDIC_MESSAGE, 'carbonocyanidic') : null;
   }
-  if (nitriles.length > 2) {
+  const pieces = connectedComponents(carbonSkeleton(mol));
+  if (pieces.some((piece) => nitriles.filter((carbon) => piece.includes(carbon)).length > 2)) {
     return refuse(MANY_NITRILES_MESSAGE, 'manyNitriles');
-  }
-  if (nitriles.length === 2) {
-    const pieces = connectedComponents(carbonSkeleton(mol));
-    if (!pieces.some((piece) => piece.includes(nitriles[0]) && piece.includes(nitriles[1]))) {
-      return refuse(CYANO_PREFIX_MESSAGE, 'cyanoPrefix');
-    }
   }
   return null;
 } // End of function nitrilePlacementError()

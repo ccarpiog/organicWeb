@@ -152,6 +152,9 @@ const SNAPSHOT_SMILES = [
   'CN(C)CCO', // 2-(dimetilamino)etan-1-ol: substituted amino prefix
   'CC(N)C(=O)O', // ácido 2-aminopropanoico: amino acid
   'CC(=O)OCCN', // etanoato de 2-aminoetilo: amino in the O-bound group
+  'N#CCCC(=O)O', // ácido 3-cianopropanoico: acid > nitrile, ciano- with its carbon outside the chain (I-39a)
+  'N#CCCOCC#N', // 3-(cianometoxi)propanonitrilo: a nitrile on a branch piece is ciano- (I-39a)
+  'CC(=O)OCC#N', // etanoato de cianometilo: ciano- in the O-bound group (I-39a)
 ];
 
 /**

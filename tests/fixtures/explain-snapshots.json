@@ -54213,5 +54213,1472 @@
     ]
    }
   ]
+ },
+ "N#CCCC(=O)O": {
+  "name": "ácido 3-cianopropanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 4 carbonos, 5 hidrógenos, 1 átomo de nitrógeno y 2 átomos de oxígeno (C₄H₅NO₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. El oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono. El nitrógeno unido a un carbono por un [[enlace triple]] (–C≡N) se ve como N: sus 3 enlaces van a ese carbono, así que no lleva hidrógeno. El enlace triple ocupa en el carbono el sitio de tres hidrógenos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       1,
+       6,
+       7
+      ],
+      "bonds": [
+       4,
+       3,
+       2,
+       1,
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo –C≡N (un nitrilo). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > nitrilo > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que cada –C≡N se nombra con el [[prefijo]] «ciano-», delante del nombre.",
+     "El [[prefijo]] «ciano-» incluye el carbono del –C≡N: ese carbono no se cuenta en la [[cadena principal]] ni se numera, y «ciano» se escribe con el número del carbono al que está unido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "Sin contar el carbono del –C≡N, que va en el [[prefijo]] «ciano-», los demás carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 3 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3
+      ],
+      "bonds": [
+       4,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 3; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 3. Gana la opción B.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 3-cianopropanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3
+      ],
+      "bonds": [
+       4,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      3,
+      3
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         3
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         4,
+         5
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        5,
+        3
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3
+        ],
+        "bonds": [
+         4,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        3,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Los grupos –C≡N unidos a la cadena principal que no son el [[grupo principal]] también son [[sustituyentes|sustituyente]]: se nombran con el [[prefijo]] «ciano-», que incluye el carbono del –C≡N.",
+     "En el carbono 3 hay un grupo –C≡N: se escribe «3-ciano».",
+     "«ciano» es el [[prefijo]] de un grupo –C≡N (un nitrilo) unido a la cadena principal. No es el [[grupo principal]]: el ácido carboxílico va antes que el nitrilo. El prefijo incluye el carbono del –C≡N, así que ese carbono no se cuenta en la cadena."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3
+      ],
+      "bonds": [
+       4,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "ciano",
+      "text": "En el carbono 3 hay un grupo –C≡N: se escribe «3-ciano». «ciano» es el [[prefijo]] de un grupo –C≡N (un nitrilo) unido a la cadena principal. No es el [[grupo principal]]: el ácido carboxílico va antes que el nitrilo. El prefijo incluye el carbono del –C≡N, así que ese carbono no se cuenta en la cadena.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         3
+        ],
+        "bonds": [
+         4,
+         3
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 3-cianopropanoico».",
+     "El nombre completo es «ácido 3-cianopropanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3
+      ],
+      "bonds": [
+       4,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      3,
+      3
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «ciano»"
+     },
+     {
+      "text": "ciano",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo –C≡N (un nitrilo), que aquí no es el grupo principal; su carbono va en el prefijo, no en la cadena"
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       3,
+       2
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "ciano",
+      "kind": "prefix",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       5,
+       4,
+       3
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       4,
+       3
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "N#CCCOCC#N": {
+  "name": "3-(cianometoxi)propanonitrilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 5 carbonos, 6 hidrógenos, 2 átomos de nitrógeno y 1 átomo de oxígeno (C₅H₆N₂O).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno unido a dos carbonos (C–O–C) también se ve como O: es el oxígeno de un éter y no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces. El oxígeno del éter no ocupa el sitio de ningún hidrógeno: va entre dos carbonos, como un eslabón más. Cada nitrógeno unido a un carbono por un [[enlace triple]] (–C≡N) se ve como N: sus 3 enlaces van a ese carbono, así que no lleva hidrógeno. Cada enlace triple ocupa en su carbono el sitio de tres hidrógenos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       1
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –C≡N: un carbono unido a un nitrógeno por un [[enlace triple]]. Es un [[grupo funcional]]: la molécula es un nitrilo.",
+     "Ese enlace triple no es el de un alquino: no une dos carbonos, sino un carbono y un nitrógeno. Por eso no se nombra con «-ino»: forma parte del grupo –C≡N.",
+     "El carbono del –C≡N solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1. El nitrógeno no forma parte de la cadena.",
+     "El grupo –C≡N es el [[grupo principal]]: se nombra con el [[sufijo]] «-nitrilo», al final del nombre (como en «etanonitrilo»).",
+     "Otro –C≡N queda en una rama, fuera de la cadena principal: ese no va en el sufijo, sino con el [[prefijo]] «ciano-», dentro del nombre de la rama.",
+     "El [[prefijo]] «ciano-» incluye el carbono del –C≡N: ese carbono no se cuenta en ninguna cadena (ni en la principal ni en la de una rama) ni se numera, y «ciano» se escribe con el número del carbono al que está unido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ether",
+    "title": "Reconoce el éter",
+    "text": [
+     "Además, tu molécula tiene un oxígeno unido a dos carbonos (C–O–C): un éter.",
+     "Un éter nunca es el [[grupo principal]] y nunca va al final del nombre: se nombra con un [[prefijo]] acabado en «-oxi» (grupo alcoxi), como «metoxi-» en «metoxietano».",
+     "La [[cadena principal]] no puede pasar por el oxígeno: el O corta la molécula en dos lados, cada uno con sus carbonos. La cadena principal se busca entre los carbonos de los dos lados, con las reglas de siempre; el otro lado, junto con el O, es un [[sustituyente]].",
+     "Los dos lados llevan los mismos grupos –C≡N, así que decide la longitud. En el lado de la [[cadena principal]] hay una cadena de 3 carbonos; en el otro lado, la cadena más larga tiene 2 carbonos. Gana la más larga, y el otro lado es el sustituyente «cianometoxi».",
+     "«cianometoxi» se forma como «metoxi» (met + oxi: una cadena de 1 carbono unida al oxígeno, y «oxi», que es el oxígeno), con los sustituyentes de esa cadena delante. Con cadenas de 1 a 4 carbonos se usa esta forma corta (metoxi, etoxi, propoxi, butoxi), no «cianometiloxi»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       5
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –C≡N, porque el –C≡N es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –C≡N, gana la más larga.",
+     "El carbono de cada –C≡N forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Su nitrógeno no forma parte de ella.",
+     "De las cadenas que llevan el grupo –C≡N, la más larga tiene 3 carbonos. Solo hay una así.",
+     "La cadena no puede atravesar el oxígeno de un éter: solo cuentan las cadenas de carbonos seguidos, a un lado o al otro del O."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –C≡N tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –C≡N (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 1; opción B: 3. Se comparan uno a uno: en el primer número distinto, 1 es menor que 3. Gana la opción A.",
+     "El carbono del grupo –C≡N siempre es el 1, así que su número no se escribe: «3-(cianometoxi)propanonitrilo», nunca «-1-nitrilo».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      4,
+      3
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –C≡N",
+       "lists": [
+        [
+         1
+        ],
+        [
+         3
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         3,
+         4
+        ],
+        "bonds": [
+         2,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        3,
+        2
+       ],
+       [
+        4,
+        3
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3,
+         2
+        ],
+        "bonds": [
+         3,
+         2
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        3,
+        2
+       ],
+       [
+        2,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Los grupos unidos a la cadena principal a través de un oxígeno (–O–, un éter) son [[sustituyentes|sustituyente]]: se nombran con un [[prefijo]] acabado en «-oxi» (grupos alcoxi), como «metoxi» o «etoxi».",
+     "En el carbono 3 hay un grupo cianometoxi: se escribe «3-(cianometoxi)».",
+     "«cianometoxi» es el [[prefijo]] de un éter: un oxígeno unido a la cadena principal y, al otro lado del oxígeno, un grupo de 2 carbonos.",
+     "«cianometoxi» se forma como «metoxi» (met + oxi: una cadena de 1 carbono unida al oxígeno, y «oxi», que es el oxígeno), con los sustituyentes de esa cadena delante. Con cadenas de 1 a 4 carbonos se usa esta forma corta (metoxi, etoxi, propoxi, butoxi), no «cianometiloxi».",
+     "El grupo unido al oxígeno, «cianometil», se nombra como cualquier rama.",
+     "Es una rama con un grupo –C≡N. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: «ciano».",
+     "Un –C≡N que está en una rama, y no en la cadena principal, no va en el sufijo «-nitrilo»: se nombra con el prefijo «ciano-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama.",
+     "Va entre paréntesis porque tiene sus propios sustituyentes."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "cianometoxi",
+      "text": "En el carbono 3 hay un grupo cianometoxi: se escribe «3-(cianometoxi)». «cianometoxi» es el [[prefijo]] de un éter: un oxígeno unido a la cadena principal y, al otro lado del oxígeno, un grupo de 2 carbonos. «cianometoxi» se forma como «metoxi» (met + oxi: una cadena de 1 carbono unida al oxígeno, y «oxi», que es el oxígeno), con los sustituyentes de esa cadena delante. Con cadenas de 1 a 4 carbonos se usa esta forma corta (metoxi, etoxi, propoxi, butoxi), no «cianometiloxi». El grupo unido al oxígeno, «cianometil», se nombra como cualquier rama. Es una rama con un grupo –C≡N. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: «ciano». Un –C≡N que está en una rama, y no en la cadena principal, no va en el sufijo «-nitrilo»: se nombra con el prefijo «ciano-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama. Va entre paréntesis porque tiene sus propios sustituyentes.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         3,
+         4
+        ],
+        "bonds": [
+         2,
+         3
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         5,
+         6,
+         7,
+         8
+        ],
+        "bonds": [
+         4,
+         5,
+         6,
+         7
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El éter va delante como prefijo («-oxi»), igual que las ramas: nunca cambia la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-nitrilo», sin número.",
+     "El –C≡N no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se queda delante de «-nitrilo», porque empieza por consonante: «3-(cianometoxi)propanonitrilo».",
+     "El nombre completo es «3-(cianometoxi)propanonitrilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      4,
+      3
+     ]
+    ],
+    "legend": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «cianometoxi»"
+     },
+     {
+      "text": "cianometoxi",
+      "kind": "prefix",
+      "meaning": "sustituyente: un éter, el oxígeno y el grupo de 2 carbonos unido a él («-oxi»)"
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     },
+     {
+      "text": "-nitrilo",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –C≡N (nitrilo)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "cianometoxi",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       2,
+       3
+      ]
+     },
+     {
+      "text": "nitrilo",
+      "kind": "ending",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)OCC#N": {
+  "name": "etanoato de cianometilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 4 carbonos, 5 hidrógenos, 1 átomo de nitrógeno y 2 átomos de oxígeno (C₄H₅NO₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno. El nitrógeno unido a un carbono por un [[enlace triple]] (–C≡N) se ve como N: sus 3 enlaces van a ese carbono, así que no lleva hidrógeno. El enlace triple ocupa en el carbono el sitio de tres hidrógenos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»).",
+     "También tiene un grupo –C≡N (un nitrilo). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > nitrilo > aldehído > cetona > alcohol.",
+     "Aquí manda el éster, así que cada –C≡N se nombra con el [[prefijo]] «ciano-», delante del nombre de la parte en la que está.",
+     "El [[prefijo]] «ciano-» incluye el carbono del –C≡N: ese carbono no se cuenta en ninguna cadena (ni en la principal ni en la de una rama) ni se numera, y «ciano» se escribe con el número del carbono al que está unido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 2 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «cianometilo».",
+     "Es una rama con un grupo –C≡N. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: «ciano».",
+     "Un –C≡N que está en una rama se nombra con el prefijo «ciano-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama.",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «etanoato de cianometilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 2 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «cianometilo». Es una rama con un grupo –C≡N. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: «ciano». Un –C≡N que está en una rama se nombra con el prefijo «ciano-». El prefijo incluye su carbono: ese carbono no es de la cadena de la rama.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         5,
+         6
+        ],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Las cadenas que llevan menos grupos –COO– quedan descartadas.",
+     "Solo una cadena lleva el grupo –COO–: tiene 2 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «etanoato de cianometilo», nunca «-1-oato»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «etanoato de cianometilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «cianometilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «etanoato de cianometilo».",
+     "También es correcto:",
+     "«acetato de cianometilo»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "cianometilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (2 carbonos), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "cianometilo",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       4,
+       5,
+       6
+      ]
+     }
+    ]
+   }
+  ]
  }
 }

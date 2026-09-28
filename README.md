@@ -237,8 +237,11 @@ the Keychain account is the WebDAV user).
   several amine groups on the main chain when some N carries other groups
   (N¹/N² locants) are refused too, and so are an amide with an acid or an
   ester or on a branch (`carbamoil-`, `acilamino-`), more than two amides,
-  a diamide with groups on an N and imides, and a nitrile with an acid,
-  ester or amide or on a branch (`ciano-`) and more than two nitriles;
+  a diamide with groups on an N and imides, and a nitrile bonded to the
+  carbon of an acid, ester or amide (`ácido carbonocianídico`) and more
+  than two nitriles on one chain when the nitrile is the principal group
+  (`-carbonitrilo`); a nitrile below an acid, ester or amide, or on a
+  branch, is named with the `ciano-` prefix;
   salts, ammonium ions and other acid derivatives are not named yet; several
   rings, fused, bridged and spiro rings, heterocycles, benzenes with two or
   more substituents (no orto/meta/para), other oxygen and nitrogen compounds,

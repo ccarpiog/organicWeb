@@ -19,7 +19,9 @@
  * half as many amides (one or two –CONH₂ at chain ends, N-substituted,
  * some with C=O, OH groups, amines, ethers and halogens; I-37) and half
  * as many nitriles (one or two –C≡N at chain ends, some with C=O, OH
- * groups, amines, ethers and halogens; I-38), adds
+ * groups, amines, ethers and halogens; I-38) and half as many molecules
+ * with a nitrile cited `ciano-` (beside an acid, ester or amide, or on a
+ * branch piece of a nitrile; generateCyano(), I-39a), adds
  * one cycloalkane per ring size in the carbon range, names
  * each one in every prefix style (plus its traditional name — `toluene`,
  * `styrene`, `formaldehyde`, `acetaldehyde`, `acetone`, `formic acid`,
@@ -54,7 +56,7 @@ import { renderName } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import {
   generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
-  generateAcids, generateEthers, generateEsters, generateAmines, generateAmides, generateNitriles, generateCycloalkanes,
+  generateAcids, generateEthers, generateEsters, generateAmines, generateAmides, generateNitriles, generateCyano, generateCycloalkanes,
 } from './generate.mjs';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
 import { englishName, compareWithOpsin } from './compare.mjs';
@@ -276,14 +278,15 @@ export async function main(argv) {
   });
   const amides = generateAmides({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
   const nitriles = generateNitriles({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
+  const cyano = generateCyano({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
   const molecules = [
     ...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...amines,
-    ...amides, ...nitriles, ...rings,
+    ...amides, ...nitriles, ...cyano, ...rings,
   ];
   console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes `
     + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${carbonyls.length} aldehydes and ketones `
-    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${nitriles.length} nitriles + ${rings.length} cycloalkanes, `
+    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${nitriles.length} nitriles + ${cyano.length} ciano- molecules + ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
   const availability = await checkAvailability(options.jar, options.java);
   if (!availability.ok) {

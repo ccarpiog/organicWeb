@@ -136,10 +136,17 @@
  * `metanonitrilo`, `etanonitrilo`, `2-metilpropanonitrilo`,
  * `prop-2-enonitrilo`, `butanodinitrilo`, `4-oxopentanonitrilo`,
  * `2-aminopropanonitrilo`. Validation refuses nitriles with a ring
- * (`ringNitrile`), with an acid, ester or amide or on another carbon piece
- * (`cyanoPrefix`) and more than two (`manyNitriles`); a nitrile left out of
- * the suffix is refused here as a safety net (`cyanoPrefix`). The bare
- * etanonitrilo also gets `acetonitrilo`.
+ * (`ringNitrile`) and more than two on one carbon piece when the nitrile
+ * is principal (`manyNitriles`). The bare etanonitrilo also gets
+ * `acetonitrilo`. A nitrile that is not principal (an acid, ester or amide
+ * beside it) or that lies on a branch (I-39a) is the prefix `ciano-`,
+ * whose carbon is outside the chain (principal.js outsideCarbons(),
+ * substituent.js cyanoSubstituent()): `ácido 3-cianopropanoico`,
+ * `2-cianoetanoato de metilo`, `3-cianopropanamida`, `etanoato de
+ * cianometilo`, `3-(cianometoxi)propanonitrilo`. Validation refuses a
+ * nitrile bonded to the carbon of an acid, ester or amide
+ * (`carbonocyanidic`); a nitrile cited neither as a suffix nor as `ciano`
+ * is refused here as a safety net (`cyanoPrefix`).
  *
  * Any other heteroatom (an N of an imide or imine, an O of an anhydride or carbonate, a peroxide) is
  * still refused (`HETEROATOM`), but the refusal carries `groups`: its
@@ -373,7 +380,8 @@ function nameValidated(mol, options) {
     if (amides.length > 0 && (!structure.suffix || structure.suffix.kind !== 'amide' || suffixCount(structure) !== amides.length)) {
       return withGroups({ ok: false, error: amidePrefixError(amides) }, mol);
     }
-    if (nitriles.length > 0 && (!structure.suffix || structure.suffix.kind !== 'nitrile' || suffixCount(structure) !== nitriles.length)) {
+    const nitrileSuffixes = structure.suffix && structure.suffix.kind === 'nitrile' ? suffixCount(structure) : 0;
+    if (nitriles.length > 0 && nitrileSuffixes + cyanoCount(structure) !== nitriles.length) {
       return withGroups({ ok: false, error: cyanoPrefixError(nitriles) }, mol);
     }
     if (structure.suffix && structure.suffix.kind === 'amine' && suffixCount(structure) > 1 && hasNitrogenLocants(structure.prefixes)) {
@@ -557,10 +565,24 @@ function amidePrefixError(amides) {
 }
 
 /**
- * The HETEROATOM refusal of a molecule whose name would leave a nitrile out
- * of the parent's suffix (a `ciano-` prefix, design.md §13.4 I-38). A
- * safety net: validation already refuses every molecule where this can
- * happen (`cyanoPrefix`, `manyNitriles`, `ringNitrile`).
+ * The number of `ciano` prefixes cited in a name structure, at any depth,
+ * the O-bound group of an ester and the groups on an N included (design.md
+ * §13.4 I-39a): every nitrile that is not a suffix group should be one.
+ *
+ * @param {{prefixes: object[], ester?: {alkyl: object}}} structure - A name or substituent structure.
+ * @returns {number} The count.
+ */
+export function cyanoCount(structure) {
+  const own = structure.prefixes.reduce((sum, group) => sum
+    + (group.substituent.cyano ? group.locants.length : group.locants.length * cyanoCount(group.substituent)), 0);
+  return own + (structure.ester ? cyanoCount(structure.ester.alkyl) : 0);
+}
+
+/**
+ * The HETEROATOM refusal of a molecule whose name neither cites a nitrile
+ * as a suffix group nor as a `ciano` prefix (design.md §13.4 I-38, I-39a).
+ * A safety net that validation and the chain machinery make unreachable
+ * (`manyNitriles`, `ringNitrile`, `carbonocyanidic`).
  *
  * @param {number[]} nitriles - The nitrile carbons of the molecule.
  * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.

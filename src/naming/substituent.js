@@ -87,15 +87,20 @@
  * `N,N-dimetiletanamida`). Validation refuses every amide that would be a
  * prefix (`carbamoil-`, `acilamino-`).
  *
- * Nitriles (design.md §13.4 I-38): the –C≡N is the principal group, its
- * carbon a parent atom (a chain end) and its N the suffix site
- * (suffixSites(), like an amine's N); it is never a substituent. Validation
- * refuses every nitrile that would be the `ciano-` prefix.
+ * Nitriles (design.md §13.4 I-38): a principal –C≡N on the parent has its
+ * carbon as a parent atom (a chain end) and its N as the suffix site
+ * (suffixSites(), like an amine's N). Any other nitrile (I-39a) is the
+ * prefix `ciano` (cyanoSubstituent()): its carbon and N, a simple prefix
+ * like `cloro`, bonded to the chain atom that carries it; the nitrile
+ * carbon is never a chain atom of the parent (principal.js
+ * outsideCarbons()) nor of a branch (buildSubstituent() skips it):
+ * `ácido 3-cianopropanoico`, `3-(cianometoxi)propanonitrilo`.
  * Pure: topology only.
  */
 
 import { adjacency, rootedTreeKey } from '../model/graph.js';
 import { isHalogen } from '../model/elements.js';
+import { isNitrileCarbon } from '../model/validate.js';
 import { buildChainStructure } from './structure.js';
 import { numberParent, compareCitationKeys } from './numbering.js';
 import { citationKey, prefixNameKey } from './render.js';
@@ -293,6 +298,10 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
       if (parent && isPrincipalOxygen(ctx.mol, ctx.adj, n.atom, ctx.principal)) {
         continue; // A suffix group of the parent (`-ol`, `-al`, `-ona`), not a prefix.
       }
+      if (isNitrileCarbon(ctx.mol, ctx.adj, n.atom)) {
+        result.push(cyanoEntry(ctx, chainAtom, n));
+        continue;
+      }
       if (isHalogen(element) || (element === 'O' && ctx.adj.get(n.atom).length === 1)) {
         let structure = halogenSubstituent(n.atom, element);
         if (element === 'O') {
@@ -317,6 +326,62 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
   } // End of the loop over the chain atoms
   return result;
 } // End of function substituentsOf()
+
+/**
+ * The substituentsOf() entry of a nitrile bonded to a chain atom but not
+ * part of the chain (design.md §13.4 I-39a): the prefix `ciano`
+ * (cyanoSubstituent()), whose atoms are the nitrile carbon and its N and
+ * whose one bond is the C≡N; the connecting bond is the single bond from
+ * the chain atom to the nitrile carbon. Like a halogen it has no chain, so
+ * it adds no multiple bond to any chain count.
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {number} chainAtom - The carrying chain atom.
+ * @param {{atom: number, bond: number, order: number}} n - The link to the nitrile carbon.
+ * @returns {object} The entry.
+ */
+function cyanoEntry(ctx, chainAtom, n) {
+  const structure = cyanoSubstituent(ctx, n.atom);
+  return {
+    chainAtom,
+    attachAtom: n.atom,
+    bond: n.bond,
+    order: n.order,
+    atoms: [...structure.atoms],
+    bonds: [...structure.bonds],
+    multipleBonds: [],
+    key: ATTACH_SYMBOL[n.order] + rootedTreeKey(ctx.mol, n.atom, chainAtom, ctx.adj),
+    structure,
+    citation: citationKey(structure, ctx.lexicon),
+  };
+} // End of function cyanoEntry()
+
+/**
+ * The substituent structure of a nitrile cited as a prefix (design.md
+ * §13.4 I-39a): `ciano` (lexicon groupPrefix('nitrile')), a simple prefix
+ * like a halogen (never enclosed; `diciano`), with no chain and no
+ * prefixes. IUPAC 2013 (P-66.5) counts the nitrile carbon in the prefix,
+ * never in the chain: NC–CH₂–CH₂–COOH is `ácido 3-cianopropanoico` (a
+ * three-carbon parent). `atoms` are the carbon, then the N; `bonds` the
+ * C≡N.
+ *
+ * @param {object} ctx - Naming context (createNamingContext), or any object with `mol` and `adj`.
+ * @param {number} carbon - The nitrile carbon (validate.js isNitrileCarbon()).
+ * @returns {object} The SubstituentStructure (structure.js) with `cyano` set.
+ */
+export function cyanoSubstituent(ctx, carbon) {
+  const triple = ctx.adj.get(carbon).find((n) => n.order === 3);
+  return {
+    cyano: true,
+    chain: null,
+    prefixes: [],
+    freeValence: { locant: 1, order: 1 },
+    retained: null,
+    commonName: null,
+    atoms: [carbon, triple.atom],
+    bonds: [triple.bond],
+  };
+} // End of function cyanoSubstituent()
 
 /**
  * The substituentsOf() entry of the branch rooted at one neighbour of a
@@ -730,7 +795,8 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
     throw new Error(`buildSubstituent: attachment bond of order ${order}`);
   }
   const { adj, style } = ctx;
-  const skip = (id) => ctx.mol.atoms.get(id).element !== 'C';
+  // Heteroatoms and nitrile carbons (a `ciano` prefix of the branch, I-39a) are never chain atoms.
+  const skip = (id) => ctx.mol.atoms.get(id).element !== 'C' || isNitrileCarbon(ctx.mol, adj, id);
   let chains = substituentChainCandidates(adj, chainAtom, attachAtom, style === 'substituted', skip);
   chains = keepMax(chains, (c) => c.length);
   chains = keepMax(chains, (c) => countBonds(adj, c, (order) => order >= 2));
@@ -765,7 +831,7 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
  * @param {number} chainAtom - The carrying chain atom.
  * @param {number} attachAtom - The substituent atom bonded to it.
  * @param {string} [style] - Prefix style (default 'isopropil').
- * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH, `oxo` for a C=O oxygen, an alkoxy group for an ether oxygen, an amino group for an amine nitrogen), or null when the two atoms are not bonded.
+ * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH, `oxo` for a C=O oxygen, an alkoxy group for an ether oxygen, an amino group for an amine nitrogen, `ciano` for a nitrile carbon), or null when the two atoms are not bonded.
  */
 export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLES[0]) {
   const ctx = createNamingContext(mol, style);
@@ -776,6 +842,9 @@ export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLE
   const element = mol.atoms.get(attachAtom).element;
   if (element === 'O' && ctx.adj.get(attachAtom).length === 1) {
     return link.order === 2 ? oxoSubstituent(attachAtom) : hydroxySubstituent(attachAtom);
+  }
+  if (isNitrileCarbon(mol, ctx.adj, attachAtom)) {
+    return cyanoSubstituent(ctx, attachAtom);
   }
   return isHalogen(element) ? halogenSubstituent(attachAtom, element) : nameSubstituentIn(ctx, chainAtom, attachAtom, link.order);
 }

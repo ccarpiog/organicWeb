@@ -20,6 +20,7 @@ import { numberParent, compareCitationKeys } from '../../src/naming/numbering.js
 import { substituentChainCandidates, nameSubstituent } from '../../src/naming/substituent.js';
 import { citationKey } from '../../src/naming/render.js';
 import { commonGroupName } from '../../src/naming/lexicon.es.js';
+import { outsideCarbons, principalKindOf } from '../../src/naming/principal.js';
 import { bundleModules } from '../../scripts/build.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -56,15 +57,28 @@ async function readFixtures() {
  * Tells whether a molecule is unbranched: its carbon skeleton is one piece
  * (an ether O splits it, design.md §13.4 I-34) and no carbon is bonded to
  * more than two carbons (halogens are substituents, not branches of the
- * carbon skeleton).
+ * carbon skeleton; nor is the carbon of a `ciano-` nitrile, I-39a).
  *
  * @param {object} mol - The molecule.
  * @returns {boolean} True for an unbranched chain.
  */
 function isUnbranched(mol) {
-  const skeleton = carbonSkeleton(mol);
+  const skeleton = chainSkeleton(mol);
   return connectedComponents(skeleton).length === 1
     && [...adjacency(skeleton).values()].every((list) => list.length <= 2);
+}
+
+/**
+ * The carbons a parent chain may use: the carbon skeleton without the
+ * carbons of nitriles cited `ciano-` (design.md §13.4 I-39a; principal.js
+ * outsideCarbons()).
+ *
+ * @param {object} mol - A molecule.
+ * @returns {{atoms: Map<number, object>, bonds: Map<number, object>}} The skeleton.
+ */
+function chainSkeleton(mol) {
+  const adj = adjacency(mol);
+  return carbonSkeleton(mol, outsideCarbons(mol, adj, principalKindOf(mol, adj)));
 }
 
 const fixtureRows = await readFixtures();
@@ -134,7 +148,7 @@ for (const row of fixtureRows) {
     }
     assert.equal(p1.rule, 'P1');
     assert.equal(result.parent.atoms.length, Math.max(...p1.values));
-    const carbons = carbonSkeleton(mol).atoms.size;
+    const carbons = chainSkeleton(mol).atoms.size;
     if (isUnbranched(mol)) {
       assert.equal(result.parent.atoms.length, carbons);
     }

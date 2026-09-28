@@ -287,7 +287,7 @@ function token(text, kind) {
  * @returns {boolean} True when the prefix is enclosed.
  */
 export function needsEnclosure(substituent) {
-  if (substituent.retained || substituent.halogen || substituent.hydroxy || substituent.oxo) {
+  if (substituent.retained || substituent.halogen || substituent.hydroxy || substituent.oxo || substituent.cyano) {
     return false;
   }
   if (substituent.amino) {
@@ -319,7 +319,8 @@ export function isCompoundPrefix(substituent) {
   if (substituent.alkoxy) {
     return substituent.prefixes.length > 0 || (!substituent.retained && !isContractedAlkoxy(substituent));
   }
-  return !substituent.retained && !substituent.halogen && !substituent.hydroxy && !substituent.oxo && substituent.prefixes.length > 0;
+  return !substituent.retained && !substituent.halogen && !substituent.hydroxy && !substituent.oxo && !substituent.cyano
+    && substituent.prefixes.length > 0;
 }
 
 /** Longest alkyl group whose alkoxy prefix is contracted (`butoxi`; IUPAC 2013 P-63.2.2.2). */
@@ -466,6 +467,7 @@ function locantTokens(locants) {
  * `propan-2-iliden`, `eteniliden` — or a retained prefix (`isopropil`,
  * `isopropiliden`, `tert-butil`, `fenil`), or a halogen prefix (`cloro`,
  * design.md §13.4 I-30), or `hidroxi` (an OH not cited as the suffix, I-31), or `oxo` (a C=O not cited as the suffix, I-32),
+ * or `ciano` (a nitrile not cited as the suffix, I-39a),
  * or an alkoxy group (an ether, I-34: alkoxyTokens()). A saturated group with the free valence at
  * locant 1 uses the short form (`propil`, `propiliden`, `2-metilpropil`);
  * one- and two-carbon groups cite no locant.
@@ -483,6 +485,9 @@ function substituentTokens(substituent, lexicon) {
   }
   if (substituent.oxo) {
     return [token(lexicon.groupPrefix('ketone'), 'prefix')];
+  }
+  if (substituent.cyano) {
+    return [token(lexicon.groupPrefix('nitrile'), 'prefix')];
   }
   if (substituent.alkoxy) {
     return alkoxyTokens(substituent, lexicon);

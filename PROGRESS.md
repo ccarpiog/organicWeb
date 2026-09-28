@@ -48,13 +48,16 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-36 | v2.16 Amines | same, §3.16 | done — `docs/progress-archive/i-36.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-36.md` |
 | I-37 | v2.17 Amides | same, §3.17 | done — `docs/progress-archive/i-37.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-37.md` |
 | I-38 | v2.18 Nitriles | same, §3.18 | done — `docs/progress-archive/i-38.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-38.md` |
-| I-39 | v2.19 Functional combinations | same, §3.19 | queued | — | — |
+| I-39a | v2.19a `ciano-` prefix (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-39a.md` |
+| I-39b | v2.19b Acyl prefixes `formil-`/`acetil-` (split from I-39) | same, §3.19 | queued | — | — |
+| I-39c | v2.19c Ester/amide prefixes, pair matrix (split from I-39) | same, §3.19 | queued | — | — |
 | I-40 | v2.20 Functions on rings | same, §3.20 | queued | — | — |
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-38 done; I-39…I-41 queued in order
-(I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
+v2 plan (user-confirmed scope): I-21…I-39a done; I-39b…I-41 queued in order
+(I-27 split into I-27a editor drawing and I-27b Ordenar dibujo; I-39 into I-39a `ciano-`,
+I-39b acyl prefixes, I-39c ester/amide prefixes + pair matrix);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
 
@@ -89,15 +92,14 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-39 (v2 §3.19 functional combinations: seniority ácido > éster >
-amida > nitrilo > aldehído > cetona > alcohol > amina; enable only covered pairs. Still
-refused and candidates for this phase: `ciano-` below acid/ester/amide (`cyanoPrefix`, I-38),
-amide as prefix beside acid/ester (`amidePrefix`, I-37: `carbamoil-`/`acilamino-`), ester
-prefix and diesters (`esterPrefix` / `manyEsters`, I-35), acyl prefixes `acetil`/`formil`
-(`acylSubstituent`, I-32). Split the phase if it is too big (e.g. I-39a ciano-/acyl
-prefixes, I-39b ester/amide prefixes + pair matrix). Spec: design §13.4 row I-39, §13.6,
-and `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 19. Deploying
-stays a manual user step.
+Poll the inbox, then run I-39b (acyl prefixes: a C=O carbon bonded to its chain as a branch,
+today refused as `acylSubstituent` since I-32 — `formil-`, `acetil-`, `propanoil-`…; the
+acyl carbon joins `outsideCarbons()` in `src/naming/principal.js` like the I-39a `ciano-`
+carbons, or is the attachment atom of an acyl branch — decide and record). Spec: design
+§13.4 row I-39b, §13.6 "Where X belongs"; I-39a narrative `docs/progress-archive/i-39a.md`.
+Then I-39c (ester/amide prefixes `alcoxicarbonil-`/`aciloxi-`/`carbamoil-`/`acilamino-`,
+diesters, pair matrix with counter-examples; enable only covered pairs). Deploying stays a
+manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -185,14 +187,17 @@ stays a manual user step.
   refusals `ringNitrile` / `manyNitriles` / `cyanoPrefix`; `assertNoTripleBondLeaves` now C≡C
   only; P0-aware chain sentence `outsideUnsaturation()` in `explain.js`; oracle
   `generateNitriles()`; tests `tests/unit/nitriles.test.js`, `tests/e2e/nitriles.spec.js`.
+- `ciano-` (I-39a): `outsideCarbons()` in `principal.js` (carbons never in a chain), parent
+  skeleton without them in `parent.js`; refusal `carbonocyanidic`, `manyNitriles` narrowed; oracle
+  `generateCyano()`; tests `tests/unit/cyano.test.js`, `tests/e2e/cyano.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-38)
+## Verification (last phase, I-39a)
 
-- `npm test` 0 (1109 pass) · `npm run check` 0 (111 files) · `npm run e2e` 0
-  (209 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (6111 pass, 500
-  nitriles; run before the explanation-only review fix, re-run 0 by the worker after it).
+- `npm test` 0 (1143 pass) · `npm run check` 0 (113 files) · `npm run e2e` 0 (213 pass,
+  source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (6611 pass, 500 ciano-; run
+  before the explanation-only review fix; unit, check and e2e re-run 0 after it).
 
 ## Open risks / deviations
 
@@ -369,10 +374,15 @@ stays a manual user step.
   step blamed length instead of P0) fixed for nitriles, diacids and diamides with regressions
   (`docs/progress-archive/i-38.md`).
 
+- I-39a: `ciano-` named at any depth with its carbon outside every chain; `manyNitriles` only
+  for 3+ principal nitriles on one piece; NC–C(=O)X refused (`carbonocyanidic`, from memory);
+  `ácido 2-cianoetanoico` keeps its locant. Review should-fix (chain step said the chain ends
+  at the cyano carbon) fixed with a regression (`docs/progress-archive/i-39a.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-37 `a052801`, pushed. I-38 committed and pushed right after this
-  checkpoint (see `git log`).
+- I-38 `bcd8b06`, pushed. I-39a committed and pushed right after this checkpoint (see
+  `git log`).

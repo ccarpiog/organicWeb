@@ -283,8 +283,8 @@ test('out-of-scope amines and other nitrogen compounds are refused with their me
   await expect(stepper.locator('.step-title')).toHaveText('Aún no sé nombrarla');
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
-  // A refused nitrile (below an acid, I-38) is named by its group steps as a nitrile (–C≡N), not an amine.
-  await loadSmiles(page, 'N#CCC(=O)O');
+  // A refused nitrile (on an acid's carbon, carbonocyanidic since I-39a) is named by its group steps as a nitrile (–C≡N), not an amine.
+  await loadSmiles(page, 'N#CC(=O)O');
   await askName(page);
   await page.getByRole('button', { name: 'Ver paso a paso' }).click();
   await dots.nth(0).click();

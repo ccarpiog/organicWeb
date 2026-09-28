@@ -50,12 +50,16 @@ export function adjacency(mol) {
  * module accept. Halogens are monovalent end atoms, so the skeleton of a
  * connected hydrocarbon or halogen derivative stays connected; chain lengths
  * (design.md §1.1 caps, §4.2 parent candidates) are measured on it.
+ * `exclude` leaves out carbons that are never skeleton carbons in some
+ * context: the carbon of a nitrile cited as `ciano-` (design.md §13.4
+ * I-39a, §13.6 "Where X belongs"; naming/principal.js outsideCarbons()).
  *
  * @param {object} mol - The molecule.
+ * @param {Set<number>} [exclude] - Carbon ids to leave out (default none).
  * @returns {{atoms: Map<number, object>, bonds: Map<number, object>}} The carbon atoms and C–C bonds (same objects, not copies).
  */
-export function carbonSkeleton(mol) {
-  const atoms = new Map([...mol.atoms].filter(([, atom]) => atom.element === 'C'));
+export function carbonSkeleton(mol, exclude = new Set()) {
+  const atoms = new Map([...mol.atoms].filter(([id, atom]) => atom.element === 'C' && !exclude.has(id)));
   const bonds = new Map([...mol.bonds].filter(([, bond]) => atoms.has(bond.a) && atoms.has(bond.b)));
   return { atoms, bonds };
 }
