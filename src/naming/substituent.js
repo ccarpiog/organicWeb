@@ -67,6 +67,17 @@
  * carbon a parent atom (suffixSites() carries the bridge O), and the group
  * on the far side of the bridge O is named like an alkoxy group's alkyl
  * (esterAlkyl()), cited as its own word (`de metilo`), never as a prefix.
+ *
+ * Amines (design.md §13.4 I-36): like an ether O, an amine N is never a
+ * chain atom. When the amine is principal, each N bonded to the parent is a
+ * suffix group (`-amina`, suffixSites()) and the groups on its other bonds
+ * are prefixes with the locant `N` (nitrogenSubstituents(): the `metil` of
+ * `N-metiletanamina`, both of `N,N-dimetilmetanamina`), named like any
+ * branch whose carrying atom is the N and grouped with the other prefixes
+ * (`N,2-dimetilpropan-1-amina`). Any other amine N bonded to a chain is an
+ * `amino` prefix (aminoSubstituent()): the N plus its other groups, cited
+ * without locants (`amino`, `(metilamino)`, `(dimetilamino)`,
+ * `[etil(metil)amino]`).
  * Pure: topology only.
  */
 
@@ -77,6 +88,7 @@ import { numberParent, compareCitationKeys } from './numbering.js';
 import { citationKey, prefixNameKey } from './render.js';
 import { lexiconEs } from './lexicon.es.js';
 import { principalKindOf, isPrincipalOxygen, isSuffixOxygen } from './principal.js';
+import { N_LOCANT } from './structure.js';
 
 /** Bond-order symbols that prefix a substituent identity key. */
 const ATTACH_SYMBOL = { 1: '-', 2: '=', 3: '#' };
@@ -287,37 +299,86 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
         });
         continue;
       }
-      const subtree = substituentSubtree(ctx.adj, chainAtom, n.atom);
-      const inSubtree = new Set(subtree.bonds);
-      // Carbon–carbon multiple bonds only: a C=O inside the branch is its `oxo` prefix, not an unsaturation.
-      const isCarbon = (id) => ctx.mol.atoms.get(id).element === 'C';
-      const multipleBonds = [...new Set(subtree.atoms.filter(isCarbon).flatMap((atom) => ctx.adj.get(atom)
-        .filter((link) => link.order > 1 && inSubtree.has(link.bond) && isCarbon(link.atom))
-        .map((link) => link.bond)))].sort((p, q) => p - q);
-      const structure = nameSubstituentIn(ctx, chainAtom, n.atom, n.order);
-      const entry = {
-        chainAtom,
-        attachAtom: n.atom,
-        bond: n.bond,
-        order: n.order,
-        atoms: subtree.atoms,
-        bonds: subtree.bonds,
-        multipleBonds,
-        key: ATTACH_SYMBOL[n.order] + rootedTreeKey(ctx.mol, n.atom, chainAtom, ctx.adj),
-        structure,
-        citation: citationKey(structure, ctx.lexicon),
-      };
-      if (structure.alkoxy) {
-        // The other side of the ether O: its carbon and the O–C bond (both sides are highlighted apart).
-        const far = ctx.adj.get(n.atom).find((m) => m.atom !== chainAtom);
-        entry.etherCarbon = far.atom;
-        entry.etherBond = far.bond;
-      }
-      result.push(entry);
+      result.push(branchEntry(ctx, chainAtom, n));
     } // End of the loop over the neighbours of one chain atom
   } // End of the loop over the chain atoms
   return result;
 } // End of function substituentsOf()
+
+/**
+ * The substituentsOf() entry of the branch rooted at one neighbour of a
+ * carrying atom (a chain atom, or the nitrogen of a principal amine):
+ * the branch named recursively, its subtree, its carbon–carbon multiple
+ * bonds, its identity key and citation key; an alkoxy entry also has the
+ * carbon on the other side of its O and that O–C bond.
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {number} chainAtom - The carrying atom.
+ * @param {{atom: number, bond: number, order: number}} n - The neighbour that roots the branch.
+ * @returns {object} The entry.
+ */
+function branchEntry(ctx, chainAtom, n) {
+  const subtree = substituentSubtree(ctx.adj, chainAtom, n.atom);
+  const inSubtree = new Set(subtree.bonds);
+  // Carbon–carbon multiple bonds only: a C=O inside the branch is its `oxo` prefix, not an unsaturation.
+  const isCarbon = (id) => ctx.mol.atoms.get(id).element === 'C';
+  const multipleBonds = [...new Set(subtree.atoms.filter(isCarbon).flatMap((atom) => ctx.adj.get(atom)
+    .filter((link) => link.order > 1 && inSubtree.has(link.bond) && isCarbon(link.atom))
+    .map((link) => link.bond)))].sort((p, q) => p - q);
+  const structure = nameSubstituentIn(ctx, chainAtom, n.atom, n.order);
+  const entry = {
+    chainAtom,
+    attachAtom: n.atom,
+    bond: n.bond,
+    order: n.order,
+    atoms: subtree.atoms,
+    bonds: subtree.bonds,
+    multipleBonds,
+    key: ATTACH_SYMBOL[n.order] + rootedTreeKey(ctx.mol, n.atom, chainAtom, ctx.adj),
+    structure,
+    citation: citationKey(structure, ctx.lexicon),
+  };
+  if (structure.alkoxy) {
+    // The other side of the ether O: its carbon and the O–C bond (both sides are highlighted apart).
+    const far = ctx.adj.get(n.atom).find((m) => m.atom !== chainAtom);
+    entry.etherCarbon = far.atom;
+    entry.etherBond = far.bond;
+  }
+  return entry;
+} // End of function branchEntry()
+
+/**
+ * The groups on the nitrogens of the principal amine groups of a parent
+ * (design.md §13.4 I-36): for each N of the principal kind bonded to a
+ * parent atom, every other neighbour of that N roots a branch, named like
+ * any branch whose carrying atom is the N (branchEntry()) and flagged
+ * `nitrogen`: it is cited with the locant `N` (`N-metiletanamina`,
+ * `N,N-dimetilmetanamina`). Empty unless the amine is principal.
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {number[]} chainAtoms - The parent's atom ids.
+ * @returns {object[]} Entries as substituentsOf() returns them, plus `nitrogen: true`; `chainAtom` is the N.
+ */
+export function nitrogenSubstituents(ctx, chainAtoms) {
+  if (ctx.principal !== 'amine') {
+    return [];
+  }
+  const inChain = new Set(chainAtoms);
+  const result = [];
+  for (const chainAtom of chainAtoms) {
+    for (const n of ctx.adj.get(chainAtom)) {
+      if (!isPrincipalOxygen(ctx.mol, ctx.adj, n.atom, ctx.principal)) {
+        continue;
+      }
+      for (const m of ctx.adj.get(n.atom)) {
+        if (m.atom !== chainAtom && !inChain.has(m.atom)) {
+          result.push({ ...branchEntry(ctx, n.atom, m), nitrogen: true });
+        }
+      }
+    } // End of the loop over the neighbours of one parent atom
+  } // End of the loop over the parent atoms
+  return result;
+} // End of function nitrogenSubstituents()
 
 /**
  * The substituent structure of a halogen atom (design.md §13.4 I-30): the
@@ -405,12 +466,10 @@ export function oxoSubstituent(atom) {
 export function hasAcylPrefix(structure) {
   for (const group of structure.prefixes) {
     const sub = group.substituent;
-    if (!sub.chain) {
-      continue;
-    }
-    const attach = sub.chain.atoms[sub.freeValence.locant - 1];
+    // A chainless prefix (a halogen, hidroxi, oxo) has no branches; an amino prefix has its N's groups.
+    const attach = sub.chain ? sub.chain.atoms[sub.freeValence.locant - 1] : null;
     for (const inner of sub.prefixes) {
-      const site = inner.substituent.oxo ? inner.locants.find((l) => l.atom === attach) : null;
+      const site = attach !== null && inner.substituent.oxo ? inner.locants.find((l) => l.atom === attach) : null;
       if (site) {
         return { atoms: [site.atom, site.attachAtom], bonds: [site.bond] };
       }
@@ -429,7 +488,9 @@ export function hasAcylPrefix(structure) {
  * `-ol`, or the C=O of `-al` / `-ona`, whose carbon is the parent atom; a
  * –COOH (`ácido …oico`) is one site, its C=O oxygen, carrying its OH
  * oxygen as `hydroxyAtom` / `hydroxyBond`; an ester –COO– (`…oato de
- * …ilo`) likewise, carrying its bridge O as `esterOxygen` / `esterBond`.
+ * …ilo`) likewise, carrying its bridge O as `esterOxygen` / `esterBond`;
+ * an amine (`-amina`, I-36) is one site per N (its other groups are
+ * nitrogenSubstituents()).
  *
  * @param {object} mol - A validated molecule.
  * @param {Map<number, object[]>} adj - Its adjacency map.
@@ -484,7 +545,9 @@ export function nameKeyFunction(substituentLists, lexicon) {
 
 /**
  * Groups the substituents of a numbered chain into prefix groups, in
- * citation (alphanumerical) order, each occurrence with its locant.
+ * citation (alphanumerical) order, each occurrence with its locant (a
+ * group on a principal amine's N, `nitrogen` set, gets N_LOCANT, which
+ * sorts first: `N,2-dimetil`).
  *
  * @param {object[]} substituents - Entries from substituentsOf(), all with a structure.
  * @param {number[]} atoms - Chain atom ids in locant order.
@@ -498,7 +561,7 @@ export function groupPrefixes(substituents, atoms) {
       byKey.set(sub.key, { key: sub.key, substituent: sub.structure, locants: [], citation: sub.citation });
     }
     byKey.get(sub.key).locants.push({
-      locant: locantOf.get(sub.chainAtom),
+      locant: sub.nitrogen ? N_LOCANT : locantOf.get(sub.chainAtom),
       atom: sub.chainAtom,
       attachAtom: sub.attachAtom,
       bond: sub.bond,
@@ -529,13 +592,52 @@ export function groupPrefixes(substituents, atoms) {
 function nameSubstituentIn(ctx, chainAtom, attachAtom, order) {
   const cacheKey = `${chainAtom}>${attachAtom}`;
   if (!ctx.cache.has(cacheKey)) {
-    const structure = ctx.mol.atoms.get(attachAtom).element === 'O'
-      ? alkoxySubstituent(ctx, chainAtom, attachAtom)
-      : buildSubstituent(ctx, chainAtom, attachAtom, order);
+    const element = ctx.mol.atoms.get(attachAtom).element;
+    let structure;
+    if (element === 'O') {
+      structure = alkoxySubstituent(ctx, chainAtom, attachAtom);
+    } else if (element === 'N') {
+      structure = aminoSubstituent(ctx, chainAtom, attachAtom);
+    } else {
+      structure = buildSubstituent(ctx, chainAtom, attachAtom, order);
+    }
     ctx.cache.set(cacheKey, structure);
   }
   return ctx.cache.get(cacheKey);
-}
+} // End of function nameSubstituentIn()
+
+/**
+ * The substituent structure of an amine nitrogen cited as a prefix
+ * (design.md §13.4 I-36): the N plus the groups on its other bonds, each
+ * named like any branch whose carrying atom is the N and grouped as its
+ * `prefixes` (in citation order). render.js cites it `amino` (an NH₂),
+ * `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`: the groups
+ * without locants, then `amino` (IUPAC 2013 P-62.2.1.1.2, compound
+ * prefixes). Used for every amine N bonded to a chain that is not a
+ * principal-amine N of the parent: an amine below a more senior group
+ * (`2-aminoetan-1-ol`, `ácido 2-aminopropanoico`) or on a branch
+ * (`(aminometil)`).
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {number} chainAtom - The carbon that carries the N.
+ * @param {number} nitrogen - The amine nitrogen.
+ * @returns {object} The SubstituentStructure (structure.js) with `amino` true and `nitrogen` its N.
+ */
+export function aminoSubstituent(ctx, chainAtom, nitrogen) {
+  const groups = substituentsOf(ctx, [nitrogen], chainAtom);
+  const subtree = substituentSubtree(ctx.adj, chainAtom, nitrogen);
+  return {
+    amino: true,
+    nitrogen,
+    chain: null,
+    prefixes: groupPrefixes(groups, [nitrogen]),
+    freeValence: { locant: 1, order: 1 },
+    retained: null,
+    commonName: null,
+    atoms: subtree.atoms,
+    bonds: subtree.bonds,
+  };
+} // End of function aminoSubstituent()
 
 /**
  * The substituent structure of an ether oxygen seen from the chain that
@@ -643,7 +745,7 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
  * @param {number} chainAtom - The carrying chain atom.
  * @param {number} attachAtom - The substituent atom bonded to it.
  * @param {string} [style] - Prefix style (default 'isopropil').
- * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH, `oxo` for a C=O oxygen, an alkoxy group for an ether oxygen), or null when the two atoms are not bonded.
+ * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH, `oxo` for a C=O oxygen, an alkoxy group for an ether oxygen, an amino group for an amine nitrogen), or null when the two atoms are not bonded.
  */
 export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLES[0]) {
   const ctx = createNamingContext(mol, style);
@@ -660,14 +762,30 @@ export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLE
 
 /**
  * Lists every substituent hanging from a parent chain or ring, named under a
- * prefix style. The parent's oxygen groups of the principal kind are its
- * suffix (suffixSites()), so they are not listed.
+ * prefix style. The parent's groups of the principal kind are its
+ * suffix (suffixSites()), so they are not listed; the groups on the N of a
+ * principal amine are (nitrogenSubstituents(), flagged `nitrogen`, cited
+ * with the locant `N`), after the others.
  *
  * @param {object} mol - A validated molecule.
  * @param {number[]} chainAtoms - The parent's atom ids.
  * @param {object} [ctx] - Naming context (a default-style one is created when omitted).
- * @returns {object[]} Entries as substituentsOf() returns them.
+ * @returns {object[]} Entries as substituentsOf() returns them (the N-groups with `nitrogen: true`).
  */
 export function collectSubstituents(mol, chainAtoms, ctx = createNamingContext(mol)) {
-  return substituentsOf(ctx, chainAtoms, null, true);
+  return [...substituentsOf(ctx, chainAtoms, null, true), ...nitrogenSubstituents(ctx, chainAtoms)];
+}
+
+/**
+ * The numbering description of one substituent entry (numbering.js
+ * candidateData() prefixes): its carrying atom, identity key and citation
+ * key, plus the fixed locant N_LOCANT for a group on a principal amine's
+ * N (the same in every numbering; IUPAC 2013 compares it as lower than any
+ * number).
+ *
+ * @param {object} sub - An entry of collectSubstituents().
+ * @returns {{atom: number, key: string, citation: object, locant?: number}} The prefix description.
+ */
+export function numberingPrefix(sub) {
+  return { atom: sub.chainAtom, key: sub.key, citation: sub.citation, ...(sub.nitrogen ? { locant: N_LOCANT } : {}) };
 }

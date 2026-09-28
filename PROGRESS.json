@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T00:47:16Z",
+  "updated": "2026-09-28T01:42:14Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -333,8 +333,11 @@
     {
       "id": "I-36",
       "title": "v2.16 Amines",
-      "status": "queued",
-      "summary": "v2 plan phase 16: amines (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Names primary, secondary and tertiary amines (-amina, N-locants, amino- prefix), including ring amines.",
+      "risk": "high",
+      "review": "docs/reviews/I-36.md",
+      "narrative": "docs/progress-archive/i-36.md"
     },
     {
       "id": "I-37",

@@ -99,6 +99,20 @@
  * never crosses the middle O; the legend and the assemble step explain the
  * Spanish order `… de …` (and the English one, group first).
  *
+ * Amines (design.md §13.4 I-36, `structure.suffix.kind` 'amine') get the
+ * alcohol's steps in their own words: the count step draws each N as NH₂,
+ * NH or N and adds N to the formula (Hill order …, N, O); the group step
+ * (amineGroupStep()) shows the N with its carbon, primary / secondary /
+ * tertiary, the suffix `-amina` (`-diamina`), the N never in the chain, the
+ * other groups on the N cited with the locant `N`, `bencenamina` and its
+ * retained `anilina`; groupChain explains, from the trace, why the parent
+ * is on its side of the N (amineSideReason()); the locant `N` (N_LOCANT) is
+ * shown as `N` in comparisons, legends and sentences and never drawn as a
+ * number. An amine below a more senior group is an `amino-` prefix
+ * (`amino`, `(dimetilamino)`, `[etil(metil)amino]`), described in the
+ * substituents step and named in the seniority sentences (… > alcohol >
+ * amina).
+ *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
  * GroupAnalysis); it gets groups ("Reconoce los grupos": each
@@ -115,9 +129,9 @@ import { ELEMENT_NAMES_ES } from '../model/elements.js';
 import {
   substituentPrefix, citationKey, needsEnclosure, isCompoundPrefix, renderPrefixes, omitsPrefixLocants,
   suffixWords, suffixCount, suffixGroupIds, isContractedAlkoxy, MAX_CONTRACTED_ALKOXY, TERMINAL_SUFFIXES,
-  esterAlkylName, renderName,
+  esterAlkylName, renderName, carbonLocantPrefixes, hasNitrogenLocants,
 } from '../naming/render.js';
-import { locantText, siteLocantText } from '../naming/structure.js';
+import { locantText, siteLocantText, N_LOCANT } from '../naming/structure.js';
 
 /** Glossary for the underlined terms (design.md §5): key → Spanish definition. */
 export const GLOSSARY = Object.freeze({
@@ -133,6 +147,7 @@ export const GLOSSARY = Object.freeze({
   'grupo principal': 'El grupo funcional más importante de la molécula. Da la terminación (el sufijo) del nombre.',
   sufijo: 'Una terminación que se añade al final del nombre, como «-ol» en «etanol».',
   prefijo: 'Una parte que se escribe delante del nombre, como «cloro-» en «clorometano».',
+  amina: 'Una molécula con un nitrógeno unido a carbonos solo con enlaces simples. Es como el amoníaco (NH₃) con uno, dos o tres hidrógenos cambiados por grupos de carbonos.',
 });
 
 /** Titles of the steps (design.md §5). */
@@ -252,7 +267,7 @@ function count(n, one, many) {
  * @returns {Array<number|string>|null} The displayed list.
  */
 function displayLocants(list) {
-  return list && list.map((v) => (Number.isInteger(v) ? v : locantText(v)));
+  return list && list.map((v) => (Number.isInteger(v) && v !== N_LOCANT ? v : locantText(v)));
 }
 
 /**
@@ -297,6 +312,9 @@ const PARENT_WORDS = Object.freeze({
 
 /** Words for the O that carries the alkyl group of an alkoxy prefix (design.md §13.4 I-34). */
 const OXYGEN_WORDS = Object.freeze({ the: 'el oxígeno', to: 'al oxígeno', of: 'del oxígeno' });
+
+/** Words for the N of a principal amine that carries the groups cited with the locant `N` (design.md §13.4 I-36). */
+const NITROGEN_WORDS = Object.freeze({ the: 'el nitrógeno', to: 'al nitrógeno', of: 'del nitrógeno' });
 
 /**
  * The words used for the parent of a result in sentences (a one-carbon
@@ -346,14 +364,148 @@ function isBenzene(result) {
  */
 function ringOmission(result) {
   const { parentKind, parent, prefixes } = result.structure;
+  // The groups on an amine nitrogen (locant `N`) do not count, as in render.js (design.md §13.4 I-36).
   return parentKind === 'ring'
-    ? lexiconEs.ringOmitsLocants(parent, prefixes, suffixCount(result.structure))
+    ? lexiconEs.ringOmitsLocants(parent, carbonLocantPrefixes(prefixes), suffixCount(result.structure))
     : { parent: false, prefixes: omitsPrefixLocants(result.structure, lexiconEs) };
 }
 
 /**
+ * Whether the prefix locants of a name are left out: the omission rule
+ * (ringOmission()), unless some prefix is on an amine nitrogen — its `N` is
+ * always written and then every carbon locant too (render.js renderName(),
+ * design.md §13.4 I-36: `1-cloro-N-metilmetanamina`).
+ *
+ * @param {object} result - The naming result.
+ * @returns {boolean} True when no prefix locant is written.
+ */
+function prefixLocantsOmitted(result) {
+  return ringOmission(result).prefixes && !hasNitrogenLocants(result.structure.prefixes);
+}
+
+/**
+ * Tells whether a prefix group is cited only on the nitrogen of a principal
+ * amine (every locant `N`, design.md §13.4 I-36: `N-metil`, `N,N-dimetil`).
+ *
+ * @param {object} group - A prefix group.
+ * @returns {boolean} True for a group only on the nitrogen.
+ */
+function onNitrogen(group) {
+  return group.locants.every((site) => site.locant === N_LOCANT);
+}
+
+/**
+ * The occurrences of prefixes on the nitrogen of a principal amine (locant
+ * `N`, design.md §13.4 I-36), each with its group.
+ *
+ * @param {object} result - The naming result.
+ * @returns {{group: object, site: object}[]} The occurrences (none without such groups).
+ */
+function nitrogenSites(result) {
+  return result.structure.prefixes.flatMap((group) => group.locants
+    .filter((site) => site.locant === N_LOCANT)
+    .map((site) => ({ group, site })));
+}
+
+/**
+ * Tells whether a result's principal group is an amine (design.md §13.4
+ * I-36, suffix `-amina`).
+ *
+ * @param {object} result - The naming result.
+ * @returns {boolean} True for `…amina`.
+ */
+function isAmine(result) {
+  const { suffix } = result.structure;
+  return Boolean(suffix) && suffix.kind === 'amine';
+}
+
+/**
+ * Number of amine nitrogens inside a substituent, nested ones included (an
+ * `amino` prefix counts its own N plus those of its own groups, design.md
+ * §13.4 I-36).
+ *
+ * @param {object} sub - A substituent structure.
+ * @returns {number} The count.
+ */
+function aminoTotal(sub) {
+  let n = sub.amino ? 1 : 0;
+  for (const group of sub.prefixes) {
+    n += group.locants.length * aminoTotal(group.substituent);
+  }
+  return n;
+}
+
+/**
+ * Amine nitrogens cited as `amino-` prefixes in a name: on the parent, in
+ * branches, or in an ester's O-bound group (design.md §13.4 I-36).
+ *
+ * @param {object} result - The naming result.
+ * @returns {number} The count.
+ */
+function aminoPrefixCount(result) {
+  const alkyl = esterGroup(result);
+  return prefixSum(result, aminoTotal) + (alkyl ? aminoTotal(alkyl) : 0);
+}
+
+/**
+ * Every amine nitrogen of a name, classified by how many carbons it is
+ * bonded to (1: –NH₂, 2: –NH–, 3: N without hydrogen): the nitrogens of the
+ * suffix (their carbon plus the groups cited with `N`) and those of the
+ * `amino` prefixes at any depth (design.md §13.4 I-36).
+ *
+ * @param {object} result - The naming result.
+ * @returns {{1: number, 2: number, 3: number}} Nitrogens bonded to 1, 2 and 3 carbons.
+ */
+function nitrogenKinds(result) {
+  const kinds = { 1: 0, 2: 0, 3: 0 };
+  if (isAmine(result)) {
+    const sites = nitrogenSites(result);
+    for (const s of result.structure.suffix.locants) {
+      kinds[1 + sites.filter(({ site }) => site.atom === s.attachAtom).length] += 1;
+    }
+  }
+  /**
+   * Adds the amino nitrogens of a substituent, `times` occurrences of it.
+   *
+   * @param {object} sub - A substituent structure.
+   * @param {number} times - How many times the substituent is cited.
+   * @returns {void}
+   */
+  const visit = (sub, times) => {
+    if (sub.amino) {
+      kinds[1 + sub.prefixes.reduce((sum, g) => sum + g.locants.length, 0)] += times;
+    }
+    for (const group of sub.prefixes) {
+      visit(group.substituent, times * group.locants.length);
+    }
+  };
+  for (const group of result.structure.prefixes) {
+    visit(group.substituent, group.locants.length);
+  }
+  const alkyl = esterGroup(result);
+  if (alkyl) {
+    visit(alkyl, 1);
+  }
+  return kinds;
+} // End of function nitrogenKinds()
+
+/**
+ * Highlight specs of the prefix groups that are or carry an `amino` prefix
+ * (design.md §13.4 I-36: `amino`, `(dimetilamino)`, `(aminometil)`), as
+ * substituents.
+ *
+ * @param {object} result - The naming result.
+ * @returns {{atoms: number[], bonds: number[], style: string}[]} The specs.
+ */
+function aminoPrefixSpecs(result) {
+  return result.structure.prefixes
+    .filter((g) => aminoTotal(g.substituent) > 0)
+    .map((g) => ({ ...groupIds(g), style: 'substituent' }));
+}
+
+/**
  * How the principal group of each suffix kind is called in sentences
- * (design.md §5; alcohols I-31, aldehydes and ketones I-32, acids I-33, esters I-35): `the` / `one` /
+ * (design.md §5; alcohols I-31, aldehydes and ketones I-32, acids I-33, esters I-35, amines I-36): `the` / `one` /
  * `many` for the group, `art` for its short form with the article, `group`
  * without article, `carbonWith` / `carbonThe` / `carbonA` for its carbon,
  * `label` for the N0 row of the comparison table, `prefix` for the prefix
@@ -435,6 +587,21 @@ const SUFFIX_GROUP_WORDS = Object.freeze({
     prefix: 'oxo',
     family: 'cetona',
     ringExample: 'ciclohexanona',
+  }),
+  amine: Object.freeze({
+    the: 'el grupo amino',
+    one: 'un grupo amino',
+    many: 'grupos amino',
+    group: 'grupo amino',
+    art: 'el grupo amino',
+    short: 'grupos amino',
+    carbonWith: 'el carbono unido al nitrógeno',
+    carbonThe: 'el carbono unido al nitrógeno',
+    carbonA: 'un carbono unido a un nitrógeno',
+    label: 'Grupos amino',
+    prefix: 'amino',
+    family: 'amina',
+    ringExample: 'ciclohexanamina',
   }),
 });
 
@@ -621,6 +788,9 @@ function principalInBranches(result) {
   if (!suffix || TERMINAL_SUFFIXES.includes(suffix.kind)) {
     return 0;
   }
+  if (suffix.kind === 'amine') {
+    return prefixSum(result, aminoTotal); // `(aminometil)` on a diamine (design.md §13.4 I-36).
+  }
   return prefixSum(result, suffix.kind === 'alcohol' ? hydroxyTotal : oxoTotal);
 }
 
@@ -637,10 +807,11 @@ function oxygenGroups(result) {
   const n = suffixCount(result.structure);
   const alcohol = Boolean(suffix) && suffix.kind === 'alcohol';
   const acid = Boolean(suffix) && suffix.kind === 'acid';
+  const amine = Boolean(suffix) && suffix.kind === 'amine';
   const alkyl = esterGroup(result);
   return {
     oh: (alcohol || acid ? n : 0) + prefixSum(result, hydroxyTotal) + (alkyl ? hydroxyTotal(alkyl) : 0),
-    co: (alcohol ? 0 : n) + prefixSum(result, oxoTotal) + (alkyl ? oxoTotal(alkyl) : 0),
+    co: (alcohol || amine ? 0 : n) + prefixSum(result, oxoTotal) + (alkyl ? oxoTotal(alkyl) : 0),
   };
 }
 
@@ -735,14 +906,14 @@ function halogenTotal(sub) {
 
 /**
  * Number of carbons of one occurrence of a substituent (its subtree atoms
- * minus its halogen atoms and oxygens, ether oxygens included; 0 for a
- * halogen, hydroxy or oxo prefix).
+ * minus its halogen atoms, oxygens, ether oxygens included, and amine
+ * nitrogens; 0 for a halogen, hydroxy, oxo or plain amino prefix).
  *
  * @param {object} sub - A substituent structure.
  * @returns {number} The carbon count.
  */
 function substituentCarbons(sub) {
-  return sub.atoms.length - halogenTotal(sub) - hydroxyTotal(sub) - oxoTotal(sub) - etherTotal(sub);
+  return sub.atoms.length - halogenTotal(sub) - hydroxyTotal(sub) - oxoTotal(sub) - etherTotal(sub) - aminoTotal(sub);
 }
 
 /**
@@ -791,10 +962,11 @@ function halogenAtoms(n, element) {
  * @returns {number} Number of π bonds inside the group.
  */
 function substituentPi(sub) {
-  if (!sub.chain) {
+  if (!sub.chain && !sub.amino) {
     return 0; // A halogen, hydroxy or oxo prefix.
   }
-  let pi = sub.chain.double.length + 2 * sub.chain.triple.length;
+  // An amino prefix has no chain, only the groups on its N (design.md §13.4 I-36).
+  let pi = sub.chain ? sub.chain.double.length + 2 * sub.chain.triple.length : 0;
   for (const group of sub.prefixes) {
     for (const site of group.locants) {
       pi += substituentPi(group.substituent) + (site.order - 1);
@@ -804,8 +976,9 @@ function substituentPi(sub) {
 }
 
 /**
- * Counts the carbons, hydrogens, halogen and oxygen atoms of the named
- * molecule from its structure (H = 2C + 2 − 2·π − 2·rings − halogens; one
+ * Counts the carbons, hydrogens, halogen, nitrogen and oxygen atoms of the
+ * named molecule from its structure (H = 2C + 2 + N − 2·π − 2·rings −
+ * halogens; one
  * ring for a ring parent; each halogen takes the place of one hydrogen,
  * each OH group replaces a hydrogen by an OH, so it adds an oxygen and
  * leaves the hydrogen count unchanged, and each C=O — of the `-al` / `-ona`
@@ -813,18 +986,22 @@ function substituentPi(sub) {
  * it counts as one π bond; a –COOH is one of each: two oxygens, one π
  * bond; an ether O of an alkoxy prefix adds an oxygen between two carbons
  * and changes no hydrogen count; an ester –COO– is one C=O and, with its
- * O-bound group, an O between two carbons like an ether's, I-35).
+ * O-bound group, an O between two carbons like an ether's, I-35; each
+ * amine N — of the `-amina` suffix or of an `amino-` prefix — has three
+ * bonds, so it adds one hydrogen to the count, I-36).
  *
  * @param {object} structure - The name structure.
- * @returns {{carbons: number, hydrogens: number, halogens: Object<string, number>, oxygens: number}} The counts (halogens by element; empty for a hydrocarbon).
+ * @returns {{carbons: number, hydrogens: number, halogens: Object<string, number>, nitrogens?: number, oxygens: number}} The counts (halogens by element; empty for a hydrocarbon; `nitrogens` only when positive).
  */
 export function atomCounts(structure) {
   const { parent, prefixes } = structure;
   let carbons = parent.length;
   let pi = parent.double.length + 2 * parent.triple.length;
-  const acid = Boolean(structure.suffix) && structure.suffix.kind === 'acid';
-  let oxygens = suffixCount(structure) * (acid ? 2 : 1);
-  if (structure.suffix && structure.suffix.kind !== 'alcohol') {
+  const kind = structure.suffix ? structure.suffix.kind : null;
+  const amine = kind === 'amine';
+  let oxygens = amine ? 0 : suffixCount(structure) * (kind === 'acid' ? 2 : 1);
+  let nitrogens = amine ? suffixCount(structure) : 0;
+  if (kind && kind !== 'alcohol' && !amine) {
     pi += suffixCount(structure); // Each C=O of `-al` / `-ona` / `-oico` / `-oato`.
   }
   const halogens = {};
@@ -837,11 +1014,14 @@ export function atomCounts(structure) {
     carbons += substituentCarbons(sub);
     substituentHalogens(sub, halogens);
     oxygens += hydroxyTotal(sub) + oxoTotal(sub) + etherTotal(sub);
+    nitrogens += aminoTotal(sub);
     pi += substituentPi(sub) + (order - 1);
   }
   const rings = structure.parentKind === 'ring' ? 1 : 0;
   const x = Object.values(halogens).reduce((a, b) => a + b, 0);
-  return { carbons, hydrogens: 2 * carbons + 2 - 2 * pi - 2 * rings - x, halogens, oxygens };
+  const hydrogens = 2 * carbons + 2 + nitrogens - 2 * pi - 2 * rings - x;
+  // `nitrogens` only when there are some, so the counts of a molecule without N keep their shape.
+  return nitrogens > 0 ? { carbons, hydrogens, halogens, nitrogens, oxygens } : { carbons, hydrogens, halogens, oxygens };
 } // End of function atomCounts()
 
 /**
@@ -1016,17 +1196,47 @@ function esterDrawingSentences(result, oh, co, halogens) {
 } // End of function esterDrawingSentences()
 
 /**
+ * The count-step sentences on how the amine nitrogens are drawn (design.md
+ * §13.4 I-36): an N bonded to one carbon as NH₂, to two as NH, to three as
+ * N alone, like the OH label; a nitrogen makes three bonds, the ones not to
+ * a carbon go to hydrogens, and it takes the place of one hydrogen on each
+ * carbon it is bonded to.
+ *
+ * @param {{1: number, 2: number, 3: number}} kinds - Nitrogens by number of carbons (nitrogenKinds()).
+ * @returns {string} The sentences, each starting with a space.
+ */
+function nitrogenDrawingSentences(kinds) {
+  const total = kinds[1] + kinds[2] + kinds[3];
+  const forms = [
+    [kinds[1], 'a un solo carbono se ve como NH₂: lleva dos hidrógenos'],
+    [kinds[2], 'a dos carbonos se ve como NH: lleva un hidrógeno'],
+    [kinds[3], 'a tres carbonos se ve como N, sin hidrógenos'],
+  ];
+  let drawing = '';
+  for (const [n, form] of forms) {
+    if (n > 0) {
+      drawing += ` ${n === 1 ? (total === 1 ? 'El nitrógeno unido' : 'Un nitrógeno unido') : 'Cada nitrógeno unido'} ${form}.`;
+    }
+  }
+  drawing += ' Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno.';
+  drawing += total === 1
+    ? ' El nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une.'
+    : ' Cada nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une.';
+  return drawing;
+} // End of function nitrogenDrawingSentences()
+
+/**
  * Step 1, "Cuenta los carbonos": carbons, hydrogens and formula.
  *
  * @param {object} result - The naming result.
  * @returns {object} The step.
  */
 function countStep(result) {
-  const { carbons, hydrogens, halogens, oxygens } = atomCounts(result.structure);
+  const { carbons, hydrogens, halogens, nitrogens = 0, oxygens } = atomCounts(result.structure);
   const present = HALOGEN_ORDER.filter((el) => halogens[el]);
   const symbol = (el, n) => `${el}${n === 1 ? '' : n}`;
-  // Hill order: C, H, then the other elements alphabetically (Br, Cl, F, I, O).
-  const formula = toSubscript(`C${carbons === 1 ? '' : carbons}${hydrogens === 0 ? '' : symbol('H', hydrogens)}${present.map((el) => symbol(el, halogens[el])).join('')}${oxygens === 0 ? '' : symbol('O', oxygens)}`);
+  // Hill order: C, H, then the other elements alphabetically (Br, Cl, F, I, N, O).
+  const formula = toSubscript(`C${carbons === 1 ? '' : carbons}${hydrogens === 0 ? '' : symbol('H', hydrogens)}${present.map((el) => symbol(el, halogens[el])).join('')}${nitrogens === 0 ? '' : symbol('N', nitrogens)}${oxygens === 0 ? '' : symbol('O', oxygens)}`);
   const atoms = [...result.parent.atoms, ...result.structure.prefixes.flatMap((g) => groupIds(g).atoms)];
   const bonds = [...result.parent.bonds, ...result.structure.prefixes.flatMap((g) => groupIds(g).bonds)];
   if (result.structure.suffix) {
@@ -1040,7 +1250,20 @@ function countStep(result) {
     bonds.push(...ester.alkyl.bonds);
   }
   const text = [];
-  if (present.length === 0 && oxygens === 0) {
+  const nitrogenWords = nitrogens === 0 ? [] : [`${count(nitrogens, 'átomo', 'átomos')} de nitrógeno`];
+  if (nitrogens > 0 && oxygens === 0) {
+    const hydrogenWords = hydrogens === 0 ? 'ningún hidrógeno' : count(hydrogens, 'hidrógeno', 'hidrógenos');
+    const items = [count(carbons, 'carbono', 'carbonos'), hydrogenWords, ...present.map((el) => halogenAtoms(halogens[el], el)), ...nitrogenWords];
+    text.push(`Tu molécula tiene ${joinY(items)} (${formula}).`);
+    let drawing = 'En el dibujo, cada punta y cada vértice sin letra es un carbono.';
+    if (present.length > 0) {
+      drawing += ` Los átomos de ${joinY(present.map((el) => ELEMENT_NAMES_ES[el]))} se ven con su símbolo (${present.join(', ')}): son halógenos.`;
+    }
+    drawing += nitrogenDrawingSentences(nitrogenKinds(result));
+    drawing += ' Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces';
+    drawing += present.length > 0 ? ', y cada halógeno ocupa el sitio de un hidrógeno.' : '.';
+    text.push(drawing);
+  } else if (present.length === 0 && oxygens === 0) {
     text.push(`Tu molécula tiene ${count(carbons, 'carbono', 'carbonos')} y ${count(hydrogens, 'hidrógeno', 'hidrógenos')} (${formula}).`);
     text.push('En el dibujo, cada punta y cada vértice es un carbono. Los hidrógenos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces.');
   } else if (oxygens === 0) {
@@ -1051,7 +1274,7 @@ function countStep(result) {
   } else {
     const hydrogenWords = hydrogens === 0 ? 'ningún hidrógeno' : count(hydrogens, 'hidrógeno', 'hidrógenos');
     const items = [count(carbons, 'carbono', 'carbonos'), hydrogenWords, ...present.map((el) => halogenAtoms(halogens[el], el)),
-      `${count(oxygens, 'átomo', 'átomos')} de oxígeno`];
+      ...nitrogenWords, `${count(oxygens, 'átomo', 'átomos')} de oxígeno`];
     text.push(`Tu molécula tiene ${joinY(items)} (${formula}).`);
     let drawing = 'En el dibujo, cada punta y cada vértice sin letra es un carbono.';
     if (present.length > 0) {
@@ -1090,6 +1313,9 @@ function countStep(result) {
           : ' En cada grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono.';
       }
     } // End of the oxygen sentences
+    if (nitrogens > 0) {
+      drawing += nitrogenDrawingSentences(nitrogenKinds(result));
+    }
     text.push(drawing);
   } // End of the count sentences
   if (result.structure.parentKind === 'ring' && result.structure.prefixes.length === 0 && !result.structure.suffix
@@ -1129,6 +1355,9 @@ function groupStep(result) {
   if (isCarbonyl(result)) {
     return carbonylGroupStep(result);
   }
+  if (isAmine(result)) {
+    return amineGroupStep(result);
+  }
   const { suffix: n, branch } = hydroxylsIn(result);
   const total = n + branch;
   const benzene = isBenzene(result);
@@ -1154,6 +1383,11 @@ function groupStep(result) {
   if (benzene) {
     text.push('Un benceno con un –OH tiene nombre propio: «fenol». La IUPAC (2013) lo conserva como nombre preferido; con las reglas generales sería «bencenol», que no se usa.');
   }
+  const amines = aminoPrefixCount(result);
+  if (amines > 0) {
+    text.push(`También tiene ${aminoWords(amines)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): alcohol > amina.`);
+    text.push(`Aquí manda el alcohol, así que ${amines === 1 ? 'el grupo amino se nombra' : 'cada grupo amino se nombra'} con el [[prefijo]] «amino-», delante del nombre.`);
+  }
   if (halogensIn(result).length > 0) {
     text.push('Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]].');
   }
@@ -1161,10 +1395,108 @@ function groupStep(result) {
     id: 'group',
     title: STEP_TITLES.group,
     text,
-    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result)],
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result)],
     locants: null,
   };
 } // End of function groupStep()
+
+/**
+ * Words for the amine nitrogens cited as `amino-` prefixes, for the
+ * "También tiene…" sentences of the group steps (design.md §13.4 I-36).
+ *
+ * @param {number} n - How many (at least 1).
+ * @returns {string} `un grupo amino (una amina)` or `2 grupos amino (aminas)`.
+ */
+function aminoWords(n) {
+  return n === 1 ? 'un grupo amino (un nitrógeno unido a carbonos: una [[amina]])' : `${n} grupos amino (nitrógenos unidos a carbonos: [[aminas|amina]])`;
+}
+
+/**
+ * Step "Reconoce el grupo funcional" for an amine (design.md §13.4 I-36):
+ * the N with its hydrogens (–NH₂, –NH–, or N bonded to three carbons:
+ * primary, secondary, tertiary), the principal group named with the suffix
+ * `-amina` (`-diamina`…), the N never part of the chain, the other groups on
+ * the N cited as prefixes with the locant `N`, `bencenamina` and its
+ * retained name `anilina`, an amine left on a branch (`amino-`), and
+ * halogens as prefixes. The N with its carbon is highlighted as the
+ * principal group, the groups on the N as substituents.
+ *
+ * @param {object} result - A naming result whose suffix is an amine.
+ * @returns {object} The step.
+ */
+function amineGroupStep(result) {
+  const { suffix, parentKind } = result.structure;
+  const n = suffix.locants.length;
+  const ring = parentKind === 'ring';
+  const benzene = isBenzene(result);
+  const sites = nitrogenSites(result);
+  const ending = lexiconEs.groupSuffix('amine');
+  const text = [];
+  const kinds = { 1: 'primaria', 2: 'secundaria', 3: 'terciaria' };
+  const branch = principalInBranches(result);
+  const found = nitrogenKinds(result);
+  const primary = found[2] + found[3] === 0;
+  if (n + branch > 1) {
+    text.push(primary
+      ? `Tu molécula tiene ${n + branch} grupos –NH₂ (cada uno, un nitrógeno con dos hidrógenos) unidos a carbonos. Son [[grupos funcionales|grupo funcional]]: la molécula es una [[amina]].`
+      : `Tu molécula tiene ${n + branch} nitrógenos unidos a carbonos solo con enlaces simples. Son [[grupos funcionales|grupo funcional]]: la molécula es una [[amina]].`);
+  } else {
+    const carbons = 1 + sites.length;
+    const on = benzene ? 'a un carbono del [[benceno]]' : 'a un carbono';
+    const what = {
+      1: `un grupo –NH₂: un nitrógeno con dos hidrógenos, unido ${on}`,
+      2: 'un nitrógeno unido a dos carbonos y a un hidrógeno (–NH–)',
+      3: 'un nitrógeno unido a tres carbonos, sin hidrógenos',
+    }[carbons];
+    text.push(`Tu molécula tiene ${what}. Es un [[grupo funcional]]: la molécula es una [[amina]].`);
+  }
+  let which = n + branch === 1 ? `Aquí es una amina ${kinds[1 + sites.length]}.` : 'Aquí todas son primarias.';
+  if (n + branch > 1 && !primary) {
+    which = `Aquí hay de varios tipos: ${joinY([1, 2, 3].filter((k) => found[k] > 0).map((k) => `${found[k]} ${found[k] === 1 ? kinds[k] : `${kinds[k]}s`}`))}.`;
+  }
+  text.push(`Una amina es como el amoníaco (NH₃) con hidrógenos cambiados por grupos de carbonos: con uno es una amina primaria; con dos, secundaria, y con tres, terciaria. ${which}`);
+  text.push(`El grupo amino es el [[grupo principal]]: se nombra con el [[sufijo]] «-${ending}», al final del nombre (como en «metanamina»).`);
+  if (n > 1) {
+    const { multiplier: mult } = suffixWords(suffix, lexiconEs);
+    text.push(`Aquí hay ${n} grupos amino ${ring ? 'en el anillo' : 'en la [[cadena principal]]'}, así que el sufijo dice cuántos: «-${mult}${ending}» («di» = 2, «tri» = 3).`);
+  }
+  if (ring) {
+    text.push('El nitrógeno no forma parte del [[anillo]]: el anillo solo tiene carbonos. El carbono unido al nitrógeno sí es del anillo.');
+  } else {
+    text.push(result.structure.parent.length === 1
+      ? 'El nitrógeno no forma parte de la cadena: la cadena solo tiene carbonos. Aquí la cadena es un solo carbono, el unido al nitrógeno.'
+      : 'El nitrógeno no forma parte de la cadena: la cadena solo tiene carbonos. El carbono unido al nitrógeno sí es de la cadena, y su número es el del sufijo.');
+  }
+  if (sites.length > 0) {
+    const where = ring ? 'en el anillo' : 'en la cadena principal';
+    text.push(sites.length === 1
+      ? `El otro grupo de carbonos unido al nitrógeno no está ${where}: es un [[sustituyente]] y se nombra delante, como las ramas, pero con la letra «N» en vez de un número (como en «N-metiletanamina»). La N dice que el grupo va unido al nitrógeno, no a un carbono.`
+      : `Los otros ${sites.length} grupos de carbonos unidos al nitrógeno no están ${where}: son [[sustituyentes|sustituyente]] y se nombran delante, como las ramas, pero con la letra «N» en vez de un número (como en «N,N-dimetilmetanamina»). La N dice que el grupo va unido al nitrógeno, no a un carbono.`);
+  }
+  if (branch > 0) {
+    text.push(branch === 1
+      ? 'Un grupo amino queda en una rama, fuera de la cadena principal: ese no va en el sufijo, sino con el [[prefijo]] «amino-» delante del nombre.'
+      : `${branch} grupos amino quedan en ramas, fuera de la cadena principal: esos no van en el sufijo, sino con el [[prefijo]] «amino-» delante del nombre.`);
+  }
+  if (benzene) {
+    const traditional = (result.alternatives || []).find((a) => a.style === 'traditional');
+    const aniline = lexiconEs.traditionalName('aniline');
+    const here = traditional && traditional.name !== aniline ? ` (aquí, ${q(traditional.name)})` : '';
+    const kept = traditional ? ` La IUPAC (2013) conserva también el nombre tradicional ${q(aniline)} y lo prefiere${here}: lo verás en «Otras formas válidas».` : '';
+    text.push(`Un benceno con un grupo amino se nombra con el nombre del anillo sin su «o» final más «-${ending}»: «${lexiconEs.benzeneName.slice(0, -1)}${ending}».${kept}`);
+  }
+  if (halogensIn(result).length > 0) {
+    text.push('Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]].');
+  }
+  return {
+    id: 'group',
+    title: STEP_TITLES.group,
+    text,
+    highlight: [suffixSpec(result), ...sites.map(({ site }) => ({ atoms: [...site.atoms], bonds: [site.bond, ...site.bonds], style: 'substituent' })),
+      ...aminoPrefixSpecs(result)],
+    locants: null,
+  };
+} // End of function amineGroupStep()
 
 /**
  * Step "Reconoce el grupo funcional" for an aldehyde or ketone (design.md
@@ -1222,14 +1554,21 @@ function carbonylGroupStep(result) {
   if (oh > 0) {
     others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
   }
+  const amines = aminoPrefixCount(result);
+  if (amines > 0) {
+    others.push(aminoWords(amines));
+  }
   if (others.length > 0) {
-    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): aldehído > cetona > alcohol.`);
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
     const how = [];
     if (ketones > 0) {
       how.push('cada C=O de cetona se nombra con el [[prefijo]] «oxo-»');
     }
     if (oh > 0) {
       how.push(ketones > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
+    }
+    if (amines > 0) {
+      how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda ${suffix.kind === 'aldehyde' ? 'el aldehído' : 'la cetona'}, así que ${joinY(how)}, delante del nombre.`);
   } // End of the seniority sentences
@@ -1240,7 +1579,7 @@ function carbonylGroupStep(result) {
     id: 'group',
     title: STEP_TITLES.group,
     text,
-    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result)],
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result)],
     locants: null,
   };
 } // End of function carbonylGroupStep()
@@ -1514,8 +1853,12 @@ function acidGroupStep(result) {
   if (oh > 0) {
     others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
   }
+  const amines = aminoPrefixCount(result);
+  if (amines > 0) {
+    others.push(aminoWords(amines));
+  }
   if (others.length > 0) {
-    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > aldehído > cetona > alcohol.`);
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
     const how = [];
     if (aldehyde + otherCo > 0) {
       how.push(aldehyde > 0
@@ -1524,6 +1867,9 @@ function acidGroupStep(result) {
     }
     if (oh > 0) {
       how.push(aldehyde + otherCo > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH que no es del ácido se nombra con el [[prefijo]] «hidroxi-»');
+    }
+    if (amines > 0) {
+      how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
     }
     text.push(`Aquí manda el ácido, así que ${joinY(how)}, delante del nombre.`);
   } // End of the seniority sentences
@@ -1534,7 +1880,7 @@ function acidGroupStep(result) {
     id: 'group',
     title: STEP_TITLES.group,
     text,
-    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result)],
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result)],
     locants: null,
   };
 } // End of function acidGroupStep()
@@ -1592,8 +1938,12 @@ function esterGroupStep(result) {
   if (oh > 0) {
     others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
   }
+  const amines = aminoPrefixCount(result);
+  if (amines > 0) {
+    others.push(aminoWords(amines));
+  }
   if (others.length > 0) {
-    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > aldehído > cetona > alcohol.`);
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > aldehído > cetona > alcohol${amines > 0 ? ' > amina' : ''}.`);
     const how = [];
     if (aldehyde + otherCo > 0) {
       how.push(aldehyde > 0
@@ -1603,16 +1953,20 @@ function esterGroupStep(result) {
     if (oh > 0) {
       how.push(aldehyde + otherCo > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
     }
+    if (amines > 0) {
+      how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
+    }
     text.push(`Aquí manda el éster, así que ${joinY(how)}, delante del nombre de la parte en la que está.`);
   } // End of the seniority sentences
   if (halogensIn(result).length + Object.keys(esterGroupHalogens(result)).length > 0) {
     text.push('Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]].');
   }
+  const alkylAmino = alkyl && aminoTotal(alkyl) > 0 ? [esterSpecs(result).alkyl] : [];
   return {
     id: 'group',
     title: STEP_TITLES.group,
     text,
-    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result)],
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result), ...alkylAmino],
     locants: null,
   };
 } // End of function esterGroupStep()
@@ -1715,11 +2069,13 @@ function outsideUnsaturation(result) {
    * @returns {void}
    */
   const visit = (sub) => {
-    if (!sub.chain) {
+    if (!sub.chain && !sub.amino) {
       return; // A halogen, hydroxy or oxo prefix.
     }
-    double += sub.chain.double.length;
-    triple += sub.chain.triple.length;
+    if (sub.chain) {
+      double += sub.chain.double.length;
+      triple += sub.chain.triple.length;
+    }
     for (const group of sub.prefixes) {
       for (const site of group.locants) {
         double += site.order === 2 && !group.substituent.oxo ? 1 : 0;
@@ -1807,9 +2163,11 @@ function groupChainSentences(result, p0, p1, step) {
   const length = result.parent.atoms.length;
   const most = Math.max(...p0.values);
   const oh = most === 1 ? words.the : `los ${most} ${words.many}`;
-  const carry = result.structure.suffix.kind === 'alcohol' ? 'llevar unidos' : 'llevar';
+  const carry = result.structure.suffix.kind === 'alcohol' || isAmine(result) ? 'llevar unidos' : 'llevar';
   text.push(`La [[cadena principal]] tiene que ${carry} el mayor número posible de ${words.many}, porque ${words.art} es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más ${words.many}, gana la más larga.`);
-  if (isCarbonyl(result)) {
+  if (isAmine(result)) {
+    text.push('El carbono unido al nitrógeno es un carbono más de la cadena; el nitrógeno no: la cadena solo tiene carbonos y no puede atravesar el nitrógeno.');
+  } else if (isCarbonyl(result)) {
     text.push('El carbono de cada C=O forma parte de la cadena: se cuenta como los demás carbonos. El oxígeno no forma parte de ella.');
   } else if (isAcid(result)) {
     text.push('El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.');
@@ -1833,15 +2191,19 @@ function groupChainSentences(result, p0, p1, step) {
     }
   }
   const survivors = p1.survivors;
+  const carbons = count(length, 'carbono', 'carbonos');
   if (p1.candidatesBefore.length === 1) {
-    text.push(`Solo una cadena lleva ${oh}: tiene ${length} carbonos.`);
+    text.push(`Solo una cadena lleva ${oh}: tiene ${carbons}.`);
+  } else if (length === 1) {
+    // One-carbon sides of an amine N (N-metilmetanamina): the options are the sides (amineSideSentences()).
+    text.push(`De las cadenas que llevan ${oh}, la más larga tiene 1 carbono: cada lado del nitrógeno tiene solo 1 carbono.`);
   } else if (survivors.length === 1) {
-    text.push(`De las cadenas que llevan ${oh}, la más larga tiene ${length} carbonos. Solo hay una así.`);
+    text.push(`De las cadenas que llevan ${oh}, la más larga tiene ${carbons}. Solo hay una así.`);
   } else {
-    text.push(`De las cadenas que llevan ${oh}, la más larga tiene ${length} carbonos. Hay ${survivors.length} cadenas de ${length}. Pulsa cada opción para verlas.`);
+    text.push(`De las cadenas que llevan ${oh}, la más larga tiene ${carbons}. Hay ${survivors.length} cadenas de ${length}. Pulsa cada opción para verlas.`);
     step.options = [...(step.options || []), ...survivors.map((c, i) => ({
       label: `Opción ${i + 1} de ${survivors.length}`,
-      text: `Una cadena de ${length} carbonos con ${oh}.`,
+      text: `Una cadena de ${carbons} con ${oh}.`,
       highlight: [candidateSpec(c, 'candidate')],
       locants: null,
     }))];
@@ -1849,7 +2211,108 @@ function groupChainSentences(result, p0, p1, step) {
   if (principalInBranches(result) > 0) {
     text.push(`Ninguna cadena puede llevar todos los ${words.many}: el que queda en una rama se nombra con el [[prefijo]] «${words.prefix}-».`);
   }
+  if (isAmine(result)) {
+    amineSideSentences(result, step);
+  }
 } // End of function groupChainSentences()
+
+/**
+ * The atoms and bonds of one side of the nitrogen of a principal amine
+ * (design.md §13.4 I-36): the N with its bonds to the parent carbon and to
+ * the group, and the group cited with the locant `N`.
+ *
+ * @param {object} result - An amine naming result.
+ * @param {object} site - A PrefixLocant with the locant `N`.
+ * @returns {{atoms: number[], bonds: number[], style: string}[]} The specs: the parent, the group, the N.
+ */
+function nitrogenSideSpecs(result, site) {
+  const own = result.structure.suffix.locants.find((s) => s.attachAtom === site.atom);
+  return [
+    parentSpec(result),
+    { atoms: [...site.atoms], bonds: [...site.bonds], style: 'substituent' },
+    { atoms: [site.atom], bonds: own ? [own.bond, site.bond] : [site.bond], style: 'candidate' },
+  ];
+}
+
+/**
+ * Explains, from the trace, why the parent is not on the side of one group
+ * on the nitrogen of a principal amine (design.md §13.4 I-36): every side
+ * carries the amine, so the first rule after which no candidate chain of
+ * that side survives decides — P1 (the length), P2/P3 (multiple bonds), a
+ * numbering rule, P4 (more substituents) or the presentation tie-break
+ * (the sides alike: same name). Never re-derives chemistry.
+ *
+ * @param {object} result - An amine naming result.
+ * @param {object} group - The prefix group on the nitrogen.
+ * @param {object} site - Its occurrence on the nitrogen.
+ * @returns {string} The sentence.
+ */
+function amineSideReason(result, group, site) {
+  const prefix = q(substituentPrefix(group.substituent, lexiconEs));
+  const after = `El otro lado es el sustituyente ${prefix}, que se escribe con la letra N delante.`;
+  const side = new Set(site.atoms);
+  const inSide = (c) => c.atoms.some((id) => side.has(id));
+  const length = result.parent.atoms.length;
+  for (const step of result.trace) {
+    const before = step.candidatesBefore.map((c, i) => ({ c, value: step.values[i] })).filter((e) => inSide(e.c));
+    if (before.length === 0 || step.survivors.some(inSide)) {
+      continue;
+    }
+    if (step.rule === 'P0') {
+      return `En ese lado hay cadenas que no llevan el grupo amino unido: pierden. ${after}`;
+    }
+    if (step.rule === 'P1') {
+      const sideValue = Math.max(...before.map((e) => e.value));
+      return `Decide la longitud: en el lado de la [[cadena principal]] hay una cadena de ${count(length, 'carbono', 'carbonos')}; en el otro, la más larga tiene ${count(sideValue, 'carbono', 'carbonos')}. ${after}`;
+    }
+    if (step.rule === 'P2' || step.rule === 'P3') {
+      const what = step.rule === 'P2' ? 'más enlaces dobles o triples' : 'más enlaces dobles';
+      return `Las cadenas de los lados del nitrógeno son igual de largas (${count(length, 'carbono', 'carbonos')}): gana la que tiene ${what}. ${after}`;
+    }
+    if (step.rule === 'P4') {
+      return `Las cadenas de los lados del nitrógeno empatan en longitud: gana la que tiene más [[sustituyentes|sustituyente]] (cuentan también los grupos unidos al nitrógeno). ${after}`;
+    }
+    if (step.rule === 'TIE') {
+      return `Los lados del nitrógeno son iguales: da igual cuál sea la [[cadena principal]], el nombre sale igual. ${after}`;
+    }
+    return `Las cadenas de los lados del nitrógeno empatan en longitud: gana la que da los números más bajos (mira el paso «Numera la cadena»). ${after}`;
+  } // End of the loop over the trace steps
+  return after;
+} // End of function amineSideReason()
+
+/**
+ * The sentences and options of "Busca la cadena principal" on the sides of
+ * the nitrogen of a principal amine with groups cited `N` (design.md §13.4
+ * I-36): every side carries the amine, the chain cannot cross the N, and
+ * why each other side lost (amineSideReason()), one option per group on
+ * the N.
+ *
+ * @param {object} result - An amine naming result.
+ * @param {object} step - The step being built (its `text` and `options` are filled in).
+ * @returns {void}
+ */
+function amineSideSentences(result, step) {
+  const sites = nitrogenSites(result);
+  if (sites.length === 0) {
+    return;
+  }
+  const { text } = step;
+  text.push(`Aquí el nitrógeno está unido a ${sites.length + 1} grupos de carbonos: cada uno es un lado del nitrógeno. Todos llevan el grupo amino, porque todos están unidos al nitrógeno, así que cualquiera podría ser la [[cadena principal]]. Se elige con las reglas de siempre, y los otros lados son [[sustituyentes|sustituyente]] del nitrógeno.`);
+  const options = [];
+  sites.forEach(({ group, site }, i) => {
+    const reason = amineSideReason(result, group, site);
+    if (!text.includes(reason)) {
+      text.push(reason);
+    }
+    options.push({
+      label: `Grupo ${i + 1} de ${sites.length} en el nitrógeno`,
+      text: reason,
+      highlight: nitrogenSideSpecs(result, site),
+      locants: null,
+    });
+  }); // End of the loop over the groups on the nitrogen
+  step.options = [...(step.options || []), ...options];
+} // End of function amineSideSentences()
 
 /**
  * Step 2, "Busca la cadena más larga", from the P1 trace step; for an
@@ -1863,7 +2326,8 @@ function chainStep(result) {
   const p0 = result.trace.find((s) => s.rule === 'P0');
   const p1 = result.trace.find((s) => s.rule === 'P1');
   const length = result.parent.atoms.length;
-  if (!p1 || length === 1) {
+  // A one-carbon amine parent with groups on its N still has sides to choose from (N-metilmetanamina).
+  if (!p1 || (length === 1 && !(p0 && isAmine(result) && nitrogenSites(result).length > 0))) {
     return null;
   }
   const text = [];
@@ -1897,6 +2361,9 @@ function chainStep(result) {
   }
   if (prefixSum(result, etherTotal) > 0) {
     text.push('La cadena no puede atravesar el oxígeno de un éter: solo cuentan las cadenas de carbonos seguidos, a un lado o al otro del O.');
+  }
+  if (prefixSum(result, aminoTotal) > 0) {
+    text.push('El nitrógeno de un grupo amino no forma parte de la cadena: la cadena solo tiene carbonos seguidos y no puede atravesarlo.');
   }
   const outside = outsideUnsaturation(result);
   if (outside.double + outside.triple > 0) {
@@ -1942,15 +2409,27 @@ function ringStep(result) {
   const n = parent.length;
   const open = `${lexiconEs.stem(n)}${lexiconEs.endings.saturated}`;
   const ring = `${lexiconEs.ringPrefix}${open}`;
-  const branches = prefixes.filter((g) => !isAtomPrefix(g));
+  // Groups on the amine N and amino prefixes are not side chains of the ring (design.md §13.4 I-36).
+  const branches = prefixes.filter((g) => !isAtomPrefix(g) && !g.substituent.amino && !onNitrogen(g));
+  const outer = branches.length > 0 || prefixes.some((g) => substituentCarbons(g.substituent) > 0);
   const text = [
-    `${branches.length > 0 ? `En tu molécula, ${n} de los carbonos` : `Los ${n} carbonos`} forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].`,
+    `${outer ? `En tu molécula, ${n} de los carbonos` : `Los ${n} carbonos`} forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].`,
     'El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.',
   ];
   if (prefixes.some((g) => g.substituent.halogen)) {
     text.push('Los átomos de halógeno unidos al anillo no forman parte de él: son [[sustituyentes|sustituyente]] y se nombran con un [[prefijo]] delante.');
   }
-  if (result.structure.suffix && isCarbonyl(result)) {
+  if (isAmine(result)) {
+    text.push(suffixCount(result.structure) === 1
+      ? 'El grupo amino unido al anillo no forma parte de él (el nitrógeno nunca es del anillo ni de la cadena): es el [[grupo principal]] y da la terminación «-amina».'
+      : 'Los grupos amino unidos al anillo no forman parte de él (el nitrógeno nunca es del anillo ni de la cadena): son el [[grupo principal]] y dan la terminación «-amina».');
+    const onN = prefixes.filter(onNitrogen).reduce((sum, g) => sum + g.locants.length, 0);
+    if (onN > 0) {
+      text.push(onN === 1
+        ? 'El grupo de carbonos unido al nitrógeno tampoco es del anillo. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y ese grupo es un [[sustituyente]] del nitrógeno, que se escribe con la letra «N».'
+        : 'Los grupos de carbonos unidos al nitrógeno tampoco son del anillo. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y esos grupos son [[sustituyentes|sustituyente]] del nitrógeno, que se escriben con la letra «N».');
+    }
+  } else if (result.structure.suffix && isCarbonyl(result)) {
     text.push(suffixCount(result.structure) === 1
       ? 'El oxígeno unido al anillo con un [[enlace doble]] no forma parte de él, pero su carbono sí: el grupo C=O es el [[grupo principal]] y da la terminación «-ona».'
       : 'Los oxígenos unidos al anillo con [[enlaces dobles|enlace doble]] no forman parte de él, pero sus carbonos sí: los grupos C=O son el [[grupo principal]] y dan la terminación «-ona».');
@@ -1964,6 +2443,13 @@ function ringStep(result) {
     text.push(ringHydroxyls === 1
       ? 'El grupo –OH unido al anillo no es el [[grupo principal]] (la cetona va antes que el alcohol): se nombra con el [[prefijo]] «hidroxi-».'
       : 'Los grupos –OH unidos al anillo no son el [[grupo principal]] (la cetona va antes que el alcohol): se nombran con el [[prefijo]] «hidroxi-».');
+  }
+  const ringAmino = prefixes.filter((g) => g.substituent.amino).reduce((sum, g) => sum + g.locants.length, 0);
+  if (ringAmino > 0 && result.structure.suffix) {
+    const senior = familyWithArticle(result.structure.suffix.kind);
+    text.push(ringAmino === 1
+      ? `El grupo amino unido al anillo no es el [[grupo principal]] (${senior} va antes que la amina): se nombra con el [[prefijo]] «amino-».`
+      : `Los grupos amino unidos al anillo no son el [[grupo principal]] (${senior} va antes que la amina): se nombran con el [[prefijo]] «amino-».`);
   }
   if (branches.length > 0) {
     text.push('Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].');
@@ -2010,12 +2496,20 @@ function benzeneStep(result) {
   const { parent, prefixes } = result.structure;
   const doubles = parent.double.map((site) => site.bond);
   const halogen = prefixes.length > 0 && prefixes[0].substituent.halogen;
-  const phenol = Boolean(result.structure.suffix);
+  const amine = isAmine(result);
+  const phenol = Boolean(result.structure.suffix) && !amine;
   const text = [
     `${prefixes.length > 0 && !halogen ? 'En tu molécula, 6 de los carbonos' : 'Los 6 carbonos'} forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, ${q(lexiconEs.benzeneName)}. No se llama «ciclohexatrieno».`,
     'El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.',
   ];
-  if (phenol) {
+  if (amine) {
+    const stem = lexiconEs.benzeneName.slice(0, -1);
+    text.push(`El grupo amino unido al anillo es el [[grupo principal]]: el nombre acaba en «-amina». Se forma con el nombre del anillo sin su «o» final: ${stem} + amina = «${stem}amina».`);
+    if (prefixes.length > 0) {
+      text.push('Los grupos de carbonos unidos al nitrógeno no están en el anillo: van delante, con la letra «N» (como en «N-metil»). El anillo sigue teniendo un solo sustituyente, el grupo amino.');
+    }
+    text.push('Con un solo grupo en el anillo no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono unido al nitrógeno es siempre el 1 y el número no se escribe.');
+  } else if (phenol) {
     text.push('El grupo –OH unido al anillo es el [[grupo principal]]. Un benceno con un –OH se llama «fenol»: es un nombre propio.');
     text.push('Con un solo –OH no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono del –OH es siempre el 1 y el número no se escribe.');
   } else if (prefixes.length > 0 && prefixes[0].substituent.alkoxy) {
@@ -2044,7 +2538,7 @@ function benzeneStep(result) {
       { atoms: [...result.parent.atoms], bonds: result.parent.bonds.filter((id) => !doubles.includes(id)), style: 'parent' },
       { atoms: [], bonds: doubles, style: 'candidate' },
       ...substituentSpecs(result),
-      ...(phenol ? [{ ...suffixSpec(result), style: 'substituent' }] : []),
+      ...(result.structure.suffix ? [{ ...suffixSpec(result), style: 'substituent' }] : []),
     ],
     locants: null,
   };
@@ -2195,7 +2689,7 @@ function ringNumberingChoice(result) {
   if (multiple) {
     rules.push('los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] del anillo llevan los [[localizadores|localizador]] más bajos (si empatan, los dobles)');
   }
-  if (prefixes.length > 0) {
+  if (carbonLocantPrefixes(prefixes).length > 0) {
     rules.push('los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético)');
   }
   const ordered = rules.map((rule, i) => `${i === 0 ? 'primero' : 'después'}, ${rule}`);
@@ -2229,12 +2723,16 @@ function ringNumberingChoice(result) {
       }
     } // End of the comparison of several options
   } else {
-    const numbers = result.parts.filter((p) => p.kind === 'locant').map((p) => p.text).sort((a, b) => parseFloat(a) - parseFloat(b));
+    const numbers = carbonLocantTexts(result);
     text.push(`Empieces por donde empieces, salen los mismos números${numbers.length > 0 ? `: ${numbers.join(', ')}` : ''}. Todas las formas dan el mismo nombre.`);
   } // End of the deciding-rules explanation
   const note = ringOmissionNote(result);
   if (note) {
     text.push(note);
+  }
+  const nitrogen = nitrogenNote(result);
+  if (nitrogen) {
+    text.push(nitrogen);
   }
   const closure = [...parent.double, ...parent.triple].find((site) => site.closing);
   if (closure) {
@@ -2298,6 +2796,9 @@ function tiebreakStep(result) {
     let rule = step.rule === 'P4' && halogens ? P4_WITH_HALOGENS : COUNT_RULES[step.rule];
     if (step.rule === 'P4' && oxygenPrefixes) {
       rule = { ...COUNT_RULES.P4, rule: `Gana la cadena con más [[sustituyentes|sustituyente]]: cuentan las ramas${halogens ? ', los halógenos' : ''} y también los grupos que van como [[prefijo]] («hidroxi-», «oxo-»).` };
+    }
+    if (step.rule === 'P4' && isAmine(result)) {
+      rule = { ...COUNT_RULES.P4, rule: `Gana la cadena con más [[sustituyentes|sustituyente]]: cuentan las ramas${halogens ? ', los halógenos' : ''} y también los grupos unidos al nitrógeno.` };
     }
     const lines = step.candidatesBefore.map((c, i) => `opción ${labelOf(c)}: ${rule.value(step.values[i])}`);
     const sentence = k > 0 ? `Si sigue el empate, ${rule.rule[0].toLowerCase()}${rule.rule.slice(1)}` : rule.rule;
@@ -2631,8 +3132,10 @@ function numberingStep(result) {
   };
   const note = omissionNote(result);
   const prefixNote = prefixOmissionNote(result);
-  const hasLocants = result.parts.some((p) => p.kind === 'locant');
+  // The `N` of a group on an amine nitrogen is not a carbon number (design.md §13.4 I-36).
+  const hasLocants = carbonLocantTexts(result).length > 0;
   const aldehyde = terminalGroupNote(result);
+  const nitrogen = nitrogenNote(result);
   if (!hasLocants) {
     text.push('Aquí no hace falta numerar: el nombre no lleva números.');
     if (note) {
@@ -2643,6 +3146,9 @@ function numberingStep(result) {
     }
     if (aldehyde) {
       text.push(aldehyde);
+    }
+    if (nitrogen) {
+      text.push(nitrogen);
     }
     return step;
   }
@@ -2663,7 +3169,7 @@ function numberingStep(result) {
     step.compare = comparison.compare;
     step.options = comparison.options;
   } else {
-    const numbers = result.parts.filter((p) => p.kind === 'locant').map((p) => p.text).sort((a, b) => parseFloat(a) - parseFloat(b));
+    const numbers = carbonLocantTexts(result);
     text.push(`Empieces por donde empieces, salen los mismos números: ${numbers.join(', ')}. Todas las formas dan el mismo nombre.`);
   } // End of the deciding-rules explanation
   if (deciding.length > 0 && result.trace.some((s) => s.rule === 'TIE')) {
@@ -2682,9 +3188,41 @@ function numberingStep(result) {
   if (aldehyde) {
     text.push(aldehyde);
   }
+  if (nitrogen) {
+    text.push(nitrogen);
+  }
   text.push('Mira los números en el dibujo.');
   return step;
 } // End of function numberingStep()
+
+/**
+ * The carbon locants written in a name, lowest first (the `N` of the groups
+ * on an amine nitrogen left out, design.md §13.4 I-36).
+ *
+ * @param {object} result - The naming result.
+ * @returns {string[]} The locant texts.
+ */
+function carbonLocantTexts(result) {
+  return result.parts.filter((p) => p.kind === 'locant' && p.text !== locantText(N_LOCANT))
+    .map((p) => p.text).sort((a, b) => parseFloat(a) - parseFloat(b));
+}
+
+/**
+ * Note on the locant `N` of the groups on the nitrogen of a principal amine
+ * (design.md §13.4 I-36): it is not a carbon number, so it does not depend
+ * on the numbering; in the comparisons it goes before every number.
+ *
+ * @param {object} result - The naming result.
+ * @returns {string|null} The note, or null without such groups.
+ */
+function nitrogenNote(result) {
+  if (!hasNitrogenLocants(result.structure.prefixes)) {
+    return null;
+  }
+  const deciding = result.trace.some((s) => (s.rule === 'N3' || s.rule === 'N4') && decided(s));
+  const compared = deciding ? ' Al comparar, la N va antes que cualquier número.' : '';
+  return `La «N» del nombre no es el número de un carbono: dice que el grupo va unido al nitrógeno. No cambia empieces por donde empieces a contar.${compared}`;
+}
 
 /**
  * Note on the uncited locant of an aldehyde, an acid or an ester on a chain
@@ -2717,9 +3255,53 @@ function terminalGroupNote(result) {
  * @returns {string} The standalone group name.
  */
 function groupNameOf(sub) {
-  // An alkoxy group is called by its prefix (`grupo metoxi`, design.md §13.4 I-34).
-  return sub.alkoxy ? substituentPrefix(sub, lexiconEs) : lexiconEs.groupName(substituentPrefix(sub, lexiconEs));
+  // An alkoxy or amino group is called by its prefix (`grupo metoxi`, `grupo amino`, design.md §13.4 I-34, I-36).
+  return sub.alkoxy || sub.amino ? substituentPrefix(sub, lexiconEs) : lexiconEs.groupName(substituentPrefix(sub, lexiconEs));
 }
+
+/**
+ * The groups on the nitrogen of an `amino` prefix in words: `un grupo
+ * metilo`, `2 grupos metilo`, `un grupo etilo y un grupo metilo` (design.md
+ * §13.4 I-36).
+ *
+ * @param {object} sub - An amino substituent structure.
+ * @returns {string} The words ('' for a plain `amino`).
+ */
+function aminoGroupsWords(sub) {
+  return joinY(sub.prefixes.map((g) => (g.locants.length === 1
+    ? `un grupo ${groupNameOf(g.substituent)}`
+    : `${g.locants.length} grupos ${groupNameOf(g.substituent)}`)));
+}
+
+/**
+ * Explains an `amino` prefix (design.md §13.4 I-36): an amine that is not
+ * the principal group; with groups on its N, how the compound prefix is
+ * formed (the groups without locants, the second one enclosed, then
+ * `amino`) and why it is enclosed.
+ *
+ * @param {object} sub - An amino substituent structure.
+ * @param {{to: string}} words - How the parent is named (parentWords()).
+ * @param {string|null} principal - The principal group kind of the name, or null.
+ * @returns {string[]} Sentences.
+ */
+function aminoDescription(sub, words, principal) {
+  const prefix = substituentPrefix(sub, lexiconEs);
+  const reason = principal && principal !== 'amine'
+    ? ` No es el [[grupo principal]]: ${familyWithArticle(principal)} va antes que la amina.`
+    : '';
+  if (sub.prefixes.length === 0) {
+    return [`${q(prefix)} es el [[prefijo]] de un grupo –NH₂ (un nitrógeno con dos hidrógenos, una [[amina]]) unido ${words.to}.${reason}`];
+  }
+  const out = [`${q(prefix)} es el [[prefijo]] de una [[amina]]: un nitrógeno unido ${words.to} que lleva además ${aminoGroupsWords(sub)}.${reason}`];
+  out.push(`Se nombra como una amina pequeña: primero los grupos unidos al nitrógeno, sin números (todos van en el nitrógeno), y después «${lexiconEs.groupPrefix('amine')}», todo junto: ${q(prefix)}.`);
+  if (sub.prefixes.length > 1) {
+    out.push('Los grupos distintos van por orden alfabético, y cada uno después del primero va entre paréntesis.');
+  }
+  out.push(prefix.includes('(')
+    ? 'En el nombre va entre corchetes [ ], porque es un prefijo compuesto (un grupo con sus propios sustituyentes) y ya lleva paréntesis dentro.'
+    : 'En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo con sus propios sustituyentes.');
+  return out;
+} // End of function aminoDescription()
 
 /**
  * Text of one prefix group as cited in the name, with its locants and
@@ -2771,6 +3353,9 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
   if (sub.alkoxy) {
     return alkoxyDescription(sub, words, principal);
   }
+  if (sub.amino) {
+    return aminoDescription(sub, words, principal);
+  }
   if (sub.retained === 'isopropyl') {
     out.push('Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos:');
     out.push('«isopropil» es el nombre tradicional, que la IUPAC acepta (es el que usamos aquí);');
@@ -2810,6 +3395,7 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
       return one ? text : `${text} ${where}`;
     });
     const allHalogens = sub.prefixes.every((g) => g.substituent.halogen);
+    const amino = sub.prefixes.some((g) => g.substituent.amino);
     const hydroxy = sub.prefixes.some((g) => g.substituent.hydroxy);
     const oxo = sub.prefixes.some((g) => g.substituent.oxo);
     const atomsOnly = sub.prefixes.every(isAtomPrefix);
@@ -2820,6 +3406,8 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
       kind = oxoTotal(sub) === 1 ? 'Es una rama con un grupo C=O' : 'Es una rama con grupos C=O';
     } else if (oxo && atomsOnly) {
       kind = 'Es una rama con grupos –OH y C=O';
+    } else if (amino && sub.prefixes.every((g) => g.substituent.amino)) {
+      kind = aminoTotal(sub) === 1 ? 'Es una rama con un grupo amino' : 'Es una rama con grupos amino';
     }
     if (one) {
       out.push(`${kind}. Se nombra como una molécula pequeña: su cadena tiene 1 carbono, así que no hace falta ningún número. En ella hay: ${joinY(inner)}.`);
@@ -2835,6 +3423,11 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
       out.push(principal === 'ketone'
         ? 'Un C=O que está en una rama, y no en la cadena principal, no va en el sufijo «-ona»: se nombra con el prefijo «oxo-».'
         : 'Un C=O que está en una rama se nombra con el prefijo «oxo-».');
+    }
+    if (amino) {
+      out.push(principal === 'amine'
+        ? 'Un grupo amino que está en una rama, y no en la cadena principal, no va en el sufijo «-amina»: se nombra con el prefijo «amino-».'
+        : 'Un grupo amino que está en una rama se nombra con el prefijo «amino-».');
     }
   } // End of the nested prefixes
   const unsaturated = chain.double.length + chain.triple.length > 0;
@@ -2896,13 +3489,24 @@ function substituentsStep(result) {
     return null;
   }
   const words = parentWords(result);
-  const omit = ringOmission(result).prefixes;
+  const omit = prefixLocantsOmitted(result);
   const halogens = halogenGroups(result);
-  const branches = groups.filter((g) => !isAtomPrefix(g) && !g.substituent.alkoxy);
+  const branches = groups.filter((g) => !isAtomPrefix(g) && !g.substituent.alkoxy && !g.substituent.amino && !onNitrogen(g));
   const alkoxy = groups.filter((g) => g.substituent.alkoxy);
+  const amino = groups.filter((g) => g.substituent.amino);
   const text = [];
   if (branches.length > 0) {
     text.push(`Las ramas que salen ${words.of} son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).`);
+  }
+  if (hasNitrogenLocants(groups)) {
+    text.push(`Los grupos de carbonos unidos al nitrógeno del grupo amino${branches.length > 0 ? ' también' : ''} son [[sustituyentes|sustituyente]]: se nombran igual que las ramas («metil», «etil»…), pero su [[localizador]] es la letra «N», porque van unidos al nitrógeno y no a un carbono.`);
+  }
+  if (amino.length > 0) {
+    const also = branches.length > 0 || alkoxy.length > 0 ? ' también' : '';
+    const inner = amino.some((g) => g.substituent.prefixes.length > 0)
+      ? ' Si el nitrógeno lleva grupos de carbonos, esos grupos se escriben delante de «amino», todo junto y entre paréntesis, como en «(dimetilamino)».'
+      : '';
+    text.push(`Los grupos amino unidos ${words.to} que no son el [[grupo principal]]${also} son [[sustituyentes|sustituyente]]: se nombran con el [[prefijo]] «amino-».${inner}`);
   }
   if (alkoxy.length > 0) {
     const also = branches.length > 0 ? ' también' : '';
@@ -2927,10 +3531,13 @@ function substituentsStep(result) {
   for (const group of groups) {
     const sub = group.substituent;
     const k = group.locants.length;
-    const places = [...new Set(group.locants.map((s) => s.locant))];
-    const where = omit ? omitted : (places.length === 1 ? `En el carbono ${places[0]}` : `En los carbonos ${joinY(places)}`);
+    const where = omit ? omitted : placesText(group);
     let what = k === 1 ? `hay un grupo ${groupNameOf(sub)}` : `hay ${k} grupos ${groupNameOf(sub)}`;
-    if (sub.halogen) {
+    if (sub.amino && sub.prefixes.length > 0) {
+      what = k === 1
+        ? `hay un grupo amino cuyo nitrógeno lleva ${aminoGroupsWords(sub)}`
+        : `hay ${k} grupos amino; cada nitrógeno lleva ${aminoGroupsWords(sub)}`;
+    } else if (sub.halogen) {
       what = `hay ${k === 1 ? `un átomo de ${ELEMENT_NAMES_ES[sub.halogen]}` : halogenAtoms(k, sub.halogen)}`;
     } else if (sub.hydroxy) {
       what = k === 1 ? 'hay un grupo –OH' : `hay ${k} grupos –OH`;
@@ -2942,6 +3549,8 @@ function substituentsStep(result) {
       const mult = isCompoundPrefix(sub) ? lexiconEs.compoundMultiplier(k) : lexiconEs.multiplier(k);
       if (omit) {
         line += ` «${mult}» significa ${k}.`;
+      } else if (group.locants.some((site) => site.locant === N_LOCANT)) {
+        line += ` «${mult}» significa ${k}; se pone un número o una N por cada grupo, aunque se repita.`;
       } else {
         line += ` «${mult}» significa ${k}; se pone un número por cada ${sub.halogen ? 'átomo' : 'grupo'}, aunque se repita.`;
       }
@@ -2949,14 +3558,15 @@ function substituentsStep(result) {
         line += ' Con grupos que tienen sus propias ramas se usa «bis», «tris»… en vez de «di» o «tri».';
       }
     }
-    const details = describeSubstituent(sub, words, result.structure.suffix ? result.structure.suffix.kind : null);
+    const details = describeSubstituent(sub, onNitrogen(group) ? NITROGEN_WORDS : words, result.structure.suffix ? result.structure.suffix.kind : null);
     text.push(line);
     options.push({
       label: substituentPrefix(sub, lexiconEs),
       text: [line, ...details].join(' '),
       highlight: [parentSpec(result), { ...groupIds(group), style: 'substituent' }],
-      // A locant the name omits (metilciclohexano, metilbenceno, cloroetano) is not drawn either.
-      locants: omit ? null : group.locants.map((s) => [s.atom, s.locant]),
+      // A locant the name omits (metilciclohexano, metilbenceno, cloroetano) is not drawn either, nor the
+      // `N` of a group on an amine nitrogen (a letter, not a carbon number).
+      locants: omit ? null : carbonSiteLocants(group.locants),
     });
     text.push(...details);
   } // End of the loop over the prefix groups
@@ -2965,10 +3575,40 @@ function substituentsStep(result) {
     title: STEP_TITLES.substituents,
     text,
     highlight: [parentSpec(result), ...substituentSpecs(result)],
-    locants: omit ? null : groups.flatMap((g) => g.locants.map((s) => [s.atom, s.locant])),
+    locants: omit ? null : groups.flatMap((g) => carbonSiteLocants(g.locants)),
     options,
   };
 } // End of function substituentsStep()
+
+/**
+ * Locant labels of some prefix occurrences on the parent (atom id → locant),
+ * leaving out the occurrences on an amine nitrogen (locant `N`, design.md
+ * §13.4 I-36).
+ *
+ * @param {object[]} sites - PrefixLocants.
+ * @returns {Array<[number, number]>} Atom id → locant pairs.
+ */
+function carbonSiteLocants(sites) {
+  return sites.filter((site) => site.locant !== N_LOCANT).map((site) => [site.atom, site.locant]);
+}
+
+/**
+ * Where a prefix group is, for the substituents step: `En el carbono 2`,
+ * `En los carbonos 2 y 3`, `En el nitrógeno` (locant `N`, design.md §13.4
+ * I-36), `En el nitrógeno y en el carbono 2`.
+ *
+ * @param {object} group - A prefix group.
+ * @returns {string} The words, capitalised.
+ */
+function placesText(group) {
+  const places = [...new Set(group.locants.map((s) => s.locant))];
+  const carbons = places.filter((locant) => locant !== N_LOCANT);
+  const onCarbons = carbons.length === 1 ? `el carbono ${carbons[0]}` : `los carbonos ${joinY(carbons)}`;
+  if (carbons.length === places.length) {
+    return `En ${onCarbons}`;
+  }
+  return carbons.length === 0 ? 'En el nitrógeno' : `En el nitrógeno y en ${onCarbons}`;
+}
 
 /**
  * Explains why one prefix is cited before the next one.
@@ -3027,8 +3667,15 @@ function orderStep(result) {
   if (subs.some((s) => s.alkoxy)) {
     text.push('Los prefijos de los éteres («metoxi», «etoxi»…) se ordenan junto con los demás, por su nombre completo (por ejemplo, «metil» va antes que «metoxi», porque la i va antes que la o).');
   }
-  if (subs.some((s) => isCompoundPrefix(s) && s.prefixes.some((g) => g.locants.length > 1))) {
+  if (subs.some((s) => !s.amino && isCompoundPrefix(s) && s.prefixes.some((g) => g.locants.length > 1))) {
     text.push('Dentro de un paréntesis todo cuenta, también di-, tri-…: «(2,2-dimetilpropil)» se ordena por la d.');
+  }
+  for (const sub of subs.filter((s) => s.amino && s.prefixes.length > 0)) {
+    const prefix = substituentPrefix(sub, lexiconEs);
+    text.push(`Un prefijo de amina con grupos en su nitrógeno se ordena por su nombre completo, con di- incluido: ${q(prefix)} va por la ${citationKey(sub, lexiconEs).alpha[0]}.`);
+  }
+  if (hasNitrogenLocants(groups)) {
+    text.push('La «N» de los grupos unidos al nitrógeno no cuenta para el orden: solo cuenta el nombre del grupo.');
   }
   const halogens = HALOGEN_ORDER.filter((el) => subs.some((s) => s.halogen === el));
   if (halogens.length > 0) {
@@ -3059,6 +3706,7 @@ function nameLegend(result) {
   const { parent, prefixes } = result.structure;
   const words = parentWords(result);
   const omission = ringOmission(result);
+  const omitPrefixes = prefixLocantsOmitted(result);
   const legend = [];
   const classWord = result.structure.suffix ? lexiconEs.suffixClassWord(result.structure.suffix.kind) : null;
   if (classWord) {
@@ -3067,11 +3715,11 @@ function nameLegend(result) {
   for (const group of prefixes) {
     const sub = group.substituent;
     const k = group.locants.length;
-    if (!omission.prefixes) {
+    if (!omitPrefixes) {
       legend.push({
-        text: group.locants.map((s) => s.locant).join(','),
+        text: group.locants.map((s) => locantText(s.locant)).join(','),
         kind: 'locant',
-        meaning: `${k === 1 ? 'carbono' : 'carbonos'} ${words.of} donde está ${q(substituentPrefix(sub, lexiconEs))}`,
+        meaning: prefixLocantMeaning(group, words),
       });
     }
     if (k > 1) {
@@ -3087,9 +3735,18 @@ function nameLegend(result) {
       meaning = 'sustituyente: oxígeno unido con un enlace doble (C=O), que aquí no es el grupo principal';
     } else if (sub.alkoxy) {
       meaning = `sustituyente: un éter, el oxígeno y el grupo de ${count(substituentCarbons(sub), 'carbono', 'carbonos')} unido a él («-oxi»)`;
+    } else if (sub.amino) {
+      meaning = sub.prefixes.length === 0
+        ? 'sustituyente: grupo amino (–NH₂), una amina que aquí no es el grupo principal'
+        : `sustituyente: grupo amino con ${aminoGroupsWords(sub)} en su nitrógeno, una amina que aquí no es el grupo principal`;
     }
     legend.push({ text: substituentPrefix(sub, lexiconEs), kind: 'prefix', meaning });
   } // End of the loop over the prefix groups
+  if (isBenzene(result) && isAmine(result)) {
+    legend.push({ text: lexiconEs.benzeneName.slice(0, -1), kind: 'stem', meaning: `el anillo de benceno (sin la «o» final, delante de «-${lexiconEs.groupSuffix('amine')}»)` });
+    legend.push({ text: `-${lexiconEs.groupSuffix('amine')}`, kind: 'ending', meaning: 'grupo principal: el grupo amino unido al anillo (amina)' });
+    return legend;
+  }
   if (isBenzene(result) && result.structure.suffix) {
     legend.push({ text: lexiconEs.phenolStem, kind: 'stem', meaning: 'el anillo de benceno («fenol» es un nombre propio)' });
     legend.push({ text: `-${lexiconEs.groupSuffix('alcohol')}`, kind: 'ending', meaning: 'grupo principal: el –OH unido al anillo' });
@@ -3147,6 +3804,34 @@ function nameLegend(result) {
 } // End of function nameLegend()
 
 /**
+ * Legend meaning of the locants of one prefix group: the carbons of the
+ * parent, or `N` for a group on the nitrogen of a principal amine (design.md
+ * §13.4 I-36: «el grupo va unido al nitrógeno, no a un carbono»).
+ *
+ * @param {object} group - A prefix group.
+ * @param {{of: string}} words - How the parent is named (parentWords()).
+ * @returns {string} The meaning.
+ */
+function prefixLocantMeaning(group, words) {
+  const prefix = q(substituentPrefix(group.substituent, lexiconEs));
+  const onN = group.locants.filter((s) => s.locant === N_LOCANT).length;
+  const carbons = group.locants.filter((s) => s.locant !== N_LOCANT).map((s) => s.locant);
+  if (onN === 0 && words === PARENT_WORDS.carbon) {
+    // A one-carbon parent (`1-cloro-N-metilmetanamina`): its locant is written only because of an `N`.
+    return `el único carbono de la cadena principal, donde está ${prefix}`;
+  }
+  if (onN === 0) {
+    return `${carbons.length === 1 ? 'carbono' : 'carbonos'} ${words.of} donde está ${prefix}`;
+  }
+  if (carbons.length === 0) {
+    return onN === 1
+      ? `el grupo ${prefix} va unido al nitrógeno, no a un carbono`
+      : `los ${onN} grupos ${prefix} van unidos al nitrógeno, no a un carbono (una N por cada uno)`;
+  }
+  return `dónde está cada ${prefix}: «N» es el nitrógeno (ese grupo va unido a él, no a un carbono) y ${joinY(carbons)} ${carbons.length === 1 ? 'es el carbono' : 'son los carbonos'} ${words.of}`;
+} // End of function prefixLocantMeaning()
+
+/**
  * Legend entries of the suffix of an alcohol, aldehyde, ketone, acid or
  * ester (design.md §13.4 I-31, I-32, I-33, I-35): the locants of the
  * carbons of the principal groups (unless omitted: `etanol`,
@@ -3167,9 +3852,12 @@ function suffixLegend(result) {
   const legend = [];
   if (!suffixOmitted(result)) {
     // An acid's locants are never written on a chain (suffixOmitted()), so only –OH and C=O reach here.
-    const carbons = suffix.kind === 'alcohol'
+    let carbons = suffix.kind === 'alcohol'
       ? `${n === 1 ? 'carbono que lleva' : 'carbonos que llevan'} el grupo –OH`
       : `${n === 1 ? 'carbono del grupo' : 'carbonos de los grupos'} C=O`;
+    if (suffix.kind === 'amine') {
+      carbons = n === 1 ? 'carbono unido al nitrógeno del grupo amino' : 'carbonos unidos a los nitrógenos de los grupos amino';
+    }
     legend.push({ text: suffix.locants.map((s) => s.locant).join(','), kind: 'locant', meaning: carbons });
   }
   const { multiplier: mult, word } = suffixWords(suffix, lexiconEs);
@@ -3206,20 +3894,35 @@ function assembleStep(result) {
   if (isEster(result)) {
     text.push('El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:');
   }
-  if (benzene && result.structure.suffix) {
+  if (benzene && isAmine(result)) {
+    const stem = lexiconEs.benzeneName.slice(0, -1);
+    text.push(prefixes.length > 0
+      ? `Primero van los grupos unidos al nitrógeno, cada uno con su «N», y después el nombre del anillo sin su «o» final, ${q(stem)}, más la terminación «-amina», todo junto. El anillo no lleva números: solo tiene un grupo.`
+      : `El nombre es el del anillo sin su «o» final, ${q(stem)}, más la terminación del grupo principal, «-amina». No lleva números: el anillo solo tiene un grupo.`);
+  } else if (benzene && result.structure.suffix) {
     text.push(`El benceno con un grupo –OH tiene nombre propio: ${q(result.name)}. No lleva números: «fen» es el anillo y «-ol», el grupo –OH.`);
   } else if (benzene) {
     text.push(prefixes.length > 0
       ? `Primero va el sustituyente, sin número, y al final ${q(lexiconEs.benzeneName)}, todo junto.`
       : `El anillo tiene nombre propio: ${q(lexiconEs.benzeneName)}. No lleva números ni terminación que añadir.`);
-  } else if (prefixes.length > 0 && !ring && ringOmission(result).prefixes) {
+  } else if (prefixes.length > 0 && prefixes.every(onNitrogen)) {
+    // Only groups on an amine N (N-metiletanamina, N,N-dimetilciclohexanamina, design.md §13.4 I-36).
+    let first = 'van los sustituyentes del nitrógeno, en orden alfabético, cada uno con su «N» y un guion';
+    if (prefixes.length === 1) {
+      first = prefixes[0].locants.length === 1 ? 'va el sustituyente del nitrógeno, con su «N» y un guion' : 'van los sustituyentes del nitrógeno, con sus «N» y un guion';
+    }
+    text.push(`Primero ${first}, y al final el nombre ${ring ? 'del anillo' : 'de la cadena principal'}, todo junto.`);
+    if (ring) {
+      text.push(`El nombre del anillo empieza por «${lexiconEs.ringPrefix}-», que dice que la cadena está cerrada.`);
+    }
+  } else if (prefixes.length > 0 && !ring && prefixLocantsOmitted(result)) {
     const one = prefixes.length === 1 && prefixes[0].locants.length === 1;
     text.push(`Primero ${prefixes.length === 1 ? 'va el sustituyente' : 'van los sustituyentes'}, sin ${one ? 'número' : 'números'}, y al final el nombre de la cadena principal, todo junto.`);
   } else if (prefixes.length > 0 && !ring) {
     text.push('Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.');
     text.push('Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.');
   } else if (prefixes.length > 0) {
-    text.push(ringOmission(result).prefixes
+    text.push(prefixLocantsOmitted(result)
       ? 'Primero va el sustituyente y al final el nombre del anillo, todo junto.'
       : 'Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre del anillo.');
     if (hasLocants) {
@@ -3238,6 +3941,13 @@ function assembleStep(result) {
   }
   if (prefixes.some((g) => g.substituent.alkoxy)) {
     text.push('El éter va delante como prefijo («-oxi»), igual que las ramas: nunca cambia la terminación del nombre.');
+  }
+  if (prefixes.some((g) => aminoTotal(g.substituent) > 0)) {
+    text.push('La amina que no es el grupo principal va delante como prefijo («amino»), igual que las ramas: no cambia la terminación del nombre.');
+  }
+  const nitrogen = nitrogenAssembleSentence(result);
+  if (nitrogen) {
+    text.push(nitrogen);
   }
   const parent = result.structure.parent;
   if (!benzene && parent.double.length + parent.triple.length > 0) {
@@ -3268,6 +3978,34 @@ function assembleStep(result) {
     parts: result.parts.map((p) => ({ text: p.text, kind: p.kind, atoms: [...p.atoms], bonds: [...p.bonds] })),
   };
 } // End of function assembleStep()
+
+/**
+ * Sentence of "Monta el nombre" on the groups on the nitrogen of a
+ * principal amine (design.md §13.4 I-36): the letter `N` instead of a
+ * number, one `N` per group (`N,N-dimetil`), the `N` before the numbers
+ * (`N,2-dimetil`), and the carbon locants written even where the omission
+ * rule would drop them (`1-cloro-N-metilmetanamina`).
+ *
+ * @param {object} result - The naming result.
+ * @returns {string|null} The sentence, or null without groups on the nitrogen.
+ */
+function nitrogenAssembleSentence(result) {
+  const { prefixes } = result.structure;
+  if (!hasNitrogenLocants(prefixes)) {
+    return null;
+  }
+  let sentence = 'Los grupos unidos al nitrógeno llevan la letra «N» en lugar de un número (como en «N-metil»).';
+  if (prefixes.some((g) => g.locants.filter((site) => site.locant === N_LOCANT).length > 1)) {
+    sentence += ' Si hay dos grupos iguales en el nitrógeno, se escribe una N por cada uno: «N,N-dimetil».';
+  }
+  if (prefixes.some((g) => !onNitrogen(g) && g.locants.some((site) => site.locant === N_LOCANT))) {
+    sentence += ' Si un mismo grupo está en el nitrógeno y en un carbono, la N va primero: «N,2-dimetil».';
+  }
+  if (ringOmission(result).prefixes && carbonLocantPrefixes(prefixes).length > 0) {
+    sentence += ' Sin la N, aquí no harían falta los números de los carbonos; pero cuando hay una «N», también se escriben, para que quede claro qué va en un carbono y qué en el nitrógeno.';
+  }
+  return sentence;
+} // End of function nitrogenAssembleSentence()
 
 /**
  * Sentences of "Monta el nombre" about the suffix of an alcohol, aldehyde,
@@ -3308,6 +4046,11 @@ function suffixSentences(result) {
   }
   if (suffix.kind === 'ester') {
     text.push('El –COO– no lleva número: su carbono siempre es el 1.');
+  }
+  if (suffix.kind === 'amine' && !omitted) {
+    text.push(suffix.locants.length === 1
+      ? 'El número del sufijo es el del carbono unido al nitrógeno: el nitrógeno no tiene número en la cadena.'
+      : 'Los números del sufijo son los de los carbonos unidos a los nitrógenos: los nitrógenos no tienen número en la cadena.');
   }
   if (suffix.kind === 'acid') {
     text.push(suffix.locants.length === 1

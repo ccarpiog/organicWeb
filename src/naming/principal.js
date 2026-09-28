@@ -21,11 +21,19 @@
  *              principal group (IUPAC 2013 P-41), always an `alcoxi-`
  *              prefix (substituent.js alkoxySubstituent()).
  *
+ * Validation also admits a nitrogen bonded by single bonds to one, two or
+ * three carbons that are not functional carbons (validate.js
+ * isAmineNitrogen(), design.md §13.4 I-36), so every nitrogen of a
+ * validated molecule is an 'amine' (groupKindOf()): the least senior kind
+ * that can be a suffix (`-amina`), else the prefix `amino-`. The functions
+ * below that speak of "oxygens" take such a nitrogen too: the N of a
+ * principal amine is its suffix group's heteroatom.
+ *
  * The principal kind is the most senior one present (ácido > éster >
- * aldehído > cetona > alcohol, seniority.js SENIORITY; validation never
+ * aldehído > cetona > alcohol > amina, seniority.js SENIORITY; validation never
  * lets an acid and an ester meet): its groups on the parent are the
- * suffix (`ácido …oico`, `…oato de …ilo`, `-al`, `-ona`, `-ol`), every other oxygen
- * group is a prefix (`oxo-`, `hidroxi-`). The carbon X of a C=O or a COOH
+ * suffix (`ácido …oico`, `…oato de …ilo`, `-al`, `-ona`, `-ol`, `-amina`), every other
+ * group is a prefix (`oxo-`, `hidroxi-`, `amino-`). The carbon X of a C=O or a COOH
  * is always a skeleton carbon (a chain or ring atom), never part of a
  * prefix by itself (design.md §13.6 "Where X belongs"). A carboxyl group
  * has two oxygens but is one suffix group: its C=O oxygen stands for it
@@ -44,6 +52,9 @@ import { isCarboxylCarbon, isEsterCarbon } from '../model/validate.js';
 
 /** Kinds of oxygen group the engine names, most senior first. */
 export const OXYGEN_KINDS = Object.freeze(['acid', 'ester', 'aldehyde', 'ketone', 'alcohol']);
+
+/** Every kind of group the engine can cite as a suffix, most senior first (the amine, I-36, last). */
+export const NAMED_KINDS = Object.freeze([...OXYGEN_KINDS, 'amine']);
 
 /**
  * Kind of the group an oxygen of a validated molecule belongs to: either
@@ -80,22 +91,42 @@ export function oxygenKind(mol, adj, oxygen) {
 } // End of function oxygenKind()
 
 /**
- * The principal oxygen kind of a validated molecule: the most senior kind
- * among its oxygen groups (ácido > éster > aldehído > cetona > alcohol), or null
- * without such a group (a hydrocarbon, a halogen derivative or an ether:
- * an ether oxygen is never principal).
+ * Kind of the group a heteroatom of a validated molecule belongs to, for
+ * the atoms that can stand for a suffix group: an oxygen's kind
+ * (oxygenKind()), 'amine' for a nitrogen (validation admits only amine
+ * nitrogens, design.md §13.4 I-36), null for any other atom (a carbon, a
+ * halogen).
  *
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, object[]>} adj - Its adjacency map.
- * @returns {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'|null} The principal kind.
+ * @param {number} atom - Any atom id.
+ * @returns {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'|'ether'|'amine'|null} The kind.
+ */
+export function groupKindOf(mol, adj, atom) {
+  const element = mol.atoms.get(atom).element;
+  if (element === 'N') {
+    return 'amine';
+  }
+  return element === 'O' ? oxygenKind(mol, adj, atom) : null;
+}
+
+/**
+ * The principal kind of a validated molecule: the most senior kind among
+ * its oxygen groups and amine nitrogens (ácido > éster > aldehído > cetona
+ * > alcohol > amina), or null without such a group (a hydrocarbon, a
+ * halogen derivative or an ether: an ether oxygen is never principal).
+ *
+ * @param {object} mol - A molecule accepted by validateForNaming().
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @returns {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'|'amine'|null} The principal kind.
  */
 export function principalKindOf(mol, adj) {
   let best = null;
   for (const atom of mol.atoms.values()) {
-    if (atom.element !== 'O') {
+    if (atom.element !== 'O' && atom.element !== 'N') {
       continue;
     }
-    const kind = oxygenKind(mol, adj, atom.id);
+    const kind = groupKindOf(mol, adj, atom.id);
     if (kind === 'ether') {
       continue; // Always a prefix (`alcoxi-`), never the principal group.
     }
@@ -109,16 +140,18 @@ export function principalKindOf(mol, adj) {
 /**
  * Tells whether an oxygen neighbour of a parent atom belongs to one of its
  * suffix groups (an oxygen of the principal kind; for an acid, both oxygens
- * of each –COOH; for an ester, both oxygens of the –COO–).
+ * of each –COOH; for an ester, both oxygens of the –COO–), or, when the
+ * amine is principal, whether the atom is an amine nitrogen (design.md
+ * §13.4 I-36).
  *
  * @param {object} mol - A validated molecule.
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {number} atom - Any atom id.
  * @param {string|null} principal - The principal kind (principalKindOf()).
- * @returns {boolean} True for an oxygen of the principal kind.
+ * @returns {boolean} True for an oxygen (or amine nitrogen) of the principal kind.
  */
 export function isPrincipalOxygen(mol, adj, atom, principal) {
-  return principal !== null && mol.atoms.get(atom).element === 'O' && oxygenKind(mol, adj, atom) === principal;
+  return principal !== null && groupKindOf(mol, adj, atom) === principal;
 }
 
 /**
@@ -138,6 +171,7 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
     return false;
   }
   const links = adj.get(atom);
+  // An amine's N, an OH, a C=O stand for their group; a –COOH or –COO– is represented by its C=O oxygen.
   return (principal !== 'acid' && principal !== 'ester') || (links.length === 1 && links[0].order === 2);
 }
 

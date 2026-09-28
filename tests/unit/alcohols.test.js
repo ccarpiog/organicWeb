@@ -59,9 +59,9 @@ test('validation: an OH on a carbon is admitted; every other O and N group keeps
   for (const smiles of ['CO', 'OCCO', 'C=CO', 'C#CO', 'ClCCO', 'OC1CCCCC1', 'OC1=CC=CC=C1', 'OC(O)C', 'FC(F)(F)CO']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Peroxides, water, amines, anhydrides, carbonates, a peracid: refused as before (aldehydes and ketones are named since I-32,
-  // acids since I-33, ethers since I-34, esters since I-35).
-  for (const smiles of ['CC(=O)OO', 'COOC', 'CCOO', 'O', 'NCCO', 'CC(=O)OC(C)=O', 'OCCOC(=O)OC']) {
+  // Peroxides, water, an N–O bond, anhydrides, carbonates, a peracid: refused as before (aldehydes and ketones are named since
+  // I-32, acids since I-33, ethers since I-34, esters since I-35, amines — `2-aminoetan-1-ol` — since I-36).
+  for (const smiles of ['CC(=O)OO', 'COOC', 'CCOO', 'O', 'ONCCO', 'CC(=O)OC(C)=O', 'OCCOC(=O)OC']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);

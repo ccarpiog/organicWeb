@@ -76,8 +76,8 @@ test('validation: an ether C–O–C is admitted; esters, anhydrides, peroxides 
   for (const smiles of ['COC', 'CCOCC', 'COCCOC', 'OCCOC', 'COCC(=O)O', 'O=CCCOC', 'COC1CCCCC1', 'COC1=CC=CC=C1', 'C=COC']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Anhydride, peroxide, hydroperoxide, O–Cl, amine + ether, carbonate (esters are named since I-35).
-  for (const smiles of ['CC(=O)OC(C)=O', 'COOC', 'CCOO', 'COCl', 'NCCOC', 'COC(=O)OC']) {
+  // Anhydride, peroxide, hydroperoxide, O–Cl, nitrile + ether, carbonate (esters are named since I-35, amines since I-36).
+  for (const smiles of ['CC(=O)OC(C)=O', 'COOC', 'CCOO', 'COCl', 'N#CCOC', 'COC(=O)OC']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);

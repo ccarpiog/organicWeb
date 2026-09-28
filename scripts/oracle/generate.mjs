@@ -13,7 +13,11 @@
  * groups and halogens too), of ethers (I-34: an O put into one or two
  * single C–C bonds outside the ring, some with OH, C=O, –COOH and
  * halogens too), of esters (I-35: one –COO– between two random acyclic
- * pieces, some with C=O, OH groups and halogens too), plus the list of
+ * pieces, some with C=O, OH groups and halogens too), of amines (I-36:
+ * –NH₂ in place of random hydrogens and/or an N put into C–C single bonds,
+ * some N carrying small alkyl groups — primary, secondary and tertiary —;
+ * on ring carbons only for a ring, anilines included; some with –COOH,
+ * ester, C=O, OH groups, ether oxygens and halogens too), plus the list of
  * cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
@@ -27,7 +31,7 @@ import { perceiveRings } from '../../src/model/rings.js';
 import { HALOGEN_ELEMENTS } from '../../src/model/elements.js';
 import { canonicalTreeKey, canonicalKey, adjacency } from '../../src/model/graph.js';
 import {
-  validateForNaming, carboxylCarbons, carboxylRole, esterCarbons, etherOxygens, MAX_CHAIN,
+  validateForNaming, carboxylCarbons, carboxylRole, esterCarbons, etherOxygens, amineNitrogens, MAX_CHAIN,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
@@ -784,6 +788,148 @@ export function generateEthers({ count, seed, minSize = 4, maxSize = 14 }) {
   } // End of the loop that draws distinct ethers
   return molecules;
 } // End of function generateEthers()
+
+/** Valence of a neutral nitrogen (an amine N has one to three single bonds). */
+const NITROGEN_VALENCE = 3;
+
+/**
+ * Copies a molecule and puts amine nitrogens into it (design.md §13.4 I-36):
+ * each hydrogen-bearing allowed carbon gets, with probability `rate`, an
+ * –NH₂ (a primary amine); then an N is put into up to `insert` carbon–carbon
+ * single bonds that are not ring bonds, chosen in random order (C–C becomes
+ * C–N–C, a secondary amine; with `only`, one end of the bond must be an
+ * allowed carbon, so a ring–chain bond gives an N on the ring). Each new N
+ * then gets, with probability `graft` per free valence, a random saturated
+ * alkyl group of 1 to 3 carbons bonded by a random carbon (secondary or
+ * tertiary amines, `N`-substituents). A C=O carbon next to a new N makes an
+ * amide, which fails validation later.
+ *
+ * @param {object} mol - A molecule (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {{rate?: number, insert?: number, graft?: number, only?: Set<number>|null}} options - Probability of an –NH₂ per allowed carbon, most N to insert into bonds, probability of grafting an alkyl per free N valence, and the carbons an N may be bonded to (default: every carbon).
+ * @returns {object} The copy (possibly without any new N).
+ */
+export function aminate(mol, random, { rate = 0, insert = 0, graft = 0, only = null } = {}) {
+  const copy = cloneMolecule(mol);
+  const allowed = (id) => copy.atoms.get(id).element === 'C' && (!only || only.has(id));
+  const added = [];
+  for (const id of [...copy.atoms.keys()]) {
+    if (allowed(id) && bondOrderSum(copy, id) < CARBON_VALENCE && random() < rate) {
+      const nitrogen = addAtom(copy, {}, 'N');
+      addBond(copy, id, nitrogen, 1);
+      added.push(nitrogen);
+    }
+  } // End of the loop that adds –NH₂ groups
+  const ringBonds = new Set(perceiveRings(copy).rings.flatMap((ring) => ring.bonds));
+  const candidates = [...copy.bonds.values()].filter((bond) => bond.order === 1 && !ringBonds.has(bond.id)
+    && copy.atoms.get(bond.a).element === 'C' && copy.atoms.get(bond.b).element === 'C'
+    && (allowed(bond.a) || allowed(bond.b)));
+  for (const bond of shuffle(candidates, random).slice(0, insert)) {
+    removeBond(copy, bond.id);
+    const nitrogen = addAtom(copy, {}, 'N');
+    addBond(copy, bond.a, nitrogen, 1);
+    addBond(copy, nitrogen, bond.b, 1);
+    added.push(nitrogen);
+  } // End of the loop that inserts N into C–C bonds
+  for (const nitrogen of added) {
+    while (bondOrderSum(copy, nitrogen) < NITROGEN_VALENCE && random() < graft) {
+      const alkyl = randomHydrocarbon(random, { size: randomInt(random, 1, 3), unsaturation: 0, branchiness: random() });
+      const ids = new Map([...alkyl.atoms.keys()].map((id) => [id, addAtom(copy)]));
+      for (const b of alkyl.bonds.values()) {
+        addBond(copy, ids.get(b.a), ids.get(b.b), b.order);
+      }
+      const keys = [...ids.values()];
+      addBond(copy, nitrogen, keys[Math.floor(random() * keys.length)], 1);
+    }
+  } // End of the loop that grafts alkyl groups onto the new nitrogens
+  return copy;
+} // End of function aminate()
+
+/**
+ * Generates up to `count` distinct (by canonical key) amines (design.md
+ * §13.4 I-36): random acyclic hydrocarbons of 1 carbon up to `maxSize`
+ * (methanamine… included) with one or more –NH₂ and/or an N put into one or
+ * two C–C single bonds, some N carrying grafted alkyl groups (aminate():
+ * primary, secondary and tertiary amines); random monocycles and benzene
+ * (bare or with one side chain) with the N on a ring carbon (–NH₂ on a ring
+ * carbon, or an N put into the ring–chain bond: `N`-alkyl ring amines,
+ * anilines); and a share combined with a –COOH, an ester, C=O, OH groups,
+ * ether oxygens and halogens (amino and substituted amino prefixes). Only
+ * molecules with at least one amine N that the engine names in every prefix
+ * style are kept (valid for naming — no amide, no side-chain N on a ring
+ * amine… — and not refused by the engine: no substituted polyamine, no
+ * symmetric amine, no acyl branch).
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C; acyclic ones may be smaller).
+ * @returns {object[]} The molecules.
+ */
+export function generateAmines({ count, seed, minSize = 4, maxSize = 14 }) {
+  const random = seededRandom(seed * 8093 + 36);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60) {
+    attempts += 1;
+    const kind = random();
+    let base;
+    let only = null;
+    let acyclic = false;
+    if (kind < 0.6 || maxSize < 3) {
+      acyclic = true;
+      const size = randomInt(random, 1, Math.max(1, maxSize - 1));
+      base = randomHydrocarbon(random, { size, unsaturation: random() * 0.4, branchiness: 0.2 + random() * 0.8 });
+    } else if (kind < 0.85 || maxSize < 6) {
+      const size = randomInt(random, Math.max(minSize, 3), Math.max(maxSize - 1, 3));
+      const ringSize = randomInt(random, 3, Math.min(10, size));
+      base = randomMonocycle(random, {
+        ringSize, extra: size - ringSize, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8,
+      });
+      only = new Set([...base.atoms.keys()].slice(0, ringSize)); // randomMonocycle() adds the ring atoms first.
+    } else {
+      const extra = random() < 0.5 ? 0 : randomInt(random, 1, Math.max(1, Math.min(4, maxSize - 7)));
+      base = randomBenzene(random, { extra, kekule: random() < 0.5 ? 1 : 2, unsaturation: random() * 0.3 });
+      only = new Set([...base.atoms.keys()].slice(0, 6)); // randomBenzene() adds the ring atoms first.
+    } // End of the choice of the parent molecule
+    const carbons = new Set([...base.atoms.keys()]);
+    const extraGroup = random();
+    if (acyclic && extraGroup < 0.12) {
+      base = carboxylate(base, random, 1);
+    } else if (acyclic && extraGroup < 0.2) {
+      const acid = carboxylate(base, random, 1);
+      base = esterify(acid, random, randomHydrocarbon(random, { size: randomInt(random, 1, 3), unsaturation: 0 }));
+    }
+    const insert = random() < 0.45 ? randomInt(random, 1, 2) : 0;
+    let mol = aminate(base, random, {
+      rate: insert > 0 && random() < 0.5 ? 0 : 0.05 + random() * 0.2, insert, graft: random() * 0.6, only,
+    });
+    if (amineNitrogens(mol).length === 0) {
+      continue; // No N drawn.
+    }
+    if (acyclic && random() < 0.12) {
+      mol = etherify(mol, random, 1);
+    }
+    if (acyclic && random() < 0.2) {
+      mol = carbonylate(mol, random, 0.05 + random() * 0.2, carbons);
+    }
+    if (random() < 0.2 && (acyclic || only.size !== 6 || kind < 0.85)) {
+      // OH on the chain or on ring carbons (not on a benzene: a second ring substituent is refused).
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.15, only || carbons);
+    }
+    if (random() < 0.2) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.15);
+    }
+    if (validateForNaming(mol) || amineNitrogens(mol).length === 0
+      || !PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
+      continue; // Not valid for naming (an amide…), or refused by the engine in some style.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct amines
+  return molecules;
+} // End of function generateAmines()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

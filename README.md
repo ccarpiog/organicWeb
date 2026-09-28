@@ -44,7 +44,13 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `metoxibenceno`…), and of esters (the acid part with `-oato` and the
   O-bound group as a separate word: `etanoato de metilo`, `propanoato de
   etilo`, `butanoato de isopropilo`, `2-metilpropanoato de tert-butilo`,
-  `3-oxobutanoato de etilo`, `etanoato de 2-hidroxietilo`…), with the name coloured by part
+  `3-oxobutanoato de etilo`, `etanoato de 2-hidroxietilo`…), and of amines
+  (the N never in the chain, `-amina` with its locants, the other groups on
+  the N as `N-` prefixes, `amino-` below a more senior group: `metanamina`,
+  `propan-2-amina`, `butano-1,4-diamina`, `N-metiletanamina`,
+  `N,N-dimetilmetanamina`, `N,2-dimetilpropan-1-amina`, `ciclohexanamina`,
+  `bencenamina`, `2-aminoetan-1-ol`, `2-(dimetilamino)etan-1-ol`, `ácido
+  2-aminopropanoico`…), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles;
@@ -55,7 +61,10 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   etanoico and etanodioico their traditional `ácido fórmico`, `ácido
   acético` and `ácido oxálico`, and a metanoato or etanoato ester its
   `formiato` / `acetato` form (`acetato de etilo`); `metoxibenceno` lists `anisol`, and a
-  simple ether its functional-class name (`etil metil éter`, `dietil éter`).
+  simple ether its functional-class name (`etil metil éter`, `dietil éter`);
+  `bencenamina` lists `anilina` (`N-metilanilina`…), and a simple amine its
+  traditional name (`metilamina`, `dimetilamina`, `trimetilamina`,
+  `etilmetilamina`).
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
   alphabetical order, assembly) that highlights each step on the drawing;
@@ -206,22 +215,27 @@ the Keychain account is the WebDAV user).
 ## Known limitations and future work
 
 - Hydrocarbons, their halogen derivatives, alcohols, aldehydes, ketones,
-  carboxylic acids, ethers and esters only, with at most one ring (a carbocycle; an
-  OH or a ketone C=O must then be on a ring carbon, and aldehydes, acids
+  carboxylic acids, ethers, esters and amines only, with at most one ring (a carbocycle; an
+  OH or a ketone C=O must then be on a ring carbon, a principal amine's N
+  bonded to a ring carbon, and aldehydes, acids
   and esters with a ring are refused); a C=O carbon bonded to the main chain as a
   branch (acetilo…), more than two aldehyde or more than two –COOH groups
-  on a chain, more than one ester group, an acid with an ester, and an
-  ether with two identical halves that each carry the
-  principal group (named with `oxidi-`) are refused too; salts and
+  on a chain, more than one ester group, an acid with an ester, an
+  ether or amine whose identical parts each carry the
+  principal group (multiplicative names, `oxidi-`, `azanodiil-`), and
+  several amine groups on the main chain when some N carries other groups
+  (N¹/N² locants) are refused too; salts, ammonium ions, amides, nitriles and
   other acid derivatives are not named yet; several
   rings, fused, bridged and spiro rings, heterocycles, benzenes with two or
   more substituents (no orto/meta/para), other oxygen and nitrogen compounds
-  (functional groups, planned), stereochemistry (E/Z, R/S), charges and
+  (amides and nitriles, planned), stereochemistry (E/Z, R/S), charges and
   radicals are not named. Traditional halogen and alcohol names
   (cloroformo, alcohol etílico, glicerina…) are not given (only `acetona`,
   `formaldehído` and `acetaldehído` among the carbonyls, and `ácido
   fórmico`, `ácido acético` and `ácido oxálico` among the acids, `formiato`
-  and `acetato` among the esters); the 90° view keeps
+  and `acetato` among the esters, `anilina` and the alkylamine names such
+  as `trimetilamina` among the amines; amino-acid names such as alanina are
+  not given); the 90° view keeps
   the normal drawing for any molecule with a heteroatom.
 - Parent chain up to 30 carbons, whole molecule up to 60.
 - Structure → name only; there is no name → structure.

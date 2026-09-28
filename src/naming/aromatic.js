@@ -33,6 +33,13 @@
  * systematic `bencenol` is not used). Substituted phenols have two ring
  * substituents and are refused like any polysubstituted benzene.
  *
+ * An amine N on the ring (design.md §13.4 I-36) is the `-amina` suffix:
+ * `bencenamina`, with the groups on the N as `N` prefixes
+ * (`N-metilbencenamina`, `N,N-dimetilbencenamina`; they are on the N, not
+ * on the ring, so the benzene keeps one substituent). IUPAC 2013 retains
+ * `aniline` as the preferred name (P-62.2.1.1.1); like `tolueno` it is
+ * offered as an alternative (`anilina`, `N-metilanilina`).
+ *
  * Traditional names retained by IUPAC 2013 for monosubstituted benzenes
  * (P-22.1.3) — `tolueno` (even the preferred IUPAC name) and `estireno`
  * (general nomenclature) — are offered as alternatives only (design.md
@@ -98,17 +105,24 @@ export function phenylSubstituent(atoms, bonds, orders) {
 
 /**
  * Id of the traditional name retained by IUPAC 2013 (P-22.1.3) for a named
- * benzene derivative: 'toluene' for a single methyl, 'styrene' for a single
+ * benzene derivative: 'aniline' for a benzene amine (design.md §13.4 I-36,
+ * P-62.2.1.1.1, whatever the groups on its N), 'toluene' for a single methyl, 'styrene' for a single
  * ethenyl (vinyl) group, 'anisole' for a single methoxy group (metoxibenceno,
  * design.md §13.4 I-34; retained by IUPAC 2013 for the unsubstituted
  * molecule); null otherwise (benzene itself is already the
  * retained name; cumene is no longer retained).
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
- * @returns {'toluene'|'styrene'|'anisole'|null} The id.
+ * @returns {'aniline'|'toluene'|'styrene'|'anisole'|null} The id.
  */
 export function traditionalNameId(structure) {
-  if (structure.parentKind !== 'ring' || structure.parent.retained !== 'benzene' || structure.prefixes.length !== 1) {
+  if (structure.parentKind !== 'ring' || structure.parent.retained !== 'benzene') {
+    return null;
+  }
+  if (structure.suffix && structure.suffix.kind === 'amine') {
+    return 'aniline'; // Any groups are on the N (`N-metilanilina`).
+  }
+  if (structure.prefixes.length !== 1) {
     return null;
   }
   const [group] = structure.prefixes;
@@ -133,7 +147,9 @@ export function traditionalNameId(structure) {
 /**
  * The traditional-name alternative of a benzene derivative (design.md §13.1:
  * listed under "Otras formas válidas", after the prefix-style ones), or null.
- * Its one part refers to every atom and bond of the molecule.
+ * Its one part refers to every atom and bond of the molecule; `anilina`
+ * keeps the groups on its N in front (`N-metilanilina`, render.js
+ * renderName() `traditional`).
  *
  * @param {object} result - A naming result (NamingSuccess) with a benzene parent.
  * @returns {{style: string, label: string, name: string, parts: object[]}|null} The alternative.
@@ -142,6 +158,9 @@ export function traditionalAlternative(result) {
   const id = traditionalNameId(result.structure);
   if (!id) {
     return null;
+  }
+  if (id === 'aniline') {
+    return { style: 'traditional', label: lexiconEs.traditionalLabel(id), ...renderName(result.structure, lexiconEs, { traditional: id }) };
   }
   const name = lexiconEs.traditionalName(id);
   const atoms = [...result.parent.atoms, ...result.structure.prefixes.flatMap((g) => g.locants.flatMap((s) => s.atoms))];
@@ -176,8 +195,10 @@ export function nameBenzeneWithStyle(mol, style = PREFIX_STYLES[0]) {
   const ctx = createNamingContext(mol, style, lexiconEs, adj);
   const substituents = collectSubstituents(mol, perceived.atoms, ctx);
   const sites = suffixSites(mol, adj, perceived.atoms, ctx.principal);
-  if (substituents.length + sites.length > 1) {
-    throw new Error(`nameBenzeneWithStyle: ${substituents.length + sites.length} substituents (polysubstituted benzenes are refused)`);
+  // Groups on an amine N (`N-metilbencenamina`) are not ring substituents.
+  const onRing = substituents.filter((sub) => !sub.nitrogen).length + sites.length;
+  if (onRing > 1) {
+    throw new Error(`nameBenzeneWithStyle: ${onRing} substituents (polysubstituted benzenes are refused)`);
   }
   const numbered = numberRing(mol, perceived, substituents, sites.map((site) => site.atom));
   const parent = { ...numbered.parent, retained: 'benzene' };

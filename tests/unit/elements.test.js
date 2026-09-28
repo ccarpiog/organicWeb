@@ -238,11 +238,11 @@ test('corrupted saves: unknown elements, charges and radicals are never accepted
 
 test('a valid molecule with heteroatoms is "not nameable yet", never a crash or a hydrocarbon name', () => {
   const molecules = [
-    build(['C', 'N'], [[1, 2]]), // metanamina
+    build(['C', 'N', 'N'], [[1, 2], [2, 3]]), // metilhidrazina, N–N (amines such as metanamina are named since I-36)
     build(['C', 'O', 'O', 'O'], [[1, 2, 2], [1, 3], [1, 4]]), // ácido carbónico (aldehydes are named since I-32, acids since I-33, esters since I-35)
     build(['C', 'O', 'O', 'C'], [[1, 2], [2, 3], [3, 4]]), // a peroxide (ethers are named since I-34)
     build(['C', 'C', 'N'], [[1, 2], [2, 3, 3]]), // etanonitrilo
-    build(['C', 'C', 'N', 'Cl'], [[1, 2], [2, 3], [1, 4]]), // 2-cloroetanamina: a halogen does not lift the refusal
+    build(['C', 'C', 'N', 'Cl'], [[1, 2], [2, 3, 3], [1, 4]]), // cloroetanonitrilo: a halogen does not lift the refusal
     build(['O']), // agua
     build(['Br', 'Br'], [[1, 2]]), // a halogen bonded to no carbon
     build(['Cl']),
@@ -258,7 +258,9 @@ test('a valid molecule with heteroatoms is "not nameable yet", never a crash or 
     assert.equal(result.error.code, 'HETEROATOM');
     assert.equal(result.name, undefined);
   }
-  assert.deepEqual(validateForNaming(build(['C', 'C', 'N', 'Cl'], [[1, 2], [2, 3], [1, 4]])).atoms, [3, 4]);
+  assert.deepEqual(validateForNaming(build(['C', 'C', 'N', 'Cl'], [[1, 2], [2, 3, 3], [1, 4]])).atoms, [3, 4]);
+  // Amines are named since I-36: 2-cloroetan-1-amina.
+  assert.equal(nameMolecule(build(['C', 'C', 'N', 'Cl'], [[1, 2], [2, 3], [1, 4]])).name, '2-cloroetan-1-amina');
   assert.match(MESSAGES.HETEROATOM, /Aún no sé nombrar/);
   // Rings are "not yet" too; empty, disconnected and valence problems are not.
   assert.ok(isNotNameableYet(validateForNaming(build(['C', 'C', 'O'], [[1, 2], [2, 3], [3, 1]]))));
@@ -304,8 +306,8 @@ test('separate caps: carbons, heavy atoms and parent chain', () => {
   addBond(long, 29, addAtom(long));
   assert.equal(long.atoms.size, 60);
   assert.equal(validateForNaming(long), null);
-  addBond(long, 1, addAtom(long, {}, 'N'));
-  assert.equal(validateForNaming(long).code, 'HETEROATOM', '60 carbons + 1 N: carbon cap not reached');
+  addBond(long, 1, addAtom(long, {}, 'N'), 3);
+  assert.equal(validateForNaming(long).code, 'HETEROATOM', '60 carbons + 1 nitrile N: carbon cap not reached');
   addBond(long, 30, addAtom(long));
   const tooBig = validateForNaming(long);
   assert.equal(tooBig.code, 'TOO_BIG');

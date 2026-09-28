@@ -42,8 +42,9 @@ test('exact Spanish messages from the design table', () => {
       + 'alcoholes (con grupos –OH unidos a un carbono), '
       + 'aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), '
       + 'ácidos carboxílicos (con el grupo –COOH), '
-      + 'éteres (con un oxígeno unido a dos carbonos, C–O–C) '
-      + 'y ésteres (con el grupo –COO– entre dos cadenas de carbonos).',
+      + 'éteres (con un oxígeno unido a dos carbonos, C–O–C), '
+      + 'ésteres (con el grupo –COO– entre dos cadenas de carbonos) '
+      + 'y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂).',
     INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
   });
 });

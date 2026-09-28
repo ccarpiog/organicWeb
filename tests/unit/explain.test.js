@@ -138,6 +138,20 @@ const SNAPSHOT_SMILES = [
   'CC(=O)OCCO', // etanoato de 2-hidroxietilo: an OH on the O-bound group
   'CC(=O)OCC=C', // etanoato de prop-2-en-1-ilo: unsaturated O-bound group with locants
   'COCC(=O)OC', // 2-metoxietanoato de metilo: ether on the acid part
+  'CN', // metanamina: one-carbon amine, metilamina (I-36)
+  'CCN', // etanamina: omitted suffix locant
+  'CC(N)C', // propan-2-amina: -amina on an inner carbon
+  'NCCCCN', // butano-1,4-diamina: o kept before -diamina
+  'CCNC', // N-metiletanamina: secondary amine, the longer side wins, N-locant
+  'CN(C)C', // N,N-dimetilmetanamina: one-carbon sides alike, N,N-
+  'CCCN(C)CC', // N-etil-N-metilpropan-1-amina: two different N-groups
+  'CNCC(C)C', // N,2-dimetilpropan-1-amina: N and carbon locants in one prefix
+  'NC1CCCCC1', // ciclohexanamina: ring amine, omitted locant
+  'CNC1=CC=CC=C1', // N-metilbencenamina: N-metilanilina
+  'NCCO', // 2-aminoetan-1-ol: alcohol > amine, amino-
+  'CN(C)CCO', // 2-(dimetilamino)etan-1-ol: substituted amino prefix
+  'CC(N)C(=O)O', // ácido 2-aminopropanoico: amino acid
+  'CC(=O)OCCN', // etanoato de 2-aminoetilo: amino in the O-bound group
 ];
 
 /**
@@ -194,10 +208,11 @@ test('every fixture: steps are well-formed and the formula matches the model', a
   const order = Object.keys(STEP_TITLES);
   for (const smiles of fixtures.keys()) {
     const { mol, result, steps } = run(smiles);
-    const { carbons, hydrogens, halogens, oxygens } = atomCounts(result.structure);
+    const { carbons, hydrogens, halogens, nitrogens = 0, oxygens } = atomCounts(result.structure);
     const count = (symbol, n) => (n === 0 ? '' : `${symbol}${n === 1 ? '' : n}`);
     const halogenPart = ['Br', 'Cl', 'F', 'I'].map((el) => count(el, halogens[el] || 0)).join('');
-    assert.equal(`${count('C', carbons)}${count('H', hydrogens)}${halogenPart}${count('O', oxygens)}`, formula(mol), smiles);
+    // Hill order: C, H, then the halogens, N and O alphabetically.
+    assert.equal(`${count('C', carbons)}${count('H', hydrogens)}${halogenPart}${count('N', nitrogens)}${count('O', oxygens)}`, formula(mol), smiles);
     assert.equal(steps[0].id, 'count');
     assert.equal(steps[steps.length - 1].id, 'assemble');
     const ids = steps.map((s) => s.id);
@@ -315,6 +330,47 @@ test('ordering explains the first differing letter and the ignored multipliers',
   assert.ok(order.includes('«iso» sí cuenta: «isopropil» se ordena por la i.'));
   const bis = run('CCCCC(CC(C)(C)C)(CC(C)(C)C)CCCC').steps.find((s) => s.id === 'substituents').text.join(' ');
   assert.match(bis, /«bis», «tris»/);
+});
+
+test('amines: formula with N, N locants, -amina suffix and amino prefixes (I-36)', () => {
+  const step = (smiles, id) => run(smiles).steps.find((s) => s.id === id);
+  const all = (s) => plainText(s.text.join(' '));
+  // The formula counts the N (Hill order: C, H, N, O) and says how the N is drawn.
+  assert.match(all(step('CN', 'count')), /1 carbono, 5 hidrógenos y 1 átomo de nitrógeno \(CH₅N\)/);
+  assert.match(all(step('CN', 'count')), /se ve como NH₂/);
+  assert.match(all(step('CCNC', 'count')), /se ve como NH: lleva un hidrógeno/);
+  assert.match(all(step('CN(C)CCO', 'count')), /\(C₄H₁₁NO\)/);
+  // The principal amine: -amina, primary/secondary, the N never in the chain, groups on N cited with N.
+  const group = all(step('CCNC', 'group'));
+  assert.match(group, /sufijo «-amina»/);
+  assert.match(group, /amina secundaria/);
+  assert.match(group, /con la letra «N» en vez de un número/);
+  assert.match(all(step('CCNC', 'groupChain')), /Decide la longitud/);
+  // A one-carbon parent with groups on its N still explains which side is the parent.
+  assert.match(all(step('CN(C)C', 'groupChain')), /Los lados del nitrógeno son iguales/);
+  // The locant N: shown as N in the legend, never drawn as a number, not a carbon number.
+  const assemble = step('CNCC(C)C', 'assemble');
+  const locant = assemble.legend.find((entry) => entry.kind === 'locant' && entry.text === 'N,2');
+  assert.ok(locant, 'N,2 in the legend');
+  assert.match(locant.meaning, /nitrógeno/);
+  assert.ok(assemble.legend.some((entry) => entry.text === '-amina' && entry.kind === 'ending'));
+  assert.match(all(assemble), /la N va primero: «N,2-dimetil»/);
+  const substituents = step('CNCC(C)C', 'substituents');
+  assert.match(all(substituents), /En el nitrógeno y en el carbono 2 hay 2 grupos metilo/);
+  assert.deepEqual(substituents.locants.map(([, n]) => n), [2]);
+  assert.match(all(step('CCNC', 'numbering')), /La «N» del nombre no es el número de un carbono/);
+  // Elided o and kept o before the suffix.
+  assert.match(all(step('CC(N)C', 'assemble')), /La «o» final de «-ano» se quita delante de «-amina»/);
+  assert.match(all(step('NCCCCN', 'assemble')), /se queda delante de «-diamina»/);
+  // Not principal: amino- and the seniority order.
+  assert.match(all(step('NCCO', 'group')), /alcohol > amina/);
+  assert.match(all(step('CC(N)C(=O)O', 'group')), /ácido > aldehído > cetona > alcohol > amina/);
+  const amino = all(step('CN(C)CCO', 'substituents'));
+  assert.match(amino, /«dimetilamino» es el prefijo de una amina/);
+  assert.match(amino, /entre paréntesis/);
+  // Benzene: bencenamina and the retained anilina.
+  assert.match(all(step('NC1=CC=CC=C1', 'group')), /«anilina» y lo prefiere/);
+  assert.match(all(step('NC1CCCCC1', 'ringNumbering')), /el número no se escribe: «ciclohexanamina»/);
 });
 
 test('glossary markup helpers', () => {

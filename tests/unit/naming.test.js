@@ -139,8 +139,10 @@ for (const row of fixtureRows) {
       assert.equal(result.parent.atoms.length, carbons);
     }
     if (alcohol && result.parent.atoms.length === 1) {
-      // A one-carbon parent chosen by P0 (a methanoate, whose O-bound group has the other carbons, I-35): nothing to number.
-      assert.equal(result.trace.length, 2);
+      // A one-carbon parent chosen by P0 (a methanoate, whose O-bound group has the other carbons, I-35): nothing to number,
+      // unless several one-carbon chains carry the principal group (the methyl groups of N-metilmetanamina, I-36): the
+      // substituent count or the tie-break then picks one.
+      assert.ok(result.trace.length === 2 || result.trace[1].survivors.length > 1, 'P0 and P1 only, or a tie among one-carbon chains');
     } else if (carbons > 1 && alcohol) {
       // N0 always runs first on the directed candidates; N1 only while N0 leaves a tie.
       const n0 = result.trace.find((step) => step.rule === 'N0');

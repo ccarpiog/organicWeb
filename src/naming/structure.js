@@ -56,10 +56,13 @@
 
 /**
  * One occurrence of a substituent: its attachment to the chain that carries it.
+ * A group on the nitrogen of a principal amine (design.md §13.4 I-36:
+ * `N-metiletanamina`) has `locant` N_LOCANT, cited `N`, and `atom` that
+ * nitrogen.
  *
  * @typedef {object} PrefixLocant
- * @property {number} locant - Locant of the carrying chain atom.
- * @property {number} atom - Id of the carrying chain atom.
+ * @property {number} locant - Locant of the carrying chain atom (N_LOCANT for a group on the amine nitrogen).
+ * @property {number} atom - Id of the carrying chain atom (or amine nitrogen).
  * @property {number} attachAtom - Id of the substituent atom bonded to it.
  * @property {number} bond - Id of the connecting bond.
  * @property {number} order - Order of the connecting bond (1 → `-il`, 2 → `-iliden`).
@@ -83,6 +86,8 @@
  * @property {boolean} [oxo] - Set on a C=O oxygen cited as a prefix (`oxo`, design.md §13.4 I-32): a ketone on the parent when the aldehyde is principal (`4-oxopentanal`), or any C=O inside a branch (`(2-oxopropil)`); its carbon is the carrying chain atom, the connecting bond is the C=O double bond (`freeValence.order` 2); no chain, no prefixes, `atoms` is the oxygen atom.
  * @property {boolean} [alkoxy] - Set on an ether cited as a prefix (design.md §13.4 I-34, substituent.js alkoxySubstituent()): the ether O plus the alkyl group on its other side. `chain`, `prefixes`, `freeValence`, `retained` describe that alkyl group as a substituent of the O (render.js cites it `metoxi`, `isopropoxi`, `pentiloxi`…); `oxygen` is the O, first in `atoms`; `bonds` include the O–C bond (not the connecting bond).
  * @property {number} [oxygen] - The ether O of an alkoxy prefix.
+ * @property {boolean} [amino] - Set on an amine nitrogen cited as a prefix (design.md §13.4 I-36, substituent.js aminoSubstituent()): the N plus the groups on its other bonds, which are its `prefixes` (cited without locants: `amino`, `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`); no chain; `nitrogen` is the N, first in `atoms`.
+ * @property {number} [nitrogen] - The N of an amino prefix.
  * @property {PrefixGroup[]} prefixes - Its own grouped prefixes, in citation order.
  * @property {{locant: number, order: number}} freeValence - Locant and order of the free valence (1 → `-il`, 2 → `-iliden`).
  * @property {string|null} [retained] - Retained-name id cited instead of the systematic prefix: 'isopropyl' or 'isopropylidene' (style 'isopropil' only) or 'tert-butyl' (styles 'isopropil' and 'pin'); the chain and prefixes still describe the systematic name. 'phenyl' (`fenil`, aromatic.js phenylSubstituent()) has a benzene RingStructure as its `chain`.
@@ -111,7 +116,7 @@
  * @typedef {object} SuffixLocant
  * @property {number} locant - Locant of the carrying parent atom.
  * @property {number} atom - Id of the carrying parent atom (a carbon).
- * @property {number} attachAtom - Id of the group's heteroatom bonded to it (the O of an OH or of a C=O; for a –COOH, the O of its C=O).
+ * @property {number} attachAtom - Id of the group's heteroatom bonded to it (the O of an OH or of a C=O; for a –COOH, the O of its C=O; the N of an amine, I-36).
  * @property {number} bond - Id of the bond between them.
  * @property {number} [hydroxyAtom] - For a –COOH only (design.md §13.4 I-33): id of its OH oxygen, part of the same group.
  * @property {number} [hydroxyBond] - For a –COOH only: id of the bond between the carbon and that OH oxygen.
@@ -128,7 +133,7 @@
  * cited (IUPAC 2013 P-14.3.4.1).
  *
  * @typedef {object} SuffixStructure
- * @property {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'} kind - Group kind (groups.js GROUP_KINDS; principal.js OXYGEN_KINDS).
+ * @property {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'|'amine'} kind - Group kind (groups.js GROUP_KINDS; principal.js NAMED_KINDS).
  * @property {SuffixLocant[]} locants - One entry per group, ascending locants (a carbon with two OH appears twice).
  */
 
@@ -264,18 +269,41 @@ export function compoundLocant(low, high) {
 }
 
 /**
- * Writes a locant value as it is cited: an integer as is, a compound
- * locant (compoundLocant()) as `low(high)`. Non-numbers pass through.
+ * Locant value of a group on the nitrogen of a principal amine (design.md
+ * §13.4 I-36), cited `N` (`N-metiletanamina`, `N,N-dimetilmetanamina`,
+ * `N,2-dimetilpropan-1-amina`). It is 0 so that it sorts and compares
+ * before every numeric locant: IUPAC 2013 P-14.3.5 counts italic letter
+ * locants lower than numbers.
+ */
+export const N_LOCANT = 0;
+
+/**
+ * Writes a locant value as it is cited: an integer as is, N_LOCANT as `N`,
+ * a compound locant (compoundLocant()) as `low(high)`. Non-numbers pass through.
  *
  * @param {number|string} value - A locant value.
- * @returns {string} The text: `3`, `1(6)`.
+ * @returns {string} The text: `3`, `N`, `1(6)`.
  */
 export function locantText(value) {
+  if (value === N_LOCANT) {
+    return 'N';
+  }
   if (typeof value !== 'number' || Number.isInteger(value)) {
     return String(value);
   }
   const low = Math.floor(value);
   return `${low}(${Math.round((value - low) * 1000)})`;
+}
+
+/**
+ * Comparable value of a cited locant text: `N` → N_LOCANT, else the number
+ * (render.js citation keys read locant tokens back as numbers).
+ *
+ * @param {string} text - A cited locant, e.g. `3` or `N`.
+ * @returns {number} The value.
+ */
+export function locantValue(text) {
+  return text === 'N' ? N_LOCANT : Number(text);
 }
 
 /**

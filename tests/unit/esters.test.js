@@ -65,13 +65,13 @@ test('validation: an ester –COO– is admitted; anhydrides, carbonates, peroxy
   for (const smiles of ['CC(=O)OC', 'O=COC', 'CCC(=O)OCC', 'CC(=O)OC=C', 'ClCC(=O)OC', 'CC(=O)OCCO', 'CC(=O)CC(=O)OCC', 'CC(=O)OCOC']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Anhydride, carbonate, peroxy ester, acyl chloride on an ester-like carbon, an ester with an amine.
-  for (const smiles of ['CC(=O)OC(C)=O', 'COC(=O)OC', 'CC(=O)OOC', 'NCC(=O)OC']) {
+  // Anhydride, carbonate, peroxy ester, an ester with a nitrile (with an amine, `2-aminoetanoato de metilo`, named since I-36).
+  for (const smiles of ['CC(=O)OC(C)=O', 'COC(=O)OC', 'CC(=O)OOC', 'N#CCC(=O)OC']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
   }
-  assert.match(MESSAGES.HETEROATOM, /y ésteres \(con el grupo –COO– entre dos cadenas de carbonos\)\.$/);
+  assert.match(MESSAGES.HETEROATOM, /, ésteres \(con el grupo –COO– entre dos cadenas de carbonos\) y aminas/);
   // A lactone is a heterocycle: out of scope.
   for (const smiles of ['O=C1CCCO1', 'O=C1CCCCO1']) {
     const error = validateForNaming(parseSmiles(smiles));

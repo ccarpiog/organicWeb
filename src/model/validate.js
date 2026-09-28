@@ -16,9 +16,11 @@
  *   only elements the engine can name yet (carbon, halogens bonded to a
  *   carbon — design.md §13.4 I-30 —, OH groups on a carbon, I-31, the
  *   C=O of aldehydes and ketones, I-32, carboxyl groups –C(=O)OH, I-33,
- *   ether oxygens C–O–C, I-34, and ester groups –C(=O)–O–R, I-35; on a
+ *   ether oxygens C–O–C, I-34, ester groups –C(=O)–O–R, I-35, and amine
+ *   nitrogens bonded to one to three carbons, I-36; on a
  *   molecule with a ring, only OH groups on ring carbons and ketone C=O
- *   whose carbon is a ring atom, no acid, no ester; on a chain, at most two
+ *   whose carbon is a ring atom, no acid, no ester, and, when the amine is
+ *   the principal group, every amine N on a ring carbon; on a chain, at most two
  *   aldehydes, at most two acids, at most one ester and never an acid with
  *   an ester), and
  *   longest carbon chain ≤ 30 (for a ring: every side chain ≤ 30; with
@@ -29,9 +31,10 @@
  * engine cannot name (CYCLE, RING_SYSTEM, HETEROATOM — see isNotNameableYet()).
  * Halogens bonded to a carbon are named since I-30, OH groups on a carbon
  * (alcohols, phenol) since I-31, aldehydes and ketones since I-32,
- * carboxylic acids since I-33, ethers since I-34, esters since I-35; any
- * other heteroatom (N, an O of an anhydride or carbonate, a peroxide, a
- * halogen on a heteroatom or on a C=O carbon…) still
+ * carboxylic acids since I-33, ethers since I-34, esters since I-35,
+ * amines since I-36; any
+ * other heteroatom (an N of an amide, imine or nitrile, NH₃, an O of an
+ * anhydride or carbonate, a peroxide, a halogen on a heteroatom or on a C=O carbon…) still
  * gets HETEROATOM, and so do an alcohol or ketone with a ring whose OH or
  * C=O is on a side chain, any aldehyde or acid with a ring, and a chain
  * with more than two aldehydes or more than two acids.
@@ -74,8 +77,9 @@ export const MESSAGES = Object.freeze({
     + 'alcoholes (con grupos –OH unidos a un carbono), '
     + 'aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), '
     + 'ácidos carboxílicos (con el grupo –COOH), '
-    + 'éteres (con un oxígeno unido a dos carbonos, C–O–C) '
-    + 'y ésteres (con el grupo –COO– entre dos cadenas de carbonos).',
+    + 'éteres (con un oxígeno unido a dos carbonos, C–O–C), '
+    + 'ésteres (con el grupo –COO– entre dos cadenas de carbonos) '
+    + 'y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂).',
   INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
 });
 
@@ -224,6 +228,40 @@ export const MANY_ESTERS_MESSAGE = 'Esta molécula tiene más de un grupo –COO
 export const ESTER_PREFIX_MESSAGE = 'Esta molécula tiene un grupo –COOH (ácido) y un grupo –COO– (éster). '
   + 'El ácido va antes que el éster, así que el éster se nombraría con un prefijo '
   + '(«alcoxicarbonil-», como «metoxicarbonil-», o «aciloxi-», como «acetiloxi-»), y eso aún no sé hacerlo.';
+
+/**
+ * HETEROATOM message for a molecule with a ring whose principal group is
+ * an amine with an N not bonded to a ring carbon (design.md §13.4 I-36),
+ * such as C₆H₅–CH₂–NH₂: the chain would carry the principal group and be
+ * the parent, with the ring as a substituent (`fenilmetanamina`), which
+ * waits for I-40.
+ */
+export const SIDE_CHAIN_AMINE_MESSAGE = 'Esta molécula tiene un anillo y un grupo amino (un nitrógeno, como el –NH₂) '
+  + 'en una de sus ramas. De momento solo sé nombrar las aminas con anillo cuando el nitrógeno está unido '
+  + 'directamente al anillo (como la ciclohexanamina o la bencenamina).';
+
+/**
+ * HETEROATOM message of the naming engine (naming/index.js) for a parent
+ * with two or more amine groups where some nitrogen carries other groups
+ * (design.md §13.4 I-36): IUPAC 2013 then tells the nitrogens apart with
+ * locants such as N¹ and N² (`N¹-metiletano-1,2-diamina`), not supported.
+ */
+export const SUBSTITUTED_POLYAMINE_MESSAGE = 'Esta molécula tiene varios grupos amino en la cadena principal '
+  + 'y alguno de sus nitrógenos lleva otros grupos unidos. Para decir en qué nitrógeno está cada grupo harían falta '
+  + 'localizadores como N¹ y N², y eso aún no sé hacerlo. Sí sé nombrar las diaminas sin grupos en el nitrógeno '
+  + '(como la etano-1,2-diamina) y las aminas con un solo nitrógeno (como la N-metiletanamina).';
+
+/**
+ * HETEROATOM message of the naming engine (naming/index.js) for an amine
+ * nitrogen that is not the principal group and joins two or three
+ * identical parts that each carry the principal group (design.md §13.4
+ * I-36), such as HO–CH₂CH₂–NH–CH₂CH₂–OH: IUPAC 2013 names it with
+ * multiplicative nomenclature (`2,2′-azanodiildi(etan-1-ol)`, P-15.3), not
+ * supported (as for ethers, SYMMETRIC_ETHER_MESSAGE).
+ */
+export const SYMMETRIC_AMINE_MESSAGE = 'Esta molécula tiene partes iguales unidas por un nitrógeno, '
+  + 'y cada una de esas partes lleva el grupo principal. La IUPAC la nombra con un nombre que junta las partes iguales '
+  + '(como el 2,2′-azanodiildietanol), y eso aún no sé hacerlo.';
 
 /** TOO_BIG message for a ring larger than the parent-size cap (MAX_CHAIN). */
 export const RING_TOO_BIG_MESSAGE = 'El anillo es demasiado grande (máximo 30 carbonos en el anillo).';
@@ -826,6 +864,38 @@ export function etherOxygens(mol) {
 }
 
 /**
+ * Tells whether an atom is the nitrogen of an amine (design.md §13.4 I-36,
+ * §13.6 table: N with 1–3 R, single bonds only): a nitrogen with one, two
+ * or three bonds, all single, all to carbons, none of them a functional
+ * carbon (a C=O carbon would make an amide, I-37). NH₃ (no carbon), an
+ * imine (C=N), a nitrile (C≡N), N–N, N–O or a halogen on N are not; a
+ * charged N (ammonium) is never in the model (INVALID) and a fourth bond
+ * is a VALENCE error. An N inside a ring never gets here: the ring would
+ * be a heterocycle, refused first (RING_SYSTEM).
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} id - An atom id.
+ * @returns {boolean} True for the N of a primary, secondary or tertiary amine.
+ */
+export function isAmineNitrogen(mol, adj, id) {
+  const links = adj.get(id);
+  return mol.atoms.get(id).element === 'N' && links.length >= 1 && links.length <= 3
+    && links.every((n) => n.order === 1 && mol.atoms.get(n.atom).element === 'C' && !isFunctionalCarbon(mol, adj, n.atom));
+}
+
+/**
+ * The amine nitrogens of a molecule (isAmineNitrogen()), ascending.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @returns {number[]} The nitrogen ids.
+ */
+export function amineNitrogens(mol) {
+  const adj = adjacency(mol);
+  return [...mol.atoms.keys()].filter((id) => isAmineNitrogen(mol, adj, id)).sort((p, q) => p - q);
+}
+
+/**
  * Longest carbon chain of an acyclic molecule: the largest number of
  * carbons on a path of its carbon skeleton. Without ethers the skeleton is
  * one tree; each ether oxygen splits it (a carbon chain never runs through
@@ -856,8 +926,9 @@ export function longestCarbonChain(mol) {
  * `oxo` prefix, I-32; carbonylKind()) or an oxygen of a carboxyl group
  * (the `ácido …oico` suffix, I-33; carboxylRole()) or the oxygen of an
  * ether C–O–C (an `alcoxi-` prefix, I-34; isEtherOxygen()) or an oxygen
- * of an ester –COO– (`…oato de …ilo`, I-35; esterRole()). Any other O,
- * and every N, is not. The OH of an ester-like or otherwise unsupported C=O carbon
+ * of an ester –COO– (`…oato de …ilo`, I-35; esterRole()), or the
+ * nitrogen of an amine (`-amina` or `amino-`, I-36; isAmineNitrogen()).
+ * Any other O or N is not. The OH of an ester-like or otherwise unsupported C=O carbon
  * (`OC(=O)O`, a peracid) is refused through its C=O.
  *
  * @param {object} mol - A structurally valid molecule.
@@ -870,7 +941,7 @@ export function hasNameableHeteroatoms(mol, hetero) {
   return isHalogenDerivative(mol, halogens)
     && hetero.every((id) => isHalogen(mol.atoms.get(id).element) || isHydroxyOxygen(mol, adj, id)
       || carbonylKind(mol, adj, id) !== null || carboxylRole(mol, adj, id) !== null || isEtherOxygen(mol, adj, id)
-      || esterRole(mol, adj, id) !== null);
+      || esterRole(mol, adj, id) !== null || isAmineNitrogen(mol, adj, id));
 }
 
 /**
@@ -984,25 +1055,61 @@ function oxygenPlacementError(mol, cyclic, hetero) {
 } // End of function oxygenPlacementError()
 
 /**
+ * The refusal of a nameable-heteroatom molecule with a ring whose amine
+ * groups the engine cannot place yet (design.md §13.4 I-36), or null: when
+ * the amine is the principal group (no oxygen group other than ether
+ * oxygens: with a ring, validation leaves only OH and ketone C=O on ring
+ * carbons, which would be principal), every amine N must be bonded to a
+ * ring carbon, so the ring carries the suffix (`ciclohexanamina`,
+ * `N-metilciclohexanamina`, `bencenamina`); an N only on side-chain carbons
+ * would make the chain the parent (`sideChainAmine`, `sideChain` the
+ * nitrogens). With an OH or ketone on the ring, amine groups anywhere are
+ * `amino-` prefixes and are named.
+ *
+ * @param {object} mol - A validated single-ring molecule whose heteroatoms are nameable.
+ * @param {number[]} hetero - Its non-carbon atom ids.
+ * @returns {{code: string, message: string}|null} The HETEROATOM error, or null.
+ */
+function aminePlacementError(mol, hetero) {
+  const amines = amineNitrogens(mol);
+  if (amines.length === 0) {
+    return null;
+  }
+  const adj = adjacency(mol);
+  const principalOxygen = hetero.some((id) => mol.atoms.get(id).element === 'O' && !isEtherOxygen(mol, adj, id));
+  if (principalOxygen) {
+    return null;
+  }
+  const ringAtoms = new Set(classifyRings(mol).perception.ringAtoms);
+  const sideChain = amines.filter((id) => !adj.get(id).some((n) => ringAtoms.has(n.atom)));
+  return sideChain.length > 0
+    ? validationError('HETEROATOM', { message: SIDE_CHAIN_AMINE_MESSAGE, atoms: hetero, reason: 'sideChainAmine', sideChain })
+    : null;
+} // End of function aminePlacementError()
+
+/**
  * Structural checks plus the naming checks, in order: non-empty, connected,
  * ring scope (ringError(): a single carbocycle of at most 30 carbons
  * passes; TOO_BIG or RING_SYSTEM otherwise), carbon and heavy-atom caps,
  * carbon, halogens on carbon, OH groups on carbon, aldehyde or ketone
- * C=O, carboxyl groups, ether C–O–C and ester –COO– only (HETEROATOM for any other atom: valid but
+ * C=O, carboxyl groups, ether C–O–C, ester –COO– and amine N only (HETEROATOM for any other atom: valid but
  * not nameable yet; also for an OH, a ketone C=O or any aldehyde on a ring
  * molecule outside the ring, any acid with a ring, and for more than two
  * aldehydes or acids, more than one ester or an ester with an acid on a
- * chain, any ester with a ring: oxygenPlacementError()), chain cap — the
+ * chain, any ester with a ring: oxygenPlacementError(); and a ring whose
+ * principal amine has an N off the ring: aminePlacementError()), chain cap — the
  * longest carbon chain of a tree, or the longest side chain of a ring
  * (design.md §3.2, §13.1). A molecule passing this is a hydrocarbon (or a
- * halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether or ester of one)
+ * halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester or amine of one)
  * of at most 60 carbons that is either a tree
  * whose longest carbon chain has at most 30, or a single carbocycle of 3
  * to 30 carbons whose side chains have at most 30 carbons and carry no
  * oxygen other than ether oxygens. The engine may still refuse a C=O
  * carbon that ends up bonded to the parent as a branch
- * (ACYL_SUBSTITUENT_MESSAGE, naming/index.js) and an ether whose two
- * identical halves each carry the principal group (SYMMETRIC_ETHER_MESSAGE).
+ * (ACYL_SUBSTITUENT_MESSAGE, naming/index.js), an ether or amine whose
+ * identical parts each carry the principal group (SYMMETRIC_ETHER_MESSAGE,
+ * SYMMETRIC_AMINE_MESSAGE) and a parent with several amine groups where
+ * some N carries other groups (SUBSTITUTED_POLYAMINE_MESSAGE).
  *
  * @param {object} mol - The molecule (possibly corrupt).
  * @returns {{code: string, message: string}|null} The first error found, or null when the molecule can be named.
@@ -1034,10 +1141,12 @@ export function validateForNaming(mol) {
   }
   const hetero = [...mol.atoms.values()].filter((atom) => atom.element !== 'C').map((atom) => atom.id).sort((p, q) => p - q);
   if (hetero.length > 0 && !hasNameableHeteroatoms(mol, hetero)) {
-    // A valid molecule, but the engine only names hydrocarbons, halogen derivatives, alcohols, aldehydes, ketones, acids, ethers and esters so far.
+    // A valid molecule, but the engine only names hydrocarbons, halogen derivatives, alcohols, aldehydes, ketones, acids, ethers, esters and amines so far.
     return validationError('HETEROATOM', { atoms: hetero });
   }
-  const placement = hetero.length > 0 ? oxygenPlacementError(mol, cyclic, hetero) : null;
+  const placement = hetero.length > 0
+    ? oxygenPlacementError(mol, cyclic, hetero) || (cyclic ? aminePlacementError(mol, hetero) : null)
+    : null;
   if (placement) {
     return placement;
   }

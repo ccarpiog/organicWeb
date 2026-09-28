@@ -93,7 +93,27 @@
  * gets `formiato de …` / `acetato de …`. Validation refuses more than one
  * ester (`manyEsters`) and any ester with a ring (`ringEster`).
  *
- * Any other heteroatom (N, an O of an anhydride or carbonate, a peroxide) is
+ * Amines (design.md §13.4 I-36) are the least senior group (… alcohol >
+ * amina): the N is never a chain atom (like an ether O, it splits the
+ * carbon skeleton), each N of a principal amine bonded to the parent is one
+ * `-amina` suffix group, and the other groups on that N are prefixes with
+ * the locant `N` (substituent.js nitrogenSubstituents()): `metanamina`,
+ * `propan-2-amina`, `butano-1,4-diamina`, `N-metiletanamina`,
+ * `N,N-dimetilmetanamina`, `N-etil-N-metilpropan-1-amina`,
+ * `ciclohexanamina`, `bencenamina` (with `anilina`). The parent is the
+ * chain with the most amine groups, then the longest… as for any principal
+ * group (IUPAC 2013 P-44.1.1, P-62.2.2: the senior chain carries the suffix,
+ * the others become N-substituents). Below a more senior group the amine
+ * is the prefix `amino` (`2-aminoetan-1-ol`, `ácido 2-aminopropanoico`,
+ * `2-(dimetilamino)etan-1-ol`). Refused here: a parent with two or more
+ * amine groups where some N carries other groups (`substitutedPolyamine`,
+ * N¹/N² locants) and a non-principal amine N joining identical parts that
+ * each carry the principal group (`symmetricAmine`, multiplicative names).
+ * A simple amine (one N, simple alkyl groups) also gets its traditional
+ * name (`metilamina`, `dimetilamina`, `trimetilamina`, `etilmetilamina`;
+ * amineClassAlternative()).
+ *
+ * Any other heteroatom (an N of an amide, imine or nitrile, an O of an anhydride or carbonate, a peroxide) is
  * still refused (`HETEROATOM`), but the refusal carries `groups`: its
  * characteristic groups (groups.js), the principal group and the
  * suffix/prefix classification (seniority.js, design.md §13.4 I-29).
@@ -101,18 +121,18 @@
  */
 
 import {
-  validateForNaming, validationError, carboxylCarbons, etherOxygens, ACYL_SUBSTITUENT_MESSAGE, CARBOXY_SUBSTITUENT_MESSAGE,
-  SYMMETRIC_ETHER_MESSAGE,
+  validateForNaming, validationError, carboxylCarbons, etherOxygens, amineNitrogens, ACYL_SUBSTITUENT_MESSAGE,
+  CARBOXY_SUBSTITUENT_MESSAGE, SYMMETRIC_ETHER_MESSAGE, SYMMETRIC_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE,
 } from '../model/validate.js';
 import { adjacency, hasCycle, rootedTreeKey } from '../model/graph.js';
 import { selectParent } from './parent.js';
 import {
   createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, suffixSites, hasAcylPrefix, PREFIX_STYLES,
-  substituentSubtree, nameSubstituent, esterAlkyl,
+  substituentSubtree, nameSubstituent, esterAlkyl, numberingPrefix,
 } from './substituent.js';
 import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure, buildSuffix } from './structure.js';
-import { renderName, suffixCount, suffixGroupIds } from './render.js';
+import { renderName, suffixCount, suffixGroupIds, hasNitrogenLocants } from './render.js';
 import { nameRingWithStyle } from './rings.js';
 import { hasBenzeneRing, nameBenzeneWithStyle, traditionalAlternative } from './aromatic.js';
 import { analyzeGroups } from './seniority.js';
@@ -181,11 +201,7 @@ function nameWithStyle(mol, adj, selection, style) {
    * @param {number[]} chain - A chain from selection.chains.
    * @returns {{atom: number, key: string, citation: object|null}[]} Carrying atom, identity and citation key.
    */
-  const prefixesOf = (chain) => substituentsByChain.get(chain).map((sub) => ({
-    atom: sub.chainAtom,
-    key: sub.key,
-    citation: sub.citation,
-  }));
+  const prefixesOf = (chain) => substituentsByChain.get(chain).map(numberingPrefix);
   const nameKey = nameKeyFunction([...substituentsByChain.values()], lexiconEs);
   const suffixesOf = (chain) => suffixSites(mol, adj, chain, ctx.principal).map((site) => site.atom);
   const numbering = numberParent(mol, selection.chains, prefixesOf, { adj, nameKey, suffixesOf });
@@ -275,7 +291,7 @@ function nameValidated(mol, options) {
     throw new RangeError(`unknown prefix style ${style}`);
   }
   const cyclic = hasCycle(mol);
-  const symmetric = cyclic ? null : symmetricEther(mol);
+  const symmetric = cyclic ? null : symmetricEther(mol) || symmetricAmine(mol);
   if (symmetric) {
     return withGroups({ ok: false, error: symmetric }, mol);
   }
@@ -323,7 +339,10 @@ function nameValidated(mol, options) {
     if (acids.length > 0 && suffixCount(structure) !== acids.length) {
       return withGroups({ ok: false, error: carboxyError(acids) }, mol);
     }
-  }
+    if (structure.suffix && structure.suffix.kind === 'amine' && suffixCount(structure) > 1 && hasNitrogenLocants(structure.prefixes)) {
+      return withGroups({ ok: false, error: polyamineError(structure) }, mol);
+    }
+  } // End of the loop over the emitted styles
   const located = locantAlternative(main);
   if (located) {
     alternatives.push(located);
@@ -336,12 +355,127 @@ function nameValidated(mol, options) {
   if (traditional) {
     alternatives.push(traditional);
   }
-  const functionalClass = etherClassAlternative(mol, main);
+  const functionalClass = etherClassAlternative(mol, main) || amineClassAlternative(mol, main);
   if (functionalClass) {
     alternatives.push(functionalClass);
   }
   return { ...main, alternatives };
 } // End of function nameValidated()
+
+/**
+ * The HETEROATOM refusal of a parent with two or more amine groups where
+ * some nitrogen carries other groups (design.md §13.4 I-36): IUPAC 2013
+ * tells the nitrogens apart with locants N¹, N²… (`N¹-metiletano-1,2-diamina`),
+ * which the app does not write. `atoms` lists the nitrogens of the suffix.
+ *
+ * @param {object} structure - The name structure (an amine suffix with several groups).
+ * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
+ */
+function polyamineError(structure) {
+  const atoms = structure.suffix.locants.map((site) => site.attachAtom).sort((p, q) => p - q);
+  return validationError('HETEROATOM', { message: SUBSTITUTED_POLYAMINE_MESSAGE, atoms, reason: 'substitutedPolyamine' });
+}
+
+/**
+ * The HETEROATOM refusal of an acyclic molecule with an amine nitrogen
+ * that is not the principal group and joins two or three identical parts,
+ * each carrying the principal group (design.md §13.4 I-36): for
+ * HO–CH₂CH₂–NH–CH₂CH₂–OH IUPAC 2013 uses multiplicative nomenclature,
+ * `2,2′-azanodiildi(etan-1-ol)` (P-15.3), which the app does not support,
+ * as for ethers (symmetricEther()). Parts are identical when their rooted
+ * tree keys seen from the N are equal. Null otherwise (and always when the
+ * amine is principal, or without a principal group).
+ *
+ * @param {object} mol - A validated acyclic molecule.
+ * @returns {{code: string, message: string, atoms: number[], reason: string}|null} The error, or null.
+ */
+function symmetricAmine(mol) {
+  const nitrogens = amineNitrogens(mol);
+  if (nitrogens.length === 0) {
+    return null;
+  }
+  const adj = adjacency(mol);
+  const principal = principalKindOf(mol, adj);
+  if (principal === null || principal === 'amine') {
+    return null;
+  }
+  for (const nitrogen of nitrogens) {
+    const sides = adj.get(nitrogen).map((n) => ({ atom: n.atom, key: rootedTreeKey(mol, n.atom, nitrogen, adj) }));
+    for (const side of sides) {
+      const twins = sides.filter((other) => other.key === side.key);
+      const carries = substituentSubtree(adj, nitrogen, side.atom).atoms.some((id) => isPrincipalOxygen(mol, adj, id, principal));
+      if (twins.length > 1 && carries) {
+        const atoms = [nitrogen, ...twins.flatMap((twin) => substituentSubtree(adj, nitrogen, twin.atom).atoms)].sort((p, q) => p - q);
+        return validationError('HETEROATOM', { message: SYMMETRIC_AMINE_MESSAGE, atoms, reason: 'symmetricAmine' });
+      }
+    }
+  } // End of the loop over the amine nitrogens
+  return null;
+} // End of function symmetricAmine()
+
+/**
+ * The traditional name of a simple amine (design.md §13.4 I-36): the
+ * groups on its one nitrogen (etherSideName(): unbranched saturated alkyl
+ * groups bonded by their end, or `isopropil` / `tert-butil`), in
+ * alphabetical order (`tert-` and the multipliers not counted), identical
+ * ones multiplied, then `amina`, all in one word — `metilamina`,
+ * `dimetilamina`, `trimetilamina`, `etilmetilamina`, `etildimetilamina`,
+ * `isopropilamina`, `tert-butilamina`. Spanish school books use these
+ * names; IUPAC 2013 prefers the substitutive ones (`metanamina`,
+ * `N-metilmetanamina`, P-62.2.1), so it is listed last under "Otras formas
+ * válidas". Offered only when the molecule is that N and its groups (no
+ * ring, no other heteroatom). Its one part refers to every atom and bond.
+ * Null otherwise.
+ *
+ * @param {object} mol - The validated molecule.
+ * @param {object} result - Its naming result.
+ * @returns {{style: string, label: string, name: string, parts: object[]}|null} The alternative.
+ */
+function amineClassAlternative(mol, result) {
+  const name = amineClassName(mol, result.structure);
+  if (!name) {
+    return null;
+  }
+  const parts = [{ text: name, kind: 'stem', atoms: [...mol.atoms.keys()], bonds: [...mol.bonds.keys()] }];
+  return { style: 'amineClass', label: lexiconEs.styleLabel('amineClass'), name, parts };
+} // End of function amineClassAlternative()
+
+/**
+ * The traditional alkylamine name of a molecule in a lexicon (design.md
+ * §13.4 I-36; amineClassAlternative()): the groups on its one amine N in
+ * alphabetical order (`tert-` and the multipliers ignored; on equal
+ * letters the plain name first), identical ones multiplied, then the
+ * lexicon's `amineClassWord` — Spanish `etilmetilamina`, English
+ * `ethylmethylamine` (the oracle checks the English form). Null unless the
+ * molecule is one N and simple alkyl groups (etherSideName()) on a chain
+ * parent.
+ *
+ * @param {object} mol - The validated molecule.
+ * @param {object} structure - Its name structure (any prefix style).
+ * @param {object} [lexicon] - The lexicon (default: Spanish).
+ * @returns {string|null} The name.
+ */
+export function amineClassName(mol, structure, lexicon = lexiconEs) {
+  const others = [...mol.atoms.values()].filter((atom) => atom.element !== 'C');
+  if (others.length !== 1 || others[0].element !== 'N' || structure.parentKind !== 'chain') {
+    return null;
+  }
+  const nitrogen = others[0].id;
+  const adj = adjacency(mol);
+  const sides = adj.get(nitrogen).map((n) => etherSideName(nameSubstituent(mol, nitrogen, n.atom), lexicon));
+  if (sides.includes(null)) {
+    return null;
+  }
+  const letters = (name) => name.replace(/^tert-/, '');
+  // Alphabetical without `tert-`; on equal letters the plain name first (`butil-tert-butil…`).
+  const distinct = [...new Set(sides)].sort((x, y) => (letters(x) === letters(y) ? x.length - y.length : (letters(x) < letters(y) ? -1 : 1)));
+  const words = distinct.map((side) => {
+    const n = sides.filter((other) => other === side).length;
+    const mult = lexicon.multiplier(n);
+    return mult && side.startsWith('tert-') ? `${mult}-${side}` : `${mult}${side}`; // `di-tert-butilamina`.
+  });
+  return `${words.join('')}${lexicon.amineClassWord}`;
+} // End of function amineClassName()
 
 /**
  * The HETEROATOM refusal of a molecule whose default-style name has an acyl
@@ -455,25 +589,27 @@ function symmetricEther(mol) {
 } // End of function symmetricEther()
 
 /**
- * The prefix of one side of a simple ether as used in its functional-class
- * name (design.md §13.4 I-34): an unbranched saturated alkyl group bonded
+ * The prefix of one side of a simple ether (or of a group on a simple
+ * amine's N) as used in its functional-class or traditional name
+ * (design.md §13.4 I-34, I-36): an unbranched saturated alkyl group bonded
  * by its end (`metil`, `etil`, `propil`…), or the retained `isopropil` /
  * `tert-butil`; null for anything else (a branched, unsaturated or
  * substituted group).
  *
- * @param {object} sub - The side named as a substituent of the O (substituent.js nameSubstituent(), default style).
- * @returns {string|null} The Spanish prefix.
+ * @param {object} sub - The side named as a substituent of the O or N (substituent.js nameSubstituent(), default style).
+ * @param {object} [lexicon] - The lexicon (default: Spanish).
+ * @returns {string|null} The prefix.
  */
-function etherSideName(sub) {
+function etherSideName(sub, lexicon = lexiconEs) {
   if (sub.retained === 'isopropyl' || sub.retained === 'tert-butyl') {
-    const { italic, text } = lexiconEs.retainedPrefix(sub.retained);
+    const { italic, text } = lexicon.retainedPrefix(sub.retained);
     return `${italic}${text}`;
   }
   const { chain } = sub;
   if (sub.retained || sub.prefixes.length > 0 || sub.freeValence.locant !== 1 || chain.double.length + chain.triple.length > 0) {
     return null;
   }
-  return lexiconEs.alkylPrefix(chain.length);
+  return lexicon.alkylPrefix(chain.length);
 } // End of function etherSideName()
 
 /**

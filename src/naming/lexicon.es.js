@@ -92,6 +92,7 @@ export const TRADITIONAL_NAMES = Object.freeze({
   formate: 'formiato',
   acetate: 'acetato',
   anisole: 'anisol',
+  aniline: 'anilina',
 });
 
 /**
@@ -114,6 +115,9 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * `anisol` (design.md §13.4 I-34) is
  * offered for the bare metoxibenceno: IUPAC 2013 retains `anisole` (the
  * app says only that it is accepted, the exact status being from memory).
+ * `anilina` (design.md §13.4 I-36) replaces `bencenamina`, also after
+ * groups on its nitrogen (`N-metilanilina`): IUPAC 2013 retains `aniline`
+ * as the preferred name (P-62.2.1.1.1), so it is labelled like `tolueno`.
  */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
@@ -127,6 +131,7 @@ export const TRADITIONAL_LABELS = Object.freeze({
   formate: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   acetate: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   anisole: 'nombre tradicional, que la IUPAC (2013) acepta',
+  aniline: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
 });
 
 /** Endings of the parent name. */
@@ -502,6 +507,7 @@ export const STYLE_LABELS = Object.freeze({
   substituted: 'forma sistemática clásica',
   locants: 'con el localizador, como la escribe la IUPAC (2013) en el nombre preferido',
   functionalClass: 'nombre de clase funcional (los dos grupos y la palabra «éter»), que la IUPAC (2013) acepta',
+  amineClass: 'nombre tradicional (los grupos unidos al nitrógeno y la palabra «amina»), muy usado en los libros',
 });
 
 /**
@@ -510,6 +516,15 @@ export const STYLE_LABELS = Object.freeze({
  * in general nomenclature; the substitutive `metoxietano` is preferred).
  */
 export const ETHER_CLASS_WORD = 'éter';
+
+/**
+ * Last word of the traditional name of a simple amine (design.md §13.4
+ * I-36): the groups on the nitrogen, alphabetised, then `amina`, all in one
+ * word — `metilamina`, `dimetilamina`, `trimetilamina`, `etilmetilamina`
+ * (naming/index.js amineClassAlternative()). The substitutive `metanamina`,
+ * `N-metilmetanamina` come first (IUPAC 2013 P-62.2.1).
+ */
+export const AMINE_CLASS_WORD = 'amina';
 
 /**
  * How an ester name is assembled (design.md §13.4 I-35; render.js
@@ -577,7 +592,7 @@ export function styleLabel(style) {
  * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene,
  * a small carbonyl compound or a small acid.
  *
- * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate' or 'anisole'.
+ * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole' or 'aniline'.
  * @returns {string} The Spanish name.
  * @throws {Error} For an unknown id.
  */
@@ -732,6 +747,7 @@ export function groupFamilyName(kind) {
 /** The Spanish lexicon, as consumed by render.js. */
 export const lexiconEs = Object.freeze({
   etherClassWord: ETHER_CLASS_WORD,
+  amineClassWord: AMINE_CLASS_WORD,
   alkoxyEnding: ALKOXY_ENDING,
   esterAlkylFirst: ESTER_ALKYL_FIRST,
   esterLink: ESTER_LINK,

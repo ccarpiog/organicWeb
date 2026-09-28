@@ -49,7 +49,9 @@ test('Ayuda opens an in-page dialog with illustrations and the glossary; Esc clo
   const dialog = page.getByRole('dialog', { name: 'Cómo se usa' });
   await expect(dialog).toBeVisible();
   expect(await dialog.locator('svg.help-figure').count()).toBeGreaterThanOrEqual(4);
-  await expect(dialog.locator('.help-glossary dt')).toHaveCount(12);
+  // 13 terms since I-36 added «Amina».
+  await expect(dialog.locator('.help-glossary dt')).toHaveCount(13);
+  await expect(dialog.locator('.help-glossary')).toContainText('Amina');
   await expect(dialog.locator('.help-glossary')).toContainText('Cadena principal');
   await expect(dialog.locator('.help-glossary')).toContainText('Anillo');
   await expect(dialog.locator('.help-glossary')).toContainText('Grupo funcional');

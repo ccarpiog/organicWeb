@@ -340,7 +340,8 @@ test('lexicons: suffix and prefix forms of every group kind', () => {
 });
 
 test('a heteroatom molecule is still refused with HETEROATOM, carrying its groups', () => {
-  for (const smiles of ['NCCO', 'NCC(=O)O', 'ClCCOCCOOC', 'OCC1=CC=CC=C1', 'NC1CCCCC1', 'COOC', 'O']) {
+  // Amines are named since I-36: a nitrile, an N–O bond and a side-chain amine on a ring keep the refusal.
+  for (const smiles of ['N#CCCO', 'ONCC(=O)O', 'ClCCOCCOOC', 'OCC1=CC=CC=C1', 'NCC1CCCCC1', 'COOC', 'O']) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(result.ok, false, smiles);
     assert.equal(result.error.code, 'HETEROATOM', smiles);
@@ -355,8 +356,8 @@ test('a heteroatom molecule is still refused with HETEROATOM, carrying its group
 });
 
 test('explanation of a refusal: groups, principal, suffix or prefix, then the message', () => {
-  // An amine keeps the refusal (acids alone are named since I-33).
-  const steps = explain(nameMolecule(parseSmiles('NCC(O)C(=O)O')));
+  // A hydroperoxide keeps the refusal (acids are named since I-33, amines since I-36: `ácido 3-amino-2-hidroxipropanoico`).
+  const steps = explain(nameMolecule(parseSmiles('NCC(O)C(OO)C(=O)O')));
   assert.deepEqual(steps.map((s) => s.id), ['groups', 'principal', 'affixes', 'notYet']);
   assert.deepEqual(steps.map((s) => s.title), ['Reconoce los grupos', 'Elige el principal', 'Sufijo o prefijo', 'Aún no sé nombrarla']);
   const text = (i) => steps[i].text.map(plainText).join(' ');
@@ -368,7 +369,7 @@ test('explanation of a refusal: groups, principal, suffix or prefix, then the me
   assert.match(text(2), /El alcohol: prefijo «hidroxi-»/);
   assert.match(text(3), /Aún no sé nombrar este tipo de compuestos/);
   // Highlights: principal (parent) apart from the prefix groups (substituent).
-  assert.deepEqual(steps[1].highlight.map((h) => [h.style, h.atoms.length]), [['parent', 3], ['substituent', 2]]);
+  assert.deepEqual(steps[1].highlight.map((h) => [h.style, h.atoms.length]), [['parent', 3], ['substituent', 2], ['candidate', 2]]);
   // Only ethers and halogens (named since I-34) plus an unsupported peroxide: no principal group, no suffix.
   const prefixOnly = explain(nameMolecule(parseSmiles('ClCCOCCOOC')));
   assert.match(prefixOnly[1].text.join(' '), /no hay grupo principal/);
@@ -380,15 +381,15 @@ test('explanation of a refusal: groups, principal, suffix or prefix, then the me
 
 /** Heteroatom molecules whose group steps are snapshot-tested. */
 const GROUP_SNAPSHOT_SMILES = [
-  'NCCO', // alcohol > amine
+  'NCC(O)OO', // alcohol > amine, with an unsupported hydroperoxide (`2-aminoetan-1-ol` is named since I-36)
   'OCC1=CC=CC=C1', // alcohol on the side chain of a benzene: its own message
-  'NCC(=O)O', // acid (named since I-33) with an amine: the acid is not alcohol + ketone
+  'NCC(OO)C(=O)O', // acid with an amine and a hydroperoxide: the acid is not alcohol + ketone (amino acids are named since I-36)
   'COC(=O)CCC(=O)OC', // two esters (each not ether + ketone): refused as manyEsters since I-35
   'CC(=O)NC', // amide: not amine + ketone
-  'NCC(O)CC(=O)CC=O', // aldehyde > ketone > alcohol > amine (the amine keeps the refusal since I-32)
+  'NCC(O)CC(=O)C(OO)C=O', // aldehyde > ketone > alcohol > amine, with a hydroperoxide (amines are named since I-36)
   'NCC#N', // nitrile > amine
   'ClCCOCCOOC', // prefix-only groups (ether and halide, named since I-34) with an unsupported peroxide
-  'BrCC(Br)CN', // two bromine atoms and an amine
+  'BrCC(Br)CNO', // two bromine atoms and an N–O bond (`2,3-dibromopropan-1-amina` is named since I-36)
   'CCOOC', // unsupported peroxide
   'CC(=O)OCC(=O)O', // ester bonded through its O: aciloxi-
   'CCOC(=O)CC(=O)O', // ester bonded through its carbonyl carbon: alcoxicarbonil-

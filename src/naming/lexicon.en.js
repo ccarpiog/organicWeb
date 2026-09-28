@@ -61,6 +61,7 @@ export const TRADITIONAL_NAMES = Object.freeze({
   formate: 'formate',
   acetate: 'acetate',
   anisole: 'anisole',
+  aniline: 'aniline',
 });
 
 /** Endings of the parent name. */
@@ -102,10 +103,14 @@ export const STYLE_LABELS = Object.freeze({
   substituted: 'classic substitutive name',
   locants: 'with the locant, IUPAC 2013 preferred name',
   functionalClass: 'functional class name, accepted by IUPAC 2013',
+  amineClass: 'traditional alkylamine name',
 });
 
 /** Class word of the functional-class name of an ether (`ethyl methyl ether`; see lexicon.es.js). */
 export const ETHER_CLASS_WORD = 'ether';
+
+/** Last word of the traditional name of a simple amine (`methylamine`, `ethylmethylamine`; see lexicon.es.js). */
+export const AMINE_CLASS_WORD = 'amine';
 
 /**
  * Returns the English stem for a chain of the given length.
@@ -253,7 +258,7 @@ export function traditionalName(id) {
  * @returns {string} The label.
  */
 export function traditionalLabel(id) {
-  return ['toluene', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate'].includes(id) ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
+  return ['toluene', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'aniline'].includes(id) ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
 }
 
 /** Suffixes of the characteristic groups (see lexicon.es.js GROUP_SUFFIXES): `ethanoic acid`, `methyl ethanoate`… */
@@ -393,6 +398,7 @@ export const ESTER_ALKYL_ENDING = '';
 
 export const lexiconEn = Object.freeze({
   etherClassWord: ETHER_CLASS_WORD,
+  amineClassWord: AMINE_CLASS_WORD,
   alkoxyEnding: ALKOXY_ENDING,
   esterAlkylFirst: ESTER_ALKYL_FIRST,
   esterLink: ESTER_LINK,

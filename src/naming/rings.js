@@ -42,7 +42,9 @@ import { adjacency } from '../model/graph.js';
 import { buildRingStructure, buildNameStructure, buildSuffix } from './structure.js';
 import { renderName } from './render.js';
 import { candidateData, runNumberingCascade } from './numbering.js';
-import { createNamingContext, collectSubstituents, groupPrefixes, suffixSites, PREFIX_STYLES } from './substituent.js';
+import {
+  createNamingContext, collectSubstituents, groupPrefixes, suffixSites, numberingPrefix, PREFIX_STYLES,
+} from './substituent.js';
 import { lexiconEs } from './lexicon.es.js';
 
 /**
@@ -120,7 +122,7 @@ function withRingBonds(step, data) {
  * @returns {{parent: object, trace: object[]}} The numbered ring structure and the numbering trace steps (candidates with their ring bonds).
  */
 export function numberRing(mol, perceived, substituents, suffixAtoms = []) {
-  const prefixes = substituents.map((sub) => ({ atom: sub.chainAtom, key: sub.key, citation: sub.citation }));
+  const prefixes = substituents.map(numberingPrefix);
   const candidates = ringCandidates(perceived);
   const data = new Map(candidates.map((c) => [
     c.key,

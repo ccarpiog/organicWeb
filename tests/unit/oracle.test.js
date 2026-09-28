@@ -16,19 +16,20 @@ import { fileURLToPath } from 'node:url';
 import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
 import { canonicalTreeKey, canonicalKey, cyclomaticNumber } from '../../src/model/graph.js';
 import { validateForNaming } from '../../src/model/validate.js';
-import { nameMolecule } from '../../src/naming/index.js';
+import { nameMolecule, amineClassName } from '../../src/naming/index.js';
 import { lexiconEs } from '../../src/naming/lexicon.es.js';
 import { lexiconEn, stem } from '../../src/naming/lexicon.en.js';
 import { parseFullSmiles, heavyAtomTree, OracleSmilesError } from '../../scripts/oracle/smiles-full.mjs';
 import { englishName, compareWithOpsin, kekuleKeys } from '../../scripts/oracle/compare.mjs';
 import {
   generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, halogenate, seededRandom,
+  generateAmines, aminate,
 } from '../../scripts/oracle/generate.mjs';
 import { perceiveRings } from '../../src/model/rings.js';
-import { isBenzeneRing } from '../../src/model/validate.js';
+import { isBenzeneRing, amineNitrogens } from '../../src/model/validate.js';
 import { formula } from '../../src/model/molecule.js';
 import { checkAvailability } from '../../scripts/oracle/opsin.mjs';
-import { main, parseArgs, evaluate } from '../../scripts/oracle/run.mjs';
+import { main, parseArgs, evaluate, buildCases } from '../../scripts/oracle/run.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -244,8 +245,8 @@ test('without the jar every molecule is skipped, never passed, with exit status 
   assert.equal(status, 0);
   assert.ok(lines.some((line) => /^skipped: /.test(line)));
   // 5 random molecules, 3 random monocycles, 1 benzene, 3 halogen derivatives, 3 alcohols, 3 aldehydes and ketones,
-  // 3 carboxylic acids, 3 ethers, 3 esters and the 11 cycloalkanes of the default 4–14 C range.
-  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 38  adapter failures: 0'), lines.join('\n'));
+  // 3 carboxylic acids, 3 ethers, 3 esters, 3 amines and the 11 cycloalkanes of the default 4–14 C range.
+  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 41  adapter failures: 0'), lines.join('\n'));
   lines.length = 0;
   assert.equal(await main(['--count', '3', '--java', 'no-such-java-binary']), 0);
   assert.ok(lines.some((line) => /Java not available/.test(line)));
@@ -265,7 +266,7 @@ test('a jar whose checksum is not the pinned one is rejected at any path', async
   assert.match(availability.reason, /checksum/);
 }); // End of test 'a jar whose checksum is not the pinned one is rejected at any path'
 
-test('real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters and the cycloalkanes (skipped without Java or the jar)', async (t) => {
+test('real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines and the cycloalkanes (skipped without Java or the jar)', async (t) => {
   const availability = await checkAvailability();
   if (!availability.ok) {
     t.skip(availability.reason);
@@ -275,8 +276,8 @@ test('real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzen
   t.mock.method(console, 'log', (text) => lines.push(text));
   const status = await main(['--count', '200', '--seed', '42']);
   assert.equal(status, 0, lines.join('\n'));
-  assert.ok(lines.includes('passed: 931  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
-}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters and the cycloalkanes'
+  assert.ok(lines.includes('passed: 1031  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
+}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines and the cycloalkanes'
 
 test('the English lexicon never reaches the app', async () => {
   const files = [];
@@ -327,3 +328,73 @@ test('benzene derivatives (I-28): generated in both Kekulé drawings, compared w
   assert.equal(compareWithOpsin(parseSmiles('C=CC1=CC=CC=C1'), 'C=Cc1ccccc1').status, 'passed');
   assert.equal(englishName(nameMolecule(toluene).structure), 'methylbenzene');
 });
+
+test('the seeded amine generator: deterministic, distinct, valid, varied (I-36)', () => {
+  const molecules = generateAmines({ count: 120, seed: 3 });
+  assert.equal(molecules.length, 120);
+  assert.deepEqual(generateAmines({ count: 120, seed: 3 }).map(writeSmiles), molecules.map(writeSmiles), 'deterministic');
+  assert.notDeepEqual(generateAmines({ count: 120, seed: 4 }).map(writeSmiles), molecules.map(writeSmiles));
+  assert.equal(new Set(molecules.map(canonicalKey)).size, 120, 'distinct');
+  const degrees = new Set();
+  let polyamines = 0;
+  let withOthers = 0;
+  let rings = 0;
+  let benzenes = 0;
+  for (const mol of molecules) {
+    const smiles = writeSmiles(mol);
+    assert.equal(validateForNaming(mol), null, smiles);
+    const nitrogens = amineNitrogens(mol);
+    assert.ok(nitrogens.length > 0, `${smiles}: at least one amine N`);
+    for (const style of ['isopropil', 'pin', 'substituted']) {
+      assert.equal(nameMolecule(mol, { prefixStyle: style }).ok, true, `${smiles} (${style})`);
+    }
+    nitrogens.forEach((n) => degrees.add([...mol.bonds.values()].filter((b) => b.a === n || b.b === n).length));
+    polyamines += nitrogens.length > 1 ? 1 : 0;
+    withOthers += [...mol.atoms.values()].some((a) => a.element !== 'C' && a.element !== 'N') ? 1 : 0;
+    if (cyclomaticNumber(mol) === 1) {
+      rings += 1;
+      benzenes += /benceno|bencen/.test(nameMolecule(mol).name) ? 1 : 0;
+    }
+  } // End of the loop over the generated amines
+  assert.deepEqual([...degrees].sort(), [1, 2, 3], 'primary, secondary and tertiary amines');
+  assert.ok(polyamines > 0, 'some molecules have several amine N');
+  assert.ok(withOthers > 0, 'some combine the amine with O groups or halogens');
+  assert.ok(rings > 0 && benzenes > 0, 'ring amines and anilines are drawn');
+  const names = molecules.map((mol) => nameMolecule(mol).name);
+  assert.ok(names.some((name) => /amino/.test(name)), 'some cite the amine as an amino prefix');
+  assert.ok(names.some((name) => /\(\w*amino\)|\[\w*\(\w*\)amino\]/.test(name)), 'some have substituted amino prefixes');
+  assert.ok(names.some((name) => /^N/.test(name)), 'some have N-substituents');
+  // aminate() never mutates its input; `only` keeps the N on the allowed carbons.
+  const base = parseSmiles('CC1CCCCC1');
+  const ringCarbons = new Set([...base.atoms.keys()].slice(1));
+  const copy = aminate(base, seededRandom(2), { rate: 1, insert: 1, only: ringCarbons });
+  assert.equal(writeSmiles(base), 'CC1CCCCC1');
+  for (const n of amineNitrogens(copy)) {
+    const carbons = [...copy.bonds.values()].filter((b) => b.a === n || b.b === n).map((b) => (b.a === n ? b.b : b.a));
+    assert.ok(carbons.some((c) => ringCarbons.has(c)), 'every N is on a ring carbon');
+  }
+  assert.equal(writeSmiles(aminate(parseSmiles('CC'), seededRandom(1), { insert: 1 })), 'CNC', 'an N put into a C–C bond');
+}); // End of test 'the seeded amine generator…'
+
+test('buildCases checks aniline with the groups on its N and the functional-class amine name (I-36)', () => {
+  const [aniline, methylAniline, ethylMethylAmine] = buildCases(['NC1=CC=CC=C1', 'CNC1=CC=CC=C1', 'CNCC'].map(parseSmiles));
+  const entry = (item, style) => item.names.find((n) => n.style === style);
+  assert.deepEqual(entry(aniline, 'traditional'), { style: 'traditional', spanish: 'anilina', english: 'aniline', error: null });
+  assert.equal(entry(aniline, 'isopropil').english, 'benzenamine');
+  assert.deepEqual(entry(methylAniline, 'traditional'), {
+    style: 'traditional', spanish: 'N-metilanilina', english: 'N-methylaniline', error: null,
+  });
+  assert.deepEqual(entry(ethylMethylAmine, 'amineClass'), {
+    style: 'amineClass', spanish: 'etilmetilamina', english: 'ethylmethylamine', error: null,
+  });
+  assert.equal(entry(ethylMethylAmine, 'isopropil').english, 'N-methylethanamine');
+  // The English alkylamine names come from the same structure, rendered with the English lexicon.
+  const english = (smiles) => {
+    const mol = parseSmiles(smiles);
+    return amineClassName(mol, nameMolecule(mol).structure, lexiconEn);
+  };
+  assert.equal(english('CC(C)(C)N(C)C(C)C'), 'tert-butylisopropylmethylamine');
+  assert.equal(english('CN(C)C'), 'trimethylamine');
+  assert.equal(english('CC(C)(C)NC(C)(C)C'), 'di-tert-butylamine');
+  assert.equal(english('NCCO'), null, 'not a simple amine');
+}); // End of test 'buildCases checks aniline…'

@@ -16,12 +16,17 @@
  * before a consonant (`ano` + `diol`), IUPAC 2013 P-16.7.1. An ester
  * (design.md §13.4 I-35) is two words: the acid part (`etanoato`, suffix
  * `oato`, locant never cited) and its O-bound group (`metilo`), assembled
- * in the lexicon's order (`etanoato de metilo`, `methyl ethanoate`). No
+ * in the lexicon's order (`etanoato de metilo`, `methyl ethanoate`). An
+ * amine (design.md §13.4 I-36) takes the suffix `amina` (`etanamina`,
+ * `propan-2-amina`, `butano-1,4-diamina`, `bencenamina`); the groups on its
+ * nitrogen are prefixes with the locant `N` (`N-metiletanamina`,
+ * `N,N-dimetilmetanamina`), always cited; an amine that is not principal
+ * is the prefix `amino` (`(metilamino)`, `[etil(metil)amino]`). No
  * name is ever produced by substring translation.
  */
 
 import { lexiconEs } from './lexicon.es.js';
-import { siteLocantText } from './structure.js';
+import { siteLocantText, locantText, locantValue, N_LOCANT } from './structure.js';
 
 /**
  * Creates one name part.
@@ -223,12 +228,15 @@ function renderEnding(parent, lexicon, omit, suffix = null, omitSuffixLocants = 
  */
 export function renderRingParent(ring, lexicon, prefixes, suffix = null) {
   const suffixCount = suffix ? suffix.locants.length : 0;
-  const omission = lexicon.ringOmitsLocants(ring, prefixes, suffixCount);
+  const omission = lexicon.ringOmitsLocants(ring, carbonLocantPrefixes(prefixes), suffixCount);
   if (ring.retained === 'benzene') {
     if (suffix) {
       const [site] = suffix.locants;
+      // `fenol` (retained, OH); any other suffix on the benzene name, its final vowel elided: `bencenamina`.
+      const stemText = suffix.kind === 'alcohol' ? lexicon.phenolStem
+        : lexicon.benzeneName.slice(0, suffixWords(suffix, lexicon).elides ? -1 : undefined);
       return [
-        part(lexicon.phenolStem, 'stem', ring.atoms, ring.bonds),
+        part(stemText, 'stem', ring.atoms, ring.bonds),
         part(lexicon.groupSuffix(suffix.kind), 'ending', [site.atom, site.attachAtom], [site.bond]),
       ];
     }
@@ -275,6 +283,9 @@ export function needsEnclosure(substituent) {
   if (substituent.retained || substituent.halogen || substituent.hydroxy || substituent.oxo) {
     return false;
   }
+  if (substituent.amino) {
+    return substituent.prefixes.length > 0; // `amino`, but `(metilamino)`, `(dimetilamino)`.
+  }
   if (substituent.alkoxy) {
     return substituent.prefixes.length > 0 || !isContractedAlkoxy(substituent);
   }
@@ -295,6 +306,9 @@ export function needsEnclosure(substituent) {
  * @returns {boolean} True when the prefix is compound.
  */
 export function isCompoundPrefix(substituent) {
+  if (substituent.amino) {
+    return substituent.prefixes.length > 0; // `diamino`, but `bis(metilamino)`.
+  }
   if (substituent.alkoxy) {
     return substituent.prefixes.length > 0 || (!substituent.retained && !isContractedAlkoxy(substituent));
   }
@@ -336,11 +350,12 @@ function enclosureLevel(substituent) {
   let level = 0;
   // Inside a one-carbon group the locants are omitted, so an alkoxy prefix beside another prefix is enclosed too.
   const crowded = Boolean(substituent.chain) && substituent.chain.length === 1 && substituent.prefixes.length > 1;
-  for (const group of substituent.prefixes) {
-    if (enclosedInName(group.substituent, crowded)) {
+  substituent.prefixes.forEach((group, g) => {
+    // In an amino prefix every group after the first is enclosed (`etil(metil)amino`).
+    if (enclosedInName(group.substituent, crowded) || (substituent.amino && g > 0)) {
       level = Math.max(level, enclosureLevel(group.substituent) + 1);
     }
-  }
+  });
   return level;
 }
 
@@ -360,25 +375,30 @@ function enclosureLevel(substituent) {
  * would read as `(fluorometoxi)metano`; design.md §13.4 I-34): see
  * enclosedInName().
  *
+ * With `enclose` (a group after the first inside an amino prefix,
+ * `etil(metil)amino`, design.md §13.4 I-36) the prefix is enclosed
+ * whatever needsEnclosure() says, so the groups on the N read apart.
+ *
  * @param {object} group - The prefix group (structure.js PrefixGroup).
  * @param {object} lexicon - The lexicon.
  * @param {boolean} [omitLocants] - Leave out the locants (default false).
  * @param {boolean} [crowded] - The locants are omitted and other prefix groups are written beside this one (default false).
+ * @param {boolean} [enclose] - Always enclose the prefix (default false).
  * @returns {{text: string, kind: string}[]} The tokens.
  */
-function groupTokens(group, lexicon, omitLocants = false, crowded = false) {
+function groupTokens(group, lexicon, omitLocants = false, crowded = false, enclose = false) {
   const tokens = [];
   if (!omitLocants) {
     group.locants.forEach((site, i) => {
       if (i > 0) {
         tokens.push(token(',', 'punct'));
       }
-      tokens.push(token(String(site.locant), 'locant'));
+      tokens.push(token(locantText(site.locant), 'locant'));
     });
     tokens.push(token('-', 'punct'));
   }
   const words = substituentTokens(group.substituent, lexicon);
-  const enclosed = enclosedInName(group.substituent, crowded);
+  const enclosed = enclose || enclosedInName(group.substituent, crowded);
   const count = group.locants.length;
   const mult = isCompoundPrefix(group.substituent) ? lexicon.compoundMultiplier(count) : lexicon.multiplier(count);
   if (mult) {
@@ -459,6 +479,11 @@ function substituentTokens(substituent, lexicon) {
   }
   if (substituent.alkoxy) {
     return alkoxyTokens(substituent, lexicon);
+  }
+  if (substituent.amino) {
+    // The groups on the N without locants, every one after the first enclosed, then `amino`.
+    const tokens = substituent.prefixes.flatMap((group, g) => groupTokens(group, lexicon, true, false, g > 0));
+    return [...tokens, token(lexicon.groupPrefix('amine'), 'prefix')];
   }
   if (substituent.retained) {
     const { italic, text } = lexicon.retainedPrefix(substituent.retained);
@@ -563,7 +588,7 @@ export function citationKey(substituent, lexicon = lexiconEs) {
   const letters = tokens.filter((t) => t.kind !== 'italic' && t.kind !== 'locant').map((t) => t.text).join('');
   return {
     alpha: letters.toLowerCase().replace(/[^a-z]/g, ''),
-    numeric: tokens.filter((t) => t.kind === 'locant').map((t) => Number(t.text)),
+    numeric: tokens.filter((t) => t.kind === 'locant').map((t) => locantValue(t.text)),
     italic: tokens.filter((t) => t.kind === 'italic').map((t) => t.text).join(''),
   };
 }
@@ -591,7 +616,7 @@ export function prefixNameKey(groups, lexicon = lexiconEs) {
   const letters = tokens.filter((t) => t.kind !== 'italic' && t.kind !== 'locant').map((t) => t.text).join('');
   return {
     alpha: letters.toLowerCase().replace(/[^a-z]/g, ''),
-    numeric: tokens.filter((t) => t.kind === 'locant').map((t) => Number(t.text)),
+    numeric: tokens.filter((t) => t.kind === 'locant').map((t) => locantValue(t.text)),
     italic: tokens.filter((t) => t.kind === 'italic').map((t) => t.text).join(''),
     text: tokens.map((t) => t.text).join(''),
   };
@@ -608,7 +633,8 @@ export function prefixNameKey(groups, lexicon = lexiconEs) {
  * ringOmitsLocants(); a one- or two-carbon chain or a fully halogenated
  * parent, lexicon chainOmitsPrefixLocants()) the attachment locants and
  * their hyphen are left out: `metil` in `metilciclohexano`, `tricloro` in
- * `triclorometano`.
+ * `triclorometano`. renderName() never omits them when a prefix has the
+ * locant `N` (a group on an amine nitrogen).
  *
  * @param {object[]} groups - The prefix groups (structure.js PrefixGroup), in citation order.
  * @param {object} lexicon - The lexicon.
@@ -673,11 +699,41 @@ export function suffixCount(structure) {
 }
 
 /**
+ * The prefix groups of a name as seen by the locant-omission rules: the
+ * occurrences on the amine nitrogen (locant `N`, design.md §13.4 I-36) left
+ * out, since they substitute no hydrogen of the parent hydride
+ * (`N-metiletanamina`: ethane still carries one group, the amine), and
+ * groups left without occurrences dropped.
+ *
+ * @param {object[]} prefixes - Prefix groups (structure.js PrefixGroup).
+ * @returns {object[]} The groups with their carbon occurrences only.
+ */
+export function carbonLocantPrefixes(prefixes) {
+  return prefixes
+    .map((group) => ({ ...group, locants: group.locants.filter((site) => site.locant !== N_LOCANT) }))
+    .filter((group) => group.locants.length > 0);
+}
+
+/**
+ * Tells whether some prefix of a name has the locant `N` (a group on an
+ * amine nitrogen, design.md §13.4 I-36).
+ *
+ * @param {object[]} prefixes - Prefix groups (structure.js PrefixGroup).
+ * @returns {boolean} True when an `N` locant is cited.
+ */
+export function hasNitrogenLocants(prefixes) {
+  return prefixes.some((group) => group.locants.some((site) => site.locant === N_LOCANT));
+}
+
+/**
  * Tells whether the attachment locants of a name's prefixes — and the
  * locants of its suffix groups, which follow the same rule — are omitted:
  * ring rule (lexicon ringOmitsLocants()) for a ring parent, chain rule
  * (lexicon chainOmitsPrefixLocants(): `clorometano`, `cloroetano`,
- * `hexacloroetano`, `etanol`, `metanodiol`, `propanona`) for a chain.
+ * `hexacloroetano`, `etanol`, `metanodiol`, `propanona`) for a chain. The
+ * groups on an amine nitrogen do not count (carbonLocantPrefixes():
+ * `N-metiletanamina`, `N-metilciclohexanamina`), and their `N` locants are
+ * always written (renderName()).
  *
  * @param {object} structure - The name structure (structure.js NameStructure).
  * @param {object} [lexicon] - The lexicon (default: Spanish; both share the rules).
@@ -685,9 +741,10 @@ export function suffixCount(structure) {
  */
 export function omitsPrefixLocants(structure, lexicon = lexiconEs) {
   const count = suffixCount(structure);
+  const prefixes = carbonLocantPrefixes(structure.prefixes);
   return structure.parentKind === 'ring'
-    ? lexicon.ringOmitsLocants(structure.parent, structure.prefixes, count).prefixes
-    : lexicon.chainOmitsPrefixLocants(structure.parent, structure.prefixes, count, structure.suffix ? structure.suffix.kind : null);
+    ? lexicon.ringOmitsLocants(structure.parent, prefixes, count).prefixes
+    : lexicon.chainOmitsPrefixLocants(structure.parent, prefixes, count, structure.suffix ? structure.suffix.kind : null);
 }
 
 /**
@@ -736,7 +793,12 @@ export function assembleEster(acidParts, ester, lexicon) {
  * ester (`structure.ester`, I-35) adds its O-bound group (assembleEster());
  * with `traditional` (a lexicon TRADITIONAL_NAMES id, `acetate`, from
  * principal.js carbonylTraditionalId()) its acid part is that one word
- * (`acetato de etilo`), referring to the parent and the –COO–.
+ * (`acetato de etilo`), referring to the parent and the –COO–; for a
+ * benzene amine (`aniline`, design.md §13.4 I-36) the parent and its
+ * suffix are that one word, after the N prefixes (`N-metilanilina`).
+ * Prefix locants are never omitted when a prefix has the locant `N`
+ * (`1-cloro-N-metilmetanamina`); the suffix locants follow the omission
+ * rule without the N groups (`N-metiletanamina`).
  *
  * @param {object} structure - The name structure (structure.js NameStructure).
  * @param {object} [lexicon] - The lexicon to use (default: Spanish).
@@ -755,6 +817,14 @@ export function renderName(structure, lexicon = lexiconEs, options = {}) {
   const ring = structure.parentKind === 'ring';
   const suffix = structure.suffix || null;
   const omitPrefixLocants = !(options.citeLocants && !ring) && omitsPrefixLocants(structure, lexicon);
+  const omitGroupLocants = omitPrefixLocants && !hasNitrogenLocants(structure.prefixes);
+  if (options.traditional === 'aniline') {
+    const group = suffixGroupIds(suffix);
+    const word = part(lexicon.traditionalName('aniline'), 'stem', [...new Set([...structure.parent.atoms, ...group.atoms])],
+      [...structure.parent.bonds, ...group.bonds]);
+    const parts = [...renderPrefixes(structure.prefixes, lexicon, omitGroupLocants), word];
+    return { name: parts.map((p) => p.text).join(''), parts };
+  }
   const parent = ring
     ? renderRingParent(structure.parent, lexicon, structure.prefixes, suffix)
     : renderParent(structure.parent, lexicon, hasPrefixes, suffix, omitPrefixLocants);
@@ -764,7 +834,7 @@ export function renderName(structure, lexicon = lexiconEs, options = {}) {
     const { atoms, bonds } = suffixGroupIds(suffix);
     lead.push(part(classWord, 'ending', atoms, bonds), part(' ', 'punct'));
   }
-  const acid = [...lead, ...renderPrefixes(structure.prefixes, lexicon, omitPrefixLocants), ...parent];
+  const acid = [...lead, ...renderPrefixes(structure.prefixes, lexicon, omitGroupLocants), ...parent];
   const parts = structure.ester ? assembleEster(acid, structure.ester, lexicon) : acid;
   return { name: parts.map((p) => p.text).join(''), parts };
 } // End of function renderName()

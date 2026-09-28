@@ -251,9 +251,11 @@ function bondLocants(orders, test) {
 
 /**
  * Locants of every prefix of a numbered candidate, grouped by identity and
- * ordered by citation (alphanumerical) order.
+ * ordered by citation (alphanumerical) order. A prefix with a fixed
+ * `locant` (a group on the N of a principal amine, structure.js N_LOCANT,
+ * design.md §13.4 I-36) keeps it in every candidate.
  *
- * @param {{atom: number, key: string, citation: object}[]} prefixes - The chain's prefixes.
+ * @param {{atom: number, key: string, citation: object, locant?: number}[]} prefixes - The chain's prefixes.
  * @param {Map<number, number>} locantOf - Atom id → locant in this candidate.
  * @returns {{all: number[], groups: {key: string, citation: object, locants: number[]}[]}} All prefix locants (sorted) and the groups in citation order.
  */
@@ -263,14 +265,26 @@ function prefixLocants(prefixes, locantOf) {
     if (!byKey.has(prefix.key)) {
       byKey.set(prefix.key, { key: prefix.key, citation: prefix.citation, locants: [] });
     }
-    byKey.get(prefix.key).locants.push(locantOf.get(prefix.atom));
+    byKey.get(prefix.key).locants.push(locantOfPrefix(prefix, locantOf));
   }
   const groups = [...byKey.values()];
   groups.forEach((group) => group.locants.sort((p, q) => p - q));
   groups.sort((g, h) => compareCitationKeys(g.citation, h.citation) || (g.key < h.key ? -1 : 1));
-  const all = prefixes.map((prefix) => locantOf.get(prefix.atom)).sort((p, q) => p - q);
+  const all = prefixes.map((prefix) => locantOfPrefix(prefix, locantOf)).sort((p, q) => p - q);
   return { all, groups };
 } // End of function prefixLocants()
+
+/**
+ * Locant of one prefix in a numbered candidate: its fixed `locant` when it
+ * has one (a group on an amine N), else the locant of its carrying atom.
+ *
+ * @param {{atom: number, locant?: number}} prefix - The prefix.
+ * @param {Map<number, number>} locantOf - Atom id → locant in this candidate.
+ * @returns {number} The locant.
+ */
+function locantOfPrefix(prefix, locantOf) {
+  return prefix.locant === undefined ? locantOf.get(prefix.atom) : prefix.locant;
+}
 
 /**
  * Tells whether two candidates' prefix groups are identical (same identities

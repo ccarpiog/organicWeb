@@ -1,5 +1,5 @@
 {
- "NCCO": {
+ "NCC(O)OO": {
   "code": "HETEROATOM",
   "principal": "alcohol",
   "steps": [
@@ -10,7 +10,8 @@
      "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
      "He encontrado estos grupos:",
      "1 alcohol: un grupo –OH unido a un carbono.",
-     "1 amina: un nitrógeno unido a carbonos solo con enlaces simples (–NH₂, –NH– o –N–)."
+     "1 amina: un nitrógeno unido a carbonos solo con enlaces simples (–NH₂, –NH– o –N–).",
+     "1 grupo que no reconozco: hay átomos que no son carbono unidos entre sí (como O–O o N–O)."
     ],
     "highlight": [
      {
@@ -20,6 +21,16 @@
       ],
       "bonds": [],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -29,7 +40,8 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el alcohol: en la lista va antes que la amina."
+     "Aquí el grupo principal es el alcohol: en la lista va antes que la amina.",
+     "Además hay un grupo que no reconozco: no sé dónde iría en la lista."
     ],
     "highlight": [
      {
@@ -45,6 +57,16 @@
       ],
       "bonds": [],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -55,7 +77,8 @@
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
      "El alcohol: sufijo «-ol», como en «etanol».",
-     "La amina: prefijo «amino-»."
+     "La amina: prefijo «amino-».",
+     "El grupo que no reconozco no tiene sufijo ni prefijo entre los que conozco."
     ],
     "highlight": [
      {
@@ -71,6 +94,16 @@
       ],
       "bonds": [],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -79,13 +112,15 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos) y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂)."
     ],
     "highlight": [
      {
       "atoms": [
        1,
-       4
+       4,
+       5,
+       6
       ],
       "bonds": [],
       "style": "candidate"
@@ -173,7 +208,7 @@
    }
   ]
  },
- "NCC(=O)O": {
+ "NCC(OO)C(=O)O": {
   "code": "HETEROATOM",
   "principal": "acid",
   "steps": [
@@ -185,21 +220,32 @@
      "He encontrado estos grupos:",
      "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
      "1 amina: un nitrógeno unido a carbonos solo con enlaces simples (–NH₂, –NH– o –N–).",
+     "1 grupo que no reconozco: hay átomos que no son carbono unidos entre sí (como O–O o N–O).",
      "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona. Todo junto es un único grupo."
     ],
     "highlight": [
      {
       "atoms": [
-       3,
-       4,
-       5,
+       6,
+       7,
+       8,
        1
       ],
       "bonds": [
-       3,
-       4
+       6,
+       7
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -209,18 +255,19 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que la amina."
+     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que la amina.",
+     "Además hay un grupo que no reconozco: no sé dónde iría en la lista."
     ],
     "highlight": [
      {
       "atoms": [
-       3,
-       4,
-       5
+       6,
+       7,
+       8
       ],
       "bonds": [
-       3,
-       4
+       6,
+       7
       ],
       "style": "parent"
      },
@@ -230,6 +277,16 @@
       ],
       "bonds": [],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -240,18 +297,19 @@
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
      "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico».",
-     "La amina: prefijo «amino-»."
+     "La amina: prefijo «amino-».",
+     "El grupo que no reconozco no tiene sufijo ni prefijo entre los que conozco."
     ],
     "highlight": [
      {
       "atoms": [
-       3,
-       4,
-       5
+       6,
+       7,
+       8
       ],
       "bonds": [
-       3,
-       4
+       6,
+       7
       ],
       "style": "parent"
      },
@@ -261,6 +319,16 @@
       ],
       "bonds": [],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -269,14 +337,16 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos) y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂)."
     ],
     "highlight": [
      {
       "atoms": [
        1,
        4,
-       5
+       5,
+       7,
+       8
       ],
       "bonds": [],
       "style": "candidate"
@@ -478,7 +548,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos) y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂)."
     ],
     "highlight": [
      {
@@ -494,7 +564,7 @@
    }
   ]
  },
- "NCC(O)CC(=O)CC=O": {
+ "NCC(O)CC(=O)C(OO)C=O": {
   "code": "HETEROATOM",
   "principal": "aldehyde",
   "steps": [
@@ -507,23 +577,34 @@
      "1 aldehído: un oxígeno unido por un [[enlace doble]] a un carbono que también tiene un hidrógeno (–CHO); por eso siempre está en un extremo.",
      "1 cetona: un oxígeno unido por un [[enlace doble]] a un carbono que está entre otros dos carbonos (–CO–).",
      "1 alcohol: un grupo –OH unido a un carbono.",
-     "1 amina: un nitrógeno unido a carbonos solo con enlaces simples (–NH₂, –NH– o –N–)."
+     "1 amina: un nitrógeno unido a carbonos solo con enlaces simples (–NH₂, –NH– o –N–).",
+     "1 grupo que no reconozco: hay átomos que no son carbono unidos entre sí (como O–O o N–O)."
     ],
     "highlight": [
      {
       "atoms": [
-       9,
-       10,
+       11,
+       12,
        6,
        7,
        4,
        1
       ],
       "bonds": [
-       9,
+       11,
        6
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       9,
+       10
+      ],
+      "bonds": [
+       9
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -533,16 +614,17 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el aldehído: en la lista va antes que la cetona, el alcohol y la amina."
+     "Aquí el grupo principal es el aldehído: en la lista va antes que la cetona, el alcohol y la amina.",
+     "Además hay un grupo que no reconozco: no sé dónde iría en la lista."
     ],
     "highlight": [
      {
       "atoms": [
-       9,
-       10
+       11,
+       12
       ],
       "bonds": [
-       9
+       11
       ],
       "style": "parent"
      },
@@ -557,6 +639,16 @@
        6
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       9,
+       10
+      ],
+      "bonds": [
+       9
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -569,16 +661,17 @@
      "El aldehído: sufijo «-al», como en «etanal».",
      "La cetona: prefijo «oxo-».",
      "El alcohol: prefijo «hidroxi-».",
-     "La amina: prefijo «amino-»."
+     "La amina: prefijo «amino-».",
+     "El grupo que no reconozco no tiene sufijo ni prefijo entre los que conozco."
     ],
     "highlight": [
      {
       "atoms": [
-       9,
-       10
+       11,
+       12
       ],
       "bonds": [
-       9
+       11
       ],
       "style": "parent"
      },
@@ -593,6 +686,16 @@
        6
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       9,
+       10
+      ],
+      "bonds": [
+       9
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -601,7 +704,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos) y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂)."
     ],
     "highlight": [
      {
@@ -609,7 +712,9 @@
        1,
        4,
        7,
-       10
+       9,
+       10,
+       12
       ],
       "bonds": [],
       "style": "candidate"
@@ -708,7 +813,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos) y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂)."
     ],
     "highlight": [
      {
@@ -824,7 +929,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos) y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂)."
     ],
     "highlight": [
      {
@@ -842,9 +947,9 @@
    }
   ]
  },
- "BrCC(Br)CN": {
+ "BrCC(Br)CNO": {
   "code": "HETEROATOM",
-  "principal": "amine",
+  "principal": null,
   "steps": [
    {
     "id": "groups",
@@ -852,18 +957,27 @@
     "text": [
      "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
      "He encontrado estos grupos:",
-     "1 amina: un nitrógeno unido a carbonos solo con enlaces simples (–NH₂, –NH– o –N–).",
-     "2 átomos de bromo (–Br): un halógeno unido a un carbono."
+     "2 átomos de bromo (–Br): un halógeno unido a un carbono.",
+     "1 grupo que no reconozco: hay átomos que no son carbono unidos entre sí (como O–O o N–O)."
     ],
     "highlight": [
      {
       "atoms": [
-       6,
        1,
        4
       ],
       "bonds": [],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       6,
+       7
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -872,18 +986,10 @@
     "id": "principal",
     "title": "Elige el principal",
     "text": [
-     "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es la amina: es el único tipo de grupo que puede serlo.",
-     "Los halógenos nunca son el grupo principal: siempre se nombran delante, como las ramas."
+     "Los halógenos nunca son el [[grupo principal]]: siempre se nombran delante, como las ramas.",
+     "Tu molécula no tiene otro grupo, así que no hay grupo principal: el nombre se forma como el de un hidrocarburo, con estos grupos delante."
     ],
     "highlight": [
-     {
-      "atoms": [
-       6
-      ],
-      "bonds": [],
-      "style": "parent"
-     },
      {
       "atoms": [
        1,
@@ -891,6 +997,16 @@
       ],
       "bonds": [],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       6,
+       7
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -899,18 +1015,11 @@
     "id": "affixes",
     "title": "Sufijo o prefijo",
     "text": [
-     "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
-     "La amina: sufijo «-amina», como en «metanamina».",
-     "El bromo: prefijo «bromo-»."
+     "Sin grupo principal no hay [[sufijo]]: todos los grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
+     "El bromo: prefijo «bromo-».",
+     "El grupo que no reconozco no tiene sufijo ni prefijo entre los que conozco."
     ],
     "highlight": [
-     {
-      "atoms": [
-       6
-      ],
-      "bonds": [],
-      "style": "parent"
-     },
      {
       "atoms": [
        1,
@@ -918,6 +1027,16 @@
       ],
       "bonds": [],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       6,
+       7
+      ],
+      "bonds": [
+       6
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -926,14 +1045,15 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos) y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂)."
     ],
     "highlight": [
      {
       "atoms": [
        1,
        4,
-       6
+       6,
+       7
       ],
       "bonds": [],
       "style": "candidate"
@@ -1014,7 +1134,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos) y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂)."
     ],
     "highlight": [
      {
@@ -1396,7 +1516,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos) y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂)."
     ],
     "highlight": [
      {
@@ -1524,7 +1644,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos)."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos) y aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂)."
     ],
     "highlight": [
      {
