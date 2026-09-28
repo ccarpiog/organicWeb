@@ -3,8 +3,13 @@
  * projection of the molecule in the textbook semi-developed style, used in
  * Con carbonos mode. The parent chain (from the naming result, like
  * "Ordenar dibujo") lies on one horizontal line, locant 1 on the left;
- * branches hang straight up or down from their carbon and continue
- * horizontally or vertically.
+ * branches hang straight up or down from their chain atom and continue
+ * horizontally or vertically. Heteroatoms are ordinary tree atoms with their
+ * condensed labels (`OH`, `O`, `NH₂`, `N`, `Cl`…): an ether or ester O and
+ * an amine or amide N simply carry the carbon group beyond them. At a chain
+ * end a branch may instead continue the chain line outward (a nitrile N
+ * first, then a singly bonded heteroatom, then =O: `N≡C–CH₂–`, `HO–C–`,
+ * `CH₃–O–C–`), so a methane derivative can use all four directions.
  *
  * Placement is on an integer grid (column, row) and collision-free by
  * construction: every subtree is drawn inside its own rectangle, and the
@@ -264,50 +269,178 @@ function createSolver(adj) {
   return { half, quad };
 } // End of function createSolver()
 
+/** Cost of a chain-end branch that hangs up or down instead of continuing the chain line. */
+const END_STAY = 4;
+
+/**
+ * Preference of a chain-end branch for the slot that continues the chain
+ * line outward (lower is preferred; compare END_STAY), so that the drawing
+ * reads like a textbook formula: a nitrile N continues the line
+ * (`N≡C–CH₂–`), then a singly bonded heteroatom (`HO–CH₂–`, `Cl–CH₂–`,
+ * `CH₃–O–C–`), then a double-bonded one (`O=CH–`). A carbon branch prefers
+ * to hang up or down, so the chain line shows only the parent chain.
+ *
+ * @param {object} mol - The molecule.
+ * @param {{atom: number, order: number}} link - The branch's bond from the chain end (an adjacency entry).
+ * @returns {number} The preference.
+ */
+function endPreference(mol, link) {
+  if (mol.atoms.get(link.atom).element === 'C') {
+    return END_STAY + 1;
+  }
+  return link.order === 3 ? 0 : link.order === 2 ? 2 : 1;
+}
+
+/**
+ * Lists the ways of placing the branches of one chain atom: up or down (as
+ * for every chain atom), plus, at a chain end, straight on along the chain
+ * line ('left' before locant 1, 'right' after the last locant). The plain
+ * up/down sidings come first, in their historical order (a lone branch
+ * hangs down first), so ties keep the drawings of hydrocarbons unchanged.
+ *
+ * @param {number} count - Number of branches.
+ * @param {string[]} ends - The end slots of this atom ('right', 'left', both or none).
+ * @returns {string[][]} The side of each branch, one list per option (none when impossible).
+ */
+function sidings(count, ends) {
+  const out = count === 2 ? [['up', 'down'], ['down', 'up']] : count === 1 ? [['down'], ['up']] : count === 0 ? [[]] : [];
+  if (ends.length === 0) {
+    return out;
+  }
+  const indices = [...Array(count).keys()];
+  const slots = ['right', 'left', 'down', 'up'].filter((s) => s === 'up' || s === 'down' || ends.includes(s));
+  for (const map of assignments(indices, slots)) {
+    const sides = Array(count);
+    for (const [slot, i] of map) {
+      sides[i] = slot;
+    }
+    if (sides.some((side) => side === 'left' || side === 'right')) {
+      out.push(sides);
+    }
+  }
+  return out;
+} // End of function sidings()
+
+/**
+ * Places the branches of one chain atom that sits at column `at`, given
+ * the rightmost column used so far above and below the chain: the cost of
+ * the option (END_STAY / endPreference() terms) and the length of each
+ * straight-on bond, stretched until the branch's box clears every box on
+ * the rows it spans.
+ *
+ * @param {object} mol - The molecule.
+ * @param {object[]} links - The branch bonds (adjacency entries).
+ * @param {Sub[]} subs - The branch drawings (half-planes).
+ * @param {string[]} sides - Side of each branch.
+ * @param {boolean} isEnd - True for a chain end.
+ * @param {{up: number, down: number}} edge - Rightmost column used on each side.
+ * @param {number} at - Column of the chain atom.
+ * @returns {{prefer: number, stretch: number, lens: Object<string, number>}} Cost and straight-on bond lengths.
+ */
+function endSlots(mol, links, subs, sides, isEnd, edge, at) {
+  const low = { up: Infinity, down: Infinity };
+  const high = { up: edge.up, down: edge.down };
+  sides.forEach((side, i) => {
+    if (side === 'up' || side === 'down') {
+      low[side] = Math.min(low[side], at + subs[i].sMin);
+      high[side] = Math.max(high[side], at + subs[i].sMax);
+    }
+  });
+  let prefer = 0;
+  let stretch = 0;
+  const lens = {};
+  sides.forEach((side, i) => {
+    if (side === 'up' || side === 'down') {
+      prefer += isEnd ? END_STAY : 0;
+      return;
+    }
+    prefer += endPreference(mol, links[i]);
+    let len = 1;
+    for (const vertical of ['up', 'down']) {
+      const reaches = vertical === 'up' ? subs[i].sMin <= -1 : subs[i].sMax >= 1;
+      if (reaches && side === 'left' && low[vertical] !== Infinity) {
+        len = Math.max(len, at - low[vertical] + 1);
+      } else if (reaches && side === 'right' && high[vertical] !== -Infinity) {
+        len = Math.max(len, high[vertical] - at + 1);
+      }
+    }
+    lens[side] = len;
+    stretch += len - 1;
+  });
+  return { prefer, stretch, lens };
+} // End of function endSlots()
+
 /**
  * Places the parent chain on row 0 and its branches above (negative rows)
- * or below (positive rows), each branch in its own column range.
+ * or below (positive rows), each branch in its own column range. A branch
+ * of a chain end may instead continue the chain line outward (sidings(),
+ * endSlots()), owning the half-plane beyond that end.
  *
+ * @param {object} mol - The molecule.
  * @param {Map<number, object[]>} adj - Adjacency.
  * @param {number[]} chain - Parent atoms in locant order.
  * @returns {Map<number, {col: number, row: number}>|null} Grid cells, or null when impossible.
  */
-function gridLayout(adj, chain) {
+function gridLayout(mol, adj, chain) {
   const solver = createSolver(adj);
   const inChain = new Set(chain);
   const grid = new Map();
   const edge = { up: -Infinity, down: -Infinity }; // Rightmost column used on each side.
   let col = -1;
-  for (const id of chain) {
-    const branches = adj.get(id).filter((n) => !inChain.has(n.atom)).map((n) => n.atom);
-    if (branches.length > 2) {
+  for (let index = 0; index < chain.length; index += 1) {
+    const id = chain[index];
+    const links = adj.get(id).filter((n) => !inChain.has(n.atom));
+    const ends = [];
+    if (index === chain.length - 1) {
+      ends.push('right');
+    }
+    if (index === 0) {
+      ends.push('left');
+    }
+    const subs = links.map((n) => solver.half(n.atom, id));
+    const options = sidings(links.length, ends);
+    if (options.length === 0 || subs.some((sub) => !sub)) {
       return null;
     }
-    const subs = branches.map((b) => solver.half(b, id));
-    if (subs.some((sub) => !sub)) {
-      return null;
-    }
-    // Try the possible sides; keep the one that needs the least room (ties: first listed).
-    const sidings = branches.length === 2 ? [['up', 'down'], ['down', 'up']]
-      : branches.length === 1 ? [['down'], ['up']] : [[]];
+    // Keep the cheapest option: end preferences first, then the least room, then the shortest bonds (ties: first listed).
     let pick = null;
-    for (const sides of sidings) {
+    for (const sides of options) {
       let at = col + 1;
       sides.forEach((side, i) => {
-        at = Math.max(at, edge[side] - subs[i].sMin + 1);
+        if (side === 'up' || side === 'down') {
+          at = Math.max(at, edge[side] - subs[i].sMin + 1);
+        }
       });
-      if (!pick || at < pick.at) {
-        pick = { at, sides };
+      const slots = endSlots(mol, links, subs, sides, ends.length > 0, edge, at);
+      const better = !pick || slots.prefer < pick.prefer
+        || (slots.prefer === pick.prefer && (at < pick.at || (at === pick.at && slots.stretch < pick.stretch)));
+      if (better) {
+        pick = { at, sides, ...slots };
       }
-    }
+    } // End of the loop over the placement options
     col = pick.at;
     grid.set(id, { col, row: 0 });
     pick.sides.forEach((side, i) => {
-      const sign = side === 'up' ? -1 : 1;
-      for (const [atom, c] of subs[i].cells) {
-        grid.set(atom, { col: col + c.s, row: sign * (1 + c.f) });
+      if (side === 'up' || side === 'down') {
+        const sign = side === 'up' ? -1 : 1;
+        for (const [atom, c] of subs[i].cells) {
+          grid.set(atom, { col: col + c.s, row: sign * (1 + c.f) });
+        }
+        edge[side] = Math.max(edge[side], col + subs[i].sMax);
+        return;
       }
-      edge[side] = Math.max(edge[side], col + subs[i].sMax);
+      const sign = side === 'left' ? -1 : 1;
+      const len = pick.lens[side];
+      for (const [atom, c] of subs[i].cells) {
+        grid.set(atom, { col: col + sign * (len + c.f), row: c.s });
+      }
+      // Later branches on the rows a box before locant 1 spans stay right of it.
+      if (side === 'left' && subs[i].sMin <= -1) {
+        edge.up = Math.max(edge.up, col - len);
+      }
+      if (side === 'left' && subs[i].sMax >= 1) {
+        edge.down = Math.max(edge.down, col - len);
+      }
     });
   } // End of the loop over the parent chain
   return grid;
@@ -360,7 +493,7 @@ export function rightAngleLayout(mol, result, options = {}) {
   if (chain.length === 0 || chain.some((id) => !adj.has(id))) {
     throw new Error('rightAngleLayout: the parent chain does not belong to this molecule');
   }
-  const grid = gridLayout(adj, chain);
+  const grid = gridLayout(mol, adj, chain);
   if (!grid || grid.size !== mol.atoms.size) {
     return { ok: false, reason: 'NO_ROOM' };
   }
@@ -384,10 +517,10 @@ export function rightAngleLayout(mol, result, options = {}) {
 } // End of function rightAngleLayout()
 
 /**
- * Label box of a carbon at a position.
+ * Label box of an atom at a position (its condensed label, labelSize()).
  *
  * @param {object} mol - The molecule.
- * @param {number} id - The carbon.
+ * @param {number} id - The atom.
  * @param {{x: number, y: number}} p - Its displayed position.
  * @returns {{x1: number, y1: number, x2: number, y2: number}} The box.
  */

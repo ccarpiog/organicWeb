@@ -4,7 +4,7 @@
  * F, Cl, Br and I atoms with one undo step per gesture and element-specific
  * valence refusals; bond tools never change an element; heteroatoms are
  * always labelled with their implicit hydrogens and hit-testable on their
- * labels; the 90° view falls back for heteroatom molecules.
+ * labels; the 90° view falls back for a molecule it cannot name.
  */
 
 import { test } from 'node:test';
@@ -465,10 +465,10 @@ test('addedAtoms reports an element change (the 90° view rings it)', () => {
 
 // ---------------------------------------------------------------- views that need a name
 
-test('the 90° view falls back to the normal drawing for heteroatom molecules, with a note', () => {
+test('the 90° view draws named heteroatom molecules; one it cannot name falls back with a note', () => {
   const ethanol = build(['C', 'C', 'O'], [[1, 2], [2, 3]]);
-  const projection = projectRightAngles(ethanol);
-  assert.deepEqual(projection, { ok: false, reason: 'HETEROATOM' });
-  assert.equal(rightAngleNote(projection), FALLBACK_NOTES.HETEROATOM);
-  assert.equal(projectRightAngles(build(['O'])).reason, 'HETEROATOM');
+  assert.equal(projectRightAngles(ethanol).ok, true);
+  const water = projectRightAngles(build(['O']));
+  assert.equal(water.reason, 'HETEROATOM');
+  assert.equal(rightAngleNote(water), FALLBACK_NOTES.HETEROATOM);
 });

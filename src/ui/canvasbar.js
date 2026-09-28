@@ -27,24 +27,25 @@ export const RIGHT_ANGLE_HINT = 'Puedes dibujar aquí. Para mover átomos u orde
 
 /**
  * Notes shown when the 90° view falls back to the normal, editable drawing,
- * by reason (the empty canvas gets a gentle hint).
+ * by reason (the empty canvas gets a gentle hint). `HETEROATOM` is the naming
+ * engine's code for a group it cannot name yet (an imine, an anhydride…).
  */
 export const FALLBACK_NOTES = Object.freeze({
   EMPTY: 'Los ángulos rectos aparecerán cuando dibujes una molécula.',
   DISCONNECTED: 'Hay piezas sueltas: se ve el dibujo normal.',
   CYCLE: 'Hay un anillo: se ve el dibujo normal.',
   RING_SYSTEM: 'Hay anillos: se ve el dibujo normal.',
-  HETEROATOM: 'Hay átomos que no son carbono: se ve el dibujo normal.',
+  HETEROATOM: 'Todavía no sé nombrar esta molécula: se ve el dibujo normal.',
   NO_ROOM: 'Esta molécula no cabe con ángulos rectos sin cruces: se ve el dibujo normal.',
   OTHER: 'Esta molécula no se puede dibujar con ángulos rectos: se ve el dibujo normal.',
 });
 
 /**
  * The 90° projection of a molecule: names it (for its parent chain) and
- * lays it out with rightAngleLayout(). Pure (no DOM). A molecule with any
- * atom other than carbon keeps the normal drawing (`HETEROATOM`), even a
- * halogen derivative that has a name (design.md §13.4: the 90° view for
- * heteroatoms is phase I-41).
+ * lays it out with rightAngleLayout(). Pure (no DOM). Every named acyclic
+ * molecule is projected, heteroatoms included (design.md §6.3); a molecule
+ * the engine cannot name keeps the normal drawing with its error code as
+ * the reason, and one with a ring gets `CYCLE` from the layout.
  *
  * @param {object} mol - The molecule.
  * @returns {{ok: true, positions: Map<number, {x: number, y: number}>}|{ok: false, reason: string}}
@@ -58,9 +59,6 @@ export function projectRightAngles(mol) {
   const result = nameMolecule(mol);
   if (!result.ok) {
     return { ok: false, reason: (result.error && result.error.code) || 'OTHER' };
-  }
-  if ([...mol.atoms.values()].some((atom) => atom.element !== 'C')) {
-    return { ok: false, reason: 'HETEROATOM' };
   }
   return rightAngleLayout(mol, result);
 }

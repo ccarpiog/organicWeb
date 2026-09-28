@@ -30,7 +30,7 @@ import { explain, plainText, atomCounts } from '../../src/explain/explain.js';
 import { englishName } from '../../scripts/oracle/compare.mjs';
 import { scrambleMolecule, seededRandom } from '../../scripts/oracle/generate.mjs';
 import { canonicalLayout, layoutProblems } from '../../src/layout/canonical.js';
-import { projectRightAngles, rightAngleNote, FALLBACK_NOTES } from '../../src/ui/canvasbar.js';
+import { projectRightAngles, rightAngleNote, RIGHT_ANGLE_HINT } from '../../src/ui/canvasbar.js';
 
 /**
  * Names a SMILES string in the default style.
@@ -259,7 +259,7 @@ test('explanation: formula with halogens, halogens off the chain, prefixes, orde
   assert.ok(steps.every((s) => !['groups', 'principal', 'affixes', 'notYet'].includes(s.id)));
 });
 
-test('views that need a name: Ordenar dibujo lays out halogen derivatives; the 90° view keeps the normal drawing', () => {
+test('views that need a name: Ordenar dibujo lays out halogen derivatives; the 90° view draws them too', () => {
   for (const smiles of ['ClC(Cl)(Cl)Cl', 'CC(Br)CCl', 'ClC1=CC=CC=C1', 'FC(F)(F)C1CCCCC1', 'CCCCC(C(Cl)(Cl)Cl)CCCC']) {
     const mol = parseSmiles(smiles);
     let i = 0;
@@ -272,8 +272,9 @@ test('views that need a name: Ordenar dibujo lays out halogen derivatives; the 9
     assert.equal(layoutProblems(laid).ok, true, smiles);
     assert.equal(laid.atoms.size, mol.atoms.size);
   }
+  // Since I-41a the 90° view draws named halogen derivatives too.
   const projection = projectRightAngles(parseSmiles('CC(Br)CCl'));
-  assert.deepEqual(projection, { ok: false, reason: 'HETEROATOM' });
-  assert.equal(rightAngleNote(projection), FALLBACK_NOTES.HETEROATOM);
+  assert.equal(projection.ok, true);
+  assert.equal(rightAngleNote(projection), RIGHT_ANGLE_HINT);
   assert.equal(projectRightAngles(parseSmiles('CCCC')).ok, true, 'hydrocarbons unchanged');
 });

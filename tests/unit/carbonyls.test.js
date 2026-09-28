@@ -366,7 +366,7 @@ test('explanation: the C=O group, -al / -ona, the uncited aldehyde locant, oxo- 
   assert.match(refused[3].text[0], /carbaldehído/);
 }); // End of test 'explanation'
 
-test('views that need a name: Ordenar dibujo lays out carbonyls; the 90° view keeps the normal drawing', () => {
+test('views that need a name: Ordenar dibujo lays out carbonyls; the 90° view draws them too', () => {
   for (const smiles of ['C=O', 'CC(C)=O', 'O=CCCC=O', 'CC(=O)CC(CC(C)=O)CC(C)=O', 'O=C1CCCCC1', 'OC1CCC(=O)CC1', 'CCC(C(C)=O)CC=O']) {
     const mol = parseSmiles(smiles);
     let i = 0;
@@ -379,7 +379,7 @@ test('views that need a name: Ordenar dibujo lays out carbonyls; the 90° view k
     assert.equal(layoutProblems(laid).ok, true, smiles);
     assert.equal(laid.atoms.size, mol.atoms.size);
   }
-  assert.deepEqual(projectRightAngles(parseSmiles('CC(C)=O')), { ok: false, reason: 'HETEROATOM' });
+  assert.equal(projectRightAngles(parseSmiles('CC(C)=O')).ok, true, 'the 90° view draws named carbonyls (I-41a)');
 });
 
 test('oracle generator: deterministic aldehydes and ketones, all named, C=O on ring carbons only', () => {

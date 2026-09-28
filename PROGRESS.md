@@ -56,11 +56,14 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-40b | v2.20b Acids and aldehydes with a ring, ring acyl prefixes (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40b.md` |
 | I-40c | v2.20c Nitriles and amides with a ring (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40c.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40c.md` |
 | I-40d | v2.20d Ring esters (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40d.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40d.md` |
-| I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
+| I-41a | v2.21a 90° view for acyclic heteroatom molecules (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-41a.md` |
+| I-41b | v2.21b CHO/COOH optional abbreviations (split from I-41) | same, §3.21 | queued | — | — |
+| I-41c | v2.21c Ayuda, examples and docs wrap-up (split from I-41) | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-40d done; I-41 queued
-(I-27 split into I-27a editor drawing and I-27b Ordenar dibujo; I-39 into I-39a `ciano-`,
+v2 plan (user-confirmed scope): I-21…I-41a done; I-41b, I-41c queued
+(I-41 split into I-41a 90° view for heteroatoms, I-41b CHO/COOH abbreviations, I-41c wrap-up;
+I-27 split into I-27a editor drawing and I-27b Ordenar dibujo; I-39 into I-39a `ciano-`,
 I-39b acyl prefixes, I-39c ester prefixes + diesters, I-39d amide prefixes + pair matrix;
 I-40 into I-40a ring prefixes on a functional chain, I-40b acids/aldehydes + ring acyl
 prefixes, I-40c nitriles/amides with a ring, I-40d ring esters);
@@ -98,10 +101,12 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-41 (v2.21 condensed formulas and wrap-up): read design §13.4 row
-I-41 and `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.21; split it if it
-is too big for one worker. Also worth folding in: the pre-existing "Los 6 carbonos" wording for
-ring acids/nitriles/amides (`docs/progress-archive/i-40d.md`, open points) and the stale
+Poll the inbox, then run I-41b (CHO/COOH as optional abbreviations mapped to all their atoms;
+abbreviations never change the graph; selection, highlight, collisions, accessibility tests):
+read design §13.4 row I-41b and `autoclaude/processed/215-rings-functional-groups-confirmed.md`
+§3.21. "OH per atom" already exists (`atomLabel()` in `src/editor/labels.js`). Then I-41c
+(Ayuda, examples, docs wrap-up), folding in the pre-existing "Los 6 carbonos" wording for ring
+acids/nitriles/amides (`docs/progress-archive/i-40d.md`, open points) and the stale
 `scripts/oracle/README.md`. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
@@ -216,14 +221,17 @@ ring acids/nitriles/amides (`docs/progress-archive/i-40d.md`, open points) and t
   (two-ring `benzoato de fenilo`, lactone refusal), two-ring key in `graph.js`, two-part naming in
   `naming/index.js`; oracle `generateRingEsters()`; tests `tests/unit/ring-esters.test.js`,
   `tests/e2e/ring-esters.spec.js`.
+- 90° heteroatoms (I-41a): heteroatom gate removed in `projectRightAngles()`
+  (`src/layout/rightangle.js`), chain-end continuation into a branch, `HO`/`H₂N` labels via
+  `rightAngleLabel()` in `render.js`; tests `tests/unit/rightangle-hetero.test.js`,
+  `tests/e2e/right-angles-hetero.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-40d)
+## Verification (last phase, I-41a)
 
-- Run by the orchestrator: `npm test` 0 (1482 pass) · `npm run check` 0 (127 files) · `npm run e2e`
-  0 (253 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (10111 pass, 500 ring
-  esters). After the review fix: `npm test` 0 (1482 pass) · `npm run check` 0 · `npm run e2e` 0 (253 pass).
+- Run by the orchestrator: `npm test` 0 (1489 pass) · `npm run check` 0 (129 files) · `npm run e2e`
+  0 (259 pass, source + dist). Oracle not rerun (naming engine untouched).
 
 ## Open risks / deviations
 
@@ -362,9 +370,13 @@ ring acids/nitriles/amides (`docs/progress-archive/i-40d.md`, open points) and t
   Pre-existing: `cianometil` branch explained as "un grupo de 2 carbonos". Review should-fix
   (amide prefix form in «Anillo o cadena») fixed with a regression (`docs/progress-archive/i-40c.md`).
 
+- I-41a: named acyclic heteroatom molecules now draw at 90° (rings still fall back); 1 of 1356
+  generator molecules falls back with NO_ROOM, none overlap; HETEROATOM note reworded; five older
+  tests updated from "falls back" to the new behaviour (`docs/progress-archive/i-41a.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-40c `4e9d4b2`, pushed. I-40d committed and pushed right after this checkpoint (see `git log`).
+- I-40d `003e73c`, pushed. I-41a committed and pushed right after this checkpoint (see `git log`).

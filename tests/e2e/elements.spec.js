@@ -345,7 +345,7 @@ test('naming a heteroatom molecule shows the "not yet" message; 90° view and Or
   await page.getByRole('button', { name: 'Con carbonos' }).click();
   await page.locator('#right-angle-button').click();
   expect(await page.evaluate(() => window.__editor.isProjected())).toBe(false);
-  await expect(page.locator('#right-angle-note')).toHaveText('Hay átomos que no son carbono: se ve el dibujo normal.');
+  await expect(page.locator('#right-angle-note')).toHaveText('Todavía no sé nombrar esta molécula: se ve el dibujo normal.');
   // The imine N keeps one hydrogen: labelled NH.
   await expect(label(page, 4)).toHaveText('NH');
   await expect(label(page, 1)).toHaveText('CH₃');

@@ -304,7 +304,7 @@ the Keychain account is the WebDAV user).
   as `trimetilamina` among the amines, `formamida` and `acetamida` among
   the amides, `acetonitrilo` among the nitriles; amino-acid names such as alanina are
   not given); the 90° view keeps
-  the normal drawing for any molecule with a heteroatom.
+  the normal drawing for any molecule with a ring.
 - Parent chain up to 30 carbons, whole molecule up to 60.
 - Structure → name only; there is no name → structure.
 - Future (design §12, §13): functional groups,

@@ -332,7 +332,7 @@ test('explanation: the -OH group, the principal chain, N0, locant omission and t
   assert.equal('groups' in named('CCO'), false);
 });
 
-test('views that need a name: Ordenar dibujo lays out alcohols; the 90° view keeps the normal drawing', () => {
+test('views that need a name: Ordenar dibujo lays out alcohols; the 90° view draws them too', () => {
   for (const smiles of ['CO', 'OCC(O)CO', 'CCCCC(CO)CCC', 'OC1CCCCC1', 'OC1=CC=CC=C1', 'CC1CCCCC1O', 'OCC(CO)CO']) {
     const mol = parseSmiles(smiles);
     let i = 0;
@@ -345,7 +345,7 @@ test('views that need a name: Ordenar dibujo lays out alcohols; the 90° view ke
     assert.equal(layoutProblems(laid).ok, true, smiles);
     assert.equal(laid.atoms.size, mol.atoms.size);
   }
-  assert.deepEqual(projectRightAngles(parseSmiles('CCO')), { ok: false, reason: 'HETEROATOM' });
+  assert.equal(projectRightAngles(parseSmiles('CCO')).ok, true, 'the 90° view draws named alcohols (I-41a)');
 });
 
 test('oracle generator: deterministic alcohols, all valid, OH on ring carbons only', () => {

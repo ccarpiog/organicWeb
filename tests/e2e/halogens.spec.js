@@ -127,11 +127,12 @@ test('a molecule drawn with the Cloro tool is named, with the halogen explained 
   expect(after.bonds).toEqual(before.bonds);
   expect(after.atoms.map((a) => a.element)).toEqual(['C', 'C', 'Cl']);
 
-  // The 90° view keeps the normal drawing for a molecule with a halogen.
+  // The 90° view draws a named halogen derivative too (I-41a).
   await page.getByRole('button', { name: 'Con carbonos' }).click();
   await page.locator('#right-angle-button').click();
-  expect(await page.evaluate(() => window.__editor.isProjected())).toBe(false);
-  await expect(page.locator('#right-angle-note')).toHaveText('Hay átomos que no son carbono: se ve el dibujo normal.');
+  expect(await page.evaluate(() => window.__editor.isProjected())).toBe(true);
+  await expect(page.locator('#right-angle-note')).toHaveText(
+    'Puedes dibujar aquí. Para mover átomos u ordenar el dibujo, desactiva los ángulos rectos.');
   expect(errors).toEqual([]);
 }); // End of test 'a molecule drawn with the Cloro tool is named…'
 

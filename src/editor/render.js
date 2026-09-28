@@ -195,6 +195,31 @@ export function rightAngleSegments(mol, bondId) {
 } // End of function rightAngleSegments()
 
 /**
+ * Label text of an atom in the 90° view: atomLabel(), except that a
+ * heteroatom end with hydrogens whose only bond comes from its right is
+ * written hydrogens first, as in a textbook (`HO–CH₂–`, `H₂N–CO–`), so the
+ * bond meets the heteroatom's symbol. Same characters, so the same
+ * labelSize() box.
+ *
+ * @param {object} mol - The molecule (at its displayed coordinates).
+ * @param {number} atomId - The atom.
+ * @returns {string} The label with Unicode subscripts.
+ */
+export function rightAngleLabel(mol, atomId) {
+  const label = atomLabel(mol, atomId);
+  const atom = mol.atoms.get(atomId);
+  const links = neighbours(mol, atomId);
+  if (!atom || atom.element === 'C' || links.length !== 1 || !label.startsWith(`${atom.element}H`)) {
+    return label;
+  }
+  const other = mol.atoms.get(links[0].atom);
+  if (!other || Math.abs(other.y - atom.y) > 1e-6 || other.x <= atom.x) {
+    return label;
+  }
+  return `${label.slice(atom.element.length)}${atom.element}`;
+} // End of function rightAngleLabel()
+
+/**
  * Position of a locant number in the 90° view: up and to the right of the
  * carbon label, clear of the four bond directions (left, right, up, down)
  * a right-angle drawing can use.
@@ -812,7 +837,7 @@ export function createRenderer(svg) {
         const dot = el('circle', { class: 'carbon-dot', cx: atom.x, cy: atom.y, r: CARBON_DOT_RADIUS }, layers.atoms);
         dot.dataset.atomId = String(atom.id);
       }
-      const label = atomLabelText(mol, atom.id, mode);
+      const label = lastRightAngle ? rightAngleLabel(mol, atom.id) : atomLabelText(mol, atom.id, mode);
       if (label) {
         const cls = atom.element === 'C' ? 'atom-label' : `atom-label hetero-label element-${atom.element}`;
         const node = text(cls, atomLabelPosition(mol, atom.id, mode), label, layers.atoms);

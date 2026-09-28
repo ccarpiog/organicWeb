@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T07:47:20Z",
+  "updated": "2026-09-28T08:04:34Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -431,10 +431,25 @@
       "narrative": "docs/progress-archive/i-40d.md"
     },
     {
-      "id": "I-41",
-      "title": "v2.21 Condensed formulas and wrap-up",
+      "id": "I-41a",
+      "title": "v2.21a 90° view for acyclic heteroatom molecules (split from I-41)",
+      "status": "done",
+      "risk": "high",
+      "summary": "Right-angle (90°) condensed drawing now shows named acyclic molecules with O, N or halogen atoms; rings still fall back.",
+      "review": "docs/reviews/I-41a.md",
+      "narrative": "docs/progress-archive/i-41a.md"
+    },
+    {
+      "id": "I-41b",
+      "title": "v2.21b CHO/COOH optional abbreviations (split from I-41)",
       "status": "queued",
-      "summary": "v2 plan phase 21: condensed formulas and wrap-up (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "summary": "Adds an optional display that shortens aldehyde and acid groups to CHO/COOH labels without changing the molecule."
+    },
+    {
+      "id": "I-41c",
+      "title": "v2.21c Ayuda, examples and docs wrap-up (split from I-41)",
+      "status": "queued",
+      "summary": "Updates help, examples and documentation for rings and functional groups and closes the v2 plan."
     }
   ]
 }
