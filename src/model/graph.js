@@ -320,16 +320,22 @@ export function treeCentre(mol) {
  * @param {Map<number, object[]>} adj - Adjacency from adjacency().
  * @param {number} atom - Subtree root.
  * @param {number|null} parent - The neighbour to exclude (towards the tree root).
+ * @param {Set<number>|null} [ring] - The atoms of the one ring, encoded whole where the walk enters it (rootedBranchKey()); null for a tree.
  * @returns {string} The rooted canonical encoding.
- * @throws {Error} If the branch contains a cycle.
+ * @throws {Error} If the branch contains a cycle (and `ring` does not cover it).
  */
-function encodeRooted(mol, adj, atom, parent) {
+function encodeRooted(mol, adj, atom, parent, ring = null) {
   const codes = new Map();
   const seen = new Set([atom]);
   const stack = [{ atom, parent, expanded: false }];
   while (stack.length > 0) {
     const frame = stack.pop();
     const branches = adj.get(frame.atom).filter((n) => n.atom !== frame.parent);
+    if (ring && ring.has(frame.atom)) {
+      // The branch enters the one ring here: the whole ring (with its side branches) is one code (rootedBranchKey()).
+      codes.set(frame.atom, encodeRingEntry(mol, adj, frame.atom, frame.parent, ring));
+      continue;
+    }
     if (!frame.expanded) {
       stack.push({ ...frame, expanded: true });
       for (const n of branches) {
@@ -363,6 +369,99 @@ function encodeRooted(mol, adj, atom, parent) {
  */
 export function rootedTreeKey(mol, root, exclude, adj = adjacency(mol)) {
   return encodeRooted(mol, adj, root, exclude);
+}
+
+/**
+ * The atoms of the cycles of a molecule (its 2-core): side chains are
+ * pruned leaf by leaf until only atoms on a cycle are left. Empty for a
+ * tree; the ring atoms for a molecule with one ring.
+ *
+ * @param {Map<number, object[]>} adj - Adjacency from adjacency().
+ * @returns {Set<number>} The atom ids left after pruning.
+ */
+export function cycleCore(adj) {
+  const degree = new Map([...adj].map(([id, list]) => [id, list.length]));
+  const queue = [...adj.keys()].filter((id) => degree.get(id) <= 1);
+  const removed = new Set(queue);
+  for (let i = 0; i < queue.length; i += 1) {
+    for (const n of adj.get(queue[i])) {
+      if (!removed.has(n.atom)) {
+        degree.set(n.atom, degree.get(n.atom) - 1);
+        if (degree.get(n.atom) <= 1) {
+          removed.add(n.atom);
+          queue.push(n.atom);
+        }
+      }
+    }
+  } // End of the leaf pruning
+  return new Set([...adj.keys()].filter((id) => !removed.has(id)));
+} // End of function cycleCore()
+
+/**
+ * Encodes the one ring of a branch, entered at `entry` from `parent`
+ * (rootedBranchKey(), design.md §13.4 I-40a): each ring atom is written as
+ * its element plus the sorted rooted keys of its side branches (the one
+ * towards `parent` left out), and the ring is read from the entry atom in
+ * both directions, atom, bond symbol, atom…, the closure bond last; the
+ * smaller reading is the code, `%R<size>(<reading>)`. It does not depend on
+ * atom ids, bond ids or the direction of the ring order.
+ *
+ * @param {object} mol - The molecule.
+ * @param {Map<number, object[]>} adj - Adjacency from adjacency().
+ * @param {number} entry - The ring atom where the branch enters the ring.
+ * @param {number|null} parent - The atom the branch comes from (null for a whole molecule).
+ * @param {Set<number>} ring - The ring atoms (cycleCore()).
+ * @returns {string} The code.
+ * @throws {Error} If a side branch of the ring contains another cycle.
+ */
+function encodeRingEntry(mol, adj, entry, parent, ring) {
+  /**
+   * One ring atom as written in the reading: its element and the sorted keys of its side branches.
+   *
+   * @param {number} id - A ring atom.
+   * @returns {string} The token.
+   */
+  const tokenOf = (id) => {
+    const branches = adj.get(id)
+      .filter((n) => !ring.has(n.atom) && n.atom !== parent)
+      .map((n) => BOND_SYMBOL[n.order] + encodeRooted(mol, adj, n.atom, id))
+      .sort();
+    return `${mol.atoms.get(id).element}(${branches.join(',')})`;
+  };
+  const readings = adj.get(entry).filter((n) => ring.has(n.atom)).map((first) => {
+    let text = tokenOf(entry) + BOND_SYMBOL[first.order];
+    let previous = entry;
+    let current = first.atom;
+    while (current !== entry) {
+      const next = adj.get(current).find((n) => ring.has(n.atom) && n.atom !== previous);
+      text += tokenOf(current) + BOND_SYMBOL[next.order];
+      previous = current;
+      current = next.atom;
+    }
+    return text;
+  }); // End of the readings from the entry atom, one per direction
+  readings.sort();
+  return `%R${ring.size}(${readings[0]})`;
+} // End of function encodeRingEntry()
+
+/**
+ * Like rootedTreeKey(), but the branch may contain the one ring of a
+ * monocyclic molecule (design.md §13.4 I-40a: a `ciclohexil` or `fenil`
+ * group on a chain parent): where the walk enters the ring, the whole ring
+ * with its side branches is one code (encodeRingEntry()). Two branches
+ * have equal keys if and only if they are isomorphic, rooted at
+ * corresponding atoms, with the same elements and bond orders. For a
+ * branch without a ring it equals rootedTreeKey().
+ *
+ * @param {object} mol - A molecule with at most one ring.
+ * @param {number} root - First atom of the branch.
+ * @param {number|null} exclude - Neighbour of `root` that is not part of the branch (null: whole molecule).
+ * @param {Map<number, object[]>} [adj] - Adjacency from adjacency() (computed when omitted).
+ * @returns {string} The rooted canonical key.
+ */
+export function rootedBranchKey(mol, root, exclude, adj = adjacency(mol)) {
+  const ring = cycleCore(adj);
+  return encodeRooted(mol, adj, root, exclude, ring.size > 0 ? ring : null);
 }
 
 /**

@@ -342,8 +342,10 @@ test('lexicons: suffix and prefix forms of every group kind', () => {
 });
 
 test('a heteroatom molecule is still refused with HETEROATOM, carrying its groups', () => {
-  // Amines are named since I-36, nitriles since I-38 (ciano- since I-39a): a nitrile on an acid's carbon (carbonocyanidic), an N–O bond and a side-chain amine on a ring keep the refusal.
-  for (const smiles of ['N#CC(=O)O', 'ONCC(=O)O', 'ClCCOCCOOC', 'OCC1=CC=CC=C1', 'NCC1CCCCC1', 'COOC', 'O']) {
+  // Amines are named since I-36, nitriles since I-38 (ciano- since I-39a), ring side-chain OH and amines since I-40a: a
+  // nitrile on an acid's carbon (carbonocyanidic), an N–O bond, an aldehyde with a ring and a ring with two identical
+  // principal branches (symmetricRing) keep the refusal.
+  for (const smiles of ['N#CC(=O)O', 'ONCC(=O)O', 'ClCCOCCOOC', 'O=CCC1=CC=CC=C1', 'NCC1CCC(CN)CC1', 'COOC', 'O']) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(result.ok, false, smiles);
     assert.equal(result.error.code, 'HETEROATOM', smiles);
@@ -384,7 +386,7 @@ test('explanation of a refusal: groups, principal, suffix or prefix, then the me
 /** Heteroatom molecules whose group steps are snapshot-tested. */
 const GROUP_SNAPSHOT_SMILES = [
   'NCC(O)OO', // alcohol > amine, with an unsupported hydroperoxide (`2-aminoetan-1-ol` is named since I-36)
-  'OCC1=CC=CC=C1', // alcohol on the side chain of a benzene: its own message
+  'OCC1CCC(CO)CC1', // two identical CH₂OH branches on a ring: multiplicative, refused by the engine (symmetricRing; `fenilmetanol` is named since I-40a)
   'NCC(OO)C(=O)O', // acid with an amine and a hydroperoxide: the acid is not alcohol + ketone (amino acids are named since I-36)
   'CC(=O)OCCOC(C)=O', // two esters (each not ether + ketone) on different carbon pieces: refused as esterPrefix since I-39c (`butanodioato de dimetilo` is named since I-39c)
   'NC(=O)C1CCCCC1', // amide on a ring: not amine + ketone; refused (ringAmide) until I-40 (open-chain amides are named since I-37)

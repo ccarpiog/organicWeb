@@ -9,8 +9,9 @@
  * trimetilamina, N-etil-N-metilpropan-1-amina, butano-1,4-diamina,
  * ciclohexanamina, bencenamina with anilina, N-metilbencenamina with
  * N-metilanilina, 2-aminoetan-1-ol, 2-(dimetilamino)etan-1-ol, ácido
- * 2-aminopropanoico); "Ordenar dibujo" lays out an amine; side-chain amines
- * on a ring, N-substituted polyamines and symmetric amines are refused with
+ * 2-aminopropanoico); "Ordenar dibujo" lays out an amine; two identical
+ * amine branches on a ring (side-chain amines are named since I-40a),
+ * N-substituted polyamines and symmetric amines are refused with
  * their messages, a urea and an imine keep the generic HETEROATOM
  * refusal, and an N in a ring is a heterocycle (RING_SYSTEM). Runs on the
  * dev server and on dist/index.html.
@@ -255,8 +256,8 @@ test('out-of-scope amines and other nitrogen compounds are refused with their me
   const errors = await openApp(page);
   const error = page.locator('#results .results-error');
   for (const [smiles, text] of [
-    // An amine on a ring's side chain (sideChainAmine).
-    ['NCC1CCCCC1', 'un anillo y un grupo amino (un nitrógeno, como el –NH₂) en una de sus ramas'],
+    // Two identical amine branches on a ring (symmetricRing, I-40a; one side-chain amine is named since I-40a).
+    ['NCC1CCC(CN)CC1', 'un anillo con dos ramas iguales'],
     // A diamine with a group on one N (substitutedPolyamine).
     ['NCCNC', 'localizadores como N¹ y N²'],
     // Equal halves joined by the N, each with the principal group (symmetricAmine).
@@ -273,7 +274,7 @@ test('out-of-scope amines and other nitrogen compounds are refused with their me
   } // End of the loop over the refused molecules
 
   // The refused amine still offers the group steps: the stepper ends with "Aún no sé nombrarla".
-  await loadSmiles(page, 'NCC1CCCCC1');
+  await loadSmiles(page, 'NCC1CCC(CN)CC1');
   await askName(page);
   await page.getByRole('button', { name: 'Ver paso a paso' }).click();
   const stepper = page.locator('#stepper');

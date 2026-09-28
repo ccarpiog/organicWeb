@@ -24,7 +24,7 @@ import { readFile } from 'node:fs/promises';
 import { adjacency } from '../../src/model/graph.js';
 import {
   validateForNaming, isEtherOxygen, etherOxygens, longestCarbonChain, MESSAGES, SYMMETRIC_ETHER_MESSAGE,
-  SIDE_CHAIN_ALCOHOL_MESSAGE, RING_SYSTEM_MESSAGES,
+  RING_SYSTEM_MESSAGES,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { oxygenKind, principalKindOf } from '../../src/naming/principal.js';
@@ -281,10 +281,9 @@ test('refusals: symmetric halves with the principal group, a ring with the OH on
   // Different halves, or no principal group: named substitutively.
   assert.equal(named('OCCOCCCO').name, '3-(2-hidroxietoxi)propan-1-ol');
   assert.equal(named('CCOCC').name, 'etoxietano');
-  // The OH on the chain side of a ring ether: the chain would be the parent (I-40).
-  const ring = named('OCCOC1CCCCC1');
-  assert.equal(ring.error.reason, 'sideChainAlcohol');
-  assert.equal(ring.error.message, SIDE_CHAIN_ALCOHOL_MESSAGE);
+  // The OH on the chain side of a ring ether: the chain is the parent, the ring in the alkoxy prefix (I-40a).
+  assert.equal(named('OCCOC1CCCCC1').name, '2-(ciclohexiloxi)etan-1-ol');
+  assert.equal(named('OCCOC1=CC=CC=C1').name, '2-fenoxietan-1-ol');
   assert.equal(named('CC(=O)OC').name, 'etanoato de metilo', 'an ester O is not an ether O: esters are named since I-35');
   assert.equal(named('CC(=O)OCC(=O)OC').error.reason, 'esterPrefix', 'an ester inside the O-bound group of another (I-39c)');
   // Two rings joined by an O: several rings, out of scope.

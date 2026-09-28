@@ -163,6 +163,14 @@ const SNAPSHOT_SMILES = [
   'OC(=O)CC(C(=O)NC)CC(=O)O', // ácido 3-(metilcarbamoil)pentanodioico: carbamoil (I-39d)
   'CC(=O)N(C)CC(=O)O', // ácido 2-[acetil(metil)amino]etanoico: acilamino (I-39d)
   'CC(=O)NCC(=O)N', // 2-(acetilamino)etanamida: two amides on different pieces, P4 (I-39d)
+  'OCCC1CCCCC1', // 2-ciclohexiletan-1-ol: the chain carries the OH, the ring is a prefix (I-40a)
+  'CC(=O)C1=CC=CC=C1', // 1-feniletan-1-ona: fenil prefix, acetofenona (I-40a)
+  'NCC1=CC=CC=C1', // fenilmetanamina: one-carbon chain, bencilamina (I-40a)
+  'OC(CO)C1CCC(O)CC1', // 1-(4-hidroxiciclohexil)etano-1,2-diol: the chain carries more OH than the ring (I-40a)
+  'OCC1CCC(O)CC1', // 4-(hidroximetil)ciclohexan-1-ol: ring and chain tie, the ring wins (I-40a)
+  'OCCC1C=CCCC1', // 2-(ciclohex-2-en-1-il)etan-1-ol: an unsaturated ring prefix (I-40a)
+  'OCCOC1=CC=CC=C1', // 2-fenoxietan-1-ol: the ring on the other side of an ether O (I-40a)
+  'OCC1CCC(O)C(O)C1', // 4-(hidroximetil)ciclohexano-1,2-diol: the ring carries more OH than the branch, no tie (I-40a review)
 ];
 
 /**

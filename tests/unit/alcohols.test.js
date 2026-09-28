@@ -17,7 +17,7 @@ import assert from 'node:assert/strict';
 import { parseSmiles } from '../../src/model/smiles.js';
 import { createMolecule, addAtom, addBond, formula } from '../../src/model/molecule.js';
 import {
-  validateForNaming, isHydroxyOxygen, hasNameableHeteroatoms, sideChainHydroxyls, MESSAGES, SIDE_CHAIN_ALCOHOL_MESSAGE,
+  validateForNaming, isHydroxyOxygen, hasNameableHeteroatoms, sideChainHydroxyls, MESSAGES,
 } from '../../src/model/validate.js';
 import { adjacency } from '../../src/model/graph.js';
 import { nameMolecule } from '../../src/naming/index.js';
@@ -84,16 +84,12 @@ test('alcohol vs phenol vs carboxylic OH', () => {
   const acid = named('CC(=O)O');
   assert.equal(acid.name, 'ácido etanoico', 'the OH of an acid is part of the acid, never an alcohol (I-33)');
   assert.equal(acid.structure.suffix.kind, 'acid');
-  // A substituted phenol is a polysubstituted benzene; an OH on a benzene side chain waits for I-40.
+  // A substituted phenol is a polysubstituted benzene; an OH on a benzene side chain is named since I-40a (the chain
+  // carries the principal group, the ring is `fenil`).
   assert.equal(named('OC1=CC=C(C)C=C1').error.code, 'CYCLE');
-  const benzyl = named('OCC1=CC=CC=C1');
-  assert.equal(benzyl.error.code, 'HETEROATOM');
-  assert.equal(benzyl.error.reason, 'sideChainAlcohol');
-  assert.equal(benzyl.error.message, SIDE_CHAIN_ALCOHOL_MESSAGE);
-  assert.deepEqual(benzyl.error.sideChain, [1]);
-  assert.equal(benzyl.groups.principal, 'alcohol');
+  assert.equal(named('OCC1=CC=CC=C1').name, 'fenilmetanol');
   assert.deepEqual(sideChainHydroxyls(parseSmiles('OC1CCC(CO)CC1')), [7]);
-  assert.equal(named('OC1CCC(CO)CC1').error.reason, 'sideChainAlcohol', 'one OH on the ring, one on a branch');
+  assert.equal(named('OC1CCC(CO)CC1').name, '4-(hidroximetil)ciclohexan-1-ol', 'one OH on the ring, one on a branch: a tie, the ring wins');
 });
 
 test('P0: the parent carries the most OH groups before being the longest (IUPAC 2013 P-44.1.1)', () => {

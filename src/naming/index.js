@@ -16,8 +16,13 @@
  * styles. Doubly-attached (`-iliden`) substituents are named at any depth
  * (design.md §4.6): every valid acyclic hydrocarbon within the size caps
  * gets a name. A molecule with a ring that passes validation has exactly
- * one carbocycle, which is always the parent (ring vs chain, IUPAC 2013
- * P-44.1.2.2); rings.js names it with its side chains as substituents
+ * one carbocycle, which is the parent (ring vs chain, IUPAC 2013
+ * P-44.1.2.2) unless a chain carries more principal groups (P-44.1.1,
+ * design.md §13.4 I-40a: parent.js ringOrChain(); the chain pipeline then
+ * names it with the ring as a `ciclohexil` / `fenil` prefix,
+ * `2-ciclohexiletan-1-ol`, `1-feniletan-1-ona`, `fenilmetanamina`, and a
+ * `RINGCHAIN` trace step first; a ring with two identical such branches is
+ * refused, `symmetricRing`, multiplicative names); rings.js names it with its side chains as substituents
  * (`ciclohexano`, `metilciclohexano`, `3-metilciclohex-1-eno`, design.md
  * §13.4 I-25, I-26), under the same prefix styles and alternatives. A
  * benzene ring (six carbons, alternating double and single ring bonds; at
@@ -182,10 +187,10 @@ import {
   validateForNaming, validationError, carboxylCarbons, etherOxygens, amineNitrogens, ACYL_SUBSTITUENT_MESSAGE,
   CARBOXY_SUBSTITUENT_MESSAGE, SYMMETRIC_ETHER_MESSAGE, SYMMETRIC_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE,
   amideCarbons, AMIDE_PREFIX_MESSAGE, nitrileCarbons, CYANO_PREFIX_MESSAGE, isAmineNitrogen, esterCarbons,
-  ESTER_PREFIX_MESSAGE,
+  ESTER_PREFIX_MESSAGE, SYMMETRIC_RING_MESSAGE, RING_ACYL_MESSAGE,
 } from '../model/validate.js';
-import { adjacency, hasCycle, rootedTreeKey } from '../model/graph.js';
-import { selectParent } from './parent.js';
+import { adjacency, hasCycle, rootedBranchKey, cycleCore } from '../model/graph.js';
+import { selectParent, ringOrChain } from './parent.js';
 import {
   createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, suffixSites, unnamedAcyl, PREFIX_STYLES,
   substituentSubtree, nameSubstituent, esterAlkyl, numberingPrefix,
@@ -193,7 +198,7 @@ import {
 import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure, buildSuffix, esterParts } from './structure.js';
 import { renderName, suffixCount, suffixGroupIds, hasNitrogenLocants } from './render.js';
-import { nameRingWithStyle } from './rings.js';
+import { nameRingWithStyle, ringParent } from './rings.js';
 import { hasBenzeneRing, nameBenzeneWithStyle, traditionalAlternative } from './aromatic.js';
 import { analyzeGroups } from './seniority.js';
 import { lexiconEs } from './lexicon.es.js';
@@ -300,7 +305,8 @@ function nameWithStyle(mol, adj, selection, style) {
  * @returns {object[]} New trace steps whose candidates carry `bonds`.
  */
 function withCandidateBonds(trace, adj) {
-  const add = (candidate) => ({ ...candidate, bonds: chainBonds(adj, candidate.atoms).bonds });
+  // A ring candidate (the RINGCHAIN step, design.md §13.4 I-40a) already has its ring bonds.
+  const add = (candidate) => ({ ...candidate, bonds: candidate.bonds ? [...candidate.bonds] : chainBonds(adj, candidate.atoms).bonds });
   return trace.map((step) => ({
     ...step,
     candidatesBefore: step.candidatesBefore.map(add),
@@ -353,17 +359,24 @@ function nameValidated(mol, options) {
     throw new RangeError(`unknown prefix style ${style}`);
   }
   const cyclic = hasCycle(mol);
-  const symmetric = cyclic ? null : symmetricEther(mol) || symmetricAmine(mol);
+  // With a ring, a chain carrying more principal groups than the ring is the parent (design.md §13.4 I-40a).
+  const choice = cyclic ? ringOrChain(mol, ringParent(mol)) : null;
+  const chainParent = !cyclic || Boolean(choice && choice.chainParent);
+  const found = chainParent ? selectParent(mol) : null;
+  const symmetric = chainParent
+    ? symmetricEther(mol) || symmetricAmine(mol)
+    : null;
   if (symmetric) {
     return withGroups({ ok: false, error: symmetric }, mol);
   }
-  const benzene = cyclic && hasBenzeneRing(mol);
-  const adj = cyclic ? null : adjacency(mol);
-  const selection = cyclic ? null : selectParent(mol);
+  const benzene = !chainParent && hasBenzeneRing(mol);
+  const adj = chainParent ? adjacency(mol) : null;
+  const selection = cyclic && chainParent ? { ...found, trace: [choice.step, ...found.trace] } : found;
   /**
    * Names the molecule under one prefix style: benzene (aromatic.js) or
-   * another ring parent (rings.js) when validation let a ring through, else
-   * the chain pipeline.
+   * another ring parent (rings.js) when the ring is the parent, else the
+   * chain pipeline (an acyclic molecule, or a chain carrying more
+   * principal groups than the ring, whose ring is then a prefix).
    *
    * @param {string} s - Prefix style.
    * @returns {object} The naming result without `alternatives`.
@@ -372,7 +385,7 @@ function nameValidated(mol, options) {
     if (benzene) {
       return nameBenzeneWithStyle(mol, s);
     }
-    return cyclic ? nameRingWithStyle(mol, s) : nameWithStyle(mol, adj, selection, s);
+    return chainParent ? nameWithStyle(mol, adj, selection, s) : nameRingWithStyle(mol, s);
   };
   const main = nameIn(style);
   const byStyle = new Map([[style, main]]);
@@ -396,6 +409,11 @@ function nameValidated(mol, options) {
   const esters = acids.length === 0 ? esterCarbons(mol) : [];
   for (const s of new Set([style, PREFIX_STYLES[0], ...others])) {
     const { structure } = named(s);
+    // The parent chosen by the whole cascade (P0…P4, N-rules, tie-break), never a chain left tied before numbering (I-40a).
+    const ringTwins = cyclic && chainParent ? symmetricRing(mol, named(s).parent.atoms) : null;
+    if (ringTwins) {
+      return withGroups({ ok: false, error: ringTwins }, mol);
+    }
     // An acyl branch without an acyl prefix (–CO–C≡N) on the parent, or inside an ester's O-bound group.
     const acyl = [structure, ...esterParts(structure).map((part) => part.alkyl)].map(unnamedAcyl).find(Boolean) || null;
     if (acyl) {
@@ -478,7 +496,7 @@ function symmetricAmine(mol) {
     return null;
   }
   for (const nitrogen of nitrogens) {
-    const sides = adj.get(nitrogen).map((n) => ({ atom: n.atom, key: rootedTreeKey(mol, n.atom, nitrogen, adj) }));
+    const sides = adj.get(nitrogen).map((n) => ({ atom: n.atom, key: rootedBranchKey(mol, n.atom, nitrogen, adj) }));
     for (const side of sides) {
       const twins = sides.filter((other) => other.key === side.key);
       const carries = substituentSubtree(adj, nitrogen, side.atom).atoms.some((id) => isPrincipalOxygen(mol, adj, id, principal));
@@ -563,12 +581,18 @@ export function amineClassName(mol, structure, lexicon = lexiconEs) {
  * has an acyl branch without an acyl prefix (substituent.js unnamedAcyl(),
  * design.md §13.4 I-32, I-39b): a one-carbon acyl group carrying a
  * `ciano`, –CO–C≡N, which IUPAC 2013 names `carbonocianidoil` (from
- * memory), not supported.
+ * memory), not supported; or, since I-40a, a one-carbon acyl group bonded
+ * to the ring (`ringAcyl`: `ciclohexanocarbonil`, `benzoil`, named with the
+ * `-carbonil` forms of I-40b).
  *
- * @param {{atoms: number[], bonds: number[]}} acyl - The C=O atoms of the acyl branch.
+ * @param {{atoms: number[], bonds: number[], ring?: boolean}} acyl - The C=O atoms of the acyl branch.
  * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
  */
 function acylError(acyl) {
+  if (acyl.ring) {
+    // X bonded to the ring (design.md §13.4 I-40a): `ciclohexanocarbonil`, `benzoil`, with the -carbonyl names of I-40b.
+    return validationError('HETEROATOM', { message: RING_ACYL_MESSAGE, atoms: [...acyl.atoms], reason: 'ringAcyl' });
+  }
   return validationError('HETEROATOM', { message: ACYL_SUBSTITUENT_MESSAGE, atoms: [...acyl.atoms], reason: 'acylSubstituent' });
 }
 
@@ -703,8 +727,10 @@ function carbonylAlternative(result) {
   }
   const name = lexiconEs.traditionalName(id);
   const group = suffixGroupIds(result.structure.suffix);
-  const atoms = [...new Set([...result.parent.atoms, ...group.atoms])];
-  const bonds = [...result.parent.bonds, ...group.bonds];
+  // The `fenil` group of `acetofenona`, `alcohol bencílico`, `bencilamina` (I-40a) is part of the word too.
+  const sites = result.structure.prefixes.flatMap((g) => g.locants);
+  const atoms = [...new Set([...result.parent.atoms, ...group.atoms, ...sites.flatMap((site) => site.atoms)])];
+  const bonds = [...result.parent.bonds, ...group.bonds, ...sites.flatMap((site) => [site.bond, ...site.bonds])];
   return { style: 'traditional', label: lexiconEs.traditionalLabel(id), name, parts: [{ text: name, kind: 'stem', atoms, bonds }] };
 } // End of function carbonylAlternative()
 
@@ -734,7 +760,7 @@ function symmetricEther(mol) {
   }
   for (const oxygen of ethers) {
     const [a, b] = adj.get(oxygen).map((n) => n.atom);
-    if (rootedTreeKey(mol, a, oxygen, adj) !== rootedTreeKey(mol, b, oxygen, adj)) {
+    if (rootedBranchKey(mol, a, oxygen, adj) !== rootedBranchKey(mol, b, oxygen, adj)) {
       continue;
     }
     const side = substituentSubtree(adj, oxygen, a).atoms;
@@ -745,6 +771,41 @@ function symmetricEther(mol) {
   } // End of the loop over the ether oxygens
   return null;
 } // End of function symmetricEther()
+
+/**
+ * The HETEROATOM refusal of a ring molecule whose parent is a chain when
+ * the ring carries two or more identical branches, one of which holds the
+ * parent chain (design.md §13.4 I-40a): each of them carries as many
+ * principal groups as the parent, and IUPAC 2013 names such a molecule
+ * with multiplicative nomenclature (HOCH₂–C₆H₁₀–CH₂OH is
+ * `ciclohexano-1,4-diildimetanol`, P-15.3, from memory), which the app
+ * does not support, as for ethers and amines (symmetricEther(),
+ * symmetricAmine()). Branches are identical when their rooted keys seen
+ * from their ring atoms (graph.js rootedBranchKey()) and their connecting
+ * bond orders are equal. `atoms` lists the ring and those branches.
+ *
+ * @param {object} mol - A validated ring molecule whose parent is a chain.
+ * @param {number[]} chain - The parent chain chosen by the whole selection and numbering cascade (a naming result's `parent.atoms`), so the check never depends on atom order.
+ * @returns {{code: string, message: string, atoms: number[], reason: string}|null} The error, or null.
+ */
+function symmetricRing(mol, chain) {
+  const adj = adjacency(mol);
+  const ring = cycleCore(adj);
+  const branches = [...ring].flatMap((atom) => adj.get(atom)
+    .filter((n) => !ring.has(n.atom))
+    .map((n) => ({
+      atom: n.atom,
+      key: `${n.order}${rootedBranchKey(mol, n.atom, atom, adj)}`,
+      atoms: substituentSubtree(adj, atom, n.atom).atoms,
+    })));
+  const home = branches.find((branch) => branch.atoms.includes(chain[0]));
+  const twins = branches.filter((branch) => branch.key === home.key);
+  if (twins.length < 2) {
+    return null;
+  }
+  const atoms = [...ring, ...twins.flatMap((twin) => twin.atoms)].sort((p, q) => p - q);
+  return validationError('HETEROATOM', { message: SYMMETRIC_RING_MESSAGE, atoms, reason: 'symmetricRing' });
+} // End of function symmetricRing()
 
 /**
  * The prefix of one side of a simple ether (or of a group on a simple
@@ -764,7 +825,8 @@ function etherSideName(sub, lexicon = lexiconEs) {
     return `${italic}${text}`;
   }
   const { chain } = sub;
-  if (sub.retained || sub.prefixes.length > 0 || sub.freeValence.locant !== 1 || chain.double.length + chain.triple.length > 0) {
+  if (sub.retained || sub.ring || sub.prefixes.length > 0 || sub.freeValence.locant !== 1
+    || chain.double.length + chain.triple.length > 0) {
     return null;
   }
   return lexicon.alkylPrefix(chain.length);

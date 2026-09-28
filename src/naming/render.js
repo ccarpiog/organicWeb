@@ -390,7 +390,8 @@ export const MAX_CONTRACTED_ALKOXY = 4;
  * `propoxy`, `butoxy`, also when substituted: `2-chloroethoxy`,
  * `2-methylpropoxy`, `1-methylethoxy`): a saturated alkyl chain of one to
  * four carbons bonded to the O by its carbon 1; or a retained group
- * (`isopropoxi`, `tert-butoxi`). Every other alkoxy group is its alkyl
+ * (`isopropoxi`, `tert-butoxi`; and `fenoxi`, IUPAC 2013 P-63.2.2.2, design.md
+ * §13.4 I-40a). Every other alkoxy group (`ciclohexiloxi` included) is its alkyl
  * prefix + `oxi`: `pentiloxi`, `propan-2-iloxi`, `eteniloxi`, and the
  * acyloxy prefixes (design.md §13.4 I-39c; IUPAC 2013 prefers `acetiloxi`
  * to `acetoxi`, from memory): `acetiloxi`, `formiloxi`, `propanoiloxi`.
@@ -401,6 +402,9 @@ export const MAX_CONTRACTED_ALKOXY = 4;
 export function isContractedAlkoxy(substituent) {
   if (substituent.acyl) {
     return false; // An acyloxy prefix is acyl + `oxi`: `acetiloxi`, not `acetoxi` (design.md §13.4 I-39c).
+  }
+  if (substituent.ring && !substituent.retained) {
+    return false; // `ciclohexiloxi`, `ciclopropiloxi` (design.md §13.4 I-40a); `fenoxi` is retained.
   }
   if (substituent.retained) {
     return true;
@@ -438,7 +442,7 @@ function enclosureLevel(substituent) {
   const crowded = Boolean(substituent.chain) && substituent.chain.length === 1 && prefixes.length > 1;
   prefixes.forEach((group, g) => {
     // In an amino prefix every group after the first is enclosed (`etil(metil)amino`).
-    if (enclosedInName(group.substituent, crowded) || (substituent.amino && g > 0)) {
+    if (enclosedInName(group.substituent, crowded, g === 0) || (substituent.amino && g > 0)) {
       level = Math.max(level, enclosureLevel(group.substituent) + 1);
     }
   });
@@ -470,9 +474,10 @@ function enclosureLevel(substituent) {
  * @param {boolean} [omitLocants] - Leave out the locants (default false).
  * @param {boolean} [crowded] - The locants are omitted and other prefix groups are written beside this one (default false).
  * @param {boolean} [enclose] - Always enclose the prefix (default false).
+ * @param {boolean} [first] - The group is the first one cited (a crowded ring prefix is enclosed only after another; default false).
  * @returns {{text: string, kind: string}[]} The tokens.
  */
-function groupTokens(group, lexicon, omitLocants = false, crowded = false, enclose = false) {
+function groupTokens(group, lexicon, omitLocants = false, crowded = false, enclose = false, first = false) {
   const tokens = [];
   if (!omitLocants) {
     group.locants.forEach((site, i) => {
@@ -484,7 +489,7 @@ function groupTokens(group, lexicon, omitLocants = false, crowded = false, enclo
     tokens.push(token('-', 'punct'));
   }
   const words = substituentTokens(group.substituent, lexicon);
-  const enclosed = enclose || enclosedInName(group.substituent, crowded);
+  const enclosed = enclose || enclosedInName(group.substituent, crowded, first);
   const count = group.locants.length;
   const mult = isCompoundPrefix(group.substituent) ? lexicon.compoundMultiplier(count) : lexicon.multiplier(count);
   if (mult) {
@@ -508,14 +513,18 @@ function groupTokens(group, lexicon, omitLocants = false, crowded = false, enclo
  * without locants (a one-carbon parent or group: `cloro(metoxi)metano`,
  * `(clorometoxi)fluoro(metoxi)metano`), where running the words together
  * would read as one compound prefix (IUPAC 2013 P-16.5.1: parentheses
- * avoid ambiguity; design.md §13.4 I-34).
+ * avoid ambiguity; design.md §13.4 I-34); likewise a ring prefix
+ * (`cloro(fenil)metanol`, not `clorofenilmetanol`, which would read as
+ * `(clorofenil)metanol`; I-40a) that follows another prefix (a ring
+ * prefix cited first reads unambiguously: `fenil(metoxi)metanol`).
  *
  * @param {object} substituent - The substituent structure.
  * @param {boolean} crowded - Its locants are omitted and other prefix groups are written beside it.
+ * @param {boolean} [first] - It is the first prefix group cited (default false).
  * @returns {boolean} True when the prefix is enclosed.
  */
-export function enclosedInName(substituent, crowded) {
-  return needsEnclosure(substituent) || (crowded && Boolean(substituent.alkoxy));
+export function enclosedInName(substituent, crowded, first = false) {
+  return needsEnclosure(substituent) || (crowded && (Boolean(substituent.alkoxy) || (Boolean(substituent.ring) && !first)));
 }
 
 /**
@@ -552,7 +561,10 @@ function locantTokens(locants) {
  * I-39c: `acetiloxi`), or an `alcoxicarbonil` group (an ester bonded
  * through its C=O carbon, I-39c: alkoxycarbonylTokens()), or a `carbamoil`
  * group (an amide bonded through its C=O carbon, I-39d: the groups on its
- * N, then `carbamoil`). A saturated group with the free valence at
+ * N, then `carbamoil`), or a ring (design.md §13.4 I-40a: `ciclo` + stem,
+ * the attachment atom as locant 1 — `ciclohexil`, `(2-metilciclohexil)`,
+ * `(ciclohex-2-en-1-il)`; the benzene ring is the retained `fenil`). A
+ * saturated group with the free valence at
  * locant 1 uses the short form (`propil`, `propiliden`, `2-metilpropil`);
  * one- and two-carbon groups cite no locant.
  *
@@ -607,8 +619,11 @@ function substituentTokens(substituent, lexicon) {
     if (g > 0 && !omitLocants) {
       tokens.push(token('-', 'punct'));
     }
-    tokens.push(...groupTokens(group, lexicon, omitLocants, omitLocants && prefixes.length > 1));
+    tokens.push(...groupTokens(group, lexicon, omitLocants, omitLocants && prefixes.length > 1, false, g === 0));
   });
+  if (substituent.ring) {
+    tokens.push(token(lexicon.ringPrefix, 'stem')); // `ciclohexil`, `ciclohex-2-en-1-il` (design.md §13.4 I-40a).
+  }
   tokens.push(token(lexicon.stem(chain.length), 'stem'));
   const segments = lexicon.segmentOrder
     .map((kind) => ({ kind, sites: chain[kind] }))
@@ -853,7 +868,7 @@ export function renderPrefixes(groups, lexicon, omitLocants = false, crowded = o
     }
     const atoms = group.locants.flatMap((site) => site.atoms);
     const bonds = group.locants.flatMap((site) => [site.bond, ...site.bonds]);
-    const tokens = groupTokens(group, lexicon, false, crowded);
+    const tokens = groupTokens(group, lexicon, false, crowded, false, g === 0);
     let i = 0;
     for (const site of group.locants) {
       if (i > 0) {
@@ -881,7 +896,7 @@ export function renderPrefixes(groups, lexicon, omitLocants = false, crowded = o
         words += t.text;
       }
     }
-    const close = enclosedInName(group.substituent, crowded) ? words.slice(-1) : '';
+    const close = enclosedInName(group.substituent, crowded, g === 0) ? words.slice(-1) : '';
     parts.push(part(close ? words.slice(0, -1) : words, 'prefix', atoms, bonds));
     if (close) {
       parts.push(part(close, 'punct'));

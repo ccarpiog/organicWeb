@@ -23,7 +23,7 @@ import { addAtom, addBond, createMolecule } from '../../src/model/molecule.js';
 import { adjacency } from '../../src/model/graph.js';
 import {
   validateForNaming, validateStructure, isAmineNitrogen, amineNitrogens, hasNameableHeteroatoms, MESSAGES,
-  SIDE_CHAIN_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE, SYMMETRIC_AMINE_MESSAGE, RING_SYSTEM_MESSAGES,
+  SUBSTITUTED_POLYAMINE_MESSAGE, SYMMETRIC_AMINE_MESSAGE, RING_SYSTEM_MESSAGES,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import {
@@ -103,15 +103,18 @@ test('ammonium and heterocycles are excluded: a charge is invalid, a fourth bond
   }
 });
 
-test('refusals: side-chain amine on a ring, N-substituted polyamines, symmetric amines carrying the principal group', () => {
-  // With a ring and the amine principal, every N must be on a ring carbon (fenilmetanamina waits for I-40).
-  for (const smiles of ['NCC1CCCCC1', 'NCC1=CC=CC=C1', 'NC1CCC(CN)CC1', 'CNCC1CCCCC1']) {
-    const error = validateForNaming(parseSmiles(smiles));
-    assert.equal(error.code, 'HETEROATOM', smiles);
-    assert.equal(error.reason, 'sideChainAmine', smiles);
-    assert.equal(error.message, SIDE_CHAIN_AMINE_MESSAGE);
-    assert.ok(error.sideChain.length >= 1);
-    assert.ok(named(smiles).groups, 'the refusal carries the group analysis');
+test('refusals: N-substituted polyamines, symmetric amines carrying the principal group (side-chain amines named)', () => {
+  // With a ring and the amine principal, an N off the ring is named since I-40a: the chain carrying more amine
+  // groups than the ring is the parent (the ring a prefix); on a tie the ring is.
+  const sideChain = [
+    ['NCC1CCCCC1', 'ciclohexilmetanamina'],
+    ['NCC1=CC=CC=C1', 'fenilmetanamina'],
+    ['NC1CCC(CN)CC1', '4-(aminometil)ciclohexan-1-amina'],
+    ['CNCC1CCCCC1', '1-ciclohexil-N-metilmetanamina'],
+  ];
+  for (const [smiles, name] of sideChain) {
+    assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
+    assert.equal(nameOf(smiles), name);
   }
   // With an OH on the ring the amine is a prefix and may sit on a branch.
   assert.equal(nameOf('OC1CCC(CN)CC1'), '4-(aminometil)ciclohexan-1-ol');
@@ -135,7 +138,7 @@ test('refusals: side-chain amine on a ring, N-substituted polyamines, symmetric 
   assert.equal(nameOf('CN(C)CCO'), '2-(dimetilamino)etan-1-ol');
   assert.equal(nameOf('OCCNCCCO'), '3-[(2-hidroxietil)amino]propan-1-ol');
   // Refusal messages read as Spanish sentences for a student.
-  for (const message of [SIDE_CHAIN_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE, SYMMETRIC_AMINE_MESSAGE]) {
+  for (const message of [SUBSTITUTED_POLYAMINE_MESSAGE, SYMMETRIC_AMINE_MESSAGE]) {
     assert.match(message, /^Esta molécula tiene /);
     assert.match(message, /\.$/);
   }

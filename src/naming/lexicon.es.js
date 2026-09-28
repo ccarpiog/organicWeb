@@ -96,6 +96,9 @@ export const TRADITIONAL_NAMES = Object.freeze({
   formamide: 'formamida',
   acetamide: 'acetamida',
   acetonitrile: 'acetonitrilo',
+  acetophenone: 'acetofenona',
+  benzylAlcohol: 'alcohol bencílico',
+  benzylamine: 'bencilamina',
 });
 
 /**
@@ -132,6 +135,11 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * name is offered (`formonitrilo`, `propionitrilo`, `acrilonitrilo`) and no
  * `cianuro de …` name (functional-class names of nitriles are not IUPAC
  * 2013 names; `cianuro de hidrógeno` is an inorganic name).
+ * `acetofenona`, `alcohol bencílico` and `bencilamina` (design.md §13.4
+ * I-40a) replace the bare 1-feniletan-1-ona, fenilmetanol and
+ * fenilmetanamina: IUPAC 2013 accepts them in general nomenclature, not as
+ * preferred names (status from memory), so they are labelled like
+ * `acetona`; no other name built on `bencil` or `fenetil` is offered.
  */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
@@ -149,6 +157,9 @@ export const TRADITIONAL_LABELS = Object.freeze({
   formamide: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   acetamide: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   acetonitrile: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
+  acetophenone: 'nombre tradicional, que la IUPAC (2013) acepta',
+  benzylAlcohol: 'nombre tradicional, que la IUPAC (2013) acepta',
+  benzylamine: 'nombre tradicional, que la IUPAC (2013) acepta',
 });
 
 /** Endings of the parent name. */
@@ -627,7 +638,7 @@ export function styleLabel(style) {
  * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene,
  * a small carbonyl compound or a small acid.
  *
- * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide', 'acetamide' or 'acetonitrile'.
+ * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide', 'acetamide', 'acetonitrile', 'acetophenone', 'benzylAlcohol' or 'benzylamine'.
  * @returns {string} The Spanish name.
  * @throws {Error} For an unknown id.
  */

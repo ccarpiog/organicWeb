@@ -20,7 +20,7 @@
  * `[[key]]`); `parseMarkup()` splits them and `GLOSSARY` holds the
  * definitions shown as tooltips. Names are quoted with «…».
  *
- * Step ids, in order: count, group, ester (diester for two –COO–), ether, ring, benzene, chain, groupChain,
+ * Step ids, in order: count, group, ester (diester for two –COO–), ether, ringChain, ring, benzene, chain, groupChain,
  * tiebreak, numbering, ringNumbering, substituents, order, assemble. A step that decided
  * nothing is skipped (tiebreak without a deciding rule, substituents
  * without prefixes, order with fewer than two prefix groups) or reduced to
@@ -161,6 +161,13 @@
  * says P4 leaves out the groups on the suffix N, and it is highlighted
  * whole (amidePrefixSpecs()).
  *
+ * A ring molecule whose side chains carry principal groups (design.md
+ * §13.4 I-40a, the `RINGCHAIN` trace step) gets «Anillo o cadena»
+ * (ringChainStep()) before the chain or ring step: the principal groups
+ * first, the ring only on a tie; with a chain parent the ring is a prefix
+ * (`ciclohexil`, `fenil`; ringDescription(), `fenoxi`), its carbons out of
+ * the chain and its ring counted in the formula (atomCounts()).
+ *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
  * GroupAnalysis); it gets groups ("Reconoce los grupos": each
@@ -205,6 +212,7 @@ export const STEP_TITLES = Object.freeze({
   ester: 'Separa las dos partes del éster',
   diester: 'Separa las partes del diéster',
   ether: 'Reconoce el éter',
+  ringChain: 'Anillo o cadena',
   ring: 'Busca el anillo',
   benzene: 'Reconoce el benceno',
   chain: 'Busca la cadena más larga',
@@ -845,7 +853,7 @@ function esterAlkylSpecs(result) {
  * cited `oxo-` (`oxo`).
  *
  * @param {object} sub - A substituent structure.
- * @param {'hydroxy'|'oxo'} flag - Which prefix.
+ * @param {'hydroxy'|'oxo'|'cyano'|'ring'} flag - Which prefix (`ring`: a ring prefix, design.md §13.4 I-40a).
  * @returns {number} The count (1 for such a prefix itself).
  */
 function prefixTotal(sub, flag) {
@@ -906,6 +914,52 @@ function etherTotal(sub) {
  */
 function cyanoTotal(sub) {
   return prefixTotal(sub, 'cyano');
+}
+
+/**
+ * The ring prefix of a name (design.md §13.4 I-40a: `ciclohexil`, `fenil`,
+ * at any depth, also inside an alkoxy or amino prefix), or null. A molecule
+ * has at most one ring.
+ *
+ * @param {{prefixes: object[]}} structure - A name or substituent structure.
+ * @returns {object|null} The ring substituent structure (`ring` set).
+ */
+function ringPrefixOf(structure) {
+  for (const group of structure.prefixes) {
+    if (group.substituent.ring) {
+      return group.substituent;
+    }
+    const inner = ringPrefixOf(group.substituent);
+    if (inner) {
+      return inner;
+    }
+  }
+  return null;
+}
+
+/**
+ * The ring bonds of the ring prefix inside a substituent (design.md §13.4
+ * I-40a), empty without one.
+ *
+ * @param {object} sub - A substituent structure.
+ * @returns {number[]} The bond ids of the ring.
+ */
+function ringBondsIn(sub) {
+  const ring = sub.ring ? sub : ringPrefixOf(sub);
+  return ring ? [...ring.chain.bonds] : [];
+}
+
+/**
+ * The name of a ring prefix as the student reads it, and what it is:
+ * `«fenil» (el benceno como sustituyente)` or `«ciclohexil»` (design.md
+ * §13.4 I-40a).
+ *
+ * @param {object} ring - A ring substituent structure.
+ * @returns {string} The words.
+ */
+function ringPrefixWords(ring) {
+  const name = substituentPrefix(ring.alkoxy ? { ...ring, alkoxy: false } : ring, lexiconEs);
+  return ring.retained === 'phenyl' ? `${q(name)} (el [[benceno]] como sustituyente)` : q(name);
 }
 
 /**
@@ -1610,7 +1664,7 @@ function substituentPi(sub) {
  * Counts the carbons, hydrogens, halogen, nitrogen and oxygen atoms of the
  * named molecule from its structure (H = 2C + 2 + N − 2·π − 2·rings −
  * halogens; one
- * ring for a ring parent; each halogen takes the place of one hydrogen,
+ * ring for a ring parent or a ring prefix, I-40a; each halogen takes the place of one hydrogen,
  * each OH group replaces a hydrogen by an OH, so it adds an oxygen and
  * leaves the hydrogen count unchanged, and each C=O — of the `-al` / `-ona`
  * suffix or of an `oxo-` prefix — replaces two hydrogens by one oxygen, so
@@ -1654,7 +1708,8 @@ export function atomCounts(structure) {
     nitrogens += aminoTotal(sub) + cyanoTotal(sub);
     pi += substituentPi(sub) + (order - 1);
   }
-  const rings = structure.parentKind === 'ring' ? 1 : 0;
+  // The ring of the parent, or of a `ciclohexil` / `fenil` prefix at any depth (design.md §13.4 I-40a).
+  const rings = (structure.parentKind === 'ring' ? 1 : 0) + occurrences.reduce((n, { sub }) => n + prefixTotal(sub, 'ring'), 0);
   const x = Object.values(halogens).reduce((a, b) => a + b, 0);
   const hydrogens = 2 * carbons + 2 + nitrogens - 2 * pi - 2 * rings - x;
   // `nitrogens` only when there are some, so the counts of a molecule without N keep their shape.
@@ -2607,8 +2662,18 @@ function etherSpecs(result, site) {
  */
 function etherSideReason(result, group, site) {
   const prefix = q(substituentPrefix(group.substituent, lexiconEs));
+  const choice = result.trace.find((s) => s.rule === 'RINGCHAIN');
+  const groupsText = (n) => (n === 0 ? `ningún ${groupWords(result).group}` : (n === 1 ? groupWords(result).one : `${n} ${groupWords(result).many}`));
   if (result.structure.parentKind === 'ring') {
     const ring = isBenzene(result) ? 'el [[benceno]]' : 'un [[anillo]]';
+    if (choice) {
+      // Design.md §13.4 I-40a: the principal groups decide first, the ring only on a tie (read from RINGCHAIN).
+      const [ringCount, chainCount] = choice.values;
+      const why = ringCount === chainCount
+        ? `el anillo y la mejor cadena abierta llevan ${groupsText(ringCount)} cada uno: hay empate, y entonces manda el anillo`
+        : `el anillo lleva ${groupsText(ringCount)} y la mejor cadena abierta solo ${groupsText(chainCount)}: gana el anillo, porque lleva más`;
+      return `Un lado del oxígeno es ${ring} y el otro, una cadena abierta. Primero cuenta el [[grupo principal]]: ${why}. Por eso el anillo es la [[cadena principal]] y el otro lado es el sustituyente ${prefix}.`;
+    }
     return `Un lado del oxígeno es ${ring} y el otro, una cadena abierta: con las normas de la IUPAC (2013), el anillo manda siempre sobre la cadena abierta, así que el anillo es la [[cadena principal]] y el otro lado es el sustituyente ${prefix}.`;
   }
   const side = new Set(site.atoms);
@@ -2616,6 +2681,9 @@ function etherSideReason(result, group, site) {
   const words = groupWords(result);
   const length = result.parent.atoms.length;
   for (const step of result.trace) {
+    if (step.rule === 'RINGCHAIN') {
+      continue; // The ring or chain choice (design.md §13.4 I-40a): a ring-only side is explained after the loop.
+    }
     const before = step.candidatesBefore.map((c, i) => ({ c, value: step.values[i] })).filter((e) => inSide(e.c));
     if (before.length === 0 || step.survivors.some(inSide)) {
       continue;
@@ -2642,6 +2710,12 @@ function etherSideReason(result, group, site) {
     const why = step.rule === 'P4' ? 'la que tiene más [[sustituyentes|sustituyente]]' : 'la que da los números más bajos (mira el paso «Numera la cadena»)';
     return `Las cadenas de los dos lados empatan en longitud y en enlaces dobles o triples: gana ${why}. El otro lado es el sustituyente ${prefix}.`;
   } // End of the loop over the trace steps
+  if (group.substituent.ring) {
+    // Only a ring on the other side of the O (design.md §13.4 I-40a): it carries fewer principal groups (ringChainStep()).
+    const [ringCount, chainCount] = choice ? choice.values : [0, suffixCount(result.structure)];
+    const onRing = ringCount === 0 ? `El anillo no lleva ${groupsText(0)}` : `El anillo lleva ${groupsText(ringCount)}`;
+    return `El otro lado del oxígeno es un [[anillo]] sin cadena abierta. ${onRing} y la cadena de este lado lleva más, ${groupsText(chainCount)} (mira el paso «Anillo o cadena»): por eso la [[cadena principal]] está en este lado y el anillo, con el oxígeno, es el sustituyente ${prefix}.`;
+  }
   return `El otro lado es el sustituyente ${prefix}.`;
 } // End of function etherSideReason()
 
@@ -2665,6 +2739,17 @@ function alkoxyFormation(sub) {
   }
   if (sub.retained === 'tert-butyl') {
     return [`${q(prefix)} viene de «tert-butil», un carbono unido al oxígeno y a tres metilos: se cambia «-il» por «-${oxi}». Su forma sistemática es «1,1-dimetilet${oxi}». «tert-» no cuenta para el orden alfabético.`];
+  }
+  if (sub.retained === 'phenyl') {
+    // Design.md §13.4 I-40a: the retained short form `fenoxi` (IUPAC 2013 P-63.2.2.2), never `feniloxi`.
+    return [`${q(prefix)} viene de «fenil» (el [[benceno]] como sustituyente): se cambia «-il» por «-${oxi}». Es una forma corta que la IUPAC conserva; no se dice «fenil${oxi}».`];
+  }
+  if (sub.ring) {
+    // Design.md §13.4 I-40a: `ciclohexiloxi`, the group name + `oxi`.
+    return [
+      `${q(prefix)} se forma con el nombre del anillo unido al oxígeno, ${q(alkyl)}, más «${oxi}», que es el oxígeno: ${alkyl} + ${oxi} = ${prefix}. Con un anillo no se usa la forma corta (como «metoxi»).`,
+      'En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo más «oxi».',
+    ];
   }
   if (isContractedAlkoxy(sub)) {
     const root = lexiconEs.stem(sub.chain.length);
@@ -3389,13 +3474,14 @@ function outsideUnsaturation(result) {
     if (!sub.chain && !sub.amino) {
       return; // A halogen, hydroxy or oxo prefix.
     }
-    if (sub.chain) {
+    if (sub.chain && !sub.ring) {
+      // The multiple bonds of a ring prefix (design.md §13.4 I-40a) could never be in the chain: not counted.
       double += sub.chain.double.length;
       triple += sub.chain.triple.length;
     }
     for (const group of sub.prefixes) {
       for (const site of group.locants) {
-        double += site.order === 2 && !group.substituent.oxo ? 1 : 0;
+        double += site.order === 2 && !group.substituent.oxo && !group.substituent.ring ? 1 : 0;
         visit(group.substituent);
       }
     }
@@ -3403,13 +3489,15 @@ function outsideUnsaturation(result) {
   for (const group of result.structure.prefixes) {
     const before = double + triple;
     for (const site of group.locants) {
-      // The C=O of an `oxo-` prefix is not a carbon–carbon unsaturation.
-      const ylidene = site.order === 2 && !group.substituent.oxo;
+      // The C=O of an `oxo-` prefix is not a carbon–carbon unsaturation; the C=C to a `ciclohexiliden` ring (I-40a)
+      // could never be a chain bond.
+      const ylidene = site.order === 2 && !group.substituent.oxo && !group.substituent.ring;
       double += ylidene ? 1 : 0;
       if (ylidene) {
         bonds.push(site.bond);
       }
-      bonds.push(...site.multipleBonds);
+      const ringBonds = new Set(ringBondsIn(group.substituent));
+      bonds.push(...site.multipleBonds.filter((id) => !ringBonds.has(id)));
       visit(group.substituent);
     }
     if (double + triple > before) {
@@ -3603,7 +3691,8 @@ function amineSideReason(result, group, site) {
   const length = result.parent.atoms.length;
   for (const step of result.trace) {
     const before = step.candidatesBefore.map((c, i) => ({ c, value: step.values[i] })).filter((e) => inSide(e.c));
-    if (before.length === 0 || step.survivors.some(inSide)) {
+    // The ring or chain choice (design.md §13.4 I-40a) is explained in its own step.
+    if (step.rule === 'RINGCHAIN' || before.length === 0 || step.survivors.some(inSide)) {
       continue;
     }
     if (step.rule === 'P0') {
@@ -3663,6 +3752,85 @@ function amineSideSentences(result, step) {
 } // End of function amineSideSentences()
 
 /**
+ * Step "Anillo o cadena" (design.md §13.4 I-40a), from the `RINGCHAIN`
+ * trace step (parent.js ringOrChain()): a molecule with a ring whose side
+ * chains carry principal groups. IUPAC 2013 counts the principal groups
+ * first (P-44.1.1) and only on a tie puts the ring before the chain
+ * (P-44.1.2.2). When a chain carries more, it is the parent and the ring
+ * a substituent (`ciclohexil`, `fenil`), whose carbons are never chain
+ * carbons; on a tie the ring is the parent and the group on the branch a
+ * prefix (`hidroxi-`, `amino-`). The ring and the chains are highlighted
+ * apart and offered as options. Null without that trace step.
+ *
+ * @param {object} result - The naming result.
+ * @returns {object|null} The step.
+ */
+function ringChainStep(result) {
+  const choice = result.trace.find((s) => s.rule === 'RINGCHAIN');
+  if (!choice) {
+    return null;
+  }
+  const words = groupWords(result);
+  const [ring, ...chains] = choice.candidatesBefore;
+  const [ringCount, chainCount] = choice.values;
+  const chainParent = result.structure.parentKind === 'chain';
+  const prefix = chainParent ? ringPrefixOf(result.structure) : null;
+  const benzene = chainParent ? prefix.retained === 'phenyl' : result.structure.parent.retained === 'benzene';
+  const size = `un [[anillo]] de ${ring.atoms.length} carbonos${benzene ? ' (un [[benceno]])' : ''}`;
+  /**
+   * Spanish words for a number of principal groups: `un grupo –OH`, `2 grupos –OH`.
+   *
+   * @param {number} n - How many.
+   * @returns {string} The words.
+   */
+  const groups = (n) => (n === 1 ? words.one : `${n} ${words.many}`);
+  const ringSpec = { atoms: [...ring.atoms], bonds: [...ring.bonds], style: chainParent ? 'substituent' : 'parent' };
+  const chainSpecs = chains.map((c) => candidateSpec(c, chainParent ? 'parent' : 'candidate'));
+  const text = [
+    `Tu molécula tiene ${size} y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.`,
+    `Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de ${words.many}. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.`,
+  ];
+  const onRing = ringCount === 0 ? `El anillo no lleva ningún ${words.group}` : `El anillo lleva ${groups(ringCount)}`;
+  if (chainParent) {
+    text.push(`${onRing} y la mejor cadena abierta lleva ${groups(chainCount)}: gana la cadena.`);
+    text.push(`Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra ${ringPrefixWords(prefix)}. Los carbonos del anillo nunca forman parte de la cadena principal.`);
+  } else {
+    // The counts decide the wording: a tie (P-44.1.2.2) or a ring with more groups (P-44.1.1).
+    text.push(ringCount === chainCount
+      ? `${onRing} y la mejor rama lleva ${groups(chainCount)}: hay empate, así que manda el anillo.`
+      : `${onRing} y la mejor rama solo lleva ${groups(chainCount)}: gana el anillo, porque lleva más.`);
+    text.push(chainCount === 1
+      ? `Por eso la cadena principal es el anillo, y ${words.the} de la rama se nombra con el [[prefijo]] «${words.prefix}-».`
+      : `Por eso la cadena principal es el anillo, y los ${words.many} de la rama se nombran con el [[prefijo]] «${words.prefix}-».`);
+  }
+  const highlight = [ringSpec, ...chainSpecs];
+  if (result.structure.suffix) {
+    highlight.push(suffixSpec(result));
+  }
+  return {
+    id: 'ringChain',
+    title: STEP_TITLES.ringChain,
+    text,
+    highlight,
+    locants: null,
+    options: [
+      {
+        label: 'El anillo',
+        text: `${onRing}.`,
+        highlight: [{ ...ringSpec, style: 'candidate' }],
+        locants: null,
+      },
+      ...chains.map((c, i) => ({
+        label: chains.length === 1 ? 'La cadena' : `Cadena ${i + 1} de ${chains.length}`,
+        text: `Esta cadena lleva ${groups(chainCount)}.`,
+        highlight: [candidateSpec(c, 'candidate')],
+        locants: null,
+      })),
+    ],
+  };
+} // End of function ringChainStep()
+
+/**
  * Step 2, "Busca la cadena más larga", from the P1 trace step; for an
  * alcohol, aldehyde or ketone (a P0 step in the trace) "Busca la cadena
  * principal", from P0 and P1 (groupChainSentences()).
@@ -3683,7 +3851,11 @@ function chainStep(result) {
   const step = { id, title: STEP_TITLES[id], text, highlight: [parentSpec(result)], locants: null };
   const all = p0 ? p0.candidatesBefore : p1.candidatesBefore;
   const cyano = cyanoPrefixCounts(result);
-  if (all.length === 1 && cyano.parent > 0) {
+  // A chain parent of a ring molecule (design.md §13.4 I-40a): the ring is a prefix, its carbons never chain carbons.
+  const ring = ringPrefixOf(result.structure);
+  if (all.length === 1 && ring && cyano.parent === 0) {
+    text.push(`Sin contar los carbonos del [[anillo]], que van en el [[prefijo]] ${ringPrefixWords(ring)}, los demás carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene ${count(length, 'carbono', 'carbonos')}.`);
+  } else if (all.length === 1 && cyano.parent > 0) {
     const the = cyano.parent === 1 ? 'el carbono del –C≡N' : 'los carbonos de los –C≡N';
     text.push(`Sin contar ${the}, que va${cyano.parent === 1 ? '' : 'n'} en el [[prefijo]] «ciano-», los demás carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene ${length} carbonos.`);
   } else if (all.length === 1) {
@@ -3707,6 +3879,9 @@ function chainStep(result) {
   } // End of the chain count sentences
   if (p0) {
     step.highlight.push(suffixSpec(result));
+  }
+  if (ring && all.length > 1) {
+    text.push(`Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], ${ringPrefixWords(ring)}.`);
   }
   if (halogensIn(result).length > 0) {
     text.push('Los halógenos (flúor, cloro, bromo, yodo) nunca forman parte de la cadena: solo cuentan los carbonos. Van como [[sustituyentes|sustituyente]], con un [[prefijo]] delante del nombre.');
@@ -3893,7 +4068,10 @@ function ringStep(result) {
       : `Los grupos amino unidos al anillo no son el [[grupo principal]] (${senior} va antes que la amina): se nombran con el [[prefijo]] «amino-».`);
   }
   if (branches.length > 0) {
-    text.push('Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].');
+    // A branch with as many principal groups as the ring (design.md §13.4 I-40a, ringChainStep()): the ring wins the tie.
+    text.push(result.trace.some((s) => s.rule === 'RINGCHAIN')
+      ? 'Las ramas que salen del anillo son cadenas abiertas. Como ninguna lleva más grupos principales que el anillo, el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].'
+      : 'Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].');
     const longest = Math.max(...branches.map((g) => substituentCarbons(g.substituent)));
     if (longest > n) {
       text.push(`Aquí una rama tiene ${longest} carbonos y el anillo solo ${n}, pero aun así manda el anillo. Antes se enseñaba que ganaba la cadena más larga; con las normas actuales ya no es así.`);
@@ -4880,6 +5058,9 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
   if (sub.retained === 'phenyl') {
     return ['«fenil» es el nombre del [[benceno]] cuando va como sustituyente: un anillo de benceno al que le falta un hidrógeno (grupo fenilo, C₆H₅–).'];
   }
+  if (sub.ring) {
+    return ringDescription(sub, words, principal);
+  }
   if (sub.retained === 'tert-butyl') {
     return ['«tert-butil» es un nombre tradicional que la IUPAC acepta: un carbono unido a tres metilos. Su nombre sistemático es «1,1-dimetiletil».'];
   }
@@ -5005,6 +5186,58 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
 } // End of function describeSubstituent()
 
 /**
+ * Explains a ring prefix other than `fenil` (design.md §13.4 I-40a): a
+ * ring of n carbons bonded to the chain by one of its carbons, named like
+ * the ring alone with `-ano` changed to `-il` (`ciclohexano` →
+ * `ciclohexil`; `-iliden` on a double bond); its carbons numbered from the
+ * one bonded to the chain (1), then its own multiple bonds and groups
+ * (`ciclohex-2-en-1-il`, `(2-metilciclohexil)`, `(4-hidroxiciclohexil)`),
+ * and why it is enclosed.
+ *
+ * @param {object} sub - A ring substituent structure (`ring` set, not retained).
+ * @param {{to: string}} words - How the chain that carries it is named (parentWords()).
+ * @param {string|null} principal - The principal group kind of the name, or null.
+ * @returns {string[]} Sentences.
+ */
+function ringDescription(sub, words, principal) {
+  const { chain, freeValence, prefixes } = sub;
+  const name = substituentPrefix(sub, lexiconEs);
+  const whole = `${lexiconEs.ringPrefix}${lexiconEs.stem(chain.length)}${lexiconEs.endings.saturated}`;
+  const ending = lexiconEs.freeValenceSuffix(freeValence.order);
+  const out = [`${q(name)} es un [[anillo]] de ${chain.length} carbonos unido ${words.to} por uno de sus carbonos${freeValence.order === 2 ? ' con un [[enlace doble]]' : ''}. Se nombra como el anillo solo, ${q(whole)}, cambiando «-ano» por «-${ending}».`];
+  const unsaturated = chain.double.length + chain.triple.length > 0;
+  if (unsaturated || prefixes.length > 0) {
+    out.push(`Sus carbonos se numeran empezando por el que está unido ${words.to}, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos ${unsaturated ? 'a los enlaces dobles y triples y luego ' : ''}a sus [[sustituyentes|sustituyente]].`);
+  }
+  if (chain.double.length > 0) {
+    out.push(`Dentro del anillo hay ${chain.double.length === 1 ? 'un [[enlace doble]]' : `${chain.double.length} [[enlaces dobles|enlace doble]]`}: por eso lleva «en», con su número, y el 1 del carbono unido va justo antes de «-${ending}».`);
+  }
+  if (chain.triple.length > 0) {
+    out.push(`Dentro del anillo hay ${chain.triple.length === 1 ? 'un [[enlace triple]]' : `${chain.triple.length} [[enlaces triples|enlace triple]]`}: por eso lleva «in».`);
+  }
+  if (prefixes.length > 0) {
+    const inner = prefixes.map((g) => {
+      const places = [...new Set(g.locants.map((site) => site.locant))];
+      const where = places.length === 1 ? `en el carbono ${places[0]}` : `en los carbonos ${joinY(places)}`;
+      const what = q(substituentPrefix(g.substituent, lexiconEs));
+      return `${g.locants.length === 1 ? what : `${g.locants.length} ${g.substituent.halogen ? 'átomos' : 'grupos'} ${what}`} ${where}`;
+    });
+    out.push(`El anillo lleva sus propios [[sustituyentes|sustituyente]]: ${joinY(inner)}.`);
+    const kinds = [['hydroxy', 'alcohol', '–OH'], ['oxo', 'ketone', 'C=O'], ['amino', 'amine', 'amino']];
+    for (const [flag, kind, group] of kinds) {
+      if (prefixes.some((g) => g.substituent[flag])) {
+        const suffix = principal === kind ? `, y no en la cadena principal, no va en el sufijo: ` : ': ';
+        out.push(`Un grupo ${group} que está en el anillo${suffix}se nombra con el prefijo «${lexiconEs.groupPrefix(kind)}-».`);
+      }
+    }
+  }
+  if (needsEnclosure(sub)) {
+    out.push(`Va entre paréntesis porque tiene sus propios ${prefixes.length > 0 ? 'sustituyentes y números' : 'números'}.`);
+  }
+  return out;
+} // End of function ringDescription()
+
+/**
  * Explains an alkoxy prefix (design.md §13.4 I-34): an ether, the O plus
  * the group on its other side, never the principal group; how the prefix is
  * formed (alkoxyFormation()); and, when the group on the other side of the
@@ -5019,7 +5252,12 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
 function alkoxyDescription(sub, words, principal) {
   const prefix = substituentPrefix(sub, lexiconEs);
   const n = substituentCarbons(sub);
-  const out = [`${q(prefix)} es el [[prefijo]] de un éter: un oxígeno unido ${words.to} y, al otro lado del oxígeno, un grupo de ${count(n, 'carbono', 'carbonos')}.`];
+  let other = `un grupo de ${count(n, 'carbono', 'carbonos')}`;
+  if (sub.ring) {
+    // A ring on the other side of the O (design.md §13.4 I-40a): `fenoxi`, `ciclohexiloxi`.
+    other = sub.retained === 'phenyl' ? 'un anillo de [[benceno]]' : `un [[anillo]] de ${count(sub.chain.length, 'carbono', 'carbonos')}`;
+  }
+  const out = [`${q(prefix)} es el [[prefijo]] de un éter: un oxígeno unido ${words.to} y, al otro lado del oxígeno, ${other}.`];
   out.push(...alkoxyFormation(sub));
   const alkyl = { ...sub, alkoxy: false };
   const { chain } = sub;
@@ -6283,6 +6521,7 @@ export function explain(result) {
       countStep(result),
       groupStep(result),
       etherStep(result),
+      ringChainStep(result),
       ringStep(result),
       ringNumberingStep(result),
       substituentsStep(result),
@@ -6295,6 +6534,7 @@ export function explain(result) {
     groupStep(result),
     esterStep(result),
     etherStep(result),
+    ringChainStep(result),
     chainStep(result),
     tiebreakStep(result),
     numberingStep(result),

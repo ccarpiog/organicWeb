@@ -330,6 +330,37 @@ function applySubstituentCountRule(candidates, counts) {
 } // End of function applySubstituentCountRule()
 
 /**
+ * Lists the 2n numbering candidates of a ring: every start atom, walking
+ * the perceived ring order ('forward') or against it ('reverse'). Each
+ * candidate carries its atoms and ring bonds in locant order (bonds[k]
+ * joins locants k + 1 and k + 2; the last one joins n and 1). Used for
+ * ring parents (rings.js) and ring substituents (substituent.js, design.md
+ * §13.4 I-40a, whose candidates start at the attachment atom).
+ *
+ * @param {{atoms: number[], bonds: number[]}} ring - The ring in perceived order (bonds[i] joins atoms[i] and atoms[i + 1]).
+ * @returns {{atoms: number[], bonds: number[], direction: string, key: string, chainIndex: number}[]} The candidates.
+ */
+export function ringCandidates(ring) {
+  const n = ring.atoms.length;
+  const candidates = [];
+  for (let start = 0; start < n; start += 1) {
+    for (const direction of ['forward', 'reverse']) {
+      const step = direction === 'forward' ? 1 : -1;
+      const atoms = [];
+      const bonds = [];
+      for (let k = 0; k < n; k += 1) {
+        const i = (((start + step * k) % n) + n) % n;
+        atoms.push(ring.atoms[i]);
+        // Forwards the bond from position i is bonds[i]; backwards it is bonds[i - 1].
+        bonds.push(direction === 'forward' ? ring.bonds[i] : ring.bonds[(i - 1 + n) % n]);
+      }
+      candidates.push({ atoms, bonds, direction, key: atoms.join('-'), chainIndex: 0 });
+    }
+  } // End of the loop over every start atom and direction
+  return candidates;
+} // End of function ringCandidates()
+
+/**
  * Builds the data every numbering rule compares for one directed candidate:
  * its bonds and bond orders in locant order, the free-valence locant (FV)
  * and the prefix locants (all sorted, and grouped in citation order). Shared

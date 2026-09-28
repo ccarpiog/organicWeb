@@ -121,14 +121,29 @@
  * carbon is never a chain atom of the parent (principal.js
  * outsideCarbons()) nor of a branch (buildSubstituent() skips it):
  * `ácido 3-cianopropanoico`, `3-(cianometoxi)propanonitrilo`.
+ *
+ * Rings as substituents (design.md §13.4 I-40a): when a chain is the
+ * parent of a molecule with a ring (the chain carries more principal
+ * groups than the ring, IUPAC 2013 P-44.1.1), the ring atoms are never
+ * chain atoms, of the parent or of a branch (buildSubstituent() skips
+ * them), and a ring atom as the attachment atom of a branch roots a ring
+ * substituent (ringSubstituent()): the retained `fenil` for a benzene ring
+ * (IUPAC 2013 P-29.6), else `ciclo` + stem + `il` with the attachment atom
+ * as locant 1 (`ciclohexil`, `ciclopropil`, `(2-metilciclohexil)`,
+ * `(4-hidroxiciclohexil)`, `(ciclohex-2-en-1-il)`, `ciclohexiliden` on a
+ * double bond), its own prefixes numbered by the ring cascade. The branch
+ * identity keys see the ring whole (graph.js rootedBranchKey()).
  * Pure: topology only.
  */
 
-import { adjacency, rootedTreeKey } from '../model/graph.js';
+import { adjacency, rootedBranchKey, cycleCore } from '../model/graph.js';
 import { isHalogen } from '../model/elements.js';
-import { isNitrileCarbon, carbonylKind, isEsterCarbon, isAmideCarbon } from '../model/validate.js';
-import { buildChainStructure } from './structure.js';
-import { numberParent, compareCitationKeys } from './numbering.js';
+import { perceiveRings } from '../model/rings.js';
+import { isNitrileCarbon, carbonylKind, isEsterCarbon, isAmideCarbon, isBenzeneRing } from '../model/validate.js';
+import { buildChainStructure, buildRingStructure } from './structure.js';
+import {
+  numberParent, compareCitationKeys, ringCandidates, candidateData, runNumberingCascade,
+} from './numbering.js';
 import { citationKey, prefixNameKey } from './render.js';
 import { lexiconEs } from './lexicon.es.js';
 import { principalKindOf, isPrincipalOxygen, isSuffixOxygen, isSuffixGroupAtomOf } from './principal.js';
@@ -177,19 +192,24 @@ const YLIDENE_SHAPES = Object.freeze({
  * @param {string} [style] - Prefix style: 'isopropil' (default), 'pin' or 'substituted'.
  * @param {object} [lexicon] - The lexicon (citation order depends on the prefix words).
  * @param {Map<number, object[]>} [adj] - Adjacency map (computed when omitted).
- * @returns {{mol: object, adj: Map<number, object[]>, style: string, lexicon: object, cache: Map<string, object>, principal: string|null}} The context (`principal`: the principal oxygen kind, principal.js).
+ * @returns {{mol: object, adj: Map<number, object[]>, style: string, lexicon: object, cache: Map<string, object>, principal: string|null, ringAtoms: Set<number>}} The context (`principal`: the principal oxygen kind, principal.js; `ringAtoms`: the atoms of the one ring, empty for a tree).
  * @throws {RangeError} For an unknown style.
  */
 export function createNamingContext(mol, style = PREFIX_STYLES[0], lexicon = lexiconEs, adj = adjacency(mol)) {
   if (!PREFIX_STYLES.includes(style)) {
     throw new RangeError(`unknown prefix style ${style}`);
   }
-  return { mol, adj, style, lexicon, cache: new Map(), principal: principalKindOf(mol, adj) };
+  return {
+    mol, adj, style, lexicon, cache: new Map(), principal: principalKindOf(mol, adj), ringAtoms: cycleCore(adj),
+  };
 }
 
 /**
  * Collects the atoms and bonds of the subtree that starts at `attachAtom`
  * and leads away from `chainAtom` (the connecting bond is not included).
+ * Every bond between two of its atoms is included, so a branch that holds
+ * the ring (a ring substituent, design.md §13.4 I-40a) keeps its closure
+ * bond.
  *
  * @param {Map<number, {atom: number, bond: number, order: number}[]>} adj - Adjacency map (graph.js).
  * @param {number} chainAtom - The carrying chain atom.
@@ -199,17 +219,17 @@ export function createNamingContext(mol, style = PREFIX_STYLES[0], lexicon = lex
 export function substituentSubtree(adj, chainAtom, attachAtom) {
   const seen = new Set([chainAtom, attachAtom]);
   const atoms = [attachAtom];
-  const bonds = [];
   for (let i = 0; i < atoms.length; i += 1) {
     for (const n of adj.get(atoms[i])) {
       if (!seen.has(n.atom)) {
         seen.add(n.atom);
         atoms.push(n.atom);
-        bonds.push(n.bond);
       }
     }
   }
-  return { atoms, bonds: bonds.sort((p, q) => p - q) };
+  const inSubtree = new Set(atoms);
+  const bonds = new Set(atoms.flatMap((id) => adj.get(id).filter((n) => inSubtree.has(n.atom)).map((n) => n.bond)));
+  return { atoms, bonds: [...bonds].sort((p, q) => p - q) };
 } // End of function substituentSubtree()
 
 /**
@@ -384,7 +404,7 @@ function cyanoEntry(ctx, chainAtom, n) {
     atoms: [...structure.atoms],
     bonds: [...structure.bonds],
     multipleBonds: [],
-    key: ATTACH_SYMBOL[n.order] + rootedTreeKey(ctx.mol, n.atom, chainAtom, ctx.adj),
+    key: ATTACH_SYMBOL[n.order] + rootedBranchKey(ctx.mol, n.atom, chainAtom, ctx.adj),
     structure,
     citation: citationKey(structure, ctx.lexicon),
   };
@@ -446,7 +466,7 @@ function branchEntry(ctx, chainAtom, n) {
     atoms: subtree.atoms,
     bonds: subtree.bonds,
     multipleBonds,
-    key: ATTACH_SYMBOL[n.order] + rootedTreeKey(ctx.mol, n.atom, chainAtom, ctx.adj),
+    key: ATTACH_SYMBOL[n.order] + rootedBranchKey(ctx.mol, n.atom, chainAtom, ctx.adj),
     structure,
     citation: citationKey(structure, ctx.lexicon),
   };
@@ -583,21 +603,25 @@ export function acylOxygenOf(ctx, carbon) {
 /**
  * Finds an acyl branch that has no acyl prefix, at any depth (design.md
  * §13.4 I-39b): a one-carbon acyl group (X alone in its chain) that
- * carries a prefix of its own, which can only be a `ciano` (–CO–C≡N: the
- * nitrile carbon is never a chain atom). IUPAC 2013 names it
- * `carbonocianidoil` (from memory), which the app does not support, so the
- * engine refuses the molecule (ACYL_SUBSTITUENT_MESSAGE). Every other acyl
- * branch is named (`formil`, `acetil`, `propanoil`…).
+ * carries a prefix of its own: a `ciano` (–CO–C≡N: the nitrile carbon is
+ * never a chain atom; IUPAC 2013 names it `carbonocianidoil`, from memory,
+ * ACYL_SUBSTITUENT_MESSAGE) or, since I-40a, a ring (X bonded to the ring:
+ * `ciclohexanocarbonil`, `benzoil`, flagged `ring`, RING_ACYL_MESSAGE),
+ * which the app does not support, so the engine refuses the molecule.
+ * Every other acyl branch is named (`formil`, `acetil`, `propanoil`,
+ * `(2-ciclohexiletanoil)`…).
  *
  * @param {{prefixes: object[]}} structure - A name or substituent structure.
- * @returns {{atoms: number[], bonds: number[]}|null} The C=O atoms (carbon, oxygen) and bond of the first such branch, or null.
+ * @returns {{atoms: number[], bonds: number[], ring?: boolean}|null} The C=O atoms (carbon, oxygen) and bond of the first such branch (`ring` when X carries the ring), or null.
  */
 export function unnamedAcyl(structure) {
   for (const group of structure.prefixes) {
     const sub = group.substituent;
     if (sub.acyl && sub.chain.length === 1 && sub.prefixes.some((inner) => !inner.substituent.oxo)) {
       const site = sub.prefixes.find((inner) => inner.substituent.oxo).locants[0];
-      return { atoms: [site.atom, site.attachAtom], bonds: [site.bond] };
+      // A ring on X itself (design.md §13.4 I-40a): `ciclohexanocarbonil`, `benzoil` (I-40b).
+      const ring = sub.prefixes.some((inner) => inner.substituent.ring);
+      return { atoms: [site.atom, site.attachAtom], bonds: [site.bond], ...(ring ? { ring: true } : {}) };
     }
     const nested = unnamedAcyl(sub);
     if (nested) {
@@ -845,8 +869,11 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
     throw new Error(`buildSubstituent: attachment bond of order ${order}`);
   }
   const { adj, style } = ctx;
-  // Heteroatoms and nitrile carbons (a `ciano` prefix of the branch, I-39a) are never chain atoms.
-  const skip = (id) => ctx.mol.atoms.get(id).element !== 'C' || isNitrileCarbon(ctx.mol, adj, id);
+  if (ctx.ringAtoms.has(attachAtom)) {
+    return ringSubstituent(ctx, chainAtom, attachAtom, order); // `ciclohexil`, `fenil` (design.md §13.4 I-40a).
+  }
+  // Heteroatoms, nitrile carbons (a `ciano` prefix of the branch, I-39a) and ring atoms (a ring prefix, I-40a) are never chain atoms.
+  const skip = (id) => ctx.mol.atoms.get(id).element !== 'C' || isNitrileCarbon(ctx.mol, adj, id) || ctx.ringAtoms.has(id);
   let chains = substituentChainCandidates(adj, chainAtom, attachAtom, style === 'substituted', skip);
   chains = keepMax(chains, (c) => c.length);
   chains = keepMax(chains, (c) => countBonds(adj, c, (order) => order >= 2));
@@ -869,7 +896,7 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
   const numbering = numberParent(ctx.mol, chains, prefixesOf, { adj, freeValenceAtom: attachAtom, nameKey });
   const subs = subsByChain.get(chains[numbering.chainIndex]);
   const subtree = substituentSubtree(adj, chainAtom, attachAtom);
-  const singleShape = GROUP_SHAPES[rootedTreeKey(ctx.mol, attachAtom, chainAtom, adj)] || null;
+  const singleShape = GROUP_SHAPES[rootedBranchKey(ctx.mol, attachAtom, chainAtom, adj)] || null;
   const shape = order === 2 ? YLIDENE_SHAPES[singleShape] || null : singleShape;
   const retained = ((shape === 'isopropyl' || shape === 'isopropylidene') && style === 'isopropil')
     || (shape === 'tert-butyl' && style !== 'substituted')
@@ -890,6 +917,56 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
     ...(amideSide === 'carbon' ? { carbamoyl: true } : {}),
   };
 } // End of function buildSubstituent()
+
+/**
+ * The substituent structure of a ring bonded to the carrying atom through
+ * one of its atoms (design.md §13.4 I-40a): the ring is the group's
+ * `chain` (a RingStructure), numbered from the attachment atom (locant 1,
+ * the free valence) in the direction the ring cascade chooses
+ * (numbering.js runNumberingCascade(): N1 multiple bonds, N2 double bonds,
+ * N3 prefixes, N4 citation order, N5, then the presentation tie-break);
+ * its prefixes are its other groups (substituentsOf(), the carrying atom
+ * left out): `(2-metilciclohexil)`, `(4-hidroxiciclohexil)`,
+ * `(2-oxociclopentil)`. A benzene ring (validate.js isBenzeneRing()) is
+ * the retained `fenil` (IUPAC 2013 P-29.6; `retained` 'phenyl', its chain
+ * `retained` 'benzene'); validation keeps it monosubstituted, so it has no
+ * prefixes. render.js cites any other ring `ciclo` + stem + `il`
+ * (`ciclohexil`, `ciclohex-2-en-1-il`; `iliden` on a double bond).
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {number} chainAtom - The carrying atom (not a ring atom).
+ * @param {number} attachAtom - The ring atom bonded to it.
+ * @param {number} order - Order of the connecting bond (1 → `-il`, 2 → `-iliden`).
+ * @returns {object} The SubstituentStructure (structure.js) with `ring` set.
+ */
+export function ringSubstituent(ctx, chainAtom, attachAtom, order) {
+  const [ring] = perceiveRings(ctx.mol).rings;
+  const candidates = ringCandidates(ring).filter((c) => c.atoms[0] === attachAtom);
+  const subs = substituentsOf(ctx, ring.atoms, chainAtom);
+  const prefixes = subs.map(numberingPrefix);
+  const data = new Map(candidates.map((c) => [
+    c.key,
+    candidateData(c.atoms, c.bonds, c.bonds.map((id) => ctx.mol.bonds.get(id).order), prefixes),
+  ]));
+  const { chosen } = runNumberingCascade(candidates, data, {
+    prefixCounts: [prefixes.length],
+    nameKey: nameKeyFunction([subs], ctx.lexicon),
+  });
+  const { bonds, orders } = data.get(chosen.key);
+  const numbered = buildRingStructure(chosen.atoms, bonds, orders);
+  const benzene = isBenzeneRing(ctx.mol, ring);
+  const subtree = substituentSubtree(ctx.adj, chainAtom, attachAtom);
+  return {
+    ring: true,
+    chain: benzene ? { ...numbered, retained: 'benzene' } : numbered,
+    prefixes: groupPrefixes(subs, numbered.atoms),
+    freeValence: { locant: 1, order },
+    retained: benzene ? 'phenyl' : null,
+    commonName: null,
+    atoms: subtree.atoms,
+    bonds: subtree.bonds,
+  };
+} // End of function ringSubstituent()
 
 /**
  * How a branch reaches an amide carbon X (design.md §13.4 I-39d):

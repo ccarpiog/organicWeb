@@ -11,10 +11,15 @@
  * `3-hidroxiciclohexan-1-ona` (the ketone is principal, the OH a prefix).
  *
  * Ring vs chain (IUPAC 2013 P-44.1.2.2, P-52.2.8): a ring is senior to a
- * chain whatever the chain's length or unsaturation, so with one ring the
- * ring is always the parent and every side chain is a substituent prefix
- * (design.md §13.5). The old school rule "the longest chain wins over a
- * smaller ring" is not used: `decilciclopropano`, never `1-ciclopropildecano`.
+ * chain whatever the chain's length or unsaturation, so without a
+ * principal group the ring is always the parent and every side chain is a
+ * substituent prefix (design.md §13.5). The old school rule "the longest
+ * chain wins over a smaller ring" is not used: `decilciclopropano`, never
+ * `1-ciclopropildecano`. The principal groups come first (P-44.1.1): this
+ * module names the molecule when the ring carries at least as many of them
+ * as any chain (parent.js ringOrChain(); `4-(hidroximetil)ciclohexan-1-ol`
+ * on a tie); a chain carrying more is the parent (naming/index.js, the ring
+ * a `ciclohexil` prefix, design.md §13.4 I-40a).
  *
  * The ring comes from model/rings.js perceiveRings(): its atoms in ring
  * order and its closure bond. Side chains are named by substituent.js
@@ -41,11 +46,15 @@ import { perceiveRings } from '../model/rings.js';
 import { adjacency } from '../model/graph.js';
 import { buildRingStructure, buildNameStructure, buildSuffix } from './structure.js';
 import { renderName } from './render.js';
-import { candidateData, runNumberingCascade } from './numbering.js';
+import { candidateData, runNumberingCascade, ringCandidates } from './numbering.js';
 import {
   createNamingContext, collectSubstituents, groupPrefixes, suffixSites, numberingPrefix, PREFIX_STYLES,
 } from './substituent.js';
 import { lexiconEs } from './lexicon.es.js';
+import { ringOrChain } from './parent.js';
+
+// The ring numbering candidates live in numbering.js (a ring substituent, substituent.js, numbers its ring too).
+export { ringCandidates } from './numbering.js';
 
 /**
  * Finds the single ring of a molecule in its perceived order (ring order
@@ -64,35 +73,6 @@ export function ringParent(mol) {
   const orders = ring.bonds.map((id) => mol.bonds.get(id).order);
   return buildRingStructure(ring.atoms, ring.bonds, orders);
 }
-
-/**
- * Lists the 2n numbering candidates of a ring: every start atom, walking
- * the perceived ring order ('forward') or against it ('reverse'). Each
- * candidate carries its atoms and ring bonds in locant order (bonds[k]
- * joins locants k + 1 and k + 2; the last one joins n and 1).
- *
- * @param {{atoms: number[], bonds: number[]}} ring - The ring in perceived order (bonds[i] joins atoms[i] and atoms[i + 1]).
- * @returns {{atoms: number[], bonds: number[], direction: string, key: string, chainIndex: number}[]} The candidates.
- */
-export function ringCandidates(ring) {
-  const n = ring.atoms.length;
-  const candidates = [];
-  for (let start = 0; start < n; start += 1) {
-    for (const direction of ['forward', 'reverse']) {
-      const step = direction === 'forward' ? 1 : -1;
-      const atoms = [];
-      const bonds = [];
-      for (let k = 0; k < n; k += 1) {
-        const i = (((start + step * k) % n) + n) % n;
-        atoms.push(ring.atoms[i]);
-        // Forwards the bond from position i is bonds[i]; backwards it is bonds[i - 1].
-        bonds.push(direction === 'forward' ? ring.bonds[i] : ring.bonds[(i - 1 + n) % n]);
-      }
-      candidates.push({ atoms, bonds, direction, key: atoms.join('-'), chainIndex: 0 });
-    }
-  } // End of the loop over every start atom and direction
-  return candidates;
-} // End of function ringCandidates()
 
 /**
  * Copies a numbering trace step, giving every candidate its ring bonds in
@@ -144,7 +124,10 @@ export function numberRing(mol, perceived, substituents, suffixAtoms = []) {
  * chains are its substituents, and the ring numbering is chosen among every
  * start and direction. The trace starts with a 'RING' step (the ring as the
  * only candidate, its size as the value) followed by the numbering rules
- * that were applied (none for a bare cycloalkane). The oxygen groups of
+ * that were applied (none for a bare cycloalkane); when a side chain carries
+ * as many principal groups as the ring (ring and chain tie, design.md
+ * §13.4 I-40a: the ring is senior, P-44.1.2.2) a `RINGCHAIN` step
+ * (parent.js ringOrChain()) comes first. The oxygen groups of
  * the principal kind on ring carbons (OH, or the ketone C=O of a
  * cycloalkanone) are the `-ol` / `-ona` suffix (`structure.suffix`) and are
  * numbered first (N0); an OH beside a ring ketone is the `hidroxi` prefix.
@@ -174,13 +157,17 @@ export function nameRingWithStyle(mol, style = PREFIX_STYLES[0]) {
   });
   const { name, parts } = renderName(structure, lexiconEs);
   const candidate = { atoms: [...perceived.atoms], bonds: [...perceived.bonds], key: 'ring' };
+  // A side chain carrying as many principal groups of its own as the ring (design.md §13.4 I-40a): the ring wins the
+  // tie. An amine N bonded to the ring and to a chain (`N-metilciclohexanamina`, I-36) is the ring's group, no tie.
+  const choice = ringOrChain(mol, perceived);
+  const tie = choice && choice.offRing > 0 && choice.chainCount > 0 ? [choice.step] : [];
   return {
     ok: true,
     name,
     parts,
     structure,
     parent: { atoms: [...parent.atoms], bonds: [...parent.bonds] },
-    trace: [{
+    trace: [...tie, {
       rule: 'RING',
       candidatesBefore: [candidate],
       values: [parent.length],

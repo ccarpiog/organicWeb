@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T05:12:07Z",
+  "updated": "2026-09-28T05:52:07Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -395,10 +395,25 @@
       "narrative": "docs/progress-archive/i-39d.md"
     },
     {
-      "id": "I-40",
-      "title": "v2.20 Functions on rings",
+      "id": "I-40a",
+      "title": "v2.20a Rings as substituents of a functional chain (split from I-40)",
+      "status": "done",
+      "risk": "high",
+      "summary": "Names a chain carrying an OH, ketone or amine with a ring hung from it as ciclohexil-/fenil- (lifts sideChain refusals).",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-40a.md",
+      "narrative": "docs/progress-archive/i-40a.md"
+    },
+    {
+      "id": "I-40b",
+      "title": "v2.20b Acids, aldehydes, nitriles and amides with a ring (split from I-40)",
       "status": "queued",
-      "summary": "v2 plan phase 20: functions on rings (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "summary": "Names -carboxílico, -carbaldehído, -carbonitrilo and -carboxamida on a ring and those groups on a ring's side chain."
+    },
+    {
+      "id": "I-40c",
+      "title": "v2.20c Ring esters (split from I-40)",
+      "status": "queued",
+      "summary": "Names esters with a ring on the acid side (-carboxilato, benzoato) or the O side (…ato de fenilo/ciclohexilo)."
     },
     {
       "id": "I-41",

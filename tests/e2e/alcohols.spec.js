@@ -5,7 +5,8 @@
  * and the OH shown on the canvas; molecules loaded through the editor test
  * API get their names (propan-2-ol, prop-2-en-1-ol with the OH numbered
  * before the double bond, ciclohexanol, fenol); "Ordenar dibujo" lays out an
- * alcohol; an anhydride and an OH on a ring's side chain are still refused. Runs
+ * alcohol; an anhydride is still refused, an OH on a ring's side chain is
+ * named since I-40a (fenilmetanol). Runs
  * on the dev server and on dist/index.html.
  */
 
@@ -169,9 +170,10 @@ test('loaded alcohols: suffix locants, OH before the double bond, rings and feno
   await expect(error).toContainText('alcoholes (con grupos –OH unidos a un carbono)');
   await expect(page.locator('#result-name')).toHaveCount(0);
 
+  // An OH on a ring's side chain is named since I-40a: the chain is the parent, the ring the prefix fenil.
   await loadSmiles(page, 'OCC1=CC=CC=C1');
   await askName(page);
-  await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('cuando el –OH está unido directamente al anillo');
+  await expect(page.locator('#result-name')).toHaveText('fenilmetanol');
+  await expect(error).toHaveCount(0);
   expect(errors).toEqual([]);
 }); // End of test 'loaded alcohols…'

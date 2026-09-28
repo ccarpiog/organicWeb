@@ -130,7 +130,7 @@
    }
   ]
  },
- "OCC1=CC=CC=C1": {
+ "OCC1CCC(CO)CC1": {
   "code": "HETEROATOM",
   "principal": "alcohol",
   "steps": [
@@ -139,13 +139,14 @@
     "title": "Reconoce los grupos",
     "text": [
      "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
-     "He encontrado este grupo:",
-     "1 alcohol: un grupo –OH unido a un carbono."
+     "He encontrado estos grupos:",
+     "2 alcoholes: un grupo –OH unido a un carbono."
     ],
     "highlight": [
      {
       "atoms": [
-       1
+       1,
+       8
       ],
       "bonds": [],
       "style": "substituent"
@@ -158,12 +159,14 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el alcohol: es el único tipo de grupo que puede serlo."
+     "Aquí el grupo principal es el alcohol: es el único tipo de grupo que puede serlo.",
+     "Hay 2 grupos de este tipo: todos cuentan como principales."
     ],
     "highlight": [
      {
       "atoms": [
-       1
+       1,
+       8
       ],
       "bonds": [],
       "style": "parent"
@@ -181,7 +184,8 @@
     "highlight": [
      {
       "atoms": [
-       1
+       1,
+       8
       ],
       "bonds": [],
       "style": "parent"
@@ -193,12 +197,21 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –OH en una de sus ramas. De momento solo sé nombrar los alcoholes con anillo cuando el –OH está unido directamente al anillo (como el ciclohexanol o el fenol)."
+     "Esta molécula tiene un anillo con dos ramas iguales, y cada rama lleva el grupo principal. La IUPAC la nombra con un nombre que junta las partes iguales a través del anillo (como el ciclohexano-1,4-diildimetanol), y eso aún no sé hacerlo."
     ],
     "highlight": [
      {
       "atoms": [
-       1
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
       ],
       "bonds": [],
       "style": "candidate"
@@ -1750,7 +1763,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –CHO (un aldehído). Cuando el –CHO va unido a un anillo, el nombre acaba en «-carbaldehído» (como el ciclohexanocarbaldehído), y eso aún no sé nombrarlo. De momento, con anillo solo sé nombrar las cetonas cuyo C=O forma parte del anillo (como la ciclohexanona)."
+     "Esta molécula tiene un anillo y un grupo –CHO (un aldehído). Cuando el –CHO va unido a un anillo, el nombre acaba en «-carbaldehído» (como el ciclohexanocarbaldehído), y eso aún no sé nombrarlo. De momento, con anillo sé nombrar las cetonas (como la ciclohexanona o la 1-feniletan-1-ona), pero no los aldehídos."
     ],
     "highlight": [
      {

@@ -270,6 +270,12 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * (IUPAC 2013 retains acetonitrile as the preferred name, P-66.5.1.1.1,
  * from memory; `formonitrilo` / `cianuro de hidrógeno` for HC≡N and
  * `cianuro de metilo` are not offered).
+ * Three benzene derivatives whose parent is a chain (design.md §13.4
+ * I-40a), bare (the `fenil` group the only prefix, no N groups):
+ * 'acetophenone' for 1-feniletan-1-ona, 'benzylAlcohol' for fenilmetanol,
+ * 'benzylamine' for fenilmetanamina; IUPAC 2013 accepts acetophenone,
+ * benzyl alcohol and benzylamine in general nomenclature, not as
+ * preferred names (from memory).
  * IUPAC 2013 retains formaldehyde and acetaldehyde (aldehydes,
  * P-66.6), acetone for general nomenclature (ketones, P-64), and formic,
  * acetic and oxalic acid as preferred names (acids, P-65.1.1.1), hence
@@ -277,10 +283,18 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * (design.md §13.1), never as the main name.
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
- * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|null} The id.
+ * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|null} The id.
  */
 export function carbonylTraditionalId(structure) {
   const { parentKind, parent, prefixes, suffix } = structure;
+  const phenylOnly = parentKind === 'chain' && suffix && suffix.locants.length === 1 && prefixes.length === 1
+    && prefixes[0].locants.length === 1 && prefixes[0].substituent.retained === 'phenyl' && !prefixes[0].substituent.alkoxy
+    && parent.double.length + parent.triple.length === 0;
+  if (phenylOnly) {
+    // C₆H₅–CO–CH₃, C₆H₅–CH₂OH, C₆H₅–CH₂NH₂ (design.md §13.4 I-40a).
+    const ids = { ketone: { 2: 'acetophenone' }, alcohol: { 1: 'benzylAlcohol' }, amine: { 1: 'benzylamine' } }[suffix.kind];
+    return (ids && ids[parent.length]) || null;
+  }
   if (parentKind === 'chain' && suffix && suffix.kind === 'nitrile') {
     const bare = prefixes.length === 0 && suffix.locants.length === 1 && parent.double.length + parent.triple.length === 0;
     return bare && parent.length === 2 ? 'acetonitrile' : null;

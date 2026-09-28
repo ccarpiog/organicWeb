@@ -26,7 +26,11 @@
  * prefixes and diesters (I-39c: `alcoxicarbonil`, `…-oxi…-oxo`, `aciloxi`
  * beside an acid, half esters and diesters; generateEsterPrefixes()), of
  * amide prefixes (I-39d: `carbamoil`, `…-amino…-oxo`, `acilamino` beside
- * an acid, an ester or another amide; generateAmidePrefixes()),
+ * an acid, an ester or another amide; generateAmidePrefixes()), of
+ * rings as prefixes of a chain carrying the principal group (I-40a: an OH,
+ * a ketone or an amine on a ring's side chain, `ciclohexil`, `fenil`,
+ * `fenoxi`, `(ciclohexilamino)`, and ring and chain tied;
+ * generateRingSubstituents()),
  * plus the list of cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
@@ -1638,6 +1642,85 @@ export function generateAmidePrefixes({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct amide-prefix molecules
   return molecules;
 } // End of function generateAmidePrefixes()
+
+/**
+ * Generates up to `count` distinct (by canonical key) ring molecules whose
+ * side chains carry principal groups (design.md §13.4 I-40a): a random
+ * monocycle (3–10 ring carbons) or a monosubstituted benzene, with OH
+ * groups, ketone C=O or amine N (–NH₂, an N put into a side-chain C–C
+ * bond or the ring–chain bond, some N with small alkyl groups) on
+ * side-chain carbons; a share also with OH groups on ring carbons (not on
+ * a benzene), an ether O in a bond outside the ring (`fenoxi`,
+ * `ciclohexiloxi`) and halogens. Only molecules the engine names in every
+ * prefix style with a ring-or-chain choice in the trace (a chain parent
+ * with a ring prefix, or ring and chain tied) are kept.
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateRingSubstituents({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 7417 + 44);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60) {
+    attempts += 1;
+    const benzene = random() < 0.4 && maxSize >= 7;
+    let base;
+    let ringSize = 6;
+    if (benzene) {
+      const extra = randomInt(random, 1, Math.max(1, Math.min(5, maxSize - 6)));
+      base = randomBenzene(random, { extra, kekule: random() < 0.5 ? 1 : 2, unsaturation: random() * 0.3 });
+    } else {
+      const size = randomInt(random, 4, Math.max(4, maxSize));
+      ringSize = randomInt(random, 3, Math.min(10, size - 1));
+      base = randomMonocycle(random, {
+        ringSize, extra: size - ringSize, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8,
+      });
+    } // End of the choice of the ring molecule
+    const ids = [...base.atoms.keys()];
+    const ring = new Set(ids.slice(0, ringSize)); // randomMonocycle() and randomBenzene() add the ring atoms first.
+    const side = new Set(ids.filter((id) => !ring.has(id)));
+    if (side.size === 0) {
+      continue;
+    }
+    const kind = ['alcohol', 'alcohol', 'ketone', 'amine'][Math.floor(random() * 4)];
+    let mol;
+    if (kind === 'alcohol') {
+      mol = hydroxylate(base, random, 0.1 + random() * 0.3, side);
+    } else if (kind === 'ketone') {
+      mol = carbonylate(base, random, 0.15 + random() * 0.3, side);
+    } else {
+      const insert = random() < 0.3 ? 1 : 0;
+      mol = aminate(base, random, { rate: 0.1 + random() * 0.3, insert, graft: random() * 0.4, only: side });
+    }
+    if (mol.atoms.size === base.atoms.size) {
+      continue; // No group drawn.
+    }
+    if (!benzene && random() < 0.25) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.15, ring);
+    }
+    if (random() < 0.15) {
+      mol = etherify(mol, random, 1);
+    }
+    if (random() < 0.2) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.15);
+    }
+    if (validateForNaming(mol)) {
+      continue; // Not valid for naming (an aldehyde with a ring, a polysubstituted benzene…).
+    }
+    const results = PREFIX_STYLES.map((prefixStyle) => nameMolecule(mol, { prefixStyle }));
+    if (!results.every((result) => result.ok) || !results[0].trace.some((step) => step.rule === 'RINGCHAIN')) {
+      continue; // Refused by the engine in some style (symmetricRing…), or no side-chain principal group.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct ring-prefix molecules
+  return molecules;
+} // End of function generateRingSubstituents()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

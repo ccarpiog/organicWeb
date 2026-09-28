@@ -108,35 +108,17 @@ export const RING_SYSTEM_MESSAGES = Object.freeze({
 });
 
 /**
- * HETEROATOM message for a molecule with a ring and an OH group on a side
- * chain (design.md §13.4 I-31): the chain would be the parent (it carries
- * the principal group, IUPAC 2013 P-44.1.1) and the ring a substituent
- * (`ciclohexil`, `fenil`), which the app cannot name yet (I-40).
- */
-export const SIDE_CHAIN_ALCOHOL_MESSAGE = 'Esta molécula tiene un anillo y un grupo –OH en una de sus ramas. '
-  + 'De momento solo sé nombrar los alcoholes con anillo cuando el –OH está unido directamente al anillo '
-  + '(como el ciclohexanol o el fenol).';
-
-/**
  * HETEROATOM message for a molecule with a ring and an aldehyde (design.md
  * §13.4 I-32): a –CHO carbon can never be a ring atom, so the group is
  * either bonded to the ring, named with the suffix `-carbaldehído`
  * (`ciclohexanocarbaldehído`), or on a side chain, which then carries the
- * principal group; both wait for I-40.
+ * principal group; both wait for I-40b. Ketones on a side chain are named
+ * since I-40a (`1-feniletan-1-ona`).
  */
 export const RING_ALDEHYDE_MESSAGE = 'Esta molécula tiene un anillo y un grupo –CHO (un aldehído). '
   + 'Cuando el –CHO va unido a un anillo, el nombre acaba en «-carbaldehído» (como el ciclohexanocarbaldehído), '
-  + 'y eso aún no sé nombrarlo. De momento, con anillo solo sé nombrar las cetonas cuyo C=O forma parte del anillo '
-  + '(como la ciclohexanona).';
-
-/**
- * HETEROATOM message for a molecule with a ring and a ketone C=O on a side
- * chain (design.md §13.4 I-32): the chain would carry the principal group
- * and be the parent, the ring a substituent (I-40).
- */
-export const SIDE_CHAIN_CARBONYL_MESSAGE = 'Esta molécula tiene un anillo y un grupo C=O en una de sus ramas. '
-  + 'De momento solo sé nombrar las cetonas con anillo cuando el carbono del C=O forma parte del anillo '
-  + '(como la ciclohexanona).';
+  + 'y eso aún no sé nombrarlo. De momento, con anillo sé nombrar las cetonas (como la ciclohexanona o la '
+  + '1-feniletan-1-ona), pero no los aldehídos.';
 
 /**
  * HETEROATOM message for an open chain with more than two aldehyde groups
@@ -207,6 +189,20 @@ export const ACYL_SUBSTITUENT_MESSAGE = 'Esta molécula tiene una rama –CO–C
   + '«acetil-» o «propanoil-»).';
 
 /**
+ * HETEROATOM message of the naming engine (naming/index.js) for an acyl
+ * branch whose C=O carbon is bonded directly to the ring (design.md §13.4
+ * I-40a): a ring prefix on a one-carbon acyl group, which IUPAC 2013 names
+ * with `-carbonil` (`ciclohexanocarbonil`) or the retained `benzoil`, like
+ * the `-carboxílico` acids of I-40b (from memory); not supported yet.
+ * Acyl branches whose C=O carbon is not bonded to the ring are named
+ * (`(2-ciclohexiletanoil)`).
+ */
+export const RING_ACYL_MESSAGE = 'Esta molécula tiene una rama con un grupo C=O unido directamente a un anillo (como '
+  + 'en «ciclohexanocarbonil-» o «benzoil-»). Esas ramas se nombran con «-carbonil», igual que los ácidos con '
+  + '«-carboxílico», y eso aún no sé hacerlo. Sí sé nombrar las cetonas con un anillo como sustituyente (como la '
+  + '1-feniletan-1-ona).';
+
+/**
  * HETEROATOM message of the naming engine (naming/index.js) for an ether
  * whose two sides are identical and each carries the principal group
  * (design.md §13.4 I-34), such as HO–CH₂–CH₂–O–CH₂–CH₂–OH: IUPAC 2013
@@ -272,15 +268,17 @@ export const MIXED_DIESTER_MESSAGE = 'Esta molécula tiene dos grupos –COO– 
   + 'vista desde los dos extremos (como el propanodioato de etilo y metilo).';
 
 /**
- * HETEROATOM message for a molecule with a ring whose principal group is
- * an amine with an N not bonded to a ring carbon (design.md §13.4 I-36),
- * such as C₆H₅–CH₂–NH₂: the chain would carry the principal group and be
- * the parent, with the ring as a substituent (`fenilmetanamina`), which
- * waits for I-40.
+ * HETEROATOM message of the naming engine (naming/index.js) for a
+ * molecule whose parent is a chain and whose ring carries two or more
+ * identical branches that each hold the principal group (design.md §13.4
+ * I-40a), such as HOCH₂–C₆H₁₀–CH₂OH: IUPAC 2013 names it with
+ * multiplicative nomenclature (`ciclohexano-1,4-diildimetanol`, P-15.3,
+ * from memory), which the app does not support, as for ethers and amines
+ * (SYMMETRIC_ETHER_MESSAGE, SYMMETRIC_AMINE_MESSAGE).
  */
-export const SIDE_CHAIN_AMINE_MESSAGE = 'Esta molécula tiene un anillo y un grupo amino (un nitrógeno, como el –NH₂) '
-  + 'en una de sus ramas. De momento solo sé nombrar las aminas con anillo cuando el nitrógeno está unido '
-  + 'directamente al anillo (como la ciclohexanamina o la bencenamina).';
+export const SYMMETRIC_RING_MESSAGE = 'Esta molécula tiene un anillo con dos ramas iguales, y cada rama lleva el grupo '
+  + 'principal. La IUPAC la nombra con un nombre que junta las partes iguales a través del anillo (como el '
+  + 'ciclohexano-1,4-diildimetanol), y eso aún no sé hacerlo.';
 
 /**
  * HETEROATOM message of the naming engine (naming/index.js) for a parent
@@ -1248,8 +1246,9 @@ export function hasNameableHeteroatoms(mol, hetero) {
 
 /**
  * The OH oxygens of a single-ring molecule whose carbon is not a ring atom
- * (an OH on a side chain), ascending. Such a molecule is refused for now
- * (SIDE_CHAIN_ALCOHOL_MESSAGE): its parent would be the chain.
+ * (an OH on a side chain), ascending. Refused until I-40a (the chain may
+ * be the parent, with the ring as a `ciclohexil` / `fenil` prefix); kept
+ * as a helper.
  *
  * @param {object} mol - A validated single-ring molecule whose heteroatoms are nameable.
  * @returns {number[]} The side-chain OH oxygens (empty when every OH is on the ring).
@@ -1266,10 +1265,10 @@ export function sideChainHydroxyls(mol) {
 /**
  * The C=O oxygens of a single-ring molecule whose carbon is not a ring atom,
  * ascending, with their kind (design.md §13.4 I-32): every aldehyde (a
- * –CHO carbon is never a ring atom) and every ketone on a side chain. Such
- * a molecule is refused for now (RING_ALDEHYDE_MESSAGE,
- * SIDE_CHAIN_CARBONYL_MESSAGE): only cycloalkanones, whose C=O carbon is a
- * ring atom, are named.
+ * –CHO carbon is never a ring atom) and every ketone on a side chain. A
+ * molecule with such an aldehyde is refused (RING_ALDEHYDE_MESSAGE, until
+ * I-40b); ketones on a side chain are named since I-40a (the chain may be
+ * the parent, with the ring as a prefix: `1-feniletan-1-ona`).
  *
  * @param {object} mol - A validated single-ring molecule whose heteroatoms are nameable.
  * @returns {{atom: number, kind: 'aldehyde'|'ketone'}[]} The side-chain C=O oxygens.
@@ -1411,9 +1410,11 @@ function esterPlacementError(mol, hetero, esters) {
 /**
  * The refusal of a nameable-heteroatom molecule whose oxygen groups the
  * engine cannot place yet (design.md §13.4 I-31, I-32, I-33, I-35), or null.
- * With a ring: a carboxyl group (`ringAcid`), an ester group (`ringEster`), an aldehyde
- * (`ringAldehyde`), a ketone C=O on a side chain (`sideChainCarbonyl`) or
- * an OH on a side chain (`sideChainAlcohol`), in that order. Without a
+ * With a ring: a carboxyl group (`ringAcid`), an ester group (`ringEster`),
+ * then the amides and nitriles below, then an aldehyde (`ringAldehyde`); a
+ * ketone C=O or an OH on a side chain is named since I-40a (the chain
+ * carrying more principal groups than the ring is the parent, the ring a
+ * `ciclohexil` / `fenil` prefix). Without a
  * ring: more than two carboxyl groups (`manyAcids`, whose third –COOH
  * would be a `carboxi-` branch), then, without an acid (with one, every
  * ester is a prefix: `alcoxi…oxo`, `alcoxicarbonil-`, `aciloxi-`, I-39c),
@@ -1424,7 +1425,7 @@ function esterPlacementError(mol, hetero, esters) {
  * `manyNitriles`), then more than two aldehyde groups on one carbon piece
  * with the aldehyde principal (manyAldehydesError(), `manyAldehydes`). The error lists the heteroatoms (`atoms`) and the
  * offending groups (`acids`: the carboxyl carbons; `esters`: the ester
- * carbons; `sideChain` or `aldehydes`: oxygens).
+ * carbons; `sideChain` (every side-chain C=O oxygen) or `aldehydes`: oxygens).
  *
  * @param {object} mol - A validated molecule whose heteroatoms are nameable.
  * @param {boolean} cyclic - Whether it has a ring.
@@ -1459,22 +1460,12 @@ function oxygenPlacementError(mol, cyclic, hetero) {
     return manyAldehydesError(mol, hetero, acids.length + esters.length + amideCarbons(mol).length + nitrileCarbons(mol).length > 0);
   }
   const carbonyls = sideChainCarbonyls(mol);
-  if (carbonyls.length > 0) {
-    const aldehyde = carbonyls.some((c) => c.kind === 'aldehyde');
+  if (carbonyls.some((c) => c.kind === 'aldehyde')) {
     return validationError('HETEROATOM', {
-      message: aldehyde ? RING_ALDEHYDE_MESSAGE : SIDE_CHAIN_CARBONYL_MESSAGE,
-      atoms: hetero,
-      reason: aldehyde ? 'ringAldehyde' : 'sideChainCarbonyl',
-      sideChain: carbonyls.map((c) => c.atom),
+      message: RING_ALDEHYDE_MESSAGE, atoms: hetero, reason: 'ringAldehyde', sideChain: carbonyls.map((c) => c.atom),
     });
   }
-  const sideChain = sideChainHydroxyls(mol);
-  if (sideChain.length > 0) {
-    return validationError('HETEROATOM', {
-      message: SIDE_CHAIN_ALCOHOL_MESSAGE, atoms: hetero, reason: 'sideChainAlcohol', sideChain,
-    });
-  }
-  return null;
+  return null; // Ketones and OH groups on side chains are named since I-40a (the ring may be a prefix).
 } // End of function oxygenPlacementError()
 
 /**
@@ -1571,61 +1562,28 @@ function nitrilePlacementError(mol, cyclic, hetero, senior) {
 } // End of function nitrilePlacementError()
 
 /**
- * The refusal of a nameable-heteroatom molecule with a ring whose amine
- * groups the engine cannot place yet (design.md §13.4 I-36), or null: when
- * the amine is the principal group (no oxygen group other than ether
- * oxygens: with a ring, validation leaves only OH and ketone C=O on ring
- * carbons, which would be principal), every amine N must be bonded to a
- * ring carbon, so the ring carries the suffix (`ciclohexanamina`,
- * `N-metilciclohexanamina`, `bencenamina`); an N only on side-chain carbons
- * would make the chain the parent (`sideChainAmine`, `sideChain` the
- * nitrogens). With an OH or ketone on the ring, amine groups anywhere are
- * `amino-` prefixes and are named.
- *
- * @param {object} mol - A validated single-ring molecule whose heteroatoms are nameable.
- * @param {number[]} hetero - Its non-carbon atom ids.
- * @returns {{code: string, message: string}|null} The HETEROATOM error, or null.
- */
-function aminePlacementError(mol, hetero) {
-  const amines = amineNitrogens(mol);
-  if (amines.length === 0) {
-    return null;
-  }
-  const adj = adjacency(mol);
-  const principalOxygen = hetero.some((id) => mol.atoms.get(id).element === 'O' && !isEtherOxygen(mol, adj, id));
-  if (principalOxygen) {
-    return null;
-  }
-  const ringAtoms = new Set(classifyRings(mol).perception.ringAtoms);
-  const sideChain = amines.filter((id) => !adj.get(id).some((n) => ringAtoms.has(n.atom)));
-  return sideChain.length > 0
-    ? validationError('HETEROATOM', { message: SIDE_CHAIN_AMINE_MESSAGE, atoms: hetero, reason: 'sideChainAmine', sideChain })
-    : null;
-} // End of function aminePlacementError()
-
-/**
  * Structural checks plus the naming checks, in order: non-empty, connected,
  * ring scope (ringError(): a single carbocycle of at most 30 carbons
  * passes; TOO_BIG or RING_SYSTEM otherwise), carbon and heavy-atom caps,
  * carbon, halogens on carbon, OH groups on carbon, aldehyde or ketone
  * C=O, carboxyl groups, ether C–O–C, ester –COO–, amine N, amide –CONH₂ and nitrile –C≡N only (HETEROATOM for any other atom: valid but
- * not nameable yet, with the `imide` reason for an imide N; also for an OH, a ketone C=O or any aldehyde on a ring
- * molecule outside the ring, any acid with a ring, and for more than two
+ * not nameable yet, with the `imide` reason for an imide N; also for any aldehyde with a ring
+ * (an OH, a ketone C=O or an amine N on a ring's side chain is named since I-40a), any acid with a ring, and for more than two
  * principal aldehydes on one carbon piece or more than two acids, and, without an acid, more than two esters, two
  * esters on different carbon pieces or a mixed diester that would need locants on a chain, any ester with a ring, and the amide and nitrile placements of
- * amidePlacementError() and nitrilePlacementError(): oxygenPlacementError(); and a ring whose
- * principal amine has an N off the ring: aminePlacementError()), chain cap — the
+ * amidePlacementError() and nitrilePlacementError(): oxygenPlacementError()), chain cap — the
  * longest carbon chain of a tree, or the longest side chain of a ring
  * (design.md §3.2, §13.1). A molecule passing this is a hydrocarbon (or a
  * halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester, amine, amide or nitrile of one)
  * of at most 60 carbons that is either a tree
  * whose longest carbon chain has at most 30, or a single carbocycle of 3
- * to 30 carbons whose side chains have at most 30 carbons and carry no
- * oxygen other than ether oxygens. The engine may still refuse a C=O
+ * to 30 carbons whose side chains have at most 30 carbons (a side chain
+ * carrying more principal groups than the ring is the parent, design.md
+ * §13.4 I-40a). The engine may still refuse a C=O
  * carbon that ends up bonded to the parent as a branch
  * (ACYL_SUBSTITUENT_MESSAGE, naming/index.js), an ether or amine whose
  * identical parts each carry the principal group (SYMMETRIC_ETHER_MESSAGE,
- * SYMMETRIC_AMINE_MESSAGE) and a parent with several amine groups where
+ * SYMMETRIC_AMINE_MESSAGE, SYMMETRIC_RING_MESSAGE) and a parent with several amine groups where
  * some N carries other groups (SUBSTITUTED_POLYAMINE_MESSAGE).
  *
  * @param {object} mol - The molecule (possibly corrupt).
@@ -1664,9 +1622,7 @@ export function validateForNaming(mol) {
       ? validationError('HETEROATOM', { message: IMIDE_MESSAGE, atoms: hetero, reason: 'imide', imides })
       : validationError('HETEROATOM', { atoms: hetero });
   }
-  const placement = hetero.length > 0
-    ? oxygenPlacementError(mol, cyclic, hetero) || (cyclic ? aminePlacementError(mol, hetero) : null)
-    : null;
+  const placement = hetero.length > 0 ? oxygenPlacementError(mol, cyclic, hetero) : null;
   if (placement) {
     return placement;
   }

@@ -84,7 +84,9 @@ export function hasBenzeneRing(mol) {
  * starting at the atom bonded to the carrying atom. The ring is the group's
  * `chain` (a RingStructure, `retained` 'benzene'); the free valence is on
  * locant 1. No hydrocarbon name uses it (the ring is always the parent,
- * design.md §13.5); later phases (functional groups) will.
+ * design.md §13.5); the `fenil` prefix of a chain parent carrying the
+ * principal group (design.md §13.4 I-40a: `fenilmetanol`) has the same
+ * shape, built by substituent.js ringSubstituent() with `ring` set.
  *
  * @param {number[]} atoms - The six ring atom ids in ring order, the attachment atom first.
  * @param {number[]} bonds - The six ring bond ids (bonds[i] joins atoms[i] and atoms[i + 1]; the last closes the ring).

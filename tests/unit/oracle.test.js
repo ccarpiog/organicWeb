@@ -245,8 +245,8 @@ test('without the jar every molecule is skipped, never passed, with exit status 
   assert.equal(status, 0);
   assert.ok(lines.some((line) => /^skipped: /.test(line)));
   // 5 random molecules, 3 random monocycles, 1 benzene, 3 halogen derivatives, 3 alcohols, 3 aldehydes and ketones,
-  // 3 carboxylic acids, 3 ethers, 3 esters, 3 amines, 3 amides, 3 nitriles, 3 ciano- molecules, 3 acyl molecules, 3 ester-prefix molecules, 3 amide-prefix molecules and the 11 cycloalkanes of the default 4–14 C range.
-  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 59  adapter failures: 0'), lines.join('\n'));
+  // 3 carboxylic acids, 3 ethers, 3 esters, 3 amines, 3 amides, 3 nitriles, 3 ciano- molecules, 3 acyl molecules, 3 ester-prefix molecules, 3 amide-prefix molecules, 3 ring-prefix molecules and the 11 cycloalkanes of the default 4–14 C range.
+  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 62  adapter failures: 0'), lines.join('\n'));
   lines.length = 0;
   assert.equal(await main(['--count', '3', '--java', 'no-such-java-binary']), 0);
   assert.ok(lines.some((line) => /Java not available/.test(line)));
@@ -266,7 +266,7 @@ test('a jar whose checksum is not the pinned one is rejected at any path', async
   assert.match(availability.reason, /checksum/);
 }); // End of test 'a jar whose checksum is not the pinned one is rejected at any path'
 
-test('real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines, 100 amides, 100 nitriles, 100 ciano- molecules, 100 acyl molecules, 100 ester-prefix molecules, 100 amide-prefix molecules and the cycloalkanes (skipped without Java or the jar)', async (t) => {
+test('real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines, 100 amides, 100 nitriles, 100 ciano- molecules, 100 acyl molecules, 100 ester-prefix molecules, 100 amide-prefix molecules, 100 ring-prefix molecules and the cycloalkanes (skipped without Java or the jar)', async (t) => {
   const availability = await checkAvailability();
   if (!availability.ok) {
     t.skip(availability.reason);
@@ -276,8 +276,8 @@ test('real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzen
   t.mock.method(console, 'log', (text) => lines.push(text));
   const status = await main(['--count', '200', '--seed', '42']);
   assert.equal(status, 0, lines.join('\n'));
-  assert.ok(lines.includes('passed: 1631  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
-}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines, 100 amides, 100 nitriles, 100 ciano- molecules, 100 acyl molecules, 100 ester-prefix molecules, 100 amide-prefix molecules and the cycloalkanes'
+  assert.ok(lines.includes('passed: 1731  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
+}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles, 20 benzenes, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines, 100 amides, 100 nitriles, 100 ciano- molecules, 100 acyl molecules, 100 ester-prefix molecules, 100 amide-prefix molecules, 100 ring-prefix molecules and the cycloalkanes'
 
 test('the English lexicon never reaches the app', async () => {
   const files = [];

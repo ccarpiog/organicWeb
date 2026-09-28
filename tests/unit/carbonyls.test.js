@@ -22,7 +22,7 @@ import { formula } from '../../src/model/molecule.js';
 import { adjacency } from '../../src/model/graph.js';
 import {
   validateForNaming, carbonylKind, hasNameableHeteroatoms, sideChainCarbonyls, aldehydeOxygens, MESSAGES,
-  RING_ALDEHYDE_MESSAGE, SIDE_CHAIN_CARBONYL_MESSAGE, MANY_ALDEHYDES_MESSAGE, ACYL_SUBSTITUENT_MESSAGE,
+  RING_ALDEHYDE_MESSAGE, MANY_ALDEHYDES_MESSAGE, ACYL_SUBSTITUENT_MESSAGE,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { oxygenKind, principalKindOf, carbonylTraditionalId } from '../../src/naming/principal.js';
@@ -86,7 +86,7 @@ test('validation: aldehyde and ketone C=O are admitted; other C=O derivatives ke
   assert.equal(hasNameableHeteroatoms(parseSmiles('OCC(C)=O'), [1, 5]), true, 'an OH and a ketone');
 });
 
-test('refusals: an aldehyde with a ring, a ketone on a ring side chain, three aldehydes; acyl branches named since I-39b', () => {
+test('refusals: an aldehyde with a ring, three aldehydes; ring side-chain ketones named since I-40a, acyl branches since I-39b', () => {
   const ring = named('O=CC1CCCCC1');
   assert.equal(ring.ok, false);
   assert.equal(ring.error.code, 'HETEROATOM');
@@ -96,13 +96,11 @@ test('refusals: an aldehyde with a ring, a ketone on a ring side chain, three al
   assert.equal(ring.groups.principal, 'aldehyde', 'the refusal still explains the groups');
   assert.equal(named('O=CCC1CCCCC1').error.reason, 'ringAldehyde', 'an aldehyde on a side chain too');
   assert.equal(named('O=CC1=CC=CC=C1').error.reason, 'ringAldehyde', 'benzaldehyde waits for I-40');
-  const side = named('CC(=O)C1CCCCC1');
-  assert.equal(side.error.reason, 'sideChainCarbonyl');
-  assert.equal(side.error.message, SIDE_CHAIN_CARBONYL_MESSAGE);
-  assert.deepEqual(side.error.sideChain, [3]);
+  // A ketone on a ring's side chain is named since I-40a: the chain carries the principal group, the ring is a prefix.
+  assert.equal(named('CC(=O)C1CCCCC1').name, '1-ciclohexiletan-1-ona');
   assert.deepEqual(sideChainCarbonyls(parseSmiles('CC(=O)C1CCC(=O)CC1')), [{ atom: 3, kind: 'ketone' }]);
-  assert.equal(named('CC(=O)C1=CC=CC=C1').error.reason, 'sideChainCarbonyl', 'acetophenone waits for I-40');
-  assert.equal(named('OCC1CCC(=O)CC1').error.reason, 'sideChainAlcohol', 'ring ketone, OH on a branch');
+  assert.equal(named('CC(=O)C1=CC=CC=C1').name, '1-feniletan-1-ona', 'acetophenone, named since I-40a');
+  assert.equal(named('OCC1CCC(=O)CC1').name, '4-(hidroximetil)ciclohexan-1-ona', 'ring ketone, OH on a branch');
   const three = named('O=CCC(C=O)CC=O');
   assert.equal(three.error.reason, 'manyAldehydes');
   assert.equal(three.error.message, MANY_ALDEHYDES_MESSAGE);

@@ -13,7 +13,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { parseSmiles } from '../../src/model/smiles.js';
-import { adjacency, carbonSkeleton, connectedComponents } from '../../src/model/graph.js';
+import { adjacency, carbonSkeleton, connectedComponents, cycleCore } from '../../src/model/graph.js';
 import { createMolecule, addAtom, addBond } from '../../src/model/molecule.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { numberParent, compareCitationKeys } from '../../src/naming/numbering.js';
@@ -71,14 +71,15 @@ function isUnbranched(mol) {
 /**
  * The carbons a parent chain may use: the carbon skeleton without the
  * carbons of nitriles cited `ciano-` (design.md §13.4 I-39a; principal.js
- * outsideCarbons()).
+ * outsideCarbons()) and the ring atoms (I-40a).
  *
  * @param {object} mol - A molecule.
  * @returns {{atoms: Map<number, object>, bonds: Map<number, object>}} The skeleton.
  */
 function chainSkeleton(mol) {
   const adj = adjacency(mol);
-  return carbonSkeleton(mol, outsideCarbons(mol, adj, principalKindOf(mol, adj)));
+  // Ring atoms are never chain atoms either (a chain parent of a ring molecule, design.md §13.4 I-40a).
+  return carbonSkeleton(mol, new Set([...outsideCarbons(mol, adj, principalKindOf(mol, adj)), ...cycleCore(adj)]));
 }
 
 const fixtureRows = await readFixtures();
@@ -116,11 +117,20 @@ function parseAlternatives(text) {
 for (const row of fixtureRows) {
   const mol = parseSmiles(row.smiles);
   test(`fixture line ${row.line}: ${row.smiles} → ${row.name}`, () => {
-    const result = nameMolecule(mol);
-    assert.equal(result.ok, true, JSON.stringify(result.error));
-    assert.equal(result.name, row.name);
-    assert.equal(result.parts.map((p) => p.text).join(''), result.name);
-    assert.deepEqual(result.alternatives.map(({ style, name }) => ({ style, name })), parseAlternatives(row.alternatives));
+    const named = nameMolecule(mol);
+    assert.equal(named.ok, true, JSON.stringify(named.error));
+    assert.equal(named.name, row.name);
+    assert.equal(named.parts.map((p) => p.text).join(''), named.name);
+    assert.deepEqual(named.alternatives.map(({ style, name }) => ({ style, name })), parseAlternatives(row.alternatives));
+    // A ring molecule whose side chains carry principal groups (design.md §13.4 I-40a) starts with the ring-or-chain
+    // comparison: a chain parent when a chain carries more, else the ring (a tie); the rest is checked as usual.
+    const ringChain = named.trace[0].rule === 'RINGCHAIN';
+    if (ringChain) {
+      const [step] = named.trace;
+      assert.equal(step.candidatesBefore[0].key, 'ring');
+      assert.equal(step.survivors[0].key === 'ring', named.structure.parentKind === 'ring');
+    }
+    const result = ringChain ? { ...named, trace: named.trace.slice(1) } : named;
     if (result.structure.parentKind === 'ring') {
       // A ring parent: one RING trace step (the ring is the parent, whatever
       // the side chains), then the ring numbering rules when there is

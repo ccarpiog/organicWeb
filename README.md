@@ -66,7 +66,11 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   never an alkyne, `-nitrilo` with the nitrile carbon as carbon 1:
   `metanonitrilo`, `etanonitrilo`, `2-metilpropanonitrilo`,
   `butanodinitrilo`, `prop-2-enonitrilo`, `4-oxopentanonitrilo`,
-  `2-aminopropanonitrilo`…), with the name coloured by part
+  `2-aminopropanonitrilo`…), and, when the principal group (an OH, a
+  ketone or an amine) is on a chain rather than on the ring, of the chain
+  with the ring as a prefix (`2-ciclohexiletan-1-ol`, `fenilmetanol`,
+  `1-feniletan-1-ona`, `fenilmetanamina`, `2-fenoxietan-1-ol`,
+  `2-(ciclohexilamino)etan-1-ol`…), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles;
@@ -82,7 +86,9 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   traditional name (`metilamina`, `dimetilamina`, `trimetilamina`,
   `etilmetilamina`); `metanamida` and `etanamida` list `formamida` and
   `acetamida`, also with groups on the N (`N,N-dimetilformamida`), and
-  `etanonitrilo` lists `acetonitrilo`.
+  `etanonitrilo` lists `acetonitrilo`; `1-feniletan-1-ona`,
+  `fenilmetanol` and `fenilmetanamina` list `acetofenona`, `alcohol
+  bencílico` and `bencilamina`.
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
   alphabetical order, assembly) that highlights each step on the drawing;

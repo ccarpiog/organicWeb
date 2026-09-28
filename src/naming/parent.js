@@ -39,10 +39,19 @@
  * principal group is the prefix `ciano-` (I-39a), whose carbon is not a
  * skeleton carbon (principal.js outsideCarbons()): no path runs through it,
  * so it counts in no P1 length, and it is one substituent in P4.
+ *
+ * Ring or chain (design.md §13.5, §13.4 I-40a): with one ring and a
+ * principal group, ringOrChain() compares the ring with the chains
+ * (P-44.1.1 first: the most principal groups; P-44.1.2.2 on a tie: the
+ * ring is senior). When a chain carries more principal groups than the
+ * ring, the chain is the parent and selectParent() runs on the skeleton
+ * without the ring atoms (a ring carbon is never a chain carbon), so the
+ * ring is a substituent (`ciclohexil`, `fenil`); the carbon bearing it can
+ * end a chain and P4 counts the ring as one substituent.
  * Pure: reads topology only.
  */
 
-import { adjacency, leaves, carbonSkeleton, connectedComponents } from '../model/graph.js';
+import { adjacency, leaves, carbonSkeleton, connectedComponents, cycleCore } from '../model/graph.js';
 import { principalKindOf, isPrincipalOxygen, isSuffixOxygen, outsideCarbons } from './principal.js';
 
 /**
@@ -230,14 +239,18 @@ function applyCountRule(rule, chains, values) {
  * chain carrying more OH groups wins. The same holds for aldehydes and
  * ketones (I-32), whose C=O is the principal group when present (principal.js).
  *
- * @param {object} mol - A validated acyclic hydrocarbon, halogen derivative, alcohol, aldehyde or ketone.
+ * With a ring (a chain parent, ringOrChain()) the ring atoms are left out
+ * of the skeleton, so they are never chain atoms.
+ *
+ * @param {object} mol - A validated acyclic molecule, or a ring molecule whose parent is a chain (ringOrChain()).
  * @returns {{chains: number[][], trace: object[]}} The remaining chains (each starting at its smaller end id) and the P-rule trace steps.
  * @throws {Error} When the invariant "no C≡C triple bond leaves a longest chain" is broken.
  */
 export function selectParent(mol) {
   const adj = adjacency(mol);
   const principal = principalKindOf(mol, adj);
-  let chains = leafToLeafPaths(mol, outsideCarbons(mol, adj, principal));
+  // Ring atoms (design.md §13.4 I-40a: a chain parent of a ring molecule) are never chain atoms.
+  let chains = leafToLeafPaths(mol, new Set([...outsideCarbons(mol, adj, principal), ...cycleCore(adj)]));
   const isSuffix = (id) => isSuffixOxygen(mol, adj, id, principal);
   const isGroup = (id) => isPrincipalOxygen(mol, adj, id, principal);
   const counts = new Map(chains.map((chain) => [chain.join('-'), chainCounts(adj, chain, isSuffix, isGroup)]));
@@ -266,3 +279,47 @@ export function selectParent(mol) {
   }
   return { chains: chains.map((chain) => [...chain]), trace };
 } // End of function selectParent()
+
+/**
+ * Compares the ring of a single-ring molecule with its chains for the
+ * parent (design.md §13.5, §13.4 I-40a; IUPAC 2013 P-44.1.1, then
+ * P-44.1.2.2): the number of principal groups on ring atoms (each suffix
+ * group once: an OH, a ketone C=O, an amine N bonded to a ring carbon)
+ * against the most on one chain of the skeleton without the ring atoms
+ * (chainCounts() P0). The chain is the parent only when it carries more;
+ * on a tie the ring is senior. Null without a ring or without a principal
+ * group (a hydrocarbon, halogen derivative or ether: the ring is always
+ * the parent). The result is also the trace step `RINGCHAIN` (ring
+ * candidate first, then every chain with the most groups; `values` their
+ * counts; `survivors` the ring or those chains) that the explanation reads.
+ *
+ * @param {object} mol - A validated molecule with one ring.
+ * @param {{atoms: number[], bonds: number[]}} ring - The ring in perceived order (bonds[i] joins atoms[i] and atoms[i + 1]).
+ * @returns {{chainParent: boolean, ringCount: number, chainCount: number, offRing: number, step: object}|null} The comparison (`offRing`: the principal groups not bonded to a ring atom).
+ */
+export function ringOrChain(mol, ring) {
+  const adj = adjacency(mol);
+  const principal = principalKindOf(mol, adj);
+  if (principal === null) {
+    return null;
+  }
+  const isSuffix = (id) => isSuffixOxygen(mol, adj, id, principal);
+  const isGroup = (id) => isPrincipalOxygen(mol, adj, id, principal);
+  const onRing = new Set(ring.atoms.flatMap((atom) => adj.get(atom).filter((n) => isSuffix(n.atom)).map((n) => n.atom)));
+  const ringCount = onRing.size;
+  const offRing = [...mol.atoms.keys()].filter((id) => isSuffix(id) && !onRing.has(id)).length;
+  const exclude = new Set([...outsideCarbons(mol, adj, principal), ...ring.atoms]);
+  const chains = leafToLeafPaths(mol, exclude);
+  const counts = chains.map((chain) => chainCounts(adj, chain, isSuffix, isGroup).suffixes);
+  const chainCount = counts.length > 0 ? Math.max(...counts) : 0;
+  const best = chains.filter((_, i) => counts[i] === chainCount);
+  const chainParent = chainCount > ringCount;
+  const ringCandidate = { atoms: [...ring.atoms], bonds: [...ring.bonds], key: 'ring' };
+  const step = {
+    rule: 'RINGCHAIN',
+    candidatesBefore: [ringCandidate, ...best.map(traceCandidate)],
+    values: [ringCount, ...best.map(() => chainCount)],
+    survivors: chainParent ? best.map(traceCandidate) : [{ ...ringCandidate, atoms: [...ring.atoms], bonds: [...ring.bonds] }],
+  };
+  return { chainParent, ringCount, chainCount, offRing, step };
+} // End of function ringOrChain()

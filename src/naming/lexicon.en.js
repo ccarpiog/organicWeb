@@ -48,7 +48,7 @@ export const BENZENE_NAME = 'benzene';
 /** Stem of the retained name `phenol` (phen + ol; IUPAC 2013 P-63.1.1.1, see lexicon.es.js). */
 export const PHENOL_STEM = 'phen';
 
-/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3), anisole, aniline, small carbonyl compounds and acids (P-65.1.1.1), the acid part of their esters (P-65.6.3.2) formamide / acetamide (P-66.1.1.1.1, I-37) and acetonitrile (P-66.5.1.1.1, I-38; see lexicon.es.js). */
+/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3), anisole, aniline, small carbonyl compounds and acids (P-65.1.1.1), the acid part of their esters (P-65.6.3.2) formamide / acetamide (P-66.1.1.1.1, I-37), acetonitrile (P-66.5.1.1.1, I-38) and, for general nomenclature, acetophenone, benzyl alcohol and benzylamine (I-40a; see lexicon.es.js). */
 export const TRADITIONAL_NAMES = Object.freeze({
   toluene: 'toluene',
   styrene: 'styrene',
@@ -65,6 +65,9 @@ export const TRADITIONAL_NAMES = Object.freeze({
   formamide: 'formamide',
   acetamide: 'acetamide',
   acetonitrile: 'acetonitrile',
+  acetophenone: 'acetophenone',
+  benzylAlcohol: 'benzyl alcohol',
+  benzylamine: 'benzylamine',
 });
 
 /** Endings of the parent name. */

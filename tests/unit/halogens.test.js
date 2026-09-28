@@ -192,8 +192,9 @@ test('validation: halogens bonded to a carbon are named; other O and N molecules
   assert.equal(validateForNaming(parseSmiles('ClC1=CC=C(Cl)C=C1')).code, 'CYCLE');
   assert.equal(validateForNaming(parseSmiles('CC1=CC=C(Br)C=C1')).code, 'CYCLE');
   assert.match(MESSAGES.HETEROATOM, /derivados halogenados/);
-  // An OH on the side chain of a ring (the benzene here) has its own message.
-  assert.equal(validateForNaming(parseSmiles('ClC(O)C1=CC=CC=C1')).reason, 'sideChainAlcohol');
+  // An OH on the side chain of a ring (the benzene here) is named since I-40a: the chain is the parent.
+  assert.equal(validateForNaming(parseSmiles('ClC(O)C1=CC=CC=C1')), null);
+  assert.equal(nameMolecule(parseSmiles('ClC(O)C1=CC=CC=C1')).name, 'cloro(fenil)metanol');
 });
 
 test('size caps count carbons: a halogen never lengthens the chain', () => {
