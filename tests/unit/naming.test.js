@@ -138,7 +138,10 @@ for (const row of fixtureRows) {
     if (isUnbranched(mol)) {
       assert.equal(result.parent.atoms.length, carbons);
     }
-    if (carbons > 1 && alcohol) {
+    if (alcohol && result.parent.atoms.length === 1) {
+      // A one-carbon parent chosen by P0 (a methanoate, whose O-bound group has the other carbons, I-35): nothing to number.
+      assert.equal(result.trace.length, 2);
+    } else if (carbons > 1 && alcohol) {
       // N0 always runs first on the directed candidates; N1 only while N0 leaves a tie.
       const n0 = result.trace.find((step) => step.rule === 'N0');
       assert.ok(n0, 'trace has an N0 step');

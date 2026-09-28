@@ -41,8 +41,9 @@ test('exact Spanish messages from the design table', () => {
       + 'derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), '
       + 'alcoholes (con grupos –OH unidos a un carbono), '
       + 'aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), '
-      + 'ácidos carboxílicos (con el grupo –COOH) '
-      + 'y éteres (con un oxígeno unido a dos carbonos, C–O–C).',
+      + 'ácidos carboxílicos (con el grupo –COOH), '
+      + 'éteres (con un oxígeno unido a dos carbonos, C–O–C) '
+      + 'y ésteres (con el grupo –COO– entre dos cadenas de carbonos).',
     INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
   });
 });

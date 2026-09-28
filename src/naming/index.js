@@ -80,7 +80,20 @@
  * (`HOCH₂CH₂OCH₂CH₂OH`) is refused (`symmetricEther`): IUPAC 2013 names it
  * with multiplicative nomenclature (`oxidi-`), not supported.
  *
- * Any other heteroatom (N, an O of an ester or anhydride, a peroxide) is
+ * Esters (design.md §13.4 I-35) come after acids (ácido > éster >
+ * aldehído…; validation never lets both meet, `esterPrefix`): the –COO–
+ * carbon is a chain end of the parent like an acid's, locant 1, never
+ * cited, suffix `-oato`; the group on the far side of the bridge O is named
+ * like an alkoxy group's alkyl (substituent.js esterAlkyl()) and cited as
+ * its own word, after `de` in Spanish and first in English (render.js
+ * assembleEster()): `etanoato de metilo` / `methyl ethanoate`,
+ * `butanoato de isopropilo` (with `propan-2-ilo` and `1-metiletilo` in the
+ * other styles), `2-metilpropanoato de tert-butilo`, `3-oxobutanoato de
+ * etilo`, `etanoato de 2-hidroxietilo`. A bare metanoato or etanoato also
+ * gets `formiato de …` / `acetato de …`. Validation refuses more than one
+ * ester (`manyEsters`) and any ester with a ring (`ringEster`).
+ *
+ * Any other heteroatom (N, an O of an anhydride or carbonate, a peroxide) is
  * still refused (`HETEROATOM`), but the refusal carries `groups`: its
  * characteristic groups (groups.js), the principal group and the
  * suffix/prefix classification (seniority.js, design.md §13.4 I-29).
@@ -95,7 +108,7 @@ import { adjacency, hasCycle, rootedTreeKey } from '../model/graph.js';
 import { selectParent } from './parent.js';
 import {
   createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, suffixSites, hasAcylPrefix, PREFIX_STYLES,
-  substituentSubtree, nameSubstituent,
+  substituentSubtree, nameSubstituent, esterAlkyl,
 } from './substituent.js';
 import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure, buildSuffix } from './structure.js';
@@ -131,13 +144,18 @@ export function nameMolecule(mol, options = {}) {
 }
 
 /**
- * Tells whether a name structure cites a retained prefix, at any depth.
+ * Tells whether a name structure cites a retained prefix, at any depth,
+ * the O-bound group of an ester included (`isopropilo`, design.md §13.4
+ * I-35).
  *
- * @param {{prefixes: object[]}} structure - A name or substituent structure.
+ * @param {{prefixes: object[], ester?: {alkyl: object}}} structure - A name or substituent structure.
  * @param {string[]} ids - Retained-name ids, e.g. ['isopropyl', 'isopropylidene'].
  * @returns {boolean} True when some prefix (or nested prefix) is one of those retained groups.
  */
 export function hasRetainedPrefix(structure, ids) {
+  if (structure.ester && (ids.includes(structure.ester.alkyl.retained) || hasRetainedPrefix(structure.ester.alkyl, ids))) {
+    return true;
+  }
   return structure.prefixes.some((group) => ids.includes(group.substituent.retained) || hasRetainedPrefix(group.substituent, ids));
 }
 
@@ -148,7 +166,7 @@ const STYLE_DEPENDENT_PREFIXES = Object.freeze(['isopropyl', 'isopropylidene']);
  * Names a validated molecule under one prefix style: substituents,
  * numbering, grouping and rendering.
  *
- * @param {object} mol - A validated acyclic hydrocarbon, or a halogen derivative, alcohol, aldehyde, ketone, acid or ether of one.
+ * @param {object} mol - A validated acyclic hydrocarbon, or a halogen derivative, alcohol, aldehyde, ketone, acid, ether or ester of one.
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {{chains: number[][], trace: object[]}} selection - Result of selectParent().
  * @param {string} style - Prefix style.
@@ -173,10 +191,14 @@ function nameWithStyle(mol, adj, selection, style) {
   const numbering = numberParent(mol, selection.chains, prefixesOf, { adj, nameKey, suffixesOf });
   const substituents = substituentsByChain.get(selection.chains[numbering.chainIndex]);
   const parent = buildChainStructure(numbering.atoms, numbering.bonds, numbering.orders);
+  const suffix = buildSuffix(suffixSites(mol, adj, numbering.atoms, ctx.principal), numbering.atoms, ctx.principal);
+  // An ester's O-bound group (design.md §13.4 I-35): one –COO– (validation), its carbon on the parent.
+  const ester = suffix && suffix.kind === 'ester' ? esterAlkyl(ctx, suffix.locants[0].atom, suffix.locants[0].esterOxygen) : null;
   const structure = buildNameStructure({
     parent,
     prefixes: groupPrefixes(substituents, numbering.atoms),
-    suffix: buildSuffix(suffixSites(mol, adj, numbering.atoms, ctx.principal), numbering.atoms, ctx.principal),
+    suffix,
+    ...(ester ? { ester } : {}),
   });
   const { name, parts } = renderName(structure, lexiconEs);
   return {
@@ -292,11 +314,13 @@ function nameValidated(mol, options) {
   // others avoid.
   const acids = carboxylCarbons(mol);
   for (const s of new Set([style, PREFIX_STYLES[0], ...others])) {
-    const acyl = hasAcylPrefix(named(s).structure);
+    const { structure } = named(s);
+    // An acyl branch on the parent, or inside an ester's O-bound group.
+    const acyl = hasAcylPrefix(structure) || (structure.ester ? hasAcylPrefix(structure.ester.alkyl) : null);
     if (acyl) {
       return withGroups({ ok: false, error: acylError(acyl) }, mol);
     }
-    if (acids.length > 0 && suffixCount(named(s).structure) !== acids.length) {
+    if (acids.length > 0 && suffixCount(structure) !== acids.length) {
       return withGroups({ ok: false, error: carboxyError(acids) }, mol);
     }
   }
@@ -369,7 +393,9 @@ function locantAlternative(result) {
  * `acetona`, `ácido fórmico`, `ácido acético`, `ácido oxálico`),
  * listed last under "Otras formas válidas" (design.md §13.1), or null. Its
  * one part refers to every atom and bond of the molecule, like a benzene's
- * traditional name (aromatic.js traditionalAlternative()).
+ * traditional name (aromatic.js traditionalAlternative()). For an ester
+ * (design.md §13.4 I-35) only the acid part is traditional: `formiato de
+ * metilo`, `acetato de isopropilo` (render.js renderName() `traditional`).
  *
  * @param {object} result - The main naming result.
  * @returns {{style: string, label: string, name: string, parts: object[]}|null} The alternative.
@@ -378,6 +404,10 @@ function carbonylAlternative(result) {
   const id = carbonylTraditionalId(result.structure);
   if (!id) {
     return null;
+  }
+  if (result.structure.ester) {
+    // `acetato de etilo`: the acid part is the traditional word, the O-bound group stays (render.js).
+    return { style: 'traditional', label: lexiconEs.traditionalLabel(id), ...renderName(result.structure, lexiconEs, { traditional: id }) };
   }
   const name = lexiconEs.traditionalName(id);
   const group = suffixGroupIds(result.structure.suffix);

@@ -76,13 +76,13 @@ test('validation: an ether C–O–C is admitted; esters, anhydrides, peroxides 
   for (const smiles of ['COC', 'CCOCC', 'COCCOC', 'OCCOC', 'COCC(=O)O', 'O=CCCOC', 'COC1CCCCC1', 'COC1=CC=CC=C1', 'C=COC']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Ester, formate, anhydride, peroxide, hydroperoxide, O–Cl, amine + ether, carbonate.
-  for (const smiles of ['CC(=O)OC', 'O=COC', 'CC(=O)OC(C)=O', 'COOC', 'CCOO', 'COCl', 'NCCOC', 'COC(=O)OC']) {
+  // Anhydride, peroxide, hydroperoxide, O–Cl, amine + ether, carbonate (esters are named since I-35).
+  for (const smiles of ['CC(=O)OC(C)=O', 'COOC', 'CCOO', 'COCl', 'NCCOC', 'COC(=O)OC']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
   }
-  assert.match(MESSAGES.HETEROATOM, /y éteres \(con un oxígeno unido a dos carbonos, C–O–C\)\.$/);
+  assert.match(MESSAGES.HETEROATOM, /éteres \(con un oxígeno unido a dos carbonos, C–O–C\)/);
   // A cyclic ether is a heterocycle: out of scope, whatever the ring size.
   for (const smiles of ['C1CCOC1', 'C1CO1', 'C1CCOCC1']) {
     const error = validateForNaming(parseSmiles(smiles));
@@ -284,7 +284,8 @@ test('refusals: symmetric halves with the principal group, a ring with the OH on
   const ring = named('OCCOC1CCCCC1');
   assert.equal(ring.error.reason, 'sideChainAlcohol');
   assert.equal(ring.error.message, SIDE_CHAIN_ALCOHOL_MESSAGE);
-  assert.equal(named('CC(=O)OC').error.code, 'HETEROATOM');
+  assert.equal(named('CC(=O)OC').name, 'etanoato de metilo', 'an ester O is not an ether O: esters are named since I-35');
+  assert.equal(named('CC(=O)OCC(=O)OC').error.reason, 'manyEsters');
   // Two rings joined by an O: several rings, out of scope.
   assert.equal(named('C1CCCCC1OC1CCCCC1').error.code, 'RING_SYSTEM');
 }); // End of test 'refusals: symmetric halves with the principal group, a ri…'

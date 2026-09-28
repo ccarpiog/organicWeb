@@ -129,6 +129,15 @@ const SNAPSHOT_SMILES = [
   'COC1CCCCC1', // metoxiciclohexano: the ring is the parent
   'COC1=CC=CC=C1', // metoxibenceno: anisol
   'C1CCCC1COC', // (metoximetil)ciclopentano: ether inside a branch
+  'O=COC', // metanoato de metilo: one-carbon acid part, formiato (I-35)
+  'CC(=O)OC', // etanoato de metilo: the two parts of an ester, acetato
+  'CC(=O)OCCCCC', // etanoato de pentilo: the acid part wins over a longer O-bound group (P0)
+  'CCCC(=O)OC(C)C', // butanoato de isopropilo: isopropilo, three styles
+  'CC(C)C(=O)OC(C)(C)C', // 2-metilpropanoato de tert-butilo: branched on both sides
+  'CC(=O)CC(=O)OCC', // 3-oxobutanoato de etilo: ester > ketone, oxo-
+  'CC(=O)OCCO', // etanoato de 2-hidroxietilo: an OH on the O-bound group
+  'CC(=O)OCC=C', // etanoato de prop-2-en-1-ilo: unsaturated O-bound group with locants
+  'COCC(=O)OC', // 2-metoxietanoato de metilo: ether on the acid part
 ];
 
 /**

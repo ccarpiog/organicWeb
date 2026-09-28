@@ -9,7 +9,7 @@
  * (ácido metanoico, ácido 2-metilpropanoico, ácido but-2-enoico, ácido
  * butanodioico, ácido 4-oxopentanoico, ácido 2-hidroxipropanoico, ácido
  * 3-oxopropanoico); "Ordenar dibujo" lays out an acid; three –COOH, an acid
- * with a ring and an ester are refused with their messages. Runs on the dev
+ * with a ring and an acid with an ester are refused with their messages. Runs on the dev
  * server and on dist/index.html.
  */
 
@@ -197,9 +197,10 @@ test('loaded acids: ácido …oico, -dioico, oxo-, hidroxi-, ácido fórmico; ou
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
   await expect(error).toContainText('-carboxílico');
 
-  await loadSmiles(page, 'CC(=O)OC');
+  // An acid with an ester (esters are named since I-35): the ester would be a prefix.
+  await loadSmiles(page, 'CC(=O)OCC(=O)O');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('ácidos carboxílicos (con el grupo –COOH)');
+  await expect(error).toContainText('el éster se nombraría con un prefijo');
   expect(errors).toEqual([]);
 }); // End of test 'loaded acids…'

@@ -13,8 +13,11 @@
  * carboxylic acid's, I-33, whose name also starts with the lexicon's class
  * word: `ácido propanoico`, `ácido butanodioico`); the
  * final vowel of the ending is elided before a vowel (`an` + `ol`) and kept
- * before a consonant (`ano` + `diol`), IUPAC 2013 P-16.7.1. No name is ever
- * produced by substring translation.
+ * before a consonant (`ano` + `diol`), IUPAC 2013 P-16.7.1. An ester
+ * (design.md §13.4 I-35) is two words: the acid part (`etanoato`, suffix
+ * `oato`, locant never cited) and its O-bound group (`metilo`), assembled
+ * in the lexicon's order (`etanoato de metilo`, `methyl ethanoate`). No
+ * name is ever produced by substring translation.
  */
 
 import { lexiconEs } from './lexicon.es.js';
@@ -50,6 +53,9 @@ function locantParts(sites) {
   return parts;
 }
 
+/** Suffix kinds whose carbon is always a chain end, so their locant is never cited on a chain (IUPAC 2013 P-14.3.4.1). */
+export const TERMINAL_SUFFIXES = Object.freeze(['aldehyde', 'acid', 'ester']);
+
 /**
  * Renders a numbered chain as a parent name: stem + connecting vowel +
  * unsaturation segments with locants + ending + suffix (design.md §4.7).
@@ -58,11 +64,11 @@ function locantParts(sites) {
  * @param {object} lexicon - The lexicon.
  * @param {boolean} hasPrefixes - Whether prefixes precede the parent or a suffix follows it (disables locant omission).
  * @param {object|null} [suffix] - The suffix groups (structure.js SuffixStructure), or null.
- * @param {boolean} [omitSuffixLocants] - Leave out the suffix locants (`etanol`, `metanol`). An aldehyde or acid suffix on a chain never cites them, whatever this says: its carbon is always a chain end, locant 1 (IUPAC 2013 P-14.3.4.1: `propanal`, `2-metilpropanal`, `butanodial`, `ácido propanoico`).
+ * @param {boolean} [omitSuffixLocants] - Leave out the suffix locants (`etanol`, `metanol`). An aldehyde, acid or ester suffix on a chain never cites them, whatever this says: its carbon is always a chain end, locant 1 (IUPAC 2013 P-14.3.4.1: `propanal`, `2-metilpropanal`, `butanodial`, `ácido propanoico`, `propanoato de metilo`).
  * @returns {object[]} The parts.
  */
 export function renderParent(chain, lexicon, hasPrefixes, suffix = null, omitSuffixLocants = false) {
-  const omitSuffix = omitSuffixLocants || Boolean(suffix && (suffix.kind === 'aldehyde' || suffix.kind === 'acid'));
+  const omitSuffix = omitSuffixLocants || Boolean(suffix && TERMINAL_SUFFIXES.includes(suffix.kind));
   return [
     part(lexicon.stem(chain.length), 'stem', chain.atoms),
     ...renderEnding(chain, lexicon, lexicon.omitsLocants(chain, hasPrefixes || Boolean(suffix)), suffix, omitSuffix),
@@ -92,16 +98,25 @@ export function suffixWords(suffix, lexicon) {
 /**
  * The atoms and bonds of the suffix groups: each carrying atom and its
  * heteroatom with their bond, plus the OH oxygen of a –COOH and its bond
- * (SuffixLocant `hydroxyAtom`, design.md §13.4 I-33).
+ * (SuffixLocant `hydroxyAtom`, design.md §13.4 I-33) or the bridge O of an
+ * ester and its bond to the C=O carbon (`esterOxygen`, I-35).
  *
  * @param {{locants: object[]}} suffix - The suffix structure.
  * @returns {{atoms: number[], bonds: number[]}} The ids.
  */
 export function suffixGroupIds(suffix) {
-  const atoms = suffix.locants.flatMap((site) => [site.atom, site.attachAtom, ...(site.hydroxyAtom === undefined ? [] : [site.hydroxyAtom])]);
-  const bonds = suffix.locants.flatMap((site) => [site.bond, ...(site.hydroxyBond === undefined ? [] : [site.hydroxyBond])]);
+  const atoms = suffix.locants.flatMap((site) => [
+    site.atom, site.attachAtom,
+    ...(site.hydroxyAtom === undefined ? [] : [site.hydroxyAtom]),
+    ...(site.esterOxygen === undefined ? [] : [site.esterOxygen]),
+  ]);
+  const bonds = suffix.locants.flatMap((site) => [
+    site.bond,
+    ...(site.hydroxyBond === undefined ? [] : [site.hydroxyBond]),
+    ...(site.esterBond === undefined ? [] : [site.esterBond]),
+  ]);
   return { atoms, bonds };
-}
+} // End of function suffixGroupIds()
 
 /**
  * Renders a suffix after the parent's ending: hyphen, locants and hyphen
@@ -676,20 +691,66 @@ export function omitsPrefixLocants(structure, lexicon = lexiconEs) {
 }
 
 /**
+ * The name of an ester's O-bound group as cited in the ester's name
+ * (design.md §13.4 I-35): its substituent prefix words (the group seen from
+ * the bridge O, without `oxi`) plus the lexicon's ending — Spanish `metil`
+ * + `o` = `metilo`, `isopropilo`, `tert-butilo`, `propan-2-ilo`,
+ * `2-cloroetilo`, `prop-2-en-1-ilo`; English `methyl`, `propan-2-yl`. It
+ * is never enclosed: it is a word of its own, not a prefix.
+ *
+ * @param {object} alkyl - The group (structure.js EsterPart `alkyl`).
+ * @param {object} [lexicon] - The lexicon (default: Spanish).
+ * @returns {string} The group name.
+ */
+export function esterAlkylName(alkyl, lexicon = lexiconEs) {
+  return `${substituentPrefix({ ...alkyl, alkoxy: false }, lexicon)}${lexicon.esterAlkylEnding}`;
+}
+
+/**
+ * Assembles the two words of an ester name (design.md §13.4 I-35): the
+ * acid part and the O-bound group, in the lexicon's order — Spanish acid
+ * part, ` de `, group (`etanoato de metilo`); English group, space, acid
+ * part (`methyl ethanoate`). The group's part refers to its atoms (not the
+ * bridge O, which belongs to the `-oato` suffix) and its bonds, the O–C
+ * bond included.
+ *
+ * @param {object[]} acidParts - The parts of the acid part (`etanoato`).
+ * @param {object} ester - The O-bound group (structure.js EsterPart).
+ * @param {object} lexicon - The lexicon (`esterAlkylFirst`, `esterLink`, `esterAlkylEnding`).
+ * @returns {object[]} The parts of the whole name.
+ */
+export function assembleEster(acidParts, ester, lexicon) {
+  const alkyl = part(esterAlkylName(ester.alkyl, lexicon), 'prefix', ester.alkyl.atoms.filter((id) => id !== ester.oxygen), ester.alkyl.bonds);
+  const link = part(lexicon.esterLink, 'punct');
+  return lexicon.esterAlkylFirst ? [alkyl, link, ...acidParts] : [...acidParts, link, alkyl];
+}
+
+/**
  * Renders a name structure to text and coloured parts (a chain parent, or
  * a ring parent when `parentKind` is 'ring'), with its suffix groups.
  * With `citeLocants` (a chain parent only) the prefix and suffix locants are
  * written even where the omission rule would leave them out: `propan-2-ona`,
  * the IUPAC 2013 form of `propanona` (design.md §13.4 I-32). A suffix
  * kind with a class word (lexicon suffixClassWord(): `ácido`, I-33) starts
- * the name with that word and a space, referring to the suffix groups.
+ * the name with that word and a space, referring to the suffix groups. An
+ * ester (`structure.ester`, I-35) adds its O-bound group (assembleEster());
+ * with `traditional` (a lexicon TRADITIONAL_NAMES id, `acetate`, from
+ * principal.js carbonylTraditionalId()) its acid part is that one word
+ * (`acetato de etilo`), referring to the parent and the –COO–.
  *
  * @param {object} structure - The name structure (structure.js NameStructure).
  * @param {object} [lexicon] - The lexicon to use (default: Spanish).
- * @param {{citeLocants?: boolean}} [options] - Rendering options.
+ * @param {{citeLocants?: boolean, traditional?: string}} [options] - Rendering options.
  * @returns {{name: string, parts: object[]}} The rendered name and its parts.
  */
 export function renderName(structure, lexicon = lexiconEs, options = {}) {
+  if (structure.ester && options.traditional) {
+    const group = suffixGroupIds(structure.suffix);
+    const atoms = [...new Set([...structure.parent.atoms, ...group.atoms])];
+    const acid = [part(lexicon.traditionalName(options.traditional), 'stem', atoms, [...structure.parent.bonds, ...group.bonds])];
+    const parts = assembleEster(acid, structure.ester, lexicon);
+    return { name: parts.map((p) => p.text).join(''), parts };
+  }
   const hasPrefixes = structure.prefixes.length > 0;
   const ring = structure.parentKind === 'ring';
   const suffix = structure.suffix || null;
@@ -703,6 +764,7 @@ export function renderName(structure, lexicon = lexiconEs, options = {}) {
     const { atoms, bonds } = suffixGroupIds(suffix);
     lead.push(part(classWord, 'ending', atoms, bonds), part(' ', 'punct'));
   }
-  const parts = [...lead, ...renderPrefixes(structure.prefixes, lexicon, omitPrefixLocants), ...parent];
+  const acid = [...lead, ...renderPrefixes(structure.prefixes, lexicon, omitPrefixLocants), ...parent];
+  const parts = structure.ester ? assembleEster(acid, structure.ester, lexicon) : acid;
   return { name: parts.map((p) => p.text).join(''), parts };
-}
+} // End of function renderName()

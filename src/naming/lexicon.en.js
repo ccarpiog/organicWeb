@@ -48,7 +48,7 @@ export const BENZENE_NAME = 'benzene';
 /** Stem of the retained name `phenol` (phen + ol; IUPAC 2013 P-63.1.1.1, see lexicon.es.js). */
 export const PHENOL_STEM = 'phen';
 
-/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3), anisole, small carbonyl compounds and acids (P-65.1.1.1; see lexicon.es.js). */
+/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3), anisole, small carbonyl compounds and acids (P-65.1.1.1) and the acid part of their esters (P-65.6.3.2; see lexicon.es.js). */
 export const TRADITIONAL_NAMES = Object.freeze({
   toluene: 'toluene',
   styrene: 'styrene',
@@ -58,6 +58,8 @@ export const TRADITIONAL_NAMES = Object.freeze({
   formicAcid: 'formic acid',
   aceticAcid: 'acetic acid',
   oxalicAcid: 'oxalic acid',
+  formate: 'formate',
+  acetate: 'acetate',
   anisole: 'anisole',
 });
 
@@ -251,7 +253,7 @@ export function traditionalName(id) {
  * @returns {string} The label.
  */
 export function traditionalLabel(id) {
-  return ['toluene', 'formicAcid', 'aceticAcid', 'oxalicAcid'].includes(id) ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
+  return ['toluene', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate'].includes(id) ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
 }
 
 /** Suffixes of the characteristic groups (see lexicon.es.js GROUP_SUFFIXES): `ethanoic acid`, `methyl ethanoate`… */
@@ -375,9 +377,26 @@ export function groupFamilyName(kind) {
  */
 export const ALKOXY_ENDING = 'oxy';
 
+/**
+ * How an ester name is assembled (design.md §13.4 I-35; render.js
+ * assembleEster()): in English the O-bound group comes first, as a word of
+ * its own, then a space and the acid part (`methyl ethanoate`, IUPAC 2013
+ * P-65.6.3.2); the group name is its prefix form (`methyl`, `propan-2-yl`).
+ */
+export const ESTER_ALKYL_FIRST = true;
+
+/** Text between the two words of an ester name (`methyl ethanoate`). */
+export const ESTER_LINK = ' ';
+
+/** Ending added to the prefix form of an ester's O-bound group (none in English: `methyl`). */
+export const ESTER_ALKYL_ENDING = '';
+
 export const lexiconEn = Object.freeze({
   etherClassWord: ETHER_CLASS_WORD,
   alkoxyEnding: ALKOXY_ENDING,
+  esterAlkylFirst: ESTER_ALKYL_FIRST,
+  esterLink: ESTER_LINK,
+  esterAlkylEnding: ESTER_ALKYL_ENDING,
   freeValenceSuffix,
   saturatedInfix: SATURATED_INFIX,
   enclosingMarks: ENCLOSING_MARKS,

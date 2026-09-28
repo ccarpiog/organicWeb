@@ -166,7 +166,8 @@ test('validation: halogens bonded to a carbon are named; other O and N molecules
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
   // Ethers with halogens are named since I-34 (tests/unit/ethers.test.js).
-  for (const smiles of ['ClCCOOC', 'ClC(=O)C', 'NCCBr', 'ClCOC(C)=O', 'FC(F)(F)C#N', 'ClCC(=O)OC']) {
+  // Esters with halogens are named since I-35 (tests/unit/esters.test.js).
+  for (const smiles of ['ClCCOOC', 'ClC(=O)C', 'NCCBr', 'ClCOC(=O)OC', 'FC(F)(F)C#N', 'ClCC(=O)OC(C)=O']) {
     const mol = parseSmiles(smiles);
     const result = nameMolecule(mol);
     assert.equal(result.ok, false, smiles);

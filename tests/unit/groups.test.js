@@ -383,7 +383,7 @@ const GROUP_SNAPSHOT_SMILES = [
   'NCCO', // alcohol > amine
   'OCC1=CC=CC=C1', // alcohol on the side chain of a benzene: its own message
   'NCC(=O)O', // acid (named since I-33) with an amine: the acid is not alcohol + ketone
-  'CC(=O)OC', // ester: not ether + ketone
+  'COC(=O)CCC(=O)OC', // two esters (each not ether + ketone): refused as manyEsters since I-35
   'CC(=O)NC', // amide: not amine + ketone
   'NCC(O)CC(=O)CC=O', // aldehyde > ketone > alcohol > amine (the amine keeps the refusal since I-32)
   'NCC#N', // nitrile > amine

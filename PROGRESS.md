@@ -44,7 +44,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-32 | v2.12 Aldehydes and ketones | same, §3.12 | done — `docs/progress-archive/i-32.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-32.md` |
 | I-33 | v2.13 Carboxylic acids | same, §3.13 | done — `docs/progress-archive/i-33.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-33.md` |
 | I-34 | v2.14 Ethers | same, §3.14 | done — `docs/progress-archive/i-34.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-34.md` |
-| I-35 | v2.15 Esters | same, §3.15 | queued | — | — |
+| I-35 | v2.15 Esters | same, §3.15 | done — `docs/progress-archive/i-35.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-35.md` |
 | I-36 | v2.16 Amines | same, §3.16 | queued | — | — |
 | I-37 | v2.17 Amides | same, §3.17 | queued | — | — |
 | I-38 | v2.18 Nitriles | same, §3.18 | queued | — | — |
@@ -53,7 +53,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-34 done; I-35…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-35 done; I-36…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
@@ -89,14 +89,15 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-35 (v2 §3.15 esters: `etanoato de metilo`; identify the acid part
-and the O-bound group, explained separately; branched alkyls; Spanish and English assemble in
-different orders — `methyl ethanoate`). Build on I-33 (acid kind in `src/naming/principal.js`,
-`ácido …oico` rendering) and I-34 (O splits the skeleton, alkoxy substituents in
-`substituent.js`); esters are still refused as `HETEROATOM` in `validate.js`. Seniority
-ácido > éster > aldehído…; prefix forms per design §13.6. Spec: design §13.4 row I-35, §13.6,
-and `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 15. Deploying
-stays a manual user step.
+Poll the inbox, then run I-36 (v2 §3.16 amines: simple primary/secondary/tertiary, `-amina`
+with N-/N,N- locants, labels NH₂/NH/N; tests for N-substitution; exclude ammonium and
+heterocycles). Build on I-31 (suffix sites for OH, `suffixSites()`), I-34 (a heteroatom
+splitting the skeleton, `leafToLeafPaths()` in `parent.js`) and I-35 (O-bound group named
+with the substituent machinery, `esterAlkylName()` in `render.js`); amines are still refused
+as `HETEROATOM` in `validate.js`. Seniority …alcohol > amina; `amino-` prefix per design
+§13.6. Spec: design §13.4 row I-36, §13.6, and
+`autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 16. Deploying stays a
+manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -171,13 +172,16 @@ stays a manual user step.
 - Ethers (I-34): parent-side choice in `parent.js`, alkoxy substituents in `substituent.js`,
   refusal `symmetricEther`, N5 punctuation tie-break `compareNameKeys()` in `numbering.js`;
   tests `tests/unit/ethers.test.js`, `tests/e2e/ethers.spec.js`.
+- Esters (I-35): admission and refusals `ringEster` / `esterPrefix` / `manyEsters` in
+  `validate.js`; O-bound group `esterAlkylName()` in `render.js`; explain `esterSpecs()` and
+  step «Separa las dos partes del éster»; tests `tests/unit/esters.test.js`, `tests/e2e/esters.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-34)
+## Verification (last phase, I-35)
 
-- `npm test` 0 (916 pass) · `npm run check` 0 (103 files) · `npm run e2e` 0
-  (191 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (4111 pass).
+- `npm test` 0 (969 pass) · `npm run check` 0 (105 files) · `npm run e2e` 0
+  (195 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (4611 pass, 500 esters).
 
 ## Open risks / deviations
 
@@ -330,10 +334,16 @@ stays a manual user step.
   offered, not oracle-checked; review should-fix (polyether names depended on atom IDs)
   fixed with regressions (`docs/progress-archive/i-34.md`).
 
+- I-35: esters with one –COO– on open chains only (`ringEster`, `esterPrefix` for acid +
+  ester, `manyEsters`); groups on the O-bound side named inside it (`etanoato de
+  2-hidroxietilo`); `acetato`/`formiato` for bare etanoato/metanoato (retained status from
+  memory). Both review should-fix (acid highlight, ethers in the O-bound group) fixed with
+  regressions (`docs/progress-archive/i-35.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-33 `dcf537e`, pushed. I-34 committed and pushed right after this
+- I-34 `e596c1c`, pushed. I-35 committed and pushed right after this
   checkpoint (see `git log`).

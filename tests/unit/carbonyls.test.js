@@ -61,8 +61,9 @@ test('validation: aldehyde and ketone C=O are admitted; other C=O derivatives ke
   for (const smiles of ['C=O', 'CC=O', 'O=CC=O', 'CC(C)=O', 'CC(=O)CC(C)=O', 'OCC=O', 'ClCC=O', 'O=C1CCCCC1', 'OC1CCC(=O)CC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Ester, acyl chloride, amide, ketene, CO₂, carbonic acid: the C=O carbon has another heteroatom or a C=C (acids are named since I-33).
-  for (const smiles of ['CC(=O)OC', 'CC(=O)Cl', 'CC(N)=O', 'C=C=O', 'O=C=O', 'OC(=O)O', 'NCC=O']) {
+  // Anhydride, acyl chloride, amide, ketene, CO₂, carbonic acid: the C=O carbon has another heteroatom or a C=C (acids are named
+  // since I-33, esters since I-35).
+  for (const smiles of ['CC(=O)OC(C)=O', 'CC(=O)Cl', 'CC(N)=O', 'C=C=O', 'O=C=O', 'OC(=O)O', 'NCC=O']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
@@ -79,7 +80,7 @@ test('validation: aldehyde and ketone C=O are admitted; other C=O derivatives ke
   assert.deepEqual(kinds('CC(=O)O'), [null, null, null, null], 'the C=O of an acid is not an aldehyde');
   assert.deepEqual(kinds('C=C=O'), [null, null, null], 'a ketene is not an aldehyde');
   assert.equal(hasNameableHeteroatoms(parseSmiles('CC(=O)O'), [3, 4]), true, 'an acid, through carboxylRole() (I-33)');
-  assert.equal(hasNameableHeteroatoms(parseSmiles('CC(=O)OC'), [3, 4]), false, 'an ester');
+  assert.equal(hasNameableHeteroatoms(parseSmiles('CC(=O)OC(C)=O'), [3, 4, 7]), false, 'an anhydride');
   assert.equal(hasNameableHeteroatoms(parseSmiles('OCC(C)=O'), [1, 5]), true, 'an OH and a ketone');
 });
 

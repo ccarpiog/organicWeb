@@ -9,8 +9,8 @@
  * editor test API get their names (2-metoxietan-1-ol, 1-isopropoxibutano,
  * 1,2-dimetoxietano, metoxibenceno with anisol, ácido 2-metoxietanoico);
  * "Ordenar dibujo" lays out an ether; a symmetric ether with the
- * principal group on both halves and an ester are refused with their
- * messages. Runs on the dev server and on dist/index.html.
+ * principal group on both halves and an anhydride are refused with their
+ * messages (esters are named since I-35: tests/e2e/esters.spec.js). Runs on the dev server and on dist/index.html.
  */
 
 import { test, expect } from '@playwright/test';
@@ -189,7 +189,7 @@ test('loaded ethers: parent side, alkoxy forms, one option per O; out-of-scope e
   await expect(error).toContainText('dos mitades iguales');
   await expect(page.locator('#result-name')).toHaveCount(0);
 
-  await loadSmiles(page, 'CC(=O)OC');
+  await loadSmiles(page, 'CC(=O)OC(C)=O');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
   await expect(error).toContainText('éteres (con un oxígeno unido a dos carbonos, C–O–C)');

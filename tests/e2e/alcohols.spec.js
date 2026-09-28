@@ -5,7 +5,7 @@
  * and the OH shown on the canvas; molecules loaded through the editor test
  * API get their names (propan-2-ol, prop-2-en-1-ol with the OH numbered
  * before the double bond, ciclohexanol, fenol); "Ordenar dibujo" lays out an
- * alcohol; an ester and an OH on a ring's side chain are still refused. Runs
+ * alcohol; an anhydride and an OH on a ring's side chain are still refused. Runs
  * on the dev server and on dist/index.html.
  */
 
@@ -139,7 +139,7 @@ test('a molecule drawn with the Oxígeno tool is named etanol, with the –OH gr
   expect(errors).toEqual([]);
 }); // End of test 'a molecule drawn with the Oxígeno tool is named etanol…'
 
-test('loaded alcohols: suffix locants, OH before the double bond, rings and fenol; esters stay refused', async ({ page }) => {
+test('loaded alcohols: suffix locants, OH before the double bond, rings and fenol; anhydrides stay refused', async ({ page }) => {
   const errors = await openApp(page);
   for (const [smiles, name] of [
     ['CC(O)C', 'propan-2-ol'],
@@ -162,7 +162,7 @@ test('loaded alcohols: suffix locants, OH before the double bond, rings and feno
   expect(numbering).toContain('el enlace doble tendría el número 1 en vez del 2, pero manda el –OH');
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
-  await loadSmiles(page, 'CC(=O)OC');
+  await loadSmiles(page, 'CC(=O)OC(C)=O');
   await askName(page);
   const error = page.locator('#results .results-error');
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');

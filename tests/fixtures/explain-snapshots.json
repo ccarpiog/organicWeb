@@ -44583,5 +44583,4141 @@
     ]
    }
   ]
+ },
+ "O=COC": {
+  "name": "metanoato de metilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 2 carbonos, 4 hidrógenos y 2 átomos de oxígeno (C₂H₄O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4
+      ],
+      "bonds": [
+       1,
+       2,
+       3
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "Aquí el carbono del C=O no tiene más carbonos a su lado: es la única cadena de su parte, de 1 carbono.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es el carbono del C=O, que aquí va solo (1 carbono, «met»). Se nombra como el ácido del que viene, «ácido metanoico», cambiando «-oico» por «-oato»: «metanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «metanoato de metilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es el carbono del C=O, que aquí va solo (1 carbono, «met»). Se nombra como el ácido del que viene, «ácido metanoico», cambiando «-oico» por «-oato»: «metanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+      "highlight": [
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         3
+        ],
+        "bonds": [
+         2,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «metanoato de metilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «metilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «metanoato de metilo».",
+     "También es correcto:",
+     "«formiato de metilo»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2
+      ],
+      "bonds": [],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ]
+    ],
+    "legend": [
+     {
+      "text": "met",
+      "kind": "stem",
+      "meaning": "1 carbono en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (1 carbono), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "met",
+      "kind": "stem",
+      "atoms": [
+       2
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)OC": {
+  "name": "etanoato de metilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 3 carbonos, 6 hidrógenos y 2 átomos de oxígeno (C₃H₆O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «etanoato de metilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5
+      ],
+      "bonds": [],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+      "highlight": [
+       {
+        "atoms": [
+         5
+        ],
+        "bonds": [],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Las cadenas que llevan menos grupos –COO– quedan descartadas.",
+     "Solo una cadena lleva el grupo –COO–: tiene 2 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «etanoato de metilo», nunca «-1-oato»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «etanoato de metilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «metilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «etanoato de metilo».",
+     "También es correcto:",
+     "«acetato de metilo»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (1 carbono), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "atoms": [
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)OCCCCC": {
+  "name": "etanoato de pentilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 7 carbonos, 14 hidrógenos y 2 átomos de oxígeno (C₇H₁₄O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 5 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «pentilo».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «etanoato de pentilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 5 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «pentilo».",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8
+        ],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Hay una cadena más larga, de 5 carbonos, pero lleva menos grupos –COO–: con las normas de la IUPAC (2013), el grupo principal manda antes que la longitud.",
+     "Solo una cadena lleva el grupo –COO–: tiene 2 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Más larga, con menos –COO–",
+      "text": "Esta cadena tiene 5 carbonos, pero no lleva el grupo –COO–. No puede ser la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «etanoato de pentilo», nunca «-1-oato»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «etanoato de pentilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «pentilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «etanoato de pentilo».",
+     "También es correcto:",
+     "«acetato de pentilo»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "pentilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (5 carbonos), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "pentilo",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CCCC(=O)OC(C)C": {
+  "name": "butanoato de isopropilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 7 carbonos, 14 hidrógenos y 2 átomos de oxígeno (C₇H₁₄O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       3,
+       2,
+       1,
+       4,
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 4 carbonos. Se nombra como el ácido del que viene, «ácido butanoico», cambiando «-oico» por «-oato»: «butanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 3 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «isopropilo».",
+     "«isopropilo» es un grupo de 3 carbonos unido al oxígeno por el carbono del centro. También son correctos «propan-2-ilo» (el preferido por la IUPAC) y «1-metiletilo».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «butanoato de isopropilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       5
+      ],
+      "bonds": [
+       3,
+       2,
+       1,
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 4 carbonos. Se nombra como el ácido del que viene, «ácido butanoico», cambiando «-oico» por «-oato»: «butanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3,
+         2,
+         1,
+         5
+        ],
+        "bonds": [
+         3,
+         2,
+         1,
+         4
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 3 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «isopropilo». «isopropilo» es un grupo de 3 carbonos unido al oxígeno por el carbono del centro. También son correctos «propan-2-ilo» (el preferido por la IUPAC) y «1-metiletilo».",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         8,
+         9
+        ],
+        "bonds": [
+         7,
+         8
+        ],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         6
+        ],
+        "bonds": [
+         5,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Las cadenas que llevan menos grupos –COO– quedan descartadas.",
+     "Solo una cadena lleva el grupo –COO–: tiene 4 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «butanoato de isopropilo», nunca «-1-oato»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      1,
+      4
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «butanoato de isopropilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «isopropilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «butanoato de isopropilo».",
+     "También son correctos:",
+     "«butanoato de propan-2-ilo»: nombre preferido por la IUPAC (2013).",
+     "«butanoato de 1-metiletilo»: forma sistemática clásica."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      1,
+      4
+     ]
+    ],
+    "legend": [
+     {
+      "text": "but",
+      "kind": "stem",
+      "meaning": "4 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "isopropilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (3 carbonos), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "but",
+      "kind": "stem",
+      "atoms": [
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       2,
+       1
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "isopropilo",
+      "kind": "prefix",
+      "atoms": [
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       6,
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(C)C(=O)OC(C)(C)C": {
+  "name": "2-metilpropanoato de tert-butilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 8 carbonos, 16 hidrógenos y 2 átomos de oxígeno (C₈H₁₆O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       3,
+       1,
+       2,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 3 carbonos. Se nombra como el ácido del que viene, «ácido 2-metilpropanoico», cambiando «-oico» por «-oato»: «2-metilpropanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 4 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «tert-butilo».",
+     "«tert-butilo» es un carbono unido al oxígeno y a tres metilos; su nombre sistemático es «1,1-dimetiletilo».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «2-metilpropanoato de tert-butilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       5,
+       3
+      ],
+      "bonds": [
+       3,
+       1,
+       4,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 3 carbonos. Se nombra como el ácido del que viene, «ácido 2-metilpropanoico», cambiando «-oico» por «-oato»: «2-metilpropanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2,
+         1,
+         5,
+         3
+        ],
+        "bonds": [
+         3,
+         1,
+         4,
+         2
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 4 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «tert-butilo». «tert-butilo» es un carbono unido al oxígeno y a tres metilos; su nombre sistemático es «1,1-dimetiletilo».",
+      "highlight": [
+       {
+        "atoms": [
+         7,
+         8,
+         9,
+         10
+        ],
+        "bonds": [
+         7,
+         8,
+         9
+        ],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         6
+        ],
+        "bonds": [
+         5,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Las cadenas que llevan menos grupos –COO– quedan descartadas.",
+     "De las cadenas que llevan el grupo –COO–, la más larga tiene 3 carbonos. Hay 2 cadenas de 3. Pulsa cada opción para verlas."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Opción 1 de 2",
+      "text": "Una cadena de 3 carbonos con el grupo –COO–.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4
+        ],
+        "bonds": [
+         1,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Opción 2 de 2",
+      "text": "Una cadena de 3 carbonos con el grupo –COO–.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         2,
+         4
+        ],
+        "bonds": [
+         2,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COO– tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COO– (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 3; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 3. Gana la opción B.",
+     "Las opciones que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «2-metilpropanoato de tert-butilo», nunca «-1-oato».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      1,
+      3
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COO–",
+       "lists": [
+        [
+         3
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4
+        ],
+        "bonds": [
+         1,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        4,
+        3
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         3,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        1,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 2 hay un grupo metilo: se escribe «2-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "metil",
+      "text": "En el carbono 2 hay un grupo metilo: se escribe «2-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         3,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         3
+        ],
+        "bonds": [
+         2
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «2-metilpropanoato de tert-butilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «tert-butilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «2-metilpropanoato de tert-butilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      1,
+      3
+     ]
+    ],
+    "legend": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "meaning": "3 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "tert-butilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (4 carbonos), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "prop",
+      "kind": "stem",
+      "atoms": [
+       4,
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       1
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "tert-butilo",
+      "kind": "prefix",
+      "atoms": [
+       7,
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)CC(=O)OCC": {
+  "name": "3-oxobutanoato de etilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 6 carbonos, 10 hidrógenos y 3 átomos de oxígeno (C₆H₁₀O₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. El otro oxígeno unido con un [[enlace doble]] (C=O) también se ve como O. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       2,
+       1,
+       3,
+       6,
+       7,
+       8,
+       9
+      ],
+      "bonds": [
+       4,
+       3,
+       1,
+       2,
+       5,
+       6,
+       7,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»).",
+     "También tiene un grupo C=O entre dos carbonos (una cetona). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > aldehído > cetona > alcohol.",
+     "Aquí manda el éster, así que cada C=O que no es del éster se nombra con el [[prefijo]] «oxo-», delante del nombre de la parte en la que está."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 4 carbonos. Se nombra como el ácido del que viene, «ácido 3-oxobutanoico», cambiando «-oico» por «-oato»: «3-oxobutanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 2 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «etilo».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «3-oxobutanoato de etilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       2,
+       1,
+       6,
+       3
+      ],
+      "bonds": [
+       4,
+       3,
+       1,
+       5,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       8,
+       9
+      ],
+      "bonds": [
+       8
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       7
+      ],
+      "bonds": [
+       6,
+       7
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 4 carbonos. Se nombra como el ácido del que viene, «ácido 3-oxobutanoico», cambiando «-oico» por «-oato»: «3-oxobutanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         2,
+         1,
+         6,
+         3
+        ],
+        "bonds": [
+         4,
+         3,
+         1,
+         5,
+         2
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 2 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «etilo».",
+      "highlight": [
+       {
+        "atoms": [
+         8,
+         9
+        ],
+        "bonds": [
+         8
+        ],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         7
+        ],
+        "bonds": [
+         6,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Las cadenas que llevan menos grupos –COO– quedan descartadas.",
+     "Solo una cadena lleva el grupo –COO–: tiene 4 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COO– tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COO– (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 4; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 4. Gana la opción B.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «3-oxobutanoato de etilo», nunca «-1-oato».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      1,
+      4
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COO–",
+       "lists": [
+        [
+         4
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4,
+         5
+        ],
+        "bonds": [
+         1,
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        1,
+        1
+       ],
+       [
+        2,
+        2
+       ],
+       [
+        4,
+        3
+       ],
+       [
+        5,
+        4
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         4,
+         3,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        2,
+        3
+       ],
+       [
+        1,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Los grupos C=O unidos a la cadena principal que no son el [[grupo principal]] también se nombran como [[sustituyentes|sustituyente]], con un [[prefijo]]: «oxo-» el C=O.",
+     "En el carbono 3 hay un oxígeno unido con un enlace doble (C=O): se escribe «3-oxo».",
+     "«oxo» es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono de la cadena principal (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el éster va antes que el aldehído y la cetona."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "oxo",
+      "text": "En el carbono 3 hay un oxígeno unido con un enlace doble (C=O): se escribe «3-oxo». «oxo» es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono de la cadena principal (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el éster va antes que el aldehído y la cetona.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         2,
+         1
+        ],
+        "bonds": [
+         4,
+         3,
+         1
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         3
+        ],
+        "bonds": [
+         2
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «3-oxobutanoato de etilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «etilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «3-oxobutanoato de etilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       3,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       8,
+       9
+      ],
+      "bonds": [
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      2,
+      3
+     ],
+     [
+      1,
+      4
+     ]
+    ],
+    "legend": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «oxo»"
+     },
+     {
+      "text": "oxo",
+      "kind": "prefix",
+      "meaning": "sustituyente: oxígeno unido con un enlace doble (C=O), que aquí no es el grupo principal"
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "meaning": "4 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "etilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (2 carbonos), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "oxo",
+      "kind": "prefix",
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "atoms": [
+       5,
+       4,
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       4,
+       3,
+       1
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "etilo",
+      "kind": "prefix",
+      "atoms": [
+       8,
+       9
+      ],
+      "bonds": [
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)OCCO": {
+  "name": "etanoato de 2-hidroxietilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 4 carbonos, 8 hidrógenos y 3 átomos de oxígeno (C₄H₈O₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»).",
+     "También tiene un grupo –OH (un alcohol). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > aldehído > cetona > alcohol.",
+     "Aquí manda el éster, así que cada –OH se nombra con el [[prefijo]] «hidroxi-», delante del nombre de la parte en la que está."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 2 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «2-hidroxietilo».",
+     "Es una rama con un grupo –OH. Se nombra como una molécula pequeña: su cadena tiene 2 carbonos y se numera para que el carbono unido al oxígeno lleve el número más bajo posible. En ella hay: «hidroxi» en el carbono 2.",
+     "Un –OH que está en una rama se nombra con el prefijo «hidroxi-».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «etanoato de 2-hidroxietilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 2 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «2-hidroxietilo». Es una rama con un grupo –OH. Se nombra como una molécula pequeña: su cadena tiene 2 carbonos y se numera para que el carbono unido al oxígeno lleve el número más bajo posible. En ella hay: «hidroxi» en el carbono 2. Un –OH que está en una rama se nombra con el prefijo «hidroxi-».",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         5,
+         6
+        ],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Las cadenas que llevan menos grupos –COO– quedan descartadas.",
+     "Solo una cadena lleva el grupo –COO–: tiene 2 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «etanoato de 2-hidroxietilo», nunca «-1-oato»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «etanoato de 2-hidroxietilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «2-hidroxietilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «etanoato de 2-hidroxietilo».",
+     "También es correcto:",
+     "«acetato de 2-hidroxietilo»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "2-hidroxietilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (2 carbonos), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2-hidroxietilo",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       4,
+       5,
+       6
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)OCC=C": {
+  "name": "etanoato de prop-2-en-1-ilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 5 carbonos, 8 hidrógenos y 2 átomos de oxígeno (C₅H₈O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 3 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «prop-2-en-1-ilo».",
+     "Dentro del grupo hay un [[enlace doble]]: por eso lleva «en».",
+     "El número 1 que va justo antes de «-ilo» dice por qué carbono del grupo se une al oxígeno.",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «etanoato de prop-2-en-1-ilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 3 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «prop-2-en-1-ilo». Dentro del grupo hay un [[enlace doble]]: por eso lleva «en». El número 1 que va justo antes de «-ilo» dice por qué carbono del grupo se une al oxígeno.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         5,
+         6
+        ],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Hay una cadena más larga, de 3 carbonos, pero lleva menos grupos –COO–: con las normas de la IUPAC (2013), el grupo principal manda antes que la longitud.",
+     "Solo una cadena lleva el grupo –COO–: tiene 2 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Más larga, con menos –COO–",
+      "text": "Esta cadena tiene 3 carbonos, pero no lleva el grupo –COO–. No puede ser la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         7
+        ],
+        "bonds": [
+         5,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «etanoato de prop-2-en-1-ilo», nunca «-1-oato»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «etanoato de prop-2-en-1-ilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «prop-2-en-1-ilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «etanoato de prop-2-en-1-ilo».",
+     "También es correcto:",
+     "«acetato de prop-2-en-1-ilo»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "prop-2-en-1-ilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (3 carbonos), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "prop-2-en-1-ilo",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       4,
+       5,
+       6
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "COCC(=O)OC": {
+  "name": "2-metoxietanoato de metilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 4 carbonos, 8 hidrógenos y 3 átomos de oxígeno (C₄H₈O₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. El otro oxígeno unido a dos carbonos (C–O–C, un éter) también se ve como O. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       5,
+       6,
+       7
+      ],
+      "bonds": [
+       3,
+       2,
+       1,
+       4,
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido 2-metoxietanoico», cambiando «-oico» por «-oato»: «2-metoxietanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «2-metoxietanoato de metilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       5,
+       2,
+       1
+      ],
+      "bonds": [
+       3,
+       4,
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7
+      ],
+      "bonds": [],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       6
+      ],
+      "bonds": [
+       5,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido 2-metoxietanoico», cambiando «-oico» por «-oato»: «2-metoxietanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3,
+         5,
+         2,
+         1
+        ],
+        "bonds": [
+         3,
+         4,
+         2,
+         1
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+      "highlight": [
+       {
+        "atoms": [
+         7
+        ],
+        "bonds": [],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         6
+        ],
+        "bonds": [
+         5,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "ether",
+    "title": "Reconoce el éter",
+    "text": [
+     "Además, tu molécula tiene un oxígeno unido a dos carbonos (C–O–C): un éter.",
+     "El oxígeno del medio del –COO– no cuenta: también está entre dos carbonos, pero es parte del éster.",
+     "Un éter nunca es el [[grupo principal]] y nunca va al final del nombre: se nombra con un [[prefijo]] acabado en «-oxi» (grupo alcoxi), como «metoxi-» en «metoxietano».",
+     "La [[cadena principal]] no puede pasar por el oxígeno: el O corta la molécula en dos lados, cada uno con sus carbonos. La cadena principal se busca entre los carbonos de los dos lados, con las reglas de siempre; el otro lado, junto con el O, es un [[sustituyente]].",
+     "Primero cuenta el [[grupo principal]]: el lado de la [[cadena principal]] lleva un grupo –COO– y en el otro lado no hay ningún grupo –COO–. Por eso la cadena principal está en este lado y el otro es el sustituyente «metoxi».",
+     "«metoxi» se forma con la raíz del grupo de 1 carbono unido al oxígeno, «met», y la terminación «oxi», que es el oxígeno: met + oxi = metoxi. Con cadenas de 1 a 4 carbonos se usa esta forma corta (metoxi, etoxi, propoxi, butoxi), no «metiloxi»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Las cadenas que llevan menos grupos –COO– quedan descartadas.",
+     "Solo una cadena lleva el grupo –COO–: tiene 2 carbonos.",
+     "La cadena no puede atravesar el oxígeno de un éter: solo cuentan las cadenas de carbonos seguidos, a un lado o al otro del O."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COO– tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COO– (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 2; opción B: 1. Se comparan uno a uno: en el primer número distinto, 1 es menor que 2. Gana la opción B.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «2-metoxietanoato de metilo», nunca «-1-oato».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      3,
+      2
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COO–",
+       "lists": [
+        [
+         2
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        1
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        1
+       ],
+       [
+        4,
+        2
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        3,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Los grupos unidos a la cadena principal a través de un oxígeno (–O–, un éter) son [[sustituyentes|sustituyente]]: se nombran con un [[prefijo]] acabado en «-oxi» (grupos alcoxi), como «metoxi» o «etoxi».",
+     "En el carbono 2 hay un grupo metoxi: se escribe «2-metoxi».",
+     "«metoxi» es el [[prefijo]] de un éter: un oxígeno unido a la cadena principal y, al otro lado del oxígeno, un grupo de 1 carbono.",
+     "«metoxi» se forma con la raíz del grupo de 1 carbono unido al oxígeno, «met», y la terminación «oxi», que es el oxígeno: met + oxi = metoxi. Con cadenas de 1 a 4 carbonos se usa esta forma corta (metoxi, etoxi, propoxi, butoxi), no «metiloxi»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "metoxi",
+      "text": "En el carbono 2 hay un grupo metoxi: se escribe «2-metoxi». «metoxi» es el [[prefijo]] de un éter: un oxígeno unido a la cadena principal y, al otro lado del oxígeno, un grupo de 1 carbono. «metoxi» se forma con la raíz del grupo de 1 carbono unido al oxígeno, «met», y la terminación «oxi», que es el oxígeno: met + oxi = metoxi. Con cadenas de 1 a 4 carbonos se usa esta forma corta (metoxi, etoxi, propoxi, butoxi), no «metiloxi».",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "El éter va delante como prefijo («-oxi»), igual que las ramas: nunca cambia la terminación del nombre.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «2-metoxietanoato de metilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «metilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «2-metoxietanoato de metilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      3,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «metoxi»"
+     },
+     {
+      "text": "metoxi",
+      "kind": "prefix",
+      "meaning": "sustituyente: un éter, el oxígeno y el grupo de 1 carbono unido a él («-oxi»)"
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (1 carbono), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       3,
+       2
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metoxi",
+      "kind": "prefix",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       4,
+       3
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       4,
+       5
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "atoms": [
+       7
+      ],
+      "bonds": [
+       6
+      ]
+     }
+    ]
+   }
+  ]
  }
 }

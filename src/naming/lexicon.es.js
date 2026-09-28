@@ -89,6 +89,8 @@ export const TRADITIONAL_NAMES = Object.freeze({
   formicAcid: 'ácido fórmico',
   aceticAcid: 'ácido acético',
   oxalicAcid: 'ácido oxálico',
+  formate: 'formiato',
+  acetate: 'acetato',
   anisole: 'anisol',
 });
 
@@ -104,7 +106,12 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * retains `formic acid`, `acetic acid` and `oxalic acid` as preferred
  * names (P-65.1.1.1), so they are labelled like `tolueno`; the other
  * school names (propiónico, butírico, malónico, succínico…) are not
- * offered, to keep the list small. `anisol` (design.md §13.4 I-34) is
+ * offered, to keep the list small. The esters of formic and acetic acid
+ * (design.md §13.4 I-35) keep those acid names too: `formiato` and
+ * `acetato` replace a bare `metanoato` / `etanoato` (`acetato de etilo`,
+ * `formiato de metilo`; IUPAC 2013 P-65.6.3.2 methyl acetate), labelled
+ * like the acids; no other ester name (propionato, butirato…) is offered.
+ * `anisol` (design.md §13.4 I-34) is
  * offered for the bare metoxibenceno: IUPAC 2013 retains `anisole` (the
  * app says only that it is accepted, the exact status being from memory).
  */
@@ -117,6 +124,8 @@ export const TRADITIONAL_LABELS = Object.freeze({
   formicAcid: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   aceticAcid: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   oxalicAcid: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
+  formate: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
+  acetate: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   anisole: 'nombre tradicional, que la IUPAC (2013) acepta',
 });
 
@@ -503,6 +512,21 @@ export const STYLE_LABELS = Object.freeze({
 export const ETHER_CLASS_WORD = 'éter';
 
 /**
+ * How an ester name is assembled (design.md §13.4 I-35; render.js
+ * assembleEster()): in Spanish the acid part comes first (`etanoato`),
+ * then ` de ` and the O-bound group as a group name, its prefix form + `o`
+ * (`metilo`, `isopropilo`, `propan-2-ilo`, `2-cloroetilo`): `etanoato de
+ * metilo`. English puts the group first (`methyl ethanoate`).
+ */
+export const ESTER_ALKYL_FIRST = false;
+
+/** Text between the two words of an ester name (`etanoato de metilo`). */
+export const ESTER_LINK = ' de ';
+
+/** Ending added to the prefix form of an ester's O-bound group: `metil` + `o` = `metilo` (as groupName()). */
+export const ESTER_ALKYL_ENDING = 'o';
+
+/**
  * Returns the ending of one unsaturation segment inside a substituent
  * prefix, where it is always followed by the free-valence locant and `il`,
  * so the final `o` is dropped: `prop-2-en-1-il`, `but-3-in-1-il`.
@@ -553,7 +577,7 @@ export function styleLabel(style) {
  * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene,
  * a small carbonyl compound or a small acid.
  *
- * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid' or 'oxalicAcid'.
+ * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate' or 'anisole'.
  * @returns {string} The Spanish name.
  * @throws {Error} For an unknown id.
  */
@@ -709,6 +733,9 @@ export function groupFamilyName(kind) {
 export const lexiconEs = Object.freeze({
   etherClassWord: ETHER_CLASS_WORD,
   alkoxyEnding: ALKOXY_ENDING,
+  esterAlkylFirst: ESTER_ALKYL_FIRST,
+  esterLink: ESTER_LINK,
+  esterAlkylEnding: ESTER_ALKYL_ENDING,
   freeValenceSuffix,
   saturatedInfix: SATURATED_INFIX,
   enclosingMarks: ENCLOSING_MARKS,

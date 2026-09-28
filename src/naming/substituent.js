@@ -62,6 +62,11 @@
  * `1-metiletoxi` in the 'substituted' style; render.js). The O is never a
  * chain atom; an alkoxy group can itself carry any prefix, another alkoxy
  * included (`2-metoxietoxi`), and can sit inside a branch (`(metoximetil)`).
+ *
+ * Esters (design.md §13.4 I-35): the –COO– is the principal group, its C=O
+ * carbon a parent atom (suffixSites() carries the bridge O), and the group
+ * on the far side of the bridge O is named like an alkoxy group's alkyl
+ * (esterAlkyl()), cited as its own word (`de metilo`), never as a prefix.
  * Pure: topology only.
  */
 
@@ -419,17 +424,18 @@ export function hasAcylPrefix(structure) {
 } // End of function hasAcylPrefix()
 
 /**
- * The suffix groups of a parent (design.md §13.4 I-31, I-32, I-33): every
- * oxygen of the principal kind bonded to one of its atoms — the OH of
+ * The suffix groups of a parent (design.md §13.4 I-31, I-32, I-33, I-35):
+ * every oxygen of the principal kind bonded to one of its atoms — the OH of
  * `-ol`, or the C=O of `-al` / `-ona`, whose carbon is the parent atom; a
  * –COOH (`ácido …oico`) is one site, its C=O oxygen, carrying its OH
- * oxygen as `hydroxyAtom` / `hydroxyBond`.
+ * oxygen as `hydroxyAtom` / `hydroxyBond`; an ester –COO– (`…oato de
+ * …ilo`) likewise, carrying its bridge O as `esterOxygen` / `esterBond`.
  *
  * @param {object} mol - A validated molecule.
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {number[]} atoms - The parent's atom ids.
  * @param {string|null} [principal] - The principal oxygen kind (default: principalKindOf() of the molecule).
- * @returns {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number}[]} One site per group: carrying atom, oxygen, bond (and the OH of a –COOH); in parent-atom order.
+ * @returns {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number, esterOxygen?: number, esterBond?: number}[]} One site per group: carrying atom, oxygen, bond (and the OH of a –COOH, or the bridge O of an ester); in parent-atom order.
  */
 export function suffixSites(mol, adj, atoms, principal = principalKindOf(mol, adj)) {
   const sites = [];
@@ -443,6 +449,10 @@ export function suffixSites(mol, adj, atoms, principal = principalKindOf(mol, ad
         const hydroxy = adj.get(atom).find((m) => m.order === 1 && isPrincipalOxygen(mol, adj, m.atom, principal));
         site.hydroxyAtom = hydroxy.atom;
         site.hydroxyBond = hydroxy.bond;
+      } else if (principal === 'ester') {
+        const bridge = adj.get(atom).find((m) => m.order === 1 && isPrincipalOxygen(mol, adj, m.atom, principal));
+        site.esterOxygen = bridge.atom;
+        site.esterBond = bridge.bond;
       }
       sites.push(site);
     }
@@ -554,6 +564,29 @@ export function alkoxySubstituent(ctx, chainAtom, oxygen) {
     bonds: [...alkyl.bonds, far.bond].sort((p, q) => p - q),
   };
 } // End of function alkoxySubstituent()
+
+/**
+ * The O-bound group of an ester (design.md §13.4 I-35): the alkyl group on
+ * the far side of the bridge O of the –COO– whose carbon is `carbon`,
+ * named like any branch whose carrying atom is the O (alkoxySubstituent():
+ * its chain, prefixes, free valence at the carbon bonded to the O, retained
+ * `isopropil` / `tert-butil` per style). render.js cites it as a group name
+ * (`metilo`, `isopropilo`, `2-cloroetilo`, `prop-2-en-1-ilo`), after the
+ * acid part in Spanish (`etanoato de metilo`) and before it in English
+ * (`methyl ethanoate`). The structure keeps `alkoxy` true (its `atoms`
+ * start with the O, its `bonds` include the O–C bond), so counts that walk
+ * substituents treat the bridge O like an ether O.
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {number} carbon - The C=O carbon of the ester (a parent atom).
+ * @param {number} oxygen - The bridge O.
+ * @returns {{oxygen: number, bond: number, carbon: number, alkylBond: number, alkyl: object}} The bridge O, the C–O bond, the carbon bonded to the O on the other side, that O–C bond and the group (SubstituentStructure with `alkoxy` true).
+ */
+export function esterAlkyl(ctx, carbon, oxygen) {
+  const bond = ctx.adj.get(carbon).find((n) => n.atom === oxygen).bond;
+  const far = ctx.adj.get(oxygen).find((n) => n.atom !== carbon);
+  return { oxygen, bond, carbon: far.atom, alkylBond: far.bond, alkyl: alkoxySubstituent(ctx, carbon, oxygen) };
+} // End of function esterAlkyl()
 
 /**
  * Builds the structure of a substituent (the body of nameSubstituentIn):

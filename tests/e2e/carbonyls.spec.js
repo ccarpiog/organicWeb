@@ -8,7 +8,7 @@
  * and acetona under "Otras formas válidas", etanal, butanodial,
  * pentano-2,4-diona, pent-3-en-2-ona, 4-oxopentanal, 4-hidroxibutan-2-ona,
  * ciclohexanona, 2-metilciclohexan-1-ona); "Ordenar dibujo" lays out a
- * carbonyl; an aldehyde on a ring, an acyl branch and an ester are refused
+ * carbonyl; an aldehyde on a ring, an acyl branch and an anhydride are refused
  * with their messages. Runs on the dev server and on dist/index.html.
  */
 
@@ -194,8 +194,8 @@ test('loaded aldehydes and ketones: -al, -ona, oxo-, hidroxi-, rings, propanona 
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
   await expect(error).toContainText('un grupo acilo');
 
-  // An ester (acids are named since I-33).
-  await loadSmiles(page, 'CC(=O)OC');
+  // An anhydride (acids are named since I-33, esters since I-35).
+  await loadSmiles(page, 'CC(=O)OC(C)=O');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
   await expect(error).toContainText('aldehídos y cetonas');

@@ -11,11 +11,13 @@
  * halogenated; I-31), half as many aldehydes and ketones (C=O on chains or
  * ring carbons, some with OH groups and halogens; I-32), half as many
  * carboxylic acids (one or two –COOH at chain ends, some with C=O, OH
- * groups and halogens; I-33), adds
+ * groups and halogens; I-33), half as many ethers (I-34) and half as many
+ * esters (one –COO– between two acyclic pieces, some with C=O, OH groups
+ * and halogens; I-35), adds
  * one cycloalkane per ring size in the carbon range, names
  * each one in every prefix style (plus its traditional name — `toluene`,
  * `styrene`, `formaldehyde`, `acetaldehyde`, `acetone`, `formic acid`,
- * `acetic acid`, `oxalic acid` — when it has one,
+ * `acetic acid`, `oxalic acid`, `methyl acetate`, `ethyl formate`… — when it has one,
  * and the `propan-2-one` form of `propanone`), renders the same name structures in English, lets OPSIN
  * turn the English names back into SMILES and checks that they denote the
  * original molecule (ring count, canonical key + formula). Prints passed / failed /
@@ -44,7 +46,7 @@ import { renderName } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import {
   generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
-  generateAcids, generateEthers, generateCycloalkanes,
+  generateAcids, generateEthers, generateEsters, generateCycloalkanes,
 } from './generate.mjs';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
 import { englishName, compareWithOpsin } from './compare.mjs';
@@ -95,7 +97,9 @@ export function parseArgs(argv) {
  * Names every molecule in every prefix style and renders the English names.
  * A benzene derivative with a traditional name retained by IUPAC 2013
  * (aromatic.js traditionalNameId(): `toluene`, `styrene`) gets one more
- * entry, style 'traditional', so OPSIN checks that name too.
+ * entry, style 'traditional', so OPSIN checks that name too; so do the
+ * small carbonyl compounds, acids and esters (principal.js
+ * carbonylTraditionalId(); an ester as `methyl acetate`, render.js).
  *
  * @param {object[]} molecules - The molecules.
  * @returns {{mol: object, smiles: string, names: {style: string, spanish: string, english: string|null, error: string|null}[]}[]} One case per molecule.
@@ -114,7 +118,11 @@ export function buildCases(molecules) {
       const traditional = first ? traditionalNameId(result.structure) || carbonylTraditionalId(result.structure) : null;
       if (traditional) {
         const spanish = result.alternatives.find((a) => a.style === 'traditional').name;
-        names.push({ style: 'traditional', spanish, english: lexiconEn.traditionalName(traditional), error: null });
+        // An ester keeps its O-bound group: only the acid part is traditional (`methyl acetate`, I-35).
+        const english = result.structure.ester
+          ? renderName(result.structure, lexiconEn, { traditional }).name
+          : lexiconEn.traditionalName(traditional);
+        names.push({ style: 'traditional', spanish, english, error: null });
       }
       const located = first ? result.alternatives.find((a) => a.style === 'locants') : null;
       if (located) {
@@ -243,11 +251,14 @@ export async function main(argv) {
   const ethers = generateEthers({
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
+  const esters = generateEsters({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
-  const molecules = [...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...rings];
+  const molecules = [
+    ...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...rings,
+  ];
   console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes `
     + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${carbonyls.length} aldehydes and ketones `
-    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${rings.length} cycloalkanes, `
+    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
   const availability = await checkAvailability(options.jar, options.java);
   if (!availability.ok) {

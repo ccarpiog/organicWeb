@@ -16,9 +16,11 @@
  *   only elements the engine can name yet (carbon, halogens bonded to a
  *   carbon — design.md §13.4 I-30 —, OH groups on a carbon, I-31, the
  *   C=O of aldehydes and ketones, I-32, carboxyl groups –C(=O)OH, I-33,
- *   and ether oxygens C–O–C, I-34; on a molecule with a ring, only OH
- *   groups on ring carbons and ketone C=O whose carbon is a ring atom, no
- *   acid; on a chain, at most two aldehydes and at most two acids), and
+ *   ether oxygens C–O–C, I-34, and ester groups –C(=O)–O–R, I-35; on a
+ *   molecule with a ring, only OH groups on ring carbons and ketone C=O
+ *   whose carbon is a ring atom, no acid, no ester; on a chain, at most two
+ *   aldehydes, at most two acids, at most one ester and never an acid with
+ *   an ester), and
  *   longest carbon chain ≤ 30 (for a ring: every side chain ≤ 30; with
  *   ethers, the longest chain on either side of each O).
  *
@@ -27,9 +29,9 @@
  * engine cannot name (CYCLE, RING_SYSTEM, HETEROATOM — see isNotNameableYet()).
  * Halogens bonded to a carbon are named since I-30, OH groups on a carbon
  * (alcohols, phenol) since I-31, aldehydes and ketones since I-32,
- * carboxylic acids since I-33, ethers since I-34; any other heteroatom (N,
- * an O of an ester or anhydride, a peroxide, a halogen on a heteroatom or
- * on a C=O carbon…) still
+ * carboxylic acids since I-33, ethers since I-34, esters since I-35; any
+ * other heteroatom (N, an O of an anhydride or carbonate, a peroxide, a
+ * halogen on a heteroatom or on a C=O carbon…) still
  * gets HETEROATOM, and so do an alcohol or ketone with a ring whose OH or
  * C=O is on a side chain, any aldehyde or acid with a ring, and a chain
  * with more than two aldehydes or more than two acids.
@@ -71,8 +73,9 @@ export const MESSAGES = Object.freeze({
     + 'derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), '
     + 'alcoholes (con grupos –OH unidos a un carbono), '
     + 'aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), '
-    + 'ácidos carboxílicos (con el grupo –COOH) '
-    + 'y éteres (con un oxígeno unido a dos carbonos, C–O–C).',
+    + 'ácidos carboxílicos (con el grupo –COOH), '
+    + 'éteres (con un oxígeno unido a dos carbonos, C–O–C) '
+    + 'y ésteres (con el grupo –COO– entre dos cadenas de carbonos).',
   INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
 });
 
@@ -191,6 +194,36 @@ export const ACYL_SUBSTITUENT_MESSAGE = 'Esta molécula tiene un grupo C=O en un
 export const SYMMETRIC_ETHER_MESSAGE = 'Esta molécula tiene dos mitades iguales unidas por un oxígeno (–O–), '
   + 'y cada mitad lleva el grupo principal. La IUPAC la nombra con el prefijo «oxidi-», que junta las dos mitades '
   + '(como el 2,2′-oxidietanol), y eso aún no sé hacerlo.';
+
+/**
+ * HETEROATOM message for a molecule with a ring and an ester group –COO–
+ * (design.md §13.4 I-35): the ring would be on the acid side (a
+ * `-carboxilato`, `ciclohexanocarboxilato de metilo`), on the O side (a
+ * ring group such as `fenilo`, `etanoato de fenilo`) or on a side chain
+ * of either; the ring functions wait for I-40.
+ */
+export const RING_ESTER_MESSAGE = 'Esta molécula tiene un anillo y un grupo –COO– (un éster). '
+  + 'De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): '
+  + 'los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos.';
+
+/**
+ * HETEROATOM message for an open chain with more than one ester group
+ * (design.md §13.4 I-35): a diester such as `butanodioato de dimetilo`, or
+ * an ester inside the O-bound group of another, needs rules the app does
+ * not support yet (I-39).
+ */
+export const MANY_ESTERS_MESSAGE = 'Esta molécula tiene más de un grupo –COO– (éster). '
+  + 'De momento solo sé nombrar los ésteres con un único grupo –COO– (como el etanoato de metilo).';
+
+/**
+ * HETEROATOM message for a molecule with a carboxyl group and an ester
+ * group (design.md §13.4 I-35): the acid is the principal group (ácido >
+ * éster), so the ester would be a prefix, `alcoxicarbonil-` (bonded through
+ * its carbon) or `aciloxi-` (bonded through its O); I-39 names them.
+ */
+export const ESTER_PREFIX_MESSAGE = 'Esta molécula tiene un grupo –COOH (ácido) y un grupo –COO– (éster). '
+  + 'El ácido va antes que el éster, así que el éster se nombraría con un prefijo '
+  + '(«alcoxicarbonil-», como «metoxicarbonil-», o «aciloxi-», como «acetiloxi-»), y eso aún no sé hacerlo.';
 
 /** TOO_BIG message for a ring larger than the parent-size cap (MAX_CHAIN). */
 export const RING_TOO_BIG_MESSAGE = 'El anillo es demasiado grande (máximo 30 carbonos en el anillo).';
@@ -682,6 +715,73 @@ export function carboxylCarbons(mol) {
 }
 
 /**
+ * Tells whether a carbon is the carbon X of an ester group –C(=O)–O–R
+ * (design.md §13.4 I-35, §13.6 table: X(=O)–O–R with X bonded to at most
+ * one carbon): exactly one oxygen double-bonded to it and bonded to nothing
+ * else, one oxygen single-bonded to it whose only other neighbour is a
+ * carbon R that is not a functional carbon (isFunctionalCarbon(): an
+ * anhydride has a C=O carbon there), and at most one other neighbour, a
+ * carbon on a single bond (none for a methanoate). An acid (an OH), a
+ * carbonate (two single-bonded O on X), a peroxy ester, an acyl halide…
+ * are not.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} id - An atom id.
+ * @returns {boolean} True for the carbon of a –COO– ester group.
+ */
+export function isEsterCarbon(mol, adj, id) {
+  if (mol.atoms.get(id).element !== 'C') {
+    return false;
+  }
+  const links = adj.get(id);
+  const oxygen = (n) => mol.atoms.get(n.atom).element === 'O';
+  const oxo = links.filter((n) => oxygen(n) && n.order === 2 && adj.get(n.atom).length === 1);
+  const bridges = links.filter((n) => oxygen(n) && n.order === 1);
+  const others = links.filter((n) => !oxygen(n));
+  if (oxo.length !== 1 || bridges.length !== 1 || oxo.length + bridges.length + others.length !== links.length) {
+    return false;
+  }
+  const beyond = adj.get(bridges[0].atom).filter((n) => n.atom !== id);
+  const alkylOk = beyond.length === 1 && beyond[0].order === 1 && mol.atoms.get(beyond[0].atom).element === 'C'
+    && !isFunctionalCarbon(mol, adj, beyond[0].atom);
+  return alkylOk && others.length <= 1 && others.every((n) => n.order === 1 && mol.atoms.get(n.atom).element === 'C');
+} // End of function isEsterCarbon()
+
+/**
+ * Role of an oxygen in an ester group –C(=O)–O–R (design.md §13.4 I-35):
+ * 'carbonyl' for the O of the C=O, 'bridge' for the O between the C=O
+ * carbon and the O-bound group R, null when the atom is not an oxygen of
+ * an ester group (isEsterCarbon()).
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} id - An atom id.
+ * @returns {'carbonyl'|'bridge'|null} The role.
+ */
+export function esterRole(mol, adj, id) {
+  if (mol.atoms.get(id).element !== 'O') {
+    return null;
+  }
+  const links = adj.get(id);
+  if (links.length === 1) {
+    return links[0].order === 2 && isEsterCarbon(mol, adj, links[0].atom) ? 'carbonyl' : null;
+  }
+  return links.length === 2 && links.some((n) => isEsterCarbon(mol, adj, n.atom)) ? 'bridge' : null;
+} // End of function esterRole()
+
+/**
+ * The carbons of the ester groups of a molecule (isEsterCarbon()), ascending.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @returns {number[]} The carbon ids.
+ */
+export function esterCarbons(mol) {
+  const adj = adjacency(mol);
+  return [...mol.atoms.keys()].filter((id) => isEsterCarbon(mol, adj, id)).sort((p, q) => p - q);
+}
+
+/**
  * Tells whether a carbon is a functional carbon (design.md §13.6): one with
  * a double or triple bond to a heteroatom (the X of C=O, C=N, C≡N).
  *
@@ -755,7 +855,8 @@ export function longestCarbonChain(mol) {
  * oxygen of an aldehyde or ketone C=O (the `-al` / `-ona` suffix or the
  * `oxo` prefix, I-32; carbonylKind()) or an oxygen of a carboxyl group
  * (the `ácido …oico` suffix, I-33; carboxylRole()) or the oxygen of an
- * ether C–O–C (an `alcoxi-` prefix, I-34; isEtherOxygen()). Any other O,
+ * ether C–O–C (an `alcoxi-` prefix, I-34; isEtherOxygen()) or an oxygen
+ * of an ester –COO– (`…oato de …ilo`, I-35; esterRole()). Any other O,
  * and every N, is not. The OH of an ester-like or otherwise unsupported C=O carbon
  * (`OC(=O)O`, a peracid) is refused through its C=O.
  *
@@ -768,7 +869,8 @@ export function hasNameableHeteroatoms(mol, hetero) {
   const halogens = hetero.filter((id) => isHalogen(mol.atoms.get(id).element));
   return isHalogenDerivative(mol, halogens)
     && hetero.every((id) => isHalogen(mol.atoms.get(id).element) || isHydroxyOxygen(mol, adj, id)
-      || carbonylKind(mol, adj, id) !== null || carboxylRole(mol, adj, id) !== null || isEtherOxygen(mol, adj, id));
+      || carbonylKind(mol, adj, id) !== null || carboxylRole(mol, adj, id) !== null || isEtherOxygen(mol, adj, id)
+      || esterRole(mol, adj, id) !== null);
 }
 
 /**
@@ -821,15 +923,17 @@ export function aldehydeOxygens(mol) {
 
 /**
  * The refusal of a nameable-heteroatom molecule whose oxygen groups the
- * engine cannot place yet (design.md §13.4 I-31, I-32, I-33), or null.
- * With a ring: a carboxyl group (`ringAcid`), an aldehyde
+ * engine cannot place yet (design.md §13.4 I-31, I-32, I-33, I-35), or null.
+ * With a ring: a carboxyl group (`ringAcid`), an ester group (`ringEster`), an aldehyde
  * (`ringAldehyde`), a ketone C=O on a side chain (`sideChainCarbonyl`) or
  * an OH on a side chain (`sideChainAlcohol`), in that order. Without a
  * ring: more than two carboxyl groups (`manyAcids`, whose third –COOH
- * would be a `carboxi-` branch), then more than two aldehyde groups
+ * would be a `carboxi-` branch), an acid with an ester (`esterPrefix`: the
+ * ester would be an `alcoxicarbonil-` / `aciloxi-` prefix, I-39), more than
+ * one ester group (`manyEsters`), then more than two aldehyde groups
  * (`manyAldehydes`). The error lists the heteroatoms (`atoms`) and the
- * offending groups (`acids`: the carboxyl carbons; `sideChain` or
- * `aldehydes`: oxygens).
+ * offending groups (`acids`: the carboxyl carbons; `esters`: the ester
+ * carbons; `sideChain` or `aldehydes`: oxygens).
  *
  * @param {object} mol - A validated molecule whose heteroatoms are nameable.
  * @param {boolean} cyclic - Whether it has a ring.
@@ -841,8 +945,18 @@ function oxygenPlacementError(mol, cyclic, hetero) {
   if (cyclic && acids.length > 0) {
     return validationError('HETEROATOM', { message: RING_ACID_MESSAGE, atoms: hetero, reason: 'ringAcid', acids });
   }
+  const esters = esterCarbons(mol);
+  if (cyclic && esters.length > 0) {
+    return validationError('HETEROATOM', { message: RING_ESTER_MESSAGE, atoms: hetero, reason: 'ringEster', esters });
+  }
   if (acids.length > 2) {
     return validationError('HETEROATOM', { message: MANY_ACIDS_MESSAGE, atoms: hetero, reason: 'manyAcids', acids });
+  }
+  if (acids.length > 0 && esters.length > 0) {
+    return validationError('HETEROATOM', { message: ESTER_PREFIX_MESSAGE, atoms: hetero, reason: 'esterPrefix', acids, esters });
+  }
+  if (esters.length > 1) {
+    return validationError('HETEROATOM', { message: MANY_ESTERS_MESSAGE, atoms: hetero, reason: 'manyEsters', esters });
   }
   if (!cyclic) {
     const aldehydes = aldehydeOxygens(mol);
@@ -874,13 +988,14 @@ function oxygenPlacementError(mol, cyclic, hetero) {
  * ring scope (ringError(): a single carbocycle of at most 30 carbons
  * passes; TOO_BIG or RING_SYSTEM otherwise), carbon and heavy-atom caps,
  * carbon, halogens on carbon, OH groups on carbon, aldehyde or ketone
- * C=O, carboxyl groups and ether C–O–C only (HETEROATOM for any other atom: valid but
+ * C=O, carboxyl groups, ether C–O–C and ester –COO– only (HETEROATOM for any other atom: valid but
  * not nameable yet; also for an OH, a ketone C=O or any aldehyde on a ring
  * molecule outside the ring, any acid with a ring, and for more than two
- * aldehydes or acids on a chain: oxygenPlacementError()), chain cap — the
+ * aldehydes or acids, more than one ester or an ester with an acid on a
+ * chain, any ester with a ring: oxygenPlacementError()), chain cap — the
  * longest carbon chain of a tree, or the longest side chain of a ring
  * (design.md §3.2, §13.1). A molecule passing this is a hydrocarbon (or a
- * halogen derivative, alcohol, aldehyde, ketone, carboxylic acid or ether of one)
+ * halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether or ester of one)
  * of at most 60 carbons that is either a tree
  * whose longest carbon chain has at most 30, or a single carbocycle of 3
  * to 30 carbons whose side chains have at most 30 carbons and carry no
@@ -919,7 +1034,7 @@ export function validateForNaming(mol) {
   }
   const hetero = [...mol.atoms.values()].filter((atom) => atom.element !== 'C').map((atom) => atom.id).sort((p, q) => p - q);
   if (hetero.length > 0 && !hasNameableHeteroatoms(mol, hetero)) {
-    // A valid molecule, but the engine only names hydrocarbons, halogen derivatives, alcohols, aldehydes, ketones, acids and ethers so far.
+    // A valid molecule, but the engine only names hydrocarbons, halogen derivatives, alcohols, aldehydes, ketones, acids, ethers and esters so far.
     return validationError('HETEROATOM', { atoms: hetero });
   }
   const placement = hetero.length > 0 ? oxygenPlacementError(mol, cyclic, hetero) : null;

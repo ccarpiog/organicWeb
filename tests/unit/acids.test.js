@@ -61,8 +61,8 @@ test('validation: a –COOH is admitted; esters, acyl halides, anhydrides and ot
   for (const smiles of ['OC=O', 'CC(=O)O', 'OC(=O)C(=O)O', 'CC(O)C(=O)O', 'O=CCC(=O)O', 'ClCC(=O)O', 'C=CC(=O)O']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Ester, acyl chloride, anhydride, peracid, carbonic acid, amide, an acid with an amine, formate ester.
-  for (const smiles of ['CC(=O)OC', 'CC(=O)Cl', 'CC(=O)OC(=O)C', 'CC(=O)OO', 'OC(=O)O', 'CC(N)=O', 'NCC(=O)O', 'O=COC']) {
+  // Carbonate, acyl chloride, anhydride, peracid, carbonic acid, amide, an acid with an amine (esters are named since I-35).
+  for (const smiles of ['COC(=O)OC', 'CC(=O)Cl', 'CC(=O)OC(=O)C', 'CC(=O)OO', 'OC(=O)O', 'CC(N)=O', 'NCC(=O)O']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);

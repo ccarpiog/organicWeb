@@ -41,7 +41,10 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   (the O and the other side as an `alcoxi-` prefix, the chain never
   running through the O: `metoxietano`, `etoxietano`, `1-isopropoxibutano`,
   `2-metoxietan-1-ol`, `ácido 2-metoxietanoico`, `metoxiciclohexano`,
-  `metoxibenceno`…), with the name coloured by part
+  `metoxibenceno`…), and of esters (the acid part with `-oato` and the
+  O-bound group as a separate word: `etanoato de metilo`, `propanoato de
+  etilo`, `butanoato de isopropilo`, `2-metilpropanoato de tert-butilo`,
+  `3-oxobutanoato de etilo`, `etanoato de 2-hidroxietilo`…), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles;
@@ -50,7 +53,8 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   (the IUPAC 2013 form) and `acetona`, `metanal` and `etanal` their
   traditional `formaldehído` and `acetaldehído`, and the ácidos metanoico,
   etanoico and etanodioico their traditional `ácido fórmico`, `ácido
-  acético` and `ácido oxálico`; `metoxibenceno` lists `anisol`, and a
+  acético` and `ácido oxálico`, and a metanoato or etanoato ester its
+  `formiato` / `acetato` form (`acetato de etilo`); `metoxibenceno` lists `anisol`, and a
   simple ether its functional-class name (`etil metil éter`, `dietil éter`).
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
@@ -202,12 +206,13 @@ the Keychain account is the WebDAV user).
 ## Known limitations and future work
 
 - Hydrocarbons, their halogen derivatives, alcohols, aldehydes, ketones,
-  carboxylic acids and ethers only, with at most one ring (a carbocycle; an
-  OH or a ketone C=O must then be on a ring carbon, and aldehydes and acids
-  with a ring are refused); a C=O carbon bonded to the main chain as a
+  carboxylic acids, ethers and esters only, with at most one ring (a carbocycle; an
+  OH or a ketone C=O must then be on a ring carbon, and aldehydes, acids
+  and esters with a ring are refused); a C=O carbon bonded to the main chain as a
   branch (acetilo…), more than two aldehyde or more than two –COOH groups
-  on a chain, and an ether with two identical halves that each carry the
-  principal group (named with `oxidi-`) are refused too; esters, salts and
+  on a chain, more than one ester group, an acid with an ester, and an
+  ether with two identical halves that each carry the
+  principal group (named with `oxidi-`) are refused too; salts and
   other acid derivatives are not named yet; several
   rings, fused, bridged and spiro rings, heterocycles, benzenes with two or
   more substituents (no orto/meta/para), other oxygen and nitrogen compounds
@@ -215,7 +220,8 @@ the Keychain account is the WebDAV user).
   radicals are not named. Traditional halogen and alcohol names
   (cloroformo, alcohol etílico, glicerina…) are not given (only `acetona`,
   `formaldehído` and `acetaldehído` among the carbonyls, and `ácido
-  fórmico`, `ácido acético` and `ácido oxálico` among the acids); the 90° view keeps
+  fórmico`, `ácido acético` and `ácido oxálico` among the acids, `formiato`
+  and `acetato` among the esters); the 90° view keeps
   the normal drawing for any molecule with a heteroatom.
 - Parent chain up to 30 carbons, whole molecule up to 60.
 - Structure → name only; there is no name → structure.

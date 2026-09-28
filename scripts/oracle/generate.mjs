@@ -12,7 +12,9 @@
  * one or two –COOH at chain ends of acyclic molecules, some with C=O, OH
  * groups and halogens too), of ethers (I-34: an O put into one or two
  * single C–C bonds outside the ring, some with OH, C=O, –COOH and
- * halogens too), plus the list of cycloalkanes in a size range.
+ * halogens too), of esters (I-35: one –COO– between two random acyclic
+ * pieces, some with C=O, OH groups and halogens too), plus the list of
+ * cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
@@ -23,8 +25,10 @@ import {
 } from '../../src/model/molecule.js';
 import { perceiveRings } from '../../src/model/rings.js';
 import { HALOGEN_ELEMENTS } from '../../src/model/elements.js';
-import { canonicalTreeKey, canonicalKey } from '../../src/model/graph.js';
-import { validateForNaming, carboxylCarbons, etherOxygens, MAX_CHAIN } from '../../src/model/validate.js';
+import { canonicalTreeKey, canonicalKey, adjacency } from '../../src/model/graph.js';
+import {
+  validateForNaming, carboxylCarbons, carboxylRole, esterCarbons, etherOxygens, MAX_CHAIN,
+} from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
 
@@ -601,6 +605,90 @@ export function generateAcids({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct acids
   return molecules;
 } // End of function generateAcids()
+
+/**
+ * Copies a molecule with a –COOH and turns it into an ester (design.md
+ * §13.4 I-35): a copy of `alkyl` (a hydrocarbon) is grafted onto the OH
+ * oxygen of the first carboxyl group, bonded by one of its carbons that
+ * still has a hydrogen (chosen at random), so the –COOH becomes –COO–R.
+ *
+ * @param {object} mol - A molecule with at least one –COOH (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {object} alkyl - A hydrocarbon (not mutated): the O-bound group.
+ * @returns {object} The copy (unchanged when `mol` has no –COOH).
+ */
+export function esterify(mol, random, alkyl) {
+  const copy = cloneMolecule(mol);
+  const adj = adjacency(copy);
+  const hydroxy = [...copy.atoms.keys()].find((id) => carboxylRole(copy, adj, id) === 'hydroxy');
+  if (hydroxy === undefined) {
+    return copy;
+  }
+  const ids = new Map();
+  for (const [id, atom] of alkyl.atoms) {
+    ids.set(id, addAtom(copy, {}, atom.element));
+  }
+  for (const bond of alkyl.bonds.values()) {
+    addBond(copy, ids.get(bond.a), ids.get(bond.b), bond.order);
+  }
+  const free = [...alkyl.atoms.keys()].filter((id) => bondOrderSum(alkyl, id) < CARBON_VALENCE);
+  addBond(copy, hydroxy, ids.get(free[Math.floor(random() * free.length)]), 1);
+  return copy;
+} // End of function esterify()
+
+/**
+ * Generates up to `count` distinct (by canonical key) esters (design.md
+ * §13.4 I-35): a random acyclic hydrocarbon of 1 carbon up to `maxSize`
+ * − 2 with one –COOH at a chain end (carboxylate()), whose OH is joined to
+ * a random acyclic hydrocarbon of 1 to 6 carbons (esterify(): branched,
+ * unsaturated or bonded by an inner carbon), a share of them also with
+ * C=O (carbonylate(): `oxo-`), OH groups (hydroxylate(): `hidroxi-`) and
+ * halogens (halogenate()) on either part. Only molecules with exactly one
+ * ester group that the engine names in every prefix style are kept (a C=O
+ * next to the bridge O makes an anhydride, which validation refuses; an
+ * acyl branch in some style is refused by the engine).
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateEsters({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 8209 + 35);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50) {
+    attempts += 1;
+    const size = randomInt(random, 1, Math.max(1, maxSize - 2));
+    const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.4, branchiness: 0.2 + random() * 0.8 });
+    const acid = carboxylate(base, random, 1);
+    if (acid.atoms.size === base.atoms.size) {
+      continue; // No end carbon could take a –COOH.
+    }
+    const alkylSize = randomInt(random, 1, Math.max(1, Math.min(6, maxSize - size)));
+    const alkyl = randomHydrocarbon(random, { size: alkylSize, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8 });
+    let mol = esterify(acid, random, alkyl);
+    const carbons = new Set([...mol.atoms].filter(([, atom]) => atom.element === 'C').map(([id]) => id));
+    if (random() < 0.25) {
+      mol = carbonylate(mol, random, 0.05 + random() * 0.15, carbons);
+    }
+    if (random() < 0.25) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.1, carbons);
+    }
+    if (random() < 0.25) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.2);
+    }
+    if (validateForNaming(mol) || esterCarbons(mol).length !== 1
+      || !PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
+      continue; // Not valid for naming (an anhydride…), or refused by the engine in some style (an acyl branch).
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct esters
+  return molecules;
+} // End of function generateEsters()
 
 /**
  * Copies a molecule and puts an oxygen into some of its carbon–carbon

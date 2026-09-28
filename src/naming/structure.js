@@ -115,17 +115,20 @@
  * @property {number} bond - Id of the bond between them.
  * @property {number} [hydroxyAtom] - For a –COOH only (design.md §13.4 I-33): id of its OH oxygen, part of the same group.
  * @property {number} [hydroxyBond] - For a –COOH only: id of the bond between the carbon and that OH oxygen.
+ * @property {number} [esterOxygen] - For an ester –COO– only (design.md §13.4 I-35): id of its bridge O (between the C=O carbon and the O-bound group), part of the same group.
+ * @property {number} [esterBond] - For an ester only: id of the bond between the C=O carbon and the bridge O.
  */
 
 /**
  * The principal characteristic groups of a name, cited as a suffix after the
  * parent's ending (`propan-2-ol`, `butano-1,4-diol`, `ciclohexanol`, `fenol`,
  * `propanal`, `butanodial`, `pentano-2,4-diona`, `ciclohexanona`,
- * `ácido propanoico`, `ácido butanodioico`). An aldehyde's or acid's
- * locants (always a chain end) are never cited (IUPAC 2013 P-14.3.4.1).
+ * `ácido propanoico`, `ácido butanodioico`, `propanoato de metilo`). An
+ * aldehyde's, acid's or ester's locants (always a chain end) are never
+ * cited (IUPAC 2013 P-14.3.4.1).
  *
  * @typedef {object} SuffixStructure
- * @property {'acid'|'alcohol'|'aldehyde'|'ketone'} kind - Group kind (groups.js GROUP_KINDS; principal.js OXYGEN_KINDS).
+ * @property {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'} kind - Group kind (groups.js GROUP_KINDS; principal.js OXYGEN_KINDS).
  * @property {SuffixLocant[]} locants - One entry per group, ascending locants (a carbon with two OH appears twice).
  */
 
@@ -137,6 +140,21 @@
  * @property {ChainStructure|RingStructure} parent - The numbered parent chain or ring.
  * @property {PrefixGroup[]} prefixes - Grouped substituent prefixes in citation order (empty for an unbranched molecule).
  * @property {SuffixStructure|null} suffix - The principal characteristic groups cited as a suffix (`-ol`, design.md §13.4 I-31; `-al`, `-ona`, I-32), or null (hydrocarbons and halogen derivatives).
+ * @property {EsterPart} [ester] - Only when the suffix is an ester (design.md §13.4 I-35): its O-bound group, cited as its own word (`etanoato de metilo`, `methyl ethanoate`).
+ */
+
+/**
+ * The O-bound group of an ester (design.md §13.4 I-35; substituent.js
+ * esterAlkyl()). The parent, prefixes and suffix of the name describe the
+ * acid part (`etanoato`); this describes the group bonded to the bridge O
+ * (`metilo`).
+ *
+ * @typedef {object} EsterPart
+ * @property {number} oxygen - The bridge O.
+ * @property {number} bond - The bond between the C=O carbon and the bridge O.
+ * @property {number} carbon - The carbon bonded to the bridge O on the other side.
+ * @property {number} alkylBond - The bond between the bridge O and that carbon.
+ * @property {SubstituentStructure} alkyl - The group, named as a substituent of the O (`alkoxy` true: its `atoms` start with the O and its `bonds` include `alkylBond`).
  */
 
 /**
@@ -322,19 +340,24 @@ export function buildRingStructure(atoms, bonds, orders) {
 
 /**
  * Assembles the language-neutral name structure. The parent kind is taken
- * from the parent: 'ring' for a RingStructure, else 'chain'.
+ * from the parent: 'ring' for a RingStructure, else 'chain'. `ester` is
+ * set only when given (an ester's O-bound group, design.md §13.4 I-35).
  *
- * @param {{parent: ChainStructure|RingStructure, prefixes?: PrefixGroup[], suffix?: SuffixStructure|null}} parts - The numbered parent, its grouped prefixes (citation order) and its suffix groups.
+ * @param {{parent: ChainStructure|RingStructure, prefixes?: PrefixGroup[], suffix?: SuffixStructure|null, ester?: EsterPart}} parts - The numbered parent, its grouped prefixes (citation order), its suffix groups and an ester's O-bound group.
  * @returns {NameStructure} The name structure.
  */
 export function buildNameStructure(parts) {
-  return {
+  const structure = {
     parentKind: parts.parent.kind === 'ring' ? 'ring' : 'chain',
     parent: parts.parent,
     prefixes: parts.prefixes ? [...parts.prefixes] : [],
     suffix: parts.suffix && parts.suffix.locants.length > 0 ? parts.suffix : null,
   };
-}
+  if (parts.ester) {
+    structure.ester = parts.ester;
+  }
+  return structure;
+} // End of function buildNameStructure()
 
 /**
  * Builds the suffix of a numbered parent from its suffix sites (the groups
@@ -342,9 +365,9 @@ export function buildNameStructure(parts) {
  * SuffixLocant per group, ascending locants (then oxygen id); null without
  * sites.
  *
- * @param {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number}[]} sites - The suffix groups (carrying atom, heteroatom, bond; the OH of a –COOH).
+ * @param {{atom: number, attachAtom: number, bond: number, hydroxyAtom?: number, hydroxyBond?: number, esterOxygen?: number, esterBond?: number}[]} sites - The suffix groups (carrying atom, heteroatom, bond; the OH of a –COOH; the bridge O of an ester).
  * @param {number[]} atoms - Parent atom ids in locant order.
- * @param {'acid'|'alcohol'|'aldehyde'|'ketone'|null} [kind] - Group kind (default 'alcohol').
+ * @param {'acid'|'ester'|'alcohol'|'aldehyde'|'ketone'|null} [kind] - Group kind (default 'alcohol').
  * @returns {SuffixStructure|null} The suffix structure.
  */
 export function buildSuffix(sites, atoms, kind = 'alcohol') {
@@ -358,6 +381,7 @@ export function buildSuffix(sites, atoms, kind = 'alcohol') {
     attachAtom: site.attachAtom,
     bond: site.bond,
     ...(site.hydroxyAtom === undefined ? {} : { hydroxyAtom: site.hydroxyAtom, hydroxyBond: site.hydroxyBond }),
+    ...(site.esterOxygen === undefined ? {} : { esterOxygen: site.esterOxygen, esterBond: site.esterBond }),
   }));
   locants.sort((p, q) => p.locant - q.locant || p.attachAtom - q.attachAtom);
   return { kind, locants };

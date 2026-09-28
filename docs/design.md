@@ -55,7 +55,12 @@ names the sections of this file it implements. The plan was reviewed by Codex
   acid's name starts with the class word `ácido` (lexicon
   `suffixClassWord()`; English has none, `-oic acid` is the suffix) and
   never cites its locants either: `ácido propanoico`, `ácido
-  butanodioico`, `ácido 2-metilpropanoico`. The final `o` of `-ano`,
+  butanodioico`, `ácido 2-metilpropanoico`. An ester (I-35) is two words:
+  the acid part with the suffix `-oato` (locant never cited, like an
+  acid's) and the O-bound group as a group name, joined by `de` in
+  Spanish and in the reverse order in English (`etanoato de metilo`,
+  `methyl ethanoate`; lexicon `esterAlkylFirst`, `esterLink`,
+  `esterAlkylEnding`; `render.js assembleEster()`). The final `o` of `-ano`,
   `-eno`, `-ino` is elided before a vowel and kept before a consonant
   (IUPAC 2013 P-16.7.1): `etanol`, `prop-2-en-1-ol`, `but-3-in-2-ol`, but
   `etano-1,2-diol`, `but-2-eno-1,4-diol` (English `ethanol`,
@@ -74,7 +79,11 @@ names the sections of this file it implements. The plan was reviewed by Codex
   `etiliden`, `isopropil`, `(propan-2-il)`). So `3-metilidenhexano`,
   `4-etilidenheptano`, `5-isopropilnonano`. Explanations use the standalone
   form when talking about the group ("el grupo metilo") and the prefix form
-  when building the name.
+  when building the name. The O-bound group of an ester (I-35) is written
+  in its standalone form, never enclosed: `etanoato de metilo`,
+  `butanoato de isopropilo` (`propan-2-ilo`, `1-metiletilo` in the other
+  styles), `etanoato de tert-butilo`, `etanoato de 2-cloroetilo`,
+  `etanoato de prop-2-en-1-ilo` (`render.js esterAlkylName()`).
 - **Substituent prefixes — user decision: `isopropil` by default.** The
   `–CH(CH₃)₂` group is cited as **`isopropil`** in the main name (a simple
   prefix: no parentheses, `di`/`tri` grouping — `2,3-diisopropil…` — and
@@ -127,7 +136,13 @@ names the sections of this file it implements. The plan was reviewed by Codex
   taught in Spanish textbooks): the group names in alphabetical order
   (`tert-` ignored, the plain name first on a tie) and `éter` —
   `etil metil éter`, `tert-butil metil éter`, `butil tert-butil éter`,
-  `dietil éter`.
+  `dietil éter`. An ester whose acid part is a bare metanoato or etanoato
+  (I-35) lists its traditional form last, style `traditional`, whatever its
+  O-bound group: `formiato de metilo`, `acetato de etilo`, `acetato de
+  isopropilo` (the default-style group), labelled like `ácido acético`
+  («nombre tradicional, que la IUPAC (2013) conserva como preferido»:
+  acetate and formate follow the retained acids, P-65.6.3.2, from memory);
+  no other ester names (propionato, butirato…).
 - **Locant omission** is an explicit rule table, never inferred from "only
   one structural possibility":
   - Unsubstituted parents with omitted locants: `metano`, `etano`, `eteno`,
@@ -201,6 +216,10 @@ names the sections of this file it implements. The plan was reviewed by Codex
     follow the rules above (`ácido 2-cloroetanoico`, as `2-cloroetanal`),
     and with a suffix a multiple bond's locant is always cited (`ácido
     prop-2-enoico`, as `prop-2-enal`).
+  - Esters (I-35): the acid part follows the acid rules (`etanoato de
+    metilo`, `2-cloroetanoato de metilo`, `prop-2-enoato de metilo`); the
+    O-bound group follows the substituent rules (`2-cloroetilo`,
+    `prop-2-en-1-ilo`, `metoximetilo`).
   - Ethers (I-34): an alkoxy prefix follows the halogen rules (`metoximetano`,
     `metoxietano`, `metoxieteno`, `metoxiciclohexano`, `metoxibenceno`; but
     `1-metoxipropano`, `1,2-dimetoxietano`, `2-metoxietan-1-ol`). Where the
@@ -365,21 +384,32 @@ neighbour, a carbon on a single bond: `isCarboxylCarbon()`,
 `carboxylRole()`, I-33) and ether oxygens (an O with exactly two single
 bonds, both to carbons, neither a functional carbon with a multiple bond
 to a heteroatom: `isEtherOxygen()`, I-34; an O inside a ring is a
-heterocycle, `RING_SYSTEM` first) only (`HETEROATOM` for any other atom — N, any
-other O such as the C=O and the single-bonded O of esters, anhydrides, acyl halides, carbonic acid
+heterocycle, `RING_SYSTEM` first) and the two O of an ester group (a
+carbon with exactly one O on a double bond bonded to nothing else, one O
+on a single bond whose only other neighbour is a carbon that is not a
+functional carbon, and at most one other neighbour, a carbon on a single
+bond: `isEsterCarbon()`, `esterRole()` 'carbonyl' / 'bridge', I-35; a
+lactone is a heterocycle) only (`HETEROATOM` for any other atom — N, any
+other O such as those of anhydrides, carbonates, peroxy esters, acyl halides, carbonic acid
 or ketenes, O–O, a halogen bonded to a heteroatom or to nothing;
 charged atoms, so salts, are already `INVALID`), then the placement of the
 oxygen groups (`oxygenPlacementError()`, `HETEROATOM` with a `reason`): with
 a ring, no acid at all (`ringAcid`, `acids` the carboxyl carbons: a –COOH
 carbon is never a ring atom, so it would be a `-carboxílico` or a side
-chain, I-40), no aldehyde at all (`ringAldehyde`: a –CHO carbon is never a ring atom, so it
+chain, I-40), no ester at all (`ringEster`, `esters` the ester carbons:
+the ring would be on the acid side, `-carboxilato`, on the O side,
+`fenilo`/`ciclohexilo`, or on a side chain of either, I-40), no aldehyde at all (`ringAldehyde`: a –CHO carbon is never a ring atom, so it
 would be a `-carbaldehído` or a side chain, I-40), no ketone C=O on a side
 chain (`sideChainCarbonyl`) and no OH on a side chain (`sideChainAlcohol`),
 each with `sideChain` the oxygens (`sideChainCarbonyls()`,
 `sideChainHydroxyls()`: that parent would be the chain, with the ring as a
 `ciclohexil`/`fenil` substituent, planned for I-40); at most two acids
 (`manyAcids`, `acids`: a chain has two ends, a third –COOH would be a
-`carboxi-` branch or all would need `-carboxílico`); without a ring, at
+`carboxi-` branch or all would need `-carboxílico`); no acid with an
+ester (`esterPrefix`, `acids` and `esters`: the acid is principal, so the
+ester would be an `alcoxicarbonil-` / `aciloxi-` prefix, I-39); at most
+one ester (`manyEsters`, `esters`: diesters and an ester inside the
+O-bound group of another wait for I-39); without a ring, at
 most two aldehydes (`manyAldehydes`, `aldehydes`: a chain has two ends,
 more need `-carbaldehído`), parent chain
 ≤ 30 carbons (`MAX_CHAIN`, measured on the carbon skeleton, `carbonSkeleton()`
@@ -401,7 +431,7 @@ Errors are codes with Spanish messages:
 | `RING_SYSTEM` | Out of scope (§13.1), one message per `ringKind`: `heterocycle` Este anillo tiene átomos que no son carbono: es un heterociclo. Los heterociclos quedan fuera de lo que sé nombrar. · `fused` Has dibujado anillos fusionados (dos anillos que comparten un enlace). Este tipo de moléculas queda fuera de lo que sé nombrar. · `bridged` Has dibujado anillos con puente (dos anillos que comparten más de dos átomos). … · `spiro` Has dibujado un compuesto espiro (dos anillos que comparten un solo átomo). … · `several` Esta molécula tiene varios anillos. De momento solo podré nombrar moléculas con un único anillo. (generic: Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.) |
 | `VALENCE` | Este carbono tendría más de 4 enlaces. — per element for the lowest-id offending atom: Este oxígeno tendría más de 2 enlaces. / Este nitrógeno tendría más de 3 enlaces. / Este cloro (flúor, bromo, yodo) tendría más de 1 enlace. (The editor's "full" refusal likewise: Este oxígeno ya tiene 2 enlaces.) |
 | `TOO_BIG` | La molécula es demasiado grande (máximo 60 carbonos, cadena de 30). — also a ring side chain above 30 carbons — heavy-atom cap: La molécula es demasiado grande (máximo 80 átomos sin contar los hidrógenos). — a ring above 30 carbons: El anillo es demasiado grande (máximo 30 carbonos en el anillo). |
-| `HETEROATOM` | Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH) y éteres (con un oxígeno unido a dos carbonos, C–O–C). (valid, not nameable yet; `atoms` lists every heteroatom, halogens included; since I-29 the naming result also carries `groups`, §4.1, §13.6; since I-30 a molecule whose only heteroatoms are halogens bonded to carbons is named instead, since I-31 also one with OH groups on carbons, since I-32 also one with aldehyde or ketone C=O, since I-33 also one with carboxyl groups –COOH, since I-34 also one with ether oxygens) — an acid with a ring (`reason` `ringAcid`, `acids` the carboxyl carbons): Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico). — more than two –COOH (`manyAcids`): Esta molécula tiene más de dos grupos –COOH (ácido). Un –COOH siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos, así que alguno quedaría en una rama. Estos compuestos se nombran con el prefijo «carboxi-» o con «-carboxílico», y eso aún no sé hacerlo. — an OH on a ring's side chain (`reason` `sideChainAlcohol`): Esta molécula tiene un anillo y un grupo –OH en una de sus ramas. De momento solo sé nombrar los alcoholes con anillo cuando el –OH está unido directamente al anillo (como el ciclohexanol o el fenol). — an aldehyde with a ring (`ringAldehyde`): Esta molécula tiene un anillo y un grupo –CHO (un aldehído). Cuando el –CHO va unido a un anillo, el nombre acaba en «-carbaldehído» (como el ciclohexanocarbaldehído), y eso aún no sé nombrarlo. De momento, con anillo solo sé nombrar las cetonas cuyo C=O forma parte del anillo (como la ciclohexanona). — a ketone C=O on a ring's side chain (`sideChainCarbonyl`): Esta molécula tiene un anillo y un grupo C=O en una de sus ramas. De momento solo sé nombrar las cetonas con anillo cuando el carbono del C=O forma parte del anillo (como la ciclohexanona). — more than two aldehydes on a chain (`manyAldehydes`): Esta molécula tiene más de dos grupos –CHO (aldehído). Un –CHO siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos, así que no puede llevarlos todos. Estos compuestos se nombran con «-carbaldehído», y eso aún no sé hacerlo. — from the naming engine, after validation, a C=O carbon bonded to the chain that carries it as a branch (`acylSubstituent`, `atoms` its C and O; decided on the default-style name): Esta molécula tiene un grupo C=O en una rama, con su carbono unido directamente a la cadena principal (un grupo acilo, como el acetilo, –CO–CH₃). Aún no sé nombrar estas ramas. — from the naming engine, a safety net that validation makes unreachable, a –COOH left out of the suffix (`carboxySubstituent`, `atoms` the carboxyl carbons): Esta molécula tiene un grupo –COOH en una rama. Se nombraría con el prefijo «carboxi-», y eso aún no sé hacerlo. — from the naming engine, an acyclic ether whose two sides are identical and carry the principal group (`symmetricEther`, `atoms` the O and both sides; IUPAC 2013 uses multiplicative nomenclature, `2,2′-oxidi(etan-1-ol)`): Esta molécula tiene dos mitades iguales unidas por un oxígeno (–O–), y cada mitad lleva el grupo principal. La IUPAC la nombra con el prefijo «oxidi-», que junta las dos mitades (como el 2,2′-oxidietanol), y eso aún no sé hacerlo. |
+| `HETEROATOM` | Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C) y ésteres (con el grupo –COO– entre dos cadenas de carbonos). (valid, not nameable yet; `atoms` lists every heteroatom, halogens included; since I-29 the naming result also carries `groups`, §4.1, §13.6; since I-30 a molecule whose only heteroatoms are halogens bonded to carbons is named instead, since I-31 also one with OH groups on carbons, since I-32 also one with aldehyde or ketone C=O, since I-33 also one with carboxyl groups –COOH, since I-34 also one with ether oxygens, since I-35 also one with one ester group –COO–) — an ester with a ring on either side or on a side chain (`reason` `ringEster`, `esters` the ester carbons): Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos. — more than one ester group (`manyEsters`): Esta molécula tiene más de un grupo –COO– (éster). De momento solo sé nombrar los ésteres con un único grupo –COO– (como el etanoato de metilo). — an acid with an ester (`esterPrefix`, `acids` and `esters`): Esta molécula tiene un grupo –COOH (ácido) y un grupo –COO– (éster). El ácido va antes que el éster, así que el éster se nombraría con un prefijo («alcoxicarbonil-», como «metoxicarbonil-», o «aciloxi-», como «acetiloxi-»), y eso aún no sé hacerlo. — an acid with a ring (`reason` `ringAcid`, `acids` the carboxyl carbons): Esta molécula tiene un anillo y un grupo –COOH (un ácido carboxílico). Cuando el –COOH va unido a un anillo, el nombre acaba en «-carboxílico» (como el ácido ciclohexanocarboxílico), y eso aún no sé nombrarlo. De momento solo sé nombrar los ácidos de cadena abierta (como el ácido etanoico). — more than two –COOH (`manyAcids`): Esta molécula tiene más de dos grupos –COOH (ácido). Un –COOH siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos, así que alguno quedaría en una rama. Estos compuestos se nombran con el prefijo «carboxi-» o con «-carboxílico», y eso aún no sé hacerlo. — an OH on a ring's side chain (`reason` `sideChainAlcohol`): Esta molécula tiene un anillo y un grupo –OH en una de sus ramas. De momento solo sé nombrar los alcoholes con anillo cuando el –OH está unido directamente al anillo (como el ciclohexanol o el fenol). — an aldehyde with a ring (`ringAldehyde`): Esta molécula tiene un anillo y un grupo –CHO (un aldehído). Cuando el –CHO va unido a un anillo, el nombre acaba en «-carbaldehído» (como el ciclohexanocarbaldehído), y eso aún no sé nombrarlo. De momento, con anillo solo sé nombrar las cetonas cuyo C=O forma parte del anillo (como la ciclohexanona). — a ketone C=O on a ring's side chain (`sideChainCarbonyl`): Esta molécula tiene un anillo y un grupo C=O en una de sus ramas. De momento solo sé nombrar las cetonas con anillo cuando el carbono del C=O forma parte del anillo (como la ciclohexanona). — more than two aldehydes on a chain (`manyAldehydes`): Esta molécula tiene más de dos grupos –CHO (aldehído). Un –CHO siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos, así que no puede llevarlos todos. Estos compuestos se nombran con «-carbaldehído», y eso aún no sé hacerlo. — from the naming engine, after validation, a C=O carbon bonded to the chain that carries it as a branch (`acylSubstituent`, `atoms` its C and O; decided on the default-style name): Esta molécula tiene un grupo C=O en una rama, con su carbono unido directamente a la cadena principal (un grupo acilo, como el acetilo, –CO–CH₃). Aún no sé nombrar estas ramas. — from the naming engine, a safety net that validation makes unreachable, a –COOH left out of the suffix (`carboxySubstituent`, `atoms` the carboxyl carbons): Esta molécula tiene un grupo –COOH en una rama. Se nombraría con el prefijo «carboxi-», y eso aún no sé hacerlo. — from the naming engine, an acyclic ether whose two sides are identical and carry the principal group (`symmetricEther`, `atoms` the O and both sides; IUPAC 2013 uses multiplicative nomenclature, `2,2′-oxidi(etan-1-ol)`): Esta molécula tiene dos mitades iguales unidas por un oxígeno (–O–), y cada mitad lleva el grupo principal. La IUPAC la nombra con el prefijo «oxidi-», que junta las dos mitades (como el 2,2′-oxidietanol), y eso aún no sé hacerlo. |
 | `INVALID` | Los datos de la molécula están dañados. Empieza un dibujo nuevo. (internal/corrupt data) |
 
 ---
@@ -439,11 +469,17 @@ aldehyde or ketone (I-32) likewise with `kind` 'aldehyde' / 'ketone' (one
 entry per C=O whose carbon is a parent atom; `attachAtom` its oxygen); a
 carboxylic acid (I-33) with `kind` 'acid' (one entry per –COOH: `atom` its
 carbon, `attachAtom` / `bond` its C=O oxygen, `hydroxyAtom` / `hydroxyBond`
-its OH oxygen); every other result has `suffix: null`. Their
+its OH oxygen); an ester (I-35) with `kind` 'ester' (one entry: `atom`
+its C=O carbon, `attachAtom` / `bond` its C=O oxygen, `esterOxygen` /
+`esterBond` its bridge O) and `structure.ester` (`{oxygen, bond, carbon,
+alkylBond, alkyl}`: the bridge O, the C–O bond, the carbon across the O,
+that O–C bond, and the O-bound group as a SubstituentStructure seen from
+the O, `alkoxy` true); every other result has `suffix: null` and no
+`ester`. Their
 `alternatives` may end with `{style: 'locants'}` (`propan-2-ona` for
 `propanona`) and a `{style: 'traditional'}` name (`formaldehído`,
 `acetaldehído`, `acetona`, `ácido fórmico`, `ácido acético`, `ácido
-oxálico`).
+oxálico`, `formiato de …`, `acetato de …`).
 
 `TraceStep = { rule, candidatesBefore, values, survivors, note? }` where each
 candidate is `{ atoms, direction?, key, bonds }` (`bonds`: the chain's bond ids,
@@ -459,7 +495,7 @@ every start atom and direction (each candidate with its n ring bonds in
 `bonds`); a bare cycloalkane has the `RING` step only. Trace order: P0, P1, P2, P3, N0, N1, N2, P4, N3, N4, N5, TIE (N5
 only when the candidates left after N4 would give different names). Rules stop at the first one that leaves
 a single candidate; P0 (most principal groups) and N0 (their lowest
-locants, also on rings) appear only for an alcohol, aldehyde, ketone or acid, P0
+locants, also on rings) appear only for an alcohol, aldehyde, ketone, acid or ester, P0
 always recorded then; P1 is always
 recorded, and N3/N4 are skipped when no candidate carries prefixes. The explanation layer (§5) consumes only the trace
 and the result — it never re-derives chemistry.
@@ -490,8 +526,8 @@ exceed valence; terminal attachment would make the chain longer). Assert it.
 
 Compare in order; stop when one chain remains:
 
-0. **P0 Most principal groups** (I-31, I-32, I-33; only with a principal
-   oxygen group) — the groups of the principal kind (ácido > aldehído >
+0. **P0 Most principal groups** (I-31, I-32, I-33, I-35; only with a principal
+   oxygen group) — the groups of the principal kind (ácido > éster > aldehído >
    cetona > alcohol, `naming/principal.js`) on the chain's carbons (IUPAC 2013
    P-44.1.1: the maximum number of principal characteristic groups comes
    before the length): `CCCCC(CO)CCC` is `2-propilhexan-1-ol`, not an
@@ -506,7 +542,10 @@ Compare in order; stop when one chain remains:
    chain, then more multiple bonds, then more substituents holds the parent
    (`2-(pentiloxi)etan-1-ol`, `1-metoxipropano`, `etoxieteno`,
    `1-cloro-2-etoxietano`); equal sides reach the presentation tie-break
-   and give the same name (`etoxietano`).
+   and give the same name (`etoxietano`). The bridge O of an ester (I-35)
+   splits the skeleton the same way: P0 always keeps the acid part (the
+   side with the C=O carbon), however long the O-bound group
+   (`etanoato de pentilo`).
 1. **P1 Longest chain** — carbon count (IUPAC 2013 P-44.3).
 2. **P2 Most multiple bonds** — double + triple bonds **lying within** the
    chain. A double bond connecting the chain to a substituent does not count
@@ -525,8 +564,8 @@ Every candidate is a `(chain, direction)` pair. Compare **sorted locant
 lists, keeping repeated locants, term by term, numerically, at the first
 point of difference — never by sums**:
 
-4. **N0** (I-31, I-32, I-33; only with a principal oxygen group) the principal
-   groups, one locant per OH, C=O or –COOH (IUPAC 2013 P-31.1.4.2.4: the principal
+4. **N0** (I-31, I-32, I-33, I-35; only with a principal oxygen group) the principal
+   groups, one locant per OH, C=O, –COOH or –COO– (IUPAC 2013 P-31.1.4.2.4: the principal
    characteristic groups come before the multiple bonds and the
    prefixes): `prop-2-en-1-ol`, `pent-4-en-2-ol`, `4-metilpentan-2-ol`,
    `but-3-enal` (the –CHO carbon is always 1), `pent-3-en-2-ona`.
@@ -679,6 +718,18 @@ Substituent chain selection:
   (`(2-metoxietoxi)`) falls out of the recursion. An acyclic ether whose two
   identical sides carry the principal group is refused (`symmetricEther`,
   §3.2).
+- **Ester –COO–** (I-35): with an ester present the principal kind is
+  'ester' (ácido > éster > aldehído…; validation never lets an acid and an
+  ester meet). Both oxygens of the –COO– are of that kind and are never
+  prefixes; the C=O oxygen stands for the group (`isSuffixOxygen()`), the
+  bridge O travels with it (`esterOxygen`). The group across the bridge O
+  is never a prefix either: `esterAlkyl()` names it like an alkoxy group's
+  alkyl (`alkoxySubstituent()` seen from the O: chain through the carbon on
+  the O, free valence first, its own prefixes — halogens, `hidroxi`, `oxo`,
+  alkoxy —, retained `isopropil` / `tert-butil` per style) and the name
+  structure keeps it apart (`structure.ester`), cited as its own word
+  (§4.7). An acyl branch inside it is refused like one on the parent
+  (`acylSubstituent`, checked on both).
 - Identical substituents are grouped: di/tri for simple prefixes, also when
   they are parenthesised for their own locants (`di(propan-2-il)`); bis/tris
   for compound, i.e. substituted, prefixes (`bis(2-metilpropil)`,
@@ -736,7 +787,14 @@ and oxygen; on a chain an aldehyde never writes its locants
 same way, never with locants, its parts referring to the carbon and both
 oxygens of each –COOH (`suffixGroupIds()`); the name starts with the
 lexicon's class word and a space (`ácido `, an `ending` part with the same
-atoms; none in English, whose suffix is `oic acid`).
+atoms; none in English, whose suffix is `oic acid`). An ester suffix
+(I-35) renders `oato` the same way (parts referring to the carbon, both
+oxygens and both C–O bonds); `assembleEster()` then adds the O-bound
+group, `esterAlkylName()` (its substituent words + the lexicon's
+`esterAlkylEnding`, a `prefix` part with its atoms and bonds), after the
+acid part and `' de '` (a `punct` part) in Spanish, before it and a space
+in English. With `renderName(…, {traditional})` the acid part is one
+traditional word (`acetato de etilo`, `methyl acetate`).
 `render.js` turns it into the Spanish string and coloured parts
 using `lexicon.es.js`; the oracle (§8) renders the same structure with
 `lexicon.en.js`. No name is ever produced by substring translation.
@@ -797,7 +855,10 @@ aldehído > cetona > alcohol, a ketone on a branch, halogens,
 cycloalkanones, `propanona` with its alternatives); carboxylic acids (I-33:
 one- and two-carbon acids, branched and unsaturated acids, diacids, P0
 and N0, `oxo-` for a ketone or a terminal aldehyde and `hidroxi-` beside
-an acid, halogens, `ácido fórmico` / `acético` / `oxálico`).
+an acid, halogens, `ácido fórmico` / `acético` / `oxálico`); esters (I-35:
+one- and two-carbon acid parts, `formiato` / `acetato`, branched and
+unsaturated groups on both sides in every style, P0 against a longer
+O-bound group, `oxo-` / `hidroxi-` / halogens / alkoxy on either part).
 
 The oracle (§8) is the second line of defence, not a replacement.
 
@@ -959,6 +1020,34 @@ through the O; **Nombra los sustituyentes**, **Ordena alfabéticamente**,
 the legend and **Monta el nombre** describe the «-oxi» prefixes (called
 "grupo metoxi", never "metoxilo"), their order among the others and the
 functional-class name under the alternatives.
+An ester (I-35, `structure.ester`) gets the acid's steps in its own words
+(SUFFIX_GROUP_WORDS `ester`: «el grupo –COO–»): the group step
+(`esterGroupStep()`) names the –COO– (a carbon with an O on a double bond
+and a second O that joins it to another group of carbons, one group: its
+C=O is not a ketone nor its middle O an ether), says its carbon is always
+a chain end counted in the chain (carbon 1), that the name has two words
+joined by «de» (the first ending in «-oato», the second the group ending in
+«-ilo») and, with other oxygen groups on either part, the order ácido >
+éster > aldehído > cetona > alcohol with «oxo-» / «hidroxi-» written in
+their own part; the –COO– is highlighted whole. Then one more step,
+**Separa las dos partes del éster** (id `ester`, `esterStep()`): the
+middle O splits the molecule; the acid part (the chain with the C=O
+carbon as carbon 1, named like its acid, «ácido etanoico» → «etanoato»)
+and the O-bound group (named like a branch, as a word of its own ending
+in «-ilo»; `esterGroupFormation()`: `isopropilo` with `propan-2-ilo` and
+`1-metiletilo`, `tert-butilo`, the details of a branched, unsaturated or
+substituted group) are explained and highlighted apart — acid part as
+parent, group as substituent, the middle O with its two bonds as
+candidate — with one option per part («Parte del ácido», «Grupo unido al
+oxígeno»); then the Spanish order. **Cuenta los carbonos** says both O
+of the –COO– are drawn O (one on a double bond, one between two carbons);
+**Busca la cadena principal** says the chain cannot cross the middle O
+(a longer O-bound group is shown as an option that loses at P0);
+**Numera la cadena** says the –COO– carbon is always 1 («nunca
+«-1-oato»»); the legend ends with `-oato`, `de` and the group; **Monta
+el nombre** explains the two words, `-oato` without a locant, `de` and
+the group, and that English writes the group first (a fixed example,
+«methyl ethanoate»: the English lexicon is never bundled).
 
 Where the locant-omission table applies, a note explains it ("En «propeno» no
 hace falta el número: el doble enlace solo puede estar en el carbono 1").
@@ -1225,11 +1314,18 @@ OPSIN (open-source name→structure, Java) reads English IUPAC names.
    monosubstituted benzenes with an O put into one or two C–C single
    bonds outside the ring, `etherify()`, some also with a –COOH, C=O, OH
    groups and halogens; only molecules the engine names in every prefix
+   style are kept), half as many esters (I-35, `generateEsters()`: a
+   random hydrocarbon of 1 C upward with one –COOH, `carboxylate()`, whose
+   OH is joined to a random hydrocarbon of 1–6 C by any carbon,
+   `esterify()`, some also with C=O, OH groups and halogens on either part;
+   only molecules with one ester that the engine names in every prefix
    style are kept), plus one cycloalkane per ring size in the carbon range
    (I-25).
    Each molecule is checked in every prefix style, plus its traditional
    name (`toluene`, `styrene`, `anisole`, `formaldehyde`, `acetaldehyde`,
-   `acetone`, `formic acid`, `acetic acid`, `oxalic acid`) and the
+   `acetone`, `formic acid`, `acetic acid`, `oxalic acid`, and the esters'
+   `methyl acetate`, `ethyl formate`… rendered by `renderName(…,
+   {traditional})`) and the
    `propan-2-one` form of `propanone` (the functional-class ether names are
    not checked).
 3. name → English → OPSIN → SMILES → a **dev-only fuller SMILES parser**
@@ -1450,7 +1546,9 @@ before being presented as validated IUPAC 2013 coverage.
   oxygen groups as `oxo` / `hydroxy` prefixes; carboxylic acids (I-33)
   use `kind` 'acid', each –COOH one entry carrying its OH oxygen
   (`hydroxyAtom`); ethers (I-34) are `alkoxy` prefixes (§4.5) whose
-  locants carry the carbon across the O (`etherCarbon`, `etherBond`), and
+  locants carry the carbon across the O (`etherCarbon`, `etherBond`);
+  esters (I-35) use `kind` 'ester', the one entry carrying its bridge O
+  (`esterOxygen`), plus `structure.ester`, the O-bound group; all of them
   carry no `groups` either. The engine stays pure; the
   explanation is derived only from the result.
 
@@ -1508,12 +1606,12 @@ certifies IUPAC preference or Spanish spelling.
 | I-32 | Aldehydes and ketones | **Done.** A molecule whose heteroatoms are halogens on carbons, OH groups on carbons and aldehyde or ketone C=O (`carbonylKind()`: an O double-bonded to a carbon whose other neighbours are carbons on single bonds; acids, esters, acyl halides, ketenes… keep `HETEROATOM`) passes validation, with the placement checks of `oxygenPlacementError()` (§3.2): with a ring no aldehyde (`ringAldehyde`, `-carbaldehído`, I-40) and no ketone or OH on a side chain (`sideChainCarbonyl`, `sideChainAlcohol`); on a chain at most two aldehydes (`manyAldehydes`). New `N/principal.js`: oxygen kind and principal kind (aldehído > cetona > alcohol); P0/N0 (`N/parent.js`, `N/numbering.js`) count the groups of the principal kind; the suffix `-al` / `-dial` (aldehyde carbon in the chain, locant 1, never cited, P-14.3.4.1) or `-ona` / `-diona` with locants (`structure.suffix.kind`); the C=O is never a hydrocarbon unsaturation; non-principal groups are the prefixes `oxo` (`oxoSubstituent()`) and `hidroxi` on the parent or in a branch (`4-oxopentanal`, `4-hidroxibutan-2-ona`, `4-(2-oxopropil)heptano-2,6-diona`). A C=O carbon bonded to its chain as a branch (acyl: `acetil`) is refused by the engine (`acylSubstituent`, `hasAcylPrefix()`, decided on the default-style name); `formil-` is never needed, since a chain holds both ends' –CHO and more are refused. Cycloalkanones (`ciclohexanona`, `2-metilciclohexan-1-ona`, `4-hidroxiciclohexan-1-ona`) brought forward from I-40: they fall out of the I-31 ring machinery. `propanona` omits its locant (design decision, §1.1) and lists `propan-2-ona` (the IUPAC 2013 form) and the traditional `acetona`; `formaldehído` and `acetaldehído` are offered for the bare `metanal` and `etanal` (retained by IUPAC 2013 and the usual school names); no other traditional names. Both lexicons. E: group step for C=O (`carbonylGroupStep()`), count, chain, numbering (`aldehydeNote()`), ring, substituents and legend texts per kind; each C=O highlighted whole. Oracle generates aldehydes and ketones (`generateCarbonyls()`). | Terminal/internal, several carbonyls, ald + ket, ket + OH, halogens, id invariance, refusals; fixtures, `tests/unit/carbonyls.test.js`, snapshots, `tests/e2e/carbonyls.spec.js`. |
 | I-33 | Carboxylic acids | **Done.** A molecule whose heteroatoms are halogens on carbons, OH groups on carbons, aldehyde or ketone C=O and carboxyl groups (`isCarboxylCarbon()`: a carbon with one O on a double bond and one OH, both bonded to nothing else, and at most one carbon neighbour on a single bond; `carboxylRole()`; esters, anhydrides, acyl halides, carbonic acid, peracids keep `HETEROATOM`, salts are `INVALID`) passes validation, with the placement checks of `oxygenPlacementError()` (§3.2): no acid with a ring (`ringAcid`, `-carboxílico`, I-40) and at most two –COOH (`manyAcids`: a third would be a `carboxi-` branch). `N/principal.js`: kind 'acid' for both O of a –COOH, most senior (ácido > aldehído > cetona > alcohol); `isSuffixOxygen()` lets the C=O oxygen stand for the group, so P0/N0 (`N/parent.js`, `N/numbering.js`) count each –COOH once and `suffixSites()` gives one site carrying its OH (`hydroxyAtom`, `hydroxyBond`). The carboxyl carbon is a chain end, locant 1, never cited; the suffix `-oico` / `-dioico` (`ácido etanoico`, `ácido 2-metilpropanoico`, `ácido but-2-enoico`, `ácido prop-2-enoico`, `ácido butanodioico`, `ácido hexanodioico`) and the class word `ácido` (lexicon `suffixClassWord()`, its own part; English `-oic acid`, no class word). Other oxygen groups are `oxo` / `hidroxi` prefixes: `ácido 4-oxopentanoico`, `ácido 2-hidroxipropanoico`, `ácido 3-oxopropanoico` (a terminal aldehyde beside an acid is in the chain, so `oxo`, as in IUPAC 2013's 3-oxopropanoic acid; `formil` never needed). With two –COOH both are always the parent's ends, so `carboxi-` never arises; the engine still refuses a –COOH left out of the suffix (`carboxySubstituent`, a safety net). Traditional `ácido fórmico`, `ácido acético` and `ácido oxálico` for the bare methanoic, ethanoic and ethanedioic acids, labelled like `tolueno` («que la IUPAC (2013) conserva como preferido»: all three are retained PINs); no other school names (propiónico, malónico, succínico, láctico…). Both lexicons. E: group step (`acidGroupStep()`: one –COOH group, OH not an alcohol nor C=O a ketone, carbon counted in the chain as carbon 1, «ácido …-oico», seniority with `oxo-`/`hidroxi-`), count, chain, numbering (`terminalGroupNote()`), substituents, assemble and legend texts (the word «ácido»); each –COOH highlighted whole (C and both O). Oracle generates acids (`generateAcids()`, `carboxylate()`). | Branching, numbering, diacids, acid + ketone/aldehyde/alcohol, halogens, id invariance, refusals (3+ COOH, ring + COOH, esters, acyl halides, anhydrides, salts); fixtures, `tests/unit/acids.test.js`, snapshots, `tests/e2e/acids.spec.js`. |
 | I-34 | Ethers | **Done.** A molecule whose heteroatoms are the ones named so far plus ether oxygens (`isEtherOxygen()`: an O with two single bonds to carbons, neither a functional carbon — esters, anhydrides, peroxides keep `HETEROATOM`; an O in a ring is a heterocycle, `RING_SYSTEM`) passes validation; the chain cap is measured on each side of the O (`longestCarbonChain()`). The ether is never principal nor a suffix (`N/principal.js` kind 'ether', skipped by `principalKindOf()`): the O splits the carbon skeleton, `leafToLeafPaths()` (`N/parent.js`) gives the paths of every piece (a lone carbon a one-atom path), and the usual cascade picks the parent side — the principal group (P0), a ring (always senior), the length (P1), multiple bonds (P2/P3), the number of substituents (P4), numbering rules; symmetric sides reach the presentation tie-break, same name. The O with the other side is an alkoxy prefix (`alkoxySubstituent()` in `N/substituent.js`; `alkoxyTokens()`, `isContractedAlkoxy()`, `enclosedInName()` in `N/render.js`; `alkoxyEnding` in both lexicons): contracted `metoxi`/`etoxi`/`propoxi`/`butoxi` (also substituted, `(2-cloroetoxi)`), retained `isopropoxi` (with `(propan-2-iloxi)` and `(1-metiletoxi)` as the styled alternatives, like `isopropil`) and `tert-butoxi`, else the prefix + `oxi` in parentheses (`(pentiloxi)`, `(butan-2-iloxi)`, `(prop-2-en-1-iloxi)`); Spanish alphabetical order with the other prefixes (`2-metil-2-metoxipropano`); locant omission as for halogens (`metoximetano`, `metoxietano`, `1-metoxipropano`, `1,2-dimetoxietano`), an alkoxy among locant-less prefixes enclosed (`cloro(metoxi)metano`). Ethers with every named group: `2-metoxietan-1-ol`, `3-metoxipropanal`, `4-metoxibutan-2-ona`, `ácido 2-metoxietanoico`, `2-metoxiciclohexan-1-ol`, `metoxiciclohexano`, `metoxibenceno`; ethers inside branches (`(metoximetil)ciclopentano`) and inside alkoxy groups (`1-(2-metoxietoxi)propano`) fall out. A ring is never on the alkoxy side (the ring is the parent; a principal group on the chain side is refused as before, `sideChainAlcohol`…), so `ciclohexiloxi`/`fenoxi` never arise (I-40). Refused by the engine: an acyclic ether whose identical halves carry the principal group (`symmetricEther`, multiplicative `oxidi-`, §3.2). Other valid forms: the functional-class name of a simple R–O–R′ (`etil metil éter`, `dietil éter`, `tert-butil metil éter`; style `functionalClass`) and `anisol` for `metoxibenceno`; no other traditional names. E: step «Reconoce el éter» (`etherStep()`: both sides of the O highlighted apart, why the O is never in the chain, which side is the parent and why from the trace, how the prefix is formed), ether notes in count, chain, substituents, order, legend and assemble (§5). Oracle generates ethers (`generateEthers()`, `etherify()`). | Symmetric/asymmetric, branched; each named group; refusals; id invariance; a carbon chain never runs through O; fixtures, `tests/unit/ethers.test.js`, snapshots, `tests/e2e/ethers.spec.js`. |
-| I-35 | Esters | `etanoato de metilo`; acid part and O-bound group explained separately. | Branched alkyls; Spanish and English assemble in different orders. |
+| I-35 | Esters | **Done.** A molecule whose heteroatoms are the ones named so far plus one ester group (`isEsterCarbon()`: a carbon with one O on a double bond bonded to nothing else, one O on a single bond whose only other neighbour is a carbon that is not a functional carbon, and at most one carbon neighbour on a single bond; `esterRole()` 'carbonyl' / 'bridge', `esterCarbons()`; anhydrides, carbonates, peroxy esters keep `HETEROATOM`, a lactone is a heterocycle, `RING_SYSTEM`) passes validation, with the placement checks of `oxygenPlacementError()` (§3.2): no ester with a ring on either side or on a side chain (`ringEster`: `-carboxilato`, `fenilo`, `ciclohexilo`, I-40), no acid with an ester (`esterPrefix`: the ester would be an `alcoxicarbonil-` / `aciloxi-` prefix, I-39) and at most one ester (`manyEsters`: diesters and an ester inside another's O-bound group, I-39). `N/principal.js`: kind 'ester' for both O of the –COO– (after 'acid' in `OXYGEN_KINDS`, ácido > éster > aldehído > cetona > alcohol); `isSuffixOxygen()` lets the C=O oxygen stand for the group, so P0/N0 count it once and `suffixSites()` gives one site carrying its bridge O (`esterOxygen`, `esterBond`). The bridge O splits the carbon skeleton like an ether O, and P0 keeps the acid part whatever the length of the other side (`etanoato de pentilo`); the C=O carbon is a chain end, locant 1, never cited (`TERMINAL_SUFFIXES` in `N/render.js`), suffix `-oato`. The O-bound group is named by `esterAlkyl()` (`N/substituent.js`: `alkoxySubstituent()` seen from the O, so the substituent machinery and the prefix styles apply) and kept as `structure.ester`; `assembleEster()` / `esterAlkylName()` (`N/render.js`) write it as its own word, `prefix + o`, after `de` in Spanish and first in English (lexicon `esterAlkylFirst`, `esterLink`, `esterAlkylEnding`): `etanoato de metilo` / `methyl ethanoate`, `propanoato de etilo`, `butanoato de isopropilo` (with `propan-2-ilo`, `1-metiletilo` as the styled alternatives: `hasRetainedPrefix()` looks into the group), `2-metilpropanoato de tert-butilo`, `metanoato de metilo`, `etanoato de butan-2-ilo`, `etanoato de etenilo`, `etanoato de prop-2-en-1-ilo`. Other groups on the acid part are prefixes as for acids (`3-oxobutanoato de etilo`, `3-oxopropanoato de metilo`, `2-hidroxipropanoato de etilo`, `2-cloroetanoato de metilo`, `2-metoxietanoato de metilo`); groups on the O-bound part are prefixes inside the group name (decided: named, as IUPAC 2013 does, never refused — `etanoato de 2-hidroxietilo`, `etanoato de 2-oxopropilo`, `etanoato de 2-cloroetilo`, `etanoato de 2-metoxietilo`); an acyl (formyl) branch on either part is refused (`acylSubstituent`). Other valid forms: `formiato de …` / `acetato de …` for a bare metanoato / etanoato acid part, whatever the group (`carbonylTraditionalId()` 'formate' / 'acetate', `renderName(…, {traditional})`), labelled like `ácido acético`; no other traditional ester names. Both lexicons. E: group step (`esterGroupStep()`), step «Separa las dos partes del éster» (`esterStep()`: acid part and O-bound group explained and highlighted apart, one option each, the Spanish order), ester notes in count, groupChain, numbering (`terminalGroupNote()`), substituents, legend (`-oato`, `de`, the group) and assemble (the two words, English order by a fixed example) (§5). Oracle generates esters (`generateEsters()`, `esterify()`), traditional names included. | Branched alkyls on both sides in every style, oxo/hidroxi/halogen/alkoxy on either part, Spanish vs English order, id invariance, refusals; fixtures, `tests/unit/esters.test.js`, snapshots, `tests/e2e/esters.spec.js`. |
 | I-36 | Amines | Simple primary/secondary/tertiary; -amina and N-/N,N- locants; labels NH₂/NH/N. | N-substitution; ammonium and heterocycles excluded. |
 | I-37 | Amides | `etanamida`, simple N-substitution; C(=O)N as one unit. | N-substituted; never ketone + amine. |
 | I-38 | Nitriles | `etanonitrilo`; C of C≡N in the chain, N not counted. | Branched, simple dinitriles; drop the old "no triple bond outside the chain" assertion. |
-| I-39 | Functional combinations | Seniority ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina (aldehído > cetona > alcohol with oxo-/hidroxi- done since I-32, ácido above them since I-33); ethers/halogens as prefixes; hidroxi-, oxo-, amino-, ciano-; acyl prefixes (`acetil`, `formil`) for a C=O carbon bonded to its chain as a branch (refused since I-32, `acylSubstituent`). | Pair matrix and counter-examples; only covered combinations enabled. |
-| I-40 | Functions on rings | Selected monosubstituted derivatives (cycloalkanols and `fenol` are done since I-31, cycloalkanones since I-32); rings as substituents of a chain carrying the principal group (`ciclohexil`, `fenil`: e.g. an OH on a ring's side chain, refused since I-31, or a ketone C=O there, refused since I-32); -carboxílico (any acid with a ring, refused since I-33), -carbaldehído (any aldehyde with a ring, refused since I-32), -carbonitrilo. | Counting and numbering; small aromatic functional catalogue. |
+| I-39 | Functional combinations | Seniority ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina (aldehído > cetona > alcohol with oxo-/hidroxi- done since I-32, ácido above them since I-33, éster between them since I-35; an ester beside an acid, whose prefix would be `alcoxicarbonil-`/`aciloxi-`, and diesters refused since I-35, `esterPrefix` / `manyEsters`); ethers/halogens as prefixes; hidroxi-, oxo-, amino-, ciano-; acyl prefixes (`acetil`, `formil`) for a C=O carbon bonded to its chain as a branch (refused since I-32, `acylSubstituent`). | Pair matrix and counter-examples; only covered combinations enabled. |
+| I-40 | Functions on rings | Selected monosubstituted derivatives (cycloalkanols and `fenol` are done since I-31, cycloalkanones since I-32); rings as substituents of a chain carrying the principal group (`ciclohexil`, `fenil`: e.g. an OH on a ring's side chain, refused since I-31, or a ketone C=O there, refused since I-32); -carboxílico (any acid with a ring, refused since I-33), ring esters (`-carboxilato`, `…ato de fenilo`; refused since I-35, `ringEster`), -carbaldehído (any aldehyde with a ring, refused since I-32), -carbonitrilo. | Counting and numbering; small aromatic functional catalogue. |
 | I-41 | Condensed formulas and wrap-up | Render, both layouts, Ayuda, examples, docs: OH per atom; CHO/COOH as optional abbreviations mapped to all their atoms; 90° view for acyclic heteroatoms. | Selection, highlight, collisions, accessibility; abbreviations never change the graph. |
 
 ### 13.5 Ring vs chain and ring numbering (I-26)
@@ -1539,6 +1637,7 @@ decision table is:
 | One carbocycle with ketone C=O whose carbons are ring atoms (I-32) | The ring, carrying the `-ona` suffix; C=O carbon numbered first; an OH on the ring is `hidroxi-` (cetona > alcohol) | `ciclohexanona`, `2-metilciclohexan-1-ona`, `4-hidroxiciclohexan-1-ona` |
 | One carbocycle with a ketone C=O on a side chain, or any aldehyde (I-32) | Refused (`HETEROATOM`, `sideChainCarbonyl` / `ringAldehyde`): the chain would be the parent, or the ring would take `-carbaldehído` (I-40) | — |
 | One carbocycle and any –COOH (I-33) | Refused (`HETEROATOM`, `ringAcid`): the chain would be the parent, or the ring would take `-carboxílico` (I-40) | — |
+| One carbocycle and any ester –COO– (I-35) | Refused (`HETEROATOM`, `ringEster`): the ring would be on the acid side (`-carboxilato`), on the O side (`fenilo`, `ciclohexilo`) or on a side chain of either (I-40) | — |
 | One carbocycle and an ether O, on the ring or on a side chain (I-34) | The ring (it is senior to the chain on the other side of the O); the O with that side is an alkoxy prefix, or part of a branch | `metoxiciclohexano`, `metoxibenceno`, `2-metoxiciclohexan-1-ol`, `(metoximetil)ciclopentano` |
 
 The school rule "the longest chain wins over a smaller ring"
@@ -1614,7 +1713,10 @@ acyl prefixes (`acetil`), where X would be a branch's attachment atom, are
 refused until I-39/I-40. Since I-33 a carboxyl carbon is always a chain
 end of the parent (at most two –COOH, no ring); `carboxi-` is never
 produced (`manyAcids`, `ringAcid`, and the engine's `carboxySubstituent`
-safety net).
+safety net). Since I-35 an ester carbon is always a chain end of the
+parent too (one –COO–, no ring, no acid beside it: P0 keeps it on the
+parent); `alcoxicarbonil-` and `aciloxi-` are never produced
+(`esterPrefix`, `manyEsters`, `ringEster`).
 
 **Seniority** (`naming/seniority.js`, IUPAC 2013 P-41 restricted to the
 scope): ácido > éster > amida > nitrilo > aldehído > cetona > alcohol (and
@@ -1635,15 +1737,17 @@ so the explanation can show the reasoning.
 returns `HETEROATOM` for any molecule with N or with an O that is neither an
 OH on a carbon, nor the O of an aldehyde or ketone C=O, nor an O of a
 carboxyl group, nor an ether O between two carbons that are not C=O
-carbons (halogens bonded to carbons are named since I-30, OH groups
+carbons, nor an O of an ester group (halogens bonded to carbons are named since I-30, OH groups
 on carbons since I-31, aldehydes and ketones since I-32, carboxylic acids
-since I-33, ethers since I-34 — always as `alcoxi-` prefixes —, all without going through the group analysis: validation
+since I-33, ethers since I-34 — always as `alcoxi-` prefixes —, esters
+since I-35 — one –COO–, always the principal group, never an
+`alcoxicarbonil-` / `aciloxi-` prefix —, all without going through the group analysis: validation
 checks the atoms directly — `isHydroxyOxygen()`, `carbonylKind()`,
-`isCarboxylCarbon()` / `carboxylRole()`, `isEtherOxygen()` — since `model/` cannot import
+`isCarboxylCarbon()` / `carboxylRole()`, `isEtherOxygen()`, `isEsterCarbon()` / `esterRole()` — since `model/` cannot import
 `naming/groups.js`, and the engine finds the principal kind with
-`naming/principal.js`, whose acid test is `isCarboxylCarbon()` and whose
+`naming/principal.js`, whose acid test is `isCarboxylCarbon()`, whose ester test is `isEsterCarbon()` and whose
 aldehyde/ketone split is the `X` with 0–1 / 2 R rule of the table above),
-and for the placements named later (§3.2: `ringAcid`, `manyAcids`,
+and for the placements named later (§3.2: `ringAcid`, `ringEster`, `manyAcids`, `esterPrefix`, `manyEsters`,
 `ringAldehyde`, `sideChainCarbonyl`, `sideChainAlcohol`,
 `manyAldehydes`); the engine adds `symmetricEther` before naming and
 `acylSubstituent` (and the `carboxySubstituent` safety net) after choosing

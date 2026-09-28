@@ -20,7 +20,7 @@
  * `[[key]]`); `parseMarkup()` splits them and `GLOSSARY` holds the
  * definitions shown as tooltips. Names are quoted with «…».
  *
- * Step ids, in order: count, group, ether, ring, benzene, chain, groupChain,
+ * Step ids, in order: count, group, ester, ether, ring, benzene, chain, groupChain,
  * tiebreak, numbering, ringNumbering, substituents, order, assemble. A step that decided
  * nothing is skipped (tiebreak without a deciding rule, substituents
  * without prefixes, order with fewer than two prefix groups) or reduced to
@@ -87,6 +87,18 @@
  * `pentil` + `oxi`, `isopropoxi`); the count step draws the ether O as O
  * (no hydrogen) and the other steps describe and order the `-oxi` prefixes.
  *
+ * Esters (design.md §13.4 I-35, `structure.suffix.kind` 'ester' and
+ * `structure.ester`) get the acid's steps in their own words (the group
+ * step esterGroupStep(): one –COO– group, its C=O not a ketone nor its
+ * middle O an ether, ácido > éster > aldehído…) and one more step after
+ * group, "Separa las dos partes del éster" (esterStep()): the acid part
+ * (the chain with the C=O carbon as carbon 1, named like the acid with
+ * `-oico` changed to `-oato`) and the O-bound group (named like a branch,
+ * ending in `-ilo`), each highlighted apart and each an option; the count
+ * step draws both O of the –COO– as O; the chain step says why the chain
+ * never crosses the middle O; the legend and the assemble step explain the
+ * Spanish order `… de …` (and the English one, group first).
+ *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
  * GroupAnalysis); it gets groups ("Reconoce los grupos": each
@@ -102,7 +114,8 @@ import { SENIORITY } from '../naming/seniority.js';
 import { ELEMENT_NAMES_ES } from '../model/elements.js';
 import {
   substituentPrefix, citationKey, needsEnclosure, isCompoundPrefix, renderPrefixes, omitsPrefixLocants,
-  suffixWords, suffixCount, suffixGroupIds, isContractedAlkoxy, MAX_CONTRACTED_ALKOXY,
+  suffixWords, suffixCount, suffixGroupIds, isContractedAlkoxy, MAX_CONTRACTED_ALKOXY, TERMINAL_SUFFIXES,
+  esterAlkylName, renderName,
 } from '../naming/render.js';
 import { locantText, siteLocantText } from '../naming/structure.js';
 
@@ -126,6 +139,7 @@ export const GLOSSARY = Object.freeze({
 export const STEP_TITLES = Object.freeze({
   count: 'Cuenta los carbonos',
   group: 'Reconoce el grupo funcional',
+  ester: 'Separa las dos partes del éster',
   ether: 'Reconoce el éter',
   ring: 'Busca el anillo',
   benzene: 'Reconoce el benceno',
@@ -339,7 +353,7 @@ function ringOmission(result) {
 
 /**
  * How the principal group of each suffix kind is called in sentences
- * (design.md §5; alcohols I-31, aldehydes and ketones I-32, acids I-33): `the` / `one` /
+ * (design.md §5; alcohols I-31, aldehydes and ketones I-32, acids I-33, esters I-35): `the` / `one` /
  * `many` for the group, `art` for its short form with the article, `group`
  * without article, `carbonWith` / `carbonThe` / `carbonA` for its carbon,
  * `label` for the N0 row of the comparison table, `prefix` for the prefix
@@ -360,6 +374,21 @@ const SUFFIX_GROUP_WORDS = Object.freeze({
     label: 'Grupos –COOH',
     prefix: 'carboxi',
     family: 'ácido carboxílico',
+    ringExample: '',
+  }),
+  ester: Object.freeze({
+    the: 'el grupo –COO–',
+    one: 'un grupo –COO–',
+    many: 'grupos –COO–',
+    group: 'grupo –COO–',
+    art: 'el –COO–',
+    short: '–COO–',
+    carbonWith: 'el carbono del –COO–',
+    carbonThe: 'el carbono del grupo –COO–',
+    carbonA: 'un carbono de un grupo –COO–',
+    label: 'Grupos –COO–',
+    prefix: 'alcoxicarbonil',
+    family: 'éster',
     ringExample: '',
   }),
   alcohol: Object.freeze({
@@ -444,6 +473,58 @@ function isAcid(result) {
   const { suffix } = result.structure;
   return Boolean(suffix) && suffix.kind === 'acid';
 }
+
+/**
+ * Tells whether a result's principal group is an ester –COO– (design.md
+ * §13.4 I-35): its structure then has `ester`, the O-bound group.
+ *
+ * @param {object} result - The naming result.
+ * @returns {boolean} True for `…oato de …ilo`.
+ */
+function isEster(result) {
+  return Boolean(result.structure.ester);
+}
+
+/**
+ * The O-bound group of an ester result (structure.js EsterPart `alkyl`),
+ * or null for any other result.
+ *
+ * @param {object} result - The naming result.
+ * @returns {object|null} The group's substituent structure (`alkoxy` true).
+ */
+function esterGroup(result) {
+  return result.structure.ester ? result.structure.ester.alkyl : null;
+}
+
+/**
+ * Highlight specs of the two parts of an ester and the O between them
+ * (design.md §13.4 I-35): the acid part (the parent chain with its C=O
+ * oxygen and every prefix occurrence on it, with its connecting bond) as
+ * the parent, the O-bound group (its atoms and inner bonds) as a
+ * substituent, and the middle O with its two bonds apart. Together the
+ * three specs cover every atom and bond of the molecule exactly once.
+ *
+ * @param {object} result - An ester naming result.
+ * @returns {{acid: object, bridge: object, alkyl: object}} The three specs.
+ */
+function esterSpecs(result) {
+  const { ester, suffix, prefixes } = result.structure;
+  const [site] = suffix.locants;
+  const branches = prefixes.map(groupIds);
+  return {
+    acid: {
+      atoms: [...result.parent.atoms, site.attachAtom, ...branches.flatMap((ids) => ids.atoms)],
+      bonds: [...result.parent.bonds, site.bond, ...branches.flatMap((ids) => ids.bonds)],
+      style: 'parent',
+    },
+    bridge: { atoms: [ester.oxygen], bonds: [ester.bond, ester.alkylBond], style: 'candidate' },
+    alkyl: {
+      atoms: ester.alkyl.atoms.filter((id) => id !== ester.oxygen),
+      bonds: ester.alkyl.bonds.filter((id) => id !== ester.alkylBond),
+      style: 'substituent',
+    },
+  };
+} // End of function esterSpecs()
 
 /**
  * Number of prefixes of one kind of atom group inside a substituent (nested
@@ -537,15 +618,16 @@ function hydroxylsIn(result) {
  */
 function principalInBranches(result) {
   const { suffix } = result.structure;
-  if (!suffix || suffix.kind === 'aldehyde' || suffix.kind === 'acid') {
+  if (!suffix || TERMINAL_SUFFIXES.includes(suffix.kind)) {
     return 0;
   }
   return prefixSum(result, suffix.kind === 'alcohol' ? hydroxyTotal : oxoTotal);
 }
 
 /**
- * The OH and C=O groups of a name, wherever they are cited (suffix or
- * prefixes, at any depth); a –COOH counts as one OH and one C=O.
+ * The OH and C=O groups of a name, wherever they are cited (suffix,
+ * prefixes at any depth, or an ester's O-bound group); a –COOH counts as
+ * one OH and one C=O, an ester –COO– as one C=O.
  *
  * @param {object} result - The naming result.
  * @returns {{oh: number, co: number}} The number of OH groups and of C=O groups.
@@ -555,23 +637,24 @@ function oxygenGroups(result) {
   const n = suffixCount(result.structure);
   const alcohol = Boolean(suffix) && suffix.kind === 'alcohol';
   const acid = Boolean(suffix) && suffix.kind === 'acid';
+  const alkyl = esterGroup(result);
   return {
-    oh: (alcohol || acid ? n : 0) + prefixSum(result, hydroxyTotal),
-    co: (alcohol ? 0 : n) + prefixSum(result, oxoTotal),
+    oh: (alcohol || acid ? n : 0) + prefixSum(result, hydroxyTotal) + (alkyl ? hydroxyTotal(alkyl) : 0),
+    co: (alcohol ? 0 : n) + prefixSum(result, oxoTotal) + (alkyl ? oxoTotal(alkyl) : 0),
   };
 }
 
 /**
- * Whether the suffix locants of a name are omitted: always for an aldehyde
- * or an acid on a chain (its carbon is a chain end, IUPAC 2013
- * P-14.3.4.1), else the prefix rule (ringOmission()).
+ * Whether the suffix locants of a name are omitted: always for an
+ * aldehyde, an acid or an ester on a chain (its carbon is a chain end,
+ * IUPAC 2013 P-14.3.4.1), else the prefix rule (ringOmission()).
  *
  * @param {object} result - A naming result with a suffix.
  * @returns {boolean} True when the suffix locants are not written.
  */
 function suffixOmitted(result) {
   const { parentKind, suffix } = result.structure;
-  return (parentKind === 'chain' && (suffix.kind === 'aldehyde' || suffix.kind === 'acid')) || ringOmission(result).prefixes;
+  return (parentKind === 'chain' && TERMINAL_SUFFIXES.includes(suffix.kind)) || ringOmission(result).prefixes;
 }
 
 /**
@@ -729,7 +812,8 @@ function substituentPi(sub) {
  * suffix or of an `oxo-` prefix — replaces two hydrogens by one oxygen, so
  * it counts as one π bond; a –COOH is one of each: two oxygens, one π
  * bond; an ether O of an alkoxy prefix adds an oxygen between two carbons
- * and changes no hydrogen count).
+ * and changes no hydrogen count; an ester –COO– is one C=O and, with its
+ * O-bound group, an O between two carbons like an ether's, I-35).
  *
  * @param {object} structure - The name structure.
  * @returns {{carbons: number, hydrogens: number, halogens: Object<string, number>, oxygens: number}} The counts (halogens by element; empty for a hydrocarbon).
@@ -741,16 +825,19 @@ export function atomCounts(structure) {
   const acid = Boolean(structure.suffix) && structure.suffix.kind === 'acid';
   let oxygens = suffixCount(structure) * (acid ? 2 : 1);
   if (structure.suffix && structure.suffix.kind !== 'alcohol') {
-    pi += suffixCount(structure); // Each C=O of `-al` / `-ona` / `-oico`.
+    pi += suffixCount(structure); // Each C=O of `-al` / `-ona` / `-oico` / `-oato`.
   }
   const halogens = {};
-  for (const group of prefixes) {
-    for (const site of group.locants) {
-      carbons += substituentCarbons(group.substituent);
-      substituentHalogens(group.substituent, halogens);
-      oxygens += hydroxyTotal(group.substituent) + oxoTotal(group.substituent) + etherTotal(group.substituent);
-      pi += substituentPi(group.substituent) + (site.order - 1);
-    }
+  // The prefixes, then an ester's O-bound group (its bridge O counted by etherTotal(), like an ether O).
+  const occurrences = prefixes.flatMap((group) => group.locants.map((site) => ({ sub: group.substituent, order: site.order })));
+  if (structure.ester) {
+    occurrences.push({ sub: structure.ester.alkyl, order: 1 });
+  }
+  for (const { sub, order } of occurrences) {
+    carbons += substituentCarbons(sub);
+    substituentHalogens(sub, halogens);
+    oxygens += hydroxyTotal(sub) + oxoTotal(sub) + etherTotal(sub);
+    pi += substituentPi(sub) + (order - 1);
   }
   const rings = structure.parentKind === 'ring' ? 1 : 0;
   const x = Object.values(halogens).reduce((a, b) => a + b, 0);
@@ -889,6 +976,46 @@ function etherDrawingSentences(result, oh, co, ethers, halogens) {
 } // End of function etherDrawingSentences()
 
 /**
+ * The count-step sentences on how the oxygens of an ester are drawn
+ * (design.md §13.4 I-35): the C=O oxygen of the –COO– as O, its middle O
+ * as O between two carbons (no hydrogen, like an ether's), and the other
+ * OH, C=O and ether oxygens, wherever they are (on the acid part or on the
+ * O-bound group).
+ *
+ * @param {object} result - An ester naming result.
+ * @param {number} oh - OH groups (oxygenGroups()).
+ * @param {number} co - C=O groups, the ester's included (oxygenGroups()).
+ * @param {boolean} halogens - Whether there are halogen atoms.
+ * @returns {string} The sentences, each starting with a space.
+ */
+function esterDrawingSentences(result, oh, co, halogens) {
+  const ethers = prefixSum(result, etherTotal) + etherTotal(esterGroup(result)) - 1;
+  let drawing = ' En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más.';
+  if (oh > 0) {
+    drawing += oh === 1
+      ? ' El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno.'
+      : ' Cada oxígeno de un grupo –OH se ve como OH: es un oxígeno con su hidrógeno.';
+  }
+  if (co > 1) {
+    drawing += co === 2
+      ? ' El otro oxígeno unido con un [[enlace doble]] (C=O) también se ve como O.'
+      : ' Los otros oxígenos unidos con un [[enlace doble]] (C=O) también se ven como O.';
+  }
+  if (ethers > 0) {
+    drawing += ethers === 1
+      ? ' El otro oxígeno unido a dos carbonos (C–O–C, un éter) también se ve como O.'
+      : ' Los otros oxígenos unidos a dos carbonos (C–O–C, éteres) también se ven como O.';
+  }
+  drawing += ' Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces';
+  const single = [...(halogens ? ['halógeno'] : []), ...(oh > 0 ? ['grupo –OH'] : [])];
+  if (single.length > 0) {
+    drawing += `; cada ${single.join(' o ')} ocupa el sitio de un hidrógeno`;
+  }
+  drawing += '; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno.';
+  return drawing;
+} // End of function esterDrawingSentences()
+
+/**
  * Step 1, "Cuenta los carbonos": carbons, hydrogens and formula.
  *
  * @param {object} result - The naming result.
@@ -906,6 +1033,11 @@ function countStep(result) {
     const spec = suffixSpec(result);
     atoms.push(...spec.atoms.filter((id) => !atoms.includes(id)));
     bonds.push(...spec.bonds);
+  }
+  if (isEster(result)) {
+    const { ester } = result.structure;
+    atoms.push(...ester.alkyl.atoms.filter((id) => !atoms.includes(id)));
+    bonds.push(...ester.alkyl.bonds);
   }
   const text = [];
   if (present.length === 0 && oxygens === 0) {
@@ -927,7 +1059,9 @@ function countStep(result) {
     }
     const { oh, co } = oxygenGroups(result);
     const ethers = prefixSum(result, etherTotal);
-    if (ethers > 0) {
+    if (isEster(result)) {
+      drawing += esterDrawingSentences(result, oh, co, present.length > 0);
+    } else if (ethers > 0) {
       drawing += etherDrawingSentences(result, oh, co, ethers, present.length > 0);
     } else if (co === 0) {
       drawing += oxygens === 1
@@ -988,6 +1122,9 @@ function groupStep(result) {
   }
   if (isAcid(result)) {
     return acidGroupStep(result);
+  }
+  if (isEster(result)) {
+    return esterGroupStep(result);
   }
   if (isCarbonyl(result)) {
     return carbonylGroupStep(result);
@@ -1252,19 +1389,24 @@ function alkoxyFormation(sub) {
  * holds the parent and why (etherSideReason()), and how each alkoxy prefix
  * is formed (alkoxyFormation()). Each ether O cited on the parent is
  * highlighted with both its sides (etherSpecs()); with several, one option
- * per O.
+ * per O. Ether oxygens inside an ester's O-bound group (design.md §13.4
+ * I-35: `etanoato de 2-metoxietilo`) are counted, explained and
+ * highlighted too; the ester's middle O never counts as an ether.
  *
  * @param {object} result - The naming result.
  * @returns {object|null} The step, or null without ethers.
  */
 function etherStep(result) {
-  const total = prefixSum(result, etherTotal);
+  const alkyl = esterGroup(result);
+  // The O-bound group carries `alkoxy` for the ester's middle O, which is not an ether: minus one.
+  const inEster = alkyl ? etherTotal(alkyl) - 1 : 0;
+  const total = prefixSum(result, etherTotal) + inEster;
   if (total === 0) {
     return null;
   }
   const groups = result.structure.prefixes.filter((g) => g.substituent.alkoxy);
   const sites = groups.flatMap((group) => group.locants.map((site) => ({ group, site })));
-  const nested = total - sites.length;
+  const nested = total - sites.length - inEster;
   const text = [];
   const principal = Boolean(result.structure.suffix);
   if (total === 1) {
@@ -1275,6 +1417,9 @@ function etherStep(result) {
     text.push(principal
       ? `Además, tu molécula tiene ${total} oxígenos unidos cada uno a dos carbonos (C–O–C): ${total} grupos éter.`
       : `Tu molécula tiene ${total} oxígenos unidos cada uno a dos carbonos (C–O–C): son ${total} grupos éter.`);
+  }
+  if (alkyl) {
+    text.push('El oxígeno del medio del –COO– no cuenta: también está entre dos carbonos, pero es parte del éster.');
   }
   text.push('Un éter nunca es el [[grupo principal]] y nunca va al final del nombre: se nombra con un [[prefijo]] acabado en «-oxi» (grupo alcoxi), como «metoxi-» en «metoxietano».');
   text.push('La [[cadena principal]] no puede pasar por el oxígeno: el O corta la molécula en dos lados, cada uno con sus carbonos. La cadena principal se busca entre los carbonos de los dos lados, con las reglas de siempre; el otro lado, junto con el O, es un [[sustituyente]].');
@@ -1300,9 +1445,18 @@ function etherStep(result) {
       ? `El éter está dentro de una rama: ${nested === 1 ? 'su oxígeno' : 'sus oxígenos'} no ${nested === 1 ? 'toca' : 'tocan'} la cadena principal. La rama se nombra como siempre y lleva el prefijo «-oxi» dentro de su nombre (como en «(metoximetil)»).`
       : `${nested === 1 ? 'Otro oxígeno entre dos carbonos está' : `Otros ${nested} oxígenos entre dos carbonos están`} dentro de un sustituyente: también se ${nested === 1 ? 'nombra' : 'nombran'} con «-oxi», dentro del nombre de ese sustituyente (como en «(2-metoxietoxi)»).`);
   }
+  if (inEster > 0) {
+    const name = esterAlkylName(alkyl, lexiconEs);
+    text.push(inEster === 1
+      ? `${sites.length + nested > 0 ? 'Otro' : 'El'} oxígeno entre dos carbonos está dentro del grupo unido al oxígeno del éster: se nombra con «-oxi» dentro del nombre de ese grupo, ${q(name)}.`
+      : `${inEster} oxígenos entre dos carbonos están dentro del grupo unido al oxígeno del éster: se nombran con «-oxi» dentro del nombre de ese grupo, ${q(name)}.`);
+  }
   const highlight = sites.length > 0
     ? sites.flatMap(({ site }, i) => (i === 0 ? etherSpecs(result, site) : etherSpecs(result, site).slice(1)))
     : [parentSpec(result), ...result.structure.prefixes.filter((g) => etherTotal(g.substituent) > 0).map((g) => ({ ...groupIds(g), style: 'substituent' }))];
+  if (inEster > 0) {
+    highlight.push(esterSpecs(result).alkyl);
+  }
   const step = { id: 'ether', title: STEP_TITLES.ether, text, highlight, locants: null };
   if (sites.length > 1) {
     step.options = options;
@@ -1384,6 +1538,159 @@ function acidGroupStep(result) {
     locants: null,
   };
 } // End of function acidGroupStep()
+
+/**
+ * The halogen atoms of an ester's O-bound group, by element (empty for any
+ * other result).
+ *
+ * @param {object} result - The naming result.
+ * @returns {Object<string, number>} Element symbol → number of atoms.
+ */
+function esterGroupHalogens(result) {
+  const alkyl = esterGroup(result);
+  return alkyl ? substituentHalogens(alkyl) : {};
+}
+
+/**
+ * Step "Reconoce el grupo funcional" for an ester (design.md §13.4 I-35):
+ * the –COO– group (a carbon with an O on a double bond and a second O that
+ * joins it to another group of carbons; one group: its C=O is not a ketone,
+ * its middle O not an ether), its carbon always a chain end counted in the
+ * chain (carbon 1), the two-word name `…oato de …ilo`, the seniority
+ * ácido > éster > aldehído > cetona > alcohol when other oxygen groups are
+ * present (on either part: they become `oxo-` / `hidroxi-` prefixes of
+ * their own part), and halogens as prefixes. The –COO– is highlighted
+ * whole (carbon and both oxygens).
+ *
+ * @param {object} result - An ester naming result.
+ * @returns {object} The step.
+ */
+function esterGroupStep(result) {
+  const { parent } = result.structure;
+  const alkyl = esterGroup(result);
+  const ending = lexiconEs.groupSuffix('ester');
+  const text = [];
+  text.push('Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.');
+  text.push('Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.');
+  text.push(parent.length === 1
+    ? 'Aquí el carbono del C=O no tiene más carbonos a su lado: es la única cadena de su parte, de 1 carbono.'
+    : 'El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.');
+  text.push(`El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-${ending}» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»).`);
+  const { aldehyde, ketone, branchCo } = acidCompanions(result);
+  const otherCo = ketone + branchCo + oxoTotal(alkyl);
+  const { oh } = oxygenGroups(result);
+  const others = [];
+  if (aldehyde > 0) {
+    others.push('un grupo –CHO en el otro extremo (un aldehído)');
+  }
+  if (ketone > 0) {
+    others.push(ketone === 1 ? 'un grupo C=O entre dos carbonos (una cetona)' : `${ketone} grupos C=O entre dos carbonos (cetonas)`);
+  }
+  if (otherCo - ketone > 0) {
+    others.push(otherCo - ketone === 1 ? 'un grupo C=O en una rama' : `${otherCo - ketone} grupos C=O en ramas`);
+  }
+  if (oh > 0) {
+    others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
+  }
+  if (others.length > 0) {
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > aldehído > cetona > alcohol.`);
+    const how = [];
+    if (aldehyde + otherCo > 0) {
+      how.push(aldehyde > 0
+        ? 'cada C=O que no es del éster se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
+        : 'cada C=O que no es del éster se nombra con el [[prefijo]] «oxo-»');
+    }
+    if (oh > 0) {
+      how.push(aldehyde + otherCo > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
+    }
+    text.push(`Aquí manda el éster, así que ${joinY(how)}, delante del nombre de la parte en la que está.`);
+  } // End of the seniority sentences
+  if (halogensIn(result).length + Object.keys(esterGroupHalogens(result)).length > 0) {
+    text.push('Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]].');
+  }
+  return {
+    id: 'group',
+    title: STEP_TITLES.group,
+    text,
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result)],
+    locants: null,
+  };
+} // End of function esterGroupStep()
+
+/**
+ * How the O-bound group of an ester is named (design.md §13.4 I-35): the
+ * retained `isopropilo` (with `propan-2-ilo` and `1-metiletilo`) and
+ * `tert-butilo` (`1,1-dimetiletilo`), or, for a group with its own
+ * branches, multiple bonds or a free valence not at its carbon 1, the
+ * sentences of describeSubstituent() on that group seen from the O (never
+ * enclosed: it is a word of its own, not a prefix).
+ *
+ * @param {object} alkyl - The group (structure.js EsterPart `alkyl`).
+ * @returns {string[]} Sentences (none for a plain group such as `metilo`).
+ */
+function esterGroupFormation(alkyl) {
+  const name = esterAlkylName(alkyl, lexiconEs);
+  if (alkyl.retained === 'isopropyl') {
+    return [`${q(name)} es un grupo de 3 carbonos unido al oxígeno por el carbono del centro. También son correctos «propan-2-ilo» (el preferido por la IUPAC) y «1-metiletilo».`];
+  }
+  if (alkyl.retained === 'tert-butyl') {
+    return [`${q(name)} es un carbono unido al oxígeno y a tres metilos; su nombre sistemático es «1,1-dimetiletilo».`];
+  }
+  const group = { ...alkyl, alkoxy: false };
+  const { chain } = group;
+  if (group.retained || (group.prefixes.length === 0 && chain.double.length + chain.triple.length === 0 && group.freeValence.locant === 1)) {
+    return [];
+  }
+  // The first sentence (`«x» es un grupo de n carbonos`) is said by esterStep(); a word of its own has no
+  // parentheses, and its free valence is written `-ilo`.
+  return describeSubstituent(group, OXYGEN_WORDS, 'ester').slice(1)
+    .filter((sentence) => !sentence.startsWith('Va entre paréntesis'))
+    .map((sentence) => sentence.replace(`«-${lexiconEs.freeValenceSuffix(1)}»`, `«-${lexiconEs.freeValenceSuffix(1)}${lexiconEs.esterAlkylEnding}»`));
+} // End of function esterGroupFormation()
+
+/**
+ * Step "Separa las dos partes del éster" (design.md §13.4 I-35): the middle
+ * O of the –COO– splits the molecule; the acid part (the chain with the C=O
+ * carbon as carbon 1, named like its acid with `-oico` changed to `-oato`)
+ * and the O-bound group (named like a branch, as a word of its own ending
+ * in `-ilo`) are explained and highlighted apart, one option each; then
+ * the Spanish order `… de …`.
+ *
+ * @param {object} result - The naming result.
+ * @returns {object|null} The step, or null for a result that is not an ester.
+ */
+function esterStep(result) {
+  if (!isEster(result)) {
+    return null;
+  }
+  const { structure } = result;
+  const { parent, ester } = structure;
+  const specs = esterSpecs(result);
+  const acidPart = renderName({ ...structure, ester: undefined }, lexiconEs).name;
+  const acidName = renderName({ ...structure, ester: undefined, suffix: { ...structure.suffix, kind: 'acid' } }, lexiconEs).name;
+  const alkylName = esterAlkylName(ester.alkyl, lexiconEs);
+  const n = substituentCarbons(ester.alkyl);
+  const text = ['El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.'];
+  const acid = parent.length === 1
+    ? `La parte del ácido es el carbono del C=O, que aquí va solo (1 carbono, «${lexiconEs.stem(1)}»). Se nombra como el ácido del que viene, ${q(acidName)}, cambiando «-oico» por «-oato»: ${q(acidPart)}.`
+    : `La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene ${count(parent.length, 'carbono', 'carbonos')}. Se nombra como el ácido del que viene, ${q(acidName)}, cambiando «-oico» por «-oato»: ${q(acidPart)}.`;
+  const formation = esterGroupFormation(ester.alkyl);
+  const alkyl = [`La otra parte es el grupo unido al otro lado del oxígeno, de ${count(n, 'carbono', 'carbonos')}. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): ${q(alkylName)}.`, ...formation];
+  text.push(acid, ...alkyl);
+  text.push('El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.');
+  text.push(`En español se escribe primero la parte del ácido, luego «de» y al final el grupo: ${q(result.name)}.`);
+  return {
+    id: 'ester',
+    title: STEP_TITLES.ester,
+    text,
+    highlight: [specs.acid, specs.alkyl, specs.bridge],
+    locants: null,
+    options: [
+      { label: 'Parte del ácido', text: acid, highlight: [specs.acid], locants: null },
+      { label: 'Grupo unido al oxígeno', text: alkyl.join(' '), highlight: [specs.alkyl, specs.bridge], locants: null },
+    ],
+  };
+} // End of function esterStep()
 
 /**
  * Counts the multiple bonds that stay outside the parent chain (in
@@ -1506,6 +1813,8 @@ function groupChainSentences(result, p0, p1, step) {
     text.push('El carbono de cada C=O forma parte de la cadena: se cuenta como los demás carbonos. El oxígeno no forma parte de ella.');
   } else if (isAcid(result)) {
     text.push('El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.');
+  } else if (isEster(result)) {
+    text.push('El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».');
   }
   if (decided(p0)) {
     const lengths = p0.candidatesBefore.map((c) => c.atoms.length);
@@ -2175,7 +2484,7 @@ function prefixOmissionNote(result) {
     return `En ${q(result.name)} no hacen falta números: todos los hidrógenos se han cambiado por ${element}, así que no hay que decir dónde está cada uno.`;
   }
   const { suffix } = result.structure;
-  if (suffix && (suffix.kind === 'aldehyde' || suffix.kind === 'acid') && prefixes.length === 0) {
+  if (suffix && TERMINAL_SUFFIXES.includes(suffix.kind) && prefixes.length === 0) {
     return null; // terminalGroupNote() explains it.
   }
   if (suffix && suffix.kind === 'ketone' && parent.length === 3) {
@@ -2378,17 +2687,17 @@ function numberingStep(result) {
 } // End of function numberingStep()
 
 /**
- * Note on the uncited locant of an aldehyde or an acid on a chain
- * (design.md §13.4 I-32, I-33; IUPAC 2013 P-14.3.4.1): the –CHO or –COOH
+ * Note on the uncited locant of an aldehyde, an acid or an ester on a chain
+ * (design.md §13.4 I-32, I-33, I-35; IUPAC 2013 P-14.3.4.1): the –CHO, –COOH or –COO–
  * carbon is always a chain end, so it is always carbon 1 (with two, the
  * first and the last) and its number is never written.
  *
  * @param {object} result - The naming result (chain parent).
- * @returns {string|null} The note, or null when the suffix is neither an aldehyde nor an acid.
+ * @returns {string|null} The note, or null when the suffix is not an aldehyde, an acid or an ester.
  */
 function terminalGroupNote(result) {
   const { suffix, parent } = result.structure;
-  if (!suffix || (suffix.kind !== 'aldehyde' && suffix.kind !== 'acid')) {
+  if (!suffix || !TERMINAL_SUFFIXES.includes(suffix.kind)) {
     return null;
   }
   const { short } = groupWords(result);
@@ -2443,12 +2752,18 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
   }
   if (sub.hydroxy) {
     // Only when a C=O or a –COOH is the principal group can an OH be cited on the parent itself.
+    if (principal === 'ester') {
+      return [`${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el éster (–COO–) va antes que el alcohol.`];
+    }
     return [principal === 'acid'
       ? `${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el ácido (–COOH) va antes que el alcohol.`
       : `${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el grupo C=O va antes que el –OH.`];
   }
   if (sub.oxo) {
     // Only when an aldehyde or an acid is principal can a C=O be cited on the parent itself.
+    if (principal === 'ester') {
+      return [`${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el éster va antes que el aldehído y la cetona.`];
+    }
     return [principal === 'acid'
       ? `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona.`
       : `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de una cetona). No es el [[grupo principal]]: el aldehído va antes que la cetona.`];
@@ -2832,11 +3147,12 @@ function nameLegend(result) {
 } // End of function nameLegend()
 
 /**
- * Legend entries of the suffix of an alcohol, aldehyde, ketone or acid
- * (design.md §13.4 I-31, I-32, I-33): the locants of the carbons of the
- * principal groups (unless omitted: `etanol`, `ciclohexanol`, `propanona`,
- * every aldehyde and acid on a chain) and `-ol`, `-diol`, `-al`, `-dial`,
- * `-ona`, `-diona`, `-oico`, `-dioico`…
+ * Legend entries of the suffix of an alcohol, aldehyde, ketone, acid or
+ * ester (design.md §13.4 I-31, I-32, I-33, I-35): the locants of the
+ * carbons of the principal groups (unless omitted: `etanol`,
+ * `ciclohexanol`, `propanona`, every aldehyde, acid and ester on a chain)
+ * and `-ol`, `-diol`, `-al`, `-dial`, `-ona`, `-diona`, `-oico`,
+ * `-dioico`, `-oato`…; for an ester also `de` and its O-bound group.
  *
  * @param {object} result - The naming result.
  * @returns {{text: string, kind: string, meaning: string}[]} The entries (none without a suffix).
@@ -2862,8 +3178,17 @@ function suffixLegend(result) {
     kind: 'ending',
     meaning: n === 1 ? `grupo principal: ${words.one} (${words.family})` : `grupo principal: ${n} ${words.many} (${words.family})`,
   });
+  const alkyl = esterGroup(result);
+  if (alkyl) {
+    legend.push({ text: lexiconEs.esterLink.trim(), kind: 'punct', meaning: 'une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno' });
+    legend.push({
+      text: esterAlkylName(alkyl, lexiconEs),
+      kind: 'prefix',
+      meaning: `grupo unido al oxígeno del –COO– (${count(substituentCarbons(alkyl), 'carbono', 'carbonos')}), acabado en «-ilo»`,
+    });
+  }
   return legend;
-} // End of function suffixLegend()
+} // End of function suffixLegend() // End of function suffixLegend()
 
 /**
  * Step 7, "Monta el nombre": the pieces in writing order, the punctuation
@@ -2878,6 +3203,9 @@ function assembleStep(result) {
   const hasLocants = result.parts.some((p) => p.kind === 'locant');
   const text = [];
   const benzene = isBenzene(result);
+  if (isEster(result)) {
+    text.push('El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:');
+  }
   if (benzene && result.structure.suffix) {
     text.push(`El benceno con un grupo –OH tiene nombre propio: ${q(result.name)}. No lleva números: «fen» es el anillo y «-ol», el grupo –OH.`);
   } else if (benzene) {
@@ -2930,7 +3258,10 @@ function assembleStep(result) {
     id: 'assemble',
     title: STEP_TITLES.assemble,
     text,
-    highlight: [parentSpec(result), ...substituentSpecs(result), ...(result.structure.suffix ? [suffixSpec(result)] : [])],
+    highlight: [
+      parentSpec(result), ...substituentSpecs(result), ...(result.structure.suffix ? [suffixSpec(result)] : []),
+      ...(isEster(result) ? [esterSpecs(result).alkyl] : []),
+    ],
     // A ring whose name has no locant (ciclohexano, metilciclohexano) shows no locant labels.
     locants: ring && !hasLocants ? null : parentLocants(result),
     legend: nameLegend(result),
@@ -2940,7 +3271,9 @@ function assembleStep(result) {
 
 /**
  * Sentences of "Monta el nombre" about the suffix of an alcohol, aldehyde,
- * ketone or acid (design.md §13.4 I-31, I-32, I-33): `-ol` / `-al` /
+ * ketone, acid or ester (design.md §13.4 I-31, I-32, I-33, I-35; an
+ * ester's first word ends with `-oato`, then `de` and the O-bound group,
+ * the English order being the reverse): `-ol` / `-al` /
  * `-ona` / `-oico` at the very end with its locants (never for an aldehyde
  * or acid on a chain), `-diol`, `-dial`, `-diona`, `-dioico`…, the word
  * `ácido` that starts an acid's name, and the final `o` of the ending,
@@ -2960,7 +3293,9 @@ function suffixSentences(result) {
   if (!omitted && suffix.locants.length > 1) {
     where = 'con los números de sus carbonos justo delante';
   }
-  text.push(`Al final va el [[sufijo]] del grupo principal, ${q(`-${mult}${word}`)}, ${where}.`);
+  text.push(isEster(result)
+    ? `La primera palabra acaba con el [[sufijo]] del grupo principal, ${q(`-${mult}${word}`)}, ${where}.`
+    : `Al final va el [[sufijo]] del grupo principal, ${q(`-${mult}${word}`)}, ${where}.`);
   if (mult) {
     const full = lexiconEs.multiplier(suffix.locants.length);
     const cut = full === mult ? '' : ` (${q(full)} pierde su «a» final delante de ${q(`-${word}`)}, porque empieza por vocal)`;
@@ -2970,6 +3305,9 @@ function suffixSentences(result) {
     text.push(suffix.locants.length === 1
       ? 'El –CHO no lleva número: su carbono siempre es el 1.'
       : 'Los –CHO no llevan número: sus carbonos siempre son los dos extremos.');
+  }
+  if (suffix.kind === 'ester') {
+    text.push('El –COO– no lleva número: su carbono siempre es el 1.');
   }
   if (suffix.kind === 'acid') {
     text.push(suffix.locants.length === 1
@@ -2984,8 +3322,15 @@ function suffixSentences(result) {
   text.push(elides
     ? `La «o» final de «-${last}» se quita delante de «-${word}», porque empieza por vocal: ${q(result.name)}.`
     : `La «o» final de «-${last}» se queda delante de «-${mult}${word}», porque empieza por consonante: ${q(result.name)}.`);
+  const alkyl = esterGroup(result);
+  if (alkyl) {
+    const alkylName = esterAlkylName(alkyl, lexiconEs);
+    text.push(`Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: ${q(alkylName)}. En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.`);
+    // A fixed example: the English lexicon is development-only and never bundled (design.md §2).
+    text.push('En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).');
+  }
   return text;
-} // End of function suffixSentences()
+} // End of function suffixSentences() // End of function suffixSentences()
 
 /** Spanish article of each group family name (`el alcohol`, `la cetona`). */
 const GROUP_ARTICLES = Object.freeze({
@@ -3340,6 +3685,7 @@ export function explain(result) {
   return [
     countStep(result),
     groupStep(result),
+    esterStep(result),
     etherStep(result),
     chainStep(result),
     tiebreakStep(result),

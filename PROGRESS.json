@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T00:07:27Z",
+  "updated": "2026-09-28T00:47:16Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -324,8 +324,11 @@
     {
       "id": "I-35",
       "title": "v2.15 Esters",
-      "status": "queued",
-      "summary": "v2 plan phase 15: esters (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Names esters (etanoato de metilo), explaining the acid part and the O-bound group separately; Spanish and English orders differ.",
+      "risk": "high",
+      "review": "docs/reviews/I-35.md",
+      "narrative": "docs/progress-archive/i-35.md"
     },
     {
       "id": "I-36",
