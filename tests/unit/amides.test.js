@@ -82,7 +82,7 @@ test('validation: open-chain amides are admitted; ureas, carbamates, hydrazides 
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
     assert.equal(error.reason, undefined, smiles);
   }
-  assert.match(MESSAGES.HETEROATOM, / y amidas \(con el grupo –CONH₂: un C=O unido a un nitrógeno\)\.$/);
+  assert.match(MESSAGES.HETEROATOM, /, amidas \(con el grupo –CONH₂: un C=O unido a un nitrógeno\) y nitrilos/);
 });
 
 test('an amide is one group: its C=O is never a ketone, its N never an amine', () => {
@@ -118,8 +118,9 @@ test('an amide is one group: its C=O is never a ketone, its N never an amine', (
   assert.ok(TERMINAL_SUFFIXES.includes('amide'));
 });
 
-test('seniority: ácido > éster > amida > aldehído > cetona > alcohol > amina', () => {
-  assert.deepEqual(NAMED_KINDS, ['acid', 'ester', 'amide', 'aldehyde', 'ketone', 'alcohol', 'amine']);
+test('seniority: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina', () => {
+  // The nitrile (I-38) sits between the amide and the aldehyde.
+  assert.deepEqual(NAMED_KINDS, ['acid', 'ester', 'amide', 'nitrile', 'aldehyde', 'ketone', 'alcohol', 'amine']);
   const pairs = [
     ['CC(=O)CCC(N)=O', '4-oxopentanamida'],
     ['O=CCC(N)=O', '3-oxopropanamida'],

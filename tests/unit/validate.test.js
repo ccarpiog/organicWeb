@@ -44,8 +44,9 @@ test('exact Spanish messages from the design table', () => {
       + 'ácidos carboxílicos (con el grupo –COOH), '
       + 'éteres (con un oxígeno unido a dos carbonos, C–O–C), '
       + 'ésteres (con el grupo –COO– entre dos cadenas de carbonos), '
-      + 'aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂) '
-      + 'y amidas (con el grupo –CONH₂: un C=O unido a un nitrógeno).',
+      + 'aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂), '
+      + 'amidas (con el grupo –CONH₂: un C=O unido a un nitrógeno) '
+      + 'y nitrilos (con el grupo –C≡N: un carbono unido a un nitrógeno por un enlace triple).',
     INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
   });
 });

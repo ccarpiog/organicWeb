@@ -17,14 +17,16 @@
  *   carbon — design.md §13.4 I-30 —, OH groups on a carbon, I-31, the
  *   C=O of aldehydes and ketones, I-32, carboxyl groups –C(=O)OH, I-33,
  *   ether oxygens C–O–C, I-34, ester groups –C(=O)–O–R, I-35, amine
- *   nitrogens bonded to one to three carbons, I-36, and amide groups
- *   –C(=O)–N, I-37; on a
+ *   nitrogens bonded to one to three carbons, I-36, amide groups
+ *   –C(=O)–N, I-37, and nitrile groups –C≡N, I-38; on a
  *   molecule with a ring, only OH groups on ring carbons and ketone C=O
- *   whose carbon is a ring atom, no acid, no ester, no amide, and, when the amine is
+ *   whose carbon is a ring atom, no acid, no ester, no amide, no nitrile, and, when the amine is
  *   the principal group, every amine N on a ring carbon; on a chain, at most two
  *   aldehydes, at most two acids, at most one ester, never an acid with
  *   an ester, never an amide with an acid or ester, at most two amides, both
- *   on one carbon piece and, when there are two, with no group on their N), and
+ *   on one carbon piece and, when there are two, with no group on their N;
+ *   never a nitrile with an acid, ester or amide, at most two nitriles, both
+ *   on one carbon piece), and
  *   longest carbon chain ≤ 30 (for a ring: every side chain ≤ 30; with
  *   ethers, the longest chain on either side of each O).
  *
@@ -34,8 +36,8 @@
  * Halogens bonded to a carbon are named since I-30, OH groups on a carbon
  * (alcohols, phenol) since I-31, aldehydes and ketones since I-32,
  * carboxylic acids since I-33, ethers since I-34, esters since I-35,
- * amines since I-36, amides since I-37; any
- * other heteroatom (an N of an imide, imine or nitrile, NH₃, an O of an
+ * amines since I-36, amides since I-37, nitriles since I-38; any
+ * other heteroatom (an N of an imide, imine or cyanamide, NH₃, an O of an
  * anhydride or carbonate, a peroxide, a halogen on a heteroatom or on a C=O carbon…) still
  * gets HETEROATOM, and so do an alcohol or ketone with a ring whose OH or
  * C=O is on a side chain, any aldehyde or acid with a ring, and a chain
@@ -81,8 +83,9 @@ export const MESSAGES = Object.freeze({
     + 'ácidos carboxílicos (con el grupo –COOH), '
     + 'éteres (con un oxígeno unido a dos carbonos, C–O–C), '
     + 'ésteres (con el grupo –COO– entre dos cadenas de carbonos), '
-    + 'aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂) '
-    + 'y amidas (con el grupo –CONH₂: un C=O unido a un nitrógeno).',
+    + 'aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂), '
+    + 'amidas (con el grupo –CONH₂: un C=O unido a un nitrógeno) '
+    + 'y nitrilos (con el grupo –C≡N: un carbono unido a un nitrógeno por un enlace triple).',
   INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
 });
 
@@ -320,6 +323,43 @@ export const SUBSTITUTED_POLYAMIDE_MESSAGE = 'Esta molécula tiene dos grupos am
  */
 export const IMIDE_MESSAGE = 'Esta molécula tiene un nitrógeno unido a dos grupos C=O (–CO–NH–CO–). '
   + 'Eso es una imida, no una amida con un grupo en el nitrógeno, y las imidas quedan fuera de lo que sé nombrar.';
+
+/**
+ * HETEROATOM message for a molecule with a ring and a nitrile group –C≡N
+ * (design.md §13.4 I-38): a –C≡N carbon can never be a ring atom, so the
+ * group is either bonded to the ring, named with the suffix
+ * `-carbonitrilo` (`ciclohexanocarbonitrilo`, `benzonitrilo`), or on a
+ * side chain, which then carries the principal group; both wait for I-40.
+ */
+export const RING_NITRILE_MESSAGE = 'Esta molécula tiene un anillo y un grupo –C≡N (un nitrilo). '
+  + 'Cuando el –C≡N va unido a un anillo, el nombre acaba en «-carbonitrilo» (como el ciclohexanocarbonitrilo '
+  + 'o el benzonitrilo), y eso aún no sé nombrarlo. De momento solo sé nombrar los nitrilos de cadena abierta '
+  + '(como el etanonitrilo).';
+
+/**
+ * HETEROATOM message for an open chain with more than two nitrile groups
+ * (design.md §13.4 I-38): the C of a –C≡N is always a chain end and the
+ * chain has only two ends, so one nitrile would be a branch (`ciano-`) or
+ * IUPAC 2013 names every group with `-carbonitrilo` on a smaller parent
+ * (`propano-1,2,3-tricarbonitrilo`); neither is supported yet.
+ */
+export const MANY_NITRILES_MESSAGE = 'Esta molécula tiene más de dos grupos –C≡N (nitrilo). '
+  + 'El carbono de un –C≡N siempre está en un extremo de la cadena y la cadena principal solo tiene dos extremos, '
+  + 'así que alguno quedaría en una rama. Estos compuestos se nombran con el prefijo «ciano-» '
+  + 'o con «-carbonitrilo», y eso aún no sé hacerlo.';
+
+/**
+ * HETEROATOM message for a molecule whose nitrile group cannot be the
+ * principal group (design.md §13.4 I-38): with an acid, an ester or an
+ * amide (ácido > éster > amida > nitrilo), or with a second nitrile on
+ * another carbon piece (joined through an O or an N), the nitrile would
+ * be the prefix `ciano-`, whose carbon is not a chain carbon; I-39 names
+ * it (`ácido 3-cianopropanoico`).
+ */
+export const CYANO_PREFIX_MESSAGE = 'Esta molécula tiene un grupo –C≡N (nitrilo) que no puede ser el grupo principal: '
+  + 'o hay un grupo que va antes que el nitrilo (un ácido –COOH, un éster –COO– o una amida), '
+  + 'o el nitrilo queda en una rama, fuera de la cadena principal. Entonces el nitrilo se nombraría con el prefijo '
+  + '«ciano-» (como en el ácido 3-cianopropanoico), y eso aún no sé hacerlo.';
 
 /** TOO_BIG message for a ring larger than the parent-size cap (MAX_CHAIN). */
 export const RING_TOO_BIG_MESSAGE = 'El anillo es demasiado grande (máximo 30 carbonos en el anillo).';
@@ -926,7 +966,7 @@ export function etherOxygens(mol) {
  * §13.6 table: N with 1–3 R, single bonds only): a nitrogen with one, two
  * or three bonds, all single, all to carbons, none of them a functional
  * carbon (a C=O carbon makes an amide, I-37: isAmideCarbon()). NH₃ (no carbon), an
- * imine (C=N), a nitrile (C≡N), N–N, N–O or a halogen on N are not; a
+ * imine (C=N), a nitrile (C≡N, isNitrileNitrogen(), I-38), N–N, N–O or a halogen on N are not; a
  * charged N (ammonium) is never in the model (INVALID) and a fourth bond
  * is a VALENCE error. An N inside a ring never gets here: the ring would
  * be a heterocycle, refused first (RING_SYSTEM).
@@ -1057,6 +1097,59 @@ export function imideNitrogens(mol) {
 } // End of function imideNitrogens()
 
 /**
+ * Tells whether a carbon is the carbon X of a nitrile group –C≡N
+ * (design.md §13.4 I-38, §13.6 table: X≡N with X bonded to at most one
+ * carbon): exactly one nitrogen triple-bonded to it and bonded to nothing
+ * else, and at most one other neighbour, a carbon on a single bond (none
+ * for HC≡N, metanonitrilo). A cyanogen halide (Cl–C≡N), a cyanate
+ * (O–C≡N), a cyanamide (N–C≡N)… are not.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} id - An atom id.
+ * @returns {boolean} True for the carbon of a –C≡N group.
+ */
+export function isNitrileCarbon(mol, adj, id) {
+  if (mol.atoms.get(id).element !== 'C') {
+    return false;
+  }
+  const links = adj.get(id);
+  const nitrogens = links.filter((n) => mol.atoms.get(n.atom).element === 'N' && n.order === 3 && adj.get(n.atom).length === 1);
+  const others = links.filter((n) => !nitrogens.includes(n));
+  return nitrogens.length === 1 && others.length <= 1
+    && others.every((n) => n.order === 1 && mol.atoms.get(n.atom).element === 'C');
+} // End of function isNitrileCarbon()
+
+/**
+ * Tells whether an atom is the nitrogen of a nitrile group –C≡N (design.md
+ * §13.4 I-38): a nitrogen whose only bond is a triple bond to a nitrile
+ * carbon (isNitrileCarbon()). It is never an amine nitrogen (a triple
+ * bond) and never a chain atom.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} id - An atom id.
+ * @returns {boolean} True for the N of a –C≡N.
+ */
+export function isNitrileNitrogen(mol, adj, id) {
+  const links = adj.get(id);
+  return mol.atoms.get(id).element === 'N' && links.length === 1 && links[0].order === 3
+    && isNitrileCarbon(mol, adj, links[0].atom);
+}
+
+/**
+ * The carbons of the nitrile groups of a molecule (isNitrileCarbon()),
+ * ascending.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @returns {number[]} The carbon ids.
+ */
+export function nitrileCarbons(mol) {
+  const adj = adjacency(mol);
+  return [...mol.atoms.keys()].filter((id) => isNitrileCarbon(mol, adj, id)).sort((p, q) => p - q);
+}
+
+/**
  * Longest carbon chain of an acyclic molecule: the largest number of
  * carbons on a path of its carbon skeleton. Without ethers the skeleton is
  * one tree; each ether oxygen splits it (a carbon chain never runs through
@@ -1089,7 +1182,8 @@ export function longestCarbonChain(mol) {
  * ether C–O–C (an `alcoxi-` prefix, I-34; isEtherOxygen()) or an oxygen
  * of an ester –COO– (`…oato de …ilo`, I-35; esterRole()), or the
  * nitrogen of an amine (`-amina` or `amino-`, I-36; isAmineNitrogen()), or
- * the O or N of an amide –CONH₂ (`-amida`, I-37; amideRole()).
+ * the O or N of an amide –CONH₂ (`-amida`, I-37; amideRole()), or the N
+ * of a nitrile –C≡N (`-nitrilo`, I-38; isNitrileNitrogen()).
  * Any other O or N is not. The OH of an ester-like or otherwise unsupported C=O carbon
  * (`OC(=O)O`, a peracid) is refused through its C=O.
  *
@@ -1103,7 +1197,8 @@ export function hasNameableHeteroatoms(mol, hetero) {
   return isHalogenDerivative(mol, halogens)
     && hetero.every((id) => isHalogen(mol.atoms.get(id).element) || isHydroxyOxygen(mol, adj, id)
       || carbonylKind(mol, adj, id) !== null || carboxylRole(mol, adj, id) !== null || isEtherOxygen(mol, adj, id)
-      || esterRole(mol, adj, id) !== null || isAmineNitrogen(mol, adj, id) || amideRole(mol, adj, id) !== null);
+      || esterRole(mol, adj, id) !== null || isAmineNitrogen(mol, adj, id) || amideRole(mol, adj, id) !== null
+      || isNitrileNitrogen(mol, adj, id));
 }
 
 /**
@@ -1165,7 +1260,8 @@ export function aldehydeOxygens(mol) {
  * ester would be an `alcoxicarbonil-` / `aciloxi-` prefix, I-39), more than
  * one ester group (`manyEsters`), then the amides (amidePlacementError():
  * `ringAmide`, `amidePrefix`, `manyAmides`, `substitutedPolyamide`), then
- * more than two aldehyde groups (`manyAldehydes`). The error lists the heteroatoms (`atoms`) and the
+ * the nitriles (nitrilePlacementError(): `ringNitrile`, `cyanoPrefix`,
+ * `manyNitriles`), then more than two aldehyde groups (`manyAldehydes`). The error lists the heteroatoms (`atoms`) and the
  * offending groups (`acids`: the carboxyl carbons; `esters`: the ester
  * carbons; `sideChain` or `aldehydes`: oxygens).
  *
@@ -1195,6 +1291,10 @@ function oxygenPlacementError(mol, cyclic, hetero) {
   const amide = amidePlacementError(mol, cyclic, hetero, acids.length + esters.length > 0);
   if (amide) {
     return amide;
+  }
+  const nitrile = nitrilePlacementError(mol, cyclic, hetero, acids.length + esters.length + amideCarbons(mol).length > 0);
+  if (nitrile) {
+    return nitrile;
   }
   if (!cyclic) {
     const aldehydes = aldehydeOxygens(mol);
@@ -1269,6 +1369,50 @@ function amidePlacementError(mol, cyclic, hetero, senior) {
 } // End of function amidePlacementError()
 
 /**
+ * The refusal of a nameable-heteroatom molecule whose nitrile groups the
+ * engine cannot place (design.md §13.4 I-38), or null. In order: any
+ * nitrile with a ring (`ringNitrile`: `-carbonitrilo`, `benzonitrilo`, or
+ * a ring on the chain that carries it, I-40); a nitrile with an acid, an
+ * ester or an amide (`cyanoPrefix`: ácido > éster > amida > nitrilo, so
+ * the nitrile would be the `ciano-` prefix, I-39); more than two nitriles
+ * (`manyNitriles`: a nitrile carbon is always a chain end); two nitriles
+ * whose carbons lie on different carbon pieces, joined through an O or an
+ * N (`cyanoPrefix`: one of them would be on a branch of the other's
+ * chain). With at most two nitriles on one carbon piece, both are ends of
+ * the parent chain (P0). The error lists the heteroatoms (`atoms`) and the
+ * nitrile carbons (`nitriles`).
+ *
+ * @param {object} mol - A validated molecule whose heteroatoms are nameable.
+ * @param {boolean} cyclic - Whether it has a ring.
+ * @param {number[]} hetero - Its non-carbon atom ids.
+ * @param {boolean} senior - Whether it has an acid, an ester or an amide group.
+ * @returns {{code: string, message: string}|null} The HETEROATOM error, or null.
+ */
+function nitrilePlacementError(mol, cyclic, hetero, senior) {
+  const nitriles = nitrileCarbons(mol);
+  if (nitriles.length === 0) {
+    return null;
+  }
+  const refuse = (message, reason) => validationError('HETEROATOM', { message, atoms: hetero, reason, nitriles });
+  if (cyclic) {
+    return refuse(RING_NITRILE_MESSAGE, 'ringNitrile');
+  }
+  if (senior) {
+    return refuse(CYANO_PREFIX_MESSAGE, 'cyanoPrefix');
+  }
+  if (nitriles.length > 2) {
+    return refuse(MANY_NITRILES_MESSAGE, 'manyNitriles');
+  }
+  if (nitriles.length === 2) {
+    const pieces = connectedComponents(carbonSkeleton(mol));
+    if (!pieces.some((piece) => piece.includes(nitriles[0]) && piece.includes(nitriles[1]))) {
+      return refuse(CYANO_PREFIX_MESSAGE, 'cyanoPrefix');
+    }
+  }
+  return null;
+} // End of function nitrilePlacementError()
+
+/**
  * The refusal of a nameable-heteroatom molecule with a ring whose amine
  * groups the engine cannot place yet (design.md §13.4 I-36), or null: when
  * the amine is the principal group (no oxygen group other than ether
@@ -1306,16 +1450,16 @@ function aminePlacementError(mol, hetero) {
  * ring scope (ringError(): a single carbocycle of at most 30 carbons
  * passes; TOO_BIG or RING_SYSTEM otherwise), carbon and heavy-atom caps,
  * carbon, halogens on carbon, OH groups on carbon, aldehyde or ketone
- * C=O, carboxyl groups, ether C–O–C, ester –COO–, amine N and amide –CONH₂ only (HETEROATOM for any other atom: valid but
+ * C=O, carboxyl groups, ether C–O–C, ester –COO–, amine N, amide –CONH₂ and nitrile –C≡N only (HETEROATOM for any other atom: valid but
  * not nameable yet, with the `imide` reason for an imide N; also for an OH, a ketone C=O or any aldehyde on a ring
  * molecule outside the ring, any acid with a ring, and for more than two
  * aldehydes or acids, more than one ester or an ester with an acid on a
- * chain, any ester with a ring, and the amide placements of
- * amidePlacementError(): oxygenPlacementError(); and a ring whose
+ * chain, any ester with a ring, and the amide and nitrile placements of
+ * amidePlacementError() and nitrilePlacementError(): oxygenPlacementError(); and a ring whose
  * principal amine has an N off the ring: aminePlacementError()), chain cap — the
  * longest carbon chain of a tree, or the longest side chain of a ring
  * (design.md §3.2, §13.1). A molecule passing this is a hydrocarbon (or a
- * halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester, amine or amide of one)
+ * halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester, amine, amide or nitrile of one)
  * of at most 60 carbons that is either a tree
  * whose longest carbon chain has at most 30, or a single carbocycle of 3
  * to 30 carbons whose side chains have at most 30 carbons and carry no
@@ -1356,7 +1500,7 @@ export function validateForNaming(mol) {
   }
   const hetero = [...mol.atoms.values()].filter((atom) => atom.element !== 'C').map((atom) => atom.id).sort((p, q) => p - q);
   if (hetero.length > 0 && !hasNameableHeteroatoms(mol, hetero)) {
-    // A valid molecule, but the engine only names hydrocarbons, halogen derivatives, alcohols, aldehydes, ketones, acids, ethers, esters, amines and amides so far.
+    // A valid molecule, but the engine only names hydrocarbons, halogen derivatives, alcohols, aldehydes, ketones, acids, ethers, esters, amines, amides and nitriles so far.
     const imides = imideNitrogens(mol);
     return imides.length > 0
       ? validationError('HETEROATOM', { message: IMIDE_MESSAGE, atoms: hetero, reason: 'imide', imides })

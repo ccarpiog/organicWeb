@@ -17,12 +17,14 @@
  * tertiary; on chains, on ring carbons, anilines; some with –COOH, ester,
  * C=O, OH groups, ethers and halogens, cited as amino prefixes; I-36) and
  * half as many amides (one or two –CONH₂ at chain ends, N-substituted,
- * some with C=O, OH groups, amines, ethers and halogens; I-37), adds
+ * some with C=O, OH groups, amines, ethers and halogens; I-37) and half
+ * as many nitriles (one or two –C≡N at chain ends, some with C=O, OH
+ * groups, amines, ethers and halogens; I-38), adds
  * one cycloalkane per ring size in the carbon range, names
  * each one in every prefix style (plus its traditional name — `toluene`,
  * `styrene`, `formaldehyde`, `acetaldehyde`, `acetone`, `formic acid`,
  * `acetic acid`, `oxalic acid`, `methyl acetate`, `ethyl formate`, `aniline`,
- * `N-methylaniline`, `acetamide`, `N,N-dimethylformamide`… — when it has one, the functional-class name of a simple
+ * `N-methylaniline`, `acetamide`, `N,N-dimethylformamide`, `acetonitrile`… — when it has one, the functional-class name of a simple
  * amine — `ethylmethylamine` — and the `propan-2-one` form of
  * `propanone`), renders the same name structures in English, lets OPSIN
  * turn the English names back into SMILES and checks that they denote the
@@ -52,7 +54,7 @@ import { renderName } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import {
   generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
-  generateAcids, generateEthers, generateEsters, generateAmines, generateAmides, generateCycloalkanes,
+  generateAcids, generateEthers, generateEsters, generateAmines, generateAmides, generateNitriles, generateCycloalkanes,
 } from './generate.mjs';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
 import { englishName, compareWithOpsin } from './compare.mjs';
@@ -108,7 +110,7 @@ export function parseArgs(argv) {
  * carbonylTraditionalId(); an ester as `methyl acetate`, render.js) and
  * the benzene amines (`aniline`, `N-methylaniline`: the groups on the N
  * kept, render.js) and the small amides (`acetamide`,
- * `N,N-dimethylformamide`, I-37). A simple amine's traditional alkylamine alternative
+ * `N,N-dimethylformamide`, I-37) and `acetonitrile` (I-38). A simple amine's traditional alkylamine alternative
  * (`etilmetilamina`, style 'amineClass') is checked too, rendered in
  * English by naming/index.js amineClassName() with the English lexicon
  * (`ethylmethylamine`).
@@ -273,14 +275,15 @@ export async function main(argv) {
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
   const amides = generateAmides({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
+  const nitriles = generateNitriles({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
   const molecules = [
     ...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...amines,
-    ...amides, ...rings,
+    ...amides, ...nitriles, ...rings,
   ];
   console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes `
     + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${carbonyls.length} aldehydes and ketones `
-    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${rings.length} cycloalkanes, `
+    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${nitriles.length} nitriles + ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
   const availability = await checkAvailability(options.jar, options.java);
   if (!availability.ok) {

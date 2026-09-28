@@ -124,6 +124,15 @@
  * `acetamida`; the numbering step says why the amide's locant is never
  * written (terminalGroupNote()).
  *
+ * Nitriles (design.md §13.4 I-38, `structure.suffix.kind` 'nitrile') get
+ * the acid's steps in their own words: the count step draws the N as N
+ * (no hydrogen) and counts the C≡N as two π bonds and one N
+ * (allNitrogenSentences(), atomCounts()); the group step
+ * (nitrileGroupStep()) shows the –C≡N as one group whose triple bond is
+ * not an alkyne's, its carbon a chain end counted in the chain (carbon 1),
+ * the N outside the chain, the suffix `-nitrilo` (`-dinitrilo`), the full
+ * seniority order with the other groups as prefixes, and `acetonitrilo`.
+ *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
  * GroupAnalysis); it gets groups ("Reconoce los grupos": each
@@ -443,6 +452,18 @@ function isAmide(result) {
 }
 
 /**
+ * Tells whether a result's principal group is a nitrile (design.md §13.4
+ * I-38, suffix `-nitrilo`).
+ *
+ * @param {object} result - The naming result.
+ * @returns {boolean} True for `…nitrilo`.
+ */
+function isNitrile(result) {
+  const { suffix } = result.structure;
+  return Boolean(suffix) && suffix.kind === 'nitrile';
+}
+
+/**
  * Number of amine nitrogens inside a substituent, nested ones included (an
  * `amino` prefix counts its own N plus those of its own groups, design.md
  * §13.4 I-36).
@@ -530,7 +551,7 @@ function aminoPrefixSpecs(result) {
 
 /**
  * How the principal group of each suffix kind is called in sentences
- * (design.md §5; alcohols I-31, aldehydes and ketones I-32, acids I-33, esters I-35, amines I-36, amides I-37): `the` / `one` /
+ * (design.md §5; alcohols I-31, aldehydes and ketones I-32, acids I-33, esters I-35, amines I-36, amides I-37, nitriles I-38): `the` / `one` /
  * `many` for the group, `art` for its short form with the article, `group`
  * without article, `carbonWith` / `carbonThe` / `carbonA` for its carbon,
  * `label` for the N0 row of the comparison table, `prefix` for the prefix
@@ -581,6 +602,21 @@ const SUFFIX_GROUP_WORDS = Object.freeze({
     label: 'Grupos amida',
     prefix: 'carbamoil',
     family: 'amida',
+    ringExample: '',
+  }),
+  nitrile: Object.freeze({
+    the: 'el grupo –C≡N',
+    one: 'un grupo –C≡N',
+    many: 'grupos –C≡N',
+    group: 'grupo –C≡N',
+    art: 'el –C≡N',
+    short: '–C≡N',
+    carbonWith: 'el carbono del –C≡N',
+    carbonThe: 'el carbono del grupo –C≡N',
+    carbonA: 'un carbono de un grupo –C≡N',
+    label: 'Grupos –C≡N',
+    prefix: 'ciano',
+    family: 'nitrilo',
     ringExample: '',
   }),
   alcohol: Object.freeze({
@@ -837,7 +873,7 @@ function principalInBranches(result) {
 /**
  * The OH and C=O groups of a name, wherever they are cited (suffix,
  * prefixes at any depth, or an ester's O-bound group); a –COOH counts as
- * one OH and one C=O, an ester –COO– as one C=O.
+ * one OH and one C=O, an ester –COO– as one C=O, a nitrile –C≡N as none.
  *
  * @param {object} result - The naming result.
  * @returns {{oh: number, co: number}} The number of OH groups and of C=O groups.
@@ -848,10 +884,11 @@ function oxygenGroups(result) {
   const alcohol = Boolean(suffix) && suffix.kind === 'alcohol';
   const acid = Boolean(suffix) && suffix.kind === 'acid';
   const amine = Boolean(suffix) && suffix.kind === 'amine';
+  const nitrile = Boolean(suffix) && suffix.kind === 'nitrile';
   const alkyl = esterGroup(result);
   return {
     oh: (alcohol || acid ? n : 0) + prefixSum(result, hydroxyTotal) + (alkyl ? hydroxyTotal(alkyl) : 0),
-    co: (alcohol || amine ? 0 : n) + prefixSum(result, oxoTotal) + (alkyl ? oxoTotal(alkyl) : 0),
+    co: (alcohol || amine || nitrile ? 0 : n) + prefixSum(result, oxoTotal) + (alkyl ? oxoTotal(alkyl) : 0),
   };
 }
 
@@ -1029,7 +1066,9 @@ function substituentPi(sub) {
  * O-bound group, an O between two carbons like an ether's, I-35; each
  * amine N — of the `-amina` suffix or of an `amino-` prefix — has three
  * bonds, so it adds one hydrogen to the count, I-36; an amide –CONH₂ is one
- * C=O, one O and one such N, I-37).
+ * C=O, one O and one such N, I-37; a nitrile –C≡N is one N and two π
+ * bonds, the triple bond taking the place of three hydrogens on its carbon
+ * and the N adding one, I-38).
  *
  * @param {object} structure - The name structure.
  * @returns {{carbons: number, hydrogens: number, halogens: Object<string, number>, nitrogens?: number, oxygens: number}} The counts (halogens by element; empty for a hydrocarbon; `nitrogens` only when positive).
@@ -1040,10 +1079,12 @@ export function atomCounts(structure) {
   let pi = parent.double.length + 2 * parent.triple.length;
   const kind = structure.suffix ? structure.suffix.kind : null;
   const amine = kind === 'amine';
-  let oxygens = amine ? 0 : suffixCount(structure) * (kind === 'acid' ? 2 : 1);
-  let nitrogens = amine || kind === 'amide' ? suffixCount(structure) : 0;
+  const nitrile = kind === 'nitrile';
+  let oxygens = amine || nitrile ? 0 : suffixCount(structure) * (kind === 'acid' ? 2 : 1);
+  let nitrogens = amine || nitrile || kind === 'amide' ? suffixCount(structure) : 0;
   if (kind && kind !== 'alcohol' && !amine) {
-    pi += suffixCount(structure); // Each C=O of `-al` / `-ona` / `-oico` / `-oato` / `-amida`.
+    // Each C=O of `-al` / `-ona` / `-oico` / `-oato` / `-amida`; each C≡N of `-nitrilo` counts two.
+    pi += suffixCount(structure) * (nitrile ? 2 : 1);
   }
   const halogens = {};
   // The prefixes, then an ester's O-bound group (its bridge O counted by etherTotal(), like an ether O).
@@ -1261,10 +1302,11 @@ function esterDrawingSentences(result, oh, co, halogens) {
  * carbon it is bonded to.
  *
  * @param {{1: number, 2: number, 3: number}} kinds - Nitrogens by number of carbons (nitrogenKinds()).
+ * @param {number} [others] - Other nitrogens in the molecule (a nitrile's, design.md §13.4 I-38), described apart (default 0).
  * @returns {string} The sentences, each starting with a space.
  */
-function nitrogenDrawingSentences(kinds) {
-  const total = kinds[1] + kinds[2] + kinds[3];
+function nitrogenDrawingSentences(kinds, others = 0) {
+  const total = kinds[1] + kinds[2] + kinds[3] + others;
   const forms = [
     [kinds[1], 'a un solo carbono se ve como NH₂: lleva dos hidrógenos'],
     [kinds[2], 'a dos carbonos se ve como NH: lleva un hidrógeno'],
@@ -1277,11 +1319,37 @@ function nitrogenDrawingSentences(kinds) {
     }
   }
   drawing += ' Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno.';
+  if (others > 0) {
+    return `${drawing} Cada uno de estos nitrógenos ocupa el sitio de un hidrógeno en cada carbono al que se une.`;
+  }
   drawing += total === 1
     ? ' El nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une.'
     : ' Cada nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une.';
   return drawing;
 } // End of function nitrogenDrawingSentences()
+
+/**
+ * The count-step sentences on every nitrogen of a name: the N of each
+ * nitrile –C≡N (design.md §13.4 I-38), drawn N (its three bonds go to its
+ * carbon, so it has no hydrogen; the triple bond takes the place of three
+ * hydrogens on that carbon), then the amine and amide nitrogens
+ * (nitrogenDrawingSentences()); '' without nitrogens.
+ *
+ * @param {object} result - The naming result.
+ * @returns {string} The sentences, each starting with a space.
+ */
+function allNitrogenSentences(result) {
+  const kinds = nitrogenKinds(result);
+  const amines = kinds[1] + kinds[2] + kinds[3];
+  const nitriles = isNitrile(result) ? suffixCount(result.structure) : 0;
+  let drawing = '';
+  if (nitriles > 0) {
+    drawing += nitriles === 1
+      ? ' El nitrógeno unido a un carbono por un [[enlace triple]] (–C≡N) se ve como N: sus 3 enlaces van a ese carbono, así que no lleva hidrógeno. El enlace triple ocupa en el carbono el sitio de tres hidrógenos.'
+      : ' Cada nitrógeno unido a un carbono por un [[enlace triple]] (–C≡N) se ve como N: sus 3 enlaces van a ese carbono, así que no lleva hidrógeno. Cada enlace triple ocupa en su carbono el sitio de tres hidrógenos.';
+  }
+  return amines > 0 ? drawing + nitrogenDrawingSentences(kinds, nitriles) : drawing;
+} // End of function allNitrogenSentences()
 
 /**
  * Step 1, "Cuenta los carbonos": carbons, hydrogens and formula.
@@ -1317,7 +1385,7 @@ function countStep(result) {
     if (present.length > 0) {
       drawing += ` Los átomos de ${joinY(present.map((el) => ELEMENT_NAMES_ES[el]))} se ven con su símbolo (${present.join(', ')}): son halógenos.`;
     }
-    drawing += nitrogenDrawingSentences(nitrogenKinds(result));
+    drawing += allNitrogenSentences(result);
     drawing += ' Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces';
     drawing += present.length > 0 ? ', y cada halógeno ocupa el sitio de un hidrógeno.' : '.';
     text.push(drawing);
@@ -1373,7 +1441,7 @@ function countStep(result) {
       drawing += amideDrawingSentence(result);
     } // End of the oxygen sentences
     if (nitrogens > 0) {
-      drawing += nitrogenDrawingSentences(nitrogenKinds(result));
+      drawing += allNitrogenSentences(result);
     }
     text.push(drawing);
   } // End of the count sentences
@@ -1419,6 +1487,9 @@ function groupStep(result) {
   }
   if (isAmide(result)) {
     return amideGroupStep(result);
+  }
+  if (isNitrile(result)) {
+    return nitrileGroupStep(result);
   }
   const { suffix: n, branch } = hydroxylsIn(result);
   const total = n + branch;
@@ -1660,6 +1731,92 @@ function amideGroupStep(result) {
     locants: null,
   };
 } // End of function amideGroupStep()
+
+/**
+ * Step "Reconoce el grupo funcional" for a nitrile (design.md §13.4 I-38):
+ * the –C≡N group (a carbon bonded to a nitrogen by a triple bond, never an
+ * alkyne: the triple bond is not between two carbons, so it is no `-ino`),
+ * its carbon always a chain end counted in the chain (carbon 1), the N
+ * never in the chain, the suffix `-nitrilo` (`-dinitrilo`) after the whole
+ * hydrocarbon name (its final «o» kept, the suffix starting with a
+ * consonant), the seniority ácido > éster > amida > nitrilo > aldehído >
+ * cetona > alcohol > amina when other groups are present (they become
+ * `oxo-`, `hidroxi-`, `amino-` prefixes), the traditional `acetonitrilo`,
+ * and halogens as prefixes. The group is highlighted whole (carbon and N).
+ *
+ * @param {object} result - A naming result whose suffix is a nitrile.
+ * @returns {object} The step.
+ */
+function nitrileGroupStep(result) {
+  const { suffix, parent } = result.structure;
+  const n = suffix.locants.length;
+  const ending = lexiconEs.groupSuffix('nitrile');
+  const text = [];
+  text.push(n === 1
+    ? 'Tu molécula tiene un grupo –C≡N: un carbono unido a un nitrógeno por un [[enlace triple]]. Es un [[grupo funcional]]: la molécula es un nitrilo.'
+    : `Tu molécula tiene ${n} grupos –C≡N (cada uno, un carbono unido a un nitrógeno por un [[enlace triple]]). Son [[grupos funcionales|grupo funcional]]: la molécula es un nitrilo con ${n} grupos –C≡N.`);
+  text.push('Ese enlace triple no es el de un alquino: no une dos carbonos, sino un carbono y un nitrógeno. Por eso no se nombra con «-ino»: forma parte del grupo –C≡N.');
+  if (parent.length === 1) {
+    text.push('Aquí el carbono del –C≡N es el único carbono de la [[cadena principal]].');
+  } else {
+    text.push(n === 1
+      ? 'El carbono del –C≡N solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1. El nitrógeno no forma parte de la cadena.'
+      : 'El carbono de cada –C≡N solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Esos carbonos son carbonos de la cadena: se cuentan al buscarla y al numerarla. Los nitrógenos no forman parte de la cadena.');
+  }
+  text.push(`El grupo –C≡N es el [[grupo principal]]: se nombra con el [[sufijo]] «-${ending}», al final del nombre (como en «etanonitrilo»).`);
+  if (n > 1) {
+    const { multiplier: mult } = suffixWords(suffix, lexiconEs);
+    text.push(`Aquí hay ${n} grupos –C≡N, uno en cada extremo de la cadena principal, así que el sufijo dice cuántos: «-${mult}${ending}» («di» = 2).`);
+  }
+  const { aldehyde, ketone, branchCo, oh } = acidCompanions(result);
+  const others = [];
+  if (aldehyde > 0) {
+    others.push('un grupo –CHO en el otro extremo (un aldehído)');
+  }
+  if (ketone > 0) {
+    others.push(ketone === 1 ? 'un grupo C=O entre dos carbonos (una cetona)' : `${ketone} grupos C=O entre dos carbonos (cetonas)`);
+  }
+  if (branchCo > 0) {
+    others.push(branchCo === 1 ? 'un grupo C=O en una rama' : `${branchCo} grupos C=O en ramas`);
+  }
+  if (oh > 0) {
+    others.push(oh === 1 ? 'un grupo –OH (un alcohol)' : `${oh} grupos –OH (alcohol)`);
+  }
+  const amines = aminoPrefixCount(result);
+  if (amines > 0) {
+    others.push(aminoWords(amines));
+  }
+  if (others.length > 0) {
+    text.push(`También tiene ${joinY(others)}. Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.`);
+    const how = [];
+    if (aldehyde + ketone + branchCo > 0) {
+      how.push(aldehyde > 0
+        ? 'cada C=O se nombra con el [[prefijo]] «oxo-» (también el del –CHO, porque su carbono ya está en la cadena)'
+        : 'cada C=O se nombra con el [[prefijo]] «oxo-»');
+    }
+    if (oh > 0) {
+      how.push(how.length > 0 ? 'cada –OH, con el [[prefijo]] «hidroxi-»' : 'cada –OH se nombra con el [[prefijo]] «hidroxi-»');
+    }
+    if (amines > 0) {
+      how.push(how.length > 0 ? 'cada grupo amino, con el [[prefijo]] «amino-»' : 'cada grupo amino se nombra con el [[prefijo]] «amino-»');
+    }
+    text.push(`Aquí manda el nitrilo, así que ${joinY(how)}, delante del nombre.`);
+  } // End of the seniority sentences
+  const traditional = (result.alternatives || []).find((a) => a.style === 'traditional');
+  if (traditional) {
+    text.push(`La IUPAC (2013) conserva también el nombre tradicional ${q(traditional.name)}: lo verás en «Otras formas válidas».`);
+  }
+  if (halogensIn(result).length > 0) {
+    text.push('Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]].');
+  }
+  return {
+    id: 'group',
+    title: STEP_TITLES.group,
+    text,
+    highlight: [suffixSpec(result), ...oxygenPrefixSpecs(result), ...aminoPrefixSpecs(result)],
+    locants: null,
+  };
+} // End of function nitrileGroupStep()
 
 /**
  * Step "Reconoce el grupo funcional" for an aldehyde or ketone (design.md
@@ -2216,9 +2373,10 @@ function esterStep(result) {
  * many of them lie on some longest chain (a P1 survivor).
  *
  * @param {object} result - The naming result.
- * @returns {{double: number, triple: number, specs: object[], total: number, inLongest: number, oneChain: boolean}}
+ * @returns {{double: number, triple: number, specs: object[], total: number, inLongest: number, oneChain: boolean, byGroups: number}}
  *   Counts, highlight specs of those groups, the number of outside bonds, how many lie on a longest chain,
- *   and whether a single longest chain holds all of those.
+ *   whether a single longest chain holds all of those, and how many of the others lie only on chains that
+ *   P0 dropped for carrying fewer principal groups (so the principal group, not the length, left them out).
  */
 function outsideUnsaturation(result) {
   let double = 0;
@@ -2266,7 +2424,15 @@ function outsideUnsaturation(result) {
   const chains = (p1 ? p1.survivors : []).map((c) => new Set(c.bonds || []));
   const onLongest = bonds.filter((id) => chains.some((chain) => chain.has(id)));
   const oneChain = onLongest.length > 0 && chains.some((chain) => onLongest.every((id) => chain.has(id)));
-  return { double, triple, specs, total: bonds.length, inLongest: onLongest.length, oneChain };
+  // A bond on no longest chain was left out by P0 (fewer principal groups) when every chain holding it lost at P0,
+  // else by the length (P1): IUPAC 2013 P-44.1.1 puts the principal groups before the length.
+  const p0 = result.trace.find((s) => s.rule === 'P0');
+  const keptByP0 = (p0 ? p0.survivors : []).map((c) => new Set(c.bonds || []));
+  const lostAtP0 = p0 ? p0.candidatesBefore.filter((c) => !p0.survivors.some((kept) => kept.key === c.key))
+    .map((c) => new Set(c.bonds || [])) : [];
+  const byGroups = bonds.filter((id) => !onLongest.includes(id) && !keptByP0.some((chain) => chain.has(id))
+    && lostAtP0.some((chain) => chain.has(id))).length;
+  return { double, triple, specs, total: bonds.length, inLongest: onLongest.length, oneChain, byGroups };
 } // End of function outsideUnsaturation()
 
 /**
@@ -2274,11 +2440,12 @@ function outsideUnsaturation(result) {
  * the parent chain (IUPAC 2013: length first). Each outside bond is either
  * on another longest chain (that chain lost a tie-break) or on none (length).
  *
- * @param {{double: number, triple: number, total: number, inLongest: number, oneChain: boolean}} outside - Result of outsideUnsaturation().
+ * @param {{double: number, triple: number, total: number, inLongest: number, oneChain: boolean, byGroups: number}} outside - Result of outsideUnsaturation().
+ * @param {object} [words] - The principal group's words (groupWords()); needed when `byGroups` > 0.
  * @returns {string} The paragraph.
  */
-function outsideSentence(outside) {
-  const { double, triple, total, inLongest } = outside;
+function outsideSentence(outside, words = null) {
+  const { double, triple, total, inLongest, byGroups = 0 } = outside;
   let what;
   if (double > 0 && triple > 0) {
     what = 'Los enlaces dobles y triples de las ramas no están';
@@ -2292,6 +2459,15 @@ function outsideSentence(outside) {
       ? `Hay otra cadena igual de larga que ${total === 1 ? 'lo' : 'los'} incluye, pero pierde en los desempates.`
       : 'Cada uno está en otra cadena igual de larga, pero esas cadenas pierden en los desempates.';
     return `${what} en la cadena principal. ${lost}`;
+  }
+  if (byGroups > 0 && words) {
+    // Left out by the principal groups (P0), not by the length (design.md §13.4 I-38 review).
+    const groups = `${what} en la cadena principal: ${byGroups === total ? (total === 1 ? 'la cadena que lo incluye' : 'las cadenas que los incluyen') : 'alguno está en una cadena que'} lleva${byGroups === total && total > 1 ? 'n' : ''} menos ${words.many}. Con las normas de la IUPAC (2013), la cadena principal tiene que llevar el mayor número posible de ${words.many}, aunque sea más corta o deje fuera una [[insaturación]].`;
+    if (byGroups === total) {
+      return groups;
+    }
+    const rest = total - byGroups;
+    return `${groups} ${rest === 1 ? 'Otro queda fuera' : `Otros ${rest} quedan fuera`} por otra razón: entre las cadenas que llevan más ${words.many}, manda la longitud y luego los desempates.`;
   }
   const length = `${what} en la cadena principal: con las normas actuales de la IUPAC (2013) manda la longitud. Primero se busca la cadena más larga, aunque deje fuera una [[insaturación]].`;
   if (inLongest === 0) {
@@ -2340,6 +2516,8 @@ function groupChainSentences(result, p0, p1, step) {
     text.push(nitrogenSites(result).length > 0
       ? 'El carbono de la amida forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Su oxígeno y su nitrógeno no forman parte de ella, y la cadena no puede atravesar el nitrógeno: los grupos de carbonos unidos al nitrógeno se nombran aparte, con la letra «N».'
       : 'El carbono de cada grupo amida forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Su oxígeno y su nitrógeno no forman parte de ella.');
+  } else if (isNitrile(result)) {
+    text.push('El carbono de cada –C≡N forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Su nitrógeno no forma parte de ella.');
   }
   if (decided(p0)) {
     const lengths = p0.candidatesBefore.map((c) => c.atoms.length);
@@ -2534,7 +2712,7 @@ function chainStep(result) {
   }
   const outside = outsideUnsaturation(result);
   if (outside.double + outside.triple > 0) {
-    text.push(outsideSentence(outside));
+    text.push(outsideSentence(outside, result.structure.suffix ? groupWords(result) : null));
     step.options = step.options || [];
     step.options.push({
       label: 'Fuera de la cadena',
@@ -3392,8 +3570,8 @@ function nitrogenNote(result) {
 }
 
 /**
- * Note on the uncited locant of an aldehyde, an acid, an ester or an amide on a chain
- * (design.md §13.4 I-32, I-33, I-35, I-37; IUPAC 2013 P-14.3.4.1): the –CHO, –COOH, –COO– or amide
+ * Note on the uncited locant of an aldehyde, an acid, an ester, an amide or a nitrile on a chain
+ * (design.md §13.4 I-32, I-33, I-35, I-37, I-38; IUPAC 2013 P-14.3.4.1): the –CHO, –COOH, –COO–, amide or –C≡N
  * carbon is always a chain end, so it is always carbon 1 (with two, the
  * first and the last) and its number is never written.
  *
@@ -3500,21 +3678,24 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
     return [`${q(prefix)} es el [[prefijo]] del ${ELEMENT_NAMES_ES[sub.halogen]} (${sub.halogen}), un halógeno unido ${words.to}.`];
   }
   if (sub.hydroxy) {
-    // Only when a C=O or a –COOH is the principal group can an OH be cited on the parent itself.
+    // Only when a C=O, a –COOH, a –COO–, an amide or a –C≡N is the principal group can an OH be cited on the parent itself.
     if (principal === 'ester') {
       return [`${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el éster (–COO–) va antes que el alcohol.`];
     }
     if (principal === 'amide') {
       return [`${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: la amida va antes que el alcohol.`];
     }
+    if (principal === 'nitrile') {
+      return [`${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el nitrilo (–C≡N) va antes que el alcohol.`];
+    }
     return [principal === 'acid'
       ? `${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el ácido (–COOH) va antes que el alcohol.`
       : `${q(prefix)} es el [[prefijo]] de un grupo –OH (alcohol) unido ${words.to}. No es el [[grupo principal]]: el grupo C=O va antes que el –OH.`];
   }
   if (sub.oxo) {
-    // Only when an aldehyde or an acid is principal can a C=O be cited on the parent itself.
-    if (principal === 'ester' || principal === 'amide') {
-      const senior = principal === 'ester' ? 'el éster' : 'la amida';
+    // Only when an aldehyde, an acid (or an ester, amide or nitrile) is principal can a C=O be cited on the parent itself.
+    if (principal === 'ester' || principal === 'amide' || principal === 'nitrile') {
+      const senior = { ester: 'el éster', amide: 'la amida', nitrile: 'el nitrilo' }[principal];
       return [`${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: ${senior} va antes que el aldehído y la cetona.`];
     }
     return [principal === 'acid'
@@ -4223,6 +4404,11 @@ function suffixSentences(result) {
       ? 'El grupo amida no lleva número: su carbono siempre es el 1.'
       : 'Los grupos amida no llevan número: sus carbonos siempre son los dos extremos.');
   }
+  if (suffix.kind === 'nitrile') {
+    text.push(suffix.locants.length === 1
+      ? 'El –C≡N no lleva número: su carbono siempre es el 1.'
+      : 'Los –C≡N no llevan número: sus carbonos siempre son los dos extremos.');
+  }
   if (suffix.kind === 'amine' && !omitted) {
     text.push(suffix.locants.length === 1
       ? 'El número del sufijo es el del carbono unido al nitrógeno: el nitrógeno no tiene número en la cadena.'
@@ -4468,6 +4654,9 @@ function groupsStep(result) {
   }
   if (kinds.has('amide')) {
     whole.push('el nitrógeno de una amida no cuenta como amina ni su C=O como cetona');
+  }
+  if (kinds.has('nitrile')) {
+    whole.push('el enlace triple de un nitrilo (C≡N) no es el de un alquino y su nitrógeno no cuenta como amina');
   }
   if (whole.length > 0) {
     text.push(`Cada átomo pertenece a un solo grupo: ${whole.join('; ')}. Todo junto es un único grupo.`);

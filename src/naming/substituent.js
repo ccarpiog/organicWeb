@@ -86,6 +86,11 @@
  * principal amine (nitrogenSubstituents(): `N-metiletanamida`,
  * `N,N-dimetiletanamida`). Validation refuses every amide that would be a
  * prefix (`carbamoil-`, `acilamino-`).
+ *
+ * Nitriles (design.md §13.4 I-38): the –C≡N is the principal group, its
+ * carbon a parent atom (a chain end) and its N the suffix site
+ * (suffixSites(), like an amine's N); it is never a substituent. Validation
+ * refuses every nitrile that would be the `ciano-` prefix.
  * Pure: topology only.
  */
 

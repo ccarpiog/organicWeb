@@ -33,10 +33,16 @@
  * stands for its group and its N travels with it (SuffixLocant
  * `amideNitrogen`).
  *
+ * Since I-38 validation also admits the N of a nitrile –C≡N (validate.js
+ * isNitrileNitrogen()), kind 'nitrile' (`-nitrilo`): it stands for its
+ * group like an amine's N; its carbon X is a chain end of the parent.
+ * Validation refuses every molecule where a nitrile would be the prefix
+ * `ciano-` (an acid, ester or amide beside it; a nitrile on a branch).
+ *
  * The principal kind is the most senior one present (ácido > éster > amida >
- * aldehído > cetona > alcohol > amina, seniority.js SENIORITY; validation never
- * lets an acid, an ester or an amide meet): its groups on the parent are the
- * suffix (`ácido …oico`, `…oato de …ilo`, `-amida`, `-al`, `-ona`, `-ol`, `-amina`), every other
+ * nitrilo > aldehído > cetona > alcohol > amina, seniority.js SENIORITY; validation never
+ * lets an acid, an ester, an amide or a nitrile meet): its groups on the parent are the
+ * suffix (`ácido …oico`, `…oato de …ilo`, `-amida`, `-nitrilo`, `-al`, `-ona`, `-ol`, `-amina`), every other
  * group is a prefix (`oxo-`, `hidroxi-`, `amino-`). The carbon X of a C=O or a COOH
  * is always a skeleton carbon (a chain or ring atom), never part of a
  * prefix by itself (design.md §13.6 "Where X belongs"). A carboxyl group
@@ -49,18 +55,18 @@
  * esters and amides that the app offers under "Otras formas válidas" (`acetona`,
  * `formaldehído`, `acetaldehído`, `ácido fórmico`, `ácido acético`,
  * `ácido oxálico`, `formiato de …`, `acetato de …`, `formamida`,
- * `acetamida`). Pure: reads topology only.
+ * `acetamida`, `acetonitrilo`). Pure: reads topology only.
  */
 
 import { seniorityRank } from './seniority.js';
 import { N_LOCANT } from './structure.js';
-import { isCarboxylCarbon, isEsterCarbon, isAmideCarbon, amideRole } from '../model/validate.js';
+import { isCarboxylCarbon, isEsterCarbon, isAmideCarbon, amideRole, isNitrileNitrogen } from '../model/validate.js';
 
 /** Kinds of oxygen group the engine names, most senior first. */
 export const OXYGEN_KINDS = Object.freeze(['acid', 'ester', 'aldehyde', 'ketone', 'alcohol']);
 
-/** Every kind of group the engine can cite as a suffix, most senior first (the amide, I-37, after the ester; the amine, I-36, last). */
-export const NAMED_KINDS = Object.freeze(['acid', 'ester', 'amide', 'aldehyde', 'ketone', 'alcohol', 'amine']);
+/** Every kind of group the engine can cite as a suffix, most senior first (the amide, I-37, after the ester; the nitrile, I-38, after the amide; the amine, I-36, last). */
+export const NAMED_KINDS = Object.freeze(['acid', 'ester', 'amide', 'nitrile', 'aldehyde', 'ketone', 'alcohol', 'amine']);
 
 /**
  * Kind of the group an oxygen of a validated molecule belongs to: either
@@ -104,18 +110,22 @@ export function oxygenKind(mol, adj, oxygen) {
  * Kind of the group a heteroatom of a validated molecule belongs to, for
  * the atoms that can stand for a suffix group: an oxygen's kind
  * (oxygenKind()), 'amide' for the N of an amide group (design.md §13.4
- * I-37; validate.js amideRole()), 'amine' for any other nitrogen
- * (validation admits only amine and amide nitrogens, I-36), null for any
- * other atom (a carbon, a halogen).
+ * I-37; validate.js amideRole()), 'nitrile' for the N of a –C≡N (I-38;
+ * validate.js isNitrileNitrogen()), 'amine' for any other nitrogen
+ * (validation admits only amine, amide and nitrile nitrogens, I-36), null
+ * for any other atom (a carbon, a halogen).
  *
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, object[]>} adj - Its adjacency map.
  * @param {number} atom - Any atom id.
- * @returns {'acid'|'ester'|'amide'|'alcohol'|'aldehyde'|'ketone'|'ether'|'amine'|null} The kind.
+ * @returns {'acid'|'ester'|'amide'|'nitrile'|'alcohol'|'aldehyde'|'ketone'|'ether'|'amine'|null} The kind.
  */
 export function groupKindOf(mol, adj, atom) {
   const element = mol.atoms.get(atom).element;
   if (element === 'N') {
+    if (isNitrileNitrogen(mol, adj, atom)) {
+      return 'nitrile';
+    }
     return amideRole(mol, adj, atom) === null ? 'amine' : 'amide';
   }
   return element === 'O' ? oxygenKind(mol, adj, atom) : null;
@@ -123,13 +133,13 @@ export function groupKindOf(mol, adj, atom) {
 
 /**
  * The principal kind of a validated molecule: the most senior kind among
- * its oxygen groups and amine nitrogens (ácido > éster > amida > aldehído >
- * cetona > alcohol > amina), or null without such a group (a hydrocarbon, a
+ * its oxygen groups and nitrogens (ácido > éster > amida > nitrilo >
+ * aldehído > cetona > alcohol > amina), or null without such a group (a hydrocarbon, a
  * halogen derivative or an ether: an ether oxygen is never principal).
  *
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, object[]>} adj - Its adjacency map.
- * @returns {'acid'|'ester'|'amide'|'alcohol'|'aldehyde'|'ketone'|'amine'|null} The principal kind.
+ * @returns {'acid'|'ester'|'amide'|'nitrile'|'alcohol'|'aldehyde'|'ketone'|'amine'|null} The principal kind.
  */
 export function principalKindOf(mol, adj) {
   let best = null;
@@ -152,7 +162,8 @@ export function principalKindOf(mol, adj) {
  * Tells whether an oxygen neighbour of a parent atom belongs to one of its
  * suffix groups (an oxygen of the principal kind; for an acid, both oxygens
  * of each –COOH; for an ester, both oxygens of the –COO–; for an amide,
- * its C=O oxygen and its N, I-37), or, when the amine is principal,
+ * its C=O oxygen and its N, I-37; for a nitrile, the N of each –C≡N,
+ * I-38), or, when the amine is principal,
  * whether the atom is an amine nitrogen (design.md §13.4 I-36).
  *
  * @param {object} mol - A validated molecule.
@@ -183,7 +194,7 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
     return false;
   }
   const links = adj.get(atom);
-  // An amine's N, an OH, a C=O stand for their group; a –COOH, –COO– or –CONH₂ is represented by its C=O oxygen.
+  // An amine's N, a nitrile's N, an OH, a C=O stand for their group; a –COOH, –COO– or –CONH₂ is represented by its C=O oxygen.
   return !['acid', 'ester', 'amide'].includes(principal) || (links.length === 1 && links[0].order === 2);
 }
 
@@ -202,6 +213,10 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * its N (`N-metilacetamida`, `N,N-dimetilformamida`; render.js renders the
  * prefixes before the word, as for `N-metilanilina`); IUPAC 2013 retains
  * formamide and acetamide as preferred names (P-66.1.1.1.1, from memory).
+ * For a nitrile (I-38) 'acetonitrile' for the bare etanonitrilo only
+ * (IUPAC 2013 retains acetonitrile as the preferred name, P-66.5.1.1.1,
+ * from memory; `formonitrilo` / `cianuro de hidrógeno` for HC≡N and
+ * `cianuro de metilo` are not offered).
  * IUPAC 2013 retains formaldehyde and acetaldehyde (aldehydes,
  * P-66.6), acetone for general nomenclature (ketones, P-64), and formic,
  * acetic and oxalic acid as preferred names (acids, P-65.1.1.1), hence
@@ -209,10 +224,14 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * (design.md §13.1), never as the main name.
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
- * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|null} The id.
+ * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|null} The id.
  */
 export function carbonylTraditionalId(structure) {
   const { parentKind, parent, prefixes, suffix } = structure;
+  if (parentKind === 'chain' && suffix && suffix.kind === 'nitrile') {
+    const bare = prefixes.length === 0 && suffix.locants.length === 1 && parent.double.length + parent.triple.length === 0;
+    return bare && parent.length === 2 ? 'acetonitrile' : null;
+  }
   const onNitrogen = prefixes.every((group) => group.locants.every((site) => site.locant === N_LOCANT));
   if (parentKind === 'chain' && suffix && suffix.kind === 'amide' && onNitrogen && suffix.locants.length === 1
     && parent.double.length + parent.triple.length === 0) {

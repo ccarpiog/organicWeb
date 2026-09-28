@@ -33,7 +33,8 @@ import { perceiveRings } from '../../src/model/rings.js';
 import { HALOGEN_ELEMENTS } from '../../src/model/elements.js';
 import { canonicalTreeKey, canonicalKey, adjacency } from '../../src/model/graph.js';
 import {
-  validateForNaming, carboxylCarbons, carboxylRole, esterCarbons, etherOxygens, amineNitrogens, amideCarbons, MAX_CHAIN,
+  validateForNaming, carboxylCarbons, carboxylRole, esterCarbons, etherOxygens, amineNitrogens, amideCarbons, nitrileCarbons,
+  MAX_CHAIN,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
@@ -1034,6 +1035,87 @@ export function generateAmides({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct amides
   return molecules;
 } // End of function generateAmides()
+
+/**
+ * Copies a hydrocarbon and turns chain ends into nitrile groups (design.md
+ * §13.4 I-38): like carboxylate(), each carbon with at most one carbon
+ * neighbour on a single bond and three hydrogens (a –CH₃ end, or the lone
+ * carbon of methane) gets an N on a triple bond (–C≡N); at most `max` of
+ * them, chosen in random order.
+ *
+ * @param {object} mol - A hydrocarbon (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} max - The most nitrile groups to add (1 or 2).
+ * @returns {object} The copy (possibly without any nitrile).
+ */
+export function nitrilate(mol, random, max) {
+  const copy = cloneMolecule(mol);
+  const ends = [...copy.atoms.keys()].filter((id) => {
+    const bonds = [...copy.bonds.values()].filter((b) => b.a === id || b.b === id);
+    return bonds.length <= 1 && bonds.every((b) => b.order === 1) && CARBON_VALENCE - bondOrderSum(copy, id) >= 3;
+  });
+  for (const id of shuffle(ends, random).slice(0, max)) {
+    addBond(copy, id, addAtom(copy, {}, 'N'), 3);
+  }
+  return copy;
+} // End of function nitrilate()
+
+/**
+ * Generates up to `count` distinct (by canonical key) nitriles (design.md
+ * §13.4 I-38): random acyclic hydrocarbons of 1 carbon up to `maxSize` − 1
+ * (metanonitrilo, etanonitrilo, etanodinitrilo… included) with one or two
+ * –C≡N at chain ends (nitrilate()), a share of them also with C=O
+ * (carbonylate(): `oxo-`), OH groups (hydroxylate(): `hidroxi-`), amines
+ * (aminate(): `amino-`), an ether O (etherify(): `alcoxi-`) and halogens
+ * (halogenate()). Only molecules with at least one nitrile that the engine
+ * names in every prefix style are kept (valid for naming — the nitriles on
+ * one carbon piece… — and not refused by the engine: no acyl branch, no
+ * symmetric amine or ether).
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateNitriles({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 8231 + 41);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50) {
+    attempts += 1;
+    const size = randomInt(random, 1, Math.max(1, maxSize - 1));
+    const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.4, branchiness: 0.2 + random() * 0.8 });
+    let mol = nitrilate(base, random, random() < 0.25 ? 2 : 1);
+    if (nitrileCarbons(mol).length === 0) {
+      continue; // No end carbon could take a nitrile.
+    }
+    const carbons = new Set([...base.atoms.keys()]);
+    if (random() < 0.2) {
+      mol = carbonylate(mol, random, 0.05 + random() * 0.15, carbons);
+    }
+    if (random() < 0.2) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.15, carbons);
+    }
+    if (random() < 0.15) {
+      mol = aminate(mol, random, { rate: 0.05 + random() * 0.15, graft: random() * 0.5, only: carbons });
+    }
+    if (random() < 0.1) {
+      mol = etherify(mol, random, 1);
+    }
+    if (random() < 0.2) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.2);
+    }
+    if (validateForNaming(mol) || nitrileCarbons(mol).length === 0
+      || !PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
+      continue; // Not valid for naming, the nitrile was spoilt, or refused by the engine in some style.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct nitriles
+  return molecules;
+} // End of function generateNitriles()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

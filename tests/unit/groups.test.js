@@ -340,8 +340,8 @@ test('lexicons: suffix and prefix forms of every group kind', () => {
 });
 
 test('a heteroatom molecule is still refused with HETEROATOM, carrying its groups', () => {
-  // Amines are named since I-36: a nitrile, an N–O bond and a side-chain amine on a ring keep the refusal.
-  for (const smiles of ['N#CCCO', 'ONCC(=O)O', 'ClCCOCCOOC', 'OCC1=CC=CC=C1', 'NCC1CCCCC1', 'COOC', 'O']) {
+  // Amines are named since I-36, nitriles since I-38: a nitrile below an acid (ciano-), an N–O bond and a side-chain amine on a ring keep the refusal.
+  for (const smiles of ['N#CCC(=O)O', 'ONCC(=O)O', 'ClCCOCCOOC', 'OCC1=CC=CC=C1', 'NCC1CCCCC1', 'COOC', 'O']) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(result.ok, false, smiles);
     assert.equal(result.error.code, 'HETEROATOM', smiles);
@@ -387,7 +387,7 @@ const GROUP_SNAPSHOT_SMILES = [
   'COC(=O)CCC(=O)OC', // two esters (each not ether + ketone): refused as manyEsters since I-35
   'NC(=O)C1CCCCC1', // amide on a ring: not amine + ketone; refused (ringAmide) until I-40 (open-chain amides are named since I-37)
   'NCC(O)CC(=O)C(OO)C=O', // aldehyde > ketone > alcohol > amine, with a hydroperoxide (amines are named since I-36)
-  'NCC#N', // nitrile > amine
+  'N#CCCC(=O)O', // acid > nitrile: the nitrile would be ciano-, refused (cyanoPrefix) until I-39 (`3-aminopropanonitrilo` is named since I-38)
   'ClCCOCCOOC', // prefix-only groups (ether and halide, named since I-34) with an unsupported peroxide
   'BrCC(Br)CNO', // two bromine atoms and an N–O bond (`2,3-dibromopropan-1-amina` is named since I-36)
   'CCOOC', // unsupported peroxide

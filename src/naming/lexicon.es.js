@@ -95,6 +95,7 @@ export const TRADITIONAL_NAMES = Object.freeze({
   aniline: 'anilina',
   formamide: 'formamida',
   acetamide: 'acetamida',
+  acetonitrile: 'acetonitrilo',
 });
 
 /**
@@ -125,6 +126,12 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * (`N,N-dimetilformamida`, `N-metilacetamida`): IUPAC 2013 retains formamide
  * and acetamide as preferred names (P-66.1.1.1.1; status from memory), so
  * they are labelled like `tolueno`; no other amide name (propionamida…).
+ * `acetonitrilo` (design.md §13.4 I-38) replaces the bare `etanonitrilo`:
+ * IUPAC 2013 retains acetonitrile as the preferred name (P-66.5.1.1.1;
+ * status from memory), so it is labelled like `tolueno`. No other nitrile
+ * name is offered (`formonitrilo`, `propionitrilo`, `acrilonitrilo`) and no
+ * `cianuro de …` name (functional-class names of nitriles are not IUPAC
+ * 2013 names; `cianuro de hidrógeno` is an inorganic name).
  */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
@@ -141,6 +148,7 @@ export const TRADITIONAL_LABELS = Object.freeze({
   aniline: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   formamide: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   acetamide: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
+  acetonitrile: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
 });
 
 /** Endings of the parent name. */
@@ -601,7 +609,7 @@ export function styleLabel(style) {
  * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene,
  * a small carbonyl compound or a small acid.
  *
- * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide' or 'acetamide'.
+ * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide', 'acetamide' or 'acetonitrile'.
  * @returns {string} The Spanish name.
  * @throws {Error} For an unknown id.
  */

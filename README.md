@@ -55,7 +55,11 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `N-` prefixes: `metanamida`, `etanamida`, `2-metilpropanamida`,
   `butanodiamida`, `prop-2-enamida`, `N-metiletanamida`,
   `N,N-dimetiletanamida`, `N-etil-N-metilpropanamida`, `4-oxopentanamida`,
-  `2-aminopropanamida`…), with the name coloured by part
+  `2-aminopropanamida`…), and of open-chain nitriles (the –C≡N one group,
+  never an alkyne, `-nitrilo` with the nitrile carbon as carbon 1:
+  `metanonitrilo`, `etanonitrilo`, `2-metilpropanonitrilo`,
+  `butanodinitrilo`, `prop-2-enonitrilo`, `4-oxopentanonitrilo`,
+  `2-aminopropanonitrilo`…), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles;
@@ -70,7 +74,8 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `bencenamina` lists `anilina` (`N-metilanilina`…), and a simple amine its
   traditional name (`metilamina`, `dimetilamina`, `trimetilamina`,
   `etilmetilamina`); `metanamida` and `etanamida` list `formamida` and
-  `acetamida`, also with groups on the N (`N,N-dimetilformamida`).
+  `acetamida`, also with groups on the N (`N,N-dimetilformamida`), and
+  `etanonitrilo` lists `acetonitrilo`.
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
   alphabetical order, assembly) that highlights each step on the drawing;
@@ -221,10 +226,10 @@ the Keychain account is the WebDAV user).
 ## Known limitations and future work
 
 - Hydrocarbons, their halogen derivatives, alcohols, aldehydes, ketones,
-  carboxylic acids, ethers, esters, amines and amides only, with at most one ring (a carbocycle; an
+  carboxylic acids, ethers, esters, amines, amides and nitriles only, with at most one ring (a carbocycle; an
   OH or a ketone C=O must then be on a ring carbon, a principal amine's N
   bonded to a ring carbon, and aldehydes, acids,
-  esters and amides with a ring are refused); a C=O carbon bonded to the main chain as a
+  esters, amides and nitriles with a ring are refused); a C=O carbon bonded to the main chain as a
   branch (acetilo…), more than two aldehyde or more than two –COOH groups
   on a chain, more than one ester group, an acid with an ester, an
   ether or amine whose identical parts each carry the
@@ -232,18 +237,19 @@ the Keychain account is the WebDAV user).
   several amine groups on the main chain when some N carries other groups
   (N¹/N² locants) are refused too, and so are an amide with an acid or an
   ester or on a branch (`carbamoil-`, `acilamino-`), more than two amides,
-  a diamide with groups on an N and imides; salts, ammonium ions, nitriles and
-  other acid derivatives are not named yet; several
+  a diamide with groups on an N and imides, and a nitrile with an acid,
+  ester or amide or on a branch (`ciano-`) and more than two nitriles;
+  salts, ammonium ions and other acid derivatives are not named yet; several
   rings, fused, bridged and spiro rings, heterocycles, benzenes with two or
-  more substituents (no orto/meta/para), other oxygen and nitrogen compounds
-  (nitriles, planned), stereochemistry (E/Z, R/S), charges and
+  more substituents (no orto/meta/para), other oxygen and nitrogen compounds,
+  stereochemistry (E/Z, R/S), charges and
   radicals are not named. Traditional halogen and alcohol names
   (cloroformo, alcohol etílico, glicerina…) are not given (only `acetona`,
   `formaldehído` and `acetaldehído` among the carbonyls, and `ácido
   fórmico`, `ácido acético` and `ácido oxálico` among the acids, `formiato`
   and `acetato` among the esters, `anilina` and the alkylamine names such
   as `trimetilamina` among the amines, `formamida` and `acetamida` among
-  the amides; amino-acid names such as alanina are
+  the amides, `acetonitrilo` among the nitriles; amino-acid names such as alanina are
   not given); the 90° view keeps
   the normal drawing for any molecule with a heteroatom.
 - Parent chain up to 30 carbons, whole molecule up to 60.

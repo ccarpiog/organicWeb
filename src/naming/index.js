@@ -129,7 +129,19 @@
  * N-substituted) metanamida and etanamida also get `formamida` /
  * `acetamida` (`N,N-dimetilformamida`).
  *
- * Any other heteroatom (an N of an imide, imine or nitrile, an O of an anhydride or carbonate, a peroxide) is
+ * Nitriles (design.md §13.4 I-38) sit between amides and aldehydes (…
+ * amida > nitrilo > aldehído…): the –C≡N carbon is a chain end of the
+ * parent like an acid's, locant 1, never cited, suffix `-nitrilo`; the N
+ * is never a chain atom and the C≡N is never an `-ino` unsaturation:
+ * `metanonitrilo`, `etanonitrilo`, `2-metilpropanonitrilo`,
+ * `prop-2-enonitrilo`, `butanodinitrilo`, `4-oxopentanonitrilo`,
+ * `2-aminopropanonitrilo`. Validation refuses nitriles with a ring
+ * (`ringNitrile`), with an acid, ester or amide or on another carbon piece
+ * (`cyanoPrefix`) and more than two (`manyNitriles`); a nitrile left out of
+ * the suffix is refused here as a safety net (`cyanoPrefix`). The bare
+ * etanonitrilo also gets `acetonitrilo`.
+ *
+ * Any other heteroatom (an N of an imide or imine, an O of an anhydride or carbonate, a peroxide) is
  * still refused (`HETEROATOM`), but the refusal carries `groups`: its
  * characteristic groups (groups.js), the principal group and the
  * suffix/prefix classification (seniority.js, design.md §13.4 I-29).
@@ -139,7 +151,7 @@
 import {
   validateForNaming, validationError, carboxylCarbons, etherOxygens, amineNitrogens, ACYL_SUBSTITUENT_MESSAGE,
   CARBOXY_SUBSTITUENT_MESSAGE, SYMMETRIC_ETHER_MESSAGE, SYMMETRIC_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE,
-  amideCarbons, AMIDE_PREFIX_MESSAGE,
+  amideCarbons, AMIDE_PREFIX_MESSAGE, nitrileCarbons, CYANO_PREFIX_MESSAGE, isAmineNitrogen,
 } from '../model/validate.js';
 import { adjacency, hasCycle, rootedTreeKey } from '../model/graph.js';
 import { selectParent } from './parent.js';
@@ -347,6 +359,7 @@ function nameValidated(mol, options) {
   // others avoid.
   const acids = carboxylCarbons(mol);
   const amides = amideCarbons(mol);
+  const nitriles = nitrileCarbons(mol);
   for (const s of new Set([style, PREFIX_STYLES[0], ...others])) {
     const { structure } = named(s);
     // An acyl branch on the parent, or inside an ester's O-bound group.
@@ -359,6 +372,9 @@ function nameValidated(mol, options) {
     }
     if (amides.length > 0 && (!structure.suffix || structure.suffix.kind !== 'amide' || suffixCount(structure) !== amides.length)) {
       return withGroups({ ok: false, error: amidePrefixError(amides) }, mol);
+    }
+    if (nitriles.length > 0 && (!structure.suffix || structure.suffix.kind !== 'nitrile' || suffixCount(structure) !== nitriles.length)) {
+      return withGroups({ ok: false, error: cyanoPrefixError(nitriles) }, mol);
     }
     if (structure.suffix && structure.suffix.kind === 'amine' && suffixCount(structure) > 1 && hasNitrogenLocants(structure.prefixes)) {
       return withGroups({ ok: false, error: polyamineError(structure) }, mol);
@@ -483,6 +499,9 @@ export function amineClassName(mol, structure, lexicon = lexiconEs) {
   }
   const nitrogen = others[0].id;
   const adj = adjacency(mol);
+  if (!isAmineNitrogen(mol, adj, nitrogen)) {
+    return null; // The N of a nitrile (I-38) or an amide: no alkylamine name.
+  }
   const sides = adj.get(nitrogen).map((n) => etherSideName(nameSubstituent(mol, nitrogen, n.atom), lexicon));
   if (sides.includes(null)) {
     return null;
@@ -535,6 +554,19 @@ function carboxyError(acids) {
  */
 function amidePrefixError(amides) {
   return validationError('HETEROATOM', { message: AMIDE_PREFIX_MESSAGE, atoms: [...amides], reason: 'amidePrefix' });
+}
+
+/**
+ * The HETEROATOM refusal of a molecule whose name would leave a nitrile out
+ * of the parent's suffix (a `ciano-` prefix, design.md §13.4 I-38). A
+ * safety net: validation already refuses every molecule where this can
+ * happen (`cyanoPrefix`, `manyNitriles`, `ringNitrile`).
+ *
+ * @param {number[]} nitriles - The nitrile carbons of the molecule.
+ * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
+ */
+function cyanoPrefixError(nitriles) {
+  return validationError('HETEROATOM', { message: CYANO_PREFIX_MESSAGE, atoms: [...nitriles], reason: 'cyanoPrefix' });
 }
 
 /**

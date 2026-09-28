@@ -63,7 +63,7 @@ function locantParts(sites) {
 }
 
 /** Suffix kinds whose carbon is always a chain end, so their locant is never cited on a chain (IUPAC 2013 P-14.3.4.1). */
-export const TERMINAL_SUFFIXES = Object.freeze(['aldehyde', 'acid', 'ester', 'amide']);
+export const TERMINAL_SUFFIXES = Object.freeze(['aldehyde', 'acid', 'ester', 'amide', 'nitrile']);
 
 /**
  * Renders a numbered chain as a parent name: stem + connecting vowel +
@@ -73,7 +73,7 @@ export const TERMINAL_SUFFIXES = Object.freeze(['aldehyde', 'acid', 'ester', 'am
  * @param {object} lexicon - The lexicon.
  * @param {boolean} hasPrefixes - Whether prefixes precede the parent or a suffix follows it (disables locant omission).
  * @param {object|null} [suffix] - The suffix groups (structure.js SuffixStructure), or null.
- * @param {boolean} [omitSuffixLocants] - Leave out the suffix locants (`etanol`, `metanol`). An aldehyde, acid or ester suffix on a chain never cites them, whatever this says: its carbon is always a chain end, locant 1 (IUPAC 2013 P-14.3.4.1: `propanal`, `2-metilpropanal`, `butanodial`, `ácido propanoico`, `propanoato de metilo`).
+ * @param {boolean} [omitSuffixLocants] - Leave out the suffix locants (`etanol`, `metanol`). An aldehyde, acid, ester, amide or nitrile suffix on a chain never cites them, whatever this says: its carbon is always a chain end, locant 1 (IUPAC 2013 P-14.3.4.1: `propanal`, `2-metilpropanal`, `butanodial`, `ácido propanoico`, `propanoato de metilo`, `propanonitrilo`).
  * @returns {object[]} The parts.
  */
 export function renderParent(chain, lexicon, hasPrefixes, suffix = null, omitSuffixLocants = false) {

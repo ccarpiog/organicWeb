@@ -130,12 +130,14 @@
  * The principal characteristic groups of a name, cited as a suffix after the
  * parent's ending (`propan-2-ol`, `butano-1,4-diol`, `ciclohexanol`, `fenol`,
  * `propanal`, `butanodial`, `pentano-2,4-diona`, `ciclohexanona`,
- * `ácido propanoico`, `ácido butanodioico`, `propanoato de metilo`). An
- * aldehyde's, acid's or ester's locants (always a chain end) are never
- * cited (IUPAC 2013 P-14.3.4.1).
+ * `ácido propanoico`, `ácido butanodioico`, `propanoato de metilo`,
+ * `propanonitrilo`). An aldehyde's, acid's, ester's, amide's or nitrile's
+ * locants (always a chain end) are never cited (IUPAC 2013 P-14.3.4.1). A
+ * nitrile (design.md §13.4 I-38) has one SuffixLocant per –C≡N: its carbon
+ * (`atom`), its N (`attachAtom`) and the triple bond (`bond`).
  *
  * @typedef {object} SuffixStructure
- * @property {'acid'|'ester'|'amide'|'alcohol'|'aldehyde'|'ketone'|'amine'} kind - Group kind (groups.js GROUP_KINDS; principal.js NAMED_KINDS).
+ * @property {'acid'|'ester'|'amide'|'nitrile'|'alcohol'|'aldehyde'|'ketone'|'amine'} kind - Group kind (groups.js GROUP_KINDS; principal.js NAMED_KINDS).
  * @property {SuffixLocant[]} locants - One entry per group, ascending locants (a carbon with two OH appears twice).
  */
 

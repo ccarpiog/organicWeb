@@ -613,3 +613,23 @@ ClCC(N)=O	2-cloroetanamida	halogen on an amide	Two substituents on ethane (the a
 NC(=O)CCOC	3-metoxipropanamida	ether prefix on an amide	The ether O is a metoxi- prefix	
 CC(=O)NCCO	N-(2-hidroxietil)etanamida	substituted group on N	The group on the N is named like a branch, with its own locants and parentheses	traditional=N-(2-hidroxietil)acetamida
 CCC(C)C(=O)N(CC)CC	N,N-dietil-2-metilbutanamida	N,N-diethyl and a branch	dietil before metil (multipliers ignored); N,N before 2	
+# Nitriles (I-38): the nitrile –C≡N is one characteristic group (its N never an amine, its triple bond never an alkyne -ino), below amides and above aldehydes (ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina, IUPAC 2013 P-41), cited as the suffix -nitrilo (-dinitrilo; P-66.5.1.1); its carbon is a chain carbon, always a chain end, locant 1, never cited (P-14.3.4.1); the N is not a chain atom; the final o of -ano/-eno is kept before the consonant of -nitrilo (P-16.7.1: etanonitrilo, prop-2-enonitrilo; English prop-2-enenitrile); other groups are prefixes (oxo-, hidroxi-, amino-, alcoxi-, halogens); acetonitrilo (retained PIN) only under Otras formas válidas; nitriles with a ring (-carbonitrilo), more than two, and any nitrile that would be ciano- (below an acid, ester or amide, or on another carbon piece) are refused (tests/unit/nitriles.test.js)
+C#N	metanonitrilo	one-carbon nitrile	HC≡N: the nitrile carbon is the only chain carbon (P-66.5.1.1.1 systematic form); no locant; formonitrilo / cianuro de hidrógeno not offered	
+CC#N	etanonitrilo	two-carbon nitrile	The C≡N carbon is chain carbon 1, never cited (P-14.3.4.1); the o of etano is kept before -nitrilo; acetonitrilo (retained PIN, P-66.5.1.1.1) only under Otras formas válidas	traditional=acetonitrilo
+CCC#N	propanonitrilo	three-carbon nitrile	The C≡N is never an -ino: no triple bond in the parent	
+CC(C)C#N	2-metilpropanonitrilo	branched nitrile	The nitrile carbon is carbon 1; the methyl on carbon 2	
+CC(C)(C)C#N	2,2-dimetilpropanonitrilo	quaternary carbon next to the nitrile	Both methyls on carbon 2	
+CCCCC(C#N)CCCCCC	2-butiloctanonitrilo	branched nitrile, chain must carry the CN carbon	The parent carries the principal group before being the longest (P-44.1.1): the chain ends at the nitrile carbon	
+N#CC#N	etanodinitrilo	cyanogen	Two nitrile carbons bonded: a two-carbon chain with -dinitrilo	
+N#CCCC#N	butanodinitrilo	dinitrile	One nitrile at each end of the chain, locants never cited (like butanodioico)	
+N#CCC(CCCCC)CC#N	3-pentilpentanodinitrilo	dinitrile with a longer branch	The parent carries both nitriles (P-44.1.1), even though a longer chain exists	
+C=CC#N	prop-2-enonitrilo	unsaturated nitrile	Acrylonitrile: the nitrile gets locant 1 before the double bond (P-31.1.4.2.4); the o of -eno kept before -nitrilo (English prop-2-enenitrile)	
+C#CC#N	prop-2-inonitrilo	C≡C beside the C≡N	Only the C≡C in the chain is an -ino	
+CC(=O)CCC#N	4-oxopentanonitrilo	ketone below a nitrile	nitrilo > cetona: the ketone C=O is oxo-	
+O=CCC#N	3-oxopropanonitrilo	aldehyde below a nitrile	nitrilo > aldehído: the CHO at the other end is oxo- (its carbon is in the chain)	
+CC(O)CC#N	3-hidroxibutanonitrilo	alcohol below a nitrile	The OH is hidroxi-	
+CC(N)C#N	2-aminopropanonitrilo	amine below a nitrile	nitrilo > amina: the amine is amino-	
+CN(C)CC#N	2-(dimetilamino)etanonitrilo	substituted amino prefix on a nitrile	The groups on the amino N are cited before amino, enclosed	
+COCC#N	2-metoxietanonitrilo	ether on a nitrile	The ether O is a metoxi- prefix; two substituents on ethane: the locant is cited	
+ClCCC#N	3-cloropropanonitrilo	halogen on a nitrile	The chlorine is a prefix on carbon 3	
+ClCC#N	2-cloroetanonitrilo	halogen on a two-carbon nitrile	Suffix + prefix on ethane: the prefix locant is cited (as in ácido 2-cloroetanoico)	

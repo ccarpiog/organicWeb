@@ -11,7 +11,7 @@
  * N-metilanilina, 2-aminoetan-1-ol, 2-(dimetilamino)etan-1-ol, ácido
  * 2-aminopropanoico); "Ordenar dibujo" lays out an amine; side-chain amines
  * on a ring, N-substituted polyamines and symmetric amines are refused with
- * their messages, a urea and a nitrile keep the generic HETEROATOM
+ * their messages, a urea and an imine keep the generic HETEROATOM
  * refusal, and an N in a ring is a heterocycle (RING_SYSTEM). Runs on the
  * dev server and on dist/index.html.
  */
@@ -261,9 +261,9 @@ test('out-of-scope amines and other nitrogen compounds are refused with their me
     ['NCCNC', 'localizadores como N¹ y N²'],
     // Equal halves joined by the N, each with the principal group (symmetricAmine).
     ['OCCNCCO', 'partes iguales unidas por un nitrógeno'],
-    // A urea and a nitrile: the generic message, which lists the amines (and, since I-37, the amides).
-    ['NC(=O)N', 'aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂) y amidas'],
-    ['CCC#N', 'Aún no sé nombrar este tipo de compuestos'],
+    // A urea and an imine: the generic message, which lists the amines (and, since I-37, the amides; since I-38, the nitriles).
+    ['NC(=O)N', 'aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂), amidas'],
+    ['CCC=N', 'Aún no sé nombrar este tipo de compuestos'],
   ]) {
     await loadSmiles(page, smiles);
     await askName(page);
@@ -283,8 +283,8 @@ test('out-of-scope amines and other nitrogen compounds are refused with their me
   await expect(stepper.locator('.step-title')).toHaveText('Aún no sé nombrarla');
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
-  // The nitrile group steps name it (–C≡N), not an amine.
-  await loadSmiles(page, 'CCC#N');
+  // A refused nitrile (below an acid, I-38) is named by its group steps as a nitrile (–C≡N), not an amine.
+  await loadSmiles(page, 'N#CCC(=O)O');
   await askName(page);
   await page.getByRole('button', { name: 'Ver paso a paso' }).click();
   await dots.nth(0).click();

@@ -167,8 +167,9 @@ test('validation: halogens bonded to a carbon are named; other O and N molecules
   }
   // Ethers with halogens are named since I-34 (tests/unit/ethers.test.js).
   // Esters with halogens are named since I-35 (tests/unit/esters.test.js).
-  // Amines with halogens are named since I-36 (tests/unit/amines.test.js).
-  for (const smiles of ['ClCCOOC', 'ClC(=O)C', 'ONCCBr', 'ClCOC(=O)OC', 'FC(F)(F)C#N', 'ClCC(=O)OC(C)=O']) {
+  // Amines with halogens are named since I-36 (tests/unit/amines.test.js), nitriles since I-38 (`2,2,2-trifluoroetanonitrilo`);
+  // cyanogen chloride (Cl on the nitrile carbon) keeps the refusal.
+  for (const smiles of ['ClCCOOC', 'ClC(=O)C', 'ONCCBr', 'ClCOC(=O)OC', 'ClC#N', 'ClCC(=O)OC(C)=O']) {
     const mol = parseSmiles(smiles);
     const result = nameMolecule(mol);
     assert.equal(result.ok, false, smiles);

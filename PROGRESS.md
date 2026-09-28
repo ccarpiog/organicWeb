@@ -47,13 +47,13 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-35 | v2.15 Esters | same, §3.15 | done — `docs/progress-archive/i-35.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-35.md` |
 | I-36 | v2.16 Amines | same, §3.16 | done — `docs/progress-archive/i-36.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-36.md` |
 | I-37 | v2.17 Amides | same, §3.17 | done — `docs/progress-archive/i-37.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-37.md` |
-| I-38 | v2.18 Nitriles | same, §3.18 | queued | — | — |
+| I-38 | v2.18 Nitriles | same, §3.18 | done — `docs/progress-archive/i-38.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-38.md` |
 | I-39 | v2.19 Functional combinations | same, §3.19 | queued | — | — |
 | I-40 | v2.20 Functions on rings | same, §3.20 | queued | — | — |
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-37 done; I-38…I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-38 done; I-39…I-41 queued in order
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
@@ -89,13 +89,15 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-38 (v2 §3.18 nitriles: `etanonitrilo`, `propanonitrilo`, the C≡N
-carbon is chain locant 1 like the acid/amide end; `ciano-` prefix below a more senior group;
-seniority per design §13.6: nitrile sits between amide and aldehyde). Build on I-37 (amide
-kind in `principal.js`, chain-end suffix, refusals in `validate.js`) and I-33 (acid
-chain-end suffix). Nitriles are still refused in `validate.js` (`HETEROATOM`). Spec: design
-§13.4 row I-38, §13.6, and `autoclaude/processed/215-rings-functional-groups-confirmed.md`
-§3 item 18. Deploying stays a manual user step.
+Poll the inbox, then run I-39 (v2 §3.19 functional combinations: seniority ácido > éster >
+amida > nitrilo > aldehído > cetona > alcohol > amina; enable only covered pairs. Still
+refused and candidates for this phase: `ciano-` below acid/ester/amide (`cyanoPrefix`, I-38),
+amide as prefix beside acid/ester (`amidePrefix`, I-37: `carbamoil-`/`acilamino-`), ester
+prefix and diesters (`esterPrefix` / `manyEsters`, I-35), acyl prefixes `acetil`/`formil`
+(`acylSubstituent`, I-32). Split the phase if it is too big (e.g. I-39a ciano-/acyl
+prefixes, I-39b ester/amide prefixes + pair matrix). Spec: design §13.4 row I-39, §13.6,
+and `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3 item 19. Deploying
+stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -179,19 +181,25 @@ chain-end suffix). Nitriles are still refused in `validate.js` (`HETEROATOM`). S
 - Amides (I-37): amide kind in `principal.js` (C(=O)N one group, `N` locants from I-36),
   refusals `ringAmide` / `amidePrefix` / `manyAmides` / `substitutedPolyamide` / `imide` in
   `validate.js`; oracle `generateAmides()`; tests `tests/unit/amides.test.js`, `tests/e2e/amides.spec.js`.
+- Nitriles (I-38): nitrile kind in `principal.js` (C≡N carbon chain end, N never a chain atom),
+  refusals `ringNitrile` / `manyNitriles` / `cyanoPrefix`; `assertNoTripleBondLeaves` now C≡C
+  only; P0-aware chain sentence `outsideUnsaturation()` in `explain.js`; oracle
+  `generateNitriles()`; tests `tests/unit/nitriles.test.js`, `tests/e2e/nitriles.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-37)
+## Verification (last phase, I-38)
 
-- `npm test` 0 (1077 pass) · `npm run check` 0 (109 files) · `npm run e2e` 0
-  (205 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (5611 pass, 500 amides).
+- `npm test` 0 (1109 pass) · `npm run check` 0 (111 files) · `npm run e2e` 0
+  (209 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (6111 pass, 500
+  nitriles; run before the explanation-only review fix, re-run 0 by the worker after it).
 
 ## Open risks / deviations
 
 - Commits `21b918a` and `add6d93` carry a `Co-Authored-By: Claude` trailer,
   against the user's rule of no AI references in commits. Already pushed, not
-  rewritten; later commits omit it.
+  rewritten; later commits omit it. `a052801` (I-37) repeats the mistake (pushed, not
+  rewritten); commits from I-38 on omit it.
 
 - I-5 decisions (see `docs/progress-archive/i-5.md`): `di(propan-2-il)` not
   `bis(...)` for simple parenthesised prefixes (spec wording superseded);
@@ -355,10 +363,16 @@ chain-end suffix). Nitriles are still refused in `validate.js` (`HETEROATOM`). S
   memory. `scripts/oracle/README.md` still stale; seed 7 keeps 2 pre-existing carbonyl
   generator failures (`docs/progress-archive/i-37.md`).
 
+- I-38: open-chain nitriles only; `ciano-` refused (`cyanoPrefix`, left to I-39), ring
+  nitriles and 3+ nitriles refused; `metanonitrilo` (HCN) admitted; `acetonitrilo` labelled
+  preferred and `-onitrilo` elision from memory (P-16.7.1). Review should-fix (dinitrile chain
+  step blamed length instead of P0) fixed for nitriles, diacids and diamides with regressions
+  (`docs/progress-archive/i-38.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-36 `336fc98`, pushed. I-37 committed and pushed right after this
+- I-37 `a052801`, pushed. I-38 committed and pushed right after this
   checkpoint (see `git log`).

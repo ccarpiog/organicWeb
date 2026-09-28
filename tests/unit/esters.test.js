@@ -65,8 +65,9 @@ test('validation: an ester –COO– is admitted; anhydrides, carbonates, peroxy
   for (const smiles of ['CC(=O)OC', 'O=COC', 'CCC(=O)OCC', 'CC(=O)OC=C', 'ClCC(=O)OC', 'CC(=O)OCCO', 'CC(=O)CC(=O)OCC', 'CC(=O)OCOC']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Anhydride, carbonate, peroxy ester, an ester with a nitrile (with an amine, `2-aminoetanoato de metilo`, named since I-36).
-  for (const smiles of ['CC(=O)OC(C)=O', 'COC(=O)OC', 'CC(=O)OOC', 'N#CCC(=O)OC']) {
+  // Anhydride, carbonate, peroxy ester (with an amine, `2-aminoetanoato de metilo`, named since I-36; an ester with a nitrile
+  // gets its own `cyanoPrefix` refusal since I-38, nitriles.test.js).
+  for (const smiles of ['CC(=O)OC(C)=O', 'COC(=O)OC', 'CC(=O)OOC']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);

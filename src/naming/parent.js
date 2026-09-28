@@ -33,7 +33,9 @@
  * always a leaf, so it can end a chain; a ketone carbon has two carbon
  * neighbours), and
  * the C=O bond is never a chain bond, so it counts in no P2/P3 comparison
- * (design.md §13.6 "Where X belongs").
+ * (design.md §13.6 "Where X belongs"). The same holds for a nitrile
+ * carbon (I-38: a leaf, its C≡N never a chain bond, never an `-ino`); its
+ * N, like an amine's, is counted by P0.
  * Pure: reads topology only.
  */
 
@@ -158,20 +160,24 @@ export function chainCounts(adj, atoms, isSuffixAtom = () => false, isGroupAtom 
 } // End of function chainCounts()
 
 /**
- * Internal invariant of design.md §4.2: no triple bond can leave a longest
- * chain (an internal attachment would exceed the valence of 4, a terminal
- * one would make the chain longer).
+ * Internal invariant of design.md §4.2: no carbon–carbon triple bond can
+ * leave a longest chain (an internal attachment would exceed the valence
+ * of 4, a terminal one would make the chain longer). The v1 form of this
+ * check banned every triple bond leaving the chain; since I-38 (design.md
+ * §13.3, §13.4) the C≡N of a nitrile does: its carbon is a chain end and
+ * its N is never a chain atom, so only carbon neighbours are checked.
  *
+ * @param {object} mol - The molecule.
  * @param {Map<number, {atom: number, order: number}[]>} adj - Adjacency map.
  * @param {number[]} atoms - A longest chain.
  * @returns {void}
- * @throws {Error} When a triple bond joins the chain to an atom outside it.
+ * @throws {Error} When a C≡C triple bond joins the chain to a carbon outside it.
  */
-function assertNoTripleBondLeaves(adj, atoms) {
+function assertNoTripleBondLeaves(mol, adj, atoms) {
   const inChain = new Set(atoms);
   for (const atom of atoms) {
     for (const n of adj.get(atom)) {
-      if (!inChain.has(n.atom) && n.order === 3) {
+      if (!inChain.has(n.atom) && n.order === 3 && mol.atoms.get(n.atom).element === 'C') {
         throw new Error(`selectParent: triple bond ${atom}-${n.atom} leaves a longest chain (invariant broken)`);
       }
     }
@@ -220,7 +226,7 @@ function applyCountRule(rule, chains, values) {
  *
  * @param {object} mol - A validated acyclic hydrocarbon, halogen derivative, alcohol, aldehyde or ketone.
  * @returns {{chains: number[][], trace: object[]}} The remaining chains (each starting at its smaller end id) and the P-rule trace steps.
- * @throws {Error} When the invariant "no triple bond leaves a longest chain" is broken.
+ * @throws {Error} When the invariant "no C≡C triple bond leaves a longest chain" is broken.
  */
 export function selectParent(mol) {
   const adj = adjacency(mol);
@@ -249,7 +255,7 @@ export function selectParent(mol) {
     trace.push(step);
     chains = survivors;
     if (rule === 'P1') {
-      chains.forEach((chain) => assertNoTripleBondLeaves(adj, chain));
+      chains.forEach((chain) => assertNoTripleBondLeaves(mol, adj, chain));
     }
   }
   return { chains: chains.map((chain) => [...chain]), trace };

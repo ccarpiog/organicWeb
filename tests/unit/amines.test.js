@@ -64,14 +64,14 @@ test('validation: amine nitrogens are admitted; ureas, hydrazides, nitriles, imi
     'CC(=O)OCCN', 'COCCN', 'NCCCC=O', 'NC1CCCCC1', 'NC1=CC=CC=C1', 'CN(C)C1=CC=CC=C1', 'NC1CCCCC1O', 'OC1CCC(CN)CC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Urea, hydrazide, nitrile, imine, ammonia, hydrazine, hydroxylamine, N-chloro amine, an N on a C=O carbon of a carbamate
-  // (amides are named since I-37, tests/unit/amides.test.js).
-  for (const smiles of ['NC(=O)N', 'CC(=O)NN', 'CC#N', 'CC=NC', 'N', 'CNN', 'CNO', 'CNCl', 'COC(N)=O']) {
+  // Urea, hydrazide, cyanamide, imine, ammonia, hydrazine, hydroxylamine, N-chloro amine, an N on a C=O carbon of a carbamate
+  // (amides are named since I-37, tests/unit/amides.test.js; nitriles since I-38, tests/unit/nitriles.test.js).
+  for (const smiles of ['NC(=O)N', 'CC(=O)NN', 'CNC#N', 'CC=NC', 'N', 'CNN', 'CNO', 'CNCl', 'COC(N)=O']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
   }
-  assert.match(MESSAGES.HETEROATOM, /, aminas \(con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂\) y amidas/);
+  assert.match(MESSAGES.HETEROATOM, /, aminas \(con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂\), amidas/);
   const mol = parseSmiles('CC(=O)NCCN');
   const adj = adjacency(mol);
   const nitrogens = [...mol.atoms.keys()].filter((id) => mol.atoms.get(id).element === 'N');
@@ -142,7 +142,7 @@ test('refusals: side-chain amine on a ring, N-substituted polyamines, symmetric 
 });
 
 test('principal kind: the amine is the least senior suffix group', () => {
-  assert.deepEqual(NAMED_KINDS, ['acid', 'ester', 'amide', 'aldehyde', 'ketone', 'alcohol', 'amine']);
+  assert.deepEqual(NAMED_KINDS, ['acid', 'ester', 'amide', 'nitrile', 'aldehyde', 'ketone', 'alcohol', 'amine']);
   const mol = parseSmiles('NCCO');
   const adj = adjacency(mol);
   const [n, , , o] = [...mol.atoms.keys()];
