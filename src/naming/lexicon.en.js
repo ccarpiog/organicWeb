@@ -72,6 +72,7 @@ export const TRADITIONAL_NAMES = Object.freeze({
   phenylacetaldehyde: 'phenylacetaldehyde',
   phenylacetamide: '2-phenylacetamide',
   phenylacetonitrile: 'phenylacetonitrile',
+  phenylacetate: 'phenylacetate',
 });
 
 /** Endings of the parent name. */
@@ -279,7 +280,7 @@ export const GROUP_SUFFIXES = Object.freeze({
 
 /** Suffixes of a principal group whose carbon is outside a ring parent (see lexicon.es.js RING_GROUP_SUFFIXES): `cyclohexanecarboxylic acid`, `cyclohexanecarbaldehyde`, `cyclohexanecarboxamide`, `cyclohexanecarbonitrile`. */
 export const RING_GROUP_SUFFIXES = Object.freeze({
-  acid: 'carboxylic acid', aldehyde: 'carbaldehyde', amide: 'carboxamide', nitrile: 'carbonitrile',
+  acid: 'carboxylic acid', ester: 'carboxylate', aldehyde: 'carbaldehyde', amide: 'carboxamide', nitrile: 'carbonitrile',
 });
 
 /**
@@ -296,6 +297,7 @@ export function ringGroupSuffix(kind) {
 /** Retained names of benzene with a –COOH, a –CHO, an amide or a nitrile (see lexicon.es.js BENZENE_GROUP_NAMES): `benzoic acid`, `benzaldehyde`, `benzamide`, `benzonitrile`. */
 export const BENZENE_GROUP_NAMES = Object.freeze({
   acid: Object.freeze({ stem: 'benz', ending: 'oic acid' }),
+  ester: Object.freeze({ stem: 'benz', ending: 'oate' }),
   aldehyde: Object.freeze({ stem: 'benz', ending: 'aldehyde' }),
   amide: Object.freeze({ stem: 'benz', ending: 'amide' }),
   nitrile: Object.freeze({ stem: 'benz', ending: 'onitrile' }),

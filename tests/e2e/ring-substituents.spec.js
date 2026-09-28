@@ -8,9 +8,10 @@
  * ring and a chain with as many groups each keep the ring as the parent;
  * the traditional names are listed under "Otras formas válidas"; "Ordenar
  * dibujo" lays a ring prefix out; two identical principal branches on a
- * ring and an ester with a ring are refused with their messages (an acyl
- * group on the ring and aldehydes are named since I-40b,
- * tests/e2e/ring-acids.spec.js; nitriles and amides since I-40c).
+ * ring and two esters on two side chains of the ring are refused with
+ * their messages (an acyl group on the ring and aldehydes are named since
+ * I-40b, tests/e2e/ring-acids.spec.js; nitriles and amides since I-40c;
+ * ring esters since I-40d, tests/e2e/ring-esters.spec.js).
  * Runs on the dev server and on dist/index.html.
  */
 
@@ -141,7 +142,7 @@ test('ketones and amines beside a benzene, with their traditional names; a tie k
   expect(errors).toEqual([]);
 }); // End of test 'ketones and amines beside a benzene…'
 
-test('loaded ring-prefix molecules are named; identical principal branches and a ring ester are refused', async ({ page }) => {
+test('loaded ring-prefix molecules are named; identical principal branches and two esters apart are refused', async ({ page }) => {
   const errors = await openApp(page);
   for (const [smiles, name] of [
     ['CC(O)C1=CC=CC=C1', '1-feniletan-1-ol'],
@@ -167,9 +168,10 @@ test('loaded ring-prefix molecules are named; identical principal branches and a
   await expect(error).toContainText('ciclohexano-1,4-diildimetanol');
   await expect(page.locator('#result-name')).toHaveCount(0);
 
-  await loadSmiles(page, 'CC(=O)OCC1CCCCC1');
+  // Ring esters are named since I-40d; two esters on two side chains of the ring stay refused.
+  await loadSmiles(page, 'COC(=O)CC1CCC(CCC(=O)OC)CC1');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('un grupo –COO– (un éster)');
+  await expect(error).toContainText('dos grupos –COO– (éster)');
   expect(errors).toEqual([]);
 }); // End of test 'loaded ring-prefix molecules…'

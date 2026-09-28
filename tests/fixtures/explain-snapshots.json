@@ -76792,5 +76792,5250 @@
     ]
    }
   ]
+ },
+ "COC(=O)C1=CC=CC=C1": {
+  "name": "benzoato de metilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 8 carbonos, 8 hidrógenos y 2 átomos de oxígeno (C₈H₈O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       3,
+       4,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El –COO– está unido directamente a un carbono del [[anillo]]. Su carbono no forma parte del anillo (solo puede unirse a un carbono más, el del anillo) y tampoco forma una cadena aparte: el anillo es la [[cadena principal]] y lleva el grupo.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera nombra el benceno con un grupo –COO–, que tiene nombre propio, «benzoato» (del «ácido benzoico»), y la IUPAC (2013) lo conserva como preferido. También se puede formar como en los demás anillos, con el [[sufijo]] «-carboxilato», que incluye el carbono del grupo: «bencenocarboxilato». La segunda palabra es el nombre del grupo unido al otro oxígeno, acabado en «-ilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       4,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es el [[benceno]], con el carbono del C=O, que está fuera del anillo. Se nombra como el ácido del que viene, «ácido benzoico», cambiando «-oico» por «-oato»: «benzoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «benzoato de metilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       3,
+       4
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       4,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es el [[benceno]], con el carbono del C=O, que está fuera del anillo. Se nombra como el ácido del que viene, «ácido benzoico», cambiando «-oico» por «-oato»: «benzoato».",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         3,
+         4
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         4,
+         3
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+      "highlight": [
+       {
+        "atoms": [
+         1
+        ],
+        "bonds": [],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         2
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "El grupo –COO– unido al anillo es el [[grupo principal]]. Su carbono no es del anillo. La parte del ácido, el benceno con un grupo –COO–, tiene nombre propio: «benzoato» (del «ácido benzoico»).",
+     "Con un solo –COO– no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono del anillo unido al –COO– es siempre el 1 y el número no se escribe."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       6,
+       8,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       5,
+       7,
+       9
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       4,
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido:",
+     "El benceno con un grupo –COO– tiene nombre propio: «benzoato». No lleva números: «benz» es el anillo y «-oato», el grupo –COO–.",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «metilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «benzoato de metilo».",
+     "También es correcto:",
+     "«bencenocarboxilato de metilo»: forma sistemática, con el nombre del anillo (benceno), que usan algunos libros; la IUPAC (2013) prefiere el nombre tradicional."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       4,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "fen",
+      "kind": "stem",
+      "meaning": "el anillo de benceno («fenol» es un nombre propio)"
+     },
+     {
+      "text": "-ol",
+      "kind": "ending",
+      "meaning": "grupo principal: el –OH unido al anillo"
+     }
+    ],
+    "parts": [
+     {
+      "text": "benz",
+      "kind": "stem",
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       5,
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       4,
+       2
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "COC(=O)C1CCCCC1C": {
+  "name": "2-metilciclohexano-1-carboxilato de metilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos, 16 hidrógenos y 2 átomos de oxígeno (C₉H₁₆O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       10,
+       9,
+       8,
+       7,
+       6,
+       11,
+       4,
+       3,
+       2,
+       1
+      ],
+      "bonds": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       11,
+       3,
+       4,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El –COO– está unido directamente a un carbono del [[anillo]]. Su carbono no forma parte del anillo (solo puede unirse a un carbono más, el del anillo) y tampoco forma una cadena aparte: el anillo es la [[cadena principal]] y lleva el grupo.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de», y la primera termina con el [[sufijo]] «-carboxilato» (como en «ciclohexanocarboxilato de metilo»). Ese sufijo ya incluye el carbono del –COO–, así que ese carbono no se cuenta en el nombre del anillo. La segunda palabra es el nombre del grupo unido al otro oxígeno, acabado en «-ilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       4,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es el [[anillo]] de 6 carbonos, con el carbono del C=O, que está fuera del anillo. Se nombra como el ácido del que viene, «ácido 2-metilciclohexano-1-carboxílico», cambiando «-ílico» por «-ilato»: «2-metilciclohexano-1-carboxilato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «2-metilciclohexano-1-carboxilato de metilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       10,
+       9,
+       8,
+       7,
+       6,
+       3,
+       4,
+       11
+      ],
+      "bonds": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5,
+       4,
+       3,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es el [[anillo]] de 6 carbonos, con el carbono del C=O, que está fuera del anillo. Se nombra como el ácido del que viene, «ácido 2-metilciclohexano-1-carboxílico», cambiando «-ílico» por «-ilato»: «2-metilciclohexano-1-carboxilato».",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         10,
+         9,
+         8,
+         7,
+         6,
+         3,
+         4,
+         11
+        ],
+        "bonds": [
+         10,
+         9,
+         8,
+         7,
+         6,
+         5,
+         4,
+         3,
+         11
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+      "highlight": [
+       {
+        "atoms": [
+         1
+        ],
+        "bonds": [],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         2
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "El grupo –COO– unido al anillo no forma parte de él: ni su carbono ni sus oxígenos se cuentan en el anillo. Es el [[grupo principal]] y da la terminación «-carboxilato», que ya incluye ese carbono.",
+     "El grupo unido al otro oxígeno del –COO– tampoco es del anillo ni una rama suya: se nombra aparte, como segunda palabra del nombre.",
+     "Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       10,
+       9,
+       8,
+       7,
+       6
+      ],
+      "bonds": [
+       10,
+       9,
+       8,
+       7,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       5
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       11
+      ],
+      "bonds": [
+       11
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       4,
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, el grupo –COO– (el [[grupo principal]]) lleva el número más bajo, así que el carbono del anillo unido al –COO– es el 1 y después, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético).",
+     "Las numeraciones cuyo primer número no es 1 pierden enseguida. Estas son las que quedan para comparar:",
+     "Regla: los grupos –COO– (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 1; opción B: 1. Empatan las opciones A y B: se pasa a la regla siguiente.",
+     "Regla: los [[sustituyentes|sustituyente]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 2; opción B: 6. Se comparan uno a uno: en el primer número distinto, 2 es menor que 6. Gana la opción A.",
+     "El carbono del anillo unido al grupo –COO– es el 1, y aquí ese 1 se escribe («2-metilciclohexano-1-carboxilato de metilo»): solo se quita cuando el –COO– es lo único que hay en un anillo sin enlaces dobles ni triples, como en «ciclohexanocarboxilato de metilo».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       10,
+       9,
+       8,
+       7,
+       6
+      ],
+      "bonds": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       11
+      ],
+      "bonds": [
+       11
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      10,
+      2
+     ],
+     [
+      9,
+      3
+     ],
+     [
+      8,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      6,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COO–",
+       "lists": [
+        [
+         1
+        ],
+        [
+         1
+        ]
+       ],
+       "firstDifference": -1,
+       "marks": [
+        [],
+        []
+       ],
+       "winners": [
+        0,
+        1
+       ]
+      },
+      {
+       "rule": "N3",
+       "label": "Sustituyentes",
+       "lists": [
+        [
+         2
+        ],
+        [
+         6
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         10,
+         9,
+         8,
+         7,
+         6
+        ],
+        "bonds": [
+         10,
+         9,
+         8,
+         7,
+         6,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        1
+       ],
+       [
+        10,
+        2
+       ],
+       [
+        9,
+        3
+       ],
+       [
+        8,
+        4
+       ],
+       [
+        7,
+        5
+       ],
+       [
+        6,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         10
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         10
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        1
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        7,
+        3
+       ],
+       [
+        8,
+        4
+       ],
+       [
+        9,
+        5
+       ],
+       [
+        10,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 2 hay un grupo metilo: se escribe «2-metil».",
+     "«metil» es un grupo de 1 carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       10,
+       9,
+       8,
+       7,
+       6
+      ],
+      "bonds": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       11
+      ],
+      "bonds": [
+       11
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      10,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "metil",
+      "text": "En el carbono 2 hay un grupo metilo: se escribe «2-metil». «metil» es un grupo de 1 carbono.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         10,
+         9,
+         8,
+         7,
+         6
+        ],
+        "bonds": [
+         10,
+         9,
+         8,
+         7,
+         6,
+         5
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         11
+        ],
+        "bonds": [
+         11
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        10,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier anillo:",
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre del anillo.",
+     "Los números se separan entre sí con comas (1,2) y de las letras con guiones (1-metil). Los sustituyentes se escriben pegados al nombre del anillo.",
+     "El nombre del anillo empieza por «ciclo-», que dice que la cadena está cerrada.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-carboxilato», con el número del carbono del anillo unido al grupo justo delante.",
+     "El carbono del –COO– no tiene número: no es del anillo, y el sufijo «-carboxilato» ya lo incluye.",
+     "La «o» final de «-ano» se queda delante de «-carboxilato», porque empieza por consonante: «2-metilciclohexano-1-carboxilato de metilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «metilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «2-metilciclohexano-1-carboxilato de metilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       10,
+       9,
+       8,
+       7,
+       6
+      ],
+      "bonds": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       11
+      ],
+      "bonds": [
+       11
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       4,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      10,
+      2
+     ],
+     [
+      9,
+      3
+     ],
+     [
+      8,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      6,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono del anillo donde está «metil»"
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo metilo (1 carbono)"
+     },
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "meaning": "carbono del anillo unido al grupo –COO–"
+     },
+     {
+      "text": "-carboxilato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (1 carbono), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       10,
+       11
+      ],
+      "bonds": [
+       11
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metil",
+      "kind": "prefix",
+      "atoms": [
+       11
+      ],
+      "bonds": [
+       11
+      ]
+     },
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       5,
+       10,
+       9,
+       8,
+       7,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       5,
+       10,
+       9,
+       8,
+       7,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       10,
+       9,
+       8,
+       7,
+       6,
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       5,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "carboxilato",
+      "kind": "ending",
+      "atoms": [
+       5,
+       4,
+       3,
+       2
+      ],
+      "bonds": [
+       3,
+       4,
+       2
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "COC(=O)C1CCC(C(=O)OC)CC1": {
+  "name": "ciclohexano-1,4-dicarboxilato de dimetilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 10 carbonos, 16 hidrógenos y 4 átomos de oxígeno (C₁₀H₁₆O₄).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En cada grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       14,
+       4,
+       3,
+       2,
+       10,
+       9,
+       11,
+       1,
+       12
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       12,
+       13,
+       14,
+       3,
+       4,
+       2,
+       9,
+       8,
+       10,
+       1,
+       11
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 2 grupos –COO– (cada uno, un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos). Son [[grupos funcionales|grupo funcional]]: la molécula es un diéster, un éster con 2 grupos –COO–.",
+     "Los tres átomos de cada –COO– forman un solo grupo: su C=O no es una cetona, ni su oxígeno del medio un éter.",
+     "Los 2 grupos –COO– están unidos directamente a carbonos del [[anillo]]. Sus carbonos no forman parte del anillo (cada uno solo puede unirse a un carbono más, el del anillo) y tampoco forman cadenas aparte: el anillo es la [[cadena principal]] y lleva los grupos.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de», y la primera termina con el [[sufijo]] «-carboxilato» (como en «ciclohexanocarboxilato de metilo»). Ese sufijo ya incluye el carbono del –COO–, así que ese carbono no se cuenta en el nombre del anillo. La segunda palabra es el nombre del grupo unido al otro oxígeno, acabado en «-ilo».",
+     "Aquí hay 2 grupos –COO– en el anillo, así que el sufijo dice cuántos: «-dicarboxilato» («di» = 2, «tri» = 3)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       3,
+       4,
+       2,
+       9,
+       8,
+       10
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "diester",
+    "title": "Separa las partes del diéster",
+    "text": [
+     "Los oxígenos del medio de los dos –COO– están cada uno entre dos carbonos y separan la molécula en tres partes: la parte del ácido y un grupo al otro lado de cada oxígeno. Cada parte se nombra por separado, y el nombre del diéster las junta.",
+     "La parte del ácido es el [[anillo]] de 6 carbonos, con los carbonos de los C=O, que están fuera del anillo. Se nombra como el ácido del que viene, «ácido ciclohexano-1,4-dicarboxílico», cambiando «-ílico» por «-ilato»: «ciclohexano-1,4-dicarboxilato».",
+     "Al otro lado de cada oxígeno está el mismo grupo de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+     "Los dos grupos son iguales, así que se escribe su nombre una vez, con «di» delante («di» = 2): «dimetilo».",
+     "Los oxígenos del medio no se nombran aparte: son parte de los grupos –COO–, que ya dicen «-oato». Tampoco son de ninguna cadena: la [[cadena principal]] no puede atravesarlos.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final los grupos: «ciclohexano-1,4-dicarboxilato de dimetilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       14,
+       3,
+       9,
+       4,
+       10
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       12,
+       13,
+       14,
+       4,
+       8,
+       3,
+       9
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       12
+      ],
+      "bonds": [],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       11
+      ],
+      "bonds": [
+       10,
+       11
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es el [[anillo]] de 6 carbonos, con los carbonos de los C=O, que están fuera del anillo. Se nombra como el ácido del que viene, «ácido ciclohexano-1,4-dicarboxílico», cambiando «-ílico» por «-ilato»: «ciclohexano-1,4-dicarboxilato».",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         7,
+         8,
+         13,
+         14,
+         3,
+         9,
+         4,
+         10
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         12,
+         13,
+         14,
+         4,
+         8,
+         3,
+         9
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno 1 de 2",
+      "text": "Al otro lado de un oxígeno hay un grupo de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+      "highlight": [
+       {
+        "atoms": [
+         1
+        ],
+        "bonds": [],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         2
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno 2 de 2",
+      "text": "Al otro lado de un oxígeno hay un grupo de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+      "highlight": [
+       {
+        "atoms": [
+         12
+        ],
+        "bonds": [],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         11
+        ],
+        "bonds": [
+         10,
+         11
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "Los grupos –COO– unidos al anillo no forman parte de él: ni sus carbonos ni sus oxígenos se cuentan en el anillo. Son el [[grupo principal]] y dan la terminación «-dicarboxilato», que ya incluye esos carbonos.",
+     "Los grupos unidos a los otros oxígenos de los –COO– tampoco son del anillo ni ramas suyas: se nombran aparte, al final del nombre.",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       14
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       12,
+       13
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       14
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       3,
+       4,
+       2,
+       9,
+       8,
+       10
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, los grupos –COO– (el [[grupo principal]]) llevan los números más bajos, así que un carbono del anillo unido a un grupo –COO– es el 1.",
+     "Empieza a contar por un carbono del anillo unido a un grupo –COO–: así salen los números 1, 4, los más bajos posibles. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Con varios grupos –COO– en el anillo se escriben los números de todos los carbonos del anillo unidos a ellos, para decir dónde está cada uno: «ciclohexano-1,4-dicarboxilato de dimetilo».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       14
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       12,
+       13,
+       14
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      7,
+      3
+     ],
+     [
+      8,
+      4
+     ],
+     [
+      13,
+      5
+     ],
+     [
+      14,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un diéster tiene dos partes unidas por «de». La primera es la parte del ácido, y se forma como el nombre de cualquier anillo:",
+     "El nombre de un anillo empieza por «ciclo-», que dice que la cadena está cerrada. Luego va la raíz, que dice cuántos carbonos tiene el anillo, y la terminación.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-dicarboxilato», con los números de los carbonos del anillo unidos a los grupos justo delante.",
+     "«di» quiere decir que hay 2 grupos –COO– en el anillo.",
+     "Los carbonos de los –COO– no tienen número: no son del anillo, y el sufijo «-dicarboxilato» ya los incluye.",
+     "La «o» final de «-ano» se queda delante de «-dicarboxilato», porque empieza por consonante: «ciclohexano-1,4-dicarboxilato de dimetilo».",
+     "Después va la palabra «de» y los nombres de los grupos unidos a los oxígenos, acabados en «-ilo»: «dimetilo». Los dos grupos son iguales, así que se escribe su nombre una vez, con «di» delante («di» = 2): «dimetilo».",
+     "En inglés el orden es al revés: primero los grupos y después la parte del ácido, sin «de» (el butanodioato de dimetilo es «dimethyl butanedioate», y el propanodioato de etilo y metilo, «ethyl methyl propanedioate»).",
+     "El nombre completo es «ciclohexano-1,4-dicarboxilato de dimetilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       14
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       12,
+       13,
+       14
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       3,
+       4,
+       2,
+       9,
+       8,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       12
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      1
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      7,
+      3
+     ],
+     [
+      8,
+      4
+     ],
+     [
+      13,
+      5
+     ],
+     [
+      14,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     },
+     {
+      "text": "1,4",
+      "kind": "locant",
+      "meaning": "carbonos del anillo unidos a los grupos –COO–"
+     },
+     {
+      "text": "-dicarboxilato",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las partes del diéster: primero la del ácido y luego los grupos unidos a los oxígenos"
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "meaning": "hay 2 grupos iguales, uno en el oxígeno de cada –COO–"
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno de cada –COO– (1 carbono), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       14
+      ],
+      "bonds": [
+       14
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       14
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       5,
+       6,
+       7,
+       12,
+       13,
+       14
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       5,
+       4
+      ],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       8,
+       10
+      ],
+      "bonds": [
+       9
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       3,
+       4,
+       2,
+       9,
+       8,
+       10
+      ]
+     },
+     {
+      "text": "carboxilato",
+      "kind": "ending",
+      "atoms": [
+       5,
+       4,
+       3,
+       2,
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       3,
+       4,
+       2,
+       9,
+       8,
+       10
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       1,
+       12
+      ],
+      "bonds": [
+       1,
+       11
+      ]
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "atoms": [
+       1,
+       12
+      ],
+      "bonds": [
+       1,
+       11
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)OC1=CC=CC=C1": {
+  "name": "etanoato de fenilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 8 carbonos, 8 hidrógenos y 2 átomos de oxígeno (C₈H₈O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       10,
+       7,
+       9,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 6 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «fenilo».",
+     "«fenilo» es el [[benceno]] como grupo, unido al oxígeno por uno de sus carbonos: «fenil» + «-o».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «etanoato de fenilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       10,
+       7,
+       9,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 6 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «fenilo». «fenilo» es el [[benceno]] como grupo, unido al oxígeno por uno de sus carbonos: «fenil» + «-o».",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         10,
+         7,
+         9,
+         8
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         10
+        ],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "ringChain",
+    "title": "Anillo o cadena",
+    "text": [
+     "Tu molécula tiene un [[anillo]] de 6 carbonos (un [[benceno]]) y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.",
+     "Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de grupos –COO–. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.",
+     "El anillo no lleva ningún grupo –COO– y la mejor cadena abierta lleva un grupo –COO–: gana la cadena.",
+     "Por eso la cadena principal es la cadena abierta. El anillo está al otro lado del oxígeno del medio del –COO–: es parte del grupo unido a ese oxígeno, que se nombra aparte, como segunda palabra del nombre: «fenilo». Los carbonos del anillo nunca forman parte de la cadena principal."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       10,
+       9
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       10,
+       9,
+       8
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "El anillo",
+      "text": "El anillo no lleva ningún grupo –COO–.",
+      "highlight": [
+       {
+        "atoms": [
+         8,
+         7,
+         6,
+         5,
+         10,
+         9
+        ],
+        "bonds": [
+         7,
+         6,
+         5,
+         10,
+         9,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "La cadena",
+      "text": "Esta cadena lleva un grupo –COO–.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "Sin contar los carbonos del grupo unido al oxígeno del –COO–, «fenilo», que se nombra aparte, los demás carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene 2 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «etanoato de fenilo», nunca «-1-oato»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «etanoato de fenilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «fenilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «etanoato de fenilo».",
+     "También es correcto:",
+     "«acetato de fenilo»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       10,
+       7,
+       9,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "fenilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (6 carbonos), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "fenilo",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       10,
+       7,
+       9,
+       8
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)OC1CCCCC1C": {
+  "name": "etanoato de 2-metilciclohexilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos, 16 hidrógenos y 2 átomos de oxígeno (C₉H₁₆O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       10,
+       7,
+       9,
+       11,
+       8
+      ],
+      "bonds": [
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 7 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «2-metilciclohexilo».",
+     "Sus carbonos se numeran empezando por el que está unido al oxígeno, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus [[sustituyentes|sustituyente]].",
+     "El anillo lleva sus propios [[sustituyentes|sustituyente]]: «metil» en el carbono 2.",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «etanoato de 2-metilciclohexilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       1,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       10,
+       7,
+       9,
+       11,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4
+      ],
+      "bonds": [
+       3,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido etanoico», cambiando «-oico» por «-oato»: «etanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         1,
+         2
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 7 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «2-metilciclohexilo». Sus carbonos se numeran empezando por el que está unido al oxígeno, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus [[sustituyentes|sustituyente]]. El anillo lleva sus propios [[sustituyentes|sustituyente]]: «metil» en el carbono 2.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         6,
+         10,
+         7,
+         9,
+         11,
+         8
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         11
+        ],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         4
+        ],
+        "bonds": [
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "ringChain",
+    "title": "Anillo o cadena",
+    "text": [
+     "Tu molécula tiene un [[anillo]] de 6 carbonos y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.",
+     "Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de grupos –COO–. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.",
+     "El anillo no lleva ningún grupo –COO– y la mejor cadena abierta lleva un grupo –COO–: gana la cadena.",
+     "Por eso la cadena principal es la cadena abierta. El anillo está al otro lado del oxígeno del medio del –COO–: es parte del grupo unido a ese oxígeno, que se nombra aparte, como segunda palabra del nombre: «2-metilciclohexilo». Los carbonos del anillo nunca forman parte de la cadena principal."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       10,
+       9
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       10,
+       9,
+       8
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       1,
+       2
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "El anillo",
+      "text": "El anillo no lleva ningún grupo –COO–.",
+      "highlight": [
+       {
+        "atoms": [
+         8,
+         7,
+         6,
+         5,
+         10,
+         9
+        ],
+        "bonds": [
+         7,
+         6,
+         5,
+         10,
+         9,
+         8
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "La cadena",
+      "text": "Esta cadena lleva un grupo –COO–.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Las cadenas que llevan menos grupos –COO– quedan descartadas.",
+     "Solo una cadena lleva el grupo –COO–: tiene 2 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Aquí no hace falta numerar: el nombre no lleva números.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «etanoato de 2-metilciclohexilo», nunca «-1-oato»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "El nombre de la cadena principal es la raíz, que dice cuántos carbonos hay, más una terminación.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «etanoato de 2-metilciclohexilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «2-metilciclohexilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «etanoato de 2-metilciclohexilo».",
+     "También es correcto:",
+     "«acetato de 2-metilciclohexilo»: nombre tradicional, que la IUPAC (2013) conserva como preferido."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       10,
+       7,
+       9,
+       11,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      1,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "2-metilciclohexilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (7 carbonos), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       4
+      ],
+      "bonds": [
+       2,
+       3
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2-metilciclohexilo",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       10,
+       7,
+       9,
+       11,
+       8
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "O=C(OC1=CC=CC=C1)C1=CC=CC=C1": {
+  "name": "benzoato de fenilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 13 carbonos, 10 hidrógenos y 2 átomos de oxígeno (C₁₃H₁₀O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       1,
+       2,
+       3,
+       4,
+       5,
+       9,
+       6,
+       8,
+       7
+      ],
+      "bonds": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       1,
+       10,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El –COO– está unido directamente a un carbono del [[anillo]]. Su carbono no forma parte del anillo (solo puede unirse a un carbono más, el del anillo) y tampoco forma una cadena aparte: el anillo es la [[cadena principal]] y lleva el grupo.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera nombra el benceno con un grupo –COO–, que tiene nombre propio, «benzoato» (del «ácido benzoico»), y la IUPAC (2013) lo conserva como preferido. También se puede formar como en los demás anillos, con el [[sufijo]] «-carboxilato», que incluye el carbono del grupo: «bencenocarboxilato». La segunda palabra es el nombre del grupo unido al otro oxígeno, acabado en «-ilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       10,
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       10,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es el [[benceno]], con el carbono del C=O, que está fuera del anillo. Se nombra como el ácido del que viene, «ácido benzoico», cambiando «-oico» por «-oato»: «benzoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 6 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «fenilo».",
+     "«fenilo» es el [[benceno]] como grupo, unido al oxígeno por uno de sus carbonos: «fenil» + «-o».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «benzoato de fenilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       2,
+       1
+      ],
+      "bonds": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       10,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       9,
+       6,
+       8,
+       7
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3
+      ],
+      "bonds": [
+       2,
+       3
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es el [[benceno]], con el carbono del C=O, que está fuera del anillo. Se nombra como el ácido del que viene, «ácido benzoico», cambiando «-oico» por «-oato»: «benzoato».",
+      "highlight": [
+       {
+        "atoms": [
+         10,
+         11,
+         12,
+         13,
+         14,
+         15,
+         2,
+         1
+        ],
+        "bonds": [
+         11,
+         12,
+         13,
+         14,
+         15,
+         16,
+         10,
+         1
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 6 carbonos. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «fenilo». «fenilo» es el [[benceno]] como grupo, unido al oxígeno por uno de sus carbonos: «fenil» + «-o».",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         5,
+         9,
+         6,
+         8,
+         7
+        ],
+        "bonds": [
+         4,
+         5,
+         6,
+         7,
+         8,
+         9
+        ],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         3
+        ],
+        "bonds": [
+         2,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "El grupo –COO– unido al anillo es el [[grupo principal]]. Su carbono no es del anillo. La parte del ácido, el benceno con un grupo –COO–, tiene nombre propio: «benzoato» (del «ácido benzoico»).",
+     "Con un solo –COO– no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono del anillo unido al –COO– es siempre el 1 y el número no se escribe."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       12,
+       14,
+       16
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       11,
+       13,
+       15
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       10,
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       10,
+       2
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido:",
+     "El benceno con un grupo –COO– tiene nombre propio: «benzoato». No lleva números: «benz» es el anillo y «-oato», el grupo –COO–.",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «fenilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «benzoato de fenilo».",
+     "También es correcto:",
+     "«bencenocarboxilato de fenilo»: forma sistemática, con el nombre del anillo (benceno), que usan algunos libros; la IUPAC (2013) prefiere el nombre tradicional."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       10,
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       10,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       9,
+       6,
+       8,
+       7
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "fen",
+      "kind": "stem",
+      "meaning": "el anillo de benceno («fenol» es un nombre propio)"
+     },
+     {
+      "text": "-ol",
+      "kind": "ending",
+      "meaning": "grupo principal: el –OH unido al anillo"
+     }
+    ],
+    "parts": [
+     {
+      "text": "benz",
+      "kind": "stem",
+      "atoms": [
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       10,
+       1,
+       2,
+       3
+      ],
+      "bonds": [
+       1,
+       10,
+       2
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "fenilo",
+      "kind": "prefix",
+      "atoms": [
+       4,
+       5,
+       9,
+       6,
+       8,
+       7
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "COC(=O)CC1=CC=CC=C1": {
+  "name": "2-feniletanoato de metilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos, 10 hidrógenos y 2 átomos de oxígeno (C₉H₁₀O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       5,
+       6,
+       7,
+       11,
+       8,
+       10,
+       9,
+       4,
+       2,
+       1
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       3,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COO–: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otro grupo de carbonos. Es un [[grupo funcional]]: la molécula es un éster.",
+     "Los tres átomos forman un solo grupo: el C=O del –COO– no es una cetona, ni su oxígeno del medio un éter.",
+     "El carbono del C=O solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COO– es el [[grupo principal]]: el nombre tiene dos palabras unidas por «de». La primera termina con el [[sufijo]] «-oato» y la segunda es el nombre del grupo unido al otro oxígeno, acabado en «-ilo» (como en «etanoato de metilo»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       2
+      ],
+      "bonds": [
+       3,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ester",
+    "title": "Separa las dos partes del éster",
+    "text": [
+     "El oxígeno del medio del –COO– está entre dos carbonos y separa la molécula en dos partes. Cada parte se nombra por separado, y el nombre del éster junta los dos nombres.",
+     "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido 2-feniletanoico», cambiando «-oico» por «-oato»: «2-feniletanoato».",
+     "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+     "El oxígeno del medio no se nombra aparte: es parte del grupo –COO–, que ya dice «-oato». Tampoco es de ninguna cadena: la [[cadena principal]] no puede atravesarlo.",
+     "En español se escribe primero la parte del ácido, luego «de» y al final el grupo: «2-feniletanoato de metilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       5,
+       4,
+       6,
+       7,
+       11,
+       8,
+       10,
+       9
+      ],
+      "bonds": [
+       4,
+       3,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Parte del ácido",
+      "text": "La parte del ácido es la [[cadena principal]], la que lleva el carbono del C=O. Ese carbono es el carbono 1 de la cadena y se cuenta con los demás: la cadena tiene 2 carbonos. Se nombra como el ácido del que viene, «ácido 2-feniletanoico», cambiando «-oico» por «-oato»: «2-feniletanoato».",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         5,
+         4,
+         6,
+         7,
+         11,
+         8,
+         10,
+         9
+        ],
+        "bonds": [
+         4,
+         3,
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         11
+        ],
+        "style": "parent"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Grupo unido al oxígeno",
+      "text": "La otra parte es el grupo unido al otro lado del oxígeno, de 1 carbono. Se nombra como una rama, pero como palabra suelta y acabado en «-ilo» (metilo, etilo, propilo…): «metilo».",
+      "highlight": [
+       {
+        "atoms": [
+         1
+        ],
+        "bonds": [],
+        "style": "substituent"
+       },
+       {
+        "atoms": [
+         2
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "ringChain",
+    "title": "Anillo o cadena",
+    "text": [
+     "Tu molécula tiene un [[anillo]] de 6 carbonos (un [[benceno]]) y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.",
+     "Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de grupos –COO–. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.",
+     "El anillo no lleva ningún grupo –COO– y la mejor cadena abierta lleva un grupo –COO–: gana la cadena.",
+     "Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra «fenil» (el [[benceno]] como sustituyente). Los carbonos del anillo nunca forman parte de la cadena principal."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       9,
+       8,
+       7,
+       6,
+       11,
+       10
+      ],
+      "bonds": [
+       8,
+       7,
+       6,
+       11,
+       10,
+       9
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3,
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       4,
+       2
+      ],
+      "bonds": [
+       3,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "El anillo",
+      "text": "El anillo no lleva ningún grupo –COO–.",
+      "highlight": [
+       {
+        "atoms": [
+         9,
+         8,
+         7,
+         6,
+         11,
+         10
+        ],
+        "bonds": [
+         8,
+         7,
+         6,
+         11,
+         10,
+         9
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "La cadena",
+      "text": "Esta cadena lleva un grupo –COO–.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         5
+        ],
+        "bonds": [
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COO–, porque el –COO– es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COO–, gana la más larga.",
+     "El carbono del –COO– forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella, y la cadena no puede atravesar el oxígeno del medio: los carbonos del otro lado forman el grupo que se nombra aparte, con «-ilo».",
+     "Las cadenas que llevan menos grupos –COO– quedan descartadas.",
+     "Solo una cadena lleva el grupo –COO–: tiene 2 carbonos.",
+     "Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], «fenil» (el [[benceno]] como sustituyente)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       4,
+       2
+      ],
+      "bonds": [
+       3,
+       2
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COO– tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COO– (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 1; opción B: 2. Se comparan uno a uno: en el primer número distinto, 1 es menor que 2. Gana la opción A.",
+     "El carbono del grupo –COO– siempre es el 1, así que su número no se escribe: «2-feniletanoato de metilo», nunca «-1-oato».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       11,
+       8,
+       10,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      1
+     ],
+     [
+      5,
+      2
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COO–",
+       "lists": [
+        [
+         1
+        ],
+        [
+         2
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         5
+        ],
+        "bonds": [
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        1
+       ],
+       [
+        5,
+        2
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         3
+        ],
+        "bonds": [
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        1
+       ],
+       [
+        3,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 2 hay un grupo fenilo: se escribe «2-fenil».",
+     "«fenil» es el nombre del [[benceno]] cuando va como sustituyente: un anillo de benceno al que le falta un hidrógeno (grupo fenilo, C₆H₅–)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       11,
+       8,
+       10,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "fenil",
+      "text": "En el carbono 2 hay un grupo fenilo: se escribe «2-fenil». «fenil» es el nombre del [[benceno]] cuando va como sustituyente: un anillo de benceno al que le falta un hidrógeno (grupo fenilo, C₆H₅–).",
+      "highlight": [
+       {
+        "atoms": [
+         3,
+         5
+        ],
+        "bonds": [
+         4
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         6,
+         7,
+         11,
+         8,
+         10,
+         9
+        ],
+        "bonds": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         11
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre de un éster tiene dos palabras. La primera es la parte del ácido, y se forma como el nombre de cualquier cadena:",
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La primera palabra acaba con el [[sufijo]] del grupo principal, «-oato», sin número.",
+     "El –COO– no lleva número: su carbono siempre es el 1.",
+     "La «o» final de «-ano» se quita delante de «-oato», porque empieza por vocal: «2-feniletanoato de metilo».",
+     "Después va la palabra «de» y la segunda palabra, el nombre del grupo unido al oxígeno, acabado en «-ilo»: «metilo». En español, el nombre de un éster se monta así: primero la parte del ácido y luego, tras «de», el grupo unido al oxígeno.",
+     "En inglés el orden es al revés: primero el grupo y después la parte del ácido, sin «de» (el etanoato de metilo es «methyl ethanoate»).",
+     "El nombre completo es «2-feniletanoato de metilo».",
+     "También es correcto:",
+     "«fenilacetato de metilo»: nombre tradicional, que la IUPAC (2013) acepta."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       5
+      ],
+      "bonds": [
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       11,
+       8,
+       10,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       3,
+       4,
+       2
+      ],
+      "bonds": [
+       3,
+       2
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      1
+     ],
+     [
+      5,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «fenil»"
+     },
+     {
+      "text": "fenil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo fenilo (6 carbonos)"
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oato»)"
+     },
+     {
+      "text": "-oato",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COO– (éster)"
+     },
+     {
+      "text": "de",
+      "kind": "punct",
+      "meaning": "une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno"
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "meaning": "grupo unido al oxígeno del –COO– (1 carbono), acabado en «-ilo»"
+     }
+    ],
+    "parts": [
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "fenil",
+      "kind": "prefix",
+      "atoms": [
+       6,
+       7,
+       11,
+       8,
+       10,
+       9
+      ],
+      "bonds": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11
+      ]
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       3,
+       5
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "oato",
+      "kind": "ending",
+      "atoms": [
+       3,
+       4,
+       2
+      ],
+      "bonds": [
+       3,
+       2
+      ]
+     },
+     {
+      "text": " de ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metilo",
+      "kind": "prefix",
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "COC(=O)C1CCC(C(=O)O)CC1": {
+  "name": "ácido 4-(metoxicarbonil)ciclohexano-1-carboxílico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos, 14 hidrógenos y 4 átomos de oxígeno (C₉H₁₄O₄).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. El otro oxígeno unido con un [[enlace doble]] (C=O) también se ve como O. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno. En el grupo –COOH están el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12,
+       3,
+       2,
+       4,
+       1,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12,
+       11,
+       4,
+       1,
+       2,
+       3,
+       9,
+       8,
+       10
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El –COOH está unido directamente a un carbono del [[anillo]]. Su carbono no forma parte del anillo (solo puede unirse a un carbono más, el del anillo) y tampoco forma una cadena aparte: el anillo es la [[cadena principal]] y lleva el grupo.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-carboxílico» (como en «ácido ciclohexanocarboxílico»). Ese sufijo ya incluye el carbono del –COOH, así que ese carbono no se cuenta en el nombre del anillo.",
+     "También tiene un grupo –COO– (un éster). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que el éster se nombra con un [[prefijo]], delante del nombre.",
+     "El –COO– tiene su carbono fuera de la [[cadena principal]]: el éster está unido al [[anillo]] por ese carbono y se nombra con un solo [[prefijo]] que lo incluye todo, «alcoxicarbonil-»: el nombre del grupo unido al oxígeno acabado en «-oxi», más «carbonil», que es el C=O (aquí, «metoxicarbonil»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       9,
+       8,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       2,
+       4,
+       1
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "El grupo –COOH unido al anillo no forma parte de él: ni su carbono ni sus oxígenos se cuentan en el anillo. Es el [[grupo principal]] y da la terminación «-carboxílico», que ya incluye ese carbono.",
+     "Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       11
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       3,
+       2,
+       4,
+       1
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       9,
+       8,
+       10
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, el grupo –COOH (el [[grupo principal]]) lleva el número más bajo, así que el carbono del anillo unido al –COOH es el 1 y después, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético).",
+     "Empieza a contar por el carbono del anillo unido al grupo –COOH: así sale el número 1, el más bajo posible. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "El carbono del anillo unido al grupo –COOH es el 1, y aquí ese 1 se escribe («ácido 4-(metoxicarbonil)ciclohexano-1-carboxílico»): solo se quita cuando el –COOH es lo único que hay en un anillo sin enlaces dobles ni triples, como en «ácido ciclohexanocarboxílico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       2,
+       4,
+       1
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      8,
+      1
+     ],
+     [
+      7,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      13,
+      5
+     ],
+     [
+      12,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Los ésteres (–COO–) que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y un prefijo «-oxi» con el mismo número; unidos por su carbono, «alcoxicarbonil-» (como «metoxicarbonil»); unidos por su oxígeno, «aciloxi-» (como «acetiloxi»).",
+     "En el carbono 4 hay un grupo metoxicarbonilo: se escribe «4-(metoxicarbonil)».",
+     "«metoxicarbonil» es el [[prefijo]] de un éster (–COO–) unido al anillo por el carbono de su C=O. No es el [[grupo principal]]: el ácido carboxílico va antes que el éster. Ese carbono no está en la cadena, así que el prefijo lo incluye: se forma con el nombre del grupo unido al oxígeno como prefijo «-oxi», «metoxi», más «carbonil», que es el C=O: metoxi + carbonil = metoxicarbonil.",
+     "«metoxi» se forma con la raíz del grupo de 1 carbono unido al oxígeno, «met», y la terminación «oxi», que es el oxígeno: met + oxi = metoxi. Con cadenas de 1 a 4 carbonos se usa esta forma corta (metoxi, etoxi, propoxi, butoxi), no «metiloxi».",
+     "Va entre paréntesis porque es un prefijo compuesto (un grupo más «-oxi» más «carbonil»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       2,
+       4,
+       1
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      4
+     ]
+    ],
+    "options": [
+     {
+      "label": "metoxicarbonil",
+      "text": "En el carbono 4 hay un grupo metoxicarbonilo: se escribe «4-(metoxicarbonil)». «metoxicarbonil» es el [[prefijo]] de un éster (–COO–) unido al anillo por el carbono de su C=O. No es el [[grupo principal]]: el ácido carboxílico va antes que el éster. Ese carbono no está en la cadena, así que el prefijo lo incluye: se forma con el nombre del grupo unido al oxígeno como prefijo «-oxi», «metoxi», más «carbonil», que es el C=O: metoxi + carbonil = metoxicarbonil. «metoxi» se forma con la raíz del grupo de 1 carbono unido al oxígeno, «met», y la terminación «oxi», que es el oxígeno: met + oxi = metoxi. Con cadenas de 1 a 4 carbonos se usa esta forma corta (metoxi, etoxi, propoxi, butoxi), no «metiloxi». Va entre paréntesis porque es un prefijo compuesto (un grupo más «-oxi» más «carbonil»).",
+      "highlight": [
+       {
+        "atoms": [
+         8,
+         7,
+         6,
+         5,
+         13,
+         12
+        ],
+        "bonds": [
+         7,
+         6,
+         5,
+         13,
+         12,
+         11
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         3,
+         2,
+         4,
+         1
+        ],
+        "bonds": [
+         4,
+         1,
+         2,
+         3
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre del anillo.",
+     "Los números se separan entre sí con comas (1,2) y de las letras con guiones (1-metil). Los sustituyentes se escriben pegados al nombre del anillo.",
+     "El nombre del anillo empieza por «ciclo-», que dice que la cadena está cerrada.",
+     "El éster que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-carboxílico», con el número del carbono del anillo unido al grupo justo delante.",
+     "El carbono del –COOH no tiene número: no es del anillo, y el sufijo «-carboxílico» ya lo incluye.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se queda delante de «-carboxílico», porque empieza por consonante: «ácido 4-(metoxicarbonil)ciclohexano-1-carboxílico».",
+     "El nombre completo es «ácido 4-(metoxicarbonil)ciclohexano-1-carboxílico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       2,
+       4,
+       1
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       9,
+       8,
+       10
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      8,
+      1
+     ],
+     [
+      7,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      13,
+      5
+     ],
+     [
+      12,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono del anillo donde está «metoxicarbonil»"
+     },
+     {
+      "text": "metoxicarbonil",
+      "kind": "prefix",
+      "meaning": "sustituyente: un éster (–COO–) unido por el carbono de su C=O: el grupo del oxígeno («-oxi») más «carbonil»"
+     },
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "meaning": "carbono del anillo unido al grupo –COOH"
+     },
+     {
+      "text": "-carboxílico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       9,
+       8,
+       10
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       5,
+       3
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "metoxicarbonil",
+      "kind": "prefix",
+      "atoms": [
+       3,
+       2,
+       4,
+       1
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": [
+       11
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12,
+       11
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       8,
+       10
+      ],
+      "bonds": [
+       9
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "carboxílico",
+      "kind": "ending",
+      "atoms": [
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       9,
+       8,
+       10
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)OC1CCC(C(=O)O)CC1": {
+  "name": "ácido 4-(acetiloxi)ciclohexano-1-carboxílico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos, 14 hidrógenos y 4 átomos de oxígeno (C₉H₁₄O₄).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. En el grupo –COO– hay dos oxígenos, y los dos se ven como O, sin hidrógeno: uno está unido al carbono con un [[enlace doble]] (C=O) y el otro está entre dos carbonos, como un eslabón más. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. El otro oxígeno unido con un [[enlace doble]] (C=O) también se ve como O. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno; cada oxígeno con enlace doble ocupa el sitio de dos, y un oxígeno entre dos carbonos no ocupa el de ninguno. En el grupo –COOH están el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12,
+       4,
+       2,
+       1,
+       3,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12,
+       11,
+       4,
+       1,
+       2,
+       3,
+       9,
+       8,
+       10
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El –COOH está unido directamente a un carbono del [[anillo]]. Su carbono no forma parte del anillo (solo puede unirse a un carbono más, el del anillo) y tampoco forma una cadena aparte: el anillo es la [[cadena principal]] y lleva el grupo.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-carboxílico» (como en «ácido ciclohexanocarboxílico»). Ese sufijo ya incluye el carbono del –COOH, así que ese carbono no se cuenta en el nombre del anillo.",
+     "También tiene un grupo –COO– (un éster). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > éster > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que el éster se nombra con un [[prefijo]], delante del nombre.",
+     "El –COO– está unido al [[anillo]] por su oxígeno del medio: el carbono del C=O queda del otro lado y empieza un grupo acilo (como «acetil»). Ese éster se nombra con el [[prefijo]] «aciloxi-»: el nombre del grupo acilo más «oxi», que es el oxígeno (aquí, «acetiloxi»). La IUPAC prefiere «acetiloxi» a la forma corta «acetoxi»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       9,
+       8,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ring",
+    "title": "Busca el anillo",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman una cadena que se cierra sobre sí misma: el último carbono está unido al primero. Una cadena cerrada es un [[anillo]].",
+     "El enlace que cierra el anillo está marcado en otro color. Si lo quitaras, tendrías una cadena abierta.",
+     "El grupo –COOH unido al anillo no forma parte de él: ni su carbono ni sus oxígenos se cuentan en el anillo. Es el [[grupo principal]] y da la terminación «-carboxílico», que ya incluye ese carbono.",
+     "Las ramas que salen del anillo son cadenas abiertas. Con las normas de la IUPAC (2013), un anillo manda siempre sobre una cadena abierta: el anillo es la [[cadena principal]] y las ramas son [[sustituyentes|sustituyente]].",
+     "Un anillo se nombra como la cadena abierta con los mismos carbonos, poniendo delante «ciclo-»: «hexano» → «ciclohexano»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       11
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       9,
+       8,
+       10
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En un anillo no hay extremos: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Las reglas son las mismas que en una cadena, por orden: primero, el grupo –COOH (el [[grupo principal]]) lleva el número más bajo, así que el carbono del anillo unido al –COOH es el 1 y después, los [[sustituyentes|sustituyente]] llevan los números más bajos (si empatan, el que se escribe primero por orden alfabético).",
+     "Empieza a contar por el carbono del anillo unido al grupo –COOH: así sale el número 1, el más bajo posible. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "El carbono del anillo unido al grupo –COOH es el 1, y aquí ese 1 se escribe («ácido 4-(acetiloxi)ciclohexano-1-carboxílico»): solo se quita cuando el –COOH es lo único que hay en un anillo sin enlaces dobles ni triples, como en «ácido ciclohexanocarboxílico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      8,
+      1
+     ],
+     [
+      7,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      13,
+      5
+     ],
+     [
+      12,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Los ésteres (–COO–) que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y un prefijo «-oxi» con el mismo número; unidos por su carbono, «alcoxicarbonil-» (como «metoxicarbonil»); unidos por su oxígeno, «aciloxi-» (como «acetiloxi»).",
+     "En el carbono 4 hay un grupo acetiloxi: se escribe «4-(acetiloxi)».",
+     "«acetiloxi» es el [[prefijo]] de un éster (–COO–) unido al anillo por su oxígeno del medio. No es el [[grupo principal]]: el ácido carboxílico va antes que el éster. Al otro lado del oxígeno está el carbono del C=O, que empieza un grupo acilo, «acetil». El prefijo es el nombre del grupo acilo más «oxi», que es el oxígeno: acetil + oxi = acetiloxi.",
+     "Con 2 carbonos (CH₃–CO–) se llama «acetil»: es un nombre tradicional que la IUPAC (2013) prefiere a «etanoil».",
+     "La IUPAC (2013) prefiere «acetiloxi» a la forma corta «acetoxi».",
+     "Va entre paréntesis porque es un prefijo compuesto: un grupo más «oxi»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      5,
+      4
+     ]
+    ],
+    "options": [
+     {
+      "label": "acetiloxi",
+      "text": "En el carbono 4 hay un grupo acetiloxi: se escribe «4-(acetiloxi)». «acetiloxi» es el [[prefijo]] de un éster (–COO–) unido al anillo por su oxígeno del medio. No es el [[grupo principal]]: el ácido carboxílico va antes que el éster. Al otro lado del oxígeno está el carbono del C=O, que empieza un grupo acilo, «acetil». El prefijo es el nombre del grupo acilo más «oxi», que es el oxígeno: acetil + oxi = acetiloxi. Con 2 carbonos (CH₃–CO–) se llama «acetil»: es un nombre tradicional que la IUPAC (2013) prefiere a «etanoil». La IUPAC (2013) prefiere «acetiloxi» a la forma corta «acetoxi». Va entre paréntesis porque es un prefijo compuesto: un grupo más «oxi».",
+      "highlight": [
+       {
+        "atoms": [
+         8,
+         7,
+         6,
+         5,
+         13,
+         12
+        ],
+        "bonds": [
+         7,
+         6,
+         5,
+         13,
+         12,
+         11
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         4,
+         2,
+         1,
+         3
+        ],
+        "bonds": [
+         4,
+         1,
+         2,
+         3
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        5,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre del anillo.",
+     "Los números se separan entre sí con comas (1,2) y de las letras con guiones (1-metil). Los sustituyentes se escriben pegados al nombre del anillo.",
+     "El nombre del anillo empieza por «ciclo-», que dice que la cadena está cerrada.",
+     "El éster que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-carboxílico», con el número del carbono del anillo unido al grupo justo delante.",
+     "El carbono del –COOH no tiene número: no es del anillo, y el sufijo «-carboxílico» ya lo incluye.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se queda delante de «-carboxílico», porque empieza por consonante: «ácido 4-(acetiloxi)ciclohexano-1-carboxílico».",
+     "El nombre completo es «ácido 4-(acetiloxi)ciclohexano-1-carboxílico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       9,
+       8,
+       10
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      8,
+      1
+     ],
+     [
+      7,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      13,
+      5
+     ],
+     [
+      12,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "meaning": "carbono del anillo donde está «acetiloxi»"
+     },
+     {
+      "text": "acetiloxi",
+      "kind": "prefix",
+      "meaning": "sustituyente: un éster (–COO–) unido por su oxígeno: el grupo acilo («-oil», «formil», «acetil») más «oxi»"
+     },
+     {
+      "text": "ciclo-",
+      "kind": "stem",
+      "meaning": "la cadena se cierra: es un anillo"
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "meaning": "6 carbonos en el anillo"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "meaning": "carbono del anillo unido al grupo –COOH"
+     },
+     {
+      "text": "-carboxílico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       9,
+       8,
+       10
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       5,
+       4
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "acetiloxi",
+      "kind": "prefix",
+      "atoms": [
+       4,
+       2,
+       1,
+       3
+      ],
+      "bonds": [
+       4,
+       1,
+       2,
+       3
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "ciclo",
+      "kind": "stem",
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": [
+       11
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "stem",
+      "atoms": [
+       8,
+       7,
+       6,
+       5,
+       13,
+       12
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       7,
+       6,
+       5,
+       13,
+       12,
+       11
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       8,
+       10
+      ],
+      "bonds": [
+       9
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "carboxílico",
+      "kind": "ending",
+      "atoms": [
+       8,
+       10,
+       9,
+       11
+      ],
+      "bonds": [
+       9,
+       8,
+       10
+      ]
+     }
+    ]
+   }
+  ]
  }
 }

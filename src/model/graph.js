@@ -398,6 +398,54 @@ export function cycleCore(adj) {
 } // End of function cycleCore()
 
 /**
+ * The atoms that lie on a cycle (design.md §13.4 I-40d): for one ring,
+ * its atoms (cycleCore()); for two separate rings, the atoms of both,
+ * without the chain that joins them (an atom of the 2-core is on a cycle
+ * when one of its bonds inside the core is not a bridge).
+ *
+ * @param {Map<number, object[]>} adj - Adjacency from adjacency().
+ * @returns {Set<number>} The ring atom ids (empty for a tree).
+ */
+export function ringAtomsOf(adj) {
+  const core = cycleCore(adj);
+  const edges = [...core].reduce((sum, id) => sum + adj.get(id).filter((n) => core.has(n.atom)).length, 0) / 2;
+  if (core.size === 0 || edges - core.size + 1 <= 1) {
+    return core; // A single cycle: the 2-core is the ring.
+  }
+  /**
+   * Tells whether `to` is reached from `from` inside the core without the bond `bond`.
+   *
+   * @param {number} from - Start atom.
+   * @param {number} to - Target atom.
+   * @param {number} bond - The bond left out.
+   * @returns {boolean} True when another path exists.
+   */
+  const reached = (from, to, bond) => {
+    const seen = new Set([from]);
+    const queue = [from];
+    for (let i = 0; i < queue.length; i += 1) {
+      for (const n of adj.get(queue[i])) {
+        if (n.bond !== bond && core.has(n.atom) && !seen.has(n.atom)) {
+          if (n.atom === to) {
+            return true;
+          }
+          seen.add(n.atom);
+          queue.push(n.atom);
+        }
+      }
+    }
+    return false;
+  };
+  const onCycle = new Set();
+  for (const id of core) {
+    if (adj.get(id).some((n) => core.has(n.atom) && reached(id, n.atom, n.bond))) {
+      onCycle.add(id);
+    }
+  } // End of the loop over the core atoms
+  return onCycle;
+} // End of function ringAtomsOf()
+
+/**
  * Encodes the one ring of a branch, entered at `entry` from `parent`
  * (rootedBranchKey(), design.md §13.4 I-40a): each ring atom is written as
  * its element plus the sorted rooted keys of its side branches (the one
@@ -410,9 +458,10 @@ export function cycleCore(adj) {
  * @param {Map<number, object[]>} adj - Adjacency from adjacency().
  * @param {number} entry - The ring atom where the branch enters the ring.
  * @param {number|null} parent - The atom the branch comes from (null for a whole molecule).
- * @param {Set<number>} ring - The ring atoms (cycleCore()).
+ * @param {Set<number>} ring - The ring atoms (ringAtomsOf()); with two separate rings (design.md §13.4 I-40d) both, and a side
+ *   branch reaching the other ring encodes it the same way.
  * @returns {string} The code.
- * @throws {Error} If a side branch of the ring contains another cycle.
+ * @throws {Error} If a side branch of the ring contains a cycle not in `ring`.
  */
 function encodeRingEntry(mol, adj, entry, parent, ring) {
   /**
@@ -424,24 +473,27 @@ function encodeRingEntry(mol, adj, entry, parent, ring) {
   const tokenOf = (id) => {
     const branches = adj.get(id)
       .filter((n) => !ring.has(n.atom) && n.atom !== parent)
-      .map((n) => BOND_SYMBOL[n.order] + encodeRooted(mol, adj, n.atom, id))
+      .map((n) => BOND_SYMBOL[n.order] + encodeRooted(mol, adj, n.atom, id, ring))
       .sort();
     return `${mol.atoms.get(id).element}(${branches.join(',')})`;
   };
+  let size = 1;
   const readings = adj.get(entry).filter((n) => ring.has(n.atom)).map((first) => {
     let text = tokenOf(entry) + BOND_SYMBOL[first.order];
     let previous = entry;
     let current = first.atom;
+    size = 1;
     while (current !== entry) {
       const next = adj.get(current).find((n) => ring.has(n.atom) && n.atom !== previous);
       text += tokenOf(current) + BOND_SYMBOL[next.order];
       previous = current;
       current = next.atom;
+      size += 1;
     }
     return text;
   }); // End of the readings from the entry atom, one per direction
   readings.sort();
-  return `%R${ring.size}(${readings[0]})`;
+  return `%R${size}(${readings[0]})`;
 } // End of function encodeRingEntry()
 
 /**
@@ -453,14 +505,14 @@ function encodeRingEntry(mol, adj, entry, parent, ring) {
  * corresponding atoms, with the same elements and bond orders. For a
  * branch without a ring it equals rootedTreeKey().
  *
- * @param {object} mol - A molecule with at most one ring.
+ * @param {object} mol - A molecule with at most one ring, or two separate rings (not bonded to each other, design.md §13.4 I-40d).
  * @param {number} root - First atom of the branch.
  * @param {number|null} exclude - Neighbour of `root` that is not part of the branch (null: whole molecule).
  * @param {Map<number, object[]>} [adj] - Adjacency from adjacency() (computed when omitted).
  * @returns {string} The rooted canonical key.
  */
 export function rootedBranchKey(mol, root, exclude, adj = adjacency(mol)) {
-  const ring = cycleCore(adj);
+  const ring = ringAtomsOf(adj);
   return encodeRooted(mol, adj, root, exclude, ring.size > 0 ? ring : null);
 }
 
@@ -590,13 +642,15 @@ export function monocycleKey(mol) {
 } // End of function monocycleKey()
 
 /**
- * Structural identity of a connected molecule that is a tree or has exactly
- * one ring: canonicalTreeKey() for a tree (unchanged), monocycleKey() for a
- * monocycle. Polycyclic molecules have no key yet.
+ * Structural identity of a connected molecule that is a tree or has one
+ * ring, or two separate rings: canonicalTreeKey() for a tree (unchanged),
+ * monocycleKey() for a monocycle, separateRingsKey() for two rings that
+ * share no atom (design.md §13.4 I-40d). Other polycyclic molecules have no
+ * key yet.
  *
  * @param {object} mol - The molecule.
  * @returns {string} The canonical key; empty string for an empty molecule.
- * @throws {Error} If the molecule is disconnected or has more than one ring.
+ * @throws {Error} If the molecule is disconnected, has more than two rings, or two rings sharing atoms.
  */
 export function canonicalKey(mol) {
   if (mol.atoms.size === 0) {
@@ -612,5 +666,35 @@ export function canonicalKey(mol) {
   if (rings === 1) {
     return monocycleKey(mol);
   }
+  if (rings === 2) {
+    return separateRingsKey(mol);
+  }
   throw new Error(`canonicalKey: polycyclic molecules (${rings} rings) have no key yet`);
 } // End of function canonicalKey()
+
+/**
+ * The canonical key of a molecule with two separate rings (no shared atom,
+ * every ring atom bonded to exactly two ring atoms; design.md §13.4 I-40d,
+ * `benzoato de fenilo`): the smallest rooted encoding over every root atom,
+ * each ring written whole where a walk enters it (encodeRingEntry()). Equal
+ * keys mean isomorphic molecules with the same elements and bond orders.
+ *
+ * @param {object} mol - A connected molecule with two independent cycles.
+ * @returns {string} The key.
+ * @throws {Error} For two rings that share atoms (fused, bridged, spiro).
+ */
+function separateRingsKey(mol) {
+  const adj = adjacency(mol);
+  const ring = ringAtomsOf(adj);
+  if ([...ring].some((id) => adj.get(id).filter((n) => ring.has(n.atom)).length !== 2)) {
+    throw new Error('canonicalKey: polycyclic molecules with shared ring atoms have no key yet');
+  }
+  let best = null;
+  for (const root of adj.keys()) {
+    const key = encodeRooted(mol, adj, root, null, ring);
+    if (best === null || key < best) {
+      best = key;
+    }
+  }
+  return `%2${best}`;
+} // End of function separateRingsKey()

@@ -16,7 +16,8 @@
  * styles. Doubly-attached (`-iliden`) substituents are named at any depth
  * (design.md §4.6): every valid acyclic hydrocarbon within the size caps
  * gets a name. A molecule with a ring that passes validation has exactly
- * one carbocycle, which is the parent (ring vs chain, IUPAC 2013
+ * one carbocycle (or two on either side of an ester, named in two parts,
+ * I-40d), which is the parent (ring vs chain, IUPAC 2013
  * P-44.1.2.2) unless a chain carries more principal groups (P-44.1.1,
  * design.md §13.4 I-40a: parent.js ringOrChain(); the chain pipeline then
  * names it with the ring as a `ciclohexil` / `fenil` prefix,
@@ -117,10 +118,14 @@
  * bonded through its O it is `aciloxi` (`ácido 2-(acetiloxi)etanoico`;
  * substituent.js esterAttachment()). Validation refuses more than two
  * esters (`manyEsters`), two on different carbon pieces without an acid
- * (`esterPrefix`), a mixed diester that would need locants for its groups
- * (`mixedDiester`) and any ester with a ring (`ringEster`); an ester left
- * out of the suffix without an acid is refused here as a safety net
- * (`esterPrefix`).
+ * (`esterPrefix`) and a mixed diester that would need locants for its
+ * groups (`mixedDiester`); an ester left out of the suffix without an acid
+ * is refused here as a safety net (`esterPrefix`). With a ring (I-40d) an
+ * ester bonded to a ring carbon is the ring's group, `-carboxilato`
+ * (`ciclohexanocarboxilato de etilo`, the retained `benzoato de metilo`
+ * with `bencenocarboxilato de metilo`); a ring on the O side is the O-bound
+ * group (`etanoato de fenilo`); a ring on each side (`benzoato de fenilo`)
+ * is named in two parts (esterAcidPart(), withSplitEster()).
  *
  * Amines (design.md §13.4 I-36) are the least senior group (… alcohol >
  * amina): the N is never a chain atom (like an ether O, it splits the
@@ -204,13 +209,13 @@ import {
   validateForNaming, validationError, carboxylCarbons, etherOxygens, amineNitrogens, ACYL_SUBSTITUENT_MESSAGE,
   CARBOXY_SUBSTITUENT_MESSAGE, SYMMETRIC_ETHER_MESSAGE, SYMMETRIC_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE,
   amideCarbons, AMIDE_PREFIX_MESSAGE, nitrileCarbons, CYANO_PREFIX_MESSAGE, isAmineNitrogen, esterCarbons,
-  ESTER_PREFIX_MESSAGE, SYMMETRIC_RING_MESSAGE,
+  ESTER_PREFIX_MESSAGE, SYMMETRIC_RING_MESSAGE, esterRingSplit,
 } from '../model/validate.js';
 import { adjacency, hasCycle, rootedBranchKey, cycleCore } from '../model/graph.js';
 import { selectParent, ringOrChain } from './parent.js';
 import {
   createNamingContext, collectSubstituents, groupPrefixes, nameKeyFunction, suffixSites, unnamedAcyl, PREFIX_STYLES,
-  substituentSubtree, nameSubstituent, esterAlkyl, numberingPrefix,
+  substituentSubtree, nameSubstituent, esterAlkyl, esterAlkyls, numberingPrefix,
 } from './substituent.js';
 import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure, buildSuffix, esterParts } from './structure.js';
@@ -291,9 +296,7 @@ function nameWithStyle(mol, adj, selection, style) {
   const parent = buildChainStructure(numbering.atoms, numbering.bonds, numbering.orders);
   const suffix = buildSuffix(suffixSites(mol, adj, numbering.atoms, ctx.principal), numbering.atoms, ctx.principal);
   // The O-bound group of each ester (design.md §13.4 I-35, I-39c): one or two –COO– (validation), carbons on the parent.
-  const esters = suffix && suffix.kind === 'ester'
-    ? suffix.locants.map((site) => esterAlkyl(ctx, site.atom, site.esterOxygen))
-    : [];
+  const esters = esterAlkyls(ctx, suffix);
   const structure = buildNameStructure({
     parent,
     prefixes: groupPrefixes(substituents, numbering.atoms),
@@ -310,6 +313,75 @@ function nameWithStyle(mol, adj, selection, style) {
     trace: withCandidateBonds([...selection.trace, ...numbering.trace], adj),
   };
 } // End of function nameWithStyle()
+
+/**
+ * The molecule made of some atoms of another and the bonds between them
+ * (ids, elements and orders kept; coordinates dropped: naming never reads
+ * them).
+ *
+ * @param {object} mol - The molecule.
+ * @param {Set<number>} keep - The atom ids to keep.
+ * @returns {object} The sub-molecule.
+ */
+function subMolecule(mol, keep) {
+  const atoms = new Map([...mol.atoms.values()].filter((a) => keep.has(a.id)).map((a) => [a.id, { id: a.id, element: a.element }]));
+  const bonds = new Map([...mol.bonds.values()].filter((b) => keep.has(b.a) && keep.has(b.b)).map((b) => [b.id, { ...b }]));
+  return { atoms, bonds, nextAtomId: mol.nextAtomId, nextBondId: mol.nextBondId };
+}
+
+/**
+ * The acid part of an ester split between two rings (design.md §13.4
+ * I-40d, validate.js esterRingSplit()): the molecule without its O-bound
+ * group, except the carbon bonded to the bridge O, which stays as a
+ * one-carbon group (the acid part of `benzoato de fenilo` is `benzoato de
+ * metilo`, with the phenyl's first carbon as the methyl). It has one ring,
+ * so the whole pipeline names it; withSplitEster() then names the real
+ * O-bound group.
+ *
+ * @param {object} mol - The validated molecule.
+ * @param {{far: number, alkylAtoms: number[]}} split - esterRingSplit() of it.
+ * @returns {object} The acid part, with the original atom and bond ids.
+ */
+function esterAcidPart(mol, split) {
+  const alkyl = new Set(split.alkylAtoms);
+  return subMolecule(mol, new Set([...mol.atoms.keys()].filter((id) => !alkyl.has(id) || id === split.far)));
+}
+
+/**
+ * Gives the naming result of the acid part of a split ester (design.md
+ * §13.4 I-40d, esterAcidPart()) its real O-bound group: the group is named
+ * by esterAlkyl() in the ester made of the ester carbon X, its two O and
+ * the O-bound group (a methanoate, one ring: `metanoato de fenilo`), in
+ * the same prefix style, and the name is rendered again (`benzoato de
+ * fenilo`, `etanoato de fenilo`). Trace candidates holding an atom of the
+ * O-bound group (the one-carbon stand-in) are dropped, with their values.
+ *
+ * @param {object} result - The naming result of the acid part.
+ * @param {object} mol - The whole molecule.
+ * @param {{carbon: number, bridge: number, far: number, alkylAtoms: number[]}} split - esterRingSplit() of it.
+ * @param {string} style - The prefix style.
+ * @returns {object} The naming result of the whole molecule.
+ */
+function withSplitEster(result, mol, split, style) {
+  const carbonyl = [...mol.bonds.values()].find((b) => b.order === 2 && (b.a === split.carbon || b.b === split.carbon));
+  const oxo = carbonyl.a === split.carbon ? carbonyl.b : carbonyl.a;
+  const part = subMolecule(mol, new Set([...split.alkylAtoms, split.bridge, split.carbon, oxo]));
+  const ctx = createNamingContext(part, style, lexiconEs, adjacency(part));
+  const ester = esterAlkyl(ctx, split.carbon, split.bridge);
+  const structure = { ...result.structure, ester };
+  const { name, parts } = renderName(structure, lexiconEs);
+  const alkyl = new Set(split.alkylAtoms);
+  const trace = result.trace.map((step) => {
+    const kept = step.candidatesBefore.map((c, i) => ({ c, i })).filter(({ c }) => !c.atoms.some((id) => alkyl.has(id)));
+    return {
+      ...step,
+      candidatesBefore: kept.map(({ c }) => c),
+      values: step.values ? kept.map(({ i }) => step.values[i]) : step.values,
+      survivors: step.survivors.filter((c) => !c.atoms.some((id) => alkyl.has(id))),
+    };
+  });
+  return { ...result, name, parts, structure, trace };
+} // End of function withSplitEster()
 
 /**
  * Adds to every trace candidate the ids of its chain bonds, in the order of
@@ -366,15 +438,19 @@ function withGroups(failure, mol) {
  * @returns {object} The naming result.
  * @throws {RangeError} For an unknown prefix style (reported as INTERNAL).
  */
-function nameValidated(mol, options) {
-  const error = validateForNaming(mol);
+function nameValidated(input, options) {
+  const error = validateForNaming(input);
   if (error) {
-    return error.code === 'HETEROATOM' ? withGroups({ ok: false, error }, mol) : { ok: false, error };
+    return error.code === 'HETEROATOM' ? withGroups({ ok: false, error }, input) : { ok: false, error };
   }
   const style = options.prefixStyle || PREFIX_STYLES[0];
   if (!PREFIX_STYLES.includes(style)) {
     throw new RangeError(`unknown prefix style ${style}`);
   }
+  // Two rings on either side of an ester (design.md §13.4 I-40d, `benzoato de fenilo`): the pipeline names the
+  // one-ring acid part, and each style's result gets the O-bound group named on its own (withSplitEster()).
+  const split = hasCycle(input) ? esterRingSplit(input) : null;
+  const mol = split ? esterAcidPart(input, split) : input;
   const cyclic = hasCycle(mol);
   // With a ring, a chain carrying more principal groups than the ring is the parent (design.md §13.4 I-40a).
   const choice = cyclic ? ringOrChain(mol, ringParent(mol)) : null;
@@ -384,7 +460,7 @@ function nameValidated(mol, options) {
     ? symmetricEther(mol) || symmetricAmine(mol)
     : null;
   if (symmetric) {
-    return withGroups({ ok: false, error: symmetric }, mol);
+    return withGroups({ ok: false, error: symmetric }, input);
   }
   const benzene = !chainParent && hasBenzeneRing(mol);
   const adj = chainParent ? adjacency(mol) : null;
@@ -399,10 +475,13 @@ function nameValidated(mol, options) {
    * @returns {object} The naming result without `alternatives`.
    */
   const nameIn = (s) => {
+    let result;
     if (benzene) {
-      return nameBenzeneWithStyle(mol, s);
+      result = nameBenzeneWithStyle(mol, s);
+    } else {
+      result = chainParent ? nameWithStyle(mol, adj, selection, s) : nameRingWithStyle(mol, s);
     }
-    return chainParent ? nameWithStyle(mol, adj, selection, s) : nameRingWithStyle(mol, s);
+    return split ? withSplitEster(result, input, split, s) : result;
   };
   const main = nameIn(style);
   const byStyle = new Map([[style, main]]);
@@ -420,40 +499,41 @@ function nameValidated(mol, options) {
   // Every style that is emitted (main, reference, alternatives) is checked:
   // each runs its own prefix naming, so one may need a branch the others
   // avoid (an unnamed acyl, a `ciano`…).
-  const acids = carboxylCarbons(mol);
-  const amides = amideCarbons(mol);
-  const nitriles = nitrileCarbons(mol);
-  const esters = acids.length === 0 ? esterCarbons(mol) : [];
+  // Counted on the whole molecule: with a split ester (I-40d) the O-bound group is named apart.
+  const acids = carboxylCarbons(input);
+  const amides = amideCarbons(input);
+  const nitriles = nitrileCarbons(input);
+  const esters = acids.length === 0 ? esterCarbons(input) : [];
   for (const s of new Set([style, PREFIX_STYLES[0], ...others])) {
     const { structure } = named(s);
     // The parent chosen by the whole cascade (P0…P4, N-rules, tie-break), never a chain left tied before numbering (I-40a).
     const ringTwins = cyclic && chainParent ? symmetricRing(mol, named(s).parent.atoms) : null;
     if (ringTwins) {
-      return withGroups({ ok: false, error: ringTwins }, mol);
+      return withGroups({ ok: false, error: ringTwins }, input);
     }
     // An acyl branch without an acyl prefix (–CO–C≡N) on the parent, or inside an ester's O-bound group.
     const acyl = [structure, ...esterParts(structure).map((part) => part.alkyl)].map(unnamedAcyl).find(Boolean) || null;
     if (acyl) {
-      return withGroups({ ok: false, error: acylError(acyl) }, mol);
+      return withGroups({ ok: false, error: acylError(acyl) }, input);
     }
     if (acids.length > 0 && suffixCount(structure) + carboxyCount(structure) !== acids.length) {
-      return withGroups({ ok: false, error: carboxyError(acids) }, mol);
+      return withGroups({ ok: false, error: carboxyError(acids) }, input);
     }
     if (esters.length > 0 && suffixCount(structure) !== esters.length) {
       // Safety net (I-39c): without an acid every ester is a suffix group (validation, esterPlacementError()).
-      return withGroups({ ok: false, error: esterPrefixError(esters) }, mol);
+      return withGroups({ ok: false, error: esterPrefixError(esters) }, input);
     }
     const amideSuffixes = structure.suffix && structure.suffix.kind === 'amide' ? suffixCount(structure) : 0;
     if (amides.length > 0 && amideSuffixes + amidePrefixCount(structure) !== amides.length) {
       // Safety net (I-39d): every amide is a suffix group or one prefix (`amino…oxo`, `carbamoil`, `acilamino`).
-      return withGroups({ ok: false, error: amidePrefixError(amides) }, mol);
+      return withGroups({ ok: false, error: amidePrefixError(amides) }, input);
     }
     const nitrileSuffixes = structure.suffix && structure.suffix.kind === 'nitrile' ? suffixCount(structure) : 0;
     if (nitriles.length > 0 && nitrileSuffixes + cyanoCount(structure) !== nitriles.length) {
-      return withGroups({ ok: false, error: cyanoPrefixError(nitriles) }, mol);
+      return withGroups({ ok: false, error: cyanoPrefixError(nitriles) }, input);
     }
     if (structure.suffix && structure.suffix.kind === 'amine' && suffixCount(structure) > 1 && hasNitrogenLocants(structure.prefixes)) {
-      return withGroups({ ok: false, error: polyamineError(structure) }, mol);
+      return withGroups({ ok: false, error: polyamineError(structure) }, input);
     }
   } // End of the loop over the emitted styles
   const located = locantAlternative(main);

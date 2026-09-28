@@ -103,6 +103,7 @@ export const TRADITIONAL_NAMES = Object.freeze({
   phenylacetaldehyde: 'fenilacetaldehído',
   phenylacetamide: '2-fenilacetamida',
   phenylacetonitrile: 'fenilacetonitrilo',
+  phenylacetate: 'fenilacetato',
 });
 
 /**
@@ -176,6 +177,7 @@ export const TRADITIONAL_LABELS = Object.freeze({
   phenylacetaldehyde: 'nombre tradicional, que la IUPAC (2013) acepta',
   phenylacetamide: 'nombre tradicional, que la IUPAC (2013) acepta',
   phenylacetonitrile: 'nombre tradicional, que la IUPAC (2013) acepta',
+  phenylacetate: 'nombre tradicional, que la IUPAC (2013) acepta',
 });
 
 /** Endings of the parent name. */
@@ -656,7 +658,7 @@ export function styleLabel(style) {
  * Returns a traditional name (TRADITIONAL_NAMES): a monosubstituted benzene,
  * a small carbonyl compound or a small acid.
  *
- * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide', 'acetamide', 'acetonitrile', 'acetophenone', 'benzylAlcohol', 'benzylamine', 'phenylaceticAcid', 'phenylacetaldehyde', 'phenylacetamide' or 'phenylacetonitrile'.
+ * @param {string} id - 'toluene', 'styrene', 'formaldehyde', 'acetaldehyde', 'acetone', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'anisole', 'aniline', 'formamide', 'acetamide', 'acetonitrile', 'acetophenone', 'benzylAlcohol', 'benzylamine', 'phenylaceticAcid', 'phenylacetaldehyde', 'phenylacetamide', 'phenylacetonitrile' or 'phenylacetate'.
  * @returns {string} The Spanish name.
  * @throws {Error} For an unknown id.
  */
@@ -696,10 +698,11 @@ export const GROUP_SUFFIXES = Object.freeze({
  * `ciclohexanocarbaldehído`, `ciclohex-2-eno-1-carbaldehído`; for amides and
  * nitriles (I-40c; P-66.1.1.4, P-66.5.1.1, from memory) `ciclohexanocarboxamida`,
  * `N-metilciclohexanocarboxamida`, `ciclohexanocarbonitrilo`,
- * `ciclohexano-1,2-dicarbonitrilo`.
+ * `ciclohexano-1,2-dicarbonitrilo`; for esters (I-40d; P-65.6.3.2.1, from
+ * memory) `ciclohexanocarboxilato de metilo`.
  */
 export const RING_GROUP_SUFFIXES = Object.freeze({
-  acid: 'carboxílico', aldehyde: 'carbaldehído', amide: 'carboxamida', nitrile: 'carbonitrilo',
+  acid: 'carboxílico', ester: 'carboxilato', aldehyde: 'carbaldehído', amide: 'carboxamida', nitrile: 'carbonitrilo',
 });
 
 /**
@@ -724,10 +727,13 @@ export function ringGroupSuffix(kind) {
  * (`benzamida`, `N-metilbenzamida`; P-66.1.1.1.2) and `benz` + `onitrilo`
  * (`benzonitrilo`; P-66.5.1.1.2), retained preferred names derived from
  * benzoic acid (from memory), with `bencenocarboxamida` /
- * `bencenocarbonitrilo` as alternatives.
+ * `bencenocarbonitrilo` as alternatives; and (I-40d) `benz` + `oato`
+ * (`benzoato de metilo`, the ester of the retained benzoic acid,
+ * P-65.6.3.2, from memory) with `bencenocarboxilato de metilo`.
  */
 export const BENZENE_GROUP_NAMES = Object.freeze({
   acid: Object.freeze({ stem: 'benz', ending: 'oico' }),
+  ester: Object.freeze({ stem: 'benz', ending: 'oato' }),
   aldehyde: Object.freeze({ stem: 'benz', ending: 'aldehído' }),
   amide: Object.freeze({ stem: 'benz', ending: 'amida' }),
   nitrile: Object.freeze({ stem: 'benz', ending: 'onitrilo' }),

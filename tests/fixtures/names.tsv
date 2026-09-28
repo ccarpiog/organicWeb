@@ -887,3 +887,41 @@ NC(=O)CC(C(N)=O)C1CCC(C(N)=O)CC1	2-(4-carbamoilciclohexil)butanodiamida	chain wi
 OC(=O)CNC(=O)C1=CC=CC=C1	ácido 2-(benzoilamino)etanoico	benzoil on an acilamino prefix	The amide below the acid is bonded to the chain by its N; its acyl part is the benzoyl group (I-40b)	
 OC(=O)CNC(=O)C1CCCCC1	ácido 2-[(ciclohexanocarbonil)amino]etanoico	cycloalkanecarbonyl on an acilamino prefix	As above with ciclohexanocarbonil, enclosed inside the amino prefix	
 CC(C)C1CCC(C#N)CC1	4-isopropilciclohexano-1-carbonitrilo	prefix styles on a ring nitrile	isopropil (default), propan-2-il (PIN), 1-metiletil	pin=4-(propan-2-il)ciclohexano-1-carbonitrilo;substituted=4-(1-metiletil)ciclohexano-1-carbonitrilo
+# Ring esters (I-40d): a –COO– whose C=O carbon is bonded to a ring carbon is the ring's group like the –COOH of I-40b (P-44.1.1 counts it for the ring; ring senior on a tie, P-44.1.2.2), cited -carboxilato after the full ring name (P-65.6.3.2.1, from memory), the ring atom bonded to it locant 1, and benzoato for the ester of the retained benzoic acid (bencenocarboxilato as another form); a ring on the O side is the O-bound group, named as a ring group with -ilo (fenilo, ciclohexilo, 2-metilciclohexilo); two rings, one on each side of the –COO–, are the only two-ring molecules named (benzoato de fenilo); on a side chain the chain is the parent and the ring a prefix (I-40a; fenilacetato accepted like ácido fenilacético); below an acid the ring esters are alcoxicarbonil- / aciloxi- (I-39c) (tests/unit/ring-esters.test.js)
+COC(=O)C1=CC=CC=C1	benzoato de metilo	benzoate	Ester of the retained benzoic acid: benzoato is the retained preferred acid part (P-65.6.3.2, from memory); the systematic bencenocarboxilato as another form	benzeneSystematic=bencenocarboxilato de metilo
+CCOC(=O)C1CCCCC1	ciclohexanocarboxilato de etilo	-carboxilato on a cycloalkane	The ester carbon is outside the ring: the ring carries the group with the suffix carboxylate (P-65.6.3.2.1, from memory) and the O-bound group is the second word; one group on a saturated ring, locant omitted	
+COC(=O)C1CCCC1	ciclopentanocarboxilato de metilo	-carboxilato on a five-membered ring	As above	
+CC(C)OC(=O)C1CCCCC1	ciclohexanocarboxilato de isopropilo	prefix styles in the O-bound group of a ring ester	isopropilo (default), propan-2-ilo (PIN), 1-metiletilo	pin=ciclohexanocarboxilato de propan-2-ilo;substituted=ciclohexanocarboxilato de 1-metiletilo
+COC(=O)C1CCCCC1C	2-metilciclohexano-1-carboxilato de metilo	substituted ring ester	N0: the ring carbon bonded to the –COO– is 1; then the methyl lowest (2); the 1 is cited once there is a prefix	
+COC(=O)C1C=CCCC1	ciclohex-2-eno-1-carboxilato de metilo	ring ester with a ring double bond	N0 first, then N1 (the double bond at 2); the ending keeps its o before carboxilato	
+COC(=O)C1CCC(Cl)CC1	4-clorociclohexano-1-carboxilato de metilo	halogen on a ring ester	N0 then the halogen (4)	
+COC(=O)C1CCC(C(=O)OC)CC1	ciclohexano-1,4-dicarboxilato de dimetilo	ring diester, same groups	Both –COO– are suffix groups of the ring: -dicarboxilato, locants 1,4; the identical O-bound groups once with di (as for chain diesters, I-39c)	
+CCOC(=O)C1CCCCC1C(=O)OCC	ciclohexano-1,2-dicarboxilato de dietilo	ring diester on adjacent carbons	As above, locants 1,2	
+COC(=O)C1CCC(O)CC1	4-hidroxiciclohexano-1-carboxilato de metilo	ring ester with an OH	Ester > alcohol (P-41): hidroxi on the ring	
+COC(=O)C1CCC(=O)CC1	4-oxociclohexano-1-carboxilato de metilo	ring ester with a ring ketone	Ester > ketone: oxo on the ring carbon	
+COC(=O)C1CCC(C#N)CC1	4-cianociclohexano-1-carboxilato de metilo	ring ester with a ring nitrile	Ester > nitrile (P-41): ciano	
+COC(=O)C1CCC(C(N)=O)CC1	4-carbamoilciclohexano-1-carboxilato de metilo	ring ester with a ring amide	Ester > amide: the amide bonded to the ring by its carbon is carbamoil (I-39d)	
+COC(=O)C1CCC(NC(C)=O)CC1	4-(acetilamino)ciclohexano-1-carboxilato de metilo	ring ester with an acilamino group	Ester > amide: the amide bonded to the ring by its N is acetilamino	
+CC(=O)OC1=CC=CC=C1	etanoato de fenilo	phenyl ester	P-44.1.1: the chain carries the ester, the ring none; the benzene is the O-bound group fenilo (P-65.6.3.2.1); acetate retained (P-65.6.3.2, from memory)	traditional=acetato de fenilo
+CC(=O)OC1CCCCC1	etanoato de ciclohexilo	cyclohexyl ester	As above with ciclohexilo	traditional=acetato de ciclohexilo
+CCC(=O)OC1=CC=CC=C1	propanoato de fenilo	phenyl propanoate	As above; no traditional name	
+O=COC1=CC=CC=C1	metanoato de fenilo	phenyl methanoate	As above; formate retained	traditional=formiato de fenilo
+CC(=O)OC1CCCCC1C	etanoato de 2-metilciclohexilo	substituted ring group on the O	The ring group is numbered from the carbon bonded to the O (free valence 1), then its methyl lowest; a word of its own, not enclosed	traditional=acetato de 2-metilciclohexilo
+CC(=O)OC1C=CCCC1	etanoato de ciclohex-2-en-1-ilo	unsaturated ring group on the O	As above: -en-1-ilo	traditional=acetato de ciclohex-2-en-1-ilo
+CC(=O)OCC1CCCCC1	etanoato de ciclohexilmetilo	ring on the O-bound chain	The O-bound group is a methyl carrying a cyclohexyl prefix: ciclohexilmetilo (I-40a ring prefix)	traditional=acetato de ciclohexilmetilo
+O=C(OC1=CC=CC=C1)C1=CC=CC=C1	benzoato de fenilo	rings on both sides	Two rings, one on each side of the –COO– (the only two-ring molecules named): benzoate and the phenyl group	benzeneSystematic=bencenocarboxilato de fenilo
+O=C(OC1CCCCC1)C1=CC=CC=C1	benzoato de ciclohexilo	benzoate of a cycloalkyl	As above with ciclohexilo	benzeneSystematic=bencenocarboxilato de ciclohexilo
+O=C(OC1=CC=CC=C1)C1CCCCC1	ciclohexanocarboxilato de fenilo	phenyl ester of a ring acid	As above: -carboxilato and fenilo	
+O=C(OC1CCCCC1C)C1CCCCC1	ciclohexanocarboxilato de 2-metilciclohexilo	ring on both sides, substituted O-bound ring	As above; the O-bound ring numbered from its carbon bonded to the O	
+O=C(OC1=CC=CC=C1)CC1=CC=CC=C1	2-feniletanoato de fenilo	phenyl on both parts	The acid part is a chain (P-44.1.1) with a fenil prefix; the O-bound group is fenilo; phenylacetate accepted	traditional=fenilacetato de fenilo
+COC(=O)CC1=CC=CC=C1	2-feniletanoato de metilo	ester on a ring side chain	P-44.1.1: the chain carries the ester; phenylacetate accepted like ácido fenilacético (I-40b, from memory)	traditional=fenilacetato de metilo
+CCOC(=O)CC1=CC=CC=C1	2-feniletanoato de etilo	ethyl phenylacetate	As above	traditional=fenilacetato de etilo
+COC(=O)CCC1=CC=CC=C1	3-fenilpropanoato de metilo	3-phenylpropanoate	P-44.1.1; no traditional name	
+COC(=O)CC1CCCCC1	2-ciclohexiletanoato de metilo	ester chain with a cycloalkyl prefix	P-44.1.1	
+COC(=O)C(CC(=O)OC)C1CCCCC1	2-ciclohexilbutanodioato de dimetilo	diester chain with a ring prefix	P-44.1.1: the chain carries both –COO–, the ring none	
+COC(=O)C1CCC(C(=O)O)CC1	ácido 4-(metoxicarbonil)ciclohexano-1-carboxílico	alcoxicarbonil on a ring acid	Acid > ester: the ester bonded to the ring by its C=O carbon is metoxicarbonil (I-39c), enclosed	
+CCOC(=O)C1CCCCC1C(=O)O	ácido 2-(etoxicarbonil)ciclohexano-1-carboxílico	alcoxicarbonil next to the ring acid	As above, 2-(etoxicarbonil)	
+CC(=O)OC1CCC(C(=O)O)CC1	ácido 4-(acetiloxi)ciclohexano-1-carboxílico	aciloxi on a ring acid	Acid > ester: the ester bonded to the ring by its O is acetiloxi (I-39c)	
+O=COC1CCC(C(=O)O)CC1	ácido 4-(formiloxi)ciclohexano-1-carboxílico	formiloxi on a ring acid	As above with formiloxi	
+OC(=O)CC1CCC(OC(C)=O)CC1	ácido 2-[4-(acetiloxi)ciclohexil]etanoico	aciloxi on a ring prefix	P-44.1.1: the chain carries the –COOH, the ring none: the chain is the parent, the ring a prefix carrying acetiloxi	
+OC(=O)CCC(=O)OC1=CC=CC=C1	ácido 4-fenoxi-4-oxobutanoico	ester with a phenyl beside an acid	Acid > ester: the ester carbon is in the chain (4-oxo) and its O with the phenyl is fenoxi (I-39c, I-40a)	

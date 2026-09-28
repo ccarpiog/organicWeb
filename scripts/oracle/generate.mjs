@@ -35,7 +35,9 @@
  * `carboxi-`, `benzoil`, `(ciclohexanocarbonil)`; generateRingAcids()), of
  * ring nitriles and amides (I-40c: `-carbonitrilo`, `-carboxamida`,
  * `benzonitrilo`, `benzamida`, `N-feniletanamida`, `ciano-` / `carbamoil-`
- * on a ring; generateRingNitrilesAmides()),
+ * on a ring; generateRingNitrilesAmides()), of ring esters (I-40d:
+ * `-carboxilato`, `benzoato`, `etanoato de fenilo`, `benzoato de fenilo`,
+ * `alcoxicarbonil-` / `aciloxi-` on a ring; generateRingEsters()),
  * plus the list of cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
@@ -636,14 +638,15 @@ export function generateAcids({ count, seed, maxSize = 14 }) {
  * @param {object} mol - A molecule with at least one –COOH (not mutated).
  * @param {function(): number} random - Seeded generator.
  * @param {object} alkyl - A hydrocarbon (not mutated): the O-bound group.
- * @returns {object} The copy (unchanged when `mol` has no –COOH).
+ * @returns {object} The copy (unchanged when `mol` has no –COOH or `alkyl` no carbon with a hydrogen).
  */
 export function esterify(mol, random, alkyl) {
   const copy = cloneMolecule(mol);
   const adj = adjacency(copy);
   const hydroxy = [...copy.atoms.keys()].find((id) => carboxylRole(copy, adj, id) === 'hydroxy');
-  if (hydroxy === undefined) {
-    return copy;
+  const room = [...alkyl.atoms.keys()].some((id) => bondOrderSum(alkyl, id) < CARBON_VALENCE);
+  if (hydroxy === undefined || !room) {
+    return copy; // No –COOH, or a group with no hydrogen to spare (a fully unsaturated small ring).
   }
   const ids = new Map();
   for (const [id, atom] of alkyl.atoms) {
@@ -2037,6 +2040,116 @@ export function generateRingNitrilesAmides({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct ring nitrile and amide molecules
   return molecules;
 } // End of function generateRingNitrilesAmides()
+
+/**
+ * A random small ring hydrocarbon for an ester's O-bound group (design.md
+ * §13.4 I-40d): a benzene (40 %, bare) or a cycloalkane of 3 to 7 carbons,
+ * sometimes with a double bond, with up to `extra` side-chain carbons.
+ *
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} extra - The most side-chain carbons.
+ * @returns {object} The ring molecule.
+ */
+function randomRingGroup(random, extra) {
+  if (random() < 0.4) {
+    return randomBenzene(random, { extra: 0, kekule: random() < 0.5 ? 1 : 2 });
+  }
+  const ringSize = randomInt(random, 3, 7);
+  return randomMonocycle(random, {
+    ringSize, extra: randomInt(random, 0, Math.max(0, extra)), unsaturation: random() * 0.2, branchiness: random(),
+  });
+}
+
+/**
+ * Generates up to `count` distinct (by canonical key) ring esters (design.md
+ * §13.4 I-40d): a ring on the acid side — a random monocycle (3–10 ring
+ * carbons) or benzene with one or two –COOH bonded to ring carbons
+ * (ringGroupGraft()) esterified by a random acyclic group or a ring group
+ * (esterify(), randomRingGroup(): `ciclohexanocarboxilato de metilo`,
+ * `benzoato de metilo`, `ciclohexano-1,2-dicarboxilato de dimetilo`,
+ * `benzoato de fenilo`); a ring on the O side of an acyclic acid
+ * (`etanoato de fenilo`, `propanoato de 2-metilciclohexilo`); an ester at
+ * a side-chain end of a ring molecule (`2-feniletanoato de metilo`); or,
+ * beside a ring acid, ester groups on ring carbons (esterGraft():
+ * `metoxicarbonil-`, `acetiloxi-` on a ring). A share also carry OH
+ * groups, ring C=O and halogens. Only molecules with a ring and an ester
+ * that the engine names in every prefix style are kept.
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateRingEsters({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 9241 + 61);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60) {
+    attempts += 1;
+    const kind = ['ring', 'ring', 'oxygen', 'side', 'prefix'][Math.floor(random() * 5)];
+    /**
+     * The O-bound group: a ring group (for a two-ring ester too) or a random acyclic hydrocarbon of 1 to 4 carbons.
+     *
+     * @param {boolean} ring - Whether it is a ring group.
+     * @returns {object} The group.
+     */
+    const group = (ring) => (ring
+      ? randomRingGroup(random, 2)
+      : randomHydrocarbon(random, { size: randomInt(random, 1, 4), unsaturation: random() * 0.2, branchiness: random() }));
+    let mol;
+    if (kind === 'oxygen') {
+      const size = randomInt(random, 1, Math.max(1, maxSize - 8));
+      const base = randomHydrocarbon(random, { size, unsaturation: random() * 0.3, branchiness: 0.3 + random() * 0.7 });
+      mol = esterify(carboxylate(base, random, 1), random, group(true));
+    } else {
+      const benzene = random() < 0.35 && maxSize >= 7 && kind !== 'prefix';
+      let base;
+      let ringSize = 6;
+      if (benzene) {
+        const extra = kind === 'side' ? randomInt(random, 1, Math.max(1, Math.min(4, maxSize - 7))) : 0;
+        base = randomBenzene(random, { extra, kekule: random() < 0.5 ? 1 : 2, unsaturation: random() * 0.3 });
+      } else {
+        const size = randomInt(random, 3, Math.max(3, maxSize - 4));
+        ringSize = randomInt(random, 3, Math.min(10, size));
+        base = randomMonocycle(random, {
+          ringSize, extra: size - ringSize, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8,
+        });
+      } // End of the choice of the ring molecule
+      const ring = new Set([...base.atoms.keys()].slice(0, ringSize)); // Ring atoms come first.
+      mol = base;
+      if (kind === 'ring') {
+        const two = !benzene && random() < 0.25;
+        mol = ringGroupGraft(mol, random, 'acid', two ? 2 : 1, ring);
+        const alkyl = group(random() < 0.3);
+        mol = esterify(mol, random, alkyl);
+        if (two) {
+          mol = esterify(mol, random, random() < 0.7 ? alkyl : group(false));
+        }
+      } else if (kind === 'side') {
+        mol = esterify(carboxylate(mol, random, 1), random, group(random() < 0.2));
+      } else {
+        mol = esterGraft(ringGroupGraft(mol, random, 'acid', 1, ring), random, 0.1, ring);
+      }
+      if (!benzene && random() < 0.2) {
+        mol = random() < 0.5 ? hydroxylate(mol, random, 0.05 + random() * 0.15, ring) : carbonylate(mol, random, 0.1, ring);
+      }
+    } // End of the choice of the kind of molecule
+    if (random() < 0.15) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.15);
+    }
+    if (validateForNaming(mol) || perceiveRings(mol).rings.length === 0 || esterCarbons(mol).length === 0) {
+      continue; // Not valid for naming (a polysubstituted benzene, a mixed ring diester…), no ring, or no ester.
+    }
+    if (!PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
+      continue; // Refused by the engine in some style (symmetricRing…).
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct ring esters
+  return molecules;
+} // End of function generateRingEsters()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

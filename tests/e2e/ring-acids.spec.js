@@ -8,8 +8,9 @@
  * 2-feniletanoico`, with `ácido fenilacético`); `carboxi-`, `benzoil` and
  * `(ciclohexanocarbonil)` prefixes are named; the stepper explains that
  * the group's carbon is not a ring carbon; "Ordenar dibujo" lays a ring
- * acid out; esters with a ring stay refused (nitriles and amides with a
- * ring are named since I-40c, ring-nitriles-amides.spec.js). Runs on the dev server and
+ * acid out; a ring ester beside a chain ester stays refused (nitriles and
+ * amides with a ring are named since I-40c, ring-nitriles-amides.spec.js;
+ * ring esters since I-40d, ring-esters.spec.js). Runs on the dev server and
  * on dist/index.html.
  */
 
@@ -141,7 +142,7 @@ test('benzene: ácido benzoico and benzaldehído, with their systematic names; -
   expect(errors).toEqual([]);
 }); // End of test 'benzene…'
 
-test('loaded ring acids, aldehydes and ring acyl prefixes are named; esters with a ring stay refused', async ({ page }) => {
+test('loaded ring acids, aldehydes and ring acyl prefixes are named; a ring ester beside a chain ester stays refused', async ({ page }) => {
   const errors = await openApp(page);
   for (const [smiles, name] of [
     ['O=CC1CCCCC1', 'ciclohexanocarbaldehído'],
@@ -172,10 +173,11 @@ test('loaded ring acids, aldehydes and ring acyl prefixes are named; esters with
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
 
   const error = page.locator('#results .results-error');
-  await loadSmiles(page, 'COC(=O)C1CCC(C(=O)O)CC1');
+  // A ring ester beside an acid is named since I-40d; a ring ester beside a chain ester stays refused.
+  await loadSmiles(page, 'COC(=O)C1CCC(CCC(=O)OC)CC1');
   await askName(page);
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('un grupo –COO– (un éster)');
+  await expect(error).toContainText('un oxígeno, un nitrógeno o un anillo');
   await expect(page.locator('#result-name')).toHaveCount(0);
   expect(errors).toEqual([]);
 }); // End of test 'loaded ring acids…'

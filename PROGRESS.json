@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T07:09:00Z",
+  "updated": "2026-09-28T07:47:20Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -424,8 +424,11 @@
     {
       "id": "I-40d",
       "title": "v2.20d Ring esters (split from I-40)",
-      "status": "queued",
-      "summary": "Names esters with a ring on the acid side (-carboxilato, benzoato) or the O side (…ato de fenilo/ciclohexilo)."
+      "status": "done",
+      "summary": "Names esters with a ring on either side (benzoato de metilo, etanoato de fenilo, benzoato de fenilo); lactones refused.",
+      "risk": "high",
+      "review": "docs/reviews/I-40d.md",
+      "narrative": "docs/progress-archive/i-40d.md"
     },
     {
       "id": "I-41",

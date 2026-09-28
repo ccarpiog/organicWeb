@@ -464,7 +464,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene dos grupos –COO– (éster) que no están en la misma cadena de carbonos: entre ellos hay un oxígeno o un nitrógeno que corta la cadena (como en el diacetato de etano-1,2-diilo, o cuando un éster está dentro del grupo unido al oxígeno del otro). Entonces uno de los dos se nombraría con un prefijo («aciloxi-», como «acetiloxi-», o «alcoxicarbonil-», como «metoxicarbonil-») o con un nombre especial, y eso aún no sé hacerlo. Sí sé nombrar los diésteres con los dos grupos –COO– en la misma cadena (como el butanodioato de dimetilo) y los ésteres junto a un ácido (como el ácido 4-metoxi-4-oxobutanoico)."
+     "Esta molécula tiene dos grupos –COO– (éster) que no están en la misma cadena de carbonos: entre ellos hay un oxígeno, un nitrógeno o un anillo que corta la cadena (como en el diacetato de etano-1,2-diilo, o cuando un éster está dentro del grupo unido al oxígeno del otro). Entonces uno de los dos se nombraría con un prefijo («aciloxi-», como «acetiloxi-», o «alcoxicarbonil-», como «metoxicarbonil-») o con un nombre especial, y eso aún no sé hacerlo. Sí sé nombrar los diésteres con los dos grupos –COO– en la misma cadena (como el butanodioato de dimetilo) y los ésteres junto a un ácido (como el ácido 4-metoxi-4-oxobutanoico)."
     ],
     "highlight": [
      {
@@ -1197,7 +1197,7 @@
    }
   ]
  },
- "CC(=O)OC1CCC(C(=O)O)CC1": {
+ "CC(=O)OC1CCC(C(=O)O)CC1OO": {
   "code": "HETEROATOM",
   "principal": "acid",
   "steps": [
@@ -1209,6 +1209,7 @@
      "He encontrado estos grupos:",
      "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
      "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
+     "1 grupo que no reconozco: hay átomos que no son carbono unidos entre sí (como O–O o N–O).",
      "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona; el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona. Todo junto es un único grupo."
     ],
     "highlight": [
@@ -1228,6 +1229,16 @@
        3
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       14,
+       15
+      ],
+      "bonds": [
+       15
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1237,7 +1248,8 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que el éster."
+     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que el éster.",
+     "Además hay un grupo que no reconozco: no sé dónde iría en la lista."
     ],
     "highlight": [
      {
@@ -1263,6 +1275,16 @@
        3
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       14,
+       15
+      ],
+      "bonds": [
+       15
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1273,7 +1295,8 @@
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
      "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico».",
-     "El éster: prefijo «aciloxi-» (el nombre cambia según la cadena: «acetiloxi-», «propanoiloxi-»…), porque se une al grupo principal por su oxígeno."
+     "El éster: prefijo «aciloxi-» (el nombre cambia según la cadena: «acetiloxi-», «propanoiloxi-»…), porque se une al grupo principal por su oxígeno.",
+     "El grupo que no reconozco no tiene sufijo ni prefijo entre los que conozco."
     ],
     "highlight": [
      {
@@ -1299,6 +1322,16 @@
        3
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       14,
+       15
+      ],
+      "bonds": [
+       15
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1307,7 +1340,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos), aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂), amidas (con el grupo –CONH₂: un C=O unido a un nitrógeno) y nitrilos (con el grupo –C≡N: un carbono unido a un nitrógeno por un enlace triple)."
     ],
     "highlight": [
      {
@@ -1315,7 +1348,9 @@
        3,
        4,
        10,
-       11
+       11,
+       14,
+       15
       ],
       "bonds": [],
       "style": "candidate"
@@ -1325,7 +1360,7 @@
    }
   ]
  },
- "CCOC(=O)C1CCC(C(=O)O)CC1": {
+ "CCOC(=O)C1CCC(C(=O)O)CC1OO": {
   "code": "HETEROATOM",
   "principal": "acid",
   "steps": [
@@ -1337,6 +1372,7 @@
      "He encontrado estos grupos:",
      "1 ácido carboxílico: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, todo junto (–COOH).",
      "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
+     "1 grupo que no reconozco: hay átomos que no son carbono unidos entre sí (como O–O o N–O).",
      "Cada átomo pertenece a un solo grupo: el –OH de un ácido no cuenta como alcohol ni su C=O como cetona; el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona. Todo junto es un único grupo."
     ],
     "highlight": [
@@ -1356,6 +1392,16 @@
        4
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       15,
+       16
+      ],
+      "bonds": [
+       16
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1365,7 +1411,8 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que el éster."
+     "Aquí el grupo principal es el ácido carboxílico: en la lista va antes que el éster.",
+     "Además hay un grupo que no reconozco: no sé dónde iría en la lista."
     ],
     "highlight": [
      {
@@ -1391,6 +1438,16 @@
        4
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       15,
+       16
+      ],
+      "bonds": [
+       16
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1401,7 +1458,8 @@
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
      "El ácido carboxílico: sufijo «-oico», y el nombre empieza por «ácido», como en «ácido etanoico».",
-     "El éster: prefijo «alcoxicarbonil-» (el nombre cambia según la cadena: «metoxicarbonil-», «etoxicarbonil-»…), porque se une al grupo principal por su carbono."
+     "El éster: prefijo «alcoxicarbonil-» (el nombre cambia según la cadena: «metoxicarbonil-», «etoxicarbonil-»…), porque se une al grupo principal por su carbono.",
+     "El grupo que no reconozco no tiene sufijo ni prefijo entre los que conozco."
     ],
     "highlight": [
      {
@@ -1427,6 +1485,16 @@
        4
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       15,
+       16
+      ],
+      "bonds": [
+       16
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1435,7 +1503,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos), aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂), amidas (con el grupo –CONH₂: un C=O unido a un nitrógeno) y nitrilos (con el grupo –C≡N: un carbono unido a un nitrógeno por un enlace triple)."
     ],
     "highlight": [
      {
@@ -1443,7 +1511,9 @@
        3,
        5,
        11,
-       12
+       12,
+       15,
+       16
       ],
       "bonds": [],
       "style": "candidate"
@@ -1453,7 +1523,7 @@
    }
   ]
  },
- "CC(=O)NC1CCC(C(=O)OC)CC1": {
+ "CC(=O)NC1CCC(C(=O)OC)CC1OO": {
   "code": "HETEROATOM",
   "principal": "ester",
   "steps": [
@@ -1465,6 +1535,7 @@
      "He encontrado estos grupos:",
      "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
      "1 amida: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno (–CONH₂, –CONH– o –CON–).",
+     "1 grupo que no reconozco: hay átomos que no son carbono unidos entre sí (como O–O o N–O).",
      "Cada átomo pertenece a un solo grupo: el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona; el nitrógeno de una amida no cuenta como amina ni su C=O como cetona. Todo junto es un único grupo."
     ],
     "highlight": [
@@ -1484,6 +1555,16 @@
        3
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       15,
+       16
+      ],
+      "bonds": [
+       16
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1493,7 +1574,8 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el éster: en la lista va antes que la amida."
+     "Aquí el grupo principal es el éster: en la lista va antes que la amida.",
+     "Además hay un grupo que no reconozco: no sé dónde iría en la lista."
     ],
     "highlight": [
      {
@@ -1519,6 +1601,16 @@
        3
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       15,
+       16
+      ],
+      "bonds": [
+       16
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1529,7 +1621,8 @@
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
      "El éster: sufijo «-oato», seguido de «de» y el nombre de la otra cadena acabado en «-ilo», como en «etanoato de metilo».",
-     "La amida: prefijo «acilamino-» (el nombre cambia según la cadena: «acetilamino-», «propanoilamino-»…), porque se une al grupo principal por su nitrógeno."
+     "La amida: prefijo «acilamino-» (el nombre cambia según la cadena: «acetilamino-», «propanoilamino-»…), porque se une al grupo principal por su nitrógeno.",
+     "El grupo que no reconozco no tiene sufijo ni prefijo entre los que conozco."
     ],
     "highlight": [
      {
@@ -1555,6 +1648,16 @@
        3
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       15,
+       16
+      ],
+      "bonds": [
+       16
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1563,7 +1666,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos), aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂), amidas (con el grupo –CONH₂: un C=O unido a un nitrógeno) y nitrilos (con el grupo –C≡N: un carbono unido a un nitrógeno por un enlace triple)."
     ],
     "highlight": [
      {
@@ -1571,7 +1674,9 @@
        3,
        4,
        10,
-       11
+       11,
+       15,
+       16
       ],
       "bonds": [],
       "style": "candidate"
@@ -1581,7 +1686,7 @@
    }
   ]
  },
- "NC(=O)C1CCC(C(=O)OC)CC1": {
+ "NC(=O)C1CCC(C(=O)OC)CC1OO": {
   "code": "HETEROATOM",
   "principal": "ester",
   "steps": [
@@ -1593,6 +1698,7 @@
      "He encontrado estos grupos:",
      "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
      "1 amida: un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno (–CONH₂, –CONH– o –CON–).",
+     "1 grupo que no reconozco: hay átomos que no son carbono unidos entre sí (como O–O o N–O).",
      "Cada átomo pertenece a un solo grupo: el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona; el nitrógeno de una amida no cuenta como amina ni su C=O como cetona. Todo junto es un único grupo."
     ],
     "highlight": [
@@ -1612,6 +1718,16 @@
        2
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       14,
+       15
+      ],
+      "bonds": [
+       15
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1621,7 +1737,8 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el éster: en la lista va antes que la amida."
+     "Aquí el grupo principal es el éster: en la lista va antes que la amida.",
+     "Además hay un grupo que no reconozco: no sé dónde iría en la lista."
     ],
     "highlight": [
      {
@@ -1647,6 +1764,16 @@
        2
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       14,
+       15
+      ],
+      "bonds": [
+       15
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1657,7 +1784,8 @@
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
      "El éster: sufijo «-oato», seguido de «de» y el nombre de la otra cadena acabado en «-ilo», como en «etanoato de metilo».",
-     "La amida: prefijo «carbamoil-», porque se une al grupo principal por su carbono."
+     "La amida: prefijo «carbamoil-», porque se une al grupo principal por su carbono.",
+     "El grupo que no reconozco no tiene sufijo ni prefijo entre los que conozco."
     ],
     "highlight": [
      {
@@ -1683,6 +1811,16 @@
        2
       ],
       "style": "substituent"
+     },
+     {
+      "atoms": [
+       14,
+       15
+      ],
+      "bonds": [
+       15
+      ],
+      "style": "candidate"
      }
     ],
     "locants": null
@@ -1691,7 +1829,7 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos."
+     "Esta molécula tiene átomos que no son carbono ni hidrógeno. Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), alcoholes (con grupos –OH unidos a un carbono), aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), ácidos carboxílicos (con el grupo –COOH), éteres (con un oxígeno unido a dos carbonos, C–O–C), ésteres (con el grupo –COO– entre dos cadenas de carbonos), aminas (con un nitrógeno unido a uno, dos o tres carbonos por enlaces sencillos, como el –NH₂), amidas (con el grupo –CONH₂: un C=O unido a un nitrógeno) y nitrilos (con el grupo –C≡N: un carbono unido a un nitrógeno por un enlace triple)."
     ],
     "highlight": [
      {
@@ -1699,7 +1837,9 @@
        1,
        3,
        9,
-       10
+       10,
+       14,
+       15
       ],
       "bonds": [],
       "style": "candidate"
@@ -1709,7 +1849,7 @@
    }
   ]
  },
- "N#CC1CCC(C(=O)OC)CC1": {
+ "COC(=O)CC1CCC(C(=O)OC)CC1": {
   "code": "HETEROATOM",
   "principal": "ester",
   "steps": [
@@ -1719,23 +1859,24 @@
     "text": [
      "Además de carbono e hidrógeno, tu molécula tiene otros átomos. Con ellos se forman [[grupos funcionales|grupo funcional]]: trozos de la molécula que deciden cómo se comporta y cómo se llama.",
      "He encontrado estos grupos:",
-     "1 éster: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
-     "1 nitrilo: un carbono unido a un nitrógeno por un [[enlace triple]] (–C≡N).",
-     "Cada átomo pertenece a un solo grupo: el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona; el enlace triple de un nitrilo (C≡N) no es el de un alquino y su nitrógeno no cuenta como amina. Todo junto es un único grupo."
+     "2 ésteres: un carbono con un oxígeno unido por un [[enlace doble]] y otro oxígeno que lo une a otra cadena de carbonos (–COO–).",
+     "Cada átomo pertenece a un solo grupo: el oxígeno del medio de un éster no cuenta como éter ni su C=O como cetona. Todo junto es un único grupo."
     ],
     "highlight": [
      {
       "atoms": [
-       7,
-       8,
-       9,
-       1,
-       2
+       2,
+       3,
+       4,
+       10,
+       11,
+       12
       ],
       "bonds": [
-       7,
-       8,
-       1
+       2,
+       3,
+       10,
+       11
       ],
       "style": "substituent"
      }
@@ -1747,30 +1888,26 @@
     "title": "Elige el principal",
     "text": [
      "Cuando hay grupos distintos, solo uno es el [[grupo principal]]. Se elige con este orden de la IUPAC (2013), de más a menos importante: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina.",
-     "Aquí el grupo principal es el éster: en la lista va antes que el nitrilo."
+     "Aquí el grupo principal es el éster: es el único tipo de grupo que puede serlo.",
+     "Hay 2 grupos de este tipo: todos cuentan como principales."
     ],
     "highlight": [
      {
       "atoms": [
-       7,
-       8,
-       9
+       2,
+       3,
+       4,
+       10,
+       11,
+       12
       ],
       "bonds": [
-       7,
-       8
+       2,
+       3,
+       10,
+       11
       ],
       "style": "parent"
-     },
-     {
-      "atoms": [
-       1,
-       2
-      ],
-      "bonds": [
-       1
-      ],
-      "style": "substituent"
      }
     ],
     "locants": null
@@ -1780,31 +1917,25 @@
     "title": "Sufijo o prefijo",
     "text": [
      "El grupo principal se nombra con un [[sufijo]], una terminación al final del nombre. Los demás grupos se nombran con un [[prefijo]] delante, igual que las ramas.",
-     "El éster: sufijo «-oato», seguido de «de» y el nombre de la otra cadena acabado en «-ilo», como en «etanoato de metilo».",
-     "El nitrilo: prefijo «ciano-»."
+     "El éster: sufijo «-oato», seguido de «de» y el nombre de la otra cadena acabado en «-ilo», como en «etanoato de metilo»."
     ],
     "highlight": [
      {
       "atoms": [
-       7,
-       8,
-       9
+       2,
+       3,
+       4,
+       10,
+       11,
+       12
       ],
       "bonds": [
-       7,
-       8
+       2,
+       3,
+       10,
+       11
       ],
       "style": "parent"
-     },
-     {
-      "atoms": [
-       1,
-       2
-      ],
-      "bonds": [
-       1
-      ],
-      "style": "substituent"
      }
     ],
     "locants": null
@@ -1813,14 +1944,15 @@
     "id": "notYet",
     "title": "Aún no sé nombrarla",
     "text": [
-     "Esta molécula tiene un anillo y un grupo –COO– (un éster). De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos."
+     "Esta molécula tiene dos grupos –COO– (éster) que no están en la misma cadena de carbonos: entre ellos hay un oxígeno, un nitrógeno o un anillo que corta la cadena (como en el diacetato de etano-1,2-diilo, o cuando un éster está dentro del grupo unido al oxígeno del otro). Entonces uno de los dos se nombraría con un prefijo («aciloxi-», como «acetiloxi-», o «alcoxicarbonil-», como «metoxicarbonil-») o con un nombre especial, y eso aún no sé hacerlo. Sí sé nombrar los diésteres con los dos grupos –COO– en la misma cadena (como el butanodioato de dimetilo) y los ésteres junto a un ácido (como el ácido 4-metoxi-4-oxobutanoico)."
     ],
     "highlight": [
      {
       "atoms": [
-       1,
-       8,
-       9
+       2,
+       4,
+       11,
+       12
       ],
       "bonds": [],
       "style": "candidate"

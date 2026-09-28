@@ -55,11 +55,11 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-40a | v2.20a Rings as substituents of a functional chain (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40a.md` |
 | I-40b | v2.20b Acids and aldehydes with a ring, ring acyl prefixes (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40b.md` |
 | I-40c | v2.20c Nitriles and amides with a ring (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40c.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40c.md` |
-| I-40d | v2.20d Ring esters (split from I-40) | same, §3.20 | queued | — | — |
+| I-40d | v2.20d Ring esters (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40d.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40d.md` |
 | I-41 | v2.21 Condensed formulas and wrap-up | same, §3.21 | queued | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
-v2 plan (user-confirmed scope): I-21…I-40c done; I-40d, I-41 queued in order
+v2 plan (user-confirmed scope): I-21…I-40d done; I-41 queued
 (I-27 split into I-27a editor drawing and I-27b Ordenar dibujo; I-39 into I-39a `ciano-`,
 I-39b acyl prefixes, I-39c ester prefixes + diesters, I-39d amide prefixes + pair matrix;
 I-40 into I-40a ring prefixes on a functional chain, I-40b acids/aldehydes + ring acyl
@@ -98,13 +98,11 @@ phases may be split as they are selected. The v2 plan now lives in
 
 ## Next action
 
-Poll the inbox, then run I-40d: lift `ringEster` — esters with a ring on either side
-(`benzoato de metilo`, `ciclohexanocarboxilato de etilo`, `acetato de fenilo`, `etanoato de
-ciclohexilo`), ring esters on a chain beside a ring (I-40a prefixes) and ester prefixes on rings
-beside a senior group (`alcoxicarbonil-`, `aciloxi-`). Reuse I-40b/I-40c's ring-suffix machinery
-(`principal.js`, `rings.js`, `render.js`) and I-35/I-39c ester code (`esterAlkylName()`,
-`esterSpecs()`). Spec: design §13.4 row I-40, §13.6; archives `i-40b.md`, `i-40c.md`, `i-35.md`,
-`i-39c.md`. Then I-41. Deploying stays a manual user step.
+Poll the inbox, then run I-41 (v2.21 condensed formulas and wrap-up): read design §13.4 row
+I-41 and `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.21; split it if it
+is too big for one worker. Also worth folding in: the pre-existing "Los 6 carbonos" wording for
+ring acids/nitriles/amides (`docs/progress-archive/i-40d.md`, open points) and the stale
+`scripts/oracle/README.md`. Deploying stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -214,15 +212,18 @@ beside a senior group (`alcoxicarbonil-`, `aciloxi-`). Reuse I-40b/I-40c's ring-
   `carbamoil-` on rings in `principal.js` / `rings.js` / `substituent.js` / `render.js`; explain
   `branchAmideHow()`; oracle `generateRingNitrilesAmides()`; tests
   `tests/unit/ring-nitriles-amides.test.js`, `tests/e2e/ring-nitriles-amides.spec.js`.
+- Ring esters (I-40d): `ringEster` retired; `esterRingSplit()` / `isLactone()` in `validate.js`
+  (two-ring `benzoato de fenilo`, lactone refusal), two-ring key in `graph.js`, two-part naming in
+  `naming/index.js`; oracle `generateRingEsters()`; tests `tests/unit/ring-esters.test.js`,
+  `tests/e2e/ring-esters.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-40c)
+## Verification (last phase, I-40d)
 
-- Run by the orchestrator: `npm test` 0 (1432 pass) · `npm run check` 0 (125 files) · `npm run e2e`
-  0 (247 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (9611 pass, 500 ring
-  nitriles/amides). After the review fix: `npm test` 0 (1433 pass) · `npm run check` 0 ·
-  `npm run e2e` 0 (247 pass).
+- Run by the orchestrator: `npm test` 0 (1482 pass) · `npm run check` 0 (127 files) · `npm run e2e`
+  0 (253 pass, source + dist) · `npm run oracle -- --count 1000 --seed 1` 0 (10111 pass, 500 ring
+  esters). After the review fix: `npm test` 0 (1482 pass) · `npm run check` 0 · `npm run e2e` 0 (253 pass).
 
 ## Open risks / deviations
 
@@ -249,52 +250,11 @@ beside a senior group (`alcoxicarbonil-`, `aciloxi-`). Reuse I-40b/I-40c's ring-
   fail Ordenar dibujo checks (drawing kept, message shown); Ejemplos load leaves the view
   unrestored on undo; deploy https-only, `--dry-run` never reads the Keychain.
 
-- I-21: element table `src/model/elements.js`; heteroatom molecules get the
-  `HETEROATOM` "aún no sé nombrar" error; heteroatom labels and "carbono" wording in some
-  editor refusals wait for I-23 (`docs/progress-archive/i-21.md`).
-
-- I-22: SMILES reads/writes O, N, halogens and `[OH]`-style bracket H; the
-  oracle keeps heavy atoms (`heavyAtomTree()`), generator still hydrocarbon-only
-  (`docs/progress-archive/i-22.md`).
-
-- I-23: element palette (shortcuts `c o n f l b i`); bond tools always draw
-  carbons; 90° view falls back and Ordenar dibujo refuses when heteroatoms are
-  present. Review should-fix (label hit boxes hid bonds) fixed with regressions;
-  N–Cl at 30 units leaves ~5 units of clickable bond
-  (`docs/progress-archive/i-23.md`).
-
-- I-24: `CYCLE` (single carbocycle) and `RING_SYSTEM` (heterociclo, fusionados,
-  con puente, espiro, varios anillos) scope errors, checked before `TOO_BIG` /
-  `HETEROATOM`. Fused vs bridged exact only for two rings (cubane → fused);
-  oracle cannot compare molecules with 2+ rings. Review's two should-fix fixed
-  with regressions (`docs/progress-archive/i-24.md`).
-
-- I-25: bare rings 3–30 C named; > 30 C → `TOO_BIG`; `CYCLE` keeps a
-  `ringReason` (side chains / unsaturation / both). Closure bond chosen from
-  atom ids, not drawing order. Ordenar dibujo refuses rings with a message
-  until I-27 (`docs/progress-archive/i-25.md`).
-
-- I-26: ring always the parent (design §13.5); locant omission only for a
-  lone ring multiple bond or a lone substituent on a saturated ring; benzene
-  still refused (`CYCLE`, `ringReason: 'benzene'`) until I-28. Review
-  should-fix (option labels repeated after Z) fixed with a regression
-  (`docs/progress-archive/i-26.md`).
-
-- I-27a: ring tool (3–8, `a`); a ring hung from a ring carbon is two rings →
-  `RING_SYSTEM`; ring double bonds draw the inner line toward the smallest ring.
-  Review should-fix (stale hover crash) fixed with a regression
-  (`docs/progress-archive/i-27a.md`).
-
-- I-27b: rings ordered as polygons (locant 1 top, clockwise), side chains
-  kept outside; seeded random test 0 failures. Chain-parent layouts still take
-  branches in atom-id order (pre-existing; ties by bond order could depend on
-  ids). Both review should-fix fixed (`docs/progress-archive/i-27b.md`).
-
-- I-28: benzene monosubstituted only (polysubstituted → `CYCLE`
-  `polysubstitutedBenzene`); `tolueno`/`estireno` as other valid forms (toluene
-  labelled as the 2013 preferred name, from memory of P-22.1.3), no `cumeno`; ring
-  buttons shrunk on wide pointer screens. Both review should-fix fixed with
-  regressions (`docs/progress-archive/i-28.md`).
+- I-21…I-28 (multi-element model, SMILES, palette, ring infrastructure, cycloalkanes, substituted
+  rings, ring tool, Ordenar dibujo for rings, benzene): deviations and review resolutions in
+  `docs/progress-archive/i-21.md` … `i-28.md`. Still relevant: fused vs bridged exact only for two
+  rings; oracle compares at most two rings (I-40d); chain-parent layouts take branches in atom-id
+  order; benzene monosubstituted only; `tolueno` preferred-name status from memory.
 
 - I-29: detection only; heteroatom molecules still `HETEROATOM`, now with
   group steps. Review should-fix (ester/amide prefix direction) fixed with
@@ -389,6 +349,12 @@ beside a senior group (`alcoxicarbonil-`, `aciloxi-`). Reuse I-40b/I-40c's ring-
   `carboxySubstituent`; `manyAcids` now per carbon piece. Review should-fix (ring-adjacent ketone
   explained as an aldehyde) fixed with regressions (`docs/progress-archive/i-40b.md`).
 
+- I-40d: ring esters named, `benzoato de fenilo` the only two-ring molecules admitted (two separate
+  carbocycles, one ester, no acid); lactones refused with their own message; mixed ring diesters,
+  two rings beside an acid, ring ester beside a chain ester still refused; `-carboxilato`,
+  `benzoato`, `fenilacetato` status from memory. Review should-fix (anhydride called a lactone)
+  fixed with a regression (`docs/progress-archive/i-40d.md`).
+
 - I-40c: `benzonitrilo`/`benzamida` preferred with `benceno…` forms as alternatives;
   `N-feniletanamida` first (systematic-first rule) with `N-fenilacetamida`; `2-fenilacetamida`,
   `fenilacetonitrilo` "la IUPAC acepta" — all from memory (P-66.1, P-66.5). Ring diamides with an
@@ -401,4 +367,4 @@ beside a senior group (`alcoxicarbonil-`, `aciloxi-`). Reuse I-40b/I-40c's ring-
 
 ## Git state
 
-- I-40b `cdbe7fb`, pushed. I-40c committed and pushed right after this checkpoint (see `git log`).
+- I-40c `4e9d4b2`, pushed. I-40d committed and pushed right after this checkpoint (see `git log`).

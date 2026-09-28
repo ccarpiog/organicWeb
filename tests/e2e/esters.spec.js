@@ -11,9 +11,10 @@
  * 1-metiletilo, 2-metilpropanoato de tert-butilo, metanoato de metilo with
  * formiato de metilo, 3-oxobutanoato de etilo, etanoato de 2-hidroxietilo);
  * "Ordenar dibujo" lays out an ester; two esters on different carbon pieces,
- * an ester with a ring and a mixed diester that would need locants are
- * refused with their messages (a diester on one chain and an ester beside
- * an acid are named since I-39c, tests/e2e/ester-prefixes.spec.js). Runs on
+ * a lactone and a mixed diester that would need locants are refused with
+ * their messages (a diester on one chain and an ester beside an acid are
+ * named since I-39c, tests/e2e/ester-prefixes.spec.js; esters with a ring
+ * since I-40d, tests/e2e/ring-esters.spec.js). Runs on
  * the dev server and on dist/index.html.
  */
 
@@ -220,10 +221,11 @@ test('loaded esters: branched groups on both sides, oxo- and hidroxi-, formiato;
   await expect(error).toContainText('diacetato de etano-1,2-diilo');
   await expect(page.locator('#result-name')).toHaveCount(0);
 
-  await loadSmiles(page, 'CC(=O)OC1=CC=CC=C1');
+  // Esters with a ring are named since I-40d (ring-esters.spec.js); a lactone (the –COO– inside the ring) is not.
+  await loadSmiles(page, 'O=C1CCCCO1');
   await askName(page);
-  await expect(error).toHaveAttribute('data-code', 'HETEROATOM');
-  await expect(error).toContainText('los ésteres con anillo');
+  await expect(error).toHaveAttribute('data-code', 'RING_SYSTEM');
+  await expect(error).toContainText('Esta molécula es una lactona');
 
   await loadSmiles(page, 'COC(=O)CC(C)C(=O)OCC');
   await askName(page);

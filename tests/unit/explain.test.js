@@ -189,6 +189,15 @@ const SNAPSHOT_SMILES = [
   'N#CCC1CCC(C#N)CC1', // 4-(cianometil)ciclohexano-1-carbonitrilo: ring and chain tie, ciano- on the branch (I-40c)
   'OC(=O)C1CCC(C(N)=O)CC1', // ácido 4-carbamoilciclohexano-1-carboxílico: carbamoil- on a ring below an acid (I-40c)
   'OC(=O)C1CCC(C#N)CC1', // ácido 4-cianociclohexano-1-carboxílico: ciano- on a ring below an acid (I-40c)
+  'COC(=O)C1=CC=CC=C1', // benzoato de metilo: retained acid part, bencenocarboxilato as another form (I-40d)
+  'COC(=O)C1CCCCC1C', // 2-metilciclohexano-1-carboxilato de metilo: the ester carbon outside the ring, -carboxilato (I-40d)
+  'COC(=O)C1CCC(C(=O)OC)CC1', // ciclohexano-1,4-dicarboxilato de dimetilo: a ring diester (I-40d)
+  'CC(=O)OC1=CC=CC=C1', // etanoato de fenilo: a ring as the O-bound group, acetato de fenilo (I-40d)
+  'CC(=O)OC1CCCCC1C', // etanoato de 2-metilciclohexilo: a substituted ring group on the O (I-40d)
+  'O=C(OC1=CC=CC=C1)C1=CC=CC=C1', // benzoato de fenilo: a ring on each side of the ester (I-40d)
+  'COC(=O)CC1=CC=CC=C1', // 2-feniletanoato de metilo: ester on a side chain, fenilacetato (I-40d)
+  'COC(=O)C1CCC(C(=O)O)CC1', // ácido 4-(metoxicarbonil)ciclohexano-1-carboxílico: alcoxicarbonil- on a ring below an acid (I-40d)
+  'CC(=O)OC1CCC(C(=O)O)CC1', // ácido 4-(acetiloxi)ciclohexano-1-carboxílico: aciloxi- on a ring below an acid (I-40d)
 ];
 
 /**

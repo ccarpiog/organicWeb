@@ -103,20 +103,15 @@ test('the examples of the phase are named, in Spanish and in English', () => {
   }
 });
 
-test('the side-chain refusals are lifted; esters with a ring stay refused', () => {
+test('the side-chain refusals are lifted; esters with a ring are named since I-40d', () => {
   for (const smiles of ['OCC1=CC=CC=C1', 'CC(=O)C1CCCCC1', 'NCC1=CC=CC=C1', 'OCCOC1CCCCC1', 'CNCC1CCCCC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
-  // Aldehydes and acids with a ring are named since I-40b, nitriles and amides since I-40c; ring esters wait for I-40d.
+  // Aldehydes and acids with a ring are named since I-40b, nitriles and amides since I-40c, esters since I-40d.
   for (const smiles of ['O=CCC1CCCCC1', 'O=CC1=CC=CC=C1', 'OC(=O)CC1CCCCC1', 'N#CCC1CCCCC1', 'NC(=O)CC1CCCCC1']) {
     assert.equal(named(smiles).ok, true, smiles);
   }
-  const kept = [
-    ['CC(=O)OCC1CCCCC1', 'ringEster'],
-  ];
-  for (const [smiles, reason] of kept) {
-    assert.equal(nameOf(smiles), `HETEROATOM ${reason}`, smiles);
-  }
+  assert.equal(nameOf('CC(=O)OCC1CCCCC1'), 'etanoato de ciclohexilmetilo');
 });
 
 test('ring or chain: the principal groups first (P-44.1.1), the ring on a tie (P-44.1.2.2)', () => {

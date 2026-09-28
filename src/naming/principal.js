@@ -203,7 +203,7 @@ export function outsideCarbons(mol, adj, principal) {
  * parent cites with a suffix that includes X (design.md §13.4 I-40b,
  * I-40c): `-carboxílico`, `-carbaldehído`, `-carboxamida`, `-carbonitrilo`.
  */
-export const RING_GROUP_KINDS = Object.freeze(['acid', 'aldehyde', 'amide', 'nitrile']);
+export const RING_GROUP_KINDS = Object.freeze(['acid', 'ester', 'aldehyde', 'amide', 'nitrile']);
 
 /**
  * Tells whether a carbon is the carbon X of a principal group that a ring
@@ -235,6 +235,9 @@ export function isRingGroupCarbon(mol, adj, carbon, principal, ringAtoms) {
   }
   if (principal === 'acid') {
     return isCarboxylCarbon(mol, adj, carbon);
+  }
+  if (principal === 'ester') {
+    return isEsterCarbon(mol, adj, carbon); // `-carboxilato`, `benzoato` (I-40d).
   }
   if (principal === 'amide') {
     return isAmideCarbon(mol, adj, carbon); // `-carboxamida`, `benzamida` (I-40c).
@@ -352,7 +355,9 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * and (I-40c) 'phenylacetamide' for 2-feniletanamida (`2-fenilacetamida`)
  * and 'phenylacetonitrile' for 2-feniletanonitrilo (`fenilacetonitrilo`);
  * a phenyl on an amide N is not one of these: `N-feniletanamida` gives
- * 'acetamide' (`N-fenilacetamida`).
+ * 'acetamide' (`N-fenilacetamida`); and (I-40d) 'phenylacetate' for a
+ * 2-feniletanoato (`fenilacetato de metilo`, whatever the O-bound group,
+ * like `acetato de …`).
  * IUPAC 2013 retains formaldehyde and acetaldehyde (aldehydes,
  * P-66.6), acetone for general nomenclature (ketones, P-64), and formic,
  * acetic and oxalic acid as preferred names (acids, P-65.1.1.1), hence
@@ -360,7 +365,7 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * (design.md §13.1), never as the main name.
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
- * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|'phenylaceticAcid'|'phenylacetaldehyde'|'phenylacetamide'|'phenylacetonitrile'|null} The id.
+ * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|'phenylaceticAcid'|'phenylacetaldehyde'|'phenylacetamide'|'phenylacetonitrile'|'phenylacetate'|null} The id.
  */
 export function carbonylTraditionalId(structure) {
   const { parentKind, parent, prefixes, suffix } = structure;
@@ -376,6 +381,7 @@ export function carbonylTraditionalId(structure) {
       alcohol: { 1: 'benzylAlcohol' },
       amine: { 1: 'benzylamine' },
       acid: { 2: 'phenylaceticAcid' },
+      ester: { 2: 'phenylacetate' },
       aldehyde: { 2: 'phenylacetaldehyde' },
       amide: { 2: 'phenylacetamide' },
       nitrile: { 2: 'phenylacetonitrile' },

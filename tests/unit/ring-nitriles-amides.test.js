@@ -13,8 +13,8 @@
  * `fenilacetonitrilo`, `3-ciclohexilpropanamida`); below an acid the ring
  * groups are `ciano-` / `carbamoil-` (`ácido
  * 4-cianociclohexano-1-carboxílico`). Covers the lifted refusals
- * (`ringNitrile`, `ringAmide`), the ones that stay (`ringEster`,
- * `substitutedPolyamide` on a ring, a polysubstituted benzene), the
+ * (`ringNitrile`, `ringAmide`), the ones that stay
+ * (`substitutedPolyamide` on a ring, a polysubstituted benzene), the
  * ring-or-chain count, both lexicons, the explanation, atom-order
  * invariance (refusals included), Ordenar dibujo and the oracle generator.
  * The names are also checked row by row in tests/fixtures/names.tsv.
@@ -24,7 +24,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
 import { canonicalKey } from '../../src/model/graph.js';
-import { validateForNaming, SUBSTITUTED_POLYAMIDE_MESSAGE, RING_ESTER_MESSAGE } from '../../src/model/validate.js';
+import { validateForNaming, SUBSTITUTED_POLYAMIDE_MESSAGE } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { ringOrChain } from '../../src/naming/parent.js';
 import { ringParent } from '../../src/naming/rings.js';
@@ -123,14 +123,11 @@ test('the examples of the phase are named, in Spanish and in English', () => {
   }
 });
 
-test('the ring refusals of I-40c are lifted; ring esters, N-substituted ring diamides and polysubstituted benzenes stay refused', () => {
+test('the ring refusals of I-40c are lifted; N-substituted ring diamides and polysubstituted benzenes stay refused', () => {
   for (const smiles of ['N#CC1CCCCC1', 'NC(=O)C1CCCCC1', 'CC(=O)NC1=CC=CC=C1', 'N#CCC1=CC=CC=C1', 'NC(=O)C1CCC(C(=O)O)CC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
   for (const [smiles, reason, message] of [
-    ['COC(=O)C1CCCCC1', 'ringEster', RING_ESTER_MESSAGE],
-    ['N#CC1CCC(C(=O)OC)CC1', 'ringEster', RING_ESTER_MESSAGE],
-    ['CC(=O)NC1CCC(C(=O)OC)CC1', 'ringEster', RING_ESTER_MESSAGE],
     // Two amides on the ring with a group on some N: N¹/N⁴ locants.
     ['CNC(=O)C1CCC(C(N)=O)CC1', 'substitutedPolyamide', SUBSTITUTED_POLYAMIDE_MESSAGE],
     ['CNC(=O)C1CCCCC1C(=O)NC', 'substitutedPolyamide', SUBSTITUTED_POLYAMIDE_MESSAGE],
@@ -153,7 +150,7 @@ test('the ring refusals of I-40c are lifted; ring esters, N-substituted ring dia
 
 test('refusals and names never depend on atom ids or drawing order', () => {
   const random = seededRandom(131);
-  const refusals = ['CNC(=O)C1CCC(C(N)=O)CC1', 'N#CC1CCC(C(=O)OC)CC1', 'N#CCC(C#N)(CC#N)C1CCCCC1'];
+  const refusals = ['CNC(=O)C1CCC(C(N)=O)CC1', 'N#CC1CCC(C(=O)OC)C(CC(=O)OC)C1', 'N#CCC(C#N)(CC#N)C1CCCCC1'];
   for (const smiles of refusals) {
     const reference = nameOf(smiles);
     assert.match(reference, /^HETEROATOM /, smiles);

@@ -32,17 +32,20 @@
  * atom that carries it, its attachment atom on the line of that bond and
  * its atoms in the locant order of the ring prefix (branchRing()); its own
  * side chains leave outwards and are searched like any other; the search
- * may mirror the polygon (the zigzag flip of its attachment atom).
+ * may mirror the polygon (the zigzag flip of its attachment atom). A ring
+ * that is (or is in) an ester's O-bound group (I-40d: `etanoato de
+ * fenilo`) is drawn the same way, also beside a ring parent (`benzoato de
+ * fenilo`, two rings: branchRings()).
  *
  * Pure: no DOM. Only coordinates change; atom ids, bonds and orders are
  * copied unchanged. Coordinates are SVG drawing units (y grows downwards).
  */
 
 import { cloneMolecule } from '../model/molecule.js';
-import { adjacency, isTree, rootedBranchKey } from '../model/graph.js';
+import { adjacency, isTree, rootedBranchKey, cyclomaticNumber } from '../model/graph.js';
 import { BOND_LENGTH } from '../editor/geometry.js';
 import {
-  isSingleRing, ringPolygon, ringBranchAngles, ringBranchSector, inRingSector, ringIntrusions, drawnRing,
+  ringPolygon, ringBranchAngles, ringBranchSector, inRingSector, ringIntrusions, drawnRing,
 } from './rings.js';
 
 /** Zigzag half-angle of the parent chain: bonds go ±30° from the horizontal. */
@@ -259,11 +262,11 @@ function countCrossings(pos, bonds) {
  * @param {Map<number, {x: number, y: number}>} pos - Positions of every atom.
  * @param {Array<number[]>} bonds - Bonds as atom-id pairs.
  * @param {number} length - Bond length.
- * @param {number[]|null} [ring] - Ring atoms in ring order, or null for a chain.
+ * @param {number[][]} [rings] - The drawn rings (ring atoms in ring order), whose interiors must stay empty.
  * @returns {boolean} True when valid.
  */
-function isClear(pos, bonds, length, ring = null) {
-  if (ring && ringIntrusions(pos, ring, bonds) > 0) {
+function isClear(pos, bonds, length, rings = []) {
+  if (rings.some((ring) => ringIntrusions(pos, ring, bonds) > 0)) {
     return false;
   }
   const points = [...pos.values()];
@@ -298,27 +301,41 @@ export function layoutProblems(mol, length = BOND_LENGTH) {
 }
 
 /**
- * The ring prefix of a naming result whose parent is a chain (design.md
- * §13.4 I-40a): the ring atoms in the locant order of that prefix (the
- * attachment atom first), at any depth of the prefixes; null when there is
- * none.
+ * Tells whether atoms, in order, close a cycle: at least three, all
+ * distinct, each bonded to the next and the last to the first.
+ *
+ * @param {Map<number, object[]>} adj - Adjacency from adjacency().
+ * @param {number[]} atoms - Atom ids in order.
+ * @returns {boolean} True for a ring in ring order.
+ */
+function isCycle(adj, atoms) {
+  return atoms.length >= 3 && new Set(atoms).size === atoms.length
+    && atoms.every((id, i) => adj.has(id) && adj.get(id).some((n) => n.atom === atoms[(i + 1) % atoms.length]));
+}
+
+/**
+ * The ring prefixes of a naming result (design.md §13.4 I-40a) and the
+ * rings of its ester O-bound groups (I-40d: `etanoato de fenilo`,
+ * `benzoato de fenilo`): each ring's atoms in the locant order of its
+ * group (the attachment atom first), at any depth.
  *
  * @param {object} structure - A name or substituent structure.
- * @returns {number[]|null} The ring atoms.
+ * @returns {number[][]} The rings (none when there is no such group).
  */
-function branchRing(structure) {
-  for (const group of structure.prefixes) {
-    const sub = group.substituent;
+function branchRings(structure) {
+  const rings = [];
+  const groups = [
+    ...structure.prefixes.map((group) => group.substituent),
+    ...(structure.esters || (structure.ester ? [structure.ester] : [])).map((part) => part.alkyl),
+  ];
+  for (const sub of groups) {
     if (sub.ring) {
-      return [...sub.chain.atoms];
+      rings.push([...sub.chain.atoms]);
     }
-    const inner = branchRing(sub);
-    if (inner) {
-      return inner;
-    }
+    rings.push(...branchRings(sub));
   }
-  return null;
-} // End of function branchRing()
+  return rings;
+} // End of function branchRings()
 
 /**
  * Computes canonical coordinates for a named molecule (design.md §7).
@@ -329,8 +346,8 @@ function branchRing(structure) {
  *   (default BOND_LENGTH) and the point the drawing is centred on (default: the centre of the
  *   molecule's current bounding box).
  * @returns {object} A copy of the molecule with new coordinates (same ids, bonds and orders).
- * @throws {Error} When the result is not a successful naming of this molecule, or the molecule is
- *   neither a connected tree nor a single ring whose ring is the parent.
+ * @throws {Error} When the result is not a successful naming of this molecule, or some cycle of the
+ *   molecule is neither the parent ring nor a ring group of the name (branchRings()).
  */
 export function canonicalLayout(mol, result, options = {}) {
   if (!result || !result.ok || !result.parent || !Array.isArray(result.parent.atoms)) {
@@ -340,17 +357,19 @@ export function canonicalLayout(mol, result, options = {}) {
   const adj = adjacency(mol);
   const chain = result.parent.atoms;
   const ring = !isTree(mol);
-  // A ring prefix on a chain parent (design.md §13.4 I-40a), drawn whole where the walk reaches it.
-  const subRing = ring && !isSingleRing(mol, chain) && result.structure ? branchRing(result.structure) : null;
-  if (ring && !isSingleRing(mol, chain) && !(subRing && isSingleRing(mol, subRing))) {
-    // The breadth-first walk below assumes trees around the parent: another cycle would make it loop.
-    throw new Error('canonicalLayout: the molecule is not a connected tree or a single ring');
-  }
-  const subRingSet = new Set(subRing || []);
   if (chain.length === 0 || chain.some((id) => !adj.has(id))) {
     throw new Error('canonicalLayout: the parent chain does not belong to this molecule');
   }
-  const parentRing = ring && !subRing;
+  // A ring parent, and the ring groups (a ring prefix, I-40a; a ring in an ester's O-bound group, I-40d), each drawn
+  // whole where the walk reaches it. Every cycle of the molecule must be one of them.
+  const parentRing = ring && isCycle(adj, chain);
+  const subRings = ring && result.structure ? branchRings(result.structure) : [];
+  if (ring && (cyclomaticNumber(mol) !== subRings.length + (parentRing ? 1 : 0) || !subRings.every((r) => isCycle(adj, r)))) {
+    // The breadth-first walk below assumes trees around the parent: another cycle would make it loop.
+    throw new Error('canonicalLayout: the molecule is not a connected tree or a single ring');
+  }
+  const subRingOf = new Map(subRings.map((r) => [r[0], r]));
+  const subRingSet = new Set(subRings.flat());
   const parentPos = parentRing ? ringPolygon(chain, L) : layoutParent(adj, chain, L);
   const inChain = new Set(chain);
   const n = chain.length;
@@ -409,7 +428,8 @@ export function canonicalLayout(mol, result, options = {}) {
     order.push(id);
     from.set(id, up);
     bonds.push([up, id]);
-    if (subRing && id === subRing[0]) {
+    const subRing = subRingOf.get(id);
+    if (subRing) {
       // The ring prefix: its bonds, then the side chains of every ring atom, in locant order.
       subRing.forEach((a, i) => bonds.push([a, subRing[(i + 1) % subRing.length]]));
       const kids = [];
@@ -429,7 +449,7 @@ export function canonicalLayout(mol, result, options = {}) {
       queue.push([kid, id]);
     }
   } // End of the breadth-first walk over the substituent atoms
-  if (order.length + chain.length + Math.max(subRing ? subRing.length - 1 : 0, 0) !== mol.atoms.size) {
+  if (order.length + chain.length + subRings.reduce((sum, r) => sum + r.length - 1, 0) !== mol.atoms.size) {
     throw new Error('canonicalLayout: the molecule is not a connected tree or a single ring');
   }
 
@@ -438,7 +458,7 @@ export function canonicalLayout(mol, result, options = {}) {
   let widenings = WIDENINGS;
   let rootAngles = roots.map((r) => r.angle);
   const rootIndex = new Map(roots.map((r, i) => [r.id, i]));
-  const ringAtoms = ring ? subRing || chain : null;
+  const ringAtoms = [...(parentRing ? [chain] : []), ...subRings];
 
   /**
    * Tells whether a widening keeps a ring side chain's first bond in the exterior sector of its ring atom.
@@ -461,7 +481,7 @@ export function canonicalLayout(mol, result, options = {}) {
   const penaltyOf = (pos) => {
     const target = TARGET_SEPARATION * L;
     const base = crowding(pos, bonds, target);
-    return ringAtoms ? base + 4 * target * target * ringIntrusions(pos, ringAtoms, bonds) : base;
+    return ringAtoms.reduce((sum, r) => sum + 4 * target * target * ringIntrusions(pos, r, bonds), base);
   };
 
   /**
@@ -486,8 +506,8 @@ export function canonicalLayout(mol, result, options = {}) {
       const side = flipped ? -turn : turn;
       pos.set(id, step(pos.get(from.get(id)), actual, L));
       const kids = children.get(id);
-      if (subRing && id === subRing[0]) {
-        putRing(actual, side, kids);
+      if (subRingOf.has(id)) {
+        putRing(subRingOf.get(id), actual, side, kids);
         return;
       }
       const linear = isLinear(adj, id);
@@ -500,12 +520,13 @@ export function canonicalLayout(mol, result, options = {}) {
      * outwards: one along the radial line, two ±30° from it; a second
      * exocyclic bond on the attachment atom 60° from the carrying bond.
      *
+     * @param {number[]} subRing - The ring atoms, attachment atom first (branchRings()).
      * @param {number} angle - Direction of the attachment bond.
      * @param {number} side - Winding of the polygon (1 or −1).
      * @param {number[]} kids - The side-chain atoms of the ring (ringHome() gives their ring atom).
      * @returns {void}
      */
-    function putRing(angle, side, kids) {
+    function putRing(subRing, angle, side, kids) {
       const m = subRing.length;
       const radius = L / (2 * Math.sin(Math.PI / m));
       const centre = step(pos.get(subRing[0]), angle, radius);

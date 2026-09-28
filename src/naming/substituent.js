@@ -972,6 +972,25 @@ export function esterAlkyl(ctx, carbon, oxygen) {
 } // End of function esterAlkyl()
 
 /**
+ * The O-bound group of every ester suffix group of a parent (design.md
+ * §13.4 I-35, I-39c, I-40d), in suffix order, or an empty array when the
+ * suffix is not an ester: esterAlkyl() from each group's C=O carbon — the
+ * parent atom itself on a chain (`etanoato de metilo`), the carbon X
+ * outside the ring on a ring parent (`ciclohexanocarboxilato de metilo`,
+ * `benzoato de metilo`, SuffixLocant `carbon`).
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {object|null} suffix - The parent's suffix (structure.js SuffixStructure) or null.
+ * @returns {object[]} The esterAlkyl() results.
+ */
+export function esterAlkyls(ctx, suffix) {
+  if (!suffix || suffix.kind !== 'ester') {
+    return [];
+  }
+  return suffix.locants.map((site) => esterAlkyl(ctx, site.carbon === undefined ? site.atom : site.carbon, site.esterOxygen));
+}
+
+/**
  * Builds the structure of a substituent (the body of nameSubstituentIn):
  * chooses its chain (P1–P3, then the numbering cascade with the free
  * valence first), groups its own substituents and flags retained and common

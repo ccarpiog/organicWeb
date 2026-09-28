@@ -52,7 +52,14 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `3-oxobutanoato de etilo`, `etanoato de 2-hidroxietilo`…; diesters on one
   chain: `butanodioato de dimetilo`, `propanodioato de etilo y metilo`;
   beside an acid the ester is a prefix: `ácido 4-metoxi-4-oxobutanoico`,
-  `ácido 3-(metoxicarbonil)pentanodioico`, `ácido 2-(acetiloxi)etanoico`),
+  `ácido 3-(metoxicarbonil)pentanodioico`, `ácido 2-(acetiloxi)etanoico`;
+  on a ring `-carboxilato`: `ciclohexanocarboxilato de etilo`,
+  `2-metilciclohexano-1-carboxilato de metilo`, `benzoato de metilo`; a
+  ring on the O side: `etanoato de fenilo`, `etanoato de
+  2-metilciclohexilo`; a ring on each side, the only two-ring molecules
+  named: `benzoato de fenilo`; on a ring below an acid: `ácido
+  4-(metoxicarbonil)ciclohexano-1-carboxílico`, `ácido
+  4-(acetiloxi)ciclohexano-1-carboxílico`),
   and of amines
   (the N never in the chain, `-amina` with its locants, the other groups on
   the N as `N-` prefixes, `amino-` below a more senior group: `metanamina`,
@@ -106,9 +113,11 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   bencílico` and `bencilamina`; `ácido benzoico` and `benzaldehído` list
   the systematic `ácido bencenocarboxílico` and `bencenocarbaldehído`
   (`benzamida` and `benzonitrilo` likewise `bencenocarboxamida` and
-  `bencenocarbonitrilo`), and `ácido 2-feniletanoico`, `2-feniletanal`,
-  `2-feniletanonitrilo` and `2-feniletanamida` list `ácido fenilacético`,
-  `fenilacetaldehído`, `fenilacetonitrilo` and `2-fenilacetamida`
+  `bencenocarbonitrilo`, `benzoato de metilo` `bencenocarboxilato de
+  metilo`), and `ácido 2-feniletanoico`, `2-feniletanal`,
+  `2-feniletanonitrilo`, `2-feniletanamida` and `2-feniletanoato de
+  metilo` list `ácido fenilacético`, `fenilacetaldehído`,
+  `fenilacetonitrilo`, `2-fenilacetamida` and `fenilacetato de metilo`
   (`N-feniletanamida` lists `N-fenilacetamida`).
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
@@ -260,8 +269,8 @@ the Keychain account is the WebDAV user).
 ## Known limitations and future work
 
 - Hydrocarbons, their halogen derivatives, alcohols, aldehydes, ketones,
-  carboxylic acids, ethers, esters, amines, amides and nitriles only, with at most one ring (a carbocycle; an
-  ester with a ring is refused); more than two
+  carboxylic acids, ethers, esters, amines, amides and nitriles only, with at most one ring (a carbocycle;
+  two only on either side of an ester, `benzoato de fenilo`; a lactone is refused); more than two
   aldehyde groups on a chain when the aldehyde is the principal group
   (`-carbaldehído`), more than two –COOH groups on a chain
   (`-tricarboxílico`), a –CO–C≡N
@@ -269,7 +278,8 @@ the Keychain account is the WebDAV user).
   two esters on different carbon pieces (a diol diester such as
   `diacetato de etano-1,2-diilo`, or an ester inside the O-bound group of
   another), a diester with two different O-bound groups whose chain would
-  need locants for them (`2-metilbutanodioato de 1-etilo y 4-metilo`), an
+  need locants for them (`2-metilbutanodioato de 1-etilo y 4-metilo`; on a
+  ring, `ciclohexano-1,2-dicarboxilato de 1-etilo y 2-metilo`), an
   ether or amine whose identical parts each carry the
   principal group (multiplicative names, `oxidi-`, `azanodiil-`), and
   several amine groups on the main chain when some N carries other groups
@@ -290,7 +300,7 @@ the Keychain account is the WebDAV user).
   (cloroformo, alcohol etílico, glicerina…) are not given (only `acetona`,
   `formaldehído` and `acetaldehído` among the carbonyls, and `ácido
   fórmico`, `ácido acético` and `ácido oxálico` among the acids, `formiato`
-  and `acetato` among the esters, `anilina` and the alkylamine names such
+  and `acetato` (and `fenilacetato`) among the esters, `anilina` and the alkylamine names such
   as `trimetilamina` among the amines, `formamida` and `acetamida` among
   the amides, `acetonitrilo` among the nitriles; amino-acid names such as alanina are
   not given); the 90° view keeps

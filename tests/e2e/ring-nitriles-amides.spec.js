@@ -9,8 +9,9 @@
  * on a side chain the chain is the parent (`2-feniletanonitrilo`, with
  * `fenilacetonitrilo`); below an acid the ring groups are `ciano-` /
  * `carbamoil-`; the stepper explains that the group's carbon is not a ring
- * carbon; "Ordenar dibujo" lays a ring amide out; a ring ester, an
- * N-substituted ring diamide and a polysubstituted benzene stay refused.
+ * carbon; "Ordenar dibujo" lays a ring amide out; a ring ester beside a
+ * chain ester, an N-substituted ring diamide and a polysubstituted benzene
+ * stay refused.
  * Runs on the dev server and on dist/index.html.
  */
 
@@ -146,7 +147,7 @@ test('benzene: benzonitrilo and N-metilbenzamida with their systematic names; th
   expect(errors).toEqual([]);
 }); // End of test 'benzene…'
 
-test('loaded ring nitriles and amides are named; ring esters, N-substituted ring diamides and polysubstituted benzenes stay refused', async ({ page }) => {
+test('loaded ring nitriles and amides are named; two esters apart, N-substituted ring diamides and polysubstituted benzenes stay refused', async ({ page }) => {
   const errors = await openApp(page);
   for (const [smiles, name] of [
     ['N#CC1CCCCC1', 'ciclohexanocarbonitrilo'],
@@ -177,7 +178,7 @@ test('loaded ring nitriles and amides are named; ring esters, N-substituted ring
 
   const error = page.locator('#results .results-error');
   for (const [smiles, code, text] of [
-    ['N#CC1CCC(C(=O)OC)CC1', 'HETEROATOM', 'un grupo –COO– (un éster)'],
+    ['N#CC1CCC(C(=O)OC)C(CC(=O)OC)C1', 'HETEROATOM', 'un oxígeno, un nitrógeno o un anillo'],
     ['CNC(=O)C1CCC(C(N)=O)CC1', 'HETEROATOM', 'localizadores como N¹ y N⁴'],
     ['N#CC1=CC=C(C)C=C1', 'CYCLE', 'Este benceno tiene 2 sustituyentes'],
   ]) {

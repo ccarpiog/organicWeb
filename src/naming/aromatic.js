@@ -70,7 +70,9 @@ import { isBenzeneRing } from '../model/validate.js';
 import { buildRingStructure, buildNameStructure, buildSuffix } from './structure.js';
 import { renderName } from './render.js';
 import { ringParent, numberRing } from './rings.js';
-import { createNamingContext, collectSubstituents, groupPrefixes, suffixSites, PREFIX_STYLES } from './substituent.js';
+import {
+  createNamingContext, collectSubstituents, groupPrefixes, suffixSites, esterAlkyls, PREFIX_STYLES,
+} from './substituent.js';
 import { lexiconEs } from './lexicon.es.js';
 
 /**
@@ -216,10 +218,14 @@ export function nameBenzeneWithStyle(mol, style = PREFIX_STYLES[0]) {
   }
   const numbered = numberRing(mol, perceived, substituents, sites.map((site) => site.atom));
   const parent = { ...numbered.parent, retained: 'benzene' };
+  const suffix = buildSuffix(sites, parent.atoms, ctx.principal);
+  // The O-bound group of each ring ester (design.md §13.4 I-40d): `ciclohexanocarboxilato de metilo`.
+  const esters = esterAlkyls(ctx, suffix);
   const structure = buildNameStructure({
     parent,
     prefixes: groupPrefixes(substituents, parent.atoms),
-    suffix: buildSuffix(sites, parent.atoms, ctx.principal),
+    suffix,
+    ...(esters.length > 0 ? { ester: esters[0], esters } : {}),
   });
   const { name, parts } = renderName(structure, lexiconEs);
   const candidate = { atoms: [...perceived.atoms], bonds: [...perceived.bonds], key: 'ring' };

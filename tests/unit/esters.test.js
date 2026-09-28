@@ -20,7 +20,7 @@ import { formula } from '../../src/model/molecule.js';
 import { adjacency } from '../../src/model/graph.js';
 import {
   validateForNaming, isEsterCarbon, esterRole, esterCarbons, hasNameableHeteroatoms, isEtherOxygen, MESSAGES,
-  RING_ESTER_MESSAGE, MANY_ESTERS_MESSAGE, ESTER_PREFIX_MESSAGE, RING_SYSTEM_MESSAGES,
+  MANY_ESTERS_MESSAGE, ESTER_PREFIX_MESSAGE, RING_SYSTEM_MESSAGES, LACTONE_MESSAGE,
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import {
@@ -73,12 +73,14 @@ test('validation: an ester –COO– is admitted; anhydrides, carbonates, peroxy
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
   }
   assert.match(MESSAGES.HETEROATOM, /, ésteres \(con el grupo –COO– entre dos cadenas de carbonos\), aminas/);
-  // A lactone is a heterocycle: out of scope.
+  // A lactone is a heterocycle: out of scope, with its own message since I-40d.
   for (const smiles of ['O=C1CCCO1', 'O=C1CCCCO1']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'RING_SYSTEM', smiles);
-    assert.equal(error.message, RING_SYSTEM_MESSAGES.heterocycle);
+    assert.equal(error.ringReason, 'lactone', smiles);
+    assert.equal(error.message, LACTONE_MESSAGE);
   }
+  assert.equal(validateForNaming(parseSmiles('CC1CCOCC1')).message, RING_SYSTEM_MESSAGES.heterocycle, 'other heterocycles keep theirs');
   // CC(=O)OC: atoms 1 C, 2 C (ester carbon), 3 =O, 4 bridge O, 5 C.
   const mol = parseSmiles('CC(=O)OC');
   const adj = adjacency(mol);
@@ -109,16 +111,14 @@ test('refusals: two esters on different carbon pieces, three esters, an ester wi
   const three = named('COC(=O)CC(C(=O)OC)CC(=O)OC');
   assert.equal(three.error.reason, 'manyEsters');
   assert.equal(three.error.message, MANY_ESTERS_MESSAGE);
+  // Esters with a ring are named since I-40d (tests/unit/ring-esters.test.js).
   for (const smiles of ['CC(=O)OC1CCCCC1', 'COC(=O)C1CCCCC1', 'CC(=O)OC1=CC=CC=C1', 'COC(=O)C1=CC=CC=C1', 'CC(=O)OCC1CCCCC1', 'COC(=O)CC1CCCCC1']) {
-    const ring = named(smiles);
-    assert.equal(ring.error.reason, 'ringEster', smiles);
-    assert.equal(ring.error.message, RING_ESTER_MESSAGE);
+    assert.equal(named(smiles).ok, true, smiles);
   }
-  assert.match(RING_ESTER_MESSAGE, /etanoato de fenilo/);
   // The refusals get the group steps and their own message.
-  const refused = explain(named('CC(=O)OC1CCCCC1'));
+  const refused = explain(named('CC(=O)OCC(=O)OC'));
   assert.deepEqual(refused.map((s) => s.id), ['groups', 'principal', 'affixes', 'notYet']);
-  assert.equal(refused[3].text[0], RING_ESTER_MESSAGE);
+  assert.equal(refused[3].text[0], ESTER_PREFIX_MESSAGE);
 });
 
 test('esters in both lexicons: Spanish «…oato de …ilo», English «…yl …oate»', () => {

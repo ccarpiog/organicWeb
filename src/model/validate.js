@@ -53,7 +53,7 @@
  */
 
 import {
-  isConnected, hasCycle, longestChainLength, adjacency, carbonSkeleton, connectedComponents, rootedTreeKey, cycleCore,
+  isConnected, hasCycle, longestChainLength, adjacency, carbonSkeleton, connectedComponents, rootedBranchKey,
 } from './graph.js';
 import { classifyRings } from './rings.js';
 import { isSupportedElement, valenceOf, isHalogen, ELEMENT_NAMES_ES } from './elements.js';
@@ -106,8 +106,19 @@ export const RING_SYSTEM_MESSAGES = Object.freeze({
     + 'Este tipo de moléculas queda fuera de lo que sé nombrar.',
   spiro: 'Has dibujado un compuesto espiro (dos anillos que comparten un solo átomo). '
     + 'Este tipo de moléculas queda fuera de lo que sé nombrar.',
-  several: 'Esta molécula tiene varios anillos. De momento solo podré nombrar moléculas con un único anillo.',
+  several: 'Esta molécula tiene varios anillos. De momento solo sé nombrar moléculas con un único anillo, '
+    + 'o con dos anillos separados por un grupo –COO– (éster), uno a cada lado (como el benzoato de fenilo).',
 });
+
+/**
+ * RING_SYSTEM message for a lactone (design.md §13.4 I-40d): a cyclic
+ * ester, whose –COO– lies inside the ring, so the ring holds an O and is a
+ * heterocycle (IUPAC 2013 names lactones as heterocyclic ketones, `oxolan-2-ona`,
+ * or with retained names, out of scope, §13.1). `ringReason` 'lactone'.
+ */
+export const LACTONE_MESSAGE = 'Esta molécula es una lactona: el grupo –COO– (éster) forma parte del anillo, '
+  + 'así que el anillo tiene un oxígeno y es un heterociclo. Las lactonas quedan fuera de lo que sé nombrar. '
+  + 'Sí sé nombrar los ésteres con el anillo fuera del –COO– (como el benzoato de metilo o el etanoato de fenilo).';
 
 /**
  * HETEROATOM message for an open chain with more than two aldehyde groups
@@ -180,17 +191,6 @@ export const SYMMETRIC_ETHER_MESSAGE = 'Esta molécula tiene dos mitades iguales
   + '(como el 2,2′-oxidietanol), y eso aún no sé hacerlo.';
 
 /**
- * HETEROATOM message for a molecule with a ring and an ester group –COO–
- * (design.md §13.4 I-35): the ring would be on the acid side (a
- * `-carboxilato`, `ciclohexanocarboxilato de metilo`), on the O side (a
- * ring group such as `fenilo`, `etanoato de fenilo`) or on a side chain
- * of either; the ring esters wait for I-40d.
- */
-export const RING_ESTER_MESSAGE = 'Esta molécula tiene un anillo y un grupo –COO– (un éster). '
-  + 'De momento solo sé nombrar los ésteres de cadena abierta (como el etanoato de metilo): '
-  + 'los ésteres con anillo, como el etanoato de fenilo o el ciclohexanocarboxilato de metilo, aún no sé nombrarlos.';
-
-/**
  * HETEROATOM message for an open chain with more than two ester groups
  * (design.md §13.4 I-35, narrowed by I-39c): an ester carbon is always a
  * chain end, so a third –COO– would be a branch, and IUPAC 2013 cites every
@@ -213,7 +213,7 @@ export const MANY_ESTERS_MESSAGE = 'Esta molécula tiene más de dos grupos –C
  * multiplied acid part, and the app does not choose between them.
  */
 export const ESTER_PREFIX_MESSAGE = 'Esta molécula tiene dos grupos –COO– (éster) que no están en la misma '
-  + 'cadena de carbonos: entre ellos hay un oxígeno o un nitrógeno que corta la cadena (como en el diacetato de etano-1,2-diilo, o cuando un éster '
+  + 'cadena de carbonos: entre ellos hay un oxígeno, un nitrógeno o un anillo que corta la cadena (como en el diacetato de etano-1,2-diilo, o cuando un éster '
   + 'está dentro del grupo unido al oxígeno del otro). Entonces uno de los dos se nombraría con un prefijo '
   + '(«aciloxi-», como «acetiloxi-», o «alcoxicarbonil-», como «metoxicarbonil-») o con un nombre especial, '
   + 'y eso aún no sé hacerlo. Sí sé nombrar los diésteres con los dos grupos –COO– en la misma cadena '
@@ -231,6 +231,19 @@ export const MIXED_DIESTER_MESSAGE = 'Esta molécula tiene dos grupos –COO– 
   + 'está cada grupo (como en el 2-metilbutanodioato de 1-etilo y 4-metilo), y eso aún no sé hacerlo. Sí sé nombrar '
   + 'los diésteres con los dos grupos iguales (como el 2-metilbutanodioato de dimetilo) o con una cadena que es igual '
   + 'vista desde los dos extremos (como el propanodioato de etilo y metilo).';
+
+/**
+ * HETEROATOM message for two ester groups bonded to a ring with different
+ * O-bound groups (design.md §13.4 I-40d, reason `mixedDiester`): IUPAC
+ * 2013 would give each group the locant of its ring carbon
+ * (`ciclohexano-1,2-dicarboxilato de 1-etilo y 2-metilo`, P-65.6.3.2.2,
+ * from memory), which the app does not do, as for the chain diesters of
+ * MIXED_DIESTER_MESSAGE.
+ */
+export const MIXED_RING_DIESTER_MESSAGE = 'Esta molécula tiene dos grupos –COO– (éster) unidos al anillo con grupos '
+  + 'distintos unidos al oxígeno. Habría que decir con localizadores en qué carbono del anillo está cada grupo '
+  + '(como en el ciclohexano-1,2-dicarboxilato de 1-etilo y 2-metilo), y eso aún no sé hacerlo. Sí sé nombrar '
+  + 'los diésteres de anillo con los dos grupos iguales (como el ciclohexano-1,2-dicarboxilato de dimetilo).';
 
 /**
  * HETEROATOM message of the naming engine (naming/index.js) for a
@@ -617,19 +630,90 @@ export function substitutedRingAtoms(mol, ring) {
 }
 
 /**
+ * Tells whether a heterocycle is a lactone (design.md §13.4 I-40d): a ring
+ * carbon that is the carbon X of a real ester group (isEsterCarbon()) whose
+ * bridge O is also in the ring, the –COO– of an ester inside the ring. A
+ * cyclic anhydride or carbonate is not an ester, so it is not a lactone.
+ *
+ * @param {object} mol - The molecule.
+ * @param {number[]} ringAtoms - The ring atoms (perceiveRings()).
+ * @returns {boolean} True for a lactone.
+ */
+function isLactone(mol, ringAtoms) {
+  const adj = adjacency(mol);
+  const inRing = new Set(ringAtoms);
+  const bridgeInRing = (carbon) => adj.get(carbon).some((n) => n.order === 1 && inRing.has(n.atom)
+    && mol.atoms.get(n.atom).element === 'O');
+  return ringAtoms.some((id) => isEsterCarbon(mol, adj, id) && bridgeInRing(id));
+}
+
+/**
+ * The ester that splits a two-ring molecule into two one-ring parts
+ * (design.md §13.4 I-40d: `benzoato de fenilo`), or null: exactly two
+ * separate simple carbocycles (no atom shared), no carboxyl group and
+ * exactly one ester group whose O-bound group (the atoms beyond its bridge
+ * O) holds every atom of one ring and none of the other. The acid part
+ * (the molecule without the O-bound group) then has one ring, and so has
+ * the O-bound group, named as a ring group (`fenilo`,
+ * `4-metilciclohexilo`); the naming engine names each part as a one-ring
+ * molecule (naming/index.js).
+ *
+ * @param {object} mol - A structurally valid, connected molecule.
+ * @returns {{carbon: number, bridge: number, far: number, alkylAtoms: number[]}|null} The ester carbon X, its
+ *   bridge O, the O-bound carbon and every atom of the O-bound group; null when the molecule is not such an ester.
+ */
+export function esterRingSplit(mol) {
+  const { kind, hetero, perception } = classifyRings(mol);
+  if (kind !== 'several' || hetero || perception.blocks.length !== 2 || perception.blocks.some((b) => b.cyclomatic !== 1)) {
+    return null;
+  }
+  const shared = perception.blocks[0].atoms.some((id) => perception.blocks[1].atoms.includes(id));
+  const esters = esterCarbons(mol);
+  if (shared || esters.length !== 1 || carboxylCarbons(mol).length > 0) {
+    return null;
+  }
+  const adj = adjacency(mol);
+  const [carbon] = esters;
+  const bridge = adj.get(carbon).find((n) => n.order === 1 && mol.atoms.get(n.atom).element === 'O').atom;
+  const far = adj.get(bridge).find((n) => n.atom !== carbon).atom;
+  const alkylAtoms = sideAtoms(adj, bridge, far);
+  const side = new Set(alkylAtoms);
+  const inside = perception.blocks.map((block) => block.atoms.filter((id) => side.has(id)).length);
+  const split = perception.blocks.every((block, i) => inside[i] === 0 || inside[i] === block.atoms.length)
+    && inside.filter((count) => count > 0).length === 1;
+  return split ? { carbon, bridge, far, alkylAtoms } : null;
+} // End of function esterRingSplit()
+
+/**
+ * The atoms of every ring of a molecule, as a set (rings.js
+ * perceiveRings() `ringAtoms`): for one ring, the atoms of cycleCore(); for
+ * the two rings of an ester split by esterRingSplit() (design.md §13.4
+ * I-40d), both rings, without the atoms that join them.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @returns {Set<number>} The ring atom ids (empty for a tree).
+ */
+export function ringAtomSet(mol) {
+  return new Set(classifyRings(mol).perception.ringAtoms);
+}
+
+/**
  * The scope check for a molecule with rings. A single carbocycle of at most
  * MAX_CHAIN carbons is in scope (null), with or without side chains and ring
  * multiple bonds (design.md §13.4 I-26; its side chains are checked later
- * by validateForNaming()). A benzene ring is in scope with at most one
+ * by validateForNaming()), and so are two such rings on either side of an
+ * ester (esterRingSplit(), I-40d: `benzoato de fenilo`), each checked
+ * alone. A benzene ring is in scope with at most one
  * substituent (I-28, named by naming/aromatic.js); with two or more it gets
  * CYCLE with `ringReason` 'polysubstitutedBenzene' (valid, but orto/meta/para
  * and polysubstituted benzenes are out of scope, design.md §13.1). A
  * benzene ring always carries at most one substituent per ring atom (each
  * ring atom already has three bonds). Otherwise: TOO_BIG for a larger ring,
- * and RING_SYSTEM with `ringKind` for a heterocycle, fused, bridged or spiro
- * system, or several rings (out of scope, design.md §13.1) — a benzene with
- * a ring in its substituent included. `atoms` lists every ring atom, for
- * highlighting.
+ * and RING_SYSTEM with `ringKind` for a heterocycle (a lactone, an ester
+ * inside the ring, with its own message and `ringReason` 'lactone', I-40d),
+ * fused, bridged or spiro system, or several rings (out of scope, design.md
+ * §13.1) — a benzene with a ring in its substituent included. `atoms` lists
+ * every ring atom, for highlighting.
  *
  * @param {object} mol - A structurally valid, connected molecule with at least one ring.
  * @returns {{code: string, message: string, atoms: number[]}|null} The error, or null for a nameable single carbocycle.
@@ -637,15 +721,18 @@ export function substitutedRingAtoms(mol, ring) {
 function ringError(mol) {
   const { kind, perception } = classifyRings(mol);
   const atoms = perception.ringAtoms;
-  if (kind !== 'carbocycle') {
+  const split = kind === 'several' && esterRingSplit(mol) !== null;
+  if (kind === 'heterocycle' && isLactone(mol, atoms)) {
+    return validationError('RING_SYSTEM', { message: LACTONE_MESSAGE, atoms, ringKind: kind, ringReason: 'lactone' });
+  }
+  if (kind !== 'carbocycle' && !split) {
     return validationError('RING_SYSTEM', { message: RING_SYSTEM_MESSAGES[kind], atoms, ringKind: kind });
   }
-  if (atoms.length > MAX_CHAIN) {
-    return validationError('TOO_BIG', { message: RING_TOO_BIG_MESSAGE, detail: `ring of ${atoms.length} carbons`, atoms });
-  }
-  const [ring] = perception.rings;
-  if (isBenzeneRing(mol, ring)) {
-    const substituted = substitutedRingAtoms(mol, ring);
+  for (const ring of perception.rings) {
+    if (ring.atoms.length > MAX_CHAIN) {
+      return validationError('TOO_BIG', { message: RING_TOO_BIG_MESSAGE, detail: `ring of ${ring.atoms.length} carbons`, atoms });
+    }
+    const substituted = isBenzeneRing(mol, ring) ? substitutedRingAtoms(mol, ring) : [];
     if (substituted.length > 1) {
       return validationError('CYCLE', {
         message: polysubstitutedBenzeneMessage(substituted.length),
@@ -655,7 +742,7 @@ function ringError(mol) {
         substituted,
       });
     }
-  }
+  } // End of the loop over the rings
   return null;
 } // End of function ringError()
 
@@ -1297,8 +1384,10 @@ function sideAtoms(adj, bridge, far) {
  * carbon (rooted tree keys from each carbon differ: in a tree, equal keys
  * mean a symmetry that swaps the two ends). `propanodioato de etilo y
  * metilo` needs none; `2-metilbutanodioato de 1-etilo y 4-metilo` does.
+ * The keys are graph.js rootedBranchKey(), so a ring on a branch is
+ * encoded whole (I-40d: `2-ciclohexilbutanodioato de 1-etilo y 4-metilo`).
  *
- * @param {object} mol - A validated acyclic molecule.
+ * @param {object} mol - A validated molecule with at most one ring, not between the two esters.
  * @param {number[]} esters - Its two ester carbons, on one carbon piece.
  * @returns {boolean} True when locants would be needed.
  */
@@ -1309,29 +1398,36 @@ export function diesterNeedsLocants(mol, esters) {
     const bridge = adj.get(carbon).find((n) => n.order === 1 && mol.atoms.get(n.atom).element === 'O').atom;
     const far = adj.get(bridge).find((n) => n.atom !== carbon).atom;
     sideAtoms(adj, bridge, far).forEach((id) => cut.add(id));
-    return rootedTreeKey(mol, far, bridge, adj);
+    return rootedBranchKey(mol, far, bridge, adj);
   });
   if (keys[0] === keys[1]) {
     return false;
   }
   const part = new Map([...adj].filter(([id]) => !cut.has(id)).map(([id, links]) => [id, links.filter((n) => !cut.has(n.atom))]));
-  return rootedTreeKey(mol, esters[0], null, part) !== rootedTreeKey(mol, esters[1], null, part);
+  return rootedBranchKey(mol, esters[0], null, part) !== rootedBranchKey(mol, esters[1], null, part);
 } // End of function diesterNeedsLocants()
 
 /**
- * The refusal of an open-chain molecule without an acid whose ester groups
- * cannot all be cited as the suffix (design.md §13.4 I-35, I-39c), or
- * null: more than two esters (`manyEsters`: a third would need
- * `-carboxilato`); two whose C=O carbons lie on different carbon pieces
- * (`esterPrefix`: a diol diester such as `diacetato de etano-1,2-diilo`,
- * or an ester inside the O-bound group of another — one would be a
- * prefix); two with different O-bound groups on an acid part that differs
- * seen from each end (`mixedDiester`: locants for the groups,
+ * The refusal of a molecule without an acid whose ester groups cannot all
+ * be cited as the suffix (design.md §13.4 I-35, I-39c, I-40d), or null:
+ * more than two esters (`manyEsters`: a third would need `-carboxilato`
+ * on a chain, `-tricarboxilato` on a ring); two bonded to the ring
+ * (`ciclohexano-1,2-dicarboxilato de dimetilo`, I-40d) with different
+ * O-bound groups (`mixedDiester`, MIXED_RING_DIESTER_MESSAGE: locants for
+ * the groups); one bonded to the ring and one elsewhere (`esterPrefix`:
+ * the ring wins, P-44.1.2.2, and the other would be a prefix); two whose
+ * C=O carbons lie on different carbon pieces (chainPieces(), ring atoms
+ * left out; `esterPrefix`: a diol diester such as `diacetato de
+ * etano-1,2-diilo`, or an ester inside the O-bound group of another — one
+ * would be a prefix), except on two side chains of the ring, left to the
+ * engine (identical branches are `symmetricRing`, others the engine's
+ * `esterPrefix` safety net); two with different O-bound groups on an acid part
+ * that differs seen from each end (`mixedDiester`: locants for the groups,
  * diesterNeedsLocants()). Two esters on one carbon piece are both chain
  * ends of the parent (`butanodioato de dimetilo`, `propanodioato de etilo
  * y metilo`). `esters` lists the ester carbons.
  *
- * @param {object} mol - A validated acyclic molecule whose heteroatoms are nameable.
+ * @param {object} mol - A validated molecule whose heteroatoms are nameable.
  * @param {number[]} hetero - Its non-carbon atom ids.
  * @param {number[]} esters - Its ester carbons (esterCarbons()).
  * @returns {{code: string, message: string}|null} The HETEROATOM error, or null.
@@ -1344,18 +1440,48 @@ function esterPlacementError(mol, hetero, esters) {
   if (esters.length < 2) {
     return null;
   }
-  const pieces = connectedComponents(carbonSkeleton(mol));
-  if (!pieces.some((piece) => piece.includes(esters[0]) && piece.includes(esters[1]))) {
+  const adj = adjacency(mol);
+  const ring = ringAtomSet(mol);
+  const onRing = esters.filter((carbon) => adj.get(carbon).some((n) => ring.has(n.atom)));
+  if (onRing.length === 2) {
+    return ringDiesterDiffers(mol, adj, esters) ? refuse(MIXED_RING_DIESTER_MESSAGE, 'mixedDiester') : null;
+  }
+  if (onRing.length === 1) {
     return refuse(ESTER_PREFIX_MESSAGE, 'esterPrefix');
+  }
+  const both = (piece) => piece.includes(esters[0]) && piece.includes(esters[1]);
+  if (!chainPieces(mol).some(both)) {
+    // On two side chains of the ring the engine decides: identical branches are `symmetricRing` (naming/index.js).
+    const throughRing = ring.size > 0 && connectedComponents(carbonSkeleton(mol)).some(both);
+    return throughRing ? null : refuse(ESTER_PREFIX_MESSAGE, 'esterPrefix');
   }
   return diesterNeedsLocants(mol, esters) ? refuse(MIXED_DIESTER_MESSAGE, 'mixedDiester') : null;
 } // End of function esterPlacementError()
 
 /**
+ * Tells whether the two esters of a ring diester (design.md §13.4 I-40d)
+ * have different O-bound groups (rooted tree keys seen from their bridge
+ * O; a ring inside a group is encoded too).
+ *
+ * @param {object} mol - A validated molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number[]} esters - The two ester carbons.
+ * @returns {boolean} True when the groups differ.
+ */
+function ringDiesterDiffers(mol, adj, esters) {
+  const keys = esters.map((carbon) => {
+    const bridge = adj.get(carbon).find((n) => n.order === 1 && mol.atoms.get(n.atom).element === 'O').atom;
+    const far = adj.get(bridge).find((n) => n.atom !== carbon).atom;
+    return rootedBranchKey(mol, far, bridge, adj);
+  });
+  return keys[0] !== keys[1];
+}
+
+/**
  * The refusal of a nameable-heteroatom molecule whose oxygen groups the
  * engine cannot place yet (design.md §13.4 I-31, I-32, I-33, I-35), or null.
- * With a ring: an ester group (`ringEster`), then the amides and nitriles
- * below; a ketone C=O, an OH or an amine on a side chain is named since
+ * With a ring the same checks apply (esters since I-40d: `-carboxilato`,
+ * `benzoato`, a ring group on the O, `etanoato de fenilo`); a ketone C=O, an OH or an amine on a side chain is named since
  * I-40a and an acid or aldehyde since I-40b (the ring carries a –COOH or
  * –CHO bonded to it as `-carboxílico` / `-carbaldehído`; a chain carrying
  * more principal groups than the ring is the parent, the ring a
@@ -1364,7 +1490,7 @@ function esterPlacementError(mol, hetero, esters) {
  * `-carboxílico`; on other pieces it is `carboxi-`), then, without an acid (with one, every
  * ester is a prefix: `alcoxi…oxo`, `alcoxicarbonil-`, `aciloxi-`, I-39c),
  * the esters that cannot all be the suffix (esterPlacementError():
- * `manyEsters`, `esterPrefix`, `mixedDiester`), then the amides (amidePlacementError():
+ * `manyEsters`, `esterPrefix`, `mixedDiester`; with a ring since I-40d), then the amides (amidePlacementError():
  * `manyAmides`, `substitutedPolyamide`; with a ring since I-40c), then
  * the nitriles (nitrilePlacementError(): `carbonocyanidic`,
  * `manyNitriles`; with a ring since I-40c), then more than two aldehyde groups on one carbon piece
@@ -1373,16 +1499,12 @@ function esterPlacementError(mol, hetero, esters) {
  * carbons; `aldehydes`: oxygens).
  *
  * @param {object} mol - A validated molecule whose heteroatoms are nameable.
- * @param {boolean} cyclic - Whether it has a ring.
  * @param {number[]} hetero - Its non-carbon atom ids.
  * @returns {{code: string, message: string}|null} The HETEROATOM error, or null.
  */
-function oxygenPlacementError(mol, cyclic, hetero) {
+function oxygenPlacementError(mol, hetero) {
   const acids = carboxylCarbons(mol);
   const esters = esterCarbons(mol);
-  if (cyclic && esters.length > 0) {
-    return validationError('HETEROATOM', { message: RING_ESTER_MESSAGE, atoms: hetero, reason: 'ringEster', esters });
-  }
   const pieces = chainPieces(mol);
   if (pieces.some((piece) => acids.filter((carbon) => piece.includes(carbon)).length > 2)) {
     return validationError('HETEROATOM', { message: MANY_ACIDS_MESSAGE, atoms: hetero, reason: 'manyAcids', acids });
@@ -1415,7 +1537,7 @@ function oxygenPlacementError(mol, cyclic, hetero) {
  * @returns {number[][]} The pieces, as ascending carbon-id arrays.
  */
 function chainPieces(mol) {
-  return connectedComponents(carbonSkeleton(mol, cycleCore(adjacency(mol))));
+  return connectedComponents(carbonSkeleton(mol, ringAtomSet(mol)));
 }
 
 /**
@@ -1452,7 +1574,7 @@ function amidePlacementError(mol, hetero, senior) {
     return null; // Beside an acid or an ester every amide is a prefix (I-39d): `amino…oxo`, `carbamoil-`, `acilamino-`.
   }
   const adj = adjacency(mol);
-  const ring = cycleCore(adj);
+  const ring = ringAtomSet(mol);
   // Amides bonded to the ring (I-40c: `-carboxamida`) are pieces of one carbon; they are counted for the ring.
   const onRing = amides.filter((carbon) => adj.get(carbon).some((n) => ring.has(n.atom)));
   const pieces = chainPieces(mol)
@@ -1517,20 +1639,22 @@ function nitrilePlacementError(mol, hetero, senior) {
 /**
  * Structural checks plus the naming checks, in order: non-empty, connected,
  * ring scope (ringError(): a single carbocycle of at most 30 carbons
- * passes; TOO_BIG or RING_SYSTEM otherwise), carbon and heavy-atom caps,
+ * passes, and two such rings on either side of an ester, I-40d; TOO_BIG or
+ * RING_SYSTEM otherwise, a lactone included), carbon and heavy-atom caps,
  * carbon, halogens on carbon, OH groups on carbon, aldehyde or ketone
  * C=O, carboxyl groups, ether C–O–C, ester –COO–, amine N, amide –CONH₂ and nitrile –C≡N only (HETEROATOM for any other atom: valid but
  * not nameable yet, with the `imide` reason for an imide N; also (an OH, a ketone C=O or an amine N on a ring's side
  * chain is named since I-40a, an acid or aldehyde with a ring since I-40b) for more than two
  * principal aldehydes or more than two acids on one carbon piece, and, without an acid, more than two esters, two
- * esters on different carbon pieces or a mixed diester that would need locants on a chain, any ester with a ring, and the amide and nitrile placements of
+ * esters on different carbon pieces (or one on the ring and one elsewhere) or a mixed diester that would need locants (on a chain or a ring), and the amide and nitrile placements of
  * amidePlacementError() and nitrilePlacementError(): oxygenPlacementError()), chain cap — the
  * longest carbon chain of a tree, or the longest side chain of a ring
  * (design.md §3.2, §13.1). A molecule passing this is a hydrocarbon (or a
  * halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester, amine, amide or nitrile of one)
  * of at most 60 carbons that is either a tree
  * whose longest carbon chain has at most 30, or a single carbocycle of 3
- * to 30 carbons whose side chains have at most 30 carbons (a side chain
+ * to 30 carbons whose side chains have at most 30 carbons, or two such
+ * carbocycles on either side of an ester (esterRingSplit()) (a side chain
  * carrying more principal groups than the ring is the parent, design.md
  * §13.4 I-40a). The engine may still refuse a C=O
  * carbon that ends up bonded to the parent as a branch
@@ -1575,7 +1699,7 @@ export function validateForNaming(mol) {
       ? validationError('HETEROATOM', { message: IMIDE_MESSAGE, atoms: hetero, reason: 'imide', imides })
       : validationError('HETEROATOM', { atoms: hetero });
   }
-  const placement = hetero.length > 0 ? oxygenPlacementError(mol, cyclic, hetero) : null;
+  const placement = hetero.length > 0 ? oxygenPlacementError(mol, hetero) : null;
   if (placement) {
     return placement;
   }

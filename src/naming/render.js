@@ -1188,8 +1188,11 @@ export function assembleEster(acidParts, esters, lexicon) {
 export function renderName(structure, lexicon = lexiconEs, options = {}) {
   if (structure.ester && options.traditional) {
     const group = suffixGroupIds(structure.suffix);
-    const atoms = [...new Set([...structure.parent.atoms, ...group.atoms])];
-    const acid = [part(lexicon.traditionalName(options.traditional), 'stem', atoms, [...structure.parent.bonds, ...group.bonds])];
+    // The `fenil` of `fenilacetato de metilo` (I-40d) is part of the word too; `acetato` / `formiato` have no prefixes.
+    const sites = structure.prefixes.flatMap((g) => g.locants);
+    const atoms = [...new Set([...structure.parent.atoms, ...group.atoms, ...sites.flatMap((site) => site.atoms)])];
+    const bonds = [...structure.parent.bonds, ...group.bonds, ...sites.flatMap((site) => [site.bond, ...site.bonds])];
+    const acid = [part(lexicon.traditionalName(options.traditional), 'stem', atoms, bonds)];
     const parts = assembleEster(acid, esterParts(structure), lexicon);
     return { name: parts.map((p) => p.text).join(''), parts };
   }

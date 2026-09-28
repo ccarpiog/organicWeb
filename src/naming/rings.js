@@ -56,7 +56,7 @@ import { buildRingStructure, buildNameStructure, buildSuffix } from './structure
 import { renderName } from './render.js';
 import { candidateData, runNumberingCascade, ringCandidates } from './numbering.js';
 import {
-  createNamingContext, collectSubstituents, groupPrefixes, suffixSites, numberingPrefix, PREFIX_STYLES,
+  createNamingContext, collectSubstituents, groupPrefixes, suffixSites, numberingPrefix, esterAlkyls, PREFIX_STYLES,
 } from './substituent.js';
 import { lexiconEs } from './lexicon.es.js';
 import { ringOrChain } from './parent.js';
@@ -158,10 +158,14 @@ export function nameRingWithStyle(mol, style = PREFIX_STYLES[0]) {
     parent = numbered.parent;
     numberingTrace = numbered.trace;
   }
+  const suffix = buildSuffix(sites, parent.atoms, ctx.principal);
+  // The O-bound group of each ring ester (design.md §13.4 I-40d): `ciclohexanocarboxilato de metilo`.
+  const esters = esterAlkyls(ctx, suffix);
   const structure = buildNameStructure({
     parent,
     prefixes: groupPrefixes(substituents, parent.atoms),
-    suffix: buildSuffix(sites, parent.atoms, ctx.principal),
+    suffix,
+    ...(esters.length > 0 ? { ester: esters[0], esters } : {}),
   });
   const { name, parts } = renderName(structure, lexiconEs);
   const candidate = { atoms: [...perceived.atoms], bonds: [...perceived.bonds], key: 'ring' };

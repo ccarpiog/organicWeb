@@ -216,9 +216,10 @@ test('refusals that stay: esters on different pieces, three esters, a mixed dies
   assert.equal(diesterNeedsLocants(parseSmiles('COC(=O)CC(C)C(=O)OC'), esterCarbons(parseSmiles('COC(=O)CC(C)C(=O)OC'))), false);
   // A symmetric acid part with a substituent on the middle carbon needs no locants either.
   assert.equal(nameOf('COC(=O)CC(C)CC(=O)OCC'), '3-metilpentanodioato de etilo y metilo');
-  // Rings keep ringEster (I-40d; ring acids are named since I-40b); amides beside an ester or acid are prefixes since I-39d.
-  assert.equal(nameOf('COC(=O)C1CCC(C(=O)O)CC1'), 'HETEROATOM ringEster');
-  assert.equal(nameOf('COC(=O)CC1CCC(CC(=O)OC)CC1'), 'HETEROATOM ringEster');
+  // Ring esters are named since I-40d (a prefix beside an acid); two identical ester branches on a ring stay
+  // refused (symmetricRing); amides beside an ester or acid are prefixes since I-39d.
+  assert.equal(nameOf('COC(=O)C1CCC(C(=O)O)CC1'), 'ácido 4-(metoxicarbonil)ciclohexano-1-carboxílico');
+  assert.equal(nameOf('COC(=O)CC1CCC(CC(=O)OC)CC1'), 'HETEROATOM symmetricRing');
   assert.equal(nameOf('NC(=O)CC(=O)OC'), '3-amino-3-oxopropanoato de metilo');
   assert.equal(nameOf('NC(=O)CCC(=O)OCC(=O)O'), 'ácido 2-[(4-amino-4-oxobutanoil)oxi]etanoico');
   // Two acids on different pieces joined by an ester: a `carboxi-` branch since I-40b.
