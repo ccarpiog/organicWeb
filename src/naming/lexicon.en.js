@@ -48,7 +48,7 @@ export const BENZENE_NAME = 'benzene';
 /** Stem of the retained name `phenol` (phen + ol; IUPAC 2013 P-63.1.1.1, see lexicon.es.js). */
 export const PHENOL_STEM = 'phen';
 
-/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3), small carbonyl compounds and acids (P-65.1.1.1; see lexicon.es.js). */
+/** Traditional names retained by IUPAC 2013: monosubstituted benzenes (P-22.1.3), anisole, small carbonyl compounds and acids (P-65.1.1.1; see lexicon.es.js). */
 export const TRADITIONAL_NAMES = Object.freeze({
   toluene: 'toluene',
   styrene: 'styrene',
@@ -58,6 +58,7 @@ export const TRADITIONAL_NAMES = Object.freeze({
   formicAcid: 'formic acid',
   aceticAcid: 'acetic acid',
   oxalicAcid: 'oxalic acid',
+  anisole: 'anisole',
 });
 
 /** Endings of the parent name. */
@@ -98,7 +99,11 @@ export const STYLE_LABELS = Object.freeze({
   pin: 'IUPAC 2013 preferred name',
   substituted: 'classic substitutive name',
   locants: 'with the locant, IUPAC 2013 preferred name',
+  functionalClass: 'functional class name, accepted by IUPAC 2013',
 });
+
+/** Class word of the functional-class name of an ether (`ethyl methyl ether`; see lexicon.es.js). */
+export const ETHER_CLASS_WORD = 'ether';
 
 /**
  * Returns the English stem for a chain of the given length.
@@ -364,7 +369,15 @@ export function groupFamilyName(kind) {
 }
 
 /** The English lexicon, as consumed by render.js (same members as lexiconEs). */
+/**
+ * Ending of an alkoxy prefix (an ether, design.md §13.4 I-34): `methoxy`,
+ * `isopropoxy`, `pentyloxy`, `propan-2-yloxy` (render.js alkoxyTokens()).
+ */
+export const ALKOXY_ENDING = 'oxy';
+
 export const lexiconEn = Object.freeze({
+  etherClassWord: ETHER_CLASS_WORD,
+  alkoxyEnding: ALKOXY_ENDING,
   freeValenceSuffix,
   saturatedInfix: SATURATED_INFIX,
   enclosingMarks: ENCLOSING_MARKS,

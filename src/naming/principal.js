@@ -2,8 +2,9 @@
  * @file The oxygen groups the naming engine can name and the principal one
  * among them (design.md §13.4 I-31, I-32, I-33; IUPAC 2013 P-41).
  * Validation (model/validate.js) admits an oxygen only as an OH on a
- * carbon, as the O of an aldehyde or ketone C=O, or as one of the two O of
- * a carboxyl group, so every oxygen of a validated molecule is one of:
+ * carbon, as the O of an aldehyde or ketone C=O, as one of the two O of
+ * a carboxyl group, or as the O of an ether C–O–C, so every oxygen of a
+ * validated molecule is one of:
  *
  *   acid     – either O of X(=O)–OH, X bonded to at most one carbon
  *              (–COOH; methanoic acid has none): both oxygens belong to
@@ -11,7 +12,10 @@
  *   alcohol  – C–OH (a single bond);
  *   aldehyde – X=O with X bonded to at most one carbon (–CHO; methanal
  *              has none);
- *   ketone   – X=O with X bonded to two carbons (–CO–).
+ *   ketone   – X=O with X bonded to two carbons (–CO–);
+ *   ether    – C–O–C (two single bonds to carbons, I-34): never the
+ *              principal group (IUPAC 2013 P-41), always an `alcoxi-`
+ *              prefix (substituent.js alkoxySubstituent()).
  *
  * The principal kind is the most senior one present (ácido > aldehído >
  * cetona > alcohol, seniority.js SENIORITY): its groups on the parent are
@@ -36,8 +40,9 @@ import { isCarboxylCarbon } from '../model/validate.js';
 export const OXYGEN_KINDS = Object.freeze(['acid', 'aldehyde', 'ketone', 'alcohol']);
 
 /**
- * Kind of the group an oxygen of a validated molecule belongs to: either
- * oxygen of a carboxyl group (validate.js isCarboxylCarbon()) is 'acid';
+ * Kind of the group an oxygen of a validated molecule belongs to: an
+ * oxygen bonded to two atoms is an 'ether' (validation admits no other
+ * such oxygen); either oxygen of a carboxyl group (validate.js isCarboxylCarbon()) is 'acid';
  * any other OH (single bond to its carbon) is 'alcohol'; any other C=O is
  * 'aldehyde' when its carbon has at most one carbon neighbour (so it keeps
  * a hydrogen) and 'ketone' when it has two.
@@ -45,10 +50,14 @@ export const OXYGEN_KINDS = Object.freeze(['acid', 'aldehyde', 'ketone', 'alcoho
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, {atom: number, order: number}[]>} adj - Its adjacency map.
  * @param {number} oxygen - An oxygen atom id.
- * @returns {'acid'|'alcohol'|'aldehyde'|'ketone'} The kind.
+ * @returns {'acid'|'alcohol'|'aldehyde'|'ketone'|'ether'} The kind.
  */
 export function oxygenKind(mol, adj, oxygen) {
-  const [link] = adj.get(oxygen);
+  const links = adj.get(oxygen);
+  if (links.length === 2) {
+    return 'ether';
+  }
+  const [link] = links;
   if (isCarboxylCarbon(mol, adj, link.atom)) {
     return 'acid';
   }
@@ -62,7 +71,8 @@ export function oxygenKind(mol, adj, oxygen) {
 /**
  * The principal oxygen kind of a validated molecule: the most senior kind
  * among its oxygen groups (ácido > aldehído > cetona > alcohol), or null
- * without oxygen (a hydrocarbon or a halogen derivative).
+ * without such a group (a hydrocarbon, a halogen derivative or an ether:
+ * an ether oxygen is never principal).
  *
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @param {Map<number, object[]>} adj - Its adjacency map.
@@ -75,6 +85,9 @@ export function principalKindOf(mol, adj) {
       continue;
     }
     const kind = oxygenKind(mol, adj, atom.id);
+    if (kind === 'ether') {
+      continue; // Always a prefix (`alcoxi-`), never the principal group.
+    }
     if (best === null || seniorityRank(kind) < seniorityRank(best)) {
       best = kind;
     }

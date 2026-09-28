@@ -89,6 +89,7 @@ export const TRADITIONAL_NAMES = Object.freeze({
   formicAcid: 'ácido fórmico',
   aceticAcid: 'ácido acético',
   oxalicAcid: 'ácido oxálico',
+  anisole: 'anisol',
 });
 
 /**
@@ -103,7 +104,9 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * retains `formic acid`, `acetic acid` and `oxalic acid` as preferred
  * names (P-65.1.1.1), so they are labelled like `tolueno`; the other
  * school names (propiónico, butírico, malónico, succínico…) are not
- * offered, to keep the list small.
+ * offered, to keep the list small. `anisol` (design.md §13.4 I-34) is
+ * offered for the bare metoxibenceno: IUPAC 2013 retains `anisole` (the
+ * app says only that it is accepted, the exact status being from memory).
  */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
@@ -114,6 +117,7 @@ export const TRADITIONAL_LABELS = Object.freeze({
   formicAcid: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   aceticAcid: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
   oxalicAcid: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
+  anisole: 'nombre tradicional, que la IUPAC (2013) acepta',
 });
 
 /** Endings of the parent name. */
@@ -433,6 +437,14 @@ export function freeValenceSuffix(order) {
   return suffix;
 }
 
+/**
+ * Ending of an alkoxy prefix (an ether, design.md §13.4 I-34): it replaces
+ * the `il` of a short alkyl prefix (`metil` → `metoxi`, `isopropil` →
+ * `isopropoxi`) or follows a longer one (`pentiloxi`, `propan-2-iloxi`);
+ * render.js alkoxyTokens(), IUPAC 2013 P-63.2.2.2.
+ */
+export const ALKOXY_ENDING = 'oxi';
+
 /** Infix between the stem and a cited free-valence locant of a saturated group (`propan-2-il`). */
 export const SATURATED_INFIX = 'an';
 
@@ -480,7 +492,15 @@ export const STYLE_LABELS = Object.freeze({
   pin: 'nombre preferido por la IUPAC (2013)',
   substituted: 'forma sistemática clásica',
   locants: 'con el localizador, como la escribe la IUPAC (2013) en el nombre preferido',
+  functionalClass: 'nombre de clase funcional (los dos grupos y la palabra «éter»), que la IUPAC (2013) acepta',
 });
+
+/**
+ * Class word of the functional-class name of an ether (design.md §13.4
+ * I-34): `etil metil éter`, `dietil éter` (IUPAC 2013 P-63.2.2.1: accepted
+ * in general nomenclature; the substitutive `metoxietano` is preferred).
+ */
+export const ETHER_CLASS_WORD = 'éter';
 
 /**
  * Returns the ending of one unsaturation segment inside a substituent
@@ -687,6 +707,8 @@ export function groupFamilyName(kind) {
 
 /** The Spanish lexicon, as consumed by render.js. */
 export const lexiconEs = Object.freeze({
+  etherClassWord: ETHER_CLASS_WORD,
+  alkoxyEnding: ALKOXY_ENDING,
   freeValenceSuffix,
   saturatedInfix: SATURATED_INFIX,
   enclosingMarks: ENCLOSING_MARKS,

@@ -67,7 +67,7 @@ test('validation: a –COOH is admitted; esters, acyl halides, anhydrides and ot
     assert.equal(error.code, 'HETEROATOM', smiles);
     assert.equal(error.message, MESSAGES.HETEROATOM, smiles);
   }
-  assert.match(MESSAGES.HETEROATOM, /y ácidos carboxílicos \(con el grupo –COOH\)/);
+  assert.match(MESSAGES.HETEROATOM, /ácidos carboxílicos \(con el grupo –COOH\)/);
   // A salt (a metal, a charge) is not even a valid structure: charges and metals are out of scope.
   const salt = createMolecule();
   const c1 = addAtom(salt);

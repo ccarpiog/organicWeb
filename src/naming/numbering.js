@@ -111,6 +111,29 @@ function defaultNameKey(groups) {
 }
 
 /**
+ * Compares two N5 values (`[nameKey]`): the complete-name keys
+ * (compareCitationKeys()), then, when letters, locants and italic
+ * descriptors all tie, the whole prefix text as written (`text`, render.js
+ * prefixNameKey(); code-unit order). The last comparison only separates
+ * different names with the same letters (nested polyethers, design.md
+ * §13.4 I-34), so the choice never falls to the atom-id tie-break; equal
+ * texts are equal names.
+ *
+ * @param {object[]} a - First value.
+ * @param {object[]} b - Second value.
+ * @returns {number} Negative when `a` wins, positive when `b` wins, 0 when equal.
+ */
+function compareNameKeys(a, b) {
+  const byKey = compareCitationKeys(a[0], b[0]);
+  if (byKey !== 0) {
+    return byKey;
+  }
+  const ta = a[0].text || '';
+  const tb = b[0].text || '';
+  return ta === tb ? 0 : (ta < tb ? -1 : 1);
+}
+
+/**
  * Keeps the candidates whose value is lowest under a comparator and records
  * the comparison as a trace step.
  *
@@ -376,7 +399,7 @@ export function runNumberingCascade(candidates, data, options) {
   if (remaining.length > 1 && differ()) {
     const nameKey = options.nameKey || defaultNameKey;
     const values = remaining.map((c) => [nameKey(data.get(c.key).groups)]);
-    const { step, survivors } = applyLocantRule('N5', remaining, values, (a, b) => compareCitationKeys(a[0], b[0]));
+    const { step, survivors } = applyLocantRule('N5', remaining, values, compareNameKeys);
     trace.push(step);
     remaining = survivors;
   }

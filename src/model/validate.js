@@ -15,19 +15,21 @@
  *   one gets TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps (≤ 60 carbons, ≤ 80 heavy atoms),
  *   only elements the engine can name yet (carbon, halogens bonded to a
  *   carbon — design.md §13.4 I-30 —, OH groups on a carbon, I-31, the
- *   C=O of aldehydes and ketones, I-32, and carboxyl groups –C(=O)OH,
- *   I-33; on a molecule with a ring, only OH groups on ring carbons and
- *   ketone C=O whose carbon is a ring atom, no acid; on a chain, at most
- *   two aldehydes and at most two acids), and longest carbon chain ≤ 30
- *   (for a ring: every side chain ≤ 30).
+ *   C=O of aldehydes and ketones, I-32, carboxyl groups –C(=O)OH, I-33,
+ *   and ether oxygens C–O–C, I-34; on a molecule with a ring, only OH
+ *   groups on ring carbons and ketone C=O whose carbon is a ring atom, no
+ *   acid; on a chain, at most two aldehydes and at most two acids), and
+ *   longest carbon chain ≤ 30 (for a ring: every side chain ≤ 30; with
+ *   ethers, the longest chain on either side of each O).
  *
  * Two kinds of failure are kept apart (design.md §13.1): an invalid structure
  * (INVALID, VALENCE — the drawing itself is wrong) and a valid molecule the
  * engine cannot name (CYCLE, RING_SYSTEM, HETEROATOM — see isNotNameableYet()).
  * Halogens bonded to a carbon are named since I-30, OH groups on a carbon
  * (alcohols, phenol) since I-31, aldehydes and ketones since I-32,
- * carboxylic acids since I-33; any other heteroatom (N, an O of an ester,
- * anhydride or ether, a halogen on a heteroatom or on a C=O carbon…) still
+ * carboxylic acids since I-33, ethers since I-34; any other heteroatom (N,
+ * an O of an ester or anhydride, a peroxide, a halogen on a heteroatom or
+ * on a C=O carbon…) still
  * gets HETEROATOM, and so do an alcohol or ketone with a ring whose OH or
  * C=O is on a side chain, any aldehyde or acid with a ring, and a chain
  * with more than two aldehydes or more than two acids.
@@ -37,7 +39,9 @@
  * for highlighting). This module never reads coordinates or the DOM.
  */
 
-import { isConnected, hasCycle, longestChainLength, adjacency, carbonSkeleton } from './graph.js';
+import {
+  isConnected, hasCycle, longestChainLength, adjacency, carbonSkeleton, connectedComponents,
+} from './graph.js';
 import { classifyRings } from './rings.js';
 import { isSupportedElement, valenceOf, isHalogen, ELEMENT_NAMES_ES } from './elements.js';
 
@@ -66,8 +70,9 @@ export const MESSAGES = Object.freeze({
     + 'Aún no sé nombrar este tipo de compuestos: de momento solo nombro hidrocarburos, '
     + 'derivados halogenados (con flúor, cloro, bromo o yodo unidos a un carbono), '
     + 'alcoholes (con grupos –OH unidos a un carbono), '
-    + 'aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O) '
-    + 'y ácidos carboxílicos (con el grupo –COOH).',
+    + 'aldehídos y cetonas (con un oxígeno unido a un carbono por un enlace doble, C=O), '
+    + 'ácidos carboxílicos (con el grupo –COOH) '
+    + 'y éteres (con un oxígeno unido a dos carbonos, C–O–C).',
   INVALID: 'Los datos de la molécula están dañados. Empieza un dibujo nuevo.',
 });
 
@@ -174,6 +179,18 @@ export const CARBOXY_SUBSTITUENT_MESSAGE = 'Esta molécula tiene un grupo –COO
  */
 export const ACYL_SUBSTITUENT_MESSAGE = 'Esta molécula tiene un grupo C=O en una rama, con su carbono unido directamente '
   + 'a la cadena principal (un grupo acilo, como el acetilo, –CO–CH₃). Aún no sé nombrar estas ramas.';
+
+/**
+ * HETEROATOM message of the naming engine (naming/index.js) for an ether
+ * whose two sides are identical and each carries the principal group
+ * (design.md §13.4 I-34), such as HO–CH₂–CH₂–O–CH₂–CH₂–OH: IUPAC 2013
+ * names it with multiplicative nomenclature (`2,2′-oxidi(etan-1-ol)`,
+ * P-15.3), not supported. The substitutive name
+ * `2-(2-hidroxietoxi)etan-1-ol` would not be the preferred one.
+ */
+export const SYMMETRIC_ETHER_MESSAGE = 'Esta molécula tiene dos mitades iguales unidas por un oxígeno (–O–), '
+  + 'y cada mitad lleva el grupo principal. La IUPAC la nombra con el prefijo «oxidi-», que junta las dos mitades '
+  + '(como el 2,2′-oxidietanol), y eso aún no sé hacerlo.';
 
 /** TOO_BIG message for a ring larger than the parent-size cap (MAX_CHAIN). */
 export const RING_TOO_BIG_MESSAGE = 'El anillo es demasiado grande (máximo 30 carbonos en el anillo).';
@@ -665,13 +682,81 @@ export function carboxylCarbons(mol) {
 }
 
 /**
+ * Tells whether a carbon is a functional carbon (design.md §13.6): one with
+ * a double or triple bond to a heteroatom (the X of C=O, C=N, C≡N).
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} id - An atom id.
+ * @returns {boolean} True for a carbon with a multiple bond to a heteroatom.
+ */
+export function isFunctionalCarbon(mol, adj, id) {
+  return mol.atoms.get(id).element === 'C'
+    && adj.get(id).some((n) => n.order > 1 && mol.atoms.get(n.atom).element !== 'C');
+}
+
+/**
+ * Tells whether an atom is the oxygen of an ether C–O–C (design.md §13.4
+ * I-34, §13.6 table: R–O–R): an oxygen with exactly two bonds, both single,
+ * both to carbons, neither of them a functional carbon (a C=O carbon: that
+ * would be an ester, `CC(=O)OC`, or an anhydride). A peroxide (O–O), an
+ * O–N or O–halogen bond is not. An oxygen inside a ring never gets here:
+ * the ring would be a heterocycle, refused first (RING_SYSTEM).
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} id - An atom id.
+ * @returns {boolean} True for the O of a C–O–C ether.
+ */
+export function isEtherOxygen(mol, adj, id) {
+  const links = adj.get(id);
+  return mol.atoms.get(id).element === 'O' && links.length === 2
+    && links.every((n) => n.order === 1 && mol.atoms.get(n.atom).element === 'C' && !isFunctionalCarbon(mol, adj, n.atom));
+}
+
+/**
+ * The ether oxygens of a molecule (isEtherOxygen()), ascending.
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @returns {number[]} The oxygen ids.
+ */
+export function etherOxygens(mol) {
+  const adj = adjacency(mol);
+  return [...mol.atoms.keys()].filter((id) => isEtherOxygen(mol, adj, id)).sort((p, q) => p - q);
+}
+
+/**
+ * Longest carbon chain of an acyclic molecule: the largest number of
+ * carbons on a path of its carbon skeleton. Without ethers the skeleton is
+ * one tree; each ether oxygen splits it (a carbon chain never runs through
+ * an O, design.md §13.4 I-34), so the longest path of every piece counts.
+ *
+ * @param {object} mol - A connected acyclic molecule (validated structure).
+ * @returns {number} The longest chain in carbons.
+ */
+export function longestCarbonChain(mol) {
+  const skeleton = carbonSkeleton(mol);
+  let longest = 0;
+  for (const component of connectedComponents(skeleton)) {
+    const ids = new Set(component);
+    const piece = {
+      atoms: new Map([...skeleton.atoms].filter(([id]) => ids.has(id))),
+      bonds: new Map([...skeleton.bonds].filter(([, bond]) => ids.has(bond.a))),
+    };
+    longest = Math.max(longest, longestChainLength(piece));
+  }
+  return longest;
+} // End of function longestCarbonChain()
+
+/**
  * Tells whether every non-carbon atom of a molecule is one the engine can
  * name: a halogen bonded to a carbon (a prefix, I-30), the oxygen of an OH
  * on a carbon (the `-ol` suffix or the `hidroxi` prefix, I-31), the
  * oxygen of an aldehyde or ketone C=O (the `-al` / `-ona` suffix or the
  * `oxo` prefix, I-32; carbonylKind()) or an oxygen of a carboxyl group
- * (the `ácido …oico` suffix, I-33; carboxylRole()). Any other O, and every
- * N, is not. The OH of an ester-like or otherwise unsupported C=O carbon
+ * (the `ácido …oico` suffix, I-33; carboxylRole()) or the oxygen of an
+ * ether C–O–C (an `alcoxi-` prefix, I-34; isEtherOxygen()). Any other O,
+ * and every N, is not. The OH of an ester-like or otherwise unsupported C=O carbon
  * (`OC(=O)O`, a peracid) is refused through its C=O.
  *
  * @param {object} mol - A structurally valid molecule.
@@ -683,7 +768,7 @@ export function hasNameableHeteroatoms(mol, hetero) {
   const halogens = hetero.filter((id) => isHalogen(mol.atoms.get(id).element));
   return isHalogenDerivative(mol, halogens)
     && hetero.every((id) => isHalogen(mol.atoms.get(id).element) || isHydroxyOxygen(mol, adj, id)
-      || carbonylKind(mol, adj, id) !== null || carboxylRole(mol, adj, id) !== null);
+      || carbonylKind(mol, adj, id) !== null || carboxylRole(mol, adj, id) !== null || isEtherOxygen(mol, adj, id));
 }
 
 /**
@@ -698,7 +783,7 @@ export function sideChainHydroxyls(mol) {
   const ringAtoms = new Set(classifyRings(mol).perception.ringAtoms);
   const adj = adjacency(mol);
   return [...mol.atoms.values()]
-    .filter((atom) => atom.element === 'O' && adj.get(atom.id)[0].order === 1 && !ringAtoms.has(adj.get(atom.id)[0].atom))
+    .filter((atom) => isHydroxyOxygen(mol, adj, atom.id) && !ringAtoms.has(adj.get(atom.id)[0].atom))
     .map((atom) => atom.id)
     .sort((p, q) => p - q);
 }
@@ -789,18 +874,20 @@ function oxygenPlacementError(mol, cyclic, hetero) {
  * ring scope (ringError(): a single carbocycle of at most 30 carbons
  * passes; TOO_BIG or RING_SYSTEM otherwise), carbon and heavy-atom caps,
  * carbon, halogens on carbon, OH groups on carbon, aldehyde or ketone
- * C=O and carboxyl groups only (HETEROATOM for any other atom: valid but
+ * C=O, carboxyl groups and ether C–O–C only (HETEROATOM for any other atom: valid but
  * not nameable yet; also for an OH, a ketone C=O or any aldehyde on a ring
  * molecule outside the ring, any acid with a ring, and for more than two
  * aldehydes or acids on a chain: oxygenPlacementError()), chain cap — the
  * longest carbon chain of a tree, or the longest side chain of a ring
  * (design.md §3.2, §13.1). A molecule passing this is a hydrocarbon (or a
- * halogen derivative, alcohol, aldehyde, ketone or carboxylic acid of one)
+ * halogen derivative, alcohol, aldehyde, ketone, carboxylic acid or ether of one)
  * of at most 60 carbons that is either a tree
  * whose longest carbon chain has at most 30, or a single carbocycle of 3
  * to 30 carbons whose side chains have at most 30 carbons and carry no
- * oxygen. The engine may still refuse a C=O carbon that ends up bonded to
- * the parent as a branch (ACYL_SUBSTITUENT_MESSAGE, naming/index.js).
+ * oxygen other than ether oxygens. The engine may still refuse a C=O
+ * carbon that ends up bonded to the parent as a branch
+ * (ACYL_SUBSTITUENT_MESSAGE, naming/index.js) and an ether whose two
+ * identical halves each carry the principal group (SYMMETRIC_ETHER_MESSAGE).
  *
  * @param {object} mol - The molecule (possibly corrupt).
  * @returns {{code: string, message: string}|null} The first error found, or null when the molecule can be named.
@@ -832,14 +919,14 @@ export function validateForNaming(mol) {
   }
   const hetero = [...mol.atoms.values()].filter((atom) => atom.element !== 'C').map((atom) => atom.id).sort((p, q) => p - q);
   if (hetero.length > 0 && !hasNameableHeteroatoms(mol, hetero)) {
-    // A valid molecule, but the engine only names hydrocarbons, halogen derivatives, alcohols, aldehydes, ketones and acids so far.
+    // A valid molecule, but the engine only names hydrocarbons, halogen derivatives, alcohols, aldehydes, ketones, acids and ethers so far.
     return validationError('HETEROATOM', { atoms: hetero });
   }
   const placement = hetero.length > 0 ? oxygenPlacementError(mol, cyclic, hetero) : null;
   if (placement) {
     return placement;
   }
-  const chain = cyclic ? longestSideChain(mol) : longestChainLength(carbonSkeleton(mol));
+  const chain = cyclic ? longestSideChain(mol) : longestCarbonChain(mol);
   if (chain > MAX_CHAIN) {
     return validationError('TOO_BIG', { detail: `${cyclic ? 'longest side chain' : 'longest chain'} has ${chain} carbons` });
   }

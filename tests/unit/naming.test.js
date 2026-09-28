@@ -13,7 +13,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { parseSmiles } from '../../src/model/smiles.js';
-import { adjacency, carbonSkeleton } from '../../src/model/graph.js';
+import { adjacency, carbonSkeleton, connectedComponents } from '../../src/model/graph.js';
 import { createMolecule, addAtom, addBond } from '../../src/model/molecule.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { numberParent, compareCitationKeys } from '../../src/naming/numbering.js';
@@ -53,14 +53,18 @@ async function readFixtures() {
 }
 
 /**
- * Tells whether a molecule is unbranched: no carbon bonded to more than two
- * carbons (halogens are substituents, not branches of the carbon skeleton).
+ * Tells whether a molecule is unbranched: its carbon skeleton is one piece
+ * (an ether O splits it, design.md §13.4 I-34) and no carbon is bonded to
+ * more than two carbons (halogens are substituents, not branches of the
+ * carbon skeleton).
  *
  * @param {object} mol - The molecule.
  * @returns {boolean} True for an unbranched chain.
  */
 function isUnbranched(mol) {
-  return [...adjacency(carbonSkeleton(mol)).values()].every((list) => list.length <= 2);
+  const skeleton = carbonSkeleton(mol);
+  return connectedComponents(skeleton).length === 1
+    && [...adjacency(skeleton).values()].every((list) => list.length <= 2);
 }
 
 const fixtureRows = await readFixtures();

@@ -37,7 +37,8 @@
  * (P-22.1.3) — `tolueno` (even the preferred IUPAC name) and `estireno`
  * (general nomenclature) — are offered as alternatives only (design.md
  * §13.1: systematic name first). `cumeno` is not: cumene is no longer
- * retained in the 2013 recommendations.
+ * retained in the 2013 recommendations. `anisol` is offered for
+ * metoxibenceno (an ether, design.md §13.4 I-34).
  *
  * The ring numbering (locant order of the parent, used by Ordenar dibujo) is
  * chosen by the ring cascade of rings.js numberRing(): the substituted atom
@@ -98,11 +99,13 @@ export function phenylSubstituent(atoms, bonds, orders) {
 /**
  * Id of the traditional name retained by IUPAC 2013 (P-22.1.3) for a named
  * benzene derivative: 'toluene' for a single methyl, 'styrene' for a single
- * ethenyl (vinyl) group; null otherwise (benzene itself is already the
+ * ethenyl (vinyl) group, 'anisole' for a single methoxy group (metoxibenceno,
+ * design.md §13.4 I-34; retained by IUPAC 2013 for the unsubstituted
+ * molecule); null otherwise (benzene itself is already the
  * retained name; cumene is no longer retained).
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
- * @returns {'toluene'|'styrene'|null} The id.
+ * @returns {'toluene'|'styrene'|'anisole'|null} The id.
  */
 export function traditionalNameId(structure) {
   if (structure.parentKind !== 'ring' || structure.parent.retained !== 'benzene' || structure.prefixes.length !== 1) {
@@ -110,10 +113,14 @@ export function traditionalNameId(structure) {
   }
   const [group] = structure.prefixes;
   const sub = group.substituent;
-  if (group.locants.length !== 1 || sub.halogen || sub.retained || sub.prefixes.length > 0 || sub.freeValence.order !== 1) {
+  if (group.locants.length !== 1 || sub.halogen || sub.hydroxy || sub.oxo || sub.retained || sub.prefixes.length > 0
+    || sub.freeValence.order !== 1) {
     return null;
   }
   const { chain } = sub;
+  if (sub.alkoxy) {
+    return chain.length === 1 ? 'anisole' : null;
+  }
   if (chain.length === 1) {
     return 'toluene';
   }

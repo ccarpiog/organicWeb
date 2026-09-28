@@ -450,3 +450,44 @@ O=CCC(=O)O	ácido 3-oxopropanoico	acid principal, terminal aldehyde as oxo-	Acid
 OC(=O)C(C=O)C	ácido 2-metil-3-oxopropanoico	aldehyde end and a methyl	The chain joins the COOH and CHO carbons (longest through the COOH); metil (m) before oxo (o)	
 CC(C(=O)O)C(C)=O	ácido 2-metil-3-oxobutanoico	oxo and alkyl on an acid	COOH at 1; the ketone carbon is in the four-carbon chain (oxo at 3), the other methyl is a prefix at 2	
 CC(=O)CC(O)C(=O)O	ácido 2-hidroxi-4-oxopentanoico	acid with hidroxi and oxo	Acid > ketone > alcohol; hidroxi (h) before oxo (o)	
+# Ethers (I-34): the ether O is never a chain atom nor a suffix (IUPAC 2013 P-63.2.2): it splits the carbon skeleton, the parent is chosen among the chains of every side with the usual rules (principal groups P-44.1.1, ring over chain P-44.1.2.2, then length and unsaturation P-44.3, then P-45.2.1), and the O with the other side is an alkoxy prefix: metoxi, etoxi, propoxi, butoxi contracted (P-63.2.2.2), isopropoxi / tert-butoxi retained per style, otherwise alkyl + oxi in parentheses (pentiloxi, propan-2-iloxi); Spanish alphabetical order; a simple R–O–R′ also gets its functional-class name (etil metil éter, P-63.2.2.1) and metoxibenceno anisol under Otras formas válidas; symmetric halves carrying the principal group are refused (oxidi-, multiplicative) (tests/unit/ethers.test.js)
+COC	metoximetano	symmetric ether, one-carbon parent	The O is never a chain atom (IUPAC 2013 P-63.2.2): the two CH3 sides are equal, either is the methane parent and the other with the O the methoxy prefix (met + oxi, contracted, P-63.2.2.2); one-carbon parent cites no locant (P-14.3.4.2(a)); dimethyl ether as the functional-class name (P-63.2.2.1, general nomenclature)	functionalClass=dimetil éter
+CCOC	metoxietano	asymmetric ether, parent side by length	Chains of both sides compete (P-44.3): ethane (2 C) beats methane (1 C), so the CH3–O– side is the prefix; monosubstituted two-carbon parent cites no locant (P-14.3.4.2(b))	functionalClass=etil metil éter
+CCOCC	etoxietano	symmetric ether	Both sides are ethyl: either is the parent, same name; ethoxy is a contracted prefix (P-63.2.2.2); diethyl ether as the functional-class name	functionalClass=dietil éter
+CCCOC	1-metoxipropano	ether locant on a three-carbon parent	Propane (longer) is the parent; the methoxy prefix gets locant 1 (P-31.1.4.3.4) and is cited (three-carbon parent)	functionalClass=metil propil éter
+CC(C)OC	2-metoxipropano	methoxy on the middle carbon	Propane is the parent (3 C vs 1 C); methoxy at 2; the isopropyl side is the parent here, not the prefix	functionalClass=isopropil metil éter
+CCCCOC	1-metoxibutano	butyl methyl ether	Butane parent, methoxy at 1	functionalClass=butil metil éter
+CC(C)COCC	1-etoxi-2-metilpropano	branched parent side	The O-side pieces are C4 (branched, longest chain 3) and C2: propane beats ethane; the ethyl side is ethoxy; prefixes etoxi (e) before metil (m), lowest locants {1,2}	
+CC(C)OCCCC	1-isopropoxibutano	branched alkoxy (isopropoxi)	Butane (4 C) beats the three-carbon side; –O–CH(CH3)2 is isopropoxi in the default style (design §1.1: isopropil accepted; IUPAC 2013 P-63.2.2.2 retains isopropoxy for general nomenclature), propan-2-iloxi in the preferred style, 1-metiletoxi in the classic style	pin=1-(propan-2-iloxi)butano;substituted=1-(1-metiletoxi)butano;functionalClass=butil isopropil éter
+CC(C)OC(C)C	2-isopropoxipropano	symmetric branched ether	Both sides isopropyl: propane parent (C-2 carries the O), the other side isopropoxi; diisopropil éter as the functional-class name	pin=2-(propan-2-iloxi)propano;substituted=2-(1-metiletoxi)propano;functionalClass=diisopropil éter
+CC(C)(C)OC	2-metil-2-metoxipropano	tert-butyl methyl ether (MTBE)	The tert-butyl side holds the longest chain (propane); methyl and methoxy both at 2; Spanish alphabetical order: metil before metoxi (i before o; English methoxy before methyl)	functionalClass=tert-butil metil éter
+CC(C)(C)OCCCC	1-tert-butoxibutano	retained tert-butoxy	Butane parent; –O–C(CH3)3 is tert-butoxi (tert-butyl + oxy contracted; retained like tert-butil, design §1.1); the italic tert- is ignored in alphabetical order	functionalClass=butil tert-butil éter
+CCCCCOCCCCCC	1-(pentiloxi)hexano	alkoxy longer than four carbons	Hexane beats the pentyl side; only C1–C4 alkoxy prefixes are contracted (P-63.2.2.2), so pentil + oxi = pentiloxi, a compound prefix in parentheses	functionalClass=hexil pentil éter
+CCC(C)OCCCCCC	1-(butan-2-iloxi)hexano	alkoxy attached by its carbon 2	Hexane parent; the butan-2-il group + oxi (not contracted: the O is on carbon 2 of the group)	
+C=COC	metoxieteno	enol ether	Both sides are compared as usual: ethene (2 C) beats methane; no locants on a two-carbon parent	
+CCOC=C	etoxieteno	unsaturation decides the side	Both sides have 2 C (P-44.3 length tie); ethene wins by the multiple bond (P2), the ethyl side is ethoxy	
+C=CCOCCCC	1-(prop-2-en-1-iloxi)butano	unsaturated alkoxy	Butane (4 C) beats the allyl side (3 C) although that side has the double bond: length first (IUPAC 2013); prop-2-en-1-il + oxi, enclosed	
+COCCOC	1,2-dimetoxietano	two ether oxygens	Three carbon pieces (C1, C2, C1): ethane is the parent with two methoxy prefixes (di-, P-16.9)	
+COCOC	dimetoximetano	two methoxy on one carbon (acetal)	The middle carbon has the most substituents (P4) among the one-carbon pieces; one-carbon parent, no locants	
+CCOC(C)OCC	1,1-dietoxietano	acetal of ethanal	Ethane pieces tie in length; the one with two ethoxy groups wins by P4; both at 1	
+COCCOCCC	1-(2-metoxietoxi)propano	alkoxy with its own ether	Propane (3 C) is the longest piece; the other O and its sides form one prefix, 2-metoxietoxi (ethoxy with a methoxy on its carbon 2), enclosed	
+ClCCOCC	1-cloro-2-etoxietano	side chosen by the number of substituents	Both sides have 2 C and no multiple bond; the side with the chlorine carries more prefixes (P-45.2.1), so the ethyl side is ethoxy; cloro (c) before etoxi (e)	
+ClCOC	cloro(metoxi)metano	alkoxy beside another prefix without locants	The CH2Cl piece carries more substituents; on a one-carbon parent the prefixes have no locants, so methoxy is put in parentheses to separate it (clorometoximetano would read as (clorometoxi)metano; P-16.5.1)	
+COC(Cl)Cl	dicloro(metoxi)metano	enclosed methoxy on a one-carbon parent	As cloro(metoxi)metano, with two chlorine atoms	
+OCCOC	2-metoxietan-1-ol	ether + alcohol: parent side by the principal group	The OH is the principal group: the side carrying it is the parent (P-44.1.1), the other side methoxy at 2; the OH gets locant 1 (P-31.1.4.2.4)	
+OCCOCCCO	3-(2-hidroxietoxi)propan-1-ol	OH on both sides, different halves	Each side has one OH (P0 tie); propane (3 C) beats ethane; the OH on the alkoxy side is hidroxi-	
+CCC(O)COC	1-metoxibutan-2-ol	ether and alcohol on a branched parent	Butane carries the OH; OH at 2 (N0), methoxy at 1	
+COCC(=O)O	ácido 2-metoxietanoico	ether + acid	The COOH side is the parent (acid principal); two substituents on ethane (suffix + prefix), so the locant is cited	
+COC(C)C(=O)O	ácido 2-metoxipropanoico	methoxy next to an acid	COOH at 1, methoxy at 2	
+O=CCCOC	3-metoxipropanal	ether + aldehyde	The CHO side is the parent; CHO carbon 1 uncited, methoxy at 3	
+COCC=O	2-metoxietanal	ether + aldehyde on two carbons	Suffix + prefix on ethane: the prefix locant is cited	
+CC(=O)CCOC	4-metoxibutan-2-ona	ether + ketone	The ketone side is the parent; C=O at 2 (N0), methoxy at 4	
+COC1CCCCC1	metoxiciclohexano	alkoxy on a ring	The ring is senior to the chain on the other side of the O (P-44.1.2.2); one substituent on a saturated ring: no locant	
+OC1CCCCC1OC	2-metoxiciclohexan-1-ol	ether on a cycloalkanol	The ring carries the OH (-ol, locant 1); methoxy at 2	
+COC1CCC(O)CC1	4-metoxiciclohexan-1-ol	para-like ring ether-alcohol	OH at 1, methoxy at 4 on the ring	
+O=C1CCCCC1OC	2-metoxiciclohexan-1-ona	ether on a cycloalkanone	C=O ring carbon at 1, methoxy at 2	
+COC1=CC=CC=C1	metoxibenceno	methoxy on benzene	Benzene is the parent (ring senior); one substituent: no locant; anisol (retained by IUPAC 2013) only under Otras formas válidas	traditional=anisol
+CCOC1=CC=CC=C1	etoxibenceno	ethoxy on benzene	No traditional name offered (phenetole is not)	
+COCC1=CC=CC=C1	(metoximetil)benceno	ether inside a branch of benzene	The O is in the side chain: the branch is methyl carrying methoxy, (metoximetil)	
+C1CCCC1COC	(metoximetil)ciclopentano	ether inside a branch of a ring	The ring is the parent; the branch –CH2–O–CH3 is (metoximetil)	
+CCOCC(C)C=O	3-etoxi-2-metilpropanal	ether with an aldehyde and a branch	CHO at 1; etoxi (e) before metil (m); locants 2 and 3	

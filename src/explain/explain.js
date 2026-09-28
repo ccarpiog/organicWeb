@@ -20,7 +20,7 @@
  * `[[key]]`); `parseMarkup()` splits them and `GLOSSARY` holds the
  * definitions shown as tooltips. Names are quoted with «…».
  *
- * Step ids, in order: count, group, ring, benzene, chain, groupChain,
+ * Step ids, in order: count, group, ether, ring, benzene, chain, groupChain,
  * tiebreak, numbering, ringNumbering, substituents, order, assemble. A step that decided
  * nothing is skipped (tiebreak without a deciding rule, substituents
  * without prefixes, order with fewer than two prefix groups) or reduced to
@@ -77,6 +77,16 @@
  * locant is never written (terminalGroupNote()); the legend and the
  * assemble step explain the word `ácido` that starts the name.
  *
+ * Ethers (design.md §13.4 I-34, `alkoxy` prefixes) get one more step
+ * after group, "Reconoce el éter" (etherStep()): the O between two
+ * carbons highlighted apart from both sides (the parent side and the
+ * alkoxy side), why the O is never in the chain nor a suffix, which side
+ * holds the parent and why (read from the trace: the side with the
+ * principal group, the longer chain, more multiple bonds, the ring, or
+ * both sides alike), and how the prefix is formed (`met` + `oxi`,
+ * `pentil` + `oxi`, `isopropoxi`); the count step draws the ether O as O
+ * (no hydrogen) and the other steps describe and order the `-oxi` prefixes.
+ *
  * A molecule refused with `HETEROATOM` (valid, but with atoms other than
  * carbon, design.md §13.4 I-29) carries `groups` (seniority.js
  * GroupAnalysis); it gets groups ("Reconoce los grupos": each
@@ -92,7 +102,7 @@ import { SENIORITY } from '../naming/seniority.js';
 import { ELEMENT_NAMES_ES } from '../model/elements.js';
 import {
   substituentPrefix, citationKey, needsEnclosure, isCompoundPrefix, renderPrefixes, omitsPrefixLocants,
-  suffixWords, suffixCount, suffixGroupIds,
+  suffixWords, suffixCount, suffixGroupIds, isContractedAlkoxy, MAX_CONTRACTED_ALKOXY,
 } from '../naming/render.js';
 import { locantText, siteLocantText } from '../naming/structure.js';
 
@@ -116,6 +126,7 @@ export const GLOSSARY = Object.freeze({
 export const STEP_TITLES = Object.freeze({
   count: 'Cuenta los carbonos',
   group: 'Reconoce el grupo funcional',
+  ether: 'Reconoce el éter',
   ring: 'Busca el anillo',
   benzene: 'Reconoce el benceno',
   chain: 'Busca la cadena más larga',
@@ -269,6 +280,9 @@ const PARENT_WORDS = Object.freeze({
   ring: Object.freeze({ the: 'el anillo', to: 'al anillo', of: 'del anillo' }),
   carbon: Object.freeze({ the: 'el carbono', to: 'al carbono', of: 'del carbono' }),
 });
+
+/** Words for the O that carries the alkyl group of an alkoxy prefix (design.md §13.4 I-34). */
+const OXYGEN_WORDS = Object.freeze({ the: 'el oxígeno', to: 'al oxígeno', of: 'del oxígeno' });
 
 /**
  * The words used for the parent of a result in sentences (a one-carbon
@@ -474,6 +488,22 @@ function oxoTotal(sub) {
 }
 
 /**
+ * Number of ether oxygens inside a substituent, nested ones included (an
+ * alkoxy prefix counts its own O plus those of its own prefixes:
+ * `(2-metoxietoxi)` has 2).
+ *
+ * @param {object} sub - A substituent structure.
+ * @returns {number} The count.
+ */
+function etherTotal(sub) {
+  let n = sub.alkoxy ? 1 : 0;
+  for (const group of sub.prefixes) {
+    n += group.locants.length * etherTotal(group.substituent);
+  }
+  return n;
+}
+
+/**
  * Sum of a per-substituent count over every occurrence of the prefixes of a name.
  *
  * @param {object} result - The naming result.
@@ -622,13 +652,14 @@ function halogenTotal(sub) {
 
 /**
  * Number of carbons of one occurrence of a substituent (its subtree atoms
- * minus its halogen atoms and oxygens; 0 for a halogen, hydroxy or oxo prefix).
+ * minus its halogen atoms and oxygens, ether oxygens included; 0 for a
+ * halogen, hydroxy or oxo prefix).
  *
  * @param {object} sub - A substituent structure.
  * @returns {number} The carbon count.
  */
 function substituentCarbons(sub) {
-  return sub.atoms.length - halogenTotal(sub) - hydroxyTotal(sub) - oxoTotal(sub);
+  return sub.atoms.length - halogenTotal(sub) - hydroxyTotal(sub) - oxoTotal(sub) - etherTotal(sub);
 }
 
 /**
@@ -697,7 +728,8 @@ function substituentPi(sub) {
  * leaves the hydrogen count unchanged, and each C=O — of the `-al` / `-ona`
  * suffix or of an `oxo-` prefix — replaces two hydrogens by one oxygen, so
  * it counts as one π bond; a –COOH is one of each: two oxygens, one π
- * bond).
+ * bond; an ether O of an alkoxy prefix adds an oxygen between two carbons
+ * and changes no hydrogen count).
  *
  * @param {object} structure - The name structure.
  * @returns {{carbons: number, hydrogens: number, halogens: Object<string, number>, oxygens: number}} The counts (halogens by element; empty for a hydrocarbon).
@@ -716,7 +748,7 @@ export function atomCounts(structure) {
     for (const site of group.locants) {
       carbons += substituentCarbons(group.substituent);
       substituentHalogens(group.substituent, halogens);
-      oxygens += hydroxyTotal(group.substituent) + oxoTotal(group.substituent);
+      oxygens += hydroxyTotal(group.substituent) + oxoTotal(group.substituent) + etherTotal(group.substituent);
       pi += substituentPi(group.substituent) + (site.order - 1);
     }
   }
@@ -810,6 +842,53 @@ function decided(step) {
 }
 
 /**
+ * The count-step sentences on how the oxygens are drawn when the molecule
+ * has ether oxygens (design.md §13.4 I-34): an OH is drawn OH, a C=O
+ * oxygen O, and an ether oxygen O between two carbons, without hydrogen
+ * (it takes the place of no hydrogen: it sits between two carbons).
+ *
+ * @param {object} result - The naming result.
+ * @param {number} oh - OH groups (oxygenGroups()).
+ * @param {number} co - C=O groups (oxygenGroups()).
+ * @param {number} ethers - Ether oxygens.
+ * @param {boolean} halogens - Whether there are halogen atoms.
+ * @returns {string} The sentences, each starting with a space.
+ */
+function etherDrawingSentences(result, oh, co, ethers, halogens) {
+  let drawing = '';
+  if (oh > 0) {
+    drawing += oh === 1
+      ? ' El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno.'
+      : ' Cada oxígeno de un grupo –OH se ve como OH: es un oxígeno con su hidrógeno.';
+  }
+  if (co > 0) {
+    drawing += co === 1
+      ? ' El oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno.'
+      : ' Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno.';
+  }
+  drawing += ethers === 1
+    ? ' El oxígeno unido a dos carbonos (C–O–C) también se ve como O: es el oxígeno de un éter y no lleva hidrógeno.'
+    : ' Cada oxígeno unido a dos carbonos (C–O–C) también se ve como O: es el oxígeno de un éter y no lleva hidrógeno.';
+  drawing += ' Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces';
+  const single = [...(halogens ? ['halógeno'] : []), ...(oh > 0 ? ['grupo –OH'] : [])];
+  if (single.length > 0) {
+    drawing += `; cada ${single.join(' o ')} ocupa el sitio de un hidrógeno`;
+  }
+  if (co > 0) {
+    drawing += '; cada oxígeno con enlace doble ocupa el sitio de dos';
+  }
+  drawing += ethers === 1
+    ? '. El oxígeno del éter no ocupa el sitio de ningún hidrógeno: va entre dos carbonos, como un eslabón más.'
+    : '. Los oxígenos de los éteres no ocupan el sitio de ningún hidrógeno: cada uno va entre dos carbonos, como un eslabón más.';
+  if (isAcid(result)) {
+    drawing += suffixCount(result.structure) === 1
+      ? ' En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono.'
+      : ' En cada grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono.';
+  }
+  return drawing;
+} // End of function etherDrawingSentences()
+
+/**
  * Step 1, "Cuenta los carbonos": carbons, hydrogens and formula.
  *
  * @param {object} result - The naming result.
@@ -847,7 +926,10 @@ function countStep(result) {
       drawing += ` Los átomos de ${joinY(present.map((el) => ELEMENT_NAMES_ES[el]))} se ven con su símbolo (${present.join(', ')}): son halógenos.`;
     }
     const { oh, co } = oxygenGroups(result);
-    if (co === 0) {
+    const ethers = prefixSum(result, etherTotal);
+    if (ethers > 0) {
+      drawing += etherDrawingSentences(result, oh, co, ethers, present.length > 0);
+    } else if (co === 0) {
       drawing += oxygens === 1
         ? ' El oxígeno se ve como OH: es un oxígeno con su hidrógeno.'
         : ' Cada oxígeno se ve como OH: es un oxígeno con su hidrógeno.';
@@ -1043,6 +1125,190 @@ function acidCompanions(result) {
   const ketone = sites.length - aldehyde;
   return { aldehyde, ketone, branchCo: prefixSum(result, oxoTotal) - sites.length, oh: prefixSum(result, hydroxyTotal) };
 }
+
+/**
+ * The atoms and bonds of the two sides of the ether O of one alkoxy
+ * occurrence (design.md §13.4 I-34): the O with its two bonds, and the
+ * alkoxy side (its carbons and inner bonds, without the O and the O–C
+ * bond). The other side is the parent side.
+ *
+ * @param {object} site - A PrefixLocant of an alkoxy prefix group (with `etherBond`).
+ * @returns {{oxygen: {atoms: number[], bonds: number[]}, side: {atoms: number[], bonds: number[]}}} The ids.
+ */
+function etherParts(site) {
+  return {
+    oxygen: { atoms: [site.attachAtom], bonds: [site.bond, site.etherBond] },
+    side: { atoms: site.atoms.filter((id) => id !== site.attachAtom), bonds: site.bonds.filter((id) => id !== site.etherBond) },
+  };
+}
+
+/**
+ * Highlight specs of one ether O and both its sides: the parent chain (or
+ * ring) as the parent, the alkoxy side as a substituent, and the O with its
+ * two C–O bonds apart.
+ *
+ * @param {object} result - The naming result.
+ * @param {object} site - A PrefixLocant of an alkoxy prefix group.
+ * @returns {{atoms: number[], bonds: number[], style: string}[]} The specs.
+ */
+function etherSpecs(result, site) {
+  const { oxygen, side } = etherParts(site);
+  return [parentSpec(result), { ...side, style: 'substituent' }, { ...oxygen, style: 'candidate' }];
+}
+
+/**
+ * Explains, from the trace, why the parent is on its side of one ether O
+ * and not on the other (design.md §13.4 I-34): the first rule after which
+ * no candidate chain of the alkoxy side survives — P0 (the principal
+ * groups), P1 (the length), P2/P3 (multiple bonds), a numbering rule or P4,
+ * or the presentation tie-break (both sides alike: same name). A ring
+ * parent is always senior to the chain on the other side (IUPAC 2013
+ * P-44.1.2.2). Never re-derives chemistry: it only reads trace values.
+ *
+ * @param {object} result - The naming result.
+ * @param {object} group - The alkoxy prefix group.
+ * @param {object} site - One of its occurrences.
+ * @returns {string} The sentence.
+ */
+function etherSideReason(result, group, site) {
+  const prefix = q(substituentPrefix(group.substituent, lexiconEs));
+  if (result.structure.parentKind === 'ring') {
+    const ring = isBenzene(result) ? 'el [[benceno]]' : 'un [[anillo]]';
+    return `Un lado del oxígeno es ${ring} y el otro, una cadena abierta: con las normas de la IUPAC (2013), el anillo manda siempre sobre la cadena abierta, así que el anillo es la [[cadena principal]] y el otro lado es el sustituyente ${prefix}.`;
+  }
+  const side = new Set(site.atoms);
+  const inSide = (c) => c.atoms.some((id) => side.has(id));
+  const words = groupWords(result);
+  const length = result.parent.atoms.length;
+  for (const step of result.trace) {
+    const before = step.candidatesBefore.map((c, i) => ({ c, value: step.values[i] })).filter((e) => inSide(e.c));
+    if (before.length === 0 || step.survivors.some(inSide)) {
+      continue;
+    }
+    const best = (list) => Math.max(...list);
+    const sideValue = best(before.map((e) => e.value));
+    const winners = step.candidatesBefore.map((c, i) => ({ c, value: step.values[i] })).filter((e) => !inSide(e.c));
+    if (step.rule === 'P0') {
+      const own = best(winners.map((e) => e.value));
+      const there = sideValue === 0 ? `no hay ningún ${words.group}` : `solo hay ${sideValue}`;
+      return `Primero cuenta el [[grupo principal]]: el lado de la [[cadena principal]] lleva ${own === 1 ? words.one : `${own} ${words.many}`} y en el otro lado ${there}. Por eso la cadena principal está en este lado y el otro es el sustituyente ${prefix}.`;
+    }
+    if (step.rule === 'P1') {
+      const tied = result.trace.some((t) => t.rule === 'P0') ? `Los dos lados llevan los mismos ${words.many}, así que decide la longitud. ` : '';
+      return `${tied}En el lado de la [[cadena principal]] hay una cadena de ${count(length, 'carbono', 'carbonos')}; en el otro lado, la cadena más larga tiene ${count(sideValue, 'carbono', 'carbonos')}. Gana la más larga, y el otro lado es el sustituyente ${prefix}.`;
+    }
+    if (step.rule === 'P2' || step.rule === 'P3') {
+      const what = step.rule === 'P2' ? 'más enlaces dobles o triples' : 'más enlaces dobles';
+      return `Las cadenas de los dos lados son igual de largas (${count(length, 'carbono', 'carbonos')}): gana la que tiene ${what}. El otro lado es el sustituyente ${prefix}.`;
+    }
+    if (step.rule === 'TIE') {
+      return `Los dos lados del oxígeno son iguales: da igual en cuál pongas la [[cadena principal]], el nombre sale igual. El otro lado es el sustituyente ${prefix}.`;
+    }
+    const why = step.rule === 'P4' ? 'la que tiene más [[sustituyentes|sustituyente]]' : 'la que da los números más bajos (mira el paso «Numera la cadena»)';
+    return `Las cadenas de los dos lados empatan en longitud y en enlaces dobles o triples: gana ${why}. El otro lado es el sustituyente ${prefix}.`;
+  } // End of the loop over the trace steps
+  return `El otro lado es el sustituyente ${prefix}.`;
+} // End of function etherSideReason()
+
+/**
+ * How an alkoxy prefix is formed (design.md §13.4 I-34; IUPAC 2013
+ * P-63.2.2.2): the root of a short group + `oxi` (`met` + `oxi`), the
+ * retained `isopropoxi` / `tert-butoxi`, or the group name + `oxi` for a
+ * longer, unsaturated or not end-bonded group (`pentil` + `oxi`,
+ * `propan-2-il` + `oxi`), with its parentheses.
+ *
+ * @param {object} sub - An alkoxy substituent structure.
+ * @returns {string[]} Sentences.
+ */
+function alkoxyFormation(sub) {
+  const prefix = substituentPrefix(sub, lexiconEs);
+  const alkyl = substituentPrefix({ ...sub, alkoxy: false }, lexiconEs);
+  const oxi = lexiconEs.alkoxyEnding;
+  const n = substituentCarbons(sub);
+  if (sub.retained === 'isopropyl') {
+    return [`${q(prefix)} viene de «isopropil», un grupo de 3 carbonos unido al oxígeno por el carbono del centro: se cambia «-il» por «-${oxi}». También son correctos «propan-2-il${oxi}» (el preferido por la IUPAC) y «1-metilet${oxi}».`];
+  }
+  if (sub.retained === 'tert-butyl') {
+    return [`${q(prefix)} viene de «tert-butil», un carbono unido al oxígeno y a tres metilos: se cambia «-il» por «-${oxi}». Su forma sistemática es «1,1-dimetilet${oxi}». «tert-» no cuenta para el orden alfabético.`];
+  }
+  if (isContractedAlkoxy(sub)) {
+    const root = lexiconEs.stem(sub.chain.length);
+    const short = `Con cadenas de 1 a ${MAX_CONTRACTED_ALKOXY} carbonos se usa esta forma corta (metoxi, etoxi, propoxi, butoxi), no ${q(`${alkyl}${oxi}`)}.`;
+    if (sub.prefixes.length === 0) {
+      return [`${q(prefix)} se forma con la raíz del grupo de ${count(n, 'carbono', 'carbonos')} unido al oxígeno, ${q(root)}, y la terminación «${oxi}», que es el oxígeno: ${root} + ${oxi} = ${prefix}. ${short}`];
+    }
+    return [`${q(prefix)} se forma como ${q(`${root}${oxi}`)} (${root} + ${oxi}: una cadena de ${count(sub.chain.length, 'carbono', 'carbonos')} unida al oxígeno, y «${oxi}», que es el oxígeno), con los sustituyentes de esa cadena delante. ${short}`];
+  }
+  const out = [`${q(prefix)} se forma con el nombre del grupo unido al oxígeno, ${q(alkyl)} (${count(n, 'carbono', 'carbonos')}), más «${oxi}», que es el oxígeno: ${alkyl} + ${oxi} = ${prefix}.`];
+  out.push(`La forma corta (como «metoxi») solo se usa con grupos de 1 a ${MAX_CONTRACTED_ALKOXY} carbonos, sin enlaces dobles ni triples y unidos al oxígeno por su carbono 1.`);
+  out.push('En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo más «oxi».');
+  return out;
+} // End of function alkoxyFormation()
+
+/**
+ * Step "Reconoce el éter" (design.md §13.4 I-34), for a name with at least
+ * one ether oxygen (an alkoxy prefix, at any depth): the O between two
+ * carbons, why it is never part of the chain nor a suffix, which side
+ * holds the parent and why (etherSideReason()), and how each alkoxy prefix
+ * is formed (alkoxyFormation()). Each ether O cited on the parent is
+ * highlighted with both its sides (etherSpecs()); with several, one option
+ * per O.
+ *
+ * @param {object} result - The naming result.
+ * @returns {object|null} The step, or null without ethers.
+ */
+function etherStep(result) {
+  const total = prefixSum(result, etherTotal);
+  if (total === 0) {
+    return null;
+  }
+  const groups = result.structure.prefixes.filter((g) => g.substituent.alkoxy);
+  const sites = groups.flatMap((group) => group.locants.map((site) => ({ group, site })));
+  const nested = total - sites.length;
+  const text = [];
+  const principal = Boolean(result.structure.suffix);
+  if (total === 1) {
+    text.push(principal
+      ? 'Además, tu molécula tiene un oxígeno unido a dos carbonos (C–O–C): un éter.'
+      : 'Tu molécula tiene un oxígeno unido a dos carbonos (C–O–C). Es un [[grupo funcional]]: la molécula es un éter.');
+  } else {
+    text.push(principal
+      ? `Además, tu molécula tiene ${total} oxígenos unidos cada uno a dos carbonos (C–O–C): ${total} grupos éter.`
+      : `Tu molécula tiene ${total} oxígenos unidos cada uno a dos carbonos (C–O–C): son ${total} grupos éter.`);
+  }
+  text.push('Un éter nunca es el [[grupo principal]] y nunca va al final del nombre: se nombra con un [[prefijo]] acabado en «-oxi» (grupo alcoxi), como «metoxi-» en «metoxietano».');
+  text.push('La [[cadena principal]] no puede pasar por el oxígeno: el O corta la molécula en dos lados, cada uno con sus carbonos. La cadena principal se busca entre los carbonos de los dos lados, con las reglas de siempre; el otro lado, junto con el O, es un [[sustituyente]].');
+  const options = [];
+  for (const { group, site } of sites) {
+    const reason = etherSideReason(result, group, site);
+    const formation = alkoxyFormation(group.substituent);
+    // Equal sentences (dimetoxi: the same reason and formation) are written once.
+    for (const sentence of [reason, ...formation]) {
+      if (!text.includes(sentence)) {
+        text.push(sentence);
+      }
+    }
+    options.push({
+      label: `Oxígeno ${options.length + 1} de ${sites.length}`,
+      text: [reason, ...formation].join(' '),
+      highlight: etherSpecs(result, site),
+      locants: null,
+    });
+  } // End of the loop over the ether oxygens on the parent
+  if (nested > 0) {
+    text.push(sites.length === 0
+      ? `El éter está dentro de una rama: ${nested === 1 ? 'su oxígeno' : 'sus oxígenos'} no ${nested === 1 ? 'toca' : 'tocan'} la cadena principal. La rama se nombra como siempre y lleva el prefijo «-oxi» dentro de su nombre (como en «(metoximetil)»).`
+      : `${nested === 1 ? 'Otro oxígeno entre dos carbonos está' : `Otros ${nested} oxígenos entre dos carbonos están`} dentro de un sustituyente: también se ${nested === 1 ? 'nombra' : 'nombran'} con «-oxi», dentro del nombre de ese sustituyente (como en «(2-metoxietoxi)»).`);
+  }
+  const highlight = sites.length > 0
+    ? sites.flatMap(({ site }, i) => (i === 0 ? etherSpecs(result, site) : etherSpecs(result, site).slice(1)))
+    : [parentSpec(result), ...result.structure.prefixes.filter((g) => etherTotal(g.substituent) > 0).map((g) => ({ ...groupIds(g), style: 'substituent' }))];
+  const step = { id: 'ether', title: STEP_TITLES.ether, text, highlight, locants: null };
+  if (sites.length > 1) {
+    step.options = options;
+  }
+  return step;
+} // End of function etherStep()
 
 /**
  * Step "Reconoce el grupo funcional" for a carboxylic acid (design.md §13.4
@@ -1320,6 +1586,9 @@ function chainStep(result) {
   if (halogensIn(result).length > 0) {
     text.push('Los halógenos (flúor, cloro, bromo, yodo) nunca forman parte de la cadena: solo cuentan los carbonos. Van como [[sustituyentes|sustituyente]], con un [[prefijo]] delante del nombre.');
   }
+  if (prefixSum(result, etherTotal) > 0) {
+    text.push('La cadena no puede atravesar el oxígeno de un éter: solo cuentan las cadenas de carbonos seguidos, a un lado o al otro del O.');
+  }
   const outside = outsideUnsaturation(result);
   if (outside.double + outside.triple > 0) {
     text.push(outsideSentence(outside));
@@ -1440,6 +1709,10 @@ function benzeneStep(result) {
   if (phenol) {
     text.push('El grupo –OH unido al anillo es el [[grupo principal]]. Un benceno con un –OH se llama «fenol»: es un nombre propio.');
     text.push('Con un solo –OH no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono del –OH es siempre el 1 y el número no se escribe.');
+  } else if (prefixes.length > 0 && prefixes[0].substituent.alkoxy) {
+    const prefix = substituentPrefix(prefixes[0].substituent, lexiconEs);
+    text.push(`El oxígeno unido al anillo lleva al otro lado un grupo de carbonos: es un éter. El anillo manda sobre la cadena abierta, así que el nombre acaba en «benceno» y el éter va delante como [[prefijo]] (${q(`${prefix}-`)}).`);
+    text.push('Con un solo sustituyente no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono que lleva el oxígeno es siempre el 1 y el número no se escribe.');
   } else if (halogen) {
     text.push(`El átomo de ${ELEMENT_NAMES_ES[halogen]} unido al anillo es un [[sustituyente]]: el nombre acaba en «benceno» y el halógeno va delante como [[prefijo]] («${lexiconEs.halogenPrefix(halogen)}-»).`);
     text.push('Con un solo sustituyente no hace falta numerar: todos los carbonos del benceno son iguales, así que el carbono que lleva el halógeno es siempre el 1 y el número no se escribe.');
@@ -2128,13 +2401,15 @@ function terminalGroupNote(result) {
 
 /**
  * Group name used when talking about a substituent (`metilo`,
- * `propan-2-ilo`, `isopropilo`).
+ * `propan-2-ilo`, `isopropilo`; an alkoxy group keeps its prefix form:
+ * `metoxi`).
  *
  * @param {object} sub - A substituent structure.
  * @returns {string} The standalone group name.
  */
 function groupNameOf(sub) {
-  return lexiconEs.groupName(substituentPrefix(sub, lexiconEs));
+  // An alkoxy group is called by its prefix (`grupo metoxi`, design.md §13.4 I-34).
+  return sub.alkoxy ? substituentPrefix(sub, lexiconEs) : lexiconEs.groupName(substituentPrefix(sub, lexiconEs));
 }
 
 /**
@@ -2143,10 +2418,11 @@ function groupNameOf(sub) {
  *
  * @param {object} group - A prefix group.
  * @param {boolean} [omitLocants] - Leave out the locants (a ring with a single substituent).
+ * @param {boolean} [crowded] - Other prefixes are written beside it without locants (render.js enclosedInName(): `(metoxi)`).
  * @returns {string} The cited text.
  */
-function citedGroup(group, omitLocants = false) {
-  return renderPrefixes([group], lexiconEs, omitLocants).map((p) => p.text).join('');
+function citedGroup(group, omitLocants = false, crowded = false) {
+  return renderPrefixes([group], lexiconEs, omitLocants, crowded).map((p) => p.text).join('');
 }
 
 /**
@@ -2176,6 +2452,9 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
     return [principal === 'acid'
       ? `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de un aldehído o de una cetona). No es el [[grupo principal]]: el ácido va antes que el aldehído y la cetona.`
       : `${q(prefix)} es el [[prefijo]] de un oxígeno unido con un [[enlace doble]] a un carbono ${words.of} (el C=O de una cetona). No es el [[grupo principal]]: el aldehído va antes que la cetona.`];
+  }
+  if (sub.alkoxy) {
+    return alkoxyDescription(sub, words, principal);
   }
   if (sub.retained === 'isopropyl') {
     out.push('Es un grupo de 3 carbonos unido por el carbono del centro. Tiene tres nombres válidos:');
@@ -2264,6 +2543,32 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
 } // End of function describeSubstituent()
 
 /**
+ * Explains an alkoxy prefix (design.md §13.4 I-34): an ether, the O plus
+ * the group on its other side, never the principal group; how the prefix is
+ * formed (alkoxyFormation()); and, when the group on the other side of the
+ * O has its own branches, multiple bonds or locants, the description of
+ * that group as a branch of the O (describeSubstituent()).
+ *
+ * @param {object} sub - An alkoxy substituent structure.
+ * @param {{to: string}} words - How the parent is named (parentWords()).
+ * @param {string|null} principal - The principal group kind of the name, or null.
+ * @returns {string[]} Sentences.
+ */
+function alkoxyDescription(sub, words, principal) {
+  const prefix = substituentPrefix(sub, lexiconEs);
+  const n = substituentCarbons(sub);
+  const out = [`${q(prefix)} es el [[prefijo]] de un éter: un oxígeno unido ${words.to} y, al otro lado del oxígeno, un grupo de ${count(n, 'carbono', 'carbonos')}.`];
+  out.push(...alkoxyFormation(sub));
+  const alkyl = { ...sub, alkoxy: false };
+  const { chain } = sub;
+  if (!sub.retained && (sub.prefixes.length > 0 || chain.double.length + chain.triple.length > 0 || sub.freeValence.locant > 1)) {
+    const inner = describeSubstituent(alkyl, OXYGEN_WORDS, principal).slice(1);
+    out.push(`El grupo unido al oxígeno, ${q(substituentPrefix(alkyl, lexiconEs))}, se nombra como cualquier rama.`, ...inner);
+  }
+  return out;
+} // End of function alkoxyDescription()
+
+/**
  * Step 5, "Nombra los sustituyentes": each group highlighted, with its
  * name, locants, multiplier and a mini-explanation.
  *
@@ -2278,10 +2583,15 @@ function substituentsStep(result) {
   const words = parentWords(result);
   const omit = ringOmission(result).prefixes;
   const halogens = halogenGroups(result);
-  const branches = groups.filter((g) => !isAtomPrefix(g));
+  const branches = groups.filter((g) => !isAtomPrefix(g) && !g.substituent.alkoxy);
+  const alkoxy = groups.filter((g) => g.substituent.alkoxy);
   const text = [];
   if (branches.length > 0) {
     text.push(`Las ramas que salen ${words.of} son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).`);
+  }
+  if (alkoxy.length > 0) {
+    const also = branches.length > 0 ? ' también' : '';
+    text.push(`Los grupos unidos ${words.to} a través de un oxígeno (–O–, un éter)${also} son [[sustituyentes|sustituyente]]: se nombran con un [[prefijo]] acabado en «-oxi» (grupos alcoxi), como «metoxi» o «etoxi».`);
   }
   if (halogens.length > 0) {
     const also = halogens.length < groups.length ? ' también' : '';
@@ -2312,7 +2622,7 @@ function substituentsStep(result) {
     } else if (sub.oxo) {
       what = k === 1 ? 'hay un oxígeno unido con un enlace doble (C=O)' : `hay ${k} oxígenos unidos con enlaces dobles (C=O)`;
     }
-    let line = `${where} ${what}: se escribe ${q(citedGroup(group, omit))}${omit ? `, sin ${k === 1 ? 'número' : 'números'}` : ''}.`;
+    let line = `${where} ${what}: se escribe ${q(citedGroup(group, omit, omit && groups.length > 1))}${omit ? `, sin ${k === 1 ? 'número' : 'números'}` : ''}.`;
     if (k > 1) {
       const mult = isCompoundPrefix(sub) ? lexiconEs.compoundMultiplier(k) : lexiconEs.multiplier(k);
       if (omit) {
@@ -2391,11 +2701,16 @@ function orderStep(result) {
   if (groups.some((g) => g.locants.length > 1)) {
     text.push('Los prefijos que dicen cuántos hay (di-, tri-, bis-…) no cuentan para el orden.');
   }
-  if (subs.some((s) => s.retained === 'tert-butyl')) {
-    text.push('«tert-» tampoco cuenta: «tert-butil» se ordena por la b.');
+  const tert = subs.find((s) => s.retained === 'tert-butyl');
+  if (tert) {
+    text.push(`«tert-» tampoco cuenta: ${q(tert.alkoxy ? substituentPrefix(tert, lexiconEs) : 'tert-butil')} se ordena por la b.`);
   }
-  if (subs.some((s) => s.retained === 'isopropyl' || s.retained === 'isopropylidene')) {
-    text.push('«iso» sí cuenta: «isopropil» se ordena por la i.');
+  const iso = subs.find((s) => s.retained === 'isopropyl' || s.retained === 'isopropylidene');
+  if (iso) {
+    text.push(`«iso» sí cuenta: ${q(iso.alkoxy ? substituentPrefix(iso, lexiconEs) : 'isopropil')} se ordena por la i.`);
+  }
+  if (subs.some((s) => s.alkoxy)) {
+    text.push('Los prefijos de los éteres («metoxi», «etoxi»…) se ordenan junto con los demás, por su nombre completo (por ejemplo, «metil» va antes que «metoxi», porque la i va antes que la o).');
   }
   if (subs.some((s) => isCompoundPrefix(s) && s.prefixes.some((g) => g.locants.length > 1))) {
     text.push('Dentro de un paréntesis todo cuenta, también di-, tri-…: «(2,2-dimetilpropil)» se ordena por la d.');
@@ -2455,6 +2770,8 @@ function nameLegend(result) {
       meaning = 'sustituyente: grupo –OH, que aquí no es el grupo principal';
     } else if (sub.oxo) {
       meaning = 'sustituyente: oxígeno unido con un enlace doble (C=O), que aquí no es el grupo principal';
+    } else if (sub.alkoxy) {
+      meaning = `sustituyente: un éter, el oxígeno y el grupo de ${count(substituentCarbons(sub), 'carbono', 'carbonos')} unido a él («-oxi»)`;
     }
     legend.push({ text: substituentPrefix(sub, lexiconEs), kind: 'prefix', meaning });
   } // End of the loop over the prefix groups
@@ -2590,6 +2907,9 @@ function assembleStep(result) {
   }
   if (halogensIn(result).length > 0) {
     text.push('Los halógenos van delante como prefijos, igual que las ramas: nunca cambian la terminación del nombre.');
+  }
+  if (prefixes.some((g) => g.substituent.alkoxy)) {
+    text.push('El éter va delante como prefijo («-oxi»), igual que las ramas: nunca cambia la terminación del nombre.');
   }
   const parent = result.structure.parent;
   if (!benzene && parent.double.length + parent.triple.length > 0) {
@@ -2729,7 +3049,7 @@ const PREFIX_NOTES = Object.freeze({
   ester: ' (el nombre cambia según la cadena: «metoxicarbonil-», «etoxicarbonil-»…)',
   'ester:heteroatom': ' (el nombre cambia según la cadena: «acetiloxi-», «propanoiloxi-»…)',
   'amide:heteroatom': ' (el nombre cambia según la cadena: «acetilamino-», «propanoilamino-»…)',
-  ether: ' (la cadena más corta acabada en «-oxi», como «metoxi-» o «etoxi-»)',
+  ether: ' (el oxígeno con el lado que no lleva la cadena principal, acabado en «-oxi», como «metoxi-» o «etoxi-»)',
 });
 
 /**
@@ -2999,6 +3319,7 @@ export function explain(result) {
     return [
       countStep(result),
       groupStep(result),
+      etherStep(result),
       benzeneStep(result),
       substituentsStep(result),
       assembleStep(result),
@@ -3008,6 +3329,7 @@ export function explain(result) {
     return [
       countStep(result),
       groupStep(result),
+      etherStep(result),
       ringStep(result),
       ringNumberingStep(result),
       substituentsStep(result),
@@ -3018,6 +3340,7 @@ export function explain(result) {
   return [
     countStep(result),
     groupStep(result),
+    etherStep(result),
     chainStep(result),
     tiebreakStep(result),
     numberingStep(result),

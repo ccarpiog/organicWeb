@@ -245,7 +245,12 @@ function token(text, kind) {
  * `(propan-2-il)`, `(prop-2-en-1-il)`, `(2-metilpropil)`. Unenclosed:
  * `metil`, `propil`, `etenil`, `etinil`, `metiliden`, `etiliden`,
  * `eteniliden`, `isopropil`, `isopropiliden`, `tert-butil`, the halogen
- * prefixes `fluoro`, `cloro`, `bromo`, `yodo`, `hidroxi` and `oxo`.
+ * prefixes `fluoro`, `cloro`, `bromo`, `yodo`, `hidroxi` and `oxo`. An
+ * alkoxy prefix (design.md §13.4 I-34) is unenclosed only in its short
+ * forms without prefixes of its own (`metoxi`, `etoxi`, `propoxi`,
+ * `butoxi`, `isopropoxi`, `tert-butoxi`); `(pentiloxi)`,
+ * `(propan-2-iloxi)`, `(2-metilpropoxi)` are enclosed (prefix + `oxi`
+ * makes a compound prefix, IUPAC 2013 P-16.5.1).
  * Enclosure does not decide the multiplier (see isCompoundPrefix()).
  *
  * @param {object} substituent - The substituent structure.
@@ -254,6 +259,9 @@ function token(text, kind) {
 export function needsEnclosure(substituent) {
   if (substituent.retained || substituent.halogen || substituent.hydroxy || substituent.oxo) {
     return false;
+  }
+  if (substituent.alkoxy) {
+    return substituent.prefixes.length > 0 || !isContractedAlkoxy(substituent);
   }
   const { chain, prefixes, freeValence } = substituent;
   const unsaturated = chain.double.length > 0 || chain.triple.length > 0;
@@ -264,13 +272,42 @@ export function needsEnclosure(substituent) {
  * Tells whether a substituent prefix is compound (substituted itself:
  * `2-metilpropil`, `1-metiletil`), so identical ones are multiplied with
  * bis/tris. A simple prefix that is enclosed only because of its own
- * locants still takes di/tri: `di(propan-2-il)` (IUPAC 2013 P-16.9).
+ * locants still takes di/tri: `di(propan-2-il)` (IUPAC 2013 P-16.9). An
+ * alkoxy prefix is compound when it has prefixes or is written alkyl +
+ * `oxi` (`bis(pentiloxi)`); `dimetoxi`, `diisopropoxi` are simple.
  *
  * @param {object} substituent - The substituent structure.
  * @returns {boolean} True when the prefix is compound.
  */
 export function isCompoundPrefix(substituent) {
+  if (substituent.alkoxy) {
+    return substituent.prefixes.length > 0 || (!substituent.retained && !isContractedAlkoxy(substituent));
+  }
   return !substituent.retained && !substituent.halogen && !substituent.hydroxy && !substituent.oxo && substituent.prefixes.length > 0;
+}
+
+/** Longest alkyl group whose alkoxy prefix is contracted (`butoxi`; IUPAC 2013 P-63.2.2.2). */
+export const MAX_CONTRACTED_ALKOXY = 4;
+
+/**
+ * Tells whether an alkoxy prefix (design.md §13.4 I-34) takes the short
+ * form stem + `oxi` (IUPAC 2013 P-63.2.2.2 keeps `methoxy`, `ethoxy`,
+ * `propoxy`, `butoxy`, also when substituted: `2-chloroethoxy`,
+ * `2-methylpropoxy`, `1-methylethoxy`): a saturated alkyl chain of one to
+ * four carbons bonded to the O by its carbon 1; or a retained group
+ * (`isopropoxi`, `tert-butoxi`). Every other alkoxy group is its alkyl
+ * prefix + `oxi`: `pentiloxi`, `propan-2-iloxi`, `eteniloxi`.
+ *
+ * @param {object} substituent - An alkoxy substituent structure (`alkoxy` true).
+ * @returns {boolean} True for the short form.
+ */
+export function isContractedAlkoxy(substituent) {
+  if (substituent.retained) {
+    return true;
+  }
+  const { chain, freeValence } = substituent;
+  return chain.length <= MAX_CONTRACTED_ALKOXY && freeValence.locant === 1
+    && chain.double.length === 0 && chain.triple.length === 0;
 }
 
 /**
@@ -282,8 +319,10 @@ export function isCompoundPrefix(substituent) {
  */
 function enclosureLevel(substituent) {
   let level = 0;
+  // Inside a one-carbon group the locants are omitted, so an alkoxy prefix beside another prefix is enclosed too.
+  const crowded = Boolean(substituent.chain) && substituent.chain.length === 1 && substituent.prefixes.length > 1;
   for (const group of substituent.prefixes) {
-    if (needsEnclosure(group.substituent)) {
+    if (enclosedInName(group.substituent, crowded)) {
       level = Math.max(level, enclosureLevel(group.substituent) + 1);
     }
   }
@@ -301,12 +340,18 @@ function enclosureLevel(substituent) {
  * single position: `(clorometil)`, `(triclorometil)`, IUPAC 2013
  * P-14.3.4.2(a)) the locants and their hyphen are left out.
  *
+ * An alkoxy prefix written without locants next to other prefixes is
+ * always enclosed (`fluoro(metoxi)metano`, not `fluorometoximetano`, which
+ * would read as `(fluorometoxi)metano`; design.md §13.4 I-34): see
+ * enclosedInName().
+ *
  * @param {object} group - The prefix group (structure.js PrefixGroup).
  * @param {object} lexicon - The lexicon.
  * @param {boolean} [omitLocants] - Leave out the locants (default false).
+ * @param {boolean} [crowded] - The locants are omitted and other prefix groups are written beside this one (default false).
  * @returns {{text: string, kind: string}[]} The tokens.
  */
-function groupTokens(group, lexicon, omitLocants = false) {
+function groupTokens(group, lexicon, omitLocants = false, crowded = false) {
   const tokens = [];
   if (!omitLocants) {
     group.locants.forEach((site, i) => {
@@ -318,7 +363,7 @@ function groupTokens(group, lexicon, omitLocants = false) {
     tokens.push(token('-', 'punct'));
   }
   const words = substituentTokens(group.substituent, lexicon);
-  const enclosed = needsEnclosure(group.substituent);
+  const enclosed = enclosedInName(group.substituent, crowded);
   const count = group.locants.length;
   const mult = isCompoundPrefix(group.substituent) ? lexicon.compoundMultiplier(count) : lexicon.multiplier(count);
   if (mult) {
@@ -335,6 +380,22 @@ function groupTokens(group, lexicon, omitLocants = false) {
   }
   return tokens;
 } // End of function groupTokens()
+
+/**
+ * Tells whether a prefix is written between enclosing marks in a name:
+ * needsEnclosure(), plus an alkoxy prefix among other prefixes written
+ * without locants (a one-carbon parent or group: `cloro(metoxi)metano`,
+ * `(clorometoxi)fluoro(metoxi)metano`), where running the words together
+ * would read as one compound prefix (IUPAC 2013 P-16.5.1: parentheses
+ * avoid ambiguity; design.md §13.4 I-34).
+ *
+ * @param {object} substituent - The substituent structure.
+ * @param {boolean} crowded - Its locants are omitted and other prefix groups are written beside it.
+ * @returns {boolean} True when the prefix is enclosed.
+ */
+export function enclosedInName(substituent, crowded) {
+  return needsEnclosure(substituent) || (crowded && Boolean(substituent.alkoxy));
+}
 
 /**
  * Tokens of a locant list followed by a hyphen: `1`, `,`, `3`, `-`.
@@ -362,7 +423,8 @@ function locantTokens(locants) {
  * `2-metilprop-1-en-1-il`, `etenil`, `buta-1,3-dien-1-il`, `metiliden`,
  * `propan-2-iliden`, `eteniliden` — or a retained prefix (`isopropil`,
  * `isopropiliden`, `tert-butil`, `fenil`), or a halogen prefix (`cloro`,
- * design.md §13.4 I-30), or `hidroxi` (an OH not cited as the suffix, I-31), or `oxo` (a C=O not cited as the suffix, I-32). A saturated group with the free valence at
+ * design.md §13.4 I-30), or `hidroxi` (an OH not cited as the suffix, I-31), or `oxo` (a C=O not cited as the suffix, I-32),
+ * or an alkoxy group (an ether, I-34: alkoxyTokens()). A saturated group with the free valence at
  * locant 1 uses the short form (`propil`, `propiliden`, `2-metilpropil`);
  * one- and two-carbon groups cite no locant.
  *
@@ -380,6 +442,9 @@ function substituentTokens(substituent, lexicon) {
   if (substituent.oxo) {
     return [token(lexicon.groupPrefix('ketone'), 'prefix')];
   }
+  if (substituent.alkoxy) {
+    return alkoxyTokens(substituent, lexicon);
+  }
   if (substituent.retained) {
     const { italic, text } = lexicon.retainedPrefix(substituent.retained);
     return italic ? [token(italic, 'italic'), token(text, 'prefix')] : [token(text, 'prefix')];
@@ -393,7 +458,7 @@ function substituentTokens(substituent, lexicon) {
     if (g > 0 && !omitLocants) {
       tokens.push(token('-', 'punct'));
     }
-    tokens.push(...groupTokens(group, lexicon, omitLocants));
+    tokens.push(...groupTokens(group, lexicon, omitLocants, omitLocants && prefixes.length > 1));
   });
   tokens.push(token(lexicon.stem(chain.length), 'stem'));
   const segments = lexicon.segmentOrder
@@ -426,6 +491,31 @@ function substituentTokens(substituent, lexicon) {
   tokens.push(token('-', 'punct'), ...locantTokens([freeValence.locant]), suffix);
   return tokens;
 } // End of function substituentTokens()
+
+/**
+ * Tokens of an alkoxy prefix (design.md §13.4 I-34): the tokens of its
+ * alkyl group (the same structure without `alkoxy`) with the free-valence
+ * ending `il` replaced by `oxi` in the short forms (isContractedAlkoxy():
+ * `met` + `oxi`, `2-metilprop` + `oxi`, `isoprop` + `oxi`, `tert-but` +
+ * `oxi`) and followed by `oxi` otherwise (`pentil` + `oxi`,
+ * `propan-2-il` + `oxi`).
+ *
+ * @param {object} substituent - An alkoxy substituent structure.
+ * @param {object} lexicon - The lexicon (`alkoxyEnding`: `oxi` / `oxy`).
+ * @returns {{text: string, kind: string}[]} The tokens.
+ */
+function alkoxyTokens(substituent, lexicon) {
+  const tokens = substituentTokens({ ...substituent, alkoxy: false }, lexicon);
+  const ending = token(lexicon.alkoxyEnding, 'ending');
+  if (!isContractedAlkoxy(substituent)) {
+    return [...tokens, ending];
+  }
+  const il = lexicon.freeValenceSuffix(1);
+  const last = tokens[tokens.length - 1];
+  const cut = last.text.endsWith(il) ? last.text.slice(0, -il.length) : last.text;
+  const head = tokens.slice(0, -1);
+  return cut === '' ? [...head, ending] : [...head, token(cut, last.kind), ending];
+} // End of function alkoxyTokens()
 
 /**
  * Returns the words of a substituent prefix as cited inside a name, without
@@ -469,11 +559,17 @@ export function citationKey(substituent, lexicon = lexiconEs) {
  * multiplying prefixes (di, bis…) and nested prefixes included, italic
  * descriptors left out — and then every locant in order of citation. All
  * letters are compared before any locant (numbering.js
- * compareCitationKeys).
+ * compareCitationKeys). `text` is the whole prefix part as written
+ * (punctuation and enclosing marks included): numbering.js compares it,
+ * only after everything else ties, so that two structurally different
+ * candidates whose letters and locants coincide (nested polyethers,
+ * `(metoxi){[(metoximetoxi)metoxi]metoxi}metano` vs
+ * `(metoximetoxi)[(metoximetoxi)metoxi]metano`, design.md §13.4 I-34) are
+ * told apart without atom ids.
  *
  * @param {{substituent: object, locants: {locant: number}[]}[]} groups - Prefix groups in citation order.
  * @param {object} [lexicon] - The lexicon (default: Spanish).
- * @returns {{alpha: string, numeric: number[], italic: string}} The key.
+ * @returns {{alpha: string, numeric: number[], italic: string, text: string}} The key.
  */
 export function prefixNameKey(groups, lexicon = lexiconEs) {
   const tokens = groups.flatMap((group) => groupTokens(group, lexicon));
@@ -482,6 +578,7 @@ export function prefixNameKey(groups, lexicon = lexiconEs) {
     alpha: letters.toLowerCase().replace(/[^a-z]/g, ''),
     numeric: tokens.filter((t) => t.kind === 'locant').map((t) => Number(t.text)),
     italic: tokens.filter((t) => t.kind === 'italic').map((t) => t.text).join(''),
+    text: tokens.map((t) => t.text).join(''),
   };
 }
 
@@ -501,9 +598,10 @@ export function prefixNameKey(groups, lexicon = lexiconEs) {
  * @param {object[]} groups - The prefix groups (structure.js PrefixGroup), in citation order.
  * @param {object} lexicon - The lexicon.
  * @param {boolean} [omitLocants] - Leave out the attachment locants (default false).
+ * @param {boolean} [crowded] - Other prefix groups are written beside these without locants, so alkoxy prefixes are enclosed (enclosedInName(); default: omitLocants with two or more groups).
  * @returns {object[]} The parts.
  */
-export function renderPrefixes(groups, lexicon, omitLocants = false) {
+export function renderPrefixes(groups, lexicon, omitLocants = false, crowded = omitLocants && groups.length > 1) {
   const parts = [];
   groups.forEach((group, g) => {
     if (g > 0 && !omitLocants) {
@@ -512,7 +610,7 @@ export function renderPrefixes(groups, lexicon, omitLocants = false) {
     }
     const atoms = group.locants.flatMap((site) => site.atoms);
     const bonds = group.locants.flatMap((site) => [site.bond, ...site.bonds]);
-    const tokens = groupTokens(group, lexicon);
+    const tokens = groupTokens(group, lexicon, false, crowded);
     let i = 0;
     for (const site of group.locants) {
       if (i > 0) {
@@ -540,7 +638,7 @@ export function renderPrefixes(groups, lexicon, omitLocants = false) {
         words += t.text;
       }
     }
-    const close = needsEnclosure(group.substituent) ? words.slice(-1) : '';
+    const close = enclosedInName(group.substituent, crowded) ? words.slice(-1) : '';
     parts.push(part(close ? words.slice(0, -1) : words, 'prefix', atoms, bonds));
     if (close) {
       parts.push(part(close, 'punct'));

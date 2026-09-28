@@ -5,7 +5,8 @@
  * test API get their names (2-metil-4-yodopentano with the Spanish
  * alphabetical order, clorobenceno); "Ordenar dibujo" lays out a halogen
  * derivative, the 90° view keeps the normal drawing, and a molecule with
- * an ether oxygen keeps its HETEROATOM refusal. Runs on the dev server and on
+ * an ester oxygen keeps its HETEROATOM refusal (ethers are named since
+ * I-34: tests/e2e/ethers.spec.js). Runs on the dev server and on
  * dist/index.html.
  */
 
@@ -134,7 +135,7 @@ test('a molecule drawn with the Cloro tool is named, with the halogen explained 
   expect(errors).toEqual([]);
 }); // End of test 'a molecule drawn with the Cloro tool is named…'
 
-test('loaded halogen derivatives: Spanish alphabetical order, halogen on benzene; an ether is still refused', async ({ page }) => {
+test('loaded halogen derivatives: Spanish alphabetical order, halogen on benzene; an ester is still refused', async ({ page }) => {
   const errors = await openApp(page);
   await loadSmiles(page, 'CC(I)CC(C)C');
   await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
@@ -148,7 +149,7 @@ test('loaded halogen derivatives: Spanish alphabetical order, halogen on benzene
   await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
   await expect(page.locator('#result-name')).toHaveText('clorobenceno');
 
-  await loadSmiles(page, 'ClCCOC');
+  await loadSmiles(page, 'ClCCOC(C)=O');
   await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
   const error = page.locator('#results .results-error');
   await expect(error).toHaveAttribute('data-code', 'HETEROATOM');

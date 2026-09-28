@@ -37,7 +37,11 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `4-oxopentanal`, `4-hidroxibutan-2-ona`, `ciclohexanona`…), and of
   carboxylic acids (–COOH as `ácido …oico`: `ácido etanoico`,
   `ácido 2-metilpropanoico`, `ácido but-2-enoico`, `ácido butanodioico`,
-  `ácido 4-oxopentanoico`, `ácido 2-hidroxipropanoico`…), with the name coloured by part
+  `ácido 4-oxopentanoico`, `ácido 2-hidroxipropanoico`…), and of ethers
+  (the O and the other side as an `alcoxi-` prefix, the chain never
+  running through the O: `metoxietano`, `etoxietano`, `1-isopropoxibutano`,
+  `2-metoxietan-1-ol`, `ácido 2-metoxietanoico`, `metoxiciclohexano`,
+  `metoxibenceno`…), with the name coloured by part
   (locants, multipliers, prefixes, stem, ending).
 - **Otras formas válidas**: for isopropyl groups the name is also given in
   the IUPAC-preferred (`propan-2-il`) and classic (`1-metiletil`) styles;
@@ -46,7 +50,8 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   (the IUPAC 2013 form) and `acetona`, `metanal` and `etanal` their
   traditional `formaldehído` and `acetaldehído`, and the ácidos metanoico,
   etanoico and etanodioico their traditional `ácido fórmico`, `ácido
-  acético` and `ácido oxálico`.
+  acético` and `ácido oxálico`; `metoxibenceno` lists `anisol`, and a
+  simple ether its functional-class name (`etil metil éter`, `dietil éter`).
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
   alphabetical order, assembly) that highlights each step on the drawing;
@@ -196,13 +201,14 @@ the Keychain account is the WebDAV user).
 
 ## Known limitations and future work
 
-- Hydrocarbons, their halogen derivatives, alcohols, aldehydes, ketones and
-  carboxylic acids only, with at most one ring (a carbocycle; an OH or a
-  ketone C=O must then be on a ring carbon, and aldehydes and acids with a
-  ring are refused); a C=O carbon bonded to the main chain as a branch
-  (acetilo…) and more than two aldehyde or more than two –COOH groups on a
-  chain are refused too; esters, salts and other acid derivatives are not
-  named yet; several
+- Hydrocarbons, their halogen derivatives, alcohols, aldehydes, ketones,
+  carboxylic acids and ethers only, with at most one ring (a carbocycle; an
+  OH or a ketone C=O must then be on a ring carbon, and aldehydes and acids
+  with a ring are refused); a C=O carbon bonded to the main chain as a
+  branch (acetilo…), more than two aldehyde or more than two –COOH groups
+  on a chain, and an ether with two identical halves that each carry the
+  principal group (named with `oxidi-`) are refused too; esters, salts and
+  other acid derivatives are not named yet; several
   rings, fused, bridged and spiro rings, heterocycles, benzenes with two or
   more substituents (no orto/meta/para), other oxygen and nitrogen compounds
   (functional groups, planned), stereochemistry (E/Z, R/S), charges and

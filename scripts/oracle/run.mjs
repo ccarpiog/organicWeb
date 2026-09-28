@@ -44,7 +44,7 @@ import { renderName } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import {
   generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
-  generateAcids, generateCycloalkanes,
+  generateAcids, generateEthers, generateCycloalkanes,
 } from './generate.mjs';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
 import { englishName, compareWithOpsin } from './compare.mjs';
@@ -240,11 +240,14 @@ export async function main(argv) {
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
   const acids = generateAcids({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
+  const ethers = generateEthers({
+    count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
+  });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
-  const molecules = [...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...rings];
+  const molecules = [...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...rings];
   console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes `
     + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${carbonyls.length} aldehydes and ketones `
-    + `+ ${acids.length} carboxylic acids + ${rings.length} cycloalkanes, `
+    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
   const availability = await checkAvailability(options.jar, options.java);
   if (!availability.ok) {

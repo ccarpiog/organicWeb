@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-27T23:28:32Z",
+  "updated": "2026-09-28T00:07:27Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
   "phases": [
@@ -309,13 +309,17 @@
       "summary": "Names open-chain carboxylic acids and diacids (ácido etanoico), with acid seniority over carbonyls and alcohols.",
       "risk": "high",
       "review": "docs/reviews/I-33.md",
-      "narrative": "docs/progress-archive/i-33.md"
+      "narrative": "docs/progress-archive/i-33.md",
+      "commit": "dcf537e"
     },
     {
       "id": "I-34",
       "title": "v2.14 Ethers",
-      "status": "queued",
-      "summary": "v2 plan phase 14: ethers (autoclaude/processed/215-rings-functional-groups-confirmed.md)."
+      "status": "done",
+      "summary": "Names ethers with alkoxy prefixes (metoxietano), choosing the parent side by explicit rules and highlighting both sides.",
+      "risk": "high",
+      "review": "docs/reviews/I-34.md",
+      "narrative": "docs/progress-archive/i-34.md"
     },
     {
       "id": "I-35",

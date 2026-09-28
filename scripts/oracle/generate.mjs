@@ -10,16 +10,21 @@
  * =O in place of two hydrogens of a carbon — on ring carbons only for a
  * ring —, some with OH groups and halogens too), of carboxylic acids (I-33:
  * one or two –COOH at chain ends of acyclic molecules, some with C=O, OH
- * groups and halogens too), plus the list of cycloalkanes in a size range.
+ * groups and halogens too), of ethers (I-34: an O put into one or two
+ * single C–C bonds outside the ring, some with OH, C=O, –COOH and
+ * halogens too), plus the list of cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
  */
 
-import { createMolecule, addAtom, addBond, bondOrderSum, cloneMolecule, CARBON_VALENCE } from '../../src/model/molecule.js';
+import {
+  createMolecule, addAtom, addBond, removeBond, bondOrderSum, cloneMolecule, CARBON_VALENCE,
+} from '../../src/model/molecule.js';
+import { perceiveRings } from '../../src/model/rings.js';
 import { HALOGEN_ELEMENTS } from '../../src/model/elements.js';
 import { canonicalTreeKey, canonicalKey } from '../../src/model/graph.js';
-import { validateForNaming, carboxylCarbons, MAX_CHAIN } from '../../src/model/validate.js';
+import { validateForNaming, carboxylCarbons, etherOxygens, MAX_CHAIN } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
 
@@ -596,6 +601,101 @@ export function generateAcids({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct acids
   return molecules;
 } // End of function generateAcids()
+
+/**
+ * Copies a molecule and puts an oxygen into some of its carbon–carbon
+ * single bonds that are not ring bonds (design.md §13.4 I-34): each chosen
+ * bond C–C becomes C–O–C, an ether (a C=O carbon next to the new O makes an
+ * ester, which fails validation later); at most `max` bonds, chosen in
+ * random order.
+ *
+ * @param {object} mol - A molecule (not mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} max - The most oxygens to insert (1 or 2).
+ * @returns {object} The copy (without any new O when there is no such bond).
+ */
+export function etherify(mol, random, max) {
+  const copy = cloneMolecule(mol);
+  const ringBonds = new Set(perceiveRings(copy).rings.flatMap((ring) => ring.bonds));
+  const candidates = [...copy.bonds.values()].filter((bond) => bond.order === 1 && !ringBonds.has(bond.id)
+    && copy.atoms.get(bond.a).element === 'C' && copy.atoms.get(bond.b).element === 'C');
+  for (const bond of shuffle(candidates, random).slice(0, max)) {
+    removeBond(copy, bond.id);
+    const oxygen = addAtom(copy, {}, 'O');
+    addBond(copy, bond.a, oxygen, 1);
+    addBond(copy, oxygen, bond.b, 1);
+  }
+  return copy;
+} // End of function etherify()
+
+/**
+ * Generates up to `count` distinct (by canonical key) ethers (design.md
+ * §13.4 I-34): random acyclic hydrocarbons of 2 carbons up to `maxSize`
+ * (dimethyl ether included), random monocycles and random monosubstituted
+ * benzenes, with an O put into one or two C–C single bonds outside the
+ * ring (etherify()); a share of the acyclic ones also get a –COOH, C=O or
+ * OH groups (on ring carbons only for a ring) and halogens. Only molecules
+ * the engine names in every prefix style are kept (valid for naming — no
+ * ester, no OH or C=O on a ring's side chain… — and not refused by the
+ * engine: no acyl branch, no symmetric ether with the principal group on
+ * both halves).
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C; acyclic ones may be smaller).
+ * @returns {object[]} The molecules.
+ */
+export function generateEthers({ count, seed, minSize = 4, maxSize = 14 }) {
+  const random = seededRandom(seed * 8191 + 34);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50) {
+    attempts += 1;
+    const kind = random();
+    let base;
+    let only = null;
+    if (kind < 0.65 || maxSize < 4) {
+      const size = randomInt(random, 2, Math.max(2, maxSize));
+      base = randomHydrocarbon(random, { size, unsaturation: random() * 0.4, branchiness: 0.2 + random() * 0.8 });
+    } else if (kind < 0.85 || maxSize < 7) {
+      const size = randomInt(random, Math.max(minSize, 4), Math.max(maxSize, 4));
+      const ringSize = randomInt(random, 3, Math.min(10, size - 1));
+      base = randomMonocycle(random, {
+        ringSize, extra: size - ringSize, unsaturation: random() * 0.3, branchiness: 0.2 + random() * 0.8,
+      });
+      only = new Set([...base.atoms.keys()].slice(0, ringSize)); // randomMonocycle() adds the ring atoms first.
+    } else {
+      base = randomBenzene(random, { extra: randomInt(random, 1, Math.max(1, Math.min(6, maxSize - 6))), kekule: random() < 0.5 ? 1 : 2 });
+    } // End of the choice of the parent molecule
+    const carbons = new Set([...base.atoms.keys()]);
+    const acyclic = only === null && base.atoms.size === base.bonds.size + 1;
+    if (acyclic && random() < 0.15) {
+      base = carboxylate(base, random, 1);
+    }
+    let mol = etherify(base, random, random() < 0.3 ? 2 : 1);
+    if (etherOxygens(mol).length === 0) {
+      continue; // No C–C single bond outside a ring.
+    }
+    if (acyclic && random() < 0.2) {
+      mol = carbonylate(mol, random, 0.05 + random() * 0.2, carbons);
+    }
+    if (random() < 0.25 && !(only === null && !acyclic)) {
+      mol = hydroxylate(mol, random, 0.05 + random() * 0.15, only || carbons);
+    }
+    if (random() < 0.25) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.2);
+    }
+    if (validateForNaming(mol) || etherOxygens(mol).length === 0
+      || !PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
+      continue; // Not valid for naming (an ester…), or refused by the engine in some style.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct ethers
+  return molecules;
+} // End of function generateEthers()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

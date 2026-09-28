@@ -115,6 +115,20 @@ const SNAPSHOT_SMILES = [
   'CC(O)C(=O)O', // ácido 2-hidroxipropanoico: acid > alcohol, hidroxi-
   'O=CCC(=O)O', // ácido 3-oxopropanoico: acid > aldehyde, terminal CHO as oxo-
   'CC(=O)CC(O)C(=O)O', // ácido 2-hidroxi-4-oxopentanoico: acid > ketone > alcohol
+  'COC', // metoximetano: symmetric ether, both sides alike (I-34)
+  'CCOC', // metoxietano: parent side by length, no locant
+  'CC(C)OCCCC', // 1-isopropoxibutano: retained isopropoxi, three styles, functional-class name
+  'CCOC=C', // etoxieteno: parent side by the double bond
+  'ClCCOCC', // 1-cloro-2-etoxietano: parent side by the number of substituents
+  'CCCCCOCCCCCC', // 1-(pentiloxi)hexano: long alkoxy, not contracted
+  'COCCOC', // 1,2-dimetoxietano: two ether oxygens, one option each
+  'COCCOCCC', // 1-(2-metoxietoxi)propano: an ether inside the alkoxy
+  'ClCOC', // cloro(metoxi)metano: enclosed methoxy without locants
+  'OCCOC', // 2-metoxietan-1-ol: parent side by the principal group
+  'COCC(=O)O', // ácido 2-metoxietanoico: ether + acid
+  'COC1CCCCC1', // metoxiciclohexano: the ring is the parent
+  'COC1=CC=CC=C1', // metoxibenceno: anisol
+  'C1CCCC1COC', // (metoximetil)ciclopentano: ether inside a branch
 ];
 
 /**

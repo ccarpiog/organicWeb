@@ -340,7 +340,7 @@ test('lexicons: suffix and prefix forms of every group kind', () => {
 });
 
 test('a heteroatom molecule is still refused with HETEROATOM, carrying its groups', () => {
-  for (const smiles of ['NCCO', 'NCC(=O)O', 'ClCCOC', 'OCC1=CC=CC=C1', 'NC1CCCCC1', 'COOC', 'O']) {
+  for (const smiles of ['NCCO', 'NCC(=O)O', 'ClCCOCCOOC', 'OCC1=CC=CC=C1', 'NC1CCCCC1', 'COOC', 'O']) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(result.ok, false, smiles);
     assert.equal(result.error.code, 'HETEROATOM', smiles);
@@ -369,8 +369,8 @@ test('explanation of a refusal: groups, principal, suffix or prefix, then the me
   assert.match(text(3), /Aún no sé nombrar este tipo de compuestos/);
   // Highlights: principal (parent) apart from the prefix groups (substituent).
   assert.deepEqual(steps[1].highlight.map((h) => [h.style, h.atoms.length]), [['parent', 3], ['substituent', 2]]);
-  // Only ethers and halogens: no principal group, no suffix.
-  const prefixOnly = explain(nameMolecule(parseSmiles('ClCCOC')));
+  // Only ethers and halogens (named since I-34) plus an unsupported peroxide: no principal group, no suffix.
+  const prefixOnly = explain(nameMolecule(parseSmiles('ClCCOCCOOC')));
   assert.match(prefixOnly[1].text.join(' '), /no hay grupo principal/);
   assert.match(prefixOnly[2].text.join(' '), /Sin grupo principal no hay \[\[sufijo\]\]/);
   // Other refusals and hydrocarbons get no group steps.
@@ -387,7 +387,7 @@ const GROUP_SNAPSHOT_SMILES = [
   'CC(=O)NC', // amide: not amine + ketone
   'NCC(O)CC(=O)CC=O', // aldehyde > ketone > alcohol > amine (the amine keeps the refusal since I-32)
   'NCC#N', // nitrile > amine
-  'ClCCOC', // prefix-only groups
+  'ClCCOCCOOC', // prefix-only groups (ether and halide, named since I-34) with an unsupported peroxide
   'BrCC(Br)CN', // two bromine atoms and an amine
   'CCOOC', // unsupported peroxide
   'CC(=O)OCC(=O)O', // ester bonded through its O: aciloxi-

@@ -51,6 +51,17 @@
  * (`4-hidroxibutan-2-ona`). The C=O carbon itself is always a chain atom;
  * when it is the attachment atom of a branch (an acyl group, `1-oxoetil`
  * for acetilo), hasAcylPrefix() finds it and the engine refuses the name.
+ *
+ * Ethers (design.md §13.4 I-34): an ether oxygen bonded to a chain atom
+ * roots an alkoxy substituent (alkoxySubstituent()): the O plus the alkyl
+ * group on its other side, named like any branch with the O as its
+ * carrying atom, and cited `metoxi`, `etoxi`, `propoxi`, `butoxi`
+ * (contracted, IUPAC 2013 P-63.2.2.2), `isopropoxi` / `tert-butoxi`
+ * (retained, in the styles that keep `isopropil` / `tert-butil`),
+ * otherwise the alkyl prefix + `oxi` (`pentiloxi`, `propan-2-iloxi`,
+ * `1-metiletoxi` in the 'substituted' style; render.js). The O is never a
+ * chain atom; an alkoxy group can itself carry any prefix, another alkoxy
+ * included (`2-metoxietoxi`), and can sit inside a branch (`(metoximetil)`).
  * Pure: topology only.
  */
 
@@ -238,7 +249,7 @@ function countBonds(adj, atoms, test) {
  * @param {number[]} chainAtoms - The chain's atom ids.
  * @param {number|null} [exclude] - An atom outside the chain that is not a substituent (the carrying atom of a substituent chain).
  * @param {boolean} [parent] - True for the parent chain or ring, whose OH groups are suffixes (default false).
- * @returns {{chainAtom: number, attachAtom: number, bond: number, order: number, atoms: number[], bonds: number[], multipleBonds: number[], key: string, structure: object, citation: object}[]} One entry per substituent, in chain order then attachment-atom order.
+ * @returns {{chainAtom: number, attachAtom: number, bond: number, order: number, atoms: number[], bonds: number[], multipleBonds: number[], key: string, structure: object, citation: object, etherCarbon?: number, etherBond?: number}[]} One entry per substituent, in chain order then attachment-atom order (an alkoxy entry also has the carbon on the other side of its O and that O–C bond).
  */
 export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) {
   const inChain = new Set(chainAtoms);
@@ -252,7 +263,7 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
       if (parent && isPrincipalOxygen(ctx.mol, ctx.adj, n.atom, ctx.principal)) {
         continue; // A suffix group of the parent (`-ol`, `-al`, `-ona`), not a prefix.
       }
-      if (isHalogen(element) || element === 'O') {
+      if (isHalogen(element) || (element === 'O' && ctx.adj.get(n.atom).length === 1)) {
         let structure = halogenSubstituent(n.atom, element);
         if (element === 'O') {
           structure = n.order === 2 ? oxoSubstituent(n.atom) : hydroxySubstituent(n.atom);
@@ -279,7 +290,7 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
         .filter((link) => link.order > 1 && inSubtree.has(link.bond) && isCarbon(link.atom))
         .map((link) => link.bond)))].sort((p, q) => p - q);
       const structure = nameSubstituentIn(ctx, chainAtom, n.atom, n.order);
-      result.push({
+      const entry = {
         chainAtom,
         attachAtom: n.atom,
         bond: n.bond,
@@ -290,7 +301,14 @@ export function substituentsOf(ctx, chainAtoms, exclude = null, parent = false) 
         key: ATTACH_SYMBOL[n.order] + rootedTreeKey(ctx.mol, n.atom, chainAtom, ctx.adj),
         structure,
         citation: citationKey(structure, ctx.lexicon),
-      });
+      };
+      if (structure.alkoxy) {
+        // The other side of the ether O: its carbon and the O–C bond (both sides are highlighted apart).
+        const far = ctx.adj.get(n.atom).find((m) => m.atom !== chainAtom);
+        entry.etherCarbon = far.atom;
+        entry.etherBond = far.bond;
+      }
+      result.push(entry);
     } // End of the loop over the neighbours of one chain atom
   } // End of the loop over the chain atoms
   return result;
@@ -478,6 +496,7 @@ export function groupPrefixes(substituents, atoms) {
       atoms: [...sub.atoms],
       bonds: [...sub.bonds],
       multipleBonds: [...sub.multipleBonds],
+      ...(sub.etherCarbon === undefined ? {} : { etherCarbon: sub.etherCarbon, etherBond: sub.etherBond }),
     });
   }
   const groups = [...byKey.values()];
@@ -500,10 +519,41 @@ export function groupPrefixes(substituents, atoms) {
 function nameSubstituentIn(ctx, chainAtom, attachAtom, order) {
   const cacheKey = `${chainAtom}>${attachAtom}`;
   if (!ctx.cache.has(cacheKey)) {
-    ctx.cache.set(cacheKey, buildSubstituent(ctx, chainAtom, attachAtom, order));
+    const structure = ctx.mol.atoms.get(attachAtom).element === 'O'
+      ? alkoxySubstituent(ctx, chainAtom, attachAtom)
+      : buildSubstituent(ctx, chainAtom, attachAtom, order);
+    ctx.cache.set(cacheKey, structure);
   }
   return ctx.cache.get(cacheKey);
 }
+
+/**
+ * The substituent structure of an ether oxygen seen from the chain that
+ * carries it (design.md §13.4 I-34): an alkoxy group, i.e. the alkyl group
+ * on the other side of the O, named like any branch whose carrying atom is
+ * the O (its chain, prefixes, free valence at the carbon bonded to the O,
+ * retained `isopropil` / `tert-butil` per style), with `alkoxy` set and the
+ * O added to its atoms (first) and the O–C bond to its bonds. render.js
+ * cites it `metoxi`, `etoxi`, `isopropoxi`, `pentiloxi`… The group is
+ * never a common-name group (`isobutoxi` is not offered).
+ *
+ * @param {object} ctx - Naming context (createNamingContext).
+ * @param {number} chainAtom - The carbon that carries the O.
+ * @param {number} oxygen - The ether oxygen.
+ * @returns {object} The SubstituentStructure (structure.js) with `alkoxy` true and `oxygen` its O.
+ */
+export function alkoxySubstituent(ctx, chainAtom, oxygen) {
+  const far = ctx.adj.get(oxygen).find((n) => n.atom !== chainAtom);
+  const alkyl = nameSubstituentIn(ctx, oxygen, far.atom, 1);
+  return {
+    ...alkyl,
+    alkoxy: true,
+    oxygen,
+    commonName: null,
+    atoms: [oxygen, ...alkyl.atoms],
+    bonds: [...alkyl.bonds, far.bond].sort((p, q) => p - q),
+  };
+} // End of function alkoxySubstituent()
 
 /**
  * Builds the structure of a substituent (the body of nameSubstituentIn):
@@ -560,7 +610,7 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
  * @param {number} chainAtom - The carrying chain atom.
  * @param {number} attachAtom - The substituent atom bonded to it.
  * @param {string} [style] - Prefix style (default 'isopropil').
- * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH, `oxo` for a C=O oxygen), or null when the two atoms are not bonded.
+ * @returns {object|null} The SubstituentStructure (`-il` or `-iliden`; a halogen prefix for a halogen atom, `hidroxi` for an OH, `oxo` for a C=O oxygen, an alkoxy group for an ether oxygen), or null when the two atoms are not bonded.
  */
 export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLES[0]) {
   const ctx = createNamingContext(mol, style);
@@ -569,7 +619,7 @@ export function nameSubstituent(mol, chainAtom, attachAtom, style = PREFIX_STYLE
     return null;
   }
   const element = mol.atoms.get(attachAtom).element;
-  if (element === 'O') {
+  if (element === 'O' && ctx.adj.get(attachAtom).length === 1) {
     return link.order === 2 ? oxoSubstituent(attachAtom) : hydroxySubstituent(attachAtom);
   }
   return isHalogen(element) ? halogenSubstituent(attachAtom, element) : nameSubstituentIn(ctx, chainAtom, attachAtom, link.order);

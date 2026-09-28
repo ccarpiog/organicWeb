@@ -66,6 +66,8 @@
  * @property {number[]} atoms - Atoms of this occurrence's substituent subtree (for highlighting).
  * @property {number[]} bonds - Bonds of this occurrence's subtree (not the connecting bond).
  * @property {number[]} multipleBonds - Double and triple bonds of this occurrence's subtree, ascending (not the connecting bond; for the explanation).
+ * @property {number} [etherCarbon] - Alkoxy prefixes only (design.md §13.4 I-34): the carbon on the other side of the ether O (`attachAtom`).
+ * @property {number} [etherBond] - Alkoxy prefixes only: the bond between the O and `etherCarbon` (in `bonds`).
  */
 
 /**
@@ -79,6 +81,8 @@
  * @property {string} [halogen] - Set on a halogen atom cited as a prefix (design.md §13.4 I-30): 'F', 'Cl', 'Br' or 'I' (`fluoro`, `cloro`, `bromo`, `yodo`); such a substituent has no chain and no prefixes, and `atoms` is the halogen atom.
  * @property {boolean} [hydroxy] - Set on an OH group cited as a prefix (`hidroxi`, design.md §13.4 I-31): an OH on a substituent chain, or on the parent when a C=O is the principal group (`4-hidroxibutan-2-ona`, I-32); no chain, no prefixes, `atoms` is the oxygen atom.
  * @property {boolean} [oxo] - Set on a C=O oxygen cited as a prefix (`oxo`, design.md §13.4 I-32): a ketone on the parent when the aldehyde is principal (`4-oxopentanal`), or any C=O inside a branch (`(2-oxopropil)`); its carbon is the carrying chain atom, the connecting bond is the C=O double bond (`freeValence.order` 2); no chain, no prefixes, `atoms` is the oxygen atom.
+ * @property {boolean} [alkoxy] - Set on an ether cited as a prefix (design.md §13.4 I-34, substituent.js alkoxySubstituent()): the ether O plus the alkyl group on its other side. `chain`, `prefixes`, `freeValence`, `retained` describe that alkyl group as a substituent of the O (render.js cites it `metoxi`, `isopropoxi`, `pentiloxi`…); `oxygen` is the O, first in `atoms`; `bonds` include the O–C bond (not the connecting bond).
+ * @property {number} [oxygen] - The ether O of an alkoxy prefix.
  * @property {PrefixGroup[]} prefixes - Its own grouped prefixes, in citation order.
  * @property {{locant: number, order: number}} freeValence - Locant and order of the free valence (1 → `-il`, 2 → `-iliden`).
  * @property {string|null} [retained] - Retained-name id cited instead of the systematic prefix: 'isopropyl' or 'isopropylidene' (style 'isopropil' only) or 'tert-butyl' (styles 'isopropil' and 'pin'); the chain and prefixes still describe the systematic name. 'phenyl' (`fenil`, aromatic.js phenylSubstituent()) has a benzene RingStructure as its `chain`.

@@ -299,13 +299,13 @@ test('a bond between two close heteroatom labels stays a bond; the label text st
 
 test('naming a heteroatom molecule shows the "not yet" message; 90° view and Ordenar dibujo fall back', async ({ page }) => {
   const errors = await openApp(page);
-  // C–C–C–C, then Oxígeno on the third carbon: an ether, C–C–O–C (an alcohol would be named since I-31).
+  // C–C–C–C, then Nitrógeno on the third carbon: an amine, C–C–N–C (an ether would be named since I-34).
   await clickCanvas(page, 0.4, 0.5);
   await clickAtom(page, 2);
   await clickAtom(page, 3);
-  await page.keyboard.press('o');
+  await page.keyboard.press('n');
   await clickAtom(page, 3);
-  expect(await elements(page)).toEqual(['C', 'C', 'O', 'C']);
+  expect(await elements(page)).toEqual(['C', 'C', 'N', 'C']);
 
   await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
   const error = page.locator('#results .results-error');
@@ -324,11 +324,11 @@ test('naming a heteroatom molecule shows the "not yet" message; 90° view and Or
   }
   expect(titles).toEqual(['Reconoce los grupos', 'Elige el principal', 'Sufijo o prefijo', 'Aún no sé nombrarla']);
   await dots.nth(0).click();
-  await expect(stepper.locator('.step-content')).toContainText('1 éter: un oxígeno entre dos carbonos (–O–).');
+  await expect(stepper.locator('.step-content')).toContainText('1 amina: un nitrógeno unido a carbonos');
   await expect(page.locator('svg#canvas .hl-atom.hl-substituent')).toHaveCount(1);
   await dots.nth(2).click();
-  await expect(stepper.locator('.step-content')).toContainText('El éter: prefijo «alcoxi-»');
-  await expect(page.locator('svg#canvas .hl-atom.hl-substituent')).toHaveCount(1);
+  await expect(stepper.locator('.step-content')).toContainText('La amina: sufijo «-amina»');
+  await expect(page.locator('svg#canvas .hl-atom.hl-parent')).toHaveCount(1);
   await page.getByRole('button', { name: 'Ocultar el paso a paso' }).click();
   await expect(page.locator('svg#canvas .hl')).toHaveCount(0);
 
@@ -342,9 +342,9 @@ test('naming a heteroatom molecule shows the "not yet" message; 90° view and Or
   await page.locator('#right-angle-button').click();
   expect(await page.evaluate(() => window.__editor.isProjected())).toBe(false);
   await expect(page.locator('#right-angle-note')).toHaveText('Hay átomos que no son carbono: se ve el dibujo normal.');
-  await expect(label(page, 3)).toHaveText('O');
+  await expect(label(page, 3)).toHaveText('NH');
   await expect(label(page, 1)).toHaveText('CH₃');
-  // Still editable there: Carbono on the O turns it back into butane, which projects.
+  // Still editable there: Carbono on the N turns it back into butane, which projects.
   await page.keyboard.press('c');
   await clickAtom(page, 3);
   expect(await elements(page)).toEqual(['C', 'C', 'C', 'C']);

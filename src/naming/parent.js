@@ -22,11 +22,13 @@
  * left). P4 (most substituents) comes after
  * the unsaturation locants N1/N2, so it lives in numbering.js. The
  * leaf-to-leaf restriction is for the parent only, never for substituents.
- * Paths run over the carbon skeleton only: a halogen (design.md §13.4 I-30)
+ * Paths run over the carbon skeleton only (so never through the O of an
+ * ether, I-34: the chains of both sides compete): a halogen (design.md §13.4 I-30)
  * is never a chain atom, only a substituent, so it counts in P4 like any
  * other prefix (chainCounts() on the whole graph); nor is any oxygen: one
  * of the principal kind is counted by P0, any other (a non-principal OH or
- * C=O, cited `hidroxi-` / `oxo-`) is a prefix counted by P4. A C=O carbon
+ * C=O, cited `hidroxi-` / `oxo-`; an ether O with the other side, cited
+ * `alcoxi-`) is a prefix counted by P4. A C=O carbon
  * is a skeleton carbon like any other (an aldehyde or carboxyl carbon is
  * always a leaf, so it can end a chain; a ketone carbon has two carbon
  * neighbours), and
@@ -35,7 +37,7 @@
  * Pure: reads topology only.
  */
 
-import { adjacency, leaves, carbonSkeleton } from '../model/graph.js';
+import { adjacency, leaves, carbonSkeleton, connectedComponents } from '../model/graph.js';
 import { principalKindOf, isPrincipalOxygen, isSuffixOxygen } from './principal.js';
 
 /**
@@ -85,29 +87,39 @@ function bfsParents(adj, from) {
  * Enumerates every leaf-to-leaf path of the carbon skeleton of a tree
  * molecule (design.md §4.2; halogens are left out, so a carbon bearing a
  * halogen can still be a chain end). A lone carbon (methane, clorometano)
- * gives the one-atom chain.
+ * gives the one-atom chain. An ether oxygen (design.md §13.4 I-34) is not a
+ * skeleton atom either, so it splits the skeleton into pieces, one per
+ * side: a carbon chain never runs through an O, and the paths of every
+ * piece compete for the parent with the usual rules (the side that carries
+ * the principal groups, then the longest chain…); a piece that is a lone
+ * carbon (the CH₃ of a methoxy group) gives its one-atom chain.
  *
- * @param {object} mol - A validated acyclic hydrocarbon or halogen derivative (a tree).
- * @returns {number[][]} Paths, each starting at its smaller end id, ordered by key.
+ * @param {object} mol - A validated acyclic molecule (a tree).
+ * @returns {number[][]} Paths, each starting at its smaller end id, piece by piece (pieces by smallest atom id).
  */
 export function leafToLeafPaths(mol) {
   const skeleton = carbonSkeleton(mol);
   const adj = adjacency(skeleton);
-  if (adj.size === 1) {
-    return [[adj.keys().next().value]];
-  }
-  const ends = leaves(skeleton);
+  const allEnds = leaves(skeleton);
   const paths = [];
-  for (let i = 0; i < ends.length; i += 1) {
-    const parent = bfsParents(adj, ends[i]);
-    for (let j = i + 1; j < ends.length; j += 1) {
-      const path = [];
-      for (let current = ends[j]; current !== null; current = parent.get(current)) {
-        path.push(current);
-      }
-      paths.push(orientChain(path));
+  for (const component of connectedComponents(skeleton)) {
+    if (component.length === 1) {
+      paths.push([component[0]]);
+      continue;
     }
-  }
+    const inPiece = new Set(component);
+    const ends = allEnds.filter((id) => inPiece.has(id));
+    for (let i = 0; i < ends.length; i += 1) {
+      const parent = bfsParents(adj, ends[i]);
+      for (let j = i + 1; j < ends.length; j += 1) {
+        const path = [];
+        for (let current = ends[j]; current !== null; current = parent.get(current)) {
+          path.push(current);
+        }
+        paths.push(orientChain(path));
+      }
+    } // End of the loop over the pairs of ends of one piece
+  } // End of the loop over the pieces of the skeleton
   return paths;
 } // End of function leafToLeafPaths()
 
