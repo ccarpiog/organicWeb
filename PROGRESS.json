@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-13T19:12:11Z",
+  "updated": "2026-10-13T19:40:28Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups, polysubstituted benzenes) by IUPAC 2013 rules.",
   "phases": [
@@ -487,8 +487,11 @@
     {
       "id": "I-43b",
       "title": "v3 One outside-carbon suffix on the ring, plus prefixes",
-      "status": "queued",
-      "summary": "Substituted benzoic acids, benzaldehydes, benzonitriles and benzamides, e.g. ácido 4-metilbenzoico."
+      "status": "done",
+      "summary": "Benzoic acids, benzaldehydes, benzonitriles and benzamides with extra ring substituents are named.",
+      "risk": "high",
+      "review": "docs/reviews/I-43b.md",
+      "narrative": "docs/progress-archive/i-43b.md"
     },
     {
       "id": "I-44",

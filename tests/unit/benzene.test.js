@@ -140,13 +140,15 @@ test('aromaticity is never inferred from other alternations', () => {
 
 test('polysubstituted benzenes with a functional group are refused with CYCLE; a ring in the substituent stays RING_SYSTEM', () => {
   // Since I-42a (design.md §14.1) prefix groups (branches, halogens, alkoxy) are named on a polysubstituted benzene,
-  // since I-43a also one OH and one amine on the ring; the other functional groups stay refused.
+  // since I-43a also one OH and one amine on the ring, since I-43b one –COOH, –CHO, –C≡N or amide on the ring with
+  // junior groups as prefixes; the other functional groups stay refused.
   for (const smiles of ['CC1=CC=CC=C1C', 'CC1=CC(C)=CC=C1', 'CC1=CC=C(C)C=C1', 'CC1C(C)=CC=CC=1', 'CC1=CC(C)=CC(C)=C1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
   const cases = [
     ['NC1=CC=C(N)C=C1', 2], // a diamine (I-44)
-    ['OC(=O)C1=CC(C)=CC(C)=C1', 3], // a substituted benzoic acid (I-43b)
+    ['OC(=O)C1=CC(C(=O)O)=CC(C)=C1', 3], // a substituted benzenedicarboxylic acid (I-44)
+    ['CCOC(=O)C1=CC=C(C)C=C1', 2], // an ester of a substituted benzoic acid (I-45c)
     ['OCC1=CC=C(Cl)C=C1', 2], // a substituted phenyl on a chain parent (I-45a)
     ['OC1=CC=CC=C1O', 2], // a diol (I-44)
     ['CC1=C(C)C(C)=C(C)C(O)=C1O', 6],

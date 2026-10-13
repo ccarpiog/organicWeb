@@ -285,8 +285,9 @@ test('a benzene ring (Kekulé hexagon) is named by aromatic.js since I-28; other
     assert.match(named(smiles).name, /benceno$/, smiles);
   }
   // Two or more substituents with a functional group out of scope: CYCLE with ringReason 'polysubstitutedBenzene'
-  // (prefix groups are named since I-42a, plus one OH and one amine on the ring since I-43a, design.md §14).
-  for (const smiles of ['OC1=CC=CC=C1O', 'O=CC1=CC(C)=CC=C1', 'NC1=CC=C(N)C=C1', 'CC1=C(C)C(C)=C(O)C(C)=C1O']) {
+  // (prefix groups are named since I-42a, plus one OH and one amine on the ring since I-43a, one –COOH, –CHO, –C≡N or
+  // amide since I-43b, design.md §14).
+  for (const smiles of ['OC1=CC=CC=C1O', 'O=CC1=CC(C=O)=CC=C1', 'NC1=CC=C(N)C=C1', 'CC1=C(C)C(C)=C(O)C(C)=C1O']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'CYCLE', smiles);
     assert.equal(error.ringReason, 'polysubstitutedBenzene', smiles);

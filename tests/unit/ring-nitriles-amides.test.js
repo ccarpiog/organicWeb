@@ -139,8 +139,11 @@ test('the ring refusals of I-40c are lifted; N-substituted ring diamides and pol
   }
   // A ring diamide without groups on its N is named, and so is one amide on the ring beside a chain diamide.
   assert.equal(nameOf('NC(=O)C1CCCCC1C(N)=O'), 'ciclohexano-1,2-dicarboxamida');
-  // A benzene with the group and another substituent is still a polysubstituted benzene.
-  for (const smiles of ['N#CC1=CC=C(C)C=C1', 'NC(=O)C1=CC=CC=C1C', 'N#CCC1=CC=CC=C1C#N']) {
+  // A benzene with the group and other substituents is named since I-43b (tests/unit/polysubstituted-benzenes.test.js);
+  // two such groups, or a group on a side chain beside one on the ring, stay refused (I-44, I-45a).
+  assert.equal(nameOf('N#CC1=CC=C(C)C=C1'), '4-metilbenzonitrilo');
+  assert.equal(nameOf('NC(=O)C1=CC=CC=C1C'), '2-metilbenzamida');
+  for (const smiles of ['N#CC1=CC=C(C#N)C=C1C', 'NC(=O)C1=CC=CC=C1C(N)=O', 'N#CCC1=CC=CC=C1C#N']) {
     assert.equal(nameOf(smiles), 'CYCLE', smiles);
   }
   // Three nitriles or amides on one chain piece are still refused; on the ring they are named.

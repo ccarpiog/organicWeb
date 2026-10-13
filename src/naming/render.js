@@ -250,7 +250,10 @@ function renderEnding(parent, lexicon, omit, suffix = null, omitSuffixLocants = 
  * gives the retained `benzoico` / `benzaldehído` (the systematic
  * `bencenocarboxílico` / `bencenocarbaldehído` with `systematic`); so do an
  * amide or a –C≡N (I-40c): `ciclohexanocarboxamida`, `benzamida`,
- * `benzonitrilo` (`bencenocarboxamida`, `bencenocarbonitrilo`).
+ * `benzonitrilo` (`bencenocarboxamida`, `bencenocarbonitrilo`). The
+ * retained names keep the group at an implicit 1 beside ring prefixes
+ * (`ácido 4-metilbenzoico`, design.md §14.3, I-43b), while the systematic
+ * forms cite it (`ácido 4-metilbenceno-1-carboxílico`).
  *
  * @param {object} ring - The ring structure (structure.js RingStructure).
  * @param {object} lexicon - The lexicon.
@@ -268,6 +271,10 @@ export function renderRingParent(ring, lexicon, prefixes, suffix = null, systema
       // `ácido benzoico`, `benzaldehído`, `benzamida`, `benzonitrilo` (design.md §13.4 I-40b, I-40c): the stem is the ring, the ending the group.
       const { atoms, bonds } = suffixGroupIds(suffix);
       return [part(retained.stem, 'stem', ring.atoms, ring.bonds), part(retained.ending, 'ending', atoms, bonds)];
+    }
+    if (suffix && suffix.outside && !omission.prefixes) {
+      // Beside ring prefixes the systematic form cites its 1 (design.md §14.3, I-43b): `ácido 4-metilbenceno-1-carboxílico`.
+      return [part(lexicon.benzeneName, 'stem', ring.atoms, ring.bonds), ...renderSuffix(suffix, lexicon, false)];
     }
     if (suffix && suffix.outside) {
       // `ácido bencenocarboxílico`, `bencenocarbaldehído`: the systematic alternatives.

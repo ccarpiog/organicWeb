@@ -43,7 +43,8 @@ the last one is `passed: … failed: … skipped: … adapter failures: …`.
 seed (mulberry32), within the naming size caps, and keeps only those the
 engine can name. With `--count N`, `run.mjs` draws N acyclic hydrocarbons,
 one cycloalkane per ring size in the carbon range, N/4 phenols and
-benzenamines, and N/2 of every other family:
+benzenamines, N/4 substituted benzoic acids, benzaldehydes, benzonitriles
+and benzamides, and N/2 of every other family:
 
 | Generator | Family (design.md §13.4 phase) |
 |---|---|
@@ -51,6 +52,7 @@ benzenamines, and N/2 of every other family:
 | `generateMonocycles()` | one ring of 3–10 C with side chains and ring/chain unsaturation (I-26) |
 | `generateBenzenes()` | benzene and benzenes with 1–6 groups at random ring positions — hydrocarbon branches (unsaturated and branched ones too: `etenil`, `isopropil`…), halogens and alkoxy groups —, either Kekulé drawing (I-28, I-42); never filtered by a refusal, so a refused one counts as a naming failure |
 | `generateRingPrincipalBenzenes()` | one OH or one amine (–NH₂, –NHR, –NRR′) on a benzene with 1–5 other groups, sometimes an OH plus an `amino-` prefix: `4-metilfenol`, `2-clorobencen-1-amina`, `4-aminofenol` (I-43a); never filtered by a refusal |
+| `generateRingOutsideBenzenes()` | one –COOH, –CHO, –C≡N or amide (–CONH₂, –CONHR, –CONRR′) on a benzene with other groups, half of them with one or two junior groups on the ring as prefixes (`hidroxi`, `amino`, `formil`, `ciano`, `carbamoil`): `ácido 4-metilbenzoico`, `N-etil-4-metilbenzamida`, `ácido 4-formilbenzoico`, `3-cianobenzamida` (I-43b); never filtered by a refusal |
 | `generateCycloalkanes()` | one cycloalkane per ring size, `cyclopropane` … `cyclotriacontane` |
 | `generateHalogenated()` | F, Cl, Br, I in place of random hydrogens, halomethanes included (I-30) |
 | `generateAlcohols()` | OH groups on chains or ring carbons, phenol (I-31) |
@@ -75,9 +77,10 @@ amines…), so the seniority rules and the prefix forms are exercised together.
 Out-of-scope structures (stereo, charges, heterocycles, fused/bridged/spiro
 rings) are never generated. `randomBenzene()` with its defaults (one group)
 keeps its original draws; the other families that start from it may still
-add groups that make a benzene the engine refuses for now (two OH or two
-amines, or a –COOH, –CHO, –CN, amide or ester on a ring that carries other
-groups, design.md §14), and those families drop every refused molecule.
+add groups that make a benzene the engine refuses for now (two groups of
+the principal kind on the ring, such as two OH or two –COOH, an ester or a
+ketone on a ring that carries other groups, or a group on a side chain,
+design.md §14), and those families drop every refused molecule.
 
 ## How it works
 

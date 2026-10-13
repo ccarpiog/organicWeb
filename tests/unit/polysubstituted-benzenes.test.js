@@ -10,7 +10,13 @@
  * and for phase I-43a, one OH or amine group on the ring plus prefixes
  * (`4-metilfenol`, `2-clorobencen-1-amina`, `N,4-dimetilbencen-1-amina`,
  * `4-aminofenol`): the group at locant 1, cresol / anilina / o-m-p forms
- * present and absent, invariance, explanation, Ordenar dibujo and 90° view.
+ * present and absent, invariance, explanation, Ordenar dibujo and 90° view;
+ * and for phase I-43b, one –COOH, –CHO, –C≡N or amide on the ring plus
+ * prefixes, junior groups among them (`ácido 4-metilbenzoico`,
+ * `N-etil-4-metilbenzamida`, `ácido 4-formilbenzoico`, `3-cianobenzamida`):
+ * the retained name first with its group at an implicit 1, the systematic
+ * `benceno-1-…` and o/m/p forms present and absent, invariance,
+ * explanation, legend, Ordenar dibujo and 90° view.
  */
 
 import { test } from 'node:test';
@@ -234,13 +240,15 @@ test('a polysubstituted benzene with a functional group stays refused with an ac
     'OC1=CC=C(O)C=C1', // benceno-1,4-diol (I-44)
     'NC1=CC=C(N)C=C1', // benceno-1,4-diamina (I-44)
     'OC1=CC=C(O)C=C1C', // 2-metilbenceno-1,4-diol (I-44)
-    'NC1=CC=C(C(O)=O)C=C1O', // OH, NH2 and COOH: ácido 4-amino-3-hidroxibenzoico (I-43b)
+    'OC(=O)C1=CC=C(C(=O)O)C=C1', // ácido benceno-1,4-dicarboxílico (I-44)
+    'O=CC1=CC=C(C=O)C=C1Cl', // 2-clorobenceno-1,4-dicarbaldehído (I-44)
+    'N#CC1=CC(C#N)=CC(C)=C1', // 5-metilbenceno-1,3-dicarbonitrilo (I-44)
+    'CC(=O)C1=CC=C(C(O)=O)C=C1', // a ketone on the ring: ácido 4-acetilbenzoico
+    'O=CCC1=CC=C(C(O)=O)C=C1', // an aldehyde on a side chain: ácido 4-(2-oxoetil)benzoico
     'OCC1=CC=C(O)C=C1', // an OH on a side chain: 4-(hidroximetil)fenol
     'NCC1=CC=C(C)C=C1', // an amine on a side chain: (4-metilfenil)metanamina (I-45a)
     'CC(=O)OC1=CC=C(C)C=C1', // acetato de 4-metilfenilo (I-45c)
-    'OC(=O)C1=CC=C(C)C=C1', // ácido 4-metilbenzoico (I-43b)
-    'O=CC1=CC=C(Cl)C=C1', // 4-clorobenzaldehído (I-43b)
-    'N#CC1=CC=CC(C)=C1', // 3-metilbenzonitrilo (I-43b)
+    'CC(=O)NC1=CC=C(C)C=C1', // N-(4-metilfenil)acetamida (I-45a)
     'CCC1=C(O)C(O)=CC=C1', // 3-etilbenceno-1,2-diol (I-44)
     'CC(=O)C1=CC=C(C)C=C1', // 1-(4-metilfenil)etan-1-ona (I-45a)
     'OCCOC1=CC=C(C)C=C1', // 2-(4-metilfenoxi)etan-1-ol (I-45a)
@@ -252,7 +260,8 @@ test('a polysubstituted benzene with a functional group stays refused with an ac
     assert.equal(result.error.code, 'CYCLE', smiles);
     assert.equal(result.error.ringReason, 'polysubstitutedBenzene', smiles);
     assert.match(result.error.message, /^Este benceno tiene \d sustituyentes y alguno de ellos es o lleva un grupo funcional/);
-    assert.match(result.error.message, /ramas de carbono, halógenos .* o grupos alcoxi/);
+    assert.match(result.error.message, /ramas de carbono, halógenos .*, grupos alcoxi .* o grupos –COOH, amida, –C≡N, –CHO, –OH o amino/);
+    assert.match(result.error.message, /el grupo principal\) aparece una sola vez/);
   }
   // Two rings stay RING_SYSTEM, a benzoate of a substituted phenyl stays CYCLE.
   assert.equal(validateForNaming(parseSmiles('CC1=CC=C(C=C1)C1=CC=CC=C1')).code, 'RING_SYSTEM');
@@ -393,6 +402,157 @@ test('I-43a: the explanation says the principal group takes 1 and never mentions
 
 test('I-43a: Ordenar dibujo is offered; the 90° view still falls back', () => {
   for (const [smiles] of PRINCIPAL_CASES) {
+    assert.equal(canArrange(named(smiles)), true, smiles);
+    assert.deepEqual(projectRightAngles(parseSmiles(smiles)), { ok: false, reason: 'CYCLE' }, smiles);
+  }
+});
+
+/** Label of the systematic `benceno-1-carboxílico` forms (design.md §13.4 I-40b, §14.3). */
+const SYSTEMATIC = 'forma sistemática, con el nombre del anillo (benceno), que usan algunos libros; la IUPAC (2013) prefiere el nombre tradicional';
+
+/**
+ * Phase I-43b (design.md §14): one –COOH, –CHO, –C≡N or amide on the ring plus prefixes. Expected names and every
+ * alternative (style, name), in order: the list is complete, so absent ones are asserted too.
+ */
+const OUTSIDE_CASES = [
+  ['OC(=O)C1=CC=C(C)C=C1', 'ácido 4-metilbenzoico',
+    [['benzeneSystematic', 'ácido 4-metilbenceno-1-carboxílico'], ['positional', 'ácido p-metilbenzoico']]],
+  ['O=CC1=CC=C(Cl)C=C1', '4-clorobenzaldehído',
+    [['benzeneSystematic', '4-clorobenceno-1-carbaldehído'], ['positional', 'p-clorobenzaldehído']]],
+  ['N#CC1=CC=CC(C)=C1', '3-metilbenzonitrilo',
+    [['benzeneSystematic', '3-metilbenceno-1-carbonitrilo'], ['positional', 'm-metilbenzonitrilo']]],
+  ['NC(=O)C1=CC=C(C)C=C1', '4-metilbenzamida',
+    [['benzeneSystematic', '4-metilbenceno-1-carboxamida'], ['positional', 'p-metilbenzamida']]],
+  ['CCNC(=O)C1=CC=C(C)C=C1', 'N-etil-4-metilbenzamida',
+    [['benzeneSystematic', 'N-etil-4-metilbenceno-1-carboxamida'], ['positional', 'N-etil-p-metilbenzamida']]],
+  ['CN(C)C(=O)C1=CC=C(Br)C=C1', '4-bromo-N,N-dimetilbenzamida',
+    [['benzeneSystematic', '4-bromo-N,N-dimetilbenceno-1-carboxamida'], ['positional', 'p-bromo-N,N-dimetilbenzamida']]],
+  ['OC(=O)C1=CC=C(O)C=C1', 'ácido 4-hidroxibenzoico',
+    [['benzeneSystematic', 'ácido 4-hidroxibenceno-1-carboxílico'], ['positional', 'ácido p-hidroxibenzoico']]],
+  ['O=C(O)C1=CC=C(C=O)C=C1', 'ácido 4-formilbenzoico',
+    [['benzeneSystematic', 'ácido 4-formilbenceno-1-carboxílico'], ['positional', 'ácido p-formilbenzoico']]],
+  ['NC(=O)C1=CC(C#N)=CC=C1', '3-cianobenzamida',
+    [['benzeneSystematic', '3-cianobenceno-1-carboxamida'], ['positional', 'm-cianobenzamida']]],
+  ['NC(=O)C1=CC=C(C(O)=O)C=C1', 'ácido 4-carbamoilbenzoico',
+    [['benzeneSystematic', 'ácido 4-carbamoilbenceno-1-carboxílico'], ['positional', 'ácido p-carbamoilbenzoico']]],
+  ['N#CC1=CC=C(C=O)C=C1', '4-formilbenzonitrilo',
+    [['benzeneSystematic', '4-formilbenceno-1-carbonitrilo'], ['positional', 'p-formilbenzonitrilo']]],
+  ['NC1=CC=C(C#N)C=C1', '4-aminobenzonitrilo',
+    [['benzeneSystematic', '4-aminobenceno-1-carbonitrilo'], ['positional', 'p-aminobenzonitrilo']]],
+  ['OC1=CC=CC=C1C=O', '2-hidroxibenzaldehído',
+    [['benzeneSystematic', '2-hidroxibenceno-1-carbaldehído'], ['positional', 'o-hidroxibenzaldehído']]],
+  ['NC1=CC=C(C(O)=O)C=C1O', 'ácido 4-amino-3-hidroxibenzoico', [['benzeneSystematic', 'ácido 4-amino-3-hidroxibenceno-1-carboxílico']]],
+  ['OC(=O)C1=CC=C(O)C(O)=C1', 'ácido 3,4-dihidroxibenzoico', [['benzeneSystematic', 'ácido 3,4-dihidroxibenceno-1-carboxílico']]],
+  ['CC(C)C1=CC=CC=C1C=O', '2-isopropilbenzaldehído', [
+    ['pin', '2-(propan-2-il)benzaldehído'], ['substituted', '2-(1-metiletil)benzaldehído'],
+    ['benzeneSystematic', '2-isopropilbenceno-1-carbaldehído'], ['positional', 'o-isopropilbenzaldehído'],
+  ]],
+];
+
+test('I-43b: one –COOH, –CHO, –C≡N or amide on the ring plus prefixes, with exactly the expected alternatives', () => {
+  for (const [smiles, name, alternatives] of OUTSIDE_CASES) {
+    assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
+    const result = named(smiles);
+    assert.equal(result.name, name, smiles);
+    assert.deepEqual(result.alternatives.map((a) => [a.style, a.name]), alternatives, smiles);
+    for (const alt of result.alternatives) {
+      // Never a toluic acid, tolualdehyde, anisaldehyde, salicylic name or a systematic form without its 1.
+      assert.doesNotMatch(alt.name, /tolu|anis|salic|bencenocarb/, smiles);
+      assert.ok(alt.style !== 'positional' || alt.label === POSITIONAL, smiles);
+      assert.ok(alt.style !== 'benzeneSystematic' || alt.label === SYSTEMATIC, smiles);
+    }
+  }
+  // Monosubstituted ring acids, aldehydes, nitriles and amides keep their outputs (no locant at all).
+  assert.deepEqual(named('OC(=O)C1=CC=CC=C1').alternatives.map((a) => a.name), ['ácido bencenocarboxílico']);
+  assert.deepEqual(named('CNC(=O)C1=CC=CC=C1').alternatives.map((a) => a.name), ['N-metilbencenocarboxamida']);
+  assert.equal(named('N#CC1=CC=CC=C1').name, 'benzonitrilo');
+  // Junior OH and amine groups beside a phenol: several amino prefixes are named too.
+  assert.equal(named('NC1=CC=C(O)C(N)=C1').name, '2,4-diaminofenol');
+}); // End of test 'I-43b: one –COOH, –CHO, –C≡N or amide on the ring…'
+
+test('I-43b: the principal group takes locant 1, cited in the systematic form only, never by the Kekulé bonds', () => {
+  for (const [smiles] of OUTSIDE_CASES) {
+    const result = named(smiles);
+    assert.equal(result.structure.suffix.outside, true, smiles);
+    const [site] = result.structure.suffix.locants;
+    assert.equal(site.locant, 1, smiles);
+    assert.equal(result.parent.atoms[0], site.atom, smiles);
+    const rules = result.trace.map((step) => step.rule);
+    assert.ok(rules.includes('N0'), smiles);
+    assert.ok(!rules.some((rule) => rule === 'N1' || rule === 'N2'), smiles);
+  }
+  assert.deepEqual(named('OC(=O)C1=CC=C(C)C=C1').parts.map((p) => p.text), ['ácido', ' ', '4', '-', 'metil', 'benz', 'oico']);
+  const systematic = named('OC(=O)C1=CC=C(C)C=C1').alternatives.find((a) => a.style === 'benzeneSystematic');
+  assert.deepEqual(systematic.parts.map((p) => p.text), ['ácido', ' ', '4', '-', 'metil', 'benceno', '-', '1', '-', 'carboxílico']);
+  // The cited 1 refers to the ring carbon bonded to the group.
+  const one = systematic.parts.find((p) => p.kind === 'locant' && p.text === '1');
+  assert.equal(one.atoms[0], named('OC(=O)C1=CC=C(C)C=C1').structure.suffix.locants[0].atom);
+  assert.equal(englishName(named('OC(=O)C1=CC=C(C)C=C1').structure), '4-methylbenzoic acid');
+  assert.equal(englishName(named('CCNC(=O)C1=CC=C(C)C=C1').structure), 'N-ethyl-4-methylbenzamide');
+  assert.equal(englishName(named('NC(=O)C1=CC(C#N)=CC=C1').structure), '3-cyanobenzamide');
+}); // End of test 'I-43b: the principal group takes locant 1…'
+
+test('I-43b: both Kekulé drawings and atom-id scrambles give the same name, alternatives and explanation', () => {
+  const random = seededRandom(431);
+  for (const [smiles, name] of OUTSIDE_CASES) {
+    const reference = summary(named(smiles));
+    const swapped = kekuleSwap(smiles);
+    assert.equal(named(swapped).name, name, `${smiles} (other Kekulé drawing)`);
+    assert.deepEqual(summary(named(swapped)), reference, smiles);
+    for (const mol of [parseSmiles(smiles), swapped]) {
+      for (let k = 0; k < 3; k += 1) {
+        const copy = scrambleMolecule(mol, random);
+        for (const atom of copy.atoms.values()) {
+          atom.x = random() * 500;
+          atom.y = random() * 500;
+        }
+        assert.deepEqual(summary(named(copy)), reference, `${smiles} scrambled`);
+      }
+    }
+  } // End of the loop over the I-43b cases
+}); // End of test 'I-43b: both Kekulé drawings and atom-id scrambles…'
+
+test('I-43b: the explanation says the principal group takes 1, not written, and never mentions the double bonds', () => {
+  const textOf = (step) => step.text.map(plainText).join(' ');
+  const stepsOf = (smiles) => explain(named(smiles));
+  for (const [smiles] of OUTSIDE_CASES) {
+    const all = stepsOf(smiles);
+    const numbering = all.find((s) => s.id === 'ringNumbering');
+    assert.ok(numbering, smiles);
+    assert.doesNotMatch(textOf(numbering), /enlace|doble/, smiles);
+    assert.match(textOf(numbering), /es el grupo principal y lleva el número más bajo, así que el carbono del anillo unido .* es siempre el 1/, smiles);
+    assert.ok(Array.isArray(numbering.locants) && numbering.locants.length === 6, smiles);
+    assert.doesNotMatch(all.map(textOf).join(' '), /Con un solo|el nombre acaba en «benceno»|No lleva números/, smiles);
+    assert.match(textOf(all.find((s) => s.id === 'benzene')), /es el grupo principal, y el benceno con .* tiene nombre propio/, smiles);
+    const assemble = all.find((s) => s.id === 'assemble');
+    assert.match(textOf(assemble), /no lleva número: en «(ácido benzoico|benzaldehído|benzamida|benzonitrilo)»/, smiles);
+    assert.match(textOf(assemble), /En la forma sistemática sí se escribe: «[^»]*benceno-1-/, smiles);
+    // The colour key shows `benz` and the group ending, never `fen` / `-ol`.
+    const legend = assemble.legend.map((entry) => entry.text);
+    assert.ok(legend.includes('benz'), smiles);
+    assert.ok(!legend.includes('fen') && !legend.includes('-ol'), smiles);
+  }
+  const acid = stepsOf('OC(=O)C1=CC=C(C)C=C1');
+  assert.match(textOf(acid.find((s) => s.id === 'ringNumbering')), /«metil» está en posición para \(1,4\) respecto al grupo –COOH/);
+  assert.match(textOf(acid.find((s) => s.id === 'benzene')), /El otro sustituyente va delante de «benzoico» como prefijo/);
+  assert.match(textOf(acid.find((s) => s.id === 'assemble')), /los sustituyentes van entre «ácido» y «benzoico»/);
+  assert.deepEqual(acid.find((s) => s.id === 'assemble').legend.map((entry) => entry.text), ['ácido', '4', 'metil', 'benz', '-oico']);
+  // A group on the amide N: the N note in the benzene step.
+  const amide = stepsOf('CCNC(=O)C1=CC=C(C)C=C1');
+  assert.match(textOf(amide.find((s) => s.id === 'benzene')), /no cuentan como sustituyentes del anillo/);
+  assert.match(textOf(amide.find((s) => s.id === 'ringNumbering')), /La «N» del nombre no es el número de un carbono/);
+  // A junior group as a prefix: the seniority in the group step, the prefix in the substituents step.
+  const formyl = stepsOf('O=C(O)C1=CC=C(C=O)C=C1');
+  assert.match(textOf(formyl.find((s) => s.id === 'substituents')), /«formil»/);
+  const cyano = stepsOf('NC(=O)C1=CC(C#N)=CC=C1');
+  assert.match(textOf(cyano.find((s) => s.id === 'group')), /amida > nitrilo/);
+  assert.match(textOf(cyano.find((s) => s.id === 'substituents')), /no se cuenta en el anillo/);
+  const step = cyano.find((s) => s.id === 'ringNumbering');
+  assert.ok(step.compare && step.options.length >= 2);
+}); // End of test 'I-43b: the explanation says the principal group takes 1…'
+
+test('I-43b: Ordenar dibujo is offered; the 90° view still falls back', () => {
+  for (const [smiles] of OUTSIDE_CASES) {
     assert.equal(canArrange(named(smiles)), true, smiles);
     assert.deepEqual(projectRightAngles(parseSmiles(smiles)), { ok: false, reason: 'CYCLE' }, smiles);
   }

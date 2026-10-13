@@ -170,14 +170,14 @@ for (const c of [
   });
 } // End of the loop over the named phenols and benzenamines
 
-test('still out of scope: two OH, two amines, a ring –COOH with prefixes, an OH on a branch', async ({ page }) => {
+test('still out of scope: two OH, two amines, two ring –COOH, an OH on a branch', async ({ page }) => {
   const errors = await openApp(page);
   const error = page.locator('#results .results-error');
-  for (const smiles of ['OC1=CC=C(O)C=C1', 'NC1=CC=C(N)C=C1', 'OC(=O)C1=CC=C(C)C=C1', 'NC1=CC=C(C(O)=O)C=C1O', 'OCC1=CC=C(O)C=C1']) {
+  for (const smiles of ['OC1=CC=C(O)C=C1', 'NC1=CC=C(N)C=C1', 'OC(=O)C1=CC=C(C(O)=O)C=C1O', 'OCC1=CC=C(O)C=C1']) {
     await loadSmiles(page, smiles);
     await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
     await expect(error).toContainText('aún no sé combinar con los demás');
-    await expect(error).toContainText('más como mucho un grupo –OH y un grupo amino');
+    await expect(error).toContainText('el más importante de estos grupos (el grupo principal) aparece una sola vez');
     await expect(page.locator('#result-name')).toHaveCount(0);
   } // End of the loop over the refused benzenes
   expect(errors).toEqual([]);

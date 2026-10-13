@@ -180,7 +180,7 @@ test('loaded ring nitriles and amides are named; two esters apart, N-substituted
   for (const [smiles, code, text] of [
     ['N#CC1CCC(C(=O)OC)C(CC(=O)OC)C1', 'HETEROATOM', 'un oxígeno, un nitrógeno o un anillo'],
     ['CNC(=O)C1CCC(C(N)=O)CC1', 'HETEROATOM', 'localizadores como N¹ y N⁴'],
-    ['N#CC1=CC=C(C)C=C1', 'CYCLE', 'Este benceno tiene 2 sustituyentes'],
+    ['N#CC1=CC(C#N)=CC=C1C', 'CYCLE', 'Este benceno tiene 3 sustituyentes'],
   ]) {
     await loadSmiles(page, smiles);
     await askName(page);

@@ -463,6 +463,101 @@ export function generateRingPrincipalBenzenes({ count, seed, minSize = 4, maxSiz
   return molecules;
 } // End of function generateRingPrincipalBenzenes()
 
+/** Ring groups of the I-43b oracle family in seniority order (IUPAC 2013 P-41: acid > amide > nitrile > aldehyde > alcohol > amine). */
+const RING_GROUP_ORDER = Object.freeze(['acid', 'amide', 'nitrile', 'aldehyde', 'alcohol', 'amine']);
+
+/**
+ * Hangs a characteristic group on a ring atom: a –COOH, an amide –CONH₂ /
+ * –CONHR / –CONRR′ (`nGroups` saturated 1–3-carbon groups on its N), a
+ * –C≡N, a –CHO, an OH, or an amine (hangAmine()).
+ *
+ * @param {object} mol - The molecule (mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} site - The ring atom.
+ * @param {string} kind - One of RING_GROUP_ORDER.
+ * @param {number} nGroups - Number of carbon groups on the N of an amide or amine (0–2).
+ */
+function hangRingGroup(mol, random, site, kind, nGroups) {
+  if (kind === 'alcohol') {
+    addBond(mol, site, addAtom(mol, {}, 'O'), 1);
+    return;
+  }
+  if (kind === 'amine') {
+    hangAmine(mol, random, site, nGroups);
+    return;
+  }
+  const carbon = addAtom(mol);
+  addBond(mol, site, carbon, 1);
+  if (kind === 'nitrile') {
+    addBond(mol, carbon, addAtom(mol, {}, 'N'), 3);
+    return;
+  }
+  addBond(mol, carbon, addAtom(mol, {}, 'O'), 2);
+  if (kind === 'acid') {
+    addBond(mol, carbon, addAtom(mol, {}, 'O'), 1);
+  } else if (kind === 'amide') {
+    const nitrogen = addAtom(mol, {}, 'N');
+    addBond(mol, carbon, nitrogen, 1);
+    for (let i = 0; i < nGroups; i += 1) {
+      growSideChain(mol, random, nitrogen, randomInt(random, 1, 3), 0.3);
+    }
+  }
+} // End of function hangRingGroup()
+
+/**
+ * Generates up to `count` distinct benzenes with one –COOH, amide, –C≡N or
+ * –CHO on the ring plus other groups (design.md §14, I-43b): a random
+ * benzene with prefixes (randomBenzene(): branches, halogens, alkoxy
+ * groups), then the principal group on a free ring atom (`ácido
+ * 4-metilbenzoico`, `4-clorobenzaldehído`, `N-etil-4-metilbenzamida`) and,
+ * with probability 0.5, one or two junior groups on other free ring atoms
+ * (OH, amine, –CHO, –C≡N or amide below it in seniority: `ácido
+ * 4-hidroxibenzoico`, `ácido 4-formilbenzoico`, `3-cianobenzamida`,
+ * `4-aminobenzonitrilo`). Only the size cap (`TOO_BIG`) filters them out:
+ * any other refusal is reported by the oracle as a naming failure.
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C).
+ * @returns {object[]} The molecules.
+ */
+export function generateRingOutsideBenzenes({ count, seed, minSize = 4, maxSize = 14 }) {
+  const random = seededRandom(seed * 7349 + 431);
+  const seen = new Set();
+  const molecules = [];
+  const low = Math.max(minSize, 8);
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50 && low <= maxSize) {
+    attempts += 1;
+    const size = randomInt(random, low, maxSize);
+    const principal = RING_GROUP_ORDER[randomInt(random, 0, 3)];
+    const juniors = RING_GROUP_ORDER.slice(RING_GROUP_ORDER.indexOf(principal) + 1);
+    const junior = random() < 0.5 ? randomInt(random, 1, 2) : 0;
+    const mol = randomBenzene(random, {
+      extra: size - 7,
+      kekule: random() < 0.5 ? 1 : 2,
+      unsaturation: random() * 0.5,
+      branchiness: 0.2 + random() * 0.8,
+      groups: randomInt(random, 1, 5 - junior),
+      hetero: random() * 0.7,
+    });
+    const ring = [...mol.atoms.keys()].slice(0, 6); // randomBenzene() adds the ring atoms first.
+    const adj = adjacency(mol);
+    const free = shuffle(ring.filter((id) => adj.get(id).length === 2), random);
+    hangRingGroup(mol, random, free[0], principal, randomInt(random, 0, 2));
+    for (let i = 1; i <= junior && i < free.length; i += 1) {
+      hangRingGroup(mol, random, free[i], juniors[randomInt(random, 0, juniors.length - 1)], randomInt(random, 0, 1));
+    }
+    if (validateForNaming(mol)?.code === 'TOO_BIG') {
+      continue; // A side chain beyond the 30-carbon cap: out of scope, not a failure.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct benzoic acids, benzaldehydes, benzonitriles and benzamides
+  return molecules;
+} // End of function generateRingOutsideBenzenes()
+
 /**
  * Copies a hydrocarbon and replaces some of its hydrogens by halogens: each
  * hydrogen of each carbon becomes, with probability `rate`, a random F, Cl,

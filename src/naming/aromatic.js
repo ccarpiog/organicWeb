@@ -24,9 +24,10 @@
  * `isopropilbenceno` with `(propan-2-il)benceno` and `(1-metiletil)benceno`
  * as alternatives. Two or more substituents reach this module only when
  * every group is a detachable prefix — hydrocarbon branches, halogens,
- * alkoxy groups (design.md §14, I-42a) — or, since I-43a, beside one OH or
- * one amine group on the ring (the suffix, at locant 1); any other
- * polysubstituted benzene is refused by validateForNaming() (`CYCLE`,
+ * alkoxy groups (design.md §14, I-42a) — or, since I-43a / I-43b, beside
+ * one principal group on the ring (the suffix, at locant 1: an OH, an amine,
+ * a –COOH, a –CHO, a –C≡N or an amide), the junior groups as prefixes; any
+ * other polysubstituted benzene is refused by validateForNaming() (`CYCLE`,
  * `ringReason` 'polysubstitutedBenzene'). Then every locant is cited
  * (`1,2-dimetilbenceno`), except when all six positions hold one identical
  * prefix (`hexaclorobenceno`, lexicon ringOmitsLocants()). The old school
@@ -57,6 +58,12 @@
  * `bencenocarboxamida` / `bencenocarbonitrilo` are alternatives,
  * naming/index.js). The groups on a benzamide N are N prefixes, not ring
  * substituents (`N-metilbenzamida`: the benzene stays monosubstituted).
+ * With other groups on the ring (design.md §14, I-43b) the retained name
+ * keeps the group at an implicit 1 (`ácido 4-metilbenzoico`,
+ * `N-etil-4-metilbenzamida`), the systematic alternative cites it
+ * (`ácido 4-metilbenceno-1-carboxílico`), and junior groups are prefixes
+ * (`ácido 4-hidroxibenzoico`, `ácido 4-formilbenzoico`,
+ * `3-cianobenzamida`).
  *
  * Traditional names retained by IUPAC 2013 for monosubstituted benzenes
  * (P-22.1.3) — `tolueno` (even the preferred IUPAC name) and `estireno`
@@ -69,7 +76,8 @@
  * for 1,3,5-trimetilbenceno, `o-cresol` / `m-cresol` / `p-cresol` for the
  * bare methylphenols (I-43a), and the old orto/meta/para form for two
  * identical prefixes or a retained parent plus one prefix
- * (`o-diclorobenceno`, `p-metilfenol`, `o-cloroanilina`, its own label);
+ * (`o-diclorobenceno`, `p-metilfenol`, `o-cloroanilina`,
+ * `ácido p-metilbenzoico`, its own label);
  * never a substituted tolueno, xileno, cresol or anisol.
  *
  * The ring numbering (locant order of the parent, used by Ordenar dibujo) is
@@ -401,8 +409,9 @@ export function benzeneAlternatives(result) {
  * chain is the only substituent, cited without locant; a single OH is the
  * `-ol` suffix instead (`fenol`). With two or more occupied ring positions
  * (design.md §14, I-42a) every group is a detachable prefix (hydrocarbon,
- * halogen or alkoxy), except at most one OH or amine suffix group on the
- * ring (I-43a, numbered 1 first, N0; validation refuses anything else), and
+ * halogen or alkoxy), except one principal suffix group on the ring (an OH
+ * or amine, I-43a; a –COOH, –CHO, –C≡N or amide, I-43b; numbered 1 first,
+ * N0; validation refuses anything else), and
  * the ring is numbered without its Kekulé double bonds (rings.js numberRing()
  * `aromatic`: P-14.4 (f) all prefixes together, then (g) the prefix cited
  * first), so both Kekulé drawings give the same name; the real bond orders
@@ -414,8 +423,8 @@ export function benzeneAlternatives(result) {
  * @param {object} mol - A molecule accepted by validateForNaming() whose only ring is a benzene ring.
  * @param {string} [style] - Prefix style (default 'isopropil', design.md §1.1).
  * @returns {object} The naming result (structure.js NamingSuccess) without `alternatives`.
- * @throws {Error} When the ring is not a benzene ring, or it carries several suffix groups, or a –COOH, –CHO, amide
- *   or –C≡N suffix group beside another substituent (safety net, out of scope).
+ * @throws {Error} When the ring is not a benzene ring, or it carries several suffix groups beside another substituent
+ *   (safety net, out of scope until I-44).
  */
 export function nameBenzeneWithStyle(mol, style = PREFIX_STYLES[0]) {
   if (!hasBenzeneRing(mol)) {
@@ -428,8 +437,8 @@ export function nameBenzeneWithStyle(mol, style = PREFIX_STYLES[0]) {
   const sites = suffixSites(mol, adj, perceived.atoms, ctx.principal, true);
   // Groups on an amine N (`N-metilbencenamina`) are not ring substituents.
   const onRing = substituents.filter((sub) => !sub.nitrogen).length + sites.length;
-  if (onRing > 1 && (sites.length > 1 || sites.some((site) => site.carbon !== undefined))) {
-    // Safety net: beside other groups, validation lets through one OH or amine on the ring only (design.md §14.1, I-43a).
+  if (onRing > 1 && sites.length > 1) {
+    // Safety net: beside other groups, validation lets through one principal group on the ring only (design.md §14.1, I-43a, I-43b).
     throw new Error(`nameBenzeneWithStyle: ${onRing} substituents with ${sites.length} suffix groups (out of scope)`);
   }
   const polysubstituted = onRing > 1;

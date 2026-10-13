@@ -5,7 +5,11 @@
  * Generates seeded random acyclic hydrocarbons and half as many random
  * substituted or unsaturated monocycles and half as many benzene
  * derivatives (benzene and benzenes with 1–6 hydrocarbon, halogen or alkoxy
- * groups at random ring positions, either Kekulé drawing; I-42), half as many halogen derivatives of such molecules (F, Cl, Br,
+ * groups at random ring positions, either Kekulé drawing; I-42), a quarter
+ * as many phenols and benzenamines with ring prefixes
+ * (generateRingPrincipalBenzenes(), I-43a) and a quarter as many benzoic
+ * acids, benzaldehydes, benzonitriles and benzamides with ring prefixes,
+ * junior groups among them (generateRingOutsideBenzenes(), I-43b), half as many halogen derivatives of such molecules (F, Cl, Br,
  * I; halomethanes and haloethanes included, design.md §13.4 I-30), half as
  * many alcohols (OH groups on chains or on ring carbons, phenol, some also
  * halogenated; I-31), half as many aldehydes and ketones (C=O on chains or
@@ -73,7 +77,7 @@ import { renderName } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import { traditionalName as lexiconEsName } from '../../src/naming/lexicon.es.js';
 import {
-  generateMolecules, generateMonocycles, generateBenzenes, generateRingPrincipalBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
+  generateMolecules, generateMonocycles, generateBenzenes, generateRingPrincipalBenzenes, generateRingOutsideBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
   generateAcids, generateEthers, generateEsters, generateAmines, generateAmides, generateNitriles, generateCyano, generateAcyl,
   generateEsterPrefixes, generateAmidePrefixes, generateRingSubstituents, generateRingAcids, generateRingNitrilesAmides,
   generateRingEsters, generateCycloalkanes,
@@ -322,6 +326,9 @@ export async function main(argv) {
   const ringPrincipal = generateRingPrincipalBenzenes({
     count: Math.ceil(options.count / 4), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
+  const ringOutside = generateRingOutsideBenzenes({
+    count: Math.ceil(options.count / 4), seed: options.seed, minSize: options.min, maxSize: options.max,
+  });
   const halogenated = generateHalogenated({
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
@@ -353,11 +360,12 @@ export async function main(argv) {
   const ringEsters = generateRingEsters({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
   const molecules = [
-    ...random, ...monocycles, ...benzenes, ...ringPrincipal, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...amines,
+    ...random, ...monocycles, ...benzenes, ...ringPrincipal, ...ringOutside, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...amines,
     ...amides, ...nitriles, ...cyano, ...acyl, ...esterPrefixes, ...amidePrefixes, ...ringPrefixes, ...ringAcids,
     ...ringNitrilesAmides, ...ringEsters, ...rings,
   ];
   console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes + ${ringPrincipal.length} phenols and benzenamines `
+    + `+ ${ringOutside.length} substituted benzoic acids, benzaldehydes, benzonitriles and benzamides `
     + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${carbonyls.length} aldehydes and ketones `
     + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${nitriles.length} nitriles + ${cyano.length} ciano- molecules + ${acyl.length} acyl molecules + ${esterPrefixes.length} ester-prefix molecules + ${amidePrefixes.length} amide-prefix molecules + ${ringPrefixes.length} ring-prefix molecules + ${ringAcids.length} ring acids and aldehydes + ${ringNitrilesAmides.length} ring nitriles and amides + ${ringEsters.length} ring esters + ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);

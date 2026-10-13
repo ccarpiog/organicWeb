@@ -39,7 +39,9 @@
  * two to six prefixes (design.md §14, I-42a) also gets ringNumbering
  * (benzeneNumberingStep(): lowest locant set, then alphabetical order,
  * never the double bonds; the orto/meta/para position of two groups) and
- * order; with one OH or amine group on the ring as well (I-43a) the
+ * order; with one OH or amine group on the ring as well (I-43a), or one
+ * –COOH, –CHO, –C≡N or amide (I-43b: `ácido 4-metilbenzoico`, the group
+ * not numbered in the retained name, the colour key `benz` + `-oico`), the
  * numbering step first gives that group locant 1.
  *
  * Halogen derivatives (design.md §13.4 I-30) get the same steps: the
@@ -4687,8 +4689,8 @@ function benzeneStep(result) {
     'El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.',
   ];
   const positions = benzenePositions(result);
-  if (positions > 1 && (phenol || amine)) {
-    // One OH or amine group on the ring plus prefixes (design.md §14, I-43a): the group is the suffix, numbered 1.
+  if (positions > 1 && (phenol || amine || outside)) {
+    // One principal group on the ring plus prefixes (design.md §14, I-43a, I-43b): the group is the suffix, numbered 1.
     text.push(...principalOnBenzeneSentences(result, positions));
     text.push('Con varios sustituyentes sí hay que numerar el anillo, para decir en qué carbono está cada uno.');
   } else if (positions > 1) {
@@ -4752,13 +4754,14 @@ function benzeneStep(result) {
 } // End of function benzeneStep()
 
 /**
- * The benzene-step sentences of a benzene with one OH or amine group and
- * other groups on the ring (design.md §14, I-43a): the group is the
- * principal one, named at the end (`fenol`, `bencen-1-amina`), and the
- * others go in front as prefixes; the groups on an amine N are not ring
- * substituents.
+ * The benzene-step sentences of a benzene with one principal group and
+ * other groups on the ring (design.md §14): the group is the principal
+ * one, named at the end (`fenol`, `bencen-1-amina`, I-43a; the retained
+ * `ácido benzoico`, `benzaldehído`, `benzamida`, `benzonitrilo`, I-43b),
+ * and the others go in front as prefixes; the groups on an amine or amide
+ * N are not ring substituents.
  *
- * @param {object} result - A naming result with a benzene parent and an OH or amine suffix.
+ * @param {object} result - A naming result with a benzene parent and one suffix group.
  * @param {number} positions - Number of occupied ring positions (benzenePositions()).
  * @returns {string[]} The sentences.
  */
@@ -4771,11 +4774,18 @@ function principalOnBenzeneSentences(result, positions) {
   if (isAmine(result)) {
     const stem = lexiconEs.benzeneName.slice(0, -1);
     text.push(`Al anillo hay unidos ${positions} [[sustituyentes|sustituyente]]. Uno es el grupo amino: es el [[grupo principal]], así que el nombre acaba en «-amina», unido al nombre del anillo sin su «o» final (${q(`${stem}amina`)}). ${rest}, igual que en un benceno con ramas.`);
-    if (hasNitrogenLocants(result.structure.prefixes)) {
-      text.push('Los grupos de carbonos unidos al nitrógeno no están en el anillo: no cuentan como sustituyentes del anillo y van delante con la letra «N» (como en «N-metil»).');
-    }
+  } else if (isOutsideSuffix(result)) {
+    // `ácido 4-metilbenzoico`, `3-cianobenzamida` (design.md §14, I-43b): the retained name keeps the group.
+    const words = groupWords(result);
+    const { kind } = result.structure.suffix;
+    const group = lexiconEs.benzeneGroupName(kind);
+    const word = group.stem + group.ending;
+    text.push(`Al anillo hay unidos ${positions} [[sustituyentes|sustituyente]]. Uno es ${words.the}: es el [[grupo principal]], y el benceno con ${words.one} tiene nombre propio, ${q(RING_GROUP_NAMES[kind].retained)}. ${rest.replace(/ como /, ` de ${q(word)} como `)}, igual que en un benceno con ramas.`);
   } else {
     text.push(`Al anillo hay unidos ${positions} [[sustituyentes|sustituyente]]. Uno es el grupo –OH: es el [[grupo principal]], así que el nombre acaba en ${q(lexiconEs.phenolStem + lexiconEs.groupSuffix('alcohol'))} (el benceno con un –OH tiene nombre propio). ${rest}, igual que en un benceno con ramas.`);
+  }
+  if (hasNitrogenLocants(result.structure.prefixes)) {
+    text.push('Los grupos de carbonos unidos al nitrógeno no están en el anillo: no cuentan como sustituyentes del anillo y van delante con la letra «N» (como en «N-metil»).');
   }
   return text;
 } // End of function principalOnBenzeneSentences()
@@ -5784,7 +5794,7 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
     const reason = principal && principal !== 'nitrile'
       ? ` No es el [[grupo principal]]: ${familyWithArticle(principal)} va antes que el nitrilo.`
       : '';
-    return [`${q(prefix)} es el [[prefijo]] de un grupo –C≡N (un nitrilo) unido ${words.to}.${reason} El prefijo incluye el carbono del –C≡N, así que ese carbono no se cuenta en la cadena.`];
+    return [`${q(prefix)} es el [[prefijo]] de un grupo –C≡N (un nitrilo) unido ${words.to}.${reason} El prefijo incluye el carbono del –C≡N, así que ese carbono no se cuenta en ${words === PARENT_WORDS.ring ? 'el anillo' : 'la cadena'}.`];
   }
   if (sub.carboxy) {
     // A –COOH cited `carboxi-` (design.md §13.4 I-40b): on a branch or on the ring prefix, never on the parent.
@@ -6661,6 +6671,16 @@ function nameLegend(result) {
     legend.push({ text: `-${lexiconEs.groupSuffix('amine')}`, kind: 'ending', meaning: 'grupo principal: el grupo amino unido al anillo (amina)' });
     return legend;
   }
+  if (isBenzene(result) && isOutsideSuffix(result)) {
+    // `ácido 4-metilbenzoico`, `benzamida`, `benzoato de metilo` (design.md §13.4 I-40b–I-40d, §14 I-43b): `benz` + the group's ending.
+    const { kind } = result.structure.suffix;
+    const retained = lexiconEs.benzeneGroupName(kind);
+    const group = groupWords(result);
+    legend.push({ text: retained.stem, kind: 'stem', meaning: `el anillo de benceno (${q(RING_GROUP_NAMES[kind].retained)} es un nombre propio)` });
+    legend.push({ text: `-${retained.ending}`, kind: 'ending', meaning: `grupo principal: ${group.one} unido al anillo (${group.family})` });
+    legend.push(...esterTailLegend(result));
+    return legend;
+  }
   if (isBenzene(result) && result.structure.suffix) {
     legend.push({ text: lexiconEs.phenolStem, kind: 'stem', meaning: 'el anillo de benceno («fenol» es un nombre propio)' });
     legend.push({ text: `-${lexiconEs.groupSuffix('alcohol')}`, kind: 'ending', meaning: 'grupo principal: el –OH unido al anillo' });
@@ -6784,6 +6804,20 @@ function suffixLegend(result) {
     kind: 'ending',
     meaning: n === 1 ? `grupo principal: ${words.one} (${words.family})` : `grupo principal: ${n} ${words.many} (${words.family})`,
   });
+  legend.push(...esterTailLegend(result));
+  return legend;
+} // End of function suffixLegend()
+
+/**
+ * Legend entries after the acid part of an ester name (design.md §13.4
+ * I-35, I-40d): `de` and the O-bound group (`de metilo`), or for a diester
+ * every O-bound group; none for any other name.
+ *
+ * @param {object} result - The naming result.
+ * @returns {{text: string, kind: string, meaning: string}[]} The entries.
+ */
+function esterTailLegend(result) {
+  const legend = [];
   const alkyls = esterGroups(result);
   if (alkyls.length === 1) {
     legend.push({ text: lexiconEs.esterLink.trim(), kind: 'punct', meaning: 'une las dos partes del éster: primero la del ácido y luego la del grupo unido al oxígeno' });
@@ -6797,7 +6831,33 @@ function suffixLegend(result) {
     legend.push(...diesterGroupLegend(result));
   }
   return legend;
-} // End of function suffixLegend() // End of function suffixLegend()
+} // End of function esterTailLegend()
+
+/**
+ * The assembly sentences of a benzene with one –COOH, –CHO, amide or –C≡N
+ * and other groups on the ring (design.md §14.3, I-43b): the prefixes with
+ * their numbers in alphabetical order, then the retained name (`benzoico`,
+ * `benzaldehído`, `benzamida`, `benzonitrilo`) whose group keeps an
+ * implicit 1, which the systematic form writes
+ * (`ácido 4-metilbenceno-1-carboxílico`).
+ *
+ * @param {object} result - A naming result with a benzene parent, an outside suffix group and ring prefixes.
+ * @returns {string[]} The sentences.
+ */
+function outsideGroupAssembleSentences(result) {
+  const words = groupWords(result);
+  const { kind } = result.structure.suffix;
+  const group = lexiconEs.benzeneGroupName(kind);
+  const nitrogen = hasNitrogenLocants(result.structure.prefixes) ? ' (los del nitrógeno con su «N»)' : '';
+  const acid = isAcid(result)
+    ? ` El nombre empieza por la palabra ${q(lexiconEs.suffixClassWord('acid'))}, como el de cualquier ácido carboxílico, y los sustituyentes van entre ${q(lexiconEs.suffixClassWord('acid'))} y ${q(group.stem + group.ending)}.`
+    : '';
+  const systematic = result.alternatives && result.alternatives.find((a) => a.style === 'benzeneSystematic');
+  return [
+    `Primero van los sustituyentes, cada uno con sus números y en orden alfabético${nitrogen}, y al final ${q(group.stem + group.ending)}, todo junto: ${q(group.stem)} es el anillo y ${q(`-${group.ending}`)}, ${words.the}.${acid}`,
+    `${capitalise(words.the)} no lleva número: en ${q(RING_GROUP_NAMES[kind].retained)} ${words.carbonWith} es siempre el 1, así que el 1 no se escribe. Los números que ves son los de los demás sustituyentes.${systematic ? ` En la forma sistemática sí se escribe: ${q(systematic.name)}.` : ''}`,
+  ];
+} // End of function outsideGroupAssembleSentences()
 
 /**
  * Step 7, "Monta el nombre": the pieces in writing order, the punctuation
@@ -6832,6 +6892,9 @@ function assembleStep(result) {
     text.push(prefixes.length > 0
       ? `Primero van los grupos unidos al nitrógeno, cada uno con su «N», y después el nombre del anillo sin su «o» final, ${q(stem)}, más la terminación «-amina», todo junto. El anillo no lleva números: solo tiene un grupo.`
       : `El nombre es el del anillo sin su «o» final, ${q(stem)}, más la terminación del grupo principal, «-amina». No lleva números: el anillo solo tiene un grupo.`);
+  } else if (benzene && isOutsideSuffix(result) && benzenePositions(result) > 1) {
+    // `ácido 4-metilbenzoico`, `N-etil-4-metilbenzamida` (design.md §14.3, I-43b): the group keeps an implicit 1.
+    text.push(...outsideGroupAssembleSentences(result));
   } else if (benzene && isOutsideSuffix(result)) {
     // design.md §13.4 I-40b: `ácido benzoico` = `ácido` + `benz` + `oico`; `benzaldehído` = `benz` + `aldehído`.
     const words = groupWords(result);

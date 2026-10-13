@@ -208,6 +208,11 @@ const SNAPSHOT_SMILES = [
   'CNC1=CC=C(C)C=C1', // N,4-dimetilbencen-1-amina: a group on the N and one on the ring (I-43a)
   'NC1=CC=C(O)C=C1', // 4-aminofenol: alcohol > amine, the amine is a prefix (I-43a)
   'OC1=C(C)C=C(C)C=C1Cl', // 2-cloro-4,6-dimetilfenol: OH at 1, then alphabetical order decides (I-43a)
+  'OC(=O)C1=CC=C(C)C=C1', // ácido 4-metilbenzoico: COOH at 1 not cited, systematic -1-carboxílico and para forms (I-43b)
+  'O=CC1=CC=C(Cl)C=C1', // 4-clorobenzaldehído: a halogen beside the CHO (I-43b)
+  'CCNC(=O)C1=CC=C(C)C=C1', // N-etil-4-metilbenzamida: a group on the amide N and one on the ring (I-43b)
+  'OC(=O)C1=CC=C(O)C=C1', // ácido 4-hidroxibenzoico: acid > alcohol, the OH is a prefix (I-43b)
+  'NC(=O)C1=CC(C#N)=CC=C1', // 3-cianobenzamida: amide > nitrile, numbering comparison (I-43b)
 ];
 
 /**

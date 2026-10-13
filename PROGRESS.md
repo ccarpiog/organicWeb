@@ -63,8 +63,8 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-42a | v3 Benzene parent with prefixes: naming engine, explanation, design §14 (split from I-42) | `autoclaude/processed/220-polysubstituted-benzenes.md` "I-42" | done — `docs/progress-archive/i-42a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-42a.md` |
 | I-42b | v3 Benzene parent with prefixes: oracle `randomBenzene` 1–6 groups, e2e, Ordenar dibujo / 90° checks (split from I-42) | same, "I-42" | done — `docs/progress-archive/i-42b.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-42b.md` |
 | I-43a | v3 One OH or amine on the ring, plus prefixes | same, "I-43a" | done — `docs/progress-archive/i-43a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-43a.md` |
-| I-43b | v3 One outside-carbon suffix (COOH/CHO/CN/CONH₂) on the ring, plus prefixes | same, "I-43b" | queued (next) | — | — |
-| I-44 | v3 Several identical principal groups on the ring | same, "I-44" | queued | — | — |
+| I-43b | v3 One outside-carbon suffix (COOH/CHO/CN/CONH₂) on the ring, plus prefixes | same, "I-43b" | done — `docs/progress-archive/i-43b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-43b.md` |
+| I-44 | v3 Several identical principal groups on the ring | same, "I-44" | queued (next) | — | — |
 | I-45a | v3 Substituted phenyl and phenoxy as a substituent | same, "I-45a" | queued | — | — |
 | I-45b | v3 Substituted benzoyl | same, "I-45b" | queued | — | — |
 | I-45c | v3 Esters with substituted rings | same, "I-45c" | queued | — | — |
@@ -117,14 +117,12 @@ user's decisions as `docs/design.md` §14 (pointer from §13.1).
 
 ## Next action
 
-Start I-43b: one outside-carbon suffix (COOH/CHO/CN/CONH₂) on a benzene ring plus prefixes
-(`ácido 4-metilbenzoico`, `4-clorobenzaldehído`, `3-metilbenzonitrilo`, `4-metilbenzamida`,
-`N-etil-4-metilbenzamida`, `ácido 4-hidroxibenzoico`, `ácido 4-formilbenzoico`, `3-cianobenzamida`;
-systematic forms with locant 1 under Otras formas). Spec:
-`autoclaude/processed/220-polysubstituted-benzenes.md` "I-43b", "Code traps", "Fixtures to include";
-design `docs/design.md` §14. The refusal gate in `validate.js` (I-43a lifted it for one OH/amine)
-must be lifted only for that case; extend the oracle like `generateRingPrincipalBenzenes()`.
-Deploying (`npm run deploy`) stays a manual user step.
+Start I-44: several identical principal groups on a benzene ring. Spec:
+`autoclaude/processed/220-polysubstituted-benzenes.md` "I-44", "Code traps", "Fixtures to include";
+design `docs/design.md` §14. The benzene gate is now one rule, `ringSinglePrincipal()` in
+`validate.js` (most senior ring group exactly once); I-44 relaxes it to allow several of the
+senior group. Oracle generators to extend: `generateRingPrincipalBenzenes()`,
+`generateRingOutsideBenzenes()`. Deploying (`npm run deploy`) stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -257,14 +255,16 @@ Deploying (`npm run deploy`) stays a manual user step.
 - Phenols/benzenamines with prefixes (I-43a): gate in `validate.js`, principal-locant-1 naming and
   cresol/anilina aliases in `aromatic.js` / `render.js`; e2e `tests/e2e/phenols-anilines.spec.js`;
   oracle `generateRingPrincipalBenzenes()`.
+- Ring suffix groups with prefixes (I-43b): gate `ringSinglePrincipal()` in `validate.js`; e2e
+  `tests/e2e/substituted-benzoic.spec.js`; oracle `generateRingOutsideBenzenes()`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-43a)
+## Verification (last phase, I-43b)
 
-- Run by the orchestrator: `npm test` 0 (1566 pass) · `npm run check` 0 (134 files) · `npm run build`
-  0 · `npm run e2e` 0 (307 pass, source + dist) · `npm run oracle -- --count 2000 --seed 1 --max 60`
-  0 (21527 pass, 0 fail).
+- Run by the orchestrator: `npm test` 0 (1596 pass) · `npm run check` 0 (135 files) · `npm run build`
+  0 · `npm run e2e` 0 (329 pass, source + dist) · `npm run oracle -- --count 2000 --seed 1 --max 60`
+  0 (22027 pass, 0 fail).
 
 ## Open risks / deviations
 
@@ -429,4 +429,4 @@ Deploying (`npm run deploy`) stays a manual user step.
 
 ## Git state
 
-- I-42b `0f3de8d`, pushed. I-43a committed and pushed right after this checkpoint (see `git log`).
+- I-43a `506e488`, pushed. I-43b committed and pushed right after this checkpoint (see `git log`).
