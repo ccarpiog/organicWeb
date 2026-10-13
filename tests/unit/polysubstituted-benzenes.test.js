@@ -256,8 +256,8 @@ test('a polysubstituted benzene with a functional group stays refused with an ac
     assert.match(result.error.message, /como sustituyente \(fenil, fenoxi o benzoil\) cuando una sola de sus ramas lleva grupos funcionales/);
     assert.match(result.error.message, /\(con grupos funcionales en el anillo y en una rama a la vez, o en dos ramas, por ejemplo\)/);
   }
-  // Esters with a substituted benzene (I-45c) get their own message.
-  for (const smiles of ['CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', 'CC(=O)OC1=CC=C(C)C=C1', 'CCOC(=O)C1=CC=C(C)C=C1']) {
+  // An ester beside another functional group of a substituted benzene gets its own message (I-45c names the rest).
+  for (const smiles of ['CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', 'CC(=O)OC1=CC=C(O)C=C1', 'CCOC(=O)C1=CC=C(N)C=C1']) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(`${result.error.code} ${result.error.ringReason}`, 'CYCLE polysubstitutedBenzene', smiles);
     assert.equal(result.error.message, SUBSTITUTED_BENZENE_ESTER_MESSAGE, smiles);
@@ -266,9 +266,9 @@ test('a polysubstituted benzene with a functional group stays refused with an ac
   for (const smiles of ['NCC1=CC=C(C)C=C1', 'CC(=O)NC1=CC=C(C)C=C1', 'CC(=O)C1=CC=C(C)C=C1', 'OCCOC1=CC=C(C)C=C1']) {
     assert.equal(nameMolecule(parseSmiles(smiles)).ok, true, smiles);
   }
-  // Two rings stay RING_SYSTEM, a benzoate of a substituted phenyl stays CYCLE.
+  // Two rings stay RING_SYSTEM; a benzoate of a substituted phenyl is named since I-45c.
   assert.equal(validateForNaming(parseSmiles('CC1=CC=C(C=C1)C1=CC=CC=C1')).code, 'RING_SYSTEM');
-  assert.equal(validateForNaming(parseSmiles('O=C(OC1=CC=C(Cl)C=C1)C1=CC=CC=C1')).code, 'CYCLE');
+  assert.equal(validateForNaming(parseSmiles('O=C(OC1=CC=C(Cl)C=C1)C1=CC=CC=C1')), null);
 }); // End of test 'a polysubstituted benzene with a functional gro…'
 
 test('complete substitution: the assembly step names the multiplier the name uses (hexa- or hexakis)', () => {

@@ -41,8 +41,10 @@
  * `alcoxicarbonil-` / `aciloxi-` on a ring; generateRingEsters()), of
  * substituted phenyl / phenoxy prefixes (I-45a: `1-(4-metilfenil)etan-1-ona`;
  * generateSubstitutedPhenyls()) and of substituted benzoyl prefixes (I-45b:
- * `ácido 2-(4-metilbenzoil)butanoico`; generateSubstitutedBenzoyls()),
- * plus the list of cycloalkanes in a size range.
+ * `ácido 2-(4-metilbenzoil)butanoico`; generateSubstitutedBenzoyls()) and
+ * of esters with substituted benzene rings (I-45c: `4-metilbenzoato de
+ * etilo`, `etanoato de 4-metilfenilo`, `4-metilbenzoato de 4-clorofenilo`;
+ * generateSubstitutedEsters()), plus the list of cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
  * molecules, in the same order.
@@ -2677,6 +2679,133 @@ export function generateRingEsters({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct ring esters
   return molecules;
 } // End of function generateRingEsters()
+
+/**
+ * A random benzene with one to `most` prefix groups (randomBenzene():
+ * branches, halogens, alkoxy groups, either Kekulé drawing) for
+ * generateSubstitutedEsters(), with its ring atoms that still carry a
+ * hydrogen.
+ *
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} extra - The most side-chain carbons.
+ * @param {number} most - The most prefix groups (1–4).
+ * @returns {{mol: object, free: number[]}} The benzene and its free ring atoms.
+ */
+function prefixedBenzene(random, extra, most) {
+  const mol = randomBenzene(random, {
+    extra: randomInt(random, 0, Math.max(0, extra)),
+    kekule: random() < 0.5 ? 1 : 2,
+    unsaturation: random() * 0.2,
+    branchiness: 0.2 + random() * 0.8,
+    groups: randomInt(random, 1, most),
+    hetero: 0.3 + random() * 0.6,
+  });
+  const ring = [...mol.atoms.keys()].slice(0, 6); // randomBenzene() adds the ring atoms first.
+  return { mol, free: ring.filter((id) => adjacency(mol).get(id).length === 2) };
+}
+
+/**
+ * Tells whether a molecule has a benzene ring with two or more substituted
+ * ring atoms (design.md §14: a polysubstituted benzene).
+ *
+ * @param {object} mol - A molecule.
+ * @returns {boolean} True when some benzene ring carries two or more groups.
+ */
+function hasSubstitutedBenzene(mol) {
+  const adj = adjacency(mol);
+  return perceiveRings(mol).rings.some((ring) => {
+    const inRing = new Set(ring.atoms);
+    const orders = ring.bonds.map((id) => mol.bonds.get(id).order);
+    const benzene = ring.atoms.length === 6 && orders.every((order, i) => order === orders[i % 2]) && orders[0] !== orders[1];
+    return benzene && ring.atoms.filter((id) => adj.get(id).some((n) => !inRing.has(n.atom))).length > 1;
+  });
+}
+
+/** Shapes drawn by generateSubstitutedEsters(), with their weights. */
+const SUBSTITUTED_ESTER_SHAPES = Object.freeze(['benzoate', 'benzoate', 'aryl', 'aryl', 'split', 'split', 'side']);
+
+/**
+ * Generates up to `count` distinct (by canonical key) esters with a
+ * substituted benzene ring (design.md §14.1, I-45c): a random benzene with
+ * one to three or four prefix groups (prefixedBenzene()) that carries the
+ * –COO– carbon on a free ring atom, esterified by a random acyclic group
+ * or a ring group (`4-metilbenzoato de etilo`, `4-clorobenzoato de
+ * ciclohexilo`); a random acyclic acid esterified by such a benzene
+ * through one of its carbons (`etanoato de 4-metilfenilo`, `etanoato de
+ * 2-(4-metilfenil)etilo`); both at once, two rings split by the ester
+ * (`4-metilbenzoato de 4-clorofenilo`); or such a benzene with a short
+ * side chain ending in the –COO– (`2-(4-metilfenil)etanoato de etilo`).
+ * Only molecules valid for naming, with a benzene carrying two or more
+ * groups, named in every prefix style, are kept.
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateSubstitutedEsters({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 3779 + 47);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60 && maxSize >= 9) {
+    attempts += 1;
+    const shape = SUBSTITUTED_ESTER_SHAPES[Math.floor(random() * SUBSTITUTED_ESTER_SHAPES.length)];
+    /**
+     * An acyclic hydrocarbon of 1 to `most` carbons.
+     *
+     * @param {number} most - The most carbons.
+     * @returns {object} The hydrocarbon.
+     */
+    const acyclic = (most) => randomHydrocarbon(random, {
+      size: randomInt(random, 1, Math.max(1, most)), unsaturation: random() * 0.2, branchiness: random(),
+    });
+    let mol;
+    if (shape === 'aryl') {
+      const acid = carboxylate(acyclic(Math.max(1, maxSize - 8)), random, 1);
+      mol = esterify(acid, random, prefixedBenzene(random, Math.max(0, maxSize - 9), 3).mol);
+    } else {
+      const { mol: base, free } = prefixedBenzene(random, Math.max(0, maxSize - 9), shape === 'split' ? 3 : 4);
+      if (free.length === 0 || free.length === 6) {
+        continue; // No room for the –COO–, or no ring prefix (a carbon group may get no carbon).
+      }
+      const site = free[Math.floor(random() * free.length)];
+      let acid;
+      if (shape === 'side') {
+        const copy = cloneMolecule(base);
+        const firstNew = copy.nextAtomId;
+        growSideChain(copy, random, site, randomInt(random, 1, 3), 0.3);
+        acid = carboxylate(copy, random, 1);
+        if (carboxylCarbons(acid).length === 0 || carboxylCarbons(acid).some((c) => c < firstNew)) {
+          continue;
+        }
+      } else {
+        acid = ringGroupGraft(base, random, 'acid', 1, new Set([site]));
+      }
+      let alkyl;
+      if (shape === 'split') {
+        alkyl = random() < 0.8 ? prefixedBenzene(random, 2, 3).mol : randomRingGroup(random, 2);
+      } else {
+        alkyl = random() < 0.2 ? randomRingGroup(random, 2) : acyclic(4);
+      }
+      mol = esterify(acid, random, alkyl);
+    } // End of the choice of the shape
+    if (random() < 0.1) {
+      mol = halogenate(mol, random, 0.05 + random() * 0.1);
+    }
+    const carbons = [...mol.atoms.values()].filter((a) => a.element === 'C').length;
+    if (carbons > maxSize || esterCarbons(mol).length !== 1 || !hasSubstitutedBenzene(mol) || validateForNaming(mol)) {
+      continue; // Too big, no ester, no polysubstituted benzene, or out of scope.
+    }
+    if (!PREFIX_STYLES.every((prefixStyle) => nameMolecule(mol, { prefixStyle }).ok)) {
+      continue; // Refused by the engine in some style.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct substituted esters
+  return molecules;
+} // End of function generateSubstitutedEsters()
 
 /**
  * The cycloalkanes (unsubstituted saturated monocycles, design.md §13.4

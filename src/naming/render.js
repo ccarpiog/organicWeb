@@ -1229,9 +1229,10 @@ export function assembleEster(acidParts, esters, lexicon) {
 /**
  * Traditional-name ids (principal.js carbonylTraditionalId()) of an acetic
  * word after a substituted phenyl prefix (design.md §14.1, I-45a):
- * `ácido 2-(3-metilfenil)acético`, `2-(4-metilfenil)acetamida`.
+ * `ácido 2-(3-metilfenil)acético`, `2-(4-metilfenil)acetamida`; since I-45c
+ * the acid part of an ester, `2-(4-metilfenil)acetato de etilo`.
  */
-export const ARYL_ACETIC_IDS = Object.freeze(['arylaceticAcid', 'arylacetaldehyde', 'arylacetamide', 'arylacetonitrile']);
+export const ARYL_ACETIC_IDS = Object.freeze(['arylaceticAcid', 'arylacetaldehyde', 'arylacetamide', 'arylacetonitrile', 'arylacetate']);
 
 /**
  * Renders a name structure to text and coloured parts (a chain parent, or
@@ -1266,7 +1267,10 @@ export function renderName(structure, lexicon = lexiconEs, options = {}) {
     const sites = structure.prefixes.flatMap((g) => g.locants);
     const atoms = [...new Set([...structure.parent.atoms, ...group.atoms, ...sites.flatMap((site) => site.atoms)])];
     const bonds = [...structure.parent.bonds, ...group.bonds, ...sites.flatMap((site) => [site.bond, ...site.bonds])];
-    const acid = [part(lexicon.traditionalName(options.traditional), 'stem', atoms, bonds)];
+    const word = part(lexicon.traditionalName(options.traditional), 'stem', atoms, bonds);
+    // A substituted phenyl on the acetate word (design.md §14.1, I-45c) keeps its prefix: `2-(4-metilfenil)acetato`.
+    const aryl = ARYL_ACETIC_IDS.includes(options.traditional);
+    const acid = aryl ? [...renderPrefixes(structure.prefixes, lexicon, false), { ...word, atoms: [...new Set([...structure.parent.atoms, ...group.atoms])], bonds: [...structure.parent.bonds, ...group.bonds] }] : [word];
     const parts = assembleEster(acid, esterParts(structure), lexicon);
     return { name: parts.map((p) => p.text).join(''), parts };
   }

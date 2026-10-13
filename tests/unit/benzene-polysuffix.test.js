@@ -285,7 +285,7 @@ test('refusals that stay: groups on the N of a ring diamine or diamide, esters, 
   assert.equal(amide.error.message, SUBSTITUTED_BENZENE_POLYAMIDE_MESSAGE);
   // On a cyclohexane the message is unchanged.
   assert.equal(nameMolecule(parseSmiles('CNC(=O)C1CCC(C(N)=O)CC1')).error.message, SUBSTITUTED_POLYAMIDE_MESSAGE);
-  // An ester beside a substituted benzene has its own message (I-45c).
+  // An ester beside another functional group of a substituted benzene has its own message (I-45c).
   const refusals = [
     ['CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', SUBSTITUTED_BENZENE_ESTER_MESSAGE],
     ['CC(=O)C1=CC(O)=CC(O)=C1', /el benceno-1,2-diol/],

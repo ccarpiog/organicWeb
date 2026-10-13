@@ -67,8 +67,8 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-44 | v3 Several identical principal groups on the ring | same, "I-44" | done — `docs/progress-archive/i-44.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-44.md` |
 | I-45a | v3 Substituted phenyl and phenoxy as a substituent | same, "I-45a" | done — `docs/progress-archive/i-45a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-45a.md` |
 | I-45b | v3 Substituted benzoyl | same, "I-45b" | done — `docs/progress-archive/i-45b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-45b.md` |
-| I-45c | v3 Esters with substituted rings | same, "I-45c" | queued (next) | — | — |
-| I-46 | v3 Wrap-up (Ayuda, examples, README, CLAUDE.md scope, oracle README) | same, "I-46" | queued | — | — |
+| I-45c | v3 Esters with substituted rings | same, "I-45c" | done — `docs/progress-archive/i-45c.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-45c.md` |
+| I-46 | v3 Wrap-up (Ayuda, examples, README, CLAUDE.md scope, oracle README) | same, "I-46" | queued (next) | — | — |
 
 The twelve original plan items and user-feedback items I-13…I-20 are done.
 v2 plan (user-confirmed scope): I-21…I-41c all done — the plan is complete
@@ -117,14 +117,12 @@ user's decisions as `docs/design.md` §14 (pointer from §13.1).
 
 ## Next action
 
-Start I-45c: esters with substituted rings — `4-metilbenzoato de etilo`, `acetato de 4-metilfenilo`,
-`benzoato de 4-clorofenilo`, including the split-ring (two-ring) case. Spec:
-`autoclaude/processed/220-polysubstituted-benzenes.md` "I-45c" and "Code traps" 3 and 6; design
-`docs/design.md` §14. Esters with a substituted benzene are refused today in `validate.js` (its
-message "su benceno lleva otros sustituyentes además del éster" also fires for a benzoyl's ring —
-reword or lift it). Ring esters came from I-40d (`esterRingSplit()` in `validate.js`); phenyl and
-benzoyl numbering from I-45a/I-45b (`substituent.js` / `render.js`). Deploying (`npm run deploy`)
-stays a manual user step.
+Start I-46, the v3 wrap-up (last phase of the plan): Ayuda — lift the "dos o más sustituyentes
+(orto, meta, para)" out-of-scope line and add a short o/m/p note; examples group «Bencenos con varios
+sustituyentes» in `src/ui/examples.js`; README, CLAUDE.md scope sentence, `docs/design.md` §14
+cleanup, `scripts/oracle/README.md`. Spec: `autoclaude/processed/220-polysubstituted-benzenes.md`
+"I-46" (new wording still pending teacher review). Pattern: I-41c (`docs/progress-archive/i-41c.md`).
+Deploying (`npm run deploy`) stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -269,14 +267,17 @@ stays a manual user step.
   `explain.js` (`ringCarbonylDescription`, `acylaminoDescription`); tests
   `tests/unit/substituted-benzoyl.test.js`, `tests/e2e/substituted-benzoyl.spec.js`; oracle
   `generateSubstitutedBenzoyls()`.
+- Substituted-ring esters (I-45c): per-ring gate in `validate.js`, benzoate/phenyl-ester naming in
+  `principal.js` / `render.js`, explain ester step; tests `tests/unit/substituted-esters.test.js`,
+  `tests/e2e/substituted-esters.spec.js`; oracle `generateSubstitutedEsters()`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-45b)
+## Verification (last phase, I-45c)
 
-- Run by the orchestrator after the review fix: `npm test` 0 (1682 pass) · `npm run check` 0 (141 files)
-  · `npm run build` 0 · `npm run e2e` 0 (385 pass, source + dist) · `npm run oracle -- --count 2000
-  --seed 1 --max 60` 0 (23277 pass, 0 fail).
+- Run by the orchestrator: `npm test` 0 (1715 pass) · `npm run check` 0 (143 files) · `npm run build` 0
+  · `npm run e2e` 0 (405 pass, source + dist) · `npm run oracle -- --count 2000 --seed 1 --max 60` 0
+  (23527 pass, 0 fail).
 
 ## Open risks / deviations
 
@@ -337,10 +338,13 @@ stays a manual user step.
 - I-45b: no retained alternatives for substituted benzoyl (no `toluoil`/o/m/p); two rings,
   esters and functional groups on the benzoyl ring stay refused; spec example
   `ácido 4-(4-metilbenzoil)benzoico` is two rings, refused (`docs/progress-archive/i-45b.md`).
+- I-45c: no `toluato`/`tolilo`/`cresilo`; o/m/p only for a one-prefix benzoate, never the O-bound
+  phenyl (from memory); junior groups on an ester's ring and benzene diesters stay refused
+  (`docs/progress-archive/i-45c.md`).
 
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-45a `1defad6`, pushed. I-45b committed and pushed right after this checkpoint (see `git log`).
+- I-45b `671baf7`, pushed. I-45c committed and pushed right after this checkpoint (see `git log`).

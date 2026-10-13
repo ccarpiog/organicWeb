@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-13T21:19:01Z",
+  "updated": "2026-10-13T21:48:23Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups, polysubstituted benzenes) by IUPAC 2013 rules.",
   "phases": [
@@ -523,8 +523,11 @@
     {
       "id": "I-45c",
       "title": "v3 Esters with substituted rings",
-      "status": "queued",
-      "summary": "Esters whose ring parts carry substituents, e.g. 4-metilbenzoato de etilo."
+      "status": "done",
+      "summary": "Esters whose benzene rings carry prefixes are named, e.g. 4-metilbenzoato de 4-clorofenilo.",
+      "risk": "high",
+      "review": "Codex ship, 0 findings — docs/reviews/I-45c.md",
+      "narrative": "docs/progress-archive/i-45c.md"
     },
     {
       "id": "I-46",

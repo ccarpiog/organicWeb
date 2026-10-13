@@ -80,7 +80,8 @@ export const PHENOL_STEM = 'fen';
  * nomenclature. Cumene, cymene and the like are no longer retained
  * (P-22.1.3), so `cumeno` is not offered. The `aryl…` ids (I-45a) are
  * only the acetic word after a substituted phenyl prefix
- * (`ácido 2-(3-metilfenil)acético`, render.js renderName()).
+ * (`ácido 2-(3-metilfenil)acético`, render.js renderName(); I-45c also
+ * `2-(4-metilfenil)acetato de etilo`).
  */
 export const TRADITIONAL_NAMES = Object.freeze({
   toluene: 'tolueno',
@@ -110,6 +111,7 @@ export const TRADITIONAL_NAMES = Object.freeze({
   arylacetaldehyde: 'acetaldehído',
   arylacetamide: 'acetamida',
   arylacetonitrile: 'acetonitrilo',
+  arylacetate: 'acetato',
   xylene12: '1,2-xileno',
   xylene13: '1,3-xileno',
   xylene14: '1,4-xileno',
@@ -210,6 +212,7 @@ export const TRADITIONAL_LABELS = Object.freeze({
   arylacetaldehyde: 'nombre tradicional, que la IUPAC (2013) acepta',
   arylacetamide: 'nombre tradicional, que la IUPAC (2013) acepta',
   arylacetonitrile: 'nombre tradicional, que la IUPAC (2013) acepta',
+  arylacetate: 'nombre tradicional, que la IUPAC (2013) acepta',
   xylene12: 'nombre tradicional, que la IUPAC (2013) acepta',
   xylene13: 'nombre tradicional, que la IUPAC (2013) acepta',
   xylene14: 'nombre tradicional, que la IUPAC (2013) acepta',

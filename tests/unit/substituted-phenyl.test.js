@@ -217,9 +217,10 @@ test('out-of-scope molecules stay refused with accurate messages', () => {
   assert.equal(named('OC(=O)C(CC)C(=O)C1=CC=C(C)C=C1').name, 'ácido 2-(4-metilbenzoil)butanoico');
   assert.equal(named('OC(=O)CNC(=O)C1=CC=C(C)C=C1').name, 'ácido 2-[(4-metilbenzoil)amino]etanoico');
   assert.equal(named('OC(=O)C(CC)C(=O)C1=CC=CC=C1').name, 'ácido 2-benzoilbutanoico', 'an unsubstituted benzoyl is still named');
-  // Esters with a substituted ring (I-45c), the ring-split ones and an ester cited as a prefix included.
-  for (const smiles of ['CC(=O)OC1=CC=C(C)C=C1', 'CCOC(=O)C1=CC=C(C)C=C1', 'ClC1=CC=C(C=C1)C(=O)OC1=CC=CC=C1',
-    'O=C(OC1=CC=C(Cl)C=C1)C1=CC=CC=C1', 'OC(=O)CCC(=O)OC1=CC=C(C)C=C1', 'COC(=O)CC1=CC=C(C)C=C1']) {
+  // Esters with a substituted ring are named since I-45c (tests/unit/substituted-esters.test.js); beside another
+  // functional group of the ring they stay refused, the ring-split ones included.
+  for (const smiles of ['CC(=O)OC1=CC=C(O)C=C1', 'CCOC(=O)C1=CC=C(CO)C=C1', 'OC1=CC=C(C=C1)C(=O)OC1=CC=CC=C1',
+    'O=C(OC1=CC=C(N)C=C1)C1=CC=CC=C1', 'OC(=O)CCC(=O)OC1=CC=C(O)C=C1', 'COC(=O)CC1=CC=C(CO)C=C1']) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(`${result.error.code} ${result.error.ringReason}`, 'CYCLE polysubstitutedBenzene', smiles);
     assert.equal(result.error.message, SUBSTITUTED_BENZENE_ESTER_MESSAGE, smiles);

@@ -154,9 +154,11 @@ test('ringEster is retired; lactones, mixed ring diesters, three esters and othe
   }
   assert.match(MIXED_RING_DIESTER_MESSAGE, /ciclohexano-1,2-dicarboxilato de 1-etilo y 2-metilo/);
   assert.match(ESTER_PREFIX_MESSAGE, /un oxígeno, un nitrógeno o un anillo/);
-  // Benzene stays monosubstituted; two rings only with the ester between them and no acid.
-  assert.equal(nameOf('COC(=O)C1=CC=C(C)C=C1'), 'CYCLE polysubstitutedBenzene');
-  assert.equal(nameOf('CC(=O)OC1=CC=C(C)C=C1'), 'CYCLE polysubstitutedBenzene');
+  // Two rings only with the ester between them and no acid.
+  // Esters with a substituted benzene are named since I-45c (tests/unit/substituted-esters.test.js).
+  assert.equal(nameOf('COC(=O)C1=CC=C(C)C=C1'), '4-metilbenzoato de metilo');
+  assert.equal(nameOf('CC(=O)OC1=CC=C(C)C=C1'), 'etanoato de 4-metilfenilo');
+  assert.equal(nameOf('CC(=O)OC1=CC=C(O)C=C1'), 'CYCLE polysubstitutedBenzene');
   assert.equal(nameOf('OC(=O)C1CCC(OC(=O)C2=CC=CC=C2)CC1'), 'RING_SYSTEM');
   assert.equal(nameOf('COC(=O)C1CCC(C2CCCCC2)CC1'), 'RING_SYSTEM', 'two rings on the same side of the ester');
   assert.equal(nameOf('O=C(OC1CCCCC1)C1CCC(C2CC2)CC1'), 'RING_SYSTEM', 'three rings');

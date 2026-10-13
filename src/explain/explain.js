@@ -3761,7 +3761,9 @@ function esterGroupStep(result) {
  * How the O-bound group of an ester is named (design.md §13.4 I-35): the
  * retained `isopropilo` (with `propan-2-ilo` and `1-metiletilo`) and
  * `tert-butilo` (`1,1-dimetiletilo`), a bare ring group (`fenilo`,
- * `ciclohexilo`, I-40d), or, for a group with its own
+ * `ciclohexilo`, I-40d), a substituted phenyl (design.md §14.1, I-45c:
+ * `4-metilfenilo`, numbered from the carbon bonded to the O,
+ * benzeneOwnPrefixSentences()), or, for a group with its own
  * branches, multiple bonds or a free valence not at its carbon 1, the
  * sentences of describeSubstituent() on that group seen from the O (never
  * enclosed: it is a word of its own, not a prefix).
@@ -3774,6 +3776,14 @@ function esterGroupFormation(alkyl) {
   if (alkyl.ring && alkyl.prefixes.length === 0 && alkyl.retained === 'phenyl') {
     // A ring as the O-bound group (design.md §13.4 I-40d): `etanoato de fenilo`.
     return [`${q(name)} es el [[benceno]] como grupo, unido al oxígeno por uno de sus carbonos: «fenil» + «-o».`];
+  }
+  if (alkyl.ring && alkyl.retained === 'phenyl') {
+    // A substituted phenyl as the O-bound group (design.md §14.1, I-45c): `acetato de 4-metilfenilo`.
+    return [
+      `${q(name)} es un anillo de [[benceno]] unido al oxígeno por uno de sus carbonos: el grupo «fenil» (el benceno como sustituyente) + «-o», que además lleva sus propios [[sustituyentes|sustituyente]].`,
+      ...benzeneOwnPrefixSentences(alkyl, 'al oxígeno', 'fenilo'),
+      'No va entre paréntesis: es una palabra suelta, la segunda del nombre.',
+    ];
   }
   if (alkyl.ring && alkyl.prefixes.length === 0 && alkyl.chain.double.length + alkyl.chain.triple.length === 0) {
     return [`${q(name)} es el [[anillo]] de ${count(alkyl.chain.length, 'carbono', 'carbonos')} como grupo, unido al oxígeno por uno de sus carbonos: el nombre del anillo con «-ilo» en lugar de «-ano».`];

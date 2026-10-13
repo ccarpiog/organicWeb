@@ -18,7 +18,9 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   `3-etilbenceno-1,2-diol`, `ácido benceno-1,3-dicarboxílico`), and such a
   benzene with prefixes is also a substituted phenyl, phenoxy or benzoyl
   prefix of a chain parent (`1-(4-metilfenil)etan-1-ona`,
-  `2-(4-metilfenoxi)etan-1-ol`, `ácido 2-(4-metilbenzoil)butanoico`).
+  `2-(4-metilfenoxi)etan-1-ol`, `ácido 2-(4-metilbenzoil)butanoico`) or
+  either ring of an ester (`4-metilbenzoato de etilo`, `etanoato de
+  4-metilfenilo`, `4-metilbenzoato de 4-clorofenilo`).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles. Systematic name first; traditional names and the old
   orto/meta/para forms go under "Otras formas válidas".

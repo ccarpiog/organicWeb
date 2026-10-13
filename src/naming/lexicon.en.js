@@ -77,6 +77,7 @@ export const TRADITIONAL_NAMES = Object.freeze({
   arylacetaldehyde: 'acetaldehyde',
   arylacetamide: 'acetamide',
   arylacetonitrile: 'acetonitrile',
+  arylacetate: 'acetate',
   xylene12: '1,2-xylene',
   xylene13: '1,3-xylene',
   xylene14: '1,4-xylene',

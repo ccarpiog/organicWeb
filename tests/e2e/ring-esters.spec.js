@@ -175,7 +175,7 @@ test('loaded ring esters are named; a lactone, a mixed ring diester and two este
     ['O=C1CCCCO1', 'RING_SYSTEM', 'Esta molécula es una lactona'],
     ['CCOC(=O)C1CCCCC1C(=O)OC', 'HETEROATOM', 'en qué carbono del anillo está cada grupo'],
     ['COC(=O)C1CCC(CC(=O)OC)CC1', 'HETEROATOM', 'un oxígeno, un nitrógeno o un anillo'],
-    ['COC(=O)C1=CC=C(C)C=C1', 'CYCLE', 'Esta molécula es un éster (tiene un grupo –COO–) y su benceno lleva otros sustituyentes'],
+    ['COC(=O)C1=CC=C(O)C=C1', 'CYCLE', 'Esta molécula es un éster (tiene un grupo –COO–) y su benceno lleva, además del éster, otro grupo funcional'],
   ]) {
     await loadSmiles(page, smiles);
     await askName(page);

@@ -206,8 +206,9 @@ test('out-of-scope molecules stay refused with accurate messages', () => {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(`${result.error.code} ${result.error.ringKind}`, 'RING_SYSTEM several', smiles);
   }
-  // An ester in the molecule (I-45c).
-  const ester = nameMolecule(parseSmiles('CCOC(=O)C(CC)C(=O)C1=CC=C(C)C=C1'));
+  // An ester in the molecule is named since I-45c; beside a junior group on the benzoyl's ring it stays refused.
+  assert.equal(named('CCOC(=O)C(CC)C(=O)C1=CC=C(C)C=C1').name, '2-(4-metilbenzoil)butanoato de etilo');
+  const ester = nameMolecule(parseSmiles('CCOC(=O)C(CC)C(=O)C1=CC=C(O)C=C1'));
   assert.equal(`${ester.error.code} ${ester.error.ringReason}`, 'CYCLE polysubstitutedBenzene');
   assert.equal(ester.error.message, SUBSTITUTED_BENZENE_ESTER_MESSAGE);
   // A functional group on the benzoyl's ring or on another of its branches.

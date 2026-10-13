@@ -166,12 +166,12 @@ for (const c of [
 test('still out of scope: a diester, a CHO on a branch, an ester or a ketone beside other groups (two ring –COOH or –CHO are named since I-44)', async ({ page }) => {
   const errors = await openApp(page);
   const error = page.locator('#results .results-error');
-  for (const smiles of ['CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', 'O=CCC1=CC=C(C(O)=O)C=C1', 'CCOC(=O)C1=CC=C(C)C=C1', 'CC(=O)C1=CC=C(C(O)=O)C=C1']) {
+  for (const smiles of ['CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', 'O=CCC1=CC=C(C(O)=O)C=C1', 'CCOC(=O)C1=CC=C(O)C=C1', 'CC(=O)C1=CC=C(C(O)=O)C=C1']) {
     await loadSmiles(page, smiles);
     await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
     await expect(error).toHaveAttribute('data-code', 'CYCLE');
-    // An ester beside a substituted ring has its own message (I-45c).
-    await expect(error).toContainText(smiles.startsWith('CCOC(=O)') ? 'De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más'
+    // An ester beside another functional group of the ring has its own message (I-45c names the rest).
+    await expect(error).toContainText(smiles.startsWith('CCOC(=O)') ? 'su benceno lleva, además del éster, otro grupo funcional'
       : 'el benceno-1,2-diol o el ácido 4-hidroxibenzoico');
     await expect(page.locator('#result-name')).toHaveCount(0);
   } // End of the loop over the refused benzenes

@@ -177,8 +177,8 @@ test('still out of scope: an OH on a branch, a ketone or an ester beside other g
     await loadSmiles(page, smiles);
     await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
     if (smiles.startsWith('CCOC(=O)')) {
-      // An ester beside a substituted ring has its own message (I-45c).
-      await expect(error).toContainText('De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más');
+      // An ester beside another functional group of the ring has its own message (I-45c).
+      await expect(error).toContainText('su benceno lleva, además del éster, otro grupo funcional');
       continue;
     }
     await expect(error).toContainText('aún no sé combinar con los demás');

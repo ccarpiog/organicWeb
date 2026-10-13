@@ -218,7 +218,8 @@ test('Ordenar dibujo lays out a named ring (I-27b); the 90° view falls back', (
   assert.equal(canArrange(nameMolecule(parseSmiles('OC1=CC(C)=CC=C1'))), true, 'a substituted phenol is named since I-43a');
   assert.equal(canArrange(nameMolecule(parseSmiles('OC(=O)C1=CC(C)=CC=C1'))), true, 'a substituted benzoic acid is named since I-43b');
   assert.equal(canArrange(nameMolecule(parseSmiles('OC(=O)C1=CC(C(=O)O)=CC=C1'))), true, 'a benzenedicarboxylic acid is named since I-44');
-  assert.equal(canArrange(nameMolecule(parseSmiles('CCOC(=O)C1=CC(C)=CC=C1'))), false, 'an ester of a substituted benzoic acid is refused (I-45c)');
+  assert.equal(canArrange(nameMolecule(parseSmiles('CCOC(=O)C1=CC(C)=CC=C1'))), true, 'an ester of a substituted benzoic acid is named since I-45c');
+  assert.equal(canArrange(nameMolecule(parseSmiles('CCOC(=O)C1=CC=C(C(=O)OCC)C=C1'))), false, 'a ring diester of benzene stays refused (I-45c)');
   assert.equal(canArrange(nameMolecule(parseSmiles('CCCC'))), true);
   assert.deepEqual(projectRightAngles(mol), { ok: false, reason: 'CYCLE' });
 });

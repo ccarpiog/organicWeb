@@ -14,7 +14,8 @@
  *   only when every group is a hydrocarbon branch, a halogen or an alkoxy
  *   group, plus OH, amine, –COOH, amide, –C≡N or –CHO groups bonded to the
  *   ring, the most senior once or several times, or as a substituted phenyl,
- *   phenoxy or benzoyl prefix beside one functional branch, without an ester
+ *   phenoxy or benzoyl prefix beside one functional branch, or (I-45c) as the ring of
+ *   an ester beside one functional branch, `4-metilbenzoato de etilo`, `etanoato de 4-metilfenilo`
  *   (design.md §14.1; otherwise CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
  *   one gets TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps (≤ 60 carbons, ≤ 80 heavy atoms),
  *   only elements the engine can name yet (carbon, halogens bonded to a
@@ -281,14 +282,20 @@ export const SUBSTITUTED_POLYAMINE_MESSAGE = 'Esta molécula tiene varios grupos
   + '(como la etano-1,2-diamina) y las aminas con un solo nitrógeno (como la N-metiletanamina).';
 
 /**
- * Spanish CYCLE message (design.md §14.1, I-45a) for an ester whose molecule
- * has a benzene ring with two or more substituents: esters with a
- * substituted ring are phase I-45c (`acetato de 4-metilfenilo`).
+ * Spanish CYCLE message (design.md §14.1, I-45a, reworded in I-45c) for an
+ * ester whose molecule has a benzene ring with two or more substituents
+ * that is still out of scope: besides the branch that holds the ester
+ * (polysubstitutedBenzeneScope()), the ring carries another functional
+ * group, on the ring itself or on another branch (`acetato de
+ * 4-hidroxifenilo`, `benceno-1,4-dicarboxilato de dietilo`). Esters whose
+ * benzene only carries carbon branches, halogens or alkoxy groups besides
+ * the ester are named since I-45c (`4-metilbenzoato de etilo`, `etanoato
+ * de 4-metilfenilo`, `benzoato de 4-clorofenilo`).
  */
-export const SUBSTITUTED_BENZENE_ESTER_MESSAGE = 'Esta molécula es un éster (tiene un grupo –COO–) y su benceno lleva '
-  + 'otros sustituyentes además del éster. De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más (como '
-  + 'el benzoato de metilo o el etanoato de fenilo). Sí sé nombrar un benceno con varios sustituyentes sin éster (como '
-  + 'el 2-(4-metilfenoxi)etan-1-ol).';
+export const SUBSTITUTED_BENZENE_ESTER_MESSAGE = 'Esta molécula es un éster (tiene un grupo –COO–) y su benceno lleva, '
+  + 'además del éster, otro grupo funcional (otro –COO–, un –OH, un grupo amino…), en el anillo o en otra de sus ramas. '
+  + 'De momento solo sé nombrar los ésteres cuyo benceno lleva, aparte del éster, solo ramas de carbono, halógenos o '
+  + 'grupos alcoxi (como el 4-metilbenzoato de etilo, el etanoato de 4-metilfenilo o el benzoato de 4-clorofenilo).';
 
 /**
  * The SUBSTITUTED_POLYAMINE_MESSAGE of a benzene parent (design.md §14.1,
@@ -762,7 +769,8 @@ function ringGroups(mol, ring) {
  * (`substitutedPolyamine`, naming/index.js; `substitutedPolyamide`,
  * amidePlacementError(): N¹/N⁴ locants). A ketone or any group on a side
  * chain makes the benzene a substituted phenyl prefix instead
- * (polysubstitutedBenzeneScope(), I-45a); an ester stays refused (I-45c).
+ * (polysubstitutedBenzeneScope(), I-45a), and an ester makes it the ring
+ * of the ester (I-45c).
  *
  * @param {Map<string, Set<number>>|null} groups - The ring groups (ringGroups()).
  * @returns {boolean} True when the molecule is in the I-43a / I-43b / I-44 scope.
@@ -806,38 +814,51 @@ function functionalBranches(mol, ring) {
  * ringPrincipalGroups(): I-42a…I-44); 'phenyl' when it is a substituted
  * `fenil` / `fenoxi` prefix of a chain parent (I-45a), or the ring of a
  * substituted `benzoil` prefix (I-45b: `ácido 2-(4-metilbenzoil)butanoico`,
- * its C=O carbon in the functional branch): no ester in the
- * molecule (I-45c) and exactly one branch holding characteristic groups
- * (functionalBranches(): the branch that holds the parent with the
- * principal group), every other branch being a hydrocarbon branch, a
- * halogen or an alkoxy group (`2-(4-clorofenil)etan-1-ol`,
- * `2-(4-metilfenoxi)etan-1-ol`, `N-(4-metilfenil)etanamida`); null
- * otherwise. A junior group on the ring beside a functional branch
- * (`ácido 2-(4-hidroxifenil)etanoico`) is not covered yet. Whether the
- * engine really makes the ring a prefix is checked by naming/index.js
- * (substitutedPhenylOnly()).
+ * its C=O carbon in the functional branch), or, since I-45c, the
+ * substituted ring of an ester's O-bound group (`acetato de
+ * 4-metilfenilo`, `etanoato de 2-(4-metilfenil)etilo`) or of its acid part
+ * away from the ester carbon (`2-(4-metilfenil)etanoato de etilo`);
+ * 'benzoate' (I-45c) when the ring is the parent of an ester whose carbon
+ * is bonded to the ring (`4-metilbenzoato de etilo`). In every case
+ * exactly one branch holds characteristic groups (functionalBranches():
+ * the branch that holds the parent with the principal group, or the
+ * ester), every other branch being a hydrocarbon branch, a halogen or an
+ * alkoxy group (`2-(4-clorofenil)etan-1-ol`, `2-(4-metilfenoxi)etan-1-ol`,
+ * `N-(4-metilfenil)etanamida`); null otherwise. Each ring of an ester split
+ * between two rings (esterRingSplit(), I-40d) is checked the same way
+ * (`4-metilbenzoato de 4-clorofenilo`). A junior group on the ring beside
+ * a functional branch (`ácido 2-(4-hidroxifenil)etanoico`, `acetato de
+ * 4-hidroxifenilo`) is not covered yet. Whether the engine really makes
+ * the ring a prefix is checked by naming/index.js (substitutedPhenylOnly()).
  *
  * @param {object} mol - A structurally valid molecule.
  * @param {string} kind - Its ring kind (classifyRings()).
  * @param {{atoms: number[]}} ring - The benzene ring.
- * @returns {'parent'|'phenyl'|null} The scope.
+ * @returns {'parent'|'phenyl'|'benzoate'|null} The scope.
  */
 function polysubstitutedBenzeneScope(mol, kind, ring) {
-  if (kind !== 'carbocycle') {
+  const split = kind === 'several' && esterRingSplit(mol) !== null;
+  if (kind !== 'carbocycle' && !split) {
     return null;
   }
-  if (prefixesOnly(mol) || ringPrincipalGroups(ringGroups(mol, ring))) {
+  if (!split && (prefixesOnly(mol) || ringPrincipalGroups(ringGroups(mol, ring)))) {
     return 'parent';
   }
-  return esterCarbons(mol).length === 0 && functionalBranches(mol, ring).length === 1 ? 'phenyl' : null;
+  const branches = functionalBranches(mol, ring);
+  if (branches.length !== 1) {
+    return null;
+  }
+  // An ester carbon bonded to the ring (no acid: beside one it is a prefix, `benzoiloxi`): the ring is the parent.
+  const benzoate = isEsterCarbon(mol, adjacency(mol), branches[0][0]) && carboxylCarbons(mol).length === 0;
+  return benzoate ? 'benzoate' : 'phenyl';
 }
 
 /**
  * The CYCLE error (`ringReason` 'polysubstitutedBenzene') of a benzene ring
  * with two or more substituents that the app cannot name yet (design.md
  * §3.2, §14.1): polysubstitutedBenzeneMessage(), or
- * SUBSTITUTED_BENZENE_ESTER_MESSAGE when the molecule has an ester (I-45c,
- * the ring-split esters included).
+ * SUBSTITUTED_BENZENE_ESTER_MESSAGE when the molecule has an ester (the
+ * ring-split esters included; reworded in I-45c, which names the rest).
  *
  * @param {object} mol - The molecule.
  * @param {number[]} atoms - Every ring atom (highlighting).
@@ -876,9 +897,11 @@ export function phenylParentError(mol) {
  * Tells whether a molecule passes validation only because its benzene ring,
  * with two or more substituents, is a substituted `fenil` / `fenoxi`
  * prefix of a chain parent (design.md §14.1, I-45a,
- * polysubstitutedBenzeneScope() 'phenyl'). The naming engine refuses such
- * a molecule when its parent choice (P-44.1: a ring is senior to a chain
- * with as many principal groups) makes the ring the parent after all.
+ * polysubstitutedBenzeneScope() 'phenyl'; since I-45c also the ring of an
+ * ester's O-bound group). The naming engine refuses such a molecule when
+ * its parent choice (P-44.1: a ring is senior to a chain with as many
+ * principal groups) makes the ring the parent after all. The ring of a
+ * substituted benzoate ('benzoate', I-45c) is meant to be the parent.
  *
  * @param {object} mol - A molecule accepted by validateForNaming().
  * @returns {boolean} True for a substituted phenyl that must stay a prefix.
@@ -991,11 +1014,15 @@ export function ringAtomSet(mol) {
  * `3-cianobenzamida`) or, since I-44, several times
  * (`3-etilbenceno-1,2-diol`, `ácido benceno-1,3-dicarboxílico`), and since
  * I-45a as a substituted phenyl / phenoxy prefix of a chain parent
- * (polysubstitutedBenzeneScope() 'phenyl': `2-(4-clorofenil)etan-1-ol`);
+ * (polysubstitutedBenzeneScope() 'phenyl': `2-(4-clorofenil)etan-1-ol`),
+ * and since I-45c as the ring of an ester, on either side and on both rings
+ * of a split ester ('benzoate' / 'phenyl': `4-metilbenzoato de etilo`,
+ * `etanoato de 4-metilfenilo`, `4-metilbenzoato de 4-clorofenilo`);
  * any other polysubstituted benzene gets CYCLE with `ringReason`
- * 'polysubstitutedBenzene' (valid, but not nameable yet: an ester —
- * SUBSTITUTED_BENZENE_ESTER_MESSAGE —, groups on the ring and on a side
- * chain at once, groups on two side chains…; polysubstitutedBenzeneError()). A
+ * 'polysubstitutedBenzene' (valid, but not nameable yet: an ester beside
+ * another functional group of the ring — SUBSTITUTED_BENZENE_ESTER_MESSAGE —,
+ * groups on the ring and on a side chain at once, groups on two side
+ * chains…; polysubstitutedBenzeneError()). A
  * benzene ring always carries at most one substituent per ring atom (each
  * ring atom already has three bonds). Otherwise: TOO_BIG for a larger ring,
  * and RING_SYSTEM with `ringKind` for a heterocycle (a lactone, an ester

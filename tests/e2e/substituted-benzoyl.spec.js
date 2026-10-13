@@ -6,8 +6,9 @@
  * `ácido 2-[(4-clorobenzoil)amino]etanoico`), in either Kekulé drawing;
  * "Otras formas válidas" offers only the isopropyl prefix styles, never
  * `toluoil` or an o/m/p form; the substituents step numbers the benzoyl
- * ring from the carbon bonded to the C=O. A benzoyl beside an ester or a
- * functional group on the ring stays refused. "Ordenar dibujo" gives a
+ * ring from the carbon bonded to the C=O. A functional group on the ring
+ * stays refused (beside an ester too; a benzoyl beside an ester is named
+ * since I-45c, tests/e2e/substituted-esters.spec.js). "Ordenar dibujo" gives a
  * clean drawing. Runs on the dev server and on dist/index.html.
  */
 
@@ -163,11 +164,11 @@ test('the substituents step numbers the benzoyl ring from the carbon bonded to t
   expect(errors).toEqual([]);
 });
 
-test('still out of scope: a benzoyl beside an ester, a functional group on the benzoyl ring', async ({ page }) => {
+test('still out of scope: a functional group on the benzoyl ring (beside an ester too, I-45c)', async ({ page }) => {
   const errors = await openApp(page);
   const error = page.locator('#results .results-error');
   for (const [smiles, text] of [
-    ['CCOC(=O)C(CC)C(=O)C1=CC=C(C)C=C1', 'De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más'],
+    ['CCOC(=O)C(CC)C(=O)C1=CC=C(O)C=C1', 'su benceno lleva, además del éster, otro grupo funcional'],
     ['OC(=O)C(CC)C(=O)C1=CC=C(O)C=C1', 'como sustituyente (fenil, fenoxi o benzoil) cuando una sola de sus ramas lleva grupos funcionales'],
   ]) {
     await loadSmiles(page, smiles);

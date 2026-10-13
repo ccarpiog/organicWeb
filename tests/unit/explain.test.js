@@ -234,6 +234,11 @@ const SNAPSHOT_SMILES = [
   'OC(=O)CNC(=O)C1=CC=C(CC(C)C)C=C1', // ácido 2-{[4-(2-metilpropil)benzoil]amino}etanoico: nested enclosure, braces and brackets (I-45b)
   'OC(=O)C(CC)C(=O)C1=CC=C(CC(C)C)C=C1', // ácido 2-[4-(2-metilpropil)benzoil]butanoico: benzoyl in brackets (I-45b)
   'OC(=O)CNC(=O)C1=CC=CC=C1', // ácido 2-(benzoilamino)etanoico: plain benzoyl in an acilamino prefix, parentheses (I-40c, I-45b)
+  'CCOC(=O)C1=CC=C(C)C=C1', // 4-metilbenzoato de etilo: substituted benzoate parent (I-45c)
+  'CC(=O)OC1=CC=C(C)C=C1', // etanoato de 4-metilfenilo: substituted phenyl as the O-bound group (I-45c)
+  'CC(=O)OC1=C(C)C=CC=C1Cl', // etanoato de 2-cloro-6-metilfenilo: O-bound phenyl locants by alphabetical order (I-45c)
+  'CC1=CC=C(C=C1)C(=O)OC1=CC=C(Cl)C=C1', // 4-metilbenzoato de 4-clorofenilo: two substituted rings split by the ester (I-45c)
+  'CCOC(=O)CC1=CC=C(C)C=C1', // 2-(4-metilfenil)etanoato de etilo: 2-(4-metilfenil)acetato de etilo under Otras formas (I-45c)
 ];
 
 /**

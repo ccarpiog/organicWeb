@@ -152,8 +152,8 @@ test('polysubstituted benzenes with a functional group are refused with CYCLE; a
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
   const cases = [
-    ['CCOC(=O)C1=CC(C)=CC(C)=C1', 3], // an ester of a substituted benzoic acid (I-45c)
-    ['CCOC(=O)C1=CC=C(C)C=C1', 2], // an ester of a substituted benzoic acid (I-45c)
+    ['CCOC(=O)C1=CC(O)=CC(C)=C1', 3], // an ester beside an OH on the ring (I-45c names it without the OH)
+    ['CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', 2], // a ring diester of benzene (I-45c)
     ['OCC1=CC=CC=C1O', 2], // an OH on the ring and one on a side chain
     ['CC1=C(C)C(C)=C(C)C(CO)=C1CO', 6], // OH groups on two side chains
   ];

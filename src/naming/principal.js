@@ -364,7 +364,8 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * acetonitrile with the substituted phenyl on carbon 2 (app decision, from
  * memory: IUPAC 2013 lets acetic acid be substituted on its CH₃):
  * 'arylaceticAcid' (`ácido 2-(3-metilfenil)acético`), 'arylacetaldehyde',
- * 'arylacetamide', 'arylacetonitrile' (render.js renderName() `traditional`).
+ * 'arylacetamide', 'arylacetonitrile' (render.js renderName() `traditional`),
+ * and (I-45c) 'arylacetate' (`2-(4-metilfenil)acetato de etilo`).
  * IUPAC 2013 retains formaldehyde and acetaldehyde (aldehydes,
  * P-66.6), acetone for general nomenclature (ketones, P-64), and formic,
  * acetic and oxalic acid as preferred names (acids, P-65.1.1.1), hence
@@ -372,7 +373,7 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * (design.md §13.1), never as the main name.
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
- * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|'phenylaceticAcid'|'phenylacetaldehyde'|'phenylacetamide'|'phenylacetonitrile'|'phenylacetate'|'arylaceticAcid'|'arylacetaldehyde'|'arylacetamide'|'arylacetonitrile'|null} The id.
+ * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|'phenylaceticAcid'|'phenylacetaldehyde'|'phenylacetamide'|'phenylacetonitrile'|'phenylacetate'|'arylaceticAcid'|'arylacetaldehyde'|'arylacetamide'|'arylacetonitrile'|'arylacetate'|null} The id.
  */
 export function carbonylTraditionalId(structure) {
   const { parentKind, parent, prefixes, suffix } = structure;
@@ -388,6 +389,7 @@ export function carbonylTraditionalId(structure) {
     const substituted = prefixes[0].substituent.prefixes.length > 0;
     const ids = (substituted ? {
       acid: { 2: 'arylaceticAcid' },
+      ester: { 2: 'arylacetate' },
       aldehyde: { 2: 'arylacetaldehyde' },
       amide: { 2: 'arylacetamide' },
       nitrile: { 2: 'arylacetonitrile' },

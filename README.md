@@ -43,7 +43,9 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   carrying the principal group (`1-(4-metilfenil)etan-1-ona`,
   `2-(4-metilfenoxi)etan-1-ol`, `N-(4-metilfenil)etanamida`) or as the
   ring of a substituted `benzoil` prefix (`ácido
-  2-(4-metilbenzoil)butanoico`); other
+  2-(4-metilbenzoil)butanoico`), or as either ring of an ester
+  (`4-metilbenzoato de etilo`, `etanoato de 4-metilfenilo` with `acetato de
+  4-metilfenilo`, `4-metilbenzoato de 4-clorofenilo`); other
   polysubstituted benzenes get a clear refusal), and of their halogen derivatives
   (F, Cl, Br, I as prefixes: `clorometano`, `2-bromo-1-cloropropano`,
   `2-metil-4-yodopentano`, `clorociclohexano`, `clorobenceno`,
@@ -155,7 +157,7 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 - **Ayuda**: a short in-page guide: the families the app names and what is
   out of scope, how to draw (elements, rings, the 90° view with heteroatoms
   and the «Abreviar CHO y COOH» toggle), keyboard shortcuts and the glossary.
-- Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles, benzenes with two or more substituents and an ester, a ketone or a functional group on a side chain), disconnected pieces, an empty canvas
+- Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles, benzenes with two or more substituents and a functional group on the ring and on a side chain, or an ester beside another functional group), disconnected pieces, an empty canvas
   and impossible bonds. Light and dark theme following the system.
 - Accessible: every control is reachable with the keyboard and has a visible
   focus ring and an accessible name; the name and the current explanation
@@ -319,7 +321,8 @@ the Keychain account is the WebDAV user).
   `propanoil-`…);
   salts, ammonium ions and other acid derivatives are not named yet; several
   rings, fused, bridged and spiro rings, heterocycles, benzenes with two or
-  more substituents when one is an ester, a ketone or a group on a side chain,
+  more substituents with functional groups on the ring and on a side chain (an
+  ester beside another functional group of the ring included),
   other oxygen and nitrogen compounds,
   stereochemistry (E/Z, R/S), charges and
   radicals are not named. Traditional halogen and alcohol names

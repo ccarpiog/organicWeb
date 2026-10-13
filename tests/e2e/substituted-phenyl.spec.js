@@ -7,9 +7,10 @@
  * `N-(4-metilfenil)etanamida`), in either Kekulé drawing; "Otras formas
  * válidas" keeps the acetic forms (`ácido 2-(3-metilfenil)acético`,
  * `N-(4-metilfenil)acetamida`) but never `acetofenona`; the substituents
- * step numbers the phenyl from its attachment carbon. Esters with a
- * substituted ring stay refused (substituted benzoyl groups are named since
- * I-45b: substituted-benzoyl.spec.js). "Ordenar dibujo"
+ * step numbers the phenyl from its attachment carbon. An ester beside
+ * another functional group of the ring stays refused (substituted benzoyl
+ * groups are named since I-45b: substituted-benzoyl.spec.js; esters with a
+ * substituted ring since I-45c: substituted-esters.spec.js). "Ordenar dibujo"
  * gives a clean drawing. Runs on the dev server and on dist/index.html.
  */
 
@@ -164,12 +165,13 @@ test('the substituents step numbers the phenyl from its attachment carbon', asyn
   expect(errors).toEqual([]);
 });
 
-test('still out of scope: esters with a substituted ring, two functional branches', async ({ page }) => {
+test('still out of scope: an ester beside another functional group of the ring, two functional branches', async ({ page }) => {
   const errors = await openApp(page);
   const error = page.locator('#results .results-error');
   for (const [smiles, code, text] of [
-    ['CC(=O)OC1=CC=C(C)C=C1', 'CYCLE', 'De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más'],
-    ['CCOC(=O)C1=CC=C(C)C=C1', 'CYCLE', 'De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más'],
+    // Esters with a substituted ring are named since I-45c (tests/e2e/substituted-esters.spec.js).
+    ['CC(=O)OC1=CC=C(O)C=C1', 'CYCLE', 'su benceno lleva, además del éster, otro grupo funcional'],
+    ['CCOC(=O)C1=CC=C(N)C=C1', 'CYCLE', 'su benceno lleva, además del éster, otro grupo funcional'],
     ['OCCC1=CC=C(CCO)C=C1', 'CYCLE', 'como sustituyente (fenil, fenoxi o benzoil) cuando una sola de sus ramas lleva grupos funcionales'],
   ]) {
     await loadSmiles(page, smiles);
