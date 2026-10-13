@@ -179,7 +179,7 @@ test('the grouped Ejemplos menu loads ring and functional-group examples, named 
   await page.getByRole('button', { name: 'Ejemplos' }).click();
   const menu = page.locator('#examples-menu');
   for (const group of ['Hidrocarburos de cadena abierta', 'Hidrocarburos con un anillo', 'Grupos funcionales',
-    'Anillos con un grupo funcional']) {
+    'Anillos con un grupo funcional', 'Bencenos con varios sustituyentes']) {
     await expect(menu.getByRole('group', { name: group, exact: true })).toBeVisible();
   }
   await expect(menu.getByRole('group', { name: 'Grupos funcionales', exact: true }).getByRole('menuitem')).toHaveCount(10);
@@ -205,12 +205,41 @@ test('the grouped Ejemplos menu loads ring and functional-group examples, named 
   await button.focus();
   await page.keyboard.press('Enter');
   await page.keyboard.press('End');
-  await expect(page.getByRole('menuitem', { name: 'Benceno con un grupo –COOH' })).toBeFocused();
+  await expect(page.getByRole('menuitem', { name: 'Éster con un benceno sustituido' })).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(page.getByRole('menuitem', { name: 'Alcano de cadena recta' })).toBeFocused();
   await page.keyboard.press('Escape');
   expect(errors).toEqual([]);
 }); // End of test 'the grouped Ejemplos menu loads ring and functional-group examples…'
+
+test('the «Bencenos con varios sustituyentes» examples are named and keep their name after Ordenar dibujo (I-46)', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.getByRole('button', { name: 'Ejemplos' }).click();
+  const group = page.locator('#examples-menu').getByRole('group', { name: 'Bencenos con varios sustituyentes', exact: true });
+  await expect(group.getByRole('menuitem')).toHaveCount(7);
+  await page.keyboard.press('Escape');
+  const cases = [
+    ['Benceno con dos ramas vecinas (orto)', '1,2-dimetilbenceno', 'o-xileno'],
+    ['Benceno con dos halógenos distintos', '1-bromo-2-clorobenceno', null],
+    ['Fenol con una rama (para)', '4-metilfenol', 'p-metilfenol'],
+    ['Benceno con –COOH y –OH', 'ácido 4-hidroxibenzoico', 'ácido p-hidroxibenzoico'],
+    ['Benceno con dos grupos –COOH (meta)', 'ácido benceno-1,3-dicarboxílico', 'ácido isoftálico'],
+    ['Cetona con un benceno sustituido', '1-(4-metilfenil)etan-1-ona', null],
+    ['Éster con un benceno sustituido', '4-metilbenzoato de etilo', 'p-metilbenzoato de etilo'],
+  ];
+  for (const [label, name, alternative] of cases) {
+    await loadExample(page, label);
+    await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+    await expect(page.locator('#result-name')).toHaveText(name);
+    if (alternative) {
+      await expect(page.locator('#alternatives')).toContainText(alternative);
+    }
+    // Ordenar dibujo keeps the name.
+    await page.locator('#toolbar [data-action="arrange"]').click();
+    await expect(page.locator('#result-name')).toHaveText(name);
+  } // End of the loop over the examples
+  expect(errors).toEqual([]);
+}); // End of test 'the «Bencenos con varios sustituyentes» examples…'
 
 test('a click during the redraw animation ends it and edits nothing', async ({ page }) => {
   const errors = await openApp(page);

@@ -49,7 +49,7 @@ molecules with a substituted phenyl prefix, N/8 with a substituted benzoyl
 prefix, N/8 esters with a substituted benzene ring, and N/2 of every other
 family:
 
-| Generator | Family (design.md §13.4 phase) |
+| Generator | Family (design.md §13.4 / §14.6 phase) |
 |---|---|
 | `generateMolecules()` | acyclic hydrocarbons: alkanes, alkenes, alkynes, branched (v1) |
 | `generateMonocycles()` | one ring of 3–10 C with side chains and ring/chain unsaturation (I-26) |
@@ -84,13 +84,20 @@ amines…), so the seniority rules and the prefix forms are exercised together.
 Out-of-scope structures (stereo, charges, heterocycles, fused/bridged/spiro
 rings) are never generated. `randomBenzene()` with its defaults (one group)
 keeps its original draws; the other families that start from it may still
-add groups that make a benzene the engine refuses for now (an ester beside
+add groups that make a benzene the engine refuses (an ester beside
 another functional group of the ring, groups on the ring and on a side chain at
 once, groups on two side chains, design.md §14), and those
 families drop every refused molecule; since I-45a a substituted phenyl on a
 functional chain is named, so `generateRingSubstituents()` keeps such
 molecules when a halogen lands on its benzene, and since I-45c
 `generateRingEsters()` keeps a halogenated benzene ester.
+
+The seven v3 generators (design.md §14, all phases done) are
+`generateBenzenes()` (I-42), `generateRingPrincipalBenzenes()` (I-43a),
+`generateRingOutsideBenzenes()` (I-43b), `generateRingPolysuffixBenzenes()`
+(I-44), `generateSubstitutedPhenyls()` (I-45a),
+`generateSubstitutedBenzoyls()` (I-45b) and `generateSubstitutedEsters()`
+(I-45c).
 
 ## How it works
 

@@ -1,7 +1,7 @@
 # organicWeb — Química orgánica
 
 A static, offline web app for secondary-school students (ESO, Spain): draw an
-acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester, amine, amide or nitrile of one) and get its IUPAC name **in Spanish**, with a
+acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester, amine, amide or nitrile of one, benzenes with two to six substituents included) and get its IUPAC name **in Spanish**, with a
 step-by-step explanation and a redraw that makes the main chain obvious. The
 user interface is in Spanish; code and documentation are in English. The
 design and phase plan live in [`docs/design.md`](docs/design.md).
@@ -151,13 +151,17 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 - **Ordenar dibujo**: redraws the molecule with the main chain laid out left
   to right and numbered, or a ring as a regular polygon with locant 1 on top
   and the numbering clockwise (one animated, undoable edit).
-- **Ejemplos**: a menu of 32 molecules, one per feature, in four groups:
+- **Ejemplos**: a menu of 39 molecules, one per feature, in five groups:
   open-chain hydrocarbons, hydrocarbons with a ring, functional groups (one
-  per family) and rings with a functional group.
-- **Ayuda**: a short in-page guide: the families the app names and what is
-  out of scope, how to draw (elements, rings, the 90° view with heteroatoms
+  per family), rings with a functional group and benzenes with several
+  substituents (`1,2-dimetilbenceno`, `4-metilfenol`, `ácido
+  4-hidroxibenzoico`, `1-(4-metilfenil)etan-1-ona`, `4-metilbenzoato de
+  etilo`…).
+- **Ayuda**: a short in-page guide: the families the app names (benzenes
+  with several substituents included, with a short orto/meta/para note) and
+  what is out of scope, how to draw (elements, rings, the 90° view with heteroatoms
   and the «Abreviar CHO y COOH» toggle), keyboard shortcuts and the glossary.
-- Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles, benzenes with two or more substituents and a functional group on the ring and on a side chain, or an ester beside another functional group), disconnected pieces, an empty canvas
+- Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles, benzenes with functional groups on the ring and on a side chain or on two side chains, or an ester beside another functional group of its ring), disconnected pieces, an empty canvas
   and impossible bonds. Light and dark theme following the system.
 - Accessible: every control is reachable with the keyboard and has a visible
   focus ring and an accessible name; the name and the current explanation
@@ -320,9 +324,10 @@ the Keychain account is the WebDAV user).
   its chain as a branch with an acyl prefix (`formil-`, `acetil-`,
   `propanoil-`…);
   salts, ammonium ions and other acid derivatives are not named yet; several
-  rings, fused, bridged and spiro rings, heterocycles, benzenes with two or
-  more substituents with functional groups on the ring and on a side chain (an
-  ester beside another functional group of the ring included),
+  rings, fused, bridged and spiro rings, heterocycles, benzenes with
+  functional groups on the ring and on a side chain or on two side chains,
+  an ester beside another functional group of its ring and a ring diester
+  of benzene (`benceno-1,4-dicarboxilato de dietilo`),
   other oxygen and nitrogen compounds,
   stereochemistry (E/Z, R/S), charges and
   radicals are not named. Traditional halogen and alcohol names

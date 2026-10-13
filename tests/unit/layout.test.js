@@ -198,6 +198,37 @@ test('the Ejemplos list covers every required feature with nameable, well-laid-o
   assert.ok(names.some((n) => /^[a-z]+ano$/.test(n)), 'an unbranched alkane');
 });
 
+test('the «Bencenos con varios sustituyentes» examples are named and lay out cleanly (I-46)', () => {
+  const group = listExampleGroups().find((g) => g.id === 'benceno-varios');
+  assert.ok(group, 'the group exists');
+  assert.equal(group.label, 'Bencenos con varios sustituyentes');
+  assert.equal(listExampleGroups().at(-1).id, 'benceno-varios', 'it is the last group of the menu');
+  const expected = {
+    'CC1=CC=CC=C1C': '1,2-dimetilbenceno',
+    'ClC1=CC=CC=C1Br': '1-bromo-2-clorobenceno',
+    'CC1=CC=C(O)C=C1': '4-metilfenol',
+    'OC(=O)C1=CC=C(O)C=C1': 'ácido 4-hidroxibenzoico',
+    'OC(=O)C1=CC(C(=O)O)=CC=C1': 'ácido benceno-1,3-dicarboxílico',
+    'CC(=O)C1=CC=C(C)C=C1': '1-(4-metilfenil)etan-1-ona',
+    'CCOC(=O)C1=CC=C(C)C=C1': '4-metilbenzoato de etilo',
+  };
+  const examples = listExamples().filter((e) => e.group === 'benceno-varios');
+  assert.deepEqual(Object.fromEntries(examples.map((e) => [e.smiles, e.name])), expected);
+  for (const example of examples) {
+    const result = nameMolecule(parseSmiles(example.smiles));
+    assert.ok(result.ok, `${example.id} is named, not refused`);
+    assert.equal(result.name, example.name);
+    const mol = exampleMolecule(example);
+    assert.ok(closestApproach(mol) >= 0.5 * BOND_LENGTH, `${example.id}: no crowded atoms`);
+    assert.ok(layoutProblems(mol).ok, `${example.id}: no crossing bonds or clashes`);
+    assert.equal(nameMolecule(mol).name, example.name, `${example.id}: laid out, same name`);
+  } // End of the loop over the polysubstituted benzene examples
+  // The numbered name comes first; the orto/meta/para form is an alternative.
+  const alternatives = (smiles) => (nameMolecule(parseSmiles(smiles)).alternatives || []).map((a) => a.name);
+  assert.ok(alternatives('CC1=CC=CC=C1C').includes('o-dimetilbenceno'));
+  assert.ok(alternatives('CC1=CC=C(O)C=C1').includes('p-metilfenol'));
+});
+
 test('the Ejemplos list has at least 10 ring and functional-group examples (I-41c)', () => {
   const byName = new Map(listExamples().map((e) => [e.name, e]));
   const expected = {

@@ -22,7 +22,7 @@ names the sections of this file it implements. The plan was reviewed by Codex
 | v1 scope | **Acyclic hydrocarbons only**: alkanes, alkenes, alkynes, any branching, single/double/triple bonds, branched, unsaturated and doubly-attached (`-iliden`) substituents. |
 | Out of scope v1 | Rings, benzene, heteroatoms, stereochemistry (E/Z, R/S), charges, radicals, name→structure. The editor can draw a ring; naming then says kindly that it is not supported yet. |
 | v2 scope (done) | Rings and functional groups, level ESO + 1º Bachillerato — plan, phases I-21…I-41 (all done) and the user's final decisions in §13: one carbocycle (two only on either side of an ester), halogen derivatives, alcohols, aldehydes, ketones, carboxylic acids, ethers, esters, amines, amides and nitriles. Valid molecules outside that scope (§13.1) get a kind "not nameable" message. |
-| v3 scope (in progress) | Polysubstituted benzenes (2–6 occupied positions) within the v2 families — user decisions and phases I-42a…I-46 in §14. |
+| v3 scope (done) | Polysubstituted benzenes (2–6 occupied positions) within the v2 families — user decisions and phases I-42a…I-46 (all done) in §14. |
 | Platform | Static web app, no backend, works offline. Desktop + tablet (pointer events, touch). |
 | Tech | Vanilla JavaScript ES modules, no framework, no build step for development. JSDoc on every function. Unit tests with Node's built-in runner (`node --test`), zero runtime dependencies. Playwright as a dev dependency for end-to-end tests. |
 | Distribution | `npm run build` produces `dist/index.html`, one self-contained file (JS + CSS inlined) that opens from `file://` and can be put on any static host. |
@@ -1918,13 +1918,14 @@ on narrow screens).
   and `TOO_BIG` have no hint.
 - A chemical edit clears the result (stale names must never show);
   coordinate edits do not.
-- **Ejemplos** menu: molecules from SMILES covering each feature (32 since
-  I-41c), in labelled groups (open-chain hydrocarbons, hydrocarbons with a
-  ring, functional groups, rings with a functional group), loaded with the
+- **Ejemplos** menu: molecules from SMILES covering each feature (39 since
+  I-46), in labelled groups (open-chain hydrocarbons, hydrocarbons with a
+  ring, functional groups, rings with a functional group, benzenes with
+  several substituents), loaded with the
   canonical layout (one undoable edit). Menu labels describe the feature
   ("Alcano ramificado"), not the name, so the student still asks.
-- **Ayuda** dialog: what the app names and what is out of scope, then how to
-  draw, short, with small inline SVG illustrations.
+- **Ayuda** dialog: what the app names (with a short orto/meta/para note
+  since I-46) and what is out of scope, then how to draw, short, with small inline SVG illustrations.
 - Light/dark theme following the system, colour tokens in `:root`.
 - Accessibility: keyboard reachable controls, visible focus, ARIA labels on
   tools, the name and each step text available to screen readers.
@@ -2414,7 +2415,7 @@ Every phase keeps all existing outputs, fixtures, snapshots and e2e green.
 | Traditional disubstituted names | Under "Otras formas válidas", only where IUPAC 2013 admits them (§14.5). |
 | Still out of scope | Stereo, charges, salts, heterocycles; polycycles (naphthalene, biphenyl); more than two separate rings; nitro and sulfur groups. |
 
-Delivered so far (I-42a): a benzene parent whose groups are all detachable
+Delivered (I-42a): a benzene parent whose groups are all detachable
 prefixes — hydrocarbon branches (alkyl, alkenyl, alkynyl, any branching),
 halogens and alkoxy groups. I-43a adds one OH or one amine group (–NH₂,
 –NHR, –NRR′) bonded to a ring carbon as the principal group (`fenol`,
@@ -2453,7 +2454,7 @@ branch holds characteristic groups
 halogen or an alkoxy group; the engine refuses it if the ring still wins
 the parent choice (`substitutedPhenylOnly()`, `phenylParentError()`, a
 safety net). App decision: a junior group on the ring beside the functional
-branch (`ácido 2-(4-hidroxifenil)etanoico`) is not covered yet. I-45b adds
+branch (`ácido 2-(4-hidroxifenil)etanoico`) stays refused. I-45b adds
 the benzene with its own prefixes as the ring of a `benzoil` prefix,
 wherever plain `benzoil` is named (a C=O carbon bonded to the ring that the
 parent chain misses, §13.6; the same validation scope, the C=O being part
@@ -2503,8 +2504,7 @@ parentheses). App decision: a junior group on an ester's ring (`acetato de
 `SUBSTITUTED_BENZENE_ESTER_MESSAGE` (§3.2). Anything else (groups on the
 ring and on a side chain at once, groups on two branches — a functional
 group on a benzoyl's ring included —, an ester beside another functional
-group of the ring) keeps `CYCLE` with the messages of §3.2, until its
-phase in §14.6. Two substituted rings
+group of the ring) keeps `CYCLE` with the messages of §3.2. Two substituted rings
 (`bis(4-clorofenil)metanol`, a benzoyl beside another benzoyl or phenyl)
 are two rings: `RING_SYSTEM` (`several`).
 
@@ -2687,4 +2687,17 @@ locants and `-diol` / `-dicarboxílico`….
 | I-45a | Substituted phenyl and phenoxy as a substituent: `1-(4-metilfenil)etan-1-ona`, `2-(4-clorofenil)etan-1-ol`, `ácido 2-(3-metilfenil)etanoico` (`ácido 2-(3-metilfenil)acético`), `2-(4-metilfenoxi)etan-1-ol`, `N-(4-metilfenil)etanamida` (`N-(4-metilfenil)acetamida`); validation `polysubstitutedBenzeneScope()`; Kekulé-neutral phenyl numbering; esters with a substituted ring and substituted benzoyl (until I-45b) refused with their own messages; oracle `generateSubstitutedPhenyls()` | Done |
 | I-45b | Substituted benzoyl prefixes wherever `benzoil` is named: `ácido 2-(4-metilbenzoil)butanoico`, `ácido 2-(2-cloro-6-metilbenzoil)butanoico`, `3-(4-metilbenzoil)pentano-2,4-diona`, `ácido 2-[(4-clorobenzoil)amino]etanoico`; engine refusal `substitutedBenzoyl` lifted; explanation of the benzoyl ring's own numbering (also fixes «formil» said of a `benzoil` inside an `acilamino` prefix); oracle `generateSubstitutedBenzoyls()` | Done |
 | I-45c | Esters with substituted rings: `4-metilbenzoato de etilo`, `etanoato de 4-metilfenilo` (`acetato de 4-metilfenilo`), `benzoato de 4-clorofenilo`, `4-metilbenzoato de 4-clorofenilo`, `2-(4-metilfenil)etanoato de etilo` (`2-(4-metilfenil)acetato de etilo`); validation scope 'benzoate' and the ester refusal reworded (a junior group or a second ester on the ring stays refused); explanation of the substituted O-bound phenyl; oracle `generateSubstitutedEsters()` | Done |
-| I-46 | Wrap-up: Ayuda o/m/p note, examples group «Bencenos con varios sustituyentes», README, CLAUDE.md scope, oracle README | Queued |
+| I-46 | Wrap-up: Ayuda (polysubstituted benzenes no longer out of scope, `#help-benzenes`, ESO-level orto/meta/para note `#help-omp`, accurate remaining refusals), Ejemplos group «Bencenos con varios sustituyentes» (7 examples, `src/ui/examples.js`), README, CLAUDE.md scope, oracle README | Done |
+
+v3 is complete. What stays refused (`CYCLE` / `RING_SYSTEM`, §3.2):
+functional groups on the ring and on a side chain at once or on two side
+chains, a junior group on an ester's ring or a ring diester of benzene,
+two separate substituted rings (other than either side of an ester), and
+the v2 exclusions (stereo, charges, salts, heterocycles, polycycles).
+
+**Pending teacher review.** All new Spanish wording of v3 — the refusal
+messages, the explanation sentences (orto/meta/para positions, the
+benzene numbering step, the substituted phenyl / benzoyl / ester steps),
+the «forma antigua con orto/meta/para» label, the Ayuda text and the
+example labels — is the app's own phrasing, not IUPAC text, and still
+needs review by a chemistry teacher.

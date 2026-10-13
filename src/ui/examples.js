@@ -1,7 +1,8 @@
 /**
  * @file Ejemplos menu (design.md §9): a gallery of molecules written as
  * SMILES, one per feature the app explains (grouped: open-chain
- * hydrocarbons, rings, functional groups, rings with a functional group),
+ * hydrocarbons, rings, functional groups, rings with a functional group,
+ * benzenes with several substituents),
  * loaded on the canvas with the canonical layout of "Ordenar dibujo"
  * (design.md §7) as one undoable edit.
  *
@@ -20,6 +21,7 @@ const GROUPS = Object.freeze([
   { id: 'anillos', label: 'Hidrocarburos con un anillo' },
   { id: 'grupos', label: 'Grupos funcionales' },
   { id: 'anillo-grupo', label: 'Anillos con un grupo funcional' },
+  { id: 'benceno-varios', label: 'Bencenos con varios sustituyentes' },
 ].map((group) => Object.freeze(group)));
 
 /** The examples, in menu order (grouped by `group`, see GROUPS). */
@@ -56,6 +58,13 @@ const EXAMPLES = Object.freeze([
   { group: 'anillo-grupo', id: 'anillo-alcohol', label: 'Anillo con un grupo –OH', smiles: 'OC1CCCCC1', name: 'ciclohexanol' },
   { group: 'anillo-grupo', id: 'benceno-halogeno', label: 'Benceno con un halógeno', smiles: 'ClC1=CC=CC=C1', name: 'clorobenceno' },
   { group: 'anillo-grupo', id: 'benceno-acido', label: 'Benceno con un grupo –COOH', smiles: 'OC(=O)C1=CC=CC=C1', name: 'ácido benzoico' },
+  { group: 'benceno-varios', id: 'benceno-dos-ramas', label: 'Benceno con dos ramas vecinas (orto)', smiles: 'CC1=CC=CC=C1C', name: '1,2-dimetilbenceno' },
+  { group: 'benceno-varios', id: 'benceno-dos-halogenos', label: 'Benceno con dos halógenos distintos', smiles: 'ClC1=CC=CC=C1Br', name: '1-bromo-2-clorobenceno' },
+  { group: 'benceno-varios', id: 'fenol-rama', label: 'Fenol con una rama (para)', smiles: 'CC1=CC=C(O)C=C1', name: '4-metilfenol' },
+  { group: 'benceno-varios', id: 'benzoico-oh', label: 'Benceno con –COOH y –OH', smiles: 'OC(=O)C1=CC=C(O)C=C1', name: 'ácido 4-hidroxibenzoico' },
+  { group: 'benceno-varios', id: 'benceno-dos-acidos', label: 'Benceno con dos grupos –COOH (meta)', smiles: 'OC(=O)C1=CC(C(=O)O)=CC=C1', name: 'ácido benceno-1,3-dicarboxílico' },
+  { group: 'benceno-varios', id: 'fenil-sustituido', label: 'Cetona con un benceno sustituido', smiles: 'CC(=O)C1=CC=C(C)C=C1', name: '1-(4-metilfenil)etan-1-ona' },
+  { group: 'benceno-varios', id: 'benzoato-sustituido', label: 'Éster con un benceno sustituido', smiles: 'CCOC(=O)C1=CC=C(C)C=C1', name: '4-metilbenzoato de etilo' },
 ].map((example) => Object.freeze(example)));
 
 /**

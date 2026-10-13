@@ -64,9 +64,17 @@ test('Ayuda opens an in-page dialog with illustrations and the glossary; Esc clo
     await expect(dialog.locator('#help-families')).toContainText(phrase);
   }
   const outOfScope = dialog.locator('#help-out-of-scope');
-  for (const phrase of ['estereoquímica', 'cargas', 'heterociclos', 'fusionados', 'benceno con dos o más sustituyentes',
-    'imidas']) {
+  for (const phrase of ['estereoquímica', 'cargas', 'heterociclos', 'fusionados', 'imidas',
+    'en el anillo y en una rama a la vez', 'un éster comparte su benceno con otro grupo funcional']) {
     await expect(outOfScope).toContainText(phrase);
+  }
+  // v3 (I-46): polysubstituted benzenes are named, no longer out of scope,
+  // and an ESO-level note explains orto, meta and para.
+  await expect(outOfScope).not.toContainText('benceno con dos o más sustituyentes');
+  await expect(dialog.locator('#help-benzenes')).toContainText('de dos a seis sustituyentes');
+  const omp = dialog.locator('#help-omp');
+  for (const phrase of ['orto (o-) = 1,2', 'meta (m-) = 1,3', 'para (p-) = 1,4', 'p-diclorobenceno', '«Otras formas válidas»']) {
+    await expect(omp).toContainText(phrase);
   }
   for (const phrase of ['«Anillos»', '«Benceno»', 'O (oxígeno), N (nitrógeno)', '«Ángulos rectos (90°)»',
     'también con oxígeno, nitrógeno y halógenos', '«Abreviar CHO y COOH»']) {

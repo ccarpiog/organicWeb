@@ -1,6 +1,6 @@
 # organicWeb — Química orgánica para ESO
 
-Static web app: draw an acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester, amine, amide or nitrile of one; an ester may have a ring on each side), get its IUPAC name in Spanish with
+Static web app: draw an acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester, amine, amide or nitrile of one; an ester may have a ring on each side; a benzene may carry two to six substituents), get its IUPAC name in Spanish with
 a step-by-step explanation, and optionally redraw it so the main chain is clear.
 
 - **User-facing text: Spanish (Spain), ESO level.** Code, comments and docs: English.
@@ -8,9 +8,9 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   unsaturation; `hex-2-eno` style). Full rules and decisions: `docs/design.md`.
 - User decision: the `–CH(CH₃)₂` group is named `isopropil` by default; the
   app also shows the `propan-2-il` (IUPAC preferred) and `1-metiletil` forms.
-- Scope: v1 (acyclic hydrocarbons) and v2 (rings and functional groups, ESO +
-  1º Bachillerato, `docs/design.md` §13, phases I-21…I-41) are both done;
-  v3 (polysubstituted benzenes, §14, phases I-42a…I-46) is in progress —
+- Scope: v1 (acyclic hydrocarbons), v2 (rings and functional groups, ESO +
+  1º Bachillerato, `docs/design.md` §13, phases I-21…I-41) and v3
+  (polysubstituted benzenes, §14, phases I-42a…I-46) are all done —
   benzenes with two to six branch, halogen or alkoxy prefixes are named, also
   beside one or several identical principal groups on the ring — OH, amine,
   –COOH, –CHO, –C≡N or amide — with junior groups as prefixes (`4-metilfenol`,
@@ -22,8 +22,10 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   either ring of an ester (`4-metilbenzoato de etilo`, `etanoato de
   4-metilfenilo`, `4-metilbenzoato de 4-clorofenilo`).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
-  polycycles. Systematic name first; traditional names and the old
-  orto/meta/para forms go under "Otras formas válidas".
+  polycycles, and benzenes with functional groups on the ring and on a side
+  chain (or on two side chains) or an ester beside another ring group.
+  Systematic name first; traditional names and the old orto/meta/para forms
+  go under "Otras formas válidas".
 - Tech: vanilla JavaScript ES modules, no framework, no runtime dependencies.
   Tests: `npm test` (`node --test`), static checks: `npm run check`,
   end-to-end: `npm run e2e` (Playwright; runs every spec on the dev server

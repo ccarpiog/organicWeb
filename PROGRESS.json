@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-13T21:48:23Z",
+  "updated": "2026-10-13T21:56:39Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups, polysubstituted benzenes) by IUPAC 2013 rules.",
   "phases": [
@@ -532,8 +532,11 @@
     {
       "id": "I-46",
       "title": "v3 Wrap-up",
-      "status": "queued",
-      "summary": "Help text, examples, README, CLAUDE.md scope and oracle docs updated for polysubstituted benzenes."
+      "status": "done",
+      "summary": "Help text, examples, README, CLAUDE.md scope and oracle docs updated for polysubstituted benzenes.",
+      "risk": "routine",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-46.md",
+      "narrative": "docs/progress-archive/i-46.md"
     }
   ]
 }
