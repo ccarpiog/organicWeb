@@ -26,10 +26,13 @@
  * refused, `symmetricRing`, multiplicative names); rings.js names it with its side chains as substituents
  * (`ciclohexano`, `metilciclohexano`, `3-metilciclohex-1-eno`, design.md
  * §13.4 I-25, I-26), under the same prefix styles and alternatives. A
- * benzene ring (six carbons, alternating double and single ring bonds; at
- * most one substituent, validation refuses more) is named by aromatic.js:
- * `benceno`, `metilbenceno`, `isopropilbenceno` (I-28), with the traditional
- * `tolueno` / `estireno` as an extra alternative.
+ * benzene ring (six carbons, alternating double and single ring bonds) is
+ * named by aromatic.js: `benceno`, `metilbenceno`, `isopropilbenceno`
+ * (I-28), with the traditional `tolueno` / `estireno` as an extra
+ * alternative; since I-42a also with two to six prefix groups
+ * (`1,2-dimetilbenceno`, with `1,2-xileno`, `o-xileno` and the old
+ * `o-dimetilbenceno` form; design.md §14), validation refusing any other
+ * polysubstituted benzene.
  *
  * Halogen derivatives (design.md §13.4 I-30) go through the same
  * pipelines: a halogen bonded to a carbon is a substituent prefix
@@ -221,7 +224,7 @@ import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure, buildSuffix, esterParts } from './structure.js';
 import { renderName, suffixCount, suffixGroupIds, hasNitrogenLocants } from './render.js';
 import { nameRingWithStyle, ringParent } from './rings.js';
-import { hasBenzeneRing, nameBenzeneWithStyle, traditionalAlternative } from './aromatic.js';
+import { hasBenzeneRing, nameBenzeneWithStyle, benzeneAlternatives } from './aromatic.js';
 import { analyzeGroups } from './seniority.js';
 import { lexiconEs } from './lexicon.es.js';
 import { carbonylTraditionalId, principalKindOf, isPrincipalOxygen } from './principal.js';
@@ -548,10 +551,9 @@ function nameValidated(input, options) {
   if (systematic) {
     alternatives.push(systematic);
   }
-  const traditional = benzene ? traditionalAlternative(main) : carbonylAlternative(main);
-  if (traditional) {
-    alternatives.push(traditional);
-  }
+  // A benzene may give several (`1,2-xileno`, `o-xileno`, then the orto/meta/para form; design.md §14.4–§14.5).
+  const traditional = benzene ? benzeneAlternatives(main) : [carbonylAlternative(main)].filter(Boolean);
+  alternatives.push(...traditional);
   const functionalClass = etherClassAlternative(mol, main) || amineClassAlternative(mol, main);
   if (functionalClass) {
     alternatives.push(functionalClass);

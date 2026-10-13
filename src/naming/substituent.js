@@ -1078,8 +1078,8 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
  * left out): `(2-metilciclohexil)`, `(4-hidroxiciclohexil)`,
  * `(2-oxociclopentil)`. A benzene ring (validate.js isBenzeneRing()) is
  * the retained `fenil` (IUPAC 2013 P-29.6; `retained` 'phenyl', its chain
- * `retained` 'benzene'); validation keeps it monosubstituted, so it has no
- * prefixes. render.js cites any other ring `ciclo` + stem + `il`
+ * `retained` 'benzene'); validation keeps it monosubstituted (a substituted
+ * phenyl is still refused, design.md §14.6, I-45a), so it has no prefixes. render.js cites any other ring `ciclo` + stem + `il`
  * (`ciclohexil`, `ciclohex-2-en-1-il`; `iliden` on a double bond).
  *
  * @param {object} ctx - Naming context (createNamingContext).

@@ -198,6 +198,11 @@ const SNAPSHOT_SMILES = [
   'COC(=O)CC1=CC=CC=C1', // 2-feniletanoato de metilo: ester on a side chain, fenilacetato (I-40d)
   'COC(=O)C1CCC(C(=O)O)CC1', // ácido 4-(metoxicarbonil)ciclohexano-1-carboxílico: alcoxicarbonil- on a ring below an acid (I-40d)
   'CC(=O)OC1CCC(C(=O)O)CC1', // ácido 4-(acetiloxi)ciclohexano-1-carboxílico: aciloxi- on a ring below an acid (I-40d)
+  'CC1=CC=CC=C1C', // 1,2-dimetilbenceno: benzene numbering step, orto sentence, xileno forms (I-42a)
+  'ClC1=CC(Br)=CC=C1', // 1-bromo-3-clorobenceno: alphabetical order decides the benzene numbering, meta sentence (I-42a)
+  'CCC1=CC(C)=C(C)C=C1', // 4-etil-1,2-dimetilbenceno: three prefixes, lowest locant set (I-42a)
+  'CC1=C(C)C(C)=C(C)C(C)=C1C', // hexametilbenceno: complete substitution, no numbers (I-42a)
+  'COC1=CC=C(C)C=C1', // 1-metil-4-metoxibenceno: alkoxy and alkyl on benzene, Spanish order (I-42a)
 ];
 
 /**

@@ -10,8 +10,9 @@
  * - validateForNaming(): the structural checks, then non-empty, connected,
  *   the ring scope (rings are classified by rings.js: a single carbocycle of
  *   at most 30 ring carbons is nameable, with or without side chains and ring
- *   multiple bonds — a benzene ring included, but only with at most one
- *   substituent (two or more: CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
+ *   multiple bonds — a benzene ring included; with two or more substituents
+ *   only when every group is a hydrocarbon branch, a halogen or an alkoxy
+ *   group (design.md §14.1; otherwise CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
  *   one gets TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps (≤ 60 carbons, ≤ 80 heavy atoms),
  *   only elements the engine can name yet (carbon, halogens bonded to a
  *   carbon — design.md §13.4 I-30 —, OH groups on a carbon, I-31, the
@@ -74,8 +75,10 @@ export const NOT_NAMEABLE_YET = Object.freeze(['CYCLE', 'RING_SYSTEM', 'HETEROAT
 export const MESSAGES = Object.freeze({
   EMPTY: 'Dibuja primero una molécula.',
   DISCONNECTED: 'Hay piezas sueltas: todas las partes deben estar unidas.',
-  CYCLE: 'Este benceno tiene varios sustituyentes. Solo sé nombrar el benceno con un sustituyente como máximo '
-    + '(como el metilbenceno): los bencenos con dos o más sustituyentes quedan fuera de lo que sé nombrar.',
+  CYCLE: 'Este benceno tiene varios sustituyentes y alguno de ellos es o lleva un grupo funcional '
+    + '(como –OH, –NH₂, –CHO, –COOH o –C≡N). Cuando el benceno tiene dos o más sustituyentes, de momento solo sé '
+    + 'nombrarlo si todos son ramas de carbono, halógenos (flúor, cloro, bromo, yodo) o grupos alcoxi (como –O–CH₃), '
+    + 'como el 1,2-dimetilbenceno o el 1-bromo-3-clorobenceno. Los demás quedan fuera de lo que sé nombrar.',
   RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
   VALENCE: 'Este carbono tendría más de 4 enlaces.',
   TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
@@ -606,13 +609,31 @@ export function isBenzeneRing(mol, ring) {
 
 /**
  * Spanish CYCLE message for a benzene ring with `count` (≥ 2) substituents
- * (design.md §3.2, §13.1: monosubstituted benzenes only, no orto/meta/para).
+ * of which some group is not a detachable prefix (design.md §3.2, §14.1:
+ * polysubstituted benzenes are named with hydrocarbon, halogen and alkoxy
+ * prefixes only so far).
  *
  * @param {number} count - Number of substituents on the ring.
  * @returns {string} The message.
  */
 export function polysubstitutedBenzeneMessage(count) {
   return MESSAGES.CYCLE.replace('varios sustituyentes', `${count} sustituyentes`);
+}
+
+/**
+ * Tells whether every atom of a molecule other than carbon is a halogen or
+ * an ether oxygen (isEtherOxygen()), i.e. it has no principal
+ * characteristic group and every group is a detachable prefix: hydrocarbon
+ * branches, halogens and alkoxy groups (design.md §14.1, I-42a: the only
+ * polysubstituted benzenes named so far).
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @returns {boolean} True when the molecule only has prefix groups.
+ */
+function prefixesOnly(mol) {
+  const adj = adjacency(mol);
+  return [...mol.atoms.values()].every((atom) => atom.element === 'C' || isEtherOxygen(mol, adj, atom.id)
+    || (isHalogen(atom.element) && adj.get(atom.id).length === 1 && mol.atoms.get(adj.get(atom.id)[0].atom).element === 'C'));
 }
 
 /**
@@ -704,9 +725,12 @@ export function ringAtomSet(mol) {
  * by validateForNaming()), and so are two such rings on either side of an
  * ester (esterRingSplit(), I-40d: `benzoato de fenilo`), each checked
  * alone. A benzene ring is in scope with at most one
- * substituent (I-28, named by naming/aromatic.js); with two or more it gets
- * CYCLE with `ringReason` 'polysubstitutedBenzene' (valid, but orto/meta/para
- * and polysubstituted benzenes are out of scope, design.md §13.1). A
+ * substituent (I-28, named by naming/aromatic.js), and since I-42a with two
+ * or more when the molecule has one ring and only prefix groups
+ * (prefixesOnly(): hydrocarbon branches, halogens, alkoxy groups; design.md
+ * §14.1); any other polysubstituted benzene gets CYCLE with `ringReason`
+ * 'polysubstitutedBenzene' (valid, but not nameable yet: a principal group
+ * on the ring with other groups, a substituted phenyl…). A
  * benzene ring always carries at most one substituent per ring atom (each
  * ring atom already has three bonds). Otherwise: TOO_BIG for a larger ring,
  * and RING_SYSTEM with `ringKind` for a heterocycle (a lactone, an ester
@@ -733,7 +757,7 @@ function ringError(mol) {
       return validationError('TOO_BIG', { message: RING_TOO_BIG_MESSAGE, detail: `ring of ${ring.atoms.length} carbons`, atoms });
     }
     const substituted = isBenzeneRing(mol, ring) ? substitutedRingAtoms(mol, ring) : [];
-    if (substituted.length > 1) {
+    if (substituted.length > 1 && !(kind === 'carbocycle' && prefixesOnly(mol))) {
       return validationError('CYCLE', {
         message: polysubstitutedBenzeneMessage(substituted.length),
         atoms,

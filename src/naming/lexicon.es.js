@@ -104,6 +104,13 @@ export const TRADITIONAL_NAMES = Object.freeze({
   phenylacetamide: '2-fenilacetamida',
   phenylacetonitrile: 'fenilacetonitrilo',
   phenylacetate: 'fenilacetato',
+  xylene12: '1,2-xileno',
+  xylene13: '1,3-xileno',
+  xylene14: '1,4-xileno',
+  oXylene: 'o-xileno',
+  mXylene: 'm-xileno',
+  pXylene: 'p-xileno',
+  mesitylene: 'mesitileno',
 });
 
 /**
@@ -153,6 +160,13 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * `2-fenilacetamida` and `fenilacetonitrilo` for the bare 2-feniletanamida
  * and 2-feniletanonitrilo; the amide keeps the locant 2, since its N could
  * carry the phenyl too (`N-fenilacetamida`; from memory).
+ * `1,2-xileno` / `o-xileno` (and the 1,3 / m and 1,4 / p forms) and
+ * `mesitileno` (design.md §14.5) replace the bare 1,2-, 1,3- and
+ * 1,4-dimetilbenceno and the bare 1,3,5-trimetilbenceno: IUPAC 2013
+ * retains xylene and mesitylene for general nomenclature without
+ * substitution (P-22.1.3; o/m/p-xylene are an admitted exception to the
+ * rule that drops orto/meta/para, P-14.3.1), so they are labelled like
+ * `acetona`; never a substituted xileno or tolueno.
  */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
@@ -178,6 +192,13 @@ export const TRADITIONAL_LABELS = Object.freeze({
   phenylacetamide: 'nombre tradicional, que la IUPAC (2013) acepta',
   phenylacetonitrile: 'nombre tradicional, que la IUPAC (2013) acepta',
   phenylacetate: 'nombre tradicional, que la IUPAC (2013) acepta',
+  xylene12: 'nombre tradicional, que la IUPAC (2013) acepta',
+  xylene13: 'nombre tradicional, que la IUPAC (2013) acepta',
+  xylene14: 'nombre tradicional, que la IUPAC (2013) acepta',
+  oXylene: 'nombre tradicional, que la IUPAC (2013) acepta',
+  mXylene: 'nombre tradicional, que la IUPAC (2013) acepta',
+  pXylene: 'nombre tradicional, que la IUPAC (2013) acepta',
+  mesitylene: 'nombre tradicional, que la IUPAC (2013) acepta',
 });
 
 /** Endings of the parent name. */
@@ -340,8 +361,10 @@ export function omitsLocants(chain, hasPrefixes) {
  *   kind of substitutable hydrogen);
  * - a benzene parent (`retained` 'benzene', aromatic.js) never cites the
  *   locants of its double bonds, and a single substituent omits its locant
- *   as well: `benceno`, `metilbenceno`, `fenol` (P-14.3.4.2(c);
- *   polysubstituted benzenes are refused before naming, design.md §13.1);
+ *   as well: `benceno`, `metilbenceno`, `fenol` (P-14.3.4.2(c)); with two
+ *   or more substituents every prefix locant is cited (`1,2-dimetilbenceno`),
+ *   except when all six positions hold one identical prefix
+ *   (`hexaclorobenceno`, `hexametilbenceno`; P-14.3.4, design.md §14.3);
  * - everything else keeps all its locants, the 1 of a ring double bond
  *   and of a suffix included: `3-metilciclohex-1-eno`, `1-metilciclohex-1-eno`,
  *   `ciclohexa-1,3-dieno`, `1,1-dimetilciclohexano`, `2-metilciclohexan-1-ol`,
@@ -356,7 +379,9 @@ export function ringOmitsLocants(ring, prefixes, suffixCount = 0) {
   const occurrences = prefixes.reduce((sum, group) => sum + group.locants.length, 0) + suffixCount;
   const single = occurrences === 1;
   if (ring.retained === 'benzene') {
-    return { parent: true, prefixes: single };
+    // `hexaclorobenceno`, `hexametilbenceno` (design.md §14.3, P-14.3.4): every position holds one identical prefix.
+    const complete = suffixCount === 0 && prefixes.length === 1 && prefixes[0].locants.length === ring.length;
+    return { parent: true, prefixes: single || complete };
   }
   const multiple = ring.double.length + ring.triple.length;
   return {
@@ -556,7 +581,16 @@ export const STYLE_LABELS = Object.freeze({
   amineClass: 'nombre tradicional (los grupos unidos al nitrógeno y la palabra «amina»), muy usado en los libros',
   benzeneSystematic: 'forma sistemática, con el nombre del anillo (benceno), que usan algunos libros; '
     + 'la IUPAC (2013) prefiere el nombre tradicional',
+  positional: 'forma antigua con orto/meta/para; hoy se recomienda el número (1,2 / 1,3 / 1,4)',
 });
+
+/**
+ * Positional letters of the old orto/meta/para form (design.md §14.4), by
+ * the locant of the second of two occupied benzene positions (the first is
+ * always 1): `o-diclorobenceno` (1,2), `m-` (1,3), `p-` (1,4). Only offered
+ * under "Otras formas válidas", with STYLE_LABELS.positional.
+ */
+export const POSITIONAL_LETTERS = Object.freeze({ 2: 'o', 3: 'm', 4: 'p' });
 
 /**
  * Class word of the functional-class name of an ether (design.md §13.4
@@ -953,4 +987,5 @@ export const lexiconEs = Object.freeze({
   benzeneGroupName,
   benzoylPrefix: BENZOYL_PREFIX,
   ringCarbonylEnding: RING_CARBONYL_ENDING,
+  positionalLetters: POSITIONAL_LETTERS,
 });

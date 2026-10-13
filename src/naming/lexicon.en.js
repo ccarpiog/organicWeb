@@ -73,6 +73,13 @@ export const TRADITIONAL_NAMES = Object.freeze({
   phenylacetamide: '2-phenylacetamide',
   phenylacetonitrile: 'phenylacetonitrile',
   phenylacetate: 'phenylacetate',
+  xylene12: '1,2-xylene',
+  xylene13: '1,3-xylene',
+  xylene14: '1,4-xylene',
+  oXylene: 'o-xylene',
+  mXylene: 'm-xylene',
+  pXylene: 'p-xylene',
+  mesitylene: 'mesitylene',
 });
 
 /** Endings of the parent name. */
@@ -116,7 +123,11 @@ export const STYLE_LABELS = Object.freeze({
   functionalClass: 'functional class name, accepted by IUPAC 2013',
   amineClass: 'traditional alkylamine name',
   benzeneSystematic: 'systematic name with the ring name (benzene)',
+  positional: 'old ortho/meta/para form; numbers are recommended today',
 });
+
+/** Positional letters of the old ortho/meta/para form, by the second locant (see lexicon.es.js). */
+export const POSITIONAL_LETTERS = Object.freeze({ 2: 'o', 3: 'm', 4: 'p' });
 
 /** Class word of the functional-class name of an ether (`ethyl methyl ether`; see lexicon.es.js). */
 export const ETHER_CLASS_WORD = 'ether';
@@ -510,4 +521,5 @@ export const lexiconEn = Object.freeze({
   benzeneGroupName,
   benzoylPrefix: BENZOYL_PREFIX,
   ringCarbonylEnding: RING_CARBONYL_ENDING,
+  positionalLetters: POSITIONAL_LETTERS,
 });

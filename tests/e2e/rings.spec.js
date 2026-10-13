@@ -330,8 +330,9 @@ test('benzene and toluene are named (I-28); a disubstituted benzene keeps its na
     await stepper.locator('.step-dot').nth(i).click();
     await expect(page.locator('svg#canvas .locant')).toHaveCount(0);
   }
-  // A disubstituted benzene: CYCLE, no name, Ordenar dibujo shows the error and changes nothing.
-  await loadSmiles(page, 'CC1=CC=CC=C1C');
+  // A disubstituted benzene with a functional group (a substituted phenol, still out of scope after I-42a): CYCLE,
+  // no name, Ordenar dibujo shows the error and changes nothing.
+  await loadSmiles(page, 'OC1=CC=CC=C1C');
   await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
   const error = page.locator('#results .results-error');
   await expect(error).toHaveAttribute('data-code', 'CYCLE');

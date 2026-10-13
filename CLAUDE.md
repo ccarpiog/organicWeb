@@ -9,10 +9,12 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
 - User decision: the `–CH(CH₃)₂` group is named `isopropil` by default; the
   app also shows the `propan-2-il` (IUPAC preferred) and `1-metiletil` forms.
 - Scope: v1 (acyclic hydrocarbons) and v2 (rings and functional groups, ESO +
-  1º Bachillerato, `docs/design.md` §13, phases I-21…I-41) are both done.
+  1º Bachillerato, `docs/design.md` §13, phases I-21…I-41) are both done;
+  v3 (polysubstituted benzenes, §14, phases I-42a…I-46) is in progress —
+  benzenes with two to six branch, halogen or alkoxy prefixes are named.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
-  polycycles, orto/meta/para. Systematic name first;
-  traditional names go under "Otras formas válidas".
+  polycycles. Systematic name first; traditional names and the old
+  orto/meta/para forms go under "Otras formas válidas".
 - Tech: vanilla JavaScript ES modules, no framework, no runtime dependencies.
   Tests: `npm test` (`node --test`), static checks: `npm run check`,
   end-to-end: `npm run e2e` (Playwright; runs every spec on the dev server

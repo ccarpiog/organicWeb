@@ -107,9 +107,12 @@ function withRingBonds(step, data) {
  * @param {object} perceived - The ring in perceived order (ringParent()).
  * @param {{chainAtom: number, key: string, citation: object}[]} substituents - Its substituents (substituentsOf() entries).
  * @param {number[]} [suffixAtoms] - The ring atom carrying each suffix group (one entry per OH), default none.
+ * @param {{aromatic?: boolean}} [options] - `aromatic`: a benzene ring with two or more occupied positions
+ *   (design.md §14.2), numbered without N1/N2 so that the Kekulé drawing never steers the numbering; the real bond
+ *   orders stay in the returned structure (highlighting).
  * @returns {{parent: object, trace: object[]}} The numbered ring structure and the numbering trace steps (candidates with their ring bonds).
  */
-export function numberRing(mol, perceived, substituents, suffixAtoms = []) {
+export function numberRing(mol, perceived, substituents, suffixAtoms = [], options = {}) {
   const prefixes = substituents.map(numberingPrefix);
   const candidates = ringCandidates(perceived);
   const data = new Map(candidates.map((c) => [
@@ -119,6 +122,7 @@ export function numberRing(mol, perceived, substituents, suffixAtoms = []) {
   const { chosen, trace } = runNumberingCascade(candidates, data, {
     prefixCounts: [prefixes.length],
     hasSuffix: suffixAtoms.length > 0,
+    aromatic: Boolean(options.aromatic),
   });
   return {
     parent: buildRingStructure(chosen.atoms, data.get(chosen.key).bonds, data.get(chosen.key).orders),

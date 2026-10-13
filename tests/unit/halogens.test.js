@@ -188,9 +188,10 @@ test('validation: halogens bonded to a carbon are named; other O and N molecules
   assert.equal(nameMolecule(dichlorine).error.code, 'HETEROATOM');
   assert.equal(isHalogenDerivative(parseSmiles('CCCl'), [3]), true);
   assert.equal(isHalogenDerivative(parseSmiles('CCO'), [3]), false);
-  // A polysubstituted benzene is still CYCLE, halogens or not.
-  assert.equal(validateForNaming(parseSmiles('ClC1=CC=C(Cl)C=C1')).code, 'CYCLE');
-  assert.equal(validateForNaming(parseSmiles('CC1=CC=C(Br)C=C1')).code, 'CYCLE');
+  // A polysubstituted benzene with halogens and branches only is named since I-42a (design.md §14); with an OH it is CYCLE.
+  assert.equal(validateForNaming(parseSmiles('ClC1=CC=C(Cl)C=C1')), null);
+  assert.equal(validateForNaming(parseSmiles('CC1=CC=C(Br)C=C1')), null);
+  assert.equal(validateForNaming(parseSmiles('ClC1=CC=C(O)C=C1')).code, 'CYCLE');
   assert.match(MESSAGES.HETEROATOM, /derivados halogenados/);
   // An OH on the side chain of a ring (the benzene here) is named since I-40a: the chain is the parent.
   assert.equal(validateForNaming(parseSmiles('ClC(O)C1=CC=CC=C1')), null);

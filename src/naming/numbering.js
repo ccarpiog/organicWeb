@@ -394,7 +394,9 @@ export function candidateData(atoms, bonds, orders, prefixes, freeValenceAtom = 
  * recorded with the compared values. N0 is skipped without suffix groups
  * (`options.hasSuffix`); P4 when the remaining candidates all come from one
  * chain (always, for a ring); N3 and N4 when no candidate carries prefixes
- * (nothing to compare).
+ * (nothing to compare); N1 and N2 for a benzene ring (`options.aromatic`,
+ * design.md §14.2: its Kekulé double bonds are not cited and never steer
+ * the numbering: IUPAC 2013 P-14.4 (e), hydro/ene/yne, does not apply).
  *
  * N5 is applied only when the candidates left after N4 would give different
  * names (different prefixes with the same locants); it compares complete-name
@@ -404,7 +406,7 @@ export function candidateData(atoms, bonds, orders, prefixes, freeValenceAtom = 
  *
  * @param {{atoms: number[], direction: string, key: string, chainIndex: number}[]} candidates - Directed candidates (unique keys).
  * @param {Map<string, object>} data - candidateData() of each candidate, by key.
- * @param {{prefixCounts: number[], hasFreeValence?: boolean, hasSuffix?: boolean, nameKey?: function(object[]): object}} options - Prefix count of each source chain (P4, by chainIndex); whether FV applies; whether N0 applies (suffix groups); complete-name key (N5).
+ * @param {{prefixCounts: number[], hasFreeValence?: boolean, hasSuffix?: boolean, aromatic?: boolean, nameKey?: function(object[]): object}} options - Prefix count of each source chain (P4, by chainIndex); whether FV applies; whether N0 applies (suffix groups); whether N1/N2 are skipped (a benzene ring); complete-name key (N5).
  * @returns {{chosen: object, trace: object[]}} The winning candidate and the trace steps.
  */
 export function runNumberingCascade(candidates, data, options) {
@@ -414,8 +416,8 @@ export function runNumberingCascade(candidates, data, options) {
   const rules = [
     { rule: 'FV', value: (d) => d.freeValence, skip: !options.hasFreeValence },
     { rule: 'N0', value: (d) => d.suffix, skip: !options.hasSuffix },
-    { rule: 'N1', value: (d) => bondLocants(d.orders, (order) => order >= 2) },
-    { rule: 'N2', value: (d) => bondLocants(d.orders, (order) => order === 2) },
+    { rule: 'N1', value: (d) => bondLocants(d.orders, (order) => order >= 2), skip: Boolean(options.aromatic) },
+    { rule: 'N2', value: (d) => bondLocants(d.orders, (order) => order === 2), skip: Boolean(options.aromatic) },
     { rule: 'P4' },
     { rule: 'N3', value: (d) => d.all, skip: !hasPrefixes },
     { rule: 'N4', value: (d) => d.groups.flatMap((g) => g.locants), skip: !hasPrefixes },

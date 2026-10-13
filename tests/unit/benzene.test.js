@@ -138,21 +138,25 @@ test('aromaticity is never inferred from other alternations', () => {
   assert.throws(() => nameBenzeneWithStyle(parseSmiles('C1=CC=CCC1')), /no benzene ring/);
 });
 
-test('polysubstituted benzenes are refused with CYCLE; a ring in the substituent stays RING_SYSTEM', () => {
+test('polysubstituted benzenes with a functional group are refused with CYCLE; a ring in the substituent stays RING_SYSTEM', () => {
+  // Since I-42a (design.md §14.1) only prefix groups (branches, halogens, alkoxy) are named on a polysubstituted benzene.
+  for (const smiles of ['CC1=CC=CC=C1C', 'CC1=CC(C)=CC=C1', 'CC1=CC=C(C)C=C1', 'CC1C(C)=CC=CC=1', 'CC1=CC(C)=CC(C)=C1']) {
+    assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
+  }
   const cases = [
-    ['CC1=CC=CC=C1C', 2], // orto
-    ['CC1=CC(C)=CC=C1', 2], // meta
-    ['CC1=CC=C(C)C=C1', 2], // para
-    ['CC1C(C)=CC=CC=1', 2], // orto, other Kekulé drawing
-    ['CC1=CC(C)=CC(C)=C1', 3],
-    ['CC1=C(C)C(C)=C(C)C(C)=C1C', 6],
+    ['OC1=CC=C(C)C=C1', 2], // a substituted phenol (I-43a)
+    ['NC1=CC=CC=C1C', 2], // a substituted aniline (I-43a)
+    ['OC(=O)C1=CC(C)=CC(C)=C1', 3], // a substituted benzoic acid (I-43b)
+    ['OCC1=CC=C(Cl)C=C1', 2], // a substituted phenyl on a chain parent (I-45a)
+    ['OC1=CC=CC=C1O', 2], // a diol (I-44)
+    ['CC1=C(C)C(C)=C(C)C(C)=C1O', 6],
   ];
   for (const [smiles, count] of cases) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'CYCLE', smiles);
     assert.equal(error.ringReason, 'polysubstitutedBenzene', smiles);
     assert.equal(error.substituted.length, count, smiles);
-    assert.ok(error.message.startsWith(`Este benceno tiene ${count} sustituyentes.`), error.message);
+    assert.ok(error.message.startsWith(`Este benceno tiene ${count} sustituyentes y alguno de ellos es o lleva un grupo funcional`), error.message);
     assert.match(error.message, /quedan fuera de lo que sé nombrar/);
     assert.ok(isNotNameableYet(error));
     const result = nameMolecule(parseSmiles(smiles));

@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-09-28T08:35:50Z",
+  "updated": "2026-10-13T18:26:17Z",
   "plan": "PLAN.md",
-  "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups) by IUPAC 2013 rules.",
+  "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups, polysubstituted benzenes) by IUPAC 2013 rules.",
   "phases": [
     {
       "id": "I-1",
@@ -456,6 +456,63 @@
       "summary": "Help, grouped examples and docs now cover rings and functional groups; the v2 plan is complete.",
       "review": "docs/reviews/I-41c.md",
       "narrative": "docs/progress-archive/i-41c.md"
+    },
+    {
+      "id": "I-42a",
+      "title": "v3 Benzene parent with prefixes: engine, explanation, design §14",
+      "status": "done",
+      "summary": "Benzenes with several hydrocarbon, halogen or alkoxy prefixes get Kekulé-neutral names and explanations.",
+      "risk": "high",
+      "review": "docs/reviews/I-42a.md",
+      "narrative": "docs/progress-archive/i-42a.md"
+    },
+    {
+      "id": "I-42b",
+      "title": "v3 Benzene parent with prefixes: oracle, e2e, layout checks",
+      "status": "queued",
+      "summary": "Oracle draws benzenes with 1–6 groups; end-to-end tests and Ordenar dibujo checks cover them."
+    },
+    {
+      "id": "I-43a",
+      "title": "v3 One OH or amine on the ring, plus prefixes",
+      "status": "queued",
+      "summary": "Phenols and anilines with extra ring substituents, e.g. 4-metilfenol and N,4-dimetilbencen-1-amina."
+    },
+    {
+      "id": "I-43b",
+      "title": "v3 One outside-carbon suffix on the ring, plus prefixes",
+      "status": "queued",
+      "summary": "Substituted benzoic acids, benzaldehydes, benzonitriles and benzamides, e.g. ácido 4-metilbenzoico."
+    },
+    {
+      "id": "I-44",
+      "title": "v3 Several identical principal groups on the ring",
+      "status": "queued",
+      "summary": "Benzene diols, diamines, diacids and similar, e.g. 3-etilbenceno-1,2-diol."
+    },
+    {
+      "id": "I-45a",
+      "title": "v3 Substituted phenyl and phenoxy as a substituent",
+      "status": "queued",
+      "summary": "Substituted phenyl and phenoxy prefixes on chains, e.g. 1-(4-metilfenil)etan-1-ona."
+    },
+    {
+      "id": "I-45b",
+      "title": "v3 Substituted benzoyl",
+      "status": "queued",
+      "summary": "Substituted benzoyl prefixes such as (4-metilbenzoil) wherever benzoil is named."
+    },
+    {
+      "id": "I-45c",
+      "title": "v3 Esters with substituted rings",
+      "status": "queued",
+      "summary": "Esters whose ring parts carry substituents, e.g. 4-metilbenzoato de etilo."
+    },
+    {
+      "id": "I-46",
+      "title": "v3 Wrap-up",
+      "status": "queued",
+      "summary": "Help text, examples, README, CLAUDE.md scope and oracle docs updated for polysubstituted benzenes."
     }
   ]
 }

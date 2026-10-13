@@ -60,7 +60,8 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41b | v2.21b CHO/COOH optional abbreviations (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-41b.md` |
 | I-41c | v2.21c Ayuda, examples and docs wrap-up (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41c.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-41c.md` |
 
-| I-42 | v3 Benzene parent with prefixes only (Kekulé-neutral numbering, o/m/p aliases, design §14) | `autoclaude/processed/220-polysubstituted-benzenes.md` "I-42" | queued (next) | — | — |
+| I-42a | v3 Benzene parent with prefixes: naming engine, explanation, design §14 (split from I-42) | `autoclaude/processed/220-polysubstituted-benzenes.md` "I-42" | done — `docs/progress-archive/i-42a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-42a.md` |
+| I-42b | v3 Benzene parent with prefixes: oracle `randomBenzene` 1–6 groups, e2e, Ordenar dibujo / 90° checks (split from I-42) | same, "I-42" | queued (next) | — | — |
 | I-43a | v3 One OH or amine on the ring, plus prefixes | same, "I-43a" | queued | — | — |
 | I-43b | v3 One outside-carbon suffix (COOH/CHO/CN/CONH₂) on the ring, plus prefixes | same, "I-43b" | queued | — | — |
 | I-44 | v3 Several identical principal groups on the ring | same, "I-44" | queued | — | — |
@@ -116,8 +117,11 @@ user's decisions as `docs/design.md` §14 (pointer from §13.1).
 
 ## Next action
 
-Start I-42 (benzene parent with prefixes only) per
-`autoclaude/processed/220-polysubstituted-benzenes.md` "I-42" and "Code traps". Deploying
+Start I-42b: extend oracle `randomBenzene` (`scripts/oracle/generate.mjs`) to place 1–6 groups and
+run `npm run oracle`; e2e specs (dev + `file://`) for polysubstituted benzenes incl. canvas locants;
+check Ordenar dibujo works and the 90° view falls back; fix the stale "never generated" line in
+`scripts/oracle/README.md`. Spec: `autoclaude/processed/220-polysubstituted-benzenes.md` "I-42" and
+"Code traps" 7; I-42a notes in `docs/progress-archive/i-42a.md`. Then I-43a. Deploying
 (`npm run deploy`) stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
@@ -243,13 +247,17 @@ Start I-42 (benzene parent with prefixes only) per
 - Wrap-up (I-41c): Ayuda text in `index.html` (`src/ui/help.js`), grouped examples in
   `src/ui/examples.js` (tests in `tests/unit/layout.test.js`, `tests/e2e/redraw.spec.js`),
   oracle generators documented in `scripts/oracle/README.md`.
+- Polysubstituted benzenes (I-42a): design §14; Kekulé-neutral numbering in `numbering.js` /
+  `rings.js`, naming and aliases in `aromatic.js` / `index.js`, `ringOmitsLocants` in
+  `lexicon.es.js`, refusal message in `validate.js`, numbering step in `explain.js`; tests
+  `tests/unit/polysubstituted-benzenes.test.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-41c)
+## Verification (last phase, I-42a)
 
-- Run by the orchestrator: `npm test` 0 (1502 pass) · `npm run check` 0 (131 files) · `npm run e2e`
-  0 (269 pass, source + dist). Oracle not rerun (naming engine untouched).
+- Run by the orchestrator: `npm test` 0 (1533 pass) · `npm run check` 0 (132 files) · `npm run e2e`
+  0 (269 pass, source + dist). Oracle not run (I-42b).
 
 ## Open risks / deviations
 
@@ -401,9 +409,15 @@ Start I-42 (benzene parent with prefixes only) per
   Ayuda/example wording not teacher-reviewed; still open from I-40d: the ring step calls an ester
   prefix on the ring «una rama» (`docs/progress-archive/i-41c.md`).
 
+- I-42a: `1-metil-4-metoxibenceno` (Spanish alphabetical order) instead of the item's
+  `1-metoxi-4-metilbenceno`; `o-dimetilbenceno` offered beside the xileno forms; xileno/mesitileno
+  label from memory (P-22.1.3). Review should-fix (hexa vs hexakis in the explanation) fixed with a
+  regression (`docs/progress-archive/i-42a.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-41b `67c6787`, pushed. I-41c committed and pushed right after this checkpoint (see `git log`).
+- I-41c `728d465`, pushed; triage `428b1e1`. I-42a committed and pushed right after this checkpoint
+  (see `git log`).
