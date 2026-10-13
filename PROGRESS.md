@@ -60,6 +60,15 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-41b | v2.21b CHO/COOH optional abbreviations (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-41b.md` |
 | I-41c | v2.21c Ayuda, examples and docs wrap-up (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41c.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-41c.md` |
 
+| I-42 | v3 Benzene parent with prefixes only (Kekulé-neutral numbering, o/m/p aliases, design §14) | `autoclaude/processed/220-polysubstituted-benzenes.md` "I-42" | queued (next) | — | — |
+| I-43a | v3 One OH or amine on the ring, plus prefixes | same, "I-43a" | queued | — | — |
+| I-43b | v3 One outside-carbon suffix (COOH/CHO/CN/CONH₂) on the ring, plus prefixes | same, "I-43b" | queued | — | — |
+| I-44 | v3 Several identical principal groups on the ring | same, "I-44" | queued | — | — |
+| I-45a | v3 Substituted phenyl and phenoxy as a substituent | same, "I-45a" | queued | — | — |
+| I-45b | v3 Substituted benzoyl | same, "I-45b" | queued | — | — |
+| I-45c | v3 Esters with substituted rings | same, "I-45c" | queued | — | — |
+| I-46 | v3 Wrap-up (Ayuda, examples, README, CLAUDE.md scope, oracle README) | same, "I-46" | queued | — | — |
+
 The twelve original plan items and user-feedback items I-13…I-20 are done.
 v2 plan (user-confirmed scope): I-21…I-41c all done — the plan is complete
 (I-41 split into I-41a 90° view for heteroatoms, I-41b CHO/COOH abbreviations, I-41c wrap-up;
@@ -69,6 +78,9 @@ I-40 into I-40a ring prefixes on a functional chain, I-40b acids/aldehydes + rin
 prefixes, I-40c nitriles/amides with a ring, I-40d ring esters);
 phases may be split as they are selected. The v2 plan now lives in
 `docs/design.md` §13.
+v3 plan (user-confirmed 2026-10-13, polysubstituted benzenes): I-42…I-46 from
+`autoclaude/processed/220-polysubstituted-benzenes.md`, run in table order; I-42 records the
+user's decisions as `docs/design.md` §14 (pointer from §13.1).
 
 ## Inbox
 
@@ -98,11 +110,14 @@ phases may be split as they are selected. The v2 plan now lives in
   names under "Otras formas válidas"; benzene monosubstituted only; stereo,
   charges, salts, heterocycles, polycycles out) → queued as I-21…I-41, one
   per plan phase §3.1…§3.21.
+- 2026-10-13 pickup 10 (plan complete): `220-polysubstituted-benzenes.md` — user-confirmed
+  scope lift (benzenes with 2–6 substituents; o/m/p only under Otras formas) → queued as
+  I-42, I-43a, I-43b, I-44, I-45a, I-45b, I-45c, I-46, one per phase of the item.
 
 ## Next action
 
-Plan complete: all phases I-1…I-41c are done and reviewed. Poll the inbox
-(`~/.claude/scripts/autoclaude-inbox.sh list`); if empty there is nothing to do. Deploying
+Start I-42 (benzene parent with prefixes only) per
+`autoclaude/processed/220-polysubstituted-benzenes.md` "I-42" and "Code traps". Deploying
 (`npm run deploy`) stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
