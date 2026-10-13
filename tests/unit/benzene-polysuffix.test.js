@@ -20,7 +20,7 @@ import assert from 'node:assert/strict';
 import { parseSmiles } from '../../src/model/smiles.js';
 import {
   validateForNaming, SUBSTITUTED_BENZENE_POLYAMINE_MESSAGE, SUBSTITUTED_BENZENE_POLYAMIDE_MESSAGE,
-  SUBSTITUTED_POLYAMIDE_MESSAGE,
+  SUBSTITUTED_POLYAMIDE_MESSAGE, SUBSTITUTED_BENZENE_ESTER_MESSAGE,
 } from '../../src/model/validate.js';
 import { perceiveRings } from '../../src/model/rings.js';
 import { nameMolecule } from '../../src/naming/index.js';
@@ -285,10 +285,21 @@ test('refusals that stay: groups on the N of a ring diamine or diamide, esters, 
   assert.equal(amide.error.message, SUBSTITUTED_BENZENE_POLYAMIDE_MESSAGE);
   // On a cyclohexane the message is unchanged.
   assert.equal(nameMolecule(parseSmiles('CNC(=O)C1CCC(C(N)=O)CC1')).error.message, SUBSTITUTED_POLYAMIDE_MESSAGE);
-  for (const smiles of ['CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', 'CC(=O)C1=CC(O)=CC(O)=C1', 'OCC1=CC(O)=CC(O)=C1', 'CC(=O)OC1=CC=C(O)C=C1']) {
+  // An ester beside a substituted benzene has its own message (I-45c).
+  const refusals = [
+    ['CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', SUBSTITUTED_BENZENE_ESTER_MESSAGE],
+    ['CC(=O)C1=CC(O)=CC(O)=C1', /el benceno-1,2-diol/],
+    ['OCC1=CC(O)=CC(O)=C1', /el benceno-1,2-diol/],
+    ['CC(=O)OC1=CC=C(O)C=C1', SUBSTITUTED_BENZENE_ESTER_MESSAGE],
+  ];
+  for (const [smiles, message] of refusals) {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(`${result.error.code} ${result.error.ringReason}`, 'CYCLE polysubstitutedBenzene', smiles);
-    assert.match(result.error.message, /el benceno-1,2-diol/);
+    if (typeof message === 'string') {
+      assert.equal(result.error.message, message, smiles);
+    } else {
+      assert.match(result.error.message, message, smiles);
+    }
   }
   const random = seededRandom(5);
   for (let k = 0; k < 4; k += 1) {

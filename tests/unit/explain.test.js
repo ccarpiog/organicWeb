@@ -222,6 +222,11 @@ const SNAPSHOT_SMILES = [
   'NC(=O)C1=CC=C(C(N)=O)C=C1', // benceno-1,4-dicarboxamida (I-44)
   'NC1=CC(O)=CC(O)=C1', // 5-aminobenceno-1,3-diol: two OH and an amino prefix (I-44)
   'OC1=C(O)C(O)=C(O)C(O)=C1O', // bencenohexol: complete substitution by the suffix group, no numbers (I-44)
+  'CC(=O)C1=CC=C(C)C=C1', // 1-(4-metilfenil)etan-1-ona: substituted phenyl, no acetofenona (I-45a)
+  'OC(=O)CC1=CC(C)=CC=C1', // ácido 2-(3-metilfenil)etanoico: ácido 2-(3-metilfenil)acético under Otras formas (I-45a)
+  'OCCOC1=CC=C(C)C=C1', // 2-(4-metilfenoxi)etan-1-ol: substituted phenoxy (I-45a)
+  'CC(=O)NC1=CC=C(C)C=C1', // N-(4-metilfenil)etanamida: substituted phenyl on the amide N (I-45a)
+  'OCCC1=C(C)C=CC=C1Cl', // 2-(2-cloro-6-metilfenil)etan-1-ol: phenyl locants by alphabetical order (I-45a)
 ];
 
 /**

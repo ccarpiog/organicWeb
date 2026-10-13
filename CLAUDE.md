@@ -15,7 +15,9 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   beside one or several identical principal groups on the ring — OH, amine,
   –COOH, –CHO, –C≡N or amide — with junior groups as prefixes (`4-metilfenol`,
   `4-metilbencen-1-amina`, `ácido 4-hidroxibenzoico`, `3-cianobenzamida`,
-  `3-etilbenceno-1,2-diol`, `ácido benceno-1,3-dicarboxílico`).
+  `3-etilbenceno-1,2-diol`, `ácido benceno-1,3-dicarboxílico`), and such a
+  benzene with prefixes is also a substituted phenyl or phenoxy prefix of a
+  chain parent (`1-(4-metilfenil)etan-1-ona`, `2-(4-metilfenoxi)etan-1-ol`).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles. Systematic name first; traditional names and the old
   orto/meta/para forms go under "Otras formas válidas".

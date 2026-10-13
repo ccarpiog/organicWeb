@@ -212,7 +212,7 @@ import {
   substituentPrefix, citationKey, needsEnclosure, isCompoundPrefix, renderPrefixes, omitsPrefixLocants,
   suffixWords, suffixCount, suffixGroupIds, isContractedAlkoxy, MAX_CONTRACTED_ALKOXY, TERMINAL_SUFFIXES,
   esterAlkylName, renderName, carbonLocantPrefixes, hasNitrogenLocants, citedPrefixes, alkoxycarbonylAlkoxy, carbamoylAmino,
-  ringCarbonylRing,
+  ringCarbonylRing, isSubstitutedPhenyl,
 } from '../naming/render.js';
 import { locantText, siteLocantText, N_LOCANT, esterParts } from '../naming/structure.js';
 
@@ -1183,6 +1183,9 @@ function ringBondsIn(sub) {
  */
 function ringPrefixWords(ring) {
   const name = substituentPrefix(ring.alkoxy ? { ...ring, alkoxy: false } : ring, lexiconEs);
+  if (isSubstitutedPhenyl(ring)) {
+    return `${q(name)} (el [[benceno]] como sustituyente, con sus propios sustituyentes)`; // I-45a.
+  }
   return ring.retained === 'phenyl' ? `${q(name)} (el [[benceno]] como sustituyente)` : q(name);
 }
 
@@ -3054,6 +3057,10 @@ function alkoxyFormation(sub) {
   }
   if (sub.retained === 'tert-butyl') {
     return [`${q(prefix)} viene de «tert-butil», un carbono unido al oxígeno y a tres metilos: se cambia «-il» por «-${oxi}». Su forma sistemática es «1,1-dimetilet${oxi}». «tert-» no cuenta para el orden alfabético.`];
+  }
+  if (isSubstitutedPhenyl(sub)) {
+    // Design.md §14.1, I-45a: a substituted phenyl keeps the short form, `4-metilfenoxi`.
+    return [`${q(prefix)} viene de ${q(alkyl)} (el [[benceno]] como sustituyente, con sus propios sustituyentes): se cambia «-il» por «-${oxi}», como en «fen${oxi}», la forma corta que la IUPAC conserva; no se dice «fenil${oxi}».`];
   }
   if (sub.retained === 'phenyl') {
     // Design.md §13.4 I-40a: the retained short form `fenoxi` (IUPAC 2013 P-63.2.2.2), never `feniloxi`.
@@ -5968,6 +5975,9 @@ function describeSubstituent(sub, words = PARENT_WORDS.chain, principal = null) 
   if (sub.retained === 'isopropylidene') {
     return ['Es un grupo de 3 carbonos unido por el carbono del centro con un [[enlace doble]]. Tiene tres nombres válidos: «isopropiliden» (el tradicional, que usamos aquí), «propan-2-iliden» (el preferido por la IUPAC: cadena de 3 carbonos unida por su carbono 2) y «1-metiletiliden» (cadena de 2 carbonos con un metil en el carbono 1).'];
   }
+  if (isSubstitutedPhenyl(sub)) {
+    return substitutedPhenylDescription(sub, words);
+  }
   if (sub.retained === 'phenyl') {
     return ['«fenil» es el nombre del [[benceno]] cuando va como sustituyente: un anillo de benceno al que le falta un hidrógeno (grupo fenilo, C₆H₅–).'];
   }
@@ -6167,6 +6177,41 @@ function ringDescription(sub, words, principal) {
 } // End of function ringDescription()
 
 /**
+ * Explains a substituted phenyl prefix (design.md §14.1, I-45a:
+ * `4-metilfenil`, `2-cloro-6-metilfenil`): the benzene as a substituent,
+ * `fenil`, with its own prefixes; its carbons numbered from the one bonded
+ * to the carrying atom (1) in the direction that gives the lowest locants
+ * to its prefixes, then (when both directions give the same locants) the
+ * lowest to the prefix cited first in alphabetical order; the benzene's
+ * double bonds never count (design.md §14.2); the prefixes in alphabetical
+ * order before `fenil`; why it is enclosed and the letter it sorts under.
+ *
+ * @param {object} sub - A substituent structure for which isSubstitutedPhenyl() is true.
+ * @param {{to: string}} words - How the carrying atom is named (parentWords(), OXYGEN_WORDS…).
+ * @returns {string[]} Sentences.
+ */
+function substitutedPhenylDescription(sub, words) {
+  const name = substituentPrefix(sub, lexiconEs);
+  const { prefixes } = sub;
+  const out = [`${q(name)} es un anillo de [[benceno]] unido ${words.to} por uno de sus carbonos: el grupo «fenil» (el benceno como sustituyente), que además lleva sus propios [[sustituyentes|sustituyente]].`];
+  const locants = prefixes.flatMap((g) => g.locants.map((site) => site.locant)).sort((p, r) => p - r);
+  // The other direction around the ring (attachment atom 1): locant l becomes 8 - l (2 ↔ 6, 3 ↔ 5, 4 ↔ 4).
+  const mirrored = locants.map((l) => 8 - l).sort((p, r) => p - r);
+  const tie = locants.every((l, i) => l === mirrored[i]) && prefixes.length > 1;
+  out.push(`Sus carbonos se numeran empezando por el que está unido ${words.to}, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes${tie ? '; como los dos sentidos dan los mismos números, el número más bajo es para el sustituyente que va antes por orden alfabético' : ''}. Los enlaces dobles del benceno no cuentan para numerar.`);
+  const inner = prefixes.map((g) => {
+    const places = [...new Set(g.locants.map((site) => site.locant))];
+    const where = places.length === 1 ? `en el carbono ${places[0]}` : `en los carbonos ${joinY(places)}`;
+    const what = q(substituentPrefix(g.substituent, lexiconEs));
+    return `${g.locants.length === 1 ? what : `${g.locants.length} ${g.substituent.halogen ? 'átomos' : 'grupos'} ${what}`} ${where}`;
+  });
+  out.push(`El anillo lleva ${joinY(inner)}${prefixes.length > 1 ? ', que se escriben en orden alfabético' : ''}, delante de «fenil».`);
+  const letter = citationKey(sub, lexiconEs).alpha.charAt(0);
+  out.push(`Va entre paréntesis porque tiene sus propios sustituyentes y números. En el orden alfabético del nombre completo cuenta su primera letra: ${q(name)} va por la «${letter}».`);
+  return out;
+} // End of function substitutedPhenylDescription()
+
+/**
  * Explains a ring acyl prefix (design.md §13.4 I-40b, `ringCarbonyl`): a
  * C=O bonded to the chain by its carbon and, on its other side, to a ring
  * (a ketone C=O cut off the chain); named from the ring acid, `benzoil`
@@ -6235,7 +6280,8 @@ function alkoxyDescription(sub, words, principal) {
   out.push(...alkoxyFormation(sub));
   const alkyl = { ...sub, alkoxy: false };
   const { chain } = sub;
-  if (!sub.retained && (sub.prefixes.length > 0 || chain.double.length + chain.triple.length > 0 || sub.freeValence.locant > 1)) {
+  if (isSubstitutedPhenyl(alkyl)
+    || (!sub.retained && (sub.prefixes.length > 0 || chain.double.length + chain.triple.length > 0 || sub.freeValence.locant > 1))) {
     const inner = describeSubstituent(alkyl, OXYGEN_WORDS, principal).slice(1);
     out.push(`El grupo unido al oxígeno, ${q(substituentPrefix(alkyl, lexiconEs))}, se nombra como cualquier rama.`, ...inner);
   }

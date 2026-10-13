@@ -357,7 +357,14 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * a phenyl on an amide N is not one of these: `N-feniletanamida` gives
  * 'acetamide' (`N-fenilacetamida`); and (I-40d) 'phenylacetate' for a
  * 2-feniletanoato (`fenilacetato de metilo`, whatever the O-bound group,
- * like `acetato de …`).
+ * like `acetato de …`). A phenyl with its own prefixes (design.md §14.1,
+ * I-45a) never gives 'acetophenone', 'benzylAlcohol' or 'benzylamine'
+ * (the phenyl is part of those words, which are not substituted); the
+ * acetic names stay as acetic acid, acetaldehyde, acetamide or
+ * acetonitrile with the substituted phenyl on carbon 2 (app decision, from
+ * memory: IUPAC 2013 lets acetic acid be substituted on its CH₃):
+ * 'arylaceticAcid' (`ácido 2-(3-metilfenil)acético`), 'arylacetaldehyde',
+ * 'arylacetamide', 'arylacetonitrile' (render.js renderName() `traditional`).
  * IUPAC 2013 retains formaldehyde and acetaldehyde (aldehydes,
  * P-66.6), acetone for general nomenclature (ketones, P-64), and formic,
  * acetic and oxalic acid as preferred names (acids, P-65.1.1.1), hence
@@ -365,7 +372,7 @@ export function isSuffixOxygen(mol, adj, atom, principal) {
  * (design.md §13.1), never as the main name.
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
- * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|'phenylaceticAcid'|'phenylacetaldehyde'|'phenylacetamide'|'phenylacetonitrile'|'phenylacetate'|null} The id.
+ * @returns {'formaldehyde'|'acetaldehyde'|'acetone'|'formicAcid'|'aceticAcid'|'oxalicAcid'|'formate'|'acetate'|'formamide'|'acetamide'|'acetonitrile'|'acetophenone'|'benzylAlcohol'|'benzylamine'|'phenylaceticAcid'|'phenylacetaldehyde'|'phenylacetamide'|'phenylacetonitrile'|'phenylacetate'|'arylaceticAcid'|'arylacetaldehyde'|'arylacetamide'|'arylacetonitrile'|null} The id.
  */
 export function carbonylTraditionalId(structure) {
   const { parentKind, parent, prefixes, suffix } = structure;
@@ -376,7 +383,15 @@ export function carbonylTraditionalId(structure) {
   if (phenylOnly) {
     // C₆H₅–CO–CH₃, C₆H₅–CH₂OH, C₆H₅–CH₂NH₂ (design.md §13.4 I-40a); C₆H₅–CH₂–COOH, C₆H₅–CH₂–CHO (I-40b);
     // C₆H₅–CH₂–CONH₂, C₆H₅–CH₂–C≡N (I-40c). A phenyl on an amide N is `N-fenilacetamida` (below).
-    const ids = {
+    // A phenyl with its own prefixes (I-45a) keeps only the acetic names, as a substituted acetic word
+    // (`ácido 2-(3-metilfenil)acético`); `acetofenona`, `alcohol bencílico`, `bencilamina` are never substituted.
+    const substituted = prefixes[0].substituent.prefixes.length > 0;
+    const ids = (substituted ? {
+      acid: { 2: 'arylaceticAcid' },
+      aldehyde: { 2: 'arylacetaldehyde' },
+      amide: { 2: 'arylacetamide' },
+      nitrile: { 2: 'arylacetonitrile' },
+    } : {
       ketone: { 2: 'acetophenone' },
       alcohol: { 1: 'benzylAlcohol' },
       amine: { 1: 'benzylamine' },
@@ -385,7 +400,7 @@ export function carbonylTraditionalId(structure) {
       aldehyde: { 2: 'phenylacetaldehyde' },
       amide: { 2: 'phenylacetamide' },
       nitrile: { 2: 'phenylacetonitrile' },
-    }[suffix.kind];
+    })[suffix.kind];
     return (ids && ids[parent.length]) || null;
   }
   if (parentKind === 'chain' && suffix && suffix.kind === 'nitrile') {

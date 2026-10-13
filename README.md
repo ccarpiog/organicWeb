@@ -38,8 +38,11 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `3-cianobenzamida`), or several identical ones, always with the systematic
   name (`3-etilbenceno-1,2-diol`, `benceno-1,4-diol` with `hidroquinona`,
   `benceno-1,4-diamina`, `ácido benceno-1,3-dicarboxílico` with `ácido
-  isoftálico`, `benceno-1,3,5-tricarbonitrilo`; other polysubstituted benzenes
-  get a clear refusal), and of their halogen derivatives
+  isoftálico`, `benceno-1,3,5-tricarbonitrilo`), or, with its branch, halogen
+  or alkoxy prefixes, as a substituted `fenil` / `fenoxi` prefix of a chain
+  carrying the principal group (`1-(4-metilfenil)etan-1-ona`,
+  `2-(4-metilfenoxi)etan-1-ol`, `N-(4-metilfenil)etanamida`); other
+  polysubstituted benzenes get a clear refusal), and of their halogen derivatives
   (F, Cl, Br, I as prefixes: `clorometano`, `2-bromo-1-cloropropano`,
   `2-metil-4-yodopentano`, `clorociclohexano`, `clorobenceno`,
   `hexacloroetano`…), and of alcohols (OH groups as the suffix `-ol`:
@@ -132,7 +135,10 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `2-feniletanonitrilo`, `2-feniletanamida` and `2-feniletanoato de
   metilo` list `ácido fenilacético`, `fenilacetaldehído`,
   `fenilacetonitrilo`, `2-fenilacetamida` and `fenilacetato de metilo`
-  (`N-feniletanamida` lists `N-fenilacetamida`).
+  (`N-feniletanamida` lists `N-fenilacetamida`); with a substituted phenyl
+  only the acetic forms stay (`ácido 2-(3-metilfenil)acético`,
+  `N-(4-metilfenil)acetamida`), never `acetofenona`, `alcohol bencílico` or
+  `bencilamina`.
 - **Paso a paso**: an explanation stepper (count, longest chain, tie-breaks,
   numbering with a side-by-side comparison of the options, substituents,
   alphabetical order, assembly) that highlights each step on the drawing;

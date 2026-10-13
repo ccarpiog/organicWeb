@@ -176,6 +176,11 @@ test('still out of scope: an OH on a branch, a ketone or an ester beside other g
   for (const smiles of ['OCC1=CC(O)=CC(O)=C1', 'CC(=O)C1=CC(O)=CC(O)=C1', 'CCOC(=O)C1=CC=C(O)C=C1', 'OCC1=CC=C(O)C=C1']) {
     await loadSmiles(page, smiles);
     await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+    if (smiles.startsWith('CCOC(=O)')) {
+      // An ester beside a substituted ring has its own message (I-45c).
+      await expect(error).toContainText('De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más');
+      continue;
+    }
     await expect(error).toContainText('aún no sé combinar con los demás');
     await expect(error).toContainText('el benceno-1,2-diol o el ácido 4-hidroxibenzoico');
     await expect(page.locator('#result-name')).toHaveCount(0);

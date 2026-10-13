@@ -22,7 +22,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSmiles } from '../../src/model/smiles.js';
-import { validateForNaming } from '../../src/model/validate.js';
+import { validateForNaming, SUBSTITUTED_BENZENE_ESTER_MESSAGE } from '../../src/model/validate.js';
 import { perceiveRings } from '../../src/model/rings.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { explain, plainText } from '../../src/explain/explain.js';
@@ -240,15 +240,10 @@ test('a polysubstituted benzene with a functional group stays refused with an ac
     'CC(=O)C1=CC=C(C(O)=O)C=C1', // a ketone on the ring: ácido 4-acetilbenzoico
     'CC(=O)C1=CC(O)=CC(O)=C1', // a ketone beside two OH: 1-(3,5-dihidroxifenil)etan-1-ona
     'OCC1=CC(O)=CC(O)=C1', // an OH on a side chain beside two on the ring: 5-(hidroximetil)benceno-1,3-diol
-    'CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', // a diester: benceno-1,4-dicarboxilato de dietilo (I-45c)
     'O=CCC1=CC=C(C(O)=O)C=C1', // an aldehyde on a side chain: ácido 4-(2-oxoetil)benzoico
     'OCC1=CC=C(O)C=C1', // an OH on a side chain: 4-(hidroximetil)fenol
-    'NCC1=CC=C(C)C=C1', // an amine on a side chain: (4-metilfenil)metanamina (I-45a)
-    'CC(=O)OC1=CC=C(C)C=C1', // acetato de 4-metilfenilo (I-45c)
-    'CC(=O)NC1=CC=C(C)C=C1', // N-(4-metilfenil)acetamida (I-45a)
-    'CC(=O)C1=CC=C(C)C=C1', // 1-(4-metilfenil)etan-1-ona (I-45a)
-    'OCCOC1=CC=C(C)C=C1', // 2-(4-metilfenoxi)etan-1-ol (I-45a)
-    'CCOC(=O)C1=CC=C(C)C=C1', // 4-metilbenzoato de etilo (I-45c)
+    'OC(=O)CC1=CC=C(O)C=C1', // a junior OH on a substituted phenyl: ácido 2-(4-hidroxifenil)etanoico
+    'OCCC1=CC=C(CCO)C=C1', // groups on two branches
   ];
   for (const smiles of refused) {
     const result = nameMolecule(parseSmiles(smiles));
@@ -258,7 +253,18 @@ test('a polysubstituted benzene with a functional group stays refused with an ac
     assert.match(result.error.message, /^Este benceno tiene \d sustituyentes y alguno de ellos es o lleva un grupo funcional/);
     assert.match(result.error.message, /ramas de carbono, halógenos .*, grupos alcoxi .* o grupos –COOH, amida, –C≡N, –CHO, –OH o amino/);
     assert.match(result.error.message, /el benceno-1,2-diol o el ácido 4-hidroxibenzoico/);
-    assert.match(result.error.message, /\(con un éster, una cetona o un grupo funcional en una rama, por ejemplo\)/);
+    assert.match(result.error.message, /como sustituyente \(fenil o fenoxi\) cuando una sola de sus ramas lleva grupos funcionales/);
+    assert.match(result.error.message, /\(con grupos funcionales en el anillo y en una rama a la vez, o en dos ramas, por ejemplo\)/);
+  }
+  // Esters with a substituted benzene (I-45c) get their own message.
+  for (const smiles of ['CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', 'CC(=O)OC1=CC=C(C)C=C1', 'CCOC(=O)C1=CC=C(C)C=C1']) {
+    const result = nameMolecule(parseSmiles(smiles));
+    assert.equal(`${result.error.code} ${result.error.ringReason}`, 'CYCLE polysubstitutedBenzene', smiles);
+    assert.equal(result.error.message, SUBSTITUTED_BENZENE_ESTER_MESSAGE, smiles);
+  }
+  // The substituted phenyl and phenoxy prefixes are named since I-45a.
+  for (const smiles of ['NCC1=CC=C(C)C=C1', 'CC(=O)NC1=CC=C(C)C=C1', 'CC(=O)C1=CC=C(C)C=C1', 'OCCOC1=CC=C(C)C=C1']) {
+    assert.equal(nameMolecule(parseSmiles(smiles)).ok, true, smiles);
   }
   // Two rings stay RING_SYSTEM, a benzoate of a substituted phenyl stays CYCLE.
   assert.equal(validateForNaming(parseSmiles('CC1=CC=C(C=C1)C1=CC=CC=C1')).code, 'RING_SYSTEM');

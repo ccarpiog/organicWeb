@@ -168,7 +168,7 @@ test('still out of scope: a group on the N of a ring diamine, an ester beside tw
   const error = page.locator('#results .results-error');
   for (const [smiles, code, text] of [
     ['CNC1=CC=C(N)C=C1', 'HETEROATOM', 'Este benceno tiene varios grupos amino unidos al anillo'],
-    ['CCOC(=O)C1=CC(O)=CC(O)=C1', 'CYCLE', 'el benceno-1,2-diol o el ácido 4-hidroxibenzoico'],
+    ['CCOC(=O)C1=CC(O)=CC(O)=C1', 'CYCLE', 'De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más'], // an ester beside a substituted ring (I-45c)
   ]) {
     await loadSmiles(page, smiles);
     await page.getByRole('button', { name: '¿Cómo se llama?' }).click();

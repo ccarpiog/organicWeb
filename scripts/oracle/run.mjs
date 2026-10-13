@@ -43,7 +43,10 @@
  * and amides (`-carbonitrilo`, `-carboxamida`, `benzamida`,
  * `N-feniletanamida`; generateRingNitrilesAmides(), I-40c) and half as
  * many ring esters (`-carboxilato`, `benzoato`, `etanoato de fenilo`,
- * `benzoato de fenilo`; generateRingEsters(), I-40d), adds
+ * `benzoato de fenilo`; generateRingEsters(), I-40d) and a quarter as many
+ * molecules with a substituted `fenil` / `fenoxi` prefix on a chain parent
+ * (`1-(4-metilfenil)etan-1-ona`, `2-(4-metilfenoxi)etan-1-ol`,
+ * `N-(4-metilfenil)etanamida`; generateSubstitutedPhenyls(), I-45a), adds
  * one cycloalkane per ring size in the carbon range, names
  * each one in every prefix style (plus its traditional name — `toluene`,
  * `styrene`, `formaldehyde`, `acetaldehyde`, `acetone`, `formic acid`,
@@ -77,7 +80,7 @@ import {
   traditionalNameId, retainedPolyIds, retainedDigroupIds, digroupParts, positionalParts,
 } from '../../src/naming/aromatic.js';
 import { carbonylTraditionalId } from '../../src/naming/principal.js';
-import { renderName } from '../../src/naming/render.js';
+import { renderName, ARYL_ACETIC_IDS } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import { traditionalName as lexiconEsName, lexiconEs } from '../../src/naming/lexicon.es.js';
 import {
@@ -85,7 +88,7 @@ import {
   generateHalogenated, generateAlcohols, generateCarbonyls,
   generateAcids, generateEthers, generateEsters, generateAmines, generateAmides, generateNitriles, generateCyano, generateAcyl,
   generateEsterPrefixes, generateAmidePrefixes, generateRingSubstituents, generateRingAcids, generateRingNitrilesAmides,
-  generateRingEsters, generateCycloalkanes,
+  generateRingEsters, generateCycloalkanes, generateSubstitutedPhenyls,
 } from './generate.mjs';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
 import { englishName, compareWithOpsin } from './compare.mjs';
@@ -202,7 +205,8 @@ export function buildCases(molecules) {
         const spanish = result.alternatives.find((a) => a.style === 'traditional').name;
         // An ester keeps its O-bound group: only the acid part is traditional (`methyl acetate`, I-35);
         // an aniline keeps the groups on its N (`N-methylaniline`, I-36).
-        const english = result.structure.ester || ['aniline', 'formamide', 'acetamide'].includes(traditional)
+        // A substituted phenyl on an acetic word keeps its prefixes too (`2-(3-methylphenyl)acetic acid`, I-45a).
+        const english = result.structure.ester || ['aniline', 'formamide', 'acetamide', ...ARYL_ACETIC_IDS].includes(traditional)
           ? renderName(result.structure, lexiconEn, { traditional }).name
           : lexiconEn.traditionalName(traditional);
         names.push({ style: 'traditional', spanish, english, error: null });
@@ -372,17 +376,18 @@ export async function main(argv) {
     count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max,
   });
   const ringEsters = generateRingEsters({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
+  const phenyls = generateSubstitutedPhenyls({ count: Math.ceil(options.count / 4), seed: options.seed, maxSize: options.max });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
   const molecules = [
     ...random, ...monocycles, ...benzenes, ...ringPrincipal, ...ringOutside, ...ringPolysuffix, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...amines,
     ...amides, ...nitriles, ...cyano, ...acyl, ...esterPrefixes, ...amidePrefixes, ...ringPrefixes, ...ringAcids,
-    ...ringNitrilesAmides, ...ringEsters, ...rings,
+    ...ringNitrilesAmides, ...ringEsters, ...phenyls, ...rings,
   ];
   console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes + ${ringPrincipal.length} phenols and benzenamines `
     + `+ ${ringOutside.length} substituted benzoic acids, benzaldehydes, benzonitriles and benzamides `
     + `+ ${ringPolysuffix.length} benzenes with several identical principal groups `
     + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${carbonyls.length} aldehydes and ketones `
-    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${nitriles.length} nitriles + ${cyano.length} ciano- molecules + ${acyl.length} acyl molecules + ${esterPrefixes.length} ester-prefix molecules + ${amidePrefixes.length} amide-prefix molecules + ${ringPrefixes.length} ring-prefix molecules + ${ringAcids.length} ring acids and aldehydes + ${ringNitrilesAmides.length} ring nitriles and amides + ${ringEsters.length} ring esters + ${rings.length} cycloalkanes, `
+    + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${nitriles.length} nitriles + ${cyano.length} ciano- molecules + ${acyl.length} acyl molecules + ${esterPrefixes.length} ester-prefix molecules + ${amidePrefixes.length} amide-prefix molecules + ${ringPrefixes.length} ring-prefix molecules + ${ringAcids.length} ring acids and aldehydes + ${ringNitrilesAmides.length} ring nitriles and amides + ${ringEsters.length} ring esters + ${phenyls.length} substituted-phenyl molecules + ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);
   const availability = await checkAvailability(options.jar, options.java);
   if (!availability.ok) {

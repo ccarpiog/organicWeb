@@ -57,6 +57,7 @@ import {
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
+import { isSubstitutedPhenyl } from '../../src/naming/render.js';
 
 /**
  * Creates a seeded pseudo-random generator (mulberry32).
@@ -625,6 +626,119 @@ export function generateRingPolysuffixBenzenes({ count, seed, minSize = 4, maxSi
   } // End of the loop that draws distinct benzenes with several identical principal groups
   return molecules;
 } // End of function generateRingPolysuffixBenzenes()
+
+/** How the functional branch of generateSubstitutedPhenyls() is bonded to the ring (carbon chains most often). */
+const PHENYL_LINKS = Object.freeze(['carbon', 'carbon', 'carbon', 'oxygen', 'nitrogen', 'anilide']);
+
+/** Principal groups put on the functional branch of generateSubstitutedPhenyls(). */
+const PHENYL_BRANCH_GROUPS = Object.freeze(['alcohol', 'ketone', 'amine', 'acid', 'aldehyde', 'amide', 'nitrile']);
+
+/**
+ * Tells whether a name or substituent structure cites, at any depth, a
+ * substituted `fenil` / `fenoxi` prefix (render.js isSubstitutedPhenyl()).
+ *
+ * @param {{prefixes: object[]}} structure - A name or substituent structure.
+ * @returns {boolean} True when such a prefix is cited.
+ */
+function citesSubstitutedPhenyl(structure) {
+  return structure.prefixes.some(({ substituent }) => isSubstitutedPhenyl(substituent) || citesSubstitutedPhenyl(substituent));
+}
+
+/**
+ * Generates up to `count` distinct (by canonical key) molecules whose
+ * benzene ring is a substituted `fenil` / `fenoxi` prefix of a chain
+ * parent (design.md §14.1, I-45a: `1-(4-metilfenil)etan-1-ona`,
+ * `2-(4-clorofenil)etan-1-ol`, `2-(4-metilfenoxi)etan-1-ol`,
+ * `N-(4-metilfenil)etanamida`): a random benzene with one to four prefix
+ * groups (randomBenzene(): branches, halogens, alkoxy groups, either
+ * Kekulé drawing), then, on a free ring atom, one functional branch — a
+ * 1–4-carbon chain bonded to the ring through a carbon, an ether O or an
+ * amine N, carrying OH groups, ketone C=O, amine N, or a –COOH, –CHO,
+ * amide or –C≡N at its end; or an N-aryl amide (N on the ring, then the
+ * acyl chain). Only molecules valid for naming, named in every prefix style
+ * with a substituted phenyl prefix, are kept (an engine refusal such as
+ * `symmetricRing` or a ring parent is out of this generator's scope).
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateSubstitutedPhenyls({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 4733 + 61);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60 && maxSize >= 8) {
+    attempts += 1;
+    const branchSize = randomInt(random, 1, Math.min(4, maxSize - 7));
+    const mol = randomBenzene(random, {
+      extra: randomInt(random, 0, Math.max(0, maxSize - 6 - branchSize - 1)),
+      kekule: random() < 0.5 ? 1 : 2,
+      unsaturation: random() * 0.3,
+      branchiness: 0.2 + random() * 0.8,
+      groups: randomInt(random, 1, 4),
+      hetero: 0.3 + random() * 0.6,
+    });
+    const ring = [...mol.atoms.keys()].slice(0, 6); // randomBenzene() adds the ring atoms first.
+    const free = ring.filter((id) => adjacency(mol).get(id).length === 2);
+    if (free.length === 6 || free.length === 0) {
+      continue; // No ring prefix (a carbon group may get no carbon), or no room for the branch.
+    }
+    const site = free[Math.floor(random() * free.length)];
+    const link = PHENYL_LINKS[Math.floor(random() * PHENYL_LINKS.length)];
+    const firstNew = mol.nextAtomId;
+    let start = site;
+    if (link !== 'carbon') {
+      start = addAtom(mol, {}, link === 'oxygen' ? 'O' : 'N');
+      addBond(mol, site, start, 1);
+    }
+    let kind = PHENYL_BRANCH_GROUPS[Math.floor(random() * PHENYL_BRANCH_GROUPS.length)];
+    if (link === 'anilide') {
+      // An N-aryl amide: the C=O carbon on the N, the rest of the acyl chain on it (`N-(4-metilfenil)etanamida`).
+      const carbon = addAtom(mol);
+      addBond(mol, start, carbon, 1);
+      addBond(mol, carbon, addAtom(mol, {}, 'O'), 2);
+      if (branchSize > 1) {
+        growSideChain(mol, random, carbon, branchSize - 1, 0.3);
+      }
+      kind = 'anilide';
+    } else {
+      growSideChain(mol, random, start, branchSize, 0.3);
+    }
+    const branch = new Set([...mol.atoms.keys()].filter((id) => id >= firstNew && mol.atoms.get(id).element === 'C'));
+    let result = mol;
+    if (kind === 'alcohol') {
+      result = hydroxylate(mol, random, 0.3 + random() * 0.3, branch);
+    } else if (kind === 'ketone') {
+      result = carbonylate(mol, random, 0.4 + random() * 0.3, branch);
+    } else if (kind === 'amine') {
+      result = aminate(mol, random, { rate: 0.3 + random() * 0.3, graft: random() * 0.3, only: branch });
+    } else if (kind !== 'anilide') {
+      const ends = [...branch].filter((id) => bondOrderSum(mol, id) < CARBON_VALENCE);
+      if (ends.length === 0) {
+        continue;
+      }
+      result = cloneMolecule(mol);
+      hangRingGroup(result, random, ends[ends.length - 1], kind, randomInt(random, 0, 1));
+    } // End of the choice of the branch's principal group
+    if (kind !== 'anilide' && kind !== 'acid' && kind !== 'aldehyde' && kind !== 'amide' && kind !== 'nitrile'
+      && result.atoms.size === mol.atoms.size) {
+      continue; // No group drawn.
+    }
+    if (validateForNaming(result)) {
+      continue; // Out of scope (a ketene, an ester-like O–C=O, a group refused with a ring…).
+    }
+    const named = PREFIX_STYLES.map((prefixStyle) => nameMolecule(result, { prefixStyle }));
+    if (!named.every((r) => r.ok) || named[0].structure.parentKind !== 'chain' || !citesSubstitutedPhenyl(named[0].structure)) {
+      continue; // Refused by the engine in some style, or the ring is not a substituted phenyl prefix.
+    }
+    const key = canonicalKey(result);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(result);
+    }
+  } // End of the loop that draws distinct substituted-phenyl molecules
+  return molecules;
+} // End of function generateSubstitutedPhenyls()
 
 /**
  * Copies a hydrocarbon and replaces some of its hydrogens by halogens: each

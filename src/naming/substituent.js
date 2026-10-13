@@ -1078,8 +1078,11 @@ function buildSubstituent(ctx, chainAtom, attachAtom, order) {
  * left out): `(2-metilciclohexil)`, `(4-hidroxiciclohexil)`,
  * `(2-oxociclopentil)`. A benzene ring (validate.js isBenzeneRing()) is
  * the retained `fenil` (IUPAC 2013 P-29.6; `retained` 'phenyl', its chain
- * `retained` 'benzene'); validation keeps it monosubstituted (a substituted
- * phenyl is still refused, design.md §14.6, I-45a), so it has no prefixes. render.js cites any other ring `ciclo` + stem + `il`
+ * `retained` 'benzene'); since I-45a (design.md §14.1) it may carry its own
+ * prefixes (hydrocarbon branches, halogens, alkoxy groups:
+ * `(4-metilfenil)`, `(2,4-dimetilfenil)`), numbered from the attachment
+ * atom without N1/N2 (`aromatic`, so both Kekulé drawings give the same
+ * locants, design.md §14.2). render.js cites any other ring `ciclo` + stem + `il`
  * (`ciclohexil`, `ciclohex-2-en-1-il`; `iliden` on a double bond).
  *
  * @param {object} ctx - Naming context (createNamingContext).
@@ -1097,13 +1100,15 @@ export function ringSubstituent(ctx, chainAtom, attachAtom, order) {
     c.key,
     candidateData(c.atoms, c.bonds, c.bonds.map((id) => ctx.mol.bonds.get(id).order), prefixes),
   ]));
+  const benzene = isBenzeneRing(ctx.mol, ring);
   const { chosen } = runNumberingCascade(candidates, data, {
     prefixCounts: [prefixes.length],
     nameKey: nameKeyFunction([subs], ctx.lexicon),
+    // A substituted phenyl (I-45a) is numbered without N1/N2: the Kekulé drawing never steers it (design.md §14.2).
+    aromatic: benzene && prefixes.length > 0,
   });
   const { bonds, orders } = data.get(chosen.key);
   const numbered = buildRingStructure(chosen.atoms, bonds, orders);
-  const benzene = isBenzeneRing(ctx.mol, ring);
   const subtree = substituentSubtree(ctx.adj, chainAtom, attachAtom);
   return {
     ring: true,

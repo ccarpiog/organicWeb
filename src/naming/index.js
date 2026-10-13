@@ -22,8 +22,12 @@
  * design.md §13.4 I-40a: parent.js ringOrChain(); the chain pipeline then
  * names it with the ring as a `ciclohexil` / `fenil` prefix,
  * `2-ciclohexiletan-1-ol`, `1-feniletan-1-ona`, `fenilmetanamina`, and a
- * `RINGCHAIN` trace step first; a ring with two identical such branches is
- * refused, `symmetricRing`, multiplicative names); rings.js names it with its side chains as substituents
+ * `RINGCHAIN` trace step first; since I-45a also a substituted
+ * `(4-metilfenil)` / `(4-metilfenoxi)` prefix, design.md §14.1, refused when
+ * the ring wins the parent choice after all, `phenylParentError()`, and as
+ * a substituted `benzoil` prefix, `substitutedBenzoyl` (I-45b); a ring with
+ * two identical such branches is refused, `symmetricRing`, multiplicative
+ * names); rings.js names it with its side chains as substituents
  * (`ciclohexano`, `metilciclohexano`, `3-metilciclohex-1-eno`, design.md
  * §13.4 I-25, I-26), under the same prefix styles and alternatives. A
  * benzene ring (six carbons, alternating double and single ring bonds) is
@@ -213,7 +217,8 @@ import {
   CARBOXY_SUBSTITUENT_MESSAGE, SYMMETRIC_ETHER_MESSAGE, SYMMETRIC_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE,
   SUBSTITUTED_BENZENE_POLYAMINE_MESSAGE,
   amideCarbons, AMIDE_PREFIX_MESSAGE, nitrileCarbons, CYANO_PREFIX_MESSAGE, isAmineNitrogen, esterCarbons,
-  ESTER_PREFIX_MESSAGE, SYMMETRIC_RING_MESSAGE, esterRingSplit,
+  ESTER_PREFIX_MESSAGE, SYMMETRIC_RING_MESSAGE, esterRingSplit, substitutedPhenylOnly, phenylParentError,
+  SUBSTITUTED_BENZOYL_MESSAGE, ringAtomSet,
 } from '../model/validate.js';
 import { adjacency, hasCycle, rootedBranchKey, cycleCore } from '../model/graph.js';
 import { selectParent, ringOrChain } from './parent.js';
@@ -223,7 +228,9 @@ import {
 } from './substituent.js';
 import { numberParent, chainBonds } from './numbering.js';
 import { buildChainStructure, buildNameStructure, buildSuffix, esterParts } from './structure.js';
-import { renderName, suffixCount, suffixGroupIds, hasNitrogenLocants } from './render.js';
+import {
+  renderName, suffixCount, suffixGroupIds, hasNitrogenLocants, ARYL_ACETIC_IDS, isSubstitutedPhenyl, ringCarbonylRing,
+} from './render.js';
 import { nameRingWithStyle, ringParent } from './rings.js';
 import { hasBenzeneRing, nameBenzeneWithStyle, benzeneAlternatives } from './aromatic.js';
 import { analyzeGroups } from './seniority.js';
@@ -466,6 +473,10 @@ function nameValidated(input, options) {
   if (symmetric) {
     return withGroups({ ok: false, error: symmetric }, input);
   }
+  if (!chainParent && substitutedPhenylOnly(mol)) {
+    // Admitted as a substituted phenyl prefix (I-45a), but the ring wins the parent choice: not covered yet.
+    return { ok: false, error: phenylParentError(mol) };
+  }
   const benzene = !chainParent && hasBenzeneRing(mol);
   const adj = chainParent ? adjacency(mol) : null;
   const selection = cyclic && chainParent ? { ...found, trace: [choice.step, ...found.trace] } : found;
@@ -515,6 +526,10 @@ function nameValidated(input, options) {
     if (ringTwins) {
       return withGroups({ ok: false, error: ringTwins }, input);
     }
+    if (hasSubstitutedBenzoyl(structure)) {
+      // A `benzoil` prefix whose ring carries prefixes (`(4-metilbenzoil)`) is phase I-45b (design.md §14.6).
+      return { ok: false, error: substitutedBenzoylError(input) };
+    }
     // An acyl branch without an acyl prefix (–CO–C≡N) on the parent, or inside an ester's O-bound group.
     const acyl = [structure, ...esterParts(structure).map((part) => part.alkyl)].map(unnamedAcyl).find(Boolean) || null;
     if (acyl) {
@@ -561,6 +576,38 @@ function nameValidated(input, options) {
   }
   return { ...main, alternatives };
 } // End of function nameValidated()
+
+/**
+ * Tells whether a name or substituent structure cites, at any depth, a
+ * `benzoil` prefix whose benzene ring carries prefixes of its own
+ * (render.js isSubstitutedPhenyl() on ringCarbonylRing()): substituted
+ * benzoyl groups (`(4-metilbenzoil)`) are phase I-45b (design.md §14.6),
+ * so the engine refuses them instead of dropping the ring's prefixes.
+ *
+ * @param {{prefixes: object[]}} structure - A name or substituent structure.
+ * @returns {boolean} True when such a prefix is cited.
+ */
+function hasSubstitutedBenzoyl(structure) {
+  return structure.prefixes.some(({ substituent }) => (substituent.ringCarbonyl
+    && isSubstitutedPhenyl(ringCarbonylRing(substituent))) || hasSubstitutedBenzoyl(substituent));
+}
+
+/**
+ * The CYCLE refusal (`ringReason` 'substitutedBenzoyl') of a substituted
+ * benzoyl prefix (hasSubstitutedBenzoyl(), design.md §14.1), every ring
+ * atom highlighted.
+ *
+ * @param {object} mol - The molecule.
+ * @returns {{code: string, message: string, atoms: number[], ringKind: string, ringReason: string}} The error.
+ */
+function substitutedBenzoylError(mol) {
+  return validationError('CYCLE', {
+    message: SUBSTITUTED_BENZOYL_MESSAGE,
+    atoms: [...ringAtomSet(mol)].sort((p, q) => p - q),
+    ringKind: 'carbocycle',
+    ringReason: 'substitutedBenzoyl',
+  });
+}
 
 /**
  * The HETEROATOM refusal of a parent with two or more amine groups where
@@ -838,7 +885,7 @@ function carbonylAlternative(result) {
   if (!id) {
     return null;
   }
-  if (result.structure.ester || id === 'formamide' || id === 'acetamide') {
+  if (result.structure.ester || id === 'formamide' || id === 'acetamide' || ARYL_ACETIC_IDS.includes(id)) {
     // `acetato de etilo`, `N-metilacetamida`: the traditional word, with the O-bound group or the N groups (render.js).
     return { style: 'traditional', label: lexiconEs.traditionalLabel(id), ...renderName(result.structure, lexiconEs, { traditional: id }) };
   }

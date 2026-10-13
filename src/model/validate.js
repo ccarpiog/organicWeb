@@ -13,8 +13,9 @@
  *   multiple bonds — a benzene ring included; with two or more substituents
  *   only when every group is a hydrocarbon branch, a halogen or an alkoxy
  *   group, plus OH, amine, –COOH, amide, –C≡N or –CHO groups bonded to the
- *   ring, the most senior once or several times (design.md §14.1; otherwise
- *   CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
+ *   ring, the most senior once or several times, or as a substituted phenyl
+ *   or phenoxy prefix beside one functional branch, without an ester
+ *   (design.md §14.1; otherwise CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
  *   one gets TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps (≤ 60 carbons, ≤ 80 heavy atoms),
  *   only elements the engine can name yet (carbon, halogens bonded to a
  *   carbon — design.md §13.4 I-30 —, OH groups on a carbon, I-31, the
@@ -81,8 +82,10 @@ export const MESSAGES = Object.freeze({
     + 'que aún no sé combinar con los demás. Cuando el benceno tiene dos o más sustituyentes, de momento solo sé '
     + 'nombrarlo si son ramas de carbono, halógenos (flúor, cloro, bromo, yodo), grupos alcoxi (como –O–CH₃) o grupos '
     + '–COOH, amida, –C≡N, –CHO, –OH o amino (como –NH₂) unidos directamente al anillo: por ejemplo, el '
-    + '1,2-dimetilbenceno, el 4-metilfenol, el benceno-1,2-diol o el ácido 4-hidroxibenzoico. Los demás (con un éster, '
-    + 'una cetona o un grupo funcional en una rama, por ejemplo) quedan fuera de lo que sé nombrar.',
+    + '1,2-dimetilbenceno, el 4-metilfenol, el benceno-1,2-diol o el ácido 4-hidroxibenzoico. También sé nombrarlo como '
+    + 'sustituyente (fenil o fenoxi) cuando una sola de sus ramas lleva grupos funcionales y las demás son ramas de '
+    + 'carbono, halógenos o grupos alcoxi: por ejemplo, el 2-(4-clorofenil)etan-1-ol. Los demás (con grupos funcionales '
+    + 'en el anillo y en una rama a la vez, o en dos ramas, por ejemplo) quedan fuera de lo que sé nombrar.',
   RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
   VALENCE: 'Este carbono tendría más de 4 enlaces.',
   TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
@@ -275,6 +278,26 @@ export const SUBSTITUTED_POLYAMINE_MESSAGE = 'Esta molécula tiene varios grupos
   + 'y alguno de sus nitrógenos lleva otros grupos unidos. Para decir en qué nitrógeno está cada grupo harían falta '
   + 'localizadores como N¹ y N², y eso aún no sé hacerlo. Sí sé nombrar las diaminas sin grupos en el nitrógeno '
   + '(como la etano-1,2-diamina) y las aminas con un solo nitrógeno (como la N-metiletanamina).';
+
+/**
+ * Spanish CYCLE message (design.md §14.1, I-45a) for an ester whose molecule
+ * has a benzene ring with two or more substituents: esters with a
+ * substituted ring are phase I-45c (`acetato de 4-metilfenilo`).
+ */
+export const SUBSTITUTED_BENZENE_ESTER_MESSAGE = 'Esta molécula es un éster (tiene un grupo –COO–) y su benceno lleva '
+  + 'otros sustituyentes además del éster. De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más (como '
+  + 'el benzoato de metilo o el etanoato de fenilo). Sí sé nombrar un benceno con varios sustituyentes sin éster (como '
+  + 'el 2-(4-metilfenoxi)etan-1-ol).';
+
+/**
+ * Spanish CYCLE message (design.md §14.1, I-45a) for a benzoyl prefix
+ * (C₆H₅–CO– cited `benzoil`) whose benzene carries other substituents:
+ * substituted benzoyl prefixes (`(4-metilbenzoil)`) are phase I-45b.
+ */
+export const SUBSTITUTED_BENZOYL_MESSAGE = 'En esta molécula, el benceno está unido a un grupo C=O que va como prefijo '
+  + '(el grupo benzoil, C₆H₅–CO–), y además el anillo lleva otros sustituyentes. Ese caso aún no sé nombrarlo. Sí sé '
+  + 'nombrar el grupo benzoil sin nada más en el anillo (como en el ácido 2-benzoilbutanoico) y el benceno con '
+  + 'sustituyentes unido directamente a la cadena (como en la 1-(4-metilfenil)etan-1-ona).';
 
 /**
  * The SUBSTITUTED_POLYAMINE_MESSAGE of a benzene parent (design.md §14.1,
@@ -637,7 +660,8 @@ export function isBenzeneRing(mol, ring) {
  * Spanish CYCLE message for a benzene ring with `count` (≥ 2) substituents
  * of which some group is out of scope (design.md §3.2, §14.1:
  * polysubstituted benzenes are named with hydrocarbon, halogen and alkoxy
- * prefixes plus groups bonded to the ring, ringPrincipalGroups(), so far).
+ * prefixes plus groups bonded to the ring, ringPrincipalGroups(), and as a
+ * substituted phenyl prefix, polysubstitutedBenzeneScope(), so far).
  *
  * @param {number} count - Number of substituents on the ring.
  * @returns {string} The message.
@@ -745,14 +769,135 @@ function ringGroups(mol, ring) {
  * `ácido benceno-1,3-dicarboxílico`, `benceno-1,3,5-tricarbonitrilo`).
  * Groups on the N of two or more ring amines or amides are refused later
  * (`substitutedPolyamine`, naming/index.js; `substitutedPolyamide`,
- * amidePlacementError(): N¹/N⁴ locants). An ester, a ketone or any group on
- * a side chain (I-45) stay refused.
+ * amidePlacementError(): N¹/N⁴ locants). A ketone or any group on a side
+ * chain makes the benzene a substituted phenyl prefix instead
+ * (polysubstitutedBenzeneScope(), I-45a); an ester stays refused (I-45c).
  *
  * @param {Map<string, Set<number>>|null} groups - The ring groups (ringGroups()).
  * @returns {boolean} True when the molecule is in the I-43a / I-43b / I-44 scope.
  */
 function ringPrincipalGroups(groups) {
   return Boolean(groups) && RING_GROUP_SENIORITY.some((kind) => groups.get(kind).size > 0);
+}
+
+/**
+ * The branches of a ring that hold some atom of a characteristic group
+ * other than a prefix group (isPrefixAtom(): carbons, halogens on a
+ * carbon, ether oxygens): each branch is the subtree hanging from one
+ * ring atom through one non-ring neighbour (sideAtoms()), in a molecule
+ * with a single ring.
+ *
+ * @param {object} mol - A structurally valid molecule with exactly one ring.
+ * @param {{atoms: number[]}} ring - The ring (perceiveRings()).
+ * @returns {number[][]} The atoms of each such branch, the atom bonded to the ring first.
+ */
+function functionalBranches(mol, ring) {
+  const adj = adjacency(mol);
+  const inRing = new Set(ring.atoms);
+  const branches = [];
+  for (const id of ring.atoms) {
+    for (const n of adj.get(id)) {
+      if (inRing.has(n.atom)) {
+        continue;
+      }
+      const atoms = sideAtoms(adj, id, n.atom);
+      if (atoms.some((atom) => !isPrefixAtom(mol, adj, atom))) {
+        branches.push(atoms);
+      }
+    }
+  } // End of the loop over the ring atoms
+  return branches;
+} // End of function functionalBranches()
+
+/**
+ * How a benzene ring with two or more substituents can be named
+ * (design.md §14.1): 'parent' when the ring is the parent (prefixesOnly(),
+ * ringPrincipalGroups(): I-42a…I-44); 'phenyl' when it is a substituted
+ * `fenil` / `fenoxi` prefix of a chain parent (I-45a): no ester in the
+ * molecule (I-45c) and exactly one branch holding characteristic groups
+ * (functionalBranches(): the branch that holds the parent with the
+ * principal group), every other branch being a hydrocarbon branch, a
+ * halogen or an alkoxy group (`2-(4-clorofenil)etan-1-ol`,
+ * `2-(4-metilfenoxi)etan-1-ol`, `N-(4-metilfenil)etanamida`); null
+ * otherwise. A junior group on the ring beside a functional branch
+ * (`ácido 2-(4-hidroxifenil)etanoico`) is not covered yet. Whether the
+ * engine really makes the ring a prefix is checked by naming/index.js
+ * (substitutedPhenylOnly()).
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {string} kind - Its ring kind (classifyRings()).
+ * @param {{atoms: number[]}} ring - The benzene ring.
+ * @returns {'parent'|'phenyl'|null} The scope.
+ */
+function polysubstitutedBenzeneScope(mol, kind, ring) {
+  if (kind !== 'carbocycle') {
+    return null;
+  }
+  if (prefixesOnly(mol) || ringPrincipalGroups(ringGroups(mol, ring))) {
+    return 'parent';
+  }
+  return esterCarbons(mol).length === 0 && functionalBranches(mol, ring).length === 1 ? 'phenyl' : null;
+}
+
+/**
+ * The CYCLE error (`ringReason` 'polysubstitutedBenzene') of a benzene ring
+ * with two or more substituents that the app cannot name yet (design.md
+ * §3.2, §14.1): polysubstitutedBenzeneMessage(), or
+ * SUBSTITUTED_BENZENE_ESTER_MESSAGE when the molecule has an ester (I-45c,
+ * the ring-split esters included).
+ *
+ * @param {object} mol - The molecule.
+ * @param {number[]} atoms - Every ring atom (highlighting).
+ * @param {string} kind - The ring kind (classifyRings()).
+ * @param {number[]} substituted - The substituted benzene ring atoms (substitutedRingAtoms()).
+ * @returns {{code: string, message: string, atoms: number[]}} The error.
+ */
+export function polysubstitutedBenzeneError(mol, atoms, kind, substituted) {
+  const ester = esterCarbons(mol).length > 0;
+  return validationError('CYCLE', {
+    message: ester ? SUBSTITUTED_BENZENE_ESTER_MESSAGE : polysubstitutedBenzeneMessage(substituted.length),
+    atoms,
+    ringKind: kind,
+    ringReason: 'polysubstitutedBenzene',
+    substituted,
+  });
+}
+
+/**
+ * The CYCLE error of a molecule that passed validation only as a
+ * substituted `fenil` / `fenoxi` prefix (substitutedPhenylOnly(), I-45a)
+ * when the engine makes its benzene ring the parent after all (P-44.1:
+ * the ring then carries as many principal groups as the chain, e.g. the
+ * amine N of `N-(2-aminoetil)-4-metilbencen-1-amina`): the ring would be a
+ * parent with a functional group on a branch, not covered yet.
+ *
+ * @param {object} mol - A molecule for which substitutedPhenylOnly() is true.
+ * @returns {{code: string, message: string, atoms: number[]}} The error.
+ */
+export function phenylParentError(mol) {
+  const { kind, perception } = classifyRings(mol);
+  return polysubstitutedBenzeneError(mol, perception.ringAtoms, kind, substitutedRingAtoms(mol, perception.rings[0]));
+}
+
+/**
+ * Tells whether a molecule passes validation only because its benzene ring,
+ * with two or more substituents, is a substituted `fenil` / `fenoxi`
+ * prefix of a chain parent (design.md §14.1, I-45a,
+ * polysubstitutedBenzeneScope() 'phenyl'). The naming engine refuses such
+ * a molecule when its parent choice (P-44.1: a ring is senior to a chain
+ * with as many principal groups) makes the ring the parent after all.
+ *
+ * @param {object} mol - A molecule accepted by validateForNaming().
+ * @returns {boolean} True for a substituted phenyl that must stay a prefix.
+ */
+export function substitutedPhenylOnly(mol) {
+  if (!hasCycle(mol)) {
+    return false;
+  }
+  const { kind, perception } = classifyRings(mol);
+  const [ring] = perception.rings;
+  return kind === 'carbocycle' && isBenzeneRing(mol, ring) && substitutedRingAtoms(mol, ring).length > 1
+    && polysubstitutedBenzeneScope(mol, kind, ring) === 'phenyl';
 }
 
 /**
@@ -851,10 +996,13 @@ export function ringAtomSet(mol) {
  * directly to the ring, the most senior once (ringPrincipalGroups():
  * `4-metilfenol`, `4-metilbencen-1-amina`, `ácido 4-hidroxibenzoico`,
  * `3-cianobenzamida`) or, since I-44, several times
- * (`3-etilbenceno-1,2-diol`, `ácido benceno-1,3-dicarboxílico`); any other
- * polysubstituted benzene gets CYCLE with `ringReason`
- * 'polysubstitutedBenzene' (valid, but not nameable yet: an ester, a
- * ketone or a group on a side chain, a substituted phenyl…). A
+ * (`3-etilbenceno-1,2-diol`, `ácido benceno-1,3-dicarboxílico`), and since
+ * I-45a as a substituted phenyl / phenoxy prefix of a chain parent
+ * (polysubstitutedBenzeneScope() 'phenyl': `2-(4-clorofenil)etan-1-ol`);
+ * any other polysubstituted benzene gets CYCLE with `ringReason`
+ * 'polysubstitutedBenzene' (valid, but not nameable yet: an ester —
+ * SUBSTITUTED_BENZENE_ESTER_MESSAGE —, groups on the ring and on a side
+ * chain at once, groups on two side chains…; polysubstitutedBenzeneError()). A
  * benzene ring always carries at most one substituent per ring atom (each
  * ring atom already has three bonds). Otherwise: TOO_BIG for a larger ring,
  * and RING_SYSTEM with `ringKind` for a heterocycle (a lactone, an ester
@@ -881,16 +1029,8 @@ function ringError(mol) {
       return validationError('TOO_BIG', { message: RING_TOO_BIG_MESSAGE, detail: `ring of ${ring.atoms.length} carbons`, atoms });
     }
     const substituted = isBenzeneRing(mol, ring) ? substitutedRingAtoms(mol, ring) : [];
-    const groups = kind === 'carbocycle' && substituted.length > 1 ? ringGroups(mol, ring) : null;
-    const nameable = kind === 'carbocycle' && (prefixesOnly(mol) || ringPrincipalGroups(groups));
-    if (substituted.length > 1 && !nameable) {
-      return validationError('CYCLE', {
-        message: polysubstitutedBenzeneMessage(substituted.length),
-        atoms,
-        ringKind: kind,
-        ringReason: 'polysubstitutedBenzene',
-        substituted,
-      });
+    if (substituted.length > 1 && polysubstitutedBenzeneScope(mol, kind, ring) === null) {
+      return polysubstitutedBenzeneError(mol, atoms, kind, substituted);
     }
   } // End of the loop over the rings
   return null;

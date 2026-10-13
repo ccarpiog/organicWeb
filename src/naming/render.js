@@ -366,6 +366,9 @@ export function needsEnclosure(substituent) {
   if (substituent.alkoxycarbonyl) {
     return true; // `(metoxicarbonil)`, `[(propan-2-iloxi)carbonil]` (design.md §13.4 I-39c).
   }
+  if (isSubstitutedPhenyl(substituent)) {
+    return true; // `(4-metilfenil)`, `(4-metilfenoxi)` (design.md §14.1, I-45a).
+  }
   if (substituent.retained || substituent.halogen || substituent.hydroxy || substituent.oxo || substituent.cyano
     || substituent.carboxy) {
     return false;
@@ -392,6 +395,20 @@ export function needsEnclosure(substituent) {
 }
 
 /**
+ * Tells whether a substituent is a `fenil` group (or the phenyl of a
+ * `fenoxi` group) whose ring carries its own prefixes (design.md §14.1,
+ * I-45a): `(4-metilfenil)`, `(2,4-dimetilfenil)`, `(4-metilfenoxi)`.
+ * Such a prefix is compound: enclosed, multiplied with bis/tris, and
+ * sorted under the first letter of its complete name (`clorofenil` under c).
+ *
+ * @param {object} substituent - The substituent structure.
+ * @returns {boolean} True for a substituted phenyl or phenoxy group.
+ */
+export function isSubstitutedPhenyl(substituent) {
+  return substituent.retained === 'phenyl' && substituent.prefixes.length > 0;
+}
+
+/**
  * Tells whether a substituent prefix is compound (substituted itself:
  * `2-metilpropil`, `1-metiletil`), so identical ones are multiplied with
  * bis/tris. A simple prefix that is enclosed only because of its own
@@ -406,6 +423,9 @@ export function needsEnclosure(substituent) {
  * @returns {boolean} True when the prefix is compound.
  */
 export function isCompoundPrefix(substituent) {
+  if (isSubstitutedPhenyl(substituent)) {
+    return true; // `bis(4-clorofenil)` (design.md §14.1, I-45a).
+  }
   if (substituent.carbamoyl) {
     return carbamoylAmino(substituent).prefixes.length > 0;
   }
@@ -677,6 +697,17 @@ function substituentTokens(substituent, lexicon) {
     // The groups on the N without locants, every one after the first enclosed, then `amino`.
     const tokens = substituent.prefixes.flatMap((group, g) => groupTokens(group, lexicon, true, false, g > 0));
     return [...tokens, token(lexicon.groupPrefix('amine'), 'prefix')];
+  }
+  if (isSubstitutedPhenyl(substituent)) {
+    // The phenyl's own prefixes with their locants (the attachment atom is 1), then `fenil` (I-45a).
+    const tokens = [];
+    substituent.prefixes.forEach((group, g) => {
+      if (g > 0) {
+        tokens.push(token('-', 'punct'));
+      }
+      tokens.push(...groupTokens(group, lexicon, false, false, false, g === 0));
+    });
+    return [...tokens, token(lexicon.retainedPrefix('phenyl').text, 'prefix')];
   }
   if (substituent.retained) {
     const { italic, text } = lexicon.retainedPrefix(substituent.retained);
@@ -1188,6 +1219,13 @@ export function assembleEster(acidParts, esters, lexicon) {
 }
 
 /**
+ * Traditional-name ids (principal.js carbonylTraditionalId()) of an acetic
+ * word after a substituted phenyl prefix (design.md §14.1, I-45a):
+ * `ácido 2-(3-metilfenil)acético`, `2-(4-metilfenil)acetamida`.
+ */
+export const ARYL_ACETIC_IDS = Object.freeze(['arylaceticAcid', 'arylacetaldehyde', 'arylacetamide', 'arylacetonitrile']);
+
+/**
  * Renders a name structure to text and coloured parts (a chain parent, or
  * a ring parent when `parentKind` is 'ring'), with its suffix groups.
  * With `citeLocants` (a chain parent only) the prefix and suffix locants are
@@ -1201,7 +1239,9 @@ export function assembleEster(acidParts, esters, lexicon) {
  * (`acetato de etilo`), referring to the parent and the –COO–; for a
  * benzene amine (`aniline`, design.md §13.4 I-36) or a small amide
  * (`formamide`, `acetamide`, I-37) the parent and its suffix are that one
- * word, after the N prefixes (`N-metilanilina`, `N,N-dimetilformamida`).
+ * word, after the N prefixes (`N-metilanilina`, `N,N-dimetilformamida`);
+ * for an `aryl…` id (ARYL_ACETIC_IDS, I-45a) the class word, the prefixes
+ * with their locants and the acetic word (`ácido 2-(3-metilfenil)acético`).
  * Prefix locants are never omitted when a prefix has the locant `N`
  * (`1-cloro-N-metilmetanamina`); the suffix locants follow the omission
  * rule without the N groups (`N-metiletanamina`).
@@ -1227,6 +1267,16 @@ export function renderName(structure, lexicon = lexiconEs, options = {}) {
   const suffix = structure.suffix || null;
   const omitPrefixLocants = !(options.citeLocants && !ring) && omitsPrefixLocants(structure, lexicon);
   const omitGroupLocants = omitPrefixLocants && !hasNitrogenLocants(structure.prefixes);
+  if (ARYL_ACETIC_IDS.includes(options.traditional)) {
+    // A substituted phenyl on an acetic word (design.md §14.1, I-45a): `ácido 2-(3-metilfenil)acético`.
+    const group = suffixGroupIds(suffix);
+    const classWord = lexicon.suffixClassWord ? lexicon.suffixClassWord(suffix.kind) : null;
+    const lead = classWord ? [part(classWord, 'ending', group.atoms, group.bonds), part(' ', 'punct')] : [];
+    const word = part(lexicon.traditionalName(options.traditional), 'stem', [...new Set([...structure.parent.atoms, ...group.atoms])],
+      [...structure.parent.bonds, ...group.bonds]);
+    const parts = [...lead, ...renderPrefixes(structure.prefixes, lexicon, false), word];
+    return { name: parts.map((p) => p.text).join(''), parts };
+  }
   if (['aniline', 'formamide', 'acetamide'].includes(options.traditional)) {
     const group = suffixGroupIds(suffix);
     const word = part(lexicon.traditionalName(options.traditional), 'stem', [...new Set([...structure.parent.atoms, ...group.atoms])],

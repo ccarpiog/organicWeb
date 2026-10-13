@@ -12,7 +12,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseSmiles } from '../../src/model/smiles.js';
-import { validateForNaming, isNotNameableYet, isBenzeneRing } from '../../src/model/validate.js';
+import {
+  validateForNaming, isNotNameableYet, isBenzeneRing, SUBSTITUTED_BENZENE_ESTER_MESSAGE,
+} from '../../src/model/validate.js';
 import { perceiveRings } from '../../src/model/rings.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import {
@@ -145,21 +147,25 @@ test('polysubstituted benzenes with a functional group are refused with CYCLE; a
   for (const smiles of ['CC1=CC=CC=C1C', 'CC1=CC(C)=CC=C1', 'CC1=CC=C(C)C=C1', 'CC1C(C)=CC=CC=1', 'CC1=CC(C)=CC(C)=C1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
+  // Since I-45a a substituted phenyl on a chain parent is named: `1-(4-metilfenil)etan-1-ona`, `(4-clorofenil)metanol`.
+  for (const smiles of ['CC(=O)C1=CC=C(C)C=C1', 'OCC1=CC=C(Cl)C=C1', 'CC1=C(C)C(C)=C(C)C(CO)=C1C']) {
+    assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
+  }
   const cases = [
-    ['CC(=O)C1=CC=C(C)C=C1', 2], // a ketone on a substituted phenyl (I-45a)
     ['CCOC(=O)C1=CC(C)=CC(C)=C1', 3], // an ester of a substituted benzoic acid (I-45c)
     ['CCOC(=O)C1=CC=C(C)C=C1', 2], // an ester of a substituted benzoic acid (I-45c)
-    ['OCC1=CC=C(Cl)C=C1', 2], // a substituted phenyl on a chain parent (I-45a)
-    ['OCC1=CC=CC=C1O', 2], // an OH on the ring and one on a side chain (I-45a)
-    ['CC1=C(C)C(C)=C(C)C(CO)=C1C', 6], // an OH on a side chain
+    ['OCC1=CC=CC=C1O', 2], // an OH on the ring and one on a side chain
+    ['CC1=C(C)C(C)=C(C)C(CO)=C1CO', 6], // OH groups on two side chains
   ];
   for (const [smiles, count] of cases) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'CYCLE', smiles);
     assert.equal(error.ringReason, 'polysubstitutedBenzene', smiles);
     assert.equal(error.substituted.length, count, smiles);
-    assert.ok(error.message.startsWith(`Este benceno tiene ${count} sustituyentes y alguno de ellos es o lleva un grupo funcional`), error.message);
-    assert.match(error.message, /quedan fuera de lo que sé nombrar/);
+    const ester = smiles.includes('OC(=O)');
+    assert.ok(ester ? error.message === SUBSTITUTED_BENZENE_ESTER_MESSAGE
+      : error.message.startsWith(`Este benceno tiene ${count} sustituyentes y alguno de ellos es o lleva un grupo funcional`), error.message);
+    assert.match(error.message, ester ? /De momento solo sé nombrar los ésteres/ : /quedan fuera de lo que sé nombrar/);
     assert.ok(isNotNameableYet(error));
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(result.ok, false);

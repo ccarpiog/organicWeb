@@ -35,8 +35,10 @@ test('exact Spanish messages from the design table', () => {
       + 'que aún no sé combinar con los demás. Cuando el benceno tiene dos o más sustituyentes, de momento solo sé '
       + 'nombrarlo si son ramas de carbono, halógenos (flúor, cloro, bromo, yodo), grupos alcoxi (como –O–CH₃) o grupos '
       + '–COOH, amida, –C≡N, –CHO, –OH o amino (como –NH₂) unidos directamente al anillo: por ejemplo, el '
-      + '1,2-dimetilbenceno, el 4-metilfenol, el benceno-1,2-diol o el ácido 4-hidroxibenzoico. Los demás (con un éster, '
-      + 'una cetona o un grupo funcional en una rama, por ejemplo) quedan fuera de lo que sé nombrar.',
+      + '1,2-dimetilbenceno, el 4-metilfenol, el benceno-1,2-diol o el ácido 4-hidroxibenzoico. También sé nombrarlo como '
+      + 'sustituyente (fenil o fenoxi) cuando una sola de sus ramas lleva grupos funcionales y las demás son ramas de '
+      + 'carbono, halógenos o grupos alcoxi: por ejemplo, el 2-(4-clorofenil)etan-1-ol. Los demás (con grupos funcionales '
+      + 'en el anillo y en una rama a la vez, o en dos ramas, por ejemplo) quedan fuera de lo que sé nombrar.',
     RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
     VALENCE: 'Este carbono tendría más de 4 enlaces.',
     TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',

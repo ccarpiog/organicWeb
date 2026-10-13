@@ -78,7 +78,9 @@ export const PHENOL_STEM = 'fen';
  * systematic name comes first). `tolueno` is even the 2013 preferred name
  * (substitution allowed on the ring only); `estireno` is retained for general
  * nomenclature. Cumene, cymene and the like are no longer retained
- * (P-22.1.3), so `cumeno` is not offered.
+ * (P-22.1.3), so `cumeno` is not offered. The `aryl…` ids (I-45a) are
+ * only the acetic word after a substituted phenyl prefix
+ * (`ácido 2-(3-metilfenil)acético`, render.js renderName()).
  */
 export const TRADITIONAL_NAMES = Object.freeze({
   toluene: 'tolueno',
@@ -104,6 +106,10 @@ export const TRADITIONAL_NAMES = Object.freeze({
   phenylacetamide: '2-fenilacetamida',
   phenylacetonitrile: 'fenilacetonitrilo',
   phenylacetate: 'fenilacetato',
+  arylaceticAcid: 'acético',
+  arylacetaldehyde: 'acetaldehído',
+  arylacetamide: 'acetamida',
+  arylacetonitrile: 'acetonitrilo',
   xylene12: '1,2-xileno',
   xylene13: '1,3-xileno',
   xylene14: '1,4-xileno',
@@ -200,6 +206,10 @@ export const TRADITIONAL_LABELS = Object.freeze({
   phenylacetamide: 'nombre tradicional, que la IUPAC (2013) acepta',
   phenylacetonitrile: 'nombre tradicional, que la IUPAC (2013) acepta',
   phenylacetate: 'nombre tradicional, que la IUPAC (2013) acepta',
+  arylaceticAcid: 'nombre tradicional, que la IUPAC (2013) acepta',
+  arylacetaldehyde: 'nombre tradicional, que la IUPAC (2013) acepta',
+  arylacetamide: 'nombre tradicional, que la IUPAC (2013) acepta',
+  arylacetonitrile: 'nombre tradicional, que la IUPAC (2013) acepta',
   xylene12: 'nombre tradicional, que la IUPAC (2013) acepta',
   xylene13: 'nombre tradicional, que la IUPAC (2013) acepta',
   xylene14: 'nombre tradicional, que la IUPAC (2013) acepta',

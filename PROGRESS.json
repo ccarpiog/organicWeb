@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-13T20:12:06Z",
+  "updated": "2026-10-13T20:45:45Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups, polysubstituted benzenes) by IUPAC 2013 rules.",
   "phases": [
@@ -505,8 +505,11 @@
     {
       "id": "I-45a",
       "title": "v3 Substituted phenyl and phenoxy as a substituent",
-      "status": "queued",
-      "summary": "Substituted phenyl and phenoxy prefixes on chains, e.g. 1-(4-metilfenil)etan-1-ona."
+      "status": "done",
+      "summary": "Substituted phenyl and phenoxy prefixes on functional chains, e.g. 1-(4-metilfenil)etan-1-ona.",
+      "risk": "high",
+      "review": "Codex ship, 0 findings — docs/reviews/I-45a.md",
+      "narrative": "docs/progress-archive/i-45a.md"
     },
     {
       "id": "I-45b",

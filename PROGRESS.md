@@ -65,8 +65,8 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-43a | v3 One OH or amine on the ring, plus prefixes | same, "I-43a" | done — `docs/progress-archive/i-43a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-43a.md` |
 | I-43b | v3 One outside-carbon suffix (COOH/CHO/CN/CONH₂) on the ring, plus prefixes | same, "I-43b" | done — `docs/progress-archive/i-43b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-43b.md` |
 | I-44 | v3 Several identical principal groups on the ring | same, "I-44" | done — `docs/progress-archive/i-44.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-44.md` |
-| I-45a | v3 Substituted phenyl and phenoxy as a substituent | same, "I-45a" | queued (next) | — | — |
-| I-45b | v3 Substituted benzoyl | same, "I-45b" | queued | — | — |
+| I-45a | v3 Substituted phenyl and phenoxy as a substituent | same, "I-45a" | done — `docs/progress-archive/i-45a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-45a.md` |
+| I-45b | v3 Substituted benzoyl | same, "I-45b" | queued (next) | — | — |
 | I-45c | v3 Esters with substituted rings | same, "I-45c" | queued | — | — |
 | I-46 | v3 Wrap-up (Ayuda, examples, README, CLAUDE.md scope, oracle README) | same, "I-46" | queued | — | — |
 
@@ -117,13 +117,12 @@ user's decisions as `docs/design.md` §14 (pointer from §13.1).
 
 ## Next action
 
-Start I-45a: substituted phenyl and phenoxy as a substituent (`1-(4-metilfenil)etan-1-ona`,
-`2-(4-clorofenil)etan-1-ol`, `ácido 2-(3-metilfenil)acético`, `2-(4-metilfenoxi)etan-1-ol`,
-`N-(4-metilfenil)acetamida`). Spec: `autoclaude/processed/220-polysubstituted-benzenes.md` "I-45a",
-"Code traps" 3 and 6; design `docs/design.md` §14. Phenyl numbering starts at the attachment atom,
-Kekulé-neutral (`substituent.js ringSubstituent()` / `phenylSubstituent`); `CYCLE` /
-`polysubstitutedBenzene` in `validate.js ringError()` still guards substituted phenyl on chains.
-Deploying (`npm run deploy`) stays a manual user step.
+Start I-45b: substituted benzoyl — `(4-metilbenzoil)` prefixes wherever `benzoil` is named today.
+Spec: `autoclaude/processed/220-polysubstituted-benzenes.md` "I-45b" and "Code traps" 3 and 6; design
+`docs/design.md` §14 (§14.5 for I-45a's substituted-phenyl admission). Substituted benzoyl is
+refused today by its own message in `validate.js` (added in I-45a); phenyl numbering from the
+attachment carbon lives in `substituent.js` / `render.js`. Deploying (`npm run deploy`) stays a
+manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -261,14 +260,17 @@ Deploying (`npm run deploy`) stays a manual user step.
 - Several identical ring principal groups (I-44): gate `ringPrincipalGroups()` in `validate.js`
   (most senior ring group, one or more times); tests `tests/unit/benzene-polysuffix.test.js`,
   `tests/e2e/benzene-polysuffix.spec.js`; oracle `generateRingPolysuffixBenzenes()`.
+- Substituted phenyl/phenoxy (I-45a): admission in `validate.js`, phenyl numbering in
+  `substituent.js` / `render.js`; tests `tests/unit/substituted-phenyl.test.js`,
+  `tests/e2e/substituted-phenyl.spec.js`; oracle `generateSubstitutedPhenyls()`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-44)
+## Verification (last phase, I-45a)
 
-- Run by the orchestrator: `npm test` 0 (1631 pass) · `npm run check` 0 (137 files) · `npm run build`
-  0 · `npm run e2e` 0 (353 pass, source + dist) · `npm run oracle -- --count 2000 --seed 1 --max 60`
-  0 (22527 pass, 0 fail).
+- Run by the orchestrator: `npm test` 0 (1658 pass) · `npm run check` 0 (139 files) · `npm run build`
+  0 · `npm run e2e` 0 (369 pass, source + dist) · `npm run oracle -- --count 2000 --seed 1 --max 60`
+  0 (23027 pass, 0 fail).
 
 ## Open risks / deviations
 
@@ -301,124 +303,13 @@ Deploying (`npm run deploy`) stays a manual user step.
   rings; oracle compares at most two rings (I-40d); chain-parent layouts take branches in atom-id
   order; benzene monosubstituted only; `tolueno` preferred-name status from memory.
 
-- I-29: detection only; heteroatom molecules still `HETEROATOM`, now with
-  group steps. Review should-fix (ester/amide prefix direction) fixed with
-  regressions. `oxo-`/`formil-` forms and diesters left to I-35/I-39
-  (`docs/progress-archive/i-29.md`).
-
-- I-30: alphabetical order by Spanish words (`2-metil-4-yodopentano`); locant
-  omission rules from memory (P-14.3.4); review should-fix `(bromo-clorometil)` fixed,
-  `2-cloroetenil` vs `2-cloroeten-1-il` declined with reasoning
-  (`docs/progress-archive/i-30.md`).
-
-- I-31: cycloalkanols and `fenol` brought forward from I-40; a ring with OH on a side
-  chain is refused until I-40; `2-cloroetan-1-ol`, enols and gem-diols decided from
-  memory; ring closing bond ranks as n, rendered `1(n)` only when OH locants force it.
-  Review should-fix (`tetrol`, closing-bond locant) fixed (`docs/progress-archive/i-31.md`).
-
-- I-32: cycloalkanones brought forward from I-40; CHO on rings, acyl-type branches and
-  3+ CHO refused; `propanona` (design) with the 2013 PIN `propan-2-ona` as an alternative;
-  `formaldehído`/`acetaldehído`/`acetona` offered; rule numbers from memory. Review
-  should-fix (acyl leaked through the pin style) fixed with a regression
-  (`docs/progress-archive/i-32.md`).
-
-- I-33: open-chain acids only (ring + COOH → `ringAcid`, 3+ COOH → `manyAcids`);
-  `ácido fórmico`/`acético`/`oxálico` offered; aldehyde end beside an acid is `oxo-`.
-  A larger oracle run (seed 7, 1–20 C) shows 7 pre-existing aldehyde/ketone refusals in the
-  'substituted' style, not wrong names (`docs/progress-archive/i-33.md`).
-
-- I-34: ring always the parent side (no `fenoxi`); `symmetricEther` refused when both
-  halves carry the principal group; functional-class names (`dietil éter`) and `anisol`
-  offered, not oracle-checked; review should-fix (polyether names depended on atom IDs)
-  fixed with regressions (`docs/progress-archive/i-34.md`).
-
-- I-35: esters with one –COO– on open chains only (`ringEster`, `esterPrefix` for acid +
-  ester, `manyEsters`); groups on the O-bound side named inside it (`etanoato de
-  2-hidroxietilo`); `acetato`/`formiato` for bare etanoato/metanoato (retained status from
-  memory). Both review should-fix (acid highlight, ethers in the O-bound group) fixed with
-  regressions (`docs/progress-archive/i-35.md`).
-
-- I-36: ring amines brought forward from I-40 (`ciclohexanamina`, `bencenamina`, `anilina`
-  as alternative); `N` locants force carbon locants (`1-cloro-N-metilmetanamina`);
-  substituted polyamines (N¹/N²) and symmetric amines refused; decisions from memory listed in
-  `docs/progress-archive/i-36.md`. `scripts/oracle/README.md` stale since I-31.
-
-- I-37: open-chain amides only; ring amides (incl. `N-fenil…`), amide beside acid/ester or
-  two amides on separate pieces (`amidePrefix`, no multiplicative names), 3+ amides,
-  N-substituted diamides and imides refused; `formamida`/`acetamida` retained status from
-  memory. `scripts/oracle/README.md` still stale; seed 7 keeps 2 pre-existing carbonyl
-  generator failures (`docs/progress-archive/i-37.md`).
-
-- I-38: open-chain nitriles only; `ciano-` refused (`cyanoPrefix`, left to I-39), ring
-  nitriles and 3+ nitriles refused; `metanonitrilo` (HCN) admitted; `acetonitrilo` labelled
-  preferred and `-onitrilo` elision from memory (P-16.7.1). Review should-fix (dinitrile chain
-  step blamed length instead of P0) fixed for nitriles, diacids and diamides with regressions
-  (`docs/progress-archive/i-38.md`).
-
-- I-39a: `ciano-` named at any depth with its carbon outside every chain; `manyNitriles` only
-  for 3+ principal nitriles on one piece; NC–C(=O)X refused (`carbonocyanidic`, from memory);
-  `ácido 2-cianoetanoico` keeps its locant. Review should-fix (chain step said the chain ends
-  at the cyano carbon) fixed with a regression (`docs/progress-archive/i-39a.md`).
-
-- I-39b: acyl carbon X stays a chain carbon (ketone in the chain when possible), an acyl branch
-  only when the chain misses it; `acetil` retained, substituted two-carbon acyls systematic
-  (`(2-cloroetanoil)`); `manyAldehydes` narrowed to 3+ principal –CHO on one piece
-  (`-carbaldehído`); `acylSubstituent` only for –CO–C≡N; acyl on rings still refused (I-40);
-  prefix words from memory. Review should-fix (acyl root O counted as `oxo` in the branch
-  tie-break) fixed with a regression (`docs/progress-archive/i-39b.md`).
-
-- I-39c: acid + ester named (ester C in the chain → `R-oxi…-oxo`, else `alcoxicarbonil-`;
-  O-bound → `aciloxi-`, `acetiloxi`); diesters on one chain (`butanodioato de dimetilo`,
-  `… de etilo y metilo`); still refused: 3+ esters, esters on separate pieces (`esterPrefix`),
-  diesters needing locants (new `mixedDiester`). Those three word choices from memory
-  (`docs/progress-archive/i-39c.md`).
-
-- I-39d: amides as prefixes beside an acid/ester (`amino…oxo`, `carbamoil-`, `acilamino-`) and on
-  a second carbon piece (`2-(acetilamino)etanamida`); `acilamino` chosen over `acetamido` from
-  memory; chain rule P4 no longer counts groups on the suffix N; still refused: 3+ amides on one
-  chain, substituted diamides, imides, rings (`docs/progress-archive/i-39d.md`).
-
-- I-40a: parent = ring or chain by principal-group count (P-44.1.1), ring wins ties
-  (P-44.1.2.2); hydrocarbons keep ring always parent. Ring prefixes incl. `(2-metilciclohexil)`,
-  `(ciclohex-2-en-1-il)`, `fenoxi` (I-34's "no fenoxi" now only when the ring side holds the
-  principal group). New refusals `symmetricRing` (multiplicative names) and `ringAcyl` (I-40b);
-  `(fenilamino)` over `anilino`, `cloro(fenil)metanol` parenthesis convention and the status of
-  `acetofenona`/`alcohol bencílico`/`bencilamina` from memory. Both review should-fix
-  (`symmetricRing` atom-order dependence, tie wording in explanations) fixed with regressions
-  (`docs/progress-archive/i-40a.md`).
-
-- I-40b: `ácido benzoico` / `benzaldehído` preferred with `bencenocarboxílico` /
-  `bencenocarbaldehído` as other forms; `ácido fenilacético`, `benzoil` status from memory; ring
-  acyl prefixes parenthesised except `benzoil`; C=O between ring and chain stays a chain `oxo`
-  when reachable; `carboxi-` prefix also names some acyclic molecules once refused as
-  `carboxySubstituent`; `manyAcids` now per carbon piece. Review should-fix (ring-adjacent ketone
-  explained as an aldehyde) fixed with regressions (`docs/progress-archive/i-40b.md`).
-
-- I-40d: ring esters named, `benzoato de fenilo` the only two-ring molecules admitted (two separate
-  carbocycles, one ester, no acid); lactones refused with their own message; mixed ring diesters,
-  two rings beside an acid, ring ester beside a chain ester still refused; `-carboxilato`,
-  `benzoato`, `fenilacetato` status from memory. Review should-fix (anhydride called a lactone)
-  fixed with a regression (`docs/progress-archive/i-40d.md`).
-
-- I-40c: `benzonitrilo`/`benzamida` preferred with `benceno…` forms as alternatives;
-  `N-feniletanamida` first (systematic-first rule) with `N-fenilacetamida`; `2-fenilacetamida`,
-  `fenilacetonitrilo` "la IUPAC acepta" — all from memory (P-66.1, P-66.5). Ring diamides with an
-  N-substituent refused (N¹/N⁴ message); four refusal snapshots swapped for still-refused molecules.
-  Pre-existing: `cianometil` branch explained as "un grupo de 2 carbonos". Review should-fix
-  (amide prefix form in «Anillo o cadena») fixed with a regression (`docs/progress-archive/i-40c.md`).
-
-- I-41a: named acyclic heteroatom molecules now draw at 90° (rings still fall back); 1 of 1356
-  generator molecules falls back with NO_ROOM, none overlap; HETEROATOM note reworded; five older
-  tests updated from "falls back" to the new behaviour (`docs/progress-archive/i-41a.md`).
-
-- I-41b: abbreviations only in the 90° view; clicks on a label act on the group's carbon, Borrar
-  removes the whole group in one undo step; methanal/formic acid/esters/amides stay per atom;
-  labels centred on the carbon (vertical bond meets the middle of "COOH"); SVG `role="img"` hides
-  per-label aria from screen readers (`docs/progress-archive/i-41b.md`).
-
-- I-41c: examples ring group named «Hidrocarburos con un anillo» (toolbar already has «Anillos»);
-  Ayuda/example wording not teacher-reviewed; still open from I-40d: the ring step calls an ester
-  prefix on the ring «una rama» (`docs/progress-archive/i-41c.md`).
+- I-29…I-41c (functional groups, rings as substituents, ring esters, 90° view, abbreviations,
+  wrap-up): deviations, decisions from memory and review resolutions in
+  `docs/progress-archive/i-29.md` … `i-41c.md`. Still relevant: many retained-name statuses and
+  prefix word choices rest on memory, not oracle checks (OPSIN judges structure only); seed 7 keeps
+  2 pre-existing carbonyl generator failures; `cianometil` branch explained as "un grupo de 2
+  carbonos"; the ring step calls an ester prefix on the ring «una rama»; Ayuda/example wording not
+  teacher-reviewed.
 
 - I-42a: `1-metil-4-metoxibenceno` (Spanish alphabetical order) instead of the item's
   `1-metoxi-4-metilbenceno`; `o-dimetilbenceno` offered beside the xileno forms; xileno/mesitileno
@@ -433,9 +324,14 @@ Deploying (`npm run deploy`) stays a manual user step.
   groups without locants (`bencenohexol`, P-14.3.4 from memory); the out-of-scope benzene refusal
   message reworded (`docs/progress-archive/i-44.md`).
 
+- I-45a: systematic name first for substituted phenyl (`ácido 2-(3-metilfenil)etanoico`, alt.
+  `…acético`; `N-(4-metilfenil)etanamida`, alt. `…acetamida`), from memory; OH and other junior
+  groups on the phenyl still refused; a "ring picked as parent" safety net is tested only directly
+  (`docs/progress-archive/i-45a.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-43b `619dde1`, pushed. I-44 committed and pushed right after this checkpoint (see `git log`).
+- I-44 `1a56065`, pushed. I-45a committed and pushed right after this checkpoint (see `git log`).

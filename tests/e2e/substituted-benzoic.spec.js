@@ -170,7 +170,9 @@ test('still out of scope: a diester, a CHO on a branch, an ester or a ketone bes
     await loadSmiles(page, smiles);
     await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
     await expect(error).toHaveAttribute('data-code', 'CYCLE');
-    await expect(error).toContainText('el benceno-1,2-diol o el ácido 4-hidroxibenzoico');
+    // An ester beside a substituted ring has its own message (I-45c).
+    await expect(error).toContainText(smiles.startsWith('CCOC(=O)') ? 'De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más'
+      : 'el benceno-1,2-diol o el ácido 4-hidroxibenzoico');
     await expect(page.locator('#result-name')).toHaveCount(0);
   } // End of the loop over the refused benzenes
   expect(errors).toEqual([]);
