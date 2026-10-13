@@ -9,7 +9,9 @@
  * as many phenols and benzenamines with ring prefixes
  * (generateRingPrincipalBenzenes(), I-43a) and a quarter as many benzoic
  * acids, benzaldehydes, benzonitriles and benzamides with ring prefixes,
- * junior groups among them (generateRingOutsideBenzenes(), I-43b), half as many halogen derivatives of such molecules (F, Cl, Br,
+ * junior groups among them (generateRingOutsideBenzenes(), I-43b), a quarter
+ * as many benzenes with two to six identical principal groups on the ring
+ * (generateRingPolysuffixBenzenes(), I-44), half as many halogen derivatives of such molecules (F, Cl, Br,
  * I; halomethanes and haloethanes included, design.md §13.4 I-30), half as
  * many alcohols (OH groups on chains or on ring carbons, phenol, some also
  * halogenated; I-31), half as many aldehydes and ketones (C=O on chains or
@@ -71,13 +73,16 @@ import { fileURLToPath } from 'node:url';
 import { writeSmiles } from '../../src/model/smiles.js';
 import { nameMolecule, amineClassName } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
-import { traditionalNameId, retainedPolyIds, positionalParts } from '../../src/naming/aromatic.js';
+import {
+  traditionalNameId, retainedPolyIds, retainedDigroupIds, digroupParts, positionalParts,
+} from '../../src/naming/aromatic.js';
 import { carbonylTraditionalId } from '../../src/naming/principal.js';
 import { renderName } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
-import { traditionalName as lexiconEsName } from '../../src/naming/lexicon.es.js';
+import { traditionalName as lexiconEsName, lexiconEs } from '../../src/naming/lexicon.es.js';
 import {
-  generateMolecules, generateMonocycles, generateBenzenes, generateRingPrincipalBenzenes, generateRingOutsideBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
+  generateMolecules, generateMonocycles, generateBenzenes, generateRingPrincipalBenzenes, generateRingOutsideBenzenes, generateRingPolysuffixBenzenes,
+  generateHalogenated, generateAlcohols, generateCarbonyls,
   generateAcids, generateEthers, generateEsters, generateAmines, generateAmides, generateNitriles, generateCyano, generateAcyl,
   generateEsterPrefixes, generateAmidePrefixes, generateRingSubstituents, generateRingAcids, generateRingNitrilesAmides,
   generateRingEsters, generateCycloalkanes,
@@ -130,7 +135,8 @@ export function parseArgs(argv) {
 /**
  * The extra names of a polysubstituted benzene (design.md §14.4, §14.5):
  * the retained xylene / mesitylene / cresol names (aromatic.js
- * retainedPolyIds()) and the old orto/meta/para form (style 'positional':
+ * retainedPolyIds()), the names of two identical principal groups
+ * (retainedDigroupIds(), I-44: `hydroquinone`, `4-methylphthalic acid`) and the old orto/meta/para form (style 'positional':
  * aromatic.js positionalParts() applied to the English name, as the Spanish
  * alternative is built — `o-dichlorobenzene`, `p-methylphenol`, and on the
  * `aniline` form for an amine, `o-chloroaniline`, `N,p-dimethylaniline`).
@@ -143,6 +149,11 @@ function polyBenzeneNames(result) {
   for (const id of retainedPolyIds(result.structure)) {
     const spanish = result.alternatives.find((a) => a.style === 'traditional' && a.name === lexiconEsName(id)).name;
     entries.push({ style: 'traditional', spanish, english: lexiconEn.traditionalName(id), error: null });
+  }
+  for (const id of retainedDigroupIds(result.structure)) {
+    // `hydroquinone`, `4-methylphthalic acid` (I-44): the prefixes in front of the retained word.
+    const spanish = digroupParts(result.structure, lexiconEs, id).map((p) => p.text).join('');
+    entries.push({ style: 'traditional', spanish, english: digroupParts(result.structure, lexiconEn, id).map((p) => p.text).join(''), error: null });
   }
   const positional = result.alternatives.find((a) => a.style === 'positional');
   if (positional) {
@@ -329,6 +340,9 @@ export async function main(argv) {
   const ringOutside = generateRingOutsideBenzenes({
     count: Math.ceil(options.count / 4), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
+  const ringPolysuffix = generateRingPolysuffixBenzenes({
+    count: Math.ceil(options.count / 4), seed: options.seed, minSize: options.min, maxSize: options.max,
+  });
   const halogenated = generateHalogenated({
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
@@ -360,12 +374,13 @@ export async function main(argv) {
   const ringEsters = generateRingEsters({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
   const molecules = [
-    ...random, ...monocycles, ...benzenes, ...ringPrincipal, ...ringOutside, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...amines,
+    ...random, ...monocycles, ...benzenes, ...ringPrincipal, ...ringOutside, ...ringPolysuffix, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...amines,
     ...amides, ...nitriles, ...cyano, ...acyl, ...esterPrefixes, ...amidePrefixes, ...ringPrefixes, ...ringAcids,
     ...ringNitrilesAmides, ...ringEsters, ...rings,
   ];
   console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes + ${ringPrincipal.length} phenols and benzenamines `
     + `+ ${ringOutside.length} substituted benzoic acids, benzaldehydes, benzonitriles and benzamides `
+    + `+ ${ringPolysuffix.length} benzenes with several identical principal groups `
     + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${carbonyls.length} aldehydes and ketones `
     + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${nitriles.length} nitriles + ${cyano.length} ciano- molecules + ${acyl.length} acyl molecules + ${esterPrefixes.length} ester-prefix molecules + ${amidePrefixes.length} amide-prefix molecules + ${ringPrefixes.length} ring-prefix molecules + ${ringAcids.length} ring acids and aldehydes + ${ringNitrilesAmides.length} ring nitriles and amides + ${ringEsters.length} ring esters + ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);

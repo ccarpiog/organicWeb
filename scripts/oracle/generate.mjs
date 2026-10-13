@@ -559,6 +559,74 @@ export function generateRingOutsideBenzenes({ count, seed, minSize = 4, maxSize 
 } // End of function generateRingOutsideBenzenes()
 
 /**
+ * Generates up to `count` distinct benzenes with two to six identical
+ * principal groups on the ring (design.md §14, I-44): a –COOH, an amide
+ * –CONH₂, a –C≡N, a –CHO, an OH or an –NH₂ (no groups on the N of the
+ * principal amides and amines: those need N¹/N⁴ locants and are refused),
+ * on random free ring atoms of a random benzene with prefixes
+ * (randomBenzene(): branches, halogens, alkoxy groups, sometimes none) and,
+ * with probability 0.3, one junior group on another free ring atom
+ * (`3-etilbenceno-1,2-diol`, `benceno-1,4-diamina`,
+ * `ácido 5-metilbenceno-1,3-dicarboxílico`, `benceno-1,3,5-tricarbonitrilo`,
+ * `5-aminobenceno-1,3-diol`, `bencenohexol`). Only the size cap
+ * (`TOO_BIG`) filters them out: any other refusal is reported by the oracle
+ * as a naming failure.
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C).
+ * @returns {object[]} The molecules.
+ */
+export function generateRingPolysuffixBenzenes({ count, seed, minSize = 4, maxSize = 14 }) {
+  const random = seededRandom(seed * 6113 + 919);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50) {
+    attempts += 1;
+    const principal = RING_GROUP_ORDER[randomInt(random, 0, RING_GROUP_ORDER.length - 1)];
+    const outside = !['alcohol', 'amine'].includes(principal);
+    // Mostly two or three groups, sometimes up to six.
+    const n = random() < 0.8 ? randomInt(random, 2, 3) : randomInt(random, 4, 6);
+    const juniors = RING_GROUP_ORDER.slice(RING_GROUP_ORDER.indexOf(principal) + 1);
+    const junior = n < 6 && juniors.length > 0 && random() < 0.3 ? 1 : 0;
+    const low = Math.max(minSize, 6 + (outside ? n : 0));
+    if (low > maxSize) {
+      continue;
+    }
+    const size = randomInt(random, low, maxSize);
+    const room = 6 - n - junior;
+    const mol = randomBenzene(random, {
+      extra: room > 0 ? size - low : 0,
+      kekule: random() < 0.5 ? 1 : 2,
+      unsaturation: random() * 0.5,
+      branchiness: 0.2 + random() * 0.8,
+      groups: Math.max(1, randomInt(random, 0, room)),
+      hetero: random() * 0.7,
+    });
+    const ring = [...mol.atoms.keys()].slice(0, 6); // randomBenzene() adds the ring atoms first.
+    const adj = adjacency(mol);
+    const free = shuffle(ring.filter((id) => adj.get(id).length === 2), random);
+    if (free.length < n + junior) {
+      continue;
+    }
+    for (let i = 0; i < n; i += 1) {
+      hangRingGroup(mol, random, free[i], principal, 0);
+    }
+    if (junior) {
+      hangRingGroup(mol, random, free[n], juniors[randomInt(random, 0, juniors.length - 1)], randomInt(random, 0, 1));
+    }
+    if (validateForNaming(mol)?.code === 'TOO_BIG') {
+      continue; // A side chain beyond the 30-carbon cap: out of scope, not a failure.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct benzenes with several identical principal groups
+  return molecules;
+} // End of function generateRingPolysuffixBenzenes()
+
+/**
  * Copies a hydrocarbon and replaces some of its hydrogens by halogens: each
  * hydrogen of each carbon becomes, with probability `rate`, a random F, Cl,
  * Br or I atom bonded to that carbon (design.md §13.4 I-30).

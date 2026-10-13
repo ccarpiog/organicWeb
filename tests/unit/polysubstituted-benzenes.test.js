@@ -237,19 +237,15 @@ test('the English rendering cites every locant too (oracle)', () => {
 
 test('a polysubstituted benzene with a functional group stays refused with an accurate message', () => {
   const refused = [
-    'OC1=CC=C(O)C=C1', // benceno-1,4-diol (I-44)
-    'NC1=CC=C(N)C=C1', // benceno-1,4-diamina (I-44)
-    'OC1=CC=C(O)C=C1C', // 2-metilbenceno-1,4-diol (I-44)
-    'OC(=O)C1=CC=C(C(=O)O)C=C1', // ácido benceno-1,4-dicarboxílico (I-44)
-    'O=CC1=CC=C(C=O)C=C1Cl', // 2-clorobenceno-1,4-dicarbaldehído (I-44)
-    'N#CC1=CC(C#N)=CC(C)=C1', // 5-metilbenceno-1,3-dicarbonitrilo (I-44)
     'CC(=O)C1=CC=C(C(O)=O)C=C1', // a ketone on the ring: ácido 4-acetilbenzoico
+    'CC(=O)C1=CC(O)=CC(O)=C1', // a ketone beside two OH: 1-(3,5-dihidroxifenil)etan-1-ona
+    'OCC1=CC(O)=CC(O)=C1', // an OH on a side chain beside two on the ring: 5-(hidroximetil)benceno-1,3-diol
+    'CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', // a diester: benceno-1,4-dicarboxilato de dietilo (I-45c)
     'O=CCC1=CC=C(C(O)=O)C=C1', // an aldehyde on a side chain: ácido 4-(2-oxoetil)benzoico
     'OCC1=CC=C(O)C=C1', // an OH on a side chain: 4-(hidroximetil)fenol
     'NCC1=CC=C(C)C=C1', // an amine on a side chain: (4-metilfenil)metanamina (I-45a)
     'CC(=O)OC1=CC=C(C)C=C1', // acetato de 4-metilfenilo (I-45c)
     'CC(=O)NC1=CC=C(C)C=C1', // N-(4-metilfenil)acetamida (I-45a)
-    'CCC1=C(O)C(O)=CC=C1', // 3-etilbenceno-1,2-diol (I-44)
     'CC(=O)C1=CC=C(C)C=C1', // 1-(4-metilfenil)etan-1-ona (I-45a)
     'OCCOC1=CC=C(C)C=C1', // 2-(4-metilfenoxi)etan-1-ol (I-45a)
     'CCOC(=O)C1=CC=C(C)C=C1', // 4-metilbenzoato de etilo (I-45c)
@@ -261,7 +257,8 @@ test('a polysubstituted benzene with a functional group stays refused with an ac
     assert.equal(result.error.ringReason, 'polysubstitutedBenzene', smiles);
     assert.match(result.error.message, /^Este benceno tiene \d sustituyentes y alguno de ellos es o lleva un grupo funcional/);
     assert.match(result.error.message, /ramas de carbono, halógenos .*, grupos alcoxi .* o grupos –COOH, amida, –C≡N, –CHO, –OH o amino/);
-    assert.match(result.error.message, /el grupo principal\) aparece una sola vez/);
+    assert.match(result.error.message, /el benceno-1,2-diol o el ácido 4-hidroxibenzoico/);
+    assert.match(result.error.message, /\(con un éster, una cetona o un grupo funcional en una rama, por ejemplo\)/);
   }
   // Two rings stay RING_SYSTEM, a benzoate of a substituted phenyl stays CYCLE.
   assert.equal(validateForNaming(parseSmiles('CC1=CC=C(C=C1)C1=CC=CC=C1')).code, 'RING_SYSTEM');

@@ -123,7 +123,7 @@ test('the examples of the phase are named, in Spanish and in English', () => {
   }
 });
 
-test('the ring refusals of I-40c are lifted; N-substituted ring diamides and polysubstituted benzenes stay refused', () => {
+test('the ring refusals of I-40c are lifted; N-substituted ring diamides and some polysubstituted benzenes stay refused', () => {
   for (const smiles of ['N#CC1CCCCC1', 'NC(=O)C1CCCCC1', 'CC(=O)NC1=CC=CC=C1', 'N#CCC1=CC=CC=C1', 'NC(=O)C1CCC(C(=O)O)CC1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
@@ -140,12 +140,12 @@ test('the ring refusals of I-40c are lifted; N-substituted ring diamides and pol
   // A ring diamide without groups on its N is named, and so is one amide on the ring beside a chain diamide.
   assert.equal(nameOf('NC(=O)C1CCCCC1C(N)=O'), 'ciclohexano-1,2-dicarboxamida');
   // A benzene with the group and other substituents is named since I-43b (tests/unit/polysubstituted-benzenes.test.js);
-  // two such groups, or a group on a side chain beside one on the ring, stay refused (I-44, I-45a).
+  // two such groups since I-44; a group on a side chain beside one on the ring stays refused (I-45a).
   assert.equal(nameOf('N#CC1=CC=C(C)C=C1'), '4-metilbenzonitrilo');
   assert.equal(nameOf('NC(=O)C1=CC=CC=C1C'), '2-metilbenzamida');
-  for (const smiles of ['N#CC1=CC=C(C#N)C=C1C', 'NC(=O)C1=CC=CC=C1C(N)=O', 'N#CCC1=CC=CC=C1C#N']) {
-    assert.equal(nameOf(smiles), 'CYCLE', smiles);
-  }
+  assert.equal(nameOf('N#CC1=CC=C(C#N)C=C1C'), '2-metilbenceno-1,4-dicarbonitrilo');
+  assert.equal(nameOf('NC(=O)C1=CC=CC=C1C(N)=O'), 'benceno-1,2-dicarboxamida');
+  assert.equal(nameOf('N#CCC1=CC=CC=C1C#N'), 'CYCLE');
   // Three nitriles or amides on one chain piece are still refused; on the ring they are named.
   assert.equal(nameOf('N#CCC(C#N)CC#N'), 'HETEROATOM manyNitriles');
   assert.equal(nameOf('N#CCC(C#N)(CC#N)C1CCCCC1'), 'HETEROATOM manyNitriles');

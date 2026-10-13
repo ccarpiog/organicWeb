@@ -44,7 +44,8 @@ seed (mulberry32), within the naming size caps, and keeps only those the
 engine can name. With `--count N`, `run.mjs` draws N acyclic hydrocarbons,
 one cycloalkane per ring size in the carbon range, N/4 phenols and
 benzenamines, N/4 substituted benzoic acids, benzaldehydes, benzonitriles
-and benzamides, and N/2 of every other family:
+and benzamides, N/4 benzenes with several identical principal groups, and
+N/2 of every other family:
 
 | Generator | Family (design.md §13.4 phase) |
 |---|---|
@@ -53,6 +54,7 @@ and benzamides, and N/2 of every other family:
 | `generateBenzenes()` | benzene and benzenes with 1–6 groups at random ring positions — hydrocarbon branches (unsaturated and branched ones too: `etenil`, `isopropil`…), halogens and alkoxy groups —, either Kekulé drawing (I-28, I-42); never filtered by a refusal, so a refused one counts as a naming failure |
 | `generateRingPrincipalBenzenes()` | one OH or one amine (–NH₂, –NHR, –NRR′) on a benzene with 1–5 other groups, sometimes an OH plus an `amino-` prefix: `4-metilfenol`, `2-clorobencen-1-amina`, `4-aminofenol` (I-43a); never filtered by a refusal |
 | `generateRingOutsideBenzenes()` | one –COOH, –CHO, –C≡N or amide (–CONH₂, –CONHR, –CONRR′) on a benzene with other groups, half of them with one or two junior groups on the ring as prefixes (`hidroxi`, `amino`, `formil`, `ciano`, `carbamoil`): `ácido 4-metilbenzoico`, `N-etil-4-metilbenzamida`, `ácido 4-formilbenzoico`, `3-cianobenzamida` (I-43b); never filtered by a refusal |
+| `generateRingPolysuffixBenzenes()` | two to six identical OH, –NH₂, –COOH, –CHO, –C≡N or –CONH₂ groups on a benzene (no groups on the N), with random branch, halogen or alkoxy prefixes and sometimes one junior group: `3-etilbenceno-1,2-diol`, `benceno-1,4-diamina`, `ácido 5-metilbenceno-1,3-dicarboxílico`, `benceno-1,3,5-tricarbonitrilo`, `bencenohexol` (I-44); never filtered by a refusal |
 | `generateCycloalkanes()` | one cycloalkane per ring size, `cyclopropane` … `cyclotriacontane` |
 | `generateHalogenated()` | F, Cl, Br, I in place of random hydrogens, halomethanes included (I-30) |
 | `generateAlcohols()` | OH groups on chains or ring carbons, phenol (I-31) |
@@ -91,8 +93,9 @@ design.md §14), and those families drop every refused molecule.
    `benzoic acid`…), its `locants` form, its systematic benzene form
    (`benzenecarboxylic acid`), the functional-class name of a simple amine
    (`ethylmethylamine`) and, for a polysubstituted benzene, its retained
-   `xylene` / `mesitylene` / `cresol` name and its old orto/meta/para form
-   (`o-dichlorobenzene`, `p-methylphenol`, `o-chloroaniline`;
+   `xylene` / `mesitylene` / `cresol` name, the names of two identical
+   principal groups (`hydroquinone`, `4-methylphthalic acid`, I-44) and its
+   old orto/meta/para form (`o-dichlorobenzene`, `p-methylphenol`, `o-chloroaniline`;
    `polyBenzeneNames()` in `run.mjs`). The same name structures are rendered in English
    with `src/naming/lexicon.en.js` (`englishName()` in `compare.mjs`) — never
    a translation of the Spanish string.

@@ -287,6 +287,36 @@ export function traditionalLabel(id) {
   return ['toluene', 'formicAcid', 'aceticAcid', 'oxalicAcid', 'formate', 'acetate', 'aniline', 'formamide', 'acetamide', 'acetonitrile'].includes(id) ? 'traditional name, IUPAC 2013 preferred' : 'traditional name';
 }
 
+/** Retained names of benzene with two identical principal groups (see lexicon.es.js BENZENE_DIGROUP_NAMES): `hydroquinone`, `phthalic acid`. */
+export const BENZENE_DIGROUP_NAMES = Object.freeze({
+  pyrocatechol: 'pyrocatechol',
+  catechol: 'catechol',
+  resorcinol: 'resorcinol',
+  hydroquinone: 'hydroquinone',
+  phthalicAcid: 'phthalic acid',
+  isophthalicAcid: 'isophthalic acid',
+  terephthalicAcid: 'terephthalic acid',
+  phthalaldehyde: 'phthalaldehyde',
+  isophthalaldehyde: 'isophthalaldehyde',
+  terephthalaldehyde: 'terephthalaldehyde',
+  phthalonitrile: 'phthalonitrile',
+  phthalamide: 'phthalamide',
+});
+
+/**
+ * Returns the retained word of benzene with two identical principal groups (BENZENE_DIGROUP_NAMES).
+ *
+ * @param {string} id - A BENZENE_DIGROUP_NAMES id.
+ * @returns {string} The word, e.g. 'phthalic acid'.
+ * @throws {Error} For an unknown id.
+ */
+export function benzeneDigroupName(id) {
+  if (!Object.prototype.hasOwnProperty.call(BENZENE_DIGROUP_NAMES, id)) {
+    throw new Error(`benzeneDigroupName: unknown name ${id}`);
+  }
+  return BENZENE_DIGROUP_NAMES[id];
+}
+
 /** Suffixes of the characteristic groups (see lexicon.es.js GROUP_SUFFIXES): `ethanoic acid`, `methyl ethanoate`… */
 export const GROUP_SUFFIXES = Object.freeze({
   acid: 'oic acid', ester: 'oate', amide: 'amide', nitrile: 'nitrile', aldehyde: 'al', ketone: 'one', alcohol: 'ol', amine: 'amine',
@@ -522,6 +552,7 @@ export const lexiconEn = Object.freeze({
   acylEnding: ACYL_ENDING,
   ringGroupSuffix,
   benzeneGroupName,
+  benzeneDigroupName,
   benzoylPrefix: BENZOYL_PREFIX,
   ringCarbonylEnding: RING_CARBONYL_ENDING,
   positionalLetters: POSITIONAL_LETTERS,

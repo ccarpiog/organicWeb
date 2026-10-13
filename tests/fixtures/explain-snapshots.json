@@ -91023,5 +91023,4200 @@
     ]
    }
   ]
+ },
+ "CCC1=C(O)C(O)=CC=C1": {
+  "name": "3-etilbenceno-1,2-diol",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 8 carbonos, 10 hidrógenos y 2 átomos de oxígeno (C₈H₁₀O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno se ve como OH: es un oxígeno con su hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces, y cada grupo –OH ocupa el sitio de un hidrógeno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       4,
+       3,
+       10,
+       9,
+       8,
+       2,
+       1,
+       7,
+       5
+      ],
+      "bonds": [
+       5,
+       3,
+       10,
+       9,
+       8,
+       7,
+       2,
+       1,
+       6,
+       4
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 2 grupos –OH (cada uno, un oxígeno con su hidrógeno) unidos a carbonos del [[benceno]]. Son [[grupos funcionales|grupo funcional]]: la molécula es un fenol con 2 grupos –OH.",
+     "El grupo –OH es el [[grupo principal]]: se nombra con el [[sufijo]] «-ol», al final del nombre (como en «etanol»).",
+     "Aquí hay 2 grupos –OH en el anillo, así que el sufijo dice cuántos: «-diol» («di» = 2, «tri» = 3).",
+     "Con un solo grupo –OH el benceno se llama «fenol», pero con 2 grupos –OH se nombra siempre con «benceno» y el [[sufijo]] «-diol», que dice cuántos hay. La «o» final de «benceno» se queda, porque «-diol» empieza por consonante: «benceno-1,2-diol»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       7,
+       4,
+       5
+      ],
+      "bonds": [
+       6,
+       4
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "Al anillo hay unidos 3 [[sustituyentes|sustituyente]]: 2 son grupos –OH. Son el [[grupo principal]], así que el nombre acaba con «benceno» y el [[sufijo]] «-diol», que dice cuántos hay. El otro sustituyente va delante como [[prefijo]], igual que en un benceno con ramas.",
+     "Con varios sustituyentes sí hay que numerar el anillo, para decir en qué carbono está cada uno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       4,
+       3,
+       10,
+       9,
+       8
+      ],
+      "bonds": [
+       5,
+       10,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       7,
+       3,
+       9
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       4,
+       5
+      ],
+      "bonds": [
+       6,
+       4
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En el benceno todos los carbonos son iguales: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Solo cuentan los [[sustituyentes|sustituyente]], con tres reglas, por orden: primero, los grupos –OH son el [[grupo principal]] y llevan los [[localizadores|localizador]] más bajos, así que uno de ellos está siempre en el 1; después, los demás sustituyentes juntos llevan los localizadores más bajos; y, si empatan, el número más bajo es para el sustituyente que se escribe primero (por orden alfabético).",
+     "Las numeraciones cuyo primer número no es 1 pierden enseguida. Estas son las que quedan para comparar:",
+     "Regla: los grupos –OH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los demás sustituyentes. Números: opción A: 1, 2; opción B: 1, 2; opción C: 1, 6. Se comparan uno a uno: en el primer número distinto, 2 es menor que 6. Empatan las opciones A y B: se pasa a la regla siguiente.",
+     "Regla: los [[sustituyentes|sustituyente]] deben tener los [[localizadores|localizador]] más bajos. Números: opción A: 3; opción B: 6. Se comparan uno a uno: en el primer número distinto, 3 es menor que 6. Gana la opción A.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       4,
+       3,
+       10,
+       9,
+       8
+      ],
+      "bonds": [
+       5,
+       3,
+       10,
+       9,
+       8,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      6,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      10,
+      4
+     ],
+     [
+      9,
+      5
+     ],
+     [
+      8,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B",
+      "C"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –OH",
+       "lists": [
+        [
+         1,
+         2
+        ],
+        [
+         1,
+         2
+        ],
+        [
+         1,
+         6
+        ]
+       ],
+       "firstDifference": 1,
+       "marks": [
+        [
+         1
+        ],
+        [
+         1
+        ],
+        [
+         1
+        ]
+       ],
+       "winners": [
+        0,
+        1
+       ]
+      },
+      {
+       "rule": "N3",
+       "label": "Sustituyentes",
+       "lists": [
+        [
+         3
+        ],
+        [
+         6
+        ],
+        null
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ],
+        null
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         4,
+         3,
+         10,
+         9,
+         8
+        ],
+        "bonds": [
+         5,
+         3,
+         10,
+         9,
+         8,
+         7
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        3,
+        3
+       ],
+       [
+        10,
+        4
+       ],
+       [
+        9,
+        5
+       ],
+       [
+        8,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         6,
+         8,
+         9,
+         10,
+         3
+        ],
+        "bonds": [
+         5,
+         7,
+         8,
+         9,
+         10,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        8,
+        3
+       ],
+       [
+        9,
+        4
+       ],
+       [
+        10,
+        5
+       ],
+       [
+        3,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción C",
+      "text": "Numeración C: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         8,
+         9,
+         10,
+         3,
+         4
+        ],
+        "bonds": [
+         7,
+         8,
+         9,
+         10,
+         3,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        1
+       ],
+       [
+        8,
+        2
+       ],
+       [
+        9,
+        3
+       ],
+       [
+        10,
+        4
+       ],
+       [
+        3,
+        5
+       ],
+       [
+        4,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen del anillo son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "En el carbono 3 hay un grupo etilo: se escribe «3-etil».",
+     "«etil» es un grupo de 2 carbonos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       4,
+       3,
+       10,
+       9,
+       8
+      ],
+      "bonds": [
+       5,
+       3,
+       10,
+       9,
+       8,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "etil",
+      "text": "En el carbono 3 hay un grupo etilo: se escribe «3-etil». «etil» es un grupo de 2 carbonos.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         4,
+         3,
+         10,
+         9,
+         8
+        ],
+        "bonds": [
+         5,
+         3,
+         10,
+         9,
+         8,
+         7
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         2,
+         1
+        ],
+        "bonds": [
+         2,
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        3,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Después va «benceno», los números de los grupos –OH (1,2) entre guiones y el [[sufijo]] «-diol»: «benceno-1,2-diol».",
+     "Aquí los grupos –OH sí llevan número, también el 1: con varios grupos iguales hay que decir dónde está cada uno.",
+     "El nombre completo es «3-etilbenceno-1,2-diol»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       6,
+       4,
+       3,
+       10,
+       9,
+       8
+      ],
+      "bonds": [
+       5,
+       3,
+       10,
+       9,
+       8,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       6,
+       7,
+       4,
+       5
+      ],
+      "bonds": [
+       6,
+       4
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      6,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      3,
+      3
+     ],
+     [
+      10,
+      4
+     ],
+     [
+      9,
+      5
+     ],
+     [
+      8,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono del anillo donde está «etil»"
+     },
+     {
+      "text": "etil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo etilo (2 carbonos)"
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "el anillo de benceno (conserva su «o» final, porque el sufijo empieza por consonante)"
+     },
+     {
+      "text": "1,2",
+      "kind": "locant",
+      "meaning": "carbonos que llevan el grupo –OH"
+     },
+     {
+      "text": "-diol",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos –OH (alcohol)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       3,
+       2
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "etil",
+      "kind": "prefix",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       6,
+       4,
+       3,
+       10,
+       9,
+       8
+      ],
+      "bonds": [
+       5,
+       3,
+       10,
+       9,
+       8,
+       7
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       6,
+       7
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       6,
+       7,
+       4,
+       5
+      ],
+      "bonds": [
+       6,
+       4
+      ]
+     },
+     {
+      "text": "ol",
+      "kind": "ending",
+      "atoms": [
+       6,
+       7,
+       4,
+       5
+      ],
+      "bonds": [
+       6,
+       4
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "OC1=CC=C(O)C=C1": {
+  "name": "benceno-1,4-diol",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 6 carbonos, 6 hidrógenos y 2 átomos de oxígeno (C₆H₆O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno se ve como OH: es un oxígeno con su hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces, y cada grupo –OH ocupa el sitio de un hidrógeno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       7,
+       8,
+       1,
+       6
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       6,
+       7,
+       8,
+       1,
+       5
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 2 grupos –OH (cada uno, un oxígeno con su hidrógeno) unidos a carbonos del [[benceno]]. Son [[grupos funcionales|grupo funcional]]: la molécula es un fenol con 2 grupos –OH.",
+     "El grupo –OH es el [[grupo principal]]: se nombra con el [[sufijo]] «-ol», al final del nombre (como en «etanol»).",
+     "Aquí hay 2 grupos –OH en el anillo, así que el sufijo dice cuántos: «-diol» («di» = 2, «tri» = 3).",
+     "Con un solo grupo –OH el benceno se llama «fenol», pero con 2 grupos –OH se nombra siempre con «benceno» y el [[sufijo]] «-diol», que dice cuántos hay. La «o» final de «benceno» se queda, porque «-diol» empieza por consonante: «benceno-1,4-diol».",
+     "La IUPAC (2013) acepta también el nombre tradicional «hidroquinona»: lo verás en «Otras formas válidas»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "Los 6 carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "Al anillo hay unidos 2 [[sustituyentes|sustituyente]]: los dos son grupos –OH. Son el [[grupo principal]], así que el nombre acaba con «benceno» y el [[sufijo]] «-diol», que dice cuántos hay.",
+     "Con varios sustituyentes sí hay que numerar el anillo, para decir en qué carbono está cada uno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       3,
+       6,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       2,
+       4,
+       7
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       5
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En el benceno todos los carbonos son iguales: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Solo cuentan los grupos –OH, que son el [[grupo principal]]: llevan los [[localizadores|localizador]] más bajos, así que uno de ellos está siempre en el 1.",
+     "Empieza a contar por un carbono con un grupo –OH: así salen los números 1, 4, los más bajos posibles. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Los dos grupos –OH están en posición para (1,4). Antes se decía orto (1,2), meta (1,3) o para (1,4); hoy se recomienda escribir los números.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre es «benceno», los números de los grupos –OH (1,4) entre guiones y el [[sufijo]] «-diol»: «benceno-1,4-diol».",
+     "Aquí los grupos –OH sí llevan número, también el 1: con varios grupos iguales hay que decir dónde está cada uno.",
+     "El nombre completo es «benceno-1,4-diol».",
+     "También es correcto:",
+     "«hidroquinona»: nombre tradicional, que la IUPAC (2013) acepta."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "el anillo de benceno (conserva su «o» final, porque el sufijo empieza por consonante)"
+     },
+     {
+      "text": "1,4",
+      "kind": "locant",
+      "meaning": "carbonos que llevan el grupo –OH"
+     },
+     {
+      "text": "-diol",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos –OH (alcohol)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       6,
+       7,
+       8
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       5
+      ]
+     },
+     {
+      "text": "ol",
+      "kind": "ending",
+      "atoms": [
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       5
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "NC1=CC=C(N)C=C1": {
+  "name": "benceno-1,4-diamina",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 6 carbonos, 8 hidrógenos y 2 átomos de nitrógeno (C₆H₈N₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada nitrógeno unido a un solo carbono se ve como NH₂: lleva dos hidrógenos. Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno. Cada nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       7,
+       8,
+       1,
+       6
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       6,
+       7,
+       8,
+       1,
+       5
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 2 grupos –NH₂ (cada uno, un nitrógeno con dos hidrógenos) unidos a carbonos. Son [[grupos funcionales|grupo funcional]]: la molécula es una [[amina]].",
+     "Una amina es como el amoníaco (NH₃) con hidrógenos cambiados por grupos de carbonos: con uno es una amina primaria; con dos, secundaria, y con tres, terciaria. Aquí todas son primarias.",
+     "El grupo amino es el [[grupo principal]]: se nombra con el [[sufijo]] «-amina», al final del nombre (como en «metanamina»).",
+     "Aquí hay 2 grupos amino en el anillo, así que el sufijo dice cuántos: «-diamina» («di» = 2, «tri» = 3).",
+     "El nitrógeno no forma parte del [[anillo]]: el anillo solo tiene carbonos. El carbono unido al nitrógeno sí es del anillo.",
+     "Con un solo grupo amino el nombre es «bencenamina» (o «anilina»), pero con 2 grupos amino se nombra siempre con «benceno» y el [[sufijo]] «-diamina», que dice cuántos hay. La «o» final de «benceno» se queda, porque «-diamina» empieza por consonante: «benceno-1,4-diamina»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "Los 6 carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "Al anillo hay unidos 2 [[sustituyentes|sustituyente]]: los dos son grupos amino. Son el [[grupo principal]], así que el nombre acaba con «benceno» y el [[sufijo]] «-diamina», que dice cuántos hay.",
+     "Con varios sustituyentes sí hay que numerar el anillo, para decir en qué carbono está cada uno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       3,
+       6,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       2,
+       4,
+       7
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       5
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En el benceno todos los carbonos son iguales: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Solo cuentan los grupos amino, que son el [[grupo principal]]: llevan los [[localizadores|localizador]] más bajos, así que uno de ellos está siempre en el 1.",
+     "Empieza a contar por un carbono unido a un nitrógeno: así salen los números 1, 4, los más bajos posibles. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Los dos grupos amino están en posición para (1,4). Antes se decía orto (1,2), meta (1,3) o para (1,4); hoy se recomienda escribir los números.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre es «benceno», los números de los grupos amino (1,4) entre guiones y el [[sufijo]] «-diamina»: «benceno-1,4-diamina».",
+     "Aquí los grupos amino sí llevan número, también el 1: con varios grupos iguales hay que decir dónde está cada uno.",
+     "El nombre completo es «benceno-1,4-diamina»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       6,
+       7,
+       8
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       5
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      3,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      5,
+      4
+     ],
+     [
+      7,
+      5
+     ],
+     [
+      8,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "el anillo de benceno (conserva su «o» final, porque el sufijo empieza por consonante)"
+     },
+     {
+      "text": "1,4",
+      "kind": "locant",
+      "meaning": "carbonos unidos a los nitrógenos de los grupos amino"
+     },
+     {
+      "text": "-diamina",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos amino (amina)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       2,
+       3,
+       4,
+       6,
+       7,
+       8
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       5,
+       6
+      ],
+      "bonds": [
+       5
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       5
+      ]
+     },
+     {
+      "text": "amina",
+      "kind": "ending",
+      "atoms": [
+       2,
+       1,
+       5,
+       6
+      ],
+      "bonds": [
+       1,
+       5
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "O=C(O)C1=CC(C(=O)O)=CC=C1": {
+  "name": "ácido benceno-1,3-dicarboxílico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 8 carbonos, 6 hidrógenos y 4 átomos de oxígeno (C₈H₆O₄).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno de un grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En cada grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       10,
+       11,
+       12,
+       1,
+       2,
+       3,
+       8,
+       7,
+       9
+      ],
+      "bonds": [
+       4,
+       5,
+       9,
+       10,
+       11,
+       12,
+       1,
+       3,
+       2,
+       7,
+       6,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 2 grupos –COOH (cada uno, un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH). Son [[grupos funcionales|grupo funcional]]: la molécula es un ácido carboxílico con 2 grupos ácido.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "Los 2 grupos –COOH están unidos directamente a carbonos del [[anillo]]. Sus carbonos no forman parte del anillo (cada uno solo puede unirse a un carbono más, el del anillo) y tampoco forman cadenas aparte: el anillo es la [[cadena principal]] y lleva los grupos.",
+     "Los grupos –COOH son el [[grupo principal]].",
+     "Con un solo grupo –COOH el benceno tiene nombre propio, «ácido benzoico», pero con 2 grupos –COOH se nombra siempre con «benceno» y el [[sufijo]] «-dicarboxílico», que dice cuántos hay e incluye los carbonos de los grupos. La «o» final de «benceno» se queda, porque «-dicarboxílico» empieza por consonante: «benceno-1,3-dicarboxílico».",
+     "La IUPAC (2013) acepta también el nombre tradicional «ácido isoftálico»: lo verás en «Otras formas válidas»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       1,
+       2,
+       3,
+       6,
+       8,
+       7,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       2,
+       7,
+       6,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "Al anillo hay unidos 2 [[sustituyentes|sustituyente]]: los dos son grupos –COOH. Son el [[grupo principal]], así que el nombre acaba con «benceno» y el [[sufijo]] «-dicarboxílico», que dice cuántos hay.",
+     "Con varios sustituyentes sí hay que numerar el anillo, para decir en qué carbono está cada uno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       5,
+       10,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       4,
+       9,
+       11
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       4,
+       1,
+       2,
+       3,
+       6,
+       8,
+       7,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       2,
+       7,
+       6,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En el benceno todos los carbonos son iguales: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Solo cuentan los grupos –COOH, que son el [[grupo principal]]: llevan los [[localizadores|localizador]] más bajos, así que uno de ellos está siempre en el 1.",
+     "Las numeraciones cuyo primer número no es 1 pierden enseguida. Estas son las que quedan para comparar:",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los demás sustituyentes. Números: opción A: 1, 3; opción B: 1, 5. Se comparan uno a uno: en el primer número distinto, 3 es menor que 5. Gana la opción A.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Los dos grupos –COOH están en posición meta (1,3). Antes se decía orto (1,2), meta (1,3) o para (1,4); hoy se recomienda escribir los números.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      10,
+      4
+     ],
+     [
+      11,
+      5
+     ],
+     [
+      12,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         1,
+         3
+        ],
+        [
+         1,
+         5
+        ]
+       ],
+       "firstDifference": 1,
+       "marks": [
+        [
+         1
+        ],
+        [
+         1
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5,
+         4,
+         12,
+         11,
+         10
+        ],
+        "bonds": [
+         5,
+         4,
+         12,
+         11,
+         10,
+         9
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        1
+       ],
+       [
+        5,
+        2
+       ],
+       [
+        4,
+        3
+       ],
+       [
+        12,
+        4
+       ],
+       [
+        11,
+        5
+       ],
+       [
+        10,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         10,
+         11,
+         12,
+         4,
+         5
+        ],
+        "bonds": [
+         9,
+         10,
+         11,
+         12,
+         4,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        1
+       ],
+       [
+        10,
+        2
+       ],
+       [
+        11,
+        3
+       ],
+       [
+        12,
+        4
+       ],
+       [
+        4,
+        5
+       ],
+       [
+        5,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre es «benceno», los números de los grupos –COOH (1,3) entre guiones y el [[sufijo]] «-dicarboxílico»: «benceno-1,3-dicarboxílico». El nombre empieza por la palabra «ácido», como el de cualquier ácido carboxílico.",
+     "Aquí los grupos –COOH sí llevan número, también el 1: con varios grupos iguales hay que decir dónde está cada uno.",
+     "El nombre completo es «ácido benceno-1,3-dicarboxílico».",
+     "También es correcto:",
+     "«ácido isoftálico»: nombre tradicional, que la IUPAC (2013) acepta."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       1,
+       2,
+       3,
+       6,
+       8,
+       7,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       2,
+       7,
+       6,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      10,
+      4
+     ],
+     [
+      11,
+      5
+     ],
+     [
+      12,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "el anillo de benceno (conserva su «o» final, porque el sufijo empieza por consonante)"
+     },
+     {
+      "text": "1,3",
+      "kind": "locant",
+      "meaning": "carbonos del anillo unidos a los grupos –COOH"
+     },
+     {
+      "text": "-dicarboxílico",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       4,
+       1,
+       2,
+       3,
+       6,
+       8,
+       7,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       2,
+       7,
+       6,
+       8
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       4,
+       5,
+       6,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       9,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       4,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       6,
+       8
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       4,
+       1,
+       2,
+       3,
+       6,
+       8,
+       7,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       2,
+       7,
+       6,
+       8
+      ]
+     },
+     {
+      "text": "carboxílico",
+      "kind": "ending",
+      "atoms": [
+       4,
+       1,
+       2,
+       3,
+       6,
+       8,
+       7,
+       9
+      ],
+      "bonds": [
+       1,
+       3,
+       2,
+       7,
+       6,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "O=CC1=CC=C(C=O)C=C1": {
+  "name": "benceno-1,4-dicarbaldehído",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 8 carbonos, 6 hidrógenos y 2 átomos de oxígeno (C₈H₆O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces, y cada oxígeno con enlace doble ocupa el sitio de dos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       5,
+       6,
+       9,
+       10,
+       1,
+       2,
+       8,
+       7
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       8,
+       9,
+       10,
+       1,
+       2,
+       7,
+       6
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 2 grupos –CHO (cada uno, un carbono con un oxígeno unido por un [[enlace doble]] y un hidrógeno). Son [[grupos funcionales|grupo funcional]]: la molécula es un aldehído.",
+     "Los 2 grupos –CHO están unidos directamente a carbonos del [[anillo]]. Sus carbonos no forman parte del anillo (cada uno solo puede unirse a un carbono más, el del anillo) y tampoco forman cadenas aparte: el anillo es la [[cadena principal]] y lleva los grupos.",
+     "Los grupos –CHO son el [[grupo principal]].",
+     "Con un solo grupo –CHO el benceno tiene nombre propio, «benzaldehído», pero con 2 grupos –CHO se nombra siempre con «benceno» y el [[sufijo]] «-dicarbaldehído», que dice cuántos hay e incluye los carbonos de los grupos. La «o» final de «benceno» se queda, porque «-dicarbaldehído» empieza por consonante: «benceno-1,4-dicarbaldehído».",
+     "La IUPAC (2013) acepta también el nombre tradicional «tereftalaldehído»: lo verás en «Otras formas válidas»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       1,
+       2,
+       6,
+       8,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       7,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "Al anillo hay unidos 2 [[sustituyentes|sustituyente]]: los dos son grupos –CHO. Son el [[grupo principal]], así que el nombre acaba con «benceno» y el [[sufijo]] «-dicarbaldehído», que dice cuántos hay.",
+     "Con varios sustituyentes sí hay que numerar el anillo, para decir en qué carbono está cada uno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       5,
+       6,
+       9,
+       10
+      ],
+      "bonds": [
+       4,
+       8,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       3,
+       5,
+       9
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       3,
+       1,
+       2,
+       6,
+       8,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       7,
+       6
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En el benceno todos los carbonos son iguales: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Solo cuentan los grupos –CHO, que son el [[grupo principal]]: llevan los [[localizadores|localizador]] más bajos, así que uno de ellos está siempre en el 1.",
+     "Empieza a contar por un carbono del anillo unido a un grupo –CHO: así salen los números 1, 4, los más bajos posibles. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Los dos grupos –CHO están en posición para (1,4). Antes se decía orto (1,2), meta (1,3) o para (1,4); hoy se recomienda escribir los números.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       5,
+       6,
+       9,
+       10
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       8,
+       9,
+       10
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      6,
+      4
+     ],
+     [
+      9,
+      5
+     ],
+     [
+      10,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre es «benceno», los números de los grupos –CHO (1,4) entre guiones y el [[sufijo]] «-dicarbaldehído»: «benceno-1,4-dicarbaldehído».",
+     "Aquí los grupos –CHO sí llevan número, también el 1: con varios grupos iguales hay que decir dónde está cada uno.",
+     "El nombre completo es «benceno-1,4-dicarbaldehído».",
+     "También es correcto:",
+     "«tereftalaldehído»: nombre tradicional, que la IUPAC (2013) acepta."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       5,
+       6,
+       9,
+       10
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       8,
+       9,
+       10
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       1,
+       2,
+       6,
+       8,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       7,
+       6
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      6,
+      4
+     ],
+     [
+      9,
+      5
+     ],
+     [
+      10,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "el anillo de benceno (conserva su «o» final, porque el sufijo empieza por consonante)"
+     },
+     {
+      "text": "1,4",
+      "kind": "locant",
+      "meaning": "carbonos del anillo unidos a los grupos –CHO"
+     },
+     {
+      "text": "-dicarbaldehído",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos –CHO (aldehído)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       3,
+       4,
+       5,
+       6,
+       9,
+       10
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       8,
+       9,
+       10
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       3,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       6,
+       8
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       3,
+       1,
+       2,
+       6,
+       8,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       7,
+       6
+      ]
+     },
+     {
+      "text": "carbaldehído",
+      "kind": "ending",
+      "atoms": [
+       3,
+       1,
+       2,
+       6,
+       8,
+       7
+      ],
+      "bonds": [
+       1,
+       2,
+       7,
+       6
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "N#CC1=CC(C#N)=CC(C#N)=C1": {
+  "name": "benceno-1,3,5-tricarbonitrilo",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos, 3 hidrógenos y 3 átomos de nitrógeno (C₉H₃N₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada nitrógeno unido a un carbono por un [[enlace triple]] (–C≡N) se ve como N: sus 3 enlaces van a ese carbono, así que no lleva hidrógeno. Cada enlace triple ocupa en su carbono el sitio de tres hidrógenos. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       5,
+       8,
+       9,
+       12,
+       1,
+       2,
+       7,
+       6,
+       11,
+       10
+      ],
+      "bonds": [
+       3,
+       4,
+       7,
+       8,
+       11,
+       12,
+       1,
+       2,
+       6,
+       5,
+       10,
+       9
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 3 grupos –C≡N (cada uno, un carbono unido a un nitrógeno por un [[enlace triple]]). Son [[grupos funcionales|grupo funcional]]: la molécula es un nitrilo con 3 grupos –C≡N.",
+     "Ese enlace triple no es el de un alquino: no une dos carbonos, sino un carbono y un nitrógeno. Por eso no se nombra con «-ino»: forma parte del grupo –C≡N.",
+     "Los 3 grupos –C≡N están unidos directamente a carbonos del [[anillo]]. Sus carbonos no forman parte del anillo (cada uno solo puede unirse a un carbono más, el del anillo) y tampoco forman cadenas aparte: el anillo es la [[cadena principal]] y lleva los grupos.",
+     "Los grupos –C≡N son el [[grupo principal]].",
+     "Con un solo grupo –C≡N el benceno tiene nombre propio, «benzonitrilo», pero con 3 grupos –C≡N se nombra siempre con «benceno» y el [[sufijo]] «-tricarbonitrilo», que dice cuántos hay e incluye los carbonos de los grupos. La «o» final de «benceno» se queda, porque «-tricarbonitrilo» empieza por consonante: «benceno-1,3,5-tricarbonitrilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       1,
+       2,
+       5,
+       7,
+       6,
+       9,
+       11,
+       10
+      ],
+      "bonds": [
+       1,
+       2,
+       6,
+       5,
+       10,
+       9
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "Al anillo hay unidos 3 [[sustituyentes|sustituyente]]: los 3 son grupos –C≡N. Son el [[grupo principal]], así que el nombre acaba con «benceno» y el [[sufijo]] «-tricarbonitrilo», que dice cuántos hay.",
+     "Con varios sustituyentes sí hay que numerar el anillo, para decir en qué carbono está cada uno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       5,
+       8,
+       9,
+       12
+      ],
+      "bonds": [
+       4,
+       8,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       3,
+       7,
+       11
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       3,
+       1,
+       2,
+       5,
+       7,
+       6,
+       9,
+       11,
+       10
+      ],
+      "bonds": [
+       1,
+       2,
+       6,
+       5,
+       10,
+       9
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En el benceno todos los carbonos son iguales: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Solo cuentan los grupos –C≡N, que son el [[grupo principal]]: llevan los [[localizadores|localizador]] más bajos, así que uno de ellos está siempre en el 1.",
+     "Empieza a contar por un carbono del anillo unido a un grupo –C≡N: así salen los números 1, 3, 5, los más bajos posibles. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       5,
+       8,
+       9,
+       12
+      ],
+      "bonds": [
+       3,
+       4,
+       7,
+       8,
+       11,
+       12
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      8,
+      4
+     ],
+     [
+      9,
+      5
+     ],
+     [
+      12,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre es «benceno», los números de los grupos –C≡N (1,3,5) entre guiones y el [[sufijo]] «-tricarbonitrilo»: «benceno-1,3,5-tricarbonitrilo».",
+     "Aquí los grupos –C≡N sí llevan número, también el 1: con varios grupos iguales hay que decir dónde está cada uno.",
+     "El nombre completo es «benceno-1,3,5-tricarbonitrilo»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       3,
+       4,
+       5,
+       8,
+       9,
+       12
+      ],
+      "bonds": [
+       3,
+       4,
+       7,
+       8,
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       3,
+       1,
+       2,
+       5,
+       7,
+       6,
+       9,
+       11,
+       10
+      ],
+      "bonds": [
+       1,
+       2,
+       6,
+       5,
+       10,
+       9
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      3,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      8,
+      4
+     ],
+     [
+      9,
+      5
+     ],
+     [
+      12,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "el anillo de benceno (conserva su «o» final, porque el sufijo empieza por consonante)"
+     },
+     {
+      "text": "1,3,5",
+      "kind": "locant",
+      "meaning": "carbonos del anillo unidos a los grupos –C≡N"
+     },
+     {
+      "text": "-tricarbonitrilo",
+      "kind": "ending",
+      "meaning": "grupo principal: 3 grupos –C≡N (nitrilo)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       3,
+       4,
+       5,
+       8,
+       9,
+       12
+      ],
+      "bonds": [
+       3,
+       4,
+       7,
+       8,
+       11,
+       12
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       3,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       5,
+       7
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "5",
+      "kind": "locant",
+      "atoms": [
+       9,
+       11
+      ],
+      "bonds": [
+       10
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "tri",
+      "kind": "multiplier",
+      "atoms": [
+       3,
+       1,
+       2,
+       5,
+       7,
+       6,
+       9,
+       11,
+       10
+      ],
+      "bonds": [
+       1,
+       2,
+       6,
+       5,
+       10,
+       9
+      ]
+     },
+     {
+      "text": "carbonitrilo",
+      "kind": "ending",
+      "atoms": [
+       3,
+       1,
+       2,
+       5,
+       7,
+       6,
+       9,
+       11,
+       10
+      ],
+      "bonds": [
+       1,
+       2,
+       6,
+       5,
+       10,
+       9
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "NC(=O)C1=CC=C(C(N)=O)C=C1": {
+  "name": "benceno-1,4-dicarboxamida",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 8 carbonos, 8 hidrógenos, 2 átomos de nitrógeno y 2 átomos de oxígeno (C₈H₈N₂O₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces, y cada oxígeno con enlace doble ocupa el sitio de dos. En cada grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono. Cada nitrógeno unido a un solo carbono se ve como NH₂: lleva dos hidrógenos. Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno. Cada nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       11,
+       12,
+       3,
+       2,
+       1,
+       10,
+       8,
+       9
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       10,
+       11,
+       12,
+       2,
+       3,
+       1,
+       9,
+       7,
+       8
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 2 grupos –CONH₂ (cada uno, un carbono con un oxígeno unido por un [[enlace doble]] y un nitrógeno). Son [[grupos funcionales|grupo funcional]]: la molécula es una amida con 2 grupos amida.",
+     "El C=O y el nitrógeno forman un solo grupo: el C=O de una amida no es una cetona, ni su nitrógeno una [[amina]].",
+     "Los 2 grupos amida están unidos directamente a carbonos del [[anillo]]. Sus carbonos no forman parte del anillo (cada uno solo puede unirse a un carbono más, el del anillo) y tampoco forman cadenas aparte: el anillo es la [[cadena principal]] y lleva los grupos.",
+     "Los grupos amida son el [[grupo principal]].",
+     "Con un solo grupo amida el benceno tiene nombre propio, «benzamida», pero con 2 grupos amida se nombra siempre con «benceno» y el [[sufijo]] «-dicarboxamida», que dice cuántos hay e incluye los carbonos de los grupos. La «o» final de «benceno» se queda, porque «-dicarboxamida» empieza por consonante: «benceno-1,4-dicarboxamida»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       7,
+       10,
+       8,
+       9
+      ],
+      "bonds": [
+       2,
+       3,
+       1,
+       9,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "Al anillo hay unidos 2 [[sustituyentes|sustituyente]]: los dos son grupos amida. Son el [[grupo principal]], así que el nombre acaba con «benceno» y el [[sufijo]] «-dicarboxamida», que dice cuántos hay.",
+     "Con varios sustituyentes sí hay que numerar el anillo, para decir en qué carbono está cada uno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       11,
+       12
+      ],
+      "bonds": [
+       5,
+       10,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       4,
+       6,
+       11
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       7,
+       10,
+       8,
+       9
+      ],
+      "bonds": [
+       2,
+       3,
+       1,
+       9,
+       7,
+       8
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En el benceno todos los carbonos son iguales: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Solo cuentan los grupos amida, que son el [[grupo principal]]: llevan los [[localizadores|localizador]] más bajos, así que uno de ellos está siempre en el 1.",
+     "Empieza a contar por un carbono del anillo unido a un grupo amida: así salen los números 1, 4, los más bajos posibles. Empezando en cualquier otro sitio salen números más altos.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Los dos grupos amida están en posición para (1,4). Antes se decía orto (1,2), meta (1,3) o para (1,4); hoy se recomienda escribir los números.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      7,
+      4
+     ],
+     [
+      11,
+      5
+     ],
+     [
+      12,
+      6
+     ]
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre es «benceno», los números de los grupos amida (1,4) entre guiones y el [[sufijo]] «-dicarboxamida»: «benceno-1,4-dicarboxamida».",
+     "Aquí los grupos amida sí llevan número, también el 1: con varios grupos iguales hay que decir dónde está cada uno.",
+     "El nombre completo es «benceno-1,4-dicarboxamida»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       10,
+       11,
+       12
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       7,
+       10,
+       8,
+       9
+      ],
+      "bonds": [
+       2,
+       3,
+       1,
+       9,
+       7,
+       8
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      5,
+      2
+     ],
+     [
+      6,
+      3
+     ],
+     [
+      7,
+      4
+     ],
+     [
+      11,
+      5
+     ],
+     [
+      12,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "el anillo de benceno (conserva su «o» final, porque el sufijo empieza por consonante)"
+     },
+     {
+      "text": "1,4",
+      "kind": "locant",
+      "meaning": "carbonos del anillo unidos a los grupos amida"
+     },
+     {
+      "text": "-dicarboxamida",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos amida (amida)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       4,
+       5,
+       6,
+       7,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       10,
+       11,
+       12
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       4,
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       7,
+       10
+      ],
+      "bonds": [
+       9
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       7,
+       10,
+       8,
+       9
+      ],
+      "bonds": [
+       2,
+       3,
+       1,
+       9,
+       7,
+       8
+      ]
+     },
+     {
+      "text": "carboxamida",
+      "kind": "ending",
+      "atoms": [
+       4,
+       3,
+       2,
+       1,
+       7,
+       10,
+       8,
+       9
+      ],
+      "bonds": [
+       2,
+       3,
+       1,
+       9,
+       7,
+       8
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "NC1=CC(O)=CC(O)=C1": {
+  "name": "5-aminobenceno-1,3-diol",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 6 carbonos, 7 hidrógenos, 1 átomo de nitrógeno y 2 átomos de oxígeno (C₆H₇NO₂).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno se ve como OH: es un oxígeno con su hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces, y cada grupo –OH ocupa el sitio de un hidrógeno. El nitrógeno unido a un solo carbono se ve como NH₂: lleva dos hidrógenos. Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno. El nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       6,
+       7,
+       9,
+       2,
+       3,
+       1,
+       5,
+       8
+      ],
+      "bonds": [
+       5,
+       6,
+       8,
+       9,
+       2,
+       3,
+       1,
+       4,
+       7
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 2 grupos –OH (cada uno, un oxígeno con su hidrógeno) unidos a carbonos del [[benceno]]. Son [[grupos funcionales|grupo funcional]]: la molécula es un fenol con 2 grupos –OH.",
+     "El grupo –OH es el [[grupo principal]]: se nombra con el [[sufijo]] «-ol», al final del nombre (como en «etanol»).",
+     "Aquí hay 2 grupos –OH en el anillo, así que el sufijo dice cuántos: «-diol» («di» = 2, «tri» = 3).",
+     "Con un solo grupo –OH el benceno se llama «fenol», pero con 2 grupos –OH se nombra siempre con «benceno» y el [[sufijo]] «-diol», que dice cuántos hay. La «o» final de «benceno» se queda, porque «-diol» empieza por consonante: «benceno-1,3-diol».",
+     "También tiene un grupo amino (un nitrógeno unido a carbonos: una [[amina]]). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): alcohol > amina.",
+     "Aquí manda el alcohol, así que el grupo amino se nombra con el [[prefijo]] «amino-», delante del nombre."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       4,
+       7
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "En tu molécula, 6 de los carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "Al anillo hay unidos 3 [[sustituyentes|sustituyente]]: 2 son grupos –OH. Son el [[grupo principal]], así que el nombre acaba con «benceno» y el [[sufijo]] «-diol», que dice cuántos hay. El otro sustituyente va delante como [[prefijo]], igual que en un benceno con ramas.",
+     "Con varios sustituyentes sí hay que numerar el anillo, para decir en qué carbono está cada uno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       6,
+       7,
+       9,
+       2,
+       3
+      ],
+      "bonds": [
+       6,
+       9,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       5,
+       8,
+       2
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       4,
+       7
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "En el benceno todos los carbonos son iguales: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.",
+     "Solo cuentan los [[sustituyentes|sustituyente]], con tres reglas, por orden: primero, los grupos –OH son el [[grupo principal]] y llevan los [[localizadores|localizador]] más bajos, así que uno de ellos está siempre en el 1; después, los demás sustituyentes juntos llevan los localizadores más bajos; y, si empatan, el número más bajo es para el sustituyente que se escribe primero (por orden alfabético).",
+     "Las numeraciones cuyo primer número no es 1 pierden enseguida. Estas son las que quedan para comparar:",
+     "Regla: los grupos –OH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los demás sustituyentes. Números: opción A: 1, 3; opción B: 1, 5. Se comparan uno a uno: en el primer número distinto, 3 es menor que 5. Gana la opción A.",
+     "Las formas de numerar que quedan dan el mismo nombre, así que da igual cuál elijas.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       6,
+       7,
+       9,
+       2,
+       3
+      ],
+      "bonds": [
+       5,
+       6,
+       8,
+       9,
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      7,
+      3
+     ],
+     [
+      9,
+      4
+     ],
+     [
+      2,
+      5
+     ],
+     [
+      3,
+      6
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –OH",
+       "lists": [
+        [
+         1,
+         3
+        ],
+        [
+         1,
+         5
+        ]
+       ],
+       "firstDifference": 1,
+       "marks": [
+        [
+         1
+        ],
+        [
+         1
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         6,
+         7,
+         9,
+         2,
+         3
+        ],
+        "bonds": [
+         5,
+         6,
+         8,
+         9,
+         2,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        6,
+        2
+       ],
+       [
+        7,
+        3
+       ],
+       [
+        9,
+        4
+       ],
+       [
+        2,
+        5
+       ],
+       [
+        3,
+        6
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         3,
+         2,
+         9,
+         7,
+         6
+        ],
+        "bonds": [
+         3,
+         2,
+         9,
+         8,
+         6,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        3,
+        2
+       ],
+       [
+        2,
+        3
+       ],
+       [
+        9,
+        4
+       ],
+       [
+        7,
+        5
+       ],
+       [
+        6,
+        6
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Los grupos amino unidos al anillo que no son el [[grupo principal]] son [[sustituyentes|sustituyente]]: se nombran con el [[prefijo]] «amino-».",
+     "En el carbono 5 hay un grupo amino: se escribe «5-amino».",
+     "«amino» es el [[prefijo]] de un grupo –NH₂ (un nitrógeno con dos hidrógenos, una [[amina]]) unido al anillo. No es el [[grupo principal]]: el alcohol va antes que la amina."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       6,
+       7,
+       9,
+       2,
+       3
+      ],
+      "bonds": [
+       5,
+       6,
+       8,
+       9,
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      5
+     ]
+    ],
+    "options": [
+     {
+      "label": "amino",
+      "text": "En el carbono 5 hay un grupo amino: se escribe «5-amino». «amino» es el [[prefijo]] de un grupo –NH₂ (un nitrógeno con dos hidrógenos, una [[amina]]) unido al anillo. No es el [[grupo principal]]: el alcohol va antes que la amina.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         6,
+         7,
+         9,
+         2,
+         3
+        ],
+        "bonds": [
+         5,
+         6,
+         8,
+         9,
+         2,
+         3
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         1
+        ],
+        "bonds": [
+         1
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        5
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Después va «benceno», los números de los grupos –OH (1,3) entre guiones y el [[sufijo]] «-diol»: «benceno-1,3-diol».",
+     "Aquí los grupos –OH sí llevan número, también el 1: con varios grupos iguales hay que decir dónde está cada uno.",
+     "La amina que no es el grupo principal va delante como prefijo («amino»), igual que las ramas: no cambia la terminación del nombre.",
+     "El nombre completo es «5-aminobenceno-1,3-diol»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       4,
+       6,
+       7,
+       9,
+       2,
+       3
+      ],
+      "bonds": [
+       5,
+       6,
+       8,
+       9,
+       2,
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       4,
+       7
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      1
+     ],
+     [
+      6,
+      2
+     ],
+     [
+      7,
+      3
+     ],
+     [
+      9,
+      4
+     ],
+     [
+      2,
+      5
+     ],
+     [
+      3,
+      6
+     ]
+    ],
+    "legend": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "meaning": "carbono del anillo donde está «amino»"
+     },
+     {
+      "text": "amino",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo amino (–NH₂), una amina que aquí no es el grupo principal"
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "el anillo de benceno (conserva su «o» final, porque el sufijo empieza por consonante)"
+     },
+     {
+      "text": "1,3",
+      "kind": "locant",
+      "meaning": "carbonos que llevan el grupo –OH"
+     },
+     {
+      "text": "-diol",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos –OH (alcohol)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "5",
+      "kind": "locant",
+      "atoms": [
+       2,
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "amino",
+      "kind": "prefix",
+      "atoms": [
+       1
+      ],
+      "bonds": [
+       1
+      ]
+     },
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       4,
+       6,
+       7,
+       9,
+       2,
+       3
+      ],
+      "bonds": [
+       5,
+       6,
+       8,
+       9,
+       2,
+       3
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "1",
+      "kind": "locant",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       7,
+       8
+      ],
+      "bonds": [
+       7
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       4,
+       7
+      ]
+     },
+     {
+      "text": "ol",
+      "kind": "ending",
+      "atoms": [
+       4,
+       5,
+       7,
+       8
+      ],
+      "bonds": [
+       4,
+       7
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "OC1=C(O)C(O)=C(O)C(O)=C1O": {
+  "name": "bencenohexol",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 6 carbonos, 6 hidrógenos y 6 átomos de oxígeno (C₆H₆O₆).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno se ve como OH: es un oxígeno con su hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces, y cada grupo –OH ocupa el sitio de un hidrógeno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       5,
+       7,
+       9,
+       11,
+       1,
+       4,
+       6,
+       8,
+       10,
+       12
+      ],
+      "bonds": [
+       2,
+       4,
+       6,
+       8,
+       10,
+       11,
+       1,
+       3,
+       5,
+       7,
+       9,
+       12
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 6 grupos –OH (cada uno, un oxígeno con su hidrógeno) unidos a carbonos del [[benceno]]. Son [[grupos funcionales|grupo funcional]]: la molécula es un fenol con 6 grupos –OH.",
+     "El grupo –OH es el [[grupo principal]]: se nombra con el [[sufijo]] «-ol», al final del nombre (como en «etanol»).",
+     "Aquí hay 6 grupos –OH en el anillo, así que el sufijo dice cuántos: «-hexol» («di» = 2, «tri» = 3).",
+     "Con un solo grupo –OH el benceno se llama «fenol», pero con 6 grupos –OH se nombra siempre con «benceno» y el [[sufijo]] «-hexol», que dice cuántos hay. La «o» final de «benceno» se queda, porque «-hexol» empieza por consonante: «bencenohexol»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       3,
+       5,
+       7,
+       9,
+       12
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "benzene",
+    "title": "Reconoce el benceno",
+    "text": [
+     "Los 6 carbonos forman un [[anillo]] con forma de hexágono y tres [[enlaces dobles|enlace doble]] alternados: uno sí, uno no. Este anillo es el [[benceno]] y tiene nombre propio, «benceno». No se llama «ciclohexatrieno».",
+     "El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.",
+     "Al anillo hay unidos 6 [[sustituyentes|sustituyente]]: los 6 son grupos –OH. Son el [[grupo principal]], así que el nombre acaba con «benceno» y el [[sufijo]] «-hexol», que dice cuántos hay.",
+     "Aquí los 6 carbonos del anillo llevan el mismo grupo, así que no hará falta decir dónde está cada uno."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       5,
+       7,
+       9,
+       11
+      ],
+      "bonds": [
+       4,
+       8,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [],
+      "bonds": [
+       2,
+       6,
+       10
+      ],
+      "style": "candidate"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       3,
+       5,
+       7,
+       9,
+       12
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringNumbering",
+    "title": "Numera el anillo",
+    "text": [
+     "Los 6 carbonos del anillo llevan cada uno un grupo –OH, así que no hay que decir dónde está cada uno: «bencenohexol» no lleva números. Por eso aquí no hace falta numerar."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       5,
+       7,
+       9,
+       11
+      ],
+      "bonds": [
+       2,
+       4,
+       6,
+       8,
+       10,
+       11
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "El nombre es «benceno» más el [[sufijo]] «-hexol», todo junto: «bencenohexol». No lleva números, porque los 6 carbonos del anillo llevan el grupo.",
+     "El nombre completo es «bencenohexol»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       5,
+       7,
+       9,
+       11
+      ],
+      "bonds": [
+       2,
+       4,
+       6,
+       8,
+       10,
+       11
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       3,
+       5,
+       7,
+       9,
+       12
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "legend": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "meaning": "el anillo de benceno (conserva su «o» final, porque el sufijo empieza por consonante)"
+     },
+     {
+      "text": "-hexol",
+      "kind": "ending",
+      "meaning": "grupo principal: 6 grupos –OH (alcohol)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "benceno",
+      "kind": "stem",
+      "atoms": [
+       2,
+       3,
+       5,
+       7,
+       9,
+       11
+      ],
+      "bonds": [
+       2,
+       4,
+       6,
+       8,
+       10,
+       11
+      ]
+     },
+     {
+      "text": "hex",
+      "kind": "multiplier",
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       3,
+       5,
+       7,
+       9,
+       12
+      ]
+     },
+     {
+      "text": "ol",
+      "kind": "ending",
+      "atoms": [
+       2,
+       1,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12
+      ],
+      "bonds": [
+       1,
+       3,
+       5,
+       7,
+       9,
+       12
+      ]
+     }
+    ]
+   }
+  ]
  }
 }

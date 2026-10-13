@@ -211,6 +211,7 @@
 import {
   validateForNaming, validationError, carboxylCarbons, etherOxygens, amineNitrogens, ACYL_SUBSTITUENT_MESSAGE,
   CARBOXY_SUBSTITUENT_MESSAGE, SYMMETRIC_ETHER_MESSAGE, SYMMETRIC_AMINE_MESSAGE, SUBSTITUTED_POLYAMINE_MESSAGE,
+  SUBSTITUTED_BENZENE_POLYAMINE_MESSAGE,
   amideCarbons, AMIDE_PREFIX_MESSAGE, nitrileCarbons, CYANO_PREFIX_MESSAGE, isAmineNitrogen, esterCarbons,
   ESTER_PREFIX_MESSAGE, SYMMETRIC_RING_MESSAGE, esterRingSplit,
 } from '../model/validate.js';
@@ -565,14 +566,18 @@ function nameValidated(input, options) {
  * The HETEROATOM refusal of a parent with two or more amine groups where
  * some nitrogen carries other groups (design.md §13.4 I-36): IUPAC 2013
  * tells the nitrogens apart with locants N¹, N²… (`N¹-metiletano-1,2-diamina`),
- * which the app does not write. `atoms` lists the nitrogens of the suffix.
+ * which the app does not write; a benzene parent (I-44) gets
+ * SUBSTITUTED_BENZENE_POLYAMINE_MESSAGE. `atoms` lists the nitrogens of the suffix.
  *
  * @param {object} structure - The name structure (an amine suffix with several groups).
  * @returns {{code: string, message: string, atoms: number[], reason: string}} The error.
  */
 function polyamineError(structure) {
   const atoms = structure.suffix.locants.map((site) => site.attachAtom).sort((p, q) => p - q);
-  return validationError('HETEROATOM', { message: SUBSTITUTED_POLYAMINE_MESSAGE, atoms, reason: 'substitutedPolyamine' });
+  // A benzene diamine (I-44) has its own wording: the groups are on the ring, not on a chain.
+  const benzene = structure.parentKind === 'ring' && structure.parent.retained === 'benzene';
+  const message = benzene ? SUBSTITUTED_BENZENE_POLYAMINE_MESSAGE : SUBSTITUTED_POLYAMINE_MESSAGE;
+  return validationError('HETEROATOM', { message, atoms, reason: 'substitutedPolyamine' });
 }
 
 /**
@@ -854,7 +859,9 @@ function carbonylAlternative(result) {
  * `bencenocarbaldehído`, `N-metilbencenocarboxamida`,
  * `bencenocarbonitrilo`, which some school books use; IUPAC 2013 prefers
  * the retained names (from memory), so this one is listed under "Otras
- * formas válidas". Null for any other name.
+ * formas válidas". Null for any other name, and for several identical
+ * groups on the ring (I-44), whose main name is already the systematic one
+ * (`benceno-1,4-dicarbaldehído`), so it is never listed twice.
  *
  * @param {object} result - The main naming result.
  * @returns {{style: string, label: string, name: string, parts: object[]}|null} The alternative.
@@ -863,6 +870,9 @@ function benzeneSystematicAlternative(result) {
   const { structure } = result;
   if (structure.parentKind !== 'ring' || structure.parent.retained !== 'benzene' || !structure.suffix || !structure.suffix.outside) {
     return null;
+  }
+  if (structure.suffix.locants.length > 1) {
+    return null; // Several groups: the main name is already the systematic one (`benceno-1,4-dicarbaldehído`, I-44).
   }
   const rendered = renderName(structure, lexiconEs, { systematic: true });
   return { style: 'benzeneSystematic', label: lexiconEs.styleLabel('benzeneSystematic'), ...rendered };

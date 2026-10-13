@@ -12,9 +12,10 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   1º Bachillerato, `docs/design.md` §13, phases I-21…I-41) are both done;
   v3 (polysubstituted benzenes, §14, phases I-42a…I-46) is in progress —
   benzenes with two to six branch, halogen or alkoxy prefixes are named, also
-  beside one principal group on the ring — OH, amine, –COOH, –CHO, –C≡N or
-  amide — with junior groups as prefixes (`4-metilfenol`,
-  `4-metilbencen-1-amina`, `ácido 4-hidroxibenzoico`, `3-cianobenzamida`).
+  beside one or several identical principal groups on the ring — OH, amine,
+  –COOH, –CHO, –C≡N or amide — with junior groups as prefixes (`4-metilfenol`,
+  `4-metilbencen-1-amina`, `ácido 4-hidroxibenzoico`, `3-cianobenzamida`,
+  `3-etilbenceno-1,2-diol`, `ácido benceno-1,3-dicarboxílico`).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles. Systematic name first; traditional names and the old
   orto/meta/para forms go under "Otras formas válidas".

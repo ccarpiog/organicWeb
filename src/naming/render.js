@@ -253,7 +253,13 @@ function renderEnding(parent, lexicon, omit, suffix = null, omitSuffixLocants = 
  * `benzonitrilo` (`bencenocarboxamida`, `bencenocarbonitrilo`). The
  * retained names keep the group at an implicit 1 beside ring prefixes
  * (`ácido 4-metilbenzoico`, design.md §14.3, I-43b), while the systematic
- * forms cite it (`ácido 4-metilbenceno-1-carboxílico`).
+ * forms cite it (`ácido 4-metilbenceno-1-carboxílico`). Several identical
+ * suffix groups (I-44) always give the systematic name with its locants
+ * and multiplier, the `o` of `benceno` kept before a consonant
+ * (`benceno-1,2-diol`, `benceno-1,4-diamina`, `3-etilbenceno-1,2-diol`,
+ * `ácido benceno-1,3-dicarboxílico`, `benceno-1,3,5-tricarbonitrilo`;
+ * IUPAC 2013 P-16.7.1), and no locants when all six positions hold the group
+ * (`bencenohexol`, lexicon ringOmitsLocants()).
  *
  * @param {object} ring - The ring structure (structure.js RingStructure).
  * @param {object} lexicon - The lexicon.
@@ -266,6 +272,12 @@ export function renderRingParent(ring, lexicon, prefixes, suffix = null, systema
   const suffixCount = suffix ? suffix.locants.length : 0;
   const omission = lexicon.ringOmitsLocants(ring, carbonLocantPrefixes(prefixes), suffixCount);
   if (ring.retained === 'benzene') {
+    if (suffixCount > 1) {
+      // Several identical principal groups always take the systematic name (design.md §14.3, I-44): `benceno-1,2-diol`,
+      // `ácido benceno-1,3-dicarboxílico`, `bencen-…` only before a vowel; no locants with all six (`bencenohexol`).
+      const stemText = lexicon.benzeneName.slice(0, suffixWords(suffix, lexicon).elides ? -1 : undefined);
+      return [part(stemText, 'stem', ring.atoms, ring.bonds), ...renderSuffix(suffix, lexicon, omission.prefixes)];
+    }
     const retained = suffix && suffix.outside && !systematic ? lexicon.benzeneGroupName(suffix.kind) : null;
     if (retained) {
       // `ácido benzoico`, `benzaldehído`, `benzamida`, `benzonitrilo` (design.md §13.4 I-40b, I-40c): the stem is the ring, the ending the group.

@@ -13,7 +13,7 @@
  *   multiple bonds — a benzene ring included; with two or more substituents
  *   only when every group is a hydrocarbon branch, a halogen or an alkoxy
  *   group, plus OH, amine, –COOH, amide, –C≡N or –CHO groups bonded to the
- *   ring of which the most senior occurs once (design.md §14.1; otherwise
+ *   ring, the most senior once or several times (design.md §14.1; otherwise
  *   CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
  *   one gets TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps (≤ 60 carbons, ≤ 80 heavy atoms),
  *   only elements the engine can name yet (carbon, halogens bonded to a
@@ -58,7 +58,7 @@
 import {
   isConnected, hasCycle, longestChainLength, adjacency, carbonSkeleton, connectedComponents, rootedBranchKey,
 } from './graph.js';
-import { classifyRings } from './rings.js';
+import { classifyRings, perceiveRings } from './rings.js';
 import { isSupportedElement, valenceOf, isHalogen, ELEMENT_NAMES_ES } from './elements.js';
 
 /** Maximum number of carbons in a molecule the app will name (design.md §1.1). */
@@ -80,10 +80,9 @@ export const MESSAGES = Object.freeze({
   CYCLE: 'Este benceno tiene varios sustituyentes y alguno de ellos es o lleva un grupo funcional '
     + 'que aún no sé combinar con los demás. Cuando el benceno tiene dos o más sustituyentes, de momento solo sé '
     + 'nombrarlo si son ramas de carbono, halógenos (flúor, cloro, bromo, yodo), grupos alcoxi (como –O–CH₃) o grupos '
-    + '–COOH, amida, –C≡N, –CHO, –OH o amino (como –NH₂) unidos directamente al anillo, y el más importante de estos '
-    + 'grupos (el grupo principal) aparece una sola vez: por ejemplo, el 1,2-dimetilbenceno, el 4-metilfenol o el ácido '
-    + '4-hidroxibenzoico. Los demás (con dos grupos –OH, dos grupos –COOH, un éster, una cetona o un grupo funcional en '
-    + 'una rama, por ejemplo) quedan fuera de lo que sé nombrar.',
+    + '–COOH, amida, –C≡N, –CHO, –OH o amino (como –NH₂) unidos directamente al anillo: por ejemplo, el '
+    + '1,2-dimetilbenceno, el 4-metilfenol, el benceno-1,2-diol o el ácido 4-hidroxibenzoico. Los demás (con un éster, '
+    + 'una cetona o un grupo funcional en una rama, por ejemplo) quedan fuera de lo que sé nombrar.',
   RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
   VALENCE: 'Este carbono tendría más de 4 enlaces.',
   TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
@@ -278,6 +277,17 @@ export const SUBSTITUTED_POLYAMINE_MESSAGE = 'Esta molécula tiene varios grupos
   + '(como la etano-1,2-diamina) y las aminas con un solo nitrógeno (como la N-metiletanamina).';
 
 /**
+ * The SUBSTITUTED_POLYAMINE_MESSAGE of a benzene parent (design.md §14.1,
+ * I-44): two or more amine groups on the ring, some N carrying other
+ * groups (`N¹-metilbenceno-1,4-diamina`), not supported; the diamines
+ * without groups on the N and one amine group with them are named.
+ */
+export const SUBSTITUTED_BENZENE_POLYAMINE_MESSAGE = 'Este benceno tiene varios grupos amino unidos al anillo '
+  + 'y alguno de sus nitrógenos lleva otros grupos unidos. Para decir en qué nitrógeno está cada grupo harían falta '
+  + 'localizadores como N¹ y N⁴, y eso aún no sé hacerlo. Sí sé nombrar los bencenos con varios grupos amino sin grupos '
+  + 'en el nitrógeno (como la benceno-1,4-diamina) y con un solo grupo amino (como la N,4-dimetilbencen-1-amina).';
+
+/**
  * HETEROATOM message of the naming engine (naming/index.js) for an amine
  * nitrogen that is not the principal group and joins two or three
  * identical parts that each carry the principal group (design.md §13.4
@@ -324,6 +334,17 @@ export const SUBSTITUTED_POLYAMIDE_MESSAGE = 'Esta molécula tiene dos grupos am
   + 'lleva otros grupos unidos. Para decir en qué nitrógeno está cada grupo harían falta localizadores como N¹ y N⁴, '
   + 'y eso aún no sé hacerlo. Sí sé nombrar las diamidas sin grupos en el nitrógeno (como la butanodiamida) '
   + 'y las amidas con un solo nitrógeno (como la N-metiletanamida).';
+
+/**
+ * The SUBSTITUTED_POLYAMIDE_MESSAGE of a benzene parent (design.md §14.1,
+ * I-44): two or more amide groups on the ring, some N carrying other
+ * groups (N¹/N⁴ locants), not supported; without groups on the N they are
+ * named (`benceno-1,4-dicarboxamida`), and so is one amide with them.
+ */
+export const SUBSTITUTED_BENZENE_POLYAMIDE_MESSAGE = 'Este benceno tiene varios grupos amida unidos al anillo '
+  + 'y alguno de sus nitrógenos lleva otros grupos unidos. Para decir en qué nitrógeno está cada grupo harían falta '
+  + 'localizadores como N¹ y N⁴, y eso aún no sé hacerlo. Sí sé nombrar los bencenos con varios grupos amida sin grupos '
+  + 'en el nitrógeno (como la benceno-1,4-dicarboxamida) y con un solo grupo amida (como la N-etil-4-metilbenzamida).';
 
 /**
  * HETEROATOM message for an imide (design.md §13.4 I-37): a nitrogen
@@ -616,8 +637,7 @@ export function isBenzeneRing(mol, ring) {
  * Spanish CYCLE message for a benzene ring with `count` (≥ 2) substituents
  * of which some group is out of scope (design.md §3.2, §14.1:
  * polysubstituted benzenes are named with hydrocarbon, halogen and alkoxy
- * prefixes plus groups bonded to the ring whose most senior one occurs
- * once, ringSinglePrincipal(), so far).
+ * prefixes plus groups bonded to the ring, ringPrincipalGroups(), so far).
  *
  * @param {number} count - Number of substituents on the ring.
  * @returns {string} The message.
@@ -709,30 +729,30 @@ function ringGroups(mol, ring) {
 } // End of function ringGroups()
 
 /**
- * Tells whether a polysubstituted benzene has exactly one principal group
- * on the ring and only prefix groups otherwise (design.md §14.1). The
- * principal group is the most senior of its ring groups (ringGroups(),
+ * Tells whether a polysubstituted benzene has its principal groups on the
+ * ring and only prefix groups otherwise (design.md §14.1). The principal
+ * group is the most senior of its ring groups (ringGroups(),
  * RING_GROUP_SENIORITY: acid > amide > nitrile > aldehyde > alcohol >
- * amine) and must occur once; the junior groups, any number of them, become
- * prefixes beside the hydrocarbon branches, halogens and alkoxy groups.
- * I-43a: one OH or amine (`4-metilfenol`, `N,4-dimetilbencen-1-amina`,
- * `4-aminofenol`, `2,4-diaminofenol`); I-43b: one –COOH, amide, –C≡N or
- * –CHO (`ácido 4-metilbenzoico`, `4-clorobenzaldehído`,
- * `N-etil-4-metilbenzamida`, `ácido 4-hidroxibenzoico`,
- * `ácido 4-formilbenzoico`, `3-cianobenzamida`). Two groups of the
- * principal kind (`benceno-1,2-diol`, `ácido benceno-1,3-dicarboxílico`,
- * I-44), an ester, a ketone or any group on a side chain (I-45) stay
- * refused.
+ * amine); it may occur once or several times (identical principal groups
+ * are the multiplied suffix, I-44); the junior groups, any number of them,
+ * become prefixes beside the hydrocarbon branches, halogens and alkoxy
+ * groups. I-43a: one OH or amine (`4-metilfenol`,
+ * `N,4-dimetilbencen-1-amina`, `4-aminofenol`, `2,4-diaminofenol`); I-43b:
+ * one –COOH, amide, –C≡N or –CHO (`ácido 4-metilbenzoico`,
+ * `4-clorobenzaldehído`, `N-etil-4-metilbenzamida`,
+ * `ácido 4-hidroxibenzoico`, `ácido 4-formilbenzoico`, `3-cianobenzamida`);
+ * I-44: several (`3-etilbenceno-1,2-diol`, `benceno-1,4-diamina`,
+ * `ácido benceno-1,3-dicarboxílico`, `benceno-1,3,5-tricarbonitrilo`).
+ * Groups on the N of two or more ring amines or amides are refused later
+ * (`substitutedPolyamine`, naming/index.js; `substitutedPolyamide`,
+ * amidePlacementError(): N¹/N⁴ locants). An ester, a ketone or any group on
+ * a side chain (I-45) stay refused.
  *
  * @param {Map<string, Set<number>>|null} groups - The ring groups (ringGroups()).
- * @returns {boolean} True when the molecule is in the I-43a / I-43b scope.
+ * @returns {boolean} True when the molecule is in the I-43a / I-43b / I-44 scope.
  */
-function ringSinglePrincipal(groups) {
-  if (!groups) {
-    return false;
-  }
-  const principal = RING_GROUP_SENIORITY.find((kind) => groups.get(kind).size > 0);
-  return Boolean(principal) && groups.get(principal).size === 1;
+function ringPrincipalGroups(groups) {
+  return Boolean(groups) && RING_GROUP_SENIORITY.some((kind) => groups.get(kind).size > 0);
 }
 
 /**
@@ -828,13 +848,13 @@ export function ringAtomSet(mol) {
  * or more when the molecule has one ring and only prefix groups
  * (prefixesOnly(): hydrocarbon branches, halogens, alkoxy groups; design.md
  * §14.1), since I-43a / I-43b also with characteristic groups bonded
- * directly to the ring of which the most senior occurs once
- * (ringSinglePrincipal(): `4-metilfenol`, `4-metilbencen-1-amina`,
- * `ácido 4-hidroxibenzoico`, `3-cianobenzamida`); any other
+ * directly to the ring, the most senior once (ringPrincipalGroups():
+ * `4-metilfenol`, `4-metilbencen-1-amina`, `ácido 4-hidroxibenzoico`,
+ * `3-cianobenzamida`) or, since I-44, several times
+ * (`3-etilbenceno-1,2-diol`, `ácido benceno-1,3-dicarboxílico`); any other
  * polysubstituted benzene gets CYCLE with `ringReason`
- * 'polysubstitutedBenzene' (valid, but not nameable yet: two OH or two
- * –COOH on the ring, an ester, a ketone or a group on a side chain, a
- * substituted phenyl…). A
+ * 'polysubstitutedBenzene' (valid, but not nameable yet: an ester, a
+ * ketone or a group on a side chain, a substituted phenyl…). A
  * benzene ring always carries at most one substituent per ring atom (each
  * ring atom already has three bonds). Otherwise: TOO_BIG for a larger ring,
  * and RING_SYSTEM with `ringKind` for a heterocycle (a lactone, an ester
@@ -862,7 +882,7 @@ function ringError(mol) {
     }
     const substituted = isBenzeneRing(mol, ring) ? substitutedRingAtoms(mol, ring) : [];
     const groups = kind === 'carbocycle' && substituted.length > 1 ? ringGroups(mol, ring) : null;
-    const nameable = kind === 'carbocycle' && (prefixesOnly(mol) || ringSinglePrincipal(groups));
+    const nameable = kind === 'carbocycle' && (prefixesOnly(mol) || ringPrincipalGroups(groups));
     if (substituted.length > 1 && !nameable) {
       return validationError('CYCLE', {
         message: polysubstitutedBenzeneMessage(substituted.length),
@@ -1715,8 +1735,14 @@ function amidePlacementError(mol, hetero, senior) {
   const most = Math.max(...pieces.map((onPiece) => onPiece.length));
   const substituted = (carbon) => adj.get(amideNitrogenOf(mol, adj, carbon)).length > 1;
   if (onRing.length >= most) {
-    // The ring is the parent (I-40c): two or more amides on it with a group on some N would need N¹/N² locants.
-    return onRing.length >= 2 && onRing.some(substituted) ? refuse(SUBSTITUTED_POLYAMIDE_MESSAGE, 'substitutedPolyamide') : null;
+    // The ring is the parent (I-40c): two or more amides on it with a group on some N would need N¹/N² locants
+    // (on a benzene, I-44, with its own message).
+    if (onRing.length < 2 || !onRing.some(substituted)) {
+      return null;
+    }
+    const benzene = perceiveRings(mol).rings.some((r) => isBenzeneRing(mol, r) && onRing.every((carbon) => adj.get(carbon)
+      .some((n) => r.atoms.includes(n.atom))));
+    return refuse(benzene ? SUBSTITUTED_BENZENE_POLYAMIDE_MESSAGE : SUBSTITUTED_POLYAMIDE_MESSAGE, 'substitutedPolyamide');
   }
   const candidates = pieces.filter((onPiece) => onPiece.length === most);
   // A diamide that could carry the suffix with a group on some N (another amide's piece included): N¹/N⁴ locants.

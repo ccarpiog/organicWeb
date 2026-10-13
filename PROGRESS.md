@@ -64,8 +64,8 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-42b | v3 Benzene parent with prefixes: oracle `randomBenzene` 1–6 groups, e2e, Ordenar dibujo / 90° checks (split from I-42) | same, "I-42" | done — `docs/progress-archive/i-42b.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-42b.md` |
 | I-43a | v3 One OH or amine on the ring, plus prefixes | same, "I-43a" | done — `docs/progress-archive/i-43a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-43a.md` |
 | I-43b | v3 One outside-carbon suffix (COOH/CHO/CN/CONH₂) on the ring, plus prefixes | same, "I-43b" | done — `docs/progress-archive/i-43b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-43b.md` |
-| I-44 | v3 Several identical principal groups on the ring | same, "I-44" | queued (next) | — | — |
-| I-45a | v3 Substituted phenyl and phenoxy as a substituent | same, "I-45a" | queued | — | — |
+| I-44 | v3 Several identical principal groups on the ring | same, "I-44" | done — `docs/progress-archive/i-44.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-44.md` |
+| I-45a | v3 Substituted phenyl and phenoxy as a substituent | same, "I-45a" | queued (next) | — | — |
 | I-45b | v3 Substituted benzoyl | same, "I-45b" | queued | — | — |
 | I-45c | v3 Esters with substituted rings | same, "I-45c" | queued | — | — |
 | I-46 | v3 Wrap-up (Ayuda, examples, README, CLAUDE.md scope, oracle README) | same, "I-46" | queued | — | — |
@@ -117,12 +117,13 @@ user's decisions as `docs/design.md` §14 (pointer from §13.1).
 
 ## Next action
 
-Start I-44: several identical principal groups on a benzene ring. Spec:
-`autoclaude/processed/220-polysubstituted-benzenes.md` "I-44", "Code traps", "Fixtures to include";
-design `docs/design.md` §14. The benzene gate is now one rule, `ringSinglePrincipal()` in
-`validate.js` (most senior ring group exactly once); I-44 relaxes it to allow several of the
-senior group. Oracle generators to extend: `generateRingPrincipalBenzenes()`,
-`generateRingOutsideBenzenes()`. Deploying (`npm run deploy`) stays a manual user step.
+Start I-45a: substituted phenyl and phenoxy as a substituent (`1-(4-metilfenil)etan-1-ona`,
+`2-(4-clorofenil)etan-1-ol`, `ácido 2-(3-metilfenil)acético`, `2-(4-metilfenoxi)etan-1-ol`,
+`N-(4-metilfenil)acetamida`). Spec: `autoclaude/processed/220-polysubstituted-benzenes.md` "I-45a",
+"Code traps" 3 and 6; design `docs/design.md` §14. Phenyl numbering starts at the attachment atom,
+Kekulé-neutral (`substituent.js ringSubstituent()` / `phenylSubstituent`); `CYCLE` /
+`polysubstitutedBenzene` in `validate.js ringError()` still guards substituted phenyl on chains.
+Deploying (`npm run deploy`) stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -255,16 +256,19 @@ senior group. Oracle generators to extend: `generateRingPrincipalBenzenes()`,
 - Phenols/benzenamines with prefixes (I-43a): gate in `validate.js`, principal-locant-1 naming and
   cresol/anilina aliases in `aromatic.js` / `render.js`; e2e `tests/e2e/phenols-anilines.spec.js`;
   oracle `generateRingPrincipalBenzenes()`.
-- Ring suffix groups with prefixes (I-43b): gate `ringSinglePrincipal()` in `validate.js`; e2e
-  `tests/e2e/substituted-benzoic.spec.js`; oracle `generateRingOutsideBenzenes()`.
+- Ring suffix groups with prefixes (I-43b): e2e `tests/e2e/substituted-benzoic.spec.js`; oracle
+  `generateRingOutsideBenzenes()`.
+- Several identical ring principal groups (I-44): gate `ringPrincipalGroups()` in `validate.js`
+  (most senior ring group, one or more times); tests `tests/unit/benzene-polysuffix.test.js`,
+  `tests/e2e/benzene-polysuffix.spec.js`; oracle `generateRingPolysuffixBenzenes()`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-43b)
+## Verification (last phase, I-44)
 
-- Run by the orchestrator: `npm test` 0 (1596 pass) · `npm run check` 0 (135 files) · `npm run build`
-  0 · `npm run e2e` 0 (329 pass, source + dist) · `npm run oracle -- --count 2000 --seed 1 --max 60`
-  0 (22027 pass, 0 fail).
+- Run by the orchestrator: `npm test` 0 (1631 pass) · `npm run check` 0 (137 files) · `npm run build`
+  0 · `npm run e2e` 0 (353 pass, source + dist) · `npm run oracle -- --count 2000 --seed 1 --max 60`
+  0 (22527 pass, 0 fail).
 
 ## Open risks / deviations
 
@@ -424,9 +428,14 @@ senior group. Oracle generators to extend: `generateRingPrincipalBenzenes()`,
 - I-42b: oracle benzene family N/2 with 1–6 groups; only `TOO_BIG` benzenes skipped, any other refusal
   is a failure (review fix). No naming/layout bug found (`docs/progress-archive/i-42b.md`).
 
+- I-44: N-substituted benzene diamines/diamides still refused (new benzene messages); retained
+  nitrile/amide names only `ftalonitrilo`/`ftalamida`; `catecol` beside `pirocatecol`; six identical
+  groups without locants (`bencenohexol`, P-14.3.4 from memory); the out-of-scope benzene refusal
+  message reworded (`docs/progress-archive/i-44.md`).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
 
 ## Git state
 
-- I-43a `506e488`, pushed. I-43b committed and pushed right after this checkpoint (see `git log`).
+- I-43b `619dde1`, pushed. I-44 committed and pushed right after this checkpoint (see `git log`).

@@ -9,8 +9,9 @@
  * "Otras formas válidas" only; the "Numera el anillo" step says the
  * principal group takes 1 and never talks about double bonds, the canvas
  * shows 1 on the ring carbon bonded to the group, and the colour key shows
- * `benz` and the group's ending. Two groups of the principal kind stay
- * refused. "Ordenar dibujo" gives a clean drawing and the 90° view keeps the
+ * `benz` and the group's ending. Two groups of the principal kind are named
+ * since I-44 (benzene-polysuffix.spec.js); an ester or a ketone beside other
+ * groups stays refused. "Ordenar dibujo" gives a clean drawing and the 90° view keeps the
  * normal drawing. Runs on the dev server and on dist/index.html.
  */
 
@@ -162,14 +163,14 @@ for (const c of [
   });
 } // End of the loop over the named benzoic acids, benzaldehydes, benzonitriles and benzamides
 
-test('still out of scope: two ring –COOH, two –CHO, an ester or a ketone beside other groups', async ({ page }) => {
+test('still out of scope: a diester, a CHO on a branch, an ester or a ketone beside other groups (two ring –COOH or –CHO are named since I-44)', async ({ page }) => {
   const errors = await openApp(page);
   const error = page.locator('#results .results-error');
-  for (const smiles of ['OC(=O)C1=CC=C(C(O)=O)C=C1', 'O=CC1=CC=C(C=O)C=C1Cl', 'CCOC(=O)C1=CC=C(C)C=C1', 'CC(=O)C1=CC=C(C(O)=O)C=C1']) {
+  for (const smiles of ['CCOC(=O)C1=CC=C(C(=O)OCC)C=C1', 'O=CCC1=CC=C(C(O)=O)C=C1', 'CCOC(=O)C1=CC=C(C)C=C1', 'CC(=O)C1=CC=C(C(O)=O)C=C1']) {
     await loadSmiles(page, smiles);
     await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
     await expect(error).toHaveAttribute('data-code', 'CYCLE');
-    await expect(error).toContainText('el más importante de estos grupos (el grupo principal) aparece una sola vez');
+    await expect(error).toContainText('el benceno-1,2-diol o el ácido 4-hidroxibenzoico');
     await expect(page.locator('#result-name')).toHaveCount(0);
   } // End of the loop over the refused benzenes
   expect(errors).toEqual([]);

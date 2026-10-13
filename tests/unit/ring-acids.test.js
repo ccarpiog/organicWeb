@@ -125,9 +125,9 @@ test('the ring refusals of I-40b are lifted (nitriles and amides named since I-4
   // Beside an acid a ring nitrile or amide is a prefix since I-40c (tests/unit/ring-nitriles-amides.test.js).
   assert.equal(nameOf('N#CC1CCC(C(=O)O)CC1'), 'ácido 4-cianociclohexano-1-carboxílico');
   assert.equal(nameOf('NC(=O)C1CCC(C(=O)O)CC1'), 'ácido 4-carbamoilciclohexano-1-carboxílico');
-  // A benzene with a –COOH and other groups is named since I-43b; with two –COOH it is still refused (I-44).
+  // A benzene with a –COOH and other groups is named since I-43b, with two –COOH since I-44.
   assert.equal(nameOf('OC(=O)C1=CC=C(C)C=C1'), 'ácido 4-metilbenzoico');
-  assert.equal(nameOf('OC(=O)C1=CC=C(C(=O)O)C=C1C'), 'CYCLE');
+  assert.equal(nameOf('OC(=O)C1=CC=C(C(=O)O)C=C1C'), 'ácido 2-metilbenceno-1,4-dicarboxílico');
 });
 
 test('more than two –COOH or –CHO on one carbon piece: refused; on the ring or on other pieces: named', () => {

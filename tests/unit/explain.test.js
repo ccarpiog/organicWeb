@@ -213,6 +213,15 @@ const SNAPSHOT_SMILES = [
   'CCNC(=O)C1=CC=C(C)C=C1', // N-etil-4-metilbenzamida: a group on the amide N and one on the ring (I-43b)
   'OC(=O)C1=CC=C(O)C=C1', // ácido 4-hidroxibenzoico: acid > alcohol, the OH is a prefix (I-43b)
   'NC(=O)C1=CC(C#N)=CC=C1', // 3-cianobenzamida: amide > nitrile, numbering comparison (I-43b)
+  'CCC1=C(O)C(O)=CC=C1', // 3-etilbenceno-1,2-diol: two OH, the user's example, suffix then prefix numbering (I-44)
+  'OC1=CC=C(O)C=C1', // benceno-1,4-diol: only the principal groups, para sentence, hidroquinona (I-44)
+  'NC1=CC=C(N)C=C1', // benceno-1,4-diamina: no anilina (I-44)
+  'O=C(O)C1=CC(C(=O)O)=CC=C1', // ácido benceno-1,3-dicarboxílico: ácido isoftálico (I-44)
+  'O=CC1=CC=C(C=O)C=C1', // benceno-1,4-dicarbaldehído: tereftalaldehído (I-44)
+  'N#CC1=CC(C#N)=CC(C#N)=C1', // benceno-1,3,5-tricarbonitrilo: three groups (I-44)
+  'NC(=O)C1=CC=C(C(N)=O)C=C1', // benceno-1,4-dicarboxamida (I-44)
+  'NC1=CC(O)=CC(O)=C1', // 5-aminobenceno-1,3-diol: two OH and an amino prefix (I-44)
+  'OC1=C(O)C(O)=C(O)C(O)=C1O', // bencenohexol: complete substitution by the suffix group, no numbers (I-44)
 ];
 
 /**

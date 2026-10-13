@@ -210,7 +210,62 @@ export const TRADITIONAL_LABELS = Object.freeze({
   oCresol: 'nombre tradicional, que la IUPAC (2013) acepta',
   mCresol: 'nombre tradicional, que la IUPAC (2013) acepta',
   pCresol: 'nombre tradicional, que la IUPAC (2013) acepta',
+  pyrocatechol: 'nombre tradicional, que la IUPAC (2013) acepta',
+  catechol: 'nombre tradicional muy usado; la IUPAC (2013) acepta pirocatecol',
+  resorcinol: 'nombre tradicional, que la IUPAC (2013) acepta',
+  hydroquinone: 'nombre tradicional, que la IUPAC (2013) acepta',
+  phthalicAcid: 'nombre tradicional, que la IUPAC (2013) acepta',
+  isophthalicAcid: 'nombre tradicional, que la IUPAC (2013) acepta',
+  terephthalicAcid: 'nombre tradicional, que la IUPAC (2013) acepta',
+  phthalaldehyde: 'nombre tradicional, que la IUPAC (2013) acepta',
+  isophthalaldehyde: 'nombre tradicional, que la IUPAC (2013) acepta',
+  terephthalaldehyde: 'nombre tradicional, que la IUPAC (2013) acepta',
+  phthalonitrile: 'nombre tradicional, que la IUPAC (2013) acepta',
+  phthalamide: 'nombre tradicional, que la IUPAC (2013) acepta',
 });
+
+/**
+ * Retained names of benzene with two identical principal groups (design.md
+ * §14.5, I-44; IUPAC 2013, general nomenclature only), keyed by the id
+ * aromatic.js retainedDigroupIds() returns: the diols (P-63.1.1.2:
+ * `pirocatecol` — `catecol` in many school books —, `resorcinol`,
+ * `hidroquinona`; no substitution, so only for the bare molecules) and the
+ * ftálico family (P-65.1.1.2.1 `ftálico` / `isoftálico` / `tereftálico`,
+ * after the class word `ácido`; P-66.6.2.2 `ftalaldehído` / `isoftalaldehído`
+ * / `tereftalaldehído`; P-66.5.1.2.2 `ftalonitrilo`; P-66.1.1.1.2.3
+ * `ftalamida`; substitution allowed: `ácido 4-metilftálico`). Each is one
+ * word that replaces the ring and its suffix groups; the prefixes go in
+ * front of it (aromatic.js digroupParts()).
+ */
+export const BENZENE_DIGROUP_NAMES = Object.freeze({
+  pyrocatechol: 'pirocatecol',
+  catechol: 'catecol',
+  resorcinol: 'resorcinol',
+  hydroquinone: 'hidroquinona',
+  phthalicAcid: 'ftálico',
+  isophthalicAcid: 'isoftálico',
+  terephthalicAcid: 'tereftálico',
+  phthalaldehyde: 'ftalaldehído',
+  isophthalaldehyde: 'isoftalaldehído',
+  terephthalaldehyde: 'tereftalaldehído',
+  phthalonitrile: 'ftalonitrilo',
+  phthalamide: 'ftalamida',
+});
+
+/**
+ * Returns the retained word of benzene with two identical principal groups
+ * (BENZENE_DIGROUP_NAMES), without a class word.
+ *
+ * @param {string} id - A BENZENE_DIGROUP_NAMES id.
+ * @returns {string} The word, e.g. 'ftálico'.
+ * @throws {Error} For an unknown id.
+ */
+export function benzeneDigroupName(id) {
+  if (!Object.prototype.hasOwnProperty.call(BENZENE_DIGROUP_NAMES, id)) {
+    throw new Error(`benzeneDigroupName: unknown name ${id}`);
+  }
+  return BENZENE_DIGROUP_NAMES[id];
+}
 
 /** Endings of the parent name. */
 export const ENDINGS = Object.freeze({ saturated: 'ano', double: 'eno', triple: 'ino' });
@@ -375,7 +430,8 @@ export function omitsLocants(chain, hasPrefixes) {
  *   as well: `benceno`, `metilbenceno`, `fenol` (P-14.3.4.2(c)); with two
  *   or more substituents every prefix locant is cited (`1,2-dimetilbenceno`),
  *   except when all six positions hold one identical prefix
- *   (`hexaclorobenceno`, `hexametilbenceno`; P-14.3.4, design.md §14.3);
+ *   (`hexaclorobenceno`, `hexametilbenceno`; P-14.3.4, design.md §14.3)
+ *   or six identical suffix groups with no prefix (`bencenohexol`, I-44);
  * - everything else keeps all its locants, the 1 of a ring double bond
  *   and of a suffix included: `3-metilciclohex-1-eno`, `1-metilciclohex-1-eno`,
  *   `ciclohexa-1,3-dieno`, `1,1-dimetilciclohexano`, `2-metilciclohexan-1-ol`,
@@ -391,7 +447,9 @@ export function ringOmitsLocants(ring, prefixes, suffixCount = 0) {
   const single = occurrences === 1;
   if (ring.retained === 'benzene') {
     // `hexaclorobenceno`, `hexametilbenceno` (design.md §14.3, P-14.3.4): every position holds one identical prefix.
-    const complete = suffixCount === 0 && prefixes.length === 1 && prefixes[0].locants.length === ring.length;
+    // Likewise six identical suffix groups (I-44): `bencenohexol`, `ácido bencenohexacarboxílico`.
+    const complete = (suffixCount === 0 && prefixes.length === 1 && prefixes[0].locants.length === ring.length)
+      || (prefixes.length === 0 && suffixCount === ring.length);
     return { parent: true, prefixes: single || complete };
   }
   const multiple = ring.double.length + ring.triple.length;
@@ -996,6 +1054,7 @@ export const lexiconEs = Object.freeze({
   acylEnding: ACYL_ENDING,
   ringGroupSuffix,
   benzeneGroupName,
+  benzeneDigroupName,
   benzoylPrefix: BENZOYL_PREFIX,
   ringCarbonylEnding: RING_CARBONYL_ENDING,
   positionalLetters: POSITIONAL_LETTERS,

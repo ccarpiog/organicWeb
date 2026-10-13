@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-13T19:40:28Z",
+  "updated": "2026-10-13T20:12:06Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups, polysubstituted benzenes) by IUPAC 2013 rules.",
   "phases": [
@@ -496,8 +496,11 @@
     {
       "id": "I-44",
       "title": "v3 Several identical principal groups on the ring",
-      "status": "queued",
-      "summary": "Benzene diols, diamines, diacids and similar, e.g. 3-etilbenceno-1,2-diol."
+      "status": "done",
+      "summary": "Names benzenes with several identical principal groups, e.g. 3-etilbenceno-1,2-diol and benceno-1,4-diamina.",
+      "risk": "high",
+      "review": "docs/reviews/I-44.md",
+      "narrative": "docs/progress-archive/i-44.md"
     },
     {
       "id": "I-45a",

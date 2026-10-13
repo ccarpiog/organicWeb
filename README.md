@@ -35,7 +35,11 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   `4-aminofenol`) or one –COOH, –CHO, –C≡N or amide group on the ring with junior groups as
   prefixes (`ácido 4-metilbenzoico` with `ácido 4-metilbenceno-1-carboxílico`,
   `4-clorobenzaldehído`, `N-etil-4-metilbenzamida`, `ácido 4-formilbenzoico`,
-  `3-cianobenzamida`; other polysubstituted benzenes get a clear refusal), and of their halogen derivatives
+  `3-cianobenzamida`), or several identical ones, always with the systematic
+  name (`3-etilbenceno-1,2-diol`, `benceno-1,4-diol` with `hidroquinona`,
+  `benceno-1,4-diamina`, `ácido benceno-1,3-dicarboxílico` with `ácido
+  isoftálico`, `benceno-1,3,5-tricarbonitrilo`; other polysubstituted benzenes
+  get a clear refusal), and of their halogen derivatives
   (F, Cl, Br, I as prefixes: `clorometano`, `2-bromo-1-cloropropano`,
   `2-metil-4-yodopentano`, `clorociclohexano`, `clorobenceno`,
   `hexacloroetano`…), and of alcohols (OH groups as the suffix `-ol`:
@@ -143,7 +147,7 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 - **Ayuda**: a short in-page guide: the families the app names and what is
   out of scope, how to draw (elements, rings, the 90° view with heteroatoms
   and the «Abreviar CHO y COOH» toggle), keyboard shortcuts and the glossary.
-- Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles, benzenes with two or more substituents and a functional group), disconnected pieces, an empty canvas
+- Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles, benzenes with two or more substituents and an ester, a ketone or a functional group on a side chain), disconnected pieces, an empty canvas
   and impossible bonds. Light and dark theme following the system.
 - Accessible: every control is reachable with the keyboard and has a visible
   focus ring and an accessible name; the name and the current explanation
@@ -307,7 +311,8 @@ the Keychain account is the WebDAV user).
   `propanoil-`…);
   salts, ammonium ions and other acid derivatives are not named yet; several
   rings, fused, bridged and spiro rings, heterocycles, benzenes with two or
-  more substituents when one is a functional group, other oxygen and nitrogen compounds,
+  more substituents when one is an ester, a ketone or a group on a side chain,
+  other oxygen and nitrogen compounds,
   stereochemistry (E/Z, R/S), charges and
   radicals are not named. Traditional halogen and alcohol names
   (cloroformo, alcohol etílico, glicerina…) are not given (only `acetona`,
