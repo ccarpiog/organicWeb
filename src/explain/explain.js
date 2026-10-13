@@ -39,7 +39,8 @@
  * two to six prefixes (design.md §14, I-42a) also gets ringNumbering
  * (benzeneNumberingStep(): lowest locant set, then alphabetical order,
  * never the double bonds; the orto/meta/para position of two groups) and
- * order.
+ * order; with one OH or amine group on the ring as well (I-43a) the
+ * numbering step first gives that group locant 1.
  *
  * Halogen derivatives (design.md §13.4 I-30) get the same steps: the
  * halogen atoms (`halogen` substituents) are counted in the formula, stay
@@ -4686,7 +4687,11 @@ function benzeneStep(result) {
     'El benceno se puede dibujar de dos maneras: con los enlaces dobles en unos lados del hexágono o en los otros tres. Los dos dibujos son la misma molécula (se llaman estructuras de Kekulé): en realidad los electrones de esos enlaces dobles están repartidos por igual por todo el anillo. Por eso los dos dibujos tienen el mismo nombre.',
   ];
   const positions = benzenePositions(result);
-  if (positions > 1) {
+  if (positions > 1 && (phenol || amine)) {
+    // One OH or amine group on the ring plus prefixes (design.md §14, I-43a): the group is the suffix, numbered 1.
+    text.push(...principalOnBenzeneSentences(result, positions));
+    text.push('Con varios sustituyentes sí hay que numerar el anillo, para decir en qué carbono está cada uno.');
+  } else if (positions > 1) {
     // Two or more groups on the ring, all prefixes (design.md §14, I-42a).
     text.push(`Al anillo hay unidos ${positions} [[sustituyentes|sustituyente]]. Con las normas de la IUPAC (2013), el anillo manda siempre: el nombre acaba en «benceno» y los sustituyentes van delante como [[prefijos|prefijo]]. Las ramas de carbono, los halógenos y los éteres (como «metoxi-») se nombran todos así.`);
     text.push(ringOmission(result).prefixes
@@ -4747,11 +4752,42 @@ function benzeneStep(result) {
 } // End of function benzeneStep()
 
 /**
+ * The benzene-step sentences of a benzene with one OH or amine group and
+ * other groups on the ring (design.md §14, I-43a): the group is the
+ * principal one, named at the end (`fenol`, `bencen-1-amina`), and the
+ * others go in front as prefixes; the groups on an amine N are not ring
+ * substituents.
+ *
+ * @param {object} result - A naming result with a benzene parent and an OH or amine suffix.
+ * @param {number} positions - Number of occupied ring positions (benzenePositions()).
+ * @returns {string[]} The sentences.
+ */
+function principalOnBenzeneSentences(result, positions) {
+  const others = positions - 1;
+  const rest = others === 1
+    ? 'El otro sustituyente va delante como [[prefijo]]'
+    : `Los otros ${others} sustituyentes van delante como [[prefijos|prefijo]]`;
+  const text = [];
+  if (isAmine(result)) {
+    const stem = lexiconEs.benzeneName.slice(0, -1);
+    text.push(`Al anillo hay unidos ${positions} [[sustituyentes|sustituyente]]. Uno es el grupo amino: es el [[grupo principal]], así que el nombre acaba en «-amina», unido al nombre del anillo sin su «o» final (${q(`${stem}amina`)}). ${rest}, igual que en un benceno con ramas.`);
+    if (hasNitrogenLocants(result.structure.prefixes)) {
+      text.push('Los grupos de carbonos unidos al nitrógeno no están en el anillo: no cuentan como sustituyentes del anillo y van delante con la letra «N» (como en «N-metil»).');
+    }
+  } else {
+    text.push(`Al anillo hay unidos ${positions} [[sustituyentes|sustituyente]]. Uno es el grupo –OH: es el [[grupo principal]], así que el nombre acaba en ${q(lexiconEs.phenolStem + lexiconEs.groupSuffix('alcohol'))} (el benceno con un –OH tiene nombre propio). ${rest}, igual que en un benceno con ramas.`);
+  }
+  return text;
+} // End of function principalOnBenzeneSentences()
+
+/**
  * The sentence on the relative position of the two groups of a benzene with
  * exactly two occupied positions (design.md §14.4): the old orto / meta /
  * para word with the numbers, e.g. "«cloro» y «etil» están en posición meta
- * (1,3)". The app never puts these words first in a name; for two
- * different prefixes it gives no orto/meta/para name at all.
+ * (1,3)", or for one prefix beside the OH or amine group at 1 (I-43a)
+ * "«metil» está en posición para (1,4) respecto al grupo –OH". The app
+ * never puts these words first in a name; for two different prefixes it
+ * gives no orto/meta/para name at all.
  *
  * @param {object} result - A naming result with a benzene parent and two occupied positions.
  * @returns {string|null} The sentence, or null when it does not apply.
@@ -4759,12 +4795,17 @@ function benzeneStep(result) {
 function benzenePositionSentence(result) {
   const groups = carbonLocantPrefixes(result.structure.prefixes);
   const sites = groups.flatMap((g) => g.locants.map((site) => site.locant)).sort((a, b) => a - b);
+  const old = 'Antes se decía orto (1,2), meta (1,3) o para (1,4); hoy se recomienda escribir los números.';
+  if (result.structure.suffix && benzenePositions(result) === 2 && sites.length === 1 && POSITION_WORDS[sites[0]]) {
+    // The prefix and the group at 1 of `fenol` / `bencen-1-amina` (design.md §14.4, I-43a): `p-metilfenol`.
+    const prefix = substituentPrefix(groups[0].substituent, lexiconEs);
+    return `${q(prefix)} está en posición ${POSITION_WORDS[sites[0]]} (1,${sites[0]}) respecto ${groupWords(result).the.replace(/^el /, 'al ')}. ${old}`;
+  }
   if (benzenePositions(result) !== 2 || sites.length !== 2 || !POSITION_WORDS[sites[1]]) {
     return null;
   }
   const word = POSITION_WORDS[sites[1]];
   const numbers = `(${sites.join(',')})`;
-  const old = 'Antes se decía orto (1,2), meta (1,3) o para (1,4); hoy se recomienda escribir los números.';
   if (groups.length === 1) {
     const prefix = substituentPrefix(groups[0].substituent, lexiconEs);
     return `Los dos ${q(prefix)} están en posición ${word} ${numbers}. ${old}`;
@@ -4776,7 +4817,8 @@ function benzenePositionSentence(result) {
 /**
  * "Numera el anillo" for a benzene with two or more occupied positions
  * (design.md §14.2, I-42a): every ring carbon can be 1, in either
- * direction; the substituents together get the lowest locants (IUPAC 2013
+ * direction; an OH or amine group on the ring (I-43a) takes 1 first
+ * (P-14.4 (c)); the substituents together get the lowest locants (IUPAC 2013
  * P-14.4 (f)), then the one cited first in alphabetical order the lowest
  * (P-14.4 (g)). The Kekulé double bonds never steer it (the engine skips
  * N1/N2, numbering.js), so the step never mentions them. When all six
@@ -4806,7 +4848,18 @@ function benzeneNumberingStep(result) {
     return step;
   }
   text.push('En el benceno todos los carbonos son iguales: el carbono 1 puede ser cualquiera, y desde él puedes seguir contando hacia un lado o hacia el otro. Hay que elegir dónde empiezas y hacia qué lado sigues.');
-  text.push('Solo cuentan los [[sustituyentes|sustituyente]], con dos reglas, por orden: primero, todos los sustituyentes juntos llevan los [[localizadores|localizador]] más bajos; después, si empatan, el número más bajo es para el sustituyente que se escribe primero (por orden alfabético).');
+  const { suffix } = result.structure;
+  // The Kekulé double bonds never steer a benzene numbering (design.md §14.2): the N0 rule does not mention them.
+  const words = {
+    ...groupWords(result),
+    ruleN0: `Regla: ${groupWords(result).the} (el [[grupo principal]]) debe tener el número más bajo, el 1. Esta regla va antes que la de los sustituyentes.`,
+  };
+  if (suffix) {
+    // One OH or amine group on the ring (design.md §14.2, I-43a): P-14.4 (c) puts the principal group first.
+    text.push(`Solo cuentan los [[sustituyentes|sustituyente]], con tres reglas, por orden: primero, ${words.the} es el [[grupo principal]] y lleva el número más bajo, así que ${words.carbonWith} es siempre el 1; después, los demás sustituyentes juntos llevan los [[localizadores|localizador]] más bajos; y, si empatan, el número más bajo es para el sustituyente que se escribe primero (por orden alfabético).`);
+  } else {
+    text.push('Solo cuentan los [[sustituyentes|sustituyente]], con dos reglas, por orden: primero, todos los sustituyentes juntos llevan los [[localizadores|localizador]] más bajos; después, si empatan, el número más bajo es para el sustituyente que se escribe primero (por orden alfabético).');
+  }
   const deciding = result.trace.filter((s) => /^N[0-5]$/.test(s.rule) && decided(s));
   const tie = result.trace.some((s) => s.rule === 'TIE');
   if (deciding.length > 0) {
@@ -4819,12 +4872,12 @@ function benzeneNumberingStep(result) {
     }
     const groups = signatureGroups(deciding, shown).sort(compareGroupValues);
     if (groups.length === 1) {
-      text.push(singleRingOption(first, groups[0].values[0], result.structure.parent));
+      text.push(singleRingOption(first, groups[0].values[0], result.structure.parent, words));
     } else {
       if (shown.length < first.candidatesBefore.length) {
         text.push(`Las numeraciones cuyo primer número no es ${locantText(lowest)} pierden enseguida. Estas son las que quedan para comparar:`);
       }
-      const comparison = compareNumberings(deciding, groups);
+      const comparison = compareNumberings(deciding, groups, words);
       text.push(...comparison.paragraphs);
       step.compare = comparison.compare;
       step.options = comparison.options;
@@ -4835,6 +4888,10 @@ function benzeneNumberingStep(result) {
   } else {
     text.push(`Empieces por donde empieces, salen los mismos números: ${carbonLocantTexts(result).join(', ')}. Todas las formas dan el mismo nombre.`);
   } // End of the deciding-rules explanation
+  const nitrogen = nitrogenNote(result);
+  if (nitrogen) {
+    text.push(nitrogen);
+  }
   const position = benzenePositionSentence(result);
   if (position) {
     text.push(position);
@@ -5198,12 +5255,13 @@ export function pairwiseDifferences(lists, wins) {
  * @param {string[]} labels - Option label of each candidate.
  * @param {Array<number[]>} lists - Compared lists (N0–N4) of each candidate.
  * @param {boolean[]} wins - Whether each candidate survived.
- * @param {object} [words] - The principal-group words (SUFFIX_GROUP_WORDS; default the alcohol ones), for N0.
+ * @param {object} [words] - The principal-group words (SUFFIX_GROUP_WORDS; default the alcohol ones), for N0;
+ *   `ruleN0` replaces the N0 sentence (a benzene never mentions its double bonds, design.md §14.2).
  * @returns {string} The paragraph.
  */
 function numberingRuleText(rule, labels, lists, wins, words = SUFFIX_GROUP_WORDS.alcohol) {
   const intro = {
-    N0: `Regla: los ${words.many} (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes.`,
+    N0: words.ruleN0 || `Regla: los ${words.many} (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes.`,
     N1: 'Regla: los [[enlaces dobles|enlace doble]] y [[triples|enlace triple]] deben tener los [[localizadores|localizador]] más bajos.',
     N2: 'Regla: si hay empate, los [[enlaces dobles|enlace doble]] se quedan con los números más bajos.',
     N3: 'Regla: los [[sustituyentes|sustituyente]] deben tener los [[localizadores|localizador]] más bajos.',
@@ -6596,6 +6654,10 @@ function nameLegend(result) {
   } // End of the loop over the prefix groups
   if (isBenzene(result) && isAmine(result)) {
     legend.push({ text: lexiconEs.benzeneName.slice(0, -1), kind: 'stem', meaning: `el anillo de benceno (sin la «o» final, delante de «-${lexiconEs.groupSuffix('amine')}»)` });
+    if (!ringOmission(result).prefixes) {
+      // `4-metilbencen-1-amina` (design.md §14.3, I-43a): the 1 of the suffix is written.
+      legend.push({ text: '1', kind: 'locant', meaning: 'carbono del anillo unido al nitrógeno del grupo amino' });
+    }
     legend.push({ text: `-${lexiconEs.groupSuffix('amine')}`, kind: 'ending', meaning: 'grupo principal: el grupo amino unido al anillo (amina)' });
     return legend;
   }
@@ -6760,7 +6822,12 @@ function assembleStep(result) {
       ? `El nombre de un éster tiene dos palabras. La primera es la parte del ácido${like}`
       : `El nombre de un diéster tiene dos partes unidas por «de». La primera es la parte del ácido${like}`);
   }
-  if (benzene && isAmine(result)) {
+  if (benzene && isAmine(result) && benzenePositions(result) > 1) {
+    // `4-metilbencen-1-amina`, `N,4-dimetilbencen-1-amina` (design.md §14.3, I-43a): the 1 of the suffix is written.
+    const stem = lexiconEs.benzeneName.slice(0, -1);
+    text.push(`Primero van los sustituyentes, cada uno con sus números y en orden alfabético${hasNitrogenLocants(prefixes) ? ' (los del nitrógeno con su «N»)' : ''}. Después va el nombre del anillo sin su «o» final, ${q(stem)}, y al final la terminación «-amina» con el número de su carbono delante: ${q(`${stem}-1-amina`)}.`);
+    text.push('Aquí el 1 del grupo amino sí se escribe, porque el anillo tiene más sustituyentes; solo se quita cuando el grupo amino es lo único que hay en el anillo («bencenamina»).');
+  } else if (benzene && isAmine(result)) {
     const stem = lexiconEs.benzeneName.slice(0, -1);
     text.push(prefixes.length > 0
       ? `Primero van los grupos unidos al nitrógeno, cada uno con su «N», y después el nombre del anillo sin su «o» final, ${q(stem)}, más la terminación «-amina», todo junto. El anillo no lleva números: solo tiene un grupo.`
@@ -6775,6 +6842,10 @@ function assembleStep(result) {
     const retained = RING_GROUP_NAMES[result.structure.suffix.kind].retained; // `benzamida` in `N-metilbenzamida` (I-40c).
     text.push(`El benceno con ${words.one} tiene nombre propio: ${q(retained)}. No lleva números: ${q(stem)} es el anillo y ${q(`-${ending}`)}, ${words.the}${isAcid(result) ? `, y el nombre empieza por la palabra ${q(lexiconEs.suffixClassWord('acid'))}, como el de cualquier ácido carboxílico` : ''}.`);
     text.push(...esterTailSentences(result));
+  } else if (benzene && result.structure.suffix && benzenePositions(result) > 1) {
+    // `4-metilfenol` (design.md §14.3, I-43a): the retained `fenol` keeps its OH at an implicit 1.
+    text.push(`Primero van los sustituyentes, cada uno con sus números y en orden alfabético, y al final ${q(lexiconEs.phenolStem + lexiconEs.groupSuffix('alcohol'))}, todo junto. «fen» es el anillo y «-ol», el grupo –OH.`);
+    text.push('El –OH no lleva número: en «fenol» su carbono es siempre el 1, así que el 1 no se escribe. Los números que ves son los de los demás sustituyentes.');
   } else if (benzene && result.structure.suffix) {
     text.push(`El benceno con un grupo –OH tiene nombre propio: ${q(result.name)}. No lleva números: «fen» es el anillo y «-ol», el grupo –OH.`);
   } else if (benzene && benzenePositions(result) > 1) {

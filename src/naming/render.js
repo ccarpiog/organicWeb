@@ -241,7 +241,9 @@ function renderEnding(parent, lexicon, omit, suffix = null, omitSuffixLocants = 
  * 'benzene', aromatic.js) is one retained word, `benceno` (IUPAC 2013
  * P-22.1.2), referring to every ring atom and bond; with an OH suffix it is
  * the retained `fenol` (P-63.1.1.1), written as the stem `fen` and the
- * suffix `ol` so that `ol` points at the OH group. The suffix groups (`-ol`)
+ * suffix `ol` so that `ol` points at the OH group (no locant: `4-metilfenol`,
+ * design.md §14.3); an amine suffix beside ring prefixes cites its locant
+ * (`4-metilbencen-1-amina`, I-43a). The suffix groups (`-ol`)
  * follow the ending: `ciclohexanol`, `ciclohex-2-en-1-ol`. A –COOH or –CHO
  * outside the ring (design.md §13.4 I-40b) follows the full ending:
  * `ciclohexanocarboxílico`, `ciclohex-2-eno-1-carbaldehído`; on benzene it
@@ -271,6 +273,11 @@ export function renderRingParent(ring, lexicon, prefixes, suffix = null, systema
       // `ácido bencenocarboxílico`, `bencenocarbaldehído`: the systematic alternatives.
       const { atoms, bonds } = suffixGroupIds(suffix);
       return [part(lexicon.benzeneName, 'stem', ring.atoms, ring.bonds), part(suffixWords(suffix, lexicon).word, 'ending', atoms, bonds)];
+    }
+    if (suffix && suffix.kind !== 'alcohol' && !omission.prefixes) {
+      // A suffix beside ring prefixes cites its locant (design.md §14.3, I-43a): `4-metilbencen-1-amina`.
+      const stemText = lexicon.benzeneName.slice(0, suffixWords(suffix, lexicon).elides ? -1 : undefined);
+      return [part(stemText, 'stem', ring.atoms, ring.bonds), ...renderSuffix(suffix, lexicon, false)];
     }
     if (suffix) {
       const [site] = suffix.locants;

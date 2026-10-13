@@ -84,9 +84,10 @@ test('alcohol vs phenol vs carboxylic OH', () => {
   const acid = named('CC(=O)O');
   assert.equal(acid.name, 'ácido etanoico', 'the OH of an acid is part of the acid, never an alcohol (I-33)');
   assert.equal(acid.structure.suffix.kind, 'acid');
-  // A substituted phenol is a polysubstituted benzene; an OH on a benzene side chain is named since I-40a (the chain
-  // carries the principal group, the ring is `fenil`).
-  assert.equal(named('OC1=CC=C(C)C=C1').error.code, 'CYCLE');
+  // A substituted phenol is named since I-43a (design.md §14); two OH on the ring stay refused (I-44); an OH on a
+  // benzene side chain is named since I-40a (the chain carries the principal group, the ring is `fenil`).
+  assert.equal(named('OC1=CC=C(C)C=C1').name, '4-metilfenol');
+  assert.equal(named('OC1=CC=C(O)C=C1').error.code, 'CYCLE');
   assert.equal(named('OCC1=CC=CC=C1').name, 'fenilmetanol');
   assert.deepEqual(sideChainHydroxyls(parseSmiles('OC1CCC(CO)CC1')), [7]);
   assert.equal(named('OC1CCC(CO)CC1').name, '4-(hidroximetil)ciclohexan-1-ol', 'one OH on the ring, one on a branch: a tie, the ring wins');

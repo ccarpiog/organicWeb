@@ -560,7 +560,7 @@ Errors are codes with Spanish messages:
 |---|---|
 | `EMPTY` | Dibuja primero una molécula. |
 | `DISCONNECTED` | Hay piezas sueltas: todas las partes deben estar unidas. |
-| `CYCLE` | Since I-42a only a benzene ring with two or more substituents of which some group is not a detachable prefix (`ringReason` `polysubstitutedBenzene`; valid, not nameable yet, §14.1; before I-42a every polysubstituted benzene), with the count: Este benceno tiene 2 sustituyentes y alguno de ellos es o lleva un grupo funcional (como –OH, –NH₂, –CHO, –COOH o –C≡N). Cuando el benceno tiene dos o más sustituyentes, de momento solo sé nombrarlo si todos son ramas de carbono, halógenos (flúor, cloro, bromo, yodo) o grupos alcoxi (como –O–CH₃), como el 1,2-dimetilbenceno o el 1-bromo-3-clorobenceno. Los demás quedan fuera de lo que sé nombrar. (`MESSAGES.CYCLE` says «varios sustituyentes».) Benzene and monosubstituted benzenes, refused with `ringReason` `benzene` before I-28, are named; so are the substituted and unsaturated single carbocycles refused in I-24/I-25. A benzene with a ring in its substituent is `RING_SYSTEM` (`several`). |
+| `CYCLE` | Since I-42a only a benzene ring with two or more substituents of which some group is out of scope (`ringReason` `polysubstitutedBenzene`; valid, not nameable yet, §14.1; before I-42a every polysubstituted benzene; since I-43a one OH and one amine group on the ring are in scope), with the count: Este benceno tiene 2 sustituyentes y alguno de ellos es o lleva un grupo funcional que aún no sé combinar con los demás (como –CHO, –COOH, –C≡N, un éster o un segundo –OH). Cuando el benceno tiene dos o más sustituyentes, de momento solo sé nombrarlo si todos son ramas de carbono, halógenos (flúor, cloro, bromo, yodo) o grupos alcoxi (como –O–CH₃), más como mucho un grupo –OH y un grupo amino (como –NH₂) unidos directamente al anillo: por ejemplo, el 1,2-dimetilbenceno, el 4-metilfenol o la 4-metilbencen-1-amina. Los demás (con dos grupos –OH, con dos grupos amino o con un –OH en una rama, por ejemplo) quedan fuera de lo que sé nombrar. (`MESSAGES.CYCLE` says «varios sustituyentes».) Benzene and monosubstituted benzenes, refused with `ringReason` `benzene` before I-28, are named; so are the substituted and unsaturated single carbocycles refused in I-24/I-25. A benzene with a ring in its substituent is `RING_SYSTEM` (`several`). |
 | `RING_SYSTEM` | Out of scope (§13.1), one message per `ringKind`: `heterocycle` Este anillo tiene átomos que no son carbono: es un heterociclo. Los heterociclos quedan fuera de lo que sé nombrar. (a lactone, since I-40d `ringReason` `lactone`: Esta molécula es una lactona: el grupo –COO– (éster) forma parte del anillo, así que el anillo tiene un oxígeno y es un heterociclo. Las lactonas quedan fuera de lo que sé nombrar. Sí sé nombrar los ésteres con el anillo fuera del –COO– (como el benzoato de metilo o el etanoato de fenilo).) · `fused` Has dibujado anillos fusionados (dos anillos que comparten un enlace). Este tipo de moléculas queda fuera de lo que sé nombrar. · `bridged` Has dibujado anillos con puente (dos anillos que comparten más de dos átomos). … · `spiro` Has dibujado un compuesto espiro (dos anillos que comparten un solo átomo). … · `several` Esta molécula tiene varios anillos. De momento solo sé nombrar moléculas con un único anillo, o con dos anillos separados por un grupo –COO– (éster), uno a cada lado (como el benzoato de fenilo). (two such rings are named since I-40d, esterRingSplit()) (generic: Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.) |
 | `VALENCE` | Este carbono tendría más de 4 enlaces. — per element for the lowest-id offending atom: Este oxígeno tendría más de 2 enlaces. / Este nitrógeno tendría más de 3 enlaces. / Este cloro (flúor, bromo, yodo) tendría más de 1 enlace. (The editor's "full" refusal likewise: Este oxígeno ya tiene 2 enlaces.) |
 | `TOO_BIG` | La molécula es demasiado grande (máximo 60 carbonos, cadena de 30). — also a ring side chain above 30 carbons — heavy-atom cap: La molécula es demasiado grande (máximo 80 átomos sin contar los hidrógenos). — a ring above 30 carbons: El anillo es demasiado grande (máximo 30 carbonos en el anillo). |
@@ -2158,7 +2158,8 @@ ring or on a side chain) the decision table is:
 | Several rings, fused/bridged/spiro rings, heterocycles | Refused (`RING_SYSTEM`) | — |
 | Benzene ring, at most one side chain (I-28) | The ring, named `benceno` (P-22.1.2); the chain is a prefix without locant, whatever its length or unsaturation — never `1-feniletano` | `benceno`, `etilbenceno`, `etenilbenceno` |
 | Benzene ring, two to six prefix groups only — branches, halogens, alkoxy (I-42a, §14) | The ring, `benceno`; every locant cited, numbered by the prefixes only (never the Kekulé double bonds) | `1,2-dimetilbenceno`, `1-bromo-3-clorobenceno`, `hexametilbenceno` |
-| Benzene ring, two or more substituents and some functional group | Refused (`CYCLE`, `polysubstitutedBenzene`) until its §14.6 phase | — |
+| Benzene ring, one OH or amine group on it plus prefixes (I-43a, §14) | The ring, `fenol` / `bencen-1-amina`; the group at 1, then the prefixes | `4-metilfenol`, `2-clorobencen-1-amina`, `4-aminofenol` |
+| Benzene ring, two or more substituents and another functional group | Refused (`CYCLE`, `polysubstitutedBenzene`) until its §14.6 phase | — |
 | One carbocycle with OH groups on ring carbons (I-31) | The ring, carrying the `-ol` suffix (it holds every principal group); OH carbon numbered first | `ciclohexanol`, `2-metilciclohexan-1-ol`, `fenol` |
 | One carbocycle, a side chain carrying more principal groups (an OH, a ketone or an amine) than the ring (I-40a; refused as `sideChainAlcohol` / `sideChainCarbonyl` / `sideChainAmine` before) | The chain (P-44.1.1: the most principal groups first); the ring is a prefix, `ciclohexil` or `fenil`, never a chain atom | `2-ciclohexiletan-1-ol`, `fenilmetanol`, `1-feniletan-1-ona`, `fenilmetanamina`, `1-(4-hidroxiciclohexil)etano-1,2-diol` |
 | One carbocycle, the ring and a side chain carrying as many principal groups (I-40a) | The ring (P-44.1.2.2 on the tie); the group on the chain is a prefix | `4-(hidroximetil)ciclohexan-1-ol`, `4-acetilciclohexan-1-ona`, `4-(aminometil)ciclohexan-1-amina` |
@@ -2408,11 +2409,17 @@ Every phase keeps all existing outputs, fixtures, snapshots and e2e green.
 
 Delivered so far (I-42a): a benzene parent whose groups are all detachable
 prefixes — hydrocarbon branches (alkyl, alkenyl, alkynyl, any branching),
-halogens and alkoxy groups. Validation (`model/validate.js ringError()`,
-`prefixesOnly()`) lets a polysubstituted benzene through only when the
-molecule has one ring and every non-carbon atom is a halogen on a carbon or
-an ether O; anything else keeps `CYCLE` / `polysubstitutedBenzene` with the
-message of §3.2, until its phase in §14.6.
+halogens and alkoxy groups. I-43a adds one OH or one amine group (–NH₂,
+–NHR, –NRR′) bonded to a ring carbon as the principal group (`fenol`,
+`bencen-1-amina`), and with an OH also one amine group on the ring as an
+`amino` prefix (`4-aminofenol`, `4-(metilamino)fenol`). Validation
+(`model/validate.js ringError()`, `prefixesOnly()`,
+`ringHydroxyOrAmineOnly()`) lets a polysubstituted benzene through only when
+the molecule has one ring and every non-carbon atom is a halogen on a carbon,
+an ether O, or one OH O / one amine N bonded to a ring carbon; anything else
+(two OH or two amines, an OH or amine on a side chain, –COOH, –CHO, –C≡N,
+amides, esters) keeps `CYCLE` / `polysubstitutedBenzene` with the message of
+§3.2, until its phase in §14.6.
 
 ### 14.2 Numbering (IUPAC 2013 P-14.4)
 
@@ -2432,6 +2439,10 @@ bond orders stay in the structure (highlighting); both Kekulé drawings and
 any atom-id scramble give the same name, alternatives and explanation (the
 presentation tie-break only picks among numberings with the same name). A
 monosubstituted benzene keeps its I-28 numbering (no locant is cited).
+With one OH or amine group on the ring (I-43a) the cascade starts with N0
+(P-14.4 (c)): the carbon carrying the group is always 1, then (f) and (g)
+as above; the explanation's «Numera el anillo» step says so (three rules)
+and its N0 comparison never mentions the double bonds.
 
 ### 14.3 Locant omission (P-14.3.4)
 
@@ -2444,9 +2455,11 @@ monosubstituted benzene keeps its I-28 numbering (no locant is cited).
 - Retained parents with a built-in group keep it at an implicit 1 and cite
   only the prefixes (`4-metilfenol`, `2-cloroanilina`, `ácido
   4-metilbenzoico`); systematic suffix forms cite the 1
-  (`4-metilbencen-1-amina`); italic letter locants come first
-  (`N,4-dimetilanilina`); Spanish elision `benceno-1,2-diol`,
-  `bencen-1-amina` (phases I-43a…I-44).
+  (`4-metilbencen-1-amina`, a monosubstituted `bencenamina` still omits
+  it); italic letter locants come first (`N,4-dimetilanilina`); Spanish
+  elision `benceno-1,2-diol`, `bencen-1-amina` (I-43a: `render.js
+  renderRingParent()`; the rest in I-43b…I-44). A phenol with five prefixes
+  is no complete substitution: `2,3,4,5,6-pentametilfenol`.
 
 ### 14.4 orto/meta/para (P-14.3.1)
 
@@ -2457,8 +2470,14 @@ form is an alternative only, style `positional`, with the label of §14.1.
   defining group counts as one of them, N-substitution does not.
 - Generated for two identical prefixes (`o-diclorobenceno`,
   `p-dietenilbenceno`, `o-dimetilbenceno` next to the xylenes) and, from
-  I-43, for a retained parent plus one prefix (`p-metilfenol`, `ácido
-  p-metilbenzoico`, `o-cloroanilina`).
+  I-43a, for a retained parent plus one prefix (`p-metilfenol`,
+  `p-aminofenol`, `o-cloroanilina`; `ácido p-metilbenzoico` in I-43b): the
+  prefix locant becomes the letter (`aromatic.js positionalParts()`), on the
+  main name for a phenol and on the `anilina` form for an amine
+  (`N-etil-p-metilanilina`, `p-bromo-N,N-dimetilanilina`). App decision:
+  none when one multiplied prefix is both on the N and on the ring
+  (`N,4-dimetilanilina`): `N,p-dimetilanilina` is not a used form and OPSIN
+  rejects it.
 - Never for two different prefixes on plain benzene (`m-cloroetilbenceno`
   reads like a substituted ethyl); the numbering explanation says instead
   «cloro» y «etil» están en posición meta (1,3).
@@ -2470,12 +2489,12 @@ form is an alternative only, style `positional`, with the label of §14.1.
 
 | Name | 2013 status | App |
 |---|---|---|
-| fenol (P-63.1.1.1) | PIN, substitutable | parent when exactly one OH: `4-metilfenol` (I-43a) |
-| anilina (P-62.2.1.1.1) | PIN, ring and N substitutable | `4-metilbencen-1-amina` first, `4-metilanilina` under Otras formas; `N,4-dimetil…` (I-43a) |
+| fenol (P-63.1.1.1) | PIN, substitutable | parent when exactly one OH: `4-metilfenol` (I-43a, done) |
+| anilina (P-62.2.1.1.1) | PIN, ring and N substitutable | `4-metilbencen-1-amina` first, `4-metilanilina` under Otras formas; `N,4-dimetil…` (I-43a, done); no toluidina |
 | ácido benzoico, benzaldehído, benzonitrilo, benzamida | PIN, substitutable | parent with one such group; systematic `…benceno-1-carboxílico` etc. under Otras formas (I-43b) |
 | tolueno; 1,2-/1,3-/1,4-xileno (P-22.1.3) | not freely substitutable | systematic first (`1,2-dimetilbenceno`); Otras formas `1,2-xileno`, `o-xileno` (label "acepta"); never a substituted tolueno/xileno (I-42a) |
 | mesitileno (P-22.1.3) | general only, no substitution | Otras formas of `1,3,5-trimetilbenceno` (I-42a) |
-| o/m/p-cresol; pirocatecol (catecol), resorcinol, hidroquinona (P-63.1.1.2) | general only, unsubstituted only | Otras formas of `2/3/4-metilfenol` and `benceno-1,2/1,3/1,4-diol` (I-43a, I-44) |
+| o/m/p-cresol; pirocatecol (catecol), resorcinol, hidroquinona (P-63.1.1.2) | general only, unsubstituted only | Otras formas of `2/3/4-metilfenol` (I-43a, done: `p-cresol`, label "acepta", before `p-metilfenol`; `aromatic.js retainedPolyIds()`) and `benceno-1,2/1,3/1,4-diol` (I-44) |
 | ácido ftálico/isoftálico/tereftálico; ftal-/isoftal-/tereftalaldehído; ftalonitrilo; ftalamida | general only, substitution allowed | Otras formas of `benceno-1,x-di…` (also `ácido 4-metilftálico`) (I-44) |
 | anisol (P-63.2.3) | no substitution | substituted: `1-metil-4-metoxibenceno`, no anisol alias (I-42a) |
 | estireno, acetofenona, alcohol bencílico, bencilamina, ácido fenilacético… | | never offered when the phenyl carries extra substituents (I-42a, I-45a) |
@@ -2498,8 +2517,8 @@ sustituyente no hace falta numerar» sentence appears only with one.
 | Phase | Content | Status |
 |---|---|---|
 | I-42a | Benzene parent with prefixes only (hydrocarbon, halogen, alkoxy): engine, Kekulé-neutral numbering, locant omission, xileno/mesitileno/o-m-p alternatives, explanation numbering step, refusal message, fixtures, snapshots | Done |
-| I-42b | Oracle `randomBenzene` with 1–6 groups, e2e specs, Ordenar dibujo / 90° checks for I-42a | Queued |
-| I-43a | One OH or amine group on the ring plus prefixes: `4-metilfenol` (`p-cresol`, `p-metilfenol`), `2-cloroanilina` forms, `N,4-dimetilbencen-1-amina` / `N,4-dimetilanilina`, `4-aminofenol` | Queued |
+| I-42b | Oracle `randomBenzene` with 1–6 groups, e2e specs, Ordenar dibujo / 90° checks for I-42a | Done |
+| I-43a | One OH or amine group on the ring plus prefixes: `4-metilfenol` (`p-cresol`, `p-metilfenol`), `2-clorobencen-1-amina` (`2-cloroanilina`, `o-cloroanilina`), `N,4-dimetilbencen-1-amina` / `N,4-dimetilanilina`, `4-aminofenol`; oracle `generateRingPrincipalBenzenes()` | Done |
 | I-43b | One outside-carbon suffix on the ring plus prefixes: `ácido 4-metilbenzoico`, `4-clorobenzaldehído`, `3-metilbenzonitrilo`, `4-metilbenzamida`, `N-etil-4-metilbenzamida`, `ácido 4-hidroxibenzoico`, `ácido 4-formilbenzoico`, `3-cianobenzamida` | Queued |
 | I-44 | Several identical principal groups on the ring: `3-etilbenceno-1,2-diol`, `benceno-1,4-diamina`, `ácido benceno-1,3-dicarboxílico`, `benceno-1,4-dicarbaldehído`, `benceno-1,3,5-tricarbonitrilo`, `benceno-1,4-dicarboxamida`; fix `traditionalNameId` for diamines | Queued |
 | I-45a | Substituted phenyl and phenoxy as a substituent: `1-(4-metilfenil)etan-1-ona`, `2-(4-clorofenil)etan-1-ol`, `ácido 2-(3-metilfenil)acético`, `2-(4-metilfenoxi)etan-1-ol`, `N-(4-metilfenil)acetamida` | Queued |

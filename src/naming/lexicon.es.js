@@ -111,6 +111,9 @@ export const TRADITIONAL_NAMES = Object.freeze({
   mXylene: 'm-xileno',
   pXylene: 'p-xileno',
   mesitylene: 'mesitileno',
+  oCresol: 'o-cresol',
+  mCresol: 'm-cresol',
+  pCresol: 'p-cresol',
 });
 
 /**
@@ -167,6 +170,11 @@ export const TRADITIONAL_NAMES = Object.freeze({
  * substitution (P-22.1.3; o/m/p-xylene are an admitted exception to the
  * rule that drops orto/meta/para, P-14.3.1), so they are labelled like
  * `acetona`; never a substituted xileno or tolueno.
+ * `o-cresol` / `m-cresol` / `p-cresol` (design.md §14.5, I-43a) replace
+ * the bare 2-, 3- and 4-metilfenol: IUPAC 2013 retains cresol for general
+ * nomenclature without substitution (P-63.1.1.2; with o/m/p, an admitted
+ * exception to P-14.3.1), so they are labelled like `acetona`; never a
+ * substituted cresol.
  */
 export const TRADITIONAL_LABELS = Object.freeze({
   toluene: 'nombre tradicional, que la IUPAC (2013) conserva como preferido',
@@ -199,6 +207,9 @@ export const TRADITIONAL_LABELS = Object.freeze({
   mXylene: 'nombre tradicional, que la IUPAC (2013) acepta',
   pXylene: 'nombre tradicional, que la IUPAC (2013) acepta',
   mesitylene: 'nombre tradicional, que la IUPAC (2013) acepta',
+  oCresol: 'nombre tradicional, que la IUPAC (2013) acepta',
+  mCresol: 'nombre tradicional, que la IUPAC (2013) acepta',
+  pCresol: 'nombre tradicional, que la IUPAC (2013) acepta',
 });
 
 /** Endings of the parent name. */

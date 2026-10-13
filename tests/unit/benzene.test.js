@@ -139,17 +139,17 @@ test('aromaticity is never inferred from other alternations', () => {
 });
 
 test('polysubstituted benzenes with a functional group are refused with CYCLE; a ring in the substituent stays RING_SYSTEM', () => {
-  // Since I-42a (design.md §14.1) only prefix groups (branches, halogens, alkoxy) are named on a polysubstituted benzene.
+  // Since I-42a (design.md §14.1) prefix groups (branches, halogens, alkoxy) are named on a polysubstituted benzene,
+  // since I-43a also one OH and one amine on the ring; the other functional groups stay refused.
   for (const smiles of ['CC1=CC=CC=C1C', 'CC1=CC(C)=CC=C1', 'CC1=CC=C(C)C=C1', 'CC1C(C)=CC=CC=1', 'CC1=CC(C)=CC(C)=C1']) {
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
   }
   const cases = [
-    ['OC1=CC=C(C)C=C1', 2], // a substituted phenol (I-43a)
-    ['NC1=CC=CC=C1C', 2], // a substituted aniline (I-43a)
+    ['NC1=CC=C(N)C=C1', 2], // a diamine (I-44)
     ['OC(=O)C1=CC(C)=CC(C)=C1', 3], // a substituted benzoic acid (I-43b)
     ['OCC1=CC=C(Cl)C=C1', 2], // a substituted phenyl on a chain parent (I-45a)
     ['OC1=CC=CC=C1O', 2], // a diol (I-44)
-    ['CC1=C(C)C(C)=C(C)C(C)=C1O', 6],
+    ['CC1=C(C)C(C)=C(C)C(O)=C1O', 6],
   ];
   for (const [smiles, count] of cases) {
     const error = validateForNaming(parseSmiles(smiles));
@@ -171,7 +171,8 @@ test('polysubstituted benzenes with a functional group are refused with CYCLE; a
   assert.equal(validateForNaming(parseSmiles('C1=CC2=CC=CC=C2C=C1')).code, 'RING_SYSTEM', 'naphthalene: fused');
   assert.equal(validateForNaming(parseSmiles('C1=CC=C(C=C1)O')), null, 'phenol is named since I-31');
   assert.equal(validateForNaming(parseSmiles('C1=CC=C(C=C1)CO')), null, 'an OH on the side chain is named since I-40a (fenilmetanol)');
-  assert.equal(validateForNaming(parseSmiles('OC1=CC=C(C)C=C1')).code, 'CYCLE', 'a substituted phenol is a polysubstituted benzene');
+  assert.equal(validateForNaming(parseSmiles('OC1=CC=C(C)C=C1')), null, 'a substituted phenol is named since I-43a');
+  assert.equal(validateForNaming(parseSmiles('OC1=CC=C(O)C=C1')).code, 'CYCLE', 'a benzenediol is refused (I-44)');
 });
 
 test('English rendering for the oracle: benzene, methylbenzene, (propan-2-yl)benzene', () => {

@@ -252,8 +252,9 @@ test('primary amines, diamines, amines on rings and benzene', () => {
   for (const [smiles, name] of expected) {
     assert.equal(nameOf(smiles), name, smiles);
   }
-  // A benzene with an NH2 and another substituent is polysubstituted: refused as before.
-  assert.equal(named('NC1=CC=CC=C1C').error.code, 'CYCLE');
+  // A benzene with an NH2 and other substituents is named since I-43a (design.md §14); two amines on it stay refused (I-44).
+  assert.equal(nameOf('NC1=CC=CC=C1C'), '2-metilbencen-1-amina');
+  assert.equal(named('NC1=CC=C(N)C=C1').error.code, 'CYCLE');
 });
 
 test('amino prefixes: NH2, substituted amino groups, amino inside branches and inside an ester group', () => {

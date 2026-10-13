@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-13T18:45:37Z",
+  "updated": "2026-10-13T19:12:11Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups, polysubstituted benzenes) by IUPAC 2013 rules.",
   "phases": [
@@ -478,8 +478,11 @@
     {
       "id": "I-43a",
       "title": "v3 One OH or amine on the ring, plus prefixes",
-      "status": "queued",
-      "summary": "Phenols and anilines with extra ring substituents, e.g. 4-metilfenol and N,4-dimetilbencen-1-amina."
+      "status": "done",
+      "summary": "Phenols and benzenamines with extra ring substituents are named, e.g. 4-metilfenol and N,4-dimetilbencen-1-amina.",
+      "risk": "high",
+      "review": "docs/reviews/I-43a.md",
+      "narrative": "docs/progress-archive/i-43a.md"
     },
     {
       "id": "I-43b",

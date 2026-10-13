@@ -12,7 +12,8 @@
  *   at most 30 ring carbons is nameable, with or without side chains and ring
  *   multiple bonds — a benzene ring included; with two or more substituents
  *   only when every group is a hydrocarbon branch, a halogen or an alkoxy
- *   group (design.md §14.1; otherwise CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
+ *   group, plus at most one OH and one amine group on the ring (design.md
+ *   §14.1; otherwise CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
  *   one gets TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps (≤ 60 carbons, ≤ 80 heavy atoms),
  *   only elements the engine can name yet (carbon, halogens bonded to a
  *   carbon — design.md §13.4 I-30 —, OH groups on a carbon, I-31, the
@@ -76,9 +77,11 @@ export const MESSAGES = Object.freeze({
   EMPTY: 'Dibuja primero una molécula.',
   DISCONNECTED: 'Hay piezas sueltas: todas las partes deben estar unidas.',
   CYCLE: 'Este benceno tiene varios sustituyentes y alguno de ellos es o lleva un grupo funcional '
-    + '(como –OH, –NH₂, –CHO, –COOH o –C≡N). Cuando el benceno tiene dos o más sustituyentes, de momento solo sé '
-    + 'nombrarlo si todos son ramas de carbono, halógenos (flúor, cloro, bromo, yodo) o grupos alcoxi (como –O–CH₃), '
-    + 'como el 1,2-dimetilbenceno o el 1-bromo-3-clorobenceno. Los demás quedan fuera de lo que sé nombrar.',
+    + 'que aún no sé combinar con los demás (como –CHO, –COOH, –C≡N, un éster o un segundo –OH). Cuando el benceno tiene dos o más '
+    + 'sustituyentes, de momento solo sé nombrarlo si todos son ramas de carbono, halógenos (flúor, cloro, bromo, yodo) o '
+    + 'grupos alcoxi (como –O–CH₃), más como mucho un grupo –OH y un grupo amino (como –NH₂) unidos directamente al '
+    + 'anillo: por ejemplo, el 1,2-dimetilbenceno, el 4-metilfenol o la 4-metilbencen-1-amina. Los demás (con dos '
+    + 'grupos –OH, con dos grupos amino o con un –OH en una rama, por ejemplo) quedan fuera de lo que sé nombrar.',
   RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
   VALENCE: 'Este carbono tendría más de 4 enlaces.',
   TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',
@@ -609,9 +612,9 @@ export function isBenzeneRing(mol, ring) {
 
 /**
  * Spanish CYCLE message for a benzene ring with `count` (≥ 2) substituents
- * of which some group is not a detachable prefix (design.md §3.2, §14.1:
+ * of which some group is out of scope (design.md §3.2, §14.1:
  * polysubstituted benzenes are named with hydrocarbon, halogen and alkoxy
- * prefixes only so far).
+ * prefixes plus at most one OH and one amine group on the ring so far).
  *
  * @param {number} count - Number of substituents on the ring.
  * @returns {string} The message.
@@ -621,20 +624,72 @@ export function polysubstitutedBenzeneMessage(count) {
 }
 
 /**
+ * Tells whether an atom is a carbon, a halogen bonded to a carbon or an
+ * ether oxygen (isEtherOxygen()): an atom of a hydrocarbon branch, a halogen
+ * or an alkoxy group, i.e. part of a detachable prefix (design.md §14.1).
+ *
+ * @param {object} mol - A structurally valid molecule.
+ * @param {Map<number, object[]>} adj - Its adjacency map.
+ * @param {number} id - An atom id.
+ * @returns {boolean} True for an atom of a prefix group.
+ */
+function isPrefixAtom(mol, adj, id) {
+  const { element } = mol.atoms.get(id);
+  return element === 'C' || isEtherOxygen(mol, adj, id)
+    || (isHalogen(element) && adj.get(id).length === 1 && mol.atoms.get(adj.get(id)[0].atom).element === 'C');
+}
+
+/**
  * Tells whether every atom of a molecule other than carbon is a halogen or
- * an ether oxygen (isEtherOxygen()), i.e. it has no principal
+ * an ether oxygen (isPrefixAtom()), i.e. it has no principal
  * characteristic group and every group is a detachable prefix: hydrocarbon
- * branches, halogens and alkoxy groups (design.md §14.1, I-42a: the only
- * polysubstituted benzenes named so far).
+ * branches, halogens and alkoxy groups (design.md §14.1, I-42a).
  *
  * @param {object} mol - A structurally valid molecule.
  * @returns {boolean} True when the molecule only has prefix groups.
  */
 function prefixesOnly(mol) {
   const adj = adjacency(mol);
-  return [...mol.atoms.values()].every((atom) => atom.element === 'C' || isEtherOxygen(mol, adj, atom.id)
-    || (isHalogen(atom.element) && adj.get(atom.id).length === 1 && mol.atoms.get(adj.get(atom.id)[0].atom).element === 'C'));
+  return [...mol.atoms.keys()].every((id) => isPrefixAtom(mol, adj, id));
 }
+
+/**
+ * Tells whether a polysubstituted benzene has one OH or one amine group on
+ * the ring as its principal group and only prefix groups otherwise
+ * (design.md §14.1, I-43a: `4-metilfenol`, `2-clorobencen-1-amina`,
+ * `N,4-dimetilbencen-1-amina`, `4-aminofenol`). Every atom is a prefix
+ * atom (isPrefixAtom()), the O of an OH bonded to a ring carbon, or an
+ * amine N (isAmineNitrogen(), its other groups on the N) bonded to a ring
+ * carbon; there is at most one of each and at least one. With both, the OH
+ * is principal (`fenol`) and the amine is an `amino` prefix (`4-aminofenol`,
+ * `4-(metilamino)fenol`). Two OH, two amines, an OH or amine on a side
+ * chain, or any other group (–CHO, –COOH, –C≡N, esters…) stay refused
+ * (I-43b, I-44, I-45).
+ *
+ * @param {object} mol - A structurally valid molecule with exactly one ring.
+ * @param {{atoms: number[]}} ring - The benzene ring (perceiveRings()).
+ * @returns {boolean} True when the molecule is in the I-43a scope.
+ */
+function ringHydroxyOrAmineOnly(mol, ring) {
+  const adj = adjacency(mol);
+  const inRing = new Set(ring.atoms);
+  const onRing = (id) => adj.get(id).some((n) => inRing.has(n.atom));
+  const hydroxy = [];
+  const amines = [];
+  for (const id of mol.atoms.keys()) {
+    if (isPrefixAtom(mol, adj, id)) {
+      continue;
+    }
+    if (isHydroxyOxygen(mol, adj, id) && onRing(id)) {
+      hydroxy.push(id);
+    } else if (isAmineNitrogen(mol, adj, id) && onRing(id)) {
+      amines.push(id);
+    } else {
+      return false;
+    }
+  } // End of the loop over the atoms
+  return hydroxy.length <= 1 && amines.length <= 1 && hydroxy.length + amines.length > 0;
+} // End of function ringHydroxyOrAmineOnly()
 
 /**
  * The ring atoms of a single ring that carry a side chain (a bond to an atom
@@ -728,9 +783,12 @@ export function ringAtomSet(mol) {
  * substituent (I-28, named by naming/aromatic.js), and since I-42a with two
  * or more when the molecule has one ring and only prefix groups
  * (prefixesOnly(): hydrocarbon branches, halogens, alkoxy groups; design.md
- * §14.1); any other polysubstituted benzene gets CYCLE with `ringReason`
- * 'polysubstitutedBenzene' (valid, but not nameable yet: a principal group
- * on the ring with other groups, a substituted phenyl…). A
+ * §14.1), since I-43a also with one OH and/or one amine group on the ring
+ * (ringHydroxyOrAmineOnly(): `4-metilfenol`, `4-metilbencen-1-amina`,
+ * `4-aminofenol`); any other polysubstituted benzene gets CYCLE with
+ * `ringReason` 'polysubstitutedBenzene' (valid, but not nameable yet: a
+ * –COOH, –CHO, –C≡N or amide on the ring with other groups, two OH, a
+ * substituted phenyl…). A
  * benzene ring always carries at most one substituent per ring atom (each
  * ring atom already has three bonds). Otherwise: TOO_BIG for a larger ring,
  * and RING_SYSTEM with `ringKind` for a heterocycle (a lactone, an ester
@@ -757,7 +815,8 @@ function ringError(mol) {
       return validationError('TOO_BIG', { message: RING_TOO_BIG_MESSAGE, detail: `ring of ${ring.atoms.length} carbons`, atoms });
     }
     const substituted = isBenzeneRing(mol, ring) ? substitutedRingAtoms(mol, ring) : [];
-    if (substituted.length > 1 && !(kind === 'carbocycle' && prefixesOnly(mol))) {
+    const nameable = kind === 'carbocycle' && (prefixesOnly(mol) || ringHydroxyOrAmineOnly(mol, ring));
+    if (substituted.length > 1 && !nameable) {
       return validationError('CYCLE', {
         message: polysubstitutedBenzeneMessage(substituted.length),
         atoms,

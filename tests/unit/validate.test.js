@@ -32,9 +32,11 @@ test('exact Spanish messages from the design table', () => {
     EMPTY: 'Dibuja primero una molécula.',
     DISCONNECTED: 'Hay piezas sueltas: todas las partes deben estar unidas.',
     CYCLE: 'Este benceno tiene varios sustituyentes y alguno de ellos es o lleva un grupo funcional '
-      + '(como –OH, –NH₂, –CHO, –COOH o –C≡N). Cuando el benceno tiene dos o más sustituyentes, de momento solo sé '
-      + 'nombrarlo si todos son ramas de carbono, halógenos (flúor, cloro, bromo, yodo) o grupos alcoxi (como –O–CH₃), '
-      + 'como el 1,2-dimetilbenceno o el 1-bromo-3-clorobenceno. Los demás quedan fuera de lo que sé nombrar.',
+      + 'que aún no sé combinar con los demás (como –CHO, –COOH, –C≡N, un éster o un segundo –OH). Cuando el benceno tiene dos o más '
+      + 'sustituyentes, de momento solo sé nombrarlo si todos son ramas de carbono, halógenos (flúor, cloro, bromo, yodo) o '
+      + 'grupos alcoxi (como –O–CH₃), más como mucho un grupo –OH y un grupo amino (como –NH₂) unidos directamente al '
+      + 'anillo: por ejemplo, el 1,2-dimetilbenceno, el 4-metilfenol o la 4-metilbencen-1-amina. Los demás (con dos '
+      + 'grupos –OH, con dos grupos amino o con un –OH en una rama, por ejemplo) quedan fuera de lo que sé nombrar.',
     RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
     VALENCE: 'Este carbono tendría más de 4 enlaces.',
     TOO_BIG: 'La molécula es demasiado grande (máximo 60 carbonos, cadena de 30).',

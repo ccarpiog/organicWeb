@@ -391,6 +391,79 @@ export function generateBenzenes({ count, seed, minSize = 4, maxSize = 14 }) {
 } // End of function generateBenzenes()
 
 /**
+ * Hangs an amine group on a ring atom: an N bonded to the atom and to
+ * `groups` saturated carbon chains of 1–3 carbons each (none: –NH₂).
+ *
+ * @param {object} mol - The molecule (mutated).
+ * @param {function(): number} random - Seeded generator.
+ * @param {number} site - The ring atom.
+ * @param {number} groups - Number of carbon groups on the N (0–2).
+ */
+function hangAmine(mol, random, site, groups) {
+  const nitrogen = addAtom(mol, {}, 'N');
+  addBond(mol, site, nitrogen, 1);
+  for (let i = 0; i < groups; i += 1) {
+    growSideChain(mol, random, nitrogen, randomInt(random, 1, 3), 0.3);
+  }
+}
+
+/**
+ * Generates up to `count` distinct benzenes with one OH or one amine group
+ * on the ring plus 1–5 other groups (design.md §14, I-43a): a random
+ * benzene with prefixes (randomBenzene(): branches, halogens, alkoxy
+ * groups), then on a free ring atom either an OH (`4-metilfenol`), with
+ * probability 0.3 plus an amine on another free ring atom (`4-aminofenol`,
+ * `4-(metilamino)fenol`), or an amine group –NH₂, –NHR or –NRR′ with
+ * saturated 1–3-carbon groups on its N (`2-clorobencen-1-amina`,
+ * `N,4-dimetilbencen-1-amina`). Only the size cap (`TOO_BIG`) filters them
+ * out: any other refusal is reported by the oracle as a naming failure.
+ *
+ * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C).
+ * @returns {object[]} The molecules.
+ */
+export function generateRingPrincipalBenzenes({ count, seed, minSize = 4, maxSize = 14 }) {
+  const random = seededRandom(seed * 7919 + 43);
+  const seen = new Set();
+  const molecules = [];
+  const low = Math.max(minSize, 7);
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 50 && low <= maxSize) {
+    attempts += 1;
+    const size = randomInt(random, low, maxSize);
+    const phenol = random() < 0.5;
+    const withAmine = phenol && random() < 0.3;
+    const mol = randomBenzene(random, {
+      extra: size - 6,
+      kekule: random() < 0.5 ? 1 : 2,
+      unsaturation: random() * 0.5,
+      branchiness: 0.2 + random() * 0.8,
+      groups: randomInt(random, 1, withAmine ? 4 : 5),
+      hetero: random() * 0.7,
+    });
+    const ring = [...mol.atoms.keys()].slice(0, 6); // randomBenzene() adds the ring atoms first.
+    const adj = adjacency(mol);
+    const free = shuffle(ring.filter((id) => adj.get(id).length === 2), random);
+    if (phenol) {
+      addBond(mol, free[0], addAtom(mol, {}, 'O'), 1);
+      if (withAmine) {
+        hangAmine(mol, random, free[1], random() < 0.6 ? 0 : randomInt(random, 1, 2));
+      }
+    } else {
+      hangAmine(mol, random, free[0], randomInt(random, 0, 2));
+    }
+    if (validateForNaming(mol)?.code === 'TOO_BIG') {
+      continue; // A side chain beyond the 30-carbon cap: out of scope, not a failure.
+    }
+    const key = canonicalKey(mol);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(mol);
+    }
+  } // End of the loop that draws distinct phenols and benzenamines
+  return molecules;
+} // End of function generateRingPrincipalBenzenes()
+
+/**
  * Copies a hydrocarbon and replaces some of its hydrogens by halogens: each
  * hydrogen of each carbon becomes, with probability `rate`, a random F, Cl,
  * Br or I atom bonded to that carbon (design.md §13.4 I-30).

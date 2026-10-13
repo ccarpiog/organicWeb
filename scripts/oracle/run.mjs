@@ -67,12 +67,13 @@ import { fileURLToPath } from 'node:url';
 import { writeSmiles } from '../../src/model/smiles.js';
 import { nameMolecule, amineClassName } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
-import { traditionalNameId, retainedPolyIds } from '../../src/naming/aromatic.js';
+import { traditionalNameId, retainedPolyIds, positionalParts } from '../../src/naming/aromatic.js';
 import { carbonylTraditionalId } from '../../src/naming/principal.js';
 import { renderName } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
+import { traditionalName as lexiconEsName } from '../../src/naming/lexicon.es.js';
 import {
-  generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
+  generateMolecules, generateMonocycles, generateBenzenes, generateRingPrincipalBenzenes, generateHalogenated, generateAlcohols, generateCarbonyls,
   generateAcids, generateEthers, generateEsters, generateAmines, generateAmides, generateNitriles, generateCyano, generateAcyl,
   generateEsterPrefixes, generateAmidePrefixes, generateRingSubstituents, generateRingAcids, generateRingNitrilesAmides,
   generateRingEsters, generateCycloalkanes,
@@ -123,25 +124,28 @@ export function parseArgs(argv) {
 } // End of function parseArgs()
 
 /**
- * The extra names of a benzene with prefixes only (design.md §14.4, §14.5):
- * the retained xylene / mesitylene names (aromatic.js retainedPolyIds()) and
- * the old orto/meta/para form (style 'positional', `o-dichlorobenzene`: the
- * English name with its leading `1,n-` replaced by the letter, as the
- * Spanish alternative does).
+ * The extra names of a polysubstituted benzene (design.md §14.4, §14.5):
+ * the retained xylene / mesitylene / cresol names (aromatic.js
+ * retainedPolyIds()) and the old orto/meta/para form (style 'positional':
+ * aromatic.js positionalParts() applied to the English name, as the Spanish
+ * alternative is built — `o-dichlorobenzene`, `p-methylphenol`, and on the
+ * `aniline` form for an amine, `o-chloroaniline`, `N,p-dimethylaniline`).
  *
  * @param {object} result - A naming result (NamingSuccess).
  * @returns {{style: string, spanish: string, english: string, error: null}[]} The entries (empty when none applies).
  */
 function polyBenzeneNames(result) {
   const entries = [];
-  const retained = result.alternatives.filter((a) => a.style === 'traditional');
-  retainedPolyIds(result.structure).forEach((id, i) => {
-    entries.push({ style: 'traditional', spanish: retained[i].name, english: lexiconEn.traditionalName(id), error: null });
-  });
+  for (const id of retainedPolyIds(result.structure)) {
+    const spanish = result.alternatives.find((a) => a.style === 'traditional' && a.name === lexiconEsName(id)).name;
+    entries.push({ style: 'traditional', spanish, english: lexiconEn.traditionalName(id), error: null });
+  }
   const positional = result.alternatives.find((a) => a.style === 'positional');
   if (positional) {
-    const english = englishName(result.structure).replace(/^1,([234])-/, (_, n) => `${lexiconEn.positionalLetters[n]}-`);
-    entries.push({ style: 'positional', spanish: positional.name, english, error: null });
+    const { suffix } = result.structure;
+    const options = suffix && suffix.kind === 'amine' ? { traditional: 'aniline' } : {};
+    const parts = positionalParts(result.structure, renderName(result.structure, lexiconEn, options).parts);
+    entries.push({ style: 'positional', spanish: positional.name, english: parts ? parts.map((p) => p.text).join('') : '', error: null });
   }
   return entries;
 } // End of function polyBenzeneNames()
@@ -315,6 +319,9 @@ export async function main(argv) {
   const benzenes = generateBenzenes({
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
+  const ringPrincipal = generateRingPrincipalBenzenes({
+    count: Math.ceil(options.count / 4), seed: options.seed, minSize: options.min, maxSize: options.max,
+  });
   const halogenated = generateHalogenated({
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
@@ -346,11 +353,11 @@ export async function main(argv) {
   const ringEsters = generateRingEsters({ count: Math.ceil(options.count / 2), seed: options.seed, maxSize: options.max });
   const rings = generateCycloalkanes({ minSize: options.min, maxSize: options.max });
   const molecules = [
-    ...random, ...monocycles, ...benzenes, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...amines,
+    ...random, ...monocycles, ...benzenes, ...ringPrincipal, ...halogenated, ...alcohols, ...carbonyls, ...acids, ...ethers, ...esters, ...amines,
     ...amides, ...nitriles, ...cyano, ...acyl, ...esterPrefixes, ...amidePrefixes, ...ringPrefixes, ...ringAcids,
     ...ringNitrilesAmides, ...ringEsters, ...rings,
   ];
-  console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes `
+  console.log(`OPSIN oracle: ${random.length} molecules + ${monocycles.length} monocycles + ${benzenes.length} benzenes + ${ringPrincipal.length} phenols and benzenamines `
     + `+ ${halogenated.length} halogen derivatives + ${alcohols.length} alcohols + ${carbonyls.length} aldehydes and ketones `
     + `+ ${acids.length} carboxylic acids + ${ethers.length} ethers + ${esters.length} esters + ${amines.length} amines + ${amides.length} amides + ${nitriles.length} nitriles + ${cyano.length} ciano- molecules + ${acyl.length} acyl molecules + ${esterPrefixes.length} ester-prefix molecules + ${amidePrefixes.length} amide-prefix molecules + ${ringPrefixes.length} ring-prefix molecules + ${ringAcids.length} ring acids and aldehydes + ${ringNitrilesAmides.length} ring nitriles and amides + ${ringEsters.length} ring esters + ${rings.length} cycloalkanes, `
     + `seed ${options.seed}, ${options.min}–${options.max} C, OPSIN ${OPSIN_VERSION}`);

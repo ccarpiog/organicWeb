@@ -203,6 +203,11 @@ const SNAPSHOT_SMILES = [
   'CCC1=CC(C)=C(C)C=C1', // 4-etil-1,2-dimetilbenceno: three prefixes, lowest locant set (I-42a)
   'CC1=C(C)C(C)=C(C)C(C)=C1C', // hexametilbenceno: complete substitution, no numbers (I-42a)
   'COC1=CC=C(C)C=C1', // 1-metil-4-metoxibenceno: alkoxy and alkyl on benzene, Spanish order (I-42a)
+  'OC1=CC=C(C)C=C1', // 4-metilfenol: OH at 1, cresol and para forms, position sentence (I-43a)
+  'NC1=CC=CC=C1Cl', // 2-clorobencen-1-amina: the 1 of the amine is cited, anilina and orto forms (I-43a)
+  'CNC1=CC=C(C)C=C1', // N,4-dimetilbencen-1-amina: a group on the N and one on the ring (I-43a)
+  'NC1=CC=C(O)C=C1', // 4-aminofenol: alcohol > amine, the amine is a prefix (I-43a)
+  'OC1=C(C)C=C(C)C=C1Cl', // 2-cloro-4,6-dimetilfenol: OH at 1, then alphabetical order decides (I-43a)
 ];
 
 /**

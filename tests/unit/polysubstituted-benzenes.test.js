@@ -6,7 +6,11 @@
  * (both drawings and atom-id scrambles give the same name, alternatives and
  * explanation), locant omission for complete substitution, the o/m/p alias
  * rule, the benzene numbering step of the explanation, and the refusals that
- * stay (a polysubstituted benzene with a functional group).
+ * stay (a polysubstituted benzene with a functional group out of scope);
+ * and for phase I-43a, one OH or amine group on the ring plus prefixes
+ * (`4-metilfenol`, `2-clorobencen-1-amina`, `N,4-dimetilbencen-1-amina`,
+ * `4-aminofenol`): the group at locant 1, cresol / anilina / o-m-p forms
+ * present and absent, invariance, explanation, Ordenar dibujo and 90° view.
  */
 
 import { test } from 'node:test';
@@ -227,8 +231,13 @@ test('the English rendering cites every locant too (oracle)', () => {
 
 test('a polysubstituted benzene with a functional group stays refused with an accurate message', () => {
   const refused = [
-    'OC1=CC=C(C)C=C1', // 4-metilfenol (I-43a)
-    'NC1=CC=CC=C1Cl', // 2-cloroanilina (I-43a)
+    'OC1=CC=C(O)C=C1', // benceno-1,4-diol (I-44)
+    'NC1=CC=C(N)C=C1', // benceno-1,4-diamina (I-44)
+    'OC1=CC=C(O)C=C1C', // 2-metilbenceno-1,4-diol (I-44)
+    'NC1=CC=C(C(O)=O)C=C1O', // OH, NH2 and COOH: ácido 4-amino-3-hidroxibenzoico (I-43b)
+    'OCC1=CC=C(O)C=C1', // an OH on a side chain: 4-(hidroximetil)fenol
+    'NCC1=CC=C(C)C=C1', // an amine on a side chain: (4-metilfenil)metanamina (I-45a)
+    'CC(=O)OC1=CC=C(C)C=C1', // acetato de 4-metilfenilo (I-45c)
     'OC(=O)C1=CC=C(C)C=C1', // ácido 4-metilbenzoico (I-43b)
     'O=CC1=CC=C(Cl)C=C1', // 4-clorobenzaldehído (I-43b)
     'N#CC1=CC=CC(C)=C1', // 3-metilbenzonitrilo (I-43b)
@@ -258,4 +267,133 @@ test('complete substitution: the assembly step names the multiplier the name use
   const text = assembly(isobutyl);
   assert.match(text, /con «hexakis» y el sustituyente entre paréntesis porque hay 6/);
   assert.doesNotMatch(text, /«hexa-»/);
+});
+
+/** Label of the cresols (design.md §14.5): general nomenclature only, like xileno. */
+const ACCEPTED = 'nombre tradicional, que la IUPAC (2013) acepta';
+
+/**
+ * Phase I-43a (design.md §14): one OH or amine group on the ring plus prefixes. Expected names and every
+ * alternative (style, name), in order: the list is complete, so absent ones are asserted too.
+ */
+const PRINCIPAL_CASES = [
+  ['OC1=CC=C(C)C=C1', '4-metilfenol', [['traditional', 'p-cresol'], ['positional', 'p-metilfenol']]],
+  ['OC1=CC=CC=C1C', '2-metilfenol', [['traditional', 'o-cresol'], ['positional', 'o-metilfenol']]],
+  ['OC1=CC(C)=CC=C1', '3-metilfenol', [['traditional', 'm-cresol'], ['positional', 'm-metilfenol']]],
+  ['CC(C)C1=CC=C(O)C=C1', '4-isopropilfenol',
+    [['pin', '4-(propan-2-il)fenol'], ['substituted', '4-(1-metiletil)fenol'], ['positional', 'p-isopropilfenol']]],
+  ['COC1=CC=C(O)C=C1', '4-metoxifenol', [['positional', 'p-metoxifenol']]],
+  ['OC1=C(C)C=C(C)C=C1Cl', '2-cloro-4,6-dimetilfenol', []],
+  ['OC1=CC(Br)=CC=C1C', '5-bromo-2-metilfenol', []],
+  ['OC1=C(C)C(C)=C(C)C(C)=C1C', '2,3,4,5,6-pentametilfenol', []],
+  ['NC1=CC=C(O)C=C1', '4-aminofenol', [['positional', 'p-aminofenol']]],
+  ['CNC1=CC=C(O)C=C1', '4-(metilamino)fenol', [['positional', 'p-(metilamino)fenol']]],
+  ['NC1=CC=C(O)C=C1C', '4-amino-3-metilfenol', []],
+  ['NC1=CC=CC=C1Cl', '2-clorobencen-1-amina', [['traditional', '2-cloroanilina'], ['positional', 'o-cloroanilina']]],
+  ['NC1=CC=C(C)C=C1', '4-metilbencen-1-amina', [['traditional', '4-metilanilina'], ['positional', 'p-metilanilina']]],
+  ['CNC1=CC=C(C)C=C1', 'N,4-dimetilbencen-1-amina', [['traditional', 'N,4-dimetilanilina']]],
+  ['CCNC1=CC=C(C)C=C1', 'N-etil-4-metilbencen-1-amina',
+    [['traditional', 'N-etil-4-metilanilina'], ['positional', 'N-etil-p-metilanilina']]],
+  ['CN(C)C1=CC=C(Br)C=C1', '4-bromo-N,N-dimetilbencen-1-amina',
+    [['traditional', '4-bromo-N,N-dimetilanilina'], ['positional', 'p-bromo-N,N-dimetilanilina']]],
+  ['NC1=CC(Cl)=CC(Cl)=C1', '3,5-diclorobencen-1-amina', [['traditional', '3,5-dicloroanilina']]],
+];
+
+test('I-43a: one OH or amine on the ring plus prefixes, with exactly the expected alternatives', () => {
+  for (const [smiles, name, alternatives] of PRINCIPAL_CASES) {
+    assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
+    const result = named(smiles);
+    assert.equal(result.name, name, smiles);
+    assert.deepEqual(result.alternatives.map((a) => [a.style, a.name]), alternatives, smiles);
+    for (const alt of result.alternatives) {
+      // Never a substituted cresol, toluidine, anisol or tolueno; no systematic `bencenol`.
+      assert.doesNotMatch(alt.name, /tolueno|toluidina|anisol|bencenol|cresol./, smiles);
+      assert.ok(alt.style !== 'positional' || alt.label === POSITIONAL, smiles);
+      assert.ok(!/cresol/.test(alt.name) || alt.label === ACCEPTED, smiles);
+    }
+  }
+  // Monosubstituted phenol and anilines keep their outputs.
+  assert.equal(named('OC1=CC=CC=C1').name, 'fenol');
+  assert.deepEqual(named('OC1=CC=CC=C1').alternatives, []);
+  assert.deepEqual(named('NC1=CC=CC=C1').alternatives.map((a) => a.name), ['anilina']);
+  assert.equal(named('CNC1=CC=CC=C1').name, 'N-metilbencenamina');
+}); // End of test 'I-43a: one OH or amine on the ring plus prefixes…'
+
+test('I-43a: the principal group takes locant 1, the trace keeps N0 and never uses the Kekulé double bonds', () => {
+  for (const [smiles] of PRINCIPAL_CASES) {
+    const result = named(smiles);
+    const [site] = result.structure.suffix.locants;
+    assert.equal(site.locant, 1, smiles);
+    assert.equal(result.parent.atoms[0], site.atom, smiles);
+    const rules = result.trace.map((step) => step.rule);
+    assert.ok(rules.includes('N0'), smiles);
+    assert.ok(!rules.some((rule) => rule === 'N1' || rule === 'N2'), smiles);
+  }
+  // fenol never cites its 1; bencen-1-amina does, beside ring prefixes only.
+  assert.deepEqual(named('OC1=CC=C(C)C=C1').parts.map((p) => p.text), ['4', '-', 'metil', 'fen', 'ol']);
+  assert.deepEqual(named('NC1=CC=C(C)C=C1').parts.map((p) => p.text), ['4', '-', 'metil', 'bencen', '-', '1', '-', 'amina']);
+  assert.equal(englishName(named('NC1=CC=C(C)C=C1').structure), '4-methylbenzen-1-amine');
+  assert.equal(englishName(named('CNC1=CC=C(C)C=C1').structure), 'N,4-dimethylbenzen-1-amine');
+}); // End of test 'I-43a: the principal group takes locant 1…'
+
+test('I-43a: both Kekulé drawings and atom-id scrambles give the same name, alternatives and explanation', () => {
+  const random = seededRandom(43);
+  for (const [smiles, name] of PRINCIPAL_CASES) {
+    const reference = summary(named(smiles));
+    const swapped = kekuleSwap(smiles);
+    assert.equal(named(swapped).name, name, `${smiles} (other Kekulé drawing)`);
+    assert.deepEqual(summary(named(swapped)), reference, smiles);
+    for (const mol of [parseSmiles(smiles), swapped]) {
+      for (let k = 0; k < 3; k += 1) {
+        const copy = scrambleMolecule(mol, random);
+        for (const atom of copy.atoms.values()) {
+          atom.x = random() * 500;
+          atom.y = random() * 500;
+        }
+        assert.deepEqual(summary(named(copy)), reference, `${smiles} scrambled`);
+      }
+    }
+  } // End of the loop over the I-43a cases
+}); // End of test 'I-43a: both Kekulé drawings and atom-id scrambles…'
+
+test('I-43a: the explanation says the principal group takes 1 and never mentions the double bonds when numbering', () => {
+  const textOf = (step) => step.text.map(plainText).join(' ');
+  const stepsOf = (smiles) => explain(named(smiles));
+  for (const [smiles] of PRINCIPAL_CASES) {
+    const all = stepsOf(smiles);
+    const numbering = all.find((s) => s.id === 'ringNumbering');
+    assert.ok(numbering, smiles);
+    assert.doesNotMatch(textOf(numbering), /enlace|doble/, smiles);
+    assert.match(textOf(numbering), /es el grupo principal y lleva el número más bajo, así que .* es siempre el 1/, smiles);
+    assert.ok(Array.isArray(numbering.locants) && numbering.locants.length === 6, smiles);
+    assert.doesNotMatch(all.map(textOf).join(' '), /Con un solo|el nombre acaba en «benceno»/, smiles);
+  }
+  const phenol = stepsOf('OC1=CC=C(C)C=C1');
+  assert.match(textOf(phenol.find((s) => s.id === 'ringNumbering')), /«metil» está en posición para \(1,4\) respecto al grupo –OH/);
+  assert.match(textOf(phenol.find((s) => s.id === 'benzene')), /Uno es el grupo –OH: es el grupo principal/);
+  assert.match(textOf(phenol.find((s) => s.id === 'assemble')), /El –OH no lleva número/);
+  const amine = stepsOf('NC1=CC=CC=C1Cl');
+  assert.match(textOf(amine.find((s) => s.id === 'ringNumbering')), /Regla: el grupo amino \(el grupo principal\) debe tener el número más bajo, el 1/);
+  assert.match(textOf(stepsOf('NC1=CC=C(C)C=C1').find((s) => s.id === 'ringNumbering')), /Empieza a contar por el carbono unido al nitrógeno/);
+  assert.match(textOf(amine.find((s) => s.id === 'ringNumbering')), /«cloro» está en posición orto \(1,2\) respecto al grupo amino/);
+  const assemble = amine.find((s) => s.id === 'assemble');
+  assert.match(textOf(assemble), /«bencen-1-amina»/);
+  assert.deepEqual(assemble.legend.map((entry) => entry.text), ['2', 'cloro', 'bencen', '1', '-amina']);
+  // A group on the N: the N note, and no position sentence for N,4-dimetil (the N is no ring position).
+  const nMethyl = stepsOf('CNC1=CC=C(C)C=C1');
+  assert.match(textOf(nMethyl.find((s) => s.id === 'ringNumbering')), /La «N» del nombre no es el número de un carbono/);
+  assert.match(textOf(nMethyl.find((s) => s.id === 'benzene')), /no cuentan como sustituyentes del anillo/);
+  // Alphabetical order after the OH: the comparison is shown.
+  const three = stepsOf('OC1=C(C)C=C(C)C=C1Cl');
+  const step = three.find((s) => s.id === 'ringNumbering');
+  assert.match(textOf(step), /el grupo –OH \(el grupo principal\) debe tener el número más bajo, el 1/);
+  assert.ok(step.compare && step.options.length >= 2);
+  assert.ok(three.some((s) => s.id === 'order'));
+}); // End of test 'I-43a: the explanation says the principal group…'
+
+test('I-43a: Ordenar dibujo is offered; the 90° view still falls back', () => {
+  for (const [smiles] of PRINCIPAL_CASES) {
+    assert.equal(canArrange(named(smiles)), true, smiles);
+    assert.deepEqual(projectRightAngles(parseSmiles(smiles)), { ok: false, reason: 'CYCLE' }, smiles);
+  }
 });

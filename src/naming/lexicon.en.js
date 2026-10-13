@@ -80,6 +80,9 @@ export const TRADITIONAL_NAMES = Object.freeze({
   mXylene: 'm-xylene',
   pXylene: 'p-xylene',
   mesitylene: 'mesitylene',
+  oCresol: 'o-cresol',
+  mCresol: 'm-cresol',
+  pCresol: 'p-cresol',
 });
 
 /** Endings of the parent name. */

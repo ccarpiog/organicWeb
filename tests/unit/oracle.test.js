@@ -23,7 +23,7 @@ import { parseFullSmiles, heavyAtomTree, OracleSmilesError } from '../../scripts
 import { englishName, compareWithOpsin, kekuleKeys } from '../../scripts/oracle/compare.mjs';
 import {
   generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, halogenate, seededRandom,
-  generateAmines, aminate, randomBenzene,
+  generateAmines, aminate, randomBenzene, generateRingPrincipalBenzenes,
 } from '../../scripts/oracle/generate.mjs';
 import { perceiveRings } from '../../src/model/rings.js';
 import { isBenzeneRing, amineNitrogens } from '../../src/model/validate.js';
@@ -244,9 +244,9 @@ test('without the jar every molecule is skipped, never passed, with exit status 
   const status = await main(['--count', '5', '--seed', '1', '--jar', path.join(ROOT, 'scripts', 'oracle', 'vendor', 'missing.jar')]);
   assert.equal(status, 0);
   assert.ok(lines.some((line) => /^skipped: /.test(line)));
-  // 5 random molecules, 3 random monocycles, 3 benzenes, 3 halogen derivatives, 3 alcohols, 3 aldehydes and ketones,
+  // 5 random molecules, 3 random monocycles, 3 benzenes, 2 phenols and benzenamines (I-43a), 3 halogen derivatives, 3 alcohols, 3 aldehydes and ketones,
   // 3 carboxylic acids, 3 ethers, 3 esters, 3 amines, 3 amides, 3 nitriles, 3 ciano- molecules, 3 acyl molecules, 3 ester-prefix molecules, 3 amide-prefix molecules, 3 ring-prefix molecules, 3 ring acids and aldehydes, 3 ring nitriles and amides, 3 ring esters and the 11 cycloalkanes of the default 4–14 C range.
-  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 73  adapter failures: 0'), lines.join('\n'));
+  assert.ok(lines.includes('passed: 0  failed: 0  skipped: 75  adapter failures: 0'), lines.join('\n'));
   lines.length = 0;
   assert.equal(await main(['--count', '3', '--java', 'no-such-java-binary']), 0);
   assert.ok(lines.some((line) => /Java not available/.test(line)));
@@ -266,7 +266,7 @@ test('a jar whose checksum is not the pinned one is rejected at any path', async
   assert.match(availability.reason, /checksum/);
 }); // End of test 'a jar whose checksum is not the pinned one is rejected at any path'
 
-test('real OPSIN round trip over 200 random molecules, 100 monocycles, 100 benzenes, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines, 100 amides, 100 nitriles, 100 ciano- molecules, 100 acyl molecules, 100 ester-prefix molecules, 100 amide-prefix molecules, 100 ring-prefix molecules, 100 ring acids and aldehydes, 100 ring nitriles and amides, 100 ring esters and the cycloalkanes (skipped without Java or the jar)', async (t) => {
+test('real OPSIN round trip over 200 random molecules, 100 monocycles, 100 benzenes, 50 phenols and benzenamines, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines, 100 amides, 100 nitriles, 100 ciano- molecules, 100 acyl molecules, 100 ester-prefix molecules, 100 amide-prefix molecules, 100 ring-prefix molecules, 100 ring acids and aldehydes, 100 ring nitriles and amides, 100 ring esters and the cycloalkanes (skipped without Java or the jar)', async (t) => {
   const availability = await checkAvailability();
   if (!availability.ok) {
     t.skip(availability.reason);
@@ -276,8 +276,8 @@ test('real OPSIN round trip over 200 random molecules, 100 monocycles, 100 benze
   t.mock.method(console, 'log', (text) => lines.push(text));
   const status = await main(['--count', '200', '--seed', '42']);
   assert.equal(status, 0, lines.join('\n'));
-  assert.ok(lines.includes('passed: 2111  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
-}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles, 100 benzenes, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines, 100 amides, 100 nitriles, 100 ciano- molecules, 100 acyl molecules, 100 ester-prefix molecules, 100 amide-prefix molecules, 100 ring-prefix molecules, 100 ring acids and aldehydes, 100 ring nitriles and amides, 100 ring esters and the cycloalkanes'
+  assert.ok(lines.includes('passed: 2161  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
+}); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles, 100 benzenes, 50 phenols and benzenamines, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines, 100 amides, 100 nitriles, 100 ciano- molecules, 100 acyl molecules, 100 ester-prefix molecules, 100 amide-prefix molecules, 100 ring-prefix molecules, 100 ring acids and aldehydes, 100 ring nitriles and amides, 100 ring esters and the cycloalkanes'
 
 test('the English lexicon never reaches the app', async () => {
   const files = [];
@@ -419,6 +419,40 @@ test('benzenes (I-42b review): up to 60 C, side chains over the 30-carbon cap ar
   for (const mol of benzenes) {
     assert.equal(validateForNaming(mol), null, writeSmiles(mol));
   }
+});
+
+test('phenols and benzenamines (I-43a): one OH or amine on the ring plus 1–5 groups, all nameable', () => {
+  const molecules = generateRingPrincipalBenzenes({ count: 300, seed: 4, minSize: 4, maxSize: 30 });
+  assert.equal(molecules.length, 300);
+  const again = (count) => generateRingPrincipalBenzenes({ count, seed: 4 }).map(writeSmiles);
+  assert.deepEqual(again(20), again(20), 'deterministic');
+  const kinds = new Set();
+  for (const mol of molecules) {
+    assert.equal(validateForNaming(mol), null, writeSmiles(mol));
+    const result = nameMolecule(mol);
+    assert.equal(result.ok, true, writeSmiles(mol));
+    const { suffix } = result.structure;
+    kinds.add(suffix.kind);
+    if (suffix.kind === 'amine') {
+      kinds.add(`N${result.structure.prefixes.flatMap((g) => g.locants).filter((site) => site.locant === 0).length}`);
+    } else if (result.structure.prefixes.some((g) => g.substituent.amino)) {
+      kinds.add('amino prefix');
+    }
+  } // End of the loop over the phenols and benzenamines
+  for (const kind of ['alcohol', 'amine', 'N0', 'N1', 'N2', 'amino prefix']) {
+    assert.ok(kinds.has(kind), `${kind} in ${[...kinds].join(', ')}`);
+  }
+}); // End of test 'phenols and benzenamines (I-43a)…'
+
+test('buildCases checks the cresol name and the orto/meta/para form of phenols and anilines (I-43a)', () => {
+  const [cresol, chloroaniline, dimethyl, ethylMethyl] = buildCases(
+    ['OC1=CC=C(C)C=C1', 'NC1=CC=CC=C1Cl', 'CNC1=CC=C(C)C=C1', 'CCNC1=CC=C(C)C=C1'].map(parseSmiles),
+  );
+  const extra = (c) => c.names.filter((n) => ['traditional', 'positional'].includes(n.style)).map((n) => `${n.spanish} / ${n.english}`);
+  assert.deepEqual(extra(cresol), ['p-cresol / p-cresol', 'p-metilfenol / p-methylphenol']);
+  assert.deepEqual(extra(chloroaniline), ['2-cloroanilina / 2-chloroaniline', 'o-cloroanilina / o-chloroaniline']);
+  assert.deepEqual(extra(dimethyl), ['N,4-dimetilanilina / N,4-dimethylaniline']);
+  assert.deepEqual(extra(ethylMethyl), ['N-etil-4-metilanilina / N-ethyl-4-methylaniline', 'N-etil-p-metilanilina / N-ethyl-p-methylaniline']);
 });
 
 test('buildCases checks the xylene and mesitylene names and the orto/meta/para form (I-42)', () => {

@@ -11,7 +11,8 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
 - Scope: v1 (acyclic hydrocarbons) and v2 (rings and functional groups, ESO +
   1º Bachillerato, `docs/design.md` §13, phases I-21…I-41) are both done;
   v3 (polysubstituted benzenes, §14, phases I-42a…I-46) is in progress —
-  benzenes with two to six branch, halogen or alkoxy prefixes are named.
+  benzenes with two to six branch, halogen or alkoxy prefixes are named, also
+  beside one OH or amine group on the ring (`4-metilfenol`, `4-metilbencen-1-amina`).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles. Systematic name first; traditional names and the old
   orto/meta/para forms go under "Otras formas válidas".

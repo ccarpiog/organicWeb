@@ -62,8 +62,8 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 
 | I-42a | v3 Benzene parent with prefixes: naming engine, explanation, design §14 (split from I-42) | `autoclaude/processed/220-polysubstituted-benzenes.md` "I-42" | done — `docs/progress-archive/i-42a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-42a.md` |
 | I-42b | v3 Benzene parent with prefixes: oracle `randomBenzene` 1–6 groups, e2e, Ordenar dibujo / 90° checks (split from I-42) | same, "I-42" | done — `docs/progress-archive/i-42b.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-42b.md` |
-| I-43a | v3 One OH or amine on the ring, plus prefixes | same, "I-43a" | queued (next) | — | — |
-| I-43b | v3 One outside-carbon suffix (COOH/CHO/CN/CONH₂) on the ring, plus prefixes | same, "I-43b" | queued | — | — |
+| I-43a | v3 One OH or amine on the ring, plus prefixes | same, "I-43a" | done — `docs/progress-archive/i-43a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-43a.md` |
+| I-43b | v3 One outside-carbon suffix (COOH/CHO/CN/CONH₂) on the ring, plus prefixes | same, "I-43b" | queued (next) | — | — |
 | I-44 | v3 Several identical principal groups on the ring | same, "I-44" | queued | — | — |
 | I-45a | v3 Substituted phenyl and phenoxy as a substituent | same, "I-45a" | queued | — | — |
 | I-45b | v3 Substituted benzoyl | same, "I-45b" | queued | — | — |
@@ -117,12 +117,14 @@ user's decisions as `docs/design.md` §14 (pointer from §13.1).
 
 ## Next action
 
-Start I-43a: one OH or amine group on a benzene ring plus prefixes (`4-metilfenol` with `p-cresol`,
-`2-cloroanilina` forms, `N,4-dimetilbencen-1-amina` / `N,4-dimetilanilina`, `4-aminofenol`). Spec:
-`autoclaude/processed/220-polysubstituted-benzenes.md` "I-43a", "Code traps", "Fixtures to include";
-design `docs/design.md` §14. Lift the `polysubstitutedBenzene` refusal only for that case, update
-its message; extend the oracle (`randomBenzene` already places 1–6 groups). Deploying
-(`npm run deploy`) stays a manual user step.
+Start I-43b: one outside-carbon suffix (COOH/CHO/CN/CONH₂) on a benzene ring plus prefixes
+(`ácido 4-metilbenzoico`, `4-clorobenzaldehído`, `3-metilbenzonitrilo`, `4-metilbenzamida`,
+`N-etil-4-metilbenzamida`, `ácido 4-hidroxibenzoico`, `ácido 4-formilbenzoico`, `3-cianobenzamida`;
+systematic forms with locant 1 under Otras formas). Spec:
+`autoclaude/processed/220-polysubstituted-benzenes.md` "I-43b", "Code traps", "Fixtures to include";
+design `docs/design.md` §14. The refusal gate in `validate.js` (I-43a lifted it for one OH/amine)
+must be lifted only for that case; extend the oracle like `generateRingPrincipalBenzenes()`.
+Deploying (`npm run deploy`) stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -252,13 +254,17 @@ its message; extend the oracle (`randomBenzene` already places 1–6 groups). De
   `lexicon.es.js`, refusal message in `validate.js`, numbering step in `explain.js`; tests
   `tests/unit/polysubstituted-benzenes.test.js`, `tests/e2e/polysubstituted-benzenes.spec.js`; oracle
   `randomBenzene` places 1–6 groups.
+- Phenols/benzenamines with prefixes (I-43a): gate in `validate.js`, principal-locant-1 naming and
+  cresol/anilina aliases in `aromatic.js` / `render.js`; e2e `tests/e2e/phenols-anilines.spec.js`;
+  oracle `generateRingPrincipalBenzenes()`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
-## Verification (last phase, I-42b)
+## Verification (last phase, I-43a)
 
-- Run by the orchestrator: `npm test` 0 (1540 pass) · `npm run check` 0 (133 files) · `npm run e2e`
-  0 (289 pass, source + dist) · `npm run oracle -- --count 2000 --seed 1 --max 60` 0 (21027 pass, 0 fail).
+- Run by the orchestrator: `npm test` 0 (1566 pass) · `npm run check` 0 (134 files) · `npm run build`
+  0 · `npm run e2e` 0 (307 pass, source + dist) · `npm run oracle -- --count 2000 --seed 1 --max 60`
+  0 (21527 pass, 0 fail).
 
 ## Open risks / deviations
 
@@ -423,4 +429,4 @@ its message; extend the oracle (`randomBenzene` already places 1–6 groups). De
 
 ## Git state
 
-- I-42a `ae049e1`, pushed. I-42b committed and pushed right after this checkpoint (see `git log`).
+- I-42b `0f3de8d`, pushed. I-43a committed and pushed right after this checkpoint (see `git log`).

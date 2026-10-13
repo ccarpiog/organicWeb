@@ -24,9 +24,10 @@
  * `isopropilbenceno` with `(propan-2-il)benceno` and `(1-metiletil)benceno`
  * as alternatives. Two or more substituents reach this module only when
  * every group is a detachable prefix — hydrocarbon branches, halogens,
- * alkoxy groups (design.md §14, I-42a); any other polysubstituted benzene is
- * refused by validateForNaming() (`CYCLE`, `ringReason`
- * 'polysubstitutedBenzene'). Then every locant is cited
+ * alkoxy groups (design.md §14, I-42a) — or, since I-43a, beside one OH or
+ * one amine group on the ring (the suffix, at locant 1); any other
+ * polysubstituted benzene is refused by validateForNaming() (`CYCLE`,
+ * `ringReason` 'polysubstitutedBenzene'). Then every locant is cited
  * (`1,2-dimetilbenceno`), except when all six positions hold one identical
  * prefix (`hexaclorobenceno`, lexicon ringOmitsLocants()). The old school
  * form with the ring as a `fenil` prefix on a chain (`feniletano`) is not
@@ -35,15 +36,18 @@
  * An OH on the ring (the only substituent) makes a phenol (design.md §13.4
  * I-31): its structure is the benzene parent with an `-ol` suffix, rendered
  * as the retained preferred name `fenol` (IUPAC 2013 P-63.1.1.1; the
- * systematic `bencenol` is not used). Substituted phenols have two ring
- * substituents and are still refused (`polysubstitutedBenzene`, I-43a).
+ * systematic `bencenol` is not used). With other groups on the ring
+ * (design.md §14, I-43a) the OH keeps the implicit 1 and only the prefixes
+ * cite locants: `4-metilfenol`, `4-aminofenol` (alcohol > amine).
  *
  * An amine N on the ring (design.md §13.4 I-36) is the `-amina` suffix:
  * `bencenamina`, with the groups on the N as `N` prefixes
  * (`N-metilbencenamina`, `N,N-dimetilbencenamina`; they are on the N, not
  * on the ring, so the benzene keeps one substituent). IUPAC 2013 retains
  * `aniline` as the preferred name (P-62.2.1.1.1); like `tolueno` it is
- * offered as an alternative (`anilina`, `N-metilanilina`).
+ * offered as an alternative (`anilina`, `N-metilanilina`). Beside ring
+ * prefixes (I-43a) the suffix cites its 1: `4-metilbencen-1-amina`,
+ * `N,4-dimetilbencen-1-amina` (`4-metilanilina`, `N,4-dimetilanilina`).
  *
  * A –COOH or –CHO on the ring (design.md §13.4 I-40b), or an amide or a
  * –C≡N (I-40c), is the ring's suffix group with its carbon outside the
@@ -62,9 +66,11 @@
  * metoxibenceno (an ether, design.md §13.4 I-34). For two or more
  * substituents (design.md §14.4–§14.5): `1,2-xileno` / `o-xileno` (and the
  * 1,3 / m and 1,4 / p forms) for the bare dimethylbenzenes, `mesitileno`
- * for 1,3,5-trimetilbenceno, and the old orto/meta/para form for two
- * identical prefixes (`o-diclorobenceno`, its own label); never a
- * substituted tolueno, xileno or anisol.
+ * for 1,3,5-trimetilbenceno, `o-cresol` / `m-cresol` / `p-cresol` for the
+ * bare methylphenols (I-43a), and the old orto/meta/para form for two
+ * identical prefixes or a retained parent plus one prefix
+ * (`o-diclorobenceno`, `p-metilfenol`, `o-cloroanilina`, its own label);
+ * never a substituted tolueno, xileno, cresol or anisol.
  *
  * The ring numbering (locant order of the parent, used by Ordenar dibujo) is
  * chosen by the ring cascade of rings.js numberRing(). With one substituent
@@ -83,8 +89,8 @@
 import { perceiveRings } from '../model/rings.js';
 import { adjacency } from '../model/graph.js';
 import { isBenzeneRing } from '../model/validate.js';
-import { buildRingStructure, buildNameStructure, buildSuffix } from './structure.js';
-import { renderName } from './render.js';
+import { buildRingStructure, buildNameStructure, buildSuffix, N_LOCANT } from './structure.js';
+import { renderName, carbonLocantPrefixes, suffixGroupIds } from './render.js';
 import { ringParent, numberRing } from './rings.js';
 import {
   createNamingContext, collectSubstituents, groupPrefixes, suffixSites, esterAlkyls, PREFIX_STYLES,
@@ -207,50 +213,61 @@ export function traditionalAlternative(result) {
 
 /**
  * Tells whether a prefix group is a plain methyl (no prefixes of its own,
- * not a halogen, alkoxy, hydroxy, oxo or retained group, single free
- * valence): the group of `tolueno`, the xylenes and `mesitileno`.
+ * not a halogen, alkoxy, hydroxy, oxo, amino or retained group, single
+ * free valence): the group of `tolueno`, the xylenes, `mesitileno` and
+ * the cresols.
  *
  * @param {object} group - A prefix group of a name structure.
  * @returns {boolean} True for methyl.
  */
 function isPlainMethyl(group) {
   const sub = group.substituent;
-  return !sub.halogen && !sub.hydroxy && !sub.oxo && !sub.retained && !sub.alkoxy && sub.prefixes.length === 0
-    && sub.freeValence.order === 1 && sub.chain.length === 1;
+  return !sub.halogen && !sub.hydroxy && !sub.oxo && !sub.retained && !sub.alkoxy && Boolean(sub.chain)
+    && sub.prefixes.length === 0 && sub.freeValence.order === 1 && sub.chain.length === 1;
 }
 
 /**
- * The atoms and bonds of a benzene name: the ring and every prefix group
- * (the single part of a retained whole-molecule name such as `mesitileno`).
+ * The atoms and bonds of a benzene name: the ring, its suffix group and
+ * every prefix group (the single part of a retained whole-molecule name
+ * such as `mesitileno` or `p-cresol`).
  *
  * @param {object} result - A naming result with a benzene parent.
  * @returns {{atoms: number[], bonds: number[]}} The ids.
  */
 function wholeMolecule(result) {
   const sites = result.structure.prefixes.flatMap((g) => g.locants);
+  // The OH of `p-cresol` (I-43a) belongs to the name too.
+  const group = result.structure.suffix ? suffixGroupIds(result.structure.suffix) : { atoms: [], bonds: [] };
   return {
-    atoms: [...result.parent.atoms, ...sites.flatMap((s) => s.atoms)],
-    bonds: [...result.parent.bonds, ...sites.flatMap((s) => [s.bond, ...s.bonds])],
+    atoms: [...new Set([...result.parent.atoms, ...group.atoms, ...sites.flatMap((s) => s.atoms)])],
+    bonds: [...result.parent.bonds, ...group.bonds, ...sites.flatMap((s) => [s.bond, ...s.bonds])],
   };
 }
 
 /**
  * Ids of the traditional names IUPAC 2013 retains for a polysubstituted
- * benzene with prefixes only (design.md §14.5, P-22.1.3): the xylenes
+ * benzene (design.md §14.5): with prefixes only (P-22.1.3) the xylenes
  * (two methyl groups and nothing else: `1,2-xileno` and `o-xileno`, 1,3 /
- * m, 1,4 / p) and `mesitileno` (three methyl groups at 1,3,5). They admit
- * no substitution, so any other group gives none (never a substituted
- * xileno or tolueno).
+ * m, 1,4 / p) and `mesitileno` (three methyl groups at 1,3,5); for a phenol
+ * with one methyl group and nothing else (P-63.1.1.2, I-43a) `o-cresol`,
+ * `m-cresol` or `p-cresol`. They admit no substitution, so any other group
+ * gives none (never a substituted xileno, tolueno or cresol).
  *
  * @param {object} structure - A name structure (structure.js NameStructure).
  * @returns {string[]} The TRADITIONAL_NAMES ids, in display order (empty when none applies).
  */
 export function retainedPolyIds(structure) {
-  if (structure.parentKind !== 'ring' || structure.parent.retained !== 'benzene' || structure.suffix
+  if (structure.parentKind !== 'ring' || structure.parent.retained !== 'benzene'
     || structure.prefixes.length !== 1 || !isPlainMethyl(structure.prefixes[0])) {
     return [];
   }
   const locants = structure.prefixes[0].locants.map((site) => site.locant);
+  const { suffix } = structure;
+  if (suffix) {
+    // `4-metilfenol` → `p-cresol` (one OH, one methyl).
+    const phenol = suffix.kind === 'alcohol' && !suffix.outside && suffix.locants.length === 1 && locants.length === 1;
+    return phenol && CRESOL_IDS[locants[0]] ? [CRESOL_IDS[locants[0]]] : [];
+  }
   if (locants.length === 2) {
     const second = { 2: ['xylene12', 'oXylene'], 3: ['xylene13', 'mXylene'], 4: ['xylene14', 'pXylene'] };
     return second[locants[1]] || [];
@@ -258,23 +275,60 @@ export function retainedPolyIds(structure) {
   return locants.join(',') === '1,3,5' ? ['mesitylene'] : [];
 } // End of function retainedPolyIds()
 
+/** TRADITIONAL_NAMES ids of the cresols, by the locant of the methyl group of a methylphenol. */
+const CRESOL_IDS = Object.freeze({ 2: 'oCresol', 3: 'mCresol', 4: 'pCresol' });
+
 /**
- * The old orto/meta/para form of a benzene with exactly two occupied
- * positions holding two identical prefixes (design.md §14.4, P-14.3.1: no
- * longer recommended, so only under "Otras formas válidas" with its own
- * label): `o-diclorobenceno`, `m-dibromobenceno`, `p-dietenilbenceno`.
- * Never for two different prefixes (`m-cloroetilbenceno` would read like
- * a substituted ethyl) nor for three or more positions. The locant parts
- * of the name (`1,2`) become one part with the letter, referring to the
- * same atoms and bonds.
+ * The old orto/meta/para form of a benzene name with exactly two occupied
+ * ring positions (design.md §14.4, P-14.3.1: no longer recommended, so
+ * only under "Otras formas válidas" with its own label), from the parts of
+ * the name it is built on, in any lexicon:
+ * - two identical prefixes and nothing else: the leading `1,2-` becomes
+ *   the letter, `o-diclorobenceno`, `m-dibromobenceno`,
+ *   `p-dietenilbenceno`;
+ * - a retained parent with its group at the implicit 1 plus one prefix
+ *   (I-43a): the prefix locant becomes the letter, `p-metilfenol`,
+ *   `p-aminofenol`, `o-cloroanilina` (built on the `anilina` name; the
+ *   groups on the N do not count, `p-bromo-N,N-dimetilanilina`), except
+ *   when one multiplied prefix is both on the N and on the ring
+ *   (`N,4-dimetilanilina`: `N,p-dimetilanilina` is no used form, and OPSIN
+ *   does not read it either).
+ * Never for two different prefixes on plain benzene (`m-cloroetilbenceno`
+ * would read like a substituted ethyl) nor for three or more positions.
+ * The new locant part refers to the same atoms and bonds.
  *
- * @param {object} result - A naming result with a benzene parent.
- * @returns {{style: string, label: string, name: string, parts: object[]}|null} The alternative, or null.
+ * @param {object} structure - The name structure (a benzene parent).
+ * @param {object[]} parts - The parts of the name to rewrite (`fenol`, `anilina` or `benceno` form).
+ * @returns {object[]|null} The parts of the old form, or null when it does not apply.
  */
-export function positionalAlternative(result) {
-  const { structure, parts } = result;
-  if (structure.parentKind !== 'ring' || structure.parent.retained !== 'benzene' || structure.suffix
-    || structure.prefixes.length !== 1 || structure.prefixes[0].locants.length !== 2) {
+export function positionalParts(structure, parts) {
+  if (structure.parentKind !== 'ring' || structure.parent.retained !== 'benzene') {
+    return null;
+  }
+  const groups = carbonLocantPrefixes(structure.prefixes);
+  const { suffix } = structure;
+  const copy = (p) => ({ ...p, atoms: [...p.atoms], bonds: [...p.bonds] });
+  if (suffix) {
+    // One group at the implicit 1 (`fenol`, `anilina`) and one ring prefix.
+    if (suffix.locants.length !== 1 || groups.length !== 1 || groups[0].locants.length !== 1) {
+      return null;
+    }
+    // A group on the N and on the ring cited together (`N,4-dimetilanilina`) gets none: `N,p-` is no used form.
+    const shared = structure.prefixes.some((g) => g.locants.some((site) => site.locant === N_LOCANT)
+      && g.locants.some((site) => site.locant !== N_LOCANT));
+    if (shared) {
+      return null;
+    }
+    const letter = lexiconEs.positionalLetters[groups[0].locants[0].locant];
+    const ringAtoms = new Set(structure.parent.atoms);
+    const text = String(groups[0].locants[0].locant);
+    const at = parts.findIndex((p) => p.kind === 'locant' && p.text === text && ringAtoms.has(p.atoms[0]));
+    if (!letter || at < 0 || parts.some((p, i) => i !== at && p.kind === 'locant' && /^\d/.test(p.text))) {
+      return null;
+    }
+    return parts.map((p, i) => (i === at ? { ...copy(p), text: letter } : copy(p)));
+  }
+  if (structure.prefixes.length !== 1 || structure.prefixes[0].locants.length !== 2) {
     return null;
   }
   const letter = lexiconEs.positionalLetters[structure.prefixes[0].locants[1].locant];
@@ -289,30 +343,47 @@ export function positionalAlternative(result) {
     atoms: [...new Set(head.flatMap((p) => p.atoms))],
     bonds: [...new Set(head.flatMap((p) => p.bonds))],
   };
-  const rest = parts.slice(dash);
+  return [locant, ...parts.slice(dash).map(copy)];
+} // End of function positionalParts()
+
+/**
+ * The old orto/meta/para form of a benzene derivative as an alternative
+ * (positionalParts()), built on the main name (`o-diclorobenceno`,
+ * `p-metilfenol`, `p-aminofenol`) or, for a benzene amine, on its
+ * `anilina` form (`o-cloroanilina`, design.md §14.4–§14.5).
+ *
+ * @param {object} result - A naming result with a benzene parent.
+ * @param {{parts: object[]}|null} [traditional] - The traditional alternative (traditionalAlternative()), if any.
+ * @returns {{style: string, label: string, name: string, parts: object[]}|null} The alternative, or null.
+ */
+export function positionalAlternative(result, traditional = null) {
+  const amine = result.structure.suffix && result.structure.suffix.kind === 'amine';
+  const source = amine ? traditional && traditional.parts : result.parts;
+  const parts = source ? positionalParts(result.structure, source) : null;
+  if (!parts) {
+    return null;
+  }
   return {
     style: 'positional',
     label: lexiconEs.styleLabel('positional'),
-    name: [locant, ...rest].map((p) => p.text).join(''),
-    parts: [locant, ...rest.map((p) => ({ ...p, atoms: [...p.atoms], bonds: [...p.bonds] }))],
+    name: parts.map((p) => p.text).join(''),
+    parts,
   };
 } // End of function positionalAlternative()
 
 /**
  * Every "Otras formas válidas" entry of a benzene derivative after the
- * prefix-style ones: the traditional name of a monosubstituted benzene
- * (traditionalAlternative()), else the retained xileno / mesitileno names
- * (retainedPolyIds(), one part for the whole molecule) followed by the
- * orto/meta/para form (positionalAlternative()).
+ * prefix-style ones: the traditional name (traditionalAlternative():
+ * `tolueno`, `anisol`, `anilina` also with ring prefixes, `4-metilanilina`),
+ * the retained xileno / mesitileno / cresol names (retainedPolyIds(), one
+ * part for the whole molecule) and the orto/meta/para form
+ * (positionalAlternative()).
  *
  * @param {object} result - A naming result (NamingSuccess) with a benzene parent.
  * @returns {{style: string, label: string, name: string, parts: object[]}[]} The alternatives, in display order.
  */
 export function benzeneAlternatives(result) {
   const single = traditionalAlternative(result);
-  if (single) {
-    return [single];
-  }
   const { atoms, bonds } = wholeMolecule(result);
   const retained = retainedPolyIds(result.structure).map((id) => {
     const name = lexiconEs.traditionalName(id);
@@ -320,8 +391,8 @@ export function benzeneAlternatives(result) {
       style: 'traditional', label: lexiconEs.traditionalLabel(id), name, parts: [{ text: name, kind: 'stem', atoms: [...atoms], bonds: [...bonds] }],
     };
   });
-  const positional = positionalAlternative(result);
-  return positional ? [...retained, positional] : retained;
+  const positional = positionalAlternative(result, single);
+  return [single, ...retained, positional].filter(Boolean);
 } // End of function benzeneAlternatives()
 
 /**
@@ -330,8 +401,9 @@ export function benzeneAlternatives(result) {
  * chain is the only substituent, cited without locant; a single OH is the
  * `-ol` suffix instead (`fenol`). With two or more occupied ring positions
  * (design.md §14, I-42a) every group is a detachable prefix (hydrocarbon,
- * halogen or alkoxy; validation refuses anything else) and the ring is
- * numbered without its Kekulé double bonds (rings.js numberRing()
+ * halogen or alkoxy), except at most one OH or amine suffix group on the
+ * ring (I-43a, numbered 1 first, N0; validation refuses anything else), and
+ * the ring is numbered without its Kekulé double bonds (rings.js numberRing()
  * `aromatic`: P-14.4 (f) all prefixes together, then (g) the prefix cited
  * first), so both Kekulé drawings give the same name; the real bond orders
  * stay in the structure for highlighting. The trace is the RING step (the
@@ -342,7 +414,8 @@ export function benzeneAlternatives(result) {
  * @param {object} mol - A molecule accepted by validateForNaming() whose only ring is a benzene ring.
  * @param {string} [style] - Prefix style (default 'isopropil', design.md §1.1).
  * @returns {object} The naming result (structure.js NamingSuccess) without `alternatives`.
- * @throws {Error} When the ring is not a benzene ring, or it carries a suffix group and another substituent.
+ * @throws {Error} When the ring is not a benzene ring, or it carries several suffix groups, or a –COOH, –CHO, amide
+ *   or –C≡N suffix group beside another substituent (safety net, out of scope).
  */
 export function nameBenzeneWithStyle(mol, style = PREFIX_STYLES[0]) {
   if (!hasBenzeneRing(mol)) {
@@ -355,9 +428,9 @@ export function nameBenzeneWithStyle(mol, style = PREFIX_STYLES[0]) {
   const sites = suffixSites(mol, adj, perceived.atoms, ctx.principal, true);
   // Groups on an amine N (`N-metilbencenamina`) are not ring substituents.
   const onRing = substituents.filter((sub) => !sub.nitrogen).length + sites.length;
-  if (onRing > 1 && sites.length > 0) {
-    // Safety net: validation only lets through polysubstituted benzenes with prefixes alone (design.md §14.1).
-    throw new Error(`nameBenzeneWithStyle: ${onRing} substituents with a suffix group (out of scope)`);
+  if (onRing > 1 && (sites.length > 1 || sites.some((site) => site.carbon !== undefined))) {
+    // Safety net: beside other groups, validation lets through one OH or amine on the ring only (design.md §14.1, I-43a).
+    throw new Error(`nameBenzeneWithStyle: ${onRing} substituents with ${sites.length} suffix groups (out of scope)`);
   }
   const polysubstituted = onRing > 1;
   const numbered = numberRing(mol, perceived, substituents, sites.map((site) => site.atom), { aromatic: polysubstituted });

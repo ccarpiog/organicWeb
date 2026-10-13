@@ -29,8 +29,10 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   benzene and monosubstituted benzenes in either Kekulé drawing (`benceno`,
   `metilbenceno`, `etenilbenceno`, `isopropilbenceno`…), benzenes with two to
   six branch, halogen or alkoxy prefixes (`1,2-dimetilbenceno` with
-  `o-xileno`, `1-bromo-3-clorobenceno`, `hexametilbenceno`; other
-  polysubstituted benzenes get a clear refusal), and of their halogen derivatives
+  `o-xileno`, `1-bromo-3-clorobenceno`, `hexametilbenceno`), also beside one
+  OH or amine group on the ring (`4-metilfenol` with `p-cresol`,
+  `2-clorobencen-1-amina` with `2-cloroanilina`, `N,4-dimetilbencen-1-amina`,
+  `4-aminofenol`; other polysubstituted benzenes get a clear refusal), and of their halogen derivatives
   (F, Cl, Br, I as prefixes: `clorometano`, `2-bromo-1-cloropropano`,
   `2-metil-4-yodopentano`, `clorociclohexano`, `clorobenceno`,
   `hexacloroetano`…), and of alcohols (OH groups as the suffix `-ol`:

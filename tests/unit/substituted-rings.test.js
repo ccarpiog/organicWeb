@@ -284,9 +284,9 @@ test('a benzene ring (Kekulé hexagon) is named by aromatic.js since I-28; other
     assert.equal(validateForNaming(parseSmiles(smiles)), null, smiles);
     assert.match(named(smiles).name, /benceno$/, smiles);
   }
-  // Two or more substituents with a functional group: CYCLE with ringReason 'polysubstitutedBenzene' (prefix groups
-  // only are named since I-42a, design.md §14).
-  for (const smiles of ['OC1=CC=CC=C1C', 'CC1=CC(O)=CC=C1', 'NC1=CC=C(C)C=C1', 'CC1=C(C)C(C)=C(C)C(C)=C1O']) {
+  // Two or more substituents with a functional group out of scope: CYCLE with ringReason 'polysubstitutedBenzene'
+  // (prefix groups are named since I-42a, plus one OH and one amine on the ring since I-43a, design.md §14).
+  for (const smiles of ['OC1=CC=CC=C1O', 'O=CC1=CC(C)=CC=C1', 'NC1=CC=C(N)C=C1', 'CC1=C(C)C(C)=C(O)C(C)=C1O']) {
     const error = validateForNaming(parseSmiles(smiles));
     assert.equal(error.code, 'CYCLE', smiles);
     assert.equal(error.ringReason, 'polysubstitutedBenzene', smiles);
@@ -295,8 +295,8 @@ test('a benzene ring (Kekulé hexagon) is named by aromatic.js since I-28; other
     assert.equal(error.atoms.length, 6);
     assert.equal(nameMolecule(parseSmiles(smiles)).error.code, 'CYCLE', smiles);
   }
-  assert.notEqual(MESSAGES.CYCLE, validateForNaming(parseSmiles('OC1=CC=CC=C1C')).message);
-  assert.match(validateForNaming(parseSmiles('OC1=CC=CC=C1C')).message, /tiene 2 sustituyentes/);
+  assert.notEqual(MESSAGES.CYCLE, validateForNaming(parseSmiles('OC1=CC=CC=C1O')).message);
+  assert.match(validateForNaming(parseSmiles('OC1=CC=CC=C1O')).message, /tiene 2 sustituyentes/);
   assert.equal(named('CC1=CC=CC=C1C').name, '1,2-dimetilbenceno');
   assert.equal(named('C1=CC=CC=CC=C1').name, 'cicloocta-1,3,5,7-tetraeno');
   assert.equal(named('C=C1C=CC=CC1').name, '5-metilidenciclohexa-1,3-dieno');
