@@ -36,8 +36,9 @@ test('exact Spanish messages from the design table', () => {
       + 'nombrarlo si son ramas de carbono, halógenos (flúor, cloro, bromo, yodo), grupos alcoxi (como –O–CH₃) o grupos '
       + '–COOH, amida, –C≡N, –CHO, –OH o amino (como –NH₂) unidos directamente al anillo: por ejemplo, el '
       + '1,2-dimetilbenceno, el 4-metilfenol, el benceno-1,2-diol o el ácido 4-hidroxibenzoico. También sé nombrarlo como '
-      + 'sustituyente (fenil o fenoxi) cuando una sola de sus ramas lleva grupos funcionales y las demás son ramas de '
-      + 'carbono, halógenos o grupos alcoxi: por ejemplo, el 2-(4-clorofenil)etan-1-ol. Los demás (con grupos funcionales '
+      + 'sustituyente (fenil, fenoxi o benzoil) cuando una sola de sus ramas lleva grupos funcionales y las demás son '
+      + 'ramas de carbono, halógenos o grupos alcoxi: por ejemplo, el 2-(4-clorofenil)etan-1-ol o el ácido '
+      + '2-(4-metilbenzoil)butanoico. Los demás (con grupos funcionales '
       + 'en el anillo y en una rama a la vez, o en dos ramas, por ejemplo) quedan fuera de lo que sé nombrar.',
     RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
     VALENCE: 'Este carbono tendría más de 4 enlaces.',

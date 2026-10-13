@@ -212,7 +212,7 @@ import {
   substituentPrefix, citationKey, needsEnclosure, isCompoundPrefix, renderPrefixes, omitsPrefixLocants,
   suffixWords, suffixCount, suffixGroupIds, isContractedAlkoxy, MAX_CONTRACTED_ALKOXY, TERMINAL_SUFFIXES,
   esterAlkylName, renderName, carbonLocantPrefixes, hasNitrogenLocants, citedPrefixes, alkoxycarbonylAlkoxy, carbamoylAmino,
-  ringCarbonylRing, isSubstitutedPhenyl,
+  ringCarbonylRing, isSubstitutedPhenyl, enclosureLevel,
 } from '../naming/render.js';
 import { locantText, siteLocantText, N_LOCANT, esterParts } from '../naming/structure.js';
 
@@ -1174,15 +1174,44 @@ function ringBondsIn(sub) {
 }
 
 /**
+ * The ring acyl prefix (`ringCarbonyl`, design.md §13.4 I-40b) that holds a
+ * given ring prefix, at any depth of a name or substituent structure, or
+ * null when the ring is not the ring of an acyl prefix.
+ *
+ * @param {{prefixes: object[]}} structure - A name or substituent structure.
+ * @param {object} ring - A ring substituent structure (ringPrefixOf()).
+ * @returns {object|null} The acyl substituent structure.
+ */
+function ringCarbonylHolder(structure, ring) {
+  for (const { substituent } of structure.prefixes) {
+    if (substituent.ringCarbonyl && ringCarbonylRing(substituent) === ring) {
+      return substituent;
+    }
+    const inner = ringCarbonylHolder(substituent, ring);
+    if (inner) {
+      return inner;
+    }
+  }
+  return null;
+}
+
+/**
  * The name of a ring prefix as the student reads it, and what it is:
  * `«fenil» (el benceno como sustituyente)` or `«ciclohexil»` (design.md
- * §13.4 I-40a).
+ * §13.4 I-40a). The ring of a substituted benzoyl (design.md §14.1, I-45b)
+ * is read as that whole prefix, `«(4-metilbenzoil)»`, since no `fenil`
+ * word is cited for it.
  *
  * @param {object} ring - A ring substituent structure.
+ * @param {{prefixes: object[]}|null} [structure] - The name structure that holds it (default null: not looked up).
  * @returns {string} The words.
  */
-function ringPrefixWords(ring) {
+function ringPrefixWords(ring, structure = null) {
   const name = substituentPrefix(ring.alkoxy ? { ...ring, alkoxy: false } : ring, lexiconEs);
+  const acyl = structure && isSubstitutedPhenyl(ring) ? ringCarbonylHolder(structure, ring) : null;
+  if (acyl) {
+    return `${q(substituentPrefix(acyl, lexiconEs))} (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él)`; // I-45b.
+  }
   if (isSubstitutedPhenyl(ring)) {
     return `${q(name)} (el [[benceno]] como sustituyente, con sus propios sustituyentes)`; // I-45a.
   }
@@ -4334,7 +4363,7 @@ function ringChainStep(result) {
     text.push(`${onRing} y la mejor cadena abierta lleva ${groups(chainCount)}: gana la cadena.`);
     text.push(esterRing
       ? `Por eso la cadena principal es la cadena abierta. El anillo está al otro lado del oxígeno del medio del –COO–: es parte del grupo unido a ese oxígeno, que se nombra aparte, como segunda palabra del nombre: ${q(esterAlkylName(esterRing.alkyl, lexiconEs))}. Los carbonos del anillo nunca forman parte de la cadena principal.`
-      : `Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra ${ringPrefixWords(prefix)}. Los carbonos del anillo nunca forman parte de la cadena principal.`);
+      : `Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra ${ringPrefixWords(prefix, result.structure)}. Los carbonos del anillo nunca forman parte de la cadena principal.`);
   } else {
     // The counts decide the wording: a tie (P-44.1.2.2) or a ring with more groups (P-44.1.1).
     text.push(ringCount === chainCount
@@ -4472,13 +4501,13 @@ function chainStep(result) {
   if (all.length === 1 && esterRing && cyano.parent === 0) {
     const without = [`los del grupo unido al oxígeno del –COO–, ${q(esterAlkylName(esterRing.alkyl, lexiconEs))}, que se nombra aparte`];
     if (ring) {
-      without.unshift(`los carbonos del [[anillo]] que van en el [[prefijo]] ${ringPrefixWords(ring)}`);
+      without.unshift(`los carbonos del [[anillo]] que van en el [[prefijo]] ${ringPrefixWords(ring, result.structure)}`);
     } else {
       without[0] = without[0].replace('los del grupo', 'los carbonos del grupo');
     }
     text.push(`Sin contar ${joinY(without)}, los demás carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene ${count(length, 'carbono', 'carbonos')}.`);
   } else if (all.length === 1 && ring && cyano.parent === 0) {
-    text.push(`Sin contar los carbonos del [[anillo]], que van en el [[prefijo]] ${ringPrefixWords(ring)}, los demás carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene ${count(length, 'carbono', 'carbonos')}.`);
+    text.push(`Sin contar los carbonos del [[anillo]], que van en el [[prefijo]] ${ringPrefixWords(ring, result.structure)}, los demás carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene ${count(length, 'carbono', 'carbonos')}.`);
   } else if (all.length === 1 && cyano.parent > 0) {
     const the = cyano.parent === 1 ? 'el carbono del –C≡N' : 'los carbonos de los –C≡N';
     text.push(`Sin contar ${the}, que va${cyano.parent === 1 ? '' : 'n'} en el [[prefijo]] «ciano-», los demás carbonos forman una sola cadena, sin ramas. Esa es la [[cadena principal]]: tiene ${length} carbonos.`);
@@ -4505,7 +4534,7 @@ function chainStep(result) {
     step.highlight.push(suffixSpec(result));
   }
   if (ring && all.length > 1) {
-    text.push(`Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], ${ringPrefixWords(ring)}.`);
+    text.push(`Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], ${ringPrefixWords(ring, result.structure)}.`);
   }
   if (halogensIn(result).length > 0) {
     text.push('Los halógenos (flúor, cloro, bromo, yodo) nunca forman parte de la cadena: solo cuentan los carbonos. Van como [[sustituyentes|sustituyente]], con un [[prefijo]] delante del nombre.');
@@ -6177,6 +6206,80 @@ function ringDescription(sub, words, principal) {
 } // End of function ringDescription()
 
 /**
+ * The numbering and prefix sentences of a benzene ring with its own
+ * prefixes inside a prefix (design.md §14.1: a substituted phenyl, I-45a,
+ * or the ring of a substituted benzoyl, I-45b): its carbons numbered from
+ * the one bonded to what carries it (1) in the direction that gives the
+ * lowest locants to its prefixes, then (when both directions give the same
+ * locants) the lowest to the prefix cited first in alphabetical order; the
+ * benzene's double bonds never count (design.md §14.2); the prefixes in
+ * alphabetical order before the group word.
+ *
+ * @param {object} ring - The benzene ring substituent (`retained` 'phenyl', with prefixes).
+ * @param {string} to - What the ring is bonded to, as a complement («a la cadena», «al C=O»).
+ * @param {string} word - The group word the prefixes go before (`fenil`, `benzoil`).
+ * @returns {string[]} Two sentences.
+ */
+function benzeneOwnPrefixSentences(ring, to, word) {
+  const { prefixes } = ring;
+  const locants = prefixes.flatMap((g) => g.locants.map((site) => site.locant)).sort((p, r) => p - r);
+  // The other direction around the ring (attachment atom 1): locant l becomes 8 - l (2 ↔ 6, 3 ↔ 5, 4 ↔ 4).
+  const mirrored = locants.map((l) => 8 - l).sort((p, r) => p - r);
+  const tie = locants.every((l, i) => l === mirrored[i]) && prefixes.length > 1;
+  const inner = prefixes.map((g) => {
+    const places = [...new Set(g.locants.map((site) => site.locant))];
+    const where = places.length === 1 ? `en el carbono ${places[0]}` : `en los carbonos ${joinY(places)}`;
+    const what = q(substituentPrefix(g.substituent, lexiconEs));
+    return `${g.locants.length === 1 ? what : `${g.locants.length} ${g.substituent.halogen ? 'átomos' : 'grupos'} ${what}`} ${where}`;
+  });
+  return [
+    `Sus carbonos se numeran empezando por el que está unido ${to}, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes${tie ? '; como los dos sentidos dan los mismos números, el número más bajo es para el sustituyente que va antes por orden alfabético' : ''}. Los enlaces dobles del benceno no cuentan para numerar.`,
+    `El anillo lleva ${joinY(inner)}${prefixes.length > 1 ? ', que se escriben en orden alfabético' : ''}, delante de «${word}».`,
+  ];
+} // End of function benzeneOwnPrefixSentences()
+
+/**
+ * The sentence that says which marks enclose a compound prefix with its own
+ * substituents and numbers (a substituted phenyl, I-45a, or benzoyl, I-45b;
+ * a ring acyl prefix, I-40b), following the renderer's nesting depth
+ * (render.js enclosureLevel()): `(4-metilbenzoil)`,
+ * `[4-(2-metilpropil)benzoil]`, `{4-[…]benzoil}`.
+ *
+ * @param {object} sub - The enclosed substituent structure.
+ * @param {string} why - Why it is enclosed («tiene sus propios números»…), without the final full stop.
+ * @returns {string} The sentence.
+ */
+function enclosureSentence(sub, why) {
+  const level = enclosureLevel(sub);
+  if (level === 0) {
+    return `Va entre paréntesis porque ${why}.`;
+  }
+  return level === 1
+    ? `Va entre corchetes [ ] porque ${why}, y ya lleva paréntesis dentro.`
+    : `Va entre llaves { } porque ${why}, y ya lleva corchetes y paréntesis dentro.`;
+}
+
+/**
+ * The substituents-step sentence on the marks around an `acilamino` or
+ * other compound amino-type prefix, following the renderer's nesting depth
+ * (render.js enclosureLevel(): `(acetilamino)`, `[(4-clorobenzoil)amino]`,
+ * `{[4-(2-metilpropil)benzoil]amino}`).
+ *
+ * @param {object} sub - The prefix substituent structure.
+ * @param {string} plain - The sentence when it is enclosed in parentheses.
+ * @returns {string} The sentence.
+ */
+function compoundEnclosureSentence(sub, plain) {
+  const level = enclosureLevel(sub);
+  if (level === 0) {
+    return plain;
+  }
+  return level === 1
+    ? 'En el nombre va entre corchetes [ ], porque es un prefijo compuesto y ya lleva paréntesis dentro.'
+    : 'En el nombre va entre llaves { }, porque es un prefijo compuesto y ya lleva corchetes y paréntesis dentro.';
+}
+
+/**
  * Explains a substituted phenyl prefix (design.md §14.1, I-45a:
  * `4-metilfenil`, `2-cloro-6-metilfenil`): the benzene as a substituent,
  * `fenil`, with its own prefixes; its carbons numbered from the one bonded
@@ -6192,22 +6295,10 @@ function ringDescription(sub, words, principal) {
  */
 function substitutedPhenylDescription(sub, words) {
   const name = substituentPrefix(sub, lexiconEs);
-  const { prefixes } = sub;
   const out = [`${q(name)} es un anillo de [[benceno]] unido ${words.to} por uno de sus carbonos: el grupo «fenil» (el benceno como sustituyente), que además lleva sus propios [[sustituyentes|sustituyente]].`];
-  const locants = prefixes.flatMap((g) => g.locants.map((site) => site.locant)).sort((p, r) => p - r);
-  // The other direction around the ring (attachment atom 1): locant l becomes 8 - l (2 ↔ 6, 3 ↔ 5, 4 ↔ 4).
-  const mirrored = locants.map((l) => 8 - l).sort((p, r) => p - r);
-  const tie = locants.every((l, i) => l === mirrored[i]) && prefixes.length > 1;
-  out.push(`Sus carbonos se numeran empezando por el que está unido ${words.to}, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes${tie ? '; como los dos sentidos dan los mismos números, el número más bajo es para el sustituyente que va antes por orden alfabético' : ''}. Los enlaces dobles del benceno no cuentan para numerar.`);
-  const inner = prefixes.map((g) => {
-    const places = [...new Set(g.locants.map((site) => site.locant))];
-    const where = places.length === 1 ? `en el carbono ${places[0]}` : `en los carbonos ${joinY(places)}`;
-    const what = q(substituentPrefix(g.substituent, lexiconEs));
-    return `${g.locants.length === 1 ? what : `${g.locants.length} ${g.substituent.halogen ? 'átomos' : 'grupos'} ${what}`} ${where}`;
-  });
-  out.push(`El anillo lleva ${joinY(inner)}${prefixes.length > 1 ? ', que se escriben en orden alfabético' : ''}, delante de «fenil».`);
+  out.push(...benzeneOwnPrefixSentences(sub, words.to, 'fenil'));
   const letter = citationKey(sub, lexiconEs).alpha.charAt(0);
-  out.push(`Va entre paréntesis porque tiene sus propios sustituyentes y números. En el orden alfabético del nombre completo cuenta su primera letra: ${q(name)} va por la «${letter}».`);
+  out.push(`${enclosureSentence(sub, 'tiene sus propios sustituyentes y números')} En el orden alfabético del nombre completo cuenta su primera letra: ${q(name)} va por la «${letter}».`);
   return out;
 } // End of function substitutedPhenylDescription()
 
@@ -6217,7 +6308,10 @@ function substitutedPhenylDescription(sub, words) {
  * (a ketone C=O cut off the chain); named from the ring acid, `benzoil`
  * from `ácido benzoico`, `ciclohexanocarbonil` from `ácido
  * ciclohexanocarboxílico` (`-carboxílico` → `-carbonil`); the ring
- * numbered from the carbon bonded to the C=O (1); why it is enclosed.
+ * numbered from the carbon bonded to the C=O (1); why it is enclosed. A
+ * benzoyl whose ring carries prefixes (design.md §14.1, I-45b:
+ * `(4-metilbenzoil)`) adds the benzene's own numbering and prefixes
+ * (benzeneOwnPrefixSentences()) and the letter it sorts under.
  *
  * @param {object} sub - A substituent structure with `ringCarbonyl` set.
  * @param {{to: string}} words - How the chain that carries it is named (parentWords()).
@@ -6237,6 +6331,13 @@ function ringCarbonylDescription(sub, words, principal) {
   const out = [`${q(prefix)} es el [[prefijo]] de un grupo acilo: un C=O unido ${words.to} por su carbono y, por el otro lado, a un [[anillo]]${benzene ? ' de [[benceno]]' : ''}.${reason} El prefijo incluye el carbono del C=O, que no es de la cadena ni del anillo.`];
   if (benzene) {
     out.push('Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil».');
+    if (ring.prefixes.length > 0) {
+      // A substituted benzoyl (design.md §14.1, I-45b): the ring's own prefixes, numbered from the carbon bonded to the C=O.
+      out.push(...benzeneOwnPrefixSentences(ring, 'al C=O', 'benzoil'));
+      // Inside an `acilamino` prefix (NITROGEN_WORDS) the whole amino prefix is what gets sorted (acylaminoDescription()).
+      const letter = words === NITROGEN_WORDS ? '' : citationKey(sub, lexiconEs).alpha.charAt(0);
+      out.push(`${enclosureSentence(sub, 'tiene sus propios sustituyentes y números')}${letter ? ` En el orden alfabético del nombre completo cuenta su primera letra: ${q(prefix)} va por la «${letter}».` : ''}`);
+    }
     return out;
   }
   const acid = `ácido ${prefix.replace(/^\(|\)$/g, '').slice(0, -lexiconEs.ringCarbonylEnding.length)}${lexiconEs.ringGroupSuffix('acid')}`;
@@ -6251,7 +6352,7 @@ function ringCarbonylDescription(sub, words, principal) {
     out.push(`Los carbonos del anillo se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo en el sentido que da los números más bajos${unsaturated ? ' a los enlaces dobles y triples y luego' : ''} a sus [[sustituyentes|sustituyente]]${inner.length > 0 ? `: ${joinY(inner)}` : ''}.`);
   }
   out.push(ring.prefixes.length > 0 || unsaturated
-    ? 'Va entre paréntesis porque tiene sus propios números.'
+    ? enclosureSentence(sub, 'tiene sus propios números')
     : 'Va entre paréntesis porque su nombre lleva dentro el nombre de un anillo con su terminación («-ano»): así se lee separado del resto.');
   return out;
 } // End of function ringCarbonylDescription()
@@ -6399,7 +6500,10 @@ function acylaminoDescription(sub, words, principal) {
   const part = substituentPrefix(acyl, lexiconEs);
   const amino = lexiconEs.groupPrefix('amine');
   const out = [`${q(prefix)} es el [[prefijo]] de una amida unida ${words.to} por su nitrógeno.${amideNotPrincipal(principal, words === PARENT_WORDS.ring)} Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, ${q(part)}. El prefijo es el nombre del grupo acilo más «${amino}», que es el nitrógeno.`];
-  if (acyl.chain.length === 1) {
+  if (acyl.ringCarbonyl) {
+    // A ring acyl group (design.md §13.4 I-40b, §14.1 I-45b): `benzoil`, `(4-metilbenzoil)`, `ciclohexanocarbonil`.
+    out.push(...ringCarbonylDescription(acyl, NITROGEN_WORDS, principal).slice(1));
+  } else if (acyl.chain.length === 1) {
     out.push(`Con 1 carbono (H–CO–, el de un –CHO) el grupo acilo se llama «${lexiconEs.formylPrefix}».`);
   } else {
     // acylIntro() via describeSubstituent(), without its first sentence (said above): acetil, or the acid's `-oico` → `-oil`.
@@ -6409,9 +6513,7 @@ function acylaminoDescription(sub, words, principal) {
   if (others.length > 0) {
     out.push(`El nitrógeno lleva además ${aminoGroupsWords({ prefixes: others })}. Los grupos unidos al nitrógeno van por orden alfabético, sin números, y cada uno después del primero va entre paréntesis: ${q(prefix)}.`);
   }
-  out.push(prefix.startsWith('(') || prefix.includes('(')
-    ? 'En el nombre va entre corchetes [ ], porque es un prefijo compuesto y ya lleva paréntesis dentro.'
-    : 'En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo más «amino».');
+  out.push(compoundEnclosureSentence(sub, 'En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo más «amino».'));
   return out;
 } // End of function acylaminoDescription()
 
@@ -6454,7 +6556,10 @@ function acyloxyDescription(sub, words, principal) {
   const part = substituentPrefix(acyl, lexiconEs);
   const oxi = lexiconEs.alkoxyEnding;
   const out = [`${q(prefix)} es el [[prefijo]] de un éster (–COO–) unido ${words.to} por su oxígeno del medio.${esterNotPrincipal(principal)} Al otro lado del oxígeno está el carbono del C=O, que empieza un grupo acilo, ${q(part)}. El prefijo es el nombre del grupo acilo más «${oxi}», que es el oxígeno: ${part} + ${oxi} = ${prefix}.`];
-  if (acyl.chain.length === 1) {
+  if (acyl.ringCarbonyl) {
+    // A ring acyl group (design.md §13.4 I-40b, §14.1 I-45b): `benzoil`, `(4-metilbenzoil)`, `ciclohexanocarbonil`.
+    out.push(...ringCarbonylDescription(acyl, NITROGEN_WORDS, principal).slice(1));
+  } else if (acyl.chain.length === 1) {
     out.push(`Con 1 carbono (H–CO–, el de un –CHO) el grupo acilo se llama «${lexiconEs.formylPrefix}».`);
   } else {
     // acylIntro() via describeSubstituent(), without its first sentence (said above): acetil, or the acid's `-oico` → `-oil`.

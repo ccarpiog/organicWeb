@@ -41,7 +41,9 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
   isoftálico`, `benceno-1,3,5-tricarbonitrilo`), or, with its branch, halogen
   or alkoxy prefixes, as a substituted `fenil` / `fenoxi` prefix of a chain
   carrying the principal group (`1-(4-metilfenil)etan-1-ona`,
-  `2-(4-metilfenoxi)etan-1-ol`, `N-(4-metilfenil)etanamida`); other
+  `2-(4-metilfenoxi)etan-1-ol`, `N-(4-metilfenil)etanamida`) or as the
+  ring of a substituted `benzoil` prefix (`ácido
+  2-(4-metilbenzoil)butanoico`); other
   polysubstituted benzenes get a clear refusal), and of their halogen derivatives
   (F, Cl, Br, I as prefixes: `clorometano`, `2-bromo-1-cloropropano`,
   `2-metil-4-yodopentano`, `clorociclohexano`, `clorobenceno`,

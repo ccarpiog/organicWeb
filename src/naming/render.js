@@ -351,7 +351,7 @@ function token(text, kind) {
  * amino prefix with an acyl group on its N, always enclosed
  * (`(acetilamino)`, `[acetil(metil)amino]`). `carboxi` (I-40b) is simple;
  * a ring acyl prefix (I-40b) is unenclosed as `benzoil` and always
- * enclosed otherwise, like a prefix built on a parent name with its own
+ * enclosed otherwise (`(4-metilbenzoil)`, design.md §14.1, I-45b), like a prefix built on a parent name with its own
  * ending (`(ciclohexanocarbonil)`, `(2-metilciclohexano-1-carbonil)`,
  * `(ciclohex-2-eno-1-carbonil)`; app decision for readability).
  * Enclosure does not decide the multiplier (see isCompoundPrefix()).
@@ -378,8 +378,10 @@ export function needsEnclosure(substituent) {
     return substituent.prefixes.length > 0 || !isContractedAlkoxy(substituent);
   }
   if (substituent.ringCarbonyl) {
-    // `benzoil`, but `(ciclohexanocarbonil)`, `(2-metilciclohexano-1-carbonil)`, `(ciclohex-2-eno-1-carbonil)` (I-40b).
-    return !ringCarbonylRing(substituent).retained;
+    // `benzoil`, but `(ciclohexanocarbonil)`, `(2-metilciclohexano-1-carbonil)`, `(ciclohex-2-eno-1-carbonil)` (I-40b),
+    // and `(4-metilbenzoil)` (design.md §14.1, I-45b).
+    const ring = ringCarbonylRing(substituent);
+    return !ring.retained || isSubstitutedPhenyl(ring);
   }
   if (substituent.acyl) {
     // `formil`, `acetil`, `propanoil`, but `(2-metilpropanoil)`, `(but-2-enoil)` (design.md §13.4 I-39b).
@@ -502,11 +504,13 @@ export function isContractedAlkoxy(substituent) {
 /**
  * Nesting level of the enclosing marks of a compound prefix: 0 for ( ) when
  * no nested prefix is enclosed, 1 for [ ] around a ( ) prefix, 2 for { }…
+ * Exported for the explanation (design.md §5), which names the marks the
+ * name really uses (`[4-(2-metilpropil)benzoil]`, I-45b).
  *
  * @param {object} substituent - The substituent structure (compound).
  * @returns {number} The level.
  */
-function enclosureLevel(substituent) {
+export function enclosureLevel(substituent) {
   if (substituent.carbamoyl) {
     // The groups on the N, as in an amino prefix: `(metilcarbamoil)`, `[etil(metil)carbamoil]` (design.md §13.4 I-39d).
     return enclosureLevel(carbamoylAmino(substituent));
@@ -814,7 +818,10 @@ export function ringCarbonylRing(substituent) {
 /**
  * Tokens of the acyl prefix of an acid named with `-carboxílico` (design.md
  * §13.4 I-40b; IUPAC 2013 P-65.1.7, from memory): the retained `benzoil`
- * for benzene; otherwise the ring's own prefixes with their locants, the
+ * for benzene, after the benzene's own prefixes when it has some (design.md
+ * §14.1, I-45b: `4-metilbenzoil`, `2,4-diclorobenzoil`, numbered from the
+ * ring atom bonded to X, Kekulé-neutral, substituent.js ringSubstituent());
+ * otherwise the ring's own prefixes with their locants, the
  * ring name with its full ending (`ciclohexano`, `ciclohex-2-eno`), the
  * locant 1 of the attachment atom when the ring name cites locants (the
  * same omission rule as a ring parent with one suffix group,
@@ -829,9 +836,6 @@ export function ringCarbonylRing(substituent) {
  */
 function ringCarbonylTokens(substituent, lexicon) {
   const ring = ringCarbonylRing(substituent);
-  if (ring.retained) {
-    return [token(lexicon.benzoylPrefix, 'prefix')];
-  }
   const { chain, prefixes } = ring;
   const tokens = [];
   prefixes.forEach((group, g) => {
@@ -840,6 +844,10 @@ function ringCarbonylTokens(substituent, lexicon) {
     }
     tokens.push(...groupTokens(group, lexicon, false, false, false, g === 0));
   });
+  if (ring.retained) {
+    // `benzoil`, or the benzene's own prefixes numbered from the atom bonded to X, then `benzoil`: `4-metilbenzoil` (I-45b).
+    return [...tokens, token(lexicon.benzoylPrefix, 'prefix')];
+  }
   tokens.push(token(lexicon.ringPrefix, 'stem'), token(lexicon.stem(chain.length), 'stem'));
   const segments = lexicon.segmentOrder
     .map((kind) => ({ kind, sites: chain[kind] }))

@@ -13,8 +13,8 @@
  *   multiple bonds — a benzene ring included; with two or more substituents
  *   only when every group is a hydrocarbon branch, a halogen or an alkoxy
  *   group, plus OH, amine, –COOH, amide, –C≡N or –CHO groups bonded to the
- *   ring, the most senior once or several times, or as a substituted phenyl
- *   or phenoxy prefix beside one functional branch, without an ester
+ *   ring, the most senior once or several times, or as a substituted phenyl,
+ *   phenoxy or benzoyl prefix beside one functional branch, without an ester
  *   (design.md §14.1; otherwise CYCLE, `ringReason` 'polysubstitutedBenzene'); a larger
  *   one gets TOO_BIG, any other ring system RING_SYSTEM with its kind), size caps (≤ 60 carbons, ≤ 80 heavy atoms),
  *   only elements the engine can name yet (carbon, halogens bonded to a
@@ -83,8 +83,9 @@ export const MESSAGES = Object.freeze({
     + 'nombrarlo si son ramas de carbono, halógenos (flúor, cloro, bromo, yodo), grupos alcoxi (como –O–CH₃) o grupos '
     + '–COOH, amida, –C≡N, –CHO, –OH o amino (como –NH₂) unidos directamente al anillo: por ejemplo, el '
     + '1,2-dimetilbenceno, el 4-metilfenol, el benceno-1,2-diol o el ácido 4-hidroxibenzoico. También sé nombrarlo como '
-    + 'sustituyente (fenil o fenoxi) cuando una sola de sus ramas lleva grupos funcionales y las demás son ramas de '
-    + 'carbono, halógenos o grupos alcoxi: por ejemplo, el 2-(4-clorofenil)etan-1-ol. Los demás (con grupos funcionales '
+    + 'sustituyente (fenil, fenoxi o benzoil) cuando una sola de sus ramas lleva grupos funcionales y las demás son '
+    + 'ramas de carbono, halógenos o grupos alcoxi: por ejemplo, el 2-(4-clorofenil)etan-1-ol o el ácido '
+    + '2-(4-metilbenzoil)butanoico. Los demás (con grupos funcionales '
     + 'en el anillo y en una rama a la vez, o en dos ramas, por ejemplo) quedan fuera de lo que sé nombrar.',
   RING_SYSTEM: 'Esta molécula tiene anillos que quedan fuera de lo que sé nombrar.',
   VALENCE: 'Este carbono tendría más de 4 enlaces.',
@@ -288,16 +289,6 @@ export const SUBSTITUTED_BENZENE_ESTER_MESSAGE = 'Esta molécula es un éster (t
   + 'otros sustituyentes además del éster. De momento solo sé nombrar los ésteres cuyo benceno no lleva nada más (como '
   + 'el benzoato de metilo o el etanoato de fenilo). Sí sé nombrar un benceno con varios sustituyentes sin éster (como '
   + 'el 2-(4-metilfenoxi)etan-1-ol).';
-
-/**
- * Spanish CYCLE message (design.md §14.1, I-45a) for a benzoyl prefix
- * (C₆H₅–CO– cited `benzoil`) whose benzene carries other substituents:
- * substituted benzoyl prefixes (`(4-metilbenzoil)`) are phase I-45b.
- */
-export const SUBSTITUTED_BENZOYL_MESSAGE = 'En esta molécula, el benceno está unido a un grupo C=O que va como prefijo '
-  + '(el grupo benzoil, C₆H₅–CO–), y además el anillo lleva otros sustituyentes. Ese caso aún no sé nombrarlo. Sí sé '
-  + 'nombrar el grupo benzoil sin nada más en el anillo (como en el ácido 2-benzoilbutanoico) y el benceno con '
-  + 'sustituyentes unido directamente a la cadena (como en la 1-(4-metilfenil)etan-1-ona).';
 
 /**
  * The SUBSTITUTED_POLYAMINE_MESSAGE of a benzene parent (design.md §14.1,
@@ -813,7 +804,9 @@ function functionalBranches(mol, ring) {
  * How a benzene ring with two or more substituents can be named
  * (design.md §14.1): 'parent' when the ring is the parent (prefixesOnly(),
  * ringPrincipalGroups(): I-42a…I-44); 'phenyl' when it is a substituted
- * `fenil` / `fenoxi` prefix of a chain parent (I-45a): no ester in the
+ * `fenil` / `fenoxi` prefix of a chain parent (I-45a), or the ring of a
+ * substituted `benzoil` prefix (I-45b: `ácido 2-(4-metilbenzoil)butanoico`,
+ * its C=O carbon in the functional branch): no ester in the
  * molecule (I-45c) and exactly one branch holding characteristic groups
  * (functionalBranches(): the branch that holds the parent with the
  * principal group), every other branch being a hydrocarbon branch, a

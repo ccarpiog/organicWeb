@@ -253,7 +253,7 @@ test('a polysubstituted benzene with a functional group stays refused with an ac
     assert.match(result.error.message, /^Este benceno tiene \d sustituyentes y alguno de ellos es o lleva un grupo funcional/);
     assert.match(result.error.message, /ramas de carbono, halógenos .*, grupos alcoxi .* o grupos –COOH, amida, –C≡N, –CHO, –OH o amino/);
     assert.match(result.error.message, /el benceno-1,2-diol o el ácido 4-hidroxibenzoico/);
-    assert.match(result.error.message, /como sustituyente \(fenil o fenoxi\) cuando una sola de sus ramas lleva grupos funcionales/);
+    assert.match(result.error.message, /como sustituyente \(fenil, fenoxi o benzoil\) cuando una sola de sus ramas lleva grupos funcionales/);
     assert.match(result.error.message, /\(con grupos funcionales en el anillo y en una rama a la vez, o en dos ramas, por ejemplo\)/);
   }
   // Esters with a substituted benzene (I-45c) get their own message.

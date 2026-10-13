@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-13T20:45:45Z",
+  "updated": "2026-10-13T21:19:01Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups, polysubstituted benzenes) by IUPAC 2013 rules.",
   "phases": [
@@ -514,8 +514,11 @@
     {
       "id": "I-45b",
       "title": "v3 Substituted benzoyl",
-      "status": "queued",
-      "summary": "Substituted benzoyl prefixes such as (4-metilbenzoil) wherever benzoil is named."
+      "status": "done",
+      "summary": "Substituted benzoyl prefixes such as (4-metilbenzoil) are named wherever benzoil was; explanation follows the real bracket nesting.",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-45b.md",
+      "narrative": "docs/progress-archive/i-45b.md"
     },
     {
       "id": "I-45c",

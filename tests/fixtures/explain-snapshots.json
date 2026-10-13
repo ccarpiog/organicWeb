@@ -98409,5 +98409,5518 @@
     ]
    }
   ]
+ },
+ "OC(=O)C(CC)C(=O)C1=CC=C(C)C=C1": {
+  "name": "ácido 2-(4-metilbenzoil)butanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 12 carbonos, 14 hidrógenos y 3 átomos de oxígeno (C₁₂H₁₄O₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       14,
+       12,
+       13,
+       3,
+       1
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo C=O que forma una rama que empieza en su carbono (un grupo acilo, de una cetona). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que cada rama que empieza en el carbono de un C=O (un grupo acilo) se nombra con su propio [[prefijo]] (aquí, «4-metilbenzoil-»), delante del nombre.",
+     "El carbono de ese C=O no se cuenta en la [[cadena principal]]: es el primer carbono de la rama, y el prefijo ya lo incluye. Por eso su C=O no se nombra con «oxo-»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       14,
+       12,
+       13
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringChain",
+    "title": "Anillo o cadena",
+    "text": [
+     "Tu molécula tiene un [[anillo]] de 6 carbonos (un [[benceno]]) y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.",
+     "Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de grupos –COOH. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.",
+     "El anillo no lleva ningún grupo –COOH y la mejor cadena abierta lleva un grupo –COOH: gana la cadena.",
+     "Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra «4-metilbenzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él). Los carbonos del anillo nunca forman parte de la cadena principal."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       12,
+       11,
+       10,
+       9,
+       15,
+       14
+      ],
+      "bonds": [
+       11,
+       10,
+       9,
+       15,
+       14,
+       13
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       4,
+       7
+      ],
+      "bonds": [
+       3,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "El anillo",
+      "text": "El anillo no lleva ningún grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         12,
+         11,
+         10,
+         9,
+         15,
+         14
+        ],
+        "bonds": [
+         11,
+         10,
+         9,
+         15,
+         14,
+         13
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Cadena 1 de 2",
+      "text": "Esta cadena lleva un grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         3,
+         4,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Cadena 2 de 2",
+      "text": "Esta cadena lleva un grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         7
+        ],
+        "bonds": [
+         3,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Las cadenas que llevan menos grupos –COOH quedan descartadas.",
+     "De las cadenas que llevan el grupo –COOH, la más larga tiene 4 carbonos. Solo hay una así.",
+     "Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], «4-metilbenzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él).",
+     "El carbono del C=O de la rama «4-metilbenzoil» no forma parte de la cadena: es el primer carbono de esa rama (un grupo acilo), y el prefijo ya lo incluye."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 1; opción B: 4. Se comparan uno a uno: en el primer número distinto, 1 es menor que 4. Gana la opción A.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-(4-metilbenzoil)butanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       14,
+       12,
+       13
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         1
+        ],
+        [
+         4
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         3,
+         4,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        5,
+        3
+       ],
+       [
+        6,
+        4
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5,
+         4,
+         2
+        ],
+        "bonds": [
+         5,
+         4,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        1
+       ],
+       [
+        5,
+        2
+       ],
+       [
+        4,
+        3
+       ],
+       [
+        2,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "Una rama que se une a la cadena principal por el carbono de un C=O es un grupo acilo: su nombre acaba en «-oil» (como «propanoil»), salvo «formil» (un –CHO, 1 carbono) y «acetil» (CH₃–CO–, 2 carbonos).",
+     "En el carbono 2 hay un grupo 4-metilbenzoilo: se escribe «2-(4-metilbenzoil)».",
+     "«4-metilbenzoil» es el [[prefijo]] de un grupo acilo: un C=O unido a la cadena principal por su carbono y, por el otro lado, a un [[anillo]] de [[benceno]]. No es el [[grupo principal]]: el ácido carboxílico va antes que la cetona. El prefijo incluye el carbono del C=O, que no es de la cadena ni del anillo.",
+     "Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil».",
+     "Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes. Los enlaces dobles del benceno no cuentan para numerar.",
+     "El anillo lleva «metil» en el carbono 4, delante de «benzoil».",
+     "Va entre paréntesis porque tiene sus propios sustituyentes y números. En el orden alfabético del nombre completo cuenta su primera letra: «4-metilbenzoil» va por la «m»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       14,
+       12,
+       13
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "4-metilbenzoil",
+      "text": "En el carbono 2 hay un grupo 4-metilbenzoilo: se escribe «2-(4-metilbenzoil)». «4-metilbenzoil» es el [[prefijo]] de un grupo acilo: un C=O unido a la cadena principal por su carbono y, por el otro lado, a un [[anillo]] de [[benceno]]. No es el [[grupo principal]]: el ácido carboxílico va antes que la cetona. El prefijo incluye el carbono del C=O, que no es de la cadena ni del anillo. Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil». Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes. Los enlaces dobles del benceno no cuentan para numerar. El anillo lleva «metil» en el carbono 4, delante de «benzoil». Va entre paréntesis porque tiene sus propios sustituyentes y números. En el orden alfabético del nombre completo cuenta su primera letra: «4-metilbenzoil» va por la «m».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         3,
+         4,
+         5
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         7,
+         8,
+         9,
+         10,
+         15,
+         11,
+         14,
+         12,
+         13
+        ],
+        "bonds": [
+         6,
+         7,
+         8,
+         9,
+         10,
+         11,
+         12,
+         13,
+         14,
+         15
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 2-(4-metilbenzoil)butanoico».",
+     "El nombre completo es «ácido 2-(4-metilbenzoil)butanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       14,
+       12,
+       13
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «4-metilbenzoil»"
+     },
+     {
+      "text": "4-metilbenzoil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo 4-metilbenzoilo (8 carbonos)"
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "meaning": "4 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       4,
+       7
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4-metilbenzoil",
+      "kind": "prefix",
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       14,
+       12,
+       13
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       4,
+       5
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "OC(=O)C(CC)C(=O)C1=C(C)C=CC=C1Cl": {
+  "name": "ácido 2-(2-cloro-6-metilbenzoil)butanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 12 carbonos, 13 hidrógenos, 1 átomo de cloro y 3 átomos de oxígeno (C₁₂H₁₃ClO₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Los átomos de cloro se ven con su símbolo (Cl): son halógenos. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada halógeno o grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       12,
+       14,
+       16,
+       13,
+       3,
+       1
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo C=O que forma una rama que empieza en su carbono (un grupo acilo, de una cetona). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que cada rama que empieza en el carbono de un C=O (un grupo acilo) se nombra con su propio [[prefijo]] (aquí, «2-cloro-6-metilbenzoil-»), delante del nombre.",
+     "El carbono de ese C=O no se cuenta en la [[cadena principal]]: es el primer carbono de la rama, y el prefijo ya lo incluye. Por eso su C=O no se nombra con «oxo-».",
+     "Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       12,
+       14,
+       16,
+       13
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringChain",
+    "title": "Anillo o cadena",
+    "text": [
+     "Tu molécula tiene un [[anillo]] de 6 carbonos (un [[benceno]]) y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.",
+     "Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de grupos –COOH. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.",
+     "El anillo no lleva ningún grupo –COOH y la mejor cadena abierta lleva un grupo –COOH: gana la cadena.",
+     "Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra «2-cloro-6-metilbenzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él). Los carbonos del anillo nunca forman parte de la cadena principal."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       13,
+       12,
+       10,
+       9,
+       15,
+       14
+      ],
+      "bonds": [
+       12,
+       11,
+       9,
+       15,
+       14,
+       13
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       4,
+       7
+      ],
+      "bonds": [
+       3,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "El anillo",
+      "text": "El anillo no lleva ningún grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         13,
+         12,
+         10,
+         9,
+         15,
+         14
+        ],
+        "bonds": [
+         12,
+         11,
+         9,
+         15,
+         14,
+         13
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Cadena 1 de 2",
+      "text": "Esta cadena lleva un grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         3,
+         4,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Cadena 2 de 2",
+      "text": "Esta cadena lleva un grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         7
+        ],
+        "bonds": [
+         3,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Las cadenas que llevan menos grupos –COOH quedan descartadas.",
+     "De las cadenas que llevan el grupo –COOH, la más larga tiene 4 carbonos. Solo hay una así.",
+     "Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], «2-cloro-6-metilbenzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él).",
+     "Los halógenos (flúor, cloro, bromo, yodo) nunca forman parte de la cadena: solo cuentan los carbonos. Van como [[sustituyentes|sustituyente]], con un [[prefijo]] delante del nombre.",
+     "El carbono del C=O de la rama «2-cloro-6-metilbenzoil» no forma parte de la cadena: es el primer carbono de esa rama (un grupo acilo), y el prefijo ya lo incluye."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 1; opción B: 4. Se comparan uno a uno: en el primer número distinto, 1 es menor que 4. Gana la opción A.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-(2-cloro-6-metilbenzoil)butanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       12,
+       14,
+       16,
+       13
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         1
+        ],
+        [
+         4
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         3,
+         4,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        5,
+        3
+       ],
+       [
+        6,
+        4
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5,
+         4,
+         2
+        ],
+        "bonds": [
+         5,
+         4,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        1
+       ],
+       [
+        5,
+        2
+       ],
+       [
+        4,
+        3
+       ],
+       [
+        2,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "Una rama que se une a la cadena principal por el carbono de un C=O es un grupo acilo: su nombre acaba en «-oil» (como «propanoil»), salvo «formil» (un –CHO, 1 carbono) y «acetil» (CH₃–CO–, 2 carbonos).",
+     "En el carbono 2 hay un grupo 2-cloro-6-metilbenzoilo: se escribe «2-(2-cloro-6-metilbenzoil)».",
+     "«2-cloro-6-metilbenzoil» es el [[prefijo]] de un grupo acilo: un C=O unido a la cadena principal por su carbono y, por el otro lado, a un [[anillo]] de [[benceno]]. No es el [[grupo principal]]: el ácido carboxílico va antes que la cetona. El prefijo incluye el carbono del C=O, que no es de la cadena ni del anillo.",
+     "Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil».",
+     "Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes; como los dos sentidos dan los mismos números, el número más bajo es para el sustituyente que va antes por orden alfabético. Los enlaces dobles del benceno no cuentan para numerar.",
+     "El anillo lleva «cloro» en el carbono 2 y «metil» en el carbono 6, que se escriben en orden alfabético, delante de «benzoil».",
+     "Va entre paréntesis porque tiene sus propios sustituyentes y números. En el orden alfabético del nombre completo cuenta su primera letra: «2-cloro-6-metilbenzoil» va por la «c»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       12,
+       14,
+       16,
+       13
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "2-cloro-6-metilbenzoil",
+      "text": "En el carbono 2 hay un grupo 2-cloro-6-metilbenzoilo: se escribe «2-(2-cloro-6-metilbenzoil)». «2-cloro-6-metilbenzoil» es el [[prefijo]] de un grupo acilo: un C=O unido a la cadena principal por su carbono y, por el otro lado, a un [[anillo]] de [[benceno]]. No es el [[grupo principal]]: el ácido carboxílico va antes que la cetona. El prefijo incluye el carbono del C=O, que no es de la cadena ni del anillo. Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil». Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes; como los dos sentidos dan los mismos números, el número más bajo es para el sustituyente que va antes por orden alfabético. Los enlaces dobles del benceno no cuentan para numerar. El anillo lleva «cloro» en el carbono 2 y «metil» en el carbono 6, que se escriben en orden alfabético, delante de «benzoil». Va entre paréntesis porque tiene sus propios sustituyentes y números. En el orden alfabético del nombre completo cuenta su primera letra: «2-cloro-6-metilbenzoil» va por la «c».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         3,
+         4,
+         5
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         7,
+         8,
+         9,
+         10,
+         15,
+         11,
+         12,
+         14,
+         16,
+         13
+        ],
+        "bonds": [
+         6,
+         7,
+         8,
+         9,
+         10,
+         11,
+         12,
+         13,
+         14,
+         15,
+         16
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "Los halógenos van delante como prefijos, igual que las ramas: nunca cambian la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 2-(2-cloro-6-metilbenzoil)butanoico».",
+     "El nombre completo es «ácido 2-(2-cloro-6-metilbenzoil)butanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       12,
+       14,
+       16,
+       13
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «2-cloro-6-metilbenzoil»"
+     },
+     {
+      "text": "2-cloro-6-metilbenzoil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo 2-cloro-6-metilbenzoilo (8 carbonos)"
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "meaning": "4 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       4,
+       7
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2-cloro-6-metilbenzoil",
+      "kind": "prefix",
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       15,
+       11,
+       12,
+       14,
+       16,
+       13
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       4,
+       5
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "CC(=O)C(C(=O)C1=CC=C(C)C=C1)C(C)=O": {
+  "name": "3-(4-metilbenzoil)pentano-2,4-diona",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 13 carbonos, 14 hidrógenos y 3 átomos de oxígeno (C₁₃H₁₄O₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces, y cada oxígeno con enlace doble ocupa el sitio de dos."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       14,
+       15,
+       5,
+       6,
+       7,
+       8,
+       13,
+       9,
+       12,
+       10,
+       11,
+       3,
+       16
+      ],
+      "bonds": [
+       1,
+       3,
+       14,
+       15,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       2,
+       16
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene 3 grupos C=O (cada uno, un oxígeno unido por un [[enlace doble]] a un carbono que está entre otros dos carbonos). Son [[grupos funcionales|grupo funcional]]: la molécula es una cetona.",
+     "El carbono del C=O es un carbono más de la cadena: se cuenta al buscarla y al numerarla. El oxígeno no forma parte de ella.",
+     "El grupo C=O es el [[grupo principal]]: se nombra con el [[sufijo]] «-ona», al final del nombre (como en «propanona»).",
+     "Aquí hay 2 grupos C=O en la [[cadena principal]], así que el sufijo dice cuántos: «-diona» («di» = 2, «tri» = 3).",
+     "Otro C=O queda fuera de la cadena principal, con su carbono unido a ella o a una rama: forma una rama que empieza en ese carbono (un grupo acilo). Ese no va en el sufijo: se nombra con el [[prefijo]] «4-metilbenzoil-».",
+     "El carbono de ese C=O no se cuenta en la [[cadena principal]]: es el primer carbono de la rama, y el prefijo ya lo incluye. Por eso su C=O no se nombra con «oxo-»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       14,
+       16
+      ],
+      "bonds": [
+       2,
+       16
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       9,
+       12,
+       10,
+       11
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringChain",
+    "title": "Anillo o cadena",
+    "text": [
+     "Tu molécula tiene un [[anillo]] de 6 carbonos (un [[benceno]]) y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.",
+     "Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de grupos C=O. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.",
+     "El anillo no lleva ningún grupo C=O y la mejor cadena abierta lleva 2 grupos C=O: gana la cadena.",
+     "Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra «4-metilbenzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él). Los carbonos del anillo nunca forman parte de la cadena principal."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       10,
+       9,
+       8,
+       7,
+       13,
+       12
+      ],
+      "bonds": [
+       9,
+       8,
+       7,
+       13,
+       12,
+       11
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       5
+      ],
+      "bonds": [
+       1,
+       3,
+       4
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       14,
+       15
+      ],
+      "bonds": [
+       1,
+       3,
+       14,
+       15
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       4,
+       14,
+       15
+      ],
+      "bonds": [
+       4,
+       14,
+       15
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       14,
+       16
+      ],
+      "bonds": [
+       2,
+       16
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "El anillo",
+      "text": "El anillo no lleva ningún grupo C=O.",
+      "highlight": [
+       {
+        "atoms": [
+         10,
+         9,
+         8,
+         7,
+         13,
+         12
+        ],
+        "bonds": [
+         9,
+         8,
+         7,
+         13,
+         12,
+         11
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Cadena 1 de 3",
+      "text": "Esta cadena lleva 2 grupos C=O.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4,
+         5
+        ],
+        "bonds": [
+         1,
+         3,
+         4
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Cadena 2 de 3",
+      "text": "Esta cadena lleva 2 grupos C=O.",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4,
+         14,
+         15
+        ],
+        "bonds": [
+         1,
+         3,
+         14,
+         15
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Cadena 3 de 3",
+      "text": "Esta cadena lleva 2 grupos C=O.",
+      "highlight": [
+       {
+        "atoms": [
+         5,
+         4,
+         14,
+         15
+        ],
+        "bonds": [
+         4,
+         14,
+         15
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos C=O, porque el C=O es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos C=O, gana la más larga.",
+     "El carbono de cada C=O forma parte de la cadena: se cuenta como los demás carbonos. El oxígeno no forma parte de ella.",
+     "Las cadenas que llevan menos grupos C=O quedan descartadas.",
+     "De las cadenas que llevan los 2 grupos C=O, la más larga tiene 5 carbonos. Solo hay una así.",
+     "Ninguna cadena puede llevar todos los grupos C=O: el que queda fuera tiene su carbono unido a la cadena, así que forma una rama que empieza en él (un grupo acilo), y se nombra con «4-metilbenzoil-».",
+     "Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], «4-metilbenzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       14,
+       15
+      ],
+      "bonds": [
+       1,
+       3,
+       14,
+       15
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       14,
+       16
+      ],
+      "bonds": [
+       2,
+       16
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del C=O tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Empieces por donde empieces, salen los mismos números: 2, 3, 4. Todas las formas dan el mismo nombre.",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       14,
+       15
+      ],
+      "bonds": [
+       1,
+       3,
+       14,
+       15
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       9,
+       12,
+       10,
+       11
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      14,
+      4
+     ],
+     [
+      15,
+      5
+     ]
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "Una rama que se une a la cadena principal por el carbono de un C=O es un grupo acilo: su nombre acaba en «-oil» (como «propanoil»), salvo «formil» (un –CHO, 1 carbono) y «acetil» (CH₃–CO–, 2 carbonos).",
+     "En el carbono 3 hay un grupo 4-metilbenzoilo: se escribe «3-(4-metilbenzoil)».",
+     "«4-metilbenzoil» es el [[prefijo]] de un grupo acilo: un C=O unido a la cadena principal por su carbono y, por el otro lado, a un [[anillo]] de [[benceno]]. Es una cetona, como el [[grupo principal]], pero su carbono no está en la cadena principal, así que no puede ir en el sufijo «-ona». El prefijo incluye el carbono del C=O, que no es de la cadena ni del anillo.",
+     "Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil».",
+     "Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes. Los enlaces dobles del benceno no cuentan para numerar.",
+     "El anillo lleva «metil» en el carbono 4, delante de «benzoil».",
+     "Va entre paréntesis porque tiene sus propios sustituyentes y números. En el orden alfabético del nombre completo cuenta su primera letra: «4-metilbenzoil» va por la «m»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       14,
+       15
+      ],
+      "bonds": [
+       1,
+       3,
+       14,
+       15
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       9,
+       12,
+       10,
+       11
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      3
+     ]
+    ],
+    "options": [
+     {
+      "label": "4-metilbenzoil",
+      "text": "En el carbono 3 hay un grupo 4-metilbenzoilo: se escribe «3-(4-metilbenzoil)». «4-metilbenzoil» es el [[prefijo]] de un grupo acilo: un C=O unido a la cadena principal por su carbono y, por el otro lado, a un [[anillo]] de [[benceno]]. Es una cetona, como el [[grupo principal]], pero su carbono no está en la cadena principal, así que no puede ir en el sufijo «-ona». El prefijo incluye el carbono del C=O, que no es de la cadena ni del anillo. Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil». Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes. Los enlaces dobles del benceno no cuentan para numerar. El anillo lleva «metil» en el carbono 4, delante de «benzoil». Va entre paréntesis porque tiene sus propios sustituyentes y números. En el orden alfabético del nombre completo cuenta su primera letra: «4-metilbenzoil» va por la «m».",
+      "highlight": [
+       {
+        "atoms": [
+         1,
+         2,
+         4,
+         14,
+         15
+        ],
+        "bonds": [
+         1,
+         3,
+         14,
+         15
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         5,
+         6,
+         7,
+         8,
+         13,
+         9,
+         12,
+         10,
+         11
+        ],
+        "bonds": [
+         4,
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         11,
+         12,
+         13
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        3
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "Al final va el [[sufijo]] del grupo principal, «-diona», con los números de sus carbonos justo delante.",
+     "«di» quiere decir que hay 2 grupos C=O en la cadena principal.",
+     "La «o» final de «-ano» se queda delante de «-diona», porque empieza por consonante: «3-(4-metilbenzoil)pentano-2,4-diona».",
+     "El nombre completo es «3-(4-metilbenzoil)pentano-2,4-diona»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       1,
+       2,
+       4,
+       14,
+       15
+      ],
+      "bonds": [
+       1,
+       3,
+       14,
+       15
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       9,
+       12,
+       10,
+       11
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       14,
+       16
+      ],
+      "bonds": [
+       2,
+       16
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      1,
+      1
+     ],
+     [
+      2,
+      2
+     ],
+     [
+      4,
+      3
+     ],
+     [
+      14,
+      4
+     ],
+     [
+      15,
+      5
+     ]
+    ],
+    "legend": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «4-metilbenzoil»"
+     },
+     {
+      "text": "4-metilbenzoil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo 4-metilbenzoilo (8 carbonos)"
+     },
+     {
+      "text": "pent",
+      "kind": "stem",
+      "meaning": "5 carbonos en la cadena principal"
+     },
+     {
+      "text": "-ano",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples"
+     },
+     {
+      "text": "2,4",
+      "kind": "locant",
+      "meaning": "carbonos de los grupos C=O"
+     },
+     {
+      "text": "-diona",
+      "kind": "ending",
+      "meaning": "grupo principal: 2 grupos C=O (cetona)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "3",
+      "kind": "locant",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4-metilbenzoil",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       13,
+       9,
+       12,
+       10,
+       11
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "pent",
+      "kind": "stem",
+      "atoms": [
+       1,
+       2,
+       4,
+       14,
+       15
+      ],
+      "bonds": []
+     },
+     {
+      "text": "ano",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       1,
+       3,
+       14,
+       15
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       2,
+       3
+      ],
+      "bonds": [
+       2
+      ]
+     },
+     {
+      "text": ",",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4",
+      "kind": "locant",
+      "atoms": [
+       14,
+       16
+      ],
+      "bonds": [
+       16
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "di",
+      "kind": "multiplier",
+      "atoms": [
+       2,
+       3,
+       14,
+       16
+      ],
+      "bonds": [
+       2,
+       16
+      ]
+     },
+     {
+      "text": "ona",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       14,
+       16
+      ],
+      "bonds": [
+       2,
+       16
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "OC(=O)CNC(=O)C1=CC=C(Cl)C=C1": {
+  "name": "ácido 2-[(4-clorobenzoil)amino]etanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos, 8 hidrógenos, 1 átomo de cloro, 1 átomo de nitrógeno y 3 átomos de oxígeno (C₉H₈ClNO₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. Los átomos de cloro se ven con su símbolo (Cl): son halógenos. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada halógeno o grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono. En el grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono. El nitrógeno unido a dos carbonos se ve como NH: lleva un hidrógeno. Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno. El nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       14,
+       10,
+       13,
+       11,
+       12,
+       3,
+       1
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo amida (–CONH₂, –CONH– o –CON–). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > amida > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que la amida se nombra con un [[prefijo]], delante del nombre.",
+     "La amida está unida a la cadena por su nitrógeno: el carbono del C=O queda del otro lado y empieza un grupo acilo (como «acetil»). Esa amida se nombra con el [[prefijo]] «acilamino-»: el nombre del grupo acilo más «amino», que es el nitrógeno (aquí, «(4-clorobenzoil)amino»).",
+     "Los halógenos nunca son el grupo principal: van delante, como [[prefijos|prefijo]]."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       14,
+       10,
+       13,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringChain",
+    "title": "Anillo o cadena",
+    "text": [
+     "Tu molécula tiene un [[anillo]] de 6 carbonos (un [[benceno]]) y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.",
+     "Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de grupos –COOH. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.",
+     "El anillo no lleva ningún grupo –COOH y la mejor cadena abierta lleva un grupo –COOH: gana la cadena.",
+     "Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra «4-clorobenzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él). Los carbonos del anillo nunca forman parte de la cadena principal."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       10,
+       9,
+       8,
+       14,
+       13
+      ],
+      "bonds": [
+       10,
+       9,
+       8,
+       14,
+       13,
+       12
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "El anillo",
+      "text": "El anillo no lleva ningún grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         11,
+         10,
+         9,
+         8,
+         14,
+         13
+        ],
+        "bonds": [
+         10,
+         9,
+         8,
+         14,
+         13,
+         12
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "La cadena",
+      "text": "Esta cadena lleva un grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Las cadenas que llevan menos grupos –COOH quedan descartadas.",
+     "Solo una cadena lleva el grupo –COOH: tiene 2 carbonos.",
+     "Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], «4-clorobenzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él).",
+     "Los halógenos (flúor, cloro, bromo, yodo) nunca forman parte de la cadena: solo cuentan los carbonos. Van como [[sustituyentes|sustituyente]], con un [[prefijo]] delante del nombre.",
+     "La cadena no puede atravesar el nitrógeno de una amida: el carbono del C=O de «(4-clorobenzoil)amino» queda al otro lado, y el [[prefijo]] ya lo incluye."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 1; opción B: 2. Se comparan uno a uno: en el primer número distinto, 1 es menor que 2. Gana la opción A.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-[(4-clorobenzoil)amino]etanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       14,
+       10,
+       13,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         1
+        ],
+        [
+         2
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        4,
+        2
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        2,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las amidas que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y «amino-» con el mismo número; unidas por su carbono, «carbamoil-» (como «metilcarbamoil»); unidas por su nitrógeno, «acilamino-» (como «acetilamino»).",
+     "En el carbono 2 hay una amida unida por su nitrógeno: se escribe «2-[(4-clorobenzoil)amino]».",
+     "«(4-clorobenzoil)amino» es el [[prefijo]] de una amida unida a la cadena principal por su nitrógeno. No es el [[grupo principal]]: el ácido carboxílico va antes que la amida. Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, «4-clorobenzoil». El prefijo es el nombre del grupo acilo más «amino», que es el nitrógeno.",
+     "Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil».",
+     "Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes. Los enlaces dobles del benceno no cuentan para numerar.",
+     "El anillo lleva «cloro» en el carbono 4, delante de «benzoil».",
+     "Va entre paréntesis porque tiene sus propios sustituyentes y números.",
+     "En el nombre va entre corchetes [ ], porque es un prefijo compuesto y ya lleva paréntesis dentro."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       14,
+       10,
+       13,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "(4-clorobenzoil)amino",
+      "text": "En el carbono 2 hay una amida unida por su nitrógeno: se escribe «2-[(4-clorobenzoil)amino]». «(4-clorobenzoil)amino» es el [[prefijo]] de una amida unida a la cadena principal por su nitrógeno. No es el [[grupo principal]]: el ácido carboxílico va antes que la amida. Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, «4-clorobenzoil». El prefijo es el nombre del grupo acilo más «amino», que es el nitrógeno. Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil». Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes. Los enlaces dobles del benceno no cuentan para numerar. El anillo lleva «cloro» en el carbono 4, delante de «benzoil». Va entre paréntesis porque tiene sus propios sustituyentes y números. En el nombre va entre corchetes [ ], porque es un prefijo compuesto y ya lleva paréntesis dentro.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         14,
+         10,
+         13,
+         11,
+         12
+        ],
+        "bonds": [
+         4,
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         11,
+         12,
+         13,
+         14
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "Los halógenos van delante como prefijos, igual que las ramas: nunca cambian la terminación del nombre.",
+     "La amida que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 2-[(4-clorobenzoil)amino]etanoico».",
+     "El nombre completo es «ácido 2-[(4-clorobenzoil)amino]etanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       14,
+       10,
+       13,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «(4-clorobenzoil)amino»"
+     },
+     {
+      "text": "(4-clorobenzoil)amino",
+      "kind": "prefix",
+      "meaning": "sustituyente: una amida unida por su nitrógeno: el grupo acilo («-oil», «formil», «acetil») más «amino»"
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "[",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4-clorobenzoil)amino",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       14,
+       10,
+       13,
+       11,
+       12
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14
+      ]
+     },
+     {
+      "text": "]",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "OC(=O)CNC(=O)C1=CC=C(CC(C)C)C=C1": {
+  "name": "ácido 2-{[4-(2-metilpropil)benzoil]amino}etanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 13 carbonos, 17 hidrógenos, 1 átomo de nitrógeno y 3 átomos de oxígeno (C₁₃H₁₇NO₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono. En el grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono. El nitrógeno unido a dos carbonos se ve como NH: lleva un hidrógeno. Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno. El nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       17,
+       10,
+       16,
+       11,
+       12,
+       13,
+       14,
+       15,
+       3,
+       1
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo amida (–CONH₂, –CONH– o –CON–). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > amida > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que la amida se nombra con un [[prefijo]], delante del nombre.",
+     "La amida está unida a la cadena por su nitrógeno: el carbono del C=O queda del otro lado y empieza un grupo acilo (como «acetil»). Esa amida se nombra con el [[prefijo]] «acilamino-»: el nombre del grupo acilo más «amino», que es el nitrógeno (aquí, «[4-(2-metilpropil)benzoil]amino»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       17,
+       10,
+       16,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringChain",
+    "title": "Anillo o cadena",
+    "text": [
+     "Tu molécula tiene un [[anillo]] de 6 carbonos (un [[benceno]]) y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.",
+     "Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de grupos –COOH. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.",
+     "El anillo no lleva ningún grupo –COOH y la mejor cadena abierta lleva un grupo –COOH: gana la cadena.",
+     "Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra «4-(2-metilpropil)benzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él). Los carbonos del anillo nunca forman parte de la cadena principal."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       10,
+       9,
+       8,
+       17,
+       16
+      ],
+      "bonds": [
+       10,
+       9,
+       8,
+       17,
+       16,
+       15
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "El anillo",
+      "text": "El anillo no lleva ningún grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         11,
+         10,
+         9,
+         8,
+         17,
+         16
+        ],
+        "bonds": [
+         10,
+         9,
+         8,
+         17,
+         16,
+         15
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "La cadena",
+      "text": "Esta cadena lleva un grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Hay una cadena más larga, de 3 carbonos, pero lleva menos grupos –COOH: con las normas de la IUPAC (2013), el grupo principal manda antes que la longitud.",
+     "Solo una cadena lleva el grupo –COOH: tiene 2 carbonos.",
+     "Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], «4-(2-metilpropil)benzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él).",
+     "La cadena no puede atravesar el nitrógeno de una amida: el carbono del C=O de «[4-(2-metilpropil)benzoil]amino» queda al otro lado, y el [[prefijo]] ya lo incluye."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "Más larga, con menos –COOH",
+      "text": "Esta cadena tiene 3 carbonos, pero no lleva el grupo –COOH. No puede ser la cadena principal.",
+      "highlight": [
+       {
+        "atoms": [
+         12,
+         13,
+         14
+        ],
+        "bonds": [
+         12,
+         13
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 1; opción B: 2. Se comparan uno a uno: en el primer número distinto, 1 es menor que 2. Gana la opción A.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-{[4-(2-metilpropil)benzoil]amino}etanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       17,
+       10,
+       16,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         1
+        ],
+        [
+         2
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        4,
+        2
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        2,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las amidas que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y «amino-» con el mismo número; unidas por su carbono, «carbamoil-» (como «metilcarbamoil»); unidas por su nitrógeno, «acilamino-» (como «acetilamino»).",
+     "En el carbono 2 hay una amida unida por su nitrógeno: se escribe «2-{[4-(2-metilpropil)benzoil]amino}».",
+     "«[4-(2-metilpropil)benzoil]amino» es el [[prefijo]] de una amida unida a la cadena principal por su nitrógeno. No es el [[grupo principal]]: el ácido carboxílico va antes que la amida. Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, «4-(2-metilpropil)benzoil». El prefijo es el nombre del grupo acilo más «amino», que es el nitrógeno.",
+     "Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil».",
+     "Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes. Los enlaces dobles del benceno no cuentan para numerar.",
+     "El anillo lleva «2-metilpropil» en el carbono 4, delante de «benzoil».",
+     "Va entre corchetes [ ] porque tiene sus propios sustituyentes y números, y ya lleva paréntesis dentro.",
+     "En el nombre va entre llaves { }, porque es un prefijo compuesto y ya lleva corchetes y paréntesis dentro."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       17,
+       10,
+       16,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "[4-(2-metilpropil)benzoil]amino",
+      "text": "En el carbono 2 hay una amida unida por su nitrógeno: se escribe «2-{[4-(2-metilpropil)benzoil]amino}». «[4-(2-metilpropil)benzoil]amino» es el [[prefijo]] de una amida unida a la cadena principal por su nitrógeno. No es el [[grupo principal]]: el ácido carboxílico va antes que la amida. Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, «4-(2-metilpropil)benzoil». El prefijo es el nombre del grupo acilo más «amino», que es el nitrógeno. Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil». Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes. Los enlaces dobles del benceno no cuentan para numerar. El anillo lleva «2-metilpropil» en el carbono 4, delante de «benzoil». Va entre corchetes [ ] porque tiene sus propios sustituyentes y números, y ya lleva paréntesis dentro. En el nombre va entre llaves { }, porque es un prefijo compuesto y ya lleva corchetes y paréntesis dentro.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         17,
+         10,
+         16,
+         11,
+         12,
+         13,
+         14,
+         15
+        ],
+        "bonds": [
+         4,
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         11,
+         12,
+         13,
+         14,
+         15,
+         16,
+         17
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La amida que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 2-{[4-(2-metilpropil)benzoil]amino}etanoico».",
+     "El nombre completo es «ácido 2-{[4-(2-metilpropil)benzoil]amino}etanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       17,
+       10,
+       16,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «[4-(2-metilpropil)benzoil]amino»"
+     },
+     {
+      "text": "[4-(2-metilpropil)benzoil]amino",
+      "kind": "prefix",
+      "meaning": "sustituyente: una amida unida por su nitrógeno: el grupo acilo («-oil», «formil», «acetil») más «amino»"
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "{",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "[",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4-(2-metilpropil)benzoil]amino",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       17,
+       10,
+       16,
+       11,
+       12,
+       13,
+       14,
+       15
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17
+      ]
+     },
+     {
+      "text": "}",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "OC(=O)C(CC)C(=O)C1=CC=C(CC(C)C)C=C1": {
+  "name": "ácido 2-[4-(2-metilpropil)benzoil]butanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 15 carbonos, 20 hidrógenos y 3 átomos de oxígeno (C₁₅H₂₀O₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       18,
+       11,
+       17,
+       12,
+       13,
+       14,
+       15,
+       16,
+       3,
+       1
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo C=O que forma una rama que empieza en su carbono (un grupo acilo, de una cetona). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que cada rama que empieza en el carbono de un C=O (un grupo acilo) se nombra con su propio [[prefijo]] (aquí, «4-(2-metilpropil)benzoil-»), delante del nombre.",
+     "El carbono de ese C=O no se cuenta en la [[cadena principal]]: es el primer carbono de la rama, y el prefijo ya lo incluye. Por eso su C=O no se nombra con «oxo-»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       18,
+       11,
+       17,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringChain",
+    "title": "Anillo o cadena",
+    "text": [
+     "Tu molécula tiene un [[anillo]] de 6 carbonos (un [[benceno]]) y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.",
+     "Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de grupos –COOH. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.",
+     "El anillo no lleva ningún grupo –COOH y la mejor cadena abierta lleva un grupo –COOH: gana la cadena.",
+     "Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra «4-(2-metilpropil)benzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él). Los carbonos del anillo nunca forman parte de la cadena principal."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       12,
+       11,
+       10,
+       9,
+       18,
+       17
+      ],
+      "bonds": [
+       11,
+       10,
+       9,
+       18,
+       17,
+       16
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       4,
+       7
+      ],
+      "bonds": [
+       3,
+       6
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "El anillo",
+      "text": "El anillo no lleva ningún grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         12,
+         11,
+         10,
+         9,
+         18,
+         17
+        ],
+        "bonds": [
+         11,
+         10,
+         9,
+         18,
+         17,
+         16
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Cadena 1 de 2",
+      "text": "Esta cadena lleva un grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         3,
+         4,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "Cadena 2 de 2",
+      "text": "Esta cadena lleva un grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         7
+        ],
+        "bonds": [
+         3,
+         6
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Las cadenas que llevan menos grupos –COOH quedan descartadas.",
+     "De las cadenas que llevan el grupo –COOH, la más larga tiene 4 carbonos. Solo hay una así.",
+     "Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], «4-(2-metilpropil)benzoil» (el [[benceno]] con sus propios sustituyentes, junto con el C=O unido a él).",
+     "El carbono del C=O de la rama «4-(2-metilpropil)benzoil» no forma parte de la cadena: es el primer carbono de esa rama (un grupo acilo), y el prefijo ya lo incluye."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 1; opción B: 4. Se comparan uno a uno: en el primer número distinto, 1 es menor que 4. Gana la opción A.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-[4-(2-metilpropil)benzoil]butanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       18,
+       11,
+       17,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         1
+        ],
+        [
+         4
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         3,
+         4,
+         5
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        4,
+        2
+       ],
+       [
+        5,
+        3
+       ],
+       [
+        6,
+        4
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         6,
+         5,
+         4,
+         2
+        ],
+        "bonds": [
+         5,
+         4,
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        6,
+        1
+       ],
+       [
+        5,
+        2
+       ],
+       [
+        4,
+        3
+       ],
+       [
+        2,
+        4
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las ramas que salen de la cadena principal son los [[sustituyentes|sustituyente]]. Cada uno se nombra por sus carbonos y termina en «-il» (o «-iliden» si se une con un enlace doble).",
+     "Una rama que se une a la cadena principal por el carbono de un C=O es un grupo acilo: su nombre acaba en «-oil» (como «propanoil»), salvo «formil» (un –CHO, 1 carbono) y «acetil» (CH₃–CO–, 2 carbonos).",
+     "En el carbono 2 hay un grupo 4-(2-metilpropil)benzoilo: se escribe «2-[4-(2-metilpropil)benzoil]».",
+     "«4-(2-metilpropil)benzoil» es el [[prefijo]] de un grupo acilo: un C=O unido a la cadena principal por su carbono y, por el otro lado, a un [[anillo]] de [[benceno]]. No es el [[grupo principal]]: el ácido carboxílico va antes que la cetona. El prefijo incluye el carbono del C=O, que no es de la cadena ni del anillo.",
+     "Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil».",
+     "Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes. Los enlaces dobles del benceno no cuentan para numerar.",
+     "El anillo lleva «2-metilpropil» en el carbono 4, delante de «benzoil».",
+     "Va entre corchetes [ ] porque tiene sus propios sustituyentes y números, y ya lleva paréntesis dentro. En el orden alfabético del nombre completo cuenta su primera letra: «4-(2-metilpropil)benzoil» va por la «m»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       18,
+       11,
+       17,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "4-(2-metilpropil)benzoil",
+      "text": "En el carbono 2 hay un grupo 4-(2-metilpropil)benzoilo: se escribe «2-[4-(2-metilpropil)benzoil]». «4-(2-metilpropil)benzoil» es el [[prefijo]] de un grupo acilo: un C=O unido a la cadena principal por su carbono y, por el otro lado, a un [[anillo]] de [[benceno]]. No es el [[grupo principal]]: el ácido carboxílico va antes que la cetona. El prefijo incluye el carbono del C=O, que no es de la cadena ni del anillo. Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil». Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1, y siguiendo el anillo en el sentido que da los números más bajos a sus sustituyentes. Los enlaces dobles del benceno no cuentan para numerar. El anillo lleva «2-metilpropil» en el carbono 4, delante de «benzoil». Va entre corchetes [ ] porque tiene sus propios sustituyentes y números, y ya lleva paréntesis dentro. En el orden alfabético del nombre completo cuenta su primera letra: «4-(2-metilpropil)benzoil» va por la «m».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4,
+         5,
+         6
+        ],
+        "bonds": [
+         3,
+         4,
+         5
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         7,
+         8,
+         9,
+         10,
+         18,
+         11,
+         17,
+         12,
+         13,
+         14,
+         15,
+         16
+        ],
+        "bonds": [
+         6,
+         7,
+         8,
+         9,
+         10,
+         11,
+         12,
+         13,
+         14,
+         15,
+         16,
+         17,
+         18
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 2-[4-(2-metilpropil)benzoil]butanoico».",
+     "El nombre completo es «ácido 2-[4-(2-metilpropil)benzoil]butanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": [
+       3,
+       4,
+       5
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       18,
+       11,
+       17,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ],
+     [
+      5,
+      3
+     ],
+     [
+      6,
+      4
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «4-(2-metilpropil)benzoil»"
+     },
+     {
+      "text": "4-(2-metilpropil)benzoil",
+      "kind": "prefix",
+      "meaning": "sustituyente: grupo 4-(2-metilpropil)benzoilo (11 carbonos)"
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "meaning": "4 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       4,
+       7
+      ],
+      "bonds": [
+       6
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "[",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "4-(2-metilpropil)benzoil",
+      "kind": "prefix",
+      "atoms": [
+       7,
+       8,
+       9,
+       10,
+       18,
+       11,
+       17,
+       12,
+       13,
+       14,
+       15,
+       16
+      ],
+      "bonds": [
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15,
+       16,
+       17,
+       18
+      ]
+     },
+     {
+      "text": "]",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "but",
+      "kind": "stem",
+      "atoms": [
+       2,
+       4,
+       5,
+       6
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3,
+       4,
+       5
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "OC(=O)CNC(=O)C1=CC=CC=C1": {
+  "name": "ácido 2-(benzoilamino)etanoico",
+  "steps": [
+   {
+    "id": "count",
+    "title": "Cuenta los carbonos",
+    "text": [
+     "Tu molécula tiene 9 carbonos, 9 hidrógenos, 1 átomo de nitrógeno y 3 átomos de oxígeno (C₉H₉NO₃).",
+     "En el dibujo, cada punta y cada vértice sin letra es un carbono. El oxígeno del grupo –OH se ve como OH: es un oxígeno con su hidrógeno. Cada oxígeno unido a un carbono con un [[enlace doble]] (C=O) se ve como O: no lleva hidrógeno. Los hidrógenos de los carbonos no se dibujan: cada carbono tiene los que necesita para llegar a 4 enlaces; cada grupo –OH ocupa el sitio de un hidrógeno, y cada oxígeno con enlace doble ocupa el sitio de dos. En el grupo –COOH están los dos: el O con enlace doble y el OH, en el mismo carbono. En el grupo amida están los dos: el O con enlace doble y el nitrógeno, en el mismo carbono. El nitrógeno unido a dos carbonos se ve como NH: lleva un hidrógeno. Un nitrógeno forma 3 enlaces: los que no van a un carbono llevan un hidrógeno. El nitrógeno ocupa el sitio de un hidrógeno en cada carbono al que se une."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       13,
+       10,
+       12,
+       11,
+       3,
+       1
+      ],
+      "bonds": [
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       2,
+       1
+      ],
+      "style": "candidate"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "group",
+    "title": "Reconoce el grupo funcional",
+    "text": [
+     "Tu molécula tiene un grupo –COOH: un carbono con un oxígeno unido por un [[enlace doble]] y un grupo –OH, los dos en el mismo carbono. Es un [[grupo funcional]]: la molécula es un ácido carboxílico.",
+     "Los tres átomos forman un solo grupo: el –OH del –COOH no es un alcohol, ni su C=O una cetona.",
+     "El carbono del –COOH solo puede unirse a un carbono más, así que siempre está en un extremo de la cadena. Ese carbono es un carbono más de la cadena: se cuenta al buscarla y al numerarla, y siempre es el carbono 1.",
+     "El grupo –COOH es el [[grupo principal]]: el nombre empieza por la palabra «ácido» y termina con el [[sufijo]] «-oico» (como en «ácido etanoico»).",
+     "También tiene un grupo amida (–CONH₂, –CONH– o –CON–). Cuando hay grupos distintos, solo uno es el [[grupo principal]], y se elige con este orden de la IUPAC (2013): ácido > amida > aldehído > cetona > alcohol.",
+     "Aquí manda el ácido, así que la amida se nombra con un [[prefijo]], delante del nombre.",
+     "La amida está unida a la cadena por su nitrógeno: el carbono del C=O queda del otro lado y empieza un grupo acilo (como «acetil»). Esa amida se nombra con el [[prefijo]] «acilamino-»: el nombre del grupo acilo más «amino», que es el nitrógeno (aquí, «benzoilamino»)."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       13,
+       10,
+       12,
+       11
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "ringChain",
+    "title": "Anillo o cadena",
+    "text": [
+     "Tu molécula tiene un [[anillo]] de 6 carbonos (un [[benceno]]) y, fuera de él, carbonos en cadena abierta. Hay que decidir si la [[cadena principal]] es el anillo o una cadena abierta.",
+     "Con las normas de la IUPAC (2013), lo primero es el [[grupo principal]]: la cadena principal tiene que llevar el mayor número posible de grupos –COOH. Solo si hay empate manda el anillo sobre la cadena abierta, aunque la cadena sea más larga.",
+     "El anillo no lleva ningún grupo –COOH y la mejor cadena abierta lleva un grupo –COOH: gana la cadena.",
+     "Por eso la cadena principal es la cadena abierta, y el anillo entero es un [[sustituyente]]: se nombra «fenil» (el [[benceno]] como sustituyente). Los carbonos del anillo nunca forman parte de la cadena principal."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       11,
+       10,
+       9,
+       8,
+       13,
+       12
+      ],
+      "bonds": [
+       10,
+       9,
+       8,
+       13,
+       12,
+       11
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null,
+    "options": [
+     {
+      "label": "El anillo",
+      "text": "El anillo no lleva ningún grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         11,
+         10,
+         9,
+         8,
+         13,
+         12
+        ],
+        "bonds": [
+         10,
+         9,
+         8,
+         13,
+         12,
+         11
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     },
+     {
+      "label": "La cadena",
+      "text": "Esta cadena lleva un grupo –COOH.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": null
+     }
+    ]
+   },
+   {
+    "id": "groupChain",
+    "title": "Busca la cadena principal",
+    "text": [
+     "La [[cadena principal]] tiene que llevar el mayor número posible de grupos –COOH, porque el –COOH es el [[grupo principal]]. Solo después se mira la longitud: entre las cadenas que llevan más grupos –COOH, gana la más larga.",
+     "El carbono de cada –COOH forma parte de la cadena, en un extremo: se cuenta como los demás carbonos. Sus dos oxígenos no forman parte de ella.",
+     "Las cadenas que llevan menos grupos –COOH quedan descartadas.",
+     "Solo una cadena lleva el grupo –COOH: tiene 2 carbonos.",
+     "Los carbonos del [[anillo]] no forman parte de la cadena: el anillo entero es un [[sustituyente]], «fenil» (el [[benceno]] como sustituyente).",
+     "La cadena no puede atravesar el nitrógeno de una amida: el carbono del C=O de «benzoilamino» queda al otro lado, y el [[prefijo]] ya lo incluye."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": null
+   },
+   {
+    "id": "numbering",
+    "title": "Numera la cadena",
+    "text": [
+     "Numera los carbonos de la [[cadena principal]] de un extremo al otro. Hay que elegir por qué extremo empiezas a contar.",
+     "Lo primero es el [[grupo principal]]: el carbono del –COOH tiene que llevar el número más bajo posible. Después se miran los enlaces dobles y triples, y luego los sustituyentes.",
+     "Regla: los grupos –COOH (el [[grupo principal]]) deben tener los [[localizadores|localizador]] más bajos. Esta regla va antes que la de los enlaces dobles y triples y que la de los sustituyentes. Números: opción A: 1; opción B: 2. Se comparan uno a uno: en el primer número distinto, 1 es menor que 2. Gana la opción A.",
+     "El carbono del grupo –COOH siempre es el 1, así que su número no se escribe: «ácido 2-(benzoilamino)etanoico», nunca «-1-oico».",
+     "Mira los números en el dibujo."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       13,
+       10,
+       12,
+       11
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ]
+    ],
+    "compare": {
+     "labels": [
+      "A",
+      "B"
+     ],
+     "rows": [
+      {
+       "rule": "N0",
+       "label": "Grupos –COOH",
+       "lists": [
+        [
+         1
+        ],
+        [
+         2
+        ]
+       ],
+       "firstDifference": 0,
+       "marks": [
+        [
+         0
+        ],
+        [
+         0
+        ]
+       ],
+       "winners": [
+        0
+       ]
+      }
+     ]
+    },
+    "options": [
+     {
+      "label": "Opción A",
+      "text": "Numeración A: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        2,
+        1
+       ],
+       [
+        4,
+        2
+       ]
+      ]
+     },
+     {
+      "label": "Opción B",
+      "text": "Numeración B: mira dónde queda el 1 en el dibujo.",
+      "highlight": [
+       {
+        "atoms": [
+         4,
+         2
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "candidate"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        1
+       ],
+       [
+        2,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "substituents",
+    "title": "Nombra los sustituyentes",
+    "text": [
+     "Las amidas que no son el [[grupo principal]] también se nombran con [[prefijos|prefijo]]: con su carbono en la cadena, «oxo-» y «amino-» con el mismo número; unidas por su carbono, «carbamoil-» (como «metilcarbamoil»); unidas por su nitrógeno, «acilamino-» (como «acetilamino»).",
+     "En el carbono 2 hay una amida unida por su nitrógeno: se escribe «2-(benzoilamino)».",
+     "«benzoilamino» es el [[prefijo]] de una amida unida a la cadena principal por su nitrógeno. No es el [[grupo principal]]: el ácido carboxílico va antes que la amida. Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, «benzoil». El prefijo es el nombre del grupo acilo más «amino», que es el nitrógeno.",
+     "Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil».",
+     "En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo más «amino»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       13,
+       10,
+       12,
+       11
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13
+      ],
+      "style": "substituent"
+     }
+    ],
+    "locants": [
+     [
+      4,
+      2
+     ]
+    ],
+    "options": [
+     {
+      "label": "benzoilamino",
+      "text": "En el carbono 2 hay una amida unida por su nitrógeno: se escribe «2-(benzoilamino)». «benzoilamino» es el [[prefijo]] de una amida unida a la cadena principal por su nitrógeno. No es el [[grupo principal]]: el ácido carboxílico va antes que la amida. Al otro lado del nitrógeno está el carbono del C=O, que empieza un grupo acilo, «benzoil». El prefijo es el nombre del grupo acilo más «amino», que es el nitrógeno. Con el benceno se llama «benzoil»: sale del nombre del ácido, «ácido benzoico», cambiando «-oico» por «-oil». En el nombre va entre paréntesis, porque es un prefijo compuesto: un grupo más «amino».",
+      "highlight": [
+       {
+        "atoms": [
+         2,
+         4
+        ],
+        "bonds": [
+         3
+        ],
+        "style": "parent"
+       },
+       {
+        "atoms": [
+         5,
+         6,
+         7,
+         8,
+         9,
+         13,
+         10,
+         12,
+         11
+        ],
+        "bonds": [
+         4,
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         11,
+         12,
+         13
+        ],
+        "style": "substituent"
+       }
+      ],
+      "locants": [
+       [
+        4,
+        2
+       ]
+      ]
+     }
+    ]
+   },
+   {
+    "id": "assemble",
+    "title": "Monta el nombre",
+    "text": [
+     "Primero van los sustituyentes, cada uno con sus números y en orden alfabético. Al final va el nombre de la cadena principal.",
+     "Los números se separan entre sí con comas (2,3) y de las letras con guiones (2-metil). Los sustituyentes se escriben pegados a la cadena principal.",
+     "La amida que no es el grupo principal va delante con sus prefijos, igual que las ramas: no cambia la terminación del nombre.",
+     "Al final va el [[sufijo]] del grupo principal, «-oico», sin número.",
+     "El –COOH no lleva número: su carbono siempre es el 1.",
+     "Delante de todo va la palabra «ácido», separada del resto con un espacio: el nombre de un ácido carboxílico siempre empieza así.",
+     "La «o» final de «-ano» se quita delante de «-oico», porque empieza por vocal: «ácido 2-(benzoilamino)etanoico».",
+     "El nombre completo es «ácido 2-(benzoilamino)etanoico»."
+    ],
+    "highlight": [
+     {
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": [
+       3
+      ],
+      "style": "parent"
+     },
+     {
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       13,
+       10,
+       12,
+       11
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13
+      ],
+      "style": "substituent"
+     },
+     {
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ],
+      "style": "parent"
+     }
+    ],
+    "locants": [
+     [
+      2,
+      1
+     ],
+     [
+      4,
+      2
+     ]
+    ],
+    "legend": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "meaning": "la molécula es un ácido carboxílico: su nombre empieza por esta palabra"
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "meaning": "carbono de la cadena principal donde está «benzoilamino»"
+     },
+     {
+      "text": "benzoilamino",
+      "kind": "prefix",
+      "meaning": "sustituyente: una amida unida por su nitrógeno: el grupo acilo («-oil», «formil», «acetil») más «amino»"
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "meaning": "2 carbonos en la cadena principal"
+     },
+     {
+      "text": "-an",
+      "kind": "ending",
+      "meaning": "todos los enlaces son simples (sin la «o» final, delante de «-oico»)"
+     },
+     {
+      "text": "-oico",
+      "kind": "ending",
+      "meaning": "grupo principal: un grupo –COOH (ácido carboxílico)"
+     }
+    ],
+    "parts": [
+     {
+      "text": "ácido",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     },
+     {
+      "text": " ",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "2",
+      "kind": "locant",
+      "atoms": [
+       4,
+       5
+      ],
+      "bonds": [
+       4
+      ]
+     },
+     {
+      "text": "-",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "(",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "benzoilamino",
+      "kind": "prefix",
+      "atoms": [
+       5,
+       6,
+       7,
+       8,
+       9,
+       13,
+       10,
+       12,
+       11
+      ],
+      "bonds": [
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13
+      ]
+     },
+     {
+      "text": ")",
+      "kind": "punct",
+      "atoms": [],
+      "bonds": []
+     },
+     {
+      "text": "et",
+      "kind": "stem",
+      "atoms": [
+       2,
+       4
+      ],
+      "bonds": []
+     },
+     {
+      "text": "an",
+      "kind": "ending",
+      "atoms": [],
+      "bonds": [
+       3
+      ]
+     },
+     {
+      "text": "oico",
+      "kind": "ending",
+      "atoms": [
+       2,
+       3,
+       1
+      ],
+      "bonds": [
+       2,
+       1
+      ]
+     }
+    ]
+   }
+  ]
  }
 }

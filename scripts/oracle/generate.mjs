@@ -38,7 +38,10 @@
  * `benzonitrilo`, `benzamida`, `N-feniletanamida`, `ciano-` / `carbamoil-`
  * on a ring; generateRingNitrilesAmides()), of ring esters (I-40d:
  * `-carboxilato`, `benzoato`, `etanoato de fenilo`, `benzoato de fenilo`,
- * `alcoxicarbonil-` / `aciloxi-` on a ring; generateRingEsters()),
+ * `alcoxicarbonil-` / `aciloxi-` on a ring; generateRingEsters()), of
+ * substituted phenyl / phenoxy prefixes (I-45a: `1-(4-metilfenil)etan-1-ona`;
+ * generateSubstitutedPhenyls()) and of substituted benzoyl prefixes (I-45b:
+ * `ácido 2-(4-metilbenzoil)butanoico`; generateSubstitutedBenzoyls()),
  * plus the list of cycloalkanes in a size range.
  * Development only,
  * never bundled. Deterministic: the same seed always yields the same
@@ -57,7 +60,7 @@ import {
 } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
-import { isSubstitutedPhenyl } from '../../src/naming/render.js';
+import { isSubstitutedPhenyl, ringCarbonylRing } from '../../src/naming/render.js';
 
 /**
  * Creates a seeded pseudo-random generator (mulberry32).
@@ -635,13 +638,28 @@ const PHENYL_BRANCH_GROUPS = Object.freeze(['alcohol', 'ketone', 'amine', 'acid'
 
 /**
  * Tells whether a name or substituent structure cites, at any depth, a
- * substituted `fenil` / `fenoxi` prefix (render.js isSubstitutedPhenyl()).
+ * substituted `fenil` / `fenoxi` prefix (render.js isSubstitutedPhenyl()),
+ * the ring of a `benzoil` prefix left out (I-45b: citesSubstitutedBenzoyl()).
  *
  * @param {{prefixes: object[]}} structure - A name or substituent structure.
  * @returns {boolean} True when such a prefix is cited.
  */
 function citesSubstitutedPhenyl(structure) {
-  return structure.prefixes.some(({ substituent }) => isSubstitutedPhenyl(substituent) || citesSubstitutedPhenyl(substituent));
+  return structure.prefixes.some(({ substituent }) => !substituent.ringCarbonyl
+    && (isSubstitutedPhenyl(substituent) || citesSubstitutedPhenyl(substituent)));
+}
+
+/**
+ * Tells whether a name or substituent structure cites, at any depth, a
+ * substituted `benzoil` prefix (I-45b: `(4-metilbenzoil)`, a ring acyl
+ * prefix whose benzene carries prefixes of its own).
+ *
+ * @param {{prefixes: object[]}} structure - A name or substituent structure.
+ * @returns {boolean} True when such a prefix is cited.
+ */
+function citesSubstitutedBenzoyl(structure) {
+  return structure.prefixes.some(({ substituent }) => (substituent.ringCarbonyl
+    && isSubstitutedPhenyl(ringCarbonylRing(substituent))) || citesSubstitutedBenzoyl(substituent));
 }
 
 /**
@@ -739,6 +757,96 @@ export function generateSubstitutedPhenyls({ count, seed, maxSize = 14 }) {
   } // End of the loop that draws distinct substituted-phenyl molecules
   return molecules;
 } // End of function generateSubstitutedPhenyls()
+
+/** Principal groups put on the chain of generateSubstitutedBenzoyls() (all senior to the benzoyl ketone but the ketone). */
+const BENZOYL_CHAIN_GROUPS = Object.freeze(['acid', 'acid', 'aldehyde', 'amide', 'nitrile', 'ketone']);
+
+/**
+ * Generates up to `count` distinct (by canonical key) molecules whose
+ * benzene ring is the ring of a substituted `benzoil` prefix of a chain
+ * parent (design.md §14.1, I-45b: `ácido 2-(4-metilbenzoil)butanoico`,
+ * `3-(4-metilbenzoil)pentano-2,4-diona`, `ácido
+ * 2-[(4-clorobenzoil)amino]etanoico`): a random benzene with one to four
+ * prefix groups (randomBenzene(): branches, halogens, alkoxy groups, either
+ * Kekulé drawing), then, on a free ring atom, a C=O carbon X bonded either
+ * to a carbon that carries a short chain and a –COOH, –CHO, amide, –C≡N or
+ * acetyl group (on that carbon or at the chain end), or to an amide N whose
+ * chain ends in a –COOH (the `acilamino` prefix). Only molecules valid for
+ * naming, named in every prefix style with a substituted benzoyl prefix,
+ * are kept (when the chain reaches X, X is a chain carbon with an `oxo` and
+ * the ring a substituted phenyl: generateSubstitutedPhenyls()'s scope).
+ *
+ * @param {{count: number, seed: number, maxSize?: number}} options - How many, the seed and the largest carbon count (default 14).
+ * @returns {object[]} The molecules.
+ */
+export function generateSubstitutedBenzoyls({ count, seed, maxSize = 14 }) {
+  const random = seededRandom(seed * 5023 + 89);
+  const seen = new Set();
+  const molecules = [];
+  let attempts = 0;
+  while (molecules.length < count && attempts < count * 60 && maxSize >= 10) {
+    attempts += 1;
+    const chainSize = randomInt(random, 1, Math.min(4, maxSize - 9));
+    const mol = randomBenzene(random, {
+      extra: randomInt(random, 0, Math.max(0, maxSize - 9 - chainSize)),
+      kekule: random() < 0.5 ? 1 : 2,
+      unsaturation: random() * 0.3,
+      branchiness: 0.2 + random() * 0.8,
+      groups: randomInt(random, 1, 4),
+      hetero: 0.3 + random() * 0.6,
+    });
+    const ring = [...mol.atoms.keys()].slice(0, 6); // randomBenzene() adds the ring atoms first.
+    const free = ring.filter((id) => adjacency(mol).get(id).length === 2);
+    if (free.length === 6 || free.length === 0) {
+      continue; // No ring prefix (a carbon group may get no carbon), or no room for the benzoyl.
+    }
+    const x = addAtom(mol);
+    addBond(mol, free[Math.floor(random() * free.length)], x, 1);
+    addBond(mol, x, addAtom(mol, {}, 'O'), 2);
+    let kind = BENZOYL_CHAIN_GROUPS[Math.floor(random() * BENZOYL_CHAIN_GROUPS.length)];
+    let site;
+    if (random() < 0.2) {
+      // `(4-clorobenzoil)amino` on an acid chain: X–NH–chain–COOH.
+      const nitrogen = addAtom(mol, {}, 'N');
+      addBond(mol, x, nitrogen, 1);
+      growSideChain(mol, random, nitrogen, chainSize, 0.3);
+      site = mol.nextAtomId - 1;
+      kind = 'acid';
+    } else {
+      // X on a carbon that also carries the chain: the group on that carbon or at the chain end.
+      const carbon = addAtom(mol);
+      addBond(mol, x, carbon, 1);
+      growSideChain(mol, random, carbon, chainSize, 0.4);
+      site = random() < 0.5 ? carbon : mol.nextAtomId - 1;
+    }
+    if (bondOrderSum(mol, site) >= CARBON_VALENCE) {
+      continue;
+    }
+    const result = cloneMolecule(mol);
+    if (kind === 'ketone') {
+      // An acetyl group, `3-(4-metilbenzoil)pentano-2,4-diona`-like.
+      const carbon = addAtom(result);
+      addBond(result, site, carbon, 1);
+      addBond(result, carbon, addAtom(result, {}, 'O'), 2);
+      addBond(result, carbon, addAtom(result), 1);
+    } else {
+      hangRingGroup(result, random, site, kind, randomInt(random, 0, 1));
+    }
+    if (validateForNaming(result)) {
+      continue; // Out of scope (an ester-like O–C=O, a group refused with a ring…).
+    }
+    const named = PREFIX_STYLES.map((prefixStyle) => nameMolecule(result, { prefixStyle }));
+    if (!named.every((r) => r.ok) || named[0].structure.parentKind !== 'chain' || !citesSubstitutedBenzoyl(named[0].structure)) {
+      continue; // Refused by the engine in some style, or the C=O is in the chain (a substituted phenyl).
+    }
+    const key = canonicalKey(result);
+    if (!seen.has(key)) {
+      seen.add(key);
+      molecules.push(result);
+    }
+  } // End of the loop that draws distinct substituted-benzoyl molecules
+  return molecules;
+} // End of function generateSubstitutedBenzoyls()
 
 /**
  * Copies a hydrocarbon and replaces some of its hydrogens by halogens: each

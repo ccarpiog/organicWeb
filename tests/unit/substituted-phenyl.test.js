@@ -11,7 +11,7 @@
  * `acetofenona`, `alcohol bencílico` or `bencilamina` for a substituted
  * phenyl; the acetic forms kept), Kekulé and atom-id invariance, the
  * explanation, the refusals that stay (two substituted rings, substituted
- * benzoyl, esters with a substituted ring, a junior group on the ring,
+ * benzoyl (named since I-45b), esters with a substituted ring, a junior group on the ring,
  * groups on two branches) and the oracle generator.
  */
 
@@ -20,7 +20,7 @@ import assert from 'node:assert/strict';
 import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
 import {
   validateForNaming, substitutedPhenylOnly, phenylParentError, SUBSTITUTED_BENZENE_ESTER_MESSAGE,
-  SUBSTITUTED_BENZOYL_MESSAGE, polysubstitutedBenzeneMessage,
+  polysubstitutedBenzeneMessage,
 } from '../../src/model/validate.js';
 import { perceiveRings } from '../../src/model/rings.js';
 import { nameMolecule } from '../../src/naming/index.js';
@@ -213,13 +213,9 @@ test('out-of-scope molecules stay refused with accurate messages', () => {
     const result = nameMolecule(parseSmiles(smiles));
     assert.equal(`${result.error.code} ${result.error.ringKind}`, 'RING_SYSTEM several', smiles);
   }
-  // A substituted benzoyl prefix (I-45b).
-  for (const smiles of ['OC(=O)C(CC)C(=O)C1=CC=C(C)C=C1', 'OC(=O)CNC(=O)C1=CC=C(C)C=C1']) {
-    const result = nameMolecule(parseSmiles(smiles));
-    assert.equal(`${result.error.code} ${result.error.ringReason}`, 'CYCLE substitutedBenzoyl', smiles);
-    assert.equal(result.error.message, SUBSTITUTED_BENZOYL_MESSAGE, smiles);
-    assert.equal(result.error.atoms.length, 6, smiles);
-  }
+  // A substituted benzoyl prefix is named since I-45b (tests/unit/substituted-benzoyl.test.js).
+  assert.equal(named('OC(=O)C(CC)C(=O)C1=CC=C(C)C=C1').name, 'ácido 2-(4-metilbenzoil)butanoico');
+  assert.equal(named('OC(=O)CNC(=O)C1=CC=C(C)C=C1').name, 'ácido 2-[(4-metilbenzoil)amino]etanoico');
   assert.equal(named('OC(=O)C(CC)C(=O)C1=CC=CC=C1').name, 'ácido 2-benzoilbutanoico', 'an unsubstituted benzoyl is still named');
   // Esters with a substituted ring (I-45c), the ring-split ones and an ester cited as a prefix included.
   for (const smiles of ['CC(=O)OC1=CC=C(C)C=C1', 'CCOC(=O)C1=CC=C(C)C=C1', 'ClC1=CC=C(C=C1)C(=O)OC1=CC=CC=C1',
@@ -234,7 +230,7 @@ test('out-of-scope molecules stay refused with accurate messages', () => {
     const result = nameMolecule(mol);
     assert.equal(`${result.error.code} ${result.error.ringReason}`, 'CYCLE polysubstitutedBenzene', smiles);
     assert.equal(result.error.message, polysubstitutedBenzeneMessage(count), smiles);
-    assert.match(result.error.message, /como sustituyente \(fenil o fenoxi\)/);
+    assert.match(result.error.message, /como sustituyente \(fenil, fenoxi o benzoil\)/);
     assert.equal(substitutedPhenylOnly(mol), false, smiles);
   }
   // The safety net for a ring that wins the parent choice after all: the polysubstituted-benzene message.

@@ -44,8 +44,9 @@ seed (mulberry32), within the naming size caps, and keeps only those the
 engine can name. With `--count N`, `run.mjs` draws N acyclic hydrocarbons,
 one cycloalkane per ring size in the carbon range, N/4 phenols and
 benzenamines, N/4 substituted benzoic acids, benzaldehydes, benzonitriles
-and benzamides, N/4 benzenes with several identical principal groups, and
-N/2 of every other family:
+and benzamides, N/4 benzenes with several identical principal groups, N/4
+molecules with a substituted phenyl prefix, N/8 with a substituted benzoyl
+prefix, and N/2 of every other family:
 
 | Generator | Family (design.md §13.4 phase) |
 |---|---|
@@ -74,6 +75,7 @@ N/2 of every other family:
 | `generateRingNitrilesAmides()` | `-carbonitrilo`, `-carboxamida`, `benzonitrilo`, `benzamida`, `N-feniletanamida` (I-40c) |
 | `generateRingEsters()` | `-carboxilato`, `benzoato`, `etanoato de fenilo`, `benzoato de fenilo` (I-40d) |
 | `generateSubstitutedPhenyls()` | a benzene with 1–4 branch, halogen or alkoxy prefixes as a substituted `fenil` / `fenoxi` prefix of a chain carrying the principal group (bonded through a carbon, an ether O or an amine N, or an N-aryl amide), either Kekulé drawing: `1-(4-metilfenil)etan-1-ona`, `2-(4-metilfenoxi)etan-1-ol`, `N-(4-metilfenil)etanamida`, with the acetic forms (`2-(3-methylphenyl)acetic acid`) checked too (I-45a); keeps only molecules named with such a prefix in every style |
+| `generateSubstitutedBenzoyls()` | a benzene with 1–4 branch, halogen or alkoxy prefixes as the ring of a substituted `benzoil` prefix: a C=O carbon off the parent chain, on a carbon carrying a –COOH, –CHO, amide, –C≡N or acetyl group, or on the N of an `acilamino` prefix of an acid, either Kekulé drawing: `ácido 2-(4-metilbenzoil)butanoico`, `3-(4-metilbenzoil)pentano-2,4-diona`, `ácido 2-[(4-clorobenzoil)amino]etanoico` (I-45b, N/8 molecules); keeps only molecules named with such a prefix in every style |
 
 Most families also mix in other groups at random (OH, C=O, halogens, ethers,
 amines…), so the seniority rules and the prefix forms are exercised together.
@@ -82,7 +84,7 @@ rings) are never generated. `randomBenzene()` with its defaults (one group)
 keeps its original draws; the other families that start from it may still
 add groups that make a benzene the engine refuses for now (an ester beside
 a substituted ring, groups on the ring and on a side chain at once, groups
-on two side chains, a substituted benzoyl, design.md §14), and those
+on two side chains, design.md §14), and those
 families drop every refused molecule; since I-45a a substituted phenyl on a
 functional chain is named, so `generateRingSubstituents()` keeps such
 molecules when a halogen lands on its benzene.

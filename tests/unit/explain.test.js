@@ -227,6 +227,13 @@ const SNAPSHOT_SMILES = [
   'OCCOC1=CC=C(C)C=C1', // 2-(4-metilfenoxi)etan-1-ol: substituted phenoxy (I-45a)
   'CC(=O)NC1=CC=C(C)C=C1', // N-(4-metilfenil)etanamida: substituted phenyl on the amide N (I-45a)
   'OCCC1=C(C)C=CC=C1Cl', // 2-(2-cloro-6-metilfenil)etan-1-ol: phenyl locants by alphabetical order (I-45a)
+  'OC(=O)C(CC)C(=O)C1=CC=C(C)C=C1', // ácido 2-(4-metilbenzoil)butanoico: substituted benzoyl (I-45b)
+  'OC(=O)C(CC)C(=O)C1=C(C)C=CC=C1Cl', // ácido 2-(2-cloro-6-metilbenzoil)butanoico: benzoyl locants by alphabetical order (I-45b)
+  'CC(=O)C(C(=O)C1=CC=C(C)C=C1)C(C)=O', // 3-(4-metilbenzoil)pentano-2,4-diona: substituted benzoyl on a ketone parent (I-45b)
+  'OC(=O)CNC(=O)C1=CC=C(Cl)C=C1', // ácido 2-[(4-clorobenzoil)amino]etanoico: substituted benzoyl in an acilamino prefix (I-45b)
+  'OC(=O)CNC(=O)C1=CC=C(CC(C)C)C=C1', // ácido 2-{[4-(2-metilpropil)benzoil]amino}etanoico: nested enclosure, braces and brackets (I-45b)
+  'OC(=O)C(CC)C(=O)C1=CC=C(CC(C)C)C=C1', // ácido 2-[4-(2-metilpropil)benzoil]butanoico: benzoyl in brackets (I-45b)
+  'OC(=O)CNC(=O)C1=CC=CC=C1', // ácido 2-(benzoilamino)etanoico: plain benzoyl in an acilamino prefix, parentheses (I-40c, I-45b)
 ];
 
 /**
