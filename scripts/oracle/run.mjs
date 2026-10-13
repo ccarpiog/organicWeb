@@ -3,9 +3,9 @@
  * bundled.
  *
  * Generates seeded random acyclic hydrocarbons and half as many random
- * substituted or unsaturated monocycles and a tenth as many benzene
- * derivatives (benzene and monosubstituted benzenes, either Kekulé
- * drawing), half as many halogen derivatives of such molecules (F, Cl, Br,
+ * substituted or unsaturated monocycles and half as many benzene
+ * derivatives (benzene and benzenes with 1–6 hydrocarbon, halogen or alkoxy
+ * groups at random ring positions, either Kekulé drawing; I-42), half as many halogen derivatives of such molecules (F, Cl, Br,
  * I; halomethanes and haloethanes included, design.md §13.4 I-30), half as
  * many alcohols (OH groups on chains or on ring carbons, phenol, some also
  * halogenated; I-31), half as many aldehydes and ketones (C=O on chains or
@@ -67,7 +67,7 @@ import { fileURLToPath } from 'node:url';
 import { writeSmiles } from '../../src/model/smiles.js';
 import { nameMolecule, amineClassName } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
-import { traditionalNameId } from '../../src/naming/aromatic.js';
+import { traditionalNameId, retainedPolyIds } from '../../src/naming/aromatic.js';
 import { carbonylTraditionalId } from '../../src/naming/principal.js';
 import { renderName } from '../../src/naming/render.js';
 import { lexiconEn } from '../../src/naming/lexicon.en.js';
@@ -123,6 +123,30 @@ export function parseArgs(argv) {
 } // End of function parseArgs()
 
 /**
+ * The extra names of a benzene with prefixes only (design.md §14.4, §14.5):
+ * the retained xylene / mesitylene names (aromatic.js retainedPolyIds()) and
+ * the old orto/meta/para form (style 'positional', `o-dichlorobenzene`: the
+ * English name with its leading `1,n-` replaced by the letter, as the
+ * Spanish alternative does).
+ *
+ * @param {object} result - A naming result (NamingSuccess).
+ * @returns {{style: string, spanish: string, english: string, error: null}[]} The entries (empty when none applies).
+ */
+function polyBenzeneNames(result) {
+  const entries = [];
+  const retained = result.alternatives.filter((a) => a.style === 'traditional');
+  retainedPolyIds(result.structure).forEach((id, i) => {
+    entries.push({ style: 'traditional', spanish: retained[i].name, english: lexiconEn.traditionalName(id), error: null });
+  });
+  const positional = result.alternatives.find((a) => a.style === 'positional');
+  if (positional) {
+    const english = englishName(result.structure).replace(/^1,([234])-/, (_, n) => `${lexiconEn.positionalLetters[n]}-`);
+    entries.push({ style: 'positional', spanish: positional.name, english, error: null });
+  }
+  return entries;
+} // End of function polyBenzeneNames()
+
+/**
  * Names every molecule in every prefix style and renders the English names.
  * A benzene derivative with a traditional name retained by IUPAC 2013
  * (aromatic.js traditionalNameId(): `toluene`, `styrene`) gets one more
@@ -136,7 +160,9 @@ export function parseArgs(argv) {
  * English by naming/index.js amineClassName() with the English lexicon
  * (`ethylmethylamine`), and so is the systematic form of benzoic acid and
  * benzaldehyde (style 'benzeneSystematic', I-40b: `benzenecarboxylic acid`,
- * `benzenecarbaldehyde`; I-40c: `benzenecarboxamide`, `benzenecarbonitrile`).
+ * `benzenecarbaldehyde`; I-40c: `benzenecarboxamide`, `benzenecarbonitrile`),
+ * and so are the xylene / mesitylene names and the orto/meta/para form of a
+ * benzene with prefixes only (polyBenzeneNames(), I-42).
  *
  * @param {object[]} molecules - The molecules.
  * @returns {{mol: object, smiles: string, names: {style: string, spanish: string, english: string|null, error: string|null}[]}[]} One case per molecule.
@@ -161,6 +187,9 @@ export function buildCases(molecules) {
           ? renderName(result.structure, lexiconEn, { traditional }).name
           : lexiconEn.traditionalName(traditional);
         names.push({ style: 'traditional', spanish, english, error: null });
+      }
+      if (first) {
+        names.push(...polyBenzeneNames(result));
       }
       const located = first ? result.alternatives.find((a) => a.style === 'locants') : null;
       if (located) {
@@ -284,7 +313,7 @@ export async function main(argv) {
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
   const benzenes = generateBenzenes({
-    count: Math.ceil(options.count / 10), seed: options.seed, minSize: options.min, maxSize: options.max,
+    count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,
   });
   const halogenated = generateHalogenated({
     count: Math.ceil(options.count / 2), seed: options.seed, minSize: options.min, maxSize: options.max,

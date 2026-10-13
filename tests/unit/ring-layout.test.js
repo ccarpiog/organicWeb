@@ -5,18 +5,23 @@
  * top vertex and the numbering running clockwise on screen (y down), its
  * side chains leave outwards and the drawing is clear (no two atoms closer
  * than half a bond length, no crossings), deterministic and independent of
- * atom ids, insertion order and input coordinates.
+ * atom ids, insertion order and input coordinates. Benzenes with two to six
+ * substituents (I-42) are laid out the same way, and the 90° view keeps the
+ * normal drawing of any ring.
  */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseSmiles } from '../../src/model/smiles.js';
+import { parseSmiles, writeSmiles } from '../../src/model/smiles.js';
+import { perceiveRings } from '../../src/model/rings.js';
 import { moleculeToJSON } from '../../src/model/molecule.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { canonicalLayout, closestApproach, layoutProblems } from '../../src/layout/canonical.js';
 import { isSingleRing, ringBranchAngles, ringRadius, RING_START_ANGLE, RING_DIRECTION } from '../../src/layout/rings.js';
 import { BOND_LENGTH } from '../../src/editor/geometry.js';
-import { scrambleMolecule, seededRandom } from '../../scripts/oracle/generate.mjs';
+import { scrambleMolecule, seededRandom, generateBenzenes } from '../../scripts/oracle/generate.mjs';
+import { rightAngleLayout } from '../../src/layout/rightangle.js';
+import { projectRightAngles, rightAngleNote, FALLBACK_NOTES } from '../../src/ui/canvasbar.js';
 
 /**
  * Topology of a molecule (ids, elements, bonds, orders) as a string.
@@ -329,3 +334,59 @@ test('random single carbocycles with side chains always get a clear layout (seed
   }
   assert.ok(laid >= 500, `${laid} random rings laid out`);
 });
+
+test('benzenes with two to six substituents are ordered by the ring strategy (I-42), in either Kekulé drawing', () => {
+  const cases = [
+    ['CC1=CC=CC=C1C', '1,2-dimetilbenceno'],
+    ['ClC1=CC=CC(Br)=C1', '1-bromo-3-clorobenceno'],
+    ['CC(C)C1=CC=C(C(C)C)C=C1', '1,4-diisopropilbenceno'],
+    ['CC1=CC(C)=CC(C)=C1', '1,3,5-trimetilbenceno'],
+    ['CCC1=CC(OC)=CC(C(C)C)=C1', '1-etil-3-isopropil-5-metoxibenceno'],
+    ['C=CC1=C(F)C(Cl)=C(C#C)C=C1', '2-cloro-4-etenil-1-etinil-3-fluorobenceno'],
+    ['CC1=C(C)C(C)=C(OCC)C(C(C)(C)C)=C1', '1-tert-butil-2-etoxi-3,4,5-trimetilbenceno'],
+    ['CC1=C(C)C(C)=C(C)C(C)=C1C', 'hexametilbenceno'],
+    ['CCC1=C(Cl)C(C)=C(Br)C(OC)=C1I', '1-bromo-3-cloro-4-etil-2-metil-6-metoxi-5-yodobenceno'],
+    ['CCCCC1=C(CCCC)C(CCCC)=C(CCCC)C(CCCC)=C1CCCC', 'hexabutilbenceno'],
+  ];
+  for (const [smiles, name] of cases) {
+    const mol = parseSmiles(smiles);
+    const swapped = parseSmiles(smiles);
+    for (const id of perceiveRings(swapped).rings[0].bonds) {
+      swapped.bonds.get(id).order = 3 - swapped.bonds.get(id).order;
+    }
+    for (const [drawing, label] of [[mol, smiles], [swapped, `${smiles} (other Kekulé drawing)`]]) {
+      const { out, result } = checkRing(drawing, label);
+      assert.equal(result.name, name, label);
+      const top = out.atoms.get(result.parent.atoms[0]);
+      for (const id of result.parent.atoms) {
+        assert.ok(top.y <= out.atoms.get(id).y + 1e-9, `${label}: locant 1 is the top ring vertex`);
+      }
+      for (const bond of out.bonds.values()) {
+        assert.equal(bond.order, drawing.bonds.get(bond.id).order, `${label}: bond orders kept as drawn`);
+      }
+    }
+  } // End of the loop over the benzenes
+}); // End of test 'benzenes with two to six substituents are ordered…'
+
+test('random benzenes with one to six groups always get a clear layout and no 90° drawing (seeded, I-42)', () => {
+  const seen = new Set();
+  for (const [seed, maxSize] of [[42, 14], [43, 24]]) {
+    for (const mol of generateBenzenes({ count: 300, seed, minSize: 6, maxSize })) {
+      const smiles = writeSmiles(mol);
+      const result = nameMolecule(mol);
+      assert.ok(result.ok, `${smiles} names`);
+      const out = canonicalLayout(mol, result);
+      assert.ok(layoutProblems(out).ok, `${smiles}: clear layout`);
+      assertRingInteriorEmpty(out, result.parent.atoms, smiles);
+      seen.add(result.structure.prefixes.reduce((n, g) => n + g.locants.length, 0));
+      assert.deepEqual(rightAngleLayout(mol, result), { ok: false, reason: 'CYCLE' }, `${smiles}: 90° falls back`);
+    }
+  } // End of the loop over the seeds
+  assert.deepEqual([...seen].sort(), [0, 1, 2, 3, 4, 5, 6], 'every number of groups is laid out');
+  const xylene = parseSmiles('CC1=CC=CC=C1C');
+  const projected = projectRightAngles(xylene);
+  assert.equal(projected.reason, 'CYCLE');
+  assert.equal(rightAngleNote(projected), FALLBACK_NOTES.CYCLE);
+  assert.equal(FALLBACK_NOTES.CYCLE, 'Hay un anillo: se ve el dibujo normal.');
+}); // End of test 'random benzenes with one to six groups…'
+

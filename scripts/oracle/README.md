@@ -42,14 +42,14 @@ the last one is `passed: … failed: … skipped: … adapter failures: …`.
 `generate.mjs` draws distinct (by canonical key) random molecules from the
 seed (mulberry32), within the naming size caps, and keeps only those the
 engine can name. With `--count N`, `run.mjs` draws N acyclic hydrocarbons,
-N/10 benzenes, one cycloalkane per ring size in the carbon range, and N/2 of
-every other family:
+one cycloalkane per ring size in the carbon range, and N/2 of every other
+family:
 
 | Generator | Family (design.md §13.4 phase) |
 |---|---|
 | `generateMolecules()` | acyclic hydrocarbons: alkanes, alkenes, alkynes, branched (v1) |
 | `generateMonocycles()` | one ring of 3–10 C with side chains and ring/chain unsaturation (I-26) |
-| `generateBenzenes()` | benzene and monosubstituted benzenes, either Kekulé drawing (I-28) |
+| `generateBenzenes()` | benzene and benzenes with 1–6 groups at random ring positions — hydrocarbon branches (unsaturated and branched ones too: `etenil`, `isopropil`…), halogens and alkoxy groups —, either Kekulé drawing (I-28, I-42); never filtered by a refusal, so a refused one counts as a naming failure |
 | `generateCycloalkanes()` | one cycloalkane per ring size, `cyclopropane` … `cyclotriacontane` |
 | `generateHalogenated()` | F, Cl, Br, I in place of random hydrogens, halomethanes included (I-30) |
 | `generateAlcohols()` | OH groups on chains or ring carbons, phenol (I-31) |
@@ -72,7 +72,11 @@ every other family:
 Most families also mix in other groups at random (OH, C=O, halogens, ethers,
 amines…), so the seniority rules and the prefix forms are exercised together.
 Out-of-scope structures (stereo, charges, heterocycles, fused/bridged/spiro
-rings, polysubstituted benzenes) are never generated.
+rings) are never generated. `randomBenzene()` with its defaults (one group)
+keeps its original draws; the other families that start from it may still
+add groups that make a benzene the engine refuses for now (an OH, amine,
+–COOH, –CHO, –CN, amide or ester on a ring that carries other groups,
+design.md §14), and those families drop every refused molecule.
 
 ## How it works
 
@@ -81,8 +85,10 @@ rings, polysubstituted benzenes) are never generated.
    `substituted`), plus, when there is one, its traditional name (`toluene`,
    `acetic acid`, `methyl acetate`, `aniline`, `acetamide`, `acetonitrile`,
    `benzoic acid`…), its `locants` form, its systematic benzene form
-   (`benzenecarboxylic acid`) and the functional-class name of a simple amine
-   (`ethylmethylamine`). The same name structures are rendered in English
+   (`benzenecarboxylic acid`), the functional-class name of a simple amine
+   (`ethylmethylamine`) and, for a benzene with prefixes only, its retained
+   `xylene` / `mesitylene` name and its old orto/meta/para form
+   (`o-dichlorobenzene`, `polyBenzeneNames()` in `run.mjs`). The same name structures are rendered in English
    with `src/naming/lexicon.en.js` (`englishName()` in `compare.mjs`) — never
    a translation of the Spanish string.
 3. `opsin.mjs` sends all English names to OPSIN in one batch (`-osmi`).

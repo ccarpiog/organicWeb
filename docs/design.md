@@ -1727,11 +1727,12 @@ unchanged):
   hides these marks too.
 - After naming, a hint offers it: "¿Quieres ver la cadena principal
   ordenada?", or for a named ring "¿Quieres ver el anillo ordenado?". A
-  molecule that cannot be named (polysubstituted benzenes, ring systems,
-  heteroatoms…) gets no hint and the button shows its naming error.
-  Benzene and monosubstituted benzenes (I-28) are ordered by the ring
-  strategy like any named single carbocycle (locant 1, the substituted
-  carbon, on top); their bond orders are kept as drawn.
+  molecule that cannot be named (ring systems, out-of-scope groups…) gets
+  no hint and the button shows its naming error.
+  Benzene and its named derivatives with one to six substituents (I-28,
+  I-42) are ordered by the ring strategy like any named single carbocycle
+  (locant 1 on top, numbering clockwise); their bond orders are kept as
+  drawn.
 - While the 90° drawing is shown (§6.3) "Ordenar dibujo" and its hint are disabled (the
   change would be invisible there; the message "Desactiva los ángulos rectos
   para ordenar el dibujo." answers a call anyway). The 90° view already puts
@@ -1751,9 +1752,11 @@ OPSIN (open-source name→structure, Java) reads English IUPAC names.
 2. A seeded random generator produces valid acyclic hydrocarbons (4–14 C,
    random branching and unsaturation within valence), half as many random
    monocycles (a 3–10 C ring with random side chains and ring/side-chain
-   double and triple bonds, I-26), a tenth as many benzene derivatives
-   (benzene, then random monosubstituted benzenes in either Kekulé drawing,
-   I-28; their traditional names `toluene` / `styrene` are checked too),
+   double and triple bonds, I-26), half as many benzene derivatives
+   (benzene, then random benzenes with 1–6 hydrocarbon, halogen or alkoxy
+   groups at random ring positions in either Kekulé drawing, I-28, I-42;
+   none dropped for a refusal; their traditional names `toluene` / `styrene`
+   / `xylene` / `mesitylene` are checked too),
    half as many halogen derivatives (I-30, `generateHalogenated()`: random
    hydrocarbons of 1 C upward, monocycles and benzenes whose hydrogens are
    replaced at random by F, Cl, Br or I, `halogenate()`), half as many

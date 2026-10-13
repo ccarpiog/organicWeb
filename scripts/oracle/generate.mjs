@@ -2,7 +2,8 @@
  * @file Seeded random generator of valid acyclic hydrocarbons for the OPSIN
  * oracle and the graph-invariance tests (design.md §8), of valid
  * substituted and unsaturated monocycles (design.md §13.4 I-26), of
- * benzene and monosubstituted benzenes in either Kekulé drawing (I-28),
+ * benzene and benzenes with 1–6 hydrocarbon, halogen or alkoxy groups in
+ * either Kekulé drawing (I-28, I-42),
  * of halogen derivatives of all of those (I-30: F, Cl, Br, I in place of
  * random hydrogens, one- to three-carbon parents included), of alcohols
  * (I-31: OH groups in place of random hydrogens — on ring carbons only for a
@@ -250,26 +251,25 @@ export function generateMonocycles({ count, seed, minSize = 4, maxSize = 14 }) {
 } // End of function generateMonocycles()
 
 /**
- * Builds one random benzene derivative: a Kekulé hexagon (ring bonds
- * alternating, the first one double or single per `kekule`) with, when
- * `extra` > 0, one acyclic side chain of `extra` carbons on a ring atom
- * (grown and unsaturated at random like randomHydrocarbon(); the ring bonds
- * are never changed, so the ring stays a benzene ring).
+ * Grows one random acyclic carbon chain of `size` carbons from `start` (the
+ * first carbon bonded to `start`, each next one to a random carbon of the
+ * chain with a free valence, favouring the last one added unless
+ * `branchiness` says otherwise).
  *
+ * @param {object} mol - The molecule (mutated).
  * @param {function(): number} random - Seeded generator.
- * @param {{extra: number, kekule?: 1|2, unsaturation?: number, branchiness?: number}} options - Side-chain carbons, order of the first ring bond, probability of raising a side-chain bond, branching probability.
- * @returns {object} The molecule (benzene or a monosubstituted benzene).
+ * @param {number} start - The atom the chain hangs from.
+ * @param {number} size - Carbon count of the chain.
+ * @param {number} branchiness - Branching probability.
+ * @returns {object[]} The bonds inside the chain (not the one to `start`), which may be raised.
  */
-export function randomBenzene(random, { extra, kekule = 2, unsaturation = 0.25, branchiness = 0.5 }) {
-  const mol = createMolecule();
-  const ring = Array.from({ length: 6 }, () => addAtom(mol));
-  ring.forEach((id, i) => addBond(mol, id, ring[(i + 1) % 6], i % 2 === 0 ? kekule : 3 - kekule));
+function growSideChain(mol, random, start, size, branchiness) {
   const side = [];
   const sideBonds = [];
-  for (let i = 0; i < extra; i += 1) {
+  for (let i = 0; i < size; i += 1) {
     const free = side.filter((id) => bondOrderSum(mol, id) < CARBON_VALENCE);
     const last = side[side.length - 1];
-    let target = ring[0];
+    let target = start;
     if (side.length > 0) {
       target = random() >= branchiness && free.includes(last) ? last : free[Math.floor(random() * free.length)];
     }
@@ -280,6 +280,70 @@ export function randomBenzene(random, { extra, kekule = 2, unsaturation = 0.25, 
     }
     side.push(atom);
   } // End of the loop that grows the side chain
+  return sideBonds;
+} // End of function growSideChain()
+
+/**
+ * Builds one random benzene derivative: a Kekulé hexagon (ring bonds
+ * alternating, the first one double or single per `kekule`) carrying up to
+ * `groups` groups on distinct ring atoms (I-42b): acyclic hydrocarbon
+ * branches (grown and unsaturated at random like randomHydrocarbon(), so
+ * vinyl, ethynyl, isopropyl, tert-butyl… appear), and, with probability
+ * `hetero` each, a halogen (F, Cl, Br, I) or an alkoxy group (an O on the
+ * ring and an acyclic, possibly unsaturated or branched, carbon chain on the
+ * O). The `extra` carbons are shared among the branches and alkoxy groups,
+ * at least one each; a carbon group left without a carbon is dropped. The
+ * ring bonds are never changed, so the ring stays a benzene ring, and the
+ * ring atoms are always added first. With the defaults (`groups` 1,
+ * `hetero` 0) the result and the random draws are those of the original
+ * one-chain generator (the chain on ring[0]), which several generators rely
+ * on.
+ *
+ * @param {function(): number} random - Seeded generator.
+ * @param {{extra: number, kekule?: 1|2, unsaturation?: number, branchiness?: number, groups?: number, hetero?: number}} options - Side-chain carbons, order of the first ring bond, probability of raising a side-chain bond, branching probability, number of groups (1–6), probability that a group is a halogen or an alkoxy group.
+ * @returns {object} The molecule (benzene or a benzene with 1–6 groups).
+ */
+export function randomBenzene(random, {
+  extra, kekule = 2, unsaturation = 0.25, branchiness = 0.5, groups = 1, hetero = 0,
+}) {
+  const mol = createMolecule();
+  const ring = Array.from({ length: 6 }, () => addAtom(mol));
+  ring.forEach((id, i) => addBond(mol, id, ring[(i + 1) % 6], i % 2 === 0 ? kekule : 3 - kekule));
+  const count = Math.max(1, Math.min(6, groups));
+  const sites = count > 1 ? shuffle([...ring], random).slice(0, count) : [ring[0]];
+  const kinds = sites.map(() => {
+    if (hetero <= 0 || random() >= hetero) {
+      return 'chain';
+    }
+    return random() < 0.5 ? 'halogen' : 'alkoxy';
+  });
+  // Share the carbons: one per carbon group first, the rest at random.
+  const carbonGroups = kinds.map((kind, i) => (kind === 'halogen' ? -1 : i)).filter((i) => i >= 0);
+  const sizes = kinds.map(() => 0);
+  let left = extra;
+  for (const i of carbonGroups) {
+    if (left > 0) {
+      sizes[i] = 1;
+      left -= 1;
+    }
+  }
+  const fed = carbonGroups.filter((i) => sizes[i] > 0);
+  while (left > 0 && fed.length > 0) {
+    sizes[fed.length === 1 ? fed[0] : fed[Math.floor(random() * fed.length)]] += 1;
+    left -= 1;
+  }
+  const sideBonds = [];
+  sites.forEach((site, i) => {
+    if (kinds[i] === 'halogen') {
+      addBond(mol, site, addAtom(mol, {}, HALOGEN_ELEMENTS[Math.floor(random() * HALOGEN_ELEMENTS.length)]), 1);
+    } else if (kinds[i] === 'alkoxy' && sizes[i] > 0) {
+      const oxygen = addAtom(mol, {}, 'O');
+      addBond(mol, site, oxygen, 1);
+      sideBonds.push(...growSideChain(mol, random, oxygen, sizes[i], branchiness));
+    } else if (sizes[i] > 0) {
+      sideBonds.push(...growSideChain(mol, random, site, sizes[i], branchiness));
+    }
+  }); // End of the loop that hangs the groups on the ring
   raiseRandomBonds(mol, random, unsaturation, sideBonds);
   return mol;
 } // End of function randomBenzene()
@@ -287,8 +351,12 @@ export function randomBenzene(random, { extra, kekule = 2, unsaturation = 0.25, 
 /**
  * Generates up to `count` distinct (by canonical key) benzene derivatives
  * with a total size in [max(minSize, 6), maxSize]: benzene itself when 6 C
- * is in range, then random monosubstituted benzenes (randomBenzene(), either
- * Kekulé drawing). Only molecules valid for naming are kept.
+ * is in range, then random benzenes with 1–6 groups (randomBenzene(), either
+ * Kekulé drawing): hydrocarbon branches, halogens and alkoxy groups at random
+ * ring positions — the benzene parent with prefixes of design.md §14 (I-42).
+ * Only the size cap (`TOO_BIG`, a side chain over 30 carbons) filters them
+ * out: every other molecule is nameable, so any other refusal is kept and
+ * reported by the oracle as a naming failure.
  *
  * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C).
  * @returns {object[]} The molecules.
@@ -307,9 +375,11 @@ export function generateBenzenes({ count, seed, minSize = 4, maxSize = 14 }) {
       kekule: random() < 0.5 ? 1 : 2,
       unsaturation: random() * 0.5,
       branchiness: 0.2 + random() * 0.8,
+      groups: randomInt(random, 1, 6),
+      hetero: random() * 0.7,
     });
-    if (validateForNaming(mol)) {
-      continue; // Beyond a cap (cannot happen within 60 C, but never feed an invalid input).
+    if (validateForNaming(mol)?.code === 'TOO_BIG') {
+      continue; // A side chain beyond the 30-carbon cap (possible near 60 C): out of scope, not a failure.
     }
     const key = canonicalKey(mol);
     if (!seen.has(key)) {
@@ -348,9 +418,8 @@ export function halogenate(mol, random, rate) {
  * Generates up to `count` distinct (by canonical key) halogen derivatives,
  * each with at least one halogen: random acyclic hydrocarbons of 1 carbon
  * up to `maxSize` (so halomethanes and haloethanes are drawn too), random
- * monocycles and random benzenes (at most one substituent survives
- * validation there), halogenated at random rates by halogenate(). Only
- * molecules valid for naming are kept.
+ * monocycles and random benzenes with one side chain, halogenated at random
+ * rates by halogenate(). Only molecules valid for naming are kept.
  *
  * @param {{count: number, seed: number, minSize?: number, maxSize?: number}} options - How many, the seed and the carbon range (default 4–14 C; acyclic ones may be smaller).
  * @returns {object[]} The molecules.
