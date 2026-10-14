@@ -27,9 +27,30 @@
  *
  * The verdict texts are readName()'s own (design.md §15.3 drafts, pending
  * teacher review): this module only arranges them.
+ *
+ * The diagnosis of an `otherName` verdict (design.md §15.8 R-3, phase
+ * I-49b; src/reverse/diagnose.js) goes between the verdict's two sentences
+ * («…pero se llama «X».» · the diagnosis · «Pulsa «Ver paso a paso»…»).
+ * Two decisions, both in verdictEntries():
+ *
+ * - **The student's prefix style.** A diagnosis compares the name with the
+ *   engine's naming in the student's own prefix style (`propan-2-il`
+ *   rather than `isopropil`), and the stepper explains that naming
+ *   (diagnosisExplanation()), so that a NUMBERING diagnosis is not
+ *   contradicted by a default-style numbering. «Se llama:» always keeps the
+ *   app's default name; when the explained name differs, one more line
+ *   (styleLine(), before the diagnosis) gives the name in the student's style
+ *   with its label and says the stepper uses it.
+ * - **The old style.** An `OLD_STYLE` diagnosis says what the old-style note
+ *   says, and more (where the numbers go now), so the note is left out
+ *   then; beside any other diagnosis (or none) the note stays.
+ *
+ * The canvas side (the student's chain striped beside the parent, its legend,
+ * «Ver el paso») is results.js showVerdict()'s.
  */
 
 import { canonicalLayout, layoutProblems } from '../layout/canonical.js';
+import { VERDICT_TEXTS } from '../reverse/index.js';
 import { isSuccess, verdictFeedback } from './name-builder-state.js';
 
 /** Dialog message when the molecule of an understood name cannot be drawn clearly (design.md §15.2). */
@@ -37,6 +58,59 @@ export const CANNOT_DRAW = 'He entendido el nombre, pero no consigo dibujar esta
 
 /** Label of the student's own name in the verdict block (draft pending teacher review). */
 export const STUDENT_LABEL = 'Tu nombre:';
+
+/** Label of the button that opens the stepper at the diagnosis's step (design.md §15.8 R-3; draft). */
+export const DIAGNOSIS_STEP_LABEL = 'Ver el paso';
+
+/**
+ * The line telling, when the stepper explains the name in the student's
+ * prefix style, which name that is (drafts pending teacher review).
+ *
+ * @param {string} name - The name in the student's style.
+ * @param {string|null} label - Its label among «Otras formas válidas», or null.
+ * @returns {string} The Spanish line.
+ */
+export function styleLine(name, label) {
+  return `Con las ramas escritas como en tu nombre, se escribe «${name}»${label ? ` (${label})` : ''}. `
+    + 'El paso a paso usa ese nombre.';
+}
+
+/** Accessible name of the legend of the two chains on the canvas, and its entries (drafts pending teacher review). */
+export const LEGEND_TEXTS = Object.freeze({
+  label: 'Qué se ve en el dibujo',
+  parent: 'Cadena principal',
+  student: 'Tu cadena',
+  same: 'Tu cadena (es la misma)',
+});
+
+/**
+ * The legend of the canvas marks of a diagnosis: the parent (solid) and the
+ * student's chain (striped), the latter said to be the same chain when both
+ * have the same atoms and bonds (in any order: a numbering mistake). Pure.
+ *
+ * @param {{student: {atoms: number[], bonds: number[]}, parent: {atoms: number[], bonds: number[]}}|null} diagnosis -
+ *   A diagnosis (diagnose.js), or null.
+ * @returns {{style: 'parent'|'student', text: string}[]|null} The entries, or null without a diagnosis or a student chain.
+ */
+export function diagnosisLegend(diagnosis) {
+  if (!diagnosis || !diagnosis.student || diagnosis.student.atoms.length === 0) {
+    return null;
+  }
+  /**
+   * Tells whether two id lists hold the same ids, in any order.
+   *
+   * @param {number[]} a - Ids.
+   * @param {number[]} b - Ids.
+   * @returns {boolean} True for the same set.
+   */
+  const sameSet = (a, b) => a.length === b.length && a.every((id) => b.includes(id));
+  const { student, parent } = diagnosis;
+  const same = Boolean(parent) && sameSet(student.atoms, parent.atoms) && sameSet(student.bonds, parent.bonds);
+  return [
+    { style: 'parent', text: LEGEND_TEXTS.parent },
+    { style: 'student', text: same ? LEGEND_TEXTS.same : LEGEND_TEXTS.student },
+  ];
+} // End of function diagnosisLegend()
 
 /**
  * Tone of the verdict block by verdict kind: `correct` for a name the app
@@ -107,21 +181,66 @@ export function studentParts(verdict) {
 }
 
 /**
- * What the verdict block of the results panel shows (design.md §15.3): the
- * student's name, then readName()'s message and notes (the old-style note)
- * — the same lines the dialog shows (verdictFeedback()). Pure.
+ * The text entries of a verdict block, each with its role: without a
+ * diagnosis, readName()'s message and notes (the lines the dialog shows,
+ * verdictFeedback()); with one (file header), the message split around it
+ * — `message` («…pero se llama «X».»), `style` (the name the stepper
+ * explains, when it is not «Se llama»'s), `diagnosis`, `hint` («Pulsa «Ver
+ * paso a paso»…») — then the notes, the old-style note left out beside an
+ * `OLD_STYLE` diagnosis. Pure.
  *
  * @param {object} verdict - A success verdict of readName().
- * @returns {{kind: string, tone: string, student: {text: string, kind: string}[], lines: string[]}} The block.
+ * @param {{naming: object}|null} explanation - diagnosisExplanation() of the verdict, or null.
+ * @returns {{role: 'message'|'style'|'diagnosis'|'hint'|'note', text: string}[]} The entries, in order.
  */
-export function verdictBlock(verdict) {
+export function verdictEntries(verdict, explanation) {
+  const { diagnosis } = verdict;
+  if (!diagnosis) {
+    return verdictFeedback(verdict, 0).lines.map((text, i) => ({ role: i === 0 ? 'message' : 'note', text }));
+  }
+  const entries = [];
+  const tail = ` ${VERDICT_TEXTS.stepByStep}`;
+  const split = verdict.message.endsWith(tail);
+  entries.push({ role: 'message', text: split ? verdict.message.slice(0, -tail.length) : verdict.message });
+  const styled = explanation && explanation.naming && explanation.naming.ok ? explanation.naming.name : null;
+  if (styled && styled !== verdict.name) {
+    const alternative = (verdict.alternatives || []).find((alt) => alt.name === styled);
+    entries.push({ role: 'style', text: styleLine(styled, alternative ? alternative.label : null) });
+  }
+  entries.push({ role: 'diagnosis', text: diagnosis.message });
+  if (split) {
+    entries.push({ role: 'hint', text: VERDICT_TEXTS.stepByStep });
+  }
+  // The OLD_STYLE diagnosis already says what the old-style note says (and where the numbers go now).
+  const notes = (verdict.notes || []).filter((note) => !(diagnosis.code === 'OLD_STYLE' && note.startsWith(VERDICT_TEXTS.oldStyle)));
+  entries.push(...notes.map((text) => ({ role: 'note', text })));
+  return entries;
+} // End of function verdictEntries()
+
+/**
+ * What the verdict block of the results panel shows (design.md §15.3): the
+ * student's name, then the text entries (verdictEntries()) and, for a
+ * diagnosis, the legend of the two chains on the canvas. Pure.
+ *
+ * @param {object} verdict - A success verdict of readName().
+ * @param {{naming: object, steps: object[], index: number}|null} [explanation] - diagnosisExplanation() of a diagnosed
+ *   `otherName` verdict (the explanation the stepper shows), or null.
+ * @returns {{kind: string, tone: string, student: {text: string, kind: string}[], lines: string[],
+ *   entries: {role: string, text: string}[], diagnosis: {code: string, legend: object[]|null}|null}} The block: `lines`
+ *   are the entries' texts (announced), `diagnosis` null without one.
+ */
+export function verdictBlock(verdict, explanation = null) {
+  const entries = verdictEntries(verdict, explanation);
+  const { diagnosis } = verdict;
   return {
     kind: verdict.kind,
     tone: VERDICT_TONES[verdict.kind] || 'other',
     student: studentParts(verdict),
-    lines: verdictFeedback(verdict, 0).lines,
+    lines: entries.map((entry) => entry.text),
+    entries,
+    diagnosis: diagnosis ? { code: diagnosis.code, legend: diagnosisLegend(diagnosis) } : null,
   };
-}
+} // End of function verdictBlock()
 
 /**
  * «Dibujar» for a success verdict: checks the layout, loads the molecule

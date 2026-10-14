@@ -26,6 +26,9 @@
   --color-hl-candidate: rgba(245, 158, 11, 0.4);
   --color-hl-substituent: rgba(16, 185, 129, 0.4);
   --color-hl-locant: rgba(124, 58, 237, 0.35);
+  /* The student's chain after «Dibujar» (striped, phase I-49b). */
+  --color-hl-student: rgba(219, 39, 119, 0.45);
+  --color-hl-student-ring: rgba(190, 24, 93, 0.85);
   /* Name part colours (used from phase 030 on). */
   --color-part-locant: #7c3aed;
   --color-part-prefix: #0f766e;
@@ -66,6 +69,8 @@
     --color-hl-candidate: rgba(251, 191, 36, 0.45);
     --color-hl-substituent: rgba(52, 211, 153, 0.45);
     --color-hl-locant: rgba(196, 161, 255, 0.45);
+    --color-hl-student: rgba(244, 114, 182, 0.5);
+    --color-hl-student-ring: rgba(249, 168, 212, 0.9);
     --color-part-locant: #c4a1ff;
     --color-part-prefix: #5eead4;
     --color-part-parent: #93b4ff;
@@ -521,6 +526,26 @@ body {
   stroke: none;
 }
 
+/*
+ * The student's chain beside the parent (results.js, phase I-49b): a wider,
+ * striped band (a dashed stroke) under the parent's solid one and dashed
+ * rings around its atoms, told apart by pattern and width as well as colour;
+ * the verdict block's legend (.verdict-legend) names both.
+ */
+.canvas .hl-bond.hl-student {
+  stroke: var(--color-hl-student);
+  stroke-width: 26;
+  stroke-linecap: butt;
+  stroke-dasharray: 3 3;
+}
+
+.canvas .hl-atom.hl-student {
+  fill: none;
+  stroke: var(--color-hl-student-ring);
+  stroke-width: 3;
+  stroke-dasharray: 5 4;
+}
+
 .canvas .reject-ring {
   fill: none;
   stroke: var(--color-error);
@@ -745,6 +770,80 @@ body {
 
 .verdict-message {
   font-weight: 600;
+}
+
+/* The diagnosis of an «otherName» verdict (phase I-49b): the main mistake, the legend, «Ver el paso». */
+.verdict-diagnosis {
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--color-hl-student-ring);
+}
+
+.verdict-style,
+.verdict-hint {
+  color: var(--color-text-muted);
+}
+
+.verdict-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.verdict-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.9rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.verdict-legend[hidden] {
+  display: none;
+}
+
+.verdict-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* Swatches drawn like the canvas marks: a solid band for the parent, a striped one for the student's chain. */
+.verdict-swatch {
+  flex: none;
+  width: 1.8rem;
+  height: 0.7rem;
+  border-radius: 2px;
+}
+
+.verdict-swatch--parent {
+  background: var(--color-hl-parent);
+}
+
+.verdict-swatch--student {
+  height: 1rem;
+  border-radius: 0;
+  background: repeating-linear-gradient(90deg, var(--color-hl-student-ring) 0 3px, transparent 3px 6px);
+  opacity: 0.75;
+}
+
+.verdict-step-button {
+  padding: 0.4rem 0.8rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-accent-text);
+  background: var(--color-accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.verdict-step-button:hover {
+  background: var(--color-accent-hover);
 }
 
 .part-locant { color: var(--color-part-locant); }

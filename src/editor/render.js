@@ -36,8 +36,20 @@ export const SVG_NS = 'http://www.w3.org/2000/svg';
 /** Distance between the parallel strokes of a double or triple bond. */
 export const BOND_SPACING = 6;
 
-/** Highlight styles accepted by highlight() (design.md §6.3). */
-export const HIGHLIGHT_STYLES = Object.freeze(['parent', 'candidate', 'substituent', 'locant']);
+/**
+ * Highlight styles accepted by highlight() (design.md §6.3). `student` is the
+ * chain a student's name chose, shown beside the app's `parent` after
+ * «Dibujar» with a diagnosis (phase I-49b): a wider, striped band drawn under
+ * the parent's, and dashed rings around its atoms, so the two differ by
+ * pattern and width, not by colour alone (css/app.css `.hl-student`).
+ */
+export const HIGHLIGHT_STYLES = Object.freeze(['parent', 'candidate', 'substituent', 'locant', 'student']);
+
+/** Radius of the highlight circle around an atom, in drawing units. */
+export const HIGHLIGHT_RADIUS = 11;
+
+/** Radius of the dashed `student` ring around an atom: outside the other styles' circles, so both stay visible. */
+export const STUDENT_RING_RADIUS = 15;
 
 /** How far a locant number sits from its atom, in drawing units. */
 const LOCANT_OFFSET = 18;
@@ -747,7 +759,8 @@ export function createRenderer(svg) {
           continue;
         }
         if (atom) {
-          const node = el('circle', { class: `hl hl-atom hl-${spec.style}`, cx: atom.x, cy: atom.y, r: 11 }, layers.highlight);
+          const r = spec.style === 'student' ? STUDENT_RING_RADIUS : HIGHLIGHT_RADIUS;
+          const node = el('circle', { class: `hl hl-atom hl-${spec.style}`, cx: atom.x, cy: atom.y, r }, layers.highlight);
           node.dataset.atomId = String(id);
         }
       }
@@ -991,7 +1004,8 @@ export function createRenderer(svg) {
    * Highlights atoms and bonds (the stepper's API). Replaces any previous
    * highlight; pass null to clear.
    *
-   * @param {{atoms?: number[], bonds?: number[], style?: string}|object[]|null} spec - One spec or a list; style is parent|candidate|substituent|locant.
+   * @param {{atoms?: number[], bonds?: number[], style?: string}|object[]|null} spec - One spec or a list, drawn in order (the
+   *   first one lowest); style is parent|candidate|substituent|locant|student (HIGHLIGHT_STYLES).
    * @returns {void}
    */
   function highlight(spec) {

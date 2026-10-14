@@ -4,15 +4,21 @@
  * order of the steps (load centred, results, close) with injected fakes,
  * every failure staying in the dialog, the centre of the old drawing, and
  * the verdict block's text (readName()'s own message and notes, the
- * student's name in coloured parts).
+ * student's name in coloured parts). Phase I-49b: the diagnosis between the
+ * verdict's two sentences, a null diagnosis unchanged, the OLD_STYLE note
+ * decision, the line naming the student-style name the stepper explains, and
+ * the legend of the two chains.
  */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  drawVerdict, verdictLayout, verdictBlock, studentParts, drawingCentre, CANNOT_DRAW, STUDENT_LABEL, VERDICT_TONES,
+  drawVerdict, verdictLayout, verdictBlock, verdictEntries, studentParts, drawingCentre, diagnosisLegend, styleLine, CANNOT_DRAW,
+  STUDENT_LABEL, VERDICT_TONES, DIAGNOSIS_STEP_LABEL, LEGEND_TEXTS,
 } from '../../src/ui/draw-name.js';
-import { readName } from '../../src/reverse/index.js';
+import { readName, VERDICT_TEXTS } from '../../src/reverse/index.js';
+import { diagnosisExplanation } from '../../src/reverse/diagnose.js';
+import { explain } from '../../src/explain/explain.js';
 import { tokenize } from '../../src/reverse/tokenize.js';
 import { layoutProblems } from '../../src/layout/canonical.js';
 import { nameMolecule } from '../../src/naming/index.js';
@@ -172,20 +178,100 @@ test('verdictBlock(): readName()\'s message and notes, the tone, and the student
   assert.equal(almost.tone, 'almost');
   assert.deepEqual(almost.lines, ['Casi: faltan los números. Se escribe «2-metilprop-1-eno».']);
 
+  // Another name with a diagnosis (phase I-49b): the diagnosis between the verdict's two sentences.
   const other = verdictBlock(verdictOf('metiletano'));
   assert.equal(other.tone, 'other');
-  assert.deepEqual(other.lines, ['Esta es la molécula que describe tu nombre, pero se llama «propano». '
-    + 'Pulsa «Ver paso a paso» para ver por qué.']);
+  assert.deepEqual(other.lines, [
+    'Esta es la molécula que describe tu nombre, pero se llama «propano».',
+    'La rama «metil» está en el extremo de la cadena, así que la alarga: la cadena principal tiene 3 carbonos.',
+    'Pulsa «Ver paso a paso» para ver por qué.',
+  ]);
+  assert.deepEqual(other.entries.map((e) => e.role), ['message', 'diagnosis', 'hint']);
+  assert.equal(other.diagnosis.code, 'BRANCH_AT_END');
 
-  // The old-style note is the block's second line.
-  const old = verdictBlock(verdictOf('2-buteno'));
-  assert.equal(old.kind, 'otherName');
-  assert.deepEqual(old.lines, ['Esta es la molécula que describe tu nombre, pero se llama «but-2-eno». '
-    + 'Pulsa «Ver paso a paso» para ver por qué.', 'Es la forma antigua de escribirlo; hoy se escribe «but-2-eno».']);
+  // A null diagnosis keeps today's text exactly: the message in one line, no diagnosis.
+  const plain = verdictOf('4-(1,1-dimetiletil)heptano');
+  assert.equal(plain.kind, 'otherName');
+  assert.equal(plain.diagnosis, null);
+  const undiagnosed = verdictBlock(plain);
+  assert.deepEqual(undiagnosed.lines, ['Esta es la molécula que describe tu nombre, pero se llama «4-tert-butilheptano». '
+    + 'Pulsa «Ver paso a paso» para ver por qué.']);
+  assert.deepEqual(undiagnosed.entries, [{ role: 'message', text: undiagnosed.lines[0] }]);
+  assert.equal(undiagnosed.diagnosis, null);
+  // Other kinds have no diagnosis either.
+  assert.equal(correct.diagnosis, null);
+  assert.equal(almost.diagnosis, null);
 
   assert.equal(STUDENT_LABEL, 'Tu nombre:');
   assert.deepEqual(Object.keys(VERDICT_TONES).sort(), [...SUCCESS_KINDS].sort());
 }); // End of test 'verdictBlock()…'
+
+test('the old style: an OLD_STYLE diagnosis replaces the old-style note; beside another diagnosis the note stays', () => {
+  const old = verdictOf('2-buteno');
+  assert.equal(old.diagnosis.code, 'OLD_STYLE');
+  assert.deepEqual(old.notes, [`${VERDICT_TEXTS.oldStyle} «but-2-eno».`]);
+  assert.equal(old.notes[0], 'Es la forma antigua de escribirlo; hoy se escribe «but-2-eno».');
+  const block = verdictBlock(old);
+  assert.deepEqual(block.entries.map((e) => e.role), ['message', 'diagnosis', 'hint']);
+  assert.ok(!block.lines.some((line) => line.startsWith(VERDICT_TEXTS.oldStyle)));
+  assert.equal(block.lines[1], old.diagnosis.message);
+  assert.match(block.lines[1], /«but-2-eno»/);
+
+  // An old-style name with an earlier mistake: its diagnosis, then the note.
+  const numbered = verdictOf('2-metil-3-buteno');
+  assert.equal(numbered.kind, 'otherName');
+  assert.notEqual(numbered.diagnosis.code, 'OLD_STYLE');
+  const both = verdictBlock(numbered);
+  assert.deepEqual(both.entries.map((e) => e.role), ['message', 'diagnosis', 'hint', 'note']);
+  assert.equal(both.lines[3], numbered.notes[0]);
+  assert.ok(both.lines[3].startsWith(VERDICT_TEXTS.oldStyle));
+}); // End of test 'the old style…'
+
+test('the student\'s prefix style: the name the stepper explains, with its label, before the diagnosis', () => {
+  const verdict = verdictOf('6-metil-4-(propan-2-il)nonano');
+  assert.equal(verdict.diagnosis.code, 'NUMBERING');
+  assert.equal(verdict.diagnosis.style, 'pin');
+  const explanation = diagnosisExplanation(verdict, explain);
+  assert.equal(explanation.naming.name, '4-metil-6-(propan-2-il)nonano');
+  const block = verdictBlock(verdict, explanation);
+  assert.deepEqual(block.entries.map((e) => e.role), ['message', 'style', 'diagnosis', 'hint']);
+  // «Se llama» keeps the default name; the style line names the explained one.
+  assert.equal(block.lines[0], 'Esta es la molécula que describe tu nombre, pero se llama «4-isopropil-6-metilnonano».');
+  assert.equal(block.lines[1], styleLine('4-metil-6-(propan-2-il)nonano', 'nombre preferido por la IUPAC (2013)'));
+  assert.equal(block.lines[1], 'Con las ramas escritas como en tu nombre, se escribe «4-metil-6-(propan-2-il)nonano» '
+    + '(nombre preferido por la IUPAC (2013)). El paso a paso usa ese nombre.');
+  // Without the explanation (or in the default style) there is no style line.
+  assert.deepEqual(verdictBlock(verdict).entries.map((e) => e.role), ['message', 'diagnosis', 'hint']);
+  const plain = verdictOf('2-etilbutano');
+  assert.equal(plain.diagnosis.style, 'isopropil');
+  assert.deepEqual(verdictBlock(plain, diagnosisExplanation(plain, explain)).entries.map((e) => e.role),
+    ['message', 'diagnosis', 'hint']);
+  assert.equal(styleLine('x', null), 'Con las ramas escritas como en tu nombre, se escribe «x». El paso a paso usa ese nombre.');
+}); // End of test 'the student\'s prefix style…'
+
+test('diagnosisLegend(): the parent and the student\'s chain, said to be the same when the atoms and bonds are', () => {
+  const longer = verdictOf('2-etilbutano').diagnosis;
+  assert.deepEqual(diagnosisLegend(longer), [
+    { style: 'parent', text: 'Cadena principal' }, { style: 'student', text: 'Tu cadena' },
+  ]);
+  // Numbered from the other end: the same chain in the other order.
+  const numbering = verdictOf('4-metilpentano').diagnosis;
+  assert.deepEqual(numbering.student.atoms, [...numbering.parent.atoms].reverse());
+  assert.deepEqual(diagnosisLegend(numbering), [
+    { style: 'parent', text: 'Cadena principal' }, { style: 'student', text: 'Tu cadena (es la misma)' },
+  ]);
+  assert.equal(diagnosisLegend(null), null);
+  assert.equal(diagnosisLegend({ ...longer, student: { atoms: [], bonds: [] } }), null);
+  assert.deepEqual(Object.keys(LEGEND_TEXTS).sort(), ['label', 'parent', 'same', 'student']);
+  assert.equal(DIAGNOSIS_STEP_LABEL, 'Ver el paso');
+  assert.equal(verdictBlock(verdictOf('2-etilbutano')).diagnosis.legend[1].text, 'Tu cadena');
+}); // End of test 'diagnosisLegend()…'
+
+test('verdictEntries(): a message that does not end with the hint keeps it whole, the diagnosis after it', () => {
+  const verdict = verdictOf('metiletano');
+  const entries = verdictEntries({ ...verdict, message: 'Otro texto.' }, null);
+  assert.deepEqual(entries, [{ role: 'message', text: 'Otro texto.' }, { role: 'diagnosis', text: verdict.diagnosis.message }]);
+});
 
 test('studentParts(): spans that do not give the text back fall back to one part', () => {
   assert.deepEqual(studentParts({ text: 'hexano', spans: [{ from: 0, to: 3, kind: 'stem' }] }), [{ text: 'hexano', kind: 'stem' }]);

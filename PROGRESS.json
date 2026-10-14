@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T20:14:43Z",
+  "updated": "2026-10-14T20:50:02Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -601,8 +601,11 @@
     {
       "id": "I-49b",
       "title": "v4 R-3b Diagnosis in the results panel",
-      "status": "queued",
-      "summary": "Shows the diagnosis in the verdict, highlights the student's chain and opens the stepper at that rule's step."
+      "status": "done",
+      "summary": "Shows the diagnosis in the verdict, highlights the student's chain beside the parent and opens the stepper at that rule's step.",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-49b.md",
+      "narrative": "docs/progress-archive/i-49b.md"
     },
     {
       "id": "I-50",

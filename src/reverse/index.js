@@ -75,6 +75,8 @@ export const VERDICT_TEXTS = Object.freeze({
   ambiguous: 'Faltan números: puede ser',
   incomplete: 'Faltan números: escribe en qué carbono va cada grupo.',
   outOfScope: 'Entiendo tu nombre, pero esa molécula queda fuera de lo que sé dibujar:',
+  /** Start of the old-style note (`notes`), followed by the modern writing in «…» and a full stop. */
+  oldStyle: 'Es la forma antigua de escribirlo; hoy se escribe',
 });
 
 /**
@@ -325,7 +327,7 @@ export function readName(tiles, options = {}) {
   if (early) {
     return invalid(early);
   }
-  const notes = spec.oldStyle ? [`Es la forma antigua de escribirlo; hoy se escribe «${modernText(tree)}».`] : [];
+  const notes = spec.oldStyle ? [`${VERDICT_TEXTS.oldStyle} «${modernText(tree)}».`] : [];
   const now = options.now || Date.now;
   const search = searchStructures(spec, { namer, budget: options.budget, now, cache: options.cache });
   if (search.status === 'none') {

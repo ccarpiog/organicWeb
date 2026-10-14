@@ -37,6 +37,26 @@
  * edit (Deshacer of the load included) clears it, a coordinate-only edit
  * keeps it.
  *
+ * An `otherName` verdict with a diagnosis (design.md §15.8 R-3, phase I-49b;
+ * src/reverse/diagnose.js) adds to that block the diagnosis's message (and,
+ * when the student wrote the branches in another prefix style, the name in
+ * that style: draw-name.js verdictEntries()), a legend of the canvas marks
+ * and a «Ver el paso» button. The stepper — «Ver paso a paso» as well as
+ * «Ver el paso» — then shows diagnosisExplanation()'s steps: the
+ * explanation of the naming in the student's prefix style, which the
+ * diagnosis compared with (never the default-style explanation, which may
+ * number the chain as the student did); for the default style they are the
+ * usual steps. «Se llama:», «Otras formas válidas» and «Ordenar dibujo»
+ * keep the app's default naming; the ordered drawing's persistent parent
+ * and locants follow the explained naming, so they agree with the steps.
+ * «Ver el paso» opens the stepper at the diagnosis's step and moves the
+ * focus to its title. While the verdict is on show, the student's chain is
+ * highlighted in every view (stepper closed or open, not an option view) as
+ * the striped `student` style under the parent (render.js HIGHLIGHT_STYLES),
+ * through the same canvas marks — so it follows the 90° view, moved atoms
+ * and the «Resaltar en el dibujo» switch (the legend hides with the marks)
+ * — and it goes with the verdict.
+ *
  * A HETEROATOM refusal (design.md §13.4 I-29) shows its message and, under
  * it, a stepper with the group steps (Reconoce los grupos, Elige el
  * principal, Sufijo o prefijo, the refusal); nothing is highlighted while
@@ -49,7 +69,8 @@
 import { nameMolecule } from '../naming/index.js';
 import { explain, parseMarkup, plainText, GLOSSARY } from '../explain/explain.js';
 import { canonicalLayout, layoutProblems } from '../layout/canonical.js';
-import { verdictBlock, STUDENT_LABEL } from './draw-name.js';
+import { diagnosisExplanation } from '../reverse/diagnose.js';
+import { verdictBlock, STUDENT_LABEL, DIAGNOSIS_STEP_LABEL, LEGEND_TEXTS } from './draw-name.js';
 
 /** Extra hints shown under an error message, by error code. */
 export const ERROR_HINTS = Object.freeze({
@@ -122,6 +143,58 @@ export function canvasMarks(view, visible) {
   }
   return { highlight: view.highlight || null, locants: view.locants || null };
 }
+
+/**
+ * Adds the student's chain of a diagnosis to a view (phase I-49b): a
+ * `student` highlight first, so the renderer draws it under the view's own
+ * marks (the parent's band lies on top of the wider striped one), and the
+ * diagnosis's parent when the view has no parent band of its own — the
+ * ordered drawing's marks supply one only while the layout is untouched,
+ * and the legend names both chains after a coordinate-only edit too.
+ * Option views of a step are shown as they are. Pure.
+ *
+ * @param {{highlight?: object[], locants?: Array<[number, number]>|null}|null} view - The view to draw.
+ * @param {{atoms: number[], bonds: number[]}|null} chain - The student's chain (diagnosis.student), or null.
+ * @param {boolean} [isOption] - True for an option view.
+ * @param {{atoms: number[], bonds: number[]}|null} [parent] - The diagnosis's parent chain (diagnosis.parent), or null.
+ * @returns {object|null} The view with the chain, or the view unchanged.
+ */
+export function withStudentChain(view, chain, isOption = false, parent = null) {
+  if (!view || !chain || isOption || chain.atoms.length === 0) {
+    return view;
+  }
+  const own = view.highlight || [];
+  const marks = parent && parent.atoms.length > 0 && !own.some((spec) => spec.style === 'parent')
+    ? [{ atoms: [...parent.atoms], bonds: [...parent.bonds], style: 'parent' }, ...own]
+    : own;
+  return { ...view, highlight: [{ atoms: [...chain.atoms], bonds: [...chain.bonds], style: 'student' }, ...marks] };
+}
+
+/**
+ * The explanation the stepper shows for a «Dibujar» verdict: for an
+ * `otherName` verdict with a diagnosis, diagnosisExplanation() (the steps of
+ * the naming in the student's prefix style and the index of the
+ * diagnosis's step); null otherwise, or should it have no steps or fail (a
+ * bug: the verdict, which draws the molecule and names it, never depends on
+ * its diagnosis — the usual explanation is shown then).
+ *
+ * @param {object} verdict - A readName() verdict.
+ * @param {function(object): object[]} [explainSteps] - Builds the steps of a naming (default explain()).
+ * @returns {{naming: object, steps: object[], index: number}|null} The explanation, or null.
+ */
+export function verdictExplanation(verdict, explainSteps = explain) {
+  if (!verdict || verdict.kind !== 'otherName' || !verdict.diagnosis) {
+    return null;
+  }
+  let explanation = null;
+  try {
+    explanation = diagnosisExplanation(verdict, explainSteps);
+  } catch {
+    return null;
+  }
+  const usable = explanation && explanation.naming && explanation.naming.ok && explanation.steps.length > 0 && explanation.index >= 0;
+  return usable ? explanation : null;
+} // End of function verdictExplanation()
 
 /**
  * Builds a "Resaltar en el dibujo" switch: a toggle button whose
@@ -327,6 +400,9 @@ export function buildResults(panel, editor, button, options = {}) {
   let optionIndex = -1;
   let stepper = null;
   let current = null; // The successful result on show.
+  let explained = null; // The naming the steps explain: `current`, or a diagnosis's naming in the student's style.
+  let studentChain = null; // The student's chain of a diagnosed verdict on show ({atoms, bonds}), else null.
+  let parentChain = null; // That diagnosis's parent chain ({atoms, bonds}), else null.
   let arranged = null; // Positions of the last canonical layout applied (Map id → {x, y}).
   let ordered = false; // True while the drawing shows exactly that layout.
   let lastView = null; // The step (or option) the canvas marks come from.
@@ -364,7 +440,9 @@ export function buildResults(panel, editor, button, options = {}) {
    * Adds the persistent marks of the ordered drawing to a step view: the
    * parent highlight (chain, or ring with its closure bond), and its locants
    * from the numbering step on when the step shows none. A ring whose
-   * numbering step shows no numbers (a bare ring) gets none.
+   * numbering step shows no numbers (a bare ring) gets none. The parent is
+   * that of the naming the steps explain (`explained`), so its numbers
+   * agree with the numbering step.
    *
    * @param {object|null} view - The step view.
    * @param {boolean} isOption - True for an option view (shown unchanged).
@@ -374,7 +452,8 @@ export function buildResults(panel, editor, button, options = {}) {
     if (!ordered || !current || !view || isOption) {
       return view;
     }
-    const parent = { atoms: current.parent.atoms, bonds: current.parent.bonds, style: 'parent' };
+    const named = explained || current;
+    const parent = { atoms: named.parent.atoms, bonds: named.parent.bonds, style: 'parent' };
     const highlight = view.highlight || [];
     const next = { ...view };
     if (!highlight.some((spec) => spec.style === 'parent')) {
@@ -385,7 +464,7 @@ export function buildResults(panel, editor, button, options = {}) {
     const unnumbered = numbering >= 0 && steps[numbering].id === 'ringNumbering' && !steps[numbering].locants;
     // Only a numbered parent gets persistent locants: no numbering step (benzene, I-28) means no numbers.
     if (!view.locants && numbering >= 0 && at >= numbering && !unnumbered) {
-      next.locants = current.parent.atoms.map((id, i) => [id, i + 1]);
+      next.locants = named.parent.atoms.map((id, i) => [id, i + 1]);
     }
     return next;
   } // End of function withOrderedMarks()
@@ -399,14 +478,15 @@ export function buildResults(panel, editor, button, options = {}) {
    */
   function showOnCanvas(view, isOption = false) {
     lastView = { view, isOption };
-    const marks = canvasMarks(withOrderedMarks(view, isOption), marksOn);
+    const marks = canvasMarks(withStudentChain(withOrderedMarks(view, isOption), studentChain, isOption, parentChain), marksOn);
     editor.highlight(marks.highlight);
     editor.showLocants(marks.locants);
   }
 
   /**
-   * Switches the canvas marks on or off: updates every switch and redraws
-   * the current view (the stepper stays where it is).
+   * Switches the canvas marks on or off: updates every switch, shows or
+   * hides the legend of a diagnosis's chains with the marks it describes,
+   * and redraws the current view (the stepper stays where it is).
    *
    * @param {boolean} on - True to show the marks.
    * @returns {void}
@@ -415,6 +495,9 @@ export function buildResults(panel, editor, button, options = {}) {
     marksOn = Boolean(on);
     for (const button of body.querySelectorAll('.marks-toggle')) {
       button.setAttribute('aria-pressed', String(marksOn));
+    }
+    for (const legend of body.querySelectorAll('.verdict-legend')) {
+      legend.hidden = !marksOn;
     }
     if (lastView) {
       showOnCanvas(lastView.view, lastView.isOption);
@@ -489,6 +572,9 @@ export function buildResults(panel, editor, button, options = {}) {
     steps = [];
     stepper = null;
     current = null;
+    explained = null;
+    studentChain = null;
+    parentChain = null;
     arranged = null;
     ordered = false;
     hint = null;
@@ -515,6 +601,9 @@ export function buildResults(panel, editor, button, options = {}) {
     optionIndex = -1;
     stepper = null;
     current = null;
+    explained = null;
+    studentChain = null;
+    parentChain = null;
     arranged = null;
     ordered = false;
     hint = null;
@@ -636,6 +725,7 @@ export function buildResults(panel, editor, button, options = {}) {
     const count = make(doc, 'p', 'step-count');
     top.append(count, makeMarksToggle(doc, 'stepper-marks-toggle', marksOn, toggleMarks));
     const title = make(doc, 'h3', 'step-title');
+    title.tabIndex = -1; // «Ver el paso» moves the focus here (never in the Tab order).
     header.append(top, title);
     const content = make(doc, 'div', 'step-content');
     const nav = make(doc, 'div', 'stepper-nav');
@@ -680,8 +770,15 @@ export function buildResults(panel, editor, button, options = {}) {
     // While the stepper is closed the canvas keeps the whole name's marks:
     // this switch (same state as the stepper's) governs them.
     const outerMarks = withMarks ? makeMarksToggle(doc, 'result-marks-toggle', marksOn, toggleMarks) : null;
-    toggle.addEventListener('click', () => {
-      const open = root.hidden;
+    /**
+     * Opens the stepper at a step, or closes it (the canvas then keeps the
+     * whole name's marks, or none for a refusal).
+     *
+     * @param {boolean} open - True to open.
+     * @param {number} [index] - The step to open at (default the first).
+     * @returns {void}
+     */
+    const setOpen = (open, index = 0) => {
       root.hidden = !open;
       if (outerMarks) {
         outerMarks.hidden = open;
@@ -689,11 +786,13 @@ export function buildResults(panel, editor, button, options = {}) {
       toggle.setAttribute('aria-expanded', String(open));
       toggle.textContent = open ? 'Ocultar el paso a paso' : 'Ver paso a paso';
       if (open) {
-        goTo(0);
+        goTo(index);
       } else {
         showOnCanvas(withMarks ? steps[steps.length - 1] : null);
       }
-    });
+    }; // End of function setOpen()
+    toggle.addEventListener('click', () => setOpen(root.hidden));
+    stepper.setOpen = setOpen;
     const controls = make(doc, 'div', 'result-controls');
     controls.append(toggle);
     if (outerMarks) {
@@ -703,15 +802,70 @@ export function buildResults(panel, editor, button, options = {}) {
   } // End of function stepperNodes()
 
   /**
-   * Builds the verdict block of «Dibujar» (design.md §15.3): the student's
-   * name, coloured like the result name, then the verdict's message and its
-   * notes (the old-style note).
+   * «Ver el paso»: opens the stepper (if closed) at a step and moves the
+   * focus to the step's title, so the keyboard continues from there (Tab
+   * reaches «Anterior» / «Siguiente») and a screen reader reads it.
    *
-   * @param {{kind: string, tone: string, student: {text: string, kind: string}[], lines: string[]}} block -
+   * @param {number} index - The step index.
+   * @returns {void}
+   */
+  function openStepAt(index) {
+    if (!stepper) {
+      return;
+    }
+    if (stepper.root.hidden) {
+      stepper.setOpen(true, index);
+    } else {
+      goTo(index);
+    }
+    stepper.title.focus();
+  } // End of function openStepAt()
+
+  /**
+   * Builds the legend of a diagnosis's canvas marks: a swatch drawn like
+   * each mark (solid parent, striped student's chain) and its name. Hidden
+   * while the marks are switched off.
+   *
+   * @param {{style: string, text: string}[]} entries - draw-name.js diagnosisLegend().
+   * @returns {HTMLUListElement} The legend.
+   */
+  function legendNode(entries) {
+    const legend = make(doc, 'ul', 'verdict-legend');
+    legend.setAttribute('aria-label', LEGEND_TEXTS.label);
+    legend.hidden = !marksOn;
+    for (const entry of entries) {
+      const item = make(doc, 'li', `verdict-legend-item verdict-legend-item--${entry.style}`);
+      const swatch = make(doc, 'span', `verdict-swatch verdict-swatch--${entry.style}`);
+      swatch.setAttribute('aria-hidden', 'true');
+      item.append(swatch, make(doc, 'span', 'verdict-legend-text', entry.text));
+      legend.appendChild(item);
+    }
+    return legend;
+  } // End of function legendNode()
+
+  /** Class of each verdict-block text entry, by role (draw-name.js verdictEntries()). */
+  const ENTRY_CLASSES = Object.freeze({
+    message: 'verdict-message',
+    style: 'verdict-style',
+    diagnosis: 'verdict-diagnosis',
+    hint: 'verdict-hint',
+    note: 'verdict-note',
+  });
+
+  /**
+   * Builds the verdict block of «Dibujar» (design.md §15.3): the student's
+   * name, coloured like the result name, then the text entries — the
+   * verdict's message, its notes (the old-style note) and, for a diagnosis
+   * (R-3), its message between the verdict's two sentences — and, for a
+   * diagnosis, the legend of the two chains on the canvas and «Ver el paso».
+   *
+   * @param {{kind: string, tone: string, student: {text: string, kind: string}[],
+   *   entries: {role: string, text: string}[], diagnosis: {code: string, legend: object[]|null}|null}} block -
    *   verdictBlock() output.
+   * @param {{index: number}|null} explanation - The explanation the stepper shows (verdictExplanation()), or null.
    * @returns {HTMLElement} The block.
    */
-  function verdictNode(block) {
+  function verdictNode(block, explanation) {
     const section = make(doc, 'section', `verdict verdict--${block.tone}`);
     section.id = 'verdict';
     section.dataset.kind = block.kind;
@@ -720,31 +874,61 @@ export function buildResults(panel, editor, button, options = {}) {
     student.append(make(doc, 'span', 'verdict-student-label', STUDENT_LABEL), doc.createTextNode(' '),
       renderName(doc, block.student, 'verdict-student-name name-parts'));
     section.appendChild(student);
-    block.lines.forEach((line, i) => {
-      section.appendChild(make(doc, 'p', i === 0 ? 'verdict-message' : 'verdict-note', line));
-    });
+    for (const entry of block.entries) {
+      const paragraph = make(doc, 'p', ENTRY_CLASSES[entry.role] || 'verdict-note', entry.text);
+      if (entry.role === 'diagnosis') {
+        paragraph.id = 'verdict-diagnosis';
+      }
+      section.appendChild(paragraph);
+    }
+    if (block.diagnosis) {
+      section.dataset.diagnosis = block.diagnosis.code;
+      const tools = make(doc, 'div', 'verdict-tools');
+      if (block.diagnosis.legend) {
+        tools.appendChild(legendNode(block.diagnosis.legend));
+      }
+      if (explanation) {
+        const button = make(doc, 'button', 'verdict-step-button', DIAGNOSIS_STEP_LABEL);
+        button.type = 'button';
+        button.id = 'diagnosis-step-button';
+        button.setAttribute('aria-controls', 'stepper');
+        button.setAttribute('aria-describedby', 'verdict-diagnosis');
+        button.addEventListener('click', () => openStepAt(explanation.index));
+        tools.appendChild(button);
+      }
+      section.appendChild(tools);
+    } // End of the diagnosis tools
     return section;
   } // End of function verdictNode()
 
   /**
    * Shows a successful result: coloured name, alternatives and the stepper
-   * toggle; with a verdict block («Dibujar»), the block goes first and is
-   * announced with the name.
+   * toggle; with a verdict («Dibujar»), its block goes first and is announced
+   * with the name, and a diagnosed verdict's explanation and student's chain
+   * replace the usual steps and join the canvas marks (file header).
    *
    * @param {object} result - The naming result.
-   * @param {object|null} [block] - verdictBlock() output, or null.
+   * @param {{block: object, explanation: {naming: object, steps: object[], index: number}|null,
+   *   student: {atoms: number[], bonds: number[]}|null, parent?: {atoms: number[], bonds: number[]}|null}|null} [shown] -
+   *   The verdict on show: its verdictBlock(), its verdictExplanation() and the student's and parent chains of its
+   *   diagnosis; null for a plain result.
    * @returns {void}
    */
-  function showResult(result, block = null) {
-    steps = explain(result);
+  function showResult(result, shown = null) {
+    const block = shown ? shown.block : null;
+    const explanation = shown ? shown.explanation : null;
+    steps = explanation ? explanation.steps : explain(result);
     stepIndex = 0;
     optionIndex = -1;
     current = result;
+    explained = explanation ? explanation.naming : result;
+    studentChain = shown && shown.student ? shown.student : null;
+    parentChain = studentChain && shown.parent ? shown.parent : null;
     arranged = null;
     ordered = false;
     const nodes = [];
     if (block) {
-      nodes.push(verdictNode(block));
+      nodes.push(verdictNode(block, explanation));
     }
     nodes.push(make(doc, 'p', 'result-label', 'Se llama:'));
     const name = make(doc, 'p', 'result-name');
@@ -806,7 +990,10 @@ export function buildResults(panel, editor, button, options = {}) {
    * with the verdict block above «Se llama:», and only then registers the
    * layout as the ordered drawing — showResult() resets it (design.md §15.9
    * trap 1) — so the parent is highlighted with its locants, as after
-   * «Ordenar dibujo», and the redraw hint stays hidden.
+   * «Ordenar dibujo», and the redraw hint stays hidden. A diagnosed
+   * `otherName` verdict (R-3) brings its explanation in the student's prefix
+   * style (verdictExplanation(), never explain() of the verdict's own
+   * naming) and its student's chain; both ids are the loaded molecule's.
    *
    * @param {object} verdict - The readName() verdict (correct, alternative, missingLocants or otherName).
    * @param {{atoms: Map<number, {id: number, x: number, y: number}>}} laid - The molecule as loaded (its layout).
@@ -818,7 +1005,11 @@ export function buildResults(panel, editor, button, options = {}) {
       showError(result.error, explain(result)); // Never seen: the verdict's molecule was named by the same engine.
       return result;
     }
-    showResult(result, verdictBlock(verdict));
+    const explanation = verdictExplanation(verdict);
+    const diagnosis = verdict.kind === 'otherName' && verdict.diagnosis ? verdict.diagnosis : null;
+    const student = diagnosis ? diagnosis.student : null;
+    const parent = diagnosis ? diagnosis.parent : null;
+    showResult(result, { block: verdictBlock(verdict, explanation), explanation, student, parent });
     arranged = new Map([...laid.atoms.values()].map((a) => [a.id, { x: a.x, y: a.y }]));
     syncOrdered();
     return result;

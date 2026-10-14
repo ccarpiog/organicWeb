@@ -39,9 +39,12 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   the student's prefix style, recognised by the branches' structure;
   `readName()` attaches it as `diagnosis`, with its explain() step id —
   of the explanation of the naming in that style, `diagnosisExplanation()`
-  — and the student's chain beside the parent), and
-  showing it in the results panel (message, highlight, «Ver el paso») is
-  next.
+  — and the student's chain beside the parent), and the results panel
+  shows it (`showVerdict()`: the message between the verdict's two
+  sentences, the student's chain striped under the parent with a legend,
+  «Ver el paso» opening the stepper — the explanation in the student's
+  style — at its step). Next is R-4 (phase I-50): rings and the retained
+  aromatic templates.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

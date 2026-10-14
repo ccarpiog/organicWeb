@@ -11,8 +11,9 @@
  * «Dibujar» with a name the app understands (R-2b, design.md §15.7): the
  * molecule replaces the drawing as one undoable edit, centred, ordered
  * (parent highlighted with its locants, no redraw hint), with the verdict
- * block above «Se llama:» (correct, alternative, missingLocants, otherName,
- * the old-style note); the dialog closes; Deshacer restores the old drawing
+ * block above «Se llama:» (correct, alternative, missingLocants, otherName
+ * with its diagnosis, an old-style name; the diagnosis itself is
+ * diagnosis.spec.js's); the dialog closes; Deshacer restores the old drawing
  * and clears the verdict, a coordinate-only undo keeps it; the molecule is
  * autosaved, the verdict and the tiles are not; keyboard only; a phone; the
  * 90° view. The centring is part of the edit: Deshacer restores the old
@@ -660,12 +661,14 @@ test('Dibujar: missing locants, an old-style name and another name each show the
   expect((await moleculeJSON(page)).atoms).toHaveLength(4);
   const first = await moleculeJSON(page);
 
-  // The old style: drawn, named, with the note.
+  // The old style: drawn, named, with its diagnosis (which stands in for the old-style note, I-49b).
   await drawName(page, '2', 'but', 'eno');
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«but-2-eno». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-note')).toHaveText('Es la forma antigua de escribirlo; hoy se escribe «but-2-eno».');
+    + '«but-2-eno».');
+  await expect(verdict.locator('.verdict-diagnosis')).toContainText('como se hacía antes');
+  await expect(verdict.locator('.verdict-hint')).toHaveText('Pulsa «Ver paso a paso» para ver por qué.');
+  await expect(verdict.locator('.verdict-note')).toHaveCount(0);
   await expect(page.locator('#result-name')).toHaveText('but-2-eno');
 
   // Another name: the molecule the name describes, with the app's name and the stepper.
@@ -673,7 +676,9 @@ test('Dibujar: missing locants, an old-style name and another name each show the
   await expect(verdict).toHaveClass(/verdict--other/);
   await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: metiletano');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«propano». Pulsa «Ver paso a paso» para ver por qué.');
+    + '«propano».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('La rama «metil» está en el extremo de la cadena, así que la '
+    + 'alarga: la cadena principal tiene 3 carbonos.');
   await expect(page.locator('#result-name')).toHaveText('propano');
   expect((await moleculeJSON(page)).atoms).toHaveLength(3);
   expect(await verdictBeforeName(page)).toBe(true);

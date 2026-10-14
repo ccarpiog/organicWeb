@@ -77,7 +77,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-48b | v4 R-2b «Dibujar», results entry point, Ayuda, e2e | same, "R-2b" | done — `docs/progress-archive/i-48b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-48b.md` |
 | I-49 | v4 R-3 Diagnosis for hydrocarbons | same, "R-3" | split into I-49a (engine) and I-49b (UI) | — | — |
 | I-49a | v4 R-3a Diagnosis engine (`diagnose.js`) | same, "R-3" | done — `docs/progress-archive/i-49a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-49a.md` |
-| I-49b | v4 R-3b Diagnosis in the results panel (message, highlight, «Ver el paso», Ayuda, e2e) | same, "R-3" | queued | — | — |
+| I-49b | v4 R-3b Diagnosis in the results panel (message, highlight, «Ver el paso», Ayuda, e2e) | same, "R-3" | done — `docs/progress-archive/i-49b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-49b.md` |
 | I-50 | v4 R-4 Rings and retained aromatic templates | same, "R-4" | queued | — | — |
 | I-51a | v4 R-5a Halogens and alcohols | same, "R-5a" | queued | — | — |
 | I-51b | v4 R-5b Ethers | same, "R-5b" | queued | — | — |
@@ -122,33 +122,25 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select and run I-49b (v4 R-3b): show the I-49a diagnosis in the results panel. For an `otherName`
-verdict with a non-null `verdict.diagnosis`: its `message` goes into the verdict block between
-«…pero se llama «X».» and «Pulsa «Ver paso a paso» para ver por qué.» (`showVerdict()` in
-`src/ui/results.js`); the student's chain (`diagnosis.student` atom/bond ids) is highlighted
-beside the app's parent (`diagnosis.parent`) on the canvas, distinguishable and accessible (also
-in the 90° view and with the highlight switch `organicWeb.highlights`); a «Ver el paso» button
-opens the stepper at the diagnosis's step — **via `diagnosisExplanation(verdict, explain)` from
-`src/reverse/diagnose.js` → `{naming, steps, index}`** (the explanation of the naming in the
-student's prefix style), never `explain(verdict.naming)`; when that style differs from the default,
-decide and document how the panel shows it (the «Se llama» name stays the app's default name).
-Decide whether an `OLD_STYLE` diagnosis and the existing old-style note both show (avoid saying it
-twice). A `null` diagnosis keeps today's text. Ayuda line in «Del nombre al dibujo»; e2e on both
-projects (dev server + `file://`): a diagnosed name shows its message, highlight and «Ver el paso»
-lands on the right step; Deshacer clears it; keyboard only; narrow viewport. Update the `CLAUDE.md`
-v4 sentence (it says showing the diagnosis is next). Spec: design §15.3 `otherName`, §15.8 "R-3",
-§15.9 — read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*).
-Risk high (UI over a new API; stepper context); worker opus. Commit by explicit paths.
+Select and run I-50 (v4 R-4): rings in «¿Cómo se dibuja?». Spec: design §15.8 "R-4" and the paragraph
+after the table (each family phase also adds its tiles, morphology rules §15.5.2 item 6, slot roles
+§15.5.3 step 2, diagnosis messages, fixture rows and generators in the round trips, and its Ayuda
+line), §15.9 trap 3 (`canonicalKey()` keeps bond orders: the two Kekulé benzenes differ — R-4 needs
+an aromatic-equivalence key), §14.4 (o/m/p: never for two different prefixes, never with three
+positions) — read from the working-tree `docs/design.md`; never edit or commit it (see *Open
+risks*). R-4 is too big for one worker: **split it first and record the split** in the table and
+`PROGRESS.json`, e.g. I-50a `ciclo` parents and branches (`ciclohexil`), `benceno`, `fenil`,
+substituted `(4-metilfenil)`, the aromatic-equivalence key, round trips; I-50b retained templates
+`tolueno`, `estireno`, `1,2-xileno` / `o-xileno`, `mesitileno` with their allowed substitution and
+the o/m/p aliases, diagnosis messages, Ayuda line. Risk high; worker opus. Commit by explicit paths.
 
-- **Builds on I-49a** (`docs/progress-archive/i-49a.md`): `diagnose.js` exports `diagnose`,
-  `diagnosisNaming`, `diagnosisExplanation`, `diagnosisStepIndex`, `DIAGNOSIS_TEXTS`,
-  `DIAGNOSIS_PHRASES`, `DIAGNOSES`; diagnosis fields `{code, rule, traceRule, message, step, style,
-  student, parent, focus, tiles}`; and on I-48b (`docs/progress-archive/i-48b.md`): `drawVerdict()`
-  in `src/ui/draw-name.js`, `showVerdict()` in `src/ui/results.js`, `loadMolecule(…, {center:
-  true})` in `src/editor/editor.js`.
+- **Builds on** the R-1 engine (`src/reverse/`: tiles, parser, assembler, tokenizer, `interpret.js`,
+  `build.js`, `search.js`, `readName()` — `docs/progress-archive/i-47a.md` … `i-47c.md`), the dialog
+  and «Dibujar» (`i-48a.md`, `i-48b.md`), the diagnosis engine and panel (`i-49a.md`, `i-49b.md`);
+  the forward naming engine already names every ring case (v2 §13, v3 §14).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
-(design §14.6).
+(design §14.6, §15.9).
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -316,14 +308,21 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-48a: after the review fix `npm test` 0 (1822) · `check` 0 (163) · `build` 0 · `e2e` 0 (425).
 - I-48b: `npm test` 0 (1832) · `npm run check` 0 (165 files) · `npm run build` 0 ·
   `npm run e2e -- --reporter=dot` 0 (439, source + dist); after the review fix `npm test` 0 (1833) ·
   `check` 0 (165) · `build` 0 · `e2e` 0 (445).
 - I-49a: `npm test` 0 (1844) · `check` 0 (167) · `build` 0 · `e2e` 0 (445); after the review fixes
   `npm test` 0 (1848) · `check` 0 (167) · `build` 0 · `e2e` 0 (445).
+- I-49b: `npm test` 0 (1855) · `check` 0 (168) · `build` 0 · `e2e` 0 (463); after the review fix
+  the same four, same counts.
 
 ## Open risks / deviations
+
+- I-49b decision open to the user: for a diagnosed verdict the stepper explains the naming in the
+  student's prefix style, so the ordered drawing's locants follow that naming even with the stepper
+  closed (`6-metil-4-(propan-2-il)nonano`: canvas numbered as `4-metil-6-(propan-2-il)nonano`, «Se
+  llama» `4-isopropil-6-metilnonano`). An `OLD_STYLE` diagnosis replaces the old-style note. See
+  `docs/progress-archive/i-49b.md`.
 
 - Commits `21b918a` and `add6d93` carry a `Co-Authored-By: Claude` trailer,
   against the user's rule of no AI references in commits. Already pushed, not
@@ -408,6 +407,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-48b `9fb8c66`, pushed. I-49a committed and pushed right after this checkpoint (see
+- I-49a `f8d9bee`, pushed. I-49b committed and pushed right after this checkpoint (see
   `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
   `docs/reviews/v4-plan-codex.md`, `.DS_Store`.
