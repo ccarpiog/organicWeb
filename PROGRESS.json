@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-13T21:56:39Z",
+  "updated": "2026-10-14T16:56:36Z",
   "plan": "PLAN.md",
-  "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules (hydrocarbons, rings, functional groups, polysubstituted benzenes) by IUPAC 2013 rules.",
+  "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
     {
       "id": "I-1",
@@ -537,6 +537,105 @@
       "risk": "routine",
       "review": "Codex ship-with-fixes, fixed — docs/reviews/I-46.md",
       "narrative": "docs/progress-archive/i-46.md"
+    },
+    {
+      "id": "I-47a",
+      "title": "v4 R-1a Tiles, parser, assembler, tokenizer",
+      "status": "done",
+      "summary": "Builds the tile catalogue, a lossless parser, the punctuation assembler and a tokenizer for open-chain hydrocarbon names.",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-47a.md",
+      "narrative": "docs/progress-archive/i-47a.md"
+    },
+    {
+      "id": "I-47b",
+      "title": "v4 R-1b Interpret, build, readName",
+      "status": "queued",
+      "summary": "Turns a fully located tile name into a molecule and a verdict (correct, alternative, other name, out of scope, invalid)."
+    },
+    {
+      "id": "I-47c",
+      "title": "v4 R-1c Left-out locants",
+      "status": "queued",
+      "summary": "Searches placements for names without locants and reports missing locants, ambiguity or an incomplete search."
+    },
+    {
+      "id": "I-48a",
+      "title": "v4 R-2a Name-builder dialog",
+      "status": "queued",
+      "summary": "Adds the «¿Cómo se dibuja?» dialog with tile rows, the assembled name line, branch controls and keyboard support."
+    },
+    {
+      "id": "I-48b",
+      "title": "v4 R-2b Dibujar and results",
+      "status": "queued",
+      "summary": "Draws the read molecule on the canvas as one undoable edit and shows the verdict in the results panel, with help and e2e."
+    },
+    {
+      "id": "I-49",
+      "title": "v4 R-3 Hydrocarbon diagnosis",
+      "status": "queued",
+      "summary": "Explains the main mistake of a hydrocarbon name that differs from the app's name and links it to the stepper."
+    },
+    {
+      "id": "I-50",
+      "title": "v4 R-4 Rings",
+      "status": "queued",
+      "summary": "Extends tile names to rings, benzene, phenyl and retained aromatic names such as tolueno and xileno."
+    },
+    {
+      "id": "I-51a",
+      "title": "v4 R-5a Halogens and alcohols",
+      "status": "queued",
+      "summary": "Extends tile names to halogen derivatives, alcohols and phenols, with their traditional names."
+    },
+    {
+      "id": "I-51b",
+      "title": "v4 R-5b Ethers",
+      "status": "queued",
+      "summary": "Extends tile names to ethers: alkoxy prefixes, class names and anisol."
+    },
+    {
+      "id": "I-51c",
+      "title": "v4 R-5c Aldehydes and ketones",
+      "status": "queued",
+      "summary": "Extends tile names to aldehydes and ketones, acyl prefixes and their traditional names."
+    },
+    {
+      "id": "I-51d",
+      "title": "v4 R-5d Acids",
+      "status": "queued",
+      "summary": "Extends tile names to carboxylic acids with the ácido class word and traditional acid names."
+    },
+    {
+      "id": "I-52a",
+      "title": "v4 R-6a Esters",
+      "status": "queued",
+      "summary": "Extends tile names to esters, with the automatic de and y and the O-bound side multipliers."
+    },
+    {
+      "id": "I-52b",
+      "title": "v4 R-6b Nitriles",
+      "status": "queued",
+      "summary": "Extends tile names to nitriles, carbonitriles, ciano prefixes and traditional nitrile names."
+    },
+    {
+      "id": "I-52c",
+      "title": "v4 R-6c Amines",
+      "status": "queued",
+      "summary": "Extends tile names to amines with N locants, amino prefixes, anilina templates and class names."
+    },
+    {
+      "id": "I-52d",
+      "title": "v4 R-6d Amides",
+      "status": "queued",
+      "summary": "Extends tile names to amides, carboxamides, carbamoil and acylamino prefixes and traditional amide names."
+    },
+    {
+      "id": "I-53",
+      "title": "v4 R-7 Wrap-up",
+      "status": "queued",
+      "summary": "Runs the closed loop over every generator and finishes help, README, CLAUDE.md and the wording list for teacher review."
     }
   ]
 }

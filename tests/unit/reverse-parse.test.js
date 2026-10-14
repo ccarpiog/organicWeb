@@ -1,0 +1,248 @@
+/**
+ * @file Unit tests for the parser of «¿Cómo se dibuja?» (src/reverse/parse.js,
+ * design.md §15.5.1, §15.6, phase R-1a): the lossless syntax tree of the
+ * grammar for open-chain hydrocarbons (the student's multipliers, order and
+ * locants kept), old-style locants, and one test per syntactic error code
+ * with its tile range. The structural codes (LOCANT_RANGE, BOND_RANGE,
+ * SAME_BOND, VALENCE, TOO_BIG) belong to R-1b.
+ */
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { parse, ERROR_CODES, isCompleteSubstituent } from '../../src/reverse/parse.js';
+import { tileById } from '../../src/reverse/tiles.js';
+import { seq, leafIndices } from './reverse-words.js';
+
+/**
+ * Parses tile words.
+ *
+ * @param {string} words - Space-separated tile words (reverse-words.js).
+ * @returns {{tree: object, errors: object[]}} The parse result.
+ */
+function read(words) {
+  return parse(seq(words));
+}
+
+/**
+ * The errors of a parse as `CODE[from,to)` strings.
+ *
+ * @param {string} words - Space-separated tile words.
+ * @returns {string[]} The errors.
+ */
+function errorsOf(words) {
+  return read(words).errors.map((e) => `${e.code}[${e.from},${e.to})`);
+}
+
+/**
+ * The first error of a parse with the given code.
+ *
+ * @param {string} words - Space-separated tile words.
+ * @param {string} code - Error code.
+ * @returns {object} The error.
+ */
+function errorOf(words, code) {
+  const error = read(words).errors.find((e) => e.code === code);
+  assert.ok(error, `${words}: no ${code} in ${errorsOf(words).join(' ')}`);
+  return error;
+}
+
+/** The §15.5.1 examples, valid and every one of them error-free. */
+const EXAMPLES = [
+  'hex ano',
+  '2 3 di met il pent ano',
+  'but 1 3 di eno',
+  'hex 1 eno 3 5 di ino',
+  '4 prop ano 2 il hept ano',
+  '5 et eno iliden non ano',
+  '5 5 bis START 2 2 di met il prop il END non ano',
+  '5 5 di tert-butil non ano',
+  '2 but eno',
+];
+
+/** Sequences with mistakes or unfinished, for the lossless property. */
+const BROKEN = [
+  'eno', '2 3 di', '2 met il', 'but', '5 START 2 met il', '1 3 hex eno ino', 'hex ano 2 met il', 'START END',
+  'met il END but ano', '2 START 2 met il 3 END hex ano', 'prop ano il hex ano', 'but 1 3 di', '1 3 di but eno',
+  '5 prop 1 2 il non ano', 'hex 1 eno 3 eno 5 ino', 'but 1 2 bis eno', 'il ano 2', '2 3 tri met il pent ano',
+  '5 START START 2 met il prop il END', 'iliden di bis tri', '2 met il 2 but',
+];
+
+test('the §15.5.1 examples parse without errors', () => {
+  for (const words of EXAMPLES) {
+    assert.deepEqual(errorsOf(words), [], words);
+  }
+  assert.deepEqual(ERROR_CODES, ['EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER']);
+});
+
+test('the tree is lossless: every tile exactly once, in order, also with mistakes', () => {
+  for (const words of [...EXAMPLES, ...BROKEN]) {
+    const { tree } = read(words);
+    const n = seq(words).length;
+    assert.deepEqual(leafIndices(tree), Array.from({ length: n }, (_, i) => i), words);
+    assert.deepEqual(tree.range, [0, n]);
+  }
+});
+
+test('the tree keeps the student\'s prefixes, multipliers and locants as written', () => {
+  // `2,3-dimetilpentano`: one prefix, locants 2 and 3, multiplier di, parent C5 with `ano`.
+  let { tree } = read('2 3 di met il pent ano');
+  assert.equal(tree.items.length, 1);
+  const [prefix] = tree.items;
+  assert.deepEqual(prefix.locants.map((i) => tree.tiles[i].value), [2, 3]);
+  assert.equal(tree.tiles[prefix.multiplier].id, 'mult-2');
+  assert.equal(prefix.substituent.type, 'chain');
+  assert.equal(tree.tiles[prefix.substituent.root].value, 1);
+  assert.equal(tree.tiles[prefix.substituent.fv].value, 1);
+  assert.equal(tree.tiles[tree.parent.chain.root].value, 5);
+  assert.equal(tree.parent.chain.ano, 6);
+  // Unsorted prefixes stay in the student's order; `bis` stays `bis` on a simple branch.
+  ({ tree } = read('3 met il 2 et il 5 5 bis prop 2 il non ano'));
+  assert.deepEqual(tree.items.map((item) => tree.tiles[item.substituent.root].text), ['met', 'et', 'prop']);
+  assert.equal(tree.tiles[tree.items[2].multiplier].id, 'cmult-2');
+  // A compound branch: its prefixes, its own chain (cited last) and both controls.
+  ({ tree } = read('5 5 bis START 2 2 di met il prop il END non ano'));
+  const branch = tree.items[0].substituent;
+  assert.equal(branch.type, 'branch');
+  assert.equal(branch.start, 3);
+  assert.equal(branch.end, 11);
+  assert.equal(branch.items.length, 1);
+  assert.equal(tree.tiles[branch.chain.root].text, 'prop');
+  assert.ok(isCompleteSubstituent(branch));
+  // `propan-2-il`: `ano` kept as a tile, the free-valence locant 2.
+  ({ tree } = read('4 prop ano 2 il hept ano'));
+  const chain = tree.items[0].substituent;
+  assert.equal(chain.ano, 2);
+  assert.deepEqual(chain.fvLocants, [3]);
+  // Unsaturation segments with their own locants and multipliers.
+  ({ tree } = read('hex 1 eno 3 5 di ino'));
+  assert.deepEqual(tree.parent.chain.segments.map((s) => [s.locants.length, s.multiplier, tree.tiles[s.ending].value]),
+    [[1, null, 'double'], [2, 5, 'triple']]);
+  // Retained words and `iliden`.
+  ({ tree } = read('5 5 di tert-butil 3 isopropiliden 2 et eno iliden non ano'));
+  assert.deepEqual(tree.items.map((item) => item.substituent.type), ['retained', 'retained', 'chain']);
+  assert.equal(tree.tiles[tree.items[2].substituent.fv].value, 2);
+}); // End of test 'the tree keeps the student's prefixes, multipliers and locants as written'
+
+test('old-style locants: leading numbers are never consumed greedily', () => {
+  // `2-buteno`: the 2 belongs to the only segment without locants.
+  let { tree, errors } = read('2 but eno');
+  assert.deepEqual(errors, []);
+  assert.equal(tree.items.length, 0);
+  assert.deepEqual(tree.parent.legacy, [0]);
+  assert.equal(tree.parent.legacySegment, 0);
+  // `2-metil-2-buteno`: the first 2 is the prefix's, the second the parent's.
+  ({ tree, errors } = read('2 met il 2 but eno'));
+  assert.deepEqual(errors, []);
+  assert.deepEqual(tree.items[0].locants, [0]);
+  assert.deepEqual(tree.parent.legacy, [3]);
+  // `1,3-butadieno`: two locants for the multiplied segment.
+  ({ tree, errors } = read('1 3 but di eno'));
+  assert.deepEqual(errors, []);
+  assert.deepEqual(tree.parent.legacy, [0, 1]);
+  // `1-hexen-3-ino`: exactly one segment (eno) is left without locants.
+  ({ tree, errors } = read('1 hex eno 3 ino'));
+  assert.deepEqual(errors, []);
+  assert.equal(tree.parent.legacySegment, 0);
+}); // End of test 'old-style locants: leading numbers are never consumed greedily'
+
+test('EMPTY: no tiles', () => {
+  const { tree, errors } = parse([]);
+  assert.deepEqual(errors.map((e) => [e.code, e.from, e.to, e.message]), [['EMPTY', 0, 0, 'Elige fichas para formar un nombre.']]);
+  assert.equal(tree.parent, null);
+});
+
+test('NO_PARENT: numbers and multipliers with nothing after them, or no root at all', () => {
+  const error = errorOf('2 3 di', 'NO_PARENT');
+  assert.deepEqual([error.from, error.to], [0, 3]);
+  assert.equal(error.message, 'Falta la cadena principal: una raíz (met, et, prop…) y su terminación (ano, eno, ino).');
+  // After a complete prefix, only the tiles after it are marked.
+  assert.deepEqual(errorsOf('2 met il 3'), ['NO_PARENT[3,4)']);
+  assert.deepEqual(errorsOf('eno'), ['TILE_ORDER[0,1)', 'NO_PARENT[0,1)']);
+});
+
+test('ROOT_END: a root without its ending', () => {
+  const error = errorOf('2 met il but', 'ROOT_END');
+  assert.deepEqual([error.from, error.to], [3, 4]);
+  assert.equal(error.message, 'Después de «but» va una terminación: «ano», «eno» o «ino» si es la cadena principal, o «il» si es una rama.');
+  // A root followed by another prefix; a chain without `il` inside a compound branch.
+  assert.deepEqual(errorsOf('hex 2 met il pent ano'), ['ROOT_END[0,1)']);
+  assert.deepEqual(errorsOf('5 START 2 met il prop ano END non ano'), ['ROOT_END[5,7)', 'TILE_ORDER[7,8)']);
+});
+
+test('ENDS_WITH_BRANCH: a name that ends with a complete branch', () => {
+  const error = errorOf('2 3 di met il', 'ENDS_WITH_BRANCH');
+  assert.deepEqual([error.from, error.to], [0, 5]);
+  assert.equal(error.message, 'El nombre acaba en una rama («metil»): falta la cadena principal detrás.');
+  assert.equal(errorOf('4 prop ano 2 il', 'ENDS_WITH_BRANCH').message,
+    'El nombre acaba en una rama («(propan-2-il)»): falta la cadena principal detrás.');
+  assert.deepEqual(errorsOf('5 5 bis START 2 2 di met il prop il END'), ['ENDS_WITH_BRANCH[0,12)']);
+});
+
+test('BRANCH_OPEN: a compound branch never closed', () => {
+  const error = errorOf('5 START 2 2 di met il prop il', 'BRANCH_OPEN');
+  assert.deepEqual([error.from, error.to], [1, 9]);
+  assert.equal(error.message, 'Falta cerrar la rama compuesta.');
+  // Only BRANCH_OPEN: the missing parent is not reported on top of it.
+  assert.deepEqual(errorsOf('5 START 2 2 di met il prop il'), ['BRANCH_OPEN[1,9)']);
+  // Nested: both branches are open.
+  assert.deepEqual(errorsOf('8 START 2 START 1 met il'), ['BRANCH_OPEN[1,7)', 'BRANCH_OPEN[3,7)']);
+});
+
+test('LOCANT_COUNT: locants that do not match the multiplier', () => {
+  let error = errorOf('2 3 tri met il pent ano', 'LOCANT_COUNT');
+  assert.deepEqual([error.from, error.to], [0, 3]);
+  assert.equal(error.message, 'Has puesto 2 números (2,3), pero «tri» quiere decir tres grupos.');
+  error = errorOf('2 3 met il pent ano', 'LOCANT_COUNT');
+  assert.deepEqual([error.from, error.to], [0, 2]);
+  assert.equal(error.message, 'Con dos números hace falta «di».');
+  assert.equal(errorOf('5 5 START 2 met il prop il END non ano', 'LOCANT_COUNT').message, 'Con dos números hace falta «bis».');
+  // In an unsaturation segment, and for the free-valence locant of a branch.
+  error = errorOf('but 1 di eno', 'LOCANT_COUNT');
+  assert.deepEqual([error.from, error.to], [1, 3]);
+  assert.equal(error.message, 'Has puesto 1 número (1), pero «di» quiere decir dos enlaces dobles.');
+  error = errorOf('5 prop 1 2 il non ano', 'LOCANT_COUNT');
+  assert.deepEqual([error.from, error.to], [2, 4]);
+  assert.equal(error.message, 'Una rama se une a la cadena por un solo carbono: delante de «il» va un solo número.');
+  // Left-out locants are not a count error (R-1c).
+  assert.deepEqual(errorsOf('di met il prop ano'), []);
+}); // End of test 'LOCANT_COUNT: locants that do not match the multiplier'
+
+test('LEGACY: old-style locants that cannot be allocated', () => {
+  const error = errorOf('1 3 hex eno ino', 'LEGACY');
+  assert.deepEqual([error.from, error.to], [0, 2]);
+  assert.equal(error.message, 'Con la forma antigua no sé a qué enlace va cada número: escríbelos detrás de la raíz (hex-1-en-3-ino).');
+  assert.deepEqual(errorsOf('2 but 2 eno'), ['LEGACY[0,1)']); // every segment has its locants
+  assert.deepEqual(errorsOf('2 but ano'), ['LEGACY[0,1)']); // no segment at all
+  assert.deepEqual(errorsOf('1 3 but eno'), ['LEGACY[0,2)']); // two numbers for one double bond
+});
+
+test('TILE_ORDER: a tile that cannot go where it is', () => {
+  let error = errorOf('eno hex ano', 'TILE_ORDER');
+  assert.deepEqual([error.from, error.to], [0, 1]);
+  assert.equal(error.message, 'Esta ficha no puede ir aquí: «ano», «eno» e «ino» van detrás de una raíz (butano, but-2-eno).');
+  // Tiles after the parent.
+  error = errorOf('hex ano 2 met il', 'TILE_ORDER');
+  assert.deepEqual([error.from, error.to], [2, 5]);
+  assert.match(error.message, /^Estas fichas no pueden ir aquí: el nombre termina con la cadena principal/);
+  // «acaba rama» with no open branch, and closing a branch that has no chain of its own.
+  assert.deepEqual(errorsOf('met il END but ano'), ['TILE_ORDER[2,3)']);
+  assert.deepEqual(errorsOf('2 START 2 met il END hex ano'), ['TILE_ORDER[5,6)']);
+  // `ano` with `il` but no locant (`propil`), `bis` before `eno`, a third segment, a multiplier before the parent's root.
+  assert.deepEqual(errorsOf('3 prop ano il hex ano'), ['TILE_ORDER[2,3)']);
+  assert.deepEqual(errorsOf('but 1 2 bis eno'), ['TILE_ORDER[3,4)']);
+  assert.deepEqual(errorsOf('hex 1 eno 3 eno 5 ino'), ['TILE_ORDER[5,7)']);
+  assert.deepEqual(errorsOf('di but 1 eno'), ['TILE_ORDER[0,1)']);
+  // Numbers before a closing control.
+  assert.deepEqual(errorsOf('2 START 2 met il prop il 3 END hex ano'), ['TILE_ORDER[7,8)', 'TILE_ORDER[8,9)']);
+}); // End of test 'TILE_ORDER: a tile that cannot go where it is'
+
+test('errors come sorted by position', () => {
+  const { errors } = read('il 2 3 tri met il but');
+  assert.deepEqual(errors.map((e) => e.code), ['TILE_ORDER', 'LOCANT_COUNT', 'ROOT_END']);
+  assert.ok(errors.every((e, i) => i === 0 || errors[i - 1].from <= e.from));
+});
+
+test('parse accepts tiles as well as ids, and rejects unknown ids', () => {
+  assert.deepEqual(parse(seq('hex ano').map(tileById)).errors, []);
+  assert.throws(() => parse(['root-6', 'nope']), /unknown tile/);
+});

@@ -70,7 +70,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-45c | v3 Esters with substituted rings | same, "I-45c" | done — `docs/progress-archive/i-45c.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-45c.md` |
 | I-46 | v3 Wrap-up (Ayuda, examples, README, CLAUDE.md scope, oracle README) | same, "I-46" | done — `docs/progress-archive/i-46.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-46.md` |
 
-| I-47a | v4 R-1a Tile catalogue, parser, assembler, tokenizer (open-chain hydrocarbons) | `autoclaude/processed/230-name-to-structure.md` + design §15.8 "R-1a" | queued | — | — |
+| I-47a | v4 R-1a Tile catalogue, parser, assembler, tokenizer (open-chain hydrocarbons) | `autoclaude/processed/230-name-to-structure.md` + design §15.8 "R-1a" | done — `docs/progress-archive/i-47a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-47a.md` |
 | I-47b | v4 R-1b `interpret.js` + `build.js`, `readName()` for fully located names | same, "R-1b" | queued | — | — |
 | I-47c | v4 R-1c Left-out locants (search, `missingLocants`/`ambiguous`/`incomplete`) | same, "R-1c" | queued | — | — |
 | I-48a | v4 R-2a The «¿Cómo se dibuja?» dialog | same, "R-2a" | queued | — | — |
@@ -141,10 +141,23 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-47a (v4 R-1a): tile catalogue, error-tolerant lossless parser, assembler and tokenizer for
-open-chain hydrocarbon names in a new `src/reverse/`; spec design §15.4–§15.5 and §15.8 "R-1a"
-(read from the working-tree `docs/design.md`, never edit or commit it). Deploying (`npm run deploy`)
-stays a manual user step; Ayuda/example wording awaits teacher review (design §14.6).
+Select and run I-47b (v4 R-1b): `src/reverse/interpret.js` + `build.js` for fully located names and
+`readName()` with the verdicts `correct`, `alternative`, `otherName`, `outOfScope`, `invalid`
+(structural errors `LOCANT_RANGE`, `BOND_RANGE`, `SAME_BOND`, `VALENCE`, `TOO_BIG` with tile
+ranges); fixture round trip with graph comparison; mutations. Spec: design §15.3 (verdicts), §15.4,
+§15.5.3 (readName), §15.6, §15.7, §15.8 "R-1b", §15.9 (traps 7–8: NFC, every engine alternative) —
+read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Write the
+acceptance criteria from §15.8 "R-1b" + §15.7 at selection; risk high (verdicts compare against
+every engine alternative); worker opus. Commit by explicit paths.
+
+- **Builds on I-47a** (`docs/progress-archive/i-47a.md`): `parse(ids)` → `{tree, errors}` (never
+  throws), `assemble(tree)` → `{text, spans}`, `tokenize(text)` → ids or null; tile ids in
+  `src/reverse/tiles.js`; test helper `seq()` in `tests/unit/reverse-words.js`. The syntactic codes
+  exist; the structural ones are this phase's. Update the coverage clause of the `CLAUDE.md` v4
+  scope sentence.
+
+Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
+(design §14.6).
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -294,6 +307,9 @@ stays a manual user step; Ayuda/example wording awaits teacher review (design §
   `tests/e2e/substituted-esters.spec.js`; oracle `generateSubstitutedEsters()`.
 - v3 wrap-up (I-46): Ayuda notes `#help-benzenes` / `#help-omp` in `index.html`, examples group
   «Bencenos con varios sustituyentes» in `src/ui/examples.js`.
+- Name → drawing (v4, I-47a…): pure `src/reverse/` — `tiles.js` (catalogue from `lexicon.es.js`),
+  `parse.js` (`parse(ids)` → `{tree, errors}`), `assemble.js` (`{text, spans}`), `tokenize.js`;
+  tests `tests/unit/reverse-*.test.js`, helper `tests/unit/reverse-words.js`; spec design §15.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
@@ -304,6 +320,8 @@ stays a manual user step; Ayuda/example wording awaits teacher review (design §
 - I-46: `npm test` 0 (1716) · `npm run check` 0 (143 files) · `npm run build` 0 · `npm run e2e` 0
   (407, source + dist); after the review fix `npx playwright test tests/e2e/polish.spec.js` 0 (12) and
   `npm run build` 0.
+- I-47a: `npm test` 0 (1761) · `npm run check` 0 (152) · `npm run build` 0 · `npm run e2e` 0 (407);
+  after the review fix `npm test` 0 (1762) · `check` 0 · `build` 0 · `e2e` 0 (407).
 
 ## Open risks / deviations
 
@@ -370,6 +388,12 @@ stays a manual user step; Ayuda/example wording awaits teacher review (design §
 - I-46: Ayuda o/m/p note and example labels are new wording pending teacher review
   (`docs/progress-archive/i-46.md`).
 
+- I-47a: branch enclosed whenever it shows a locant; legacy count mismatch → `LEGACY`; new
+  `ROOT_END`/`TILE_ORDER`/`LOCANT_COUNT` situations; `cloro(metoxi)metano` brackets → R-4/R-5b, suffix
+  half of rule 4 → R-5a; Spanish error texts are drafts. Review should-fix (tokenizer stack overflow)
+  fixed with `TOKENIZE_MAX_LENGTH`; `parse`/`assemble` safe to 2000 nested branches — R-2a's dialog
+  should cap the tile count (`docs/progress-archive/i-47a.md`).
+
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
   (the runner's preflight-dirty list, 2026-10-14). Per the autoclaude rules they are the user's:
@@ -383,4 +407,7 @@ stays a manual user step; Ayuda/example wording awaits teacher review (design §
 
 ## Git state
 
-- I-45c `a57d6b9`, pushed. I-46 committed and pushed right after this checkpoint (see `git log`).
+- I-46 `7a30b61`, pushed. Inbox triage of `230-name-to-structure.md` `c945375`, pushed. I-47a
+  committed and pushed right after this checkpoint (see `git log`; it folds in the previous
+  record-only iteration's selection notes and `PROGRESS.json` v4 rows). User's uncommitted paths,
+  never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.
