@@ -1,10 +1,11 @@
 /**
  * @file Unit tests for the tokenizer of «¿Cómo se dibuja?»
- * (src/reverse/tokenize.js, design.md §15.4, §15.7, phase R-1a): the
- * inverse of the assembler. The fixture round trip covers every open-chain
- * hydrocarbon name and alternative of tests/fixtures/names.tsv (rows chosen
- * by an explicit SMILES syntax check, never by "tokenize failed"), and a
- * seeded property test reads back the text of random grammatical sequences.
+ * (src/reverse/tokenize.js, design.md §15.4, §15.7, phases R-1a, R-4a): the
+ * inverse of the assembler. The fixture round trips cover every open-chain
+ * hydrocarbon name and alternative of tests/fixtures/names.tsv, then every
+ * `ciclo` hydrocarbon one (rows chosen by explicit SMILES and name syntax
+ * checks, never by "tokenize failed"), and seeded property tests read back
+ * the text of random grammatical sequences, without and with rings.
  */
 
 import { test } from 'node:test';
@@ -12,14 +13,27 @@ import assert from 'node:assert/strict';
 import { parse } from '../../src/reverse/parse.js';
 import { assemble } from '../../src/reverse/assemble.js';
 import { tokenize, TOKENIZE_BUDGET, TOKENIZE_MAX_LENGTH } from '../../src/reverse/tokenize.js';
-import { stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES } from '../../src/naming/lexicon.es.js';
-import { seq, readFixtures, isOpenChainHydrocarbon } from './reverse-words.js';
+import {
+  stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RING_PREFIX,
+} from '../../src/naming/lexicon.es.js';
+import { seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName } from './reverse-words.js';
 
 /** Fixture rows of open-chain hydrocarbons (phase R-1a scope). */
 const EXPECTED_ROWS = 176;
 
 /** Names and alternatives of those rows. */
 const EXPECTED_NAMES = 204;
+
+/**
+ * Fixture rows of `ciclo` hydrocarbons (phase R-4a scope: the sections
+ * "Cycloalkanes (I-25)" and "Substituted and unsaturated monocycles
+ * (I-26)", 11 + 40 rows, and the two non-aromatic rings of the benzene
+ * section, `5-metilidenciclohexa-1,3-dieno` and `ciclobuta-1,3-dieno`).
+ */
+const EXPECTED_RING_ROWS = 53;
+
+/** Names and alternatives of those rows (three rows have two alternatives each). */
+const EXPECTED_RING_NAMES = 59;
 
 /**
  * Reads a tile sequence back as text.
@@ -48,6 +62,46 @@ test('fixture round trip: every open-chain hydrocarbon name and alternative', as
   assert.equal(rows.length, EXPECTED_ROWS);
   assert.equal(covered, EXPECTED_NAMES);
 }); // End of test 'fixture round trip: every open-chain hydrocarbon name and alternative'
+
+test('fixture round trip (R-4a): every `ciclo` hydrocarbon name and alternative', async () => {
+  const rows = (await readFixtures()).filter((row) => isMonocyclicHydrocarbon(row.smiles) && row.names.every(isCycloName));
+  let covered = 0;
+  for (const row of rows) {
+    for (const name of row.names) {
+      const ids = tokenize(name);
+      assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
+      const back = readBack(ids);
+      assert.deepEqual(back.errors, [], `names.tsv:${row.line}: ${name}`);
+      assert.equal(back.text, name, `names.tsv:${row.line}`);
+      covered += 1;
+    }
+  } // End of the loop over the fixture rows
+  assert.equal(rows.length, EXPECTED_RING_ROWS);
+  assert.equal(covered, EXPECTED_RING_NAMES);
+}); // End of test 'fixture round trip (R-4a): every `ciclo` hydrocarbon name and alternative'
+
+test('ring forms tokenize to their tiles: `ciclo` before the root, automatic marks around a simple ring branch', () => {
+  const examples = [
+    ['ciclohexano', 'ciclo hex ano'],
+    ['ciclohexa-1,3-dieno', 'ciclo hex 1 3 di eno'],
+    ['ciclooct-1-en-3-ino', 'ciclo oct 1 eno 3 ino'],
+    ['metilidenciclohexano', 'met iliden ciclo hex ano'],
+    ['1-isopropil-4-metilciclohexano', '1 isopropil 4 met il ciclo hex ano'],
+    ['1,3-ciclohexadieno', '1 3 ciclo hex di eno'],
+    ['ciclohexilmetano', 'ciclo hex il met ano'],
+    ['ciclohexilidenmetano', 'ciclo hex iliden met ano'],
+    ['2-(ciclohex-2-en-1-il)propano', '2 ciclo hex 2 eno 1 il prop ano'],
+    ['(2-metilciclohexil)metano', 'START 2 met il ciclo hex il END met ano'],
+    ['metil(ciclohexil)metano', 'met il ciclo hex il met ano'],
+    ['2-[metil(ciclohexil)metil]butano', '2 START met il ciclo hex il met il END but ano'],
+  ];
+  for (const [text, words] of examples) {
+    assert.deepEqual(tokenize(text), seq(words), text);
+  }
+  // Without the marks of the crowded case the text does not read; with marks around both words it is one compound branch.
+  assert.equal(tokenize('metilciclohexilmetano'), null);
+  assert.deepEqual(tokenize('(metilciclohexil)metano'), seq('START met il ciclo hex il END met ano'));
+}); // End of test 'ring forms tokenize to their tiles…'
 
 test('the §15.5.1 examples tokenize to the tiles of the design', () => {
   const examples = [
@@ -78,7 +132,7 @@ test('tokenize prefers whole words and automatic marks for simple branches', () 
 }); // End of test 'tokenize prefers whole words and automatic marks for simple branches'
 
 test('tokenize returns null outside the grammar, for texts that only read with errors, and past its budget', () => {
-  for (const text of ['', 'ácido etanoico', 'ciclohexano', 'clorometano', 'propan-2-ol', 'metilbenceno', 'hex ano', 'HEXANO']) {
+  for (const text of ['', 'ácido etanoico', 'clorometano', 'propan-2-ol', 'metilbenceno', 'hex ano', 'HEXANO', 'ciclo', 'cicloetano']) {
     assert.equal(tokenize(text), null, text);
   }
   for (const text of ['2,3-trimetilpentano', '1,3-hexenino', 'hexano-2-metil', '2-metil', '5-(2-metilpropil', 'propil']) {
@@ -123,16 +177,25 @@ function mulberry32(seed) {
  * Generator of grammatical tile sequences (design.md §15.5.1), as tile
  * words: prefixes (simple, retained, compound up to two levels deep) with
  * locant counts that match their multipliers (or left out), and a parent
- * with `ano` or one or two segments, sometimes in the old style.
+ * with `ano` or one or two segments, sometimes in the old style. With
+ * `rings` (R-4a), some stems — of the parent or of a branch — are rings:
+ * `ciclo` and a root of 3 to 30 carbons.
  *
  * @param {() => number} random - The random source.
+ * @param {boolean} [rings] - Draw ring stems too (default false: the R-1a sequences, draw for draw).
  * @returns {() => string[]} A function returning one sequence of tile words.
  */
-function grammarGenerator(random) {
+function grammarGenerator(random, rings = false) {
   const int = (lo, hi) => lo + Math.floor(random() * (hi - lo + 1));
   const pick = (list) => list[int(0, list.length - 1)];
   const nums = (k) => Array.from({ length: k }, () => String(int(1, 30)));
   const fv = () => FREE_VALENCE_SUFFIXES[int(1, 2)];
+  /**
+   * The words of a stem: a root, or (with `rings`, sometimes) `ciclo` and a root of three or more carbons.
+   *
+   * @returns {string[]} The words.
+   */
+  const stemWords = () => (rings && random() < 0.4 ? [RING_PREFIX, stem(int(3, 30))] : [stem(int(1, 30))]);
   /**
    * One unsaturation segment, with or without its locants.
    *
@@ -150,16 +213,16 @@ function grammarGenerator(random) {
    */
   const simple = () => {
     const form = int(0, 3);
-    const root = stem(int(1, 30));
+    const root = stemWords();
     if (form === 0) {
-      return [root, fv()];
+      return [...root, fv()];
     }
     if (form === 1) {
-      return [root, ...(random() < 0.5 ? [ENDINGS.saturated] : []), ...nums(1), fv()];
+      return [...root, ...(random() < 0.5 ? [ENDINGS.saturated] : []), ...nums(1), fv()];
     }
     if (form === 2) {
       const segments = Array.from({ length: int(1, 2) }, () => segment(random() < 0.7)).flat();
-      return [root, ...segments, ...(random() < 0.6 ? nums(1) : []), fv()];
+      return [...root, ...segments, ...(random() < 0.6 ? nums(1) : []), fv()];
     }
     return [pick(['isopropil', 'isopropiliden', 'tert-butil'])];
   }; // End of function simple()
@@ -184,16 +247,16 @@ function grammarGenerator(random) {
    * @returns {string[]} The words.
    */
   const parent = () => {
-    const root = stem(int(1, 30));
+    const root = stemWords();
     const form = int(0, 2);
     if (form === 0) {
-      return [root, ENDINGS.saturated];
+      return [...root, ENDINGS.saturated];
     }
     if (form === 1) {
-      return [root, ...Array.from({ length: int(1, 2) }, () => segment(random() < 0.8)).flat()];
+      return [...root, ...Array.from({ length: int(1, 2) }, () => segment(random() < 0.8)).flat()];
     }
     const k = int(1, 2); // old style: the locants of the only segment without them go first
-    return [...nums(k), root, ...(k > 1 ? [multiplier(k)] : []), pick([ENDINGS.double, ENDINGS.triple])];
+    return [...nums(k), ...root, ...(k > 1 ? [multiplier(k)] : []), pick([ENDINGS.double, ENDINGS.triple])];
   }; // End of function parent()
   return () => [...Array.from({ length: int(0, 3) }, () => prefix(0)).flat(), ...parent()];
 } // End of function grammarGenerator()
@@ -212,3 +275,19 @@ test('property: the text of random grammatical sequences tokenizes back to the s
     assert.equal(readBack(found).text, original.text, words);
   } // End of the loop over the random sequences
 }); // End of test 'property: the text of random grammatical sequences tokenizes back to the same text'
+
+test('property (R-4a): random grammatical sequences with rings tokenize back to the same text', () => {
+  const next = grammarGenerator(mulberry32(20261015), true);
+  let ringed = 0;
+  for (let i = 0; i < 400; i += 1) {
+    const words = next().join(' ');
+    const ids = seq(words);
+    const original = readBack(ids);
+    assert.deepEqual(original.errors, [], words);
+    ringed += words.includes(RING_PREFIX) ? 1 : 0;
+    const found = tokenize(original.text);
+    assert.ok(found, `${words} → ${original.text}: no tiles`);
+    assert.equal(readBack(found).text, original.text, words);
+  } // End of the loop over the random sequences
+  assert.ok(ringed >= 200, `${ringed} sequences with a ring`);
+}); // End of test 'property (R-4a): random grammatical sequences with rings tokenize back to the same text'

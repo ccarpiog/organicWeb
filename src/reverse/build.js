@@ -1,9 +1,14 @@
 /**
- * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phase R-1b):
- * a NameSpec (interpret.js) and one placement — a value for each left-out
- * slot — become a molecule (model/molecule.js), or a structural error with
- * the offending tiles. Pure, no DOM; atoms are created without meaningful
- * coordinates (the UI lays the molecule out, design.md §15.2).
+ * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
+ * R-4a): a NameSpec (interpret.js) and one placement — a value for each
+ * left-out slot — become a molecule (model/molecule.js), or a structural
+ * error with the offending tiles. Pure, no DOM; atoms are created without
+ * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
+ *
+ * A ring (parent or branch, kind 'ring') is built as its chain of carbons
+ * closed by bond n, which joins carbon n to carbon 1 (design.md §15.5.3:
+ * ring bonds 1…n), so a multiple bond on bond n is the closing one and
+ * never out of range.
  *
  * The molecule is the student's reading, numbered as the student numbered
  * it: `studentParent` lists the parent's atoms in the student's locant
@@ -15,15 +20,17 @@
  *
  * 1. In tile order: a retained word given prefixes of its own inside a
  *    compound branch (`TILE_ORDER`, it has no numbering); a locant beyond
- *    its chain (`LOCANT_RANGE`; the chain of the prefix, the branch's own
- *    chain inside a branch, the branch for its free-valence locant); a
- *    multiple bond from the last carbon (`BOND_RANGE`, also any multiple
- *    bond on a one-carbon chain); two multiple bonds on one bond
- *    (`SAME_BOND`). An `iliden` is the double bond to the carbon it hangs
- *    from, so it counts in the valence below.
+ *    its chain or ring (`LOCANT_RANGE`; the chain of the prefix, the
+ *    branch's own chain inside a branch, the branch for its free-valence
+ *    locant); a multiple bond from the last carbon of a chain (`BOND_RANGE`,
+ *    also any multiple bond on a one-carbon chain; on a ring that is the
+ *    closing bond); two multiple bonds on one bond (`SAME_BOND`). An
+ *    `iliden` is the double bond to the carbon it hangs from, so it counts
+ *    in the valence below.
  * 2. `TOO_BIG`, the engine's caps (model/validate.js) checked before
  *    building and naming: more than MAX_CARBONS carbons (counted on the
- *    NameSpec), then, once built, a chain longer than MAX_CHAIN.
+ *    NameSpec), then, once built, a chain longer than MAX_CHAIN (with a
+ *    ring, a side chain longer than MAX_CHAIN, as the engine counts it).
  * 3. `VALENCE`: a carbon with more than four bonds; the tiles are those of
  *    the locant (or `il` / `iliden`) whose bond takes it over four, adding
  *    the bonds in tile order.
@@ -32,10 +39,21 @@
  * name with left-out locants still gets its definite errors before
  * search.js fills the left-out slots (R-1c), which also uses
  * attachmentOrder() to prune by valence.
+ *
+ * ringRefusal() is no structural error but a limit of the app: a name that
+ * describes more rings than MAX_KEYED_RINGS (`diciclohexilciclohexano`), or
+ * a ring bonded straight to another ring (`ciclohexilciclohexano`,
+ * `ciclohexilidenciclohexano`), gives a molecule with no structural key
+ * (model/graph.js canonicalKey() keys two rings only when no atom of one is
+ * bonded to the other), which the engine refuses anyway (RING_SYSTEM,
+ * several rings); readName() answers `outOfScope` with the engine's own
+ * message before any search.
  */
 
 import { createMolecule, addAtom, addBond, setBondOrder, bondOrderSum, CARBON_VALENCE } from '../model/molecule.js';
-import { MAX_CARBONS, MAX_CHAIN, MESSAGES as VALIDATION_MESSAGES, longestCarbonChain } from '../model/validate.js';
+import {
+  MAX_CARBONS, MAX_CHAIN, MESSAGES as VALIDATION_MESSAGES, RING_SYSTEM_MESSAGES, longestCarbonChain, longestSideChain,
+} from '../model/validate.js';
 
 /** The structural error codes of design.md §15.6 (TILE_ORDER reused for a retained word with prefixes). */
 export const BUILD_ERROR_CODES = Object.freeze(['TILE_ORDER', 'LOCANT_RANGE', 'BOND_RANGE', 'SAME_BOND', 'VALENCE', 'TOO_BIG']);
@@ -55,6 +73,13 @@ const RETAINED_TEMPLATES = Object.freeze({
 
 /** Spanish words of the bond orders in the messages. */
 const BOND_WORDS = Object.freeze({ 2: 'doble', 3: 'triple' });
+
+/**
+ * Most rings a molecule built from a name may have and still be compared by
+ * structure: model/graph.js canonicalKey() keys trees, monocycles and two
+ * separate rings only (the engine names one ring, or two across an ester).
+ */
+export const MAX_KEYED_RINGS = 2;
 
 /**
  * A structural error.
@@ -80,13 +105,19 @@ function carbons(n) {
 
 /**
  * The LOCANT_RANGE message (design.md §15.6): «La cadena de 5 carbonos va
- * del 1 al 5: no hay carbono 7.»; «La rama…» inside a branch.
+ * del 1 al 5: no hay carbono 7.»; «La rama…» inside a branch; «El anillo de
+ * 6 carbonos va del 1 al 6…», «El anillo de la rama va del 1 al 6…» for a
+ * ring.
  *
- * @param {{length: number, branch: boolean}} owner - The chain numbered.
+ * @param {{length: number, branch: boolean, ring?: boolean}} owner - The chain or ring numbered.
  * @param {number} value - The locant.
  * @returns {string} The message.
  */
 function rangeMessage(owner, value) {
+  if (owner.ring) {
+    const noun = owner.branch ? 'El anillo de la rama' : `El anillo de ${carbons(owner.length)}`;
+    return `${noun} va del 1 al ${owner.length}: no hay carbono ${value}.`;
+  }
   const noun = owner.branch ? 'La rama' : 'La cadena';
   if (owner.length === 1) {
     return `${noun} de 1 carbono solo tiene el carbono 1: no hay carbono ${value}.`;
@@ -126,12 +157,13 @@ function checkCarbon(slot, owner, values) {
 }
 
 /**
- * Checks the multiple-bond slots of a chain in tile order: each within the
- * chain (LOCANT_RANGE beyond its last carbon, BOND_RANGE from its last
- * carbon or on a one-carbon chain) and no bond taken twice (SAME_BOND, the
- * tiles from the first slot to the second).
+ * Checks the multiple-bond slots of a chain or ring in tile order: each
+ * within it (LOCANT_RANGE beyond its last carbon; on a chain BOND_RANGE
+ * from its last carbon or on a one-carbon chain, while bond n of a ring is
+ * its closing bond) and no bond taken twice (SAME_BOND, the tiles from the
+ * first slot to the second).
  *
- * @param {{length: number, branch: boolean, double: object[], triple: object[]}} owner - The chain.
+ * @param {{length: number, branch: boolean, ring?: boolean, double: object[], triple: object[]}} owner - The chain or ring.
  * @param {Map<object, number>|null} values - Placement values, or null.
  * @returns {object|null} The first error, or null.
  */
@@ -148,7 +180,7 @@ function checkBonds(owner, values) {
     if (value > owner.length) {
       return buildError('LOCANT_RANGE', rangeMessage(owner, value), slot.tiles);
     }
-    if (value === owner.length) {
+    if (value === owner.length && !owner.ring) {
       const noun = owner.branch ? 'la rama' : 'la cadena';
       return buildError('BOND_RANGE', `El enlace ${BOND_WORDS[order]} del carbono ${value} iría al carbono ${value + 1}, `
         + `y ${noun} solo tiene ${carbons(owner.length)}.`, slot.tiles);
@@ -167,7 +199,7 @@ function checkBonds(owner, values) {
  * carbon slots, then its substituent.
  *
  * @param {object[]} prefixes - PrefixSpecs.
- * @param {{length: number, branch: boolean}} owner - The chain they hang from.
+ * @param {{length: number, branch: boolean, ring?: boolean}} owner - The chain or ring they hang from.
  * @param {Map<object, number>|null} values - Placement values, or null.
  * @returns {object|null} The first error, or null.
  */
@@ -203,7 +235,7 @@ function checkSubstituent(sub, values) {
     return buildError('TILE_ORDER', `Esta ficha no puede ir aquí: «${sub.word.text}» ya es una rama entera y no lleva `
       + 'números ni ramas propias.', sub.word.tiles);
   }
-  const owner = { length: sub.length, branch: true, double: sub.double, triple: sub.triple };
+  const owner = { length: sub.length, branch: true, ring: sub.kind === 'ring', double: sub.double, triple: sub.triple };
   return checkPrefixes(sub.prefixes, owner, values) || checkBonds(owner, values)
     || checkCarbon(sub.freeValence.slot, owner, values);
 } // End of function checkSubstituent()
@@ -244,6 +276,67 @@ export function specCarbons(spec) {
 }
 
 /**
+ * Rings of a branch, its own prefixes included.
+ *
+ * @param {object} sub - A SubstituentSpec.
+ * @returns {number} The count.
+ */
+function substituentRings(sub) {
+  return (sub.kind === 'ring' ? 1 : 0) + prefixRings(sub.prefixes);
+}
+
+/**
+ * Rings of a list of prefixes, each counted as often as its multiplier says.
+ *
+ * @param {object[]} prefixes - PrefixSpecs.
+ * @returns {number} The count.
+ */
+function prefixRings(prefixes) {
+  return prefixes.reduce((sum, prefix) => sum + prefix.slots.length * substituentRings(prefix.substituent), 0);
+}
+
+/**
+ * Rings of the molecule a NameSpec describes (independent of the locants;
+ * every ring of a name is separate, joined to the rest by one bond).
+ *
+ * @param {object} spec - A NameSpec.
+ * @returns {number} The count.
+ */
+export function specRings(spec) {
+  return (spec.parent.kind === 'ring' ? 1 : 0) + prefixRings(spec.prefixes);
+}
+
+/**
+ * Tells whether a ring branch hangs straight from a ring — the parent or
+ * another ring branch, at any depth — so that the two rings are bonded
+ * atom to atom.
+ *
+ * @param {{prefixes: object[]}} owner - A ParentSpec with the name's prefixes, or a SubstituentSpec.
+ * @param {boolean} ring - The owner is a ring.
+ * @returns {boolean} True when two rings are bonded.
+ */
+function ringOnRing(owner, ring) {
+  return owner.prefixes.some((prefix) => {
+    const sub = prefix.substituent;
+    return (ring && sub.kind === 'ring') || (sub.kind !== 'retained' && ringOnRing(sub, sub.kind === 'ring'));
+  });
+}
+
+/**
+ * The engine's refusal of a name whose molecule has no structural key (file
+ * header): more rings than MAX_KEYED_RINGS, or two rings bonded atom to
+ * atom. Whatever the locants, it is the RING_SYSTEM message for several
+ * rings (model/validate.js), which the engine gives such molecules.
+ *
+ * @param {object} spec - A NameSpec.
+ * @returns {{code: string, message: string, tiles: [number, number]}|null} The refusal, or null.
+ */
+export function ringRefusal(spec) {
+  const unkeyed = specRings(spec) > MAX_KEYED_RINGS || ringOnRing({ prefixes: spec.prefixes }, spec.parent.kind === 'ring');
+  return unkeyed ? buildError('RING_SYSTEM', RING_SYSTEM_MESSAGES.several, spec.tiles) : null;
+}
+
+/**
  * The structural errors that need no placement, or that a placement's
  * values give (design.md §15.6): retained words with prefixes, ranges,
  * repeated bonds (left-out slots without a value are skipped, except that
@@ -255,7 +348,9 @@ export function specCarbons(spec) {
  * @returns {{code: string, message: string, tiles: [number, number]}|null} The first error, or null.
  */
 export function checkSpec(spec, values = null) {
-  const parent = { length: spec.parent.length, branch: false, double: spec.parent.double, triple: spec.parent.triple };
+  const parent = {
+    length: spec.parent.length, branch: false, ring: spec.parent.kind === 'ring', double: spec.parent.double, triple: spec.parent.triple,
+  };
   const error = checkPrefixes(spec.prefixes, parent, values) || checkBonds(parent, values);
   if (error) {
     return error;
@@ -291,13 +386,15 @@ function contribute(state, atom, tiles, amount) {
 }
 
 /**
- * Creates the carbons and single bonds of a chain, then its multiple bonds
- * and the prefixes hanging from it.
+ * Creates the carbons and single bonds of a chain (closed by bond n from
+ * carbon n to carbon 1 for a ring), then its multiple bonds and the
+ * prefixes hanging from it.
  *
  * @param {object} state - Build state (`mol`, `values`, `atoms` info by id).
- * @param {{length: number, double: object[], triple: object[], prefixes: object[]}} owner - ParentSpec or chain SubstituentSpec.
+ * @param {{kind?: string, length: number, double: object[], triple: object[], prefixes: object[]}} owner - ParentSpec,
+ *   chain or ring SubstituentSpec.
  * @param {boolean} branch - A branch's chain (for the messages).
- * @returns {{atoms: number[], bonds: number[]}} Its atoms and chain bonds in locant order.
+ * @returns {{atoms: number[], bonds: number[]}} Its atoms and bonds in locant order (a ring's closing bond last).
  */
 function buildChain(state, owner, branch) {
   const { mol, values } = state;
@@ -310,13 +407,17 @@ function buildChain(state, owner, branch) {
     if (locant > 1) {
       bonds.push(addBond(mol, atoms[locant - 2], id, 1));
     }
+  } // End of the loop that creates the carbons
+  const ring = owner.kind === 'ring';
+  if (ring) {
+    bonds.push(addBond(mol, atoms[owner.length - 1], atoms[0], 1)); // Bond n closes the ring.
   }
   for (const [order, slots] of [[2, owner.double], [3, owner.triple]]) {
     for (const slot of slots) {
       const value = slotValue(slot, values);
       setBondOrder(mol, bonds[value - 1], order);
       contribute(state, atoms[value - 1], slot.tiles, order - 1);
-      contribute(state, atoms[value], slot.tiles, order - 1);
+      contribute(state, atoms[ring ? value % owner.length : value], slot.tiles, order - 1);
     }
   }
   attachPrefixes(state, owner.prefixes || [], atoms);
@@ -485,7 +586,9 @@ export function build(spec, placement = []) {
   if (valence) {
     return { ok: false, error: valence };
   }
-  if (longestCarbonChain(state.mol) > MAX_CHAIN) {
+  // The engine's chain cap (model/validate.js validateForNaming()): with a ring, the longest side chain.
+  const chain = specRings(spec) > 0 ? longestSideChain(state.mol) : longestCarbonChain(state.mol);
+  if (chain > MAX_CHAIN) {
     return { ok: false, error: buildError('TOO_BIG', VALIDATION_MESSAGES.TOO_BIG, spec.tiles) };
   }
   return { ok: true, molecule: state.mol, studentParent: { atoms: parent.atoms, bonds: parent.bonds }, prefixAtoms };

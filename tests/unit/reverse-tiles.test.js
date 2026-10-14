@@ -16,9 +16,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { TILES, tileById, tileId, toTiles, START_ID, END_ID, MAX_NUM, MAX_MULT } from '../../src/reverse/tiles.js';
+import { TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, MAX_NUM, MAX_MULT } from '../../src/reverse/tiles.js';
 import {
-  stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
+  stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX,
 } from '../../src/naming/lexicon.es.js';
 import { bundleModules } from '../../scripts/build.mjs';
 
@@ -47,6 +47,7 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('retained'), 3);
   assert.equal(count('start'), 1);
   assert.equal(count('end'), 1);
+  assert.equal(count('ring'), 1); // ciclo (R-4a)
   assert.equal(new Set(TILES.map((tile) => tile.id)).size, TILES.length, 'ids are unique');
   assert.equal(new Set(TILES.map((tile) => tile.text)).size, TILES.length, 'texts are unique');
   assert.ok(TILES.every((tile) => Object.isFrozen(tile)));
@@ -64,12 +65,14 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       retained: () => `${RETAINED_PREFIXES[tile.value].italic}${RETAINED_PREFIXES[tile.value].text}`,
       start: () => ENCLOSING_MARKS[0][0],
       end: () => ENCLOSING_MARKS[0][1],
+      ring: () => RING_PREFIX,
     }[tile.kind]();
     assert.equal(tile.text, expected, tile.id);
   } // End of the loop over the tiles
   assert.deepEqual(TILES.filter((t) => t.kind === 'retained').map((t) => t.text), ['isopropil', 'isopropiliden', 'tert-butil']);
   assert.equal(tileById('retained-tert-butyl').italic, 'tert-');
   assert.equal(tileById('retained-isopropyl').italic, '');
+  assert.equal(tileById(RING_ID).text, 'ciclo');
 }); // End of test 'every tile text comes from the lexicon (numbers are digits)'
 
 test('rows and «más» follow design.md §15.2', () => {
@@ -78,8 +81,9 @@ test('rows and «más» follow design.md §15.2', () => {
   assert.equal(more('mult')[0], 7); // hepta…
   assert.equal(more('cmult')[0], 7);
   assert.equal(more('root')[0], 11); // undec…
-  assert.deepEqual([...new Set(TILES.map((tile) => tile.row))], ['numbers', 'multipliers', 'roots', 'endings', 'branches']);
-  assert.ok(TILES.filter((tile) => ['ending', 'freeValence', 'retained', 'start', 'end'].includes(tile.kind)).every((tile) => !tile.more));
+  assert.deepEqual([...new Set(TILES.map((tile) => tile.row))], ['numbers', 'multipliers', 'roots', 'endings', 'branches', 'rings']);
+  assert.ok(TILES.filter((tile) => ['ending', 'freeValence', 'retained', 'start', 'end', 'ring'].includes(tile.kind)).every((tile) => !tile.more));
+  assert.deepEqual(TILES.filter((tile) => tile.row === 'rings').map((tile) => tile.id), [RING_ID], 'R-4a: the ciclo tile');
 });
 
 test('tileById, tileId and toTiles', () => {
@@ -89,6 +93,7 @@ test('tileById, tileId and toTiles', () => {
   assert.equal(tileId('freeValence', 2), 'fv-2');
   assert.equal(tileId('start'), START_ID);
   assert.equal(tileId('end'), END_ID);
+  assert.equal(tileId('ring', 'cyclo'), RING_ID);
   assert.deepEqual(toTiles(['num-2', tileById('mult-2')]).map((tile) => tile.text), ['2', 'di']);
   assert.throws(() => tileById('root-31'), /unknown tile/);
   assert.throws(() => tileId('mult', 1), /no mult tile/);

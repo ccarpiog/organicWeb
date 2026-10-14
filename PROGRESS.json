@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T20:50:02Z",
+  "updated": "2026-10-14T21:30:27Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -586,8 +586,8 @@
     {
       "id": "I-49",
       "title": "v4 R-3 Hydrocarbon diagnosis",
-      "status": "in_progress",
-      "summary": "Split into I-49a (diagnosis engine, done) and I-49b (diagnosis in the results panel, queued)."
+      "status": "done",
+      "summary": "Split into I-49a (diagnosis engine) and I-49b (diagnosis in the results panel), both done."
     },
     {
       "id": "I-49a",
@@ -610,8 +610,31 @@
     {
       "id": "I-50",
       "title": "v4 R-4 Rings",
+      "status": "in_progress",
+      "summary": "Split into I-50a (ciclo rings, done), I-50b (benzene, phenyl, aromatic key) and I-50c (retained templates, o/m/p, diagnosis, Ayuda)."
+    },
+    {
+      "id": "I-50a",
+      "title": "v4 R-4a Cycloalkane and cycloalkene names from tiles",
+      "status": "done",
+      "risk": "high",
+      "summary": "Extends tile names to ciclo rings as the parent or as a branch (ciclohexano, ciclohex-1-eno, ciclohexil).",
+      "review": "Codex ship-with-fixes, fixed - docs/reviews/I-50a.md",
+      "narrative": "docs/progress-archive/i-50a.md"
+    },
+    {
+      "id": "I-50b",
+      "title": "v4 R-4b Benzene and phenyl names from tiles",
       "status": "queued",
-      "summary": "Extends tile names to rings, benzene, phenyl and retained aromatic names such as tolueno and xileno."
+      "risk": "high",
+      "summary": "Extends tile names to benceno, fenil and substituted phenyl branches, treating both Kekule drawings as one molecule."
+    },
+    {
+      "id": "I-50c",
+      "title": "v4 R-4c Retained aromatic names, o/m/p, ring diagnosis and Ayuda",
+      "status": "queued",
+      "risk": "high",
+      "summary": "Adds tolueno, estireno, xileno and mesitileno tiles, the o/m/p forms, ring diagnosis messages and the Ayuda line."
     },
     {
       "id": "I-51a",

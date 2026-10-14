@@ -1,6 +1,7 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phase R-1c). Pure, no DOM, no coordinates.
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a). Pure, no DOM, no
+ * coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
  * types those slots `leftOut`, and this module finds every **placement** —
@@ -8,9 +9,10 @@
  * placements that give the same structure, and names each structure once.
  *
  * - **Domains by role** (§15.5.3 step 2): each slot's role gives its values
- *   on the chain it numbers (ROLE_DOMAINS: carbons 1…n, chain bonds 1…n−1).
- *   interpret.js asks slotDomain() for every slot, so later families add
- *   their roles (ring bonds, inner carbons of a ketone, `N`) here only.
+ *   on the chain or ring it numbers (ROLE_DOMAINS: carbons 1…n, chain bonds
+ *   1…n−1, ring bonds 1…n — bond n joins carbon n to carbon 1). interpret.js
+ *   asks slotDomain() for every slot, so later families add their roles
+ *   (inner carbons of a ketone, `N`) here only.
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -25,8 +27,11 @@
  *   is left to build().
  * - **Structural merge** (step 4): each placement is built and keyed with
  *   canonicalKey(); placements with one key are one structure (symmetric
- *   placements such as `1-` / `3-metilpropano`), in the order they are
- *   first found. Never merged by the engine's name.
+ *   placements such as `1-` / `3-metilpropano`, or the six of
+ *   `metilciclohexano`), in the order they are first found. Never merged by
+ *   the engine's name. A name with more rings than canonicalKey() keys
+ *   (build.js ringRefusal()) is not searched: status `none` with the
+ *   engine's refusal (readName() answers `outOfScope` before searching).
  * - **Naming cache** (step 4): each distinct structure is named once (a
  *   Map by structural key, which callers may share); an engine refusal is
  *   cached and returned like a name, and readName() keeps refused
@@ -57,7 +62,7 @@
 
 import { CARBON_VALENCE, cloneMolecule } from '../model/molecule.js';
 import { canonicalKey, isomorphism } from '../model/graph.js';
-import { build, checkSpec, attachmentOrder } from './build.js';
+import { build, checkSpec, attachmentOrder, ringRefusal } from './build.js';
 import { TILES } from './tiles.js';
 
 /**
@@ -69,25 +74,40 @@ import { TILES } from './tiles.js';
 export const SEARCH_BUDGET = Object.freeze({ placements: 3000, namings: 200, ms: 1500 });
 
 /**
- * The values each slot role allows on a chain of `length` carbons, as
- * `[min, max]` inclusive (min > max when there are none): a carbon slot
- * (a prefix's position, a free valence) any carbon, a multiple-bond slot
- * any chain bond, numbered by its lower carbon. Later families add their
- * roles here (ring bonds 1…n, a ketone's inner carbons, `N`).
+ * The values each slot role allows on a chain or ring of `length` carbons,
+ * as `[min, max]` inclusive (min > max when there are none): a carbon slot
+ * (a prefix's position, a free valence) any carbon, a multiple-bond slot of
+ * a chain any chain bond, numbered by its lower carbon, one of a ring any
+ * ring bond, bond n being the one from carbon n to carbon 1. Later families
+ * add their roles here (a ketone's inner carbons, `N`).
  */
 export const ROLE_DOMAINS = Object.freeze({
   carbon: (length) => [1, length],
   bond: (length) => [1, length - 1],
+  ringBond: (length) => [1, length],
 });
+
+/** The slot roles that place a multiple bond. */
+const BOND_ROLES = Object.freeze(['bond', 'ringBond']);
+
+/**
+ * Tells whether a slot role places a multiple bond (on a chain or a ring).
+ *
+ * @param {string} role - Slot role.
+ * @returns {boolean} True for 'bond' and 'ringBond'.
+ */
+export function isBondRole(role) {
+  return BOND_ROLES.includes(role);
+}
 
 /** The number tiles by value, to write a placement into a tree. */
 const NUM_TILES = new Map(TILES.filter((tile) => tile.kind === 'num').map((tile) => [tile.value, tile]));
 
 /**
- * The domain of a slot role on a chain (design.md §15.5.3 step 2).
+ * The domain of a slot role on a chain or ring (design.md §15.5.3 step 2).
  *
  * @param {string} role - Slot role (a ROLE_DOMAINS key).
- * @param {number} length - Carbons of the chain the slot numbers.
+ * @param {number} length - Carbons of the chain or ring the slot numbers.
  * @returns {[number, number]} `[min, max]` inclusive.
  * @throws {Error} For an unknown role.
  */
@@ -100,13 +120,14 @@ export function slotDomain(role, length) {
 }
 
 /**
- * One chain of the search model: the bond orders its carbons already use
- * (the chain's own single bonds plus every supplied or implicit locant) and
- * the bonds already multiple.
+ * One chain or ring of the search model: the bond orders its carbons
+ * already use (its own single bonds plus every supplied or implicit locant)
+ * and the bonds already multiple.
  *
  * @typedef {object} ChainModel
  * @property {number} length - Carbons.
  * @property {boolean} branch - A branch's chain (for the messages).
+ * @property {boolean} ring - A ring: every carbon has two ring bonds, and bond n joins carbon n to carbon 1.
  * @property {number[]} used - Bond order used per carbon, indexed by locant (1…length).
  * @property {Set<number>} taken - Multiple bonds already placed, by lower locant.
  * @property {number} multiple - Multiple-bond slots of the chain, supplied and left out.
@@ -116,7 +137,7 @@ export function slotDomain(role, length) {
  * A group of identical left-out slots: those of one prefix or one segment.
  *
  * @typedef {object} SlotGroup
- * @property {'carbon'|'bond'} role - What the slots number.
+ * @property {'carbon'|'bond'|'ringBond'} role - What the slots number.
  * @property {number} chain - Index of the ChainModel they number.
  * @property {number} amount - Bond order each slot adds to a carbon (attachment order; bond order − 1 for a bond).
  * @property {boolean} distinct - Values must differ (multiple bonds).
@@ -126,23 +147,46 @@ export function slotDomain(role, length) {
  */
 
 /**
- * A new chain model with its own single bonds.
+ * A new chain or ring model with its own single bonds.
  *
  * @param {number} length - Carbons.
  * @param {boolean} branch - A branch's chain.
+ * @param {boolean} [ring] - A ring (default false).
  * @returns {ChainModel} The model.
  */
-function chainModel(length, branch) {
-  const used = Array.from({ length: length + 2 }, (_, c) => (c < 1 || c > length ? 0 : (c > 1 ? 1 : 0) + (c < length ? 1 : 0)));
-  return { length, branch, used, taken: new Set(), multiple: 0 };
+function chainModel(length, branch, ring = false) {
+  const own = (c) => (ring ? 2 : (c > 1 ? 1 : 0) + (c < length ? 1 : 0));
+  const used = Array.from({ length: length + 2 }, (_, c) => (c < 1 || c > length ? 0 : own(c)));
+  return { length, branch, ring, used, taken: new Set(), multiple: 0 };
+}
+
+/**
+ * The higher carbon of a bond: the next one, or carbon 1 for bond n of a ring.
+ *
+ * @param {ChainModel} chain - The chain or ring.
+ * @param {number} value - The bond's locant.
+ * @returns {number} The other carbon's locant.
+ */
+function otherEnd(chain, value) {
+  return chain.ring && value === chain.length ? 1 : value + 1;
+}
+
+/**
+ * The bonds between carbons of a chain (n − 1) or a ring (n).
+ *
+ * @param {ChainModel} chain - The chain or ring.
+ * @returns {number} The count.
+ */
+function bondCount(chain) {
+  return chain.ring ? chain.length : chain.length - 1;
 }
 
 /**
  * Adds a bond order to a carbon slot's value or to both carbons of a bond
  * slot's value (sign −1 takes it back).
  *
- * @param {ChainModel} chain - The chain.
- * @param {'carbon'|'bond'} role - Slot role.
+ * @param {ChainModel} chain - The chain or ring.
+ * @param {'carbon'|'bond'|'ringBond'} role - Slot role.
  * @param {number} value - The locant.
  * @param {number} amount - Bond order per carbon.
  * @param {1|-1} sign - Add or take back.
@@ -150,8 +194,8 @@ function chainModel(length, branch) {
  */
 function apply(chain, role, value, amount, sign) {
   chain.used[value] += sign * amount;
-  if (role === 'bond') {
-    chain.used[value + 1] += sign * amount;
+  if (isBondRole(role)) {
+    chain.used[otherEnd(chain, value)] += sign * amount;
     if (sign > 0) {
       chain.taken.add(value);
     } else {
@@ -167,7 +211,7 @@ function apply(chain, role, value, amount, sign) {
  *
  * @param {{chains: ChainModel[], groups: SlotGroup[], index: Map<object, number>}} model - The search model.
  * @param {object[]} slots - Slots (interpret.js).
- * @param {{role: 'carbon'|'bond', chain: number, amount: number}} kind - What they number and add.
+ * @param {{role: 'carbon'|'bond'|'ringBond', chain: number, amount: number}} kind - What they number and add.
  * @returns {void}
  */
 function addSlots(model, slots, kind) {
@@ -179,7 +223,7 @@ function addSlots(model, slots, kind) {
       continue;
     }
     if (!group || group.tiles[0] !== slot.tiles[0] || group.tiles[1] !== slot.tiles[1]) {
-      group = { ...kind, distinct: kind.role === 'bond', domain: slot.domain, indices: [], tiles: slot.tiles };
+      group = { ...kind, distinct: isBondRole(kind.role), domain: slot.domain, indices: [], tiles: slot.tiles };
       model.groups.push(group);
     }
     group.indices.push(model.index.get(slot));
@@ -187,25 +231,28 @@ function addSlots(model, slots, kind) {
 } // End of function addSlots()
 
 /**
- * Adds a chain to the model with its multiple bonds and, recursively, the
- * prefixes hanging from it and their own chains (a branch is modelled once:
- * every occurrence of a multiplied prefix shares its substituent).
+ * Adds a chain or ring to the model with its multiple bonds and,
+ * recursively, the prefixes hanging from it and their own chains (a branch
+ * is modelled once: every occurrence of a multiplied prefix shares its
+ * substituent).
  *
  * @param {{chains: ChainModel[], groups: SlotGroup[], index: Map<object, number>}} model - The search model.
- * @param {{length: number, double: object[], triple: object[], prefixes: object[]}} owner - ParentSpec (with the name's prefixes) or chain SubstituentSpec.
+ * @param {{kind: string, length: number, double: object[], triple: object[], prefixes: object[]}} owner - ParentSpec (with
+ *   the name's prefixes), chain or ring SubstituentSpec.
  * @param {boolean} branch - A branch's chain.
  * @returns {number} The chain's index.
  */
 function addChain(model, owner, branch) {
-  const id = model.chains.push(chainModel(owner.length, branch)) - 1;
+  const ring = owner.kind === 'ring';
+  const id = model.chains.push(chainModel(owner.length, branch, ring)) - 1;
   for (const [order, slots] of [[2, owner.double], [3, owner.triple]]) {
     model.chains[id].multiple += slots.length;
-    addSlots(model, slots, { role: 'bond', chain: id, amount: order - 1 });
+    addSlots(model, slots, { role: ring ? 'ringBond' : 'bond', chain: id, amount: order - 1 });
   }
   for (const prefix of owner.prefixes) {
     const sub = prefix.substituent;
     addSlots(model, prefix.slots, { role: 'carbon', chain: id, amount: attachmentOrder(sub) });
-    if (sub.kind === 'chain') {
+    if (sub.kind !== 'retained') {
       const own = addChain(model, sub, true);
       addSlots(model, [sub.freeValence.slot], { role: 'carbon', chain: own, amount: sub.freeValence.order });
     }
@@ -243,7 +290,7 @@ export function slotGroups(spec) {
  * Tells whether a group's next slot can take a value: room on the carbon
  * (or on both carbons of a free bond).
  *
- * @param {ChainModel} chain - The chain.
+ * @param {ChainModel} chain - The chain or ring.
  * @param {SlotGroup} group - The group.
  * @param {number} value - The candidate locant.
  * @returns {boolean} True when it fits.
@@ -253,7 +300,7 @@ function fits(chain, group, value) {
   if (group.role === 'carbon') {
     return free(value) >= group.amount;
   }
-  return !chain.taken.has(value) && free(value) >= group.amount && free(value + 1) >= group.amount;
+  return !chain.taken.has(value) && free(value) >= group.amount && free(otherEnd(chain, value)) >= group.amount;
 }
 
 /**
@@ -346,9 +393,9 @@ function searchError(code, message, tiles) {
 }
 
 /**
- * SAME_BOND when some chain has more multiple bonds than chain bonds
- * (`propatrieno`): no placement can give each its own bond. The tiles are
- * those of the chain's first left-out bond group.
+ * SAME_BOND when some chain or ring has more multiple bonds than bonds
+ * (`propatrieno`, `ciclopropatetraeno`): no placement can give each its own
+ * bond. The tiles are those of its first left-out bond group.
  *
  * @param {{chains: ChainModel[], groups: SlotGroup[]}} model - The search model.
  * @returns {object|null} The error, or null.
@@ -356,9 +403,10 @@ function searchError(code, message, tiles) {
 function crowdedBonds(model) {
   for (const group of model.groups) {
     const chain = model.chains[group.chain];
-    if (group.role === 'bond' && chain.multiple > chain.length - 1) {
-      const noun = chain.branch ? 'la rama' : 'la cadena';
-      const bonds = chain.length - 1 === 1 ? '1 enlace' : `${chain.length - 1} enlaces`;
+    const count = bondCount(chain);
+    if (isBondRole(group.role) && chain.multiple > count) {
+      const noun = (chain.ring && 'el anillo') || (chain.branch ? 'la rama' : 'la cadena');
+      const bonds = count === 1 ? '1 enlace' : `${count} enlaces`;
       return searchError('SAME_BOND', `No caben tantos enlaces múltiples: ${noun} de ${chain.length} carbonos solo tiene `
         + `${bonds} entre carbonos.`, group.tiles);
     }
@@ -442,7 +490,7 @@ function noRoom(spec) {
  * @returns {{status: 'complete'|'budget'|'none', structures: Structure[], error: object|null, placements: number,
  *   namings: number, deadline: number}} `complete`: every structure, each named, within the time limit; `budget`: a
  *   limit was reached (the structures found so far, maybe unnamed — never a verdict); `none`: no valid placement,
- *   with the structural error. `placements` and `namings` count the placements built and the namer calls;
+ *   with the structural error (or build.js ringRefusal()'s RING_SYSTEM refusal). `placements` and `namings` count the placements built and the namer calls;
  *   `deadline` is the clock reading past which the time limit is spent (the first reading plus `ms`).
  */
 export function searchStructures(spec, options) {
@@ -458,7 +506,7 @@ export function searchStructures(spec, options) {
    * @returns {object} The result.
    */
   const none = (error) => ({ ...result, status: 'none', error });
-  const early = checkSpec(spec);
+  const early = checkSpec(spec) || ringRefusal(spec); // No placement of a name with too many rings has a key.
   if (early) {
     return none(early);
   }
@@ -591,9 +639,39 @@ export function placementReading(spec, structure, placement) {
 } // End of function placementReading()
 
 /**
+ * The ways of filling a NameSpec's left-out locants worth comparing with
+ * the engine's names (design.md §15.5.3 step 6, phase R-4a): every list
+ * filled first; then, when the student left them out, the name-level
+ * prefix lists kept without locants (`prefixes`), the parent's
+ * multiple-bond lists kept without locants (`parent`), and both. The engine
+ * omits each of those two kinds of locants all together or not at all
+ * (render.js renderPrefixes() / renderEnding(): `metilciclohexano`,
+ * `ciclohexeno`), so a student who left out those and another list too —
+ * `(buten-3-in-1-il)ciclopropano` — is still told the name
+ * `(but-1-en-3-in-1-il)ciclopropano`. A branch's own locants are always
+ * filled (the engine omits none with more than one possible value).
+ *
+ * @param {object} spec - A NameSpec.
+ * @returns {{prefixes: boolean, parent: boolean}[]} The lists to keep without locants, one entry per way, every list
+ *   filled first.
+ */
+export function fillVariants(spec) {
+  const leftOut = (slots) => slots.some((slot) => slot.kind === 'leftOut' && slot.domain[0] !== slot.domain[1]);
+  const prefixes = spec.prefixes.some((prefix) => leftOut(prefix.slots));
+  const parent = leftOut([...spec.parent.double, ...spec.parent.triple]);
+  return [
+    { prefixes: false, parent: false },
+    ...(prefixes ? [{ prefixes: true, parent: false }] : []),
+    ...(parent ? [{ prefixes: false, parent: true }] : []),
+    ...(prefixes && parent ? [{ prefixes: true, parent: true }] : []),
+  ];
+} // End of function fillVariants()
+
+/**
  * Writes a placement into the student's syntax tree: each prefix or
  * segment without locants gets number tiles with its slots' values, in
- * increasing order (design.md §15.5.3 step 6). A slot whose domain holds
+ * increasing order (design.md §15.5.3 step 6), except the lists a
+ * fillVariants() entry keeps without locants. A slot whose domain holds
  * one value is not written: no name cites it (`etenil`, `etinil`, `eteno`,
  * never `et-1-enil`), so it is not a missing locant. The new tiles are
  * appended to the tree's tile list; the student's tiles are untouched.
@@ -601,12 +679,18 @@ export function placementReading(spec, structure, placement) {
  * @param {object} tree - The error-free parse() tree the NameSpec was read from.
  * @param {object} spec - Its NameSpec.
  * @param {number[]} placement - One value per `spec.leftOut` entry.
+ * @param {{prefixes?: boolean, parent?: boolean}} [keep] - Keep the name-level prefix lists (`prefixes`) or the
+ *   parent's multiple-bond lists (`parent`) without locants (default: fill every list).
  * @returns {object} A tree for assemble.js.
  */
-export function filledTree(tree, spec, placement) {
+export function filledTree(tree, spec, placement, keep = {}) {
+  const kept = new Set([
+    ...(keep.prefixes ? spec.prefixes.flatMap((prefix) => prefix.slots) : []),
+    ...(keep.parent ? [...spec.parent.double, ...spec.parent.triple] : []),
+  ]);
   const byRange = new Map();
   spec.leftOut.forEach((slot, i) => {
-    if (slot.domain[0] !== slot.domain[1]) {
+    if (slot.domain[0] !== slot.domain[1] && !kept.has(slot)) {
       const key = `${slot.role}:${slot.tiles[0]}:${slot.tiles[1]}`;
       byRange.set(key, [...(byRange.get(key) || []), placement[i]]);
     }
@@ -628,12 +712,15 @@ export function filledTree(tree, spec, placement) {
     return [...values].sort((p, q) => p - q).map((value) => tiles.push(NUM_TILES.get(value)) - 1);
   };
   /**
-   * A chain node with its segments filled.
+   * A chain node with its segments filled (ring bonds for a ring).
    *
    * @param {object} chain - A chain node.
    * @returns {object} The filled node.
    */
-  const fillChain = (chain) => ({ ...chain, segments: chain.segments.map((seg) => ({ ...seg, locants: numbers('bond', seg.range, seg.locants) })) });
+  const fillChain = (chain) => {
+    const role = chain.ring === null ? 'bond' : 'ringBond';
+    return { ...chain, segments: chain.segments.map((seg) => ({ ...seg, locants: numbers(role, seg.range, seg.locants) })) };
+  };
   /**
    * A substituent node, filled.
    *

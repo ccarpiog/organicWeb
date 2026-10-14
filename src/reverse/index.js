@@ -1,28 +1,39 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c): `readName(tiles) → verdict` for open-chain hydrocarbon
- * names. Pure, no DOM.
+ * R-1b, R-1c, R-4a): `readName(tiles) → verdict` for open-chain and
+ * monocyclic hydrocarbon names (`ciclo` parents and ring branches). Pure,
+ * no DOM.
  *
  * Pipeline (design.md §15.5.3):
  *
  * 1. parse (parse.js) → assemble the student's text (assemble.js, from the
  *    tree, never through the engine's rendering) → NameSpec
- *    (interpret.js) → definite structural errors (build.js checkSpec());
+ *    (interpret.js) → definite structural errors (build.js checkSpec()),
+ *    then a name whose molecule the structural key cannot handle (build.js
+ *    ringRefusal(): three rings, or two bonded atom to atom —
+ *    `ciclohexilciclohexano`) → `outOfScope` with the engine's own message,
+ *    nothing built;
  * 2–4. search.js: every placement of the left-out locants (none when the
  *    name gives them all), built (build.js), merged by structural key and
  *    named once each (naming/index.js nameMolecule(), cached by key);
  * 5. **Exact**: a structure whose name or any alternative (§15.9 trap 8)
  *    equals the text, in NFC (trap 7) → `correct` / `alternative`;
  * 6. **Filled**: with left-out locants, each placement is written into the
- *    student's tree and assembled (search.js filledTree(), assemble.js);
- *    the structures whose name or an alternative equals the filled text of
- *    one of their placements → one: `missingLocants` (with that filled
- *    name), several: `ambiguous`;
+ *    student's tree and assembled (search.js filledTree(), assemble.js) —
+ *    every list filled, and also with the lists the engine omits by rule
+ *    kept without locants (search.js fillVariants(): the name-level prefix
+ *    lists, the parent's multiple-bond lists; R-4a, a monosubstituted ring
+ *    omits its prefix locant); the structures whose name or an alternative
+ *    equals a filled text of one of their placements → one:
+ *    `missingLocants` (with that filled name), several: `ambiguous`;
  * 7. **One structure** (all placements equivalent, or no left-out locant)
  *    → `otherName`, with the student's main mistake (diagnose.js, R-3:
  *    `diagnosis`, null when no rule applies), or `outOfScope` when the
  *    engine refuses it;
- * 8. several structures, none matching → `ambiguous`, with their names.
+ * 8. several structures, none matching → `ambiguous`, with their names; but
+ *    when the engine refuses every one of them (`diciclohexilpropano`: two
+ *    rings, wherever they go) → `outOfScope` with the first refusal's
+ *    message, no molecule.
  *
  * Verdicts (design.md §15.3; Spanish drafts pending teacher review):
  * `correct`, `alternative`, `missingLocants`, `otherName`, `ambiguous`,
@@ -52,8 +63,8 @@ import { nameMolecule } from '../naming/index.js';
 import { parse } from './parse.js';
 import { assemble } from './assemble.js';
 import { interpret } from './interpret.js';
-import { checkSpec } from './build.js';
-import { searchStructures, filledTree, placementReading } from './search.js';
+import { checkSpec, ringRefusal } from './build.js';
+import { searchStructures, filledTree, fillVariants, placementReading } from './search.js';
 import { diagnose, MAX_READINGS } from './diagnose.js';
 
 /** Verdict kinds (design.md §15.3), in the order of its table. */
@@ -115,7 +126,8 @@ export const VERDICT_TEXTS = Object.freeze({
  * @property {string|null} filled - `missingLocants`: the student's name with its left-out locants filled in; else null.
  * @property {Candidate[]} candidates - `ambiguous`: every structure the name can describe, in search order; else [].
  * @property {object|null} molecule - The one molecule the name describes (model/molecule.js; atoms without meaningful
- *   coordinates): correct, alternative, missingLocants, otherName, outOfScope; else null.
+ *   coordinates): correct, alternative, missingLocants, otherName, outOfScope of one structure; else null (also an
+ *   outOfScope name with too many rings, or whose every structure the engine refuses).
  * @property {{atoms: number[], bonds: number[]}|null} studentParent - The parent in the student's locant order (with `molecule`).
  * @property {object[]} prefixAtoms - Atoms of each prefix occurrence (build.js build()); [] without `molecule`.
  * @property {object|null} naming - The engine's whole result (nameMolecule(); a refusal for outOfScope), when named.
@@ -328,6 +340,10 @@ export function readName(tiles, options = {}) {
     return invalid(early);
   }
   const notes = spec.oldStyle ? [`${VERDICT_TEXTS.oldStyle} «${modernText(tree)}».`] : [];
+  const refusal = ringRefusal(spec);
+  if (refusal) {
+    return verdict('outOfScope', `${VERDICT_TEXTS.outOfScope} ${refusal.message}`, assembled, { notes });
+  }
   const now = options.now || Date.now;
   const search = searchStructures(spec, { namer, budget: options.budget, now, cache: options.cache });
   if (search.status === 'none') {
@@ -352,11 +368,13 @@ export function readName(tiles, options = {}) {
   const { structures } = search;
   const named = structures.filter((s) => s.naming.ok);
   const memo = new Map();
+  const variants = fillVariants(spec);
   /**
    * The first placement of a structure whose filled text is one of its
-   * names (the name given first preferred), memoised. It stops early once
-   * the time limit has passed (then readName() answers `incomplete`
-   * whatever it found).
+   * names (the name given first preferred), memoised: every left-out list
+   * filled, or with the lists the engine omits by rule kept without locants
+   * (search.js fillVariants()). It stops early once the time limit has
+   * passed (then readName() answers `incomplete` whatever it found).
    *
    * @param {object} structure - A named Structure.
    * @returns {{placement: number[], filled: string, main: boolean, alternative: object|null}|null} The match, or null.
@@ -368,11 +386,16 @@ export function readName(tiles, options = {}) {
         if (overTime()) {
           break;
         }
-        const filled = assemble(filledTree(tree, spec, placement)).text.normalize('NFC');
-        const match = nameMatch(structure.naming, filled);
-        if (match && (!found || (match.main && !found.main))) {
-          found = { placement, filled, ...match };
-        }
+        for (const keep of variants) {
+          const filled = assemble(filledTree(tree, spec, placement, keep)).text.normalize('NFC');
+          const match = nameMatch(structure.naming, filled);
+          if (match && (!found || (match.main && !found.main))) {
+            found = { placement, filled, ...match };
+          }
+          if (found && found.main) {
+            break;
+          }
+        } // End of the loop over the ways of filling one placement
         if (found && found.main) {
           break;
         }
@@ -451,7 +474,11 @@ export function readName(tiles, options = {}) {
         + `${VERDICT_TEXTS.stepByStep}`, assembled, { ...fields, notes, draw: true, diagnosis });
     }
 
-    // Step 8, several structures, none matching: named ones first, refusals kept apart.
+    // Step 8, several structures, none matching: named ones first, refusals kept apart. Every one refused: whatever the
+    // left-out locants, the app cannot draw the molecule.
+    if (named.length === 0) {
+      return verdict('outOfScope', `${VERDICT_TEXTS.outOfScope} ${structures[0].naming.error.message}`, assembled, { notes });
+    }
     const refused = structures.filter((s) => !s.naming.ok);
     return ambiguous([...named.map((s) => ({ text: s.naming.name, structure: s })), ...refused.map((s) => ({ text: null, structure: s }))]);
   }; // End of function judge()

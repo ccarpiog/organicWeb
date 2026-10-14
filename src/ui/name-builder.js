@@ -17,8 +17,9 @@
  *   tabindex, `aria-selected`); `aria-live`, so every change is announced;
  *   the opening mark of an unfinished compound branch shows faintly;
  * - the tile rows («Números», «¿Cuántos?», «Raíces (cuántos carbonos)»,
- *   «Terminaciones», «Ramas»; drafts pending teacher review), each with a
- *   «más» button for the tiles the catalogue keeps behind it;
+ *   «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a;
+ *   drafts pending teacher review), each with a «más» button for the tiles
+ *   the catalogue keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
  *   «Borrar todo», «Dibujar» and «Cerrar» (also Escape and a click on the
  *   backdrop); the focus goes into the dialog on opening and back to the
@@ -49,6 +50,7 @@ export const ROWS = Object.freeze([
   Object.freeze({ id: 'roots', label: 'Raíces (cuántos carbonos)' }),
   Object.freeze({ id: 'endings', label: 'Terminaciones' }),
   Object.freeze({ id: 'branches', label: 'Ramas' }),
+  Object.freeze({ id: 'rings', label: 'Anillos' }),
 ]);
 
 /** Labels of the two compound-branch controls (design.md §15.2). */

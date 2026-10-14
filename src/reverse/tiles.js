@@ -6,8 +6,8 @@
  *
  * Every Spanish text comes from the naming lexicon (lexicon.es.js: stem(),
  * multiplier(), compoundMultiplier(), ENDINGS, FREE_VALENCE_SUFFIXES,
- * RETAINED_PREFIXES, ENCLOSING_MARKS), never retyped here; numbers are
- * digits. Tile ids are language-neutral (`root-4`, `ending-double`,
+ * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX), never retyped here;
+ * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
  *
  * A tile is `{id, kind, value, row, text, more}`:
@@ -19,15 +19,18 @@
  *   RETAINED_PREFIXES id, with `italic` the descriptor ignored in
  *   alphabetical order), 'start' / 'end' (the controls «empieza rama
  *   compuesta» / «acaba rama»; their text is the plain enclosing mark, the
- *   assembler picks the real one);
+ *   assembler picks the real one), 'ring' (the nondetachable prefix `ciclo`
+ *   before a root: a ring of that many carbons, as the parent — `ciclohexano`
+ *   — or a branch — `ciclohexil`; value 'cyclo');
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
- *   'multipliers', 'roots', 'endings', 'branches';
+ *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos»);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
  *   multipliers from hepta / heptakis, roots from undec).
  */
 
 import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
+  RING_PREFIX,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -54,6 +57,9 @@ export const START_ID = 'branch-start';
 /** Id of the «acaba rama» control. */
 export const END_ID = 'branch-end';
 
+/** Id of the `ciclo` tile (design.md §15.8 R-4: `ciclo` parents and ring branches). */
+export const RING_ID = 'ring-cyclo';
+
 /**
  * Creates one frozen tile.
  *
@@ -72,7 +78,7 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
 
 /**
  * Builds the whole catalogue in dialog order: numbers, multipliers (simple,
- * then compound), roots, endings, branch words and controls.
+ * then compound), roots, endings, branch words and controls, rings.
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -103,6 +109,7 @@ function buildCatalogue() {
   const [open, close] = ENCLOSING_MARKS[0];
   tiles.push(makeTile(START_ID, 'start', null, 'branches', open));
   tiles.push(makeTile(END_ID, 'end', null, 'branches', close));
+  tiles.push(makeTile(RING_ID, 'ring', 'cyclo', 'rings', RING_PREFIX));
   return tiles;
 } // End of function buildCatalogue()
 

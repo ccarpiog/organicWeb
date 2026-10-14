@@ -1531,7 +1531,8 @@ kbd {
 .nb-tile--num { color: var(--color-part-locant); }
 .nb-tile--mult,
 .nb-tile--cmult { color: var(--color-part-multiplier); }
-.nb-tile--root { color: var(--color-part-parent); }
+.nb-tile--root,
+.nb-tile--ring { color: var(--color-part-parent); }
 .nb-tile--ending { color: var(--color-part-ending); }
 .nb-tile--freeValence,
 .nb-tile--retained { color: var(--color-part-prefix); }

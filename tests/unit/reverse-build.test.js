@@ -4,19 +4,22 @@
  * §15.4, §15.5.3, §15.6, phase R-1b): the NameSpec with its typed slots
  * (supplied, implicit, left out; old-style locants), the molecule built
  * from it, and one test per structural error code with its tile range —
- * on the parent and inside branches.
+ * on the parent and inside branches; rings (R-4a): the ring NameSpec, its
+ * closing bond, the errors worded for a ring and the ring limit.
  */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parse } from '../../src/reverse/parse.js';
 import { interpret } from '../../src/reverse/interpret.js';
-import { build, checkSpec, specCarbons, attachmentOrder, ownPrefixAtoms, BUILD_ERROR_CODES } from '../../src/reverse/build.js';
+import {
+  build, checkSpec, specCarbons, specRings, ringRefusal, attachmentOrder, ownPrefixAtoms, BUILD_ERROR_CODES, MAX_KEYED_RINGS,
+} from '../../src/reverse/build.js';
 import { slotGroups } from '../../src/reverse/search.js';
 import { readName } from '../../src/reverse/index.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 import { canonicalKey } from '../../src/model/graph.js';
-import { MAX_CARBONS, MESSAGES } from '../../src/model/validate.js';
+import { MAX_CARBONS, MESSAGES, RING_SYSTEM_MESSAGES } from '../../src/model/validate.js';
 import { seq } from './reverse-words.js';
 
 /**
@@ -270,3 +273,90 @@ test('structural errors are checked in tile order, ranges before valence, every 
   assert.equal(errorOf('7 met il hex 7 eno').from, 0, 'the first offending tile');
   assert.equal(errorOf('2 2 2 tri met il but 9 eno').code, 'LOCANT_RANGE', 'a range error before a valence error');
 });
+
+test('interpret (R-4a): a ring parent and ring branches, ring bonds 1…n, `il` at carbon 1 by rule', () => {
+  // 0:3 1:met 2:il 3:ciclo 4:hex 5:1 6:eno
+  let spec = specOf('3 met il ciclo hex 1 eno');
+  assert.deepEqual(spec.parent, {
+    kind: 'ring', length: 6, double: [{ kind: 'supplied', value: 1, role: 'ringBond', domain: [1, 6], tiles: [5, 6] }], triple: [], tiles: [3, 7],
+  });
+  assert.equal(spec.prefixes[0].slots[0].domain[1], 6);
+  // Left out on a ring: carbons 1…6 and ring bonds 1…6.
+  spec = specOf('met il ciclo hex eno');
+  assert.deepEqual(spec.leftOut.map((slot) => [slot.role, slot.domain, slot.tiles]), [['carbon', [1, 6], [0, 2]], ['ringBond', [1, 6], [4, 5]]]);
+  // `ciclohexil`: a ring branch, its free valence at carbon 1 by rule; `(ciclohex-2-en-1-il)` cites it.
+  spec = specOf('ciclo hex il met ano');
+  const ring = spec.prefixes[0].substituent;
+  assert.deepEqual([ring.kind, ring.length, ring.freeValence.order, ring.freeValence.slot.kind, ring.freeValence.slot.value], ['ring', 6, 1, 'implicit', 1]);
+  spec = specOf('2 ciclo hex 2 eno 1 il prop ano');
+  const unsaturated = spec.prefixes[0].substituent;
+  assert.deepEqual(unsaturated.double.map((slot) => [slot.role, slot.value, slot.domain]), [['ringBond', 2, [1, 6]]]);
+  assert.deepEqual([unsaturated.freeValence.slot.kind, unsaturated.freeValence.slot.value], ['supplied', 1]);
+  assert.equal(specOf('ciclo hex iliden met ano').prefixes[0].substituent.freeValence.order, 2);
+  assert.equal(attachmentOrder(specOf('ciclo hex iliden met ano').prefixes[0].substituent), 2);
+  // A ring as the own chain of a compound branch.
+  spec = specOf('START 2 met il ciclo hex il END met ano');
+  assert.deepEqual([spec.prefixes[0].substituent.kind, spec.prefixes[0].substituent.prefixes.length], ['ring', 1]);
+  // Old style on a ring.
+  spec = specOf('1 3 ciclo hex di eno');
+  assert.equal(spec.oldStyle, true);
+  assert.deepEqual(spec.parent.double.map((slot) => [slot.kind, slot.value, slot.role]), [['supplied', 1, 'ringBond'], ['supplied', 3, 'ringBond']]);
+}); // End of test 'interpret (R-4a): a ring parent and ring branches…'
+
+test('build (R-4a): the ring closed by bond n, the student\'s numbering kept, ring branches attached by their carbon 1', () => {
+  // `ciclohex-6-eno`: bond 6 joins carbons 6 and 1 — the closing bond, never out of range.
+  let built = build(specOf('ciclo hex 6 eno'));
+  assert.ok(built.ok);
+  assert.equal(canonicalKey(built.molecule), canonicalKey(parseSmiles('C1=CCCCC1')));
+  const { atoms, bonds } = built.studentParent;
+  assert.equal(bonds.length, 6, 'a ring has as many bonds as carbons');
+  const closing = built.molecule.bonds.get(bonds[5]);
+  assert.deepEqual([[closing.a, closing.b].sort((p, q) => p - q), closing.order], [[atoms[0], atoms[5]].sort((p, q) => p - q), 2]);
+  // Prefixes on the student's carbons.
+  built = build(specOf('1 3 di met il ciclo hex ano'));
+  assert.equal(canonicalKey(built.molecule), canonicalKey(parseSmiles('CC1CC(C)CCC1')));
+  assert.deepEqual(built.prefixAtoms.map((o) => [o.locant, o.parentAtom]), [[1, atoms[0]], [3, atoms[2]]]);
+  // Ring branches: by a single bond (`il`) or a double one (`iliden`), on a chain parent (methane's one carbon placed).
+  assert.equal(canonicalKey(build(specOf('ciclo hex il met ano'), [1]).molecule), canonicalKey(parseSmiles('CC1CCCCC1')));
+  assert.equal(canonicalKey(build(specOf('ciclo hex iliden met ano'), [1]).molecule), canonicalKey(parseSmiles('C=C1CCCCC1')));
+  assert.equal(canonicalKey(build(specOf('2 ciclo hex 2 eno 1 il prop ano')).molecule), canonicalKey(parseSmiles('CC(C)C1C=CCCC1')));
+  assert.equal(canonicalKey(build(specOf('START 2 met il ciclo hex il END met ano'), [1]).molecule),
+    canonicalKey(parseSmiles('CC1CCCCC1C')));
+  assert.equal(specCarbons(specOf('START 2 met il ciclo hex il END met ano')), 8);
+}); // End of test 'build (R-4a): the ring closed by bond n…'
+
+test('structural errors worded for rings (R-4a): range, closing bond, same bond, valence, crowded bonds', () => {
+  // 0:7 1:met 2:il 3:ciclo 4:hex 5:ano
+  assertError('7 met il ciclo hex ano', 'LOCANT_RANGE', [0, 1], 'El anillo de 6 carbonos va del 1 al 6: no hay carbono 7.');
+  assertError('ciclo hex 7 eno', 'LOCANT_RANGE', [2, 3], 'El anillo de 6 carbonos va del 1 al 6: no hay carbono 7.');
+  assertError('2 ciclo prop 4 eno 1 il but ano', 'LOCANT_RANGE', [3, 4], 'El anillo de la rama va del 1 al 3: no hay carbono 4.');
+  assertError('2 ciclo prop 5 il but ano', 'LOCANT_RANGE', [3, 4], 'El anillo de la rama va del 1 al 3: no hay carbono 5.');
+  assertError('3 START 4 met il ciclo prop il END hex ano', 'LOCANT_RANGE', [2, 3], 'El anillo de la rama va del 1 al 3: no hay carbono 4.');
+  // The closing bond is no BOND_RANGE on a ring; it can be taken twice.
+  assert.equal(readName(seq('ciclo hex 6 eno')).kind, 'otherName', 'ciclohex-6-eno is ciclohexeno numbered otherwise');
+  assertError('ciclo hex 6 eno 6 ino', 'SAME_BOND', [2, 5], 'Hay dos enlaces múltiples en el mismo sitio (6).');
+  assertError('ciclo prop tetra eno', 'SAME_BOND', [2, 4],
+    'No caben tantos enlaces múltiples: el anillo de 3 carbonos solo tiene 3 enlaces entre carbonos.');
+  // Valence: a ring carbon has two ring bonds already.
+  assertError('1 1 1 tri met il ciclo hex ano', 'VALENCE', [2, 3], 'El carbono 1 tendría 5 enlaces, y un carbono solo puede tener 4.');
+  assertError('ciclo hex 1 6 di ino', 'VALENCE', [3, 4], 'El carbono 1 tendría 6 enlaces, y un carbono solo puede tener 4.');
+  assertError('1 met iliden ciclo hex 1 eno', 'VALENCE', [5, 6], 'El carbono 1 tendría 5 enlaces, y un carbono solo puede tener 4.');
+  assertError('2 ciclo hex 1 eno 1 iliden prop ano', 'VALENCE', [5, 6],
+    'El carbono 1 de la rama tendría 5 enlaces, y un carbono solo puede tener 4.');
+  assert.equal(readName(seq('1 1 di met il ciclo hex ano')).kind, 'correct', 'two methyls fit on one ring carbon');
+}); // End of test 'structural errors worded for rings (R-4a)…'
+
+test('the ring limit (R-4a): more rings than the structural key handles, or two rings bonded atom to atom', () => {
+  assert.equal(MAX_KEYED_RINGS, 2);
+  assert.deepEqual([specRings(specOf('ciclo hex ano')), specRings(specOf('di ciclo hex il met ano')),
+    specRings(specOf('1 2 bis START 2 met il ciclo hex il END ciclo hex ano'))], [1, 2, 3]);
+  // Two rings apart (through a carbon) have a key: the engine itself refuses them.
+  assert.equal(ringRefusal(specOf('di ciclo hex il met ano')), null);
+  assert.equal(ringRefusal(specOf('2 START ciclo hex il met il END ciclo hex ano')), null);
+  // Bonded straight to one another, or three: refused before any search, with the engine's message.
+  for (const words of ['ciclo hex il ciclo hex ano', 'ciclo hex iliden ciclo hex ano', 'START ciclo prop il ciclo hex il END met ano',
+    'tri ciclo hex il met ano', '1 2 di ciclo hex il ciclo hex ano']) {
+    const refusal = ringRefusal(specOf(words));
+    assert.deepEqual([refusal.code, refusal.message], ['RING_SYSTEM', RING_SYSTEM_MESSAGES.several], words);
+  }
+}); // End of test 'the ring limit (R-4a)…'

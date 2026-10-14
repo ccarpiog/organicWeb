@@ -1,9 +1,9 @@
 /**
- * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phase
- * R-1b): turns the lossless syntax tree of parse.js into a `NameSpec`, the
- * language-neutral reading of the name — which chain, which multiple bonds,
- * which branches on which carbons — with no atom ids and no chemistry
- * checks (ranges, valence and size are build.js's). Pure, no DOM.
+ * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
+ * R-1b, R-4a): turns the lossless syntax tree of parse.js into a `NameSpec`,
+ * the language-neutral reading of the name — which chain or ring, which
+ * multiple bonds, which branches on which carbons — with no atom ids and no
+ * chemistry checks (ranges, valence and size are build.js's). Pure, no DOM.
  *
  * Every locant position of the name is a **slot** typed by how the student
  * gave it (design.md §15.5.3 step 2):
@@ -13,7 +13,8 @@
  *   the one segment without locants of their own (parse.js
  *   `legacySegment`); the name is then marked `oldStyle`;
  * - `implicit` — given by rule: `il` / `iliden` without a locant puts the
- *   free valence at the branch's carbon 1;
+ *   free valence at the branch's carbon 1 (on a ring branch too:
+ *   `ciclohexil`, `ciclohexiliden`);
  * - `leftOut` — not written: a prefix or a segment without its locants.
  *   build.js needs a value for each, the *placement*, which search.js
  *   searches (R-1c).
@@ -22,10 +23,14 @@
  * parser's ranges: the number tile of a supplied locant, the `il` / `iliden`
  * tile of an implicit one, the prefix or segment that lacks its locants for
  * a left-out one), its role (`carbon` for a prefix's or a free valence's
- * position, `bond` for a multiple bond, numbered by its lower carbon) and
- * the domain of that role on its chain, `[min, max]` inclusive, from
- * search.js slotDomain(): carbons 1…n, chain bonds 1…n−1 (empty on a
- * one-carbon chain).
+ * position, `bond` for a multiple bond of a chain, numbered by its lower
+ * carbon, `ringBond` for a multiple bond of a ring, bond n joining carbons
+ * n and 1) and the domain of that role on its chain or ring, `[min, max]`
+ * inclusive, from search.js slotDomain(): carbons 1…n, chain bonds 1…n−1
+ * (empty on a one-carbon chain), ring bonds 1…n.
+ *
+ * A ring (the `ciclo` tile, R-4a) is read like a chain of its carbons with
+ * one more bond: the parent's `kind` and a branch's `kind` are 'ring'.
  */
 
 import { slotDomain } from './search.js';
@@ -36,7 +41,7 @@ import { slotDomain } from './search.js';
  * @typedef {object} Slot
  * @property {'supplied'|'implicit'|'leftOut'} kind - How the student gave it.
  * @property {number} [value] - The locant (supplied and implicit slots only).
- * @property {'carbon'|'bond'} role - What the locant numbers.
+ * @property {'carbon'|'bond'|'ringBond'} role - What the locant numbers.
  * @property {[number, number]} domain - Values the role allows on its chain, `[min, max]` inclusive (min > max when none).
  * @property {[number, number]} tiles - Tile range `[from, to)` it comes from.
  */
@@ -53,16 +58,16 @@ import { slotDomain } from './search.js';
  */
 
 /**
- * A branch: a chain with its free valence (and, for a compound branch,
- * its own prefixes) or a retained word (isopropil, isopropiliden,
+ * A branch: a chain or a ring with its free valence (and, for a compound
+ * branch, its own prefixes) or a retained word (isopropil, isopropiliden,
  * tert-butil; build.js knows their atoms).
  *
  * @typedef {object} SubstituentSpec
- * @property {'chain'|'retained'} kind - A numbered chain or a retained word.
- * @property {number|null} length - Carbons of the chain (null for a retained word).
+ * @property {'chain'|'ring'|'retained'} kind - A numbered chain, a numbered ring (`ciclohexil`) or a retained word.
+ * @property {number|null} length - Carbons of the chain or ring (null for a retained word).
  * @property {{slot: Slot, order: 1|2}|null} freeValence - Where the branch attaches and with which bond order (`il` 1, `iliden` 2); null for a retained word.
- * @property {Slot[]} double - Double-bond slots of the branch's chain.
- * @property {Slot[]} triple - Triple-bond slots of the branch's chain.
+ * @property {Slot[]} double - Double-bond slots of the branch's chain or ring.
+ * @property {Slot[]} triple - Triple-bond slots of the branch's chain or ring.
  * @property {PrefixSpec[]} prefixes - Prefixes of a compound branch, numbered on its own chain.
  * @property {string|null} retained - Retained-name id (lexicon RETAINED_PREFIXES key), or null.
  * @property {{text: string, tiles: [number, number]}|null} word - The retained word as on its tile and its tile range (for messages), or null.
@@ -71,10 +76,10 @@ import { slotDomain } from './search.js';
  */
 
 /**
- * The parent chain.
+ * The parent chain or ring.
  *
  * @typedef {object} ParentSpec
- * @property {'chain'} kind - Only open chains in R-1.
+ * @property {'chain'|'ring'} kind - An open chain, or a ring (`ciclo`, R-4a).
  * @property {number} length - Carbons.
  * @property {Slot[]} double - Double-bond slots.
  * @property {Slot[]} triple - Triple-bond slots.
@@ -85,7 +90,7 @@ import { slotDomain } from './search.js';
  * The reading of a whole name (design.md §15.4).
  *
  * @typedef {object} NameSpec
- * @property {ParentSpec} parent - The parent chain.
+ * @property {ParentSpec} parent - The parent chain or ring.
  * @property {PrefixSpec[]} prefixes - The prefixes in the student's order.
  * @property {null} suffix - Principal characteristic group (from R-5a; none for hydrocarbons).
  * @property {null} classWord - `ácido`… (from R-5d; none for hydrocarbons).
@@ -101,7 +106,7 @@ import { slotDomain } from './search.js';
  *
  * @param {'supplied'|'implicit'|'leftOut'} kind - Slot kind.
  * @param {number|null} value - The locant, or null for a left-out slot.
- * @param {'carbon'|'bond'} role - What it numbers.
+ * @param {'carbon'|'bond'|'ringBond'} role - What it numbers.
  * @param {number} length - Carbons of the chain it numbers.
  * @param {[number, number]} tiles - Tile range.
  * @returns {Slot} The slot.
@@ -121,7 +126,7 @@ function makeSlot(kind, value, role, length, tiles) {
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
  * @param {number[]} locants - Number tile indices (may be empty).
  * @param {number} count - How many slots the multiplier asks for.
- * @param {'carbon'|'bond'} role - What they number.
+ * @param {'carbon'|'bond'|'ringBond'} role - What they number.
  * @param {number} length - Carbons of the chain they number.
  * @param {[number, number]} missing - Tile range a left-out slot points at.
  * @returns {Slot[]} The slots.
@@ -147,8 +152,19 @@ function multiplierOf(tiles, index) {
 }
 
 /**
- * The double- and triple-bond slots of a chain's unsaturation segments, in
- * tile order; the old-style locants go to the segment they belong to.
+ * The kind of a chain node: 'ring' with its `ciclo` tile, else 'chain'.
+ *
+ * @param {object} chain - A chain node (parse.js).
+ * @returns {'chain'|'ring'} The kind.
+ */
+function chainKind(chain) {
+  return chain.ring === null ? 'chain' : 'ring';
+}
+
+/**
+ * The double- and triple-bond slots of a chain's or ring's unsaturation
+ * segments, in tile order (role `bond` on a chain, `ringBond` on a ring);
+ * the old-style locants go to the segment they belong to.
  *
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
  * @param {object} chain - A chain node (parse.js).
@@ -158,18 +174,19 @@ function multiplierOf(tiles, index) {
  */
 function segmentSlots(ctx, chain, length, legacy) {
   const out = { double: [], triple: [] };
+  const role = chainKind(chain) === 'ring' ? 'ringBond' : 'bond';
   chain.segments.forEach((segment, i) => {
     const locants = i === legacy.segment ? legacy.locants : segment.locants;
     const { count } = multiplierOf(ctx.tiles, segment.multiplier);
-    const slots = locantSlots(ctx, locants, count, 'bond', length, segment.range);
+    const slots = locantSlots(ctx, locants, count, role, length, segment.range);
     out[ctx.tiles[segment.ending].value].push(...slots); // 'double' | 'triple' (the ENDINGS keys)
   });
   return out;
 } // End of function segmentSlots()
 
 /**
- * The SubstituentSpec of a chain branch: its prefixes (compound branch),
- * its multiple bonds, then its free valence, in tile order.
+ * The SubstituentSpec of a chain or ring branch: its prefixes (compound
+ * branch), its multiple bonds, then its free valence, in tile order.
  *
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
  * @param {object} chain - The branch's chain node (with `fv`).
@@ -188,7 +205,7 @@ function chainSubstituent(ctx, chain, items, compound, range) {
     ? makeSlot('supplied', tiles[chain.fvLocants[0]].value, 'carbon', length, [chain.fvLocants[0], chain.fvLocants[0] + 1])
     : makeSlot('implicit', 1, 'carbon', length, fvTile); // `il` without a locant: carbon 1 by rule
   return {
-    kind: 'chain',
+    kind: chainKind(chain),
     length,
     freeValence: { slot, order: tiles[chain.fv].value },
     double: bonds.double,
@@ -292,7 +309,9 @@ export function interpret(tree) {
   const prefixes = tree.items.map((item) => prefixSpec(ctx, item, length));
   const bonds = segmentSlots(ctx, chain, length, { locants: legacy, segment: legacy.length > 0 ? legacySegment : null });
   return {
-    parent: { kind: 'chain', length, double: bonds.double, triple: bonds.triple, tiles: [tree.parent.range[0], tree.parent.range[1]] },
+    parent: {
+      kind: chainKind(chain), length, double: bonds.double, triple: bonds.triple, tiles: [tree.parent.range[0], tree.parent.range[1]],
+    },
     prefixes,
     suffix: null,
     classWord: null,

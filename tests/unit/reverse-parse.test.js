@@ -3,13 +3,13 @@
  * design.md §15.5.1, §15.6, phase R-1a): the lossless syntax tree of the
  * grammar for open-chain hydrocarbons (the student's multipliers, order and
  * locants kept), old-style locants, and one test per syntactic error code
- * with its tile range. The structural codes (LOCANT_RANGE, BOND_RANGE,
+ * with its tile range; rings (`ciclo`, R-4a) with RING_ROOT and RING_SIZE. The structural codes (LOCANT_RANGE, BOND_RANGE,
  * SAME_BOND, VALENCE, TOO_BIG) belong to R-1b.
  */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parse, ERROR_CODES, isCompleteSubstituent } from '../../src/reverse/parse.js';
+import { parse, ERROR_CODES, MIN_RING, isCompleteSubstituent } from '../../src/reverse/parse.js';
 import { tileById } from '../../src/reverse/tiles.js';
 import { seq, leafIndices } from './reverse-words.js';
 
@@ -65,17 +65,29 @@ const BROKEN = [
   'met il END but ano', '2 START 2 met il 3 END hex ano', 'prop ano il hex ano', 'but 1 3 di', '1 3 di but eno',
   '5 prop 1 2 il non ano', 'hex 1 eno 3 eno 5 ino', 'but 1 2 bis eno', 'il ano 2', '2 3 tri met il pent ano',
   '5 START START 2 met il prop il END', 'iliden di bis tri', '2 met il 2 but',
+  // Rings (R-4a): `ciclo` without a root, a ring too small, unfinished rings.
+  'ciclo', 'ciclo ano', '2 ciclo', 'ciclo ciclo hex ano', 'ciclo et ano', 'ciclo hex', 'met il ciclo', 'ciclo hex il',
+  '1 3 ciclo hex', 'START ciclo hex il END', 'ciclo met il ciclo prop ano',
 ];
 
-test('the §15.5.1 examples parse without errors', () => {
-  for (const words of EXAMPLES) {
+/** Ring forms of R-4a (design.md §15.8 R-4), valid and error-free. */
+const RING_EXAMPLES = [
+  'ciclo hex ano', 'ciclo prop eno', 'ciclo hex 1 3 di eno', 'ciclo oct 1 eno 3 ino', 'met il ciclo hex ano',
+  '1 2 di met il ciclo pent ano', '3 met il ciclo hex 1 eno', 'ciclo hex il met ano', 'ciclo hex iliden met ano',
+  '2 ciclo hex 2 eno 1 il prop ano', 'START 2 met il ciclo hex il END met ano', '1 3 ciclo hex di eno',
+  '2 START ciclo hex il met il END but ano', 'di ciclo hex il met ano', 'ciclo hex ano 1 il met ano',
+];
+
+test('the §15.5.1 examples and the ring forms parse without errors', () => {
+  for (const words of [...EXAMPLES, ...RING_EXAMPLES]) {
     assert.deepEqual(errorsOf(words), [], words);
   }
-  assert.deepEqual(ERROR_CODES, ['EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER']);
+  assert.deepEqual(ERROR_CODES, ['EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER',
+    'RING_ROOT', 'RING_SIZE']);
 });
 
 test('the tree is lossless: every tile exactly once, in order, also with mistakes', () => {
-  for (const words of [...EXAMPLES, ...BROKEN]) {
+  for (const words of [...EXAMPLES, ...RING_EXAMPLES, ...BROKEN]) {
     const { tree } = read(words);
     const n = seq(words).length;
     assert.deepEqual(leafIndices(tree), Array.from({ length: n }, (_, i) => i), words);
@@ -235,6 +247,63 @@ test('TILE_ORDER: a tile that cannot go where it is', () => {
   // Numbers before a closing control.
   assert.deepEqual(errorsOf('2 START 2 met il prop il 3 END hex ano'), ['TILE_ORDER[7,8)', 'TILE_ORDER[8,9)']);
 }); // End of test 'TILE_ORDER: a tile that cannot go where it is'
+
+test('rings (R-4a): `ciclo` before the root of the parent or of a branch, as a chain node with its ring tile', () => {
+  // `ciclohexano`: the parent's chain holds `ciclo`, the root and `ano`.
+  let { tree } = read('ciclo hex ano');
+  assert.deepEqual([tree.parent.chain.ring, tree.parent.chain.root, tree.parent.chain.ano], [0, 1, 2]);
+  assert.deepEqual(tree.parent.range, [0, 3]);
+  // `ciclohexil`, `ciclohexiliden`, `(ciclohex-2-en-1-il)`: ring branches with their free valence.
+  ({ tree } = read('ciclo hex il met ano'));
+  assert.deepEqual([tree.items[0].substituent.ring, tree.items[0].substituent.fv], [0, 2]);
+  assert.deepEqual(tree.items[0].substituent.range, [0, 3]);
+  ({ tree } = read('ciclo hex iliden met ano'));
+  assert.equal(tree.tiles[tree.items[0].substituent.fv].value, 2);
+  ({ tree } = read('2 ciclo hex 2 eno 1 il prop ano'));
+  const branch = tree.items[0].substituent;
+  assert.deepEqual([branch.ring, branch.segments.length, branch.fvLocants], [1, 1, [5]]);
+  // A ring as the own chain of a compound branch, and as one of its prefixes.
+  ({ tree } = read('START 2 met il ciclo hex il END met ano'));
+  assert.equal(tree.items[0].substituent.chain.ring, 4);
+  ({ tree } = read('2 START ciclo hex il met il END but ano'));
+  assert.equal(tree.items[0].substituent.items[0].substituent.ring, 2);
+  // Old style on a ring: `1,3-ciclohexadieno`.
+  let errors;
+  ({ tree, errors } = read('1 3 ciclo hex di eno'));
+  assert.deepEqual(errors, []);
+  assert.deepEqual([tree.parent.legacy, tree.parent.legacySegment, tree.parent.chain.ring], [[0, 1], 0, 2]);
+}); // End of test 'rings (R-4a): `ciclo` before the root of the parent or of a branch…'
+
+test('RING_ROOT: `ciclo` without a root after it', () => {
+  const error = errorOf('ciclo', 'RING_ROOT');
+  assert.deepEqual([error.from, error.to], [0, 1]);
+  assert.equal(error.message,
+    'Después de «ciclo» va una raíz que dice cuántos carbonos tiene el anillo: ciclopropano, ciclohexano, ciclohexil…');
+  // Only RING_ROOT for an unfinished ring at the end (no ROOT_END or NO_PARENT on top of it).
+  assert.deepEqual(errorsOf('2 ciclo'), ['RING_ROOT[1,2)']);
+  assert.deepEqual(errorsOf('met il ciclo'), ['RING_ROOT[2,3)']);
+  // Before another tile: that tile is read on its own.
+  assert.deepEqual(errorsOf('ciclo ciclo hex ano'), ['RING_ROOT[0,1)']);
+  assert.deepEqual(errorsOf('ciclo ano'), ['RING_ROOT[0,1)', 'NO_PARENT[0,2)', 'TILE_ORDER[1,2)']);
+}); // End of test 'RING_ROOT: `ciclo` without a root after it'
+
+test('RING_SIZE: a ring needs at least three carbons', () => {
+  assert.equal(MIN_RING, 3);
+  const error = errorOf('ciclo et ano', 'RING_SIZE');
+  assert.deepEqual([error.from, error.to], [0, 2]);
+  assert.equal(error.message, 'Un anillo tiene por lo menos 3 carbonos: el más pequeño es el ciclopropano.');
+  assert.deepEqual(errorsOf('ciclo met il prop ano'), ['RING_SIZE[0,2)']);
+  assert.deepEqual(errorsOf('ciclo prop ano'), []);
+});
+
+test('ROOT_END on a ring: «ciclohex» needs its ending, as the main ring or as a branch', () => {
+  const error = errorOf('ciclo hex', 'ROOT_END');
+  assert.deepEqual([error.from, error.to], [0, 2]);
+  assert.equal(error.message,
+    'Después de «ciclohex» va una terminación: «ano», «eno» o «ino» si es el anillo principal, o «il» si es una rama.');
+  assert.deepEqual(errorsOf('ciclo hex met il prop ano'), ['ROOT_END[0,2)']);
+  assert.equal(errorOf('ciclo hex il', 'ENDS_WITH_BRANCH').message, 'El nombre acaba en una rama («ciclohexil»): falta la cadena principal detrás.');
+}); // End of test 'ROOT_END on a ring…'
 
 test('errors come sorted by position', () => {
   const { errors } = read('il 2 3 tri met il but');

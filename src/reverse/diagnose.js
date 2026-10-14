@@ -3,8 +3,10 @@
  * §15.8 R-3; phase I-49a): for an `otherName` verdict of readName() — the
  * student's name describes one molecule, which the app names otherwise —
  * the student's **main mistake**, one diagnosis: the first rule of the list
- * below that applies. Pure, no DOM; open-chain hydrocarbons (what the
- * parser reads today).
+ * below that applies. Pure, no DOM; open-chain hydrocarbons. A name with a
+ * ring (`ciclo`, phase R-4a: a ring parent or a ring branch at any depth),
+ * or whose molecule the engine names on a ring, gets no diagnosis yet (null:
+ * the verdict stands alone); the ring messages arrive in phase I-50c.
  *
  * The rules, in order (first match wins):
  *
@@ -140,7 +142,7 @@ import {
   chainOmitsPrefixLocants,
 } from '../naming/lexicon.es.js';
 import { assemble, itemText } from './assemble.js';
-import { ownPrefixAtoms } from './build.js';
+import { ownPrefixAtoms, specRings } from './build.js';
 import { tileById, tileId, MAX_MULT } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
@@ -1443,12 +1445,15 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
  *   same name on the same molecule (the other placements of a name with left-out locants, search.js placementReading());
  *   the verdict's own reading is tried first, and the diagnosis of the latest rule is kept.
  * @param {(mol: object, options: object) => object} [namer] - Names the molecule in another prefix style (default nameMolecule()).
- * @returns {Diagnosis|null} The diagnosis, or null when no rule applies (or the naming is a refusal).
+ * @returns {Diagnosis|null} The diagnosis, or null when no rule applies (or the naming is a refusal, or a ring is involved).
  */
 export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
   const { molecule } = verdict;
   if (!verdict.naming || !verdict.naming.ok || !verdict.studentParent) {
     return null;
+  }
+  if (specRings(name.spec) > 0 || (verdict.naming.structure && verdict.naming.structure.parentKind !== 'chain')) {
+    return null; // Rings: no rule reads them yet (file header).
   }
   const adj = adjacency(molecule);
   const drawn = branchOccurrences(name, verdict, molecule, adj);

@@ -23,7 +23,8 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   4-metilfenilo`, `4-metilbenzoato de 4-clorofenilo`).
   v4 (from the name to the drawing, built from tiles: «¿Cómo se dibuja?»,
   §15) is in progress: the engine is pure modules in `src/reverse/` — tiles,
-  parser, assembler and tokenizer for open-chain hydrocarbon names, and
+  parser, assembler and tokenizer for open-chain and `ciclo` hydrocarbon
+  names, and
   `readName()`, which interprets, builds and judges them (correct,
   alternative, otherName, outOfScope, invalid with structural errors) and
   searches the locants a name leaves out (`search.js`: missingLocants,
@@ -43,8 +44,12 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   shows it (`showVerdict()`: the message between the verdict's two
   sentences, the student's chain striped under the parent with a legend,
   «Ver el paso» opening the stepper — the explanation in the student's
-  style — at its step). Next is R-4 (phase I-50): rings and the retained
-  aromatic templates.
+  style — at its step). R-4a (phase I-50a) is done: the «Anillos» row's
+  `ciclo` tile builds ring parents and ring branches (`ciclohexano`,
+  `ciclohex-1-eno`, `ciclohexil`, `(ciclohex-2-en-1-il)`; ring bonds 1…n
+  in the search; two rings bonded together or three rings `outOfScope`;
+  no diagnosis for rings yet). Next is R-4b (phase I-50b): `benceno`,
+  `fenil`, substituted `(4-metilfenil)` and the aromatic-equivalence key.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

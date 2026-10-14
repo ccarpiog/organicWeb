@@ -2,14 +2,15 @@
  * @file Test helper for the «¿Cómo se dibuja?» modules (src/reverse/):
  * writes a tile sequence as the words on the tiles, `2 3 di met il pent
  * ano`, with `START` / `END` for the compound-branch controls, and reads
- * the open-chain hydrocarbon rows of tests/fixtures/names.tsv. Not a test
- * file itself (the test glob only runs `*.test.js`).
+ * the open-chain and `ciclo` hydrocarbon rows of tests/fixtures/names.tsv.
+ * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
+import { RING_PREFIX } from '../../src/naming/lexicon.es.js';
 
 /** The fixture table (design.md §4.8). */
 const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'names.tsv');
@@ -24,6 +25,34 @@ const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
  */
 export function isOpenChainHydrocarbon(smiles) {
   return /^[C=#()]+$/.test(smiles);
+}
+
+/**
+ * Tells whether a fixture SMILES is a monocyclic hydrocarbon: aliphatic
+ * carbons, double and triple bonds, branches and one ring closure (the
+ * digit 1, opened and closed once) — no aromatic atom, bracket atom or
+ * other element. Benzene rows pass too (they are written in Kekulé form):
+ * the names decide, see isCycloName().
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True for a monocyclic hydrocarbon.
+ */
+export function isMonocyclicHydrocarbon(smiles) {
+  return /^[C=#()1]+$/.test(smiles) && smiles.split('1').length === 3;
+}
+
+/**
+ * Tells whether a name is written with the syntax of phase R-4a: a `ciclo`
+ * name (its parent or a branch a `ciclo` ring), letters without accents,
+ * digits, hyphens, commas and enclosing marks only, and no compound locant
+ * of a ring's closing bond (`1(3)`, the locant control of R-5a). Benzene
+ * and `fenil` names (R-4b) have no `ciclo`.
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True when R-4a reads it.
+ */
+export function isCycloName(name) {
+  return name.includes(RING_PREFIX) && /^[a-z0-9,()[\]{}-]+$/.test(name) && !/\d\(\d/.test(name);
 }
 
 /**
@@ -110,7 +139,7 @@ export function leafIndices(node) {
         }
         break;
       case 'chain':
-        out.push(n.root, ...(n.ano === null ? [] : [n.ano]));
+        out.push(...(n.ring === null ? [] : [n.ring]), ...(n.root === null ? [] : [n.root]), ...(n.ano === null ? [] : [n.ano]));
         n.segments.forEach((s) => out.push(...s.locants, ...(s.multiplier === null ? [] : [s.multiplier]), s.ending));
         out.push(...n.fvLocants, ...(n.fv === null ? [] : [n.fv]));
         break;

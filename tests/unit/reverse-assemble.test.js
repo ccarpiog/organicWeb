@@ -3,7 +3,8 @@
  * (src/reverse/assemble.js, design.md §15.4, §15.5.1, §15.5.2, phase R-1a):
  * each §15.5.1 example assembles to its stated text, one test per automatic
  * rule (§15.5.2 items 1–5), the spans, and partial or wrong sequences
- * (assembled as written, never repaired).
+ * (assembled as written, never repaired); the ring forms of R-4a (`ciclo`
+ * parents and branches, and the crowded case of rule 5).
  */
 
 import { test } from 'node:test';
@@ -118,6 +119,56 @@ test('rule 5: enclosure, marks by nesting level, the student\'s multiplier, di-t
   assert.equal(text('5 5 di tert-butil non ano'), '5,5-di-tert-butilnonano');
   assert.equal(text('5 5 di isopropil non ano'), '5,5-diisopropilnonano');
 }); // End of test 'rule 5: enclosure, marks by nesting level, the student's multiplier, di-tert-'
+
+test('rings (R-4a): `ciclo` parents take the chain rules (connecting a, en / in, old style)', () => {
+  assert.equal(text('ciclo hex ano'), 'ciclohexano');
+  assert.equal(text('ciclo hex eno'), 'ciclohexeno');
+  assert.equal(text('ciclo hex 1 eno'), 'ciclohex-1-eno');
+  assert.equal(text('ciclo hex 1 3 di eno'), 'ciclohexa-1,3-dieno'); // rule 2
+  assert.equal(text('ciclo oct 1 3 5 7 tetra eno'), 'cicloocta-1,3,5,7-tetraeno');
+  assert.equal(text('ciclo oct 1 eno 3 ino'), 'ciclooct-1-en-3-ino'); // rule 3
+  assert.equal(text('3 met il ciclo hex 1 eno'), '3-metilciclohex-1-eno');
+  assert.equal(text('1 isopropil 4 met il ciclo hex ano'), '1-isopropil-4-metilciclohexano');
+  assert.equal(text('prop 2 eno 1 il ciclo hex ano'), '(prop-2-en-1-il)ciclohexano');
+  assert.equal(text('1 3 ciclo hex di eno'), '1,3-ciclohexadieno'); // old style
+  // `ciclo` is a stem piece of the parent, a prefix piece inside a branch.
+  const parent = build('ciclo hex ano');
+  assert.deepEqual(parent.spans.map((s) => [parent.text.slice(s.from, s.to), s.kind, s.tile]),
+    [['ciclo', 'stem', 0], ['hex', 'stem', 1], ['ano', 'ending', 2]]);
+  const branch = build('ciclo hex il met ano');
+  assert.deepEqual(branch.spans.slice(0, 3).map((s) => [branch.text.slice(s.from, s.to), s.kind]),
+    [['ciclo', 'prefix'], ['hex', 'prefix'], ['il', 'prefix']]);
+}); // End of test 'rings (R-4a): `ciclo` parents take the chain rules…'
+
+test('rings (R-4a): ring branches enclosed as render.js needsEnclosure() says', () => {
+  // A saturated ring at its carbon 1: no marks (`ciclohexilmetanol`, `2-ciclohexilidenetan-1-ol` in names.tsv).
+  assert.equal(text('ciclo hex il met ano'), 'ciclohexilmetano');
+  assert.equal(text('2 ciclo hex iliden et ano'), '2-ciclohexilidenetano');
+  assert.equal(text('di ciclo hex il met ano'), 'diciclohexilmetano');
+  // Unsaturated, with own locants or own prefixes: enclosed (`2-(ciclohex-2-en-1-il)etan-1-ol`,
+  // `2-(2-metilciclohexil)propan-1-ol`).
+  assert.equal(text('2 ciclo hex 2 eno 1 il et ano'), '2-(ciclohex-2-en-1-il)etano');
+  assert.equal(text('ciclo hex eno il met ano'), '(ciclohexenil)metano');
+  assert.equal(text('ciclo hex 1 il met ano'), '(ciclohexan-1-il)metano'); // automatic `an`, a cited locant
+  assert.equal(text('2 START 2 met il ciclo hex il END prop ano'), '2-(2-metilciclohexil)propano');
+  assert.equal(text('1 2 bis START 2 met il ciclo hex il END et ano'), '1,2-bis(2-metilciclohexil)etano');
+  assert.equal(text('2 START ciclo hex il met il END but ano'), '2-(ciclohexilmetil)butano');
+}); // End of test 'rings (R-4a): ring branches enclosed as render.js needsEnclosure() says'
+
+test('rule 5, crowded prefixes (R-4a): a ring branch after the first of several prefixes without locants is enclosed', () => {
+  // render.js enclosedInName(): `cloro(fenil)metanol`, but `fenil(metoxi)metanol` (a ring cited first reads clearly).
+  assert.equal(text('met il ciclo hex il met ano'), 'metil(ciclohexil)metano');
+  assert.equal(text('ciclo hex il met il met ano'), 'ciclohexilmetilmetano');
+  // Not crowded: one prefix, or a locant written.
+  assert.equal(text('1 met il 1 ciclo hex il et ano'), '1-metil-1-ciclohexiletano');
+  assert.equal(text('met il 1 ciclo hex il et ano'), 'metil-1-ciclohexiletano');
+  // Inside a compound branch, and the marks around it one level up.
+  assert.equal(text('2 START met il ciclo hex il met il END but ano'), '2-[metil(ciclohexil)metil]butano');
+  // A ring branch wrapped in START…END without prefixes of its own is the same branch (review I-50a).
+  assert.equal(text('met il START ciclo hex il END met ano'), 'metil(ciclohexil)metano');
+  assert.equal(text('2 START met il START ciclo hex il END met il END but ano'), '2-[metil(ciclohexil)metil]butano');
+  assert.equal(text('START ciclo hex il END met il met ano'), 'ciclohexilmetilmetano');
+}); // End of test 'rule 5, crowded prefixes (R-4a)…'
 
 test('assembly never repairs the student\'s order, grouping or locants', () => {
   assert.equal(text('2 met il 3 et il hex ano'), '2-metil-3-etilhexano'); // not alphabetical

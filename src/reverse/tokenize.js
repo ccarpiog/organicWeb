@@ -1,7 +1,7 @@
 /**
- * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phase R-1a): the
- * inverse of the assembler, `tokenize(text) → tile ids | null`, for the
- * tests and the diagnosis (R-3). Pure, no DOM.
+ * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
+ * R-4a): the inverse of the assembler, `tokenize(text) → tile ids | null`,
+ * for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
  * text, and the elided `an` / `en` / `in` of the endings), skipping the
@@ -22,9 +22,9 @@
  * of the text: a kind-adjacency table of the grammar (design.md §15.5.1);
  * the punctuation skipped between two pieces must be exactly what the
  * assembler writes there (assemble.js separator()); an automatic enclosure
- * holds exactly one simple chain (its root first, its closing mark right
- * after `il` / `iliden`, nothing nested). A step budget bounds the search:
- * running out returns null, never a guess.
+ * holds exactly one simple chain or ring (its stem first — `ciclo` or a
+ * root —, its closing mark right after `il` / `iliden`, nothing nested). A
+ * step budget bounds the search: running out returns null, never a guess.
  */
 
 import { CONNECTING_VOWEL, ENCLOSING_MARKS } from '../naming/lexicon.es.js';
@@ -49,8 +49,8 @@ const PUNCTUATION = ',-';
 /**
  * Grammar class of a tile for the adjacency table: NUM, MULT, CMULT, ROOT,
  * ANO (`ano`), ENE (`eno` / `ino`), FV (`il` / `iliden`), RET (a retained
- * branch word), START, END. A is the automatic connecting vowel, AUTO_OPEN
- * an automatic opening mark.
+ * branch word), START, END, RING (`ciclo`). A is the automatic connecting
+ * vowel, AUTO_OPEN an automatic opening mark.
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -61,24 +61,27 @@ function tileClass(tile) {
   }
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
+    ring: 'RING',
   };
   return classes[tile.kind];
 }
 
 /** Classes that may begin a name, a prefix or a compound branch. */
-const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RET', 'START'];
+const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'START'];
 
 /**
- * The classes that may follow each class in a valid open-chain hydrocarbon
- * name (design.md §15.5.1); BEGIN is the start of the text. An automatic
- * closing mark does not change the class.
+ * The classes that may follow each class in a valid open-chain or
+ * monocyclic hydrocarbon name (design.md §15.5.1); BEGIN is the start of
+ * the text. An automatic closing mark does not change the class. `ciclo`
+ * stands wherever a root may start a stem, and only a root follows it.
  */
 const FOLLOW = Object.freeze({
   BEGIN: new Set(PREFIX_STARTS),
-  AUTO_OPEN: new Set(['ROOT']),
+  AUTO_OPEN: new Set(['ROOT', 'RING']),
   NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV']),
-  MULT: new Set(['ROOT', 'RET', 'START', 'ENE']),
-  CMULT: new Set(['ROOT', 'RET', 'START']),
+  MULT: new Set(['ROOT', 'RING', 'RET', 'START', 'ENE']),
+  CMULT: new Set(['ROOT', 'RING', 'RET', 'START']),
+  RING: new Set(['ROOT']),
   ROOT: new Set(['ANO', 'NUM', 'MULT', 'ENE', 'FV', 'A']),
   A: new Set(['NUM', 'MULT']),
   ANO: new Set(['NUM']),
@@ -232,8 +235,8 @@ export function tokenize(text, options = {}) {
   } // End of function search()
 
   /**
-   * Explores an opening mark: automatic first (around one simple chain, not
-   * inside another automatic enclosure), then the START control.
+   * Explores an opening mark: automatic first (around one simple chain or
+   * ring, not inside another automatic enclosure), then the START control.
    *
    * @param {number} pos - Position of the mark.
    * @param {string} prev - Class before it.

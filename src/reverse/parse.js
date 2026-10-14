@@ -1,24 +1,32 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phase R-1a): recursive descent over a tile sequence into a lossless
+ * phases R-1a, R-4a): recursive descent over a tile sequence into a lossless
  * syntax tree. Pure, no DOM, no chemistry (the tree is not checked against
  * a molecule; that is interpret.js / build.js, R-1b).
  *
- * Grammar for open-chain hydrocarbons (design.md §15.5.1):
+ * Grammar for open-chain and monocyclic hydrocarbons (design.md §15.5.1;
+ * the ring prefix `ciclo` from R-4a):
  *
  *   name        = { prefix } , parent ;
  *   prefix      = [ locants ] , [ MULT | CMULT ] , substituent ;
  *   substituent = simple | START , { prefix } , simple , END ;
- *   simple      = ROOT , ( il | iliden )
- *               | ROOT , [ ano ] , locant , ( il | iliden )
- *               | ROOT , segments , [ locant ] , ( il | iliden )
+ *   simple      = stem , ( il | iliden )
+ *               | stem , [ ano ] , locant , ( il | iliden )
+ *               | stem , segments , [ locant ] , ( il | iliden )
  *               | isopropil | isopropiliden | tert-butil ;
- *   parent      = [ legacy ] , ROOT , ( ano | segments ) ;
+ *   parent      = [ legacy ] , stem , ( ano | segments ) ;
+ *   stem        = [ ciclo ] , ROOT ;   (* ciclo: a ring of ROOT carbons, at least 3 *)
  *   segments    = segment , [ segment ] ;
  *   segment     = [ locants ] , [ MULT ] , ( eno | ino ) ;
  *   locants     = NUM , { NUM } ;
  *
- * A ROOT starts a branch or the parent: what follows it decides (a
+ * A ring takes the same endings, segments and free-valence suffixes as a
+ * chain (`ciclohexano`, `ciclohexa-1,3-dieno`, `ciclohexil`,
+ * `ciclohexiliden`, `ciclohex-2-en-1-il`), so it is a chain node with its
+ * `ciclo` tile; the ring's bonds and its free valence at carbon 1 are
+ * interpret.js's. Old-style locants work as on a chain (`1,3-ciclohexadieno`).
+ *
+ * A stem starts a branch or the parent: what follows it decides (a
  * free-valence suffix makes a branch), so leading numbers are never
  * consumed greedily — `2 met il 2 but eno` is the prefix `2-metil` and the
  * old-style parent `2-buteno`.
@@ -32,9 +40,11 @@
  * - prefix  `{type: 'prefix', locants: number[], multiplier: number|null,
  *            substituent: chain|retained|branch|null}` (null: numbers or a
  *            multiplier with nothing after them yet)
- * - chain   `{type: 'chain', root, ano: number|null, segments: segment[],
- *            fvLocants: number[], fv: number|null}` (a branch's chain has
- *            `fv`; the parent's has none)
+ * - chain   `{type: 'chain', ring: number|null, root: number|null, ano:
+ *            number|null, segments: segment[], fvLocants: number[], fv:
+ *            number|null}` (`ring` the `ciclo` tile of a ring, else null;
+ *            `root` null only after a `ciclo` with no root, RING_ROOT; a
+ *            branch's chain has `fv`; the parent's has none)
  * - segment `{locants: number[], multiplier: number|null, ending: number}`
  * - retained `{type: 'retained', tile}`
  * - branch  `{type: 'branch', start, items: (prefix|stray)[], chain:
@@ -50,7 +60,9 @@
  * returns a tree (so an incomplete name still assembles) and the syntactic
  * errors of design.md §15.6, each `{code, from, to, message}` with the
  * offending tile range `[from, to)`, sorted by position: EMPTY, NO_PARENT,
- * ROOT_END, ENDS_WITH_BRANCH, BRANCH_OPEN, LOCANT_COUNT, LEGACY, TILE_ORDER.
+ * ROOT_END, ENDS_WITH_BRANCH, BRANCH_OPEN, LOCANT_COUNT, LEGACY, TILE_ORDER,
+ * and for rings (R-4a) RING_ROOT (`ciclo` without a root after it) and
+ * RING_SIZE (a ring of fewer than three carbons).
  * The structural codes (LOCANT_RANGE, BOND_RANGE, SAME_BOND, VALENCE,
  * TOO_BIG) need the chemistry and belong to R-1b. The Spanish messages are
  * drafts pending teacher review (design.md §15, last paragraph); their
@@ -59,15 +71,19 @@
 
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS, CONNECTING_VOWEL,
-  MAX_MULTIPLIER,
+  MAX_MULTIPLIER, RING_PREFIX,
 } from '../naming/lexicon.es.js';
 import { toTiles } from './tiles.js';
 import { itemText } from './assemble.js';
 
-/** The syntactic error codes of design.md §15.6 handled by the parser. */
+/** The syntactic error codes of design.md §15.6 handled by the parser (RING_ROOT, RING_SIZE from R-4a). */
 export const ERROR_CODES = Object.freeze([
   'EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER',
+  'RING_ROOT', 'RING_SIZE',
 ]);
+
+/** Fewest carbons of a ring (`ciclopropano`). */
+export const MIN_RING = 3;
 
 const IL = FREE_VALENCE_SUFFIXES[1];
 const ILIDEN = FREE_VALENCE_SUFFIXES[2];
@@ -100,6 +116,9 @@ const EXAMPLES = Object.freeze({
   bisMetilpropil: `${compoundMultiplier(2)}${OPEN}2-${stem(1)}${IL}${stem(3)}${IL}${CLOSE}`,
   hexEnIno: `${stem(6)}-1-${ENDINGS.double.slice(0, -1)}-3-${ENDINGS.triple}`,
   hexadienino: `${stem(6)}${CONNECTING_VOWEL}-1,3-${multiplier(2)}${ENDINGS.double.slice(0, -1)}-5-${ENDINGS.triple}`,
+  ciclopropano: `${RING_PREFIX}${stem(3)}${ENDINGS.saturated}`,
+  ciclohexano: `${RING_PREFIX}${stem(6)}${ENDINGS.saturated}`,
+  ciclohexil: `${RING_PREFIX}${stem(6)}${IL}`,
 });
 
 /** Hints of the TILE_ORDER message, by situation (drafts pending teacher review). */
@@ -130,6 +149,9 @@ const MESSAGES = Object.freeze({
     + `(${ENDINGS.saturated}, ${ENDINGS.double}, ${ENDINGS.triple}).`,
   BRANCH_OPEN: 'Falta cerrar la rama compuesta.',
   LEGACY: `Con la forma antigua no sé a qué enlace va cada número: escríbelos detrás de la raíz (${EXAMPLES.hexEnIno}).`,
+  RING_ROOT: `Después de «${RING_PREFIX}» va una raíz que dice cuántos carbonos tiene el anillo: `
+    + `${EXAMPLES.ciclopropano}, ${EXAMPLES.ciclohexano}, ${EXAMPLES.ciclohexil}…`,
+  RING_SIZE: `Un anillo tiene por lo menos ${MIN_RING} carbonos: el más pequeño es el ${EXAMPLES.ciclopropano}.`,
 });
 
 /**
@@ -270,15 +292,31 @@ function parseSegments(state, chain) {
 } // End of function parseSegments()
 
 /**
- * Parses a chain from its root: `ano` or unsaturation segments, then the
+ * Parses a chain from its stem — a root, or `ciclo` and a root for a ring
+ * (RING_ROOT when no root follows `ciclo`, RING_SIZE for a ring of fewer
+ * than MIN_RING carbons) —, then `ano` or unsaturation segments, then the
  * free-valence locant and suffix of a branch when they follow.
  *
- * @param {object} state - Parser state (positioned on a root tile).
+ * @param {object} state - Parser state (positioned on a root or `ciclo` tile).
  * @returns {object} The chain node.
  */
 function parseChain(state) {
   const { tiles } = state;
-  const chain = { type: 'chain', root: state.pos, ano: null, segments: [], fvLocants: [], fv: null, range: null };
+  const start = state.pos;
+  const chain = { type: 'chain', ring: null, root: null, ano: null, segments: [], fvLocants: [], fv: null, range: null };
+  if (at(state, 'ring')) {
+    chain.ring = state.pos;
+    state.pos += 1;
+    if (!at(state, 'root')) {
+      chain.range = [start, state.pos];
+      addError(state, 'RING_ROOT', chain.ring, chain.ring + 1, MESSAGES.RING_ROOT);
+      return chain; // An unfinished ring: what follows is read on its own.
+    }
+    if (tiles[state.pos].value < MIN_RING) {
+      addError(state, 'RING_SIZE', chain.ring, state.pos + 1, MESSAGES.RING_SIZE);
+    }
+  }
+  chain.root = state.pos;
   state.pos += 1;
   if (at(state, 'ending', 'saturated')) {
     chain.ano = state.pos;
@@ -302,7 +340,7 @@ function parseChain(state) {
   } else {
     state.pos = save;
   }
-  chain.range = [chain.root, state.pos];
+  chain.range = [start, state.pos];
   return chain;
 } // End of function parseChain()
 
@@ -318,18 +356,24 @@ function chainEnded(chain) {
 
 /**
  * Records ROOT_END for a chain without its ending (or, inside a compound
- * branch, without `il`).
+ * branch, without `il`): «Después de «but»…», «Después de «ciclohex»… si es
+ * el anillo principal…» for a ring. Nothing for a `ciclo` without its root
+ * (RING_ROOT says it).
  *
  * @param {object} state - Parser state.
  * @param {object} chain - The chain node.
  * @returns {void}
  */
 function addRootEnd(state, chain) {
-  const word = state.tiles[chain.root].text;
+  if (chain.root === null) {
+    return;
+  }
+  const ring = chain.ring !== null;
+  const word = `${ring ? state.tiles[chain.ring].text : ''}${state.tiles[chain.root].text}`;
   addError(state, 'ROOT_END', chain.range[0], chain.range[1],
     `Después de «${word}» va una terminación: «${ENDINGS.saturated}», «${ENDINGS.double}» o «${ENDINGS.triple}» `
-    + `si es la cadena principal, o «${IL}» si es una rama.`);
-}
+    + `si es ${ring ? 'el anillo principal' : 'la cadena principal'}, o «${IL}» si es una rama.`);
+} // End of function addRootEnd()
 
 /**
  * Tells whether a substituent is complete: a chain with its free-valence
@@ -430,8 +474,8 @@ function makeParent(state, legacy, mult, chain, start) {
 
 /**
  * Parses one item at a prefix position: a prefix (locants, multiplier,
- * substituent), the parent (at name level, a chain without free valence),
- * or a tile that cannot start either (a stray).
+ * substituent), the parent (at name level, a chain or ring without free
+ * valence), or a tile that cannot start either (a stray).
  *
  * @param {object} state - Parser state.
  * @param {'name'|'branch'} context - Name level or inside a compound branch.
@@ -450,7 +494,7 @@ function parseItem(state, context) {
   const mult = takeMultiplier(state);
   const prefix = { type: 'prefix', locants, multiplier: mult, substituent: null, range: [start, state.pos] };
   const next = tiles[state.pos];
-  if (!next || !['start', 'retained', 'root'].includes(next.kind)) {
+  if (!next || !['start', 'retained', 'root', 'ring'].includes(next.kind)) {
     if (next) {
       addTileOrder(state, start, state.pos, HINTS[first.kind]); // numbers or a multiplier with no branch after them
     }
