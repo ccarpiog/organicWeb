@@ -9,55 +9,17 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parse } from '../../src/reverse/parse.js';
 import { assemble } from '../../src/reverse/assemble.js';
 import { tokenize, TOKENIZE_BUDGET, TOKENIZE_MAX_LENGTH } from '../../src/reverse/tokenize.js';
 import { stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES } from '../../src/naming/lexicon.es.js';
-import { seq } from './reverse-words.js';
-
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
-const FIXTURES = path.join(ROOT, 'tests', 'fixtures', 'names.tsv');
+import { seq, readFixtures, isOpenChainHydrocarbon } from './reverse-words.js';
 
 /** Fixture rows of open-chain hydrocarbons (phase R-1a scope). */
 const EXPECTED_ROWS = 176;
 
 /** Names and alternatives of those rows. */
 const EXPECTED_NAMES = 204;
-
-/**
- * Tells whether a fixture SMILES is an open-chain hydrocarbon: only
- * aliphatic carbons, double and triple bonds and branches — no ring-closure
- * digit, aromatic atom, bracket atom or other element.
- *
- * @param {string} smiles - The SMILES.
- * @returns {boolean} True for an open-chain hydrocarbon.
- */
-function isOpenChainHydrocarbon(smiles) {
-  return /^[C=#()]+$/.test(smiles);
-}
-
-/**
- * Reads the fixture rows (design.md §4.8): SMILES, name and the
- * alternatives column (`style=name` pairs separated by `;`).
- *
- * @returns {Promise<{line: number, smiles: string, names: string[]}[]>} The rows.
- */
-async function readFixtures() {
-  const lines = (await readFile(FIXTURES, 'utf8')).split('\n');
-  const rows = [];
-  lines.slice(1).forEach((text, i) => {
-    if (text.trim() === '' || text.startsWith('#')) {
-      return;
-    }
-    const [smiles, name, , , alternatives = ''] = text.split('\t');
-    const others = alternatives.split(';').filter(Boolean).map((pair) => pair.slice(pair.indexOf('=') + 1));
-    rows.push({ line: i + 2, smiles, names: [name, ...others] });
-  });
-  return rows;
-} // End of function readFixtures()
 
 /**
  * Reads a tile sequence back as text.

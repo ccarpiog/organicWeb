@@ -2,14 +2,16 @@
  * @file Unit tests for the tile catalogue of «¿Cómo se dibuja?»
  * (src/reverse/tiles.js, design.md §15.4, §15.5.1, phase R-1a), and the
  * rules every src/reverse/ module follows: texts from the lexicon, no
- * DOM, only the lexicon imported from the naming engine, and the bundler's
+ * DOM, from the engine only what each module needs (the lexicon; the
+ * molecule model and its caps for build.js, R-1b; nameMolecule() for
+ * index.js; never render.js or the engine's grouping), and the bundler's
  * syntax subset (scripts/build.mjs; nothing in index.html reaches these
  * modules yet, so `npm run build` alone would not exercise them).
  */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, readdir, mkdtemp, mkdir, copyFile, writeFile, rm } from 'node:fs/promises';
+import { readFile, readdir, mkdtemp, mkdir, copyFile, cp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -106,13 +108,24 @@ test('src/reverse never retypes a tile word', async () => {
   }
 }); // End of test 'src/reverse never retypes a tile word'
 
-test('src/reverse is pure and imports only the lexicon from the naming engine', async () => {
+/**
+ * Engine modules each src/reverse/ file may import besides its siblings and
+ * the lexicon: the molecule model and its caps to build (R-1b), the naming
+ * entry point to judge. Never render.js or the engine's grouping (design.md
+ * §15.4): the assembler works from the tree alone.
+ */
+const ENGINE_IMPORTS = Object.freeze({
+  'build.js': ['../model/molecule.js', '../model/validate.js'],
+  'index.js': ['../naming/index.js'],
+});
+
+test('src/reverse is pure and imports from the engine only what it needs', async () => {
   const forbidden = [
     /\.(?:x|y)\b/, // atom.x / atom.y
     /\b(?:document|window|navigator|localStorage|sessionStorage)\b/,
   ];
   const files = await reverseFiles();
-  assert.deepEqual(files.sort(), ['assemble.js', 'parse.js', 'tiles.js', 'tokenize.js']);
+  assert.deepEqual(files.sort(), ['assemble.js', 'build.js', 'index.js', 'interpret.js', 'parse.js', 'tiles.js', 'tokenize.js']);
   for (const file of files) {
     const lines = (await readFile(path.join(REVERSE, file), 'utf8')).split('\n');
     lines.forEach((line, i) => {
@@ -120,13 +133,12 @@ test('src/reverse is pure and imports only the lexicon from the naming engine', 
         assert.doesNotMatch(line, pattern, `src/reverse/${file}:${i + 1}: ${line.trim()}`);
       }
       const from = /^\s*(?:import|export)\b.*\bfrom\s+'([^']+)'/.exec(line) || /^\s*\}\s*from\s+'([^']+)'/.exec(line);
-      if (from) {
-        // Never render.js or the engine's grouping (design.md §15.4): the assembler works from the tree alone.
+      if (from && !(ENGINE_IMPORTS[file] || []).includes(from[1])) {
         assert.match(from[1], /^\.\/[a-z]+\.js$|^\.\.\/naming\/lexicon\.es\.js$/, `src/reverse/${file}:${i + 1} imports ${from[1]}`);
       }
     });
-  }
-}); // End of test 'src/reverse is pure and imports only the lexicon from the naming engine'
+  } // End of the loop over the files
+}); // End of test 'src/reverse is pure and imports from the engine only what it needs'
 
 test('reverse modules bundle and run in a classic script', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'organic-reverse-'));
@@ -157,3 +169,25 @@ test('reverse modules bundle and run in a classic script', async () => {
     await rm(dir, { recursive: true, force: true });
   }
 }); // End of test 'reverse modules bundle and run in a classic script'
+
+test('readName() bundles with the engine and runs in a classic script', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'organic-read-'));
+  try {
+    await cp(path.join(ROOT, 'src'), path.join(dir, 'src'), { recursive: true });
+    await writeFile(
+      path.join(dir, 'entry.js'),
+      [
+        "import { readName } from './src/reverse/index.js';",
+        "import { tokenize } from './src/reverse/tokenize.js';",
+        "const names = ['5,5-bis(2,2-dimetilpropil)nonano', '4-(propan-2-il)heptano', '4-metilpentano', 'hex-6-eno', 'metilpentano'];",
+        "globalThis.__result = names.map((name) => readName(tokenize(name)).kind).join(' ');",
+      ].join('\n'),
+    );
+    const code = await bundleModules(path.join(dir, 'entry.js'), dir);
+    const context = {};
+    vm.runInNewContext(code, context);
+    assert.equal(context.__result, 'correct alternative otherName invalid incomplete');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}); // End of test 'readName() bundles with the engine and runs in a classic script'

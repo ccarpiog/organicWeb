@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T16:56:36Z",
+  "updated": "2026-10-14T17:21:53Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -550,8 +550,11 @@
     {
       "id": "I-47b",
       "title": "v4 R-1b Interpret, build, readName",
-      "status": "queued",
-      "summary": "Turns a fully located tile name into a molecule and a verdict (correct, alternative, other name, out of scope, invalid)."
+      "status": "done",
+      "summary": "Turns a fully located tile name into a molecule and a verdict (correct, alternative, other name, out of scope, invalid).",
+      "risk": "high",
+      "review": "Codex ship, 0 findings — docs/reviews/I-47b.md",
+      "narrative": "docs/progress-archive/i-47b.md"
     },
     {
       "id": "I-47c",

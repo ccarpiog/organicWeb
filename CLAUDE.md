@@ -22,8 +22,12 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   either ring of an ester (`4-metilbenzoato de etilo`, `etanoato de
   4-metilfenilo`, `4-metilbenzoato de 4-clorofenilo`).
   v4 (from the name to the drawing, built from tiles: «¿Cómo se dibuja?»,
-  §15) is in progress: engine only (tiles, parser, assembler, tokenizer for
-  open-chain hydrocarbons, pure modules in `src/reverse/`), no UI yet.
+  §15) is in progress: engine only, pure modules in `src/reverse/` — tiles,
+  parser, assembler and tokenizer for open-chain hydrocarbon names, and
+  `readName()`, which interprets, builds and judges the fully located ones
+  (correct, alternative, otherName, outOfScope, invalid with structural
+  errors; a left-out locant with several possible values gives the
+  `incomplete` stand-in until R-1c's search); no UI yet.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

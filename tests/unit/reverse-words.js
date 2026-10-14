@@ -1,11 +1,50 @@
 /**
  * @file Test helper for the «¿Cómo se dibuja?» modules (src/reverse/):
  * writes a tile sequence as the words on the tiles, `2 3 di met il pent
- * ano`, with `START` / `END` for the compound-branch controls. Not a test
+ * ano`, with `START` / `END` for the compound-branch controls, and reads
+ * the open-chain hydrocarbon rows of tests/fixtures/names.tsv. Not a test
  * file itself (the test glob only runs `*.test.js`).
  */
 
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
+
+/** The fixture table (design.md §4.8). */
+const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'names.tsv');
+
+/**
+ * Tells whether a fixture SMILES is an open-chain hydrocarbon: only
+ * aliphatic carbons, double and triple bonds and branches — no ring-closure
+ * digit, aromatic atom, bracket atom or other element.
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True for an open-chain hydrocarbon.
+ */
+export function isOpenChainHydrocarbon(smiles) {
+  return /^[C=#()]+$/.test(smiles);
+}
+
+/**
+ * Reads the fixture rows (design.md §4.8): SMILES, name and the
+ * alternatives column (`style=name` pairs separated by `;`).
+ *
+ * @returns {Promise<{line: number, smiles: string, names: string[]}[]>} The rows.
+ */
+export async function readFixtures() {
+  const lines = (await readFile(FIXTURES, 'utf8')).split('\n');
+  const rows = [];
+  lines.slice(1).forEach((text, i) => {
+    if (text.trim() === '' || text.startsWith('#')) {
+      return;
+    }
+    const [smiles, name, , , alternatives = ''] = text.split('\t');
+    const others = alternatives.split(';').filter(Boolean).map((pair) => pair.slice(pair.indexOf('=') + 1));
+    rows.push({ line: i + 2, smiles, names: [name, ...others] });
+  });
+  return rows;
+} // End of function readFixtures()
 
 /** Tile ids by the text on the tile (every tile text is unique). */
 const BY_TEXT = new Map(TILES.filter((tile) => tile.kind !== 'start' && tile.kind !== 'end').map((tile) => [tile.text, tile.id]));

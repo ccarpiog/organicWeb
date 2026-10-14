@@ -71,7 +71,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-46 | v3 Wrap-up (Ayuda, examples, README, CLAUDE.md scope, oracle README) | same, "I-46" | done — `docs/progress-archive/i-46.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-46.md` |
 
 | I-47a | v4 R-1a Tile catalogue, parser, assembler, tokenizer (open-chain hydrocarbons) | `autoclaude/processed/230-name-to-structure.md` + design §15.8 "R-1a" | done — `docs/progress-archive/i-47a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-47a.md` |
-| I-47b | v4 R-1b `interpret.js` + `build.js`, `readName()` for fully located names | same, "R-1b" | queued | — | — |
+| I-47b | v4 R-1b `interpret.js` + `build.js`, `readName()` for fully located names | same, "R-1b" | done — `docs/progress-archive/i-47b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-47b.md` |
 | I-47c | v4 R-1c Left-out locants (search, `missingLocants`/`ambiguous`/`incomplete`) | same, "R-1c" | queued | — | — |
 | I-48a | v4 R-2a The «¿Cómo se dibuja?» dialog | same, "R-2a" | queued | — | — |
 | I-48b | v4 R-2b «Dibujar», results entry point, Ayuda, e2e | same, "R-2b" | queued | — | — |
@@ -106,32 +106,11 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Inbox
 
-- 2026-09-27 pickup 1: `010-scaffold.md`, `020-model.md`,
-  `030-naming-linear.md` → queued as I-1, I-2, I-3 (in plan order).
-- 2026-09-27 pickup 2 (after I-1): `040-naming-parent.md`,
-  `050-naming-substituents.md`, `060-naming-iliden-fixtures.md` → queued as
-  I-4, I-5, I-6.
-- 2026-09-27 pickup 3 (after I-2): `070-oracle.md`, `080-editor-core.md`,
-  `090-editor-extras.md` → queued as I-7, I-8, I-9.
-- 2026-09-27 pickup 4 (after I-3): `100-explain-results.md`,
-  `110-redraw-examples.md`, `120-polish-release.md` → queued as I-10, I-11, I-12.
-- 2026-09-27 pickup 5 (after I-12): `130-visible-carbons.md`,
-  `140-drag-chain-single-bond.md`, `150-right-angles.md` → queued as I-13,
-  I-14, I-15. I-15 (90° view) must also define how I-14's chain drag behaves
-  while the 90° view is on.
-- 2026-09-27 pickup 6 (after I-15): `160-hide-highlights.md`,
-  `170-edit-in-carbons-view.md` → queued as I-16, I-17. `180-author-credit.md`
-  was not ready (still settling); next boundary.
-- 2026-09-27 pickup 7 (after I-16): `180-author-credit.md`,
-  `190-undo-ordenar-dibujo.md` → queued as I-18, I-19.
-- 2026-09-27 pickup 8 (before I-18): `200-deploy-fastmail.md` → queued as
-  I-20; `210-rings-functional-groups.md` → deferred (see Decisions needed).
-- 2026-09-27 pickup 9 (after I-20): `215-rings-functional-groups-confirmed.md`
-  — the re-drop of 210 with the v2 scope confirmed by the user and the §4
-  decisions answered (ESO + 1º Bachillerato; systematic name first, traditional
-  names under "Otras formas válidas"; benzene monosubstituted only; stereo,
-  charges, salts, heterocycles, polycycles out) → queued as I-21…I-41, one
-  per plan phase §3.1…§3.21.
+- 2026-09-27 pickups 1–8: items `010-*` … `200-*` → queued as I-1…I-20 in filename order
+  (`210-rings-functional-groups.md` deferred pending the user's scope decisions).
+- 2026-09-27 pickup 9 (after I-20): `215-rings-functional-groups-confirmed.md` — the re-drop of
+  210 with the v2 scope and §4 decisions confirmed by the user → queued as I-21…I-41, one per
+  plan phase §3.1…§3.21.
 - 2026-10-13 pickup 10 (plan complete): `220-polysubstituted-benzenes.md` — user-confirmed
   scope lift (benzenes with 2–6 substituents; o/m/p only under Otras formas) → queued as
   I-42, I-43a, I-43b, I-44, I-45a, I-45b, I-45c, I-46, one per phase of the item.
@@ -141,20 +120,24 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select and run I-47b (v4 R-1b): `src/reverse/interpret.js` + `build.js` for fully located names and
-`readName()` with the verdicts `correct`, `alternative`, `otherName`, `outOfScope`, `invalid`
-(structural errors `LOCANT_RANGE`, `BOND_RANGE`, `SAME_BOND`, `VALENCE`, `TOO_BIG` with tile
-ranges); fixture round trip with graph comparison; mutations. Spec: design §15.3 (verdicts), §15.4,
-§15.5.3 (readName), §15.6, §15.7, §15.8 "R-1b", §15.9 (traps 7–8: NFC, every engine alternative) —
-read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Write the
-acceptance criteria from §15.8 "R-1b" + §15.7 at selection; risk high (verdicts compare against
-every engine alternative); worker opus. Commit by explicit paths.
+Select and run I-47c (v4 R-1c): left-out locants — `src/reverse/search.js` (typed slots' domains,
+multiset enumeration of identical occurrences with incremental pruning, symmetric placements merged
+by `canonicalKey()`, a budget of placements/namings/time → `incomplete`), the naming cache by
+structural key, and the verdicts `missingLocants` (filled text), `ambiguous` (≤ 3 names),
+`incomplete`, plus `otherName` when every placement gives one structure (`metiletano` → propane).
+Replace I-47b's `incomplete` stand-in in `src/reverse/index.js`; the worked cases of §15.5.3 for
+open-chain hydrocarbons (ring/group ones wait for R-4/R-5); fixture round trip gains `propeno`,
+`propino`, `propadieno` (204/204); closed loop over `scripts/oracle/generate.mjs`
+(`generateMolecules`, pure imports, seeded, supported-syntax filter, minimum coverage asserted).
+Spec: design §15.3, §15.5.3 steps 2–8, §15.7, §15.8 "R-1c", §15.9 trap 8 — read from the
+working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high; worker opus.
+Commit by explicit paths.
 
-- **Builds on I-47a** (`docs/progress-archive/i-47a.md`): `parse(ids)` → `{tree, errors}` (never
-  throws), `assemble(tree)` → `{text, spans}`, `tokenize(text)` → ids or null; tile ids in
-  `src/reverse/tiles.js`; test helper `seq()` in `tests/unit/reverse-words.js`. The syntactic codes
-  exist; the structural ones are this phase's. Update the coverage clause of the `CLAUDE.md` v4
-  scope sentence.
+- **Builds on I-47b** (`docs/progress-archive/i-47b.md`): `interpret()` types every slot
+  `supplied`/`implicit`/`leftOut` with role and range; `build(spec, placement)` takes the left-out
+  values; `readName(tiles, {namer})` verdict shape documented in `src/reverse/index.js`; tests
+  `tests/unit/reverse-{read,build}.test.js`. Update the coverage clause of the `CLAUDE.md` v4
+  sentence.
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6).
@@ -315,13 +298,11 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Verification (last phases)
 
-- I-45c: `npm test` 0 (1715) · `npm run check` 0 · `npm run build` 0 · `npm run e2e` 0 (405) ·
-  `npm run oracle -- --count 2000 --seed 1 --max 60` 0 (23527 pass, 0 fail).
-- I-46: `npm test` 0 (1716) · `npm run check` 0 (143 files) · `npm run build` 0 · `npm run e2e` 0
-  (407, source + dist); after the review fix `npx playwright test tests/e2e/polish.spec.js` 0 (12) and
-  `npm run build` 0.
+- Older phases: see each `docs/progress-archive/i-*.md`.
 - I-47a: `npm test` 0 (1761) · `npm run check` 0 (152) · `npm run build` 0 · `npm run e2e` 0 (407);
   after the review fix `npm test` 0 (1762) · `check` 0 · `build` 0 · `e2e` 0 (407).
+- I-47b: `npm test` 0 (1786) · `npm run check` 0 (157 files) · `npm run build` 0 · `npm run e2e` 0
+  (407, source + dist); Codex review ship, no fix needed.
 
 ## Open risks / deviations
 
@@ -393,6 +374,10 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   half of rule 4 → R-5a; Spanish error texts are drafts. Review should-fix (tokenizer stack overflow)
   fixed with `TOKENIZE_MAX_LENGTH`; `parse`/`assemble` safe to 2000 nested branches — R-2a's dialog
   should cap the tile count (`docs/progress-archive/i-47a.md`).
+- I-47b: left-out slots with several values give an `incomplete` stand-in until R-1c (so
+  `metiletano` is not yet `otherName`); no real open-chain `outOfScope` case, tested via an
+  injected namer; old-style note rewrites the student's own name; new draft error wordings
+  (`docs/progress-archive/i-47b.md`).
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -407,7 +392,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-46 `7a30b61`, pushed. Inbox triage of `230-name-to-structure.md` `c945375`, pushed. I-47a
-  committed and pushed right after this checkpoint (see `git log`; it folds in the previous
-  record-only iteration's selection notes and `PROGRESS.json` v4 rows). User's uncommitted paths,
-  never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.
+- I-47a `b4893f8`, pushed. I-47b committed and pushed right after this checkpoint (see
+  `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
+  `docs/reviews/v4-plan-codex.md`, `.DS_Store`.
