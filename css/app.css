@@ -660,6 +660,30 @@ body {
   cursor: not-allowed;
 }
 
+/* «¿Cómo se dibuja?» launcher (index.html, src/ui/name-builder.js): a secondary button right under «¿Cómo se llama?». */
+.draw-name-button {
+  margin-top: calc(0.4rem - var(--gap));
+  padding: 0.55rem 1rem;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  background: var(--color-surface);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.draw-name-button:hover:not(:disabled) {
+  background: var(--color-bg);
+}
+
+.draw-name-button:disabled {
+  color: var(--color-disabled);
+  border-color: var(--color-disabled);
+  cursor: not-allowed;
+}
+
 .results-hint {
   margin: 0;
   color: var(--color-text-muted);
@@ -1152,6 +1176,241 @@ kbd {
   margin: 0 0 0.4rem 1rem;
 }
 
+/* «¿Cómo se dibuja?» dialog (index.html, src/ui/name-builder.js): the name
+   line, the message and the buttons stay at the top; the tile rows scroll.
+   The dialog has a fixed height (it does not jump when a message appears).
+   The rows keep a minimum height and take no part in shrinking (basis 0);
+   when space runs short the top part shrinks instead: the name line and
+   the message shrink down to one visible line each and scroll, so the
+   heading, the cap notice and the buttons always fit. */
+.name-builder-dialog {
+  width: min(48rem, calc(100vw - 1rem));
+  max-width: min(48rem, calc(100vw - 1rem));
+  height: min(42rem, calc(100vh - 2rem));
+  max-height: calc(100vh - 2rem);
+  padding: 0;
+  overflow: hidden;
+}
+
+.name-builder-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.name-builder-dialog h2:focus {
+  outline: none;
+}
+
+.nb-top {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto; /* Last resort only: its shrinkable parts give way first. */
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.nb-head,
+.nb-limit,
+.nb-actions {
+  flex: none;
+}
+
+.nb-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.nb-head h2 {
+  margin: 0;
+}
+
+.nb-name {
+  flex: 0 1 auto;
+  min-height: calc(1.35em + 0.6rem + 2px); /* One line of the name. */
+  max-height: 30vh;
+  margin: 0.6rem 0 0.5rem;
+  padding: 0.3rem 0.5rem;
+  overflow-y: auto;
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.nb-placeholder {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.nb-piece {
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.nb-piece.is-selected {
+  background: var(--color-highlight);
+  box-shadow: inset 0 -3px 0 var(--color-accent);
+}
+
+/* The opening mark of an unfinished compound branch (design.md §15.2). */
+.nb-piece--pending {
+  opacity: 0.45;
+}
+
+/* A compound-branch control that writes no mark: a small dashed box, so it can still be selected. */
+.nb-piece--silent {
+  display: inline-block;
+  width: 0.45em;
+  height: 0.9em;
+  vertical-align: -0.05em;
+  border: 1px dashed var(--color-part-punct);
+}
+
+.nb-piece--invalid {
+  color: var(--color-error);
+  text-decoration: underline wavy var(--color-error);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.nb-piece--silent.nb-piece--invalid {
+  border: 2px solid var(--color-error);
+}
+
+/* The insertion point before the first tile. */
+.nb-start {
+  display: inline-block;
+  width: 0.5em;
+  height: 1.1em;
+  vertical-align: -0.15em;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+}
+
+.nb-start.is-selected {
+  border-left-color: var(--color-accent);
+}
+
+.nb-message,
+.nb-limit {
+  margin: 0;
+}
+
+.nb-message {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.nb-message-line {
+  display: block;
+}
+
+.nb-message--error,
+.nb-message--success {
+  min-height: calc(1.5em + 1rem + 2px); /* One line of the message. */
+  max-height: 25vh;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+}
+
+.nb-message--error {
+  font-weight: 600;
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+}
+
+.nb-message--success {
+  border: 1px solid var(--color-accent);
+}
+
+.nb-limit:not(:empty) {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+.nb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.nb-rows {
+  flex: 1 1 0;
+  min-height: min(7.5rem, 22vh); /* A row title and a line of tiles stay usable. */
+  overflow-y: auto;
+  padding: 0.75rem 1.25rem 1rem;
+}
+
+.nb-row + .nb-row {
+  margin-top: 0.6rem;
+}
+
+.nb-row-title {
+  margin: 0 0 0.3rem;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+.nb-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.nb-tile,
+.nb-more {
+  min-width: 2.5rem;
+  padding: 0.35rem 0.6rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.nb-tile:hover:not([aria-disabled="true"]),
+.nb-more:hover {
+  background: var(--color-bg);
+}
+
+.nb-tile[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.nb-tile--num { color: var(--color-part-locant); }
+.nb-tile--mult,
+.nb-tile--cmult { color: var(--color-part-multiplier); }
+.nb-tile--root { color: var(--color-part-parent); }
+.nb-tile--ending { color: var(--color-part-ending); }
+.nb-tile--freeValence,
+.nb-tile--retained { color: var(--color-part-prefix); }
+
+.nb-tile-mark {
+  margin: 0 0.3rem;
+  color: var(--color-part-punct);
+}
+
+.nb-more {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  border-style: dashed;
+}
+
 /* Touch screens: bigger targets. */
 @media (pointer: coarse) {
   .tool-button {
@@ -1206,5 +1465,28 @@ kbd {
 
   .help-step {
     flex-direction: column;
+  }
+
+  /* «¿Cómo se dibuja?» fills the screen; the top part stays, the rows scroll. */
+  .name-builder-dialog {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+  }
+
+  .nb-top {
+    padding: 0.75rem 0.75rem 0.6rem;
+  }
+
+  .nb-rows {
+    padding: 0.6rem 0.75rem 1rem;
+  }
+
+  .nb-name {
+    font-size: 1.35rem;
   }
 }

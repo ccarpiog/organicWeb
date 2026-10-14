@@ -73,7 +73,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-47a | v4 R-1a Tile catalogue, parser, assembler, tokenizer (open-chain hydrocarbons) | `autoclaude/processed/230-name-to-structure.md` + design §15.8 "R-1a" | done — `docs/progress-archive/i-47a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-47a.md` |
 | I-47b | v4 R-1b `interpret.js` + `build.js`, `readName()` for fully located names | same, "R-1b" | done — `docs/progress-archive/i-47b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-47b.md` |
 | I-47c | v4 R-1c Left-out locants (search, `missingLocants`/`ambiguous`/`incomplete`) | same, "R-1c" | done — `docs/progress-archive/i-47c.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-47c.md` |
-| I-48a | v4 R-2a The «¿Cómo se dibuja?» dialog | same, "R-2a" | queued | — | — |
+| I-48a | v4 R-2a The «¿Cómo se dibuja?» dialog | same, "R-2a" | done — `docs/progress-archive/i-48a.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-48a.md` |
 | I-48b | v4 R-2b «Dibujar», results entry point, Ayuda, e2e | same, "R-2b" | queued | — | — |
 | I-49 | v4 R-3 Diagnosis for hydrocarbons | same, "R-3" | queued | — | — |
 | I-50 | v4 R-4 Rings and retained aromatic templates | same, "R-4" | queued | — | — |
@@ -120,24 +120,29 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select and run I-48a (v4 R-2a): the «¿Cómo se dibuja?» dialog — the secondary button right under
-«¿Cómo se llama?» (outside `.results-body`, trap 6), the new idle hint, an in-page `<dialog>` next
-to `#help-dialog` (focus handling like `src/ui/help.js`), `src/ui/name-builder.js`: the name line
-(assembled by `assemble()`, coloured by part kind, each tile's span selectable also by keyboard,
-`aria-live`, an open compound branch's mark shown faintly), tile rows from `src/reverse/tiles.js`
-with «más» (only tiles the parser supports), branch controls, insert after the selected span,
-«Borrar ficha» / «Borrar todo», Backspace/Escape, session-only tiles, full-screen on narrow
-screens, a tile-count cap (I-47a: `parse`/`assemble` safe to 2000 nested branches); failures of
-`readName()` shown under the name line with `aria-invalid` on the offending tiles. «Dibujar»
-itself, the results entry point and e2e for drawing are R-2b. CSS in `css/app.css`. Spec: design
-§15.2, §15.8 "R-2a" — read from the working-tree `docs/design.md`; never edit or commit it (see
-*Open risks*). Risk routine/high is the selector's call (UI only, engine untouched); worker opus.
-Commit by explicit paths. Update the `CLAUDE.md` v4 sentence («no UI yet»).
+Select and run I-48b (v4 R-2b): «Dibujar» on the canvas. Replace the transitional
+`onDraw(verdict, builder)` handler in `src/ui/app.js` (today it only calls `builder.showVerdict()`)
+with: `canonicalLayout()` of the verdict's molecule checked with `layoutProblems()` **before** the
+canvas is touched (problems → the §15.2 «He entendido el nombre, pero no consigo dibujar…» message
+in the dialog, canvas untouched); `editor.loadMolecule()` (one transaction, outcome checked, keeps
+ids — trap 4), `editor.centerView()`; a new `results.js` entry point that names the loaded molecule,
+registers the supplied layout as the ordered drawing (parent highlighted with locants as after
+«Ordenar dibujo», no redraw hint — `showResult()` alone resets `arranged`/`ordered`, trap 1) and
+shows the verdict block above «Se llama:» (incl. «También se llama …» for a traditional
+alternative, the old-style note, `ambiguous`/`otherName` texts per §15.3); the dialog closes.
+Deshacer restores the old drawing and clears the verdict (chemical edit); coordinate-only undo keeps
+it; the molecule is autosaved, the verdict and tiles are not (trap 5). Ayuda section «Del nombre al
+dibujo» in `index.html` (it says the verdicts speak of the name the app gives, §15.3). e2e per
+§15.7 "e2e from R-2b" (extend `tests/e2e/name-builder.spec.js` or a new spec; both projects; 90°
+view on). Spec: design §15.2 «Dibujar», §15.3, §15.7, §15.8 "R-2b", §15.9 — read from the
+working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high (results-panel
+state machine, traps 1–4); worker opus. Commit by explicit paths. Update the `CLAUDE.md` v4
+sentence (it says drawing is next and a success only shows its message).
 
-- **Builds on I-47c** (`docs/progress-archive/i-47c.md`): `readName(tiles, {namer, cache,
-  budget})` verdicts `correct`/`alternative`/`missingLocants`/`otherName`/`ambiguous`/
-  `incomplete`/`outOfScope`/`invalid`, shape documented in `src/reverse/index.js`; each verdict
-  has `filled`, `candidates`, and on `invalid` the error's tile range.
+- **Builds on I-48a** (`docs/progress-archive/i-48a.md`): dialog `src/ui/name-builder.js`
+  (`buildNameBuilder(doc, {onDraw})`, `builder.showVerdict()`), DOM-free state
+  `src/ui/name-builder-state.js`; `readName()` verdict shape in `src/reverse/index.js` (`filled`,
+  `candidates`, molecule, `naming`, `studentParent`, `prefixAtoms`).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6).
@@ -294,17 +299,19 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   `parse.js` (`parse(ids)` → `{tree, errors}`), `assemble.js` (`{text, spans}`), `tokenize.js`,
   `interpret.js`, `build.js`, `search.js` (left-out placements, budget, naming cache),
   `index.js` (`readName()`); `isomorphism()` in `src/model/graph.js`; tests
-  `tests/unit/reverse-*.test.js`, helper `tests/unit/reverse-words.js`; spec design §15.
+  `tests/unit/reverse-*.test.js`, helper `tests/unit/reverse-words.js`; spec design §15. Dialog
+  (I-48a): `src/ui/name-builder.js` + DOM-free `name-builder-state.js`, wired in `app.js`; tests
+  `tests/unit/name-builder-state.test.js`, `tests/e2e/name-builder.spec.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-47b: `npm test` 0 (1786) · `npm run check` 0 (157 files) · `npm run build` 0 · `npm run e2e` 0
-  (407, source + dist); Codex review ship, no fix needed.
-- I-47c: `npm test` 0 (1806) · `check` 0 (159) · `build` 0 · `npm run e2e -- --reporter=dot` 0 (407);
-  after the review fixes `npm test` 0 (1809) · `check` 0 (159) · `build` 0 · `e2e` 0 (407).
+- I-47c: after the review fixes `npm test` 0 (1809) · `check` 0 (159) · `build` 0 · `e2e` 0 (407).
+- I-48a: `npm test` 0 (1822) · `npm run check` 0 (163 files) · `npm run build` 0 ·
+  `npm run e2e -- --reporter=dot` 0 (421, source + dist); after the review fix `npm test` 0 (1822) ·
+  `check` 0 (163) · `build` 0 · `e2e` 0 (425).
 
 ## Open risks / deviations
 
@@ -381,6 +388,10 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - I-47c: R-4 must make `isomorphism()` treat both Kekulé benzenes as equivalent (else
   `placementReading()` throws); unplaceable left-out locants → `invalid`; old style + left-out →
   `ambiguous`; review fixes in `docs/progress-archive/i-47c.md`.
+- I-48a: added a "start of name" insertion point; tile cap 100 (`aria-disabled` tiles + message);
+  success verdicts only show their message until R-2b; new Spanish drafts (row labels, placeholder,
+  «Principio del nombre», «menos», cap message). Review should-fix (short-phone overflow) fixed with
+  a 320×480 / 320×568 regression (`docs/progress-archive/i-48a.md`).
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -395,6 +406,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-47b `890bf8b`, pushed. I-47c committed and pushed right after this checkpoint (see
+- I-47c `c2d88a7`, pushed. I-48a committed and pushed right after this checkpoint (see
   `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
   `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

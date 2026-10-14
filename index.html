@@ -37,8 +37,10 @@
 
     <aside class="results" id="results" aria-label="Resultado">
       <button type="button" id="name-button" class="name-button" disabled>¿Cómo se llama?</button>
+      <button type="button" id="draw-name-button" class="draw-name-button" aria-haspopup="dialog"
+              aria-controls="name-builder-dialog" disabled>¿Cómo se dibuja?</button>
       <div class="results-body">
-        <p class="results-hint">Dibuja una molécula en el lienzo y pulsa «¿Cómo se llama?».</p>
+        <p class="results-hint">Dibuja una molécula en el lienzo y pulsa «¿Cómo se llama?», o forma un nombre con «¿Cómo se dibuja?».</p>
       </div>
     </aside>
   </main>
@@ -174,6 +176,27 @@
         <button type="submit" value="close" class="dialog-button dialog-button--primary">Entendido</button>
       </div>
     </form>
+  </dialog>
+  <!-- «¿Cómo se dibuja?»: a name built from tiles, never typed (src/ui/name-builder.js). -->
+  <dialog id="name-builder-dialog" class="dialog name-builder-dialog" aria-labelledby="name-builder-title">
+    <div class="nb-top">
+      <div class="nb-head">
+        <h2 id="name-builder-title" tabindex="-1">¿Cómo se dibuja?</h2>
+        <button type="button" class="dialog-button" data-role="close">Cerrar</button>
+      </div>
+      <div id="name-builder-name" class="nb-name" role="listbox" aria-orientation="horizontal"
+           aria-label="Nombre formado con las fichas" aria-live="polite" aria-atomic="true" tabindex="-1"></div>
+      <p id="name-builder-message" class="nb-message" role="status" aria-live="polite"></p>
+      <p id="name-builder-limit" class="nb-limit" role="status" aria-live="polite"></p>
+      <div class="nb-actions">
+        <button type="button" class="dialog-button" data-role="delete">Borrar ficha</button>
+        <button type="button" class="dialog-button" data-role="clear">Borrar todo</button>
+        <button type="button" class="dialog-button dialog-button--primary nb-draw" data-role="draw">Dibujar</button>
+      </div>
+    </div>
+    <div id="name-builder-rows" class="nb-rows">
+      <!-- The tile rows are created by src/ui/name-builder.js from src/reverse/tiles.js. -->
+    </div>
   </dialog>
 </body>
 </html>

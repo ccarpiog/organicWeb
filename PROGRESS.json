@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T18:12:30Z",
+  "updated": "2026-10-14T18:46:59Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -568,8 +568,11 @@
     {
       "id": "I-48a",
       "title": "v4 R-2a Name-builder dialog",
-      "status": "queued",
-      "summary": "Adds the «¿Cómo se dibuja?» dialog with tile rows, the assembled name line, branch controls and keyboard support."
+      "status": "done",
+      "risk": "routine",
+      "summary": "Adds the «¿Cómo se dibuja?» dialog with tile rows, the assembled name line, branch controls and keyboard support.",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-48a.md",
+      "narrative": "docs/progress-archive/i-48a.md"
     },
     {
       "id": "I-48b",

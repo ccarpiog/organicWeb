@@ -5,8 +5,8 @@
  * DOM, from the engine only what each module needs (the lexicon; the
  * molecule model and its caps for build.js, R-1b; nameMolecule() for
  * index.js; never render.js or the engine's grouping), and the bundler's
- * syntax subset (scripts/build.mjs; nothing in index.html reaches these
- * modules yet, so `npm run build` alone would not exercise them).
+ * syntax subset (scripts/build.mjs; index.html reaches only the modules
+ * the «¿Cómo se dibuja?» dialog imports, so every one is bundled here).
  */
 
 import { test } from 'node:test';

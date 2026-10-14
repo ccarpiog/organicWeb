@@ -1,0 +1,532 @@
+/**
+ * @file «¿Cómo se dibuja?» dialog (design.md §15.2; phase R-2a): the student
+ * builds a name from tiles — never free text — and «Dibujar» reads it with
+ * readName() (src/reverse/index.js).
+ *
+ * The page holds the skeleton (`#name-builder-dialog` in index.html, next to
+ * `#help-dialog`, and the `#draw-name-button` launcher under «¿Cómo se
+ * llama?», outside `.results-body`, which results.js replaces). This module
+ * fills the tile rows from the catalogue (src/reverse/tiles.js: a tile
+ * exists only once the parser supports it), renders the editing state
+ * (src/ui/name-builder-state.js, DOM-free) and wires the controls:
+ *
+ * - the name line: the assembled name, coloured by part kind like the
+ *   result name (`part part-<kind>`), one span per tile; a listbox whose
+ *   options (the tiles, plus the insertion point before the first one) are
+ *   selected by click or with the arrow keys, Home and End (roving
+ *   tabindex, `aria-selected`); `aria-live`, so every change is announced;
+ *   the opening mark of an unfinished compound branch shows faintly;
+ * - the tile rows («Números», «¿Cuántos?», «Raíces (cuántos carbonos)»,
+ *   «Terminaciones», «Ramas»; drafts pending teacher review), each with a
+ *   «más» button for the tiles the catalogue keeps behind it;
+ * - «Borrar ficha» (also Backspace while the focus is in the dialog),
+ *   «Borrar todo», «Dibujar» and «Cerrar» (also Escape and a click on the
+ *   backdrop); the focus goes into the dialog on opening and back to the
+ *   launcher on closing, as in help.js.
+ *
+ * «Dibujar» calls `read(tileIds)` (readName() by default; DOM-free). A
+ * failure verdict (invalid, ambiguous, incomplete, outOfScope — an empty
+ * name is `invalid`) keeps the dialog open, shows the message under the
+ * name line (role=status) and marks the wrong tiles (`aria-invalid`); the
+ * canvas is never touched here. A success verdict goes to the injected
+ * `onDraw(verdict, builder)` handler, which loads the molecule (R-2b); any
+ * edit clears a stale message and marks. The tiles live in memory only:
+ * they survive closing and reopening the dialog, never a reload.
+ *
+ * The DOM is built with createElement/textContent only (never innerHTML).
+ */
+
+import { TILES, START_ID, END_ID } from '../reverse/tiles.js';
+import { readName } from '../reverse/index.js';
+import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
+
+/** The tile rows in dialog order, with their labels (design.md §15.2; drafts pending teacher review). */
+export const ROWS = Object.freeze([
+  Object.freeze({ id: 'numbers', label: 'Números' }),
+  Object.freeze({ id: 'multipliers', label: '¿Cuántos?' }),
+  Object.freeze({ id: 'roots', label: 'Raíces (cuántos carbonos)' }),
+  Object.freeze({ id: 'endings', label: 'Terminaciones' }),
+  Object.freeze({ id: 'branches', label: 'Ramas' }),
+]);
+
+/** Labels of the two compound-branch controls (design.md §15.2). */
+export const CONTROL_LABELS = Object.freeze({ [START_ID]: 'empieza rama compuesta', [END_ID]: 'acaba rama' });
+
+/** Text of the empty name line. */
+export const PLACEHOLDER = 'Pulsa las fichas de abajo para formar un nombre.';
+
+/** Accessible name of the insertion point before the first tile. */
+export const START_LABEL = 'Principio del nombre';
+
+/** Text of a row's button that shows the rest of its tiles. */
+export const MORE_LABEL = 'más';
+
+/** Text of that button while the rest is shown. */
+export const LESS_LABEL = 'menos';
+
+/**
+ * Message shown while the name has the most tiles allowed.
+ *
+ * @param {number} cap - Most tiles allowed (name-builder-state.js MAX_TILES by default).
+ * @returns {string} The Spanish message.
+ */
+export function fullMessage(cap) {
+  return `Ya hay ${cap} fichas, el máximo: borra alguna para añadir otra.`;
+}
+
+/**
+ * Creates an element with a class and optional text.
+ *
+ * @param {Document} doc - The document.
+ * @param {string} tag - Tag name.
+ * @param {string} [className] - Class attribute.
+ * @param {string} [text] - Text content.
+ * @returns {HTMLElement} The element.
+ */
+function make(doc, tag, className, text) {
+  const node = doc.createElement(tag);
+  if (className) {
+    node.className = className;
+  }
+  if (text !== undefined) {
+    node.textContent = text;
+  }
+  return node;
+}
+
+/**
+ * Builds one tile button. The compound-branch controls show their label
+ * beside their mark (the mark hidden from screen readers).
+ *
+ * @param {Document} doc - The document.
+ * @param {{id: string, kind: string, text: string, more: boolean}} tile - A catalogue tile.
+ * @returns {HTMLButtonElement} The button.
+ */
+function makeTileButton(doc, tile) {
+  const button = make(doc, 'button', `nb-tile nb-tile--${tile.kind}`);
+  button.type = 'button';
+  button.dataset.tile = tile.id;
+  const label = CONTROL_LABELS[tile.id];
+  if (label) {
+    const mark = make(doc, 'span', 'nb-tile-mark', tile.text);
+    mark.setAttribute('aria-hidden', 'true');
+    const words = doc.createTextNode(label);
+    if (tile.kind === 'end') {
+      button.append(words, mark);
+    } else {
+      button.append(mark, words);
+    }
+  } else {
+    button.textContent = tile.text;
+  }
+  if (tile.more) {
+    button.classList.add('nb-tile--extra');
+    button.hidden = true;
+  }
+  return button;
+} // End of function makeTileButton()
+
+/**
+ * Builds a row's «más» button, which shows or hides the row's extra tiles
+ * (`aria-expanded`; «menos» while they are shown).
+ *
+ * @param {Document} doc - The document.
+ * @param {HTMLElement} group - The row's tile group.
+ * @param {string} rowLabel - The row's label, for the button's accessible name.
+ * @returns {HTMLButtonElement} The button.
+ */
+function makeMoreButton(doc, group, rowLabel) {
+  const more = make(doc, 'button', 'nb-more', MORE_LABEL);
+  more.type = 'button';
+  more.setAttribute('aria-expanded', 'false');
+  more.setAttribute('aria-label', `${MORE_LABEL} (${rowLabel})`);
+  /**
+   * Shows the extra tiles, or hides them again.
+   *
+   * @returns {void}
+   */
+  function toggle() {
+    const expanded = more.getAttribute('aria-expanded') !== 'true';
+    group.querySelectorAll('.nb-tile--extra').forEach((button) => { button.hidden = !expanded; });
+    more.setAttribute('aria-expanded', String(expanded));
+    more.textContent = expanded ? LESS_LABEL : MORE_LABEL;
+    more.setAttribute('aria-label', `${expanded ? LESS_LABEL : MORE_LABEL} (${rowLabel})`);
+  }
+  more.addEventListener('click', toggle);
+  return more;
+} // End of function makeMoreButton()
+
+/**
+ * Fills the rows container with one labelled row per tile row, each with a
+ * «más» button when the catalogue keeps tiles behind it.
+ *
+ * @param {HTMLElement} container - The `#name-builder-rows` element.
+ * @returns {void}
+ */
+export function fillRows(container) {
+  const doc = container.ownerDocument;
+  container.replaceChildren();
+  for (const row of ROWS) {
+    const tiles = TILES.filter((tile) => tile.row === row.id);
+    if (tiles.length === 0) {
+      continue;
+    }
+    const titleId = `name-builder-row-${row.id}`;
+    const section = make(doc, 'section', 'nb-row');
+    section.dataset.row = row.id;
+    const title = make(doc, 'h3', 'nb-row-title', row.label);
+    title.id = titleId;
+    const group = make(doc, 'div', 'nb-tiles');
+    group.setAttribute('role', 'group');
+    group.setAttribute('aria-labelledby', titleId);
+    tiles.forEach((tile) => group.appendChild(makeTileButton(doc, tile)));
+    if (tiles.some((tile) => tile.more)) {
+      group.appendChild(makeMoreButton(doc, group, row.label));
+    }
+    section.append(title, group);
+    container.appendChild(section);
+  } // End of the loop over the rows
+} // End of function fillRows()
+
+/**
+ * Builds the «¿Cómo se dibuja?» dialog on the page's skeleton and wires its
+ * launcher.
+ *
+ * @param {Document} doc - The document holding `#name-builder-dialog` and `#draw-name-button`.
+ * @param {{onDraw?: (verdict: object, builder: object) => void, read?: (tiles: string[]) => object,
+ *   cap?: number}} [options] - `onDraw`: what a success verdict does (default: show its message in the dialog);
+ *   `read`: the reader (default readName()); `cap`: most tiles (default MAX_TILES).
+ * @returns {{open: function(): void, close: function(): void, draw: function(): object,
+ *   showVerdict: function(object): void, state: object}|null} Handles, or null when the page has no dialog.
+ */
+export function buildNameBuilder(doc, options = {}) {
+  const dialog = doc.getElementById('name-builder-dialog');
+  const launcher = doc.getElementById('draw-name-button');
+  if (!dialog || !launcher || typeof dialog.showModal !== 'function') {
+    return null;
+  }
+  const heading = dialog.querySelector('#name-builder-title');
+  const nameLine = dialog.querySelector('#name-builder-name');
+  const message = dialog.querySelector('#name-builder-message');
+  const limit = dialog.querySelector('#name-builder-limit');
+  const rows = dialog.querySelector('#name-builder-rows');
+  const state = createNameBuilderState(options.cap === undefined ? {} : { cap: options.cap });
+  const read = options.read || readName;
+  fillRows(rows);
+
+  /**
+   * The option the name line's roving tabindex points at: the selection,
+   * else the last tile.
+   *
+   * @returns {number} A tile index or START (-1 too when there are no tiles).
+   */
+  function activeIndex() {
+    const selection = state.selection();
+    return selection === null ? state.count() - 1 : selection;
+  }
+
+  /**
+   * Updates the selected option and the roving tabindex in place (no
+   * rebuild, so the focus stays where it is).
+   *
+   * @returns {void}
+   */
+  function syncSelection() {
+    const selection = state.selection();
+    const active = activeIndex();
+    for (const option of nameLine.querySelectorAll('[role="option"]')) {
+      const index = Number(option.dataset.index);
+      option.setAttribute('aria-selected', String(index === selection));
+      option.classList.toggle('is-selected', index === selection);
+      option.tabIndex = index === active ? 0 : -1;
+    }
+  }
+
+  /**
+   * Moves the focus to the active option (to the name line itself when it
+   * has none).
+   *
+   * @returns {void}
+   */
+  function focusActive() {
+    const option = nameLine.querySelector(`[role="option"][data-index="${activeIndex()}"]`);
+    (option || nameLine).focus();
+  }
+
+  /**
+   * Rebuilds the name line from the state: the placeholder, or the
+   * insertion point and one span per piece. The focus, when it was in the
+   * name line, goes to the active option again.
+   *
+   * @returns {void}
+   */
+  function renderName() {
+    const view = state.view();
+    const refocus = nameLine.contains(doc.activeElement);
+    const nodes = [];
+    if (view.count === 0) {
+      nodes.push(make(doc, 'span', 'nb-placeholder', PLACEHOLDER));
+    } else {
+      const start = make(doc, 'span', 'nb-start');
+      start.setAttribute('role', 'option');
+      start.setAttribute('aria-label', START_LABEL);
+      start.dataset.index = String(START);
+      nodes.push(start);
+    }
+    for (const piece of view.pieces) {
+      if (piece.tile === null) {
+        if (piece.text !== '') {
+          nodes.push(make(doc, 'span', `part part-${piece.kind}`, piece.text)); // Automatic text: punctuation, connecting vowel.
+        }
+        continue;
+      }
+      const span = make(doc, 'span', `nb-piece part part-${piece.kind}`, piece.text);
+      span.setAttribute('role', 'option');
+      span.dataset.index = String(piece.tile);
+      span.dataset.tile = piece.id;
+      if (CONTROL_LABELS[piece.id]) {
+        span.setAttribute('aria-label', CONTROL_LABELS[piece.id]);
+      }
+      span.classList.toggle('nb-piece--pending', piece.pending);
+      span.classList.toggle('nb-piece--silent', piece.text === '');
+      if (piece.invalid) {
+        span.setAttribute('aria-invalid', 'true');
+        span.classList.add('nb-piece--invalid');
+      }
+      nodes.push(span);
+    } // End of the loop over the pieces
+    nameLine.replaceChildren(...nodes);
+    syncSelection();
+    if (refocus) {
+      focusActive();
+    }
+  } // End of function renderName()
+
+  /**
+   * Shows the feedback of the last «Dibujar» (or nothing) under the name
+   * line, and the cap message with the tile buttons marked unavailable.
+   *
+   * @returns {void}
+   */
+  function renderMessages() {
+    const feedback = state.feedback();
+    message.className = feedback ? `nb-message nb-message--${feedback.tone}` : 'nb-message';
+    message.replaceChildren(...(feedback ? feedback.lines.map((line) => make(doc, 'span', 'nb-message-line', line)) : []));
+    const full = state.isFull();
+    if (limit) {
+      limit.textContent = full ? fullMessage(state.cap) : '';
+    }
+    for (const button of rows.querySelectorAll('[data-tile]')) {
+      if (full) {
+        button.setAttribute('aria-disabled', 'true');
+      } else {
+        button.removeAttribute('aria-disabled');
+      }
+    }
+  } // End of function renderMessages()
+
+  /**
+   * Renders the whole state.
+   *
+   * @returns {void}
+   */
+  function render() {
+    renderName();
+    renderMessages();
+  }
+
+  /**
+   * «Borrar ficha»: removes the selected (else the last) tile.
+   *
+   * @returns {void}
+   */
+  function deleteTile() {
+    if (state.remove()) {
+      render();
+    }
+  }
+
+  /**
+   * Shows a verdict's message in the dialog: in the error style with the
+   * wrong tiles marked for a failure, in the plain style for a success.
+   *
+   * @param {object} verdict - A readName() verdict.
+   * @returns {void}
+   */
+  function showVerdict(verdict) {
+    state.setFeedback(verdictFeedback(verdict, state.count()));
+    render();
+  }
+
+  /**
+   * Opens the dialog with the focus on its heading.
+   *
+   * @returns {void}
+   */
+  function open() {
+    if (dialog.open) {
+      return;
+    }
+    render();
+    dialog.showModal();
+    (heading || dialog).focus({ preventScroll: true });
+  }
+
+  /**
+   * Closes the dialog (the tiles are kept).
+   *
+   * @returns {void}
+   */
+  function close() {
+    if (dialog.open) {
+      dialog.close();
+    }
+  }
+
+  const handle = { open, close, draw: null, showVerdict, state };
+  const onDraw = options.onDraw || ((verdict, builder) => builder.showVerdict(verdict));
+
+  /**
+   * «Dibujar»: reads the name; a failure stays in the dialog, a success goes
+   * to the onDraw handler.
+   *
+   * @returns {object} The verdict.
+   */
+  function draw() {
+    const verdict = read(state.tiles());
+    if (isSuccess(verdict)) {
+      state.clearFeedback();
+      render();
+      onDraw(verdict, handle);
+    } else {
+      showVerdict(verdict);
+    }
+    return verdict;
+  } // End of function draw()
+  handle.draw = draw;
+
+  /**
+   * A tile button adds its tile (unless the cap is reached).
+   *
+   * @param {MouseEvent} event - A click in the tile rows.
+   * @returns {void}
+   */
+  function onTileClick(event) {
+    const button = event.target.closest('[data-tile]');
+    if (!button || button.getAttribute('aria-disabled') === 'true') {
+      return;
+    }
+    if (state.insert(button.dataset.tile)) {
+      render();
+    }
+  }
+
+  /**
+   * «Borrar todo».
+   *
+   * @returns {void}
+   */
+  function clearAll() {
+    state.clear();
+    render();
+  }
+
+  /**
+   * A click on a span of the name line selects it.
+   *
+   * @param {MouseEvent} event - A click in the name line.
+   * @returns {void}
+   */
+  function onNameClick(event) {
+    const option = event.target.closest('[role="option"]');
+    if (!option) {
+      return;
+    }
+    state.select(Number(option.dataset.index));
+    syncSelection();
+    option.focus();
+  }
+
+  /**
+   * The selection follows the focus (Tab into the name line, a tap).
+   *
+   * @param {FocusEvent} event - A focusin in the name line.
+   * @returns {void}
+   */
+  function onNameFocus(event) {
+    const option = event.target.closest('[role="option"]');
+    if (option && state.select(Number(option.dataset.index))) {
+      syncSelection();
+    }
+  }
+
+  /**
+   * Arrow keys, Home and End move the selection on the name line.
+   *
+   * @param {KeyboardEvent} event - A keydown in the name line.
+   * @returns {void}
+   */
+  function onNameKey(event) {
+    const steps = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
+    if (event.key in steps) {
+      state.moveSelection(steps[event.key]);
+    } else if (event.key === 'Home') {
+      state.select(START);
+    } else if (event.key === 'End') {
+      state.select(state.count() - 1);
+    } else {
+      return;
+    }
+    event.preventDefault();
+    syncSelection();
+    focusActive();
+  } // End of function onNameKey()
+
+  /**
+   * Backspace = «Borrar ficha» while the focus is in the dialog (the editor
+   * ignores keys while a dialog is open).
+   *
+   * @param {KeyboardEvent} event - A keydown in the dialog.
+   * @returns {void}
+   */
+  function onDialogKey(event) {
+    if (event.key === 'Backspace' && !event.altKey && !event.ctrlKey && !event.metaKey) {
+      event.preventDefault();
+      deleteTile();
+    }
+  }
+
+  /**
+   * A click on the backdrop (outside the dialog box) closes the dialog.
+   *
+   * @param {MouseEvent} event - A click on the dialog element.
+   * @returns {void}
+   */
+  function onBackdropClick(event) {
+    if (event.target !== dialog) {
+      return;
+    }
+    const box = dialog.getBoundingClientRect();
+    const inside = event.clientX >= box.left && event.clientX <= box.right
+      && event.clientY >= box.top && event.clientY <= box.bottom;
+    if (!inside) {
+      close();
+    }
+  } // End of function onBackdropClick()
+
+  rows.addEventListener('click', onTileClick);
+  dialog.querySelector('[data-role="delete"]').addEventListener('click', deleteTile);
+  dialog.querySelector('[data-role="clear"]').addEventListener('click', clearAll);
+  dialog.querySelector('[data-role="draw"]').addEventListener('click', draw);
+  dialog.querySelector('[data-role="close"]').addEventListener('click', close);
+  nameLine.addEventListener('click', onNameClick);
+  nameLine.addEventListener('focusin', onNameFocus);
+  nameLine.addEventListener('keydown', onNameKey);
+  dialog.addEventListener('keydown', onDialogKey);
+  dialog.addEventListener('click', onBackdropClick);
+  dialog.addEventListener('close', () => launcher.focus());
+  launcher.addEventListener('click', open);
+  launcher.disabled = false;
+  render();
+  return handle;
+} // End of function buildNameBuilder()

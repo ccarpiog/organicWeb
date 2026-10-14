@@ -4,7 +4,8 @@
  * results panel with the naming engine, the step-by-step explanation and the
  * remembered "Resaltar en el dibujo" switch
  * (design.md §9, src/ui/results.js), "Ordenar dibujo" (design.md §7), the
- * Ejemplos menu (src/ui/examples.js) and the Ayuda dialog (src/ui/help.js).
+ * Ejemplos menu (src/ui/examples.js), the Ayuda dialog (src/ui/help.js) and
+ * the «¿Cómo se dibuja?» dialog (src/ui/name-builder.js).
  *
  * For end-to-end tests the editor instance is published as `window.__editor`
  * (see the test API in src/editor/editor.js).
@@ -17,6 +18,7 @@ import { showToast, confirmDialog } from './feedback.js';
 import { buildCanvasBar } from './canvasbar.js';
 import { buildResults } from './results.js';
 import { buildHelp } from './help.js';
+import { buildNameBuilder } from './name-builder.js';
 import {
   getStorage, readItem, writeItem, restoreDrawing, startAutosave, MODE_KEY, RIGHT_ANGLE_KEY, ABBREVIATION_KEY, MARKS_KEY,
 } from './autosave.js';
@@ -68,6 +70,9 @@ export function initApp(doc) {
         onMarksChange: (on) => writeItem(storage, MARKS_KEY, on ? 'on' : 'off'),
       });
     }
+    // «¿Cómo se dibuja?» (design.md §15.2). Until the drawing step exists (R-2b), a name the
+    // reader understands only shows its verdict in the dialog; the canvas is left alone.
+    buildNameBuilder(doc, { onDraw: (verdict, builder) => builder.showVerdict(verdict) });
     const headerActions = doc.getElementById('header-actions');
     if (headerActions) {
       buildExamplesMenu(headerActions, editor);

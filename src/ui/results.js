@@ -47,7 +47,7 @@ export const ERROR_HINTS = Object.freeze({
 });
 
 /** Hint shown when there is no result. */
-const IDLE_HINT = 'Dibuja una molécula en el lienzo y pulsa «¿Cómo se llama?».';
+const IDLE_HINT = 'Dibuja una molécula en el lienzo y pulsa «¿Cómo se llama?», o forma un nombre con «¿Cómo se dibuja?».';
 
 /** Question offering the redraw after naming (design.md §7). */
 export const REDRAW_HINT = '¿Quieres ver la cadena principal ordenada?';
