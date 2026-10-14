@@ -1,7 +1,7 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b): turns the lossless syntax tree of parse.js into the
- * name text and one span per piece of text. Pure, no DOM.
+ * R-1a, R-4a, R-4b, R-4c): turns the lossless syntax tree of parse.js into
+ * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
  * order and locants — never from the naming engine's grouping or rendering
@@ -50,6 +50,14 @@
  * level (`metil(fenil)metano`, rule 5), and a compound branch with prefixes
  * of its own is enclosed like any other (`(4-metilfenil)`,
  * `[4-(propan-2-il)fenil]`; render.js isSubstitutedPhenyl()).
+ *
+ * The retained templates (R-4c: `tolueno`, `estireno`, `xileno`,
+ * `mesitileno`) are whole words like `benceno`, the positions of `xileno`'s
+ * methyls written before it as locants (`1,2-xileno`, rule 1). An
+ * orto/meta/para letter is written where its tile stands and punctuated as
+ * a locant (render.js positionalParts() gives it the part kind 'locant'):
+ * `o-xileno`, `o-dimetilbenceno`, `p-di-tert-butilbenceno`; a prefix with a
+ * letter counts as one with locants for the crowded case.
  *
  * Rule 5 reads "a cited locant" for render.js's "free-valence locant above
  * 1 or unsaturation in a chain of three or more carbons": on every name the
@@ -139,15 +147,15 @@ export function isEnclosed(tiles, node) {
 /**
  * Tells whether the prefixes of one level (the name, or a compound branch)
  * are "crowded" as render.js renderPrefixes() / enclosureLevel() say: two or
- * more of them, all written without locants (a one-carbon parent or branch:
- * `metil(ciclohexil)metano`).
+ * more of them, all written without locants or a letter (a one-carbon parent
+ * or branch: `metil(ciclohexil)metano`).
  *
  * @param {object[]} items - The level's prefix and stray nodes.
  * @returns {boolean} True when crowded.
  */
 export function crowdedLevel(items) {
   const prefixes = items.filter((item) => item.type === 'prefix' && item.substituent);
-  return prefixes.length > 1 && prefixes.every((item) => item.locants.length === 0);
+  return prefixes.length > 1 && prefixes.every((item) => item.locants.length === 0 && item.letter === null);
 }
 
 /**
@@ -216,10 +224,10 @@ export function enclosureLevel(tiles, node) {
  */
 function strayPieces(tiles, index, out) {
   const tile = tiles[index];
-  const roles = { num: 'locant', mult: 'mult', cmult: 'mult', start: 'open', end: 'close' };
+  const roles = { num: 'locant', positional: 'locant', mult: 'mult', cmult: 'mult', start: 'open', end: 'close' };
   const kinds = {
-    num: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending', freeValence: 'ending',
-    retained: 'prefix', start: 'punct', end: 'punct', ring: 'stem', benzene: 'stem',
+    num: 'locant', positional: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending',
+    freeValence: 'ending', retained: 'prefix', start: 'punct', end: 'punct', ring: 'stem', benzene: 'stem', template: 'stem',
   };
   out.push(piece(tile.text, index, kinds[tile.kind], roles[tile.kind] || 'word', tile.italic ? { italic: true } : {}));
 }
@@ -324,8 +332,8 @@ function ownChainPieces(tiles, node, out) {
 }
 
 /**
- * The pieces of a prefix (its locants, multiplier and substituent) or of a
- * tile out of place, at one position of its level.
+ * The pieces of a prefix (its locants, letter, multiplier and substituent)
+ * or of a tile out of place, at one position of its level.
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object[]} items - The level's prefix and stray nodes (the name's, or a compound branch's).
@@ -342,6 +350,9 @@ function itemPieces(tiles, items, index, nested, out) {
   }
   const kinds = KINDS[nested ? 'prefix' : 'parent'];
   item.locants.forEach((i) => out.push(piece(tiles[i].text, i, kinds.locant, 'locant')));
+  if (item.letter !== null) {
+    out.push(piece(tiles[item.letter].text, item.letter, kinds.locant, 'locant')); // `o-dimetilbenceno`
+  }
   if (item.multiplier !== null) {
     out.push(piece(tiles[item.multiplier].text, item.multiplier, kinds.multiplier, 'mult'));
   }
@@ -351,9 +362,11 @@ function itemPieces(tiles, items, index, nested, out) {
 } // End of function itemPieces()
 
 /**
- * The pieces of the parent: old-style locants (and a multiplier out of
- * place between them and the root), then its chain — or the `benceno` word
- * (R-4b; numbers before it are a BENZENE_BONDS error, kept as written).
+ * The pieces of the parent: the locants before its stem (old-style ones, or
+ * the positions of `xileno`'s methyls) and a letter (`o-xileno`; out of place
+ * before another stem), a multiplier out of place between them and the
+ * stem, then its chain — or the `benceno` word (R-4b; numbers before it are
+ * a BENZENE_BONDS error, kept as written), or a template word (R-4c).
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} parent - The parent node.
@@ -362,11 +375,14 @@ function itemPieces(tiles, items, index, nested, out) {
  */
 function parentPieces(tiles, parent, out) {
   parent.legacy.forEach((index) => out.push(piece(tiles[index].text, index, 'locant', 'locant')));
+  if (parent.letter !== null) {
+    out.push(piece(tiles[parent.letter].text, parent.letter, 'locant', 'locant')); // `o-xileno`
+  }
   if (parent.legacyMultiplier !== null) {
     out.push(piece(tiles[parent.legacyMultiplier].text, parent.legacyMultiplier, 'multiplier', 'mult'));
   }
-  if (parent.chain.type === 'benzene') {
-    out.push(piece(tiles[parent.chain.tile].text, parent.chain.tile, KINDS.parent.stem, 'word')); // `1,2-dimetilbenceno`
+  if (parent.chain.type === 'benzene' || parent.chain.type === 'template') {
+    out.push(piece(tiles[parent.chain.tile].text, parent.chain.tile, KINDS.parent.stem, 'word')); // `1,2-dimetilbenceno`, `tolueno`
     return;
   }
   chainPieces(tiles, parent.chain, 'parent', out);

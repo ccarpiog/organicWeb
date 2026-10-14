@@ -17,10 +17,12 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import {
-  TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, BENZENE_ID, PHENYL_ID, MAX_NUM, MAX_MULT,
+  TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, BENZENE_ID, PHENYL_ID, POSITIONAL_IDS, TEMPLATES, templateGroupWord,
+  MAX_NUM, MAX_MULT,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
+  TRADITIONAL_NAMES, POSITIONAL_LETTERS,
 } from '../../src/naming/lexicon.es.js';
 import { bundleModules } from '../../scripts/build.mjs';
 
@@ -51,6 +53,8 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('end'), 1);
   assert.equal(count('ring'), 1); // ciclo (R-4a)
   assert.equal(count('benzene'), 1); // benceno (R-4b)
+  assert.equal(count('positional'), 3); // o, m, p (R-4c)
+  assert.equal(count('template'), 4); // tolueno, estireno, xileno, mesitileno (R-4c)
   assert.equal(new Set(TILES.map((tile) => tile.id)).size, TILES.length, 'ids are unique');
   assert.equal(new Set(TILES.map((tile) => tile.text)).size, TILES.length, 'texts are unique');
   assert.ok(TILES.every((tile) => Object.isFrozen(tile)));
@@ -70,6 +74,9 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       end: () => ENCLOSING_MARKS[0][1],
       ring: () => RING_PREFIX,
       benzene: () => BENZENE_NAME,
+      positional: () => POSITIONAL_LETTERS[tile.value],
+      // `xileno`: the word of `1,2-xileno` without the locants the student writes on number tiles.
+      template: () => TRADITIONAL_NAMES[TEMPLATES[tile.value].id].replace(/^1,2-/, ''),
     }[tile.kind]();
     assert.equal(tile.text, expected, tile.id);
   } // End of the loop over the tiles
@@ -79,6 +86,15 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
   assert.equal(tileById(RING_ID).text, 'ciclo');
   assert.equal(tileById(BENZENE_ID).text, 'benceno');
   assert.deepEqual([tileById(PHENYL_ID).text, tileById(PHENYL_ID).value, tileById(PHENYL_ID).italic], ['fenil', 'phenyl', '']);
+  // R-4c: the letters by the locant of the second position, the templates with their groups.
+  assert.deepEqual(Object.values(POSITIONAL_IDS).map((id) => [tileById(id).text, tileById(id).value]), [['o', 2], ['m', 3], ['p', 4]]);
+  assert.deepEqual(TILES.filter((t) => t.kind === 'template').map((t) => t.text), ['tolueno', 'estireno', 'xileno', 'mesitileno']);
+  assert.deepEqual(Object.entries(TEMPLATES).map(([value, t]) => [value, t.count, t.positions, t.group.length, t.group.double]), [
+    ['toluene', 1, [1], 1, []], ['styrene', 1, [1], 2, [1]], ['xylene', 2, null, 1, []], ['mesitylene', 3, [1, 3, 5], 1, []],
+  ]);
+  assert.deepEqual(Object.keys(TEMPLATES).map(templateGroupWord), ['metilo', 'etenilo', 'metilo', 'metilo']);
+  // The template words are those of the engine's own alternatives (aromatic.js), so `o-xileno` assembles to its text.
+  assert.equal(`${POSITIONAL_LETTERS[2]}-${tileById('template-xylene').text}`, TRADITIONAL_NAMES.oXylene);
 }); // End of test 'every tile text comes from the lexicon (numbers are digits)'
 
 test('rows and «más» follow design.md §15.2', () => {
@@ -87,11 +103,14 @@ test('rows and «más» follow design.md §15.2', () => {
   assert.equal(more('mult')[0], 7); // hepta…
   assert.equal(more('cmult')[0], 7);
   assert.equal(more('root')[0], 11); // undec…
-  assert.deepEqual([...new Set(TILES.map((tile) => tile.row))], ['numbers', 'multipliers', 'roots', 'endings', 'branches', 'rings']);
-  assert.ok(TILES.filter((tile) => ['ending', 'freeValence', 'retained', 'start', 'end', 'ring', 'benzene'].includes(tile.kind))
-    .every((tile) => !tile.more));
-  assert.deepEqual(TILES.filter((tile) => tile.row === 'rings').map((tile) => tile.id), [RING_ID, BENZENE_ID, PHENYL_ID],
-    'R-4a: the ciclo tile; R-4b: benceno and fenil');
+  assert.deepEqual([...new Set(TILES.map((tile) => tile.row))],
+    ['numbers', 'multipliers', 'roots', 'endings', 'branches', 'rings', 'traditional']);
+  assert.ok(TILES.filter((tile) => ['ending', 'freeValence', 'retained', 'start', 'end', 'ring', 'benzene', 'positional', 'template']
+    .includes(tile.kind)).every((tile) => !tile.more));
+  assert.deepEqual(TILES.filter((tile) => tile.row === 'rings').map((tile) => tile.id),
+    [RING_ID, BENZENE_ID, PHENYL_ID, ...Object.values(POSITIONAL_IDS)], 'R-4a: the ciclo tile; R-4b: benceno and fenil; R-4c: o, m, p');
+  assert.deepEqual(TILES.filter((tile) => tile.row === 'traditional').map((tile) => tile.id),
+    ['template-toluene', 'template-styrene', 'template-xylene', 'template-mesitylene'], 'R-4c: «Nombres tradicionales»');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'branches' && tile.kind === 'retained').map((tile) => tile.value),
     ['isopropyl', 'isopropylidene', 'tert-butyl']);
 });
@@ -106,6 +125,8 @@ test('tileById, tileId and toTiles', () => {
   assert.equal(tileId('ring', 'cyclo'), RING_ID);
   assert.equal(tileId('benzene', 'benzene'), BENZENE_ID);
   assert.equal(tileId('retained', 'phenyl'), PHENYL_ID);
+  assert.equal(tileId('positional', 4), POSITIONAL_IDS[4]);
+  assert.equal(tileId('template', 'xylene'), 'template-xylene');
   assert.deepEqual(toTiles(['num-2', tileById('mult-2')]).map((tile) => tile.text), ['2', 'di']);
   assert.throws(() => tileById('root-31'), /unknown tile/);
   assert.throws(() => tileId('mult', 1), /no mult tile/);
@@ -113,7 +134,9 @@ test('tileById, tileId and toTiles', () => {
 }); // End of test 'tileById, tileId and toTiles'
 
 test('src/reverse never retypes a tile word', async () => {
-  const words = TILES.filter((tile) => /[a-z]/.test(tile.text)).map((tile) => tile.text);
+  // The one-letter words (the letters o, m, p) are left out: code uses such letters for other things (the conjunction
+  // «o» of index.js orBefore()); the catalogue test checks that they come from the lexicon.
+  const words = TILES.filter((tile) => /[a-z]/.test(tile.text) && tile.text.length > 1).map((tile) => tile.text);
   for (const file of await reverseFiles()) {
     // Code only: the comments may quote the words they talk about (`ano` → `an`).
     const source = (await readFile(path.join(REVERSE, file), 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
@@ -204,7 +227,8 @@ test('readName() bundles with the engine and runs in a classic script', async ()
         "import { readName } from './src/reverse/index.js';",
         "import { tokenize } from './src/reverse/tokenize.js';",
         "const names = ['5,5-bis(2,2-dimetilpropil)nonano', '4-(propan-2-il)heptano', '4-metilpentano', 'hex-6-eno', 'metilpentano',",
-        "  'metilpropano', 'decametildecano', 'metilbenceno', 'dimetilbenceno', '1,6-dimetilbenceno'];",
+        "  'metilpropano', 'decametildecano', 'metilbenceno', 'dimetilbenceno', '1,6-dimetilbenceno', 'tolueno', 'o-xileno',",
+        "  'xileno', 'p-metiltolueno'];",
         "globalThis.__result = names.map((name) => readName(tokenize(name)).kind).join(' ')",
         "  + ' ' + readName(tokenize('dimetilbenceno')).candidates.length;",
       ].join('\n'),
@@ -212,9 +236,10 @@ test('readName() bundles with the engine and runs in a classic script', async ()
     const code = await bundleModules(path.join(dir, 'entry.js'), dir);
     const context = {};
     vm.runInNewContext(code, context);
-    // The aromatic key (R-4b) bundles too: three structures for `dimetilbenceno`, `1,6-` drawn as `1,2-`.
-    assert.equal(context.__result,
-      'correct alternative otherName invalid ambiguous missingLocants incomplete correct ambiguous otherName 3');
+    // The aromatic key (R-4b) bundles too: three structures for `dimetilbenceno`, `1,6-` drawn as `1,2-`; and the
+    // templates and letters (R-4c).
+    assert.equal(context.__result, 'correct alternative otherName invalid ambiguous missingLocants incomplete correct ambiguous '
+      + 'otherName alternative alternative ambiguous otherName 3');
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

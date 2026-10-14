@@ -1,20 +1,24 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b): recursive descent over a tile sequence into a
- * lossless syntax tree. Pure, no DOM, no chemistry (the tree is not checked
- * against a molecule; that is interpret.js / build.js, R-1b).
+ * phases R-1a, R-4a, R-4b, R-4c): recursive descent over a tile sequence
+ * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
+ * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
  * Grammar for open-chain and monocyclic hydrocarbons (design.md §15.5.1;
- * the ring prefix `ciclo` from R-4a, `benceno` and `fenil` from R-4b):
+ * the ring prefix `ciclo` from R-4a, `benceno` and `fenil` from R-4b, the
+ * retained templates and the orto/meta/para letters from R-4c):
  *
  *   name        = { prefix } , parent ;
- *   prefix      = [ locants ] , [ MULT | CMULT ] , substituent ;
+ *   prefix      = [ locants ] , [ letter ] , [ MULT | CMULT ] , substituent ;
  *   substituent = simple | START , { prefix } , simple , END ;
  *   simple      = stem , ( il | iliden )
  *               | stem , [ ano ] , locant , ( il | iliden )
  *               | stem , segments , [ locant ] , ( il | iliden )
  *               | isopropil | isopropiliden | tert-butil | fenil ;
- *   parent      = [ legacy ] , stem , ( ano | segments ) | benceno ;
+ *   parent      = [ legacy ] , stem , ( ano | segments ) | benceno
+ *               | [ locants | letter ] , template ;
+ *   template    = tolueno | estireno | xileno | mesitileno ;
+ *   letter      = o | m | p ;
  *   stem        = [ ciclo ] , ROOT ;   (* ciclo: a ring of ROOT carbons, at least 3 *)
  *   segments    = segment , [ segment ] ;
  *   segment     = [ locants ] , [ MULT ] , ( eno | ino ) ;
@@ -36,6 +40,21 @@
  * compound branch `benceno` is out of place (TILE_ORDER: as a branch it is
  * `fenil`).
  *
+ * The retained templates (R-4c, tiles.js TEMPLATES) are whole-word parents
+ * too, a benzene ring with groups of its own: `tolueno`, `estireno` and
+ * `mesitileno` say where those groups are, so numbers or a letter right
+ * before them are TEMPLATE_LOCANTS; `xileno` takes the two positions of its
+ * methyls, two numbers (`1,2-xileno`; any other count is LOCANT_COUNT) or a
+ * letter (`o-xileno`), or neither (left out, searched by search.js). A
+ * multiplier before a template, or a template inside a compound branch, is
+ * TILE_ORDER. The letters `o`, `m`, `p` (design.md §14.4) stand for two
+ * occupied positions of the parent benzene ring — 1,2 / 1,3 / 1,4, the
+ * template's group at 1 counting as one of them — and checkLetters() keeps
+ * them to the forms that have a meaning (POSITIONAL otherwise): on a
+ * name-level prefix or on `xileno`, with a benzene or template parent,
+ * exactly two occupied positions, never two different prefixes on
+ * `benceno`, never beside numbers on the same prefix.
+ *
  * A stem starts a branch or the parent: what follows it decides (a
  * free-valence suffix makes a branch), so leading numbers are never
  * consumed greedily — `2 met il 2 but eno` is the prefix `2-metil` and the
@@ -47,9 +66,10 @@
  * `tree.tiles`. Nodes (each with `range: [from, to)` of tile indices):
  *
  * - name    `{type: 'name', tiles, items: (prefix|stray)[], parent, trailing: stray[]}`
- * - prefix  `{type: 'prefix', locants: number[], multiplier: number|null,
- *            substituent: chain|retained|branch|null}` (null: numbers or a
- *            multiplier with nothing after them yet)
+ * - prefix  `{type: 'prefix', locants: number[], letter: number|null, multiplier: number|null,
+ *            substituent: chain|retained|branch|null}` (null: numbers, a
+ *            letter or a multiplier with nothing after them yet; `letter` the
+ *            o / m / p tile, R-4c)
  * - chain   `{type: 'chain', ring: number|null, root: number|null, ano:
  *            number|null, segments: segment[], fvLocants: number[], fv:
  *            number|null}` (`ring` the `ciclo` tile of a ring, else null;
@@ -60,12 +80,16 @@
  * - branch  `{type: 'branch', start, items: (prefix|stray)[], chain:
  *            chain|retained|null, end: number|null}` (`chain` is the
  *            branch's own simple chain, cited last; `end` null while open)
- * - parent  `{type: 'parent', legacy: number[], legacyMultiplier:
- *            number|null, legacySegment: number|null, chain: chain|benzene}`
- *            (`legacy`: old-style locants before the root, `2-buteno`;
- *            `legacySegment` the index of the segment they belong to once
- *            allocated; for `benceno` they are BENZENE_BONDS)
+ * - parent  `{type: 'parent', legacy: number[], letter: number|null, legacyMultiplier:
+ *            number|null, legacySegment: number|null, chain: chain|benzene|template}`
+ *            (`legacy`: the locants before the stem — old-style ones of a
+ *            chain, `2-buteno`; `legacySegment` the index of the segment they
+ *            belong to once allocated; for `benceno` they are BENZENE_BONDS;
+ *            for `xileno` its methyls' positions, `1,2-xileno` —; `letter` an
+ *            o / m / p before the stem, the methyls' positions of `o-xileno`,
+ *            out of place before any other stem)
  * - benzene `{type: 'benzene', tile}` (the `benceno` tile, R-4b)
+ * - template `{type: 'template', tile}` (a retained template tile, R-4c)
  * - stray   `{type: 'stray', tile}` (a tile out of place)
  *
  * Error-tolerant: parsing never throws on a tile sequence; it always
@@ -74,8 +98,11 @@
  * offending tile range `[from, to)`, sorted by position: EMPTY, NO_PARENT,
  * ROOT_END, ENDS_WITH_BRANCH, BRANCH_OPEN, LOCANT_COUNT, LEGACY, TILE_ORDER,
  * for rings (R-4a) RING_ROOT (`ciclo` without a root after it) and
- * RING_SIZE (a ring of fewer than three carbons), and for benzene (R-4b)
- * BENZENE_BONDS (numbers of its own on `benceno`, which has none).
+ * RING_SIZE (a ring of fewer than three carbons), for benzene (R-4b)
+ * BENZENE_BONDS (numbers of its own on `benceno`, which has none), and for
+ * the templates and the letters (R-4c) TEMPLATE_LOCANTS (numbers or a letter
+ * on a template that places its own groups) and POSITIONAL (an o / m / p
+ * letter where it has no meaning, design.md §14.4).
  * The structural codes (LOCANT_RANGE, BOND_RANGE, SAME_BOND, VALENCE,
  * TOO_BIG) need the chemistry and belong to R-1b. The Spanish messages are
  * drafts pending teacher review (design.md §15, last paragraph); their
@@ -84,15 +111,18 @@
 
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS, CONNECTING_VOWEL,
-  MAX_MULTIPLIER, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES,
+  MAX_MULTIPLIER, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, POSITIONAL_LETTERS,
 } from '../naming/lexicon.es.js';
-import { toTiles } from './tiles.js';
+import { toTiles, TEMPLATES, templateGroupWord, tileById, POSITIONAL_IDS } from './tiles.js';
 import { itemText } from './assemble.js';
 
-/** The syntactic error codes of design.md §15.6 handled by the parser (RING_ROOT, RING_SIZE from R-4a; BENZENE_BONDS from R-4b). */
+/**
+ * The syntactic error codes of design.md §15.6 handled by the parser (RING_ROOT, RING_SIZE from R-4a; BENZENE_BONDS
+ * from R-4b; TEMPLATE_LOCANTS, POSITIONAL from R-4c).
+ */
 export const ERROR_CODES = Object.freeze([
   'EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER',
-  'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS',
+  'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS', 'TEMPLATE_LOCANTS', 'POSITIONAL',
 ]);
 
 /** Fewest carbons of a ring (`ciclopropano`). */
@@ -102,6 +132,8 @@ const IL = FREE_VALENCE_SUFFIXES[1];
 const ILIDEN = FREE_VALENCE_SUFFIXES[2];
 const FENIL = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text}`;
 const [OPEN, CLOSE] = ENCLOSING_MARKS[0];
+const XILENO = tileById('template-xylene').text;
+const [ORTO, , PARA] = Object.keys(POSITIONAL_IDS).map((locant) => POSITIONAL_LETTERS[locant]);
 
 /** Spanish number words for the LOCANT_COUNT messages (digits from 11 on). */
 const NUMBER_WORDS = Object.freeze(['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez']);
@@ -134,7 +166,18 @@ const EXAMPLES = Object.freeze({
   ciclohexano: `${RING_PREFIX}${stem(6)}${ENDINGS.saturated}`,
   ciclohexil: `${RING_PREFIX}${stem(6)}${IL}`,
   dimetilbenceno: `1,2-${multiplier(2)}${stem(1)}${IL}${BENZENE_NAME}`,
+  oDimetilbenceno: `${ORTO}-${multiplier(2)}${stem(1)}${IL}${BENZENE_NAME}`,
+  metilbenceno: `${stem(1)}${IL}${BENZENE_NAME}`,
+  trimetilbenceno: `1,2,4-${multiplier(3)}${stem(1)}${IL}${BENZENE_NAME}`,
+  etilMetilbenceno: `1-${stem(2)}${IL}-2-${stem(1)}${IL}${BENZENE_NAME}`,
+  metilfenil: `${OPEN}4-${stem(1)}${IL}${FENIL}${CLOSE}`,
+  xileno12: `1,2-${XILENO}`,
+  oXileno: `${ORTO}-${XILENO}`,
+  pXileno: `${PARA}-${XILENO}`,
 });
+
+/** The three letters as the messages quote them: «o», «m» y «p». */
+const LETTERS = Object.keys(POSITIONAL_IDS).map((locant) => `«${POSITIONAL_LETTERS[locant]}»`);
 
 /** Hints of the TILE_ORDER message, by situation (drafts pending teacher review). */
 const HINTS = Object.freeze({
@@ -157,6 +200,8 @@ const HINTS = Object.freeze({
     + `no «${compoundMultiplier(2)}» ni «${compoundMultiplier(3)}».`,
   benzeneBranch: `«${BENZENE_NAME}» es el anillo principal y va al final del nombre; como rama, el benceno se escribe `
     + `«${FENIL}».`,
+  positional: `las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} van delante de los dos grupos del ${BENZENE_NAME} `
+    + `que sitúan (${EXAMPLES.oDimetilbenceno}) o delante de «${XILENO}» (${EXAMPLES.pXileno}).`,
 });
 
 /** Messages of the error codes that take no detail (design.md §15.6 drafts). */
@@ -172,6 +217,91 @@ const MESSAGES = Object.freeze({
   BENZENE_BONDS: `El ${BENZENE_NAME} no lleva números propios: sus enlaces dobles no se numeran. Los números van delante `
     + `de cada rama (${EXAMPLES.dimetilbenceno}).`,
 });
+
+/**
+ * Messages of the POSITIONAL error (design.md §14.4; R-4c drafts, pending
+ * teacher review), by what is wrong with the letter.
+ */
+const POSITIONAL_MESSAGES = Object.freeze({
+  notBenzene: `Las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} (orto, meta y para) solo se usan con el `
+    + `${BENZENE_NAME}, para decir dónde están sus dos grupos (${EXAMPLES.oDimetilbenceno}); aquí van números.`,
+  branch: `Dentro de una rama no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: escribe los números, como en `
+    + `${EXAMPLES.metilfenil}.`,
+  beforeStem: `${HINTS.positional.charAt(0).toUpperCase()}${HINTS.positional.slice(1)}`,
+  both: `Escribe los números (${EXAMPLES.dimetilbenceno}) o la letra (${EXAMPLES.oDimetilbenceno}), no las dos cosas.`,
+  bothXylene: `Escribe los números (${EXAMPLES.xileno12}) o la letra (${EXAMPLES.oXileno}), no las dos cosas.`,
+  one: `Las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} dicen dónde está el segundo de dos grupos del `
+    + `${BENZENE_NAME}; con un solo grupo no hacen falta (${EXAMPLES.metilbenceno}).`,
+  different: `Con dos grupos distintos en el ${BENZENE_NAME} no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: `
+    + `escribe los números (${EXAMPLES.etilMetilbenceno}).`,
+});
+
+/**
+ * The POSITIONAL message for a benzene with three or more occupied
+ * positions, counting the groups a template places itself (design.md §14.4:
+ * never with three or more positions).
+ *
+ * @param {number} positions - Occupied ring positions the name describes.
+ * @param {{word: string, value: string}|null} template - The template parent (its tile text and TEMPLATES key), or null for `benceno`.
+ * @returns {string} The message.
+ */
+function threePositionsMessage(positions, template) {
+  let counted = '';
+  if (template) {
+    const { count } = TEMPLATES[template.value];
+    const group = templateGroupWord(template.value);
+    counted = count === 1 ? ` (contando el ${group} del ${template.word})`
+      : ` (contando los ${numberWord(count)} ${group}s del ${template.word})`;
+  }
+  return `Las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} solo sirven cuando el ${BENZENE_NAME} lleva dos grupos, `
+    + `y tu nombre pone ${numberWord(positions)}${counted}: escribe los números (${EXAMPLES.trimetilbenceno}).`;
+} // End of function threePositionsMessage()
+
+/**
+ * The TEMPLATE_LOCANTS message (R-4c): a template that places its own groups
+ * takes no numbers or letter of its own — «tolueno» ya dice dónde va su
+ * metilo, en el carbono 1…
+ *
+ * @param {{text: string, value: string}} tile - The template tile.
+ * @returns {string} The message.
+ */
+function templateLocantsMessage(tile) {
+  const { count, positions } = TEMPLATES[tile.value];
+  const group = templateGroupWord(tile.value);
+  const where = positions.length === 1 ? `el carbono ${positions[0]}`
+    : `los carbonos ${positions.slice(0, -1).join(', ')} y ${positions[positions.length - 1]}`;
+  const which = count === 1 ? `va su ${group}` : `van sus ${numberWord(count)} ${group}s`;
+  return `«${tile.text}» ya dice dónde ${which}, en ${where}: no lleva números ni letras propios.`;
+}
+
+/**
+ * The LOCANT_COUNT message of `xileno` (R-4c): two numbers, the positions of
+ * its two methyls, or a letter.
+ *
+ * @param {{text: string, value: string}} tile - The `xileno` tile.
+ * @returns {string} The message.
+ */
+function templateCountMessage(tile) {
+  const { count } = TEMPLATES[tile.value];
+  return `Con «${tile.text}» van ${numberWord(count)} números, los de sus ${numberWord(count)} `
+    + `${templateGroupWord(tile.value)}s (${EXAMPLES.xileno12}), o una letra (${EXAMPLES.oXileno}).`;
+}
+
+/**
+ * The hint of a TILE_ORDER error on a template tile (R-4c): inside a
+ * compound branch, or after a multiplier.
+ *
+ * @param {{text: string}} tile - The template tile.
+ * @param {'branch'|'multiplier'} where - Where it stands.
+ * @returns {string} The hint.
+ */
+function templateHint(tile, where) {
+  if (where === 'branch') {
+    return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es «${FENIL}», `
+      + `como en ${EXAMPLES.metilfenil}.`;
+  }
+  return `«${multiplier(2)}», «${multiplier(3)}»… van delante de una rama (${EXAMPLES.dimetil}), no delante de «${tile.text}».`;
+}
 
 /**
  * Records an error.
@@ -237,6 +367,20 @@ function takeNums(state) {
  */
 function takeMultiplier(state) {
   if (at(state, 'mult') || at(state, 'cmult')) {
+    state.pos += 1;
+    return state.pos - 1;
+  }
+  return null;
+}
+
+/**
+ * Consumes an orto/meta/para letter tile when there is one (R-4c).
+ *
+ * @param {{tiles: object[], pos: number}} state - Parser state.
+ * @returns {number|null} Its index, or null.
+ */
+function takeLetter(state) {
+  if (at(state, 'positional')) {
     state.pos += 1;
     return state.pos - 1;
   }
@@ -416,13 +560,13 @@ export function isCompleteSubstituent(node) {
 
 /**
  * Tells whether an item of a compound branch is its own simple chain: no
- * locants, no multiplier, a complete chain or retained word.
+ * locants, letter or multiplier, a complete chain or retained word.
  *
  * @param {object} item - A prefix or stray node.
  * @returns {boolean} True for the branch's own chain.
  */
 function isOwnChain(item) {
-  return item.type === 'prefix' && item.locants.length === 0 && item.multiplier === null
+  return item.type === 'prefix' && item.locants.length === 0 && item.letter === null && item.multiplier === null
     && Boolean(item.substituent) && item.substituent.type !== 'branch' && isCompleteSubstituent(item.substituent);
 }
 
@@ -465,16 +609,19 @@ function parseBranch(state) {
  * and their count matches its multiplier; any other allocation is LEGACY.
  * A multiplier between them and the root is out of place.
  *
+ * A letter before the root stays in the node, out of place (checkLetters()).
+ *
  * @param {object} state - Parser state.
  * @param {number[]} legacy - Locant tiles before the root.
+ * @param {number|null} letter - An o / m / p tile before the root, or null.
  * @param {number|null} mult - Multiplier tile before the root, or null.
  * @param {object} chain - The parent chain.
  * @param {number} start - First tile index of the parent.
  * @returns {object} The parent node.
  */
-function makeParent(state, legacy, mult, chain, start) {
+function makeParent(state, legacy, letter, mult, chain, start) {
   const { tiles } = state;
-  const parent = { type: 'parent', legacy, legacyMultiplier: mult, legacySegment: null, chain, range: [start, state.pos] };
+  const parent = { type: 'parent', legacy, letter, legacyMultiplier: mult, legacySegment: null, chain, range: [start, state.pos] };
   if (mult !== null) {
     addTileOrder(state, mult, mult + 1, HINTS.legacyMultiplier);
   }
@@ -495,29 +642,77 @@ function makeParent(state, legacy, mult, chain, start) {
  * Builds the parent node of `benceno` (R-4b), the tile at the parser
  * position: numbers or a multiplier before it are BENZENE_BONDS (its double
  * bonds are never numbered), kept in the node as `legacy` so the tree stays
- * lossless.
+ * lossless; a letter before it is out of place (checkLetters()).
  *
  * @param {object} state - Parser state (positioned on the `benceno` tile).
  * @param {number[]} legacy - Locant tiles before it.
+ * @param {number|null} letter - An o / m / p tile before it, or null.
  * @param {number|null} mult - Multiplier tile before it, or null.
  * @param {number} start - First tile index of the parent.
  * @returns {object} The parent node, its chain a benzene node.
  */
-function makeBenzeneParent(state, legacy, mult, start) {
+function makeBenzeneParent(state, legacy, letter, mult, start) {
   const tile = state.pos;
   state.pos += 1;
   if (legacy.length > 0 || mult !== null) {
     addError(state, 'BENZENE_BONDS', start, tile, MESSAGES.BENZENE_BONDS);
   }
   const chain = { type: 'benzene', tile, range: [tile, tile + 1] };
-  return { type: 'parent', legacy, legacyMultiplier: mult, legacySegment: null, chain, range: [start, state.pos] };
+  return { type: 'parent', legacy, letter, legacyMultiplier: mult, legacySegment: null, chain, range: [start, state.pos] };
 }
 
 /**
- * Parses one item at a prefix position: a prefix (locants, multiplier,
- * substituent), the parent (at name level, a chain or ring without free
- * valence, or `benceno`), or a tile that cannot start either (a stray; also
- * `benceno` inside a compound branch).
+ * Builds the parent node of a retained template (R-4c), the tile at the
+ * parser position. `xileno` takes the positions of its two methyls before
+ * it, two numbers (`legacy`; another count is LOCANT_COUNT) or a letter
+ * (`letter`, checked by checkLetters()) — or neither, left out; the other
+ * templates place their groups themselves, so numbers or a letter before
+ * them are TEMPLATE_LOCANTS. A multiplier before a template is TILE_ORDER.
+ * Everything stays in the node, so the tree stays lossless.
+ *
+ * @param {object} state - Parser state (positioned on the template tile).
+ * @param {number[]} legacy - Locant tiles before it.
+ * @param {number|null} letter - An o / m / p tile before it, or null.
+ * @param {number|null} mult - Multiplier tile before it, or null.
+ * @param {number} start - First tile index of the parent.
+ * @returns {object} The parent node, its chain a template node.
+ */
+function makeTemplateParent(state, legacy, letter, mult, start) {
+  const { tiles } = state;
+  const tile = state.pos;
+  state.pos += 1;
+  const template = TEMPLATES[tiles[tile].value];
+  if (template.positions && (legacy.length > 0 || letter !== null)) {
+    const from = legacy.length > 0 ? legacy[0] : letter;
+    const to = (letter === null ? legacy[legacy.length - 1] : letter) + 1;
+    addError(state, 'TEMPLATE_LOCANTS', from, to, templateLocantsMessage(tiles[tile]));
+  } else if (!template.positions && letter === null && legacy.length > 0 && legacy.length !== template.count) {
+    addError(state, 'LOCANT_COUNT', legacy[0], legacy[legacy.length - 1] + 1, templateCountMessage(tiles[tile]));
+  }
+  if (mult !== null) {
+    addTileOrder(state, mult, mult + 1, templateHint(tiles[tile], 'multiplier'));
+  }
+  const chain = { type: 'template', tile, range: [tile, tile + 1] };
+  return { type: 'parent', legacy, letter, legacyMultiplier: mult, legacySegment: null, chain, range: [start, state.pos] };
+} // End of function makeTemplateParent()
+
+/**
+ * The hint of a whole-word parent (`benceno`, a template) found inside a
+ * compound branch.
+ *
+ * @param {object} tile - The tile.
+ * @returns {string} The hint.
+ */
+function wholeWordHint(tile) {
+  return tile.kind === 'benzene' ? HINTS.benzeneBranch : templateHint(tile, 'branch');
+}
+
+/**
+ * Parses one item at a prefix position: a prefix (locants, letter,
+ * multiplier, substituent), the parent (at name level, a chain or ring
+ * without free valence, `benceno` or a template), or a tile that cannot
+ * start either (a stray; also `benceno` or a template inside a compound
+ * branch).
  *
  * @param {object} state - Parser state.
  * @param {'name'|'branch'} context - Name level or inside a compound branch.
@@ -527,23 +722,27 @@ function parseItem(state, context) {
   const { tiles } = state;
   const start = state.pos;
   const first = tiles[start];
-  const benzeneBranch = first.kind === 'benzene' && context === 'branch';
-  if (first.kind === 'ending' || first.kind === 'freeValence' || first.kind === 'end' || benzeneBranch) {
+  const wholeWord = (first.kind === 'benzene' || first.kind === 'template') && context === 'branch';
+  if (first.kind === 'ending' || first.kind === 'freeValence' || first.kind === 'end' || wholeWord) {
     state.pos += 1;
-    const hint = (first.kind === 'end' && HINTS.endWithoutBranch) || (benzeneBranch && HINTS.benzeneBranch) || HINTS[first.kind];
+    const hint = (first.kind === 'end' && HINTS.endWithoutBranch) || (wholeWord && wholeWordHint(first)) || HINTS[first.kind];
     addTileOrder(state, start, start + 1, hint);
     return { type: 'stray', tile: start, range: [start, start + 1] };
   }
   const locants = takeNums(state);
+  const letter = takeLetter(state);
   const mult = takeMultiplier(state);
-  const prefix = { type: 'prefix', locants, multiplier: mult, substituent: null, range: [start, state.pos] };
+  const prefix = { type: 'prefix', locants, letter, multiplier: mult, substituent: null, range: [start, state.pos] };
   const next = tiles[state.pos];
   if (next && next.kind === 'benzene' && context === 'name') {
-    return makeBenzeneParent(state, locants, mult, start);
+    return makeBenzeneParent(state, locants, letter, mult, start);
+  }
+  if (next && next.kind === 'template' && context === 'name') {
+    return makeTemplateParent(state, locants, letter, mult, start);
   }
   if (!next || !['start', 'retained', 'root', 'ring'].includes(next.kind)) {
     if (next) {
-      addTileOrder(state, start, state.pos, HINTS[first.kind]); // numbers or a multiplier with no branch after them
+      addTileOrder(state, start, state.pos, HINTS[first.kind]); // numbers, a letter or a multiplier with no branch after them
     }
     return prefix;
   }
@@ -560,7 +759,7 @@ function parseItem(state, context) {
         if (!ended) {
           addRootEnd(state, chain); // The name so far ends in a bare root: the parent being written.
         }
-        return makeParent(state, locants, mult, chain, start);
+        return makeParent(state, locants, letter, mult, chain, start);
       }
       addRootEnd(state, chain);
     }
@@ -597,7 +796,7 @@ function checkNameEnd(state, tree) {
   }
   const last = tree.items[tree.items.length - 1];
   if (last && isCompletePrefix(last)) {
-    const words = itemText(tree, { ...last, locants: [], multiplier: null });
+    const words = itemText(tree, { ...last, locants: [], letter: null, multiplier: null });
     addError(state, 'ENDS_WITH_BRANCH', last.range[0], last.range[1],
       `El nombre acaba en una rama («${words}»): falta la cadena principal detrás.`);
     return;
@@ -605,6 +804,94 @@ function checkNameEnd(state, tree) {
   const from = tree.items.reduce((end, item) => (isCompletePrefix(item) ? item.range[1] : end), 0);
   addError(state, 'NO_PARENT', from, tree.tiles.length, MESSAGES.NO_PARENT);
 } // End of function checkNameEnd()
+
+/**
+ * Records POSITIONAL for each letter of a compound branch, at any depth: the
+ * orto/meta/para forms belong to the parent benzene ring only (the engine
+ * never writes them on a phenyl, design.md §14.4).
+ *
+ * @param {object} state - Parser state.
+ * @param {object} branch - A branch node.
+ * @returns {void}
+ */
+function checkBranchLetters(state, branch) {
+  for (const item of branch.items) {
+    if (item.type !== 'prefix') {
+      continue;
+    }
+    if (item.letter !== null) {
+      addError(state, 'POSITIONAL', item.letter, item.letter + 1, POSITIONAL_MESSAGES.branch);
+    }
+    if (item.substituent && item.substituent.type === 'branch') {
+      checkBranchLetters(state, item.substituent);
+    }
+  } // End of the loop over the branch's items
+} // End of function checkBranchLetters()
+
+/**
+ * Keeps the orto/meta/para letters (R-4c) to the forms that have a meaning
+ * (design.md §14.4), recording POSITIONAL on each other one: a letter says
+ * that the parent benzene ring has exactly two occupied positions, at 1,2 /
+ * 1,3 / 1,4 — a template's own groups counting (the methyl of `tolueno` is
+ * one), the groups on a prefix as many as its multiplier says. So a letter
+ * stands on a name-level prefix (`o-dimetilbenceno`, `p-metiltolueno`) or on
+ * `xileno` (`o-xileno`); never inside a compound branch, with another
+ * parent, before `benceno`, beside numbers on the same prefix, with one or
+ * three or more occupied positions, nor for two different prefixes on
+ * `benceno` (`m-etilmetilbenceno`). A letter before `tolueno`, `estireno` or
+ * `mesitileno` is their TEMPLATE_LOCANTS (makeTemplateParent()).
+ *
+ * @param {object} state - Parser state.
+ * @param {object} tree - The name tree.
+ * @returns {void}
+ */
+function checkLetters(state, tree) {
+  const { tiles } = state;
+  /**
+   * Records POSITIONAL over a tile range.
+   *
+   * @param {number} from - First tile index.
+   * @param {number} to - Tile index after the last one.
+   * @param {string} message - The message.
+   * @returns {void}
+   */
+  const report = (from, to, message) => addError(state, 'POSITIONAL', from, to, message);
+  const prefixes = tree.items.filter((item) => item.type === 'prefix');
+  prefixes.filter((item) => item.substituent && item.substituent.type === 'branch')
+    .forEach((item) => checkBranchLetters(state, item.substituent));
+  const { parent } = tree;
+  if (!parent) {
+    return; // NO_PARENT, or ENDS_WITH_BRANCH, says what is missing first.
+  }
+  const lettered = prefixes.filter((item) => item.letter !== null && item.substituent); // An unfinished one is TILE_ORDER.
+  const { chain } = parent;
+  if (chain.type === 'chain') {
+    [...lettered, ...(parent.letter === null ? [] : [parent])]
+      .forEach((holder) => report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.notBenzene));
+    return;
+  }
+  if (chain.type === 'benzene' && parent.letter !== null) {
+    report(parent.letter, parent.letter + 1, POSITIONAL_MESSAGES.beforeStem);
+  }
+  const template = chain.type === 'template' ? { value: tiles[chain.tile].value, word: tiles[chain.tile].text } : null;
+  const own = template && !TEMPLATES[template.value].positions && parent.letter !== null ? [parent] : []; // `o-xileno`
+  const positions = (template ? TEMPLATES[template.value].count : 0)
+    + prefixes.filter((item) => item.substituent)
+      .reduce((sum, item) => sum + (item.multiplier === null ? 1 : tiles[item.multiplier].value), 0);
+  for (const holder of [...lettered, ...own]) {
+    const locants = holder.type === 'parent' ? holder.legacy : holder.locants;
+    const count = holder.type === 'parent' || holder.multiplier === null ? 1 : tiles[holder.multiplier].value;
+    if (locants.length > 0) {
+      report(locants[0], holder.letter + 1, holder.type === 'parent' ? POSITIONAL_MESSAGES.bothXylene : POSITIONAL_MESSAGES.both);
+    } else if (positions >= 3) {
+      report(holder.letter, holder.letter + 1, threePositionsMessage(positions, template));
+    } else if (positions < 2) {
+      report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.one);
+    } else if (!template && count !== 2) {
+      report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.different);
+    }
+  } // End of the loop over the letters
+} // End of function checkLetters()
 
 /**
  * Parses a tile sequence into its lossless syntax tree and the syntactic
@@ -646,6 +933,7 @@ export function parse(sequence) {
   if (!tree.parent) {
     checkNameEnd(state, tree);
   }
+  checkLetters(state, tree);
   const errors = state.errors.map((error, i) => ({ error, i }))
     .sort((a, b) => a.error.from - b.error.from || a.i - b.i)
     .map(({ error }) => error);

@@ -1,7 +1,7 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b): the inverse of the assembler, `tokenize(text) → tile ids |
- * null`, for the tests and the diagnosis (R-3). Pure, no DOM.
+ * R-4a, R-4b, R-4c): the inverse of the assembler, `tokenize(text) → tile
+ * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
  * text, and the elided `an` / `en` / `in` of the endings), skipping the
@@ -25,8 +25,14 @@
  * holds exactly one simple chain or ring (its stem first — `ciclo` or a
  * root —, its closing mark right after `il` / `iliden`, nothing nested), or
  * the one word `fenil` (a crowded ring prefix, `metil(fenil)metano`, R-4b).
- * `benceno` (R-4b) ends a name, right after its prefixes or at the start. A
- * step budget bounds the search: running out returns null, never a guess.
+ * `benceno` (R-4b) ends a name, right after its prefixes or at the start;
+ * so does a retained template (R-4c: `tolueno`, `estireno`, `xileno`,
+ * `mesitileno`), also right after locants (`1,2-xileno`) or a letter. An
+ * orto/meta/para letter (R-4c) only starts a name (`o-xileno`,
+ * `o-dimetilbenceno`, `p-metiltolueno`): parse.js accepts it nowhere else,
+ * and the hyphen the assembler writes after it prunes every other reading
+ * of a leading `o`, `m` or `p` at once. A step budget bounds the search:
+ * running out returns null, never a guess.
  */
 
 import { CONNECTING_VOWEL, ENCLOSING_MARKS } from '../naming/lexicon.es.js';
@@ -51,7 +57,8 @@ const PUNCTUATION = ',-';
 /**
  * Grammar class of a tile for the adjacency table: NUM, MULT, CMULT, ROOT,
  * ANO (`ano`), ENE (`eno` / `ino`), FV (`il` / `iliden`), RET (a retained
- * branch word), PHE (`fenil`, R-4b), BEN (`benceno`, R-4b), START, END, RING
+ * branch word), PHE (`fenil`, R-4b), BEN (`benceno`, R-4b), TPL (a retained
+ * template, R-4c), POS (an orto/meta/para letter, R-4c), START, END, RING
  * (`ciclo`). A is the automatic connecting vowel, AUTO_OPEN an automatic
  * opening mark.
  *
@@ -67,7 +74,7 @@ function tileClass(tile) {
   }
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
-    ring: 'RING', benzene: 'BEN',
+    ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS',
   };
   return classes[tile.kind];
 }
@@ -75,8 +82,8 @@ function tileClass(tile) {
 /** Classes that may begin a name, a prefix or a compound branch. */
 const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'START'];
 
-/** Classes that may follow a complete prefix: another prefix, the end of its compound branch, or `benceno`. */
-const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN'];
+/** Classes that may follow a complete prefix: another prefix, the end of its compound branch, `benceno` or a template. */
+const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'TPL'];
 
 /**
  * The classes that may follow each class in a valid open-chain or
@@ -84,12 +91,15 @@ const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN'];
  * the text. An automatic closing mark does not change the class. `ciclo`
  * stands wherever a root may start a stem, and only a root follows it;
  * `fenil` wherever a retained word may stand; `benceno` at the start or
- * after a complete prefix, and nothing after it.
+ * after a complete prefix, and nothing after it; a template there too, or
+ * after locants or a letter; a letter at the start only, before a prefix or
+ * a template.
  */
 const FOLLOW = Object.freeze({
-  BEGIN: new Set([...PREFIX_STARTS, 'BEN']),
+  BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'TPL', 'POS']),
   AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE']),
-  NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV']),
+  NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL']),
+  POS: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'START', 'TPL']),
   MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'START', 'ENE']),
   CMULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'START']),
   RING: new Set(['ROOT']),
@@ -103,10 +113,11 @@ const FOLLOW = Object.freeze({
   START: new Set(PREFIX_STARTS),
   END: new Set(AFTER_PREFIX),
   BEN: new Set(),
+  TPL: new Set(),
 });
 
-/** Classes a valid name may end with (the parent's ending, or `benceno`). */
-const FINAL = new Set(['ANO', 'ENE', 'BEN']);
+/** Classes a valid name may end with (the parent's ending, `benceno` or a template). */
+const FINAL = new Set(['ANO', 'ENE', 'BEN', 'TPL']);
 
 /** Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, or `fenil`. */
 const AUTO_CLOSE = new Set(['FV', 'PHE']);
@@ -123,7 +134,7 @@ const CLOSE = Object.freeze({ role: 'close' });
  * @returns {{role: string, italic?: boolean}} The role.
  */
 function pieceRole(tile) {
-  if (tile.kind === 'num') {
+  if (tile.kind === 'num' || tile.kind === 'positional') {
     return Object.freeze({ role: 'locant' });
   }
   if (tile.kind === 'mult' || tile.kind === 'cmult') {

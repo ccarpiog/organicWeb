@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T22:04:28Z",
+  "updated": "2026-10-14T22:45:12Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -611,7 +611,7 @@
       "id": "I-50",
       "title": "v4 R-4 Rings",
       "status": "in_progress",
-      "summary": "Split into I-50a (ciclo rings, done), I-50b (benzene, phenyl, aromatic key, done) and I-50c (retained templates, o/m/p, diagnosis, Ayuda)."
+      "summary": "Split into I-50a (ciclo rings, done), I-50b (benzene, phenyl, aromatic key, done), I-50c (retained templates, o/m/p, Ayuda) and I-50d (ring diagnosis)."
     },
     {
       "id": "I-50a",
@@ -633,10 +633,19 @@
     },
     {
       "id": "I-50c",
-      "title": "v4 R-4c Retained aromatic names, o/m/p, ring diagnosis and Ayuda",
+      "title": "v4 R-4c Retained aromatic names, o/m/p aliases and Ayuda",
+      "status": "done",
+      "risk": "high",
+      "summary": "Adds tolueno, estireno, xileno and mesitileno tiles, the o/m/p forms and the Ayuda line for rings.",
+      "review": "Codex ship, 0 findings - docs/reviews/I-50c.md",
+      "narrative": "docs/progress-archive/i-50c.md"
+    },
+    {
+      "id": "I-50d",
+      "title": "v4 R-4d Ring diagnosis messages",
       "status": "queued",
       "risk": "high",
-      "summary": "Adds tolueno, estireno, xileno and mesitileno tiles, the o/m/p forms, ring diagnosis messages and the Ayuda line."
+      "summary": "Names the main mistake of a ring name, such as a ring that should be the parent, and shows it in the results panel."
     },
     {
       "id": "I-51a",

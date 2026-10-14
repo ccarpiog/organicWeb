@@ -17,9 +17,12 @@
  *   tabindex, `aria-selected`); `aria-live`, so every change is announced;
  *   the opening mark of an unfinished compound branch shows faintly;
  * - the tile rows («Números», «¿Cuántos?», «Raíces (cuántos carbonos)»,
- *   «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a, and
- *   `benceno` and `fenil`, phase R-4b; drafts pending teacher review), each
- *   with a «más» button for the tiles the catalogue keeps behind it;
+ *   «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a,
+ *   `benceno` and `fenil`, phase R-4b, and the letters `o`, `m`, `p`, phase
+ *   R-4c, each with its word (orto, meta, para) beside it —, «Nombres
+ *   tradicionales» — `tolueno`, `estireno`, `xileno`, `mesitileno`, phase
+ *   R-4c; drafts pending teacher review), each with a «más» button for the
+ *   tiles the catalogue keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
  *   «Borrar todo», «Dibujar» and «Cerrar» (also Escape and a click on the
  *   backdrop); the focus goes into the dialog on opening and back to the
@@ -39,7 +42,7 @@
  * The DOM is built with createElement/textContent only (never innerHTML).
  */
 
-import { TILES, START_ID, END_ID } from '../reverse/tiles.js';
+import { TILES, START_ID, END_ID, POSITIONAL_IDS } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
 
@@ -51,10 +54,31 @@ export const ROWS = Object.freeze([
   Object.freeze({ id: 'endings', label: 'Terminaciones' }),
   Object.freeze({ id: 'branches', label: 'Ramas' }),
   Object.freeze({ id: 'rings', label: 'Anillos' }),
+  Object.freeze({ id: 'traditional', label: 'Nombres tradicionales' }),
 ]);
 
 /** Labels of the two compound-branch controls (design.md §15.2). */
 export const CONTROL_LABELS = Object.freeze({ [START_ID]: 'empieza rama compuesta', [END_ID]: 'acaba rama' });
+
+/**
+ * The words of the orto/meta/para letter tiles (design.md §14.4; phase R-4c),
+ * shown small beside the letter and read in its accessible name with the
+ * positions it stands for: «o (orto, 1,2)».
+ */
+export const POSITIONAL_WORDS = Object.freeze({
+  [POSITIONAL_IDS[2]]: 'orto', [POSITIONAL_IDS[3]]: 'meta', [POSITIONAL_IDS[4]]: 'para',
+});
+
+/**
+ * The accessible name of an orto/meta/para letter tile: the letter, its word
+ * and the positions it stands for.
+ *
+ * @param {{id: string, text: string, value: number}} tile - A 'positional' catalogue tile.
+ * @returns {string} The name, e.g. «p (para, 1,4)».
+ */
+export function positionalLabel(tile) {
+  return `${tile.text} (${POSITIONAL_WORDS[tile.id]}, 1,${tile.value})`;
+}
 
 /** Text of the empty name line. */
 export const PLACEHOLDER = 'Pulsa las fichas de abajo para formar un nombre.';
@@ -100,7 +124,8 @@ function make(doc, tag, className, text) {
 
 /**
  * Builds one tile button. The compound-branch controls show their label
- * beside their mark (the mark hidden from screen readers).
+ * beside their mark (the mark hidden from screen readers); an orto/meta/para
+ * letter shows its word, small, beside the letter (R-4c).
  *
  * @param {Document} doc - The document.
  * @param {{id: string, kind: string, text: string, more: boolean}} tile - A catalogue tile.
@@ -120,6 +145,12 @@ function makeTileButton(doc, tile) {
     } else {
       button.append(mark, words);
     }
+  } else if (tile.kind === 'positional') {
+    const hint = make(doc, 'span', 'nb-tile-hint', POSITIONAL_WORDS[tile.id]);
+    hint.setAttribute('aria-hidden', 'true');
+    button.append(doc.createTextNode(tile.text), hint);
+    button.setAttribute('aria-label', positionalLabel(tile));
+    button.title = positionalLabel(tile);
   } else {
     button.textContent = tile.text;
   }

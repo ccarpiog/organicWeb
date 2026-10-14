@@ -147,7 +147,7 @@ test('a ring branch on a chain draws the molecule the app names on its ring; a r
   await drawName(page, 'ciclo', 'hex', 'il', 'met', 'ano');
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
   await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: ciclohexilmetano');
-  // No diagnosis for rings yet (phase I-50c): the whole message, with no diagnosis line.
+  // No diagnosis for rings yet (phase I-50d): the whole message, with no diagnosis line.
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
     + '«metilciclohexano». Pulsa «Ver paso a paso» para ver por qué.');
   await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);

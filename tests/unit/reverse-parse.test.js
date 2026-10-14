@@ -4,8 +4,9 @@
  * grammar for open-chain hydrocarbons (the student's multipliers, order and
  * locants kept), old-style locants, and one test per syntactic error code
  * with its tile range; rings (`ciclo`, R-4a) with RING_ROOT and RING_SIZE;
- * benzene (`benceno`, `fenil`, R-4b) with BENZENE_BONDS. The structural codes (LOCANT_RANGE, BOND_RANGE,
- * SAME_BOND, VALENCE, TOO_BIG) belong to R-1b.
+ * benzene (`benceno`, `fenil`, R-4b) with BENZENE_BONDS; the retained templates and the o/m/p letters (R-4c) keep
+ * their tiles in the tree (their errors, TEMPLATE_LOCANTS and POSITIONAL, are tested in reverse-templates.test.js).
+ * The structural codes (LOCANT_RANGE, BOND_RANGE, SAME_BOND, VALENCE, TOO_BIG) belong to R-1b.
  */
 
 import { test } from 'node:test';
@@ -72,6 +73,16 @@ const BROKEN = [
   // Benzene (R-4b): numbers of its own, `benceno` inside a branch or before more tiles, `fenil` alone or unclosed.
   '1 3 5 benceno', '1 3 5 tri benceno', 'benceno 1 3 5 tri eno', 'START benceno END met ano', 'benceno met il', 'di benceno',
   '2 START 2 benceno END but ano', 'fenil', 'START 4 met il fenil', 'met il benceno benceno',
+  // Templates and letters (R-4c): numbers or letters out of place, a template inside a branch or before more tiles.
+  '1 2 o xileno', 'o tolueno', 'di tolueno', 'o', 'o 2 met il benceno', 'START o met il fenil END met ano', 'xileno 1 2',
+  'START tolueno END met ano', 'o di o met il benceno', '1 o di met il benceno', 'o hex ano', 'o benceno', 'tolueno benceno',
+];
+
+/** Template and letter forms of R-4c (design.md §15.8 R-4, §14.4), valid and error-free. */
+const TEMPLATE_EXAMPLES = [
+  'tolueno', 'estireno', 'mesitileno', 'xileno', '1 2 xileno', 'o xileno', 'p xileno', '4 met il tolueno', 'met il xileno',
+  'o di met il benceno', 'p di et eno il benceno', 'o bis START 2 met il prop il END benceno', 'p met il tolueno',
+  'm et il estireno', '2 et il mesitileno',
 ];
 
 /** Benzene forms of R-4b (design.md §15.8 R-4), valid and error-free. */
@@ -89,16 +100,16 @@ const RING_EXAMPLES = [
   '2 START ciclo hex il met il END but ano', 'di ciclo hex il met ano', 'ciclo hex ano 1 il met ano',
 ];
 
-test('the §15.5.1 examples, the ring forms and the benzene forms parse without errors', () => {
-  for (const words of [...EXAMPLES, ...RING_EXAMPLES, ...BENZENE_EXAMPLES]) {
+test('the §15.5.1 examples, the ring forms, the benzene forms and the template forms parse without errors', () => {
+  for (const words of [...EXAMPLES, ...RING_EXAMPLES, ...BENZENE_EXAMPLES, ...TEMPLATE_EXAMPLES]) {
     assert.deepEqual(errorsOf(words), [], words);
   }
   assert.deepEqual(ERROR_CODES, ['EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER',
-    'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS']);
+    'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS', 'TEMPLATE_LOCANTS', 'POSITIONAL']);
 });
 
 test('the tree is lossless: every tile exactly once, in order, also with mistakes', () => {
-  for (const words of [...EXAMPLES, ...RING_EXAMPLES, ...BENZENE_EXAMPLES, ...BROKEN]) {
+  for (const words of [...EXAMPLES, ...RING_EXAMPLES, ...BENZENE_EXAMPLES, ...TEMPLATE_EXAMPLES, ...BROKEN]) {
     const { tree } = read(words);
     const n = seq(words).length;
     assert.deepEqual(leafIndices(tree), Array.from({ length: n }, (_, i) => i), words);

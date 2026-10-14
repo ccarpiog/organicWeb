@@ -1,13 +1,14 @@
 /**
  * @file Unit tests for the tokenizer of «¿Cómo se dibuja?»
  * (src/reverse/tokenize.js, design.md §15.4, §15.7, phases R-1a, R-4a,
- * R-4b): the inverse of the assembler. The fixture round trips cover every
- * open-chain hydrocarbon name and alternative of tests/fixtures/names.tsv,
- * then every `ciclo` hydrocarbon one, then every benzene hydrocarbon one
- * written with `benceno` / `fenil` tiles (rows chosen by explicit SMILES and
- * name syntax checks, never by "tokenize failed"), and seeded property tests
- * read back the text of random grammatical sequences, without and with rings
- * and benzene.
+ * R-4b, R-4c): the inverse of the assembler. The fixture round trips cover
+ * every open-chain hydrocarbon name and alternative of
+ * tests/fixtures/names.tsv, then every `ciclo` hydrocarbon one, then every
+ * benzene hydrocarbon one written with `benceno` / `fenil` tiles, the
+ * retained templates and the orto/meta/para letters (rows chosen by explicit
+ * SMILES and name syntax checks, never by "tokenize failed"), and seeded
+ * property tests read back the text of random grammatical sequences, without
+ * and with rings, benzene and the templates.
  */
 
 import { test } from 'node:test';
@@ -19,8 +20,9 @@ import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES,
 } from '../../src/naming/lexicon.es.js';
 import {
-  seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName, isBenzeneName,
+  seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName, isBenzeneName, isTemplateName,
 } from './reverse-words.js';
+import { TILES } from '../../src/reverse/tiles.js';
 
 /** Fixture rows of open-chain hydrocarbons (phase R-1a scope). */
 const EXPECTED_ROWS = 176;
@@ -47,15 +49,18 @@ const EXPECTED_RING_NAMES = 59;
  */
 const EXPECTED_BENZENE_ROWS = 25;
 
-/** Their names and alternatives written with R-4b tiles (four alternatives in the propan-2-il and 1-metiletil styles). */
-const EXPECTED_BENZENE_NAMES = 31;
-
 /**
- * Their alternatives left to I-50c: the retained templates (`tolueno` ×2,
- * `estireno`, the six xylene forms, `mesitileno`) and the old o/m/p forms
- * (`o-` / `m-` / `p-dimetilbenceno`, `p-dietenilbenceno`, `o-diisopropilbenceno`).
+ * Their names and alternatives: 31 written with R-4b tiles (four
+ * alternatives in the propan-2-il and 1-metiletil styles) and 18 with the
+ * R-4c tiles, none skipped since I-50c — the retained templates (`tolueno`
+ * ×2, `estireno`, the eight xylene forms, `mesitileno`) and the old o/m/p
+ * forms (`o-dimetilbenceno` ×2, `m-` / `p-dimetilbenceno`,
+ * `p-dietenilbenceno`, `o-diisopropilbenceno`).
  */
-const EXPECTED_BENZENE_SKIPPED = 18;
+const EXPECTED_BENZENE_NAMES = 49;
+
+/** Of them, the names written with R-4c tiles. */
+const EXPECTED_TEMPLATE_NAMES = 18;
 
 /**
  * Reads a tile sequence back as text.
@@ -102,16 +107,14 @@ test('fixture round trip (R-4a): every `ciclo` hydrocarbon name and alternative'
   assert.equal(covered, EXPECTED_RING_NAMES);
 }); // End of test 'fixture round trip (R-4a): every `ciclo` hydrocarbon name and alternative'
 
-test('fixture round trip (R-4b): every benzene hydrocarbon name and alternative written with `benceno` / `fenil`', async () => {
+test('fixture round trip (R-4b, R-4c): every benzene hydrocarbon name and alternative, templates and o/m/p forms too', async () => {
   const rows = (await readFixtures()).filter((row) => isMonocyclicHydrocarbon(row.smiles) && isBenzeneName(row.names[0]));
   let covered = 0;
-  let skipped = 0;
+  let templates = 0;
   for (const row of rows) {
     for (const name of row.names) {
-      if (!isBenzeneName(name)) {
-        skipped += 1; // A retained template or an o/m/p form (I-50c).
-        continue;
-      }
+      assert.ok(isBenzeneName(name), `names.tsv:${row.line}: ${name}`);
+      templates += isTemplateName(name) ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
       const back = readBack(ids);
@@ -122,8 +125,8 @@ test('fixture round trip (R-4b): every benzene hydrocarbon name and alternative 
   } // End of the loop over the fixture rows
   assert.equal(rows.length, EXPECTED_BENZENE_ROWS);
   assert.equal(covered, EXPECTED_BENZENE_NAMES);
-  assert.equal(skipped, EXPECTED_BENZENE_SKIPPED);
-}); // End of test 'fixture round trip (R-4b): every benzene hydrocarbon name and alternative…'
+  assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
+}); // End of test 'fixture round trip (R-4b, R-4c): every benzene hydrocarbon name and alternative…'
 
 test('benzene forms tokenize to their tiles (R-4b): `benceno` last, `fenil` a branch word, its compound branch marked', () => {
   const examples = [
@@ -152,6 +155,40 @@ test('benzene forms tokenize to their tiles (R-4b): `benceno` last, `fenil` a br
     assert.equal(tokenize(text), null, text);
   }
 }); // End of test 'benzene forms tokenize to their tiles (R-4b)…'
+
+test('template and o/m/p forms tokenize to their tiles (R-4c): the template last, its locants or letter before it', () => {
+  const examples = [
+    ['tolueno', 'tolueno'],
+    ['estireno', 'estireno'],
+    ['mesitileno', 'mesitileno'],
+    ['xileno', 'xileno'],
+    ['1,2-xileno', '1 2 xileno'],
+    ['1,4-xileno', '1 4 xileno'],
+    ['o-xileno', 'o xileno'],
+    ['m-xileno', 'm xileno'],
+    ['p-xileno', 'p xileno'],
+    ['o-dimetilbenceno', 'o di met il benceno'],
+    ['p-dietenilbenceno', 'p di et eno il benceno'],
+    ['o-diisopropilbenceno', 'o di isopropil benceno'],
+    ['o-di-tert-butilbenceno', 'o di tert-butil benceno'],
+    ['o-bis(2-metilpropil)benceno', 'o bis START 2 met il prop il END benceno'],
+    ['p-difenilbenceno', 'p di fenil benceno'],
+    ['4-metiltolueno', '4 met il tolueno'],
+    ['p-metiltolueno', 'p met il tolueno'],
+    ['metiltolueno', 'met il tolueno'],
+    ['4-metil-1,2-xileno', '4 met il 1 2 xileno'],
+    ['2-etilmesitileno', '2 et il mesitileno'],
+  ];
+  for (const [text, words] of examples) {
+    assert.deepEqual(tokenize(text), seq(words), text);
+  }
+  // The refused o/m/p forms, misplaced letters and numbers on a template read only with errors: never tokenized.
+  for (const text of ['o-trimetilbenceno', 'o-metilbenceno', 'm-etilmetilbenceno', 'o-dimetiltolueno', '4-metil-o-xileno',
+    'o-hexano', 'o-benceno', 'o-tolueno', '1-tolueno', '1,3,5-mesitileno', '1-xileno', '1,2,3-xileno', 'xileno-1,2',
+    '(o-metilfenil)metano', 'tolueno-1', 'ditolueno', '(tolueno)metano', 'p-dimetil']) {
+    assert.equal(tokenize(text), null, text);
+  }
+}); // End of test 'template and o/m/p forms tokenize to their tiles (R-4c)…'
 
 test('ring forms tokenize to their tiles: `ciclo` before the root, automatic marks around a simple ring branch', () => {
   const examples = [
@@ -205,7 +242,7 @@ test('tokenize prefers whole words and automatic marks for simple branches', () 
 }); // End of test 'tokenize prefers whole words and automatic marks for simple branches'
 
 test('tokenize returns null outside the grammar, for texts that only read with errors, and past its budget', () => {
-  for (const text of ['', 'ácido etanoico', 'clorometano', 'propan-2-ol', 'tolueno', 'hex ano', 'HEXANO', 'ciclo', 'cicloetano']) {
+  for (const text of ['', 'ácido etanoico', 'clorometano', 'propan-2-ol', 'p-cresol', 'hex ano', 'HEXANO', 'ciclo', 'cicloetano']) {
     assert.equal(tokenize(text), null, text);
   }
   for (const text of ['2,3-trimetilpentano', '1,3-hexenino', 'hexano-2-metil', '2-metil', '5-(2-metilpropil', 'propil']) {
@@ -254,14 +291,19 @@ function mulberry32(seed) {
  * `rings` (R-4a), some stems — of the parent or of a branch — are rings:
  * `ciclo` and a root of 3 to 30 carbons. With `benzene` (R-4b), some simple
  * branches are `fenil` (also as the own chain of a compound branch) and
- * some parents `benceno`.
+ * some parents `benceno`. With `templates` (R-4c), some parents are retained
+ * templates — `xileno` with two locants or none — and some names an
+ * orto/meta/para form with exactly two occupied positions: a letter, `di` /
+ * `bis` and one branch on `benceno`, a letter and one branch on `tolueno` or
+ * `estireno`, or a letter on `xileno`.
  *
  * @param {() => number} random - The random source.
  * @param {boolean} [rings] - Draw ring stems too (default false: the R-1a sequences, draw for draw).
  * @param {boolean} [benzene] - Draw `fenil` and `benceno` too (default false: the earlier sequences, draw for draw).
+ * @param {boolean} [templates] - Draw the templates and the letters too (default false: the earlier sequences, draw for draw).
  * @returns {() => string[]} A function returning one sequence of tile words.
  */
-function grammarGenerator(random, rings = false, benzene = false) {
+function grammarGenerator(random, rings = false, benzene = false, templates = false) {
   const int = (lo, hi) => lo + Math.floor(random() * (hi - lo + 1));
   const pick = (list) => list[int(0, list.length - 1)];
   const nums = (k) => Array.from({ length: k }, () => String(int(1, 30)));
@@ -325,7 +367,27 @@ function grammarGenerator(random, rings = false, benzene = false) {
    *
    * @returns {string[]} The words.
    */
+  /**
+   * The word of a template tile.
+   *
+   * @param {string} value - A tiles.js TEMPLATES key.
+   * @returns {string} The word.
+   */
+  const templateWord = (value) => TILES.find((tile) => tile.kind === 'template' && tile.value === value).text;
+  /**
+   * An orto/meta/para letter, at random.
+   *
+   * @returns {string} The word.
+   */
+  const letter = () => {
+    const value = int(2, 4);
+    return TILES.find((tile) => tile.kind === 'positional' && tile.value === value).text;
+  };
   const parent = () => {
+    if (templates && random() < 0.5) {
+      const value = pick(['toluene', 'styrene', 'xylene', 'mesitylene']);
+      return [...(value === 'xylene' && random() < 0.7 ? nums(2) : []), templateWord(value)];
+    }
     if (benzene && random() < 0.5) {
       return [BENZENE_NAME];
     }
@@ -340,7 +402,24 @@ function grammarGenerator(random, rings = false, benzene = false) {
     const k = int(1, 2); // old style: the locants of the only segment without them go first
     return [...nums(k), ...root, ...(k > 1 ? [multiplier(k)] : []), pick([ENDINGS.double, ENDINGS.triple])];
   }; // End of function parent()
-  return () => [...Array.from({ length: int(0, 3) }, () => prefix(0)).flat(), ...parent()];
+  /**
+   * An orto/meta/para name (R-4c): two occupied positions, one of them the letter's prefix or a template's group.
+   *
+   * @returns {string[]} The words.
+   */
+  const lettered = () => {
+    const form = int(0, 2);
+    if (form === 0) {
+      const branch = random() < 0.3 ? ['START', ...prefix(1), ...simple(), 'END'] : simple();
+      return [letter(), pick([multiplier(2), compoundMultiplier(2)]), ...branch, BENZENE_NAME];
+    }
+    if (form === 1) {
+      return [letter(), ...simple(), templateWord(pick(['toluene', 'styrene']))];
+    }
+    return [letter(), templateWord('xylene')];
+  }; // End of function lettered()
+  return () => (templates && random() < 0.25 ? lettered()
+    : [...Array.from({ length: int(0, 3) }, () => prefix(0)).flat(), ...parent()]);
 } // End of function grammarGenerator()
 
 test('property: the text of random grammatical sequences tokenizes back to the same text', () => {
@@ -389,3 +468,22 @@ test('property (R-4b): random grammatical sequences with `fenil` and `benceno` t
   } // End of the loop over the random sequences
   assert.ok(benzene >= 200, `${benzene} sequences with benzene words`);
 }); // End of test 'property (R-4b): random grammatical sequences with `fenil` and `benceno` tokenize back to the same text'
+
+test('property (R-4c): random grammatical sequences with the templates and the o/m/p letters tokenize back to the same text', () => {
+  const next = grammarGenerator(mulberry32(20261017), true, true, true);
+  const counts = { templates: 0, letters: 0 };
+  const words = (kind) => TILES.filter((tile) => tile.kind === kind).map((tile) => tile.text);
+  for (let i = 0; i < 400; i += 1) {
+    const list = next();
+    const ids = seq(list.join(' '));
+    const original = readBack(ids);
+    assert.deepEqual(original.errors, [], list.join(' '));
+    counts.templates += list.some((word) => words('template').includes(word)) ? 1 : 0;
+    counts.letters += list.some((word) => words('positional').includes(word)) ? 1 : 0;
+    const found = tokenize(original.text);
+    assert.ok(found, `${list.join(' ')} → ${original.text}: no tiles`);
+    assert.equal(readBack(found).text, original.text, list.join(' '));
+  } // End of the loop over the random sequences
+  assert.ok(counts.templates >= 150, `${counts.templates} sequences with a template`);
+  assert.ok(counts.letters >= 80, `${counts.letters} sequences with a letter`);
+}); // End of test 'property (R-4c): random grammatical sequences with the templates and the o/m/p letters…'

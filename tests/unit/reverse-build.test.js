@@ -72,7 +72,7 @@ test('interpret: supplied and implicit slots, multipliers and the NameSpec shape
     ['classWord', 'ester', 'leftOut', 'oldStyle', 'parent', 'prefixes', 'suffix', 'tiles', 'traditional']);
   assert.deepEqual([spec.suffix, spec.classWord, spec.ester, spec.traditional, spec.oldStyle], [null, null, null, null, false]);
   assert.deepEqual(spec.tiles, [0, 7]);
-  assert.deepEqual(spec.parent, { kind: 'chain', length: 5, double: [], triple: [], tiles: [5, 7] });
+  assert.deepEqual(spec.parent, { kind: 'chain', length: 5, double: [], triple: [], template: null, tiles: [5, 7] });
   const [prefix] = spec.prefixes;
   assert.deepEqual(prefix.multiplier, { count: 2, compound: false });
   assert.deepEqual(prefix.tiles, [0, 5]);
@@ -280,7 +280,8 @@ test('interpret (R-4a): a ring parent and ring branches, ring bonds 1…n, `il` 
   // 0:3 1:met 2:il 3:ciclo 4:hex 5:1 6:eno
   let spec = specOf('3 met il ciclo hex 1 eno');
   assert.deepEqual(spec.parent, {
-    kind: 'ring', length: 6, double: [{ kind: 'supplied', value: 1, role: 'ringBond', domain: [1, 6], tiles: [5, 6] }], triple: [], tiles: [3, 7],
+    kind: 'ring', length: 6, double: [{ kind: 'supplied', value: 1, role: 'ringBond', domain: [1, 6], tiles: [5, 6] }], triple: [], template: null,
+    tiles: [3, 7],
   });
   assert.equal(spec.prefixes[0].slots[0].domain[1], 6);
   // Left out on a ring: carbons 1…6 and ring bonds 1…6.
@@ -366,7 +367,7 @@ test('the ring limit (R-4a): more rings than the structural key handles, or two 
 test('interpret (R-4b): `benceno` is a six-carbon parent without bond slots; `fenil` a branch bonded by its carbon 1', () => {
   // 0:1 1:4 2:di 3:met 4:il 5:benceno
   let spec = specOf('1 4 di met il benceno');
-  assert.deepEqual(spec.parent, { kind: 'benzene', length: 6, double: [], triple: [], tiles: [5, 6] });
+  assert.deepEqual(spec.parent, { kind: 'benzene', length: 6, double: [], triple: [], template: null, tiles: [5, 6] });
   assert.deepEqual(spec.prefixes[0].slots.map((slot) => [slot.kind, slot.value, slot.role, slot.domain]),
     [['supplied', 1, 'carbon', [1, 6]], ['supplied', 4, 'carbon', [1, 6]]]);
   assert.equal(spec.oldStyle, false);

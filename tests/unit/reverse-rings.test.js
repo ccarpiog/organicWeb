@@ -308,7 +308,7 @@ test('mutations of ring names: the verdict and the molecule the name describes; 
     assert.equal(verdict.draw, true);
     if (kind === 'otherName') {
       assert.equal(verdict.message, otherNameMessage(name));
-      assert.equal(verdict.diagnosis, null, `${text}: the ring diagnosis messages arrive in I-50c`);
+      assert.equal(verdict.diagnosis, null, `${text}: the ring diagnosis messages arrive in I-50d`);
     }
   } // End of the loop over the mutations
   assert.deepEqual(read('1 3 ciclo hex di eno').notes, ['Es la forma antigua de escribirlo; hoy se escribe «ciclohexa-1,3-dieno».']);

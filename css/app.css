@@ -1533,7 +1533,9 @@ kbd {
 .nb-tile--cmult { color: var(--color-part-multiplier); }
 .nb-tile--root,
 .nb-tile--ring,
-.nb-tile--benzene { color: var(--color-part-parent); }
+.nb-tile--benzene,
+.nb-tile--template { color: var(--color-part-parent); }
+.nb-tile--positional { color: var(--color-part-locant); }
 .nb-tile--ending { color: var(--color-part-ending); }
 .nb-tile--freeValence,
 .nb-tile--retained { color: var(--color-part-prefix); }
@@ -1541,6 +1543,14 @@ kbd {
 .nb-tile-mark {
   margin: 0 0.3rem;
   color: var(--color-part-punct);
+}
+
+/* The word of an orto/meta/para letter tile (R-4c): «o orto». */
+.nb-tile-hint {
+  margin-left: 0.3rem;
+  font-size: 0.8em;
+  font-weight: 400;
+  color: var(--color-text-muted);
 }
 
 .nb-more {

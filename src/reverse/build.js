@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -17,6 +17,12 @@
  * error blames the locant that adds a fourth bond too many, never the
  * `benceno` tile. A phenyl hangs by its carbon 1; its own prefixes go on
  * carbons 2…6 (a locant 1 there is LOCANT_RANGE with its own message).
+ * A retained template (R-4c: `tolueno`, `estireno`, `xileno`, `mesitileno`)
+ * is the benzene ring with its own groups (templateGroups(), interpret.js
+ * TemplateSpec) attached like prefixes, before the student's; a group the
+ * template places by rule belongs to the ring like its double bonds, so a
+ * student's branch on that carbon is the VALENCE culprit, with a message
+ * that says the template already put a group there.
  *
  * The molecule is the student's reading, numbered as the student numbered
  * it: `studentParent` lists the parent's atoms in the student's locant
@@ -64,6 +70,7 @@ import {
   MAX_CARBONS, MAX_CHAIN, MESSAGES as VALIDATION_MESSAGES, RING_SYSTEM_MESSAGES, longestCarbonChain, longestSideChain,
 } from '../model/validate.js';
 import { BENZENE_NAME, RETAINED_PREFIXES } from '../naming/lexicon.es.js';
+import { templateGroupWord } from './tiles.js';
 
 /** The structural error codes of design.md §15.6 (TILE_ORDER reused for a retained word with prefixes). */
 export const BUILD_ERROR_CODES = Object.freeze(['TILE_ORDER', 'LOCANT_RANGE', 'BOND_RANGE', 'SAME_BOND', 'VALENCE', 'TOO_BIG']);
@@ -122,11 +129,15 @@ const FENIL = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text
  * 6 carbonos va del 1 al 6…», «El anillo de la rama va del 1 al 6…» for a
  * ring; «El benceno tiene 6 carbonos, del 1 al 6…» for `benceno` (R-4b).
  *
- * @param {{length: number, branch: boolean, ring?: boolean, benzene?: boolean}} owner - The chain or ring numbered.
+ * @param {{length: number, branch: boolean, ring?: boolean, benzene?: boolean, template?: string|null}} owner - The chain
+ *   or ring numbered (`template`: the word of a template parent, R-4c: «El anillo del xileno tiene 6 carbonos…»).
  * @param {number} value - The locant.
  * @returns {string} The message.
  */
 function rangeMessage(owner, value) {
+  if (owner.template) {
+    return `El anillo del ${owner.template} tiene ${carbons(owner.length)}, del 1 al ${owner.length}: no hay carbono ${value}.`;
+  }
   if (owner.benzene && !owner.branch) {
     return `El ${BENZENE_NAME} tiene ${carbons(owner.length)}, del 1 al ${owner.length}: no hay carbono ${value}.`;
   }
@@ -287,14 +298,25 @@ function prefixCarbons(prefixes) {
 }
 
 /**
+ * The own groups of a NameSpec's template parent (R-4c, interpret.js
+ * TemplateSpec `groups`: PrefixSpecs on the ring), or none.
+ *
+ * @param {object} spec - A NameSpec.
+ * @returns {object[]} The PrefixSpecs.
+ */
+export function templateGroups(spec) {
+  return spec.parent.template ? spec.parent.template.groups : [];
+}
+
+/**
  * Carbons of the molecule a NameSpec describes (independent of the
- * locants).
+ * locants), a template's own groups included.
  *
  * @param {object} spec - A NameSpec.
  * @returns {number} The count.
  */
 export function specCarbons(spec) {
-  return spec.parent.length + prefixCarbons(spec.prefixes);
+  return spec.parent.length + prefixCarbons(spec.prefixes) + prefixCarbons(templateGroups(spec));
 }
 
 /**
@@ -347,7 +369,7 @@ function prefixRings(prefixes) {
  * @returns {number} The count.
  */
 export function specRings(spec) {
-  return (isRing(spec.parent.kind) ? 1 : 0) + prefixRings(spec.prefixes);
+  return (isRing(spec.parent.kind) ? 1 : 0) + prefixRings(spec.prefixes) + prefixRings(templateGroups(spec));
 }
 
 /**
@@ -382,7 +404,8 @@ export function ringRefusal(spec) {
 
 /**
  * The structural errors that need no placement, or that a placement's
- * values give (design.md §15.6): retained words with prefixes, ranges,
+ * values give (design.md §15.6): retained words with prefixes, ranges (a
+ * template's own locants too, R-4c),
  * repeated bonds (left-out slots without a value are skipped, except that
  * a multiple bond on a one-carbon chain has nowhere to go), then the
  * carbon cap.
@@ -397,10 +420,13 @@ export function checkSpec(spec, values = null) {
     branch: false,
     ring: isRing(spec.parent.kind),
     benzene: spec.parent.kind === 'benzene',
+    template: spec.parent.template ? spec.parent.template.word.text : null,
     double: spec.parent.double,
     triple: spec.parent.triple,
   };
-  const error = checkPrefixes(spec.prefixes, parent, values) || checkBonds(parent, values);
+  // The template's own groups come after the prefixes in the tiles (`4-metil-1,2-xileno`).
+  const error = checkPrefixes(spec.prefixes, parent, values) || checkPrefixes(templateGroups(spec), parent, values)
+    || checkBonds(parent, values);
   if (error) {
     return error;
   }
@@ -506,14 +532,19 @@ function buildSubstituent(state, sub) {
 /**
  * Builds every occurrence of some prefixes and bonds each to its carbon
  * of a chain; at the parent level, records the atoms of each occurrence.
+ * A template's own groups (R-4c) are attached the same way, except that a
+ * group the template places by rule (an implicit slot) is the ring's own:
+ * it adds no bond order to blame, and its ring carbon remembers the
+ * template for the VALENCE message.
  *
  * @param {object} state - Build state.
  * @param {object[]} prefixes - PrefixSpecs.
  * @param {number[]} atoms - The chain's atoms in locant order.
  * @param {object[]|null} [record] - Receives one entry per occurrence (parent level only).
+ * @param {object|null} [template] - The TemplateSpec whose groups these are (none for the student's prefixes).
  * @returns {void}
  */
-function attachPrefixes(state, prefixes, atoms, record = null) {
+function attachPrefixes(state, prefixes, atoms, record = null, template = null) {
   const { mol, values } = state;
   prefixes.forEach((prefix, index) => {
     prefix.slots.forEach((slot, occurrence) => {
@@ -523,7 +554,11 @@ function attachPrefixes(state, prefixes, atoms, record = null) {
       const locant = slotValue(slot, values);
       const target = atoms[locant - 1];
       const bond = addBond(mol, target, branch.attach, branch.order);
-      contribute(state, target, slot.tiles, branch.order);
+      if (template && slot.kind === 'implicit') {
+        state.atoms.get(target).template = { word: template.word.text, group: templateGroupWord(template.value) };
+      } else {
+        contribute(state, target, slot.tiles, branch.order);
+      }
       contribute(state, branch.attach, branch.tiles, branch.order);
       if (record) {
         record.push({
@@ -608,7 +643,9 @@ function valenceError(state) {
     return null;
   }
   const where = best.info.branch ? `El carbono ${best.info.locant} de la rama` : `El carbono ${best.info.locant}`;
-  return buildError('VALENCE', `${where} tendría ${best.total} enlaces, y un carbono solo puede tener ${CARBON_VALENCE}.`, best.tiles);
+  const { template } = best.info; // A carbon a template placed its group on (R-4c).
+  const why = template ? `: en el ${template.word}, ese carbono ya lleva un ${template.group}` : '';
+  return buildError('VALENCE', `${where} tendría ${best.total} enlaces, y un carbono solo puede tener ${CARBON_VALENCE}${why}.`, best.tiles);
 } // End of function valenceError()
 
 /**
@@ -634,6 +671,9 @@ export function build(spec, placement = []) {
   }
   const state = { mol: createMolecule(), values, atoms: new Map(), tiles: spec.tiles };
   const parent = buildChain(state, { ...spec.parent, prefixes: [] }, false);
+  if (spec.parent.template) {
+    attachPrefixes(state, spec.parent.template.groups, parent.atoms, null, spec.parent.template); // `tolueno`'s methyl…
+  }
   const prefixAtoms = [];
   attachPrefixes(state, spec.prefixes, parent.atoms, prefixAtoms);
   const valence = valenceError(state);

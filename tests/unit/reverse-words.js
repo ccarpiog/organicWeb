@@ -3,7 +3,8 @@
  * writes a tile sequence as the words on the tiles, `2 3 di met il pent
  * ano`, with `START` / `END` for the compound-branch controls, and reads
  * the open-chain, `ciclo` and benzene hydrocarbon rows of
- * tests/fixtures/names.tsv.
+ * tests/fixtures/names.tsv (the benzene ones with the retained templates
+ * and the orto/meta/para forms, R-4c).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -56,37 +57,57 @@ export function isCycloName(name) {
   return name.includes(RING_PREFIX) && /^[a-z0-9,()[\]{}-]+$/.test(name) && !/\d\(\d/.test(name);
 }
 
+/** The words of the retained templates (R-4c): `tolueno`, `estireno`, `xileno`, `mesitileno`. */
+const TEMPLATE_WORDS = TILES.filter((tile) => tile.kind === 'template').map((tile) => tile.text);
+
 /**
- * Tells whether a name is written with the syntax of phase R-4b: a
- * `benceno` or `fenil` name (letters without accents, digits, hyphens,
- * commas and enclosing marks only) that is no retained template and no old
- * orto/meta/para form — `tolueno`, `estireno`, `1,2-xileno`, `mesitileno`,
- * `o-xileno`, `p-dimetilbenceno` are the tiles of I-50c.
+ * Tells whether a name is written with the syntax of phases R-4b and R-4c: a
+ * `benceno`, `fenil` or retained-template name (letters without accents,
+ * digits, hyphens, commas and enclosing marks only), the old orto/meta/para
+ * forms included — `1,2-dimetilbenceno`, `(4-metilfenil)metano`, `tolueno`,
+ * `1,2-xileno`, `o-xileno`, `mesitileno`, `o-dimetilbenceno`.
  *
  * @param {string} name - A name.
- * @returns {boolean} True when R-4b reads it.
+ * @returns {boolean} True when R-4b / R-4c read it.
  */
 export function isBenzeneName(name) {
   const phenyl = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text}`;
-  return (name.includes(BENZENE_NAME) || name.includes(phenyl)) && /^[a-z0-9,()[\]{}-]+$/.test(name) && !/(?:^|[^a-z])[omp]-/.test(name);
+  return [BENZENE_NAME, phenyl, ...TEMPLATE_WORDS].some((word) => name.includes(word)) && /^[a-z0-9,()[\]{}-]+$/.test(name);
+}
+
+/**
+ * Tells whether a name uses the tiles of phase R-4c: a retained template or
+ * an orto/meta/para letter.
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for `tolueno`, `1,2-xileno`, `o-dimetilbenceno`…
+ */
+export function isTemplateName(name) {
+  return TEMPLATE_WORDS.some((word) => name.includes(word)) || /^[omp]-/.test(name);
 }
 
 /**
  * Reads the fixture rows (design.md §4.8): SMILES, name and the
- * alternatives column (`style=name` pairs separated by `;`).
+ * alternatives column (`style=name` pairs separated by `;`), with the `#`
+ * line of the section each row is in.
  *
- * @returns {Promise<{line: number, smiles: string, names: string[]}[]>} The rows.
+ * @returns {Promise<{line: number, smiles: string, names: string[], section: string}[]>} The rows.
  */
 export async function readFixtures() {
   const lines = (await readFile(FIXTURES, 'utf8')).split('\n');
   const rows = [];
+  let section = '';
   lines.slice(1).forEach((text, i) => {
-    if (text.trim() === '' || text.startsWith('#')) {
+    if (text.startsWith('#')) {
+      section = text;
+      return;
+    }
+    if (text.trim() === '') {
       return;
     }
     const [smiles, name, , , alternatives = ''] = text.split('\t');
     const others = alternatives.split(';').filter(Boolean).map((pair) => pair.slice(pair.indexOf('=') + 1));
-    rows.push({ line: i + 2, smiles, names: [name, ...others] });
+    rows.push({ line: i + 2, smiles, names: [name, ...others], section });
   });
   return rows;
 } // End of function readFixtures()
@@ -139,11 +160,11 @@ export function leafIndices(node) {
         n.trailing.forEach(visit);
         break;
       case 'parent':
-        out.push(...n.legacy, ...(n.legacyMultiplier === null ? [] : [n.legacyMultiplier]));
+        out.push(...n.legacy, ...(n.letter === null ? [] : [n.letter]), ...(n.legacyMultiplier === null ? [] : [n.legacyMultiplier]));
         visit(n.chain);
         break;
       case 'prefix':
-        out.push(...n.locants, ...(n.multiplier === null ? [] : [n.multiplier]));
+        out.push(...n.locants, ...(n.letter === null ? [] : [n.letter]), ...(n.multiplier === null ? [] : [n.multiplier]));
         visit(n.substituent);
         break;
       case 'branch':
@@ -159,7 +180,7 @@ export function leafIndices(node) {
         n.segments.forEach((s) => out.push(...s.locants, ...(s.multiplier === null ? [] : [s.multiplier]), s.ending));
         out.push(...n.fvLocants, ...(n.fv === null ? [] : [n.fv]));
         break;
-      default: // 'retained', 'stray'
+      default: // 'retained', 'benzene', 'template', 'stray'
         out.push(n.tile);
     }
   }; // End of function visit()

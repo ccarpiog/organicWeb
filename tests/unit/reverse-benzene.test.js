@@ -8,7 +8,8 @@
  * by readName(): the worked cases with the molecule each describes (compared
  * by aromatic key, never only by name), the fixture round trip over the
  * branch-only rows of the I-28 and I-42a benzene sections of
- * tests/fixtures/names.tsv, the closed loop over the oracle's benzene
+ * tests/fixtures/names.tsv (with their retained-template and orto/meta/para
+ * alternatives since I-50c, R-4c), the closed loop over the oracle's benzene
  * generators (generateBenzenes() and randomBenzene() without halogens or
  * alkoxy groups; pure imports, no Java) with removed-locant mutations, other
  * mutations, the names the app cannot draw, the diagnosis left out for
@@ -30,16 +31,26 @@ import { cloneMolecule } from '../../src/model/molecule.js';
 import { RING_SYSTEM_MESSAGES, validateForNaming } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { generateBenzenes, randomBenzene, seededRandom, randomInt } from '../../scripts/oracle/generate.mjs';
-import { seq, readFixtures, isMonocyclicHydrocarbon, isBenzeneName } from './reverse-words.js';
+import { seq, readFixtures, isMonocyclicHydrocarbon, isBenzeneName, isTemplateName } from './reverse-words.js';
 
 /** Benzene hydrocarbon fixture rows (the I-28 and I-42a sections; as in reverse-tokenize.test.js). */
 const EXPECTED_ROWS = 25;
 
-/** Their names and alternatives written with R-4b tiles, every one read back as correct / alternative. */
-const EXPECTED_COVERED = 31;
+/**
+ * Their names and alternatives, every one read back as correct /
+ * alternative: 31 written with the R-4b tiles, and since I-50c (R-4c) the 18
+ * written with a retained template or an orto/meta/para letter (`tolueno`
+ * ×2, `estireno`, the eight xylene forms, `mesitileno`, `o-` / `m-` /
+ * `p-dimetilbenceno` with the second Kekulé drawing of the 1,2 row,
+ * `p-dietenilbenceno`, `o-diisopropilbenceno`). None is skipped.
+ */
+const EXPECTED_COVERED = 49;
 
-/** Their alternatives left to I-50c (retained templates, o/m/p forms), skipped. */
-const EXPECTED_SKIPPED = 18;
+/** Of them, the names written with R-4c tiles. */
+const EXPECTED_TEMPLATE_NAMES = 18;
+
+/** The I-42a rows with halogen or alkoxy prefixes, outside the round trip until R-5a / R-5b. */
+const EXPECTED_LATER_ROWS = 10;
 
 /** Average time budget of one readName() call, in milliseconds (design.md §15.7; phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -228,7 +239,7 @@ test('benzene cases (R-4b): the verdict, the name shown and the molecule describ
     }
     if (kind === 'otherName') {
       assert.equal(verdict.message, otherNameMessage(name));
-      assert.equal(verdict.diagnosis, null, `${text}: the ring diagnosis messages arrive in I-50c`);
+      assert.equal(verdict.diagnosis, null, `${text}: the ring diagnosis messages arrive in I-50d`);
     }
     // The molecule drawn is the graph the engine named, with the student's reading on it.
     assert.ok(verdict.studentParent.atoms.every((id) => verdict.molecule.atoms.has(id)), text);
@@ -257,18 +268,17 @@ test('benzene cases (R-4b): left-out locants on benzene list the structures, Kek
   assert.equal(read('di met il benceno', { budget: { placements: 2 } }).kind, 'incomplete');
 }); // End of test 'benzene cases (R-4b): left-out locants on benzene list the structures…'
 
-test('fixture round trip (R-4b): the branch-only benzene rows of I-28 and I-42a, graph compared with the SMILES', async () => {
-  const rows = (await readFixtures()).filter((row) => isMonocyclicHydrocarbon(row.smiles) && isBenzeneName(row.names[0]));
+test('fixture round trip (R-4b, R-4c): the branch-only benzene rows of I-28 and I-42a, graph compared with the SMILES', async () => {
+  const fixtures = await readFixtures();
+  const rows = fixtures.filter((row) => isMonocyclicHydrocarbon(row.smiles) && isBenzeneName(row.names[0]));
   let covered = 0;
-  let skipped = 0;
+  let templates = 0;
   let elapsed = 0;
   for (const row of rows) {
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
-      if (!isBenzeneName(name)) {
-        skipped += 1; // `tolueno`, `estireno`, the xylenes, `mesitileno` and the o/m/p forms: tiles of I-50c.
-        continue;
-      }
+      assert.ok(isBenzeneName(name), `names.tsv:${row.line}: ${name} is no benzene name`);
+      templates += isTemplateName(name) ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
       const start = performance.now();
@@ -288,9 +298,12 @@ test('fixture round trip (R-4b): the branch-only benzene rows of I-28 and I-42a,
   } // End of the loop over the fixture rows
   assert.equal(rows.length, EXPECTED_ROWS);
   assert.equal(covered, EXPECTED_COVERED);
-  assert.equal(skipped, EXPECTED_SKIPPED);
+  assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
-}); // End of test 'fixture round trip (R-4b): the branch-only benzene rows of I-28 and I-42a…'
+  // Only the I-42a rows with halogen or alkoxy prefixes stay out (their tiles are R-5a / R-5b).
+  const later = fixtures.filter((row) => row.section.includes('(I-42a') && !isMonocyclicHydrocarbon(row.smiles));
+  assert.equal(later.length, EXPECTED_LATER_ROWS);
+}); // End of test 'fixture round trip (R-4b, R-4c): the branch-only benzene rows of I-28 and I-42a…'
 
 /** The closed loop's seeded benzenes (scripts/oracle/generate.mjs generateBenzenes(); design.md §15.7). */
 const LOOP = Object.freeze({ count: 400, seed: 4703, minSize: 6, maxSize: 14 });
@@ -301,10 +314,12 @@ const EXTRA = Object.freeze({ seed: 47031, count: 300, attempts: 3000 });
 /**
  * Minimum coverage of the closed loop: branch-only molecules (117 from
  * generateBenzenes(), up to 300 more from randomBenzene(), distinct by
- * aromatic key), names read back, removed-locant mutations and decisive
- * verdicts among them (the seeds give 411, 449, 968 and 968).
+ * aromatic key), names read back — those with a retained template or an
+ * orto/meta/para letter among them, since I-50c (R-4c) —, removed-locant
+ * mutations and decisive verdicts among them (the seeds give 411, 468, 19,
+ * 968 and 968).
  */
-const LOOP_MIN = Object.freeze({ molecules: 400, names: 440, removed: 950, decisive: 940 });
+const LOOP_MIN = Object.freeze({ molecules: 400, names: 460, templates: 15, removed: 950, decisive: 940 });
 
 /**
  * Tells whether a molecule has carbons only: a benzene with hydrocarbon
@@ -399,7 +414,7 @@ function locantLists(tree) {
 
 test('closed loop over the benzene generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, removed: 0, decisive: 0 };
+  const counts = { names: 0, templates: 0, removed: 0, decisive: 0 };
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
     assert.ok(naming.ok, naming.ok ? '' : naming.error.message);
@@ -407,9 +422,8 @@ test('closed loop over the benzene generators: engine name → tiles → readNam
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     assert.ok(isBenzeneName(naming.name), naming.name);
     for (const [i, name] of all.entries()) {
-      if (!isBenzeneName(name)) {
-        continue; // A retained template or an o/m/p form (I-50c).
-      }
+      assert.ok(isBenzeneName(name), name); // Retained templates and o/m/p forms too (R-4c).
+      counts.templates += isTemplateName(name) ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);
       const verdict = readName(ids);
@@ -441,6 +455,7 @@ test('closed loop over the benzene generators: engine name → tiles → readNam
   } // End of the loop over the molecules
   assert.ok(molecules.length >= LOOP_MIN.molecules, `${molecules.length} molecules`);
   assert.ok(counts.names >= LOOP_MIN.names, `${counts.names} names read back`);
+  assert.ok(counts.templates >= LOOP_MIN.templates, `${counts.templates} template and o/m/p names read back`);
   assert.ok(counts.removed >= LOOP_MIN.removed, `${counts.removed} removed-locant mutations`);
   assert.ok(counts.decisive >= LOOP_MIN.decisive, `${counts.decisive} decisive verdicts`);
 }); // End of test 'closed loop over the benzene generators…'
@@ -470,7 +485,7 @@ test('mutations of benzene names: the verdict and the molecule the name describe
     assert.equal(aromaticKey(verdict.molecule), keyOf(smiles), `${text} builds another graph`);
     if (kind === 'otherName') {
       assert.equal(verdict.message, otherNameMessage(name));
-      assert.equal(verdict.diagnosis, null, `${text}: the ring diagnosis messages arrive in I-50c`);
+      assert.equal(verdict.diagnosis, null, `${text}: the ring diagnosis messages arrive in I-50d`);
     }
   } // End of the loop over the mutations
   // The chain diagnoses stand: the benzene tiles change nothing for them.

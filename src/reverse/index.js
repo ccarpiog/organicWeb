@@ -1,9 +1,21 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b): `readName(tiles) → verdict` for open-chain and
- * monocyclic hydrocarbon names (`ciclo` parents and ring branches; the
+ * R-1b, R-1c, R-4a, R-4b, R-4c): `readName(tiles) → verdict` for open-chain
+ * and monocyclic hydrocarbon names (`ciclo` parents and ring branches; the
  * `benceno` parent with branch prefixes, `fenil` and substituted
- * `(4-metilfenil)` branches). Pure, no DOM.
+ * `(4-metilfenil)` branches; the retained templates `tolueno`, `estireno`,
+ * `xileno`, `mesitileno` and the orto/meta/para letters). Pure, no DOM.
+ *
+ * The templates and the letters need nothing of their own here: the engine
+ * gives `tolueno`, `1,2-xileno`, `o-xileno`, `mesitileno`… and
+ * `o-dimetilbenceno` as alternatives of the bare molecules (design.md
+ * §14.4–§14.5), so the exact comparison of step 5 finds them (`alternative`,
+ * with the engine's own label: the traditional one for `p-xileno`, the
+ * orto/meta/para one for `p-dimetilbenceno`); a template with prefixes of the
+ * student's (`4-metiltolueno`), which the engine never writes, describes its
+ * molecule and gets `otherName`, or `ambiguous` with left-out locants;
+ * `xileno` alone is three structures, listed as `1,2-xileno`, `1,3-xileno`
+ * and `1,4-xileno` (step 6).
  *
  * Pipeline (design.md §15.5.3):
  *
@@ -33,7 +45,7 @@
  * 7. **One structure** (all placements equivalent, or no left-out locant)
  *    → `otherName`, with the student's main mistake (diagnose.js, R-3:
  *    `diagnosis`, null when no rule applies — always for a name with a ring,
- *    `ciclo` or benzene, until the ring messages of I-50c), or `outOfScope`
+ *    `ciclo`, benzene or a template, until the ring messages of I-50d), or `outOfScope`
  *    when the engine refuses it;
  * 8. several structures, none matching → `ambiguous`, with their names; but
  *    when the engine refuses every one of them (`diciclohexilpropano`: two

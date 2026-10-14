@@ -141,7 +141,7 @@ test('a substituted phenyl on a chain draws the molecule the app names on its ri
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
   await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: 1-(4-metilfenil)propano');
-  // No diagnosis for benzene yet (phase I-50c): the whole message, with no diagnosis line.
+  // No diagnosis for benzene yet (phase I-50d): the whole message, with no diagnosis line.
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
     + '«1-metil-4-propilbenceno». Pulsa «Ver paso a paso» para ver por qué.');
   await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);

@@ -4,9 +4,10 @@
  * student's name describes one molecule, which the app names otherwise —
  * the student's **main mistake**, one diagnosis: the first rule of the list
  * below that applies. Pure, no DOM; open-chain hydrocarbons. A name with a
- * ring (`ciclo`, phase R-4a: a ring parent or a ring branch at any depth),
+ * ring (`ciclo`, phase R-4a: a ring parent or a ring branch at any depth;
+ * `benceno`, `fenil`, R-4b; a retained template such as `tolueno`, R-4c),
  * or whose molecule the engine names on a ring, gets no diagnosis yet (null:
- * the verdict stands alone); the ring messages arrive in phase I-50c.
+ * the verdict stands alone); the ring messages arrive in phase I-50d.
  *
  * The rules, in order (first match wins):
  *

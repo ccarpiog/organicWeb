@@ -6,8 +6,8 @@
  *
  * Every Spanish text comes from the naming lexicon (lexicon.es.js: stem(),
  * multiplier(), compoundMultiplier(), ENDINGS, FREE_VALENCE_SUFFIXES,
- * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME), never
- * retyped here;
+ * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
+ * TRADITIONAL_NAMES, POSITIONAL_LETTERS), never retyped here;
  * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
  *
@@ -27,16 +27,23 @@
  *   nondetachable prefix `ciclo` before a root: a ring of that many carbons,
  *   as the parent — `ciclohexano` — or a branch — `ciclohexil`; value
  *   'cyclo'), 'benzene' (the retained parent `benceno`, a whole word: the
- *   benzene ring as the parent, R-4b; value 'benzene');
+ *   benzene ring as the parent, R-4b; value 'benzene'), 'template' (a
+ *   retained benzene parent with groups of its own, R-4c: `tolueno`,
+ *   `estireno`, `xileno`, `mesitileno`; value the TEMPLATES key),
+ *   'positional' (the old orto/meta/para letters `o`, `m`, `p`, R-4c: the two
+ *   occupied positions of a benzene ring; value the locant of the second
+ *   one, 2 | 3 | 4, the POSITIONAL_LETTERS keys);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
- *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos»);
+ *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
+ *   the letters o, m, p from R-4c), 'traditional' («Nombres tradicionales»,
+ *   R-4c: the templates; later phases add acetona, ácido acético…);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
  *   multipliers from hepta / heptakis, roots from undec).
  */
 
 import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
-  RING_PREFIX, BENZENE_NAME,
+  RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, POSITIONAL_LETTERS, groupName,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -72,6 +79,63 @@ export const BENZENE_ID = 'ring-benzene';
 /** Id of the `fenil` tile (design.md §15.8 R-4, phase R-4b: the benzene ring as a branch). */
 export const PHENYL_ID = 'retained-phenyl';
 
+/** Ids of the orto/meta/para letters by the locant of the second occupied position (design.md §14.4; phase R-4c). */
+export const POSITIONAL_IDS = Object.freeze({ 2: 'positional-ortho', 3: 'positional-meta', 4: 'positional-para' });
+
+/**
+ * The defining group of a retained benzene template: its chain of carbons
+ * bonded by carbon 1, with the double bonds of that chain by their lower
+ * locant (a methyl; the ethenyl of `estireno`).
+ */
+const METHYL = Object.freeze({ length: 1, double: Object.freeze([]) });
+const ETHENYL = Object.freeze({ length: 2, double: Object.freeze([1]) });
+
+/**
+ * The retained benzene parents of the «Nombres tradicionales» row (design.md
+ * §14.5, §15.8 R-4; phase R-4c), keyed by the tile value: a benzene ring
+ * with `count` identical defining groups `group`, at the ring carbons
+ * `positions` — or, for `xileno`, where the student says (`1,2-xileno`, two
+ * number tiles, or `o-xileno`, a letter; left out, they are searched).
+ * `id` is the TRADITIONAL_NAMES id of the tile's text. The forward engine
+ * gives these names for the bare molecules only (never a substituted
+ * tolueno, estireno, xileno or mesitileno, aromatic.js); a student's prefixes
+ * on a template are still read, numbered on its ring, the defining group at
+ * the carbons the template says. Later phases add the retained parents with
+ * a principal group (`fenol`, `anilina`, `ácido benzoico`…).
+ */
+export const TEMPLATES = Object.freeze({
+  toluene: Object.freeze({ id: 'toluene', group: METHYL, count: 1, positions: Object.freeze([1]) }),
+  styrene: Object.freeze({ id: 'styrene', group: ETHENYL, count: 1, positions: Object.freeze([1]) }),
+  xylene: Object.freeze({ id: 'xylene12', group: METHYL, count: 2, positions: null }),
+  mesitylene: Object.freeze({ id: 'mesitylene', group: METHYL, count: 3, positions: Object.freeze([1, 3, 5]) }),
+});
+
+/**
+ * The name of a template's defining group as the messages say it
+ * (lexicon groupName()): `metilo`, `etenilo`.
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @returns {string} The group's name.
+ */
+export function templateGroupWord(value) {
+  const { group } = TEMPLATES[value];
+  const unsaturation = group.double.length > 0 ? ENDINGS.double.slice(0, -1) : '';
+  return groupName(`${stem(group.length)}${unsaturation}${FREE_VALENCE_SUFFIXES[1]}`);
+}
+
+/**
+ * The text of a template tile: its TRADITIONAL_NAMES name, without the
+ * locants the student writes on tiles of their own (`1,2-xileno` →
+ * `xileno`).
+ *
+ * @param {{id: string, positions: number[]|null}} template - A TEMPLATES entry.
+ * @returns {string} The word.
+ */
+function templateWord(template) {
+  const name = TRADITIONAL_NAMES[template.id];
+  return template.positions ? name : name.slice(name.indexOf('-') + 1);
+}
+
 /**
  * Creates one frozen tile.
  *
@@ -91,7 +155,8 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
 /**
  * Builds the whole catalogue in dialog order: numbers, multipliers (simple,
  * then compound), roots, endings, branch words and controls, rings (`ciclo`,
- * `benceno`, `fenil`).
+ * `benceno`, `fenil`, the letters `o`, `m`, `p`), traditional names
+ * (`tolueno`, `estireno`, `xileno`, `mesitileno`).
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -126,6 +191,12 @@ function buildCatalogue() {
   tiles.push(makeTile(BENZENE_ID, 'benzene', 'benzene', 'rings', BENZENE_NAME));
   const phenyl = RETAINED_PREFIXES.phenyl;
   tiles.push(makeTile(PHENYL_ID, 'retained', 'phenyl', 'rings', `${phenyl.italic}${phenyl.text}`, false, { italic: phenyl.italic }));
+  for (const [locant, id] of Object.entries(POSITIONAL_IDS)) {
+    tiles.push(makeTile(id, 'positional', Number(locant), 'rings', POSITIONAL_LETTERS[locant]));
+  }
+  for (const [value, template] of Object.entries(TEMPLATES)) {
+    tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(template)));
+  }
   return tiles;
 } // End of function buildCatalogue()
 

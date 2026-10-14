@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b). Pure, no DOM, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c). Pure, no DOM, no
  * coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -15,7 +15,14 @@
  *   every slot, so later families add their roles (inner carbons of a
  *   ketone, `N`) here only. A benzene ring (`benceno`, `fenil`; R-4b) has no
  *   bond slots: its carbons each already use three bonds (two in the ring,
- *   one of them double), so one single-bond branch fits on each.
+ *   one of them double), so one single-bond branch fits on each. A retained
+ *   template (R-4c) is that ring with its own groups (build.js
+ *   templateGroups()), modelled like prefixes on it: the groups it places by
+ *   rule fill their carbons (`tolueno`: carbon 1), so the student's prefixes
+ *   are searched on the others, numbered from the template's group; the two
+ *   methyls of `xileno` without locants or letter are one group of left-out
+ *   slots like those of `dimetilbenceno`, so `xileno` is three structures,
+ *   filled as `1,2-` / `1,3-` / `1,4-xileno`.
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -70,7 +77,7 @@
 
 import { CARBON_VALENCE, cloneMolecule } from '../model/molecule.js';
 import { aromaticKey, aromaticIsomorphism } from '../model/graph.js';
-import { build, checkSpec, attachmentOrder, ringRefusal, isRing, isAromatic } from './build.js';
+import { build, checkSpec, attachmentOrder, ringRefusal, isRing, isAromatic, templateGroups } from './build.js';
 import { TILES } from './tiles.js';
 
 /**
@@ -285,7 +292,7 @@ function addChain(model, owner, branch) {
  */
 function modelOf(spec) {
   const model = { chains: [], groups: [], index: new Map(spec.leftOut.map((slot, i) => [slot, i])) };
-  addChain(model, { ...spec.parent, prefixes: spec.prefixes }, false);
+  addChain(model, { ...spec.parent, prefixes: [...spec.prefixes, ...templateGroups(spec)] }, false); // A template's groups too (R-4c).
   model.groups.sort((p, q) => p.indices[0] - q.indices[0]);
   return model;
 }
@@ -697,7 +704,9 @@ export function fillVariants(spec) {
  * left-out lists are found by their tile range alone, which no two lists
  * share (a prefix's range ends with its branch, a segment's with its
  * ending), whatever their role (`carbon`, `phenylCarbon`, `bond`,
- * `ringBond`); `benceno` (R-4b) has no list of its own.
+ * `ringBond`); `benceno` (R-4b) has no list of its own, and `xileno` (R-4c)
+ * gets its methyls' positions before it (`1,2-xileno`), its list found by
+ * the template tile's range. A letter is never left out.
  *
  * @param {object} tree - The error-free parse() tree the NameSpec was read from.
  * @param {object} spec - Its NameSpec.
@@ -734,13 +743,13 @@ export function filledTree(tree, spec, placement, keep = {}) {
     return [...values].sort((p, q) => p - q).map((value) => tiles.push(NUM_TILES.get(value)) - 1);
   };
   /**
-   * A chain node with its segments filled (ring bonds for a ring); `benceno` as it is.
+   * A chain node with its segments filled (ring bonds for a ring); `benceno` and a template as they are.
    *
-   * @param {object} chain - A chain or benzene node.
+   * @param {object} chain - A chain, benzene or template node.
    * @returns {object} The filled node.
    */
   const fillChain = (chain) => {
-    if (chain.type === 'benzene') {
+    if (chain.type === 'benzene' || chain.type === 'template') {
       return chain;
     }
     return { ...chain, segments: chain.segments.map((seg) => ({ ...seg, locants: numbers(seg.range, seg.locants) })) };
@@ -767,5 +776,7 @@ export function filledTree(tree, spec, placement, keep = {}) {
     return { ...item, locants: numbers(item.range, item.locants), substituent: fillSubstituent(item.substituent) };
   }
   const items = tree.items.map(fillItem);
-  return { ...tree, tiles, items, parent: { ...tree.parent, chain: fillChain(tree.parent.chain) } };
+  const { parent } = tree;
+  const legacy = parent.chain.type === 'template' ? numbers(parent.chain.range, parent.legacy) : parent.legacy;
+  return { ...tree, tiles, items, parent: { ...parent, legacy, chain: fillChain(parent.chain) } };
 } // End of function filledTree()
