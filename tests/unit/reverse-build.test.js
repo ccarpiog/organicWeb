@@ -11,7 +11,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parse } from '../../src/reverse/parse.js';
 import { interpret } from '../../src/reverse/interpret.js';
-import { build, checkSpec, specCarbons, attachmentOrder, BUILD_ERROR_CODES } from '../../src/reverse/build.js';
+import { build, checkSpec, specCarbons, attachmentOrder, ownPrefixAtoms, BUILD_ERROR_CODES } from '../../src/reverse/build.js';
 import { slotGroups } from '../../src/reverse/search.js';
 import { readName } from '../../src/reverse/index.js';
 import { parseSmiles } from '../../src/model/smiles.js';
@@ -169,6 +169,44 @@ test('build: the molecule of a NameSpec and a placement, numbered as the student
   assert.equal(molecule.atoms.size, 19);
   assert.throws(() => build(specOf('met il pent ano')), /left-out slots/);
 }); // End of test 'build: the molecule of a NameSpec and a placement, numbered as the student numbered it'
+
+test('ownPrefixAtoms(): a compound branch\'s own branches, cut from its atoms in creation order, at every depth', () => {
+  const names = [
+    '5 5 bis START 2 2 di met il prop il END non ano',
+    '8 START 2 prop ano 2 iliden hex il END pentadec ano',
+    '7 START 2 START 2 met il prop il END prop il END tridec ano',
+    '5 START 2 met il 2 START met ano 1 il END prop il END non ano',
+  ];
+  for (const words of names) {
+    const spec = specOf(words);
+    const { molecule, prefixAtoms } = build(spec);
+    let seen = 0;
+    /**
+     * Checks the own branches of one branch occurrence, then theirs: each slice joins the rest of the molecule by one
+     * bond, to the carbon of the branch's own chain its locant names, and has as many carbons as its branch.
+     *
+     * @param {object} sub - The branch's SubstituentSpec.
+     * @param {number[]} atoms - Its atoms in creation order.
+     * @returns {void}
+     */
+    const check = (sub, atoms) => {
+      ownPrefixAtoms(sub, atoms).forEach((slices, k) => {
+        const prefix = sub.prefixes[k];
+        slices.forEach((slice, occurrence) => {
+          seen += 1;
+          const inside = new Set(slice);
+          const out = [...molecule.bonds.values()].filter((b) => inside.has(b.a) !== inside.has(b.b));
+          assert.equal(out.length, 1, `${words}: one bond leaves the branch`);
+          const outer = inside.has(out[0].a) ? out[0].b : out[0].a;
+          assert.equal(outer, atoms[prefix.slots[occurrence].value - 1], `${words}: hangs from its locant's carbon`);
+          check(prefix.substituent, slice);
+        });
+      });
+    }; // End of function check()
+    prefixAtoms.forEach((o) => check(spec.prefixes[o.prefix].substituent, o.atoms));
+    assert.ok(seen > 0, `${words}: no own branches`);
+  } // End of the loop over the names
+}); // End of test 'ownPrefixAtoms(): a compound branch's own branches, cut from its atoms in creation order, at every depth'
 
 test('LOCANT_RANGE: a locant beyond its chain — the parent, a branch\'s own chain, a free valence, a bond', () => {
   assertError('7 met il pent ano', 'LOCANT_RANGE', [0, 1], 'La cadena de 5 carbonos va del 1 al 5: no hay carbono 7.');

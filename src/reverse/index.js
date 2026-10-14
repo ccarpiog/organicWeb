@@ -19,7 +19,9 @@
  *    one of their placements → one: `missingLocants` (with that filled
  *    name), several: `ambiguous`;
  * 7. **One structure** (all placements equivalent, or no left-out locant)
- *    → `otherName`, or `outOfScope` when the engine refuses it;
+ *    → `otherName`, with the student's main mistake (diagnose.js, R-3:
+ *    `diagnosis`, null when no rule applies), or `outOfScope` when the
+ *    engine refuses it;
  * 8. several structures, none matching → `ambiguous`, with their names.
  *
  * Verdicts (design.md §15.3; Spanish drafts pending teacher review):
@@ -52,6 +54,7 @@ import { assemble } from './assemble.js';
 import { interpret } from './interpret.js';
 import { checkSpec } from './build.js';
 import { searchStructures, filledTree, placementReading } from './search.js';
+import { diagnose, MAX_READINGS } from './diagnose.js';
 
 /** Verdict kinds (design.md §15.3), in the order of its table. */
 export const VERDICT_KINDS = Object.freeze([
@@ -117,6 +120,10 @@ export const VERDICT_TEXTS = Object.freeze({
  * @property {VerdictError[]} errors - `invalid`: the parser's errors, or the one structural error; else [].
  * @property {string[]} notes - Extra lines shown beside the verdict (the old-style note).
  * @property {boolean} draw - Whether the UI draws `molecule` (correct, alternative, missingLocants, otherName).
+ * @property {object|null} [diagnosis] - `otherName` only (no other verdict has the field): the student's main mistake
+ *   (diagnose.js Diagnosis), or null when no rule applies. `message` stays the §15.3 text; the results panel puts the
+ *   diagnosis's message between its two sentences. Its `step` belongs to the explanation of the naming in its `style`
+ *   (diagnose.js diagnosisExplanation()), not always to that of `naming`.
  */
 
 /**
@@ -264,13 +271,33 @@ function drawnFields(spec, structure, placement) {
 } // End of function drawnFields()
 
 /**
+ * The diagnosis of an `otherName` verdict (diagnose.js), or null should
+ * the diagnosis itself fail (a bug): the verdict, which draws the molecule
+ * and gives its name, never depends on it.
+ *
+ * @param {{tree: object, spec: object}} name - The student's tree and NameSpec.
+ * @param {object} fields - drawnFields() of the drawn placement (molecule, naming, the student's reading).
+ * @param {() => object[]} others - Gives the readings of the structure's other placements (left-out locants), built only here.
+ * @param {(mol: object, options?: object) => object} namer - readName()'s naming function (for the student's prefix style).
+ * @returns {object|null} The diagnosis, or null.
+ */
+function diagnoseSafely(name, fields, others, namer) {
+  try {
+    return diagnose(name, fields, others(), namer);
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
  * Reads a name built from tiles and judges it (design.md §15.3, §15.5.3):
  * the molecule it describes and how the app names that molecule.
  *
  * @param {(string|object)[]} tiles - Tile ids or catalogue tiles (tiles.js), in the student's order.
- * @param {{namer?: (mol: object) => object, budget?: {placements?: number, namings?: number, ms?: number},
+ * @param {{namer?: (mol: object, options?: object) => object, budget?: {placements?: number, namings?: number, ms?: number},
  *   now?: () => number, cache?: Map<string, object>}} [options] - `namer`: the naming function (default
- *   nameMolecule(); tests inject a refusal, since the engine names every open-chain hydrocarbon within its caps);
+ *   nameMolecule(); tests inject a refusal, since the engine names every open-chain hydrocarbon within its caps; the
+ *   diagnosis of an `otherName` also calls it with `{prefixStyle}` for a name in another prefix style, diagnose.js);
  *   `budget`, `now`, `cache`: the search's limits, clock and naming cache (search.js searchStructures(); its time
  *   limit also bounds steps 5–8 here).
  * @returns {Verdict} The verdict.
@@ -415,8 +442,11 @@ export function readName(tiles, options = {}) {
       if (!structure.naming.ok) {
         return verdict('outOfScope', `${VERDICT_TEXTS.outOfScope} ${structure.naming.error.message}`, assembled, { ...fields, notes });
       }
+      // The other placements of left-out locants are other readings of the same name (diagnose() keeps the kindest).
+      const others = spec.leftOut.length > 0 ? structure.placements.slice(1, MAX_READINGS) : [];
+      const diagnosis = diagnoseSafely({ tree, spec }, fields, () => others.map((p) => placementReading(spec, structure, p)), namer);
       return verdict('otherName', `Esta es la molécula que describe tu nombre, pero se llama «${structure.naming.name}». `
-        + `${VERDICT_TEXTS.stepByStep}`, assembled, { ...fields, notes, draw: true });
+        + `${VERDICT_TEXTS.stepByStep}`, assembled, { ...fields, notes, draw: true, diagnosis });
     }
 
     // Step 8, several structures, none matching: named ones first, refusals kept apart.

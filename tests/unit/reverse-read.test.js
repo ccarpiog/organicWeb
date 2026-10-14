@@ -779,7 +779,9 @@ test('every verdict has the documented shape', () => {
   ];
   assert.deepEqual([...new Set(verdicts.map((v) => v.kind))].sort(), [...VERDICT_KINDS].sort());
   for (const verdict of verdicts) {
-    assert.deepEqual(Object.keys(verdict).sort(), [...fields].sort(), verdict.kind);
+    // An otherName verdict also carries its diagnosis (diagnose.js, R-3); no other verdict has the field.
+    const expected = verdict.kind === 'otherName' ? [...fields, 'diagnosis'] : fields;
+    assert.deepEqual(Object.keys(verdict).sort(), [...expected].sort(), verdict.kind);
     assert.equal(typeof verdict.message, 'string');
     assert.ok(verdict.message.length > 0);
     assert.ok(Array.isArray(verdict.spans) && verdict.spans.length > 0);

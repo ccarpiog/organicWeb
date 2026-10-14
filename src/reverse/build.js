@@ -388,6 +388,30 @@ function attachPrefixes(state, prefixes, atoms, record = null) {
 } // End of function attachPrefixes()
 
 /**
+ * The atoms of each occurrence of a branch's own prefixes (a compound
+ * branch's), cut from the atoms of one occurrence of the branch in the
+ * order build() created them — prefixAtoms `atoms`, an order search.js
+ * placementReading() keeps: buildSubstituent() creates the branch's own
+ * chain first (a retained word's whole template), then attachPrefixes()
+ * each own prefix's occurrences one after another, in tile order, each
+ * with all of its atoms before the next. For the diagnosis (diagnose.js),
+ * which compares branches inside a compound branch by their structure.
+ *
+ * @param {object} sub - The branch's SubstituentSpec.
+ * @param {number[]} atoms - The atoms of one occurrence of the branch, in creation order.
+ * @returns {number[][][]} Per own prefix (spec order), per occurrence (slot order), its atoms in creation order.
+ */
+export function ownPrefixAtoms(sub, atoms) {
+  let next = sub.kind === 'retained' ? substituentCarbons(sub) : sub.length;
+  return sub.prefixes.map((prefix) => prefix.slots.map(() => {
+    const size = substituentCarbons(prefix.substituent);
+    const slice = atoms.slice(next, next + size);
+    next += size;
+    return slice;
+  }));
+}
+
+/**
  * The ids handed out between two counter values (model/molecule.js hands
  * them out in increasing order).
  *

@@ -112,11 +112,15 @@ test('src/reverse never retypes a tile word', async () => {
  * Engine modules each src/reverse/ file may import besides its siblings and
  * the lexicon: the molecule model and its caps to build (R-1b), the naming
  * entry point to judge, the carbon valence and the structural key to search
- * (R-1c). Never render.js or the engine's grouping (design.md §15.4): the
- * assembler works from the tree alone.
+ * (R-1c), and for the diagnosis (R-3) the engine's own comparators, chain
+ * key, locant text, prefix styles and naming, and the branch key. Never
+ * render.js or the engine's grouping (design.md §15.4): the assembler works
+ * from the tree alone.
  */
 const ENGINE_IMPORTS = Object.freeze({
   'build.js': ['../model/molecule.js', '../model/validate.js'],
+  'diagnose.js': ['../naming/index.js', '../naming/numbering.js', '../naming/parent.js', '../naming/structure.js',
+    '../naming/substituent.js', '../model/graph.js'],
   'index.js': ['../naming/index.js'],
   'search.js': ['../model/molecule.js', '../model/graph.js'],
 });
@@ -127,7 +131,8 @@ test('src/reverse is pure and imports from the engine only what it needs', async
     /\b(?:document|window|navigator|localStorage|sessionStorage)\b/,
   ];
   const files = await reverseFiles();
-  assert.deepEqual(files.sort(), ['assemble.js', 'build.js', 'index.js', 'interpret.js', 'parse.js', 'search.js', 'tiles.js', 'tokenize.js']);
+  assert.deepEqual(files.sort(), ['assemble.js', 'build.js', 'diagnose.js', 'index.js', 'interpret.js', 'parse.js', 'search.js', 'tiles.js',
+    'tokenize.js']);
   for (const file of files) {
     const lines = (await readFile(path.join(REVERSE, file), 'utf8')).split('\n');
     lines.forEach((line, i) => {

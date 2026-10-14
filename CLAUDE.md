@@ -34,7 +34,14 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   canvas is touched, the molecule loaded as one undoable edit and centred,
   then `results.js` `showVerdict()`: the ordered drawing and the verdict
   block above «Se llama:») are done, with the Ayuda section «Del nombre al
-  dibujo»; the diagnosis of an `otherName` verdict (R-3) is next.
+  dibujo»; `diagnose.js` names the main mistake of an `otherName` verdict
+  (R-3, eleven rules in order, chain rules read from the engine's trace in
+  the student's prefix style, recognised by the branches' structure;
+  `readName()` attaches it as `diagnosis`, with its explain() step id —
+  of the explanation of the naming in that style, `diagnosisExplanation()`
+  — and the student's chain beside the parent), and
+  showing it in the results panel (message, highlight, «Ver el paso») is
+  next.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

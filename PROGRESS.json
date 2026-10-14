@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T19:18:11Z",
+  "updated": "2026-10-14T20:14:43Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -586,8 +586,23 @@
     {
       "id": "I-49",
       "title": "v4 R-3 Hydrocarbon diagnosis",
+      "status": "in_progress",
+      "summary": "Split into I-49a (diagnosis engine, done) and I-49b (diagnosis in the results panel, queued)."
+    },
+    {
+      "id": "I-49a",
+      "title": "v4 R-3a Diagnosis engine",
+      "status": "done",
+      "risk": "high",
+      "summary": "Names the main mistake of a hydrocarbon name that the app names differently, in a pure diagnose module.",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-49a.md",
+      "narrative": "docs/progress-archive/i-49a.md"
+    },
+    {
+      "id": "I-49b",
+      "title": "v4 R-3b Diagnosis in the results panel",
       "status": "queued",
-      "summary": "Explains the main mistake of a hydrocarbon name that differs from the app's name and links it to the stepper."
+      "summary": "Shows the diagnosis in the verdict, highlights the student's chain and opens the stepper at that rule's step."
     },
     {
       "id": "I-50",

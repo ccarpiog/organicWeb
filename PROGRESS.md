@@ -75,7 +75,9 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-47c | v4 R-1c Left-out locants (search, `missingLocants`/`ambiguous`/`incomplete`) | same, "R-1c" | done — `docs/progress-archive/i-47c.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-47c.md` |
 | I-48a | v4 R-2a The «¿Cómo se dibuja?» dialog | same, "R-2a" | done — `docs/progress-archive/i-48a.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-48a.md` |
 | I-48b | v4 R-2b «Dibujar», results entry point, Ayuda, e2e | same, "R-2b" | done — `docs/progress-archive/i-48b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-48b.md` |
-| I-49 | v4 R-3 Diagnosis for hydrocarbons | same, "R-3" | queued | — | — |
+| I-49 | v4 R-3 Diagnosis for hydrocarbons | same, "R-3" | split into I-49a (engine) and I-49b (UI) | — | — |
+| I-49a | v4 R-3a Diagnosis engine (`diagnose.js`) | same, "R-3" | done — `docs/progress-archive/i-49a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-49a.md` |
+| I-49b | v4 R-3b Diagnosis in the results panel (message, highlight, «Ver el paso», Ayuda, e2e) | same, "R-3" | queued | — | — |
 | I-50 | v4 R-4 Rings and retained aromatic templates | same, "R-4" | queued | — | — |
 | I-51a | v4 R-5a Halogens and alcohols | same, "R-5a" | queued | — | — |
 | I-51b | v4 R-5b Ethers | same, "R-5b" | queued | — | — |
@@ -120,28 +122,30 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select and run I-49 (v4 R-3): diagnosis for hydrocarbons. New pure module
-`src/reverse/diagnose.js` (design §15.4: «the main mistake of an `otherName` verdict») that, for an
-`otherName` verdict of an open-chain hydrocarbon, names the student's main mistake, in this rule
-order: a branch on an end carbon lengthens the chain; a longer chain exists; more multiple bonds or
-more substituents (the naming trace rule at which the student's chain was dropped); numbering from
-the other end; prefixes not alphabetical (ignoring di/tri and `tert-`); identical branches not
-grouped; di vs bis; locants not ascending; needless or missing locants; `eno` after `ino`; old
-style. UI: the diagnosis goes into the verdict block between «…pero se llama «X».» and «Pulsa «Ver
-paso a paso» para ver por qué.» (`showVerdict()` in `src/ui/results.js`); the student's chain is
-highlighted beside the parent on the canvas; «Ver el paso» opens the stepper at that rule's step.
-Tests per §15.7 (one per diagnosis, mutations → expected diagnosis; e2e on both projects). Ayuda
-line in «Del nombre al dibujo». Spec: design §15.3 `otherName`, §15.4, §15.7, §15.8 "R-3", §15.9 —
-read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high
-(diagnosis must agree with the naming engine's trace); worker opus; split R-3 into engine (I-49a)
-and UI (I-49b) if it does not fit one worker. Commit by explicit paths. Update the `CLAUDE.md` v4
-sentence (it says R-3 diagnosis is next).
+Select and run I-49b (v4 R-3b): show the I-49a diagnosis in the results panel. For an `otherName`
+verdict with a non-null `verdict.diagnosis`: its `message` goes into the verdict block between
+«…pero se llama «X».» and «Pulsa «Ver paso a paso» para ver por qué.» (`showVerdict()` in
+`src/ui/results.js`); the student's chain (`diagnosis.student` atom/bond ids) is highlighted
+beside the app's parent (`diagnosis.parent`) on the canvas, distinguishable and accessible (also
+in the 90° view and with the highlight switch `organicWeb.highlights`); a «Ver el paso» button
+opens the stepper at the diagnosis's step — **via `diagnosisExplanation(verdict, explain)` from
+`src/reverse/diagnose.js` → `{naming, steps, index}`** (the explanation of the naming in the
+student's prefix style), never `explain(verdict.naming)`; when that style differs from the default,
+decide and document how the panel shows it (the «Se llama» name stays the app's default name).
+Decide whether an `OLD_STYLE` diagnosis and the existing old-style note both show (avoid saying it
+twice). A `null` diagnosis keeps today's text. Ayuda line in «Del nombre al dibujo»; e2e on both
+projects (dev server + `file://`): a diagnosed name shows its message, highlight and «Ver el paso»
+lands on the right step; Deshacer clears it; keyboard only; narrow viewport. Update the `CLAUDE.md`
+v4 sentence (it says showing the diagnosis is next). Spec: design §15.3 `otherName`, §15.8 "R-3",
+§15.9 — read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*).
+Risk high (UI over a new API; stepper context); worker opus. Commit by explicit paths.
 
-- **Builds on I-48b** (`docs/progress-archive/i-48b.md`): `drawVerdict()` in
-  `src/ui/draw-name.js`, `showVerdict()` entry point in `src/ui/results.js` (verdict block,
-  ordered drawing registered after `showResult()`), `loadMolecule(…, {center: true})` in
-  `src/editor/editor.js`; `readName()` verdict shape in `src/reverse/index.js` (`filled`,
-  `candidates`, molecule, `naming`, `studentParent`, `prefixAtoms`).
+- **Builds on I-49a** (`docs/progress-archive/i-49a.md`): `diagnose.js` exports `diagnose`,
+  `diagnosisNaming`, `diagnosisExplanation`, `diagnosisStepIndex`, `DIAGNOSIS_TEXTS`,
+  `DIAGNOSIS_PHRASES`, `DIAGNOSES`; diagnosis fields `{code, rule, traceRule, message, step, style,
+  student, parent, focus, tiles}`; and on I-48b (`docs/progress-archive/i-48b.md`): `drawVerdict()`
+  in `src/ui/draw-name.js`, `showVerdict()` in `src/ui/results.js`, `loadMolecule(…, {center:
+  true})` in `src/editor/editor.js`.
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6).
@@ -305,6 +309,9 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   {center: true})` in `src/editor/editor.js`; tests `tests/unit/draw-name.test.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
+- Diagnosis (I-49a): `src/reverse/diagnose.js` (`diagnose`, `diagnosisExplanation`,
+  `diagnosisStepIndex`, `DIAGNOSIS_TEXTS`); `ownPrefixAtoms()` in `src/reverse/build.js`; tests
+  `tests/unit/reverse-diagnose.test.js`.
 
 ## Verification (last phases)
 
@@ -313,6 +320,8 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - I-48b: `npm test` 0 (1832) · `npm run check` 0 (165 files) · `npm run build` 0 ·
   `npm run e2e -- --reporter=dot` 0 (439, source + dist); after the review fix `npm test` 0 (1833) ·
   `check` 0 (165) · `build` 0 · `e2e` 0 (445).
+- I-49a: `npm test` 0 (1844) · `check` 0 (167) · `build` 0 · `e2e` 0 (445); after the review fixes
+  `npm test` 0 (1848) · `check` 0 (167) · `build` 0 · `e2e` 0 (445).
 
 ## Open risks / deviations
 
@@ -353,31 +362,12 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   carbonos"; the ring step calls an ester prefix on the ring «una rama»; Ayuda/example wording not
   teacher-reviewed.
 
-- I-42a: `1-metil-4-metoxibenceno` (Spanish alphabetical order) instead of the item's
-  `1-metoxi-4-metilbenceno`; `o-dimetilbenceno` offered beside the xileno forms; xileno/mesitileno
-  label from memory (P-22.1.3). Review should-fix (hexa vs hexakis in the explanation) fixed with a
-  regression (`docs/progress-archive/i-42a.md`).
-
-- I-42b: oracle benzene family N/2 with 1–6 groups; only `TOO_BIG` benzenes skipped, any other refusal
-  is a failure (review fix). No naming/layout bug found (`docs/progress-archive/i-42b.md`).
-
-- I-44: N-substituted benzene diamines/diamides still refused (new benzene messages); retained
-  nitrile/amide names only `ftalonitrilo`/`ftalamida`; `catecol` beside `pirocatecol`; six identical
-  groups without locants (`bencenohexol`, P-14.3.4 from memory); the out-of-scope benzene refusal
-  message reworded (`docs/progress-archive/i-44.md`).
-
-- I-45a: systematic name first for substituted phenyl (`ácido 2-(3-metilfenil)etanoico`, alt.
-  `…acético`; `N-(4-metilfenil)etanamida`, alt. `…acetamida`), from memory; OH and other junior
-  groups on the phenyl still refused; a "ring picked as parent" safety net is tested only directly
-  (`docs/progress-archive/i-45a.md`).
-- I-45b: no retained alternatives for substituted benzoyl (no `toluoil`/o/m/p); two rings,
-  esters and functional groups on the benzoyl ring stay refused; spec example
-  `ácido 4-(4-metilbenzoil)benzoico` is two rings, refused (`docs/progress-archive/i-45b.md`).
-- I-45c: no `toluato`/`tolilo`/`cresilo`; o/m/p only for a one-prefix benzoate, never the O-bound
-  phenyl (from memory); junior groups on an ester's ring and benzene diesters stay refused
-  (`docs/progress-archive/i-45c.md`).
-- I-46: Ayuda o/m/p note and example labels are new wording pending teacher review
-  (`docs/progress-archive/i-46.md`).
+- I-42a…I-46 (v3 polysubstituted benzenes): deviations, decisions from memory and review
+  resolutions in `docs/progress-archive/i-42a.md` … `i-46.md`. Still relevant: Spanish
+  alphabetical order (`1-metil-4-metoxibenceno`); N-substituted benzene diamines/diamides, junior
+  groups on a substituted phenyl/benzoyl/ester ring, two rings and benzene diesters stay refused;
+  retained-name and o/m/p choices (xileno/mesitileno, `catecol`, `bencenohexol`, no
+  `toluoil`/`toluato`/`tolilo`/`cresilo`) rest on memory; v3 Ayuda wording pending teacher review.
 
 - I-47a: branch enclosed whenever it shows a locant; legacy count mismatch → `LEGACY`; new
   `ROOT_END`/`TILE_ORDER`/`LOCANT_COUNT` situations; `cloro(metoxi)metano` brackets → R-4/R-5b, suffix
@@ -398,6 +388,12 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   nombre:», Ayuda «Del nombre al dibujo»). Review should-fix (undo kept the new zoom) fixed with
   view snapshots in `loadMolecule(…, {center: true})`, also used by Ejemplos
   (`docs/progress-archive/i-48b.md`).
+- I-49a: R-3 split into engine (I-49a) and UI (I-49b); left-out locants → kindest of up to 16
+  readings (`diagnosis.student` may differ from `studentParent`); `null` diagnosis for a branch in a
+  style the engine does not offer or a branch with its own chain/numbering wrong; four rules
+  documented as unable to occur as `otherName`; new Spanish drafts (`DIAGNOSIS_TEXTS`). Review
+  should-fix ×3 (style by structure, nested identity, step context → `diagnosisExplanation()`)
+  fixed with regressions (`docs/progress-archive/i-49a.md`).
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -412,6 +408,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-48a `464bc01`, pushed. I-48b committed and pushed right after this checkpoint (see
+- I-48b `9fb8c66`, pushed. I-49a committed and pushed right after this checkpoint (see
   `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
   `docs/reviews/v4-plan-codex.md`, `.DS_Store`.
