@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a). Pure, no DOM, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b). Pure, no DOM, no
  * coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -9,10 +9,13 @@
  * placements that give the same structure, and names each structure once.
  *
  * - **Domains by role** (§15.5.3 step 2): each slot's role gives its values
- *   on the chain or ring it numbers (ROLE_DOMAINS: carbons 1…n, chain bonds
- *   1…n−1, ring bonds 1…n — bond n joins carbon n to carbon 1). interpret.js
- *   asks slotDomain() for every slot, so later families add their roles
- *   (inner carbons of a ketone, `N`) here only.
+ *   on the chain or ring it numbers (ROLE_DOMAINS: carbons 1…n, the carbons
+ *   2…6 of a phenyl's own prefixes, chain bonds 1…n−1, ring bonds 1…n —
+ *   bond n joins carbon n to carbon 1). interpret.js asks slotDomain() for
+ *   every slot, so later families add their roles (inner carbons of a
+ *   ketone, `N`) here only. A benzene ring (`benceno`, `fenil`; R-4b) has no
+ *   bond slots: its carbons each already use three bonds (two in the ring,
+ *   one of them double), so one single-bond branch fits on each.
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -26,12 +29,17 @@
  *   SAME_BOND, VALENCE); only a parent lengthened past MAX_CHAIN (TOO_BIG)
  *   is left to build().
  * - **Structural merge** (step 4): each placement is built and keyed with
- *   canonicalKey(); placements with one key are one structure (symmetric
- *   placements such as `1-` / `3-metilpropano`, or the six of
- *   `metilciclohexano`), in the order they are first found. Never merged by
- *   the engine's name. A name with more rings than canonicalKey() keys
- *   (build.js ringRefusal()) is not searched: status `none` with the
- *   engine's refusal (readName() answers `outOfScope` before searching).
+ *   the aromatic-equivalence key (model/graph.js aromaticKey(), R-4b: the
+ *   canonicalKey() of a view where both Kekulé drawings of a benzene ring
+ *   read alike, so `1,2-` and `1,6-dimetilbenceno`, built with the double
+ *   bonds of the ring fixed on bonds 1, 3, 5, are one structure; for a
+ *   molecule without a benzene ring it is canonicalKey() itself); placements
+ *   with one key are one structure (symmetric placements such as `1-` /
+ *   `3-metilpropano`, or the six of `metilciclohexano`), in the order they
+ *   are first found. Never merged by the engine's name. A name with more
+ *   rings than canonicalKey() keys (build.js ringRefusal()) is not searched:
+ *   status `none` with the engine's refusal (readName() answers `outOfScope`
+ *   before searching).
  * - **Naming cache** (step 4): each distinct structure is named once (a
  *   Map by structural key, which callers may share); an engine refusal is
  *   cached and returned like a name, and readName() keeps refused
@@ -61,8 +69,8 @@
  */
 
 import { CARBON_VALENCE, cloneMolecule } from '../model/molecule.js';
-import { canonicalKey, isomorphism } from '../model/graph.js';
-import { build, checkSpec, attachmentOrder, ringRefusal } from './build.js';
+import { aromaticKey, aromaticIsomorphism } from '../model/graph.js';
+import { build, checkSpec, attachmentOrder, ringRefusal, isRing, isAromatic } from './build.js';
 import { TILES } from './tiles.js';
 
 /**
@@ -76,13 +84,16 @@ export const SEARCH_BUDGET = Object.freeze({ placements: 3000, namings: 200, ms:
 /**
  * The values each slot role allows on a chain or ring of `length` carbons,
  * as `[min, max]` inclusive (min > max when there are none): a carbon slot
- * (a prefix's position, a free valence) any carbon, a multiple-bond slot of
- * a chain any chain bond, numbered by its lower carbon, one of a ring any
- * ring bond, bond n being the one from carbon n to carbon 1. Later families
- * add their roles here (a ketone's inner carbons, `N`).
+ * (a prefix's position, a free valence) any carbon, a prefix's position on
+ * a phenyl (R-4b) any carbon but 1, the one bonded to what the phenyl hangs
+ * from, a multiple-bond slot of a chain any chain bond, numbered by its
+ * lower carbon, one of a ring any ring bond, bond n being the one from
+ * carbon n to carbon 1. Later families add their roles here (a ketone's
+ * inner carbons, `N`).
  */
 export const ROLE_DOMAINS = Object.freeze({
   carbon: (length) => [1, length],
+  phenylCarbon: (length) => [2, length],
   bond: (length) => [1, length - 1],
   ringBond: (length) => [1, length],
 });
@@ -128,6 +139,7 @@ export function slotDomain(role, length) {
  * @property {number} length - Carbons.
  * @property {boolean} branch - A branch's chain (for the messages).
  * @property {boolean} ring - A ring: every carbon has two ring bonds, and bond n joins carbon n to carbon 1.
+ * @property {boolean} aromatic - A benzene ring (R-4b): every carbon also has its share of a ring double bond.
  * @property {number[]} used - Bond order used per carbon, indexed by locant (1…length).
  * @property {Set<number>} taken - Multiple bonds already placed, by lower locant.
  * @property {number} multiple - Multiple-bond slots of the chain, supplied and left out.
@@ -137,7 +149,7 @@ export function slotDomain(role, length) {
  * A group of identical left-out slots: those of one prefix or one segment.
  *
  * @typedef {object} SlotGroup
- * @property {'carbon'|'bond'|'ringBond'} role - What the slots number.
+ * @property {'carbon'|'phenylCarbon'|'bond'|'ringBond'} role - What the slots number.
  * @property {number} chain - Index of the ChainModel they number.
  * @property {number} amount - Bond order each slot adds to a carbon (attachment order; bond order − 1 for a bond).
  * @property {boolean} distinct - Values must differ (multiple bonds).
@@ -147,17 +159,19 @@ export function slotDomain(role, length) {
  */
 
 /**
- * A new chain or ring model with its own single bonds.
+ * A new chain or ring model with its own bonds: single bonds, and for a
+ * benzene ring (R-4b) its Kekulé double bonds (each carbon in one).
  *
  * @param {number} length - Carbons.
  * @param {boolean} branch - A branch's chain.
  * @param {boolean} [ring] - A ring (default false).
+ * @param {boolean} [aromatic] - A benzene ring (default false).
  * @returns {ChainModel} The model.
  */
-function chainModel(length, branch, ring = false) {
-  const own = (c) => (ring ? 2 : (c > 1 ? 1 : 0) + (c < length ? 1 : 0));
+function chainModel(length, branch, ring = false, aromatic = false) {
+  const own = (c) => (ring ? 2 + (aromatic ? 1 : 0) : (c > 1 ? 1 : 0) + (c < length ? 1 : 0));
   const used = Array.from({ length: length + 2 }, (_, c) => (c < 1 || c > length ? 0 : own(c)));
-  return { length, branch, ring, used, taken: new Set(), multiple: 0 };
+  return { length, branch, ring, aromatic, used, taken: new Set(), multiple: 0 };
 }
 
 /**
@@ -186,7 +200,7 @@ function bondCount(chain) {
  * slot's value (sign −1 takes it back).
  *
  * @param {ChainModel} chain - The chain or ring.
- * @param {'carbon'|'bond'|'ringBond'} role - Slot role.
+ * @param {'carbon'|'phenylCarbon'|'bond'|'ringBond'} role - Slot role.
  * @param {number} value - The locant.
  * @param {number} amount - Bond order per carbon.
  * @param {1|-1} sign - Add or take back.
@@ -211,7 +225,7 @@ function apply(chain, role, value, amount, sign) {
  *
  * @param {{chains: ChainModel[], groups: SlotGroup[], index: Map<object, number>}} model - The search model.
  * @param {object[]} slots - Slots (interpret.js).
- * @param {{role: 'carbon'|'bond'|'ringBond', chain: number, amount: number}} kind - What they number and add.
+ * @param {{role: 'carbon'|'phenylCarbon'|'bond'|'ringBond', chain: number, amount: number}} kind - What they number and add.
  * @returns {void}
  */
 function addSlots(model, slots, kind) {
@@ -238,20 +252,21 @@ function addSlots(model, slots, kind) {
  *
  * @param {{chains: ChainModel[], groups: SlotGroup[], index: Map<object, number>}} model - The search model.
  * @param {{kind: string, length: number, double: object[], triple: object[], prefixes: object[]}} owner - ParentSpec (with
- *   the name's prefixes), chain or ring SubstituentSpec.
+ *   the name's prefixes), chain, ring or phenyl SubstituentSpec.
  * @param {boolean} branch - A branch's chain.
  * @returns {number} The chain's index.
  */
 function addChain(model, owner, branch) {
-  const ring = owner.kind === 'ring';
-  const id = model.chains.push(chainModel(owner.length, branch, ring)) - 1;
+  const ring = isRing(owner.kind);
+  const id = model.chains.push(chainModel(owner.length, branch, ring, isAromatic(owner.kind))) - 1;
   for (const [order, slots] of [[2, owner.double], [3, owner.triple]]) {
     model.chains[id].multiple += slots.length;
     addSlots(model, slots, { role: ring ? 'ringBond' : 'bond', chain: id, amount: order - 1 });
   }
   for (const prefix of owner.prefixes) {
     const sub = prefix.substituent;
-    addSlots(model, prefix.slots, { role: 'carbon', chain: id, amount: attachmentOrder(sub) });
+    // `carbon`, or `phenylCarbon` on a phenyl (interpret.js gives every slot of one prefix the same role).
+    addSlots(model, prefix.slots, { role: prefix.slots[0].role, chain: id, amount: attachmentOrder(sub) });
     if (sub.kind !== 'retained') {
       const own = addChain(model, sub, true);
       addSlots(model, [sub.freeValence.slot], { role: 'carbon', chain: own, amount: sub.freeValence.order });
@@ -297,7 +312,7 @@ export function slotGroups(spec) {
  */
 function fits(chain, group, value) {
   const free = (c) => CARBON_VALENCE - chain.used[c];
-  if (group.role === 'carbon') {
+  if (!isBondRole(group.role)) {
     return free(value) >= group.amount;
   }
   return !chain.taken.has(value) && free(value) >= group.amount && free(otherEnd(chain, value)) >= group.amount;
@@ -317,7 +332,7 @@ function fits(chain, group, value) {
 function room(chain, group, from) {
   let total = 0;
   for (let value = from; value <= group.domain[1]; value += 1) {
-    if (group.role === 'carbon') {
+    if (!isBondRole(group.role)) {
       total += Math.max(0, Math.floor((CARBON_VALENCE - chain.used[value]) / group.amount));
     } else if (fits(chain, group, value)) {
       total += 1;
@@ -460,7 +475,7 @@ function noRoom(spec) {
  * graph that naming refers to.
  *
  * @typedef {object} Structure
- * @property {string} key - canonicalKey() of the molecule.
+ * @property {string} key - aromaticKey() of the molecule (its canonicalKey() when it has no benzene ring).
  * @property {number[][]} placements - Its placements, in the order found (one value per `spec.leftOut` entry).
  * @property {object} built - build() of `placements[0]` (ok).
  * @property {object|null} naming - The namer's result (`ok` false for a refusal); null when the budget ran out first.
@@ -552,7 +567,7 @@ export function searchStructures(spec, options) {
       firstError = firstError || built.error; // TOO_BIG: the placement lengthens the parent past MAX_CHAIN.
       return true;
     }
-    const key = canonicalKey(built.molecule);
+    const key = aromaticKey(built.molecule); // Both Kekulé drawings of a benzene ring are one structure (R-4b).
     if (!byKey.has(key)) {
       byKey.set(key, { key, placements: [], built, naming: null, molecule: null });
       result.structures.push(byKey.get(key));
@@ -607,7 +622,11 @@ export function searchStructures(spec, options) {
  * keep extending; the student's reading has a small, fixed shape. Either
  * way the placement drawn keeps the student's numbering. When the graph is
  * a copy of the build itself, the ids map onto themselves (isomorphism()
- * tries equal ids first).
+ * tries equal ids first). The isomorphism is taken up to the Kekulé drawing
+ * of the benzene rings (model/graph.js aromaticIsomorphism(), R-4b): two
+ * placements of one structure may put the ring's double bonds on other
+ * bonds relative to the branches (`1,2-` and `1,6-dimetilbenceno`), so a
+ * double bond of the build may map onto a single bond of the named graph.
  *
  * @param {object} spec - The NameSpec searched.
  * @param {Structure} structure - A named structure of its search.
@@ -618,7 +637,7 @@ export function searchStructures(spec, options) {
  */
 export function placementReading(spec, structure, placement) {
   const built = placement === structure.placements[0] ? structure.built : build(spec, placement);
-  const iso = isomorphism(built.molecule, structure.molecule);
+  const iso = aromaticIsomorphism(built.molecule, structure.molecule);
   if (!iso) {
     throw new Error('placementReading: a placement is not isomorphic to the graph named for its structure');
   }
@@ -674,7 +693,11 @@ export function fillVariants(spec) {
  * fillVariants() entry keeps without locants. A slot whose domain holds
  * one value is not written: no name cites it (`etenil`, `etinil`, `eteno`,
  * never `et-1-enil`), so it is not a missing locant. The new tiles are
- * appended to the tree's tile list; the student's tiles are untouched.
+ * appended to the tree's tile list; the student's tiles are untouched. The
+ * left-out lists are found by their tile range alone, which no two lists
+ * share (a prefix's range ends with its branch, a segment's with its
+ * ending), whatever their role (`carbon`, `phenylCarbon`, `bond`,
+ * `ringBond`); `benceno` (R-4b) has no list of its own.
  *
  * @param {object} tree - The error-free parse() tree the NameSpec was read from.
  * @param {object} spec - Its NameSpec.
@@ -691,7 +714,7 @@ export function filledTree(tree, spec, placement, keep = {}) {
   const byRange = new Map();
   spec.leftOut.forEach((slot, i) => {
     if (slot.domain[0] !== slot.domain[1] && !kept.has(slot)) {
-      const key = `${slot.role}:${slot.tiles[0]}:${slot.tiles[1]}`;
+      const key = `${slot.tiles[0]}:${slot.tiles[1]}`;
       byRange.set(key, [...(byRange.get(key) || []), placement[i]]);
     }
   });
@@ -699,27 +722,28 @@ export function filledTree(tree, spec, placement, keep = {}) {
   /**
    * The values of a left-out locant list as new number tiles.
    *
-   * @param {string} role - Slot role.
    * @param {[number, number]} range - The node's tile range.
    * @param {number[]} locants - The node's own locant tiles.
    * @returns {number[]} The locant tile indices.
    */
-  const numbers = (role, range, locants) => {
-    const values = locants.length === 0 ? byRange.get(`${role}:${range[0]}:${range[1]}`) : null;
+  const numbers = (range, locants) => {
+    const values = locants.length === 0 ? byRange.get(`${range[0]}:${range[1]}`) : null;
     if (!values) {
       return locants;
     }
     return [...values].sort((p, q) => p - q).map((value) => tiles.push(NUM_TILES.get(value)) - 1);
   };
   /**
-   * A chain node with its segments filled (ring bonds for a ring).
+   * A chain node with its segments filled (ring bonds for a ring); `benceno` as it is.
    *
-   * @param {object} chain - A chain node.
+   * @param {object} chain - A chain or benzene node.
    * @returns {object} The filled node.
    */
   const fillChain = (chain) => {
-    const role = chain.ring === null ? 'bond' : 'ringBond';
-    return { ...chain, segments: chain.segments.map((seg) => ({ ...seg, locants: numbers(role, seg.range, seg.locants) })) };
+    if (chain.type === 'benzene') {
+      return chain;
+    }
+    return { ...chain, segments: chain.segments.map((seg) => ({ ...seg, locants: numbers(seg.range, seg.locants) })) };
   };
   /**
    * A substituent node, filled.
@@ -740,7 +764,7 @@ export function filledTree(tree, spec, placement, keep = {}) {
    * @returns {object} The filled node.
    */
   function fillItem(item) {
-    return { ...item, locants: numbers('carbon', item.range, item.locants), substituent: fillSubstituent(item.substituent) };
+    return { ...item, locants: numbers(item.range, item.locants), substituent: fillSubstituent(item.substituent) };
   }
   const items = tree.items.map(fillItem);
   return { ...tree, tiles, items, parent: { ...tree.parent, chain: fillChain(tree.parent.chain) } };

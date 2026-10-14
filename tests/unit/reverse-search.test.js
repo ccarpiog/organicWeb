@@ -7,7 +7,10 @@
  * (placements, namings, injected clock, also after the last naming), the
  * naming cache with refusals and the graph each naming refers to, and the
  * filled tree written back by the assembler; rings (R-4a): ring bonds with
- * the closing one, the ring merge and pruning, the ring limit.
+ * the closing one, the ring merge and pruning, the ring limit; benzene
+ * (R-4b): the phenyl's carbons 2…6, the merge of the two Kekulé drawings by
+ * the aromatic-equivalence key, the student's reading carried across them
+ * (placementReading()), valence pruning on the ring and the ring limit.
  */
 
 import { test } from 'node:test';
@@ -16,10 +19,11 @@ import { parse } from '../../src/reverse/parse.js';
 import { interpret } from '../../src/reverse/interpret.js';
 import { assemble } from '../../src/reverse/assemble.js';
 import {
-  searchStructures, slotGroups, filledTree, slotDomain, ROLE_DOMAINS, SEARCH_BUDGET,
+  searchStructures, slotGroups, filledTree, slotDomain, ROLE_DOMAINS, SEARCH_BUDGET, placementReading,
 } from '../../src/reverse/search.js';
+import { build } from '../../src/reverse/build.js';
 import { nameMolecule } from '../../src/naming/index.js';
-import { canonicalKey } from '../../src/model/graph.js';
+import { canonicalKey, aromaticKey, isomorphism } from '../../src/model/graph.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 import { MESSAGES } from '../../src/model/validate.js';
 import { seq } from './reverse-words.js';
@@ -58,8 +62,9 @@ function summary(result) {
 }
 
 test('domains by role: carbons 1…n, chain bonds 1…n−1, ring bonds 1…n; interpret.js takes them from search.js', () => {
-  assert.deepEqual(Object.keys(ROLE_DOMAINS).sort(), ['bond', 'carbon', 'ringBond']);
+  assert.deepEqual(Object.keys(ROLE_DOMAINS).sort(), ['bond', 'carbon', 'phenylCarbon', 'ringBond']);
   assert.deepEqual(slotDomain('carbon', 5), [1, 5]);
+  assert.deepEqual(slotDomain('phenylCarbon', 6), [2, 6], 'a phenyl\'s carbon 1 is bonded to what it hangs from (R-4b)');
   assert.deepEqual(slotDomain('bond', 5), [1, 4]);
   assert.deepEqual(slotDomain('bond', 1), [1, 0], 'no bond on a one-carbon chain');
   assert.deepEqual(slotDomain('ringBond', 6), [1, 6], 'bond 6 of a six-carbon ring joins carbons 6 and 1');
@@ -68,6 +73,10 @@ test('domains by role: carbons 1…n, chain bonds 1…n−1, ring bonds 1…n; i
   assert.deepEqual(spec.leftOut.map((slot) => [slot.role, slot.domain]), [['carbon', slotDomain('carbon', 6)], ['bond', slotDomain('bond', 6)]]);
   const ring = read('met il ciclo hex eno').spec;
   assert.deepEqual(ring.leftOut.map((slot) => [slot.role, slot.domain]), [['carbon', [1, 6]], ['ringBond', [1, 6]]]);
+  // Benzene (R-4b): its carbons 1…6, no bond slot; a phenyl's own prefixes on its carbons 2…6.
+  assert.deepEqual(read('met il benceno').spec.leftOut.map((slot) => [slot.role, slot.domain]), [['carbon', [1, 6]]]);
+  assert.deepEqual(read('START met il fenil END met ano').spec.leftOut.map((slot) => [slot.role, slot.domain]),
+    [['carbon', [1, 1]], ['phenylCarbon', [2, 6]]]);
 }); // End of test 'domains by role: carbons 1…n, chain bonds 1…n−1, ring bonds 1…n; interpret.js takes them from search.js'
 
 test('identical occurrences: the slots of one prefix or one segment form a group, in tile order', () => {
@@ -327,3 +336,73 @@ test('filledTree (R-4a): ring bonds and ring carbons written back', () => {
   assert.equal(filled('2 ciclo hex eno il prop ano', [2]), '2-(ciclohex-2-enil)propano');
   assert.equal(filled('met il ciclo hex il met ano', [1, 1]), 'metil(ciclohexil)metano', 'methane\'s one carbon is never written');
 }); // End of test 'filledTree (R-4a): ring bonds and ring carbons written back'
+
+test('benzene (R-4b): the two Kekulé drawings are one structure (aromatic key); one branch per ring carbon', () => {
+  // Every carbon of benzene is alike, whichever ring bond is double next to it.
+  assert.deepEqual(summary(search('met il benceno')), [['metilbenceno', [[1], [2], [3], [4], [5], [6]]]]);
+  // Two methyls: 21 sorted pairs, the 6 on one carbon pruned by valence (each ring carbon has room for one branch).
+  const dimethyl = search('di met il benceno');
+  assert.equal(dimethyl.placements, 15);
+  assert.deepEqual(summary(dimethyl), [
+    ['1,2-dimetilbenceno', [[1, 2], [1, 6], [2, 3], [3, 4], [4, 5], [5, 6]]],
+    ['1,3-dimetilbenceno', [[1, 3], [1, 5], [2, 4], [2, 6], [3, 5], [4, 6]]],
+    ['1,4-dimetilbenceno', [[1, 4], [2, 5], [3, 6]]],
+  ]);
+  // build.js draws the ring with its double bonds on bonds 1, 3, 5: `1,2-` sits on a double bond, `1,6-` on a single one.
+  const { spec } = read('di met il benceno');
+  const [onDouble, onSingle] = [build(spec, [1, 2]).molecule, build(spec, [1, 6]).molecule];
+  assert.notEqual(canonicalKey(onDouble), canonicalKey(onSingle), 'canonicalKey() keeps the bond orders');
+  assert.equal(aromaticKey(onDouble), aromaticKey(onSingle));
+  assert.equal(dimethyl.structures[0].key, aromaticKey(onDouble));
+  assert.equal(dimethyl.namings, 3, 'each structure named once');
+  // Full and overfull rings: hexamethyl has one placement; a seventh methyl or a double bond to the ring fits nowhere.
+  assert.deepEqual(summary(search('hexa met il benceno')), [['hexametilbenceno', [[1, 2, 3, 4, 5, 6]]]]);
+  assert.equal(search('hepta met il benceno').error.code, 'VALENCE');
+  assert.equal(search('met iliden benceno').error.code, 'VALENCE');
+  // A phenyl's own left-out prefix goes on its carbons 2…6, merged by structure as well.
+  assert.deepEqual(summary(search('START met il fenil END met ano')), [
+    ['1,2-dimetilbenceno', [[1, 2], [1, 6]]], ['1,3-dimetilbenceno', [[1, 3], [1, 5]]], ['1,4-dimetilbenceno', [[1, 4]]],
+  ]);
+}); // End of test 'benzene (R-4b): the two Kekulé drawings are one structure…'
+
+test('benzene (R-4b): placementReading() carries the student\'s reading across the Kekulé drawings (I-47c)', () => {
+  const { spec } = read('di met il benceno');
+  const [ortho] = searchStructures(spec, { namer: nameMolecule }).structures;
+  for (const placement of ortho.placements) {
+    const built = build(spec, placement);
+    const reading = placementReading(spec, ortho, placement);
+    assert.deepEqual(reading.molecule, ortho.molecule, 'a copy of the graph named');
+    assert.notEqual(reading.molecule, ortho.molecule);
+    assert.equal(reading.studentParent.atoms.length, 6);
+    assert.equal(new Set(reading.studentParent.atoms).size, 6);
+    // The student's methyls are on the carbons the placement says, in the named graph's ids.
+    const parentIds = reading.studentParent.atoms;
+    assert.deepEqual(reading.prefixAtoms.map((occurrence) => parentIds.indexOf(occurrence.parentAtom) + 1), placement);
+    assert.equal(Boolean(isomorphism(built.molecule, ortho.molecule)), canonicalKey(built.molecule) === canonicalKey(ortho.molecule),
+      'the plain isomorphism finds only the same drawing');
+  } // End of the loop over the placements of 1,2-dimetilbenceno
+  assert.ok(ortho.placements.some((p) => !isomorphism(build(spec, p).molecule, ortho.molecule)), 'both drawings occur');
+}); // End of test 'benzene (R-4b): placementReading() carries the student's reading across the Kekulé drawings (I-47c)'
+
+test('benzene (R-4b): the ring limit (status none) and the filled tree', () => {
+  for (const words of ['fenil benceno', 'tri fenil met ano', 'fenil ciclo hex ano', 'ciclo hex il benceno', 'START fenil fenil END met ano']) {
+    const bonded = search(words);
+    assert.deepEqual([bonded.status, bonded.placements, bonded.error.code], ['none', 0, 'RING_SYSTEM'], words);
+  }
+  /**
+   * The student's text with a placement filled in.
+   *
+   * @param {string} words - Tile words.
+   * @param {number[]} placement - One value per left-out slot.
+   * @returns {string} The filled text.
+   */
+  const filled = (words, placement) => {
+    const { tree, spec } = read(words);
+    return assemble(filledTree(tree, spec, placement)).text;
+  };
+  assert.equal(filled('di met il benceno', [1, 4]), '1,4-dimetilbenceno');
+  assert.equal(filled('met il benceno', [1]), '1-metilbenceno');
+  assert.equal(filled('et il 4 met il benceno', [1]), '1-etil-4-metilbenceno');
+  assert.equal(filled('START met il fenil END met ano', [1, 4]), '(4-metilfenil)metano', 'methane\'s one carbon is never written');
+  assert.equal(filled('START di met il fenil END et ano', [1, 2, 4]), '1-(2,4-dimetilfenil)etano');
+}); // End of test 'benzene (R-4b): the ring limit (status none) and the filled tree'

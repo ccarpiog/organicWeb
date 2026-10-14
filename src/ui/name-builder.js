@@ -17,9 +17,9 @@
  *   tabindex, `aria-selected`); `aria-live`, so every change is announced;
  *   the opening mark of an unfinished compound branch shows faintly;
  * - the tile rows («Números», «¿Cuántos?», «Raíces (cuántos carbonos)»,
- *   «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a;
- *   drafts pending teacher review), each with a «más» button for the tiles
- *   the catalogue keeps behind it;
+ *   «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a, and
+ *   `benceno` and `fenil`, phase R-4b; drafts pending teacher review), each
+ *   with a «más» button for the tiles the catalogue keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
  *   «Borrar todo», «Dibujar» and «Cerrar» (also Escape and a click on the
  *   backdrop); the focus goes into the dialog on opening and back to the

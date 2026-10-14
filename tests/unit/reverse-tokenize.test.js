@@ -1,11 +1,13 @@
 /**
  * @file Unit tests for the tokenizer of «¿Cómo se dibuja?»
- * (src/reverse/tokenize.js, design.md §15.4, §15.7, phases R-1a, R-4a): the
- * inverse of the assembler. The fixture round trips cover every open-chain
- * hydrocarbon name and alternative of tests/fixtures/names.tsv, then every
- * `ciclo` hydrocarbon one (rows chosen by explicit SMILES and name syntax
- * checks, never by "tokenize failed"), and seeded property tests read back
- * the text of random grammatical sequences, without and with rings.
+ * (src/reverse/tokenize.js, design.md §15.4, §15.7, phases R-1a, R-4a,
+ * R-4b): the inverse of the assembler. The fixture round trips cover every
+ * open-chain hydrocarbon name and alternative of tests/fixtures/names.tsv,
+ * then every `ciclo` hydrocarbon one, then every benzene hydrocarbon one
+ * written with `benceno` / `fenil` tiles (rows chosen by explicit SMILES and
+ * name syntax checks, never by "tokenize failed"), and seeded property tests
+ * read back the text of random grammatical sequences, without and with rings
+ * and benzene.
  */
 
 import { test } from 'node:test';
@@ -14,9 +16,11 @@ import { parse } from '../../src/reverse/parse.js';
 import { assemble } from '../../src/reverse/assemble.js';
 import { tokenize, TOKENIZE_BUDGET, TOKENIZE_MAX_LENGTH } from '../../src/reverse/tokenize.js';
 import {
-  stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RING_PREFIX,
+  stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES,
 } from '../../src/naming/lexicon.es.js';
-import { seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName } from './reverse-words.js';
+import {
+  seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName, isBenzeneName,
+} from './reverse-words.js';
 
 /** Fixture rows of open-chain hydrocarbons (phase R-1a scope). */
 const EXPECTED_ROWS = 176;
@@ -34,6 +38,24 @@ const EXPECTED_RING_ROWS = 53;
 
 /** Names and alternatives of those rows (three rows have two alternatives each). */
 const EXPECTED_RING_NAMES = 59;
+
+/**
+ * Fixture rows of benzene hydrocarbons (phase R-4b scope: the hydrocarbon
+ * rows of the sections "Benzene and monosubstituted benzenes (I-28)", 13,
+ * and "Polysubstituted benzenes with prefixes only (I-42a)", 12; the 10
+ * I-42a rows with halogens or alkoxy groups are R-5a / R-5b).
+ */
+const EXPECTED_BENZENE_ROWS = 25;
+
+/** Their names and alternatives written with R-4b tiles (four alternatives in the propan-2-il and 1-metiletil styles). */
+const EXPECTED_BENZENE_NAMES = 31;
+
+/**
+ * Their alternatives left to I-50c: the retained templates (`tolueno` ×2,
+ * `estireno`, the six xylene forms, `mesitileno`) and the old o/m/p forms
+ * (`o-` / `m-` / `p-dimetilbenceno`, `p-dietenilbenceno`, `o-diisopropilbenceno`).
+ */
+const EXPECTED_BENZENE_SKIPPED = 18;
 
 /**
  * Reads a tile sequence back as text.
@@ -79,6 +101,57 @@ test('fixture round trip (R-4a): every `ciclo` hydrocarbon name and alternative'
   assert.equal(rows.length, EXPECTED_RING_ROWS);
   assert.equal(covered, EXPECTED_RING_NAMES);
 }); // End of test 'fixture round trip (R-4a): every `ciclo` hydrocarbon name and alternative'
+
+test('fixture round trip (R-4b): every benzene hydrocarbon name and alternative written with `benceno` / `fenil`', async () => {
+  const rows = (await readFixtures()).filter((row) => isMonocyclicHydrocarbon(row.smiles) && isBenzeneName(row.names[0]));
+  let covered = 0;
+  let skipped = 0;
+  for (const row of rows) {
+    for (const name of row.names) {
+      if (!isBenzeneName(name)) {
+        skipped += 1; // A retained template or an o/m/p form (I-50c).
+        continue;
+      }
+      const ids = tokenize(name);
+      assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
+      const back = readBack(ids);
+      assert.deepEqual(back.errors, [], `names.tsv:${row.line}: ${name}`);
+      assert.equal(back.text, name, `names.tsv:${row.line}`);
+      covered += 1;
+    }
+  } // End of the loop over the fixture rows
+  assert.equal(rows.length, EXPECTED_BENZENE_ROWS);
+  assert.equal(covered, EXPECTED_BENZENE_NAMES);
+  assert.equal(skipped, EXPECTED_BENZENE_SKIPPED);
+}); // End of test 'fixture round trip (R-4b): every benzene hydrocarbon name and alternative…'
+
+test('benzene forms tokenize to their tiles (R-4b): `benceno` last, `fenil` a branch word, its compound branch marked', () => {
+  const examples = [
+    ['benceno', 'benceno'],
+    ['metilbenceno', 'met il benceno'],
+    ['1,4-dimetilbenceno', '1 4 di met il benceno'],
+    ['1-isopropil-4-metilbenceno', '1 isopropil 4 met il benceno'],
+    ['1-metil-4-(propan-2-il)benceno', '1 met il 4 prop ano 2 il benceno'],
+    ['1,2-bis(1-metiletil)benceno', '1 2 bis START 1 met il et il END benceno'],
+    ['(prop-2-en-1-il)benceno', 'prop 2 eno 1 il benceno'],
+    ['fenilmetano', 'fenil met ano'],
+    ['difenilmetano', 'di fenil met ano'],
+    ['metil(fenil)metano', 'met il fenil met ano'],
+    ['(4-metilfenil)metano', 'START 4 met il fenil END met ano'],
+    ['1-(2,4-dimetilfenil)propano', '1 START 2 4 di met il fenil END prop ano'],
+    ['[4-(propan-2-il)fenil]metano', 'START 4 prop ano 2 il fenil END met ano'],
+    ['bis(4-metilfenil)metano', 'bis START 4 met il fenil END met ano'],
+    ['fenilbenceno', 'fenil benceno'],
+    ['fenilciclohexano', 'fenil ciclo hex ano'],
+  ];
+  for (const [text, words] of examples) {
+    assert.deepEqual(tokenize(text), seq(words), text);
+  }
+  // `benceno` takes no numbers of its own, and nothing follows it; a ring cited first is never enclosed.
+  for (const text of ['1,3,5-benceno', 'benceno-1,3,5-trieno', 'bencenometano', 'fenil(metil)metano', '(fenil)metano', 'fenilo']) {
+    assert.equal(tokenize(text), null, text);
+  }
+}); // End of test 'benzene forms tokenize to their tiles (R-4b)…'
 
 test('ring forms tokenize to their tiles: `ciclo` before the root, automatic marks around a simple ring branch', () => {
   const examples = [
@@ -132,7 +205,7 @@ test('tokenize prefers whole words and automatic marks for simple branches', () 
 }); // End of test 'tokenize prefers whole words and automatic marks for simple branches'
 
 test('tokenize returns null outside the grammar, for texts that only read with errors, and past its budget', () => {
-  for (const text of ['', 'ácido etanoico', 'clorometano', 'propan-2-ol', 'metilbenceno', 'hex ano', 'HEXANO', 'ciclo', 'cicloetano']) {
+  for (const text of ['', 'ácido etanoico', 'clorometano', 'propan-2-ol', 'tolueno', 'hex ano', 'HEXANO', 'ciclo', 'cicloetano']) {
     assert.equal(tokenize(text), null, text);
   }
   for (const text of ['2,3-trimetilpentano', '1,3-hexenino', 'hexano-2-metil', '2-metil', '5-(2-metilpropil', 'propil']) {
@@ -179,13 +252,16 @@ function mulberry32(seed) {
  * locant counts that match their multipliers (or left out), and a parent
  * with `ano` or one or two segments, sometimes in the old style. With
  * `rings` (R-4a), some stems — of the parent or of a branch — are rings:
- * `ciclo` and a root of 3 to 30 carbons.
+ * `ciclo` and a root of 3 to 30 carbons. With `benzene` (R-4b), some simple
+ * branches are `fenil` (also as the own chain of a compound branch) and
+ * some parents `benceno`.
  *
  * @param {() => number} random - The random source.
  * @param {boolean} [rings] - Draw ring stems too (default false: the R-1a sequences, draw for draw).
+ * @param {boolean} [benzene] - Draw `fenil` and `benceno` too (default false: the earlier sequences, draw for draw).
  * @returns {() => string[]} A function returning one sequence of tile words.
  */
-function grammarGenerator(random, rings = false) {
+function grammarGenerator(random, rings = false, benzene = false) {
   const int = (lo, hi) => lo + Math.floor(random() * (hi - lo + 1));
   const pick = (list) => list[int(0, list.length - 1)];
   const nums = (k) => Array.from({ length: k }, () => String(int(1, 30)));
@@ -212,6 +288,9 @@ function grammarGenerator(random, rings = false) {
    * @returns {string[]} The words.
    */
   const simple = () => {
+    if (benzene && random() < 0.25) {
+      return [`${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text}`];
+    }
     const form = int(0, 3);
     const root = stemWords();
     if (form === 0) {
@@ -247,6 +326,9 @@ function grammarGenerator(random, rings = false) {
    * @returns {string[]} The words.
    */
   const parent = () => {
+    if (benzene && random() < 0.5) {
+      return [BENZENE_NAME];
+    }
     const root = stemWords();
     const form = int(0, 2);
     if (form === 0) {
@@ -291,3 +373,19 @@ test('property (R-4a): random grammatical sequences with rings tokenize back to 
   } // End of the loop over the random sequences
   assert.ok(ringed >= 200, `${ringed} sequences with a ring`);
 }); // End of test 'property (R-4a): random grammatical sequences with rings tokenize back to the same text'
+
+test('property (R-4b): random grammatical sequences with `fenil` and `benceno` tokenize back to the same text', () => {
+  const next = grammarGenerator(mulberry32(20261016), true, true);
+  let benzene = 0;
+  for (let i = 0; i < 400; i += 1) {
+    const words = next().join(' ');
+    const ids = seq(words);
+    const original = readBack(ids);
+    assert.deepEqual(original.errors, [], words);
+    benzene += /\b(?:benceno|fenil)\b/.test(words) ? 1 : 0;
+    const found = tokenize(original.text);
+    assert.ok(found, `${words} → ${original.text}: no tiles`);
+    assert.equal(readBack(found).text, original.text, words);
+  } // End of the loop over the random sequences
+  assert.ok(benzene >= 200, `${benzene} sequences with benzene words`);
+}); // End of test 'property (R-4b): random grammatical sequences with `fenil` and `benceno` tokenize back to the same text'

@@ -3,7 +3,11 @@
  * paths, leaves, tree centre and diameter, the canonical structure keys
  * (design.md §3, §4.2, §8, §13.2): the unrooted canonical tree key and the
  * monocycle key, and an explicit isomorphism between two molecules
- * (isomorphism(), design.md §15.5.3).
+ * (isomorphism(), design.md §15.5.3). The aromatic-equivalence key and
+ * isomorphism (aromaticKey(), aromaticIsomorphism(); design.md §15.5.3 step
+ * 4, phase R-4b) compare a Kekulé-neutral copy (kekuleNeutral()), so the two
+ * Kekulé drawings of a benzene ring are one structure; canonicalKey() and
+ * isomorphism() themselves keep every bond order, as before.
  *
  * Every function works on the topology only (`mol.atoms` ids, `mol.bonds`
  * endpoints and orders); coordinates are never read. The module imports
@@ -17,8 +21,15 @@
  * Ring perception and classification live in rings.js.
  */
 
-/** Bond-order symbols used by the canonical key (SMILES-like). */
-const BOND_SYMBOL = { 1: '-', 2: '=', 3: '#' };
+/**
+ * Order given to the ring bonds of a benzene ring in a Kekulé-neutral copy
+ * (kekuleNeutral()): never a real bond order (model/molecule.js accepts 1, 2
+ * and 3 only), so it never meets a drawn molecule.
+ */
+export const AROMATIC_ORDER = 1.5;
+
+/** Bond-order symbols used by the canonical key (SMILES-like; `:` only in a Kekulé-neutral copy). */
+const BOND_SYMBOL = { 1: '-', 2: '=', 3: '#', [AROMATIC_ORDER]: ':' };
 
 /**
  * Builds an adjacency map of the molecule. Atom lists and neighbour lists are
@@ -837,3 +848,118 @@ export function isomorphism(from, to) {
   } // End of the individualisation search
   return null;
 } // End of function isomorphism()
+
+/**
+ * The bonds of the benzene rings of a molecule (design.md §15.5.3 step 4,
+ * phase R-4b): every six-carbon cycle whose bonds alternate double and
+ * single, a Kekulé structure — the pattern of model/validate.js
+ * isBenzeneRing() and naming/aromatic.js hasBenzeneRing(), found here
+ * without ring perception (this module imports nothing). Each carbon is a
+ * start, and the walk follows a double bond, a single bond, a double bond…
+ * through distinct carbons until the sixth bond, a single one, closes the
+ * cycle; the depth is fixed, so it cannot run away.
+ *
+ * @param {object} mol - The molecule.
+ * @param {Map<number, object[]>} [adj] - Adjacency from adjacency() (computed when omitted).
+ * @returns {Set<number>} The ids of the ring bonds of every benzene ring (empty when there is none).
+ */
+export function benzeneRingBonds(mol, adj = adjacency(mol)) {
+  const found = new Set();
+  const carbon = (id) => mol.atoms.get(id).element === 'C';
+  const atoms = [];
+  const bonds = [];
+  /**
+   * Extends the alternating path by one bond, or closes it into a six-membered cycle.
+   *
+   * @returns {boolean} True once a cycle through the path's first atom is found.
+   */
+  const extend = () => {
+    const last = atoms[atoms.length - 1];
+    const order = bonds.length % 2 === 0 ? 2 : 1; // Bonds 1, 3, 5 double; 2, 4, 6 single.
+    for (const n of adj.get(last)) {
+      if (n.order !== order || !carbon(n.atom)) {
+        continue;
+      }
+      if (atoms.length === 6) {
+        if (n.atom === atoms[0]) {
+          [...bonds, n.bond].forEach((id) => found.add(id));
+          return true;
+        }
+        continue;
+      }
+      if (atoms.includes(n.atom)) {
+        continue;
+      }
+      atoms.push(n.atom);
+      bonds.push(n.bond);
+      const closed = extend();
+      atoms.pop();
+      bonds.pop();
+      if (closed) {
+        return true;
+      }
+    } // End of the loop over the neighbours of the path's last atom
+    return false;
+  }; // End of function extend()
+  for (const id of adj.keys()) {
+    if (carbon(id) && !adj.get(id).every((n) => found.has(n.bond) || n.order !== 2)) {
+      atoms.push(id);
+      extend();
+      atoms.pop();
+    }
+  } // End of the loop over the start atoms
+  return found;
+} // End of function benzeneRingBonds()
+
+/**
+ * A Kekulé-neutral view of a molecule (design.md §15.5.3 step 4, §15.9 trap
+ * 3; phase R-4b): every bond of a benzene ring (benzeneRingBonds()) gets the
+ * order AROMATIC_ORDER, so the two Kekulé drawings of the ring — double
+ * bonds on bonds 1, 3, 5 or on 2, 4, 6 — read alike. Atom and bond ids,
+ * elements and every other bond are kept, so an isomorphism found between
+ * two views maps the molecules themselves. Read-only: the atoms (and, when
+ * there is no benzene ring, the whole molecule) are the input's own objects.
+ *
+ * @param {object} mol - The molecule.
+ * @returns {object} The view (the molecule itself when it has no benzene ring).
+ */
+export function kekuleNeutral(mol) {
+  const aromatic = benzeneRingBonds(mol);
+  if (aromatic.size === 0) {
+    return mol;
+  }
+  const bonds = new Map([...mol.bonds].map(([id, bond]) => [id, aromatic.has(id) ? { ...bond, order: AROMATIC_ORDER } : bond]));
+  return { ...mol, atoms: mol.atoms, bonds };
+}
+
+/**
+ * The aromatic-equivalence key (design.md §15.5.3 step 4, phase R-4b):
+ * canonicalKey() of the Kekulé-neutral view, so both Kekulé drawings of
+ * every benzene ring — a parent, a phenyl branch, either ring of an ester —
+ * give one key. A molecule without a benzene ring gets exactly its
+ * canonicalKey(); canonicalKey() itself is unchanged and still tells the two
+ * drawings apart.
+ *
+ * @param {object} mol - The molecule.
+ * @returns {string} The key.
+ * @throws {Error} As canonicalKey() (disconnected, or more rings than it keys).
+ */
+export function aromaticKey(mol) {
+  return canonicalKey(kekuleNeutral(mol));
+}
+
+/**
+ * An isomorphism up to the Kekulé drawing of the benzene rings (phase R-4b):
+ * isomorphism() of the Kekulé-neutral views, so a benzene ring drawn with
+ * its double bonds on bonds 1, 3, 5 maps onto the same ring drawn with them
+ * on 2, 4, 6. Every element and every other bond order is kept; the atom and
+ * bond id maps are those of the molecules themselves.
+ *
+ * @param {object} from - A molecule.
+ * @param {object} to - Another molecule.
+ * @returns {{atoms: Map<number, number>, bonds: Map<number, number>}|null} Atom and bond id maps from `from` to
+ *   `to`, or null when the molecules differ by more than their Kekulé drawings.
+ */
+export function aromaticIsomorphism(from, to) {
+  return isomorphism(kekuleNeutral(from), kekuleNeutral(to));
+}

@@ -1,7 +1,7 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a): turns the lossless syntax tree of parse.js into the name text
- * and one span per piece of text. Pure, no DOM.
+ * R-1a, R-4a, R-4b): turns the lossless syntax tree of parse.js into the
+ * name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
  * order and locants — never from the naming engine's grouping or rendering
@@ -42,6 +42,14 @@
  * `(ciclohex-2-en-1-il)` (rule 3), `ciclohexil`, `ciclohexiliden` and an
  * unsaturated ring branch always enclosed (rule 5, render.js needsEnclosure(),
  * a ring having at least three carbons).
+ *
+ * The benzene words (R-4b) take no automatic text of their own: `benceno` is
+ * the parent's whole stem, written after the prefixes (`1,2-dimetilbenceno`);
+ * `fenil` is a simple branch never enclosed alone (`fenilmetano`,
+ * `difenilmetano`), enclosed as a ring prefix after the first of a crowded
+ * level (`metil(fenil)metano`, rule 5), and a compound branch with prefixes
+ * of its own is enclosed like any other (`(4-metilfenil)`,
+ * `[4-(propan-2-il)fenil]`; render.js isSubstitutedPhenyl()).
  *
  * Rule 5 reads "a cited locant" for render.js's "free-valence locant above
  * 1 or unsaturation in a chain of three or more carbons": on every name the
@@ -145,9 +153,10 @@ export function crowdedLevel(items) {
 /**
  * Tells whether the prefix at one position of a level is written between
  * enclosing marks (rule 5, render.js enclosedInName()): isEnclosed(), or a
- * ring branch after the first prefix of a crowded level (a ring prefix cited
- * first reads unambiguously). A compound branch without prefixes of its own
- * (`START ciclo hex il END`) is judged by its chain, like isEnclosed().
+ * ring branch — `ciclo` or `fenil` — after the first prefix of a crowded
+ * level (a ring prefix cited first reads unambiguously). A compound branch
+ * without prefixes of its own (`START ciclo hex il END`) is judged by its
+ * chain, like isEnclosed().
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object[]} items - The level's prefix and stray nodes.
@@ -160,7 +169,18 @@ export function enclosedAt(tiles, items, index) {
     return true;
   }
   const core = node.type === 'branch' && node.items.length === 0 ? node.chain : node;
-  return index > 0 && core !== null && core.type === 'chain' && core.ring !== null && crowdedLevel(items);
+  return index > 0 && core !== null && isRingBranch(tiles, core) && crowdedLevel(items);
+}
+
+/**
+ * Tells whether a simple branch is a ring: a `ciclo` chain or `fenil` (R-4b).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} node - A chain or retained node.
+ * @returns {boolean} True for a ring branch.
+ */
+function isRingBranch(tiles, node) {
+  return (node.type === 'chain' && node.ring !== null) || (node.type === 'retained' && tiles[node.tile].value === 'phenyl');
 }
 
 /**
@@ -199,7 +219,7 @@ function strayPieces(tiles, index, out) {
   const roles = { num: 'locant', mult: 'mult', cmult: 'mult', start: 'open', end: 'close' };
   const kinds = {
     num: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending', freeValence: 'ending',
-    retained: 'prefix', start: 'punct', end: 'punct', ring: 'stem',
+    retained: 'prefix', start: 'punct', end: 'punct', ring: 'stem', benzene: 'stem',
   };
   out.push(piece(tile.text, index, kinds[tile.kind], roles[tile.kind] || 'word', tile.italic ? { italic: true } : {}));
 }
@@ -332,7 +352,8 @@ function itemPieces(tiles, items, index, nested, out) {
 
 /**
  * The pieces of the parent: old-style locants (and a multiplier out of
- * place between them and the root), then its chain.
+ * place between them and the root), then its chain — or the `benceno` word
+ * (R-4b; numbers before it are a BENZENE_BONDS error, kept as written).
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} parent - The parent node.
@@ -343,6 +364,10 @@ function parentPieces(tiles, parent, out) {
   parent.legacy.forEach((index) => out.push(piece(tiles[index].text, index, 'locant', 'locant')));
   if (parent.legacyMultiplier !== null) {
     out.push(piece(tiles[parent.legacyMultiplier].text, parent.legacyMultiplier, 'multiplier', 'mult'));
+  }
+  if (parent.chain.type === 'benzene') {
+    out.push(piece(tiles[parent.chain.tile].text, parent.chain.tile, KINDS.parent.stem, 'word')); // `1,2-dimetilbenceno`
+    return;
   }
   chainPieces(tiles, parent.chain, 'parent', out);
 }

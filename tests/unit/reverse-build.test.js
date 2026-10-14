@@ -5,7 +5,9 @@
  * (supplied, implicit, left out; old-style locants), the molecule built
  * from it, and one test per structural error code with its tile range —
  * on the parent and inside branches; rings (R-4a): the ring NameSpec, its
- * closing bond, the errors worded for a ring and the ring limit.
+ * closing bond, the errors worded for a ring and the ring limit; benzene
+ * (R-4b): the `benceno` and `fenil` NameSpecs, the Kekulé ring built, the
+ * phenyl's carbon 1, the errors worded for benzene and the ring limit.
  */
 
 import { test } from 'node:test';
@@ -18,7 +20,7 @@ import {
 import { slotGroups } from '../../src/reverse/search.js';
 import { readName } from '../../src/reverse/index.js';
 import { parseSmiles } from '../../src/model/smiles.js';
-import { canonicalKey } from '../../src/model/graph.js';
+import { canonicalKey, aromaticKey } from '../../src/model/graph.js';
 import { MAX_CARBONS, MESSAGES, RING_SYSTEM_MESSAGES } from '../../src/model/validate.js';
 import { seq } from './reverse-words.js';
 
@@ -360,3 +362,93 @@ test('the ring limit (R-4a): more rings than the structural key handles, or two 
     assert.deepEqual([refusal.code, refusal.message], ['RING_SYSTEM', RING_SYSTEM_MESSAGES.several], words);
   }
 }); // End of test 'the ring limit (R-4a)…'
+
+test('interpret (R-4b): `benceno` is a six-carbon parent without bond slots; `fenil` a branch bonded by its carbon 1', () => {
+  // 0:1 1:4 2:di 3:met 4:il 5:benceno
+  let spec = specOf('1 4 di met il benceno');
+  assert.deepEqual(spec.parent, { kind: 'benzene', length: 6, double: [], triple: [], tiles: [5, 6] });
+  assert.deepEqual(spec.prefixes[0].slots.map((slot) => [slot.kind, slot.value, slot.role, slot.domain]),
+    [['supplied', 1, 'carbon', [1, 6]], ['supplied', 4, 'carbon', [1, 6]]]);
+  assert.equal(spec.oldStyle, false);
+  // Left out on benzene: any of its six carbons.
+  spec = specOf('met il benceno');
+  assert.deepEqual(spec.leftOut.map((slot) => [slot.role, slot.domain, slot.tiles]), [['carbon', [1, 6], [0, 2]]]);
+  // `fenil`: a phenyl at its carbon 1 by rule (the `fenil` tile), single bond, no bond slots.
+  spec = specOf('fenil met ano');
+  const phenyl = spec.prefixes[0].substituent;
+  assert.deepEqual([phenyl.kind, phenyl.length, phenyl.retained, phenyl.double, phenyl.triple, phenyl.prefixes, phenyl.compound],
+    ['phenyl', 6, 'phenyl', [], [], [], false]);
+  assert.deepEqual(phenyl.freeValence, { slot: { kind: 'implicit', value: 1, role: 'carbon', domain: [1, 6], tiles: [0, 1] }, order: 1 });
+  assert.equal(attachmentOrder(phenyl), 1);
+  // `(4-metilfenil)`: its own prefixes on carbons 2…6 (role phenylCarbon), supplied or left out.
+  // 0:START 1:4 2:met 3:il 4:fenil 5:END 6:met 7:ano
+  spec = specOf('START 4 met il fenil END met ano');
+  const substituted = spec.prefixes[0].substituent;
+  assert.deepEqual([substituted.kind, substituted.compound, substituted.tiles, substituted.word], ['phenyl', true, [0, 6], { text: 'fenil', tiles: [4, 5] }]);
+  assert.deepEqual(substituted.prefixes[0].slots.map((slot) => [slot.kind, slot.value, slot.role, slot.domain]),
+    [['supplied', 4, 'phenylCarbon', [2, 6]]]);
+  assert.deepEqual(specOf('START di met il fenil END met ano').leftOut.map((slot) => [slot.role, slot.domain]),
+    [['carbon', [1, 1]], ['phenylCarbon', [2, 6]], ['phenylCarbon', [2, 6]]]);
+  assert.deepEqual([specCarbons(specOf('START 2 4 di met il fenil END et ano')), specRings(specOf('START 2 4 di met il fenil END et ano'))],
+    [10, 1]);
+}); // End of test 'interpret (R-4b): `benceno` is a six-carbon parent…'
+
+test('build (R-4b): one Kekulé drawing (double bonds 1, 3, 5), the student\'s numbering kept, the phenyl hung by its carbon 1', () => {
+  let built = build(specOf('benceno'));
+  assert.ok(built.ok);
+  const { atoms, bonds } = built.studentParent;
+  assert.deepEqual(bonds.map((id) => built.molecule.bonds.get(id).order), [2, 1, 2, 1, 2, 1]);
+  assert.equal(canonicalKey(built.molecule), canonicalKey(parseSmiles('C1=CC=CC=C1')));
+  // `1,2-` on a double bond, `1,6-` on a single one: two drawings of one molecule, one aromatic key.
+  built = build(specOf('1 2 di met il benceno'));
+  assert.deepEqual(built.prefixAtoms.map((o) => [o.locant, o.parentAtom]), [[1, atoms[0]], [2, atoms[1]]]);
+  const other = build(specOf('1 6 di met il benceno'));
+  assert.notEqual(canonicalKey(built.molecule), canonicalKey(other.molecule));
+  assert.equal(aromaticKey(built.molecule), aromaticKey(other.molecule));
+  assert.equal(aromaticKey(other.molecule), aromaticKey(parseSmiles('CC1=CC=CC=C1C')));
+  // A phenyl: its carbon 1 bonded to the chain, its own prefixes on its carbons.
+  built = build(specOf('START 4 met il fenil END met ano'), [1]);
+  assert.equal(aromaticKey(built.molecule), aromaticKey(parseSmiles('CC1=CC=C(C)C=C1')));
+  const [occurrence] = built.prefixAtoms;
+  assert.equal(occurrence.atoms.length, 7, 'six ring carbons and the methyl');
+  assert.equal(occurrence.attachment, occurrence.atoms[0], 'carbon 1, the first created');
+  assert.deepEqual(ownPrefixAtoms(specOf('START 4 met il fenil END met ano').prefixes[0].substituent, occurrence.atoms), [[[occurrence.atoms[6]]]]);
+  assert.equal(aromaticKey(build(specOf('1 START 2 4 di met il fenil END prop ano')).molecule),
+    aromaticKey(parseSmiles('CCCC1=C(C)C=C(C)C=C1')));
+}); // End of test 'build (R-4b): one Kekulé drawing…'
+
+test('structural errors worded for benzene (R-4b): range, the phenyl\'s carbon 1, valence, numbers on `benceno`', () => {
+  // 0:7 1:met 2:il 3:benceno
+  assertError('7 met il benceno', 'LOCANT_RANGE', [0, 1], 'El benceno tiene 6 carbonos, del 1 al 6: no hay carbono 7.');
+  // 0:START 1:7 2:met 3:il 4:fenil 5:END 6:met 7:ano
+  assertError('START 7 met il fenil END met ano', 'LOCANT_RANGE', [1, 2], 'El anillo de la rama va del 1 al 6: no hay carbono 7.');
+  assertError('START 1 met il fenil END met ano', 'LOCANT_RANGE', [1, 2],
+    'En «fenil», el carbono 1 es el que se une a la cadena: las ramas del fenil van en los carbonos del 2 al 6.');
+  // Valence: a benzene carbon has three bonds in the ring (one double), so room for one single-bond branch.
+  assertError('1 1 di met il benceno', 'VALENCE', [1, 2], 'El carbono 1 tendría 5 enlaces, y un carbono solo puede tener 4.');
+  assertError('1 met iliden benceno', 'VALENCE', [0, 1], 'El carbono 1 tendría 5 enlaces, y un carbono solo puede tener 4.');
+  assertError('START 3 3 di met il fenil END met ano', 'VALENCE', [2, 3],
+    'El carbono 3 de la rama tendría 5 enlaces, y un carbono solo puede tener 4.');
+  assertError('hepta met il benceno', 'VALENCE', [0, 3],
+    'No caben: pongas donde pongas lo que va sin número, algún carbono tendría más de 4 enlaces.');
+  // A bond locant on benzene is a parse error (parse.js BENZENE_BONDS): no number of its own, before or after it.
+  for (const words of ['1 3 5 benceno', '1 3 5 tri benceno', 'benceno 1 3 5 tri eno', 'met il 2 benceno']) {
+    const verdict = readName(seq(words));
+    assert.deepEqual([verdict.kind, verdict.errors.map((e) => e.code)], ['invalid', ['BENZENE_BONDS']], words);
+    assert.equal(verdict.message,
+      'El benceno no lleva números propios: sus enlaces dobles no se numeran. Los números van delante de cada rama (1,2-dimetilbenceno).');
+  }
+}); // End of test 'structural errors worded for benzene (R-4b)…'
+
+test('the ring limit (R-4b): benzene and phenyl count as rings; two bonded atom to atom, or three, are refused', () => {
+  assert.deepEqual([specRings(specOf('benceno')), specRings(specOf('fenil met ano')), specRings(specOf('di fenil met ano')),
+    specRings(specOf('fenil benceno'))], [1, 1, 2, 2]);
+  // Two rings apart (through a carbon) have a key: the engine itself refuses them.
+  assert.equal(ringRefusal(specOf('di fenil met ano')), null);
+  assert.equal(ringRefusal(specOf('START fenil met il END benceno')), null, '(fenilmetil)benceno');
+  for (const words of ['fenil benceno', 'fenil met il benceno', 'fenil ciclo hex ano', 'ciclo hex il benceno', 'START fenil fenil END met ano', 'tri fenil met ano',
+    'START START 4 met il fenil END fenil END met ano']) {
+    const refusal = ringRefusal(specOf(words));
+    assert.deepEqual([refusal.code, refusal.message], ['RING_SYSTEM', RING_SYSTEM_MESSAGES.several], words);
+  }
+}); // End of test 'the ring limit (R-4b)…'

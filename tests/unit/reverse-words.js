@@ -2,7 +2,8 @@
  * @file Test helper for the «¿Cómo se dibuja?» modules (src/reverse/):
  * writes a tile sequence as the words on the tiles, `2 3 di met il pent
  * ano`, with `START` / `END` for the compound-branch controls, and reads
- * the open-chain and `ciclo` hydrocarbon rows of tests/fixtures/names.tsv.
+ * the open-chain, `ciclo` and benzene hydrocarbon rows of
+ * tests/fixtures/names.tsv.
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -10,7 +11,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
-import { RING_PREFIX } from '../../src/naming/lexicon.es.js';
+import { RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES } from '../../src/naming/lexicon.es.js';
 
 /** The fixture table (design.md §4.8). */
 const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'names.tsv');
@@ -53,6 +54,21 @@ export function isMonocyclicHydrocarbon(smiles) {
  */
 export function isCycloName(name) {
   return name.includes(RING_PREFIX) && /^[a-z0-9,()[\]{}-]+$/.test(name) && !/\d\(\d/.test(name);
+}
+
+/**
+ * Tells whether a name is written with the syntax of phase R-4b: a
+ * `benceno` or `fenil` name (letters without accents, digits, hyphens,
+ * commas and enclosing marks only) that is no retained template and no old
+ * orto/meta/para form — `tolueno`, `estireno`, `1,2-xileno`, `mesitileno`,
+ * `o-xileno`, `p-dimetilbenceno` are the tiles of I-50c.
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True when R-4b reads it.
+ */
+export function isBenzeneName(name) {
+  const phenyl = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text}`;
+  return (name.includes(BENZENE_NAME) || name.includes(phenyl)) && /^[a-z0-9,()[\]{}-]+$/.test(name) && !/(?:^|[^a-z])[omp]-/.test(name);
 }
 
 /**

@@ -3,7 +3,8 @@
  * design.md §15.5.1, §15.6, phase R-1a): the lossless syntax tree of the
  * grammar for open-chain hydrocarbons (the student's multipliers, order and
  * locants kept), old-style locants, and one test per syntactic error code
- * with its tile range; rings (`ciclo`, R-4a) with RING_ROOT and RING_SIZE. The structural codes (LOCANT_RANGE, BOND_RANGE,
+ * with its tile range; rings (`ciclo`, R-4a) with RING_ROOT and RING_SIZE;
+ * benzene (`benceno`, `fenil`, R-4b) with BENZENE_BONDS. The structural codes (LOCANT_RANGE, BOND_RANGE,
  * SAME_BOND, VALENCE, TOO_BIG) belong to R-1b.
  */
 
@@ -68,6 +69,16 @@ const BROKEN = [
   // Rings (R-4a): `ciclo` without a root, a ring too small, unfinished rings.
   'ciclo', 'ciclo ano', '2 ciclo', 'ciclo ciclo hex ano', 'ciclo et ano', 'ciclo hex', 'met il ciclo', 'ciclo hex il',
   '1 3 ciclo hex', 'START ciclo hex il END', 'ciclo met il ciclo prop ano',
+  // Benzene (R-4b): numbers of its own, `benceno` inside a branch or before more tiles, `fenil` alone or unclosed.
+  '1 3 5 benceno', '1 3 5 tri benceno', 'benceno 1 3 5 tri eno', 'START benceno END met ano', 'benceno met il', 'di benceno',
+  '2 START 2 benceno END but ano', 'fenil', 'START 4 met il fenil', 'met il benceno benceno',
+];
+
+/** Benzene forms of R-4b (design.md §15.8 R-4), valid and error-free. */
+const BENZENE_EXAMPLES = [
+  'benceno', 'met il benceno', '1 2 di met il benceno', 'hexa met il benceno', '1 isopropil 4 met il benceno',
+  'fenil met ano', 'di fenil met ano', 'met il fenil met ano', 'START 4 met il fenil END met ano',
+  '1 START 2 4 di met il fenil END prop ano', 'START 4 prop ano 2 il fenil END met ano', 'fenil benceno', 'START fenil END met ano',
 ];
 
 /** Ring forms of R-4a (design.md §15.8 R-4), valid and error-free. */
@@ -78,16 +89,16 @@ const RING_EXAMPLES = [
   '2 START ciclo hex il met il END but ano', 'di ciclo hex il met ano', 'ciclo hex ano 1 il met ano',
 ];
 
-test('the §15.5.1 examples and the ring forms parse without errors', () => {
-  for (const words of [...EXAMPLES, ...RING_EXAMPLES]) {
+test('the §15.5.1 examples, the ring forms and the benzene forms parse without errors', () => {
+  for (const words of [...EXAMPLES, ...RING_EXAMPLES, ...BENZENE_EXAMPLES]) {
     assert.deepEqual(errorsOf(words), [], words);
   }
   assert.deepEqual(ERROR_CODES, ['EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER',
-    'RING_ROOT', 'RING_SIZE']);
+    'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS']);
 });
 
 test('the tree is lossless: every tile exactly once, in order, also with mistakes', () => {
-  for (const words of [...EXAMPLES, ...RING_EXAMPLES, ...BROKEN]) {
+  for (const words of [...EXAMPLES, ...RING_EXAMPLES, ...BENZENE_EXAMPLES, ...BROKEN]) {
     const { tree } = read(words);
     const n = seq(words).length;
     assert.deepEqual(leafIndices(tree), Array.from({ length: n }, (_, i) => i), words);
@@ -304,6 +315,47 @@ test('ROOT_END on a ring: «ciclohex» needs its ending, as the main ring or as 
   assert.deepEqual(errorsOf('ciclo hex met il prop ano'), ['ROOT_END[0,2)']);
   assert.equal(errorOf('ciclo hex il', 'ENDS_WITH_BRANCH').message, 'El nombre acaba en una rama («ciclohexil»): falta la cadena principal detrás.');
 }); // End of test 'ROOT_END on a ring…'
+
+test('benzene (R-4b): `benceno` is the parent node, `fenil` a retained word that may own a compound branch', () => {
+  // `1,2-dimetilbenceno`: one prefix, the parent a benzene node holding its one tile.
+  let { tree } = read('1 2 di met il benceno');
+  assert.deepEqual(tree.parent.chain, { type: 'benzene', tile: 5, range: [5, 6] });
+  assert.deepEqual([tree.parent.legacy, tree.parent.legacyMultiplier, tree.parent.range], [[], null, [5, 6]]);
+  assert.equal(tree.items.length, 1);
+  ({ tree } = read('benceno'));
+  assert.deepEqual([tree.items.length, tree.parent.chain.tile], [0, 0]);
+  // `fenil`: a simple retained branch; with prefixes of its own, the own chain of a compound branch.
+  ({ tree } = read('fenil met ano'));
+  assert.deepEqual(tree.items[0].substituent, { type: 'retained', tile: 0, range: [0, 1] });
+  ({ tree } = read('START 4 met il fenil END met ano'));
+  const branch = tree.items[0].substituent;
+  assert.deepEqual([branch.type, branch.items.length, branch.chain.type, branch.chain.tile, branch.end], ['branch', 1, 'retained', 4, 5]);
+  assert.ok(isCompleteSubstituent(branch));
+  // A phenyl prefix of a phenyl's branch stays a prefix of that branch.
+  ({ tree } = read('START 4 prop ano 2 il fenil END met ano'));
+  assert.equal(tree.items[0].substituent.items[0].substituent.type, 'chain');
+}); // End of test 'benzene (R-4b): `benceno` is the parent node…'
+
+test('BENZENE_BONDS: `benceno` takes no numbers of its own, before it or after it', () => {
+  const error = errorOf('1 3 5 benceno', 'BENZENE_BONDS');
+  assert.deepEqual([error.from, error.to], [0, 3]);
+  assert.equal(error.message,
+    'El benceno no lleva números propios: sus enlaces dobles no se numeran. Los números van delante de cada rama (1,2-dimetilbenceno).');
+  assert.deepEqual(errorsOf('1 3 5 tri benceno'), ['BENZENE_BONDS[0,4)']);
+  assert.deepEqual(errorsOf('di benceno'), ['BENZENE_BONDS[0,1)']);
+  // After a prefix, the numbers before `benceno` belong to it: `2-metil-3-benceno`.
+  assert.deepEqual(errorsOf('2 met il 3 benceno'), ['BENZENE_BONDS[3,4)']);
+  // After `benceno`: numbers, multipliers and endings number its double bonds; anything else is out of place.
+  assert.deepEqual(errorsOf('benceno 1 3 5 tri eno'), ['BENZENE_BONDS[1,6)']);
+  assert.deepEqual(errorsOf('benceno eno'), ['BENZENE_BONDS[1,2)']);
+  assert.deepEqual(errorsOf('benceno met il'), ['TILE_ORDER[1,3)']);
+  // `benceno` inside a compound branch is out of place: as a branch it is `fenil`.
+  const inside = errorOf('START benceno END met ano', 'TILE_ORDER');
+  assert.deepEqual([inside.from, inside.to], [1, 2]);
+  assert.equal(inside.message, 'Esta ficha no puede ir aquí: «benceno» es el anillo principal y va al final del nombre; como rama, '
+    + 'el benceno se escribe «fenil».');
+  assert.deepEqual(errorsOf('2 START 2 benceno END but ano'), ['TILE_ORDER[2,3)', 'TILE_ORDER[3,4)', 'TILE_ORDER[4,5)']);
+}); // End of test 'BENZENE_BONDS: `benceno` takes no numbers of its own…'
 
 test('errors come sorted by position', () => {
   const { errors } = read('il 2 3 tri met il but');

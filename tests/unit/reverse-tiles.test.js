@@ -16,9 +16,11 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, MAX_NUM, MAX_MULT } from '../../src/reverse/tiles.js';
 import {
-  stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX,
+  TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, BENZENE_ID, PHENYL_ID, MAX_NUM, MAX_MULT,
+} from '../../src/reverse/tiles.js';
+import {
+  stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
 } from '../../src/naming/lexicon.es.js';
 import { bundleModules } from '../../scripts/build.mjs';
 
@@ -44,10 +46,11 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('root'), 30); // met…triacont
   assert.equal(count('ending'), 3);
   assert.equal(count('freeValence'), 2);
-  assert.equal(count('retained'), 3);
+  assert.equal(count('retained'), 4); // isopropil, isopropiliden, tert-butil; fenil (R-4b)
   assert.equal(count('start'), 1);
   assert.equal(count('end'), 1);
   assert.equal(count('ring'), 1); // ciclo (R-4a)
+  assert.equal(count('benzene'), 1); // benceno (R-4b)
   assert.equal(new Set(TILES.map((tile) => tile.id)).size, TILES.length, 'ids are unique');
   assert.equal(new Set(TILES.map((tile) => tile.text)).size, TILES.length, 'texts are unique');
   assert.ok(TILES.every((tile) => Object.isFrozen(tile)));
@@ -66,13 +69,16 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       start: () => ENCLOSING_MARKS[0][0],
       end: () => ENCLOSING_MARKS[0][1],
       ring: () => RING_PREFIX,
+      benzene: () => BENZENE_NAME,
     }[tile.kind]();
     assert.equal(tile.text, expected, tile.id);
   } // End of the loop over the tiles
-  assert.deepEqual(TILES.filter((t) => t.kind === 'retained').map((t) => t.text), ['isopropil', 'isopropiliden', 'tert-butil']);
+  assert.deepEqual(TILES.filter((t) => t.kind === 'retained').map((t) => t.text), ['isopropil', 'isopropiliden', 'tert-butil', 'fenil']);
   assert.equal(tileById('retained-tert-butyl').italic, 'tert-');
   assert.equal(tileById('retained-isopropyl').italic, '');
   assert.equal(tileById(RING_ID).text, 'ciclo');
+  assert.equal(tileById(BENZENE_ID).text, 'benceno');
+  assert.deepEqual([tileById(PHENYL_ID).text, tileById(PHENYL_ID).value, tileById(PHENYL_ID).italic], ['fenil', 'phenyl', '']);
 }); // End of test 'every tile text comes from the lexicon (numbers are digits)'
 
 test('rows and «más» follow design.md §15.2', () => {
@@ -82,8 +88,12 @@ test('rows and «más» follow design.md §15.2', () => {
   assert.equal(more('cmult')[0], 7);
   assert.equal(more('root')[0], 11); // undec…
   assert.deepEqual([...new Set(TILES.map((tile) => tile.row))], ['numbers', 'multipliers', 'roots', 'endings', 'branches', 'rings']);
-  assert.ok(TILES.filter((tile) => ['ending', 'freeValence', 'retained', 'start', 'end', 'ring'].includes(tile.kind)).every((tile) => !tile.more));
-  assert.deepEqual(TILES.filter((tile) => tile.row === 'rings').map((tile) => tile.id), [RING_ID], 'R-4a: the ciclo tile');
+  assert.ok(TILES.filter((tile) => ['ending', 'freeValence', 'retained', 'start', 'end', 'ring', 'benzene'].includes(tile.kind))
+    .every((tile) => !tile.more));
+  assert.deepEqual(TILES.filter((tile) => tile.row === 'rings').map((tile) => tile.id), [RING_ID, BENZENE_ID, PHENYL_ID],
+    'R-4a: the ciclo tile; R-4b: benceno and fenil');
+  assert.deepEqual(TILES.filter((tile) => tile.row === 'branches' && tile.kind === 'retained').map((tile) => tile.value),
+    ['isopropyl', 'isopropylidene', 'tert-butyl']);
 });
 
 test('tileById, tileId and toTiles', () => {
@@ -94,6 +104,8 @@ test('tileById, tileId and toTiles', () => {
   assert.equal(tileId('start'), START_ID);
   assert.equal(tileId('end'), END_ID);
   assert.equal(tileId('ring', 'cyclo'), RING_ID);
+  assert.equal(tileId('benzene', 'benzene'), BENZENE_ID);
+  assert.equal(tileId('retained', 'phenyl'), PHENYL_ID);
   assert.deepEqual(toTiles(['num-2', tileById('mult-2')]).map((tile) => tile.text), ['2', 'di']);
   assert.throws(() => tileById('root-31'), /unknown tile/);
   assert.throws(() => tileId('mult', 1), /no mult tile/);
@@ -192,14 +204,17 @@ test('readName() bundles with the engine and runs in a classic script', async ()
         "import { readName } from './src/reverse/index.js';",
         "import { tokenize } from './src/reverse/tokenize.js';",
         "const names = ['5,5-bis(2,2-dimetilpropil)nonano', '4-(propan-2-il)heptano', '4-metilpentano', 'hex-6-eno', 'metilpentano',",
-        "  'metilpropano', 'decametildecano'];",
-        "globalThis.__result = names.map((name) => readName(tokenize(name)).kind).join(' ');",
+        "  'metilpropano', 'decametildecano', 'metilbenceno', 'dimetilbenceno', '1,6-dimetilbenceno'];",
+        "globalThis.__result = names.map((name) => readName(tokenize(name)).kind).join(' ')",
+        "  + ' ' + readName(tokenize('dimetilbenceno')).candidates.length;",
       ].join('\n'),
     );
     const code = await bundleModules(path.join(dir, 'entry.js'), dir);
     const context = {};
     vm.runInNewContext(code, context);
-    assert.equal(context.__result, 'correct alternative otherName invalid ambiguous missingLocants incomplete');
+    // The aromatic key (R-4b) bundles too: three structures for `dimetilbenceno`, `1,6-` drawn as `1,2-`.
+    assert.equal(context.__result,
+      'correct alternative otherName invalid ambiguous missingLocants incomplete correct ambiguous otherName 3');
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

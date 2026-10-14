@@ -1,11 +1,11 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a): recursive descent over a tile sequence into a lossless
- * syntax tree. Pure, no DOM, no chemistry (the tree is not checked against
- * a molecule; that is interpret.js / build.js, R-1b).
+ * phases R-1a, R-4a, R-4b): recursive descent over a tile sequence into a
+ * lossless syntax tree. Pure, no DOM, no chemistry (the tree is not checked
+ * against a molecule; that is interpret.js / build.js, R-1b).
  *
  * Grammar for open-chain and monocyclic hydrocarbons (design.md §15.5.1;
- * the ring prefix `ciclo` from R-4a):
+ * the ring prefix `ciclo` from R-4a, `benceno` and `fenil` from R-4b):
  *
  *   name        = { prefix } , parent ;
  *   prefix      = [ locants ] , [ MULT | CMULT ] , substituent ;
@@ -13,8 +13,8 @@
  *   simple      = stem , ( il | iliden )
  *               | stem , [ ano ] , locant , ( il | iliden )
  *               | stem , segments , [ locant ] , ( il | iliden )
- *               | isopropil | isopropiliden | tert-butil ;
- *   parent      = [ legacy ] , stem , ( ano | segments ) ;
+ *               | isopropil | isopropiliden | tert-butil | fenil ;
+ *   parent      = [ legacy ] , stem , ( ano | segments ) | benceno ;
  *   stem        = [ ciclo ] , ROOT ;   (* ciclo: a ring of ROOT carbons, at least 3 *)
  *   segments    = segment , [ segment ] ;
  *   segment     = [ locants ] , [ MULT ] , ( eno | ino ) ;
@@ -25,6 +25,16 @@
  * `ciclohexiliden`, `ciclohex-2-en-1-il`), so it is a chain node with its
  * `ciclo` tile; the ring's bonds and its free valence at carbon 1 are
  * interpret.js's. Old-style locants work as on a chain (`1,3-ciclohexadieno`).
+ *
+ * The benzene ring (R-4b) is two whole words: `benceno`, the parent, and
+ * `fenil`, a retained branch word like `isopropil` (bonded by its carbon 1),
+ * which alone among them may be the own chain of a compound branch with
+ * prefixes (`START 4 met il fenil END`: `(4-metilfenil)`; build.js refuses
+ * prefixes on the other retained words). Its double bonds are never
+ * numbered: numbers or a multiplier right before `benceno` (`1,3,5-benceno`),
+ * or numbers, a multiplier or an ending after it, are BENZENE_BONDS; inside a
+ * compound branch `benceno` is out of place (TILE_ORDER: as a branch it is
+ * `fenil`).
  *
  * A stem starts a branch or the parent: what follows it decides (a
  * free-valence suffix makes a branch), so leading numbers are never
@@ -51,9 +61,11 @@
  *            chain|retained|null, end: number|null}` (`chain` is the
  *            branch's own simple chain, cited last; `end` null while open)
  * - parent  `{type: 'parent', legacy: number[], legacyMultiplier:
- *            number|null, legacySegment: number|null, chain}` (`legacy`:
- *            old-style locants before the root, `2-buteno`; `legacySegment`
- *            the index of the segment they belong to once allocated)
+ *            number|null, legacySegment: number|null, chain: chain|benzene}`
+ *            (`legacy`: old-style locants before the root, `2-buteno`;
+ *            `legacySegment` the index of the segment they belong to once
+ *            allocated; for `benceno` they are BENZENE_BONDS)
+ * - benzene `{type: 'benzene', tile}` (the `benceno` tile, R-4b)
  * - stray   `{type: 'stray', tile}` (a tile out of place)
  *
  * Error-tolerant: parsing never throws on a tile sequence; it always
@@ -61,8 +73,9 @@
  * errors of design.md §15.6, each `{code, from, to, message}` with the
  * offending tile range `[from, to)`, sorted by position: EMPTY, NO_PARENT,
  * ROOT_END, ENDS_WITH_BRANCH, BRANCH_OPEN, LOCANT_COUNT, LEGACY, TILE_ORDER,
- * and for rings (R-4a) RING_ROOT (`ciclo` without a root after it) and
- * RING_SIZE (a ring of fewer than three carbons).
+ * for rings (R-4a) RING_ROOT (`ciclo` without a root after it) and
+ * RING_SIZE (a ring of fewer than three carbons), and for benzene (R-4b)
+ * BENZENE_BONDS (numbers of its own on `benceno`, which has none).
  * The structural codes (LOCANT_RANGE, BOND_RANGE, SAME_BOND, VALENCE,
  * TOO_BIG) need the chemistry and belong to R-1b. The Spanish messages are
  * drafts pending teacher review (design.md §15, last paragraph); their
@@ -71,15 +84,15 @@
 
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS, CONNECTING_VOWEL,
-  MAX_MULTIPLIER, RING_PREFIX,
+  MAX_MULTIPLIER, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES,
 } from '../naming/lexicon.es.js';
 import { toTiles } from './tiles.js';
 import { itemText } from './assemble.js';
 
-/** The syntactic error codes of design.md §15.6 handled by the parser (RING_ROOT, RING_SIZE from R-4a). */
+/** The syntactic error codes of design.md §15.6 handled by the parser (RING_ROOT, RING_SIZE from R-4a; BENZENE_BONDS from R-4b). */
 export const ERROR_CODES = Object.freeze([
   'EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER',
-  'RING_ROOT', 'RING_SIZE',
+  'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS',
 ]);
 
 /** Fewest carbons of a ring (`ciclopropano`). */
@@ -87,6 +100,7 @@ export const MIN_RING = 3;
 
 const IL = FREE_VALENCE_SUFFIXES[1];
 const ILIDEN = FREE_VALENCE_SUFFIXES[2];
+const FENIL = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text}`;
 const [OPEN, CLOSE] = ENCLOSING_MARKS[0];
 
 /** Spanish number words for the LOCANT_COUNT messages (digits from 11 on). */
@@ -119,6 +133,7 @@ const EXAMPLES = Object.freeze({
   ciclopropano: `${RING_PREFIX}${stem(3)}${ENDINGS.saturated}`,
   ciclohexano: `${RING_PREFIX}${stem(6)}${ENDINGS.saturated}`,
   ciclohexil: `${RING_PREFIX}${stem(6)}${IL}`,
+  dimetilbenceno: `1,2-${multiplier(2)}${stem(1)}${IL}${BENZENE_NAME}`,
 });
 
 /** Hints of the TILE_ORDER message, by situation (drafts pending teacher review). */
@@ -140,6 +155,8 @@ const HINTS = Object.freeze({
     + `«${ENDINGS.triple}» (${EXAMPLES.hexadienino}).`,
   cmultSegment: `delante de «${ENDINGS.double}» o «${ENDINGS.triple}» va «${multiplier(2)}», «${multiplier(3)}»…, `
     + `no «${compoundMultiplier(2)}» ni «${compoundMultiplier(3)}».`,
+  benzeneBranch: `«${BENZENE_NAME}» es el anillo principal y va al final del nombre; como rama, el benceno se escribe `
+    + `«${FENIL}».`,
 });
 
 /** Messages of the error codes that take no detail (design.md §15.6 drafts). */
@@ -152,6 +169,8 @@ const MESSAGES = Object.freeze({
   RING_ROOT: `Después de «${RING_PREFIX}» va una raíz que dice cuántos carbonos tiene el anillo: `
     + `${EXAMPLES.ciclopropano}, ${EXAMPLES.ciclohexano}, ${EXAMPLES.ciclohexil}…`,
   RING_SIZE: `Un anillo tiene por lo menos ${MIN_RING} carbonos: el más pequeño es el ${EXAMPLES.ciclopropano}.`,
+  BENZENE_BONDS: `El ${BENZENE_NAME} no lleva números propios: sus enlaces dobles no se numeran. Los números van delante `
+    + `de cada rama (${EXAMPLES.dimetilbenceno}).`,
 });
 
 /**
@@ -473,9 +492,32 @@ function makeParent(state, legacy, mult, chain, start) {
 } // End of function makeParent()
 
 /**
+ * Builds the parent node of `benceno` (R-4b), the tile at the parser
+ * position: numbers or a multiplier before it are BENZENE_BONDS (its double
+ * bonds are never numbered), kept in the node as `legacy` so the tree stays
+ * lossless.
+ *
+ * @param {object} state - Parser state (positioned on the `benceno` tile).
+ * @param {number[]} legacy - Locant tiles before it.
+ * @param {number|null} mult - Multiplier tile before it, or null.
+ * @param {number} start - First tile index of the parent.
+ * @returns {object} The parent node, its chain a benzene node.
+ */
+function makeBenzeneParent(state, legacy, mult, start) {
+  const tile = state.pos;
+  state.pos += 1;
+  if (legacy.length > 0 || mult !== null) {
+    addError(state, 'BENZENE_BONDS', start, tile, MESSAGES.BENZENE_BONDS);
+  }
+  const chain = { type: 'benzene', tile, range: [tile, tile + 1] };
+  return { type: 'parent', legacy, legacyMultiplier: mult, legacySegment: null, chain, range: [start, state.pos] };
+}
+
+/**
  * Parses one item at a prefix position: a prefix (locants, multiplier,
  * substituent), the parent (at name level, a chain or ring without free
- * valence), or a tile that cannot start either (a stray).
+ * valence, or `benceno`), or a tile that cannot start either (a stray; also
+ * `benceno` inside a compound branch).
  *
  * @param {object} state - Parser state.
  * @param {'name'|'branch'} context - Name level or inside a compound branch.
@@ -485,15 +527,20 @@ function parseItem(state, context) {
   const { tiles } = state;
   const start = state.pos;
   const first = tiles[start];
-  if (first.kind === 'ending' || first.kind === 'freeValence' || first.kind === 'end') {
+  const benzeneBranch = first.kind === 'benzene' && context === 'branch';
+  if (first.kind === 'ending' || first.kind === 'freeValence' || first.kind === 'end' || benzeneBranch) {
     state.pos += 1;
-    addTileOrder(state, start, start + 1, first.kind === 'end' ? HINTS.endWithoutBranch : HINTS[first.kind]);
+    const hint = (first.kind === 'end' && HINTS.endWithoutBranch) || (benzeneBranch && HINTS.benzeneBranch) || HINTS[first.kind];
+    addTileOrder(state, start, start + 1, hint);
     return { type: 'stray', tile: start, range: [start, start + 1] };
   }
   const locants = takeNums(state);
   const mult = takeMultiplier(state);
   const prefix = { type: 'prefix', locants, multiplier: mult, substituent: null, range: [start, state.pos] };
   const next = tiles[state.pos];
+  if (next && next.kind === 'benzene' && context === 'name') {
+    return makeBenzeneParent(state, locants, mult, start);
+  }
   if (!next || !['start', 'retained', 'root', 'ring'].includes(next.kind)) {
     if (next) {
       addTileOrder(state, start, state.pos, HINTS[first.kind]); // numbers or a multiplier with no branch after them
@@ -587,7 +634,14 @@ export function parse(sequence) {
     for (let i = state.pos; i < tiles.length; i += 1) {
       tree.trailing.push({ type: 'stray', tile: i, range: [i, i + 1] });
     }
-    addTileOrder(state, state.pos, tiles.length, HINTS.afterParent);
+    // After `benceno`, numbers, multipliers and endings would number its double bonds (`benceno-1,3,5-trieno`).
+    const bonds = tree.parent.chain.type === 'benzene'
+      && tiles.slice(state.pos).every((tile) => ['num', 'mult', 'ending'].includes(tile.kind));
+    if (bonds) {
+      addError(state, 'BENZENE_BONDS', state.pos, tiles.length, MESSAGES.BENZENE_BONDS);
+    } else {
+      addTileOrder(state, state.pos, tiles.length, HINTS.afterParent);
+    }
   }
   if (!tree.parent) {
     checkNameEnd(state, tree);

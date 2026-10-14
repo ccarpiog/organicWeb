@@ -6,7 +6,8 @@
  *
  * Every Spanish text comes from the naming lexicon (lexicon.es.js: stem(),
  * multiplier(), compoundMultiplier(), ENDINGS, FREE_VALENCE_SUFFIXES,
- * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX), never retyped here;
+ * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME), never
+ * retyped here;
  * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
  *
@@ -17,11 +18,16 @@
  *   keys), 'freeValence' (il / iliden; value 1 | 2, the attachment bond
  *   order), 'retained' (isopropil, isopropiliden, tert-butil; value the
  *   RETAINED_PREFIXES id, with `italic` the descriptor ignored in
- *   alphabetical order), 'start' / 'end' (the controls «empieza rama
- *   compuesta» / «acaba rama»; their text is the plain enclosing mark, the
- *   assembler picks the real one), 'ring' (the nondetachable prefix `ciclo`
- *   before a root: a ring of that many carbons, as the parent — `ciclohexano`
- *   — or a branch — `ciclohexil`; value 'cyclo');
+ *   alphabetical order; also `fenil`, value 'phenyl', in the «Anillos» row
+ *   from R-4b: the benzene ring as a branch, bonded by its carbon 1, which
+ *   unlike the other retained words takes prefixes of its own inside a
+ *   compound branch, `(4-metilfenil)`), 'start' / 'end' (the controls
+ *   «empieza rama compuesta» / «acaba rama»; their text is the plain
+ *   enclosing mark, the assembler picks the real one), 'ring' (the
+ *   nondetachable prefix `ciclo` before a root: a ring of that many carbons,
+ *   as the parent — `ciclohexano` — or a branch — `ciclohexil`; value
+ *   'cyclo'), 'benzene' (the retained parent `benceno`, a whole word: the
+ *   benzene ring as the parent, R-4b; value 'benzene');
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos»);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
@@ -30,7 +36,7 @@
 
 import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
-  RING_PREFIX,
+  RING_PREFIX, BENZENE_NAME,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -48,7 +54,7 @@ const MULT_VISIBLE = 6;
 /** Last root shown before «más» (design.md §15.2: met…dec, then undec…triacont). */
 const ROOT_VISIBLE = 10;
 
-/** Retained branch words offered in R-1 (design.md §15.5.1); `phenyl` arrives with the rings (R-4). */
+/** Retained branch words of the «Ramas» row (design.md §15.5.1); `phenyl` sits in the «Anillos» row (R-4b). */
 const RETAINED_IDS = Object.freeze(['isopropyl', 'isopropylidene', 'tert-butyl']);
 
 /** Id of the «empieza rama compuesta» control. */
@@ -59,6 +65,12 @@ export const END_ID = 'branch-end';
 
 /** Id of the `ciclo` tile (design.md §15.8 R-4: `ciclo` parents and ring branches). */
 export const RING_ID = 'ring-cyclo';
+
+/** Id of the `benceno` tile (design.md §15.8 R-4, phase R-4b: the benzene parent). */
+export const BENZENE_ID = 'ring-benzene';
+
+/** Id of the `fenil` tile (design.md §15.8 R-4, phase R-4b: the benzene ring as a branch). */
+export const PHENYL_ID = 'retained-phenyl';
 
 /**
  * Creates one frozen tile.
@@ -78,7 +90,8 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
 
 /**
  * Builds the whole catalogue in dialog order: numbers, multipliers (simple,
- * then compound), roots, endings, branch words and controls, rings.
+ * then compound), roots, endings, branch words and controls, rings (`ciclo`,
+ * `benceno`, `fenil`).
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -110,6 +123,9 @@ function buildCatalogue() {
   tiles.push(makeTile(START_ID, 'start', null, 'branches', open));
   tiles.push(makeTile(END_ID, 'end', null, 'branches', close));
   tiles.push(makeTile(RING_ID, 'ring', 'cyclo', 'rings', RING_PREFIX));
+  tiles.push(makeTile(BENZENE_ID, 'benzene', 'benzene', 'rings', BENZENE_NAME));
+  const phenyl = RETAINED_PREFIXES.phenyl;
+  tiles.push(makeTile(PHENYL_ID, 'retained', 'phenyl', 'rings', `${phenyl.italic}${phenyl.text}`, false, { italic: phenyl.italic }));
   return tiles;
 } // End of function buildCatalogue()
 

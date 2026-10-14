@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -8,7 +8,15 @@
  * A ring (parent or branch, kind 'ring') is built as its chain of carbons
  * closed by bond n, which joins carbon n to carbon 1 (design.md §15.5.3:
  * ring bonds 1…n), so a multiple bond on bond n is the closing one and
- * never out of range.
+ * never out of range. A benzene ring (`benceno`, kind 'benzene'; `fenil`,
+ * kind 'phenyl'; R-4b) is a ring of six carbons drawn in one Kekulé form,
+ * double bonds on bonds 1, 3 and 5: which of the two forms is drawn never
+ * matters, since search.js merges and maps structures up to it
+ * (model/graph.js aromaticKey(), aromaticIsomorphism()). The ring's own
+ * double bonds belong to the ring, like its single bonds, so a VALENCE
+ * error blames the locant that adds a fourth bond too many, never the
+ * `benceno` tile. A phenyl hangs by its carbon 1; its own prefixes go on
+ * carbons 2…6 (a locant 1 there is LOCANT_RANGE with its own message).
  *
  * The molecule is the student's reading, numbered as the student numbered
  * it: `studentParent` lists the parent's atoms in the student's locant
@@ -41,9 +49,10 @@
  * attachmentOrder() to prune by valence.
  *
  * ringRefusal() is no structural error but a limit of the app: a name that
- * describes more rings than MAX_KEYED_RINGS (`diciclohexilciclohexano`), or
- * a ring bonded straight to another ring (`ciclohexilciclohexano`,
- * `ciclohexilidenciclohexano`), gives a molecule with no structural key
+ * describes more rings than MAX_KEYED_RINGS (`diciclohexilciclohexano`,
+ * `trifenilmetano`), or a ring bonded straight to another ring
+ * (`ciclohexilciclohexano`, `ciclohexilidenciclohexano`, `fenilbenceno`,
+ * `fenilciclohexano`), gives a molecule with no structural key
  * (model/graph.js canonicalKey() keys two rings only when no atom of one is
  * bonded to the other), which the engine refuses anyway (RING_SYSTEM,
  * several rings); readName() answers `outOfScope` with the engine's own
@@ -54,6 +63,7 @@ import { createMolecule, addAtom, addBond, setBondOrder, bondOrderSum, CARBON_VA
 import {
   MAX_CARBONS, MAX_CHAIN, MESSAGES as VALIDATION_MESSAGES, RING_SYSTEM_MESSAGES, longestCarbonChain, longestSideChain,
 } from '../model/validate.js';
+import { BENZENE_NAME, RETAINED_PREFIXES } from '../naming/lexicon.es.js';
 
 /** The structural error codes of design.md §15.6 (TILE_ORDER reused for a retained word with prefixes). */
 export const BUILD_ERROR_CODES = Object.freeze(['TILE_ORDER', 'LOCANT_RANGE', 'BOND_RANGE', 'SAME_BOND', 'VALENCE', 'TOO_BIG']);
@@ -103,17 +113,23 @@ function carbons(n) {
   return `${n} ${n === 1 ? 'carbono' : 'carbonos'}`;
 }
 
+/** The `fenil` word in the messages (lexicon RETAINED_PREFIXES). */
+const FENIL = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text}`;
+
 /**
  * The LOCANT_RANGE message (design.md §15.6): «La cadena de 5 carbonos va
  * del 1 al 5: no hay carbono 7.»; «La rama…» inside a branch; «El anillo de
  * 6 carbonos va del 1 al 6…», «El anillo de la rama va del 1 al 6…» for a
- * ring.
+ * ring; «El benceno tiene 6 carbonos, del 1 al 6…» for `benceno` (R-4b).
  *
- * @param {{length: number, branch: boolean, ring?: boolean}} owner - The chain or ring numbered.
+ * @param {{length: number, branch: boolean, ring?: boolean, benzene?: boolean}} owner - The chain or ring numbered.
  * @param {number} value - The locant.
  * @returns {string} The message.
  */
 function rangeMessage(owner, value) {
+  if (owner.benzene && !owner.branch) {
+    return `El ${BENZENE_NAME} tiene ${carbons(owner.length)}, del 1 al ${owner.length}: no hay carbono ${value}.`;
+  }
   if (owner.ring) {
     const noun = owner.branch ? 'El anillo de la rama' : `El anillo de ${carbons(owner.length)}`;
     return `${noun} va del 1 al ${owner.length}: no hay carbono ${value}.`;
@@ -141,7 +157,9 @@ function slotValue(slot, values) {
 }
 
 /**
- * Checks a carbon slot against its chain.
+ * Checks a carbon slot against its chain: within it, and on a phenyl
+ * (R-4b, role `phenylCarbon`) not on carbon 1, the one bonded to what the
+ * phenyl hangs from (below the slot's domain).
  *
  * @param {object} slot - A carbon Slot.
  * @param {{length: number, branch: boolean}} owner - The chain it numbers.
@@ -150,11 +168,15 @@ function slotValue(slot, values) {
  */
 function checkCarbon(slot, owner, values) {
   const value = slotValue(slot, values);
-  if (value === null || (value >= 1 && value <= owner.length)) {
+  if (value === null || (value >= slot.domain[0] && value <= owner.length)) {
     return null;
   }
+  if (value >= 1 && value <= owner.length) {
+    return buildError('LOCANT_RANGE', `En «${FENIL}», el carbono 1 es el que se une a la cadena: las ramas del ${FENIL} `
+      + `van en los carbonos del ${slot.domain[0]} al ${owner.length}.`, slot.tiles);
+  }
   return buildError('LOCANT_RANGE', rangeMessage(owner, value), slot.tiles);
-}
+} // End of function checkCarbon()
 
 /**
  * Checks the multiple-bond slots of a chain or ring in tile order: each
@@ -235,7 +257,7 @@ function checkSubstituent(sub, values) {
     return buildError('TILE_ORDER', `Esta ficha no puede ir aquí: «${sub.word.text}» ya es una rama entera y no lleva `
       + 'números ni ramas propias.', sub.word.tiles);
   }
-  const owner = { length: sub.length, branch: true, ring: sub.kind === 'ring', double: sub.double, triple: sub.triple };
+  const owner = { length: sub.length, branch: true, ring: isRing(sub.kind), double: sub.double, triple: sub.triple };
   return checkPrefixes(sub.prefixes, owner, values) || checkBonds(owner, values)
     || checkCarbon(sub.freeValence.slot, owner, values);
 } // End of function checkSubstituent()
@@ -276,13 +298,35 @@ export function specCarbons(spec) {
 }
 
 /**
+ * Tells whether a ParentSpec or SubstituentSpec kind is a ring: a `ciclo`
+ * ring, or the benzene ring (`benceno`, `fenil`; R-4b).
+ *
+ * @param {string} kind - The spec's kind.
+ * @returns {boolean} True for a ring.
+ */
+export function isRing(kind) {
+  return kind === 'ring' || kind === 'benzene' || kind === 'phenyl';
+}
+
+/**
+ * Tells whether a ParentSpec or SubstituentSpec kind is the benzene ring
+ * (`benceno`, `fenil`; R-4b), drawn with its Kekulé double bonds.
+ *
+ * @param {string} kind - The spec's kind.
+ * @returns {boolean} True for a benzene ring.
+ */
+export function isAromatic(kind) {
+  return kind === 'benzene' || kind === 'phenyl';
+}
+
+/**
  * Rings of a branch, its own prefixes included.
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
  */
 function substituentRings(sub) {
-  return (sub.kind === 'ring' ? 1 : 0) + prefixRings(sub.prefixes);
+  return (isRing(sub.kind) ? 1 : 0) + prefixRings(sub.prefixes);
 }
 
 /**
@@ -303,7 +347,7 @@ function prefixRings(prefixes) {
  * @returns {number} The count.
  */
 export function specRings(spec) {
-  return (spec.parent.kind === 'ring' ? 1 : 0) + prefixRings(spec.prefixes);
+  return (isRing(spec.parent.kind) ? 1 : 0) + prefixRings(spec.prefixes);
 }
 
 /**
@@ -318,7 +362,7 @@ export function specRings(spec) {
 function ringOnRing(owner, ring) {
   return owner.prefixes.some((prefix) => {
     const sub = prefix.substituent;
-    return (ring && sub.kind === 'ring') || (sub.kind !== 'retained' && ringOnRing(sub, sub.kind === 'ring'));
+    return (ring && isRing(sub.kind)) || (sub.kind !== 'retained' && ringOnRing(sub, isRing(sub.kind)));
   });
 }
 
@@ -332,7 +376,7 @@ function ringOnRing(owner, ring) {
  * @returns {{code: string, message: string, tiles: [number, number]}|null} The refusal, or null.
  */
 export function ringRefusal(spec) {
-  const unkeyed = specRings(spec) > MAX_KEYED_RINGS || ringOnRing({ prefixes: spec.prefixes }, spec.parent.kind === 'ring');
+  const unkeyed = specRings(spec) > MAX_KEYED_RINGS || ringOnRing({ prefixes: spec.prefixes }, isRing(spec.parent.kind));
   return unkeyed ? buildError('RING_SYSTEM', RING_SYSTEM_MESSAGES.several, spec.tiles) : null;
 }
 
@@ -349,7 +393,12 @@ export function ringRefusal(spec) {
  */
 export function checkSpec(spec, values = null) {
   const parent = {
-    length: spec.parent.length, branch: false, ring: spec.parent.kind === 'ring', double: spec.parent.double, triple: spec.parent.triple,
+    length: spec.parent.length,
+    branch: false,
+    ring: isRing(spec.parent.kind),
+    benzene: spec.parent.kind === 'benzene',
+    double: spec.parent.double,
+    triple: spec.parent.triple,
   };
   const error = checkPrefixes(spec.prefixes, parent, values) || checkBonds(parent, values);
   if (error) {
@@ -387,12 +436,13 @@ function contribute(state, atom, tiles, amount) {
 
 /**
  * Creates the carbons and single bonds of a chain (closed by bond n from
- * carbon n to carbon 1 for a ring), then its multiple bonds and the
+ * carbon n to carbon 1 for a ring; a benzene ring with its Kekulé double
+ * bonds on bonds 1, 3 and 5, R-4b), then its multiple bonds and the
  * prefixes hanging from it.
  *
  * @param {object} state - Build state (`mol`, `values`, `atoms` info by id).
  * @param {{kind?: string, length: number, double: object[], triple: object[], prefixes: object[]}} owner - ParentSpec,
- *   chain or ring SubstituentSpec.
+ *   chain, ring or phenyl SubstituentSpec.
  * @param {boolean} branch - A branch's chain (for the messages).
  * @returns {{atoms: number[], bonds: number[]}} Its atoms and bonds in locant order (a ring's closing bond last).
  */
@@ -408,9 +458,13 @@ function buildChain(state, owner, branch) {
       bonds.push(addBond(mol, atoms[locant - 2], id, 1));
     }
   } // End of the loop that creates the carbons
-  const ring = owner.kind === 'ring';
+  const ring = isRing(owner.kind);
   if (ring) {
     bonds.push(addBond(mol, atoms[owner.length - 1], atoms[0], 1)); // Bond n closes the ring.
+  }
+  if (isAromatic(owner.kind)) {
+    // One Kekulé form; its double bonds are the ring's own (no `contribute`: a VALENCE error blames a locant).
+    bonds.forEach((bond, i) => i % 2 === 0 && setBondOrder(mol, bond, 2));
   }
   for (const [order, slots] of [[2, owner.double], [3, owner.triple]]) {
     for (const slot of slots) {

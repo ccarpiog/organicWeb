@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T21:30:27Z",
+  "updated": "2026-10-14T22:04:28Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -611,7 +611,7 @@
       "id": "I-50",
       "title": "v4 R-4 Rings",
       "status": "in_progress",
-      "summary": "Split into I-50a (ciclo rings, done), I-50b (benzene, phenyl, aromatic key) and I-50c (retained templates, o/m/p, diagnosis, Ayuda)."
+      "summary": "Split into I-50a (ciclo rings, done), I-50b (benzene, phenyl, aromatic key, done) and I-50c (retained templates, o/m/p, diagnosis, Ayuda)."
     },
     {
       "id": "I-50a",
@@ -625,9 +625,11 @@
     {
       "id": "I-50b",
       "title": "v4 R-4b Benzene and phenyl names from tiles",
-      "status": "queued",
+      "status": "done",
       "risk": "high",
-      "summary": "Extends tile names to benceno, fenil and substituted phenyl branches, treating both Kekule drawings as one molecule."
+      "summary": "Extends tile names to benceno, fenil and substituted phenyl branches, treating both Kekule drawings as one molecule.",
+      "review": "Codex ship, 0 findings - docs/reviews/I-50b.md",
+      "narrative": "docs/progress-archive/i-50b.md"
     },
     {
       "id": "I-50c",

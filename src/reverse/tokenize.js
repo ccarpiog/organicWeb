@@ -1,7 +1,7 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a): the inverse of the assembler, `tokenize(text) → tile ids | null`,
- * for the tests and the diagnosis (R-3). Pure, no DOM.
+ * R-4a, R-4b): the inverse of the assembler, `tokenize(text) → tile ids |
+ * null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
  * text, and the elided `an` / `en` / `in` of the endings), skipping the
@@ -23,7 +23,9 @@
  * the punctuation skipped between two pieces must be exactly what the
  * assembler writes there (assemble.js separator()); an automatic enclosure
  * holds exactly one simple chain or ring (its stem first — `ciclo` or a
- * root —, its closing mark right after `il` / `iliden`, nothing nested). A
+ * root —, its closing mark right after `il` / `iliden`, nothing nested), or
+ * the one word `fenil` (a crowded ring prefix, `metil(fenil)metano`, R-4b).
+ * `benceno` (R-4b) ends a name, right after its prefixes or at the start. A
  * step budget bounds the search: running out returns null, never a guess.
  */
 
@@ -49,8 +51,9 @@ const PUNCTUATION = ',-';
 /**
  * Grammar class of a tile for the adjacency table: NUM, MULT, CMULT, ROOT,
  * ANO (`ano`), ENE (`eno` / `ino`), FV (`il` / `iliden`), RET (a retained
- * branch word), START, END, RING (`ciclo`). A is the automatic connecting
- * vowel, AUTO_OPEN an automatic opening mark.
+ * branch word), PHE (`fenil`, R-4b), BEN (`benceno`, R-4b), START, END, RING
+ * (`ciclo`). A is the automatic connecting vowel, AUTO_OPEN an automatic
+ * opening mark.
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -59,41 +62,54 @@ function tileClass(tile) {
   if (tile.kind === 'ending') {
     return tile.value === 'saturated' ? 'ANO' : 'ENE';
   }
+  if (tile.kind === 'retained' && tile.value === 'phenyl') {
+    return 'PHE';
+  }
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
-    ring: 'RING',
+    ring: 'RING', benzene: 'BEN',
   };
   return classes[tile.kind];
 }
 
 /** Classes that may begin a name, a prefix or a compound branch. */
-const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'START'];
+const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'START'];
+
+/** Classes that may follow a complete prefix: another prefix, the end of its compound branch, or `benceno`. */
+const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN'];
 
 /**
  * The classes that may follow each class in a valid open-chain or
  * monocyclic hydrocarbon name (design.md §15.5.1); BEGIN is the start of
  * the text. An automatic closing mark does not change the class. `ciclo`
- * stands wherever a root may start a stem, and only a root follows it.
+ * stands wherever a root may start a stem, and only a root follows it;
+ * `fenil` wherever a retained word may stand; `benceno` at the start or
+ * after a complete prefix, and nothing after it.
  */
 const FOLLOW = Object.freeze({
-  BEGIN: new Set(PREFIX_STARTS),
-  AUTO_OPEN: new Set(['ROOT', 'RING']),
+  BEGIN: new Set([...PREFIX_STARTS, 'BEN']),
+  AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE']),
   NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV']),
-  MULT: new Set(['ROOT', 'RING', 'RET', 'START', 'ENE']),
-  CMULT: new Set(['ROOT', 'RING', 'RET', 'START']),
+  MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'START', 'ENE']),
+  CMULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'START']),
   RING: new Set(['ROOT']),
   ROOT: new Set(['ANO', 'NUM', 'MULT', 'ENE', 'FV', 'A']),
   A: new Set(['NUM', 'MULT']),
   ANO: new Set(['NUM']),
   ENE: new Set(['NUM', 'MULT', 'ENE', 'FV']),
-  FV: new Set([...PREFIX_STARTS, 'END']),
-  RET: new Set([...PREFIX_STARTS, 'END']),
+  FV: new Set(AFTER_PREFIX),
+  RET: new Set(AFTER_PREFIX),
+  PHE: new Set(AFTER_PREFIX),
   START: new Set(PREFIX_STARTS),
-  END: new Set([...PREFIX_STARTS, 'END']),
+  END: new Set(AFTER_PREFIX),
+  BEN: new Set(),
 });
 
-/** Classes a valid name may end with (the parent's ending). */
-const FINAL = new Set(['ANO', 'ENE']);
+/** Classes a valid name may end with (the parent's ending, or `benceno`). */
+const FINAL = new Set(['ANO', 'ENE', 'BEN']);
+
+/** Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, or `fenil`. */
+const AUTO_CLOSE = new Set(['FV', 'PHE']);
 
 /** Punctuation roles of the pieces (assemble.js separator()). */
 const WORD = Object.freeze({ role: 'word' });
@@ -214,8 +230,8 @@ export function tokenize(text, options = {}) {
       return fits(CLOSE) ? searchClosing(at, prev, CLOSERS.indexOf(ch)) : false;
     }
     const top = marks[marks.length - 1];
-    if (top && top.automatic && prev === 'FV') {
-      return false; // An automatic enclosure ends right after its chain's `il` / `iliden`.
+    if (top && top.automatic && AUTO_CLOSE.has(prev)) {
+      return false; // An automatic enclosure ends right after its chain's `il` / `iliden`, or after `fenil`.
     }
     const follow = FOLLOW[prev];
     for (const surface of SURFACES) {
@@ -236,7 +252,8 @@ export function tokenize(text, options = {}) {
 
   /**
    * Explores an opening mark: automatic first (around one simple chain or
-   * ring, not inside another automatic enclosure), then the START control.
+   * ring, or `fenil`, not inside another automatic enclosure), then the
+   * START control.
    *
    * @param {number} pos - Position of the mark.
    * @param {string} prev - Class before it.
@@ -271,8 +288,8 @@ export function tokenize(text, options = {}) {
 
   /**
    * Explores a closing mark: it closes the last opening mark, of the same
-   * level and the same choice (automatic, right after `il` / `iliden`; or
-   * the END control).
+   * level and the same choice (automatic, right after `il` / `iliden` or
+   * `fenil`; or the END control).
    *
    * @param {number} pos - Position of the mark.
    * @param {string} prev - Class before it.
@@ -281,7 +298,7 @@ export function tokenize(text, options = {}) {
    */
   function searchClosing(pos, prev, level) {
     const open = marks[marks.length - 1];
-    if (!open || open.level !== level || (open.automatic && prev !== 'FV')) {
+    if (!open || open.level !== level || (open.automatic && !AUTO_CLOSE.has(prev))) {
       return false;
     }
     marks.pop();

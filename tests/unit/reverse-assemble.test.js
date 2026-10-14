@@ -4,7 +4,8 @@
  * each §15.5.1 example assembles to its stated text, one test per automatic
  * rule (§15.5.2 items 1–5), the spans, and partial or wrong sequences
  * (assembled as written, never repaired); the ring forms of R-4a (`ciclo`
- * parents and branches, and the crowded case of rule 5).
+ * parents and branches, and the crowded case of rule 5); the benzene words
+ * of R-4b (`benceno`, `fenil`, `(4-metilfenil)`).
  */
 
 import { test } from 'node:test';
@@ -169,6 +170,37 @@ test('rule 5, crowded prefixes (R-4a): a ring branch after the first of several 
   assert.equal(text('2 START met il START ciclo hex il END met il END but ano'), '2-[metil(ciclohexil)metil]butano');
   assert.equal(text('START ciclo hex il END met il met ano'), 'ciclohexilmetilmetano');
 }); // End of test 'rule 5, crowded prefixes (R-4a)…'
+
+test('benzene (R-4b): `benceno` is the parent\'s stem, `fenil` a branch word enclosed as render.js encloses it', () => {
+  assert.equal(text('benceno'), 'benceno');
+  assert.equal(text('met il benceno'), 'metilbenceno');
+  assert.equal(text('1 4 di met il benceno'), '1,4-dimetilbenceno');
+  assert.equal(text('1 isopropil 4 met il benceno'), '1-isopropil-4-metilbenceno');
+  assert.equal(text('1 met il 4 prop ano 2 il benceno'), '1-metil-4-(propan-2-il)benceno');
+  assert.equal(text('hexa met il benceno'), 'hexametilbenceno');
+  // A bare `fenil` is never enclosed alone (`fenilmetanol`, `difenil…`); a crowded ring after the first prefix is (rule 5).
+  assert.equal(text('fenil met ano'), 'fenilmetano');
+  assert.equal(text('di fenil met ano'), 'difenilmetano');
+  assert.equal(text('met il fenil met ano'), 'metil(fenil)metano');
+  assert.equal(text('met il START fenil END met ano'), 'metil(fenil)metano');
+  assert.equal(text('fenil met il met ano'), 'fenilmetilmetano');
+  // With prefixes of its own, a compound branch (render.js isSubstitutedPhenyl()): enclosed, nested marks one level up.
+  assert.equal(text('START 4 met il fenil END met ano'), '(4-metilfenil)metano');
+  assert.equal(text('1 START 2 4 di met il fenil END prop ano'), '1-(2,4-dimetilfenil)propano');
+  assert.equal(text('START 4 prop ano 2 il fenil END met ano'), '[4-(propan-2-il)fenil]metano');
+  assert.equal(text('bis START 4 met il fenil END met ano'), 'bis(4-metilfenil)metano');
+  // Spans: `benceno` a stem piece of the parent, `fenil` a prefix piece.
+  const parent = build('1 4 di met il benceno');
+  assert.deepEqual(parent.spans.filter((s) => s.tile !== null).map((s) => [parent.text.slice(s.from, s.to), s.kind]), [
+    ['1', 'locant'], ['4', 'locant'], ['di', 'multiplier'], ['met', 'prefix'], ['il', 'prefix'], ['benceno', 'stem'],
+  ]);
+  const phenyl = build('fenil met ano');
+  assert.deepEqual([phenyl.text.slice(phenyl.spans[0].from, phenyl.spans[0].to), phenyl.spans[0].kind], ['fenil', 'prefix']);
+  // Mistakes are assembled as written: numbers on `benceno`, `benceno` inside a branch.
+  assert.equal(build('1 3 5 benceno').text, '1,3,5-benceno');
+  assert.equal(build('benceno 1 3 5 tri eno').text, 'benceno-1,3,5-trieno');
+  assert.equal(build('START benceno END met ano').text, '(benceno)metano');
+}); // End of test 'benzene (R-4b): `benceno` is the parent's stem…'
 
 test('assembly never repairs the student\'s order, grouping or locants', () => {
   assert.equal(text('2 met il 3 et il hex ano'), '2-metil-3-etilhexano'); // not alphabetical

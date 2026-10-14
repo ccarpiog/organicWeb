@@ -44,12 +44,19 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   shows it (`showVerdict()`: the message between the verdict's two
   sentences, the student's chain striped under the parent with a legend,
   «Ver el paso» opening the stepper — the explanation in the student's
-  style — at its step). R-4a (phase I-50a) is done: the «Anillos» row's
-  `ciclo` tile builds ring parents and ring branches (`ciclohexano`,
-  `ciclohex-1-eno`, `ciclohexil`, `(ciclohex-2-en-1-il)`; ring bonds 1…n
-  in the search; two rings bonded together or three rings `outOfScope`;
-  no diagnosis for rings yet). Next is R-4b (phase I-50b): `benceno`,
-  `fenil`, substituted `(4-metilfenil)` and the aromatic-equivalence key.
+  style — at its step). R-4a and R-4b (phases I-50a, I-50b) are done: the
+  «Anillos» row's `ciclo` tile builds ring parents and ring branches
+  (`ciclohexano`, `ciclohex-1-eno`, `ciclohexil`, `(ciclohex-2-en-1-il)`;
+  ring bonds 1…n in the search), its `benceno` and `fenil` tiles the
+  benzene parent with branch prefixes and phenyl branches, also substituted
+  (`1,4-dimetilbenceno`, `(4-metilfenil)`; ring carbons 1…6, a phenyl's
+  own prefixes on 2…6, no bond locants on benzene), and the
+  aromatic-equivalence key (`graph.js` `aromaticKey()` /
+  `aromaticIsomorphism()`) makes both Kekulé drawings one structure in the
+  search and its graph checks; two rings bonded together or three rings
+  `outOfScope`; no diagnosis for rings yet. Next is R-4c (phase I-50c):
+  the retained templates (`tolueno`, `estireno`, `xileno`, `mesitileno`),
+  the o/m/p aliases, the ring diagnosis messages and the Ayuda line.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

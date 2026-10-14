@@ -1,8 +1,9 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a): `readName(tiles) → verdict` for open-chain and
- * monocyclic hydrocarbon names (`ciclo` parents and ring branches). Pure,
- * no DOM.
+ * R-1b, R-1c, R-4a, R-4b): `readName(tiles) → verdict` for open-chain and
+ * monocyclic hydrocarbon names (`ciclo` parents and ring branches; the
+ * `benceno` parent with branch prefixes, `fenil` and substituted
+ * `(4-metilfenil)` branches). Pure, no DOM.
  *
  * Pipeline (design.md §15.5.3):
  *
@@ -11,11 +12,14 @@
  *    (interpret.js) → definite structural errors (build.js checkSpec()),
  *    then a name whose molecule the structural key cannot handle (build.js
  *    ringRefusal(): three rings, or two bonded atom to atom —
- *    `ciclohexilciclohexano`) → `outOfScope` with the engine's own message,
- *    nothing built;
+ *    `ciclohexilciclohexano`, `fenilbenceno`) → `outOfScope` with the
+ *    engine's own message, nothing built;
  * 2–4. search.js: every placement of the left-out locants (none when the
- *    name gives them all), built (build.js), merged by structural key and
- *    named once each (naming/index.js nameMolecule(), cached by key);
+ *    name gives them all), built (build.js), merged by structural key — the
+ *    aromatic-equivalence key (model/graph.js aromaticKey(), R-4b), so the
+ *    two Kekulé drawings of a benzene ring are one structure: `dimetilbenceno`
+ *    is three structures, not four — and named once each
+ *    (naming/index.js nameMolecule(), cached by key);
  * 5. **Exact**: a structure whose name or any alternative (§15.9 trap 8)
  *    equals the text, in NFC (trap 7) → `correct` / `alternative`;
  * 6. **Filled**: with left-out locants, each placement is written into the
@@ -28,8 +32,9 @@
  *    `missingLocants` (with that filled name), several: `ambiguous`;
  * 7. **One structure** (all placements equivalent, or no left-out locant)
  *    → `otherName`, with the student's main mistake (diagnose.js, R-3:
- *    `diagnosis`, null when no rule applies), or `outOfScope` when the
- *    engine refuses it;
+ *    `diagnosis`, null when no rule applies — always for a name with a ring,
+ *    `ciclo` or benzene, until the ring messages of I-50c), or `outOfScope`
+ *    when the engine refuses it;
  * 8. several structures, none matching → `ambiguous`, with their names; but
  *    when the engine refuses every one of them (`diciclohexilpropano`: two
  *    rings, wherever they go) → `outOfScope` with the first refusal's
@@ -47,8 +52,9 @@
  * atom and bond id in `naming` is one of its own; the student's reading is
  * carried onto it: for a name with left-out locants, the placement whose
  * filled text is the name matched (else the first placement found, lowest
- * locants first) is built and mapped through an isomorphism (search.js
- * placementReading()) to give `studentParent` and `prefixAtoms`.
+ * locants first) is built and mapped through an isomorphism up to the
+ * Kekulé drawing of its benzene rings (search.js placementReading()) to give
+ * `studentParent` and `prefixAtoms`.
  *
  * The search's time limit (search.js `deadline`) holds through steps 5–8
  * too: a verdict chosen after it has passed is replaced by `incomplete`.
