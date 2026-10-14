@@ -9,6 +9,8 @@
  * with one Deshacer (also pressed during the animation), and Rehacer
  * re-applies the ordered drawing. Undone in the 90° view, the 90° drawing
  * keeps its own view and the normal drawing gets its view back on leaving it.
+ * An example's load is centred as part of the edit: Deshacer brings the
+ * previous drawing back in its own view.
  */
 
 import { test, expect } from '@playwright/test';
@@ -425,3 +427,23 @@ test('Deshacer of Ordenar dibujo in the 90° view keeps the 90° view; the norma
   expect(await page.evaluate(() => window.__editor.getView())).toEqual(drawn.view);
   expect(errors).toEqual([]);
 }); // End of test 'Deshacer of Ordenar dibujo in the 90° view…'
+
+test('an example from Ejemplos is centred as part of its load: Deshacer brings the hand drawing back in its own view', async ({ page }) => {
+  const errors = await openApp(page);
+  const drawn = await drawByHand(page);
+  await loadExample(page, 'Alcano ramificado');
+  const example = { coords: await coordinates(page), view: await page.evaluate(() => window.__editor.getView()) };
+  expect(example.view).not.toEqual(drawn.view); // The example was centred.
+
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  expect(await coordinates(page)).toEqual(drawn.coords);
+  // Same view: every carbon is back at the very spot of the screen where it was drawn.
+  expect(await page.evaluate(() => window.__editor.getView())).toEqual(drawn.view);
+  expect(await page.evaluate(() => window.__editor.getMoleculeJSON().atoms.map((a) => window.__editor.atomClientPoint(a.id))))
+    .toEqual(drawn.points);
+
+  await page.getByRole('button', { name: 'Rehacer' }).click();
+  expect(await coordinates(page)).toEqual(example.coords);
+  expect(await page.evaluate(() => window.__editor.getView())).toEqual(example.view);
+  expect(errors).toEqual([]);
+}); // End of test 'an example from Ejemplos is centred as part of its load…'

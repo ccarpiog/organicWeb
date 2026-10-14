@@ -29,9 +29,11 @@
  * name is `invalid`) keeps the dialog open, shows the message under the
  * name line (role=status) and marks the wrong tiles (`aria-invalid`); the
  * canvas is never touched here. A success verdict goes to the injected
- * `onDraw(verdict, builder)` handler, which loads the molecule (R-2b); any
- * edit clears a stale message and marks. The tiles live in memory only:
- * they survive closing and reopening the dialog, never a reload.
+ * `onDraw(verdict, builder)` handler (src/ui/draw-name.js drawVerdict(),
+ * wired in app.js), which draws the molecule and closes the dialog, or
+ * reports a molecule it cannot draw with `builder.showFailure()`; any edit
+ * clears a stale message and marks. The tiles live in memory only: they
+ * survive closing and reopening the dialog, never a reload.
  *
  * The DOM is built with createElement/textContent only (never innerHTML).
  */
@@ -197,7 +199,8 @@ export function fillRows(container) {
  *   cap?: number}} [options] - `onDraw`: what a success verdict does (default: show its message in the dialog);
  *   `read`: the reader (default readName()); `cap`: most tiles (default MAX_TILES).
  * @returns {{open: function(): void, close: function(): void, draw: function(): object,
- *   showVerdict: function(object): void, state: object}|null} Handles, or null when the page has no dialog.
+ *   showVerdict: function(object): void, showFailure: function(string): void, state: object}|null} Handles, or null
+ *   when the page has no dialog.
  */
 export function buildNameBuilder(doc, options = {}) {
   const dialog = doc.getElementById('name-builder-dialog');
@@ -359,6 +362,19 @@ export function buildNameBuilder(doc, options = {}) {
   }
 
   /**
+   * Shows a failure that is not the reader's (the molecule of an understood
+   * name cannot be drawn) in the error style, announced like the others; no
+   * tile is marked, since no tile is wrong.
+   *
+   * @param {string} text - The Spanish message.
+   * @returns {void}
+   */
+  function showFailure(text) {
+    state.setFeedback({ tone: 'error', lines: [text], invalid: [] });
+    render();
+  }
+
+  /**
    * Opens the dialog with the focus on its heading.
    *
    * @returns {void}
@@ -383,7 +399,7 @@ export function buildNameBuilder(doc, options = {}) {
     }
   }
 
-  const handle = { open, close, draw: null, showVerdict, state };
+  const handle = { open, close, draw: null, showVerdict, showFailure, state };
   const onDraw = options.onDraw || ((verdict, builder) => builder.showVerdict(verdict));
 
   /**

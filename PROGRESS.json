@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T18:46:59Z",
+  "updated": "2026-10-14T19:18:11Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -577,8 +577,11 @@
     {
       "id": "I-48b",
       "title": "v4 R-2b Dibujar and results",
-      "status": "queued",
-      "summary": "Draws the read molecule on the canvas as one undoable edit and shows the verdict in the results panel, with help and e2e."
+      "status": "done",
+      "summary": "Draws the read molecule on the canvas as one undoable edit and shows the verdict in the results panel, with help and e2e.",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-48b.md",
+      "narrative": "docs/progress-archive/i-48b.md"
     },
     {
       "id": "I-49",

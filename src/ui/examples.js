@@ -195,7 +195,8 @@ export function buildExamplesMenu(container, editor) {
   }
 
   /**
-   * Loads an example on the canvas and centres the view on it.
+   * Loads an example on the canvas and centres the view on it, as one
+   * undoable edit (Deshacer brings back the old drawing and its view).
    *
    * @param {string} id - The example id.
    * @returns {object} The editor's transaction outcome.
@@ -206,9 +207,7 @@ export function buildExamplesMenu(container, editor) {
     if (!example) {
       throw new Error(`unknown example ${id}`);
     }
-    const outcome = editor.loadMolecule(exampleMolecule(example));
-    editor.centerView();
-    return outcome;
+    return editor.loadMolecule(exampleMolecule(example), { center: true });
   }
 
   button.addEventListener('click', () => (menu.hidden ? open() : close(true)));

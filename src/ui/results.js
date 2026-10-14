@@ -27,6 +27,16 @@
  * The name and the text of the current step are announced to screen
  * readers through the page's `#announcer` live region.
  *
+ * «Dibujar» of the «¿Cómo se dibuja?» dialog (design.md §15.2, phase R-2b)
+ * enters through showVerdict(), once the molecule of the student's name is
+ * on the canvas: the loaded molecule is named, the canonical layout it was
+ * loaded with becomes the ordered drawing (parent highlighted with its
+ * locants, no redraw hint), and the verdict block (src/ui/draw-name.js
+ * verdictBlock(): the student's name, readName()'s message and notes)
+ * shows above «Se llama:». It goes with the rest of the result: a chemical
+ * edit (Deshacer of the load included) clears it, a coordinate-only edit
+ * keeps it.
+ *
  * A HETEROATOM refusal (design.md §13.4 I-29) shows its message and, under
  * it, a stepper with the group steps (Reconoce los grupos, Elige el
  * principal, Sufijo o prefijo, the refusal); nothing is highlighted while
@@ -39,6 +49,7 @@
 import { nameMolecule } from '../naming/index.js';
 import { explain, parseMarkup, plainText, GLOSSARY } from '../explain/explain.js';
 import { canonicalLayout, layoutProblems } from '../layout/canonical.js';
+import { verdictBlock, STUDENT_LABEL } from './draw-name.js';
 
 /** Extra hints shown under an error message, by error code. */
 export const ERROR_HINTS = Object.freeze({
@@ -306,7 +317,7 @@ function renderCompare(doc, compare) {
  *   marks start switched on; `onMarksChange(on)` is called when the student flips the switch.
  * @returns {{nameCurrent: function(): object, clear: function(): void, getSteps: function(): object[],
  *   arrange: function(): object, isOrdered: function(): boolean, setMarksVisible: function(boolean): void,
- *   marksVisible: function(): boolean}} Handles (also used by tests).
+ *   marksVisible: function(): boolean, showVerdict: function(object, object): object}} Handles (also used by tests).
  */
 export function buildResults(panel, editor, button, options = {}) {
   const doc = panel.ownerDocument;
@@ -692,12 +703,39 @@ export function buildResults(panel, editor, button, options = {}) {
   } // End of function stepperNodes()
 
   /**
-   * Shows a successful result: coloured name, alternatives and the stepper toggle.
+   * Builds the verdict block of «Dibujar» (design.md §15.3): the student's
+   * name, coloured like the result name, then the verdict's message and its
+   * notes (the old-style note).
+   *
+   * @param {{kind: string, tone: string, student: {text: string, kind: string}[], lines: string[]}} block -
+   *   verdictBlock() output.
+   * @returns {HTMLElement} The block.
+   */
+  function verdictNode(block) {
+    const section = make(doc, 'section', `verdict verdict--${block.tone}`);
+    section.id = 'verdict';
+    section.dataset.kind = block.kind;
+    section.setAttribute('aria-label', 'Tu nombre');
+    const student = make(doc, 'p', 'verdict-student');
+    student.append(make(doc, 'span', 'verdict-student-label', STUDENT_LABEL), doc.createTextNode(' '),
+      renderName(doc, block.student, 'verdict-student-name name-parts'));
+    section.appendChild(student);
+    block.lines.forEach((line, i) => {
+      section.appendChild(make(doc, 'p', i === 0 ? 'verdict-message' : 'verdict-note', line));
+    });
+    return section;
+  } // End of function verdictNode()
+
+  /**
+   * Shows a successful result: coloured name, alternatives and the stepper
+   * toggle; with a verdict block («Dibujar»), the block goes first and is
+   * announced with the name.
    *
    * @param {object} result - The naming result.
+   * @param {object|null} [block] - verdictBlock() output, or null.
    * @returns {void}
    */
-  function showResult(result) {
+  function showResult(result, block = null) {
     steps = explain(result);
     stepIndex = 0;
     optionIndex = -1;
@@ -705,6 +743,9 @@ export function buildResults(panel, editor, button, options = {}) {
     arranged = null;
     ordered = false;
     const nodes = [];
+    if (block) {
+      nodes.push(verdictNode(block));
+    }
     nodes.push(make(doc, 'p', 'result-label', 'Se llama:'));
     const name = make(doc, 'p', 'result-name');
     name.id = 'result-name';
@@ -740,7 +781,7 @@ export function buildResults(panel, editor, button, options = {}) {
     body.replaceChildren(...nodes);
     panel.dataset.state = 'result';
     showOnCanvas(steps[steps.length - 1]);
-    announce(`Se llama: ${result.name}`);
+    announce(block ? `${block.lines.join(' ')} Se llama: ${result.name}` : `Se llama: ${result.name}`);
   } // End of function showResult()
 
   /**
@@ -757,6 +798,31 @@ export function buildResults(panel, editor, button, options = {}) {
     }
     return result;
   }
+
+  /**
+   * «Dibujar» (design.md §15.2): called once the molecule of a success
+   * verdict is on the canvas, loaded with the canonical layout `laid`.
+   * Names the loaded molecule (its ids are the verdict's), shows the result
+   * with the verdict block above «Se llama:», and only then registers the
+   * layout as the ordered drawing — showResult() resets it (design.md §15.9
+   * trap 1) — so the parent is highlighted with its locants, as after
+   * «Ordenar dibujo», and the redraw hint stays hidden.
+   *
+   * @param {object} verdict - The readName() verdict (correct, alternative, missingLocants or otherName).
+   * @param {{atoms: Map<number, {id: number, x: number, y: number}>}} laid - The molecule as loaded (its layout).
+   * @returns {object} The naming result of the loaded molecule.
+   */
+  function showVerdict(verdict, laid) {
+    const result = nameMolecule(editor.getMolecule());
+    if (!result.ok) {
+      showError(result.error, explain(result)); // Never seen: the verdict's molecule was named by the same engine.
+      return result;
+    }
+    showResult(result, verdictBlock(verdict));
+    arranged = new Map([...laid.atoms.values()].map((a) => [a.id, { x: a.x, y: a.y }]));
+    syncOrdered();
+    return result;
+  } // End of function showVerdict()
 
   /**
    * "Ordenar dibujo": names the molecule first when no name is shown, then
@@ -816,6 +882,13 @@ export function buildResults(panel, editor, button, options = {}) {
   });
   clear();
   return {
-    nameCurrent, clear, getSteps: () => steps, arrange, isOrdered: () => ordered, setMarksVisible, marksVisible: () => marksOn,
+    nameCurrent,
+    clear,
+    getSteps: () => steps,
+    arrange,
+    isOrdered: () => ordered,
+    setMarksVisible,
+    marksVisible: () => marksOn,
+    showVerdict,
   };
 } // End of function buildResults()

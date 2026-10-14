@@ -74,7 +74,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-47b | v4 R-1b `interpret.js` + `build.js`, `readName()` for fully located names | same, "R-1b" | done — `docs/progress-archive/i-47b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-47b.md` |
 | I-47c | v4 R-1c Left-out locants (search, `missingLocants`/`ambiguous`/`incomplete`) | same, "R-1c" | done — `docs/progress-archive/i-47c.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-47c.md` |
 | I-48a | v4 R-2a The «¿Cómo se dibuja?» dialog | same, "R-2a" | done — `docs/progress-archive/i-48a.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-48a.md` |
-| I-48b | v4 R-2b «Dibujar», results entry point, Ayuda, e2e | same, "R-2b" | queued | — | — |
+| I-48b | v4 R-2b «Dibujar», results entry point, Ayuda, e2e | same, "R-2b" | done — `docs/progress-archive/i-48b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-48b.md` |
 | I-49 | v4 R-3 Diagnosis for hydrocarbons | same, "R-3" | queued | — | — |
 | I-50 | v4 R-4 Rings and retained aromatic templates | same, "R-4" | queued | — | — |
 | I-51a | v4 R-5a Halogens and alcohols | same, "R-5a" | queued | — | — |
@@ -120,28 +120,27 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select and run I-48b (v4 R-2b): «Dibujar» on the canvas. Replace the transitional
-`onDraw(verdict, builder)` handler in `src/ui/app.js` (today it only calls `builder.showVerdict()`)
-with: `canonicalLayout()` of the verdict's molecule checked with `layoutProblems()` **before** the
-canvas is touched (problems → the §15.2 «He entendido el nombre, pero no consigo dibujar…» message
-in the dialog, canvas untouched); `editor.loadMolecule()` (one transaction, outcome checked, keeps
-ids — trap 4), `editor.centerView()`; a new `results.js` entry point that names the loaded molecule,
-registers the supplied layout as the ordered drawing (parent highlighted with locants as after
-«Ordenar dibujo», no redraw hint — `showResult()` alone resets `arranged`/`ordered`, trap 1) and
-shows the verdict block above «Se llama:» (incl. «También se llama …» for a traditional
-alternative, the old-style note, `ambiguous`/`otherName` texts per §15.3); the dialog closes.
-Deshacer restores the old drawing and clears the verdict (chemical edit); coordinate-only undo keeps
-it; the molecule is autosaved, the verdict and tiles are not (trap 5). Ayuda section «Del nombre al
-dibujo» in `index.html` (it says the verdicts speak of the name the app gives, §15.3). e2e per
-§15.7 "e2e from R-2b" (extend `tests/e2e/name-builder.spec.js` or a new spec; both projects; 90°
-view on). Spec: design §15.2 «Dibujar», §15.3, §15.7, §15.8 "R-2b", §15.9 — read from the
-working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high (results-panel
-state machine, traps 1–4); worker opus. Commit by explicit paths. Update the `CLAUDE.md` v4
-sentence (it says drawing is next and a success only shows its message).
+Select and run I-49 (v4 R-3): diagnosis for hydrocarbons. New pure module
+`src/reverse/diagnose.js` (design §15.4: «the main mistake of an `otherName` verdict») that, for an
+`otherName` verdict of an open-chain hydrocarbon, names the student's main mistake, in this rule
+order: a branch on an end carbon lengthens the chain; a longer chain exists; more multiple bonds or
+more substituents (the naming trace rule at which the student's chain was dropped); numbering from
+the other end; prefixes not alphabetical (ignoring di/tri and `tert-`); identical branches not
+grouped; di vs bis; locants not ascending; needless or missing locants; `eno` after `ino`; old
+style. UI: the diagnosis goes into the verdict block between «…pero se llama «X».» and «Pulsa «Ver
+paso a paso» para ver por qué.» (`showVerdict()` in `src/ui/results.js`); the student's chain is
+highlighted beside the parent on the canvas; «Ver el paso» opens the stepper at that rule's step.
+Tests per §15.7 (one per diagnosis, mutations → expected diagnosis; e2e on both projects). Ayuda
+line in «Del nombre al dibujo». Spec: design §15.3 `otherName`, §15.4, §15.7, §15.8 "R-3", §15.9 —
+read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high
+(diagnosis must agree with the naming engine's trace); worker opus; split R-3 into engine (I-49a)
+and UI (I-49b) if it does not fit one worker. Commit by explicit paths. Update the `CLAUDE.md` v4
+sentence (it says R-3 diagnosis is next).
 
-- **Builds on I-48a** (`docs/progress-archive/i-48a.md`): dialog `src/ui/name-builder.js`
-  (`buildNameBuilder(doc, {onDraw})`, `builder.showVerdict()`), DOM-free state
-  `src/ui/name-builder-state.js`; `readName()` verdict shape in `src/reverse/index.js` (`filled`,
+- **Builds on I-48b** (`docs/progress-archive/i-48b.md`): `drawVerdict()` in
+  `src/ui/draw-name.js`, `showVerdict()` entry point in `src/ui/results.js` (verdict block,
+  ordered drawing registered after `showResult()`), `loadMolecule(…, {center: true})` in
+  `src/editor/editor.js`; `readName()` verdict shape in `src/reverse/index.js` (`filled`,
   `candidates`, molecule, `naming`, `studentParent`, `prefixAtoms`).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
@@ -301,17 +300,19 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   `index.js` (`readName()`); `isomorphism()` in `src/model/graph.js`; tests
   `tests/unit/reverse-*.test.js`, helper `tests/unit/reverse-words.js`; spec design §15. Dialog
   (I-48a): `src/ui/name-builder.js` + DOM-free `name-builder-state.js`, wired in `app.js`; tests
-  `tests/unit/name-builder-state.test.js`, `tests/e2e/name-builder.spec.js`.
+  `tests/unit/name-builder-state.test.js`, `tests/e2e/name-builder.spec.js`. «Dibujar» (I-48b):
+  `src/ui/draw-name.js` (`drawVerdict()`), `showVerdict()` in `results.js`, `loadMolecule(…,
+  {center: true})` in `src/editor/editor.js`; tests `tests/unit/draw-name.test.js`.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-47c: after the review fixes `npm test` 0 (1809) · `check` 0 (159) · `build` 0 · `e2e` 0 (407).
-- I-48a: `npm test` 0 (1822) · `npm run check` 0 (163 files) · `npm run build` 0 ·
-  `npm run e2e -- --reporter=dot` 0 (421, source + dist); after the review fix `npm test` 0 (1822) ·
-  `check` 0 (163) · `build` 0 · `e2e` 0 (425).
+- I-48a: after the review fix `npm test` 0 (1822) · `check` 0 (163) · `build` 0 · `e2e` 0 (425).
+- I-48b: `npm test` 0 (1832) · `npm run check` 0 (165 files) · `npm run build` 0 ·
+  `npm run e2e -- --reporter=dot` 0 (439, source + dist); after the review fix `npm test` 0 (1833) ·
+  `check` 0 (165) · `build` 0 · `e2e` 0 (445).
 
 ## Open risks / deviations
 
@@ -335,8 +336,8 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - I-8…I-20 (v1 editor, explanations, redraw, 90° view, deploy): per-phase deviations and
   review resolutions live in `docs/progress-archive/i-8.md` … `i-20.md`. Still relevant:
   Spanish help/explanation texts not reviewed by a teacher; ~1/800 random molecules up to 40 C
-  fail Ordenar dibujo checks (drawing kept, message shown); Ejemplos load leaves the view
-  unrestored on undo; deploy https-only, `--dry-run` never reads the Keychain.
+  fail Ordenar dibujo checks (drawing kept, message shown); deploy https-only, `--dry-run` never
+  reads the Keychain. (The Ejemplos undo-view limitation was fixed in I-48b.)
 
 - I-21…I-28 (multi-element model, SMILES, palette, ring infrastructure, cycloalkanes, substituted
   rings, ring tool, Ordenar dibujo for rings, benzene): deviations and review resolutions in
@@ -392,6 +393,11 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   success verdicts only show their message until R-2b; new Spanish drafts (row labels, placeholder,
   «Principio del nombre», «menos», cap message). Review should-fix (short-phone overflow) fixed with
   a 320×480 / 320×568 regression (`docs/progress-archive/i-48a.md`).
+- I-48b: «Tu nombre: …» line added to the verdict block (not in spec); layout-failure path
+  unit-tested only (no failing name found in 2 000 random molecules); new Spanish drafts («Tu
+  nombre:», Ayuda «Del nombre al dibujo»). Review should-fix (undo kept the new zoom) fixed with
+  view snapshots in `loadMolecule(…, {center: true})`, also used by Ejemplos
+  (`docs/progress-archive/i-48b.md`).
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -406,6 +412,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-47c `c2d88a7`, pushed. I-48a committed and pushed right after this checkpoint (see
+- I-48a `464bc01`, pushed. I-48b committed and pushed right after this checkpoint (see
   `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
   `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

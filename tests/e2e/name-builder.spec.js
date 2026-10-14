@@ -1,12 +1,23 @@
 /**
- * @file «¿Cómo se dibuja?» dialog e2e (design.md §15.2, phase R-2a): the
- * button under «¿Cómo se llama?» opens the dialog; tiles build the name on
- * the name line (coloured by part kind, one selectable span per tile);
- * insertion after the selected span or at the front; «Borrar ficha»,
+ * @file «¿Cómo se dibuja?» dialog e2e (design.md §15.2, phases R-2a and
+ * R-2b): the button under «¿Cómo se llama?» opens the dialog; tiles build
+ * the name on the name line (coloured by part kind, one selectable span per
+ * tile); insertion after the selected span or at the front; «Borrar ficha»,
  * Backspace, «Borrar todo»; Escape closes and the focus returns; the tiles
  * survive reopening; keyboard-only use; «Dibujar» with a wrong name shows
  * the message and marks the tiles without touching the canvas, and an edit
  * clears them; the tile cap; the full-screen dialog on a phone.
+ *
+ * «Dibujar» with a name the app understands (R-2b, design.md §15.7): the
+ * molecule replaces the drawing as one undoable edit, centred, ordered
+ * (parent highlighted with its locants, no redraw hint), with the verdict
+ * block above «Se llama:» (correct, alternative, missingLocants, otherName,
+ * the old-style note); the dialog closes; Deshacer restores the old drawing
+ * and clears the verdict, a coordinate-only undo keeps it; the molecule is
+ * autosaved, the verdict and the tiles are not; keyboard only; a phone; the
+ * 90° view. The centring is part of the edit: Deshacer restores the old
+ * drawing's view (zoom and pan), Rehacer the centred one, with the 90° view
+ * off and on, while ordinary edits never move the view.
  */
 
 import { test, expect } from '@playwright/test';
@@ -328,16 +339,6 @@ test('Dibujar: failures stay in the dialog with the wrong tiles marked and the c
   await expect(message).toHaveText('Faltan números: puede ser but-1-eno o but-2-eno.');
   expect(await invalidTiles(page)).toEqual([]);
 
-  // A name the reader understands: for now its verdict shows in the plain style (drawing comes in R-2b).
-  await dialog.getByRole('button', { name: 'Borrar todo' }).click();
-  await tap(page, '2', 'met', 'il', 'but', 'ano');
-  await draw.click();
-  await expect(message).toHaveText('¡Correcto!');
-  await expect(message).toHaveClass(/nb-message--success/);
-  await expect(message).not.toHaveClass(/nb-message--error/);
-  expect(await invalidTiles(page)).toEqual([]);
-  await expect(dialog).toBeVisible();
-
   // The canvas, its history and the result were never touched.
   await page.keyboard.press('Escape');
   expect(await page.evaluate(() => JSON.stringify(window.__editor.getMoleculeJSON()))).toBe(before);
@@ -465,3 +466,443 @@ for (const viewport of [{ width: 320, height: 480 }, { width: 320, height: 568 }
     }); // End of test 'a capped name with an error message…'
   }); // End of describe 'short phone'
 } // End of the loop over the short viewports
+
+// ---------------------------------------------------------------------------
+// «Dibujar» on the canvas (phase R-2b).
+// ---------------------------------------------------------------------------
+
+/**
+ * Builds a name from tiles in the dialog (from an empty name) and presses
+ * «Dibujar».
+ *
+ * @param {import('@playwright/test').Page} page - The page.
+ * @param {...string} texts - Tile texts, in order.
+ * @returns {Promise<import('@playwright/test').Locator>} The dialog.
+ */
+async function drawName(page, ...texts) {
+  const dialog = await openBuilder(page);
+  await dialog.getByRole('button', { name: 'Borrar todo' }).click();
+  await tap(page, ...texts);
+  await dialog.getByRole('button', { name: 'Dibujar' }).click();
+  return dialog;
+}
+
+/**
+ * The molecule on the canvas, serialised.
+ *
+ * @param {import('@playwright/test').Page} page - The page.
+ * @returns {Promise<object>} moleculeToJSON() output.
+ */
+function moleculeJSON(page) {
+  return page.evaluate(() => window.__editor.getMoleculeJSON());
+}
+
+/**
+ * Tells whether every atom, as drawn (also in the 90° view), lies inside the
+ * canvas on screen.
+ *
+ * @param {import('@playwright/test').Page} page - The page.
+ * @returns {Promise<boolean>} True when the whole drawing is visible.
+ */
+function drawingInsideCanvas(page) {
+  return page.evaluate(() => {
+    const box = document.getElementById('canvas').getBoundingClientRect();
+    return window.__editor.getMoleculeJSON().atoms.every((atom) => {
+      const p = window.__editor.atomClientPoint(atom.id);
+      return p.x >= box.left && p.x <= box.right && p.y >= box.top && p.y <= box.bottom;
+    });
+  });
+}
+
+/**
+ * The locant labels on the canvas, ascending.
+ *
+ * @param {import('@playwright/test').Page} page - The page.
+ * @returns {Promise<number[]>} The numbers shown.
+ */
+function canvasLocants(page) {
+  return page.locator('svg#canvas .locant').evaluateAll((nodes) => nodes.map((n) => Number(n.textContent)).sort((a, b) => a - b));
+}
+
+/**
+ * Tells whether the verdict block comes before «Se llama:» in the results panel.
+ *
+ * @param {import('@playwright/test').Page} page - The page.
+ * @returns {Promise<boolean>} True when it does.
+ */
+function verdictBeforeName(page) {
+  return page.evaluate(() => {
+    const verdict = document.getElementById('verdict');
+    const label = document.querySelector('.results-body .result-label');
+    return Boolean(verdict && label && (verdict.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING));
+  });
+}
+
+/**
+ * Drags an atom with the Mover tool by a client offset (a coordinate-only edit).
+ *
+ * @param {import('@playwright/test').Page} page - The page.
+ * @param {number} id - Atom id.
+ * @param {number} dx - Horizontal offset (client px).
+ * @param {number} dy - Vertical offset (client px).
+ * @returns {Promise<void>}
+ */
+async function moveAtom(page, id, dx, dy) {
+  await page.evaluate(() => window.__editor.setTool('move'));
+  const p = await page.evaluate((atomId) => window.__editor.atomClientPoint(atomId), id);
+  await page.mouse.move(p.x, p.y);
+  await page.mouse.down();
+  await page.mouse.move(p.x + dx, p.y + dy, { steps: 8 });
+  await page.mouse.up();
+}
+
+test('Dibujar: the molecule replaces the drawing, centred and ordered, with the verdict above the name; Deshacer restores the old drawing', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.getByRole('button', { name: 'Ejemplos' }).click();
+  await page.getByRole('menuitem', { name: 'Alcano ramificado', exact: true }).click();
+  await page.getByRole('button', { name: '¿Cómo se llama?' }).click();
+  await expect(page.locator('#result-name')).toHaveText('2,3-dimetilpentano');
+  const before = await moleculeJSON(page);
+
+  const dialog = await drawName(page, '2', 'met', 'il', 'but', 'ano');
+  // The dialog closes and the focus goes back to its launcher.
+  await expect(dialog).toBeHidden();
+  await expect(page.locator('#draw-name-button')).toBeFocused();
+
+  // The molecule of the name is on the canvas, whole and in view.
+  const drawn = await moleculeJSON(page);
+  expect(drawn.atoms).toHaveLength(5);
+  expect(drawn.bonds).toHaveLength(4);
+  expect(await drawingInsideCanvas(page)).toBe(true);
+
+  // The verdict block, then «Se llama:» and the name.
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toBeVisible();
+  await expect(verdict).toHaveAttribute('data-kind', 'correct');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: 2-metilbutano');
+  await expect(verdict.locator('.verdict-student .part-locant')).toHaveText('2');
+  await expect(verdict.locator('.verdict-message')).toHaveText('¡Correcto!');
+  await expect(verdict.locator('.verdict-note')).toHaveCount(0);
+  await expect(page.locator('#result-name')).toHaveText('2-metilbutano');
+  expect(await verdictBeforeName(page)).toBe(true);
+  await expect(page.locator('#announcer')).toContainText('¡Correcto! Se llama: 2-metilbutano');
+
+  // The ordered drawing: parent chain highlighted with its locants, no redraw hint.
+  await expect(page.locator('#redraw-hint')).toBeHidden();
+  await expect(page.locator('svg#canvas .hl-parent.hl-atom')).toHaveCount(4);
+  expect(await canvasLocants(page)).toEqual([1, 2, 3, 4]);
+
+  // The molecule is autosaved like any edit; the verdict and the tiles are not.
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('organicWeb.molecule')));
+  expect(saved).toEqual(drawn);
+  const stored = await page.evaluate(() => Object.keys(localStorage).map((key) => localStorage.getItem(key)).join('\n'));
+  expect(stored).not.toContain('Correcto');
+  expect(stored).not.toContain('root-1');
+
+  // Deshacer restores the previous drawing and, being a chemical edit, clears the verdict with the result.
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  expect(await moleculeJSON(page)).toEqual(before);
+  await expect(page.locator('#verdict')).toHaveCount(0);
+  await expect(page.locator('#result-name')).toHaveCount(0);
+  await expect(page.locator('.results-hint')).toBeVisible();
+  // Rehacer brings the drawn molecule back (without a stale verdict).
+  await page.getByRole('button', { name: 'Rehacer' }).click();
+  expect(await moleculeJSON(page)).toEqual(drawn);
+  await expect(page.locator('#verdict')).toHaveCount(0);
+
+  // A reload keeps the molecule only: no verdict, an empty name in the dialog.
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-app-ready', 'true');
+  expect(await moleculeJSON(page)).toEqual(drawn);
+  await expect(page.locator('#verdict')).toHaveCount(0);
+  await openBuilder(page);
+  await expect(page.locator('#name-builder-name')).toHaveText('Pulsa las fichas de abajo para formar un nombre.');
+  expect(errors).toEqual([]);
+}); // End of test 'Dibujar: the molecule replaces the drawing…'
+
+test('Dibujar: a coordinate-only edit and its undo keep the verdict; the ordered state follows the drawing', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, '4', 'prop', 'ano', '2', 'il', 'hept', 'ano');
+  const verdict = page.locator('#verdict');
+  await expect(verdict.locator('.verdict-message')).toHaveText('¡Correcto! «4-(propan-2-il)heptano» es una forma válida '
+    + '(nombre preferido por la IUPAC (2013)). El nombre que doy primero es «4-isopropilheptano».');
+  await expect(verdict).toHaveAttribute('data-kind', 'alternative');
+  await expect(page.locator('#result-name')).toHaveText('4-isopropilheptano');
+  await expect(page.locator('#redraw-hint')).toBeHidden();
+  const ordered = await moleculeJSON(page);
+
+  // Moving an atom is a coordinate-only edit: the verdict stays, the drawing is no longer the ordered one.
+  await moveAtom(page, ordered.atoms[0].id, 40, 50);
+  expect(await moleculeJSON(page)).not.toEqual(ordered);
+  await expect(verdict).toBeVisible();
+  await expect(page.locator('#redraw-hint')).toBeVisible();
+  // Its undo is coordinate-only too: the verdict stays and the drawing is ordered again.
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  expect(await moleculeJSON(page)).toEqual(ordered);
+  await expect(verdict).toBeVisible();
+  await expect(page.locator('#result-name')).toHaveText('4-isopropilheptano');
+  await expect(page.locator('#redraw-hint')).toBeHidden();
+  await expect(page.locator('svg#canvas .hl-parent.hl-atom')).toHaveCount(7);
+  expect(errors).toEqual([]);
+}); // End of test 'Dibujar: a coordinate-only edit…'
+
+test('Dibujar: missing locants, an old-style name and another name each show their verdict', async ({ page }) => {
+  const errors = await openApp(page);
+  const verdict = page.locator('#verdict');
+
+  // Left-out locants: «Casi».
+  await drawName(page, 'met', 'il', 'prop', 'eno');
+  await expect(verdict).toHaveAttribute('data-kind', 'missingLocants');
+  await expect(verdict).toHaveClass(/verdict--almost/);
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: metilpropeno');
+  await expect(verdict.locator('.verdict-message')).toHaveText('Casi: faltan los números. Se escribe «2-metilprop-1-eno».');
+  await expect(page.locator('#result-name')).toHaveText('2-metilprop-1-eno');
+  expect((await moleculeJSON(page)).atoms).toHaveLength(4);
+  const first = await moleculeJSON(page);
+
+  // The old style: drawn, named, with the note.
+  await drawName(page, '2', 'but', 'eno');
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
+    + '«but-2-eno». Pulsa «Ver paso a paso» para ver por qué.');
+  await expect(verdict.locator('.verdict-note')).toHaveText('Es la forma antigua de escribirlo; hoy se escribe «but-2-eno».');
+  await expect(page.locator('#result-name')).toHaveText('but-2-eno');
+
+  // Another name: the molecule the name describes, with the app's name and the stepper.
+  await drawName(page, 'met', 'il', 'et', 'ano');
+  await expect(verdict).toHaveClass(/verdict--other/);
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: metiletano');
+  await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
+    + '«propano». Pulsa «Ver paso a paso» para ver por qué.');
+  await expect(page.locator('#result-name')).toHaveText('propano');
+  expect((await moleculeJSON(page)).atoms).toHaveLength(3);
+  expect(await verdictBeforeName(page)).toBe(true);
+  await page.getByRole('button', { name: 'Ver paso a paso' }).click();
+  await expect(page.locator('#stepper')).toBeVisible();
+
+  // Each «Dibujar» was one edit: two Deshacer get back to the first drawing, without a verdict.
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  expect(await moleculeJSON(page)).toEqual(first);
+  await expect(verdict).toHaveCount(0);
+  expect(errors).toEqual([]);
+}); // End of test 'Dibujar: missing locants…'
+
+test('Dibujar: after a drawn name, a failing one keeps the canvas, the verdict and the result', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, 'hex', 'ano');
+  await expect(page.locator('#result-name')).toHaveText('hexano');
+  const drawn = await moleculeJSON(page);
+  // An ambiguous name: the message, no tile marked.
+  const dialog = await drawName(page, 'but', 'eno');
+  const message = page.locator('#name-builder-message');
+  await expect(message).toHaveText('Faltan números: puede ser but-1-eno o but-2-eno.');
+  await expect(message).toHaveClass(/nb-message--error/);
+  expect(await invalidTiles(page)).toEqual([]);
+  await expect(dialog).toBeVisible();
+  // A wrong name: the message and the wrong tiles marked.
+  await dialog.getByRole('button', { name: 'Borrar todo' }).click();
+  await tap(page, '2', '3', 'met', 'il', 'but', 'ano');
+  await dialog.getByRole('button', { name: 'Dibujar' }).click();
+  await expect(message).toHaveText('Con dos números hace falta «di».');
+  expect(await invalidTiles(page)).toEqual([0, 1]);
+  await expect(page.locator('#name-builder-name [data-index="0"]')).toHaveAttribute('aria-invalid', 'true');
+  await expect(dialog).toBeVisible();
+  // A molecule the editor refuses to load (forced here): its message in the dialog, no tile marked.
+  await dialog.getByRole('button', { name: 'Borrar todo' }).click();
+  await tap(page, 'pent', 'ano');
+  await page.evaluate(() => {
+    window.__editor.loadMolecule = () => ({ ok: false, message: 'No se puede cargar.', atoms: [] });
+  });
+  await dialog.getByRole('button', { name: 'Dibujar' }).click();
+  await expect(message).toHaveText('No se puede cargar.');
+  await expect(message).toHaveClass(/nb-message--error/);
+  expect(await invalidTiles(page)).toEqual([]);
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  expect(await moleculeJSON(page)).toEqual(drawn);
+  await expect(page.locator('#verdict .verdict-message')).toHaveText('¡Correcto!');
+  await expect(page.locator('#result-name')).toHaveText('hexano');
+  expect(errors).toEqual([]);
+}); // End of test 'Dibujar: after a drawn name…'
+
+test('keyboard only: build a name and draw it', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.locator('body').click({ position: { x: 1, y: 1 } });
+  await tabTo(page, '#draw-name-button');
+  await page.keyboard.press('Enter');
+  const dialog = builder(page);
+  await expect(dialog).toBeVisible();
+  await tabTo(page, '#name-builder-rows [data-tile="root-6"]');
+  await page.keyboard.press('Enter');
+  await tabTo(page, '#name-builder-rows [data-tile="ending-saturated"]');
+  await page.keyboard.press('Space');
+  await expect(page.locator('#name-builder-name')).toHaveText('hexano');
+  await tabTo(page, '[data-role="draw"]', true);
+  await page.keyboard.press('Enter');
+  await expect(dialog).toBeHidden();
+  await expect(page.locator('#draw-name-button')).toBeFocused();
+  await expect(page.locator('#verdict .verdict-message')).toHaveText('¡Correcto!');
+  await expect(page.locator('#result-name')).toHaveText('hexano');
+  expect((await moleculeJSON(page)).atoms).toHaveLength(6);
+  // Ctrl+Z (the editor's shortcut) undoes the drawing and clears the verdict.
+  await page.keyboard.press('Control+z');
+  expect((await moleculeJSON(page)).atoms).toHaveLength(0);
+  await expect(page.locator('#verdict')).toHaveCount(0);
+  expect(errors).toEqual([]);
+}); // End of test 'keyboard only: build a name and draw it'
+
+test('Dibujar with the 90° view on: the drawing is projected, centred and ordered, and the preference is kept', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.getByRole('button', { name: 'Con carbonos' }).click();
+  const toggle = page.locator('#right-angle-button');
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+
+  await drawName(page, '2', 'met', 'il', 'but', 'ano');
+  await expect(page.locator('#verdict .verdict-message')).toHaveText('¡Correcto!');
+  await expect(page.locator('#result-name')).toHaveText('2-metilbutano');
+  expect(await page.evaluate(() => window.__editor.isProjected())).toBe(true);
+  await expect(page.locator('svg#canvas')).toHaveClass(/is-right-angle/);
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  expect(await drawingInsideCanvas(page)).toBe(true);
+  await expect(page.locator('svg#canvas .hl-parent.hl-atom')).toHaveCount(4);
+  expect(await canvasLocants(page)).toEqual([1, 2, 3, 4]);
+  await expect(page.locator('#redraw-hint')).toBeHidden();
+
+  // A bigger molecule still fits the visible canvas in the 90° view.
+  await drawName(page, '5', '5', 'bis', 'empieza rama compuesta', '2', '2', 'di', 'met', 'il', 'prop', 'il', 'acaba rama',
+    'non', 'ano');
+  await expect(page.locator('#result-name')).toHaveText('5,5-bis(2,2-dimetilpropil)nonano');
+  expect(await page.evaluate(() => window.__editor.isProjected())).toBe(true);
+  expect(await drawingInsideCanvas(page)).toBe(true);
+
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  expect((await moleculeJSON(page)).atoms).toHaveLength(5);
+  await expect(page.locator('#verdict')).toHaveCount(0);
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  expect(errors).toEqual([]);
+}); // End of test 'Dibujar with the 90° view on…'
+
+/**
+ * A zigzag chain of carbons, serialised: with 28 carbons it is wider than the
+ * canvas at the highest zoom «Centrar» uses, so the view centred on a short
+ * molecule cannot show it whole.
+ *
+ * @param {number} n - Number of carbons.
+ * @returns {object} moleculeToJSON() output.
+ */
+function longChain(n) {
+  const atoms = [];
+  const bonds = [];
+  for (let i = 1; i <= n; i += 1) {
+    atoms.push({ id: i, element: 'C', x: 100 + (i - 1) * 34.64, y: i % 2 === 0 ? 230 : 250 });
+    if (i > 1) {
+      bonds.push({ id: i - 1, a: i - 1, b: i, order: 1 });
+    }
+  }
+  return { version: 1, nextAtomId: n + 1, nextBondId: n, atoms, bonds };
+}
+
+/**
+ * The editor's canvas view (zoom and pan).
+ *
+ * @param {import('@playwright/test').Page} page - The page.
+ * @returns {Promise<{scale: number, x: number, y: number}>} The view.
+ */
+function canvasView(page) {
+  return page.evaluate(() => window.__editor.getView());
+}
+
+for (const rightAngle of [false, true]) {
+  test(`Dibujar is one edit with its view${rightAngle ? ' (90° view)' : ''}: Deshacer brings back the long molecule in its own view, Rehacer the short one centred`, async ({ page }) => {
+    const errors = await openApp(page);
+    if (rightAngle) {
+      await page.getByRole('button', { name: 'Con carbonos' }).click();
+      await page.locator('#right-angle-button').click();
+    }
+    await page.evaluate((json) => window.__editor.loadMolecule(json), longChain(28));
+    await page.locator('#center-button').click();
+    expect(await page.evaluate(() => window.__editor.isProjected())).toBe(rightAngle);
+    const long = { json: await moleculeJSON(page), view: await canvasView(page) };
+    expect(await drawingInsideCanvas(page)).toBe(true);
+
+    // «Dibujar» a short name: centred, at a higher zoom than the long chain's.
+    await drawName(page, 'prop', 'ano');
+    await expect(page.locator('#result-name')).toHaveText('propano');
+    const short = { json: await moleculeJSON(page), view: await canvasView(page) };
+    expect(short.json.atoms).toHaveLength(3);
+    expect(short.view.scale).toBeGreaterThan(long.view.scale);
+    expect(await drawingInsideCanvas(page)).toBe(true);
+
+    // Deshacer: the long chain in the very view it had, whole on screen; the 90° preference kept.
+    await page.getByRole('button', { name: 'Deshacer' }).click();
+    expect(await moleculeJSON(page)).toEqual(long.json);
+    expect(await canvasView(page)).toEqual(long.view);
+    expect(await drawingInsideCanvas(page)).toBe(true);
+    expect(await page.evaluate(() => window.__editor.isProjected())).toBe(rightAngle);
+    await expect(page.locator('#verdict')).toHaveCount(0);
+
+    // Rehacer: the short molecule centred again.
+    await page.getByRole('button', { name: 'Rehacer' }).click();
+    expect(await moleculeJSON(page)).toEqual(short.json);
+    expect(await canvasView(page)).toEqual(short.view);
+    expect(await drawingInsideCanvas(page)).toBe(true);
+
+    // An ordinary edit and its undo and redo never move the view.
+    await page.evaluate(() => window.__editor.zoomBy(0.8));
+    const zoomed = await canvasView(page);
+    await page.evaluate(() => window.__editor.setTool('single'));
+    const end = await page.evaluate(() => window.__editor.atomClientPoint(1));
+    await page.mouse.click(end.x, end.y);
+    expect((await moleculeJSON(page)).atoms).toHaveLength(4);
+    expect(await canvasView(page)).toEqual(zoomed);
+    await page.getByRole('button', { name: 'Deshacer' }).click();
+    expect(await moleculeJSON(page)).toEqual(short.json);
+    expect(await canvasView(page)).toEqual(zoomed);
+    await page.getByRole('button', { name: 'Rehacer' }).click();
+    expect((await moleculeJSON(page)).atoms).toHaveLength(4);
+    expect(await canvasView(page)).toEqual(zoomed);
+
+    // Undoing the «Dibujar» edit with Ctrl+Z also restores the long chain's view.
+    await page.keyboard.press('Control+z');
+    await page.keyboard.press('Control+z');
+    expect(await moleculeJSON(page)).toEqual(long.json);
+    expect(await canvasView(page)).toEqual(long.view);
+
+    if (rightAngle) {
+      // The 90° view switched off between «Dibujar» and Deshacer: the long chain, now drawn normally, is centred.
+      await page.getByRole('button', { name: 'Rehacer' }).click();
+      expect(await canvasView(page)).toEqual(short.view);
+      await page.locator('#right-angle-button').click();
+      expect(await page.evaluate(() => window.__editor.isProjected())).toBe(false);
+      await page.getByRole('button', { name: 'Deshacer' }).click();
+      expect(await moleculeJSON(page)).toEqual(long.json);
+      expect(await drawingInsideCanvas(page)).toBe(true);
+    }
+    expect(errors).toEqual([]);
+  }); // End of test 'Dibujar is one edit with its view…'
+} // End of the loop over the 90° view off and on
+
+test.describe('phone (375 × 667), Dibujar', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  test('the dialog closes, the molecule fits the canvas and the verdict shows without a sideways scroll', async ({ page }) => {
+    const errors = await openApp(page);
+    await drawName(page, '3', 'met', 'iliden', 'hex', 'ano');
+    await expect(builder(page)).toBeHidden();
+    expect((await moleculeJSON(page)).atoms).toHaveLength(7);
+    expect(await drawingInsideCanvas(page)).toBe(true);
+    const verdict = page.locator('#verdict');
+    await verdict.scrollIntoViewIfNeeded();
+    await expect(verdict).toBeInViewport();
+    await expect(verdict.locator('.verdict-message')).toHaveText('¡Correcto!');
+    await expect(page.locator('#result-name')).toHaveText('3-metilidenhexano');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+    // Deshacer empties the canvas again and clears the verdict.
+    await page.getByRole('button', { name: 'Deshacer' }).click();
+    expect((await moleculeJSON(page)).atoms).toHaveLength(0);
+    await expect(verdict).toHaveCount(0);
+    expect(errors).toEqual([]);
+  }); // End of test 'the dialog closes…'
+}); // End of describe 'phone (375 × 667), Dibujar'

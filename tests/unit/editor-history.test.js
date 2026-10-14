@@ -145,6 +145,54 @@ test('a redraw recorded with canvas views hands them back on undo and redo (Orde
   assert.deepEqual(events.at(-1), { reason: 'undo', kind: 'chemical' }, 'other edits carry no view');
 });
 
+test('a load recorded with canvas views («Dibujar», Ejemplos): the after view is computed on the new molecule; undo and redo hand the views back', () => {
+  const events = [];
+  const editor = createEditorCore({ onChange: (e) => events.push(e) });
+  clickAt(editor, { x: 0, y: 0 });
+  clickAtom(editor, 1);
+  const old = editor.getMoleculeJSON();
+  const loaded = {
+    version: 1, nextAtomId: 4, nextBondId: 3,
+    atoms: [{ id: 1, element: 'C', x: 300, y: 250 }, { id: 2, element: 'C', x: 334.64, y: 230 }, { id: 3, element: 'C', x: 369.28, y: 250 }],
+    bonds: [{ id: 1, a: 1, b: 2, order: 1 }, { id: 2, a: 2, b: 3, order: 1 }],
+  };
+  const viewBefore = { scale: 0.6, x: 10, y: 20, display: 'normal' };
+  const viewAfter = { scale: 1.5, x: -200, y: -150, display: 'normal' };
+  let calls = 0;
+  /**
+   * The view after the load: called once, with the loaded molecule already in place.
+   *
+   * @returns {object} The view.
+   */
+  const after = () => {
+    calls += 1;
+    assert.deepEqual(editor.getMoleculeJSON().atoms, loaded.atoms, 'the after view is computed on the loaded molecule');
+    return viewAfter;
+  };
+
+  // A refused load, or one that changes nothing, records no view and never asks for one.
+  assert.equal(editor.loadMolecule({ version: 99 }, { view: { before: viewBefore, after } }).ok, false);
+  assert.equal(editor.loadMolecule(old, { view: { before: viewBefore, after } }).changed, false);
+  assert.equal(calls, 0);
+
+  assert.ok(editor.loadMolecule(loaded, { view: { before: viewBefore, after } }).changed);
+  assert.equal(calls, 1);
+  assert.deepEqual(events.at(-1), { reason: 'edit', kind: 'chemical', view: viewAfter });
+  assert.ok(editor.undo());
+  assert.deepEqual(editor.getMoleculeJSON(), old);
+  assert.deepEqual(events.at(-1), { reason: 'undo', kind: 'chemical', view: viewBefore });
+  assert.ok(editor.redo());
+  assert.deepEqual(editor.getMoleculeJSON().atoms, loaded.atoms);
+  assert.deepEqual(events.at(-1), { reason: 'redo', kind: 'chemical', view: viewAfter });
+  assert.equal(calls, 1, 'the recorded view is reused on redo');
+
+  // A load without views carries none, as before.
+  assert.ok(editor.loadMolecule(old).changed);
+  assert.deepEqual(events.at(-1), { reason: 'edit', kind: 'chemical' });
+  editor.undo();
+  assert.deepEqual(events.at(-1), { reason: 'undo', kind: 'chemical' });
+}); // End of test 'a load recorded with canvas views…'
+
 test('Carbono: click on empty space draws methane; click on an atom grows it', () => {
   const editor = createEditorCore();
   editor.setTool('carbon');

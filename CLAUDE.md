@@ -28,10 +28,13 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   alternative, otherName, outOfScope, invalid with structural errors) and
   searches the locants a name leaves out (`search.js`: missingLocants,
   ambiguous, and incomplete when the search budget runs out); the dialog
-  is done (`src/ui/name-builder.js`, DOM-free state in
-  `name-builder-state.js`: tile rows, selectable name line, editing,
-  failures shown in the dialog), and drawing the molecule on the canvas
-  (R-2b) is next — until then a success verdict only shows its message.
+  (`src/ui/name-builder.js`, DOM-free state in `name-builder-state.js`:
+  tile rows, selectable name line, editing, failures shown in the dialog)
+  and «Dibujar» (`src/ui/draw-name.js`: the layout checked before the
+  canvas is touched, the molecule loaded as one undoable edit and centred,
+  then `results.js` `showVerdict()`: the ordered drawing and the verdict
+  block above «Se llama:») are done, with the Ayuda section «Del nombre al
+  dibujo»; the diagnosis of an `otherName` verdict (R-3) is next.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

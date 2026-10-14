@@ -398,8 +398,8 @@ export function addedAtoms(before, after) {
  *   Listeners: onChange({reason, kind}) after every committed edit, undo, redo, restore, tool, gesture or
  *   selection change; onEdit({reason, kind}) only for changes of the molecule (kind 'chemical' or
  *   'coordinates'); onReject({message, atoms}) when an edit is refused. Events of an edit recorded
- *   with canvas views (setCoordinates() with `view`), and of its undo and redo, also carry the
- *   `view` to show. `display()`: the projected drawing, or null (see above).
+ *   with canvas views (setCoordinates() or loadMolecule() with `view`), and of its undo and redo,
+ *   also carry the `view` to show. `display()`: the projected drawing, or null (see above).
  * @returns {object} The core API (see the returned object).
  */
 export function createEditorCore(options = {}) {
@@ -423,7 +423,7 @@ export function createEditorCore(options = {}) {
    * @param {string} reason - 'edit' | 'undo' | 'redo' | 'restore' | 'tool' | 'gesture' | 'selection'.
    * @param {'chemical'|'coordinates'|null} [kind] - What changed, for changes of the molecule.
    * @param {object|null} [view] - Canvas view that goes with the new state (a transaction
-   *   recorded with views, see setCoordinates()); the event then carries it as `view`.
+   *   recorded with views, see setCoordinates() and loadMolecule()); the event then carries it as `view`.
    * @returns {void}
    */
   function emit(reason, kind = null, view = null) {
@@ -480,8 +480,9 @@ export function createEditorCore(options = {}) {
    *
    * @param {string} label - English description (debugging).
    * @param {function(object): ({message: string, atoms?: number[]}|void)} mutate - Edits the draft.
-   * @param {{before: object, after: object}|null} [view] - Canvas views before and after the
-   *   transaction, recorded with it (undo/redo hand them back).
+   * @param {{before: object, after: (object|function(): object)}|null} [view] - Canvas views before and
+   *   after the transaction, recorded with it (undo/redo hand them back). An `after` given as a function
+   *   is called once the new molecule is in place (a view fitted to it), and its result is recorded.
    * @returns {{ok: boolean, changed?: boolean, message?: string, atoms?: number[]}} The outcome.
    */
   function transact(label, mutate, view = null) {
@@ -510,8 +511,10 @@ export function createEditorCore(options = {}) {
       return { ok: true, changed: false };
     }
     mol = draft;
-    history.record(before, after, label, view);
-    emit('edit', editKind(before, after), view ? view.after : null);
+    // A view that depends on the new molecule (a load centred on it) is known only now.
+    const views = view && typeof view.after === 'function' ? { before: view.before, after: view.after() } : view;
+    history.record(before, after, label, views);
+    emit('edit', editKind(before, after), views ? views.after : null);
     return { ok: true, changed: true };
   } // End of function transact()
 
@@ -1280,12 +1283,18 @@ export function createEditorCore(options = {}) {
   }
 
   /**
-   * Loads a molecule as one undoable transaction (after validation).
+   * Loads a molecule as one undoable transaction (after validation). With
+   * `options.view` the load also changes the canvas view (a load centred on
+   * the new drawing): the views are recorded with it, and the change events
+   * of the load, its undo and its redo carry the view to show (`after`,
+   * `before`, `after`); `after` may be a function, called once the new
+   * molecule is in place (see transact()).
    *
    * @param {object} source - A molecule or moleculeToJSON() output.
+   * @param {{view?: {before: object, after: (object|function(): object)}}} [options] - Canvas views before and after.
    * @returns {object} The transaction outcome.
    */
-  function loadMolecule(source) {
+  function loadMolecule(source, options = {}) {
     const result = moleculeFromJSON(source && source.atoms instanceof Map ? moleculeToJSON(source) : source);
     if (!result.ok) {
       return reject({ message: result.error.message });
@@ -1297,7 +1306,7 @@ export function createEditorCore(options = {}) {
       d.bonds = result.mol.bonds;
       d.nextAtomId = Math.max(d.nextAtomId, result.mol.nextAtomId);
       d.nextBondId = Math.max(d.nextBondId, result.mol.nextBondId);
-    });
+    }, options.view || null);
   } // End of function loadMolecule()
 
   /**
@@ -1711,7 +1720,8 @@ function isTextField(target) {
  *
  * @param {SVGSVGElement} svg - The canvas element.
  * @param {{notify?: function(string): void}} [options] - `notify(message)` shows a Spanish toast.
- * @returns {object} The editor API: the core API plus highlight(), clearHighlight(), showLocants(),
+ * @returns {object} The editor API: the core API (its loadMolecule() takes a `{center}` option here)
+ *   plus highlight(), clearHighlight(), showLocants(),
  *   animateCoordinates(), isAnimating(), setDisplayMode(), getDisplayMode(), setProjector(), getProjection(),
  *   isProjected(), getShownMolecule(), onViewChange(), getView(), setView(), centerView(), zoomBy(),
  *   atomClientPoint(), bondClientPoint(), modelToClient(), clientToModel(), render() and destroy().
@@ -2248,26 +2258,74 @@ export function createEditor(svg, options = {}) {
   } // End of function fittedView()
 
   /**
-   * Shows the canvas view a change event carries: the fitted view of a
-   * re-centring redraw (and of its redo), or the view before it on undo.
-   * That view belongs to the normal drawing: while the 90° drawing is shown
-   * its own view stays, and the carried one is kept for when the normal
-   * drawing comes back (refresh()).
+   * Which drawing is on screen: the projected (90°) one or the normal one.
    *
-   * @param {{view?: {scale: number, x: number, y: number}}} event - The core's change event.
+   * @returns {'projected'|'normal'} The drawing shown.
+   */
+  function shownDrawing() {
+    return isProjected() ? 'projected' : 'normal';
+  }
+
+  /**
+   * Shows the canvas view a change event carries.
+   *
+   * - A view tagged with the drawing it was shown on (`display`: a centred
+   *   load, loadMolecule() with `center`, its undo and its redo) is shown at
+   *   once when that drawing (normal or 90°) is on screen; when the other
+   *   one is (the 90° view was switched since), the drawing on screen is
+   *   centred instead, so it is never left off-screen.
+   * - Otherwise it is the fitted view of a re-centring redraw (and of its
+   *   redo), or the view before it on undo. That view belongs to the normal
+   *   drawing: while the 90° drawing is shown its own view stays, and the
+   *   carried one is kept for when the normal drawing comes back (refresh()).
+   *
+   * @param {{view?: {scale: number, x: number, y: number, display?: string}}} event - The core's change event.
    * @returns {void}
    */
   function applyEditView(event) {
     if (!event || !event.view) {
       return;
     }
-    if (isProjected()) {
+    if (event.view.display) {
+      const { display, ...view } = event.view;
+      pendingView = null;
+      renderer.setView(display === shownDrawing() ? view : centredView());
+    } else if (isProjected()) {
       pendingView = event.view;
     } else {
       pendingView = null;
       renderer.setView(event.view);
     }
-  }
+  } // End of function applyEditView()
+
+  /**
+   * Loads a molecule as one undoable edit (the core's loadMolecule()). With
+   * `opts.center` the view is also centred on the new drawing as displayed
+   * (normal or 90°, like "Centrar", centerView()), and that change of view
+   * belongs to the edit: Deshacer shows the old drawing in the view it was
+   * shown in, Rehacer the new one centred again (applyEditView()). A load
+   * that changes nothing only centres the view.
+   *
+   * @param {object} source - A molecule or moleculeToJSON() output.
+   * @param {{center?: boolean}} [opts] - Centre the view on the loaded molecule.
+   * @returns {object} The transaction outcome.
+   */
+  function loadMolecule(source, opts = {}) {
+    if (!opts.center) {
+      return core.loadMolecule(source);
+    }
+    // The centred view must measure the loaded molecule, not a frame of a redraw animation.
+    stopAnimation();
+    const view = {
+      before: { ...renderer.getView(), display: shownDrawing() },
+      after: () => ({ ...centredView(), display: shownDrawing() }),
+    };
+    const outcome = core.loadMolecule(source, { view });
+    if (outcome.ok && !outcome.changed) {
+      centerView();
+    }
+    return outcome;
+  } // End of function loadMolecule()
 
   /**
    * Moves atoms to new positions as one undoable coordinate edit
@@ -2363,15 +2421,24 @@ export function createEditor(svg, options = {}) {
   }
 
   /**
+   * The view that fits the drawn molecule (projected in the 90° view) in the
+   * visible canvas (identity view when empty), without applying it.
+   *
+   * @returns {{scale: number, x: number, y: number}} The centred view.
+   */
+  function centredView() {
+    const mol = shownMolecule().mol;
+    return mol.atoms.size > 0 ? fitView(mol, renderer.visibleRect()) : { ...IDENTITY_VIEW };
+  }
+
+  /**
    * "Centrar": fits the drawn molecule (projected in the 90° view) in the
    * visible canvas (identity view when empty).
    *
    * @returns {{scale: number, x: number, y: number}} The new view.
    */
   function centerView() {
-    const mol = shownMolecule().mol;
-    const view = mol.atoms.size > 0 ? fitView(mol, renderer.visibleRect()) : { ...IDENTITY_VIEW };
-    renderer.setView(view);
+    renderer.setView(centredView());
     return renderer.getView();
   }
 
@@ -2456,6 +2523,7 @@ export function createEditor(svg, options = {}) {
 
   return {
     ...core,
+    loadMolecule,
     highlight: renderer.highlight,
     clearHighlight: renderer.clearHighlight,
     showLocants: renderer.showLocants,

@@ -710,6 +710,43 @@ body {
   overflow-wrap: anywhere;
 }
 
+/* Verdict of «Dibujar» above «Se llama:» (src/ui/results.js, design.md §15.3). */
+.verdict {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-accent);
+  border-left-width: 4px;
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+
+.verdict--almost {
+  border-color: var(--color-part-multiplier);
+}
+
+.verdict--other {
+  border-color: var(--color-text-muted);
+}
+
+.verdict p {
+  margin: 0;
+}
+
+.verdict p + p {
+  margin-top: 0.35rem;
+}
+
+.verdict-student-label {
+  color: var(--color-text-muted);
+}
+
+.verdict-student-name {
+  font-weight: 600;
+}
+
+.verdict-message {
+  font-weight: 600;
+}
+
 .part-locant { color: var(--color-part-locant); }
 .part-multiplier { color: var(--color-part-multiplier); }
 .part-prefix { color: var(--color-part-prefix); }
