@@ -70,6 +70,23 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-45c | v3 Esters with substituted rings | same, "I-45c" | done — `docs/progress-archive/i-45c.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-45c.md` |
 | I-46 | v3 Wrap-up (Ayuda, examples, README, CLAUDE.md scope, oracle README) | same, "I-46" | done — `docs/progress-archive/i-46.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-46.md` |
 
+| I-47a | v4 R-1a Tile catalogue, parser, assembler, tokenizer (open-chain hydrocarbons) | `autoclaude/processed/230-name-to-structure.md` + design §15.8 "R-1a" | queued | — | — |
+| I-47b | v4 R-1b `interpret.js` + `build.js`, `readName()` for fully located names | same, "R-1b" | queued | — | — |
+| I-47c | v4 R-1c Left-out locants (search, `missingLocants`/`ambiguous`/`incomplete`) | same, "R-1c" | queued | — | — |
+| I-48a | v4 R-2a The «¿Cómo se dibuja?» dialog | same, "R-2a" | queued | — | — |
+| I-48b | v4 R-2b «Dibujar», results entry point, Ayuda, e2e | same, "R-2b" | queued | — | — |
+| I-49 | v4 R-3 Diagnosis for hydrocarbons | same, "R-3" | queued | — | — |
+| I-50 | v4 R-4 Rings and retained aromatic templates | same, "R-4" | queued | — | — |
+| I-51a | v4 R-5a Halogens and alcohols | same, "R-5a" | queued | — | — |
+| I-51b | v4 R-5b Ethers | same, "R-5b" | queued | — | — |
+| I-51c | v4 R-5c Aldehydes and ketones | same, "R-5c" | queued | — | — |
+| I-51d | v4 R-5d Acids | same, "R-5d" | queued | — | — |
+| I-52a | v4 R-6a Esters | same, "R-6a" | queued | — | — |
+| I-52b | v4 R-6b Nitriles | same, "R-6b" | queued | — | — |
+| I-52c | v4 R-6c Amines | same, "R-6c" | queued | — | — |
+| I-52d | v4 R-6d Amides | same, "R-6d" | queued | — | — |
+| I-53 | v4 R-7 Wrap-up | same, "R-7" | queued | — | — |
+
 The twelve original plan items and user-feedback items I-13…I-20 are done.
 v2 plan (user-confirmed scope): I-21…I-41c all done — the plan is complete
 (I-41 split into I-41a 90° view for heteroatoms, I-41b CHO/COOH abbreviations, I-41c wrap-up;
@@ -82,6 +99,10 @@ phases may be split as they are selected. The v2 plan now lives in
 v3 plan (user-confirmed 2026-10-13, polysubstituted benzenes): I-42…I-46, all done, from
 `autoclaude/processed/220-polysubstituted-benzenes.md`, run in table order; I-42 records the
 user's decisions as `docs/design.md` §14 (pointer from §13.1).
+v4 plan (user-confirmed 2026-10-14, name → drawing, «¿Cómo se dibuja?»): I-47a…I-53, one per
+phase R-1a…R-7 of `docs/design.md` §15.8 (R-n ↔ I-(46+n), letters kept), run in table order and
+split further if a phase does not fit one worker. Spec: `autoclaude/processed/230-name-to-structure.md`
++ design §15 (read from the working tree — see *Open risks*, «design.md §15 uncommitted»).
 
 ## Inbox
 
@@ -114,12 +135,16 @@ user's decisions as `docs/design.md` §14 (pointer from §13.1).
 - 2026-10-13 pickup 10 (plan complete): `220-polysubstituted-benzenes.md` — user-confirmed
   scope lift (benzenes with 2–6 substituents; o/m/p only under Otras formas) → queued as
   I-42, I-43a, I-43b, I-44, I-45a, I-45b, I-45c, I-46, one per phase of the item.
+- 2026-10-14 pickup 11 (plan complete): `230-name-to-structure.md` — user-confirmed v4 scope (build
+  a name from tiles, the app draws it and gives a verdict; plan in design §15) → queued as
+  I-47a…I-53, one per phase R-1a…R-7 of design §15.8.
 
 ## Next action
 
-None — the v3 plan (I-42a…I-46) is complete and the inbox is empty. A new inbox item starts the next
-plan. Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher
-review (design §14.6).
+Select I-47a (v4 R-1a): tile catalogue, error-tolerant lossless parser, assembler and tokenizer for
+open-chain hydrocarbon names in a new `src/reverse/`; spec design §15.4–§15.5 and §15.8 "R-1a"
+(read from the working-tree `docs/design.md`, never edit or commit it). Deploying (`npm run deploy`)
+stays a manual user step; Ayuda/example wording awaits teacher review (design §14.6).
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -344,6 +369,14 @@ review (design §14.6).
   (`docs/progress-archive/i-45c.md`).
 - I-46: Ayuda o/m/p note and example labels are new wording pending teacher review
   (`docs/progress-archive/i-46.md`).
+
+- **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
+  Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
+  (the runner's preflight-dirty list, 2026-10-14). Per the autoclaude rules they are the user's:
+  phases read them from disk but never edit, commit or revert them, and commit by explicit path.
+  So the item's «every phase updates the Status column of §15.8» is tracked here in the phase table
+  instead; once the user commits design.md, the next phase brings the §15.8 Status column up to date.
+  User action wanted: commit `docs/design.md` and `docs/reviews/v4-plan-codex.md`.
 
 - Bundler regex-literal detection is heuristic; duplicate `export *` names:
   first wins. See `docs/progress-archive/i-1.md`.
