@@ -3,11 +3,9 @@
  * §15.8 R-3; phase I-49a): for an `otherName` verdict of readName() — the
  * student's name describes one molecule, which the app names otherwise —
  * the student's **main mistake**, one diagnosis: the first rule of the list
- * below that applies. Pure, no DOM; open-chain hydrocarbons. A name with a
- * ring (`ciclo`, phase R-4a: a ring parent or a ring branch at any depth;
- * `benceno`, `fenil`, R-4b; a retained template such as `tolueno`, R-4c),
- * or whose molecule the engine names on a ring, gets no diagnosis yet (null:
- * the verdict stands alone); the ring messages arrive in phase I-50d.
+ * below that applies. Pure, no DOM; open-chain hydrocarbons and, since
+ * phase I-50d (design.md §15.8 R-4), hydrocarbons with one ring (`ciclo`,
+ * `benceno`, `fenil`, the retained templates; see «Rings» below).
  *
  * The rules, in order (first match wins):
  *
@@ -44,6 +42,55 @@
  * tie-break (TIE) gives the same name as the parent, so it is no mistake.
  * The counts and locants quoted are the trace's own values.
  *
+ * **Rings** (design.md §13.5, §14; phase I-50d). When the engine's parent
+ * is the ring (always, for a hydrocarbon with one ring: a ring is senior to
+ * any chain), its trace has no chain choice (no P1: a `RING` step, then the
+ * ring numbering), so rules 1–4 give way to the ring rules, each numbered
+ * as the rule whose place it takes, then rules 5–11 run as for a chain:
+ *
+ * 1. `RING_IS_PARENT` — the student's parent is an open chain and the ring
+ *    a branch of it (`1-(4-metilfenil)propano`, `1-ciclohexilhexano`);
+ *    trace rule `RING`, the step that makes the ring the parent;
+ * 2. `BENZENE_RING` — a `ciclo` parent that is the benzene ring
+ *    (`ciclohexa-1,3,5-trieno`: the ring has a name of its own), and
+ *    `SUBSTITUTED_TEMPLATE` — a retained template with prefixes of the
+ *    student's (`4-metiltolueno`, `p-metiltolueno`, `4-metil-1,2-xileno`,
+ *    `pentametiltolueno`, `4-metilestireno`): the engine never substitutes
+ *    tolueno, xileno, estireno or mesitileno (design.md §14.5), so the
+ *    molecule is named from `benceno`;
+ * 4. `RING_NUMBERING` — the student's ring numbering (start and direction,
+ *    studentParent in the student's locant order) leaves the engine's ring
+ *    numbering trace (N1–N4, design.md §13.5; N1 and N2 never on benzene,
+ *    §14.2) before the presentation tie-break: the rule that dropped it,
+ *    found exactly as rule 4 finds a chain's direction (directionDraft();
+ *    N4 only when it read the student's own words, «The student's words in
+ *    the alphabetical rules» below);
+ * 11. `LETTER_LOCANTS` — after every other rule, an orto/meta/para letter
+ *    (design.md §14.4) the engine does not offer on that name, which written
+ *    as its numbers is the engine's name: the old form exists only beside
+ *    the default prefix style (`p-diisopropilbenceno`, never
+ *    `p-di(propan-2-il)benceno`).
+ *
+ * Rules 5–11 read a ring parent as a chain: the ring's omission rules
+ * (lexicon ringOmitsLocants(): `metilciclohexano`, `ciclohexeno`,
+ * `metilbenceno`, `hexametilbenceno`) decide rule 9; a monosubstituted
+ * benzene has no numbering trace (the engine does not number it), so a
+ * locant on its one prefix, whichever, is needless (`1-metilbenceno`,
+ * `2-metilbenceno`), while on `ciclo` a locant other than 1 is a numbering
+ * mistake whose number is not even written (`2-metilciclohexano`).
+ *
+ * Ring cases no rule covers or that cannot occur (tested as they behave):
+ * a ring parent the engine passes over for a chain needs a principal group
+ * on the chain (design.md §13.5), so for a hydrocarbon the reverse of
+ * RING_IS_PARENT never happens; a ring branch always hangs from a chain
+ * parent (two rings bonded atom to atom, or three rings, are refused before
+ * any search), so a ring branch numbered wrong (`1-(6-metilciclohexil)…`,
+ * `(5-metilfenil)…`) is always preceded by RING_IS_PARENT; and, as on a
+ * chain, a branch of the ring whose own chain or numbering is not the
+ * engine's (`(butan-3-il)ciclohexano`) or written in a style the engine does
+ * not offer (`(1,1-dimetiletil)benceno`) gets null, beside a letter too
+ * (`p-di(butan-3-il)benceno`).
+ *
  * **The student's prefix style** (design.md §1.1: `isopropil`, `pin`,
  * `substituted`): the citation order, hence N4, N5 and sometimes the parent
  * itself, depends on the words of the prefixes (`4-isopropil-6-metilnonano`
@@ -62,6 +109,23 @@
  * trace, parent and name are the ones every rule compares with and quotes,
  * and its explanation is the one the diagnosis's `step` belongs to
  * (diagnosisNaming(), diagnosisExplanation()).
+ *
+ * **The student's words in the alphabetical rules** (phase I-50d review).
+ * The style recognised is the one most of the student's branches have, so
+ * a branch written in a style the engine does not offer for the molecule
+ * (`1-metilpropil` where the engine has only `butan-2-il`), or a name in
+ * two styles, can put the student's prefixes in another citation order
+ * than the trace's: `1-etil-2-(1-metilpropil)benceno` cites `etil` first
+ * and numbers right for its own words, while the engine cites `butan-2-il`
+ * first. The trace's N4 and N5 steps compare citation orders and names, so
+ * rules 3 and 4 (and RING_NUMBERING) blame a chain or numbering only if
+ * every such step up to the one that drops it compared, for the student's
+ * chain or ring, the values the student's own words give
+ * (judgedInOwnWords()); otherwise they blame nothing, as for any branch in
+ * a style the engine does not offer (below), and the form rules 5–11, which
+ * read the student's own words, still run (`2-(1-metilpropil)-1-etilbenceno`:
+ * ALPHABETICAL_ORDER). A numbering diagnosis therefore never contradicts
+ * the order of the student's words, nor does the explanation it opens.
  *
  * Rules 5–11 read the student's tiles (the lossless parse tree and its
  * NameSpec) and compare them with the naming rules the engine applies:
@@ -100,23 +164,31 @@
  * No rule covers (the diagnosis is null; the verdict stands alone): a
  * branch named in a prefix style the engine does not offer for the molecule
  * (`4-(1,1-dimetiletil)heptano`: the other styles are offered only beside an
- * isopropyl group, design.md §1.1), and a branch whose own chain or
- * numbering is not the engine's (`5-(butan-3-il)nonano`,
- * `7-[2-(2-metilpropil)propil]tridecano`).
+ * isopropyl group, design.md §1.1), also when its words change the citation
+ * order the numbering follows (`5-etil-7-(1-metilpropil)undecano`, above),
+ * and a branch whose own chain or numbering is not the engine's
+ * (`5-(butan-3-il)nonano`, `7-[2-(2-metilpropil)propil]tridecano`).
  *
  * A name with left-out locants (`metiletano`) is read through one placement
  * (readName() draws the first); every placement of the drawn structure is a
  * reading of the same name, so diagnose() tries the readings it is given and
  * keeps the most charitable diagnosis, the one of the latest rule (`butineno`
  * read as `but-3-in-1-eno` would be a numbering mistake, read as
- * `but-1-in-3-eno` it numbers like the engine and misses its locants).
+ * `but-1-in-3-eno` it numbers like the engine and misses its locants). A
+ * reading on which no rule applies is the most charitable of all: the
+ * diagnosis is then null (phase I-50d: `(butan-3-il)ciclohexano`, read with
+ * the branch on ring carbon 1, numbers the ring as the engine does and only
+ * the branch's own numbering is wrong, which no rule covers; on the other
+ * placements a ring numbering the student never wrote would be blamed).
  *
  * The result is a plain JSON-safe object (Diagnosis) carrying what the
  * results panel needs (phase I-49b): the code, the Spanish message, the
  * explanation step to open (`step`: the `id` of a step of
  * src/explain/explain.js explain() for the naming in the diagnosis's
  * `style` — `chain`, `tiebreak`, `numbering`, `substituents`, `order` or
- * `assemble`; diagnosisExplanation() builds those steps and finds it, with
+ * `assemble`, and for a ring `ring`, `benzene` or `ringNumbering` (a draft
+ * may name the step of its own case: `ring` on a `ciclo` ring, `benzene` on
+ * the benzene ring); diagnosisExplanation() builds those steps and finds it, with
  * the fallbacks of diagnosisStepIndex()), the student's chain and the
  * parent (atom and bond ids of the verdict's molecule, each in its own
  * locant order), the atoms the message is about and the student's tiles it
@@ -128,7 +200,7 @@
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS, and DIAGNOSES gives
  * example data for each code so the wording can be listed (R-7). Later
- * family phases (R-4…R-6d) add their codes to DIAGNOSES / DIAGNOSIS_TEXTS
+ * family phases (R-5a…R-6d) add their codes to DIAGNOSES / DIAGNOSIS_TEXTS
  * and their checks to FORM_RULES (or new trace rules to the chain walk).
  */
 
@@ -140,7 +212,7 @@ import { PREFIX_STYLES, nameSubstituent } from '../naming/substituent.js';
 import { adjacency, rootedBranchKey } from '../model/graph.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, ENCLOSING_MARKS, RETAINED_PREFIXES, FREE_VALENCE_SUFFIXES, omitsLocants,
-  chainOmitsPrefixLocants,
+  chainOmitsPrefixLocants, ringOmitsLocants, BENZENE_NAME, RING_PREFIX, POSITIONAL_LETTERS, TRADITIONAL_NAMES,
 } from '../naming/lexicon.es.js';
 import { assemble, itemText } from './assemble.js';
 import { ownPrefixAtoms, specRings } from './build.js';
@@ -161,6 +233,10 @@ const WORDS = Object.freeze({
   tert: RETAINED_PREFIXES['tert-butyl'].italic,
   metil: `${stem(1)}${FREE_VALENCE_SUFFIXES[1]}`,
   etil: `${stem(2)}${FREE_VALENCE_SUFFIXES[1]}`,
+  benceno: BENZENE_NAME,
+  tolueno: TRADITIONAL_NAMES.toluene,
+  /** The orto/meta/para letters, quoted «o», «m» y «p». */
+  letters: Object.values(POSITIONAL_LETTERS).map((letter) => `«${letter}»`),
 });
 
 /** Italic descriptors of the retained branch words (`tert-`), left out of alphabetical order. */
@@ -173,8 +249,14 @@ const ITALIC_DESCRIPTORS = Object.freeze([...new Set(Object.values(RETAINED_PREF
 export const DIAGNOSIS_TEXTS = Object.freeze({
   BRANCH_AT_END: (d) => `La rama «${d.branch}» está en el extremo de la cadena, así que la alarga: `
     + `la cadena principal tiene ${d.length} carbonos.`,
+  RING_IS_PARENT: (d) => 'El anillo es la cadena principal: un anillo manda siempre sobre una cadena abierta, aunque la cadena '
+    + `sea más larga. Tu cadena de ${d.length} ${d.length === 1 ? 'carbono' : 'carbonos'} va en una rama del anillo: «${d.name}».`,
   LONGER_CHAIN: (d) => `Hay una cadena más larga que la tuya: la tuya tiene ${d.student} carbonos y la cadena principal `
     + `tiene ${d.length}.`,
+  BENZENE_RING: (d) => 'Un anillo de 6 carbonos con tres enlaces dobles alternados, uno sí y uno no, es el benceno, y tiene '
+    + `nombre propio: «${WORDS.benceno}».${d.name === WORDS.benceno ? '' : ` Se escribe «${d.name}».`}`,
+  SUBSTITUTED_TEMPLATE: (d) => `El nombre tradicional «${d.template}» no admite más sustituyentes: con más ramas en el anillo, `
+    + `la molécula se nombra a partir de «${WORDS.benceno}», con todas las ramas delante: «${d.name}».`,
   MORE_MULTIPLE_BONDS: (d) => `Hay otra cadena igual de larga con más enlaces dobles o triples (${d.app}; la tuya tiene `
     + `${d.student}). Entre cadenas igual de largas, gana la que tiene más.`,
   MORE_DOUBLE_BONDS: (d) => `Hay otra cadena igual de larga, con los mismos enlaces múltiples, pero con más enlaces dobles `
@@ -187,6 +269,9 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
     + 'alfabético: esa es la cadena principal.',
   NUMBERING: (d) => `Hay que numerar la cadena desde el otro extremo: ${DIAGNOSIS_PHRASES.numberingReasons[d.rule]}`
     + `${difference(d)}.${d.unwritten ? ` En «${d.name}» ese número ni siquiera se escribe.` : ''}`,
+  RING_NUMBERING: (d) => 'Hay que numerar el anillo de otra manera, empezando en otro carbono o contando hacia el otro lado: '
+    + `${DIAGNOSIS_PHRASES.numberingReasons[d.rule]}${difference(d)}.`
+    + `${d.unwritten ? ` En «${d.name}» ese número ni siquiera se escribe.` : ''}`,
   ALPHABETICAL_ORDER: (d) => `Los sustituyentes se escriben por orden alfabético: «${d.first}» va antes que «${d.second}» `
     + `(${d.why}).${d.hint ? ` ${d.hint}` : ''}`,
   UNGROUPED: (d) => `Las ramas iguales se escriben una sola vez, con ${d.compound ? `«${WORDS.bis}», «${WORDS.tris}»…`
@@ -197,15 +282,29 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
     : `«${WORDS.bis}», «${WORDS.tris}»… solo van delante de ramas que tienen sus propias ramas; aquí va `
       + `«${WORDS.di}», «${WORDS.tri}»…: «${d.right}», no «${d.student}».`),
   LOCANT_ORDER: (d) => `Los números de un mismo grupo se escriben de menor a mayor: «${d.right}», no «${d.student}».`,
-  NEEDLESS_LOCANTS: (d) => (d.branch
-    ? `Sobran números dentro de la rama: se escribe «${d.right}», no «${d.student}».`
-    : `En «${d.name}» no se escriben números: solo hay una manera de colocar ${d.what}.`),
+  NEEDLESS_LOCANTS: (d) => {
+    if (d.branch) {
+      return `Sobran números dentro de la rama: se escribe «${d.right}», no «${d.student}».`;
+    }
+    if (!d.kept) {
+      return `En «${d.name}» no se escriben números: solo hay una manera de colocar ${d.what}.`;
+    }
+    // The app's name still has numbers, inside its branches: only the parent's locants are left out.
+    return d.plural
+      ? `En «${d.name}» no se escriben los números que dicen en qué carbonos ${d.on} van ${d.what}: solo hay una manera `
+        + 'de colocarlos. Los números de dentro de las ramas sí se escriben.'
+      : `En «${d.name}» no se escribe el número que dice en qué carbono ${d.on} va ${d.what}: solo hay una manera `
+        + 'de colocarlo. Los números de dentro de la rama sí se escriben.';
+  }, // End of the NEEDLESS_LOCANTS template
   MISSING_LOCANTS: (d) => `Faltan números: hay que decir en qué carbono va cada rama y cada enlace doble o triple, `
     + `como en «${d.name}».`,
   SEGMENT_ORDER: (d) => `Cuando hay enlaces dobles y triples, «${WORDS.en}» se escribe antes que «${WORDS.ino}»: `
     + `«${d.name}», no «${d.student}».`,
   OLD_STYLE: (d) => `Has escrito los números delante de la raíz, como se hacía antes. Hoy van detrás, justo delante de `
     + `«${WORDS.eno}» o «${WORDS.ino}»: «${d.name}».`,
+  LETTER_LOCANTS: (d) => `Las letras ${WORDS.letters.slice(0, -1).join(', ')} y ${WORDS.letters[WORDS.letters.length - 1]} `
+    + `(orto, meta y para) son una forma antigua de decir dónde van dos grupos del benceno, y con estas ramas no se usan: `
+    + `se escriben los números, «${d.name}».`,
 });
 
 /** The phrases the templates of DIAGNOSIS_TEXTS fill in (Spanish drafts, pending teacher review). */
@@ -243,19 +342,37 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
     doubles: 'los enlaces dobles',
     triples: 'los enlaces triples',
     both: 'los enlaces dobles y triples',
+    prefix: 'el sustituyente',
     prefixes: 'los sustituyentes',
+  }),
+  /** Where the left-out prefix locants would place the prefixes (NEEDLESS_LOCANTS, a name whose branches keep numbers). */
+  on: Object.freeze({
+    ring: 'del anillo',
+    chain: 'de la cadena',
   }),
 });
 
 /**
- * Every diagnosis code, in the order of the rules (design.md §15.8 R-3):
- * its rule number (1–11), the explanation step it points at (an explain()
- * step id, design.md §5) and example data for its message (R-7 lists the
- * drafts with it). Frozen; later families add their codes.
+ * Every diagnosis code, in the order of the rules (design.md §15.8 R-3; the
+ * ring rules of R-4 beside the chain rules whose place they take, file
+ * header): its rule number (1–11), the explanation step it points at (an
+ * explain() step id, design.md §5; a draft may give its own case's step,
+ * `benzene` for RING_IS_PARENT on the benzene ring) and example data for
+ * its message (R-7 lists the drafts with it). Frozen; later families add
+ * their codes.
  */
 export const DIAGNOSES = Object.freeze({
   BRANCH_AT_END: Object.freeze({ rule: 1, step: 'chain', example: Object.freeze({ branch: WORDS.metil, length: 4 }) }),
+  RING_IS_PARENT: Object.freeze({
+    rule: 1,
+    step: 'ring',
+    example: Object.freeze({ length: 3, name: `${stem(3)}${FREE_VALENCE_SUFFIXES[1]}${RING_PREFIX}${stem(6)}${ENDINGS.saturated}` }),
+  }),
   LONGER_CHAIN: Object.freeze({ rule: 2, step: 'chain', example: Object.freeze({ student: 4, length: 5 }) }),
+  BENZENE_RING: Object.freeze({ rule: 2, step: 'benzene', example: Object.freeze({ name: `${WORDS.metil}${WORDS.benceno}` }) }),
+  SUBSTITUTED_TEMPLATE: Object.freeze({
+    rule: 2, step: 'benzene', example: Object.freeze({ template: WORDS.tolueno, name: `1,4-${WORDS.di}${WORDS.metil}${WORDS.benceno}` }),
+  }),
   MORE_MULTIPLE_BONDS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 0, app: 1 }) }),
   MORE_DOUBLE_BONDS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 0, app: 1 }) }),
   MORE_SUBSTITUENTS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 1, app: 2 }) }),
@@ -263,6 +380,9 @@ export const DIAGNOSES = Object.freeze({
   CHAIN_ALPHABETICAL: Object.freeze({ rule: 3, step: 'numbering', example: Object.freeze({}) }),
   NUMBERING: Object.freeze({
     rule: 4, step: 'numbering', example: Object.freeze({ rule: 'N3', app: '2', student: '4', unwritten: false, name: '' }),
+  }),
+  RING_NUMBERING: Object.freeze({
+    rule: 4, step: 'ringNumbering', example: Object.freeze({ rule: 'N3', app: '3', student: '5', unwritten: false, name: '' }),
   }),
   ALPHABETICAL_ORDER: Object.freeze({
     rule: 5,
@@ -287,7 +407,8 @@ export const DIAGNOSES = Object.freeze({
     rule: 9,
     step: 'numbering',
     example: Object.freeze({
-      branch: false, name: `${stem(3)}${WORDS.eno}`, what: DIAGNOSIS_PHRASES.what.double, right: '', student: '',
+      branch: false, name: `${stem(3)}${WORDS.eno}`, what: DIAGNOSIS_PHRASES.what.double, right: '', student: '', kept: false,
+      plural: false, on: '',
     }),
   }),
   MISSING_LOCANTS: Object.freeze({
@@ -301,6 +422,9 @@ export const DIAGNOSES = Object.freeze({
     }),
   }),
   OLD_STYLE: Object.freeze({ rule: 11, step: 'assemble', example: Object.freeze({ name: `${stem(4)}-2-${WORDS.eno}` }) }),
+  LETTER_LOCANTS: Object.freeze({
+    rule: 11, step: 'ringNumbering', example: Object.freeze({ name: `1,4-${WORDS.di}(${stem(3)}an-2-${FREE_VALENCE_SUFFIXES[1]})${WORDS.benceno}` }),
+  }),
 });
 
 /** The diagnosis codes, in rule order. */
@@ -314,6 +438,10 @@ export const DIAGNOSIS_CODES = Object.freeze(Object.keys(DIAGNOSES));
  * inside the one compound branch of a parent with a single prefix group
  * (explain() skips the order step then; `substituents` explains the
  * branch's prefixes, tested); the fallbacks also keep later families safe.
+ * On a ring (phase I-50d) a rule of the chain's `numbering` step opens
+ * «Numera el anillo» (`ringNumbering`), which a monosubstituted benzene does
+ * not have (the engine does not number it): «Monta el nombre» says the
+ * locant is not written (`1-metilbenceno`, tested).
  */
 export const STEP_FALLBACKS = Object.freeze({
   chain: Object.freeze(['groupChain', 'count']),
@@ -322,6 +450,9 @@ export const STEP_FALLBACKS = Object.freeze({
   substituents: Object.freeze(['assemble']),
   order: Object.freeze(['substituents', 'assemble']),
   assemble: Object.freeze([]),
+  ring: Object.freeze(['benzene', 'count']),
+  benzene: Object.freeze(['ring', 'count']),
+  ringNumbering: Object.freeze(['numbering', 'assemble']),
 });
 
 /**
@@ -330,17 +461,20 @@ export const STEP_FALLBACKS = Object.freeze({
  *
  * @typedef {object} Diagnosis
  * @property {string} code - A DIAGNOSES key.
- * @property {number} rule - Its rule number in design.md §15.8 R-3 (1–11).
- * @property {string|null} traceRule - The engine trace rule the diagnosis follows ('P1'…'P4', 'N1'…'N5'), or null for rules 5–11.
+ * @property {number} rule - Its rule number in design.md §15.8 R-3 (1–11; a ring rule takes the number of the rule whose
+ *   place it takes, file header).
+ * @property {string|null} traceRule - The engine trace rule the diagnosis follows ('P1'…'P4', 'N1'…'N5'; 'RING' for
+ *   RING_IS_PARENT), or null for BENZENE_RING, SUBSTITUTED_TEMPLATE and rules 5–11.
  * @property {string} message - The Spanish message (DIAGNOSIS_TEXTS).
  * @property {string} step - The `id` of the explain() step that explains the rule, a step of the explanation of the naming
  *   in `style` (diagnosisExplanation() builds it and finds the step; diagnosisStepIndex()).
  * @property {string} style - The prefix style compared with (substituent.js PREFIX_STYLES; the student's own), the
  *   explanation context: the trace, `parent` and `step` belong to nameMolecule(molecule, {prefixStyle: style})
  *   (diagnosisNaming(); the verdict's own naming for the default style).
- * @property {{atoms: number[], bonds: number[]}} student - The student's parent chain, in the student's locant order.
- * @property {{atoms: number[], bonds: number[]}} parent - The app's parent chain in that style (the naming's `parent`; the
- *   verdict's naming for the default style), in its locant order.
+ * @property {{atoms: number[], bonds: number[]}} student - The student's parent chain (or ring, its closing bond last), in
+ *   the student's locant order.
+ * @property {{atoms: number[], bonds: number[]}} parent - The app's parent chain or ring in that style (the naming's
+ *   `parent`; the verdict's naming for the default style), in its locant order.
  * @property {{atoms: number[], bonds: number[]}} focus - The atoms and bonds the message is about (empty when none).
  * @property {[number, number]|null} tiles - The student's tiles the message is about, `[from, to)`, or null.
  */
@@ -583,7 +717,9 @@ function replaceNode(node, target, replacement) {
 
 /**
  * Where a branch whose atoms are known joins the rest of the molecule: an
- * open-chain molecule is a tree, so one bond leaves the branch.
+ * open-chain molecule is a tree, so one bond leaves the branch (with one
+ * ring, a branch holds the whole ring or none of it, and still one bond
+ * leaves it).
  *
  * @param {number[]} atoms - The branch's atoms.
  * @param {Map<number, object[]>} adj - The molecule's adjacency.
@@ -698,13 +834,14 @@ function quoted(tree, list, item, items = null) {
 /**
  * The chain nodes of a name: the parent's, then every branch's, in tile
  * order, each with the parent-level prefix it belongs to (null for the
- * parent).
+ * parent). A `ciclo` ring is a chain node too; the `benceno` and template
+ * parents (whole words with no endings or segments, parse.js) are not.
  *
  * @param {object} tree - The parse() tree.
  * @returns {{chain: object, top: object|null}[]} The chains.
  */
 function chainNodes(tree) {
-  const out = [{ chain: tree.parent.chain, top: null }];
+  const out = tree.parent.chain.type === 'chain' ? [{ chain: tree.parent.chain, top: null }] : [];
   /**
    * Collects the chains of a substituent.
    *
@@ -868,11 +1005,118 @@ function chainDropped(ctx, step, sameChain) {
 } // End of function chainDropped()
 
 /**
- * Rules 1–4 from the engine's trace (design.md §4.1): where the student's
- * chain, then its numbering direction, leave the parent choice.
+ * The student's parent-level branches as the alphabetical rules of the
+ * numbering (N4, N5) group and cite them, read in the student's own words:
+ * identical branches in one group (identityOf(), whatever words each one
+ * was written in), each group with the parent atoms that carry it, the
+ * citation key of the student's words (citationKeyOf(); a group written in
+ * several words takes the one cited first) and whether it takes bis/tris;
+ * the groups in the citation order of those keys (tile order on a tie).
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} The draft, or null when the chain and its numbering are the engine's (or give the same name).
+ * @returns {{key: {alpha: string, numeric: number[], italic: string}, atoms: number[], compound: boolean}[]} The groups,
+ *   in the student's citation order.
+ */
+function citedGroups(ctx) {
+  const list = ctx.lists[0];
+  const ids = list.items.map((_, i) => identityOf(ctx, list, i));
+  const groups = new Map();
+  list.items.forEach((item, i) => {
+    const key = citationKeyOf(wordsOf(ctx.tree, item));
+    const group = groups.get(ids[i]);
+    if (!group) {
+      groups.set(ids[i], { key, first: i, atoms: [], compound: isCompoundNode(item.substituent) });
+    } else if (compareCitationKeys(key, group.key) < 0) {
+      group.key = key;
+    }
+  });
+  ctx.reading.prefixAtoms.forEach((o) => groups.get(ids[o.prefix]).atoms.push(o.parentAtom));
+  return [...groups.values()].sort((g, h) => compareCitationKeys(g.key, h.key) || g.first - h.first);
+} // End of function citedGroups()
+
+/**
+ * The value an alphabetical numbering rule compares for one numbering of
+ * the student's chain or ring, read in the student's own words
+ * (citedGroups()), as numbering.js builds it from the engine's words: for
+ * N4 every group's locants, ascending, in citation order; for N5 the
+ * complete-name key — the letters of every prefix with its multiplier
+ * (di…, bis…), its italic descriptors, then every locant in order of
+ * citation (render.js prefixNameKey()).
+ *
+ * @param {string} rule - 'N4' or 'N5'.
+ * @param {object[]} groups - citedGroups() of the reading.
+ * @param {number[]} atoms - The numbering: the chain's or ring's atoms in locant order.
+ * @returns {number[]|{alpha: string, numeric: number[], italic: string}} The value.
+ */
+function ownWordsValue(rule, groups, atoms) {
+  const locantOf = new Map(atoms.map((id, k) => [id, k + 1]));
+  const located = groups.map((g) => g.atoms.map((id) => locantOf.get(id)).sort((p, q) => p - q));
+  if (rule === 'N4') {
+    return located.flat();
+  }
+  /**
+   * The multiplier a group is cited with ('' for one occurrence).
+   *
+   * @param {{atoms: number[], compound: boolean}} g - A group.
+   * @returns {string} The multiplier.
+   */
+  const lead = (g) => {
+    if (g.atoms.length < 2) {
+      return '';
+    }
+    return g.compound ? compoundMultiplier(g.atoms.length) : multiplier(g.atoms.length);
+  };
+  return {
+    alpha: groups.map((g) => `${lead(g)}${g.key.alpha}`).join('').toLowerCase().replace(/[^a-z]/g, ''),
+    numeric: groups.flatMap((g, k) => [...located[k], ...g.key.numeric]),
+    italic: groups.map((g) => g.key.italic).join(''),
+  };
+} // End of function ownWordsValue()
+
+/**
+ * Tells whether a step of the engine's trace compared the student's chain
+ * or ring in the student's own words (file header, «The student's words in
+ * the alphabetical rules»). Only N4 and N5 compare words: for every
+ * numbering of the student's chain or ring among the step's candidates
+ * (both directions of a chain; every start and direction of a ring) the
+ * value the step compared must be the one the student's words give
+ * (ownWordsValue()). A branch written in a style the engine does not offer
+ * for the molecule, or two styles in one name, can be cited elsewhere in
+ * the student's words: `1-etil-2-(1-metilpropil)benceno` cites `etil`
+ * first, while the engine cites `butan-2-il` first and so numbers the other
+ * way.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {object} step - A trace step.
+ * @param {(candidate: object) => boolean} mine - Tells the candidates of the student's chain or ring.
+ * @returns {boolean} True when the step reads the student's own words (always, for a step that compares no words).
+ */
+function judgedInOwnWords(ctx, step, mine) {
+  if (step.rule !== 'N4' && step.rule !== 'N5') {
+    return true;
+  }
+  const groups = citedGroups(ctx);
+  return step.candidatesBefore.every((c, i) => {
+    if (!mine(c)) {
+      return true;
+    }
+    const own = ownWordsValue(step.rule, groups, c.atoms);
+    return step.rule === 'N4' ? compareLocantLists(own, step.values[i]) === 0 : compareCitationKeys(own, step.values[i][0]) === 0;
+  });
+} // End of function judgedInOwnWords()
+
+/**
+ * Rules 1–4 from the engine's trace (design.md §4.1): where the student's
+ * chain, then its numbering direction, leave the parent choice. An
+ * alphabetical step (N4, N5) that did not read the student's chain in the
+ * student's own words (judgedInOwnWords()) blames nothing, from then on:
+ * neither the chain dropped there or later nor a direction dropped there
+ * (a direction dropped before it, by a rule that compares no words, stays
+ * the diagnosis).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null when the chain and its numbering are the engine's (or give the same name), or
+ *   when the step that drops them compared other words than the student's.
  */
 function chainRules(ctx) {
   const { naming, reading } = ctx;
@@ -896,12 +1140,13 @@ function chainRules(ctx) {
   const isStudent = (c) => c.direction !== undefined && c.key === directed;
   const p1 = trace.find((s) => s.rule === 'P1');
   if (!p1) {
-    return null; // A ring parent (later families).
+    return null; // Never: a ring parent goes through ringRules() (firstRule()).
   }
   if (!p1.candidatesBefore.some(sameChain)) {
     return branchAtEnd(ctx);
   }
   let direction = null;
+  let ownWords = true; // Every alphabetical step so far read the student's chain in the student's words.
   for (const step of trace) {
     if (step.rule === 'TIE') {
       break; // Every candidate left gives the same name.
@@ -909,27 +1154,137 @@ function chainRules(ctx) {
     if (!step.candidatesBefore.some(sameChain)) {
       continue;
     }
+    ownWords = ownWords && judgedInOwnWords(ctx, step, sameChain);
     if (!step.survivors.some(sameChain)) {
-      return chainDropped(ctx, step, sameChain);
+      return ownWords ? chainDropped(ctx, step, sameChain) : null;
     }
     if (!direction && step.candidatesBefore.some(isStudent) && !step.survivors.some(isStudent)) {
-      direction = step;
+      direction = { step, ownWords };
     }
   } // End of the loop over the trace steps
-  if (!direction) {
-    return null;
-  }
-  const winner = direction.survivors[0];
-  const terms = firstDifference(valueOf(direction, (c) => c.key === winner.key), valueOf(direction, isStudent));
+  return direction && direction.ownWords ? directionDraft(ctx, 'NUMBERING', direction.step, isStudent) : null;
+} // End of function chainRules()
+
+/**
+ * The draft of a numbering mistake (rule 4: NUMBERING on a chain,
+ * RING_NUMBERING on a ring): the trace step that dropped the student's
+ * numbering while its chain or ring stayed, the first difference between
+ * the survivors' value and the student's, and whether the engine's name
+ * writes no locant at all (`propeno`, `metilciclohexano`).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {string} code - 'NUMBERING' or 'RING_NUMBERING'.
+ * @param {object} step - The trace step that dropped the student's numbering.
+ * @param {(candidate: object) => boolean} isStudent - Tells the student's directed candidate.
+ * @returns {object} The draft.
+ */
+function directionDraft(ctx, code, step, isStudent) {
+  const { naming } = ctx;
+  const winner = step.survivors[0];
+  const terms = firstDifference(valueOf(step, (c) => c.key === winner.key), valueOf(step, isStudent));
   const unwritten = !naming.parts.some((p) => p.kind === 'locant');
   return {
-    code: 'NUMBERING',
-    traceRule: direction.rule,
-    data: { rule: direction.rule, ...terms, unwritten, name: naming.name },
+    code,
+    traceRule: step.rule,
+    data: { rule: step.rule, ...terms, unwritten, name: naming.name },
     focus: idsOf(null),
     tiles: null,
   };
-} // End of function chainRules()
+} // End of function directionDraft()
+
+/**
+ * Tells whether the engine's parent is the benzene ring (aromatic.js: a
+ * ring structure with `retained` 'benzene').
+ *
+ * @param {object} naming - A successful naming.
+ * @returns {boolean} True for a benzene parent.
+ */
+function benzeneParent(naming) {
+  return naming.structure.parentKind === 'ring' && naming.structure.parent.retained === 'benzene';
+}
+
+/**
+ * Ring rule 1: the student's parent is an open chain, the ring one of its
+ * branches, and the engine's parent is the ring (design.md §13.5: a ring is
+ * senior to any chain, whatever its length or unsaturation). The focus is
+ * the ring; the tiles, the parent-level prefix that holds it.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object} The draft (with the step of its ring: `ring` or `benzene`).
+ */
+function ringIsParent(ctx) {
+  const { naming, reading, spec } = ctx;
+  const ring = naming.parent.atoms;
+  const holder = reading.prefixAtoms.find((o) => o.atoms.some((id) => ring.includes(id)));
+  return {
+    code: 'RING_IS_PARENT',
+    traceRule: 'RING',
+    data: { length: reading.studentParent.atoms.length, name: naming.name },
+    focus: outsideStudent(naming.parent, reading.studentParent),
+    tiles: holder && holder.tiles ? holder.tiles : spec.parent.tiles,
+    step: benzeneParent(naming) ? 'benzene' : 'ring',
+  };
+} // End of function ringIsParent()
+
+/**
+ * Ring rules 1, 2 and 4 (file header «Rings»), in place of the chain rules
+ * 1–4 when the engine's parent is the ring: the ring as a branch of the
+ * student's chain; a `ciclo` ring that is the benzene ring; a retained
+ * template with the student's prefixes; the ring numbered otherwise
+ * (followed through the engine's ring numbering trace like rule 4 follows
+ * a chain's direction).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null when the ring and its numbering are the engine's (or give the same name).
+ */
+function ringRules(ctx) {
+  const { naming, reading, spec } = ctx;
+  if (spec.parent.kind === 'chain') {
+    return ringIsParent(ctx);
+  }
+  if (spec.parent.kind === 'ring' && benzeneParent(naming)) {
+    return { code: 'BENZENE_RING', data: { name: naming.name }, focus: idsOf(null), tiles: spec.parent.tiles };
+  }
+  const { template } = spec.parent;
+  if (template && spec.prefixes.length > 0) {
+    return {
+      code: 'SUBSTITUTED_TEMPLATE',
+      data: { template: template.word.text, name: naming.name },
+      focus: occurrenceIds(reading.prefixAtoms),
+      tiles: template.word.tiles,
+    };
+  }
+  const directed = reading.studentParent.atoms.join('-');
+  /**
+   * Tells whether a ring numbering candidate is the student's numbering (start and direction).
+   *
+   * @param {{key: string, direction?: string}} c - A candidate.
+   * @returns {boolean} True for the student's numbering.
+   */
+  const isStudent = (c) => c.direction !== undefined && c.key === directed;
+  /**
+   * Tells whether a trace candidate is a numbering of the ring (every one, after the RING step).
+   *
+   * @param {{direction?: string}} c - A candidate.
+   * @returns {boolean} True for a numbering.
+   */
+  const numbering = (c) => c.direction !== undefined;
+  let ownWords = true; // Every alphabetical step so far read the ring in the student's words.
+  for (const step of naming.trace) {
+    if (step.rule === 'TIE') {
+      break; // Every numbering left gives the same name.
+    }
+    if (!step.candidatesBefore.some(isStudent)) {
+      continue; // The RING step (no directions), or a numbering the student's is not among (never: all 2n are).
+    }
+    ownWords = ownWords && judgedInOwnWords(ctx, step, numbering);
+    if (!step.survivors.some(isStudent)) {
+      // An alphabetical step that compared other words than the student's blames nothing (judgedInOwnWords()).
+      return ownWords && DIAGNOSIS_PHRASES.numberingReasons[step.rule] ? directionDraft(ctx, 'RING_NUMBERING', step, isStudent) : null;
+    }
+  } // End of the loop over the ring numbering trace
+  return null;
+} // End of function ringRules()
 
 /**
  * The identity of a prefix of a list, to tell identical branches apart, at
@@ -1157,13 +1512,41 @@ function unsaturationWhat(parent) {
 }
 
 /**
- * Rule 9, needless locants: locants the engine's name omits (design.md
- * §1.1: the parent's multiple bonds of `propeno`, `eteno`…, lexicon
- * omitsLocants(); the prefixes of a one- or two-carbon parent,
- * chainOmitsPrefixLocants()), or locants inside a branch that the engine's
- * short forms never write (any on a one- or two-carbon branch, `etenil`;
- * the free valence 1 of a saturated branch, `propil` — render.js
- * substituentTokens()).
+ * Which locants of the engine's parent its name leaves out by rule
+ * (design.md §1.1): on a chain, the multiple bonds of `propeno`, `eteno`…
+ * (lexicon omitsLocants()) and the prefixes of a one- or two-carbon parent
+ * (chainOmitsPrefixLocants()); on a ring, the one multiple bond of a bare
+ * ring (`ciclohexeno`), the one prefix of a saturated ring or of benzene
+ * (`metilciclohexano`, `metilbenceno`) and the six identical prefixes of a
+ * complete benzene (`hexametilbenceno`; lexicon ringOmitsLocants()).
+ *
+ * @param {object} structure - The engine's name structure.
+ * @returns {{bonds: boolean, prefixes: boolean}} Whether the parent's multiple-bond locants and its prefix locants are left out.
+ */
+function parentOmissions(structure) {
+  const suffixCount = structure.suffix ? structure.suffix.locants.length : 0;
+  if (structure.parentKind === 'ring') {
+    const ring = ringOmitsLocants(structure.parent, structure.prefixes, suffixCount);
+    return { bonds: ring.parent, prefixes: ring.prefixes };
+  }
+  return {
+    bonds: omitsLocants(structure.parent, structure.prefixes.length > 0 || suffixCount > 0),
+    prefixes: chainOmitsPrefixLocants(structure.parent, structure.prefixes, suffixCount, structure.suffix ? structure.suffix.kind : null),
+  };
+} // End of function parentOmissions()
+
+/**
+ * Rule 9, needless locants: locants the engine's name omits
+ * (parentOmissions(): `propeno`, `ciclohexeno`, `metilciclohexano`,
+ * `metilbenceno`), or locants inside a branch that the engine's short forms
+ * never write (any on a one- or two-carbon branch, `etenil`; the free
+ * valence 1 of a saturated branch, `propil` — render.js
+ * substituentTokens()). When the engine's name still writes numbers inside
+ * a branch (`(butan-2-il)benceno`, `hexa(propan-2-il)benceno`), the message
+ * says that only the numbers placing the prefixes on the parent are left
+ * out (`kept`); the parent's own multiple-bond locants are left out only on
+ * a parent without prefixes (`propeno`, `ciclohexeno`; with a branch on
+ * `eteno` rule 1 comes first), whose name has no numbers at all.
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.
@@ -1178,10 +1561,9 @@ function needlessLocants(ctx) {
    * @returns {object[]} The supplied ones.
    */
   const supplied = (slots) => slots.filter((slot) => slot.kind === 'supplied');
+  const omitted = parentOmissions(structure);
   const bondSlots = supplied([...spec.parent.double, ...spec.parent.triple]);
-  const suffixCount = structure.suffix ? structure.suffix.locants.length : 0;
-  if (structure.parentKind === 'chain' && bondSlots.length > 0
-    && omitsLocants(structure.parent, structure.prefixes.length > 0 || suffixCount > 0)) {
+  if (bondSlots.length > 0 && omitted.bonds) {
     return {
       code: 'NEEDLESS_LOCANTS',
       data: { branch: false, name: naming.name, what: unsaturationWhat(structure.parent) },
@@ -1190,11 +1572,20 @@ function needlessLocants(ctx) {
     };
   }
   const prefixSlots = supplied(spec.prefixes.flatMap((prefix) => prefix.slots));
-  if (structure.parentKind === 'chain' && prefixSlots.length > 0
-    && chainOmitsPrefixLocants(structure.parent, structure.prefixes, suffixCount, structure.suffix ? structure.suffix.kind : null)) {
+  if (prefixSlots.length > 0 && omitted.prefixes) {
+    const single = structure.prefixes.reduce((sum, group) => sum + group.locants.length, 0) === 1;
+    const { what, on } = DIAGNOSIS_PHRASES;
     return {
       code: 'NEEDLESS_LOCANTS',
-      data: { branch: false, name: naming.name, what: DIAGNOSIS_PHRASES.what.prefixes },
+      data: {
+        branch: false,
+        name: naming.name,
+        what: single ? what.prefix : what.prefixes,
+        // Numbers inside a branch stay (`(butan-2-il)benceno`): the message then names only the parent's locants.
+        kept: /\d/.test(naming.name),
+        plural: !single,
+        on: structure.parentKind === 'ring' ? on.ring : on.chain,
+      },
       focus: idsOf(null),
       tiles: slotRange(prefixSlots),
     };
@@ -1241,29 +1632,25 @@ function shortForm(tree, chain) {
  * Rule 9, missing locants: a left-out locant with more than one possible
  * value (search.js domains) where the engine's name writes one — the
  * parent's multiple bonds and prefixes unless the omission rules leave
- * them out, and always inside a branch.
+ * them out (parentOmissions(), chain or ring), and always inside a branch
+ * (and on `xileno`, whose methyls are always located).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.
  */
 function missingLocants(ctx) {
   const { spec, naming } = ctx;
-  const { structure } = naming;
-  const suffixCount = structure.suffix ? structure.suffix.locants.length : 0;
-  const chain = structure.parentKind === 'chain';
   const parentBonds = new Set([...spec.parent.double, ...spec.parent.triple]);
   const parentPrefixes = new Set(spec.prefixes.flatMap((prefix) => prefix.slots));
-  const bondsOmitted = chain && omitsLocants(structure.parent, structure.prefixes.length > 0 || suffixCount > 0);
-  const prefixesOmitted = chain
-    && chainOmitsPrefixLocants(structure.parent, structure.prefixes, suffixCount, structure.suffix ? structure.suffix.kind : null);
+  const omitted = parentOmissions(naming.structure);
   const missing = spec.leftOut.find((slot) => {
     if (slot.domain[1] <= slot.domain[0]) {
       return false; // One possible value: no name writes it (search.js filledTree()).
     }
     if (parentBonds.has(slot)) {
-      return !bondsOmitted;
+      return !omitted.bonds;
     }
-    return parentPrefixes.has(slot) ? !prefixesOmitted : true;
+    return parentPrefixes.has(slot) ? !omitted.prefixes : true;
   });
   if (!missing) {
     return null;
@@ -1308,21 +1695,77 @@ function oldStyle(ctx) {
 }
 
 /**
+ * The student's tree with the orto/meta/para letter of each name-level
+ * prefix written as the numbers it stands for (interpret.js: the prefix's
+ * supplied slots with `letter`): `p-di(propan-2-il)benceno` →
+ * `1,4-di(propan-2-il)benceno`. The number tiles are appended to the tiles
+ * and the prefixes point at them, as rule 6 does with its multiplier. (A
+ * letter on `xileno` never gets here: alone it is an alternative, beside
+ * prefixes SUBSTITUTED_TEMPLATE comes first.)
+ *
+ * @param {object} tree - The parse() tree.
+ * @param {object} spec - Its NameSpec.
+ * @returns {object} The tree with numbers for the letters.
+ */
+function withNumbersForLetters(tree, spec) {
+  const tiles = [...tree.tiles];
+  /**
+   * Number tiles for the letter slots of a prefix, in ascending order.
+   *
+   * @param {object[]} slots - The prefix's slots.
+   * @returns {number[]} The indices of the new number tiles.
+   */
+  const numbers = (slots) => slots.filter((slot) => slot.letter).map((slot) => slot.value).sort((p, q) => p - q)
+    .map((value) => tiles.push(tileById(tileId('num', value))) - 1);
+  const items = tree.items.map((item, k) => (item.letter === null ? item
+    : { ...item, letter: null, locants: numbers(spec.prefixes[k].slots) }));
+  return { ...tree, tiles, items };
+} // End of function withNumbersForLetters()
+
+/**
+ * Rule 11 on benzene (phase I-50d): an orto/meta/para letter (design.md
+ * §14.4; interpret.js slots with `letter`) where the engine writes numbers
+ * only — the name with the letter written as its numbers is one of the
+ * engine's names, so the letter is the whole mistake: the old form is
+ * offered only in the default prefix style (`p-diisopropilbenceno`, never
+ * `p-di(propan-2-il)benceno`). Another mistake no rule covers beside the
+ * letter (`p-di(butan-3-il)benceno`) gives null.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function letterLocants(ctx) {
+  const { spec, naming, tree } = ctx;
+  const slots = spec.prefixes.flatMap((prefix) => prefix.slots).filter((slot) => slot.letter);
+  if (slots.length === 0) {
+    return null;
+  }
+  const text = assemble(withNumbersForLetters(tree, spec)).text.normalize('NFC');
+  const names = [naming.name, ...(naming.alternatives || []).map((alt) => alt.name)].map((name) => name.normalize('NFC'));
+  if (!names.includes(text)) {
+    return null;
+  }
+  return { code: 'LETTER_LOCANTS', data: { name: text }, focus: idsOf(null), tiles: slotRange(slots) };
+} // End of function letterLocants()
+
+/**
  * The checks of rules 5–11, in order. Later families insert theirs.
  */
 const FORM_RULES = Object.freeze([alphabeticalOrder, ungrouped, multiplierKind, locantOrder, needlessLocants, missingLocants,
-  segmentOrder, oldStyle]);
+  segmentOrder, oldStyle, letterLocants]);
 
 /**
- * The first rule that applies to one reading of the name.
+ * The first rule that applies to one reading of the name: the parent's
+ * rules (chainRules(), rules 1–4; ringRules() when the engine's parent is
+ * the ring), then the form rules.
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} The draft `{code, traceRule?, data, focus, tiles}`, or null.
+ * @returns {object|null} The draft `{code, traceRule?, data, focus, tiles, step?}`, or null.
  */
 function firstRule(ctx) {
-  const chain = chainRules(ctx);
-  if (chain) {
-    return chain;
+  const parent = ctx.naming.structure.parentKind === 'ring' ? ringRules(ctx) : chainRules(ctx);
+  if (parent) {
+    return parent;
   }
   for (const rule of FORM_RULES) {
     const draft = rule(ctx);
@@ -1446,15 +1889,16 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
  *   same name on the same molecule (the other placements of a name with left-out locants, search.js placementReading());
  *   the verdict's own reading is tried first, and the diagnosis of the latest rule is kept.
  * @param {(mol: object, options: object) => object} [namer] - Names the molecule in another prefix style (default nameMolecule()).
- * @returns {Diagnosis|null} The diagnosis, or null when no rule applies (or the naming is a refusal, or a ring is involved).
+ * @returns {Diagnosis|null} The diagnosis, or null when no rule applies (or the naming is a refusal).
  */
 export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
   const { molecule } = verdict;
-  if (!verdict.naming || !verdict.naming.ok || !verdict.studentParent) {
+  if (!verdict.naming || !verdict.naming.ok || !verdict.studentParent || !verdict.naming.structure) {
     return null;
   }
-  if (specRings(name.spec) > 0 || (verdict.naming.structure && verdict.naming.structure.parentKind !== 'chain')) {
-    return null; // Rings: no rule reads them yet (file header).
+  const { parentKind } = verdict.naming.structure;
+  if (!['chain', 'ring'].includes(parentKind) || (parentKind === 'chain' && specRings(name.spec) > 0)) {
+    return null; // Never for a hydrocarbon: a ring in the molecule is always the parent (design.md §13.5).
   }
   const adj = adjacency(molecule);
   const drawn = branchOccurrences(name, verdict, molecule, adj);
@@ -1472,20 +1916,20 @@ export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
   for (const reading of [verdict, ...readings]) {
     const occurrences = reading === verdict ? drawn.first : branchOccurrences(name, reading, molecule, adj).first;
     const draft = firstRule({ ...base, reading, occurrences });
-    if (draft && (!best || DIAGNOSES[draft.code].rule > DIAGNOSES[best.draft.code].rule)) {
+    if (!draft) {
+      return null; // The kindest reading of all: no rule names a mistake on it (file header).
+    }
+    if (!best || DIAGNOSES[draft.code].rule > DIAGNOSES[best.draft.code].rule) {
       best = { draft, reading };
     }
-  }
-  if (!best) {
-    return null;
-  }
+  } // End of the loop over the readings
   const { draft, reading } = best;
   return {
     code: draft.code,
     rule: DIAGNOSES[draft.code].rule,
     traceRule: draft.traceRule || null,
     message: DIAGNOSIS_TEXTS[draft.code](draft.data),
-    step: DIAGNOSES[draft.code].step,
+    step: draft.step || DIAGNOSES[draft.code].step,
     style,
     student: idsOf(reading.studentParent),
     parent: idsOf(naming.parent),

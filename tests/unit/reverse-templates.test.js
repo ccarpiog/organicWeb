@@ -10,7 +10,7 @@
  * engine's own label, the molecule compared by aromatic key; the o/m/p rules
  * of §14.4 (allowed and refused cases); substituted templates, which the
  * engine never writes, read as `otherName` / `ambiguous`; left-out locants on
- * a template; mutations; the ordered drawing; no diagnosis yet; time budgets.
+ * a template; mutations; the ordered drawing; the diagnosis (I-50d); time budgets.
  * The fixture round trip and the closed loop over these names are in
  * reverse-benzene.test.js and reverse-tokenize.test.js.
  */
@@ -369,14 +369,14 @@ const OTHER_NAMES = [
   ['met il mesitileno', 'metilmesitileno', 'otherName', '1,2,3,5-tetrametilbenceno', 'CC1=CC(C)=C(C)C(C)=C1'],
 ];
 
-test('readName (R-4c): a substituted or misnumbered template draws the molecule it describes, named by the app; no diagnosis yet', () => {
+test('readName (R-4c): a substituted or misnumbered template draws the molecule it describes, named by the app, with its diagnosis', () => {
   for (const [words, text, kind, name, smiles] of OTHER_NAMES) {
     const verdict = readName(seq(words));
     assert.equal(verdict.text, text, words);
     assert.equal(verdict.kind, kind, `${text}: ${verdict.message}`);
     assert.equal(verdict.name, name, text);
     assert.equal(verdict.message, otherNameMessage(name));
-    assert.equal(verdict.diagnosis, null, `${text}: the ring diagnosis messages arrive in I-50d`);
+    assert.ok(verdict.diagnosis && verdict.diagnosis.code, `${text}: a ring diagnosis (I-50d; its cases: reverse-diagnose-rings.test.js)`);
     assert.equal(aromaticKey(verdict.molecule), keyOf(smiles), `${text} describes another graph`);
     assert.equal(verdict.draw, true);
   } // End of the loop over the other names

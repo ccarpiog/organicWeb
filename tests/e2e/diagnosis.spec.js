@@ -10,7 +10,10 @@
  * legend; the 90° view keeps the chain; a coordinate-only edit keeps it all,
  * Deshacer and «¿Cómo se llama?» clear it; an OLD_STYLE diagnosis replaces
  * the old-style note; a null diagnosis and the other verdicts are unchanged;
- * keyboard only; a phone.
+ * keyboard only; a phone. Rings (phase I-50d): the ring as the parent of a
+ * name written on a chain — the student's chain striped beside the ring, the
+ * legend naming the ring, «Ver el paso» at «Reconoce el benceno» — and a ring
+ * numbered otherwise, «Ver el paso» at «Numera el anillo».
  */
 
 import { test, expect } from '@playwright/test';
@@ -89,6 +92,12 @@ const LONGER = ['2', 'et', 'il', 'but', 'ano'];
 
 /** The tiles of «4-metilpentano» (numbered from the other end: 2-metilpentano). */
 const NUMBERING = ['4', 'met', 'il', 'pent', 'ano'];
+
+/** The tiles of «1-(4-metilfenil)propano» (the ring is the parent: 1-metil-4-propilbenceno). */
+const RING_PARENT = ['1', 'empieza rama compuesta', '4', 'met', 'il', 'fenil', 'acaba rama', 'prop', 'ano'];
+
+/** The tiles of «1,5-dimetilciclohexano» (the ring numbered otherwise: 1,3-dimetilciclohexano). */
+const RING_NUMBERING = ['1', '5', 'di', 'met', 'il', 'ciclo', 'hex', 'ano'];
 
 test('a longer chain: the message between the two sentences, the student\'s chain beside the parent, «Ver el paso» at «Busca la cadena»; Deshacer clears it all', async ({ page }) => {
   const errors = await openApp(page);
@@ -206,6 +215,68 @@ test('numbered from the other end: «Ver el paso» at «Numera la cadena», the 
   expect(await locantOf(page, 4)).toBe(2);
   expect(errors).toEqual([]);
 }); // End of test 'numbered from the other end…'
+
+test('a ring (I-50d): the ring is the parent beside the student\'s chain, «Ver el paso» at «Reconoce el benceno»; a ring numbered otherwise', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, ...RING_PARENT);
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'RING_IS_PARENT');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: 1-(4-metilfenil)propano');
+  // The three sentences, in order: the verdict, the diagnosis, the hint.
+  const texts = await verdict.locator('.verdict-message, .verdict-style, .verdict-diagnosis, .verdict-hint, .verdict-note')
+    .allTextContents();
+  expect(texts).toEqual([
+    'Esta es la molécula que describe tu nombre, pero se llama «1-metil-4-propilbenceno».',
+    'El anillo es la cadena principal: un anillo manda siempre sobre una cadena abierta, aunque la cadena sea más larga. '
+      + 'Tu cadena de 3 carbonos va en una rama del anillo: «1-metil-4-propilbenceno».',
+    'Pulsa «Ver paso a paso» para ver por qué.',
+  ]);
+  await expect(page.locator('#result-name')).toHaveText('1-metil-4-propilbenceno');
+
+  // The legend names the ring; the student's three-carbon chain is striped beside the six-carbon ring, apart from it.
+  const legend = verdict.getByRole('list', { name: 'Qué se ve en el dibujo' });
+  await expect(legend).toBeVisible();
+  await expect(legend.getByRole('listitem')).toHaveText(['Cadena principal (el anillo)', 'Tu cadena']);
+  const student = await marked(page, 'student');
+  expect([student.atoms.length, student.bonds.length]).toEqual([3, 2]);
+  const parent = await marked(page, 'parent');
+  expect([parent.atoms.length, parent.bonds.length]).toEqual([6, 6]);
+  expect(parent.atoms.some((id) => student.atoms.includes(id))).toBe(false);
+
+  // «Ver el paso»: the stepper opens at «Reconoce el benceno» (the ring is always the parent), the focus on its title.
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'benzene');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 2 de 6');
+  await expect(stepper.locator('.step-title')).toHaveText('Reconoce el benceno');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  expect(await marked(page, 'student')).toEqual(student);
+
+  // A ring numbered from another carbon: the same ring in the legend, «Ver el paso» at «Numera el anillo».
+  await drawName(page, ...RING_NUMBERING);
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'RING_NUMBERING');
+  await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
+    + '«1,3-dimetilciclohexano».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('Hay que numerar el anillo de otra manera, empezando en otro '
+    + 'carbono o contando hacia el otro lado: los sustituyentes tienen que llevar los números más bajos (3 en vez de 5).');
+  await expect(verdict.getByRole('listitem')).toHaveText(['Cadena principal (el anillo)', 'Tu anillo (es el mismo)']);
+  const ring = await marked(page, 'student');
+  expect([ring.atoms.length, ring.bonds.length]).toEqual([6, 6]);
+  expect((await marked(page, 'parent')).atoms).toEqual(ring.atoms);
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  await expect(stepper).toHaveAttribute('data-step-id', 'ringNumbering');
+  await expect(stepper.locator('.step-title')).toHaveText('Numera el anillo');
+  // The student's carbon 5 (atom 5: the tiles built the ring in their order) is carbon 3 in the app's numbering.
+  expect(await locantOf(page, 5)).toBe(3);
+
+  // Deshacer (a chemical edit) clears the verdict, the diagnosis and every mark.
+  await page.getByRole('button', { name: 'Deshacer' }).click();
+  await expect(page.locator('.verdict-diagnosis')).toHaveCount(0);
+  await expect(page.locator('svg#canvas .hl-student')).toHaveCount(0);
+  expect(errors).toEqual([]);
+}); // End of test 'a ring (I-50d)…'
 
 test('branches in another prefix style: «Se llama» keeps the default name, the block names the explained one, whose numbering the stepper shows', async ({ page }) => {
   const errors = await openApp(page);

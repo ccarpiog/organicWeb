@@ -43,9 +43,9 @@
  *    equals a filled text of one of their placements → one:
  *    `missingLocants` (with that filled name), several: `ambiguous`;
  * 7. **One structure** (all placements equivalent, or no left-out locant)
- *    → `otherName`, with the student's main mistake (diagnose.js, R-3:
- *    `diagnosis`, null when no rule applies — always for a name with a ring,
- *    `ciclo`, benzene or a template, until the ring messages of I-50d), or `outOfScope`
+ *    → `otherName`, with the student's main mistake (diagnose.js, R-3 and,
+ *    for a name with a ring — `ciclo`, benzene, a template — the ring rules
+ *    of R-4d: `diagnosis`, null when no rule applies), or `outOfScope`
  *    when the engine refuses it;
  * 8. several structures, none matching → `ambiguous`, with their names; but
  *    when the engine refuses every one of them (`diciclohexilpropano`: two

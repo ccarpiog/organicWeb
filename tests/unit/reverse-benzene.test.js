@@ -12,8 +12,8 @@
  * alternatives since I-50c, R-4c), the closed loop over the oracle's benzene
  * generators (generateBenzenes() and randomBenzene() without halogens or
  * alkoxy groups; pure imports, no Java) with removed-locant mutations, other
- * mutations, the names the app cannot draw, the diagnosis left out for
- * benzene, the ordered drawing and time budgets.
+ * mutations with their diagnosis (I-50d), the names the app cannot draw,
+ * the ordered drawing and time budgets.
  */
 
 import { test } from 'node:test';
@@ -239,7 +239,7 @@ test('benzene cases (R-4b): the verdict, the name shown and the molecule describ
     }
     if (kind === 'otherName') {
       assert.equal(verdict.message, otherNameMessage(name));
-      assert.equal(verdict.diagnosis, null, `${text}: the ring diagnosis messages arrive in I-50d`);
+      assert.ok(verdict.diagnosis && verdict.diagnosis.code, `${text}: a ring diagnosis (I-50d; its cases: reverse-diagnose-rings.test.js)`);
     }
     // The molecule drawn is the graph the engine named, with the student's reading on it.
     assert.ok(verdict.studentParent.atoms.every((id) => verdict.molecule.atoms.has(id)), text);
@@ -476,7 +476,7 @@ const MUTATIONS = [
   ['1 2 3 4 5 6 hexa met il benceno', '1,2,3,4,5,6-hexametilbenceno', 'otherName', 'hexametilbenceno', 'CC1=C(C)C(C)=C(C)C(C)=C1C'],
 ];
 
-test('mutations of benzene names: the verdict and the molecule the name describes; no diagnosis for benzene yet', () => {
+test('mutations of benzene names: the verdict, the molecule the name describes and its diagnosis', () => {
   for (const [words, text, kind, name, smiles] of MUTATIONS) {
     const verdict = read(words);
     assert.equal(verdict.text, text, words);
@@ -485,7 +485,7 @@ test('mutations of benzene names: the verdict and the molecule the name describe
     assert.equal(aromaticKey(verdict.molecule), keyOf(smiles), `${text} builds another graph`);
     if (kind === 'otherName') {
       assert.equal(verdict.message, otherNameMessage(name));
-      assert.equal(verdict.diagnosis, null, `${text}: the ring diagnosis messages arrive in I-50d`);
+      assert.ok(verdict.diagnosis && verdict.diagnosis.code, `${text}: a ring diagnosis (I-50d; its cases: reverse-diagnose-rings.test.js)`);
     }
   } // End of the loop over the mutations
   // The chain diagnoses stand: the benzene tiles change nothing for them.

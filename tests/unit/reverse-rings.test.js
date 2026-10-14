@@ -9,8 +9,8 @@
  * generateCycloalkanes(); pure imports, no Java) with removed-locant
  * mutations, other mutations (swapped locants, reversed numbering,
  * unsorted, ungrouped, di/bis), the rings the app cannot draw (outOfScope),
- * the diagnosis left out for rings while the chain diagnoses stand, the
- * ordered drawing of a ring verdict, and time budgets.
+ * a diagnosis for every ring `otherName` (I-50d) while the chain diagnoses
+ * stand, the ordered drawing of a ring verdict, and time budgets.
  */
 
 import { test } from 'node:test';
@@ -298,7 +298,7 @@ const MUTATIONS = [
   ['1 3 ciclo hex di eno', '1,3-ciclohexadieno', 'otherName', 'ciclohexa-1,3-dieno', 'C1=CC=CCC1'], // old style
 ];
 
-test('mutations of ring names: the verdict and the molecule the name describes; no diagnosis for rings yet', () => {
+test('mutations of ring names: the verdict, the molecule the name describes and its diagnosis', () => {
   for (const [words, text, kind, name, smiles] of MUTATIONS) {
     const verdict = read(words);
     assert.equal(verdict.text, text, words);
@@ -308,15 +308,15 @@ test('mutations of ring names: the verdict and the molecule the name describes; 
     assert.equal(verdict.draw, true);
     if (kind === 'otherName') {
       assert.equal(verdict.message, otherNameMessage(name));
-      assert.equal(verdict.diagnosis, null, `${text}: the ring diagnosis messages arrive in I-50d`);
+      assert.ok(verdict.diagnosis && verdict.diagnosis.code, `${text}: a ring diagnosis (I-50d; its cases: reverse-diagnose-rings.test.js)`);
     }
   } // End of the loop over the mutations
   assert.deepEqual(read('1 3 ciclo hex di eno').notes, ['Es la forma antigua de escribirlo; hoy se escribe «ciclohexa-1,3-dieno».']);
   // The chain diagnoses stand: a ring tile elsewhere in the catalogue changes nothing for them.
   assert.equal(read('4 met il pent ano').diagnosis.code, 'NUMBERING');
   assert.equal(read('2 but eno').diagnosis.code, 'OLD_STYLE');
-  // A ring branch on a chain: the engine names the molecule on its ring, so no chain rule applies either.
-  assert.equal(read('ciclo hex il met ano').diagnosis, null);
+  // A ring branch on a chain: the engine names the molecule on its ring, so the ring rule says so (I-50d).
+  assert.equal(read('ciclo hex il met ano').diagnosis.code, 'RING_IS_PARENT');
 }); // End of test 'mutations of ring names…'
 
 test('rings the app cannot draw: outOfScope with the engine\'s message, never a crash', () => {

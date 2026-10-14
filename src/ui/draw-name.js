@@ -75,18 +75,41 @@ export function styleLine(name, label) {
     + 'El paso a paso usa ese nombre.';
 }
 
-/** Accessible name of the legend of the two chains on the canvas, and its entries (drafts pending teacher review). */
+/**
+ * Accessible name of the legend of the two chains on the canvas, and its
+ * entries (drafts pending teacher review); a ring (phase I-50d) is named as
+ * such: the parent ring is still the «cadena principal», as the
+ * explanation calls it, and the student's ring is «tu anillo».
+ */
 export const LEGEND_TEXTS = Object.freeze({
   label: 'Qué se ve en el dibujo',
   parent: 'Cadena principal',
+  parentRing: 'Cadena principal (el anillo)',
   student: 'Tu cadena',
   same: 'Tu cadena (es la misma)',
+  studentRing: 'Tu anillo',
+  sameRing: 'Tu anillo (es el mismo)',
 });
+
+/**
+ * Tells whether a parent selection of a diagnosis is a ring: as many bonds
+ * as atoms (the closing bond is listed too), where a chain has one bond
+ * fewer.
+ *
+ * @param {{atoms: number[], bonds: number[]}|null} ids - The selection.
+ * @returns {boolean} True for a ring.
+ */
+function isRingSelection(ids) {
+  return Boolean(ids) && ids.atoms.length >= 3 && ids.bonds.length === ids.atoms.length;
+}
 
 /**
  * The legend of the canvas marks of a diagnosis: the parent (solid) and the
  * student's chain (striped), the latter said to be the same chain when both
- * have the same atoms and bonds (in any order: a numbering mistake). Pure.
+ * have the same atoms and bonds (in any order: a numbering mistake). A ring
+ * is named as a ring (LEGEND_TEXTS): the app's ring beside the student's
+ * chain (`1-(4-metilfenil)propano`), or the same ring numbered otherwise.
+ * Pure.
  *
  * @param {{student: {atoms: number[], bonds: number[]}, parent: {atoms: number[], bonds: number[]}}|null} diagnosis -
  *   A diagnosis (diagnose.js), or null.
@@ -106,9 +129,14 @@ export function diagnosisLegend(diagnosis) {
   const sameSet = (a, b) => a.length === b.length && a.every((id) => b.includes(id));
   const { student, parent } = diagnosis;
   const same = Boolean(parent) && sameSet(student.atoms, parent.atoms) && sameSet(student.bonds, parent.bonds);
+  const ring = isRingSelection(student);
+  let studentText = ring ? LEGEND_TEXTS.studentRing : LEGEND_TEXTS.student;
+  if (same) {
+    studentText = ring ? LEGEND_TEXTS.sameRing : LEGEND_TEXTS.same;
+  }
   return [
-    { style: 'parent', text: LEGEND_TEXTS.parent },
-    { style: 'student', text: same ? LEGEND_TEXTS.same : LEGEND_TEXTS.student },
+    { style: 'parent', text: isRingSelection(parent) ? LEGEND_TEXTS.parentRing : LEGEND_TEXTS.parent },
+    { style: 'student', text: studentText },
   ];
 } // End of function diagnosisLegend()
 

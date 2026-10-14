@@ -82,7 +82,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-50a | v4 R-4a `ciclo` parents and ring branches (`ciclohexano`, `ciclohex-1-eno`, `ciclohexil`) | same, "R-4" | done — `docs/progress-archive/i-50a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-50a.md` |
 | I-50b | v4 R-4b `benceno`, `fenil`, substituted `(4-metilfenil)`, aromatic-equivalence key | same, "R-4" | done — `docs/progress-archive/i-50b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-50b.md` |
 | I-50c | v4 R-4c Retained templates (`tolueno`, `estireno`, `xileno`, `mesitileno`), o/m/p aliases, Ayuda line, e2e | same, "R-4" | done — `docs/progress-archive/i-50c.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-50c.md` |
-| I-50d | v4 R-4d Ring diagnosis messages (incl. «el anillo es la cadena principal»), shown by the I-49b panel, e2e | same, "R-4" | queued | — | — |
+| I-50d | v4 R-4d Ring diagnosis messages (incl. «el anillo es la cadena principal»), shown by the I-49b panel, e2e | same, "R-4" | done — `docs/progress-archive/i-50d.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-50d.md` |
 | I-51a | v4 R-5a Halogens and alcohols | same, "R-5a" | queued | — | — |
 | I-51b | v4 R-5b Ethers | same, "R-5b" | queued | — | — |
 | I-51c | v4 R-5c Aldehydes and ketones | same, "R-5c" | queued | — | — |
@@ -126,26 +126,22 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select and run I-50d (v4 R-4d, the last part of R-4, split from I-50c on 2026-10-14): ring
-diagnosis messages in `diagnose.js` (today `null` for every ring verdict — I-50a…I-50c), shown by
-the I-49b panel (`results.js` `showVerdict()`: message, the student's chain beside the parent,
-«Ver el paso»). Must include «el anillo es la cadena principal» (`1-(4-metilfenil)propano` →
-`otherName` «1-metil-4-propilbenceno»; `ciclo` cases: a chain parent whose ring branch should be
-the parent, and the reverse), and the R-3 rules as they apply on a ring (numbering from the wrong
-start/direction, prefixes not alphabetical, identical prefixes not grouped, needless or missing
-locants), plus the template / o-m-p cases I-50c reads as `otherName` (a substituted template such
-as `4-metiltolueno` / `p-metiltolueno`) — see `docs/progress-archive/i-50c.md` for what each now
-returns; e2e for one ring diagnosis. Spec: design §15.2–§15.9 (R-3 rules, the R-4 row, «each
-family phase also adds … its diagnosis messages»), §14.4 — read from the working-tree
-`docs/design.md`; never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by
-explicit paths. Then R-5a (I-51a: halogens and alcohols).
+Select and run I-51a (v4 R-5a, design §15.8 row "R-5a"): halogens and alcohols in «¿Cómo se
+dibuja?» — halogen prefix tiles; the «Grupos» row with `ol` / `hidroxi`; `fenol`, the `1(6)`
+closing-bond locant control (deferred from I-50a), `tetrol`; retained `o/m/p-cresol`,
+`pirocatecol` / `catecol`, `resorcinol`, `hidroquinona` as templates; their morphology rules
+(§15.5.2 item 6, suffix half of rule 4 deferred from I-47a), slot roles (§15.5.3 step 2), diagnosis
+messages, fixture rows (I-50b skipped 10 halogen/alkoxy rows for R-5a/b) and generators in the round
+trips, and the Ayuda line. Likely too big for one worker: split at selection (e.g. halogens /
+alcohols+phenols / retained phenol templates + diagnosis) and record the split in the table. Spec:
+design §15 + §13.6 (seniority) — read from the working-tree `docs/design.md`; never edit or commit
+it (see *Open risks*). Risk high; worker opus. Commit by explicit paths.
 
 - **Builds on** the R-1 engine (`src/reverse/`: tiles, parser, assembler, tokenizer, `interpret.js`,
   `build.js`, `search.js`, `readName()` — `docs/progress-archive/i-47a.md` … `i-47c.md`), the dialog
   and «Dibujar» (`i-48a.md`, `i-48b.md`), the diagnosis engine and panel (`i-49a.md`, `i-49b.md`),
-  `ciclo` rings (`i-50a.md`), benzene/phenyl and the aromatic key (`i-50b.md`), retained templates
-  and o/m/p letters (`i-50c.md`); the forward naming
-  engine already names every ring case (v2 §13, v3 §14).
+  rings, benzene/phenyl, the aromatic key, templates and o/m/p letters (`i-50a.md` … `i-50c.md`),
+  ring diagnoses (`i-50d.md`); the forward naming engine already names every case (v2 §13, v3 §14).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6, §15.9).
@@ -318,17 +314,19 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - Benzene in the reverse engine (I-50b): `benceno` / `fenil` tiles (same modules), error
   `BENZENE_BONDS`; aromatic key `kekuleNeutral()` / `aromaticKey()` / `aromaticIsomorphism()` in
   `src/model/graph.js`; tests `tests/unit/reverse-benzene.test.js`, `tests/e2e/name-builder-benzene.spec.js`.
+- Templates / o-m-p (I-50c): «Nombres tradicionales» row, `TEMPLATES` in `tiles.js`, `checkLetters()` in
+  `parse.js`; tests `tests/unit/reverse-templates.test.js`, `tests/e2e/name-builder-templates.spec.js`.
+- Ring diagnoses (I-50d): ring rule codes in `src/reverse/diagnose.js`, ring legend in
+  `src/ui/draw-name.js`; tests `tests/unit/reverse-diagnose-rings.test.js`, ring case in
+  `tests/e2e/diagnosis.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-50a: `npm test` 0 (1880) · `check` 0 (170) · `build` 0 · `e2e` 0 (469); after the review fix
-  the same four, same counts.
-- I-50b: `npm test` 0 (1904) · `check` 0 (172) · `build` 0 · `e2e` 0 (475); one earlier full e2e
-  run had a flaky dist failure in `diagnosis.spec.js` (keyboard test), 72/72 on
-  `npx playwright test tests/e2e/diagnosis.spec.js --repeat-each=4`. Review ship, no fixes.
 - I-50c: `npm test` 0 (1922) · `npm run check` 0 (174) · `npm run build` 0 ·
   `npm run e2e -- --reporter=dot` 0 (481, source + dist). Review ship, no fixes.
+- I-50d: after the review fixes `npm test` 0 (1936) · `npm run check` 0 (175) · `npm run build` 0 ·
+  `npm run e2e -- --reporter=dot` 0 (483, source + dist), no flakes.
 
 ## Open risks / deviations
 
@@ -382,49 +380,19 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   retained-name and o/m/p choices (xileno/mesitileno, `catecol`, `bencenohexol`, no
   `toluoil`/`toluato`/`tolilo`/`cresilo`) rest on memory; v3 Ayuda wording pending teacher review.
 
-- I-47a: branch enclosed whenever it shows a locant; legacy count mismatch → `LEGACY`; new
-  `ROOT_END`/`TILE_ORDER`/`LOCANT_COUNT` situations; `cloro(metoxi)metano` brackets → R-4/R-5b, suffix
-  half of rule 4 → R-5a; Spanish error texts are drafts. Review should-fix (tokenizer stack overflow)
-  fixed with `TOKENIZE_MAX_LENGTH`; `parse`/`assemble` safe to 2000 nested branches — R-2a's dialog
-  should cap the tile count (`docs/progress-archive/i-47a.md`).
-- I-47b: no real open-chain `outOfScope` case, tested via an injected namer; old-style note
-  rewrites the student's own name; new draft error wordings (`docs/progress-archive/i-47b.md`).
-- I-47c: R-4 must make `isomorphism()` treat both Kekulé benzenes as equivalent (else
-  `placementReading()` throws); unplaceable left-out locants → `invalid`; old style + left-out →
-  `ambiguous`; review fixes in `docs/progress-archive/i-47c.md`.
-- I-48a: added a "start of name" insertion point; tile cap 100 (`aria-disabled` tiles + message);
-  success verdicts only show their message until R-2b; new Spanish drafts (row labels, placeholder,
-  «Principio del nombre», «menos», cap message). Review should-fix (short-phone overflow) fixed with
-  a 320×480 / 320×568 regression (`docs/progress-archive/i-48a.md`).
-- I-48b: «Tu nombre: …» line added to the verdict block (not in spec); layout-failure path
-  unit-tested only (no failing name found in 2 000 random molecules); new Spanish drafts («Tu
-  nombre:», Ayuda «Del nombre al dibujo»). Review should-fix (undo kept the new zoom) fixed with
-  view snapshots in `loadMolecule(…, {center: true})`, also used by Ejemplos
-  (`docs/progress-archive/i-48b.md`).
-- I-49a: R-3 split into engine (I-49a) and UI (I-49b); left-out locants → kindest of up to 16
-  readings (`diagnosis.student` may differ from `studentParent`); `null` diagnosis for a branch in a
-  style the engine does not offer or a branch with its own chain/numbering wrong; four rules
-  documented as unable to occur as `otherName`; new Spanish drafts (`DIAGNOSIS_TEXTS`). Review
-  should-fix ×3 (style by structure, nested identity, step context → `diagnosisExplanation()`)
-  fixed with regressions (`docs/progress-archive/i-49a.md`).
-- I-50a: R-4 split into I-50a/b/c; `ciclohex-1-eno` → `otherName` (engine has no located form);
-  filled comparison also tries the parent's prefix / multiple-bond locants unwritten; keyless
-  multi-ring names and all-refused structure sets → `outOfScope` before/after the search; `1(3)`
-  closing-bond locants wait for R-5a; ring diagnosis `null` until I-50c; new Spanish drafts. Review
-  should-fix (wrapped ring branch skipped crowded enclosure) fixed with regressions
-  (`docs/progress-archive/i-50a.md`).
-- I-50b: hydrocarbon `fenil` names are never the engine's (the ring is the parent), so
-  `1-(4-metilfenil)propano` → `otherName`; round trip skips 18 retained/o-m-p alternatives (I-50c) and
-  10 halogen/alkoxy rows (R-5a/b); new Spanish drafts incl. `BENZENE_BONDS`; e2e has load-dependent
-  flakes (`diagnosis.spec.js` keyboard, `polish.spec.js` phone toolbar, dist only)
-  (`docs/progress-archive/i-50b.md`).
-- I-50c: R-4c split into I-50c (templates, o/m/p, Ayuda) and I-50d (ring diagnosis); templates in a
-  new «Nombres tradicionales» row; a template is a benzene parent spec with a `template` field;
-  substituted templates (`4-metiltolueno`) → `otherName`/`ambiguous`, not `invalid`; a letter on
-  one `tolueno` prefix (`p-metiltolueno`) reads as that prefix's position; new `TEMPLATE_LOCANTS`
-  error; the tile-word test skips one-letter words (the conjunction «o»); the I-50b archive's
-  breakdown of the 18 skipped names was wrong (real list in `i-50c.md`); new Spanish drafts
-  (`docs/progress-archive/i-50c.md`).
+- I-47a…I-50c (v4 engine, dialog, «Dibujar», chain diagnosis, rings, benzene, templates):
+  deviations, decisions and review resolutions in `docs/progress-archive/i-47a.md` … `i-50c.md`.
+  Still relevant: every v4 Spanish string is a draft pending teacher review; suffix half of
+  assembler rule 4 and `1(3)`/`1(6)` closing-bond locants wait for R-5a; `cloro(metoxi)metano`
+  brackets → R-5b; tile cap 100; «Tu nombre: …» verdict line not in spec; `ciclohex-1-eno` →
+  `otherName`; left-out locants → kindest of up to 16 readings; e2e has load-dependent flakes
+  (`diagnosis.spec.js` keyboard, `polish.spec.js` phone toolbar, dist only).
+- I-50d: ring rules share rule numbers with chain rules (1, 2, 4, 11); deliberate nulls for a chain
+  branch of a ring with its own numbering wrong or in an unoffered style, and — after the review
+  fix — for any numbering whose alphabetical tie-break the student's prefix style would order
+  differently (`2-etil-1-(1-metilpropil)benceno` → null even though its numbering is wrong); with
+  left-out locants, a mistake-free reading now nulls the whole diagnosis (chains too, no chain test
+  changed); new Spanish drafts (`docs/progress-archive/i-50d.md`).
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -439,6 +407,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-50b `80c943a`, pushed. I-50c committed and pushed right after this checkpoint (see
+- I-50c `de308f9`, pushed. I-50d committed and pushed right after this checkpoint (see
   `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
   `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

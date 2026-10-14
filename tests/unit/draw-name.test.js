@@ -262,10 +262,35 @@ test('diagnosisLegend(): the parent and the student\'s chain, said to be the sam
   ]);
   assert.equal(diagnosisLegend(null), null);
   assert.equal(diagnosisLegend({ ...longer, student: { atoms: [], bonds: [] } }), null);
-  assert.deepEqual(Object.keys(LEGEND_TEXTS).sort(), ['label', 'parent', 'same', 'student']);
+  assert.deepEqual(Object.keys(LEGEND_TEXTS).sort(), ['label', 'parent', 'parentRing', 'same', 'sameRing', 'student', 'studentRing']);
   assert.equal(DIAGNOSIS_STEP_LABEL, 'Ver el paso');
   assert.equal(verdictBlock(verdictOf('2-etilbutano')).diagnosis.legend[1].text, 'Tu cadena');
 }); // End of test 'diagnosisLegend()…'
+
+test('diagnosisLegend() with a ring (I-50d): the app\'s ring beside the student\'s chain, or the same ring numbered otherwise', () => {
+  // The ring is the parent, the student's three-carbon chain one of its branches.
+  const ringParent = verdictOf('1-(4-metilfenil)propano').diagnosis;
+  assert.equal(ringParent.code, 'RING_IS_PARENT');
+  assert.deepEqual([ringParent.student.atoms.length, ringParent.student.bonds.length], [3, 2]);
+  assert.deepEqual([ringParent.parent.atoms.length, ringParent.parent.bonds.length], [6, 6], 'the ring, its closing bond too');
+  assert.deepEqual(diagnosisLegend(ringParent), [
+    { style: 'parent', text: 'Cadena principal (el anillo)' }, { style: 'student', text: 'Tu cadena' },
+  ]);
+  // The student's ring is the app's, numbered from another carbon.
+  const numbering = verdictOf('1,5-dimetilciclohexano').diagnosis;
+  assert.equal(numbering.code, 'RING_NUMBERING');
+  assert.notDeepEqual(numbering.student.atoms, numbering.parent.atoms);
+  assert.deepEqual(diagnosisLegend(numbering), [
+    { style: 'parent', text: 'Cadena principal (el anillo)' }, { style: 'student', text: 'Tu anillo (es el mismo)' },
+  ]);
+  assert.deepEqual(verdictBlock(verdictOf('1-(4-metilfenil)propano')).diagnosis,
+    { code: 'RING_IS_PARENT', legend: diagnosisLegend(ringParent) });
+  // Never mistaken for a ring: a three-carbon chain has two bonds.
+  assert.equal(diagnosisLegend({ student: { atoms: [1, 2, 3], bonds: [1, 2] }, parent: { atoms: [1, 2, 3], bonds: [1, 2] } })[1].text,
+    'Tu cadena (es la misma)');
+  assert.equal(diagnosisLegend({ student: { atoms: [1, 2, 3], bonds: [1, 2, 3] }, parent: { atoms: [3, 2, 1], bonds: [2, 1, 3] } })[1]
+    .text, 'Tu anillo (es el mismo)');
+}); // End of test 'diagnosisLegend() with a ring (I-50d)…'
 
 test('verdictEntries(): a message that does not end with the hint keeps it whole, the diagnosis after it', () => {
   const verdict = verdictOf('metiletano');

@@ -5,7 +5,8 @@
  * ring on the canvas — six ring bonds and the methyl, one undoable edit,
  * centred and ordered, the ring highlighted as the parent — with
  * «¡Correcto!» above «Se llama:»; a ring branch on a chain draws the
- * molecule the app names on its ring (another name); a ring too small and
+ * molecule the app names on its ring (another name, with the ring
+ * diagnosis of phase I-50d); a ring too small and
  * two rings bonded together stay in the dialog with their message, the
  * canvas untouched. Runs on the dev server and on dist (playwright.config.js).
  */
@@ -147,10 +148,12 @@ test('a ring branch on a chain draws the molecule the app names on its ring; a r
   await drawName(page, 'ciclo', 'hex', 'il', 'met', 'ano');
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
   await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: ciclohexilmetano');
-  // No diagnosis for rings yet (phase I-50d): the whole message, with no diagnosis line.
+  // The ring diagnosis (phase I-50d) between the verdict's two sentences: the ring is the parent.
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«metilciclohexano». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);
+    + '«metilciclohexano».');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'RING_IS_PARENT');
+  await expect(verdict.locator('.verdict-diagnosis')).toContainText('El anillo es la cadena principal');
+  await expect(verdict.locator('.verdict-hint')).toHaveText('Pulsa «Ver paso a paso» para ver por qué.');
   await expect(page.locator('#result-name')).toHaveText('metilciclohexano');
   const drawn = await moleculeJSON(page);
   expect([drawn.atoms.length, drawn.bonds.length]).toEqual([7, 7]);

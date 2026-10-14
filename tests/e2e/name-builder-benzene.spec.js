@@ -6,7 +6,7 @@
  * them double, and the two methyls, one undoable edit, centred and ordered,
  * the ring highlighted as the parent — with «¡Correcto!» above «Se llama:»;
  * a substituted phenyl on a chain, `1-(4-metilfenil)propano`, draws the
- * molecule the app names on its ring (another name, no diagnosis yet);
+ * molecule the app names on its ring (another name, with its diagnosis);
  * numbers of its own on `benceno` stay in the dialog with their message and
  * the tiles marked, the canvas untouched. Runs on the dev server and on dist
  * (playwright.config.js).
@@ -141,10 +141,11 @@ test('a substituted phenyl on a chain draws the molecule the app names on its ri
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
   await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: 1-(4-metilfenil)propano');
-  // No diagnosis for benzene yet (phase I-50d): the whole message, with no diagnosis line.
+  // The ring diagnosis (phase I-50d) between the verdict's two sentences: the ring is the parent.
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«1-metil-4-propilbenceno». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);
+    + '«1-metil-4-propilbenceno».');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'RING_IS_PARENT');
+  await expect(verdict.locator('.verdict-hint')).toHaveText('Pulsa «Ver paso a paso» para ver por qué.');
   await expect(page.locator('#result-name')).toHaveText('1-metil-4-propilbenceno');
   const drawn = await moleculeJSON(page);
   expect([drawn.atoms.length, drawn.bonds.length]).toEqual([10, 10]);

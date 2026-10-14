@@ -10,7 +10,9 @@
  * moved to an end, old style, needless locants, every other chain chosen)
  * with the expected code and a coverage count; agreement of the chain
  * diagnoses with the engine's own counts and names; the charitable reading
- * of left-out locants; the cases no rule covers; time budgets; bundling.
+ * of left-out locants; the cases no rule covers; the review cases (I-49a,
+ * and I-50d: alphabetical order blames a chain or numbering only in the
+ * student's own words); time budgets; bundling.
  */
 
 import { test } from 'node:test';
@@ -45,6 +47,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 /** The codes of the chain rules 1–3 (the trace rule at which the student's chain was dropped). */
 const CHAIN_CODES = Object.freeze(['BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS',
   'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL']);
+
+/** The codes only a ring gives (phase I-50d; their cases are in reverse-diagnose-rings.test.js). */
+const RING_ONLY_CODES = Object.freeze(['RING_IS_PARENT', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'RING_NUMBERING', 'LETTER_LOCANTS']);
 
 /**
  * The tile ids of a name: space-separated tile words (reverse-words.js), or
@@ -267,7 +272,8 @@ test('one case per diagnosis code: the code, its trace rule, the step and the me
     assert.equal(d.message, message, name);
     seen.add(code);
   } // End of the loop over the cases
-  assert.deepEqual([...seen].sort(), [...DIAGNOSIS_CODES].sort(), 'every code has a case');
+  const chainCodes = DIAGNOSIS_CODES.filter((code) => !RING_ONLY_CODES.includes(code));
+  assert.deepEqual([...seen].sort(), [...chainCodes].sort(), 'every code an open chain can give has a case');
 }); // End of test 'one case per diagnosis code: the code, its trace rule, the step and the message'
 
 test('the atoms of a diagnosis: the student\'s chain beside the parent, and what the message is about', () => {
@@ -336,10 +342,12 @@ test('left-out locants: every placement is a reading, and the kindest diagnosis 
 }); // End of test 'left-out locants: every placement is a reading, and the kindest diagnosis is kept'
 
 test('the drafts: one entry per code in rule order, each message renders from its example, phrases for every rule', () => {
-  assert.deepEqual(DIAGNOSIS_CODES, ['BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS',
-    'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL', 'NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'LOCANT_ORDER',
-    'NEEDLESS_LOCANTS', 'MISSING_LOCANTS', 'SEGMENT_ORDER', 'OLD_STYLE']);
-  assert.deepEqual(DIAGNOSIS_CODES.map((code) => DIAGNOSES[code].rule), [1, 2, 3, 3, 3, 3, 3, 4, 5, 6, 7, 8, 9, 9, 10, 11]);
+  // The ring rules of phase I-50d stand beside the chain rules whose place they take (diagnose.js header «Rings»).
+  assert.deepEqual(DIAGNOSIS_CODES, ['BRANCH_AT_END', 'RING_IS_PARENT', 'LONGER_CHAIN', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE',
+    'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL', 'NUMBERING', 'RING_NUMBERING',
+    'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'LOCANT_ORDER', 'NEEDLESS_LOCANTS', 'MISSING_LOCANTS', 'SEGMENT_ORDER',
+    'OLD_STYLE', 'LETTER_LOCANTS']);
+  assert.deepEqual(DIAGNOSIS_CODES.map((code) => DIAGNOSES[code].rule), [1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 9, 10, 11, 11]);
   assert.ok(Object.isFrozen(DIAGNOSES) && Object.isFrozen(DIAGNOSIS_TEXTS) && Object.isFrozen(DIAGNOSIS_PHRASES));
   for (const code of DIAGNOSIS_CODES) {
     const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);
@@ -747,6 +755,40 @@ test('review I-49a: the step opened belongs to the explanation of the naming the
   assert.deepEqual(JSON.parse(JSON.stringify(d)), d);
 }); // End of test 'review I-49a: the step opened belongs to the explanation of the naming the diagnosis compared with'
 
+test('review I-50d: on a chain too, alphabetical order blames a chain or numbering only in the student\'s own words', () => {
+  // Rule 4: `etil` before `metilpropil`, so the chain is numbered right for the student's own words; the engine offers
+  // only `butan-2-il` for that branch, cited first, and numbers the other way (a style not offered: null).
+  const numbering = read('5-etil-7-(1-metilpropil)undecano');
+  assert.deepEqual([numbering.kind, numbering.name, numbering.diagnosis], ['otherName', '5-(butan-2-il)-7-etilundecano', null]);
+  // Rule 3 at N4 likewise (CASES: `5-(butan-2-il)-6-(but-1-en-2-il)-7-metil-3-metilidennon-4-eno` is CHAIN_LOCANTS): with
+  // `1-metilpropil` the student's chain is cited in another order than the one the trace compared, so the chain is not
+  // blamed; the rules that read the student's own words still run.
+  const chain = read('5-(1-metilpropil)-6-(but-1-en-2-il)-7-metil-3-metilidennon-4-eno');
+  assertDiagnosis(chain, 'rule 3 in other words');
+  assert.equal(chain.name, '5,6-di(butan-2-il)-3,7-dimetilidennon-4-eno');
+  assert.equal(chain.diagnosis.code, 'ALPHABETICAL_ORDER');
+  assert.equal(chain.diagnosis.message,
+    'Los sustituyentes se escriben por orden alfabético: «but-1-en-2-il» va antes que «1-metilpropil» (b antes que m).');
+  // A numbering blamed at N4 in the student's own words stays, and the explanation it opens cites the student's prefixes
+  // in the order of their words: `etil` before `metil`; `metil` before `propan-2-il` (pin style).
+  for (const [name, explained, cited] of [['4-etil-3-metilhexano', '3-etil-4-metilhexano', [0, 1]],
+    ['6-metil-4-(propan-2-il)nonano', '4-metil-6-(propan-2-il)nonano', [0, 1]]]) {
+    const verdict = read(name);
+    assertDiagnosis(verdict, name);
+    assert.deepEqual([verdict.diagnosis.code, verdict.diagnosis.traceRule], ['NUMBERING', 'N4'], name);
+    const { naming } = diagnosisExplanation(verdict, explain);
+    assert.equal(naming.name, explained, name);
+    const prefixOf = new Map(verdict.prefixAtoms.map((o) => [o.attachment, o.prefix]));
+    assert.deepEqual(naming.structure.prefixes.map((group) => prefixOf.get(group.locants[0].attachAtom)), cited, name);
+  } // End of the loop over the numbering cases
+  // Needless parent prefix locants beside a branch that keeps its own numbers (the ring's `(butan-2-il)benceno`) cannot
+  // occur on a chain: the engine leaves prefix locants out only on a one- or two-carbon parent, where any branch sits on
+  // an end, so rule 1 comes first.
+  for (const name of ['1-(butan-2-il)metano', '1-(butan-2-il)etano']) {
+    assert.equal(read(name).diagnosis.code, 'BRANCH_AT_END', name);
+  }
+}); // End of test 'review I-50d: on a chain too, alphabetical order blames a chain or numbering only…'
+
 test('readName() with its diagnosis bundles with the engine and runs in a classic script', async () => {
   const dir = await mkdtemp(path.join(tmpdir(), 'organic-diagnose-'));
   try {
@@ -764,7 +806,7 @@ test('readName() with its diagnosis bundles with the engine and runs in a classi
     const code = await bundleModules(path.join(dir, 'entry.js'), dir);
     const context = {};
     vm.runInNewContext(code, context);
-    assert.equal(context.__result, 'BRANCH_AT_END LONGER_CHAIN NUMBERING ALPHABETICAL_ORDER OLD_STYLE 16');
+    assert.equal(context.__result, `BRANCH_AT_END LONGER_CHAIN NUMBERING ALPHABETICAL_ORDER OLD_STYLE ${DIAGNOSIS_CODES.length}`);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

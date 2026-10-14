@@ -44,7 +44,7 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   shows it (`showVerdict()`: the message between the verdict's two
   sentences, the student's chain striped under the parent with a legend,
   «Ver el paso» opening the stepper — the explanation in the student's
-  style — at its step). R-4a, R-4b and R-4c (phases I-50a…I-50c) are
+  style — at its step). R-4a…R-4d (phases I-50a…I-50d) are
   done: the «Anillos» row's `ciclo` tile builds ring parents and ring
   branches (`ciclohexano`, `ciclohex-1-eno`, `ciclohexil`,
   `(ciclohex-2-en-1-il)`; ring bonds 1…n in the search), its `benceno` and
@@ -62,8 +62,12 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   prefixes or off the parent benzene, design.md §14.4) read as the
   engine's alternatives, a substituted template as `otherName`; two rings
   bonded together or three rings `outOfScope`; the Ayuda section «Del
-  nombre al dibujo» has its rings line; no diagnosis for rings yet. Next
-  is R-4d (phase I-50d): the ring diagnosis messages.
+  nombre al dibujo» has its rings line; and `diagnose.js` names the
+  ring's main mistake too (the ring is the parent of a name written on a
+  chain, benzene written with `ciclo`, a substituted template, the ring
+  numbered otherwise, an o/m/p letter the app does not offer, and the R-3
+  form rules on a ring), shown by the same panel with the ring named in
+  the legend. Next is R-5a (phase I-51a): halogens and alcohols.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

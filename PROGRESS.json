@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T22:45:12Z",
+  "updated": "2026-10-14T23:37:53Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -643,9 +643,11 @@
     {
       "id": "I-50d",
       "title": "v4 R-4d Ring diagnosis messages",
-      "status": "queued",
+      "status": "done",
       "risk": "high",
-      "summary": "Names the main mistake of a ring name, such as a ring that should be the parent, and shows it in the results panel."
+      "summary": "Names the main mistake of a ring name, such as a ring that should be the parent, and shows it in the results panel.",
+      "review": "Codex ship-with-fixes, fixed - docs/reviews/I-50d.md",
+      "narrative": "docs/progress-archive/i-50d.md"
     },
     {
       "id": "I-51a",

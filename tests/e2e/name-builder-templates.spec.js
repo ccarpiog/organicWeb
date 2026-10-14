@@ -7,7 +7,7 @@
  * — one undoable edit, centred and ordered, the ring highlighted — with
  * «¡Correcto!… es una forma válida» above «Se llama: 1,4-dimetilbenceno»;
  * `tolueno` and a substituted `4-metiltolueno` draw too (the latter with the
- * app's name, no diagnosis yet), `xileno` alone asks for its numbers; a
+ * app's name and why), `xileno` alone asks for its numbers; a
  * refused o/m/p form (`o-trimetilbenceno`, `m-etilmetilbenceno`) stays in the
  * dialog with its message and the letter marked, the canvas untouched; the
  * Ayuda section «Del nombre al dibujo» has the rings line. Runs on the dev
@@ -152,15 +152,18 @@ test('`tolueno` draws toluene; `4-metiltolueno` draws the molecule with the app\
   await expect(page.locator('#result-name')).toHaveText('metilbenceno');
   expect((await moleculeJSON(page)).atoms).toHaveLength(7);
 
-  // A substituted template, which the app never writes: the molecule it describes, named by the app (no diagnosis yet).
+  // A substituted template, which the app never writes: the molecule it describes, named by the app, and why (I-50d).
   dialog = await buildName(page, '4', 'met', 'il', 'tolueno');
   await expect(page.locator('#name-builder-name')).toHaveText('4-metiltolueno');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«1,4-dimetilbenceno». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);
+    + '«1,4-dimetilbenceno».');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'SUBSTITUTED_TEMPLATE');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('El nombre tradicional «tolueno» no admite más sustituyentes: '
+    + 'con más ramas en el anillo, la molécula se nombra a partir de «benceno», con todas las ramas delante: «1,4-dimetilbenceno».');
+  await expect(verdict.locator('.verdict-hint')).toHaveText('Pulsa «Ver paso a paso» para ver por qué.');
   await expect(page.locator('#result-name')).toHaveText('1,4-dimetilbenceno');
   const drawn = await moleculeJSON(page);
   expect([drawn.atoms.length, drawn.bonds.length]).toEqual([8, 8]);
