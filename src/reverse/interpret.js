@@ -15,18 +15,20 @@
  * - `implicit` — given by rule: `il` / `iliden` without a locant puts the
  *   free valence at the branch's carbon 1;
  * - `leftOut` — not written: a prefix or a segment without its locants.
- *   build.js needs a value for each, the *placement* (R-1c searches them;
- *   R-1b fills only the slots whose domain has one value, see
- *   build.js directPlacement()).
+ *   build.js needs a value for each, the *placement*, which search.js
+ *   searches (R-1c).
  *
  * Each slot carries the tile range it comes from (`[from, to)`, as the
  * parser's ranges: the number tile of a supplied locant, the `il` / `iliden`
  * tile of an implicit one, the prefix or segment that lacks its locants for
  * a left-out one), its role (`carbon` for a prefix's or a free valence's
  * position, `bond` for a multiple bond, numbered by its lower carbon) and
- * the domain of that role on its chain, `[min, max]` inclusive: carbons
- * 1…n, chain bonds 1…n−1 (empty on a one-carbon chain).
+ * the domain of that role on its chain, `[min, max]` inclusive, from
+ * search.js slotDomain(): carbons 1…n, chain bonds 1…n−1 (empty on a
+ * one-carbon chain).
  */
+
+import { slotDomain } from './search.js';
 
 /**
  * A locant position (design.md §15.4).
@@ -105,7 +107,7 @@
  * @returns {Slot} The slot.
  */
 function makeSlot(kind, value, role, length, tiles) {
-  const slot = { kind, role, domain: [1, role === 'bond' ? length - 1 : length], tiles: [tiles[0], tiles[1]] };
+  const slot = { kind, role, domain: slotDomain(role, length), tiles: [tiles[0], tiles[1]] };
   if (value !== null) {
     slot.value = value;
   }

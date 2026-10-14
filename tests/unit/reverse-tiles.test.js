@@ -111,12 +111,14 @@ test('src/reverse never retypes a tile word', async () => {
 /**
  * Engine modules each src/reverse/ file may import besides its siblings and
  * the lexicon: the molecule model and its caps to build (R-1b), the naming
- * entry point to judge. Never render.js or the engine's grouping (design.md
- * §15.4): the assembler works from the tree alone.
+ * entry point to judge, the carbon valence and the structural key to search
+ * (R-1c). Never render.js or the engine's grouping (design.md §15.4): the
+ * assembler works from the tree alone.
  */
 const ENGINE_IMPORTS = Object.freeze({
   'build.js': ['../model/molecule.js', '../model/validate.js'],
   'index.js': ['../naming/index.js'],
+  'search.js': ['../model/molecule.js', '../model/graph.js'],
 });
 
 test('src/reverse is pure and imports from the engine only what it needs', async () => {
@@ -125,7 +127,7 @@ test('src/reverse is pure and imports from the engine only what it needs', async
     /\b(?:document|window|navigator|localStorage|sessionStorage)\b/,
   ];
   const files = await reverseFiles();
-  assert.deepEqual(files.sort(), ['assemble.js', 'build.js', 'index.js', 'interpret.js', 'parse.js', 'tiles.js', 'tokenize.js']);
+  assert.deepEqual(files.sort(), ['assemble.js', 'build.js', 'index.js', 'interpret.js', 'parse.js', 'search.js', 'tiles.js', 'tokenize.js']);
   for (const file of files) {
     const lines = (await readFile(path.join(REVERSE, file), 'utf8')).split('\n');
     lines.forEach((line, i) => {
@@ -179,14 +181,15 @@ test('readName() bundles with the engine and runs in a classic script', async ()
       [
         "import { readName } from './src/reverse/index.js';",
         "import { tokenize } from './src/reverse/tokenize.js';",
-        "const names = ['5,5-bis(2,2-dimetilpropil)nonano', '4-(propan-2-il)heptano', '4-metilpentano', 'hex-6-eno', 'metilpentano'];",
+        "const names = ['5,5-bis(2,2-dimetilpropil)nonano', '4-(propan-2-il)heptano', '4-metilpentano', 'hex-6-eno', 'metilpentano',",
+        "  'metilpropano', 'decametildecano'];",
         "globalThis.__result = names.map((name) => readName(tokenize(name)).kind).join(' ');",
       ].join('\n'),
     );
     const code = await bundleModules(path.join(dir, 'entry.js'), dir);
     const context = {};
     vm.runInNewContext(code, context);
-    assert.equal(context.__result, 'correct alternative otherName invalid incomplete');
+    assert.equal(context.__result, 'correct alternative otherName invalid ambiguous missingLocants incomplete');
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

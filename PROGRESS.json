@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T17:21:53Z",
+  "updated": "2026-10-14T18:12:30Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -559,8 +559,11 @@
     {
       "id": "I-47c",
       "title": "v4 R-1c Left-out locants",
-      "status": "queued",
-      "summary": "Searches placements for names without locants and reports missing locants, ambiguity or an incomplete search."
+      "status": "done",
+      "summary": "Searches placements for names without locants and reports missing locants, ambiguity or an incomplete search.",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-47c.md",
+      "narrative": "docs/progress-archive/i-47c.md"
     },
     {
       "id": "I-48a",

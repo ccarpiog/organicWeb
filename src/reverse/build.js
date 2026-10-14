@@ -29,8 +29,9 @@
  *    the bonds in tile order.
  *
  * checkSpec() runs step 1 and the carbon count without a placement, so a
- * name with left-out locants still gets its definite errors before the
- * left-out slots are filled (directPlacement(), R-1b; the search of R-1c).
+ * name with left-out locants still gets its definite errors before
+ * search.js fills the left-out slots (R-1c), which also uses
+ * attachmentOrder() to prune by valence.
  */
 
 import { createMolecule, addAtom, addBond, setBondOrder, bondOrderSum, CARBON_VALENCE } from '../model/molecule.js';
@@ -266,22 +267,14 @@ export function checkSpec(spec, values = null) {
 } // End of function checkSpec()
 
 /**
- * The placement of the left-out slots that need no search (phase R-1b):
- * each slot whose domain holds exactly one value gets it (`eteno`,
- * `etenil`, `metilmetano`). R-1c replaces the null case with its search.
+ * The bond order with which a branch attaches to the carbon it hangs from:
+ * its `il` (1) or `iliden` (2), or its retained template's.
  *
- * @param {object} spec - A NameSpec.
- * @returns {number[]|null} One value per `spec.leftOut` entry, or null when some slot has several possible values (or none).
+ * @param {object} sub - A SubstituentSpec.
+ * @returns {number} 1 or 2.
  */
-export function directPlacement(spec) {
-  const placement = [];
-  for (const slot of spec.leftOut) {
-    if (slot.domain[0] !== slot.domain[1]) {
-      return null;
-    }
-    placement.push(slot.domain[0]);
-  }
-  return placement;
+export function attachmentOrder(sub) {
+  return sub.kind === 'retained' ? RETAINED_TEMPLATES[sub.retained].order : sub.freeValence.order;
 }
 
 /**

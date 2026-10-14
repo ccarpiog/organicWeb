@@ -24,10 +24,10 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   v4 (from the name to the drawing, built from tiles: «¿Cómo se dibuja?»,
   §15) is in progress: engine only, pure modules in `src/reverse/` — tiles,
   parser, assembler and tokenizer for open-chain hydrocarbon names, and
-  `readName()`, which interprets, builds and judges the fully located ones
-  (correct, alternative, otherName, outOfScope, invalid with structural
-  errors; a left-out locant with several possible values gives the
-  `incomplete` stand-in until R-1c's search); no UI yet.
+  `readName()`, which interprets, builds and judges them (correct,
+  alternative, otherName, outOfScope, invalid with structural errors) and
+  searches the locants a name leaves out (`search.js`: missingLocants,
+  ambiguous, and incomplete when the search budget runs out); no UI yet.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

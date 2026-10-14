@@ -72,7 +72,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 
 | I-47a | v4 R-1a Tile catalogue, parser, assembler, tokenizer (open-chain hydrocarbons) | `autoclaude/processed/230-name-to-structure.md` + design §15.8 "R-1a" | done — `docs/progress-archive/i-47a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-47a.md` |
 | I-47b | v4 R-1b `interpret.js` + `build.js`, `readName()` for fully located names | same, "R-1b" | done — `docs/progress-archive/i-47b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-47b.md` |
-| I-47c | v4 R-1c Left-out locants (search, `missingLocants`/`ambiguous`/`incomplete`) | same, "R-1c" | queued | — | — |
+| I-47c | v4 R-1c Left-out locants (search, `missingLocants`/`ambiguous`/`incomplete`) | same, "R-1c" | done — `docs/progress-archive/i-47c.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-47c.md` |
 | I-48a | v4 R-2a The «¿Cómo se dibuja?» dialog | same, "R-2a" | queued | — | — |
 | I-48b | v4 R-2b «Dibujar», results entry point, Ayuda, e2e | same, "R-2b" | queued | — | — |
 | I-49 | v4 R-3 Diagnosis for hydrocarbons | same, "R-3" | queued | — | — |
@@ -120,24 +120,24 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select and run I-47c (v4 R-1c): left-out locants — `src/reverse/search.js` (typed slots' domains,
-multiset enumeration of identical occurrences with incremental pruning, symmetric placements merged
-by `canonicalKey()`, a budget of placements/namings/time → `incomplete`), the naming cache by
-structural key, and the verdicts `missingLocants` (filled text), `ambiguous` (≤ 3 names),
-`incomplete`, plus `otherName` when every placement gives one structure (`metiletano` → propane).
-Replace I-47b's `incomplete` stand-in in `src/reverse/index.js`; the worked cases of §15.5.3 for
-open-chain hydrocarbons (ring/group ones wait for R-4/R-5); fixture round trip gains `propeno`,
-`propino`, `propadieno` (204/204); closed loop over `scripts/oracle/generate.mjs`
-(`generateMolecules`, pure imports, seeded, supported-syntax filter, minimum coverage asserted).
-Spec: design §15.3, §15.5.3 steps 2–8, §15.7, §15.8 "R-1c", §15.9 trap 8 — read from the
-working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high; worker opus.
-Commit by explicit paths.
+Select and run I-48a (v4 R-2a): the «¿Cómo se dibuja?» dialog — the secondary button right under
+«¿Cómo se llama?» (outside `.results-body`, trap 6), the new idle hint, an in-page `<dialog>` next
+to `#help-dialog` (focus handling like `src/ui/help.js`), `src/ui/name-builder.js`: the name line
+(assembled by `assemble()`, coloured by part kind, each tile's span selectable also by keyboard,
+`aria-live`, an open compound branch's mark shown faintly), tile rows from `src/reverse/tiles.js`
+with «más» (only tiles the parser supports), branch controls, insert after the selected span,
+«Borrar ficha» / «Borrar todo», Backspace/Escape, session-only tiles, full-screen on narrow
+screens, a tile-count cap (I-47a: `parse`/`assemble` safe to 2000 nested branches); failures of
+`readName()` shown under the name line with `aria-invalid` on the offending tiles. «Dibujar»
+itself, the results entry point and e2e for drawing are R-2b. CSS in `css/app.css`. Spec: design
+§15.2, §15.8 "R-2a" — read from the working-tree `docs/design.md`; never edit or commit it (see
+*Open risks*). Risk routine/high is the selector's call (UI only, engine untouched); worker opus.
+Commit by explicit paths. Update the `CLAUDE.md` v4 sentence («no UI yet»).
 
-- **Builds on I-47b** (`docs/progress-archive/i-47b.md`): `interpret()` types every slot
-  `supplied`/`implicit`/`leftOut` with role and range; `build(spec, placement)` takes the left-out
-  values; `readName(tiles, {namer})` verdict shape documented in `src/reverse/index.js`; tests
-  `tests/unit/reverse-{read,build}.test.js`. Update the coverage clause of the `CLAUDE.md` v4
-  sentence.
+- **Builds on I-47c** (`docs/progress-archive/i-47c.md`): `readName(tiles, {namer, cache,
+  budget})` verdicts `correct`/`alternative`/`missingLocants`/`otherName`/`ambiguous`/
+  `incomplete`/`outOfScope`/`invalid`, shape documented in `src/reverse/index.js`; each verdict
+  has `filled`, `candidates`, and on `invalid` the error's tile range.
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6).
@@ -291,18 +291,20 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - v3 wrap-up (I-46): Ayuda notes `#help-benzenes` / `#help-omp` in `index.html`, examples group
   «Bencenos con varios sustituyentes» in `src/ui/examples.js`.
 - Name → drawing (v4, I-47a…): pure `src/reverse/` — `tiles.js` (catalogue from `lexicon.es.js`),
-  `parse.js` (`parse(ids)` → `{tree, errors}`), `assemble.js` (`{text, spans}`), `tokenize.js`;
-  tests `tests/unit/reverse-*.test.js`, helper `tests/unit/reverse-words.js`; spec design §15.
+  `parse.js` (`parse(ids)` → `{tree, errors}`), `assemble.js` (`{text, spans}`), `tokenize.js`,
+  `interpret.js`, `build.js`, `search.js` (left-out placements, budget, naming cache),
+  `index.js` (`readName()`); `isomorphism()` in `src/model/graph.js`; tests
+  `tests/unit/reverse-*.test.js`, helper `tests/unit/reverse-words.js`; spec design §15.
 - Highlight switch: `canvasMarks()` / `makeMarksToggle()` in `src/ui/results.js`
   (localStorage `organicWeb.highlights`).
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-47a: `npm test` 0 (1761) · `npm run check` 0 (152) · `npm run build` 0 · `npm run e2e` 0 (407);
-  after the review fix `npm test` 0 (1762) · `check` 0 · `build` 0 · `e2e` 0 (407).
 - I-47b: `npm test` 0 (1786) · `npm run check` 0 (157 files) · `npm run build` 0 · `npm run e2e` 0
   (407, source + dist); Codex review ship, no fix needed.
+- I-47c: `npm test` 0 (1806) · `check` 0 (159) · `build` 0 · `npm run e2e -- --reporter=dot` 0 (407);
+  after the review fixes `npm test` 0 (1809) · `check` 0 (159) · `build` 0 · `e2e` 0 (407).
 
 ## Open risks / deviations
 
@@ -374,10 +376,11 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   half of rule 4 → R-5a; Spanish error texts are drafts. Review should-fix (tokenizer stack overflow)
   fixed with `TOKENIZE_MAX_LENGTH`; `parse`/`assemble` safe to 2000 nested branches — R-2a's dialog
   should cap the tile count (`docs/progress-archive/i-47a.md`).
-- I-47b: left-out slots with several values give an `incomplete` stand-in until R-1c (so
-  `metiletano` is not yet `otherName`); no real open-chain `outOfScope` case, tested via an
-  injected namer; old-style note rewrites the student's own name; new draft error wordings
-  (`docs/progress-archive/i-47b.md`).
+- I-47b: no real open-chain `outOfScope` case, tested via an injected namer; old-style note
+  rewrites the student's own name; new draft error wordings (`docs/progress-archive/i-47b.md`).
+- I-47c: R-4 must make `isomorphism()` treat both Kekulé benzenes as equivalent (else
+  `placementReading()` throws); unplaceable left-out locants → `invalid`; old style + left-out →
+  `ambiguous`; review fixes in `docs/progress-archive/i-47c.md`.
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -392,6 +395,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-47a `b4893f8`, pushed. I-47b committed and pushed right after this checkpoint (see
+- I-47b `890bf8b`, pushed. I-47c committed and pushed right after this checkpoint (see
   `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
   `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

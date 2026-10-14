@@ -11,7 +11,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parse } from '../../src/reverse/parse.js';
 import { interpret } from '../../src/reverse/interpret.js';
-import { build, checkSpec, directPlacement, specCarbons, BUILD_ERROR_CODES } from '../../src/reverse/build.js';
+import { build, checkSpec, specCarbons, attachmentOrder, BUILD_ERROR_CODES } from '../../src/reverse/build.js';
+import { slotGroups } from '../../src/reverse/search.js';
 import { readName } from '../../src/reverse/index.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 import { canonicalKey } from '../../src/model/graph.js';
@@ -113,14 +114,16 @@ test('interpret: left-out slots with their role, domain and tiles, in tile order
   ]);
   assert.equal(spec.leftOut[0], spec.prefixes[0].slots[0], 'the same slot objects');
   assert.equal(spec.leftOut[2], spec.parent.double[0]);
-  assert.equal(directPlacement(spec), null);
+  assert.deepEqual(slotGroups(spec).map((g) => [g.role, g.indices, g.tiles]), [['carbon', [0, 1], [0, 3]], ['bond', [2], [4, 5]]],
+    'the two methyls are identical occurrences (search.js)');
   // 0:2 1:et 2:eno 3:il 4:prop 5:ano: the branch's double bond has one possible place.
   const etenyl = specOf('2 et eno il prop ano');
   assert.deepEqual(etenyl.leftOut.map((s) => [s.role, s.domain, s.tiles]), [['bond', [1, 1], [2, 3]]]);
-  assert.deepEqual(directPlacement(etenyl), [1]);
-  assert.deepEqual(directPlacement(specOf('et eno')), [1]);
-  assert.deepEqual(directPlacement(specOf('hex ano')), []);
+  assert.deepEqual(specOf('hex ano').leftOut, []);
   assert.deepEqual(specOf('met eno').leftOut[0].domain, [1, 0], 'no bond on a one-carbon chain');
+  assert.deepEqual([attachmentOrder(specOf('met il pent ano').prefixes[0].substituent),
+    attachmentOrder(specOf('met iliden pent ano').prefixes[0].substituent),
+    attachmentOrder(specOf('isopropiliden pent ano').prefixes[0].substituent)], [1, 2, 2]);
 }); // End of test 'interpret: left-out slots with their role, domain and tiles, in tile order'
 
 test('interpret: old-style locants belong to the one segment without locants', () => {
@@ -188,7 +191,8 @@ test('BOND_RANGE: a multiple bond from the last carbon of its chain', () => {
 test('SAME_BOND: two multiple bonds on one bond, the tiles from the first to the second', () => {
   assertError('hex 2 eno 2 ino', 'SAME_BOND', [1, 4], 'Hay dos enlaces múltiples en el mismo sitio (2).');
   assertError('but 2 2 di eno', 'SAME_BOND', [1, 3], 'Hay dos enlaces múltiples en el mismo sitio (2).');
-  assertError('et di eno', 'SAME_BOND', [1, 3], 'Hay dos enlaces múltiples en el mismo sitio (1).'); // left out, one place
+  // Left out: more multiple bonds than bonds (search.js), whatever the placement.
+  assertError('et di eno', 'SAME_BOND', [1, 3], 'No caben tantos enlaces múltiples: la cadena de 2 carbonos solo tiene 1 enlace entre carbonos.');
   assertError('3 START hex 2 eno 2 ino 1 il END hept ano', 'SAME_BOND', [3, 6], 'Hay dos enlaces múltiples en el mismo sitio (2).');
 });
 

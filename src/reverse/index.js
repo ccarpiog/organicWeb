@@ -1,38 +1,65 @@
 /**
- * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phase
- * R-1b): `readName(tiles) → verdict` for open-chain hydrocarbon names.
- * Pure, no DOM.
+ * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
+ * R-1b, R-1c): `readName(tiles) → verdict` for open-chain hydrocarbon
+ * names. Pure, no DOM.
  *
- * Pipeline: parse (parse.js) → assemble the student's text (assemble.js,
- * from the tree, never through the engine's rendering) → NameSpec
- * (interpret.js) → definite structural errors (build.js checkSpec()) →
- * placement of the left-out locants → molecule (build.js build()) → the
- * naming engine (naming/index.js nameMolecule()) → compare the text, in
- * NFC (design.md §15.9 trap 7), with the engine's name and with every
- * alternative (trap 8).
+ * Pipeline (design.md §15.5.3):
+ *
+ * 1. parse (parse.js) → assemble the student's text (assemble.js, from the
+ *    tree, never through the engine's rendering) → NameSpec
+ *    (interpret.js) → definite structural errors (build.js checkSpec());
+ * 2–4. search.js: every placement of the left-out locants (none when the
+ *    name gives them all), built (build.js), merged by structural key and
+ *    named once each (naming/index.js nameMolecule(), cached by key);
+ * 5. **Exact**: a structure whose name or any alternative (§15.9 trap 8)
+ *    equals the text, in NFC (trap 7) → `correct` / `alternative`;
+ * 6. **Filled**: with left-out locants, each placement is written into the
+ *    student's tree and assembled (search.js filledTree(), assemble.js);
+ *    the structures whose name or an alternative equals the filled text of
+ *    one of their placements → one: `missingLocants` (with that filled
+ *    name), several: `ambiguous`;
+ * 7. **One structure** (all placements equivalent, or no left-out locant)
+ *    → `otherName`, or `outOfScope` when the engine refuses it;
+ * 8. several structures, none matching → `ambiguous`, with their names.
  *
  * Verdicts (design.md §15.3; Spanish drafts pending teacher review):
- * `correct`, `alternative`, `otherName`, `outOfScope`, `invalid`, and the
- * stand-in `incomplete`: in R-1b a left-out locant is filled only when its
- * domain has one value (`eteno`, `etenil`); any other left-out locant gives
- * `incomplete`, which claims nothing about the name. Phase R-1c replaces
- * that stand-in with the search of design.md §15.5.3 steps 3–8
- * (`missingLocants`, `ambiguous`, and `incomplete` only when the search
- * budget runs out), so `metiletano` will become `otherName` (propane).
+ * `correct`, `alternative`, `missingLocants`, `otherName`, `ambiguous`,
+ * `incomplete` (the search ran out of budget: it claims nothing about the
+ * name), `outOfScope` and `invalid` (parse or structural errors, also a
+ * name whose left-out locants fit nowhere). An `ambiguous` message lists at
+ * most MAX_LISTED names in search order (lowest locants first) and counts
+ * the rest («…, C u otras 2 moléculas»); `candidates` holds them all.
  *
- * Old-style names (`2-buteno`) are built and judged like any other and
- * carry a note with the modern writing of the student's own name
- * (`but-2-eno`).
+ * The molecule shown is (a copy of) the graph the engine named, so every
+ * atom and bond id in `naming` is one of its own; the student's reading is
+ * carried onto it: for a name with left-out locants, the placement whose
+ * filled text is the name matched (else the first placement found, lowest
+ * locants first) is built and mapped through an isomorphism (search.js
+ * placementReading()) to give `studentParent` and `prefixAtoms`.
+ *
+ * The search's time limit (search.js `deadline`) holds through steps 5–8
+ * too: a verdict chosen after it has passed is replaced by `incomplete`.
+ *
+ * Old-style names (`2-buteno`) are built and judged like any other — their
+ * filled text keeps the old style, so they never match a name — and every
+ * verdict past the structural checks carries a note with the modern writing
+ * of the student's own name (`but-2-eno`).
  */
 
 import { nameMolecule } from '../naming/index.js';
 import { parse } from './parse.js';
 import { assemble } from './assemble.js';
 import { interpret } from './interpret.js';
-import { build, checkSpec, directPlacement } from './build.js';
+import { checkSpec } from './build.js';
+import { searchStructures, filledTree, placementReading } from './search.js';
 
-/** Verdict kinds of R-1b (design.md §15.3); `incomplete` is R-1b's stand-in for the left-out-locant search. */
-export const VERDICT_KINDS = Object.freeze(['correct', 'alternative', 'otherName', 'outOfScope', 'invalid', 'incomplete']);
+/** Verdict kinds (design.md §15.3), in the order of its table. */
+export const VERDICT_KINDS = Object.freeze([
+  'correct', 'alternative', 'missingLocants', 'otherName', 'ambiguous', 'incomplete', 'invalid', 'outOfScope',
+]);
+
+/** Names an `ambiguous` message lists before counting the rest (design.md §15.3: «at most three»). */
+export const MAX_LISTED = 3;
 
 /** Alternative styles that are traditional names, announced by `correct` («También se llama…», design.md §15.1). */
 const TRADITIONAL_STYLES = Object.freeze(['traditional']);
@@ -40,7 +67,9 @@ const TRADITIONAL_STYLES = Object.freeze(['traditional']);
 /** Fixed verdict texts (design.md §15.3 drafts, pending teacher review). */
 export const VERDICT_TEXTS = Object.freeze({
   correct: '¡Correcto!',
+  almost: 'Casi: faltan los números.',
   stepByStep: 'Pulsa «Ver paso a paso» para ver por qué.',
+  ambiguous: 'Faltan números: puede ser',
   incomplete: 'Faltan números: escribe en qué carbono va cada grupo.',
   outOfScope: 'Entiendo tu nombre, pero esa molécula queda fuera de lo que sé dibujar:',
 });
@@ -56,25 +85,38 @@ export const VERDICT_TEXTS = Object.freeze({
  */
 
 /**
+ * One structure an `ambiguous` name can describe.
+ *
+ * @typedef {object} Candidate
+ * @property {string|null} text - The form shown: the student's name with its locants filled in when that is a name
+ *   of the structure (step 6), else the engine's name (step 8); null when the engine refuses the structure.
+ * @property {string|null} name - The engine's name (null when refused).
+ * @property {object} molecule - The structure (model/molecule.js; atoms without meaningful coordinates).
+ */
+
+/**
  * The result of readName(): one shape for every kind, so the UI phases can
  * rely on it (fields that do not apply are null or empty).
  *
  * @typedef {object} Verdict
- * @property {'correct'|'alternative'|'otherName'|'outOfScope'|'invalid'|'incomplete'} kind - The verdict.
+ * @property {'correct'|'alternative'|'missingLocants'|'otherName'|'ambiguous'|'incomplete'|'invalid'|'outOfScope'} kind - The verdict.
  * @property {string} message - What the app says (Spanish), ready to show.
  * @property {string} text - The assembled name (NFC), as on the dialog's name line.
  * @property {{tile: number|null, from: number, to: number, kind: string, pending?: boolean}[]} spans - assemble() spans of `text`.
- * @property {string|null} name - The engine's name of the molecule (when named).
+ * @property {string|null} name - The engine's name of the molecule (when one structure is named).
  * @property {{style: string, label: string, name: string, parts: object[]}[]} alternatives - The engine's alternatives (when named; else []).
- * @property {{style: string, label: string, name: string}|null} matched - The alternative equal to the text (`alternative` only).
- * @property {object|null} molecule - The molecule the name describes (model/molecule.js; atoms without meaningful
- *   coordinates), whenever it was built: correct, alternative, otherName, outOfScope.
+ * @property {{style: string, label: string, name: string}|null} matched - The alternative equal to the text (`alternative`) or to the
+ *   filled text (`missingLocants`); else null.
+ * @property {string|null} filled - `missingLocants`: the student's name with its left-out locants filled in; else null.
+ * @property {Candidate[]} candidates - `ambiguous`: every structure the name can describe, in search order; else [].
+ * @property {object|null} molecule - The one molecule the name describes (model/molecule.js; atoms without meaningful
+ *   coordinates): correct, alternative, missingLocants, otherName, outOfScope; else null.
  * @property {{atoms: number[], bonds: number[]}|null} studentParent - The parent in the student's locant order (with `molecule`).
  * @property {object[]} prefixAtoms - Atoms of each prefix occurrence (build.js build()); [] without `molecule`.
  * @property {object|null} naming - The engine's whole result (nameMolecule(); a refusal for outOfScope), when named.
  * @property {VerdictError[]} errors - `invalid`: the parser's errors, or the one structural error; else [].
  * @property {string[]} notes - Extra lines shown beside the verdict (the old-style note).
- * @property {boolean} draw - Whether the UI draws `molecule` (correct, alternative, otherName).
+ * @property {boolean} draw - Whether the UI draws `molecule` (correct, alternative, missingLocants, otherName).
  */
 
 /**
@@ -104,6 +146,45 @@ export function modernText(tree) {
 }
 
 /**
+ * The Spanish «o» before a word, «u» when the word sounds /o/ at the start
+ * (`u octano`, `u 8-metil…`, `u 11-metil…`, `u otras`).
+ *
+ * @param {string} next - The word that follows.
+ * @returns {string} 'o' or 'u'.
+ */
+export function orBefore(next) {
+  return /^(?:h?o|8|11(?!\d))/i.test(next) ? 'u' : 'o';
+}
+
+/**
+ * The `ambiguous` message (design.md §15.3): «Faltan números: puede ser
+ * but-1-eno o but-2-eno.», names unquoted as in the draft, at most
+ * MAX_LISTED of them, then «u otra molécula» / «u otras N moléculas» for
+ * the rest (refused structures, which have no name, are counted there
+ * too).
+ *
+ * @param {Candidate[]} candidates - The structures, in search order.
+ * @returns {string} The message.
+ */
+export function ambiguousMessage(candidates) {
+  const texts = candidates.map((c) => c.text).filter((text) => text !== null);
+  const shown = texts.slice(0, MAX_LISTED);
+  const rest = candidates.length - shown.length;
+  if (shown.length === 0) {
+    return `Faltan números: tu nombre puede describir ${candidates.length} moléculas distintas.`;
+  }
+  if (rest > 0) {
+    const others = rest === 1 ? 'otra molécula' : `otras ${rest} moléculas`;
+    return `${VERDICT_TEXTS.ambiguous} ${shown.join(', ')} ${orBefore(others)} ${others}.`;
+  }
+  if (shown.length === 1) {
+    return `${VERDICT_TEXTS.ambiguous} ${shown[0]}.`; // Defensive: an ambiguous verdict has several structures.
+  }
+  const last = shown[shown.length - 1];
+  return `${VERDICT_TEXTS.ambiguous} ${shown.slice(0, -1).join(', ')} ${orBefore(last)} ${last}.`;
+} // End of function ambiguousMessage()
+
+/**
  * A verdict with every field at its empty value.
  *
  * @param {string} kind - Verdict kind.
@@ -121,6 +202,8 @@ function verdict(kind, message, assembled, extra = {}) {
     name: null,
     alternatives: [],
     matched: null,
+    filled: null,
+    candidates: [],
     molecule: null,
     studentParent: null,
     prefixAtoms: [],
@@ -133,43 +216,63 @@ function verdict(kind, message, assembled, extra = {}) {
 } // End of function verdict()
 
 /**
- * The message of a named molecule: `correct` (with its traditional
- * alternatives), `alternative` (with the label and the name given first) or
- * `otherName`.
+ * Which name of a successful naming a text is: the name given first, one
+ * of the alternatives (every style, design.md §15.9 trap 8), or none.
  *
- * @param {string} text - The student's text.
  * @param {object} naming - A successful nameMolecule() result.
- * @returns {{kind: string, message: string, matched: object|null}} The verdict kind, message and matched alternative.
+ * @param {string} text - A name.
+ * @returns {{main: boolean, alternative: object|null}|null} `main` for the name given first, else the alternative; null when neither.
  */
-function judge(text, naming) {
-  const alternatives = naming.alternatives || [];
+function nameMatch(naming, text) {
   if (sameName(text, naming.name)) {
-    const also = alternatives.filter((alt) => TRADITIONAL_STYLES.includes(alt.style))
-      .map((alt) => ` También se llama «${alt.name}» (${alt.label}).`).join('');
-    return { kind: 'correct', message: `${VERDICT_TEXTS.correct}${also}`, matched: null };
+    return { main: true, alternative: null };
   }
-  const matched = alternatives.find((alt) => sameName(text, alt.name));
-  if (matched) {
-    return {
-      kind: 'alternative',
-      message: `${VERDICT_TEXTS.correct} «${text}» es una forma válida (${matched.label}). El nombre que doy primero es «${naming.name}».`,
-      matched: { style: matched.style, label: matched.label, name: matched.name },
-    };
-  }
+  const alternative = (naming.alternatives || []).find((alt) => sameName(text, alt.name));
+  return alternative ? { main: false, alternative } : null;
+}
+
+/**
+ * The public fields of a matched alternative.
+ *
+ * @param {object|null} alternative - An engine alternative, or null.
+ * @returns {{style: string, label: string, name: string}|null} Its style, label and name.
+ */
+function matchedFields(alternative) {
+  return alternative ? { style: alternative.style, label: alternative.label, name: alternative.name } : null;
+}
+
+/**
+ * The fields of a verdict that draws one structure: the student's reading
+ * of one placement and the engine's naming. The molecule is a copy of the
+ * graph the naming was computed on, so every atom and bond id the naming
+ * cites is one of its own, and the reading of the drawn placement is
+ * carried onto it (search.js placementReading() explains why that way
+ * round).
+ *
+ * @param {object} spec - The NameSpec.
+ * @param {object} structure - A named search.js Structure.
+ * @param {number[]} placement - One of its placements.
+ * @returns {object} `molecule`, `studentParent`, `prefixAtoms`, `naming` and, when named, `name` and `alternatives`.
+ */
+function drawnFields(spec, structure, placement) {
+  const { naming } = structure;
   return {
-    kind: 'otherName',
-    message: `Esta es la molécula que describe tu nombre, pero se llama «${naming.name}». ${VERDICT_TEXTS.stepByStep}`,
-    matched: null,
+    ...placementReading(spec, structure, placement),
+    naming,
+    ...(naming.ok ? { name: naming.name, alternatives: naming.alternatives || [] } : {}),
   };
-} // End of function judge()
+} // End of function drawnFields()
 
 /**
  * Reads a name built from tiles and judges it (design.md §15.3, §15.5.3):
  * the molecule it describes and how the app names that molecule.
  *
  * @param {(string|object)[]} tiles - Tile ids or catalogue tiles (tiles.js), in the student's order.
- * @param {{namer?: (mol: object) => object}} [options] - `namer`: the naming function (default
- *   nameMolecule(); tests inject a refusal, since the engine names every open-chain hydrocarbon within its caps).
+ * @param {{namer?: (mol: object) => object, budget?: {placements?: number, namings?: number, ms?: number},
+ *   now?: () => number, cache?: Map<string, object>}} [options] - `namer`: the naming function (default
+ *   nameMolecule(); tests inject a refusal, since the engine names every open-chain hydrocarbon within its caps);
+ *   `budget`, `now`, `cache`: the search's limits, clock and naming cache (search.js searchStructures(); its time
+ *   limit also bounds steps 5–8 here).
  * @returns {Verdict} The verdict.
  * @throws {Error} Only for an unknown tile id.
  */
@@ -180,6 +283,7 @@ export function readName(tiles, options = {}) {
   if (errors.length > 0) {
     return verdict('invalid', errors[0].message, assembled, { errors: errors.map((e) => ({ ...e })) });
   }
+  const text = assembled.text.normalize('NFC');
   const spec = interpret(tree);
   /**
    * The `invalid` verdict of a structural error.
@@ -194,26 +298,133 @@ export function readName(tiles, options = {}) {
   if (early) {
     return invalid(early);
   }
-  const placement = directPlacement(spec);
-  if (!placement) {
-    return verdict('incomplete', VERDICT_TEXTS.incomplete, assembled);
+  const notes = spec.oldStyle ? [`Es la forma antigua de escribirlo; hoy se escribe «${modernText(tree)}».`] : [];
+  const now = options.now || Date.now;
+  const search = searchStructures(spec, { namer, budget: options.budget, now, cache: options.cache });
+  if (search.status === 'none') {
+    return invalid(search.error);
   }
-  const built = build(spec, placement);
-  if (!built.ok) {
-    return invalid(built.error);
+  const incomplete = verdict('incomplete', VERDICT_TEXTS.incomplete, assembled, { notes });
+  if (search.status === 'budget') {
+    return incomplete;
   }
-  const drawn = {
-    molecule: built.molecule,
-    studentParent: built.studentParent,
-    prefixAtoms: built.prefixAtoms,
-    notes: spec.oldStyle ? [`Es la forma antigua de escribirlo; hoy se escribe «${modernText(tree)}».`] : [],
+  let late = false;
+  /**
+   * Tells whether the search's time limit has passed (design.md §15.5.3
+   * step 3), and keeps saying so once it has: the filled-text comparisons
+   * and the verdict selection count against the same `deadline`.
+   *
+   * @returns {boolean} True once the clock has read past the deadline.
+   */
+  const overTime = () => {
+    late = late || now() > search.deadline;
+    return late;
   };
-  const naming = namer(built.molecule);
-  if (!naming.ok) {
-    return verdict('outOfScope', `${VERDICT_TEXTS.outOfScope} ${naming.error.message}`, assembled, { ...drawn, naming });
-  }
-  const { kind, message, matched } = judge(assembled.text.normalize('NFC'), naming);
-  return verdict(kind, message, assembled, {
-    ...drawn, name: naming.name, alternatives: naming.alternatives || [], matched, naming, draw: true,
-  });
+  const { structures } = search;
+  const named = structures.filter((s) => s.naming.ok);
+  const memo = new Map();
+  /**
+   * The first placement of a structure whose filled text is one of its
+   * names (the name given first preferred), memoised. It stops early once
+   * the time limit has passed (then readName() answers `incomplete`
+   * whatever it found).
+   *
+   * @param {object} structure - A named Structure.
+   * @returns {{placement: number[], filled: string, main: boolean, alternative: object|null}|null} The match, or null.
+   */
+  const filledMatch = (structure) => {
+    if (!memo.has(structure)) {
+      let found = null;
+      for (const placement of spec.leftOut.length > 0 ? structure.placements : []) {
+        if (overTime()) {
+          break;
+        }
+        const filled = assemble(filledTree(tree, spec, placement)).text.normalize('NFC');
+        const match = nameMatch(structure.naming, filled);
+        if (match && (!found || (match.main && !found.main))) {
+          found = { placement, filled, ...match };
+        }
+        if (found && found.main) {
+          break;
+        }
+      } // End of the loop over the placements of one structure
+      memo.set(structure, found);
+    }
+    return memo.get(structure);
+  }; // End of function filledMatch()
+  /**
+   * An `ambiguous` verdict over some candidates.
+   *
+   * @param {{text: string|null, structure: object}[]} list - The candidates and the form each is shown with.
+   * @returns {Verdict} The verdict.
+   */
+  const ambiguous = (list) => {
+    const candidates = list.map(({ text: shown, structure }) => ({
+      text: shown, name: structure.naming.ok ? structure.naming.name : null, molecule: structure.built.molecule,
+    }));
+    return verdict('ambiguous', ambiguousMessage(candidates), assembled, { candidates, notes });
+  };
+
+  /**
+   * Steps 5–8: the verdict over the named structures.
+   *
+   * @returns {Verdict} The verdict.
+   */
+  const judge = () => {
+    // Step 5, Exact: the text is a name of a structure.
+    const exact = named.filter((s) => nameMatch(s.naming, text));
+    if (exact.length > 1) {
+      return ambiguous(exact.map((s) => ({ text: s.naming.name, structure: s }))); // Never seen: names are unambiguous.
+    }
+    if (exact.length === 1) {
+      const [structure] = exact;
+      const match = nameMatch(structure.naming, text);
+      const fields = drawnFields(spec, structure, (filledMatch(structure) || { placement: structure.placements[0] }).placement);
+      if (match.main) {
+        const also = (structure.naming.alternatives || []).filter((alt) => TRADITIONAL_STYLES.includes(alt.style))
+          .map((alt) => ` También se llama «${alt.name}» (${alt.label}).`).join('');
+        return verdict('correct', `${VERDICT_TEXTS.correct}${also}`, assembled, { ...fields, notes, draw: true });
+      }
+      return verdict('alternative', `${VERDICT_TEXTS.correct} «${text}» es una forma válida (${match.alternative.label}). `
+        + `El nombre que doy primero es «${structure.naming.name}».`, assembled, {
+        ...fields, matched: matchedFields(match.alternative), notes, draw: true,
+      });
+    } // End of step 5
+
+    // Step 6, Filled: the text with its left-out locants filled in is a name of a structure.
+    const filled = named.filter((s) => filledMatch(s));
+    if (filled.length > 1) {
+      return ambiguous(filled.map((s) => ({ text: filledMatch(s).filled, structure: s })));
+    }
+    if (filled.length === 1) {
+      const [structure] = filled;
+      const match = filledMatch(structure);
+      const message = match.main
+        ? `${VERDICT_TEXTS.almost} Se escribe «${match.filled}».`
+        : `${VERDICT_TEXTS.almost} Se escribe «${match.filled}» (${match.alternative.label}). `
+          + `El nombre que doy primero es «${structure.naming.name}».`;
+      return verdict('missingLocants', message, assembled, {
+        ...drawnFields(spec, structure, match.placement), matched: matchedFields(match.alternative), filled: match.filled, notes, draw: true,
+      });
+    } // End of step 6
+
+    // Step 7, one structure.
+    if (structures.length === 1) {
+      const [structure] = structures;
+      const fields = drawnFields(spec, structure, structure.placements[0]);
+      if (!structure.naming.ok) {
+        return verdict('outOfScope', `${VERDICT_TEXTS.outOfScope} ${structure.naming.error.message}`, assembled, { ...fields, notes });
+      }
+      return verdict('otherName', `Esta es la molécula que describe tu nombre, pero se llama «${structure.naming.name}». `
+        + `${VERDICT_TEXTS.stepByStep}`, assembled, { ...fields, notes, draw: true });
+    }
+
+    // Step 8, several structures, none matching: named ones first, refusals kept apart.
+    const refused = structures.filter((s) => !s.naming.ok);
+    return ambiguous([...named.map((s) => ({ text: s.naming.name, structure: s })), ...refused.map((s) => ({ text: null, structure: s }))]);
+  }; // End of function judge()
+  const judged = judge();
+  // The search's time limit holds through steps 5–8 (the filled-text comparisons, the drawn reading): a verdict chosen
+  // after it has passed is never claimed (design.md §15.5.3 step 3).
+  return overTime() ? incomplete : judged;
 } // End of function readName()

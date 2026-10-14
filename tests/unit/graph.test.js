@@ -1,15 +1,16 @@
 /**
  * @file Unit tests for src/model/graph.js: components, cycles, paths, leaves,
- * centre and the unrooted canonical tree key (design.md §3, §4.2, §8).
+ * centre, the unrooted canonical tree key (design.md §3, §4.2, §8) and the
+ * isomorphism between two molecules (§15.5.3).
  */
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   connectedComponents, isConnected, hasCycle, isTree, pathBetween, pathBonds, leaves,
-  treeDiameterPath, longestChainLength, treeCentre, canonicalTreeKey,
+  treeDiameterPath, longestChainLength, treeCentre, canonicalTreeKey, isomorphism,
 } from '../../src/model/graph.js';
-import { createMolecule, addAtom, addBond, moleculeToJSON, moleculeFromJSON } from '../../src/model/molecule.js';
+import { createMolecule, addAtom, addBond, moleculeToJSON, moleculeFromJSON, cloneMolecule } from '../../src/model/molecule.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 
 /**
@@ -135,3 +136,49 @@ test('canonical key rejects non-trees', () => {
   addAtom(pieces);
   assert.throws(() => canonicalTreeKey(pieces), /not a tree/);
 });
+
+/**
+ * Asserts that id maps are an isomorphism: atoms one to one with the same
+ * elements, every bond onto a bond between the mapped atoms with its order.
+ *
+ * @param {object} from - A molecule.
+ * @param {object} to - Another molecule.
+ * @param {{atoms: Map<number, number>, bonds: Map<number, number>}} iso - isomorphism(from, to).
+ * @returns {void}
+ */
+function assertIsomorphism(from, to, iso) {
+  assert.equal(iso.atoms.size, from.atoms.size);
+  assert.equal(new Set(iso.atoms.values()).size, to.atoms.size, 'one to one');
+  for (const [id, image] of iso.atoms) {
+    assert.equal(to.atoms.get(image).element, from.atoms.get(id).element);
+  }
+  assert.equal(new Set(iso.bonds.values()).size, to.bonds.size);
+  for (const bond of from.bonds.values()) {
+    const image = to.bonds.get(iso.bonds.get(bond.id));
+    const sorted = (a, b) => [a, b].sort((p, q) => p - q);
+    assert.deepEqual(sorted(image.a, image.b), sorted(iso.atoms.get(bond.a), iso.atoms.get(bond.b)));
+    assert.equal(image.order, bond.order);
+  }
+} // End of function assertIsomorphism()
+
+test('isomorphism: atom and bond id maps between molecules with one structure, null otherwise', () => {
+  const smiles = ['CC(C=C)C(C#C)(CC)C(C)=CC', 'CC(C)(C)CC(C)(C)C(C)(C)CC(C)(C)C', 'CC1CCC(Cl)CC1', 'C1=CC=CC=C1CC1=CC=CC=C1', 'C'];
+  for (const s of smiles) {
+    const mol = parseSmiles(s);
+    const other = relabel(mol);
+    assertIsomorphism(mol, other, isomorphism(mol, other));
+    // A copy maps onto itself: equal ids are tried first.
+    const self = isomorphism(mol, cloneMolecule(mol));
+    assert.ok([...self.atoms].every(([id, image]) => id === image) && [...self.bonds].every(([id, image]) => id === image), s);
+  }
+  // Written from either end: 2-metilbut-3-ino and 3-metilbut-1-ino.
+  const one = parseSmiles('CC(C)C#C');
+  const two = parseSmiles('C#CC(C)C');
+  assertIsomorphism(one, two, isomorphism(one, two));
+  // Not isomorphic: topology, a bond order's place, an element, the size.
+  assert.equal(isomorphism(parseSmiles('CCCC'), parseSmiles('CC(C)C')), null);
+  assert.equal(isomorphism(parseSmiles('C=CCC'), parseSmiles('CC=CC')), null);
+  assert.equal(isomorphism(parseSmiles('CCCl'), parseSmiles('CCC')), null);
+  assert.equal(isomorphism(parseSmiles('CCC'), parseSmiles('CCCC')), null);
+  assert.deepEqual(isomorphism(createMolecule(), createMolecule()), { atoms: new Map(), bonds: new Map() });
+}); // End of test 'isomorphism: atom and bond id maps between molecules with one structure, null otherwise'

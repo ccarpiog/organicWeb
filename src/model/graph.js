@@ -1,8 +1,9 @@
 /**
  * @file Graph utilities: connectivity, cycle detection, cyclomatic number,
- * paths, leaves, tree centre and diameter, and the canonical structure keys
+ * paths, leaves, tree centre and diameter, the canonical structure keys
  * (design.md §3, §4.2, §8, §13.2): the unrooted canonical tree key and the
- * monocycle key.
+ * monocycle key, and an explicit isomorphism between two molecules
+ * (isomorphism(), design.md §15.5.3).
  *
  * Every function works on the topology only (`mol.atoms` ids, `mol.bonds`
  * endpoints and orders); coordinates are never read. The module imports
@@ -698,3 +699,141 @@ function separateRingsKey(mol) {
   }
   return `%2${best}`;
 } // End of function separateRingsKey()
+
+/**
+ * Refines two atom colourings together until they are stable (colour
+ * refinement): an atom's new colour is its colour with the sorted orders
+ * and colours of its bonds' other atoms. Colours are numbered over both
+ * molecules at once (0…count−1, by sorted signature), so an equal colour
+ * means the same class in either molecule.
+ *
+ * @param {Map<number, object[]>} adjA - Adjacency of the first molecule (adjacency()).
+ * @param {Map<number, object[]>} adjB - Adjacency of the second molecule.
+ * @param {Map<number, number|string>} colA - The first molecule's atom colours.
+ * @param {Map<number, number|string>} colB - The second molecule's atom colours.
+ * @returns {{a: Map<number, number>, b: Map<number, number>, count: number}|null} The stable colourings and how many
+ *   colours they use; null as soon as a colour has more atoms in one molecule than in the other (not isomorphic).
+ */
+function refineJointly(adjA, adjB, colA, colB) {
+  let a = colA;
+  let b = colB;
+  let count = -1;
+  /**
+   * The signatures of one molecule's atoms under a colouring.
+   *
+   * @param {Map<number, object[]>} adj - Adjacency.
+   * @param {Map<number, number|string>} col - Atom colours.
+   * @returns {Map<number, string>} Atom id → signature.
+   */
+  const signatures = (adj, col) => new Map([...adj].map(([atom, list]) => [atom,
+    `${col.get(atom)}|${list.map((n) => `${n.order}.${col.get(n.atom)}`).sort().join(',')}`]));
+  for (;;) {
+    const sigA = signatures(adjA, a);
+    const sigB = signatures(adjB, b);
+    const index = new Map([...new Set([...sigA.values(), ...sigB.values()])].sort().map((sig, i) => [sig, i]));
+    const nextA = new Map([...sigA].map(([atom, sig]) => [atom, index.get(sig)]));
+    const nextB = new Map([...sigB].map(([atom, sig]) => [atom, index.get(sig)]));
+    const balance = new Array(index.size).fill(0);
+    nextA.forEach((colour) => { balance[colour] += 1; });
+    nextB.forEach((colour) => { balance[colour] -= 1; });
+    if (balance.some((n) => n !== 0)) {
+      return null;
+    }
+    if (index.size === count) {
+      return { a: nextA, b: nextB, count }; // Stable: this round split no class.
+    }
+    count = index.size;
+    a = nextA;
+    b = nextB;
+  } // End of the refinement rounds
+} // End of function refineJointly()
+
+/**
+ * An isomorphism between two molecules: maps of atom ids and bond ids from
+ * `from` to `to` that keep every element, bond and bond order, or null
+ * when there is none. Coordinates are never read. The reverse engine
+ * (design.md §15.5.3, src/reverse/index.js) uses it to carry the student's
+ * reading of one build onto the graph the engine named.
+ *
+ * Individualisation and refinement: the atoms of both molecules are
+ * coloured by element and refined together (refineJointly()); while some
+ * colour holds several atoms, the lowest-id atom of `from` in the lowest
+ * such colour is paired with each atom of `to` of that colour in turn
+ * (first the one with the same id, so a copy maps onto itself; then by
+ * id), the pair gets a colour of its own and the refinement runs again.
+ * When every colour holds one atom the pairing is checked bond by bond.
+ * The search is iterative (an explicit stack), deterministic and, on the
+ * trees and few-ring molecules of this app, almost never backtracks.
+ *
+ * @param {object} from - A molecule.
+ * @param {object} to - Another molecule.
+ * @returns {{atoms: Map<number, number>, bonds: Map<number, number>}|null} Atom and bond id maps from `from` to
+ *   `to`, or null when the molecules are not isomorphic.
+ */
+export function isomorphism(from, to) {
+  if (from.atoms.size !== to.atoms.size || from.bonds.size !== to.bonds.size) {
+    return null;
+  }
+  const adjA = adjacency(from);
+  const adjB = adjacency(to);
+  /**
+   * The initial colouring: each atom's element.
+   *
+   * @param {object} mol - A molecule.
+   * @returns {Map<number, string>} Atom id → element.
+   */
+  const elements = (mol) => new Map([...mol.atoms.values()].map((atom) => [atom.id, atom.element]));
+  /**
+   * The pairing of two discrete colourings, if it keeps every bond.
+   *
+   * @param {{a: Map<number, number>, b: Map<number, number>}} level - Colourings with one atom per colour.
+   * @returns {{atoms: Map<number, number>, bonds: Map<number, number>}|null} The id maps, or null.
+   */
+  const pairing = (level) => {
+    const byColour = new Map([...level.b].map(([atom, colour]) => [colour, atom]));
+    const atoms = new Map([...level.a].map(([atom, colour]) => [atom, byColour.get(colour)]));
+    const bonds = new Map();
+    for (const bond of from.bonds.values()) {
+      const match = adjB.get(atoms.get(bond.a)).find((n) => n.atom === atoms.get(bond.b) && n.order === bond.order);
+      if (!match) {
+        return null;
+      }
+      bonds.set(bond.id, match.bond);
+    }
+    return { atoms, bonds };
+  }; // End of function pairing()
+  const root = refineJointly(adjA, adjB, elements(from), elements(to));
+  const stack = root ? [root] : [];
+  while (stack.length > 0) {
+    const level = stack[stack.length - 1];
+    if (!level.split) {
+      if (level.count === level.a.size) {
+        const found = pairing(level);
+        if (found) {
+          return found;
+        }
+        stack.pop();
+        continue;
+      }
+      const sizes = new Map();
+      level.a.forEach((colour) => sizes.set(colour, (sizes.get(colour) || 0) + 1));
+      const colour = Math.min(...[...sizes].filter(([, size]) => size > 1).map(([c]) => c));
+      const atom = Math.min(...[...level.a].filter(([, c]) => c === colour).map(([id]) => id));
+      const candidates = [...level.b].filter(([, c]) => c === colour).map(([id]) => id)
+        .sort((p, q) => (q === atom) - (p === atom) || p - q);
+      level.split = { atom, candidates, next: 0 };
+    }
+    const { split } = level;
+    if (split.next === split.candidates.length) {
+      stack.pop(); // Every pairing of this atom failed: back to the previous choice.
+      continue;
+    }
+    const partner = split.candidates[split.next];
+    split.next += 1;
+    const child = refineJointly(adjA, adjB, new Map(level.a).set(split.atom, level.count), new Map(level.b).set(partner, level.count));
+    if (child) {
+      stack.push(child);
+    }
+  } // End of the individualisation search
+  return null;
+} // End of function isomorphism()
