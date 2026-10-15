@@ -26,7 +26,8 @@
  *   closing-bond locant `1(n)`, phase R-5a2, the latter with a tooltip —,
  *   «Grupos» — the halogens `fluoro`, `cloro`, `bromo`, `yodo`, phase R-5a1,
  *   `hidroxi` and the suffix `ol`, phase R-5a2, the alkoxy ending `oxi`,
- *   phase R-5b, with a tooltip —, «Nombres tradicionales» — `tolueno`,
+ *   phase R-5b, and the class word `éter` of an ether's functional-class
+ *   name, phase R-5b2, both with a tooltip —, «Nombres tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
  *   `hidroquinona`, phase R-5a3a, these and `anisol` each with a tooltip
@@ -51,7 +52,7 @@
  * The DOM is built with createElement/textContent only (never innerHTML).
  */
 
-import { TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, tileById } from '../reverse/tiles.js';
+import { TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, ETHER_CLASS_ID, tileById } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
 
@@ -95,13 +96,16 @@ export function positionalLabel(tile) {
  * closing-bond locant `1(n)`; R-5a3a: the retained phenols, which say
  * nothing of their groups — what molecule each is, and that `cresol` takes
  * a letter; R-5b: the alkoxy ending `oxi`, where it goes and that the app
- * writes the short forms, and `anisol`; drafts pending teacher review). The
- * tile's text stays its accessible name.
+ * writes the short forms, and `anisol`; R-5b2: `éter`, after the two groups
+ * of the oxygen; drafts pending teacher review). The tile's text stays its
+ * accessible name.
  */
 export const TILE_HINTS = Object.freeze({
   [CLOSING_ID]: 'Número del enlace que cierra un anillo, del último carbono al 1: se escribe 1(6) en un anillo de 6 carbonos.',
   [ALKOXY_ID]: 'Va detrás de una rama acabada en «il» y la une a la cadena por un oxígeno: met, il y oxi dan metoxi; pent, il y '
     + 'oxi dan (pentiloxi).',
+  [ETHER_CLASS_ID]: 'Va al final, detrás de los dos grupos unidos al oxígeno, por orden alfabético: et, il, met, il y éter dan '
+    + 'etil metil éter; con dos grupos iguales, di, et, il y éter dan dietil éter.',
   'template-anisole': 'Benceno con un grupo metoxi: metoxibenceno.',
   'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
   'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',

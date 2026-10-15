@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -23,8 +23,16 @@
  * (`fenoxibenceno`, several rings), or an ether whose two identical halves
  * carry the principal group (`2-(2-hidroxietoxi)etan-1-ol`, the engine's
  * `symmetricEther`, named with `oxidi-`). An ether's functional-class name
- * (`dietil éter`) has no tiles yet (phase R-5b2): `etoxietano`, the name
- * the engine gives first, is `correct`.
+ * (R-5b2: `etil metil éter`, `dietil éter`, `tert-butil metil éter`) is
+ * built from its oxygen and its two groups (interpret.js, build.js) and
+ * judged like any name: the engine lists it among the alternatives (style
+ * `functionalClass`) of the simple ethers only, so the exact comparison
+ * makes it `alternative`; one in another order or with other words
+ * (`metil etil éter`, `metil (propan-2-il) éter`), or for an ether the engine
+ * gives no class name (`etenil metil éter`, `(2-cloroetil) metil éter`),
+ * describes its molecule and gets `otherName` (diagnose.js «Ethers»); one
+ * whose molecule the engine refuses gets `outOfScope` (`difenil éter`, two
+ * rings; `bis(2-hidroxietil) éter`, `symmetricEther`).
  *
  * The retained phenols need nothing of their own here either, but one
  * message: the engine gives `o-cresol`, `pirocatecol`, `catecol`,

@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -42,7 +42,11 @@
  *   of the model whose free valence adds one bond to its carbon (the bond to
  *   the oxygen); the oxygen itself, two single bonds, never limits a
  *   placement (`metoxipropano`: two structures; `decametoxidecano`: past the
- *   budget, `incomplete`).
+ *   budget, `incomplete`). The oxygen of an ether's functional-class name
+ *   (R-5b2, ParentSpec kind 'ether') is a one-atom chain of the model whose
+ *   two groups take one implicit slot each: only the left-out locants inside
+ *   a compound group are searched (`(cloroetil) metil éter`: two
+ *   structures).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -800,13 +804,14 @@ export function filledTree(tree, spec, placement, keep = {}) {
       .map((entry) => tiles.push(entry.closing ? CLOSING_TILE : NUM_TILES.get(entry.value)) - 1);
   };
   /**
-   * A chain node with its segments filled (ring bonds for a ring); `benceno` and a template as they are.
+   * A chain node with its segments filled (ring bonds for a ring); `benceno`, a template and the `éter` of a class name
+   * (R-5b2) as they are.
    *
-   * @param {object} chain - A chain, benzene or template node.
+   * @param {object} chain - A chain, benzene, template or classWord node.
    * @returns {object} The filled node.
    */
   const fillChain = (chain) => {
-    if (chain.type === 'benzene' || chain.type === 'template') {
+    if (chain.type === 'benzene' || chain.type === 'template' || chain.type === 'classWord') {
       return chain;
     }
     return { ...chain, segments: chain.segments.map((seg) => ({ ...seg, locants: numbers(seg.range, seg.locants) })) };

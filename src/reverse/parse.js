@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -10,9 +10,12 @@
  * templates and the orto/meta/para letters from R-4c, the halogens from
  * R-5a1, the alcohols — `hidroxi`, the suffix `ol`, `fenol`, the
  * closing-bond locant `1(n)` — from R-5a2, the retained phenol templates
- * from R-5a3a, the alkoxy ending `oxi` and `anisol` from R-5b):
+ * from R-5a3a, the alkoxy ending `oxi` and `anisol` from R-5b, the ether
+ * functional-class names from R-5b2):
  *
- *   name        = { prefix } , parent ;
+ *   name        = { prefix } , parent
+ *               | { classGroup } , éter ;   (* R-5b2: exactly two groups *)
+ *   classGroup  = [ MULT | CMULT ] , ( simple | START , { prefix } , simple , END ) ;
  *   prefix      = [ locants ] , [ letter ] , [ MULT | CMULT ] , substituent ;
  *   substituent = simple | group | START , { prefix } , simple , END ;
  *   group       = fluoro | cloro | bromo | yodo | hidroxi ;
@@ -85,6 +88,24 @@
  * branch, alone —, it is TILE_ORDER with its own hint. `anisol` (R-5b) is a
  * retained template like `tolueno`, its methoxy group at carbon 1.
  *
+ * An ether's functional-class name (R-5b2, design.md §2: `etil metil
+ * éter`, `dietil éter`, `tert-butil metil éter`) ends in the class word
+ * `éter`, which stands where the parent stands (its node a parent node
+ * whose chain is a `classWord` node): the name-level prefixes before it are
+ * the two groups bonded to the ether oxygen, each a branch as in a prefix —
+ * a chain or ring ending in `il`, `isopropil`, `tert-butil`, `fenil`, or a
+ * compound branch with prefixes of its own (`START 2 cloro et il END met il
+ * éter`) —, one of them multiplied by `di` (or `bis`) when both are the
+ * same (`di et il éter`). checkClassName() keeps that shape: a group takes
+ * no locants or letter of its own (no parent chain to number them on), is
+ * no one-atom group (`cloro`, `hidroxi`), no alkoxy group (`oxi`: the
+ * oxygen is the class word's) and no doubly bonded branch (`iliden`,
+ * `isopropiliden`: TILE_ORDER, each with its hint), and the groups count
+ * two (ETHER_GROUPS); numbers or a multiplier right before `éter`, `éter`
+ * inside a compound branch and tiles after it are TILE_ORDER. Which order
+ * and which words the engine uses for the groups is the diagnosis's
+ * business (diagnose.js «Ethers»), not the parser's.
+ *
  * The tile `1(n)` (R-5a2) is the compound locant of a ring's closing bond,
  * the one from its last carbon n back to carbon 1 (the engine cites it
  * `1(6)`, IUPAC 2013 P-31.1.4.2.4: `ciclohex-1(6)-eno-1,2,4-triol`,
@@ -151,7 +172,7 @@
  *            branch's own simple chain, cited last; `end` null while open)
  * - parent  `{type: 'parent', legacy: number[], letter: number|null, legacyMultiplier:
  *            number|null, legacySegment: number|null, legacySuffix: boolean,
- *            chain: chain|benzene|template, suffix: suffix|null}`
+ *            chain: chain|benzene|template|classWord, suffix: suffix|null}`
  *            (`legacy`: the locants before the stem — old-style ones of a
  *            chain, `2-buteno`, or of its suffix, `2-propanol`, R-5a2;
  *            `legacySegment` the index of the segment they belong to once
@@ -167,6 +188,9 @@
  * - benzene `{type: 'benzene', tile}` (the `benceno` tile, R-4b; also the
  *            `fenol` tile, R-5a2, value 'phenol': isPhenol())
  * - template `{type: 'template', tile}` (a retained template tile, R-4c)
+ * - classWord `{type: 'classWord', tile}` (the `éter` tile of a functional-class name, R-5b2: the
+ *            name-level prefixes are its groups; locants, a letter or a
+ *            multiplier before it stay in the parent node, out of place)
  * - stray   `{type: 'stray', tile}` (a tile out of place)
  *
  * Error-tolerant: parsing never throws on a tile sequence; it always
@@ -180,7 +204,9 @@
  * the templates and the letters (R-4c) TEMPLATE_LOCANTS (numbers or a letter
  * on a template that places its own groups — on `fenol` too, R-5a2 —, and
  * numbers on `cresol`, which takes a letter only, R-5a3a) and POSITIONAL (an
- * o / m / p letter where it has no meaning, design.md §14.4).
+ * o / m / p letter where it has no meaning, design.md §14.4), and for the
+ * ether class names (R-5b2) ETHER_GROUPS (not exactly two groups before
+ * `éter`).
  * The structural codes (LOCANT_RANGE, BOND_RANGE, SAME_BOND, VALENCE,
  * TOO_BIG) need the chemistry and belong to R-1b. The Spanish messages are
  * drafts pending teacher review (design.md §15, last paragraph); their
@@ -190,21 +216,21 @@
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS, CONNECTING_VOWEL,
   MAX_MULTIPLIER, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, POSITIONAL_LETTERS, GROUP_SUFFIXES, GROUP_PREFIXES,
-  HALOGEN_PREFIXES, ALKOXY_ENDING,
+  HALOGEN_PREFIXES, ALKOXY_ENDING, ETHER_CLASS_WORD,
 } from '../naming/lexicon.es.js';
 import {
   toTiles, TEMPLATES, templateGroupWord, groupPlural, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
-  isPhenolTemplate, withArticle, ALKOXY_RETAINED,
+  isPhenolTemplate, withArticle, ALKOXY_RETAINED, ETHER_CLASS_GROUPS,
 } from './tiles.js';
-import { itemText, isAlkoxyNode, isCompoundAlkoxy } from './assemble.js';
+import { itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore } from './assemble.js';
 
 /**
  * The syntactic error codes of design.md §15.6 handled by the parser (RING_ROOT, RING_SIZE from R-4a; BENZENE_BONDS
- * from R-4b; TEMPLATE_LOCANTS, POSITIONAL from R-4c).
+ * from R-4b; TEMPLATE_LOCANTS, POSITIONAL from R-4c; ETHER_GROUPS from R-5b2).
  */
 export const ERROR_CODES = Object.freeze([
   'EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER',
-  'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS', 'TEMPLATE_LOCANTS', 'POSITIONAL',
+  'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS', 'TEMPLATE_LOCANTS', 'POSITIONAL', 'ETHER_GROUPS',
 ]);
 
 /** Fewest carbons of a ring (`ciclopropano`). */
@@ -272,6 +298,9 @@ const EXAMPLES = Object.freeze({
   isopropoxi: `${RETAINED_PREFIXES.isopropyl.text.slice(0, -IL.length)}${ALKOXY_ENDING}`,
   metilpropoxi: `${OPEN}2-${stem(1)}${IL}${stem(3)}${ALKOXY_ENDING}${CLOSE}`,
   metoxifenil: `${OPEN}4-${stem(1)}${ALKOXY_ENDING}${FENIL}${CLOSE}`,
+  etilMetilEter: `${stem(2)}${IL} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
+  dietilEter: `${multiplier(2)}${stem(2)}${IL} ${ETHER_CLASS_WORD}`,
+  cloroetilEter: `${OPEN}2-${HALOGEN_PREFIXES.Cl}${stem(2)}${IL}${CLOSE} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
 });
 
 /** The three letters as the messages quote them: «o», «m» y «p». */
@@ -313,7 +342,62 @@ const HINTS = Object.freeze({
     + `${stem(1)}, ${IL} y ${ALKOXY_ENDING} dan ${EXAMPLES.metoxi}; también detrás de «${RETAINED_PREFIXES.isopropyl.text}», `
     + `«${RETAINED_PREFIXES['tert-butyl'].italic}${RETAINED_PREFIXES['tert-butyl'].text}» o «${FENIL}» (${EXAMPLES.isopropoxi}), `
     + `y en una rama compuesta, antes de cerrarla: ${EXAMPLES.metilpropoxi}.`,
+  // R-5b2: the functional-class names of ethers.
+  classWord: `«${ETHER_CLASS_WORD}» va al final del nombre, detrás de los dos grupos unidos al oxígeno (${EXAMPLES.etilMetilEter}); `
+    + `dentro de una rama, el oxígeno se escribe con «${ALKOXY_ENDING}» (${EXAMPLES.metoxi}).`,
+  afterClassWord: `el nombre termina con «${ETHER_CLASS_WORD}»; los dos grupos unidos al oxígeno van delante `
+    + `(${EXAMPLES.etilMetilEter}).`,
+  classLocant: `en un nombre con «${ETHER_CLASS_WORD}» no hay cadena principal que numerar: los grupos no llevan números `
+    + `delante (${EXAMPLES.etilMetilEter}). Si un grupo lleva sus propias ramas, va en una rama compuesta, con sus números `
+    + `dentro: ${EXAMPLES.cloroetilEter}.`,
+  classMultiplier: `«${multiplier(2)}» va delante del grupo que se repite: ${multiplier(2)}, ${stem(2)}, ${IL} y `
+    + `${ETHER_CLASS_WORD} dan ${EXAMPLES.dietilEter}.`,
+  classAlkoxy: `en un nombre con «${ETHER_CLASS_WORD}», el oxígeno ya lo dice «${ETHER_CLASS_WORD}»: los grupos acaban en `
+    + `«${IL}», sin «${ALKOXY_ENDING}» (${EXAMPLES.etilMetilEter}).`,
 });
+
+/**
+ * The TILE_ORDER hint of a one-atom group (`cloro`, `hidroxi`) written as a
+ * group of an ether's class name (R-5b2): the oxygen of `éter` carries two
+ * carbon groups; a halogen or an OH goes inside a compound branch.
+ *
+ * @param {string} word - The group's word, as on its tile.
+ * @returns {string} The hint.
+ */
+function classAtomGroupHint(word) {
+  return `«${word}» no es un grupo de carbonos: en un nombre con «${ETHER_CLASS_WORD}», el oxígeno lleva dos grupos de `
+    + `carbonos (${EXAMPLES.etilMetilEter}). Si un grupo lleva «${word}», va en una rama compuesta: ${EXAMPLES.cloroetilEter}.`;
+}
+
+/**
+ * The TILE_ORDER hint of a doubly bonded branch (`iliden`, `isopropiliden`)
+ * written as a group of an ether's class name (R-5b2): the oxygen takes
+ * single bonds only.
+ *
+ * @param {string} word - The free-valence suffix or retained word, as on its tile.
+ * @returns {string} The hint.
+ */
+function classDoubleHint(word) {
+  return `en un éter, cada grupo se une al oxígeno por un enlace sencillo, así que acaba en «${IL}» `
+    + `(${EXAMPLES.etilMetilEter}), no en «${word}».`;
+}
+
+/**
+ * The ETHER_GROUPS message (R-5b2): an ether's class name has two groups
+ * before `éter`, or one with `di` when both are the same.
+ *
+ * @param {number} count - The groups the name gives (multipliers counted).
+ * @returns {string} The message.
+ */
+function etherGroupsMessage(count) {
+  const both = `por orden alfabético (${EXAMPLES.etilMetilEter}), o uno solo con «${multiplier(2)}» delante si los dos son `
+    + `iguales (${EXAMPLES.dietilEter})`;
+  if (count === 0) {
+    return `Delante de «${ETHER_CLASS_WORD}» van los dos grupos unidos al oxígeno, ${both}.`;
+  }
+  const written = count === 1 ? 'solo pone uno' : `pone ${numberWord(count)}`;
+  return `Un éter lleva ${numberWord(ETHER_CLASS_GROUPS)} grupos unidos al oxígeno y tu nombre ${written}: escribe dos, ${both}.`;
+} // End of function etherGroupsMessage()
 
 /**
  * The TILE_ORDER hint of `oxi` after a doubly bonded branch word (R-5b):
@@ -1047,6 +1131,86 @@ function makeTemplateParent(state, legacy, letter, mult, start) {
 } // End of function makeTemplateParent()
 
 /**
+ * Builds the parent node of an ether's functional-class name (R-5b2), the
+ * `éter` tile at the parser position: its chain a `classWord` node; the
+ * name-level prefixes read so far are its groups (checkClassName()).
+ * Numbers or a letter right before `éter`, and a multiplier there, are
+ * TILE_ORDER (a group takes neither; `di` goes before the group it
+ * repeats), kept in the node so the tree stays lossless.
+ *
+ * @param {object} state - Parser state (positioned on the `éter` tile).
+ * @param {number[]} legacy - Locant tiles before it.
+ * @param {number|null} letter - An o / m / p tile before it, or null.
+ * @param {number|null} mult - Multiplier tile before it, or null.
+ * @param {number} start - First tile index of the parent.
+ * @returns {object} The parent node, its chain a classWord node.
+ */
+function makeClassParent(state, legacy, letter, mult, start) {
+  const tile = state.pos;
+  state.pos += 1;
+  const marks = [...legacy, ...(letter === null ? [] : [letter])];
+  if (marks.length > 0) {
+    addTileOrder(state, marks[0], marks[marks.length - 1] + 1, HINTS.classLocant); // `etil metil 2 éter`
+  }
+  if (mult !== null) {
+    addTileOrder(state, mult, mult + 1, HINTS.classMultiplier); // `etil di éter`
+  }
+  return {
+    type: 'parent',
+    legacy,
+    letter,
+    legacyMultiplier: mult,
+    legacySegment: null,
+    legacySuffix: false,
+    chain: { type: 'classWord', tile, range: [tile, tile + 1] },
+    suffix: null,
+    range: [start, state.pos],
+  };
+} // End of function makeClassParent()
+
+/**
+ * Keeps the groups of an ether's functional-class name (R-5b2) to what an
+ * ether oxygen carries: each name-level prefix a carbon group bonded by a
+ * single bond — no locants or letter, no one-atom group, no alkoxy group,
+ * no `iliden` or `isopropiliden` (TILE_ORDER, each with its hint; the
+ * single-bonded retained words are those that take `oxi`, ALKOXY_RETAINED)
+ * — and two of them in all,
+ * multipliers counted (ETHER_GROUPS over the groups and `éter`). A prefix
+ * left unfinished or a stray tile already has its error.
+ *
+ * @param {object} state - Parser state.
+ * @param {object} tree - The name tree, its parent a class-name parent.
+ * @returns {void}
+ */
+function checkClassName(state, tree) {
+  const { tiles } = state;
+  const groups = tree.items.filter((item) => item.type === 'prefix' && item.substituent);
+  for (const item of groups) {
+    const sub = item.substituent;
+    const marks = [...item.locants, ...(item.letter === null ? [] : [item.letter])];
+    if (marks.length > 0) {
+      addTileOrder(state, marks[0], marks[marks.length - 1] + 1, HINTS.classLocant); // `2 met il …`, `o met il …`
+    }
+    const core = sub.type === 'branch' ? sub.chain : sub;
+    if (isAtomGroup(sub.type)) {
+      addTileOrder(state, sub.tile, sub.tile + 1, classAtomGroupHint(tiles[sub.tile].text)); // `cloro metil éter`
+    } else if (isAlkoxyNode(sub)) {
+      const { oxi } = alkoxyCore(sub);
+      addTileOrder(state, oxi, oxi + 1, HINTS.classAlkoxy); // `metoxi etil éter`
+    } else if (core && core.type === 'chain' && core.fv !== null && tiles[core.fv].value !== 1) {
+      addTileOrder(state, core.fv, core.fv + 1, classDoubleHint(tiles[core.fv].text)); // `metiliden metil éter`
+    } else if (core && core.type === 'retained' && !ALKOXY_RETAINED.includes(tiles[core.tile].value)) {
+      addTileOrder(state, core.tile, core.tile + 1, classDoubleHint(tiles[core.tile].text)); // `isopropiliden metil éter`
+    }
+  } // End of the loop over the groups
+  const count = groups.reduce((sum, item) => sum + multiplierCount(tiles, item.multiplier), 0);
+  if (count !== ETHER_CLASS_GROUPS) {
+    const word = tree.parent.chain.tile;
+    addError(state, 'ETHER_GROUPS', groups.length > 0 ? groups[0].range[0] : word, word + 1, etherGroupsMessage(count));
+  }
+} // End of function checkClassName()
+
+/**
  * The hint of a whole-word parent (`benceno`, `fenol`, a template) found
  * inside a compound branch.
  *
@@ -1077,7 +1241,8 @@ function parseItem(state, context) {
   const start = state.pos;
   const first = tiles[start];
   const wholeWord = (first.kind === 'benzene' || first.kind === 'template') && context === 'branch';
-  if (['ending', 'freeValence', 'end', 'suffix', 'alkoxy'].includes(first.kind) || wholeWord) { // `oxi` alone: R-5b
+  const classInBranch = first.kind === 'classWord' && context === 'branch'; // `éter` inside a compound branch (R-5b2)
+  if (['ending', 'freeValence', 'end', 'suffix', 'alkoxy'].includes(first.kind) || wholeWord || classInBranch) { // `oxi` alone: R-5b
     state.pos += 1;
     const hint = (first.kind === 'end' && HINTS.endWithoutBranch) || (wholeWord && wholeWordHint(first)) || HINTS[first.kind];
     addTileOrder(state, start, start + 1, hint);
@@ -1093,6 +1258,9 @@ function parseItem(state, context) {
   }
   if (next && next.kind === 'template' && context === 'name') {
     return makeTemplateParent(state, locants, letter, mult, start);
+  }
+  if (next && next.kind === 'classWord' && context === 'name') {
+    return makeClassParent(state, locants, letter, mult, start); // `etil metil éter` (R-5b2)
   }
   if (!next || !['start', 'retained', 'halogen', 'hydroxy', 'root', 'ring'].includes(next.kind)) {
     if (next) {
@@ -1233,6 +1401,9 @@ function checkLetters(state, tree) {
   }
   const lettered = prefixes.filter((item) => item.letter !== null && item.substituent); // An unfinished one is TILE_ORDER.
   const { chain } = parent;
+  if (chain.type === 'classWord') {
+    return; // The groups of an ether's class name take no letter: checkClassName() says so (R-5b2).
+  }
   if (chain.type === 'chain') {
     [...lettered, ...(parent.letter === null ? [] : [parent])]
       .forEach((holder) => report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.notBenzene));
@@ -1368,11 +1539,13 @@ export function parse(sequence) {
     if (bonds) {
       addError(state, 'BENZENE_BONDS', state.pos, tiles.length, MESSAGES.BENZENE_BONDS);
     } else {
-      addTileOrder(state, state.pos, tiles.length, HINTS.afterParent);
+      addTileOrder(state, state.pos, tiles.length, chain.type === 'classWord' ? HINTS.afterClassWord : HINTS.afterParent);
     }
   }
   if (!tree.parent) {
     checkNameEnd(state, tree);
+  } else if (tree.parent.chain.type === 'classWord') {
+    checkClassName(state, tree); // `etil metil éter` (R-5b2)
   }
   checkLetters(state, tree);
   checkClosing(state, tree);

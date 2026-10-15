@@ -19,11 +19,12 @@ import { fileURLToPath } from 'node:url';
 import {
   TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, BENZENE_ID, PHENYL_ID, POSITIONAL_IDS, HALOGEN_IDS, TEMPLATES,
   templateGroupWord, MAX_NUM, MAX_MULT, PHENOL_ID, CLOSING_ID, HYDROXY_ID, OL_ID, isPhenolTemplate, ALKOXY_ID, groupPlural,
+  ETHER_CLASS_ID,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
   TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM, BENZENE_DIGROUP_NAMES,
-  ALKOXY_ENDING,
+  ALKOXY_ENDING, ETHER_CLASS_WORD,
 } from '../../src/naming/lexicon.es.js';
 import { MAX_CONTRACTED_ALKOXY as RENDER_MAX_CONTRACTED_ALKOXY } from '../../src/naming/render.js';
 import { MAX_CONTRACTED_ALKOXY } from '../../src/reverse/assemble.js';
@@ -63,6 +64,7 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('suffix'), 1); // ol (R-5a2)
   assert.equal(count('closing'), 1); // 1(n) (R-5a2)
   assert.equal(count('alkoxy'), 1); // oxi (R-5b)
+  assert.equal(count('classWord'), 1); // éter (R-5b2)
   assert.equal(new Set(TILES.map((tile) => tile.id)).size, TILES.length, 'ids are unique');
   assert.equal(new Set(TILES.map((tile) => tile.text)).size, TILES.length, 'texts are unique');
   assert.ok(TILES.every((tile) => Object.isFrozen(tile)));
@@ -93,6 +95,7 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       suffix: () => GROUP_SUFFIXES[tile.value],
       closing: () => `1${ENCLOSING_MARKS[0][0]}n${ENCLOSING_MARKS[0][1]}`,
       alkoxy: () => ALKOXY_ENDING,
+      classWord: () => ETHER_CLASS_WORD, // `éter` (R-5b2)
     }[tile.kind]();
     assert.equal(tile.text, expected, tile.id);
   } // End of the loop over the tiles
@@ -124,6 +127,9 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
   assert.equal(tileById('template-anisole').text, TRADITIONAL_NAMES.anisole);
   // R-5b: the alkoxy ending, and the contraction limit the assembler shares with render.js.
   assert.deepEqual([tileById(ALKOXY_ID).text, tileById(ALKOXY_ID).kind, tileById(ALKOXY_ID).row], ['oxi', 'alkoxy', 'groups']);
+  // R-5b2: the class word of an ether's functional-class name, the lexicon's.
+  assert.deepEqual([tileById(ETHER_CLASS_ID).text, tileById(ETHER_CLASS_ID).kind, tileById(ETHER_CLASS_ID).value,
+    tileById(ETHER_CLASS_ID).row], [ETHER_CLASS_WORD, 'classWord', 'ether', 'groups']);
   assert.equal(MAX_CONTRACTED_ALKOXY, RENDER_MAX_CONTRACTED_ALKOXY);
   assert.deepEqual(Object.keys(TEMPLATES).filter(isPhenolTemplate), ['cresol', 'pyrocatechol', 'catechol', 'resorcinol', 'hydroquinone']);
   // The template words are those of the engine's own alternatives (aromatic.js), so `o-xileno` and `p-cresol` assemble to their
@@ -155,8 +161,8 @@ test('rows and «más» follow design.md §15.2', () => {
       'template-pyrocatechol', 'template-catechol', 'template-resorcinol', 'template-hydroquinone'],
     'R-4c: «Nombres tradicionales»; R-5b: anisol; R-5a3a: the retained phenols');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'groups').map((tile) => tile.id),
-    ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID, ALKOXY_ID],
-    'R-5a1: «Grupos», the halogens; R-5a2: hidroxi, ol; R-5b: oxi');
+    ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID, ALKOXY_ID, ETHER_CLASS_ID],
+    'R-5a1: «Grupos», the halogens; R-5a2: hidroxi, ol; R-5b: oxi; R-5b2: éter');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'branches' && tile.kind === 'retained').map((tile) => tile.value),
     ['isopropyl', 'isopropylidene', 'tert-butyl']);
 });

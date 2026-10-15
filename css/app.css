@@ -1538,7 +1538,8 @@ kbd {
 .nb-tile--positional,
 .nb-tile--closing { color: var(--color-part-locant); }
 .nb-tile--ending,
-.nb-tile--suffix { color: var(--color-part-ending); }
+.nb-tile--suffix,
+.nb-tile--classWord { color: var(--color-part-ending); }
 .nb-tile--freeValence,
 .nb-tile--retained,
 .nb-tile--halogen,

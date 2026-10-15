@@ -89,9 +89,9 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-51a3 | v4 R-5a3 Retained phenol templates, alcohol diagnosis, Ayuda line | same, "R-5a" | done — split into I-51a3a, I-51a3b | — | — |
 | I-51a3a | v4 R-5a3a Retained phenol templates (`o/m/p-cresol`, `catecol`/`pirocatecol`, `resorcinol`, `hidroquinona`), Ayuda line, e2e | same, "R-5a" | done — `docs/progress-archive/i-51a3a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51a3a.md` |
 | I-51a3b | v4 R-5a3b Alcohol diagnosis messages (fill the deliberate nulls of I-51a2/I-51a3a), e2e | same, "R-5a" | done — `docs/progress-archive/i-51a3b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51a3b.md` |
-| I-51b | v4 R-5b Ethers | same, "R-5b" | split into I-51b1, I-51b2 | — | — |
+| I-51b | v4 R-5b Ethers | same, "R-5b" | done — split into I-51b1, I-51b2 | — | — |
 | I-51b1 | v4 R-5b1 Alkoxy and phenoxy prefixes (`oxi` tile, automatic contraction), `anisol`, search, round trips, Ayuda line, e2e | same, "R-5b" | done — `docs/progress-archive/i-51b1.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-51b1.md` |
-| I-51b2 | v4 R-5b2 Ether class names (`etil metil éter`, `dietil éter`), ether diagnosis messages (fill the I-51b1 nulls) | same, "R-5b" | queued | — | — |
+| I-51b2 | v4 R-5b2 Ether class names (`etil metil éter`, `dietil éter`), ether diagnosis messages (fill the I-51b1 nulls) | same, "R-5b" | done — `docs/progress-archive/i-51b2.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51b2.md` |
 | I-51c | v4 R-5c Aldehydes and ketones | same, "R-5c" | queued | — | — |
 | I-51d | v4 R-5d Acids | same, "R-5d" | queued | — | — |
 | I-52a | v4 R-6a Esters | same, "R-6a" | queued | — | — |
@@ -117,26 +117,28 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select and run I-51b2 (v4 R-5b, second half; design §15.8 row "R-5b"). Content: ether class names
-(`etil metil éter`, `dietil éter`, `tert-butil metil éter`, `butil tert-butil éter` — design §2,
-the forward engine's class-name rule: one O between two simple alkyl groups, alphabetical, `éter`
-class word; a tile for `éter`, the ` ` spacing automatic) read as the engine's alternatives — the
-11 class-name fixture rows the I-51b1 round trip skips must join it (asserted); symmetric ethers
-(`symmetricEther` in `validate.js`) per the forward engine; ether diagnosis messages filling the
-I-51b1 deliberate nulls (`di(pentiloxi)` / `di(propan-2-iloxi)` / `di-tert-butoxi` where the engine
-wants `bis`; the wrong side of the O as parent, `etoximetano` for `metoxietano`, with a message
-naming the oxygen and its «Ver el paso» step), listed in `docs/progress-archive/i-51b1.md`;
-extend the Ayuda ethers paragraph with class names; CLAUDE.md sentence. Spec: design §15 + §2/§13
-— read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk
-high; worker opus. Commit by explicit paths.
+Select I-51c (v4 R-5c, aldehydes and ketones; design §15.8 row "R-5c"): `al` (terminal by rule),
+`ona` (inner carbons), `oxo`, `formil`, acyl prefixes (`acetil`, `propanoil`, `benzoil`,
+`(4-metilbenzoil)`, `ciclohexanocarbonil`), `carbaldehído`, `benzaldehído`; retained `formaldehído`,
+`acetaldehído`, `acetona`, `acetofenona`, `fenilacetaldehído`, the ftalaldehídos. Too big for one
+worker — split it when selecting and record the split in the table, as R-5a/R-5b were; suggested:
+I-51c1 the suffixes `al`/`ona`/`carbaldehído` and the `oxo`/`formil` prefixes on chains, rings and
+`benceno`, left-out locants searched, and the 7 carbonyl-beside-ether fixture rows the ether round
+trip skips joining it (asserted, `tests/unit/reverse-ethers.test.js`); I-51c2 the acyl prefixes;
+I-51c3 the retained templates (`benzaldehído`, `acetona`, `acetofenona`, …), the aldehyde/ketone
+diagnosis (fill whatever nulls I-51c1/c2 leave, header per family in `diagnose.js`), Ayuda line.
+Forward engine: I-32 (`docs/progress-archive/i-32.md`), acyl prefixes I-39b, ring carbonyls I-40b,
+benzoyl I-45b. Spec: design §15 + §13 — read from the working-tree `docs/design.md`; never edit
+or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths.
 
 - **Builds on** the R-1 engine (`src/reverse/`: tiles, parser, assembler, tokenizer, `interpret.js`,
   `build.js`, `search.js`, `readName()` — `docs/progress-archive/i-47a.md` … `i-47c.md`), the dialog
   and «Dibujar» (`i-48a.md`, `i-48b.md`), the diagnosis engine and panel (`i-49a.md`, `i-49b.md`),
   rings, benzene/phenyl, the aromatic key, templates and o/m/p letters (`i-50a.md` … `i-50c.md`),
   ring diagnoses (`i-50d.md`), halogens, alcohols, phenol templates and alcohol diagnoses
-  (`i-51a1.md` … `i-51a3b.md`), alkoxy/phenoxy prefixes and `anisol` (`i-51b1.md`); the forward
-  naming engine already names every case (v2 §13, v3 §14; ethers I-34, `i-34.md`).
+  (`i-51a1.md` … `i-51a3b.md`), alkoxy/phenoxy prefixes and `anisol` (`i-51b1.md`), ether class
+  names and the ether diagnosis (`i-51b2.md`); the forward naming engine already names every case
+  (v2 §13, v3 §14; aldehydes and ketones I-32, `i-32.md`).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6, §15.9).
@@ -281,17 +283,21 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   `diagnose.js`; tests `tests/unit/reverse-diagnose-alcohols.test.js`, alcohol case in `diagnosis.spec.js`.
 - Ethers in the reverse engine (I-51b1): `oxi` tile («Grupos», after the branch it turns into an alkoxy
   group; contraction in `assemble.js`), `anisol` in `TEMPLATES`, «Ethers» nulls in `diagnose.js`; tests
-  `tests/unit/reverse-ethers.test.js`, `tests/e2e/name-builder-ethers.spec.js`.
+  `tests/unit/reverse-ethers.test.js`, `tests/e2e/name-builder-ethers.spec.js`. Class names and ether
+  diagnoses (I-51b2): `éter` tile («Grupos», ends the name), codes ETHER_SIDE / ALKOXY_MULTIPLIER /
+  CLASS_* and the diagnosis-only step `etherClass` in `diagnose.js`; tests
+  `tests/unit/reverse-ether-classes.test.js`, `tests/unit/reverse-diagnose-ethers.test.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51b1 (orchestrator, after the worker): `npm test` 0 (2032) · `npm run check` 0 (184) · `npm run
-  build` 0 · `npm run e2e -- --reporter=dot` 0 (509 passed, source + dist, no flakes). Codex review
-  ship, 0 findings (`docs/reviews/I-51b1.md`; its own 40 targeted tests, 6118 round trips, 7631
-  omitted-locant probes, 44 hit the documented budget). Coverage: 40 ether fixture rows (46 names)
-  incl. the 2 I-42a alkoxy benzene rows, 11 class-name and 7 carbonyl-beside-ether rows skipped
-  (asserted); closed loop 563 generated molecules; no null in either mutation sweep.
+- I-51b2 (orchestrator): after the worker `npm test` 0 (2052) · `npm run check` 0 (186) · `npm run
+  build` 0 · `npm run e2e -- --reporter=dot` 0 (513 passed); after the review fixes `npm test` 0
+  (2054) · `npm run check` 0 (186) · `npm run build` 0 · `npm run e2e -- --reporter=dot` 0 (513
+  passed, source + dist, no flakes). Codex review ship-with-fixes, 2 should-fix, both fixed
+  (`docs/reviews/I-51b2.md`). Coverage: 40 ether fixture rows, 57 names (11 class names) in the round
+  trip, 7 carbonyl-beside-ether rows still skipped (asserted); closed loop 563 molecules / 609 names;
+  no unexpected null in either mutation sweep.
 
 ## Open risks / deviations
 
@@ -363,6 +369,14 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   `1,6-bis-tert-butoxihexano` where usage is `di-tert-butoxi` — followed (so `di-tert-butoxi` is
   `otherName`); changing it means changing `render.js`. LONGER_CHAIN now says «1 carbono» in the
   singular. New Spanish drafts (hints, tooltips, Ayuda ethers paragraph) in `docs/progress-archive/i-51b1.md`.
+- I-51b2: the I-51b1 «Ethers» nulls are filled (ETHER_SIDE, ALKOXY_MULTIPLIER, CLASS_NAME_NONE / CLASS_GROUP_WORDS /
+  CLASS_DI / CLASS_ORDER; class-name mistakes open the diagnosis-only step `etherClass` «Monta el nombre con «éter»»,
+  review fix). Open questions for the user: (1) forward-engine bug, not fixed — `src/naming/index.js`
+  `etherClassAlternative()` writes `ditert-butil éter` without the hyphen, so the student's `di-tert-butil éter` is
+  `otherName` with a null diagnosis (the one ether null left, tested); (2) the forward explanation's «Reconoce el éter»
+  step says an ether «nunca va al final del nombre», true of the substitutive name only (`explain()` untouched);
+  (3) `bis-tert-butoxi` still followed (I-51b1). Class names with substituted groups (`(2-cloroetil) metil éter`) are the
+  app's convention, never an engine name. New Spanish drafts in `docs/progress-archive/i-51b2.md`.
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -376,6 +390,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-51a3b `db8614a`, pushed (checkpoint refresh `0235c00`). I-51b1 committed and pushed right after
-  this checkpoint (see `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
-  `docs/reviews/v4-plan-codex.md`, `.DS_Store`.
+- I-51b1 `15477ad`, pushed. I-51b2 committed and pushed right after this checkpoint (see `git log`).
+  User's uncommitted paths, never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`,
+  `.DS_Store`.

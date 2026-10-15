@@ -54,6 +54,10 @@ const RING_ONLY_CODES = Object.freeze(['RING_IS_PARENT', 'BENZENE_RING', 'SUBSTI
 /** The codes only an alcohol gives (phase I-51a3b; their cases are in reverse-diagnose-alcohols.test.js). */
 const ALCOHOL_ONLY_CODES = Object.freeze(['HYDROXY_PREFIX', 'HYDROXY_PARENT', 'MORE_HYDROXY_GROUPS', 'PHENOL']);
 
+/** The codes only an ether gives (phase I-51b2; their cases are in reverse-diagnose-ethers.test.js). */
+const ETHER_ONLY_CODES = Object.freeze(['ETHER_SIDE', 'CLASS_NAME_NONE', 'CLASS_GROUP_WORDS', 'CLASS_ORDER', 'CLASS_DI',
+  'ALKOXY_MULTIPLIER']);
+
 /**
  * The tile ids of a name: space-separated tile words (reverse-words.js), or
  * a name text read by the tokenizer.
@@ -275,7 +279,7 @@ test('one case per diagnosis code: the code, its trace rule, the step and the me
     assert.equal(d.message, message, name);
     seen.add(code);
   } // End of the loop over the cases
-  const chainCodes = DIAGNOSIS_CODES.filter((code) => !RING_ONLY_CODES.includes(code) && !ALCOHOL_ONLY_CODES.includes(code));
+  const chainCodes = DIAGNOSIS_CODES.filter((code) => ![...RING_ONLY_CODES, ...ALCOHOL_ONLY_CODES, ...ETHER_ONLY_CODES].includes(code));
   assert.deepEqual([...seen].sort(), [...chainCodes].sort(), 'every code an open chain can give has a case');
 }); // End of test 'one case per diagnosis code: the code, its trace rule, the step and the message'
 
@@ -345,14 +349,15 @@ test('left-out locants: every placement is a reading, and the kindest diagnosis 
 }); // End of test 'left-out locants: every placement is a reading, and the kindest diagnosis is kept'
 
 test('the drafts: one entry per code in rule order, each message renders from its example, phrases for every rule', () => {
-  // The ring rules of phase I-50d and the alcohol rules of phase I-51a3b stand beside the chain rules whose place they take
-  // (diagnose.js headers «Rings» and «Alcohols»).
+  // The ring rules of phase I-50d, the alcohol rules of phase I-51a3b and the ether rules of phase I-51b2 stand beside the
+  // chain rules whose place they take (diagnose.js headers «Rings», «Alcohols» and «Ethers»).
   assert.deepEqual(DIAGNOSIS_CODES, ['HYDROXY_PREFIX', 'HYDROXY_PARENT', 'BRANCH_AT_END', 'RING_IS_PARENT', 'MORE_HYDROXY_GROUPS',
-    'LONGER_CHAIN', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'PHENOL', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS',
-    'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL', 'NUMBERING', 'RING_NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND',
+    'LONGER_CHAIN', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'PHENOL', 'ETHER_SIDE', 'CLASS_NAME_NONE', 'CLASS_GROUP_WORDS',
+    'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL', 'NUMBERING',
+    'RING_NUMBERING', 'ALPHABETICAL_ORDER', 'CLASS_ORDER', 'UNGROUPED', 'CLASS_DI', 'MULTIPLIER_KIND', 'ALKOXY_MULTIPLIER',
     'LOCANT_ORDER', 'NEEDLESS_LOCANTS', 'MISSING_LOCANTS', 'SEGMENT_ORDER', 'OLD_STYLE', 'LETTER_LOCANTS']);
   assert.deepEqual(DIAGNOSIS_CODES.map((code) => DIAGNOSES[code].rule),
-    [1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 9, 10, 11, 11]);
+    [1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 9, 9, 10, 11, 11]);
   assert.ok(Object.isFrozen(DIAGNOSES) && Object.isFrozen(DIAGNOSIS_TEXTS) && Object.isFrozen(DIAGNOSIS_PHRASES));
   for (const code of DIAGNOSIS_CODES) {
     const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);

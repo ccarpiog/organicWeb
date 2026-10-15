@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -49,6 +49,12 @@
  * bonded atom to atom to the ring it hangs from (ringRefusal():
  * `fenoxibenceno` has a structural key; the engine refuses it, two rings).
  * `anisol` (R-5b) is a template whose methoxy group is built that way.
+ * An ether's functional-class name (R-5b2, ParentSpec kind 'ether': `etil
+ * metil éter`) is built from its oxygen: the parent is that one atom
+ * (etherOxygen(); `studentParent` lists it alone), its two groups attached
+ * to it as prefixes, each by a single bond (parse.js keeps `iliden` out).
+ * The oxygen counts for the heavy-atom cap, never for the carbons
+ * (parentCarbons()).
  *
  * The molecule is the student's reading, numbered as the student numbered
  * it: `studentParent` lists the parent's atoms in the student's locant
@@ -387,7 +393,18 @@ export function templateGroups(spec) {
  * @returns {number} The count.
  */
 export function specCarbons(spec) {
-  return spec.parent.length + prefixCarbons(spec.prefixes) + prefixCarbons(templateGroups(spec));
+  return parentCarbons(spec.parent) + prefixCarbons(spec.prefixes) + prefixCarbons(templateGroups(spec));
+}
+
+/**
+ * Carbons of a NameSpec's parent: its length, or none for the oxygen of an
+ * ether's functional-class name (R-5b2, kind 'ether': one atom, an oxygen).
+ *
+ * @param {{kind: string, length: number}} parent - A ParentSpec.
+ * @returns {number} The count.
+ */
+function parentCarbons(parent) {
+  return parent.kind === 'ether' ? 0 : parent.length;
 }
 
 /**
@@ -405,7 +422,8 @@ function suffixAtomCount(spec) {
  * Heavy atoms of the molecule a NameSpec describes (independent of the
  * locants): its carbons, its halogens (R-5a1) and its oxygens (R-5a2:
  * `hidroxi` and the suffix's OH groups; R-5b: the ether oxygen of each
- * alkoxy prefix and of `anisol`'s methoxy), as model/validate.js counts them
+ * alkoxy prefix and of `anisol`'s methoxy; R-5b2: the oxygen parent of a
+ * class name, its one atom), as model/validate.js counts them
  * against MAX_HEAVY_ATOMS.
  *
  * @param {object} spec - A NameSpec.
@@ -641,6 +659,20 @@ function buildChain(state, owner, branch) {
   attachPrefixes(state, owner.prefixes || [], atoms);
   return { atoms, bonds };
 } // End of function buildChain()
+
+/**
+ * Creates the parent of an ether's functional-class name (R-5b2): its
+ * oxygen, one atom whose two groups are attached as prefixes (two single
+ * bonds: never over its valence).
+ *
+ * @param {object} state - Build state.
+ * @returns {{atoms: number[], bonds: number[]}} The oxygen, and no bonds.
+ */
+function etherOxygen(state) {
+  const oxygen = addAtom(state.mol, {}, ALKOXY_ELEMENT);
+  state.atoms.set(oxygen, { locant: 1, branch: false, added: [] });
+  return { atoms: [oxygen], bonds: [] };
+}
 
 /**
  * Creates a branch: a one-atom group (a halogen atom, R-5a1; the oxygen of
@@ -883,7 +915,8 @@ export function build(spec, placement = []) {
     return { ok: false, error };
   }
   const state = { mol: createMolecule(), values, atoms: new Map(), tiles: spec.tiles };
-  const parent = buildChain(state, { ...spec.parent, prefixes: [] }, false);
+  // The oxygen of an ether's class name (R-5b2), else the parent chain or ring.
+  const parent = spec.parent.kind === 'ether' ? etherOxygen(state) : buildChain(state, { ...spec.parent, prefixes: [] }, false);
   const suffixAtoms = attachSuffix(state, spec.suffix, parent.atoms); // `propan-2-ol`, `fenol` (R-5a2).
   if (spec.parent.template) {
     attachPrefixes(state, spec.parent.template.groups, parent.atoms, null, spec.parent.template); // `tolueno`'s methyl…

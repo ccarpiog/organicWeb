@@ -8,7 +8,8 @@
  * multiplier(), compoundMultiplier(), ENDINGS, FREE_VALENCE_SUFFIXES,
  * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
  * TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS,
- * HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING),
+ * HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING,
+ * ETHER_CLASS_WORD),
  * never retyped here;
  * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
@@ -57,11 +58,16 @@
  *   branch bonded to an ether oxygen that is bonded to the carbon the
  *   prefix's locant says; the assembler contracts it as render.js
  *   alkoxyTokens() does: `met il oxi` → `metoxi`, `isopropil oxi` →
- *   `isopropoxi`, but `pent il oxi` → `(pentiloxi)`; value 'ether');
+ *   `isopropoxi`, but `pent il oxi` → `(pentiloxi)`; value 'ether'),
+ *   'classWord' (the word `éter` of an ether's functional-class name, R-5b2:
+ *   the last tile of the name, after the two groups bonded to the oxygen —
+ *   `et il met il éter` → `etil metil éter`, `di et il éter` → `dietil
+ *   éter`; the spaces are automatic; value 'ether');
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
  *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2), 'groups'
- *   («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`; R-5b: `oxi`),
+ *   («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`; R-5b: `oxi`,
+ *   and `éter` from R-5b2),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; later phases add acetona, ácido
  *   acético…);
@@ -72,7 +78,7 @@
 import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
   RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES,
-  GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING, groupName,
+  GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING, ETHER_CLASS_WORD, groupName,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -140,6 +146,15 @@ export const ALKOXY_ID = 'group-alkoxy';
 
 /** The element of the ether oxygen an alkoxy prefix adds between its branch and the carbon it hangs from (R-5b). */
 export const ALKOXY_ELEMENT = 'O';
+
+/**
+ * Id of the `éter` tile (design.md §2, §15.8 R-5b; phase R-5b2: the class
+ * word of an ether's functional-class name, `etil metil éter`).
+ */
+export const ETHER_CLASS_ID = 'class-ether';
+
+/** How many groups the oxygen of an ether's functional-class name carries (`etil metil éter`, `dietil éter`; R-5b2). */
+export const ETHER_CLASS_GROUPS = 2;
 
 /**
  * The retained branch words that take `oxi` (R-5b, render.js
@@ -316,8 +331,8 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * Builds the whole catalogue in dialog order: numbers, multipliers (simple,
  * then compound), roots, endings, branch words and controls, rings (`ciclo`,
  * `benceno`, `fenol`, `fenil`, the letters `o`, `m`, `p`, `1(n)`), groups
- * (the halogens `fluoro`, `cloro`, `bromo`, `yodo`, then `hidroxi`, `ol` and
- * `oxi`), traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`,
+ * (the halogens `fluoro`, `cloro`, `bromo`, `yodo`, then `hidroxi`, `ol`,
+ * `oxi` and `éter`), traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`,
  * `anisol`, then the retained phenols `cresol`, `pirocatecol`, `catecol`,
  * `resorcinol`, `hidroquinona`).
  *
@@ -365,6 +380,7 @@ function buildCatalogue() {
   tiles.push(makeTile(HYDROXY_ID, 'hydroxy', 'alcohol', 'groups', GROUP_PREFIXES.alcohol)); // `hidroxi` (R-5a2)
   tiles.push(makeTile(OL_ID, 'suffix', 'alcohol', 'groups', GROUP_SUFFIXES.alcohol)); // `ol` (R-5a2)
   tiles.push(makeTile(ALKOXY_ID, 'alkoxy', 'ether', 'groups', ALKOXY_ENDING)); // `oxi` (R-5b)
+  tiles.push(makeTile(ETHER_CLASS_ID, 'classWord', 'ether', 'groups', ETHER_CLASS_WORD)); // `éter` (R-5b2)
   for (const value of Object.keys(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }

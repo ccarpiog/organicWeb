@@ -8,7 +8,8 @@
  * `benceno`, `fenil`, the retained templates; see «Rings» below), their
  * halogen derivatives and alcohols (R-5a; «Halogens» and «Alcohols» below:
  * an alcohol's own mistakes are checked before rule 1) and their ethers
- * (R-5b; «Ethers» below).
+ * (R-5b; «Ethers» below: the wrong side of the oxygen, `di` for `bis` before
+ * an alkoxy prefix, and the functional-class names, R-5b2).
  *
  * The rules, in order (first match wins):
  *
@@ -196,8 +197,10 @@
  * `style` — `chain`, `tiebreak`, `numbering`, `substituents`, `order` or
  * `assemble`, for a ring `ring`, `benzene` or `ringNumbering` (a draft
  * may name the step of its own case: `ring` on a `ciclo` ring, `benzene` on
- * the benzene ring), and for an alcohol `group`, `ringChain` or
- * `groupChain`); diagnosisExplanation() builds those steps and finds it, with
+ * the benzene ring), for an alcohol `group`, `ringChain` or
+ * `groupChain`, and for an ether `ether`, R-5b2 — or, for an ether's class
+ * name, CLASS_NAME_STEP, the step diagnosisExplanation() adds to them);
+ * diagnosisExplanation() builds those steps and finds it, with
  * the fallbacks of diagnosisStepIndex()), the student's chain and the
  * parent (atom and bond ids of the verdict's molecule, each in its own
  * locant order), the atoms the message is about and the student's tiles it
@@ -315,26 +318,78 @@
  * the prefix style is its branch's after `O:` (specShape()), and di vs bis
  * follow render.js isCompoundPrefix() (isCompoundNode(): `bis(pentiloxi)`,
  * `dimetoxi`). The ether oxygen splits the carbon skeleton, and the engine
- * chooses the parent among the chains of every side (design.md §13.4 I-34),
- * so a parent on the wrong side of the oxygen is told by the chain rules'
- * own true messages, which say nothing of the oxygen: `etoximetano` and
- * `propoxietano` LONGER_CHAIN, `(clorometoxi)metano` MORE_SUBSTITUENTS
- * (`cloro(metoxi)metano`), `fenoxietano` RING_IS_PARENT (`etoxibenceno`),
- * `(2-hidroxietoxi)metano` MORE_HYDROXY_GROUPS (`2-metoxietan-1-ol`); a
- * substituted `anisol` (`4-cloroanisol`, `p-cloroanisol`) is
- * SUBSTITUTED_TEMPLATE, named from `benceno`. Deliberate, tested nulls, for
- * the ether messages of phase R-5b2 (I-51b2): di… before an alkoxy prefix
- * that takes bis… only for its form, a branch + `oxi` with no prefixes of
- * its own (`1,6-di(pentiloxi)hexano`, `di(propan-2-iloxi)`, and
- * `1,6-di-tert-butoxihexano`, which the engine writes `bis-tert-butoxi`,
- * assemble.js isCompoundAlkoxy(); multiplierKind(): rule 7's reason, «una
- * rama que tiene sus propias ramas», does not hold),
- * and, as for any branch, an alkoxy group written in a prefix style the
- * engine does not offer for the molecule (`(1,1-dimetiletoxi)metano`, the
- * other styles are offered only beside an isopropyl group).
+ * chooses the parent among the chains of every side (design.md §13.4 I-34);
+ * a substituted `anisol` (`4-cloroanisol`, `p-cloroanisol`) is
+ * SUBSTITUTED_TEMPLATE, named from `benceno`. The ether messages (phase
+ * R-5b2, I-51b2):
+ *
+ * - `ETHER_SIDE` — the student's chain on the other side of an ether oxygen
+ *   from the engine's parent (oxygenBetween(): no shared atom, an ether O on
+ *   the path between them): the parent-choice draft the chain or ring rules
+ *   give (RING_IS_PARENT, HYDROXY_PARENT, MORE_HYDROXY_GROUPS, LONGER_CHAIN,
+ *   MORE_MULTIPLE_BONDS, MORE_DOUBLE_BONDS, MORE_SUBSTITUENTS, CHAIN_LOCANTS,
+ *   CHAIN_ALPHABETICAL; acrossOxygen()) told from the oxygen — it cuts the
+ *   molecule in two sides, the parent is sought on one of them with the usual
+ *   rules, and why the other side wins, as the explanation's etherSideReason()
+ *   reads the trace — with the engine's prefix that holds the student's chain
+ *   (`etoximetano` → «…en ese lado hay una cadena de 2 carbonos, más larga que
+ *   la tuya, de 1. Tu cadena, con el oxígeno, es el sustituyente «metoxi»:
+ *   «metoxietano».»; `(clorometoxi)metano`, `fenoxietano`,
+ *   `(2-hidroxietoxi)metano`, `2-propoxipropano` at N3), or, when the
+ *   student's chain lies deeper inside that prefix, the prefix it is part of
+ *   (nestedSide(): `(2-propoxietoxi)metano` → «Tu cadena forma parte del
+ *   sustituyente «2-metoxietoxi»…»); it keeps the trace
+ *   rule and the rule number of the draft it replaces, opens «Reconoce el
+ *   éter» (`ether`) and points at the student's prefix that holds the
+ *   engine's parent; the stripe and legend of the two chains are as for any
+ *   parent-choice diagnosis. BRANCH_AT_END keeps its own message on the
+ *   wrong side too (rule 1: the student's chain is no leaf-to-leaf path);
+ * - `ALKOXY_MULTIPLIER` — rule 7 for di… before an alkoxy prefix that takes
+ *   bis… for its form only, a branch + `oxi` with no prefixes of its own
+ *   (`1,6-di(pentiloxi)hexano`, `1,6-di(propan-2-iloxi)hexano`: a prefix
+ *   that is not shortened is compound, «un grupo más oxi»), and
+ *   `1,6-di-tert-butoxihexano`, which the engine writes `bis-tert-butoxi`
+ *   (render.js isCompoundPrefix() counts the systematic form's own branches,
+ *   «1,1-dimetiletoxi»; IUPAC usage is `di-tert-butoxy`, an open question for
+ *   the user, followed here as the engine writes it); step `substituents`;
+ * - the functional-class names (`etil metil éter`; a track of their own,
+ *   classNameDiagnosis(), before every other rule, compared with the
+ *   verdict's own naming, which lists the class name): `CLASS_NAME_NONE` —
+ *   the engine gives the molecule no class name (a group with branches other
+ *   than isopropil / tert-butil, a ring, a multiple bond, another atom:
+ *   `etenil metil éter`, `fenil metil éter`, `(2-cloroetil) metil éter`), the
+ *   `éter` tile; `CLASS_GROUP_WORDS` — the student's group words are not the
+ *   engine's (`metil (propan-2-il) éter`, `(1-metiletil) metil éter`, needless
+ *   locants), the groups; `CLASS_DI` — a repeated group written twice or
+ *   with `bis` (`etil etil éter`, `bisetil éter`); `CLASS_ORDER` — the two
+ *   groups out of alphabetical order, `tert-` not counted, the plain word
+ *   first on a tie (`metil etil éter`, `metil tert-butil éter` with the
+ *   `tert-` hint, `tert-butil butil éter`); the student has no chain to
+ *   stripe. Their rule numbers (2, 2, 6, 5) only place them in DIAGNOSES.
+ *   No explain() step speaks of class names (its «Reconoce el éter» says an
+ *   ether «nunca va al final del nombre», true of the substitutive name), so
+ *   all four open a step of their own that diagnosisExplanation() adds right
+ *   after «Reconoce el éter» (CLASS_NAME_STEP, «Monta el nombre con
+ *   «éter»», classNameStep(); review of phase I-51b2): how the class name is
+ *   formed — the two groups bonded to the oxygen named as branches, simplest
+ *   form and no numbers, in alphabetical order without `tert-`, once with
+ *   `di` when equal, the word `éter` last — and how it differs from the
+ *   substitutive name the other steps explain, with the name the message
+ *   recommends (Diagnosis `className`); for CLASS_NAME_NONE, which ethers get
+ *   a class name and that this one is named only with its `-oxi` prefix.
+ *
+ * Deliberate, tested nulls: `di-tert-butil éter`, the IUPAC form, which the
+ * engine writes `ditert-butil éter` (naming/index.js etherClassAlternative()
+ * joins `di` and `tert-butil` without rule 5's hyphen; an open question for
+ * the user — the tiles cannot write the engine's form, nor should the
+ * message teach it), and, as for any branch, an alkoxy group written in a
+ * prefix style the engine does not offer for the molecule
+ * (`(1,1-dimetiletoxi)metano`, the other styles are offered only beside an
+ * isopropyl group).
  *
  * Every Spanish string is a draft pending teacher review (design.md §15,
- * last paragraph): all of them live in DIAGNOSIS_TEXTS, and DIAGNOSES gives
+ * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
+ * (the class-name step's in CLASS_NAME_STEP_TEXTS), and DIAGNOSES gives
  * example data for each code so the wording can be listed (R-7). Later
  * family phases (R-5a…R-6d) add their codes to DIAGNOSES / DIAGNOSIS_TEXTS
  * and their checks to FORM_RULES (or new trace rules to the chain walk).
@@ -349,8 +404,9 @@ import { adjacency, rootedBranchKey } from '../model/graph.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, ENCLOSING_MARKS, RETAINED_PREFIXES, FREE_VALENCE_SUFFIXES, omitsLocants,
   chainOmitsPrefixLocants, ringOmitsLocants, BENZENE_NAME, RING_PREFIX, POSITIONAL_LETTERS, TRADITIONAL_NAMES, SATURATED_INFIX,
+  ALKOXY_ENDING, ETHER_CLASS_WORD,
 } from '../naming/lexicon.es.js';
-import { assemble, itemText, isAlkoxyNode, isCompoundAlkoxy } from './assemble.js';
+import { assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore } from './assemble.js';
 import { ownPrefixAtoms, specRings, isRing } from './build.js';
 import {
   tileById, tileId, MAX_MULT, isAtomGroup, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
@@ -380,7 +436,20 @@ const WORDS = Object.freeze({
   tolueno: TRADITIONAL_NAMES.toluene,
   /** The orto/meta/para letters, quoted «o», «m» y «p». */
   letters: Object.values(POSITIONAL_LETTERS).map((letter) => `«${letter}»`),
+  // Ethers (R-5b2).
+  oxi: ALKOXY_ENDING,
+  eter: ETHER_CLASS_WORD,
+  propil: `${stem(3)}${FREE_VALENCE_SUFFIXES[1]}`,
+  butil: `${stem(4)}${FREE_VALENCE_SUFFIXES[1]}`,
+  il: FREE_VALENCE_SUFFIXES[1],
+  isopropil: `${RETAINED_PREFIXES.isopropyl.italic}${RETAINED_PREFIXES.isopropyl.text}`,
+  tertButil: `${RETAINED_PREFIXES['tert-butyl'].italic}${RETAINED_PREFIXES['tert-butyl'].text}`,
+  /** The systematic form of `tert-butoxi` (explain.js alkoxyFormation() says it too). */
+  dimetiletoxi: `1,1-${multiplier(2)}${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${stem(2)}${ALKOXY_ENDING}`,
 });
+
+/** The style of the engine's functional-class alternative (naming/index.js etherClassAlternative(); R-5b2). */
+const FUNCTIONAL_CLASS = 'functionalClass';
 
 /** The SubstituentSpec kind of a `hidroxi` prefix (tiles.js; R-5a2). */
 const HYDROXY_KIND = tileById(HYDROXY_ID).kind;
@@ -467,6 +536,26 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
   LETTER_LOCANTS: (d) => `Las letras ${WORDS.letters.slice(0, -1).join(', ')} y ${WORDS.letters[WORDS.letters.length - 1]} `
     + `(orto, meta y para) son una forma antigua de decir dónde van dos grupos del benceno, y con estas ramas no se usan: `
     + `se escriben los números, «${d.name}».`,
+  // Ethers (R-5b2, file header «Ethers»).
+  ETHER_SIDE: (d) => `El oxígeno del éter (–O–) corta la molécula en dos lados, y la cadena principal no puede pasar por él: se `
+    + 'busca en uno de los dos lados, con las reglas de siempre. Aquí la cadena principal está en el otro lado del oxígeno, no en '
+    + `el de ${d.studentRing ? 'tu anillo' : 'tu cadena'}: ${DIAGNOSIS_PHRASES.etherSide(d)}. `
+    + `${DIAGNOSIS_PHRASES.etherHolder(d)}: «${d.name}».`,
+  ALKOXY_MULTIPLIER: (d) => (d.tertButoxy
+    ? `«${d.prefix}» se cuenta como un prefijo compuesto, porque su forma sistemática, «${WORDS.dimetiletoxi}», lleva sus `
+      + `propias ramas; delante va «${WORDS.bis}», «${WORDS.tris}»…: «${d.right}», no «${d.student}».`
+    : `Un prefijo «-${WORDS.oxi}» que no se acorta, como «${d.prefix}», es un prefijo compuesto (un grupo más «${WORDS.oxi}») y `
+      + `va entre paréntesis; delante de un prefijo compuesto se usa «${WORDS.bis}», «${WORDS.tris}»…: «${d.right}», `
+      + `no «${d.student}».`),
+  CLASS_NAME_NONE: (d) => `El nombre con «${WORDS.eter}» (nombre de clase funcional) solo lo doy cuando el oxígeno une dos `
+    + `grupos sencillos: ${DIAGNOSIS_PHRASES.simpleGroups}. Esta molécula se nombra con un prefijo acabado en `
+    + `«-${WORDS.oxi}»: «${d.name}».`,
+  CLASS_GROUP_WORDS: (d) => `En el nombre con «${WORDS.eter}», cada grupo se nombra con su forma más sencilla, sin números: `
+    + `${WORDS.metil}, ${WORDS.etil}, ${WORDS.propil}…, ${WORDS.isopropil} o ${WORDS.tertButil}. Se escribe «${d.name}».`,
+  CLASS_ORDER: (d) => `En el nombre con «${WORDS.eter}», los dos grupos se escriben por orden alfabético: «${d.first}» va antes `
+    + `que «${d.second}» (${d.why}).${d.hint ? ` ${d.hint}` : ''} Se escribe «${d.right}».`,
+  CLASS_DI: (d) => `Si los dos grupos unidos al oxígeno son iguales, su nombre se escribe una sola vez, con «${WORDS.di}» delante: `
+    + `«${d.right}», no «${d.student}».`,
 });
 
 /** The phrases the templates of DIAGNOSIS_TEXTS fill in (Spanish drafts, pending teacher review). */
@@ -546,6 +635,128 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
     const chains = d.chain === 0 ? 'las cadenas no llevan ninguno' : `la mejor cadena, ${count(d.chain)}`;
     return `el anillo lleva ${count(d.ring)} y ${chains}, así que gana el anillo`;
   }, // End of the hydroxyChoice phrase
+  /** Why a class name's groups go in that order when their letters tie (CLASS_ORDER, R-5b2: `butil tert-butil éter`). */
+  plainFirst: `con las mismas letras, va primero el grupo sin «${WORDS.tert}»`,
+  /**
+   * The ethers the engine gives a class name, «…dos grupos sencillos: <this>» (CLASS_NAME_NONE and its explanation step,
+   * R-5b2; naming/index.js etherClassAlternative()).
+   */
+  simpleGroups: `cadenas sin ramas unidas por su extremo (${WORDS.metil}, ${WORDS.etil}, ${WORDS.propil}…), ${WORDS.isopropil} o `
+    + `${WORDS.tertButil}, sin enlaces dobles ni triples, sin anillos y sin más átomos que esos carbonos y el oxígeno`,
+  /**
+   * Why the parent is on the other side of the ether oxygen (ETHER_SIDE, R-5b2), by the chain or ring rule that chose it
+   * (the code that rule gives on its own, `reason`, with its data), as the explanation's «Reconoce el éter» step words it
+   * (explain.js etherSideReason()).
+   *
+   * @param {object} d - The ETHER_SIDE data: `reason`, the counts or locants of that rule, `benzene`.
+   * @returns {string} The phrase.
+   */
+  etherSide: (d) => {
+    /**
+     * Some OH groups as the phrase says them.
+     *
+     * @param {number} n - The count.
+     * @returns {string} «ningún grupo –OH», «un grupo –OH», «2 grupos –OH».
+     */
+    const groups = (n) => ['ningún grupo –OH', 'un grupo –OH'][n] || `${n} grupos –OH`;
+    /**
+     * A count of OH groups after the first one is named.
+     *
+     * @param {number} n - The count.
+     * @returns {string} «ninguno», «uno» or the number.
+     */
+    const count = (n) => ['ninguno', 'uno'][n] || String(n);
+    const tied = 'las cadenas de los dos lados empatan en longitud';
+    const lead = 'primero cuenta el grupo principal, y';
+    switch (d.reason) {
+      case 'RING_IS_PARENT':
+        return `en ese lado ${d.benzene ? 'está el benceno' : 'hay un anillo'}, y un anillo manda siempre sobre una cadena abierta`;
+      case 'HYDROXY_PARENT': {
+        const [there, mine] = d.chainParent ? [d.chain, d.ring] : [d.ring, d.chain];
+        return there === mine
+          ? `${lead} los dos lados llevan ${groups(there)} cada uno; en el empate, manda el anillo`
+          : `${lead} en ese lado hay ${groups(there)} y en el tuyo, ${count(mine)}`;
+      }
+      case 'MORE_HYDROXY_GROUPS':
+        return `${lead} en ese lado hay ${groups(d.app)} y en ${d.studentRing ? 'tu anillo' : 'tu cadena'}, ${count(d.student)}`;
+      case 'LONGER_CHAIN':
+        return `en ese lado hay una cadena de ${d.length} carbonos, más larga que la tuya, de ${d.student}`;
+      case 'MORE_MULTIPLE_BONDS':
+        return `${tied}, y la de ese lado tiene más enlaces dobles o triples (${d.app}; la tuya, ${d.student})`;
+      case 'MORE_DOUBLE_BONDS':
+        return `${tied} y en enlaces múltiples, y la de ese lado tiene más enlaces dobles (${d.app}; la tuya, ${d.student})`;
+      case 'MORE_SUBSTITUENTS':
+        return `${tied} y en enlaces dobles o triples, y la de ese lado tiene más sustituyentes (${d.app}; la tuya, ${d.student})`;
+      case 'CHAIN_LOCANTS':
+        return `${tied}, en enlaces múltiples y en sustituyentes, y la de ese lado, bien numerada, da números más bajos a `
+          + `${DIAGNOSIS_PHRASES.lowerLocantsOf[d.rule]}${difference(d)}`;
+      default: // CHAIN_ALPHABETICAL
+        return `${tied} y en todo lo demás, y la de ese lado da un nombre que va antes por orden alfabético`;
+    }
+  }, // End of the etherSide phrase
+  /**
+   * Where the student's chain or ring goes in the engine's name (ETHER_SIDE, R-5b2 review): with the oxygen, the whole
+   * substituent that holds it (`etoximetano`: «metoxi»), or a part of it when it lies deeper inside (`nested`:
+   * `(2-propoxietoxi)metano`, the methyl inside «2-metoxietoxi»).
+   *
+   * @param {{studentRing: boolean, nested?: boolean, side: string|null}} d - The ETHER_SIDE data.
+   * @returns {string} The phrase, capitalised (it starts a sentence).
+   */
+  etherHolder: (d) => {
+    const mine = d.studentRing ? 'Tu anillo' : 'Tu cadena';
+    if (d.nested) {
+      return d.side ? `${mine} forma parte del sustituyente «${d.side}»` : `${mine} forma parte de un sustituyente`;
+    }
+    return `${mine}, con el oxígeno, `
+      + `${d.side ? `es el sustituyente «${d.side}»` : `va en un sustituyente acabado en «-${WORDS.oxi}»`}`;
+  },
+});
+
+/**
+ * The id of the explanation step that diagnosisExplanation() adds, right
+ * after «Reconoce el éter», for the diagnosis of an ether's functional-class
+ * name (classNameStep(); review of phase I-51b2): no explain() step speaks of
+ * class names.
+ */
+export const CLASS_NAME_STEP = 'etherClass';
+
+/** The class-name diagnosis codes (R-5b2), which open CLASS_NAME_STEP. */
+const CLASS_CODES = Object.freeze(['CLASS_NAME_NONE', 'CLASS_GROUP_WORDS', 'CLASS_ORDER', 'CLASS_DI']);
+
+/**
+ * The Spanish drafts (pending teacher review) of CLASS_NAME_STEP
+ * (classNameStep(), review of phase I-51b2): its title and paragraphs, in the
+ * explanation's glossary markup (`[[prefijo]]`). For an ether the engine
+ * gives a class name: the substitutive name of the other steps and how the
+ * class name differs from it, its groups, their order, `di`, the word
+ * `éter` and the name; for one it gives none (CLASS_NAME_NONE): the class
+ * name in general, which ethers get one, and the `-oxi` name of this one.
+ */
+export const CLASS_NAME_STEP_TEXTS = Object.freeze({
+  title: `Monta el nombre con «${WORDS.eter}»`,
+  substitutive: (d) => `El nombre que explican los otros pasos, «${d.substitutive}», es el que doy primero, el nombre `
+    + 'sustitutivo: el oxígeno y uno de los dos grupos unidos a él van delante como [[prefijo]] acabado en '
+    + `«-${WORDS.oxi}», y el otro grupo da la [[cadena principal]]. Un éter sencillo como este tiene también otro nombre válido, `
+    + 'que la IUPAC (2013) acepta: el nombre de clase funcional. Se monta de otra manera, sin cadena principal y sin números.',
+  groups: (d) => `Los dos grupos unidos al oxígeno se nombran como ramas, acabados en «-${WORDS.il}», cada uno con su forma más `
+    + `sencilla y sin números (${WORDS.metil}, ${WORDS.etil}, ${WORDS.propil}…, ${WORDS.isopropil} o ${WORDS.tertButil}): aquí, `
+    + `${d.groups[0] === d.groups[1] ? `los dos son «${d.groups[0]}»` : `«${d.groups[0]}» y «${d.groups[1]}»`}.`,
+  order: 'Los dos grupos se escriben por orden alfabético, como los sustituyentes de un nombre: '
+    + `«${WORDS.tert}» no cuenta para el orden, y si las letras empatan va primero el grupo sin «${WORDS.tert}» `
+    + `(${WORDS.butil} ${WORDS.tertButil} ${WORDS.eter}).`,
+  di: `Si los dos grupos son iguales, se escriben una sola vez, con «${WORDS.di}» delante: `
+    + `«${WORDS.di}${WORDS.etil} ${WORDS.eter}», no «${WORDS.etil} ${WORDS.etil} ${WORDS.eter}».`,
+  word: (d) => `Al final va la palabra «${WORDS.eter}», y las palabras van separadas por espacios. En el nombre sustitutivo, en `
+    + `cambio, el éter nunca va al final: es el prefijo «-${WORDS.oxi}». Para esta molécula: «${d.name}».`,
+  general: `Un éter sencillo tiene también un nombre de clase funcional, con la palabra «${WORDS.eter}» al final (en el nombre `
+    + `sustitutivo, el que explican los otros pasos, el éter nunca va al final: es un prefijo «-${WORDS.oxi}»).`,
+  generalForm: 'Ese nombre se monta sin cadena principal y sin números: los dos grupos unidos al oxígeno se nombran como ramas '
+    + `acabadas en «-${WORDS.il}», por orden alfabético («${WORDS.tert}» no cuenta), una sola vez con «${WORDS.di}» delante si `
+    + `son iguales, y al final va «${WORDS.eter}»: «${WORDS.etil} ${WORDS.metil} ${WORDS.eter}», `
+    + `«${WORDS.di}${WORDS.etil} ${WORDS.eter}».`,
+  only: `Ese nombre solo lo doy cuando el oxígeno une dos grupos sencillos: ${DIAGNOSIS_PHRASES.simpleGroups}.`,
+  none: (d) => `Esta molécula no es uno de esos éteres sencillos, así que no tiene nombre con «${WORDS.eter}»: se nombra como en `
+    + `los otros pasos, con el oxígeno en un [[prefijo]] acabado en «-${WORDS.oxi}»: «${d.substitutive}».`,
 });
 
 /**
@@ -554,7 +765,8 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
  * whose place they take, file header): its rule number (1–11), the
  * explanation step it points at (an explain() step id, design.md §5; a draft
  * may give its own case's step, `benzene` for RING_IS_PARENT on the benzene
- * ring) and example data for its message (R-7 lists the drafts with it).
+ * ring; the class names CLASS_NAME_STEP, which diagnosisExplanation() adds)
+ * and example data for its message (R-7 lists the drafts with it).
  * Frozen; later families add their codes.
  */
 export const DIAGNOSES = Object.freeze({
@@ -590,6 +802,26 @@ export const DIAGNOSES = Object.freeze({
     example: Object.freeze({ template: WORDS.tolueno, parent: WORDS.benceno, name: `1,4-${WORDS.di}${WORDS.metil}${WORDS.benceno}` }),
   }),
   PHENOL: Object.freeze({ rule: 2, step: 'group', example: Object.freeze({ name: `4-${WORDS.metil}${WORDS.fenol}` }) }),
+  ETHER_SIDE: Object.freeze({
+    rule: 2,
+    step: 'ether',
+    example: Object.freeze({
+      reason: 'LONGER_CHAIN',
+      student: 1,
+      length: 2,
+      benzene: false,
+      studentRing: false,
+      nested: false,
+      side: `${stem(1)}${WORDS.oxi}`,
+      name: `${stem(1)}${WORDS.oxi}${stem(2)}${ENDINGS.saturated}`,
+    }),
+  }),
+  CLASS_NAME_NONE: Object.freeze({
+    rule: 2, step: CLASS_NAME_STEP, example: Object.freeze({ name: `${stem(1)}${WORDS.oxi}${stem(2)}${ENDINGS.double}` }),
+  }),
+  CLASS_GROUP_WORDS: Object.freeze({
+    rule: 2, step: CLASS_NAME_STEP, example: Object.freeze({ name: `${WORDS.isopropil} ${WORDS.metil} ${WORDS.eter}` }),
+  }),
   MORE_MULTIPLE_BONDS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 0, app: 1 }) }),
   MORE_DOUBLE_BONDS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 0, app: 1 }) }),
   MORE_SUBSTITUENTS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 1, app: 2, halogen: false }) }),
@@ -608,15 +840,38 @@ export const DIAGNOSES = Object.freeze({
       first: WORDS.etil, second: WORDS.metil, why: DIAGNOSIS_PHRASES.why.letters(WORDS.etil[0], WORDS.metil[0]), hint: '',
     }),
   }),
+  CLASS_ORDER: Object.freeze({
+    rule: 5,
+    step: CLASS_NAME_STEP,
+    example: Object.freeze({
+      first: WORDS.etil, second: WORDS.metil, why: DIAGNOSIS_PHRASES.why.letters(WORDS.etil[0], WORDS.metil[0]), hint: '',
+      right: `${WORDS.etil} ${WORDS.metil} ${WORDS.eter}`,
+    }),
+  }),
   UNGROUPED: Object.freeze({
     rule: 6, step: 'substituents',
     example: Object.freeze({
       compound: false, halogen: false, right: `2,3-${WORDS.di}${WORDS.metil}`, student: `2-${WORDS.metil}-3-${WORDS.metil}`,
     }),
   }),
+  CLASS_DI: Object.freeze({
+    rule: 6,
+    step: CLASS_NAME_STEP,
+    example: Object.freeze({ right: `${WORDS.di}${WORDS.etil} ${WORDS.eter}`, student: `${WORDS.etil} ${WORDS.etil} ${WORDS.eter}` }),
+  }),
   MULTIPLIER_KIND: Object.freeze({
     rule: 7, step: 'substituents',
     example: Object.freeze({ compound: false, right: `2,3-${WORDS.di}${WORDS.metil}`, student: `2,3-${WORDS.bis}${WORDS.metil}` }),
+  }),
+  ALKOXY_MULTIPLIER: Object.freeze({
+    rule: 7,
+    step: 'substituents',
+    example: Object.freeze({
+      tertButoxy: false,
+      prefix: `${stem(5)}${FREE_VALENCE_SUFFIXES[1]}${WORDS.oxi}`,
+      right: `1,6-${WORDS.bis}(${stem(5)}${FREE_VALENCE_SUFFIXES[1]}${WORDS.oxi})`,
+      student: `1,6-${WORDS.di}(${stem(5)}${FREE_VALENCE_SUFFIXES[1]}${WORDS.oxi})`,
+    }),
   }),
   LOCANT_ORDER: Object.freeze({
     rule: 8, step: 'assemble',
@@ -665,7 +920,11 @@ export const DIAGNOSIS_CODES = Object.freeze(Object.keys(DIAGNOSES));
  * when a side chain carries OH groups too, which HYDROXY_PARENT checks
  * itself (it names `benzene` or `ring` otherwise); a monosubstituted
  * benzene or a one-carbon parent has no numbering step (`triclorometanol`:
- * «Monta el nombre»).
+ * «Monta el nombre»). An ether (R-5b2) always has «Reconoce el éter»
+ * (`ether`): its oxygen is an alkoxy prefix of the engine's name, at some
+ * depth; the fallbacks are the chain or ring steps that follow it. The
+ * class-name step (CLASS_NAME_STEP) is always among diagnosisExplanation()'s
+ * steps; on explain()'s alone it falls back to «Reconoce el éter».
  */
 export const STEP_FALLBACKS = Object.freeze({
   group: Object.freeze(['count']),
@@ -680,6 +939,8 @@ export const STEP_FALLBACKS = Object.freeze({
   ring: Object.freeze(['benzene', 'count']),
   benzene: Object.freeze(['ring', 'count']),
   ringNumbering: Object.freeze(['numbering', 'assemble']),
+  ether: Object.freeze(['chain', 'ring', 'benzene', 'count']),
+  [CLASS_NAME_STEP]: Object.freeze(['ether', 'chain', 'ring', 'benzene', 'count']),
 });
 
 /**
@@ -689,18 +950,22 @@ export const STEP_FALLBACKS = Object.freeze({
  * @typedef {object} Diagnosis
  * @property {string} code - A DIAGNOSES key.
  * @property {number} rule - Its rule number in design.md §15.8 R-3 (1–11; a ring or alcohol rule takes the number of the
- *   rule whose place it takes, file header).
+ *   rule whose place it takes, file header; ETHER_SIDE that of the draft it replaces, R-5b2).
  * @property {string|null} traceRule - The engine trace rule the diagnosis follows ('P0'…'P4', 'N0'…'N5'; 'RING' for
- *   RING_IS_PARENT; 'RINGCHAIN' or 'RING' for HYDROXY_PARENT), or null for HYDROXY_PREFIX, BENZENE_RING,
- *   SUBSTITUTED_TEMPLATE, PHENOL and rules 5–11.
+ *   RING_IS_PARENT; 'RINGCHAIN' or 'RING' for HYDROXY_PARENT; ETHER_SIDE that of the draft it replaces, R-5b2), or null
+ *   for HYDROXY_PREFIX, BENZENE_RING, SUBSTITUTED_TEMPLATE, PHENOL, the class-name codes and rules 5–11.
  * @property {string} message - The Spanish message (DIAGNOSIS_TEXTS).
  * @property {string} step - The `id` of the explain() step that explains the rule, a step of the explanation of the naming
- *   in `style` (diagnosisExplanation() builds it and finds the step; diagnosisStepIndex()).
+ *   in `style` (diagnosisExplanation() builds it and finds the step; diagnosisStepIndex()); for a class name,
+ *   CLASS_NAME_STEP, the step diagnosisExplanation() adds.
+ * @property {{name: string, groups: string[]}|null} [className] - Only on a class-name diagnosis (R-5b2): the class name
+ *   its message recommends and its two group words in that order (a repeated group twice), or null for CLASS_NAME_NONE;
+ *   the class-name step quotes them (classNameStep()).
  * @property {string} style - The prefix style compared with (substituent.js PREFIX_STYLES; the student's own), the
  *   explanation context: the trace, `parent` and `step` belong to nameMolecule(molecule, {prefixStyle: style})
  *   (diagnosisNaming(); the verdict's own naming for the default style).
  * @property {{atoms: number[], bonds: number[]}} student - The student's parent chain (or ring, its closing bond last), in
- *   the student's locant order.
+ *   the student's locant order; empty for an ether's class name (R-5b2), which has none.
  * @property {{atoms: number[], bonds: number[]}} parent - The app's parent chain or ring in that style (the naming's
  *   `parent`; the verdict's naming for the default style), in its locant order.
  * @property {{atoms: number[], bonds: number[]}} focus - The atoms and bonds the message is about (empty when none).
@@ -1900,10 +2165,11 @@ function ungrouped(ctx) {
 /**
  * Rule 7: a multiplier of the wrong kind — di… before a branch with
  * prefixes of its own, or bis… before a simple one. An alkoxy prefix that
- * takes bis… only for its form (R-5b: `di(pentiloxi)`, `di(propan-2-iloxi)`,
- * `di-tert-butoxi`, a branch + `oxi` with no prefixes of its own) is a deliberate null (file
- * header «Ethers»): the message's reason, «una rama que tiene sus propias
- * ramas», does not hold for it.
+ * takes bis… only for its form (R-5b2, file header «Ethers»: a branch +
+ * `oxi` with no prefixes of its own, `di(pentiloxi)`, `di(propan-2-iloxi)`,
+ * and `di-tert-butoxi`, which the engine writes `bis-tert-butoxi`) gets
+ * ALKOXY_MULTIPLIER, whose message gives that reason: MULTIPLIER_KIND's,
+ * «una rama que tiene sus propias ramas», does not hold for it.
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.
@@ -1921,13 +2187,21 @@ function multiplierKind(ctx) {
         continue;
       }
       const ownBranches = item.substituent.type === 'branch' && item.substituent.items.length > 0;
-      if (compound && !ownBranches) {
-        continue; // `di(pentiloxi)` (R-5b): compound for its form only — an ether message for I-51b2 (file header «Ethers»).
-      }
       const swapped = withTiles(tree, new Map([[item.multiplier, tileById(tileId(compound ? 'cmult' : 'mult', tile.value))]]));
+      const texts = { right: quoted(swapped, list, item), student: quoted(tree, list, item) };
+      if (compound && !ownBranches) {
+        // `di(pentiloxi)`, `di-tert-butoxi` (R-5b2): bis… for the alkoxy prefix's form (assemble.js isCompoundAlkoxy()).
+        const core = alkoxyCore(item.substituent);
+        return {
+          code: 'ALKOXY_MULTIPLIER',
+          data: { tertButoxy: core.type === 'retained', prefix: wordsOf(tree, item), ...texts },
+          focus: prefixFocus(ctx, list, [index]),
+          tiles: [item.multiplier, item.multiplier + 1],
+        };
+      }
       return {
         code: 'MULTIPLIER_KIND',
-        data: { compound, right: quoted(swapped, list, item), student: quoted(tree, list, item) },
+        data: { compound, ...texts },
         focus: prefixFocus(ctx, list, [index]),
         tiles: [item.multiplier, item.multiplier + 1],
       };
@@ -2278,6 +2552,143 @@ function letterLocants(ctx) {
 } // End of function letterLocants()
 
 /**
+ * The parent-choice codes that ETHER_SIDE takes over when the student's chain
+ * is on the other side of an ether oxygen from the engine's parent (R-5b2,
+ * file header «Ethers»): the ring or chain choice and the chain rules 2–3.
+ */
+const ACROSS_OXYGEN = Object.freeze(['RING_IS_PARENT', 'HYDROXY_PARENT', 'MORE_HYDROXY_GROUPS', 'LONGER_CHAIN',
+  'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL']);
+
+/**
+ * The ether oxygen between the student's chain and the engine's parent
+ * (R-5b2): when the two share no atom, the last ether oxygen (an O with two
+ * bonds) on the shortest path from the student's chain to the parent — the
+ * one next to the parent's side, whose alkoxy prefix holds the student's
+ * chain. Null when they share an atom or no ether oxygen lies between them.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {number|null} The oxygen's atom id, or null.
+ */
+function oxygenBetween(ctx) {
+  const { molecule, adj, reading, naming } = ctx;
+  const parent = new Set(naming.parent.atoms);
+  const start = reading.studentParent.atoms;
+  if (start.some((id) => parent.has(id))) {
+    return null;
+  }
+  const previous = new Map(start.map((id) => [id, null]));
+  const queue = [...start];
+  let reached = null;
+  while (queue.length > 0 && reached === null) {
+    const id = queue.shift();
+    for (const n of adj.get(id)) {
+      if (!previous.has(n.atom)) {
+        previous.set(n.atom, id);
+        if (parent.has(n.atom)) {
+          reached = n.atom;
+          break;
+        }
+        queue.push(n.atom);
+      }
+    }
+  } // End of the breadth-first search from the student's chain
+  for (let id = reached === null ? null : previous.get(reached); id !== null; id = previous.get(id)) {
+    if (molecule.atoms.get(id).element === ALKOXY_ELEMENT && adj.get(id).length === 2) {
+      return id;
+    }
+  }
+  return null;
+} // End of function oxygenBetween()
+
+/**
+ * The engine's prefix that holds the student's chain (R-5b2, ETHER_SIDE):
+ * the text of the naming's `prefix` part whose atoms include every atom of
+ * the student's chain — `metoxi` in `metoxietano`, the whole `(2-metoxietoxi)`
+ * for a chain deeper inside —, or null.
+ *
+ * @param {object} naming - The naming compared with.
+ * @param {number[]} atoms - The student's chain.
+ * @returns {string|null} The prefix's text.
+ */
+function holdingPrefix(naming, atoms) {
+  const part = (naming.parts || []).find((p) => p.kind === 'prefix' && atoms.every((id) => (p.atoms || []).includes(id)));
+  return part ? part.text : null;
+}
+
+/**
+ * Tells whether the student's chain lies deeper inside the engine's
+ * substituent that holds it (R-5b2 review, ETHER_SIDE): the substituent is
+ * the student's chain (with its own branches) and the oxygen only when that
+ * oxygen is bonded both to the student's chain and to the engine's parent
+ * (`etoximetano`: «metoxi»; `cloro(propoxi)metano`: «clorometoxi»);
+ * otherwise the student's chain is part of a larger substituent
+ * (`(2-propoxietoxi)metano`: the methyl inside «2-metoxietoxi»;
+ * `(2-etilpentiloxi)metano`: inside «metoximetil», whose oxygen does not
+ * touch the parent).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {number} oxygen - The ether oxygen between the two (oxygenBetween()).
+ * @returns {boolean} True when the student's chain is only part of the substituent.
+ */
+function nestedSide(ctx, oxygen) {
+  const { adj, reading, naming } = ctx;
+  /**
+   * Tells whether the oxygen is bonded to an atom of a set.
+   *
+   * @param {number[]} atoms - The atoms.
+   * @returns {boolean} True when one of them is bonded to the oxygen.
+   */
+  const bonded = (atoms) => adj.get(oxygen).some((n) => atoms.includes(n.atom));
+  return !(bonded(reading.studentParent.atoms) && bonded(naming.parent.atoms));
+}
+
+/**
+ * A parent-choice draft (ACROSS_OXYGEN) as ETHER_SIDE when the student's
+ * chain is on the other side of an ether oxygen from the engine's parent
+ * (R-5b2, file header «Ethers»: `etoximetano` for `metoxietano`,
+ * `fenoxietano` for `etoxibenceno`): the same trace rule and data, its
+ * reason told from the oxygen (DIAGNOSIS_PHRASES.etherSide()), the rule
+ * number of the draft it replaces (the kindest reading still compares
+ * them), the step «Reconoce el éter» (which says which side holds the parent
+ * and why), the oxygen added to the focus and the tiles of the student's
+ * prefix that holds the engine's parent; `nested` when the student's chain is
+ * only part of the engine's substituent that holds it (nestedSide()). Any
+ * other draft is returned as it is.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {object} draft - A draft of the parent rules.
+ * @returns {object} The draft.
+ */
+function acrossOxygen(ctx, draft) {
+  if (!ACROSS_OXYGEN.includes(draft.code)) {
+    return draft;
+  }
+  const oxygen = oxygenBetween(ctx);
+  if (oxygen === null) {
+    return draft;
+  }
+  const { naming, reading, adj } = ctx;
+  const focus = idsOf(draft.focus);
+  return {
+    code: 'ETHER_SIDE',
+    rule: DIAGNOSES[draft.code].rule,
+    traceRule: draft.traceRule,
+    data: {
+      ...draft.data,
+      reason: draft.code,
+      benzene: benzeneParent(naming),
+      studentRing: isRing(ctx.spec.parent.kind),
+      nested: nestedSide(ctx, oxygen),
+      side: holdingPrefix(naming, reading.studentParent.atoms),
+      name: naming.name,
+    },
+    focus: { atoms: [...focus.atoms, oxygen], bonds: [...focus.bonds, ...adj.get(oxygen).map((n) => n.bond)] },
+    tiles: parentHolderTiles(ctx),
+    step: 'ether',
+  };
+} // End of function acrossOxygen()
+
+/**
  * The checks of rules 5–11, in order. Later families insert theirs.
  */
 const FORM_RULES = Object.freeze([alphabeticalOrder, ungrouped, multiplierKind, locantOrder, needlessLocants, missingLocants,
@@ -2288,19 +2699,20 @@ const FORM_RULES = Object.freeze([alphabeticalOrder, ungrouped, multiplierKind, 
  * written `hidroxi` on the parent, then its parent's kind (ring or chain:
  * hydroxyPrefix(), hydroxyParent(); file header «Alcohols»), the parent's
  * rules (chainRules(), rules 1–4; ringRules() when the engine's parent is
- * the ring), then the form rules.
+ * the ring) — a parent choice told from the ether oxygen when the student's
+ * chain is on its other side (acrossOxygen(), R-5b2) —, then the form rules.
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} The draft `{code, traceRule?, data, focus, tiles, step?}`, or null.
+ * @returns {object|null} The draft `{code, rule?, traceRule?, data, focus, tiles, step?}`, or null.
  */
 function firstRule(ctx) {
   const alcohol = hydroxyPrefix(ctx) || hydroxyParent(ctx);
   if (alcohol) {
-    return alcohol;
+    return acrossOxygen(ctx, alcohol); // The ring or chain on the other side of an ether oxygen (R-5b2).
   }
   const parent = ctx.naming.structure.parentKind === 'ring' ? ringRules(ctx) : chainRules(ctx);
   if (parent) {
-    return parent;
+    return acrossOxygen(ctx, parent); // `etoximetano` (R-5b2).
   }
   for (const rule of FORM_RULES) {
     const draft = rule(ctx);
@@ -2445,6 +2857,192 @@ function outsideRules(name, structure) {
 } // End of function outsideRules()
 
 /**
+ * The rule number of a draft: its own (ETHER_SIDE takes the number of the
+ * rule it replaces, acrossOxygen()), else its code's.
+ *
+ * @param {{code: string, rule?: number}} draft - A draft.
+ * @returns {number} The rule number.
+ */
+function ruleOf(draft) {
+  return draft.rule || DIAGNOSES[draft.code].rule;
+}
+
+/**
+ * The engine's functional-class name of an ether written from the student's
+ * group words (R-5b2), as naming/index.js etherClassAlternative() writes it
+ * (not exported there): the two words in alphabetical order without `tert-`
+ * (compareClassWords()), `di` and the word once when they are the same, and
+ * `éter`. Equal to the engine's alternative exactly when the student's words
+ * are the engine's.
+ *
+ * @param {string[]} words - The two group words, a repeated group twice (`etil`, `etil`).
+ * @returns {string} The name.
+ */
+function classNameOf(words) {
+  const [a, b] = [...words].sort(compareClassWords);
+  return a === b ? `${WORDS.di}${a} ${WORDS.eter}` : `${a} ${b} ${WORDS.eter}`;
+}
+
+/**
+ * The order of two group words in an ether's class name (naming/index.js
+ * etherClassAlternative()): alphabetical without `tert-`; on equal letters
+ * the plain word first (`butil tert-butil éter`).
+ *
+ * @param {string} x - A group word.
+ * @param {string} y - Another.
+ * @returns {number} Negative when `x` goes first, positive when `y` does, 0 for the same word.
+ */
+function compareClassWords(x, y) {
+  /**
+   * A word without its italic `tert-`.
+   *
+   * @param {string} word - A group word.
+   * @returns {string} Its letters.
+   */
+  const letters = (word) => (word.startsWith(WORDS.tert) ? word.slice(WORDS.tert.length) : word);
+  if (letters(x) === letters(y)) {
+    return x.length - y.length;
+  }
+  return letters(x) < letters(y) ? -1 : 1;
+} // End of function compareClassWords()
+
+/**
+ * Why the first of two class-name group words goes first (CLASS_ORDER,
+ * R-5b2): the first letters that differ (without `tert-`), the shorter word,
+ * or — on equal letters — the plain word before the one with `tert-`.
+ *
+ * @param {string} first - The word that goes first.
+ * @param {string} second - The other.
+ * @returns {string} The phrase.
+ */
+function classOrderReason(first, second) {
+  const [a, b] = [first, second].map((word) => (word.startsWith(WORDS.tert) ? word.slice(WORDS.tert.length) : word));
+  if (a === b) {
+    return DIAGNOSIS_PHRASES.plainFirst;
+  }
+  for (let i = 0; i < Math.min(a.length, b.length); i += 1) {
+    if (a[i] !== b[i]) {
+      return DIAGNOSIS_PHRASES.why.letters(a[i], b[i]);
+    }
+  }
+  return DIAGNOSIS_PHRASES.why.shorter;
+} // End of function classOrderReason()
+
+/**
+ * The two group words of a class name as the engine writes it
+ * (naming/index.js etherClassAlternative(): `etil metil éter`, or `di`, the
+ * word and `éter` for two equal groups, `dietil éter`), in its order (review
+ * of phase I-51b2, classNameStep()).
+ *
+ * @param {string} name - The engine's class name.
+ * @returns {string[]} The two words (a repeated group twice).
+ */
+function classGroupsOf(name) {
+  const words = name.split(' ').slice(0, -1);
+  if (words.length === 2) {
+    return words;
+  }
+  const word = words[0].slice(WORDS.di.length).replace(/^-/, '');
+  return [word, word];
+}
+
+/**
+ * The draft of an ether's functional-class name (R-5b2, file header
+ * «Ethers»), in order: the engine gives the molecule no class name
+ * (CLASS_NAME_NONE, the `éter` tile); the student's group words are not the
+ * engine's (CLASS_GROUP_WORDS: `metil propan-2-il éter`, `(propan-1-il)…`,
+ * the groups' tiles); a repeated group written twice or with `bis`
+ * (CLASS_DI); the two groups out of order (CLASS_ORDER, with the `tert-`
+ * hint when the student's order is right counting it). The right forms of
+ * the last two are assembled from the student's tree. Every draft but
+ * CLASS_NAME_NONE carries `className`, the name its message recommends and
+ * its group words (classNameStep() quotes them). Null when none applies —
+ * only `di-tert-butil éter`, which the engine writes `ditert-butil éter` (a
+ * deliberate null, file header).
+ *
+ * @param {{tree: object, spec: object}} name - The student's tree and NameSpec.
+ * @param {object} verdict - The `otherName` verdict (its naming and reading).
+ * @returns {object|null} The draft `{code, data, className?, focus, tiles}`, or null.
+ */
+function classNameDraft(name, verdict) {
+  const { tree } = name;
+  const { tiles, items } = tree;
+  const word = tree.parent.chain.tile;
+  const { naming } = verdict;
+  const offered = (naming.alternatives || []).find((alt) => alt.style === FUNCTIONAL_CLASS);
+  if (!offered) {
+    return { code: 'CLASS_NAME_NONE', data: { name: naming.name }, focus: idsOf(null), tiles: [word, word + 1] };
+  }
+  const groups = [items[0].range[0], items[items.length - 1].range[1]];
+  const focus = occurrenceIds(verdict.prefixAtoms);
+  const words = items.flatMap((item) => Array.from({ length: countOf(tiles, item) }, () => wordsOf(tree, item)));
+  if (classNameOf(words) !== offered.name.normalize('NFC')) {
+    return {
+      code: 'CLASS_GROUP_WORDS',
+      data: { name: offered.name },
+      className: { name: offered.name, groups: classGroupsOf(offered.name) },
+      focus,
+      tiles: groups,
+    };
+  }
+  const student = assemble(tree).text;
+  if (words[0] === words[1] && (items.length > 1 || tiles[items[0].multiplier].kind === 'cmult')) {
+    const fixed = [...tiles, tileById(tileId('mult', words.length))];
+    const one = { ...items[0], multiplier: fixed.length - 1 };
+    const right = assemble({ ...tree, tiles: fixed, items: [one] }).text;
+    return {
+      code: 'CLASS_DI', data: { right, student }, className: { name: right, groups: [words[0], words[0]] }, focus, tiles: groups,
+    };
+  }
+  if (items.length > 1 && compareClassWords(words[0], words[1]) > 0) {
+    // The student's order is right counting `tert-` as letters (`metil tert-butil éter`): the student seems to have counted it.
+    const counted = words.some((w) => w.startsWith(WORDS.tert)) && words[0] < words[1];
+    const hint = counted ? DIAGNOSIS_PHRASES.hints.italic : '';
+    const right = assemble({ ...tree, items: [items[1], items[0]] }).text;
+    return {
+      code: 'CLASS_ORDER',
+      data: { first: words[1], second: words[0], why: classOrderReason(words[1], words[0]), hint, right },
+      className: { name: right, groups: [words[1], words[0]] },
+      focus,
+      tiles: groups,
+    };
+  }
+  return null; // `di-tert-butil éter`: the engine writes `ditert-butil éter` (file header «Ethers»).
+} // End of function classNameDraft()
+
+/**
+ * The diagnosis of an ether's functional-class name (R-5b2): classNameDraft()
+ * as a Diagnosis, compared with the verdict's own naming (the class name is
+ * offered beside the default style), the class-name step (CLASS_NAME_STEP,
+ * which diagnosisExplanation() adds; review of phase I-51b2) with the name
+ * the message recommends (`className`), no student's chain (a class name has
+ * none: no stripe, no legend) and the engine's parent.
+ *
+ * @param {{tree: object, spec: object}} name - The student's tree and NameSpec.
+ * @param {object} verdict - The `otherName` verdict.
+ * @returns {Diagnosis|null} The diagnosis, or null.
+ */
+function classNameDiagnosis(name, verdict) {
+  const draft = classNameDraft(name, verdict);
+  if (!draft) {
+    return null;
+  }
+  return {
+    code: draft.code,
+    rule: ruleOf(draft),
+    traceRule: null,
+    message: DIAGNOSIS_TEXTS[draft.code](draft.data),
+    step: DIAGNOSES[draft.code].step,
+    style: PREFIX_STYLES[0],
+    student: idsOf(null),
+    parent: idsOf(verdict.naming.parent),
+    focus: idsOf(draft.focus),
+    tiles: [draft.tiles[0], draft.tiles[1]],
+    className: draft.className ? { name: draft.className.name, groups: [...draft.className.groups] } : null,
+  };
+} // End of function classNameDiagnosis()
+
+/**
  * Names the main mistake of an `otherName` verdict (design.md §15.3, §15.8
  * R-3): the first rule of the list (file header) that applies, compared with
  * the engine's naming in the student's prefix style, on the most charitable
@@ -2465,7 +3063,13 @@ export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
     return null;
   }
   const { parentKind } = verdict.naming.structure;
-  if (!['chain', 'ring'].includes(parentKind) || outsideRules(name, verdict.naming.structure)) {
+  if (!['chain', 'ring'].includes(parentKind)) {
+    return null;
+  }
+  if (name.spec.classWord) {
+    return classNameDiagnosis(name, verdict); // `metil etil éter` (R-5b2, file header «Ethers»)
+  }
+  if (outsideRules(name, verdict.naming.structure)) {
     return null;
   }
   const adj = adjacency(molecule);
@@ -2487,14 +3091,14 @@ export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
     if (!draft) {
       return null; // The kindest reading of all: no rule names a mistake on it (file header).
     }
-    if (!best || DIAGNOSES[draft.code].rule > DIAGNOSES[best.draft.code].rule) {
+    if (!best || ruleOf(draft) > ruleOf(best.draft)) {
       best = { draft, reading };
     }
   } // End of the loop over the readings
   const { draft, reading } = best;
   return {
     code: draft.code,
-    rule: DIAGNOSES[draft.code].rule,
+    rule: ruleOf(draft),
     traceRule: draft.traceRule || null,
     message: DIAGNOSIS_TEXTS[draft.code](draft.data),
     step: draft.step || DIAGNOSES[draft.code].step,
@@ -2545,14 +3149,105 @@ export function diagnosisNaming(verdict, namer = nameMolecule) {
 }
 
 /**
+ * The canvas marks of the class-name step (review of phase I-51b2): the two
+ * groups bonded to the ether oxygen of a class name (the student's parent,
+ * build.js etherOxygen()), each as a `substituent`, and the oxygen with its
+ * two bonds as a `candidate`, as «Reconoce el éter» marks an oxygen. None
+ * when that atom is not an ether oxygen (never seen).
+ *
+ * @param {object} molecule - The verdict's molecule.
+ * @param {number|undefined} oxygen - The class name's oxygen (the verdict's studentParent).
+ * @returns {{atoms: number[], bonds: number[], style: string}[]} The highlight specs.
+ */
+function classNameHighlight(molecule, oxygen) {
+  const adj = adjacency(molecule);
+  const atom = molecule.atoms.get(oxygen);
+  if (!atom || atom.element !== ALKOXY_ELEMENT || adj.get(oxygen).length !== 2) {
+    return [];
+  }
+  const sides = adj.get(oxygen).map((start) => {
+    const atoms = new Set([start.atom]);
+    const bonds = new Set();
+    const queue = [start.atom];
+    while (queue.length > 0) {
+      const id = queue.shift();
+      for (const n of adj.get(id)) {
+        if (n.atom === oxygen) {
+          continue; // The other side lies beyond the oxygen.
+        }
+        bonds.add(n.bond);
+        if (!atoms.has(n.atom)) {
+          atoms.add(n.atom);
+          queue.push(n.atom);
+        }
+      }
+    } // End of the breadth-first search of one side
+    return { atoms: [...atoms], bonds: [...bonds], style: 'substituent' };
+  }); // End of the map over the oxygen's two sides
+  return [...sides, { atoms: [oxygen], bonds: adj.get(oxygen).map((n) => n.bond), style: 'candidate' }];
+} // End of function classNameHighlight()
+
+/**
+ * The explanation step of a class-name diagnosis (CLASS_NAME_STEP, «Monta el
+ * nombre con «éter»»; review of phase I-51b2): no explain() step speaks of
+ * class names, and «Reconoce el éter» says an ether «nunca va al final del
+ * nombre», true of the substitutive name only. For an ether the engine gives
+ * a class name, how that name is formed and how it differs from the
+ * substitutive name of the other steps, with the groups and the name the
+ * diagnosis recommends (Diagnosis `className`); for CLASS_NAME_NONE, the
+ * class name in general, which ethers get one and that this one is named only
+ * with its `-oxi` prefix (CLASS_NAME_STEP_TEXTS). Marks: classNameHighlight().
+ *
+ * @param {{molecule: object, studentParent: {atoms: number[]}, diagnosis: Diagnosis}} verdict - The class-name verdict.
+ * @param {object} naming - The naming its explanation explains (diagnosisNaming()).
+ * @returns {{id: string, title: string, text: string[], highlight: object[], locants: null}} The step.
+ */
+function classNameStep(verdict, naming) {
+  const texts = CLASS_NAME_STEP_TEXTS;
+  const { className } = verdict.diagnosis;
+  const text = className
+    ? [texts.substitutive({ substitutive: naming.name }), texts.groups(className), texts.order, texts.di, texts.word(className)]
+    : [texts.general, texts.generalForm, texts.only, texts.none({ substitutive: naming.name })];
+  return {
+    id: CLASS_NAME_STEP,
+    title: texts.title,
+    text,
+    highlight: classNameHighlight(verdict.molecule, verdict.studentParent && verdict.studentParent.atoms[0]),
+    locants: null,
+  };
+} // End of function classNameStep()
+
+/**
+ * The explanation steps a diagnosis shows (diagnosisExplanation()): the
+ * naming's own steps, with the class-name step (classNameStep()) right after
+ * «Reconoce el éter» for a class-name diagnosis (before the last step, «Monta
+ * el nombre», should that step be missing; never seen: a class name always
+ * builds an ether oxygen).
+ *
+ * @param {object[]} steps - The naming's explanation steps (explain()).
+ * @param {{molecule: object, studentParent: {atoms: number[]}, diagnosis: Diagnosis}} verdict - The diagnosed verdict.
+ * @param {object} naming - The naming the steps explain.
+ * @returns {object[]} The steps to show.
+ */
+function diagnosisSteps(steps, verdict, naming) {
+  if (!CLASS_CODES.includes(verdict.diagnosis.code) || steps.length === 0) {
+    return steps;
+  }
+  const ether = steps.findIndex((step) => step.id === 'ether');
+  const at = ether >= 0 ? ether + 1 : steps.length - 1;
+  return [...steps.slice(0, at), classNameStep(verdict, naming), ...steps.slice(at)];
+}
+
+/**
  * The explanation a diagnosis opens (phase I-49b, «Ver el paso»): the
  * naming it compared with (diagnosisNaming()), that naming's explanation
- * steps and the index of the diagnosis's step among them
- * (diagnosisStepIndex()). The stepper must show these steps — not those of
- * the verdict's own naming, which in another prefix style may number the
- * chain as the student did and so contradict a NUMBERING diagnosis
- * (`6-metil-4-(propan-2-il)nonano`). The explanation is injected
- * (src/explain/explain.js explain()): src/reverse never imports it.
+ * steps — with the class-name step for a class-name diagnosis
+ * (diagnosisSteps(), review of phase I-51b2) — and the index of the
+ * diagnosis's step among them (diagnosisStepIndex()). The stepper must show
+ * these steps — not those of the verdict's own naming, which in another
+ * prefix style may number the chain as the student did and so contradict a
+ * NUMBERING diagnosis (`6-metil-4-(propan-2-il)nonano`). The explanation is
+ * injected (src/explain/explain.js explain()): src/reverse never imports it.
  *
  * @param {{molecule: object, naming: object, diagnosis?: Diagnosis|null}} verdict - An `otherName` verdict (readName()).
  * @param {(naming: object) => {id: string}[]} explainSteps - Builds the explanation steps of a naming (explain()).
@@ -2565,6 +3260,6 @@ export function diagnosisExplanation(verdict, explainSteps, namer = nameMolecule
   if (!naming) {
     return null;
   }
-  const steps = explainSteps(naming);
+  const steps = diagnosisSteps(explainSteps(naming), verdict, naming);
   return { naming, steps, index: diagnosisStepIndex(steps, verdict.diagnosis) };
 }

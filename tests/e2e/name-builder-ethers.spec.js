@@ -8,9 +8,17 @@
  * `anisol` («Nombres tradicionales», with its tooltip) draws metoxibenceno
  * as an accepted alternative; the crowded `cloro(metoxi)metano` gets its
  * parentheses from the app and is correct; `etoximetano` draws its molecule
- * with the app's name and why; `oxi` out of place and left-out locants
- * (`metoxipropano`) stay in the dialog with their message, the canvas
- * untouched; the Ayuda section «Del nombre al dibujo» has its ethers line.
+ * with the app's name and why, told from the oxygen (phase I-51b2,
+ * ETHER_SIDE); `oxi` out of place and left-out locants (`metoxipropano`)
+ * stay in the dialog with their message, the canvas untouched; the Ayuda
+ * section «Del nombre al dibujo» has its ethers line. Phase I-51b2, R-5b2:
+ * the «Grupos» row offers `éter` (with its tooltip); tiles `et il met il
+ * éter` build `etil metil éter` — the spaces the app's — and «Dibujar» draws
+ * metoxietano as an accepted alternative, `dietil éter` too; `metil etil
+ * éter` draws its molecule with the order mistake, «Ver el paso» opening the
+ * class-name step «Monta el nombre con «éter»» (review of phase I-51b2); one
+ * group only stays in the dialog; the Ayuda ethers line speaks of class
+ * names.
  * Runs on the dev server and on dist (playwright.config.js).
  */
 
@@ -203,17 +211,17 @@ test('`anisol` draws metoxibenceno, an accepted alternative; `cloro(metoxi)metan
   expect(elementsOf(drawn)).toEqual(['C', 'C', 'Cl', 'O']);
   expect(oxygenNeighbours(drawn)).toEqual([['C1', 'C1']]);
 
-  // The wrong side of the oxygen as the parent: the molecule, its name and why.
+  // The wrong side of the oxygen as the parent: the molecule, its name and why, told from the oxygen (I-51b2).
   dialog = await buildName(page, 'et', 'il', 'oxi', 'met', 'ano');
   await expect(page.locator('#name-builder-name')).toHaveText('etoximetano');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
-  await expect(verdict).toHaveAttribute('data-diagnosis', 'LONGER_CHAIN');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'ETHER_SIDE');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
     + '«metoxietano».');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('Hay una cadena más larga que la tuya: la tuya tiene 1 carbono y la '
-    + 'cadena principal tiene 2.');
+  await expect(verdict.locator('.verdict-diagnosis')).toContainText('en ese lado hay una cadena de 2 carbonos, más larga que la '
+    + 'tuya, de 1. Tu cadena, con el oxígeno, es el sustituyente «metoxi»: «metoxietano».');
   await expect(page.locator('#result-name')).toHaveText('metoxietano');
   expect(elementsOf(await moleculeJSON(page))).toEqual(['C', 'C', 'C', 'O']);
   expect(await drawingInsideCanvas(page)).toBe(true);
@@ -259,9 +267,96 @@ test('`oxi` out of place, or left-out locants, stay in the dialog with their mes
   await expect(help.locator('#help-name-to-drawing')).toContainText('y también de sus éteres');
   const line = help.locator('#help-name-to-drawing-ethers');
   for (const phrase of ['«oxi» va detrás de una rama', 'met, il y oxi dan metoxi', '1-metoxipropano', '(pentiloxi)',
-    '(propan-2-iloxi)', '(2-metilpropoxi)', 'El anisol (metoxibenceno)']) {
+    '(propan-2-iloxi)', '(2-metilpropoxi)', 'El anisol (metoxibenceno)', 'con la palabra «éter», que está en «Grupos»',
+    'et, il, met, il y éter dan etil metil éter', 'dietil éter', 'tert-butil metil éter']) {
     await expect(line).toContainText(phrase);
   }
+  await expect(help.locator('#help-name-to-drawing')).toContainText('Los guiones, las comas, los paréntesis y los espacios los pongo yo.');
   await page.keyboard.press('Escape');
   expect(errors).toEqual([]);
 }); // End of test '`oxi` out of place, or left-out locants, stay in the dialog…'
+
+test('«Grupos»: `éter` builds a class name with the app\'s spaces; `etil metil éter` and `dietil éter` are accepted, `metil etil éter` explained', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.getByRole('button', { name: '¿Cómo se dibuja?' }).click();
+  const tile = page.getByRole('group', { name: 'Grupos' }).locator('[data-tile="class-ether"]');
+  await expect(tile).toHaveText('éter');
+  await expect(tile).toBeVisible();
+  await expect(tile).toHaveAccessibleName('éter');
+  await expect(tile).toHaveClass(/nb-tile--classWord/);
+  await expect(tile).toHaveAttribute('title', /et, il, met, il y éter dan etil metil éter/);
+  await page.keyboard.press('Escape');
+
+  // One group only: the dialog says what is missing, the tiles marked, the canvas untouched.
+  let dialog = await buildName(page, 'met', 'il', 'éter');
+  await expect(page.locator('#name-builder-name')).toHaveText('metil éter');
+  await dialog.getByRole('button', { name: 'Dibujar' }).click();
+  const message = page.locator('#name-builder-message');
+  await expect(message).toHaveText('Un éter lleva dos grupos unidos al oxígeno y tu nombre solo pone uno: escribe dos, por orden '
+    + 'alfabético (etil metil éter), o uno solo con «di» delante si los dos son iguales (dietil éter).');
+  expect(await invalidTiles(page)).toEqual([0, 1, 2]);
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  expect((await moleculeJSON(page)).atoms).toHaveLength(0);
+
+  // `et il met il éter`: the spaces are the app's; «Dibujar» draws metoxietano, an accepted alternative.
+  dialog = await buildName(page, 'et', 'il', 'met', 'il', 'éter');
+  const line = page.locator('#name-builder-name');
+  await expect(line).toHaveText('etil metil éter');
+  await expect(line.locator('.part-ending')).toHaveText(['éter']);
+  await dialog.getByRole('button', { name: 'Dibujar' }).click();
+  await expect(dialog).toBeHidden();
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'alternative');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: etil metil éter');
+  await expect(verdict.locator('.verdict-message')).toHaveText('¡Correcto! «etil metil éter» es una forma válida (nombre de clase '
+    + 'funcional (los dos grupos y la palabra «éter»), que la IUPAC (2013) acepta). El nombre que doy primero es «metoxietano».');
+  await expect(page.locator('#result-name')).toHaveText('metoxietano');
+  let drawn = await moleculeJSON(page);
+  expect(elementsOf(drawn)).toEqual(['C', 'C', 'C', 'O']);
+  expect(oxygenNeighbours(drawn)).toEqual([['C1', 'C1']]);
+  expect(await drawingInsideCanvas(page)).toBe(true);
+  await expect(page.locator('svg#canvas .hl-parent.hl-atom').first()).toBeAttached();
+
+  // `di et il éter`: dietil éter.
+  dialog = await buildName(page, 'di', 'et', 'il', 'éter');
+  await expect(line).toHaveText('dietil éter');
+  await dialog.getByRole('button', { name: 'Dibujar' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(verdict).toHaveAttribute('data-kind', 'alternative');
+  await expect(page.locator('#result-name')).toHaveText('etoxietano');
+  drawn = await moleculeJSON(page);
+  expect(elementsOf(drawn)).toEqual(['C', 'C', 'C', 'C', 'O']);
+  expect(oxygenNeighbours(drawn)).toEqual([['C1', 'C1']]);
+
+  // The groups out of order: the molecule, its name and why; a class name has no chain of its own to stripe.
+  dialog = await buildName(page, 'met', 'il', 'et', 'il', 'éter');
+  await dialog.getByRole('button', { name: 'Dibujar' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'CLASS_ORDER');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('En el nombre con «éter», los dos grupos se escriben por orden '
+    + 'alfabético: «etil» va antes que «metil» (e antes que m). Se escribe «etil metil éter».');
+  await expect(verdict.getByRole('list', { name: 'Qué se ve en el dibujo' })).toHaveCount(0);
+  await expect(page.locator('svg#canvas .hl-student')).toHaveCount(0);
+  // «Ver el paso» (review of phase I-51b2): the class-name step, after «Reconoce el éter», says how this name is formed
+  // and tells it from metoxietano; the two groups and the oxygen are marked.
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper).toHaveAttribute('data-step-id', 'etherClass');
+  await expect(stepper.locator('.step-title')).toHaveText('Monta el nombre con «éter»');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 3 de 7');
+  const content = stepper.locator('.step-content');
+  for (const phrase of ['El nombre que explican los otros pasos, «metoxietano», es el que doy primero, el nombre sustitutivo',
+    'aquí, «etil» y «metil».', '«tert-» no cuenta para el orden', '«dietil éter», no «etil etil éter»',
+    'En el nombre sustitutivo, en cambio, el éter nunca va al final', 'Para esta molécula: «etil metil éter».']) {
+    await expect(content).toContainText(phrase);
+  }
+  await expect(page.locator('svg#canvas .hl-substituent.hl-atom')).toHaveCount(3);
+  await expect(page.locator('svg#canvas .hl-candidate.hl-atom')).toHaveCount(1);
+  // One step back, «Reconoce el éter»: the substitutive name's ether.
+  await stepper.getByRole('button', { name: 'Anterior' }).click();
+  await expect(stepper).toHaveAttribute('data-step-id', 'ether');
+  expect(errors).toEqual([]);
+}); // End of test '«Grupos»: `éter` builds a class name…'

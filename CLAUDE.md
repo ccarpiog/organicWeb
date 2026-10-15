@@ -100,8 +100,17 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   `(propan-2-iloxi)`; `cloro(metoxi)metano`), on chains, rings, `benceno`,
   beside OH groups and halogens and inside compound branches, their
   left-out locants searched, and `anisol` in «Nombres tradicionales»; the
-  diagnosis reads alkoxy prefixes as substituents. Next is R-5b2 (phase
-  I-51b2): ether class names and the ether diagnosis.
+  diagnosis reads alkoxy prefixes as substituents. R-5b2 (phase I-51b2) is
+  done, and with it R-5b: the «Grupos» row's `éter` tile reads ether
+  functional-class names (`etil metil éter`, `dietil éter`, `tert-butil
+  metil éter`; the spaces automatic, each group enclosed as a prefix by
+  itself) as the engine's alternatives and any other class name as
+  `otherName`, and `diagnose.js` names the ether's own mistakes (header
+  «Ethers»: the parent on the other side of the oxygen, told from the
+  oxygen; `di` for `bis` before an alkoxy prefix; a class name for an ether
+  that has none, in other words, out of order or with a repeated group),
+  each with its «Ver el paso» step. Next is R-5c (phase I-51c): aldehydes
+  and ketones.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

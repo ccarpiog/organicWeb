@@ -226,6 +226,11 @@ const CASES = [
   ['1,4-bismetilbenceno', 'MULTIPLIER_KIND', null, 'substituents',
     '«bis», «tris»… solo van delante de ramas que tienen sus propias ramas; aquí va «di», «tri»…: «1,4-dimetil», no «1,4-bismetil».',
     '1,4-dimetilbenceno', 'correct'],
+  // Phase I-51b2: `di` before an alkoxy prefix the engine multiplies with `bis` for its form.
+  ['1,4-di(pentiloxi)benceno', 'ALKOXY_MULTIPLIER', null, 'substituents',
+    'Un prefijo «-oxi» que no se acorta, como «pentiloxi», es un prefijo compuesto (un grupo más «oxi») y va entre paréntesis; '
+    + 'delante de un prefijo compuesto se usa «bis», «tris»…: «1,4-bis(pentiloxi)», no «1,4-di(pentiloxi)».',
+    '1,4-bis(pentiloxi)benceno', 'correct'],
   ['3,1-dimetilciclohexano', 'LOCANT_ORDER', null, 'assemble',
     'Los números de un mismo grupo se escriben de menor a mayor: «1,3-dimetil», no «3,1-dimetil».',
     '1,3-dimetilciclohexano', 'correct'],
@@ -275,8 +280,9 @@ test('one case per ring rule and per R-3 rule on a ring: the code, its trace rul
   for (const code of RING_CODES) {
     assert.ok(seen.has(code), `${code} has a case`);
   }
-  // Every R-3 form rule (5–11) has a ring case too; MISSING_LOCANTS cannot be the main mistake on a ring (tested below).
-  const formCodes = DIAGNOSIS_CODES.filter((c) => DIAGNOSES[c].rule >= 5 && c !== 'MISSING_LOCANTS');
+  // Every R-3 form rule (5–11) has a ring case too; MISSING_LOCANTS cannot be the main mistake on a ring (tested below), nor
+  // can the rules of an ether's class name (phase I-51b2: a class name has no parent ring).
+  const formCodes = DIAGNOSIS_CODES.filter((c) => DIAGNOSES[c].rule >= 5 && c !== 'MISSING_LOCANTS' && !c.startsWith('CLASS_'));
   assert.deepEqual(formCodes.filter((c) => !seen.has(c)), []);
 }); // End of test 'one case per ring rule and per R-3 rule on a ring…'
 

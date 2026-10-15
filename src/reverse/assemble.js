@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -66,6 +66,15 @@
  *    (`prop 1 il oxi`) keeps the `il`: `(propan-1-iloxi)`, never a locant run
  *    into `oxi`.
  *
+ * 7. an ether's functional-class name (R-5b2, design.md §2): its groups are
+ *    separate words, a space between them and before the class word `éter`
+ *    (`etil metil éter`, `dietil éter`, `di-tert-butil éter` with rule 5's
+ *    hyphen); each group is enclosed as rule 5 encloses a prefix by itself
+ *    (isEnclosed(): `(2-cloroetil) metil éter`, `bis(2-cloroetil) éter`,
+ *    `metil (propan-2-il) éter`), never for standing beside the other group
+ *    (no crowded level: the groups are words of their own). The engine's
+ *    own class names (simple groups) are never enclosed.
+ *
  * A ring (R-4a) is a chain with its `ciclo` tile before the root, and takes
  * the same rules: `ciclohexa-1,3-dieno` (rule 2), `ciclooct-1-en-3-ino` and
  * `(ciclohex-2-en-1-il)` (rule 3), `ciclohexil`, `ciclohexiliden` and an
@@ -117,7 +126,8 @@
  * has exactly one span; the controls of a compound branch that needs no
  * marks get an empty one. `kind` follows render.js parts: 'locant',
  * 'multiplier', 'stem', 'ending' in the parent and before a prefix,
- * 'prefix' inside a branch, 'punct' for punctuation and marks. The opening
+ * 'prefix' inside a branch, 'punct' for punctuation, marks and the spaces of
+ * a class name (R-5b2), 'ending' for its class word `éter`. The opening
  * mark of an unfinished compound branch has `pending: true` (shown faintly,
  * design.md §15.2).
  */
@@ -215,7 +225,8 @@ export function isCompoundAlkoxy(tiles, node) {
  * @property {string} text - The text ('' for a compound-branch control without marks).
  * @property {number|null} tile - Index of its tile, or null for automatic text.
  * @property {string} kind - render.js part kind.
- * @property {'locant'|'word'|'mult'|'open'|'close'} role - What the punctuation rules see.
+ * @property {'locant'|'word'|'mult'|'open'|'close'|'space'} role - What the punctuation rules see ('space': the
+ *   automatic space between the words of a class name, R-5b2).
  * @property {boolean} [italic] - The piece starts with an italic descriptor (`tert-`).
  * @property {boolean} [pending] - Opening mark of an unfinished compound branch.
  */
@@ -235,7 +246,7 @@ const KINDS = Object.freeze({
  * @param {string} text - The text.
  * @param {number|null} tile - Tile index, or null.
  * @param {string} kind - Part kind.
- * @param {'locant'|'word'|'mult'|'open'|'close'} role - Punctuation role.
+ * @param {'locant'|'word'|'mult'|'open'|'close'|'space'} role - Punctuation role.
  * @param {object} [extra] - `italic` / `pending` flags.
  * @returns {Piece} The piece.
  */
@@ -369,7 +380,7 @@ function strayPieces(tiles, index, out) {
   const kinds = {
     num: 'locant', positional: 'locant', closing: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending',
     freeValence: 'ending', retained: 'prefix', halogen: 'prefix', hydroxy: 'prefix', suffix: 'ending', start: 'punct', end: 'punct',
-    ring: 'stem', benzene: 'stem', template: 'stem', alkoxy: 'ending',
+    ring: 'stem', benzene: 'stem', template: 'stem', alkoxy: 'ending', classWord: 'ending',
   };
   out.push(piece(tile.text, index, kinds[tile.kind], roles[tile.kind] || 'word', tile.italic ? { italic: true } : {}));
 }
@@ -553,9 +564,11 @@ function ownChainPieces(tiles, node, out) {
  * @param {number} index - The item's position in `items`.
  * @param {boolean} nested - Inside a compound branch (its locants and multiplier are part of the branch's prefix part).
  * @param {Piece[]} out - Receives the pieces.
+ * @param {boolean} [classGroup] - A group of an ether's class name (R-5b2, rule 7): enclosed as a prefix by itself
+ *   (isEnclosed()), never for its level (default false).
  * @returns {void}
  */
-function itemPieces(tiles, items, index, nested, out) {
+function itemPieces(tiles, items, index, nested, out, classGroup = false) {
   const item = items[index];
   if (item.type === 'stray') {
     strayPieces(tiles, item.tile, out);
@@ -570,7 +583,8 @@ function itemPieces(tiles, items, index, nested, out) {
     out.push(piece(tiles[item.multiplier].text, item.multiplier, kinds.multiplier, 'mult'));
   }
   if (item.substituent) {
-    substituentPieces(tiles, item.substituent, enclosedAt(tiles, items, index), out);
+    const enclosed = classGroup ? isEnclosed(tiles, item.substituent) : enclosedAt(tiles, items, index);
+    substituentPieces(tiles, item.substituent, enclosed, out);
   }
 } // End of function itemPieces()
 
@@ -616,7 +630,9 @@ function parentPieces(tiles, parent, out) {
   }
   const { suffix } = parent;
   const beforeVowel = suffixElides(tiles, suffix);
-  if (parent.chain.type === 'benzene' || parent.chain.type === 'template') {
+  if (parent.chain.type === 'classWord') {
+    out.push(piece(tiles[parent.chain.tile].text, parent.chain.tile, KINDS.parent.ending, 'word')); // `éter` (R-5b2)
+  } else if (parent.chain.type === 'benzene' || parent.chain.type === 'template') {
     const word = tiles[parent.chain.tile].text;
     // `1,2-dimetilbenceno`, `tolueno`, `fenol`; `bencenol`, `benceno-1,2-diol` (R-5a2).
     out.push(piece(beforeVowel ? word.slice(0, -1) : word, parent.chain.tile, KINDS.parent.stem, 'word'));
@@ -637,8 +653,8 @@ function parentPieces(tiles, parent, out) {
  * @returns {string} '', ',' or '-'.
  */
 export function separator(prev, next) {
-  if (!prev) {
-    return '';
+  if (!prev || prev.role === 'space' || next.role === 'space') {
+    return ''; // The space of a class name (R-5b2) is all there is between two of its words.
   }
   if (prev.role === 'locant') {
     return next.role === 'locant' ? ',' : '-';
@@ -717,12 +733,41 @@ function join(pieces) {
  */
 export function assemble(tree) {
   const out = [];
-  tree.items.forEach((item, i) => itemPieces(tree.tiles, tree.items, i, false, out));
+  const classWord = Boolean(tree.parent) && isClassName(tree);
+  tree.items.forEach((item, i) => {
+    if (classWord && i > 0) {
+      out.push(spacePiece()); // `etil metil éter` (rule 7, R-5b2)
+    }
+    itemPieces(tree.tiles, tree.items, i, false, out, classWord);
+  });
   if (tree.parent) {
+    if (classWord && tree.items.length > 0) {
+      out.push(spacePiece());
+    }
     parentPieces(tree.tiles, tree.parent, out);
   }
   tree.trailing.forEach((stray) => strayPieces(tree.tiles, stray.tile, out));
   return join(out);
+} // End of function assemble()
+
+/**
+ * Tells whether a tree is an ether's functional-class name (R-5b2): its
+ * parent is the class word `éter`.
+ *
+ * @param {object} tree - A parse() tree.
+ * @returns {boolean} True for `etil metil éter`, `dietil éter`…
+ */
+export function isClassName(tree) {
+  return Boolean(tree.parent) && tree.parent.chain.type === 'classWord';
+}
+
+/**
+ * The automatic space between two words of a class name (rule 7, R-5b2).
+ *
+ * @returns {Piece} The piece.
+ */
+function spacePiece() {
+  return piece(' ', null, 'punct', 'space');
 }
 
 /**

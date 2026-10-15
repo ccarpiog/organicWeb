@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T03:32:10Z",
+  "updated": "2026-10-15T04:43:58Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -701,8 +701,8 @@
     {
       "id": "I-51b",
       "title": "v4 R-5b Ethers",
-      "status": "in_progress",
-      "summary": "Extends tile names to ethers; split into I-51b1 (alkoxy prefixes, anisol) and I-51b2 (class names, ether diagnosis)."
+      "status": "done",
+      "summary": "Extends tile names to ethers; split into I-51b1 (alkoxy prefixes, anisol) and I-51b2 (class names, ether diagnosis), both done."
     },
     {
       "id": "I-51b1",
@@ -716,9 +716,11 @@
     {
       "id": "I-51b2",
       "title": "v4 R-5b2 Ether class names and ether diagnosis",
-      "status": "queued",
+      "status": "done",
       "risk": "high",
-      "summary": "Reads ether class names such as etil metil éter and names the main mistake of an ether name."
+      "summary": "Reads ether class names such as etil metil éter from tiles and names the main mistake of an ether name.",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-51b2.md",
+      "narrative": "docs/progress-archive/i-51b2.md"
     },
     {
       "id": "I-51c",

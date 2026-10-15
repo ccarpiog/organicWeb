@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -101,6 +101,16 @@
  * one methyl among its groups, at the position its letter gives — the
  * letter's locant, its carbon 1 being the OH's (`p-cresol`: 4) — or left
  * out (one left-out slot on the template tile, searched).
+ *
+ * An ether's functional-class name (R-5b2: `etil metil éter`, `dietil
+ * éter`) has no parent chain: its parent is the ether oxygen itself
+ * (ParentSpec kind 'ether', one atom, no carbons, no bonds of its own), and
+ * its two groups are the name's prefixes, each bonded to that oxygen — one
+ * implicit slot per occurrence at the oxygen's only position (role
+ * `carbon`, domain 1…1, on the group's tiles), so build.js and search.js
+ * attach them as any prefix and the left-out locants inside a compound
+ * group (`(cloroetil) metil éter`) are searched as usual. `classWord` holds
+ * the class word and its tile.
  */
 
 import { slotDomain } from './search.js';
@@ -172,9 +182,9 @@ import { isPhenol } from './parse.js';
  * The parent chain or ring.
  *
  * @typedef {object} ParentSpec
- * @property {'chain'|'ring'|'benzene'} kind - An open chain, a ring (`ciclo`, R-4a) or the benzene ring (`benceno`, R-4b;
- *   also a retained template, R-4c).
- * @property {number} length - Carbons.
+ * @property {'chain'|'ring'|'benzene'|'ether'} kind - An open chain, a ring (`ciclo`, R-4a) or the benzene ring
+ *   (`benceno`, R-4b; also a retained template, R-4c); 'ether' for the oxygen of a functional-class name (R-5b2).
+ * @property {number} length - Carbons (for 'ether', its one atom: the oxygen, no carbon; build.js parentCarbons()).
  * @property {Slot[]} double - Double-bond slots.
  * @property {Slot[]} triple - Triple-bond slots.
  * @property {TemplateSpec|null} template - The retained template (`tolueno`…, R-4c), or null.
@@ -205,7 +215,8 @@ import { isPhenol } from './parse.js';
  * @property {PrefixSpec[]} prefixes - The prefixes in the student's order.
  * @property {SuffixSpec|null} suffix - The principal characteristic group cited as a suffix (R-5a2: the alcohol's `ol`, or the
  *   OH of `fenol`), or null.
- * @property {null} classWord - `ácido`… (from R-5d; none for hydrocarbons).
+ * @property {{kind: 'ether', text: string, tiles: [number, number]}|null} classWord - The class word of a
+ *   functional-class name (R-5b2: `éter`, its tile range); `ácido`… from R-5d; null otherwise.
  * @property {null} ester - The O-bound side of an ester (from R-6a).
  * @property {{value: string, tiles: [number, number]}|null} traditional - A traditional name tile: the retained template
  *   (R-4c; its TEMPLATES key and tile range), or null.
@@ -631,6 +642,41 @@ function suffixSpec(ctx, parent) {
 } // End of function suffixSpec()
 
 /**
+ * The NameSpec of an ether's functional-class name (R-5b2; file header): the
+ * ether oxygen as the parent (kind 'ether', one atom), each group a
+ * PrefixSpec with one implicit slot per occurrence at the oxygen (`dietil
+ * éter`: two), in the student's order.
+ *
+ * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
+ * @param {object} tree - An error-free parse() tree whose parent is the class word.
+ * @returns {NameSpec} The reading of the name.
+ */
+function classNameSpec(ctx, tree) {
+  const word = tree.parent.chain.tile;
+  const own = [word, word + 1];
+  const prefixes = tree.items.map((item) => {
+    const multiplier = multiplierOf(ctx.tiles, item.multiplier);
+    return {
+      slots: Array.from({ length: multiplier.count }, () => makeSlot('implicit', 1, 'carbon', 1, item.range)),
+      multiplier,
+      substituent: substituentSpec(ctx, item.substituent),
+      tiles: [item.range[0], item.range[1]],
+    };
+  });
+  return {
+    parent: { kind: 'ether', length: 1, double: [], triple: [], template: null, tiles: own },
+    prefixes,
+    suffix: null,
+    classWord: { kind: ctx.tiles[word].value, text: ctx.tiles[word].text, tiles: [own[0], own[1]] },
+    ester: null,
+    traditional: null,
+    oldStyle: false,
+    tiles: [0, tree.tiles.length],
+    leftOut: ctx.leftOut,
+  };
+} // End of function classNameSpec()
+
+/**
  * Tells whether a tree is one interpret() accepts: a parent, no tile out of
  * place, every prefix complete (what an error-free parse gives).
  *
@@ -654,6 +700,9 @@ export function interpret(tree) {
     throw new Error('interpret: the tree is incomplete (parse() reported errors)');
   }
   const ctx = { tiles: tree.tiles, leftOut: [] };
+  if (tree.parent.chain.type === 'classWord') {
+    return classNameSpec(ctx, tree); // `etil metil éter` (R-5b2)
+  }
   const { chain, legacy, legacySegment, legacySuffix, suffix } = tree.parent;
   // `benceno` (R-4b), `fenol` (R-5a2) or a template (R-4c): no segments, no old-style locants of their own (parse.js
   // BENZENE_BONDS, TEMPLATE_LOCANTS; those of a suffix, `1,2-bencenodiol`, are the suffix's).

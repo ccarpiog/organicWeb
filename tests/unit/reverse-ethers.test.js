@@ -13,9 +13,11 @@
  * branch and its carbon; the caps; VALENCE), search (left-out alkoxy
  * locants by the carbons' free valence, the budget), readName() verdicts
  * with the molecule each describes (compared by aromatic key with a SMILES),
- * mutations and their diagnosis, the deliberate diagnosis nulls left for
- * phase R-5b2 (diagnose.js header «Ethers»), the fixture round trip over
- * every ether row of tests/fixtures/names.tsv but the class names (R-5b2),
+ * mutations and their diagnosis (the ether messages of phase R-5b2, I-51b2:
+ * the parent on the wrong side of the oxygen, `di` for `bis` before an
+ * alkoxy prefix; diagnose.js header «Ethers»), the fixture round trip over
+ * every ether row of tests/fixtures/names.tsv — the functional-class names
+ * too since phase R-5b2 (their own tests: reverse-ether-classes.test.js) —,
  * the closed loop over the oracle's ether generators (generateEthers(),
  * generateBenzenes(), generateSubstitutedPhenyls(),
  * generateRingPrincipalBenzenes(), ether molecules only; pure imports, no
@@ -40,6 +42,7 @@ import { parseSmiles } from '../../src/model/smiles.js';
 import { aromaticKey } from '../../src/model/graph.js';
 import { MAX_HEAVY_ATOMS, TOO_MANY_ATOMS_MESSAGE } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
+import { multiplier, RETAINED_PREFIXES } from '../../src/naming/lexicon.es.js';
 import {
   generateEthers, generateBenzenes, generateSubstitutedPhenyls, generateRingPrincipalBenzenes,
 } from '../../scripts/oracle/generate.mjs';
@@ -54,10 +57,10 @@ import { seq, readFixtures, leafIndices, isEther, isEtherMolecule, isEtherClassN
  */
 const EXPECTED_ROWS = Object.freeze({ total: 40, i34: 33, i40a: 2, i42a: 2, i43a: 1, i45a: 2 });
 
-/** Their names and alternatives read back (every one but the functional-class names, phase R-5b2). */
-const EXPECTED_NAMES = 46;
+/** Their names and alternatives read back: 46 substitutive and traditional names, and the class names (phase R-5b2). */
+const EXPECTED_NAMES = 57;
 
-/** The functional-class names of those rows (`dimetil éter`, `dietil éter`…), left for phase R-5b2 (I-51b2). */
+/** The functional-class names among them (`dimetil éter`, `dietil éter`…), read since phase R-5b2 (I-51b2). */
 const EXPECTED_CLASS_NAMES = 11;
 
 /** The I-34 rows with a C=O beside the ether (an acid, an aldehyde, a ketone): their phases R-5c and R-5d. */
@@ -71,16 +74,25 @@ const PER_NAME_BUDGET_MS = 250;
 
 /**
  * The tile ids of a name: space-separated tile words (reverse-words.js), or
- * a name text read by the tokenizer.
+ * a name text read by the tokenizer (a class name, `dietil éter`, has spaces
+ * too: it is tile words only when every word is a tile).
  *
  * @param {string} name - Tile words or a name.
  * @returns {string[]} The tile ids.
  */
 function idsOf(name) {
-  const ids = name.includes(' ') ? seq(name) : tokenize(name);
+  let ids = null;
+  if (name.includes(' ')) {
+    try {
+      ids = seq(name);
+    } catch (err) {
+      ids = null; // A class name: `etil metil éter` (R-5b2).
+    }
+  }
+  ids = ids || tokenize(name);
   assert.ok(ids, `no tiles for ${name}`);
   return ids;
-}
+} // End of function idsOf()
 
 /**
  * Reads a name (tile words or text).
@@ -570,11 +582,12 @@ test('readName (R-5b): left-out alkoxy locants list the structures; the budget; 
   const symmetric = read('2-(2-hidroxietoxi)etan-1-ol');
   assert.equal(symmetric.kind, 'outOfScope');
   assert.match(symmetric.message, /dos mitades iguales unidas por un oxígeno/);
-  // A symmetric ether without a principal group is the engine's own `etoxietano`; its class name `dietil éter` has no
-  // tiles yet (phase R-5b2).
+  // A symmetric ether without a principal group is the engine's own `etoxietano`; its class name `dietil éter` is read
+  // from tiles since phase R-5b2, an alternative.
   assert.equal(read('etoxietano').kind, 'correct');
   assert.ok(read('etoxietano').alternatives.some((alt) => isEtherClassName(alt.name)));
-  assert.equal(TILES.some((tile) => tile.text.includes('éter')), false);
+  assert.equal(TILES.filter((tile) => tile.text.includes('éter')).length, 1);
+  assert.equal(read('dietil éter').kind, 'alternative');
 }); // End of test 'readName (R-5b): left-out alkoxy locants list the structures…'
 
 /**
@@ -613,12 +626,12 @@ const MUTATIONS = [
   ['1 met il oxi 2 but eno', '1-metoxi-2-buteno', 'otherName', '1-metoxibut-2-eno', 'COCC=CC', 'OLD_STYLE'],
   // A carbon branch on an end lengthens the chain; an alkoxy prefix there does not.
   ['1 met il oxi 1 met il prop ano', '1-metoxi-1-metilpropano', 'otherName', '2-metoxibutano', 'CCC(C)OC', 'BRANCH_AT_END'],
-  // The wrong side of the oxygen as the parent: the chain rules' own messages (diagnose.js header «Ethers»).
-  ['et il oxi met ano', 'etoximetano', 'otherName', 'metoxietano', 'CCOC', 'LONGER_CHAIN'],
-  ['START cloro met il oxi END met ano', '(clorometoxi)metano', 'otherName', 'cloro(metoxi)metano', 'ClCOC', 'MORE_SUBSTITUENTS'],
-  ['fenil oxi et ano', 'fenoxietano', 'otherName', 'etoxibenceno', 'CCOC1=CC=CC=C1', 'RING_IS_PARENT'],
+  // The wrong side of the oxygen as the parent: told from the oxygen since phase R-5b2 (diagnose.js header «Ethers»).
+  ['et il oxi met ano', 'etoximetano', 'otherName', 'metoxietano', 'CCOC', 'ETHER_SIDE'],
+  ['START cloro met il oxi END met ano', '(clorometoxi)metano', 'otherName', 'cloro(metoxi)metano', 'ClCOC', 'ETHER_SIDE'],
+  ['fenil oxi et ano', 'fenoxietano', 'otherName', 'etoxibenceno', 'CCOC1=CC=CC=C1', 'ETHER_SIDE'],
   ['START 2 hidroxi et il oxi END met ano', '(2-hidroxietoxi)metano', 'otherName', '2-metoxietan-1-ol', 'OCCOC',
-    'MORE_HYDROXY_GROUPS'],
+    'ETHER_SIDE'],
   // A substituted `anisol`.
   ['4 cloro anisol', '4-cloroanisol', 'otherName', '1-cloro-4-metoxibenceno', 'COC1=CC=C(Cl)C=C1', 'SUBSTITUTED_TEMPLATE'],
   // Removed locants (one structure fits).
@@ -645,17 +658,12 @@ test('diagnosis (R-5b): the messages of the chain, ring and form rules with alko
     // An alkoxy prefix on an end never lengthens the chain: rule 1 blames the carbon branch.
     ['1 met il oxi 1 met il prop ano', 'BRANCH_AT_END',
       'La rama «metil» está en el extremo de la cadena, así que la alarga: la cadena principal tiene 4 carbonos.', [4, 7]],
-    ['et il oxi met ano', 'LONGER_CHAIN', 'Hay una cadena más larga que la tuya: la tuya tiene 1 carbono y la cadena principal tiene 2.',
-      [3, 5]],
-    ['START cloro met il oxi END met ano', 'MORE_SUBSTITUENTS', 'Hay otra cadena igual de larga con más sustituyentes (2; la tuya '
-      + 'tiene 1). Entre cadenas igual de largas, gana la que tiene más sustituyentes.', [6, 8]],
+    // The wrong side of the oxygen (`etoximetano`) is ETHER_SIDE since phase R-5b2: reverse-diagnose-ethers.test.js.
     ['3 met il oxi prop ano', 'NUMBERING', 'Hay que numerar la cadena desde el otro extremo: los sustituyentes tienen que llevar los '
       + 'números más bajos (1 en vez de 3).', null],
     ['4 met il 1 met il oxi benceno', 'RING_NUMBERING', 'Hay que numerar el anillo de otra manera, empezando en otro carbono o '
       + 'contando hacia el otro lado: con los mismos números, el sustituyente que va primero por orden alfabético tiene que llevar '
       + 'el más bajo (1 en vez de 4).', null],
-    ['fenil oxi et ano', 'RING_IS_PARENT', 'El anillo es la cadena principal: un anillo manda siempre sobre una cadena abierta, aunque '
-      + 'la cadena sea más larga. Tu cadena de 2 carbonos va en una rama del anillo: «etoxibenceno».', [0, 2]],
     ['2 met il oxi 2 met il prop ano', 'ALPHABETICAL_ORDER',
       'Los sustituyentes se escriben por orden alfabético: «metil» va antes que «metoxi» (i antes que o).', [0, 7]],
     ['1 met il oxi 2 met il oxi et ano', 'UNGROUPED', 'Los sustituyentes iguales se escriben una sola vez, con «di», «tri»… '
@@ -690,24 +698,8 @@ test('diagnosis (R-5b): the messages of the chain, ring and form rules with alko
   assert.deepEqual([pin.diagnosis.code, pin.diagnosis.style, pin.diagnosis.traceRule], ['NUMBERING', 'pin', 'N4']);
 }); // End of test 'diagnosis (R-5b): the messages of the chain, ring and form rules with alkoxy prefixes'
 
-test('diagnosis (R-5b): deliberate nulls for phase R-5b2 — di before an alkoxy prefix compound only for its form', () => {
-  // `di(pentiloxi)`: render.js multiplies `(pentiloxi)` with bis, but rule 7's reason («una rama que tiene sus propias
-  // ramas») does not hold for it, so no message (diagnose.js header «Ethers»); likewise `di(propan-2-iloxi)` in the pin style
-  // and `di-tert-butoxi`, which the engine writes `bis-tert-butoxi`.
-  for (const [words, name] of [
-    ['1 6 di pent il oxi hex ano', '1,6-bis(pentiloxi)hexano'],
-    ['1 6 di prop ano 2 il oxi hex ano', '1,6-diisopropoxihexano'],
-    ['1 6 di tert-butil oxi hex ano', '1,6-bis-tert-butoxihexano'],
-  ]) {
-    const verdict = read(words);
-    assert.equal(verdict.kind, 'otherName', verdict.text);
-    assert.equal(verdict.name, name, verdict.text);
-    assert.equal(verdict.diagnosis, null, `${verdict.text}: ${verdict.diagnosis && verdict.diagnosis.message}`);
-  }
-  // With prefixes of its own the reason holds: MULTIPLIER_KIND as for any compound branch.
-  assert.equal(read('1 6 di START 2 met il prop il oxi END hex ano').diagnosis.message, 'Delante de una rama que tiene sus '
-    + 'propias ramas se usa «bis», «tris»…: «1,6-bis(2-metilpropoxi)», no «1,6-di(2-metilpropoxi)».');
-}); // End of test 'diagnosis (R-5b): deliberate nulls…'
+// The R-5b1 deliberate nulls (`di(pentiloxi)`, `di(propan-2-iloxi)`, `di-tert-butoxi`) are ALKOXY_MULTIPLIER since phase
+// R-5b2: reverse-diagnose-ethers.test.js.
 
 test('«Dibujar» (R-5b): ether verdicts have an ordered drawing (canonical layout without problems)', () => {
   for (const name of ['metoximetano', '1,2-dimetoxietano', 'cloro(metoxi)metano', 'anisol', '1-metil-4-metoxibenceno',
@@ -731,7 +723,7 @@ test('dialog (R-5b): `oxi` and `anisol` have tooltips; the silent `il` of `metox
 // Fixture round trip and closed loop (design.md §15.7).
 // ---------------------------------------------------------------------------
 
-test('fixture round trip (R-5b1): every ether row but the class names, graph compared with the SMILES', async () => {
+test('fixture round trip (R-5b1, R-5b2): every ether row and its class name, graph compared with the SMILES', async () => {
   const fixtures = await readFixtures();
   const rows = fixtures.filter((row) => isEther(row.smiles));
   let covered = 0;
@@ -740,10 +732,7 @@ test('fixture round trip (R-5b1): every ether row but the class names, graph com
   for (const row of rows) {
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
-      if (isEtherClassName(name)) {
-        classNames += 1; // `dietil éter`…: phase R-5b2 (I-51b2).
-        continue;
-      }
+      classNames += isEtherClassName(name) ? 1 : 0; // `dietil éter`…: read since phase R-5b2 (I-51b2).
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
       assert.equal(assemble(parse(ids).tree).text, name, `names.tsv:${row.line}: assembly`);
@@ -779,7 +768,7 @@ test('fixture round trip (R-5b1): every ether row but the class names, graph com
   const later = fixtures.filter((row) => row.section.includes('(I-34)') && !isEther(row.smiles));
   assert.equal(later.length, EXPECTED_CARBONYL_ROWS);
   assert.ok(later.every((row) => /=O|O=/.test(row.smiles)), 'every I-34 row left out has a C=O');
-}); // End of test 'fixture round trip (R-5b1): every ether row but the class names…'
+}); // End of test 'fixture round trip (R-5b1, R-5b2): every ether row and its class name…'
 
 /** The closed loop's generators (scripts/oracle/generate.mjs; design.md §15.7), ether molecules only. */
 const LOOP = Object.freeze({
@@ -791,12 +780,24 @@ const LOOP = Object.freeze({
 
 /**
  * Minimum coverage of the closed loop: ether molecules (distinct by
- * aromatic key), names read back (class names left out), the alkoxy forms
- * among them (written as branch + `oxi`, phenoxy, `isopropoxi`), removed-locant
- * mutations and decisive verdicts among them (the seeds give 563, 600, 141,
- * 4, 12, 1563 and 1563).
+ * aromatic key), names read back (the class names too since phase R-5b2),
+ * the alkoxy forms among them (written as branch + `oxi`, phenoxy,
+ * `isopropoxi`), the class names among them, removed-locant mutations and
+ * decisive verdicts among them (the seeds give 563, 609, 141, 4, 12, 9,
+ * 1563 and 1563; no di-tert-butyl ether among them).
  */
-const LOOP_MIN = Object.freeze({ molecules: 550, names: 590, iloxi: 130, fenoxi: 4, isopropoxi: 10, removed: 1550, decisive: 1550 });
+const LOOP_MIN = Object.freeze({
+  molecules: 550, names: 600, iloxi: 130, fenoxi: 4, isopropoxi: 10, classNames: 8, removed: 1550, decisive: 1550,
+});
+
+/**
+ * The prefix of the forward engine's class name of a di-tert-butyl ether,
+ * `ditert-butil éter` (naming/index.js etherClassAlternative() writes `di`
+ * and `tert-butil` together; open question of phase R-5b2): the assembler
+ * writes the hyphen of rule 5 (`di-tert-butil éter`), so no tiles give the
+ * engine's text — the closed loop asserts it is the only name it cannot read.
+ */
+const DITERT = `${multiplier(2)}${RETAINED_PREFIXES['tert-butyl'].italic}`;
 
 /**
  * The closed loop's molecules: the ether molecules of the generators,
@@ -863,15 +864,17 @@ function locantLists(tree) {
 
 test('closed loop over the ether generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, iloxi: 0, fenoxi: 0, isopropoxi: 0, removed: 0, decisive: 0 };
+  const counts = { names: 0, iloxi: 0, fenoxi: 0, isopropoxi: 0, classNames: 0, removed: 0, decisive: 0 };
+  const unreadable = [];
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
     assert.ok(naming.ok, naming.ok ? '' : naming.error.message);
     const key = aromaticKey(mol);
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
-      if (isEtherClassName(name)) {
-        continue; // Phase R-5b2.
+      if (isEtherClassName(name) && name.startsWith(DITERT)) {
+        unreadable.push(name); // `ditert-butil éter`: the engine's form, which no tiles write (DITERT).
+        continue;
       }
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);
@@ -883,6 +886,7 @@ test('closed loop over the ether generators: engine name → tiles → readName(
       counts.iloxi += /iloxi/.test(name) ? 1 : 0;
       counts.fenoxi += /fenoxi/.test(name) ? 1 : 0;
       counts.isopropoxi += /isopropoxi/.test(name) ? 1 : 0;
+      counts.classNames += isEtherClassName(name) ? 1 : 0;
       if (i > 0) {
         continue;
       }
@@ -907,9 +911,10 @@ test('closed loop over the ether generators: engine name → tiles → readName(
       } // End of the loop over the locant lists
     } // End of the loop over the names of a molecule
   } // End of the loop over the molecules
-  const report = JSON.stringify({ molecules: molecules.length, ...counts });
+  const report = JSON.stringify({ molecules: molecules.length, ...counts, unreadable });
   assert.ok(molecules.length >= LOOP_MIN.molecules, report);
-  for (const field of ['names', 'iloxi', 'fenoxi', 'isopropoxi', 'removed', 'decisive']) {
+  assert.ok(unreadable.every((name) => name === `${DITERT}butil éter`), report);
+  for (const field of ['names', 'iloxi', 'fenoxi', 'isopropoxi', 'classNames', 'removed', 'decisive']) {
     assert.ok(counts[field] >= LOOP_MIN[field], `${field}: ${report}`);
   }
 }); // End of test 'closed loop over the ether generators…'
@@ -965,9 +970,9 @@ const FAMILY_CODES = Object.freeze({
   rotated: ['RING_NUMBERING'],
   swapped: ['NUMBERING', 'RING_NUMBERING', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS',
     'MORE_HYDROXY_GROUPS'],
-  unsorted: ['ALPHABETICAL_ORDER'],
+  unsorted: ['ALPHABETICAL_ORDER', 'CLASS_ORDER'], // CLASS_ORDER: a class name's two groups (R-5b2)
   ungrouped: ['UNGROUPED'],
-  diBis: ['MULTIPLIER_KIND'],
+  diBis: ['MULTIPLIER_KIND', 'ALKOXY_MULTIPLIER', 'CLASS_DI'], // R-5b2: `di(pentiloxi)`, `bisetil éter`
   toEnd: ['BRANCH_AT_END'],
   heteroToEnd: ['NUMBERING', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS'],
   removed: [],
@@ -1097,31 +1102,32 @@ function sweep(names) {
 /**
  * How many mutations of the ether fixture names give `otherName`, by
  * family; every one is diagnosed with one of its family's codes (no null:
- * the deliberate nulls of «Ethers» need `di(…oxi)` before a compound-form
- * alkoxy prefix, which no fixture name has). Removing locants never gives
- * `otherName`.
+ * since phase R-5b2 the one deliberate null of «Ethers» is `di-tert-butil
+ * éter`, which no fixture name gives). Removing locants never gives
+ * `otherName`. The class names (R-5b2) add 8 unsorted (`metil etil éter`:
+ * CLASS_ORDER) and 3 di ↔ bis (`bisetil éter`: CLASS_DI).
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
-  reversed: 20, reflected: 2, rotated: 22, swapped: 10, unsorted: 7, ungrouped: 2, diBis: 4, toEnd: 4, heteroToEnd: 17, removed: 0,
+  reversed: 20, reflected: 2, rotated: 22, swapped: 10, unsorted: 15, ungrouped: 2, diBis: 7, toEnd: 4, heteroToEnd: 17, removed: 0,
   added: 22,
 });
 
 test('mutations of every ether fixture name: a diagnosis of the family\'s codes for every otherName, and a coverage count', async () => {
-  const names = (await readFixtures()).filter((row) => isEther(row.smiles)).flatMap((row) => row.names)
-    .filter((name) => !isEtherClassName(name));
+  const names = (await readFixtures()).filter((row) => isEther(row.smiles)).flatMap((row) => row.names); // Class names too (R-5b2).
   assert.equal(names.length, EXPECTED_NAMES);
   const { otherName, codes, nulls } = sweep(names);
   assert.deepEqual(nulls, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
-  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'MULTIPLIER_KIND', 'NEEDLESS_LOCANTS', 'NUMBERING',
-    'RING_NUMBERING', 'UNGROUPED']);
+  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'CLASS_DI', 'CLASS_ORDER', 'MULTIPLIER_KIND',
+    'NEEDLESS_LOCANTS', 'NUMBERING', 'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of every ether fixture name…'
 
 test('mutations of the generated ethers: every otherName is diagnosed, every step resolves', () => {
   const names = [];
   for (const mol of loopMolecules().slice(0, 300)) {
     const naming = nameMolecule(mol);
-    names.push(naming.name, ...naming.alternatives.map((alt) => alt.name).filter((name) => !isEtherClassName(name)));
+    // Class names too (R-5b2), but the engine's `ditert-butil éter`, which no tiles write (DITERT).
+    names.push(naming.name, ...naming.alternatives.map((alt) => alt.name).filter((name) => !name.startsWith(DITERT)));
   }
   assert.ok(names.length >= 300, `${names.length} names`);
   const { otherName, codes, nulls } = sweep(names);
@@ -1130,7 +1136,7 @@ test('mutations of the generated ethers: every otherName is diagnosed, every ste
   assert.ok(total >= 1200, `${total} otherName verdicts`); // The seeds give 1262.
   assert.equal(otherName.removed, 0);
   for (const code of ['NUMBERING', 'RING_NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'NEEDLESS_LOCANTS',
-    'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_SUBSTITUENTS']) {
+    'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_SUBSTITUENTS', 'CLASS_ORDER', 'CLASS_DI']) {
     assert.ok(codes.has(code), code);
   }
 }); // End of test 'mutations of the generated ethers…'

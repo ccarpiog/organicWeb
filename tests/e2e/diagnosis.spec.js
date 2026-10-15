@@ -15,7 +15,10 @@
  * legend naming the ring, «Ver el paso» at «Reconoce el benceno» — and a ring
  * numbered otherwise, «Ver el paso» at «Numera el anillo». Alcohols (phase
  * I-51a3b): `butan-3-ol`, the OH numbered from the other end, «Ver el paso»
- * at «Numera la cadena», whose rule puts the OH groups first.
+ * at «Numera la cadena», whose rule puts the OH groups first. Ethers (phase
+ * I-51b2): `etoximetano`, the parent on the other side of the oxygen — the
+ * message names the oxygen, the student's chain striped apart from the
+ * parent, «Ver el paso» at «Reconoce el éter».
  */
 
 import { test, expect } from '@playwright/test';
@@ -103,6 +106,9 @@ const RING_NUMBERING = ['1', '5', 'di', 'met', 'il', 'ciclo', 'hex', 'ano'];
 
 /** The tiles of «butan-3-ol» (the OH numbered from the other end: butan-2-ol). */
 const ALCOHOL_NUMBERING = ['but', 'ano', '3', 'ol'];
+
+/** The tiles of «etoximetano» (the parent is on the other side of the oxygen: metoxietano). */
+const ETHER_SIDE = ['et', 'il', 'oxi', 'met', 'ano'];
 
 test('a longer chain: the message between the two sentences, the student\'s chain beside the parent, «Ver el paso» at «Busca la cadena»; Deshacer clears it all', async ({ page }) => {
   const errors = await openApp(page);
@@ -257,6 +263,45 @@ test('an alcohol (I-51a3b): the OH numbered from the other end, the message betw
   expect(await locantOf(page, 3)).toBe(2);
   expect(errors).toEqual([]);
 }); // End of test 'an alcohol (I-51a3b)…'
+
+test('an ether (I-51b2): the parent on the other side of the oxygen, the student\'s chain apart from it, «Ver el paso» at «Reconoce el éter»', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, ...ETHER_SIDE);
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'ETHER_SIDE');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: etoximetano');
+  const texts = await verdict.locator('.verdict-message, .verdict-style, .verdict-diagnosis, .verdict-hint, .verdict-note')
+    .allTextContents();
+  expect(texts).toEqual([
+    'Esta es la molécula que describe tu nombre, pero se llama «metoxietano».',
+    'El oxígeno del éter (–O–) corta la molécula en dos lados, y la cadena principal no puede pasar por él: se busca en uno de los '
+      + 'dos lados, con las reglas de siempre. Aquí la cadena principal está en el otro lado del oxígeno, no en el de tu cadena: en ese '
+      + 'lado hay una cadena de 2 carbonos, más larga que la tuya, de 1. Tu cadena, con el oxígeno, es el sustituyente «metoxi»: '
+      + '«metoxietano».',
+    'Pulsa «Ver paso a paso» para ver por qué.',
+  ]);
+  await expect(page.locator('#result-name')).toHaveText('metoxietano');
+  // The legend names both marks; the student's one carbon is striped apart from the two-carbon parent, the oxygen between.
+  await expect(verdict.getByRole('list', { name: 'Qué se ve en el dibujo' }).getByRole('listitem'))
+    .toHaveText(['Cadena principal', 'Tu cadena']);
+  const student = await marked(page, 'student');
+  const parent = await marked(page, 'parent');
+  expect(student.atoms).toHaveLength(1);
+  expect(parent.atoms).toHaveLength(2);
+  expect(parent.atoms.filter((id) => student.atoms.includes(id))).toEqual([]);
+
+  // «Ver el paso»: the stepper opens at «Reconoce el éter», which says which side holds the parent and why.
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'ether');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 2 de 6');
+  await expect(stepper.locator('.step-title')).toHaveText('Reconoce el éter');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  await expect(stepper).toContainText('Gana la más larga, y el otro lado es el sustituyente «metoxi».');
+  expect(errors).toEqual([]);
+}); // End of test 'an ether (I-51b2)…'
 
 test('a ring (I-50d): the ring is the parent beside the student\'s chain, «Ver el paso» at «Reconoce el benceno»; a ring numbered otherwise', async ({ page }) => {
   const errors = await openApp(page);

@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -46,7 +46,12 @@
  * its `il` (`isoprop`, `tert-but`, `fen` + `oxi`, read only before `oxi`);
  * an automatic enclosure may hold `il` + `oxi` (`(pentiloxi)`) or a whole
  * contracted alkoxy prefix of a crowded level (`cloro(metoxi)metano`,
- * `(fenoxi)`). A step budget bounds the search:
+ * `(fenoxi)`). An ether's functional-class name (R-5b2: `etil metil éter`,
+ * `dietil éter`, `butil tert-butil éter`) is read through its automatic
+ * spaces (assemble.js rule 7): a space only after a complete group — `il`,
+ * a retained word or `fenil`, a closed enclosure — outside every enclosing
+ * mark, and after a space another group or the class word `éter`, which ends
+ * the name. A step budget bounds the search:
  * running out returns null, never a guess.
  */
 
@@ -84,7 +89,8 @@ const PUNCTUATION = ',-';
  * contraction (R-5b, assemble.js rule 6) OXIC the `oxi` right after a root
  * (with the silent `il` tile before it: `metoxi`), RETX a retained word and
  * PHEX `fenil` without their `il`, only before `oxi` (`isopropoxi`,
- * `fenoxi`).
+ * `fenoxi`); for the class names (R-5b2) ETHER the class word `éter` and
+ * SPACE the automatic space between their words.
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -102,10 +108,16 @@ function tileClass(tile) {
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
     ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS', halogen: 'HAL', hydroxy: 'HAL', suffix: 'OL',
-    closing: 'CLO', alkoxy: 'OXI',
+    closing: 'CLO', alkoxy: 'OXI', classWord: 'ETHER',
   };
   return classes[tile.kind];
 } // End of function tileClass()
+
+/** The automatic space between the words of a class name (assemble.js rule 7, R-5b2). */
+const SPACE = ' ';
+
+/** Classes after which a class name's space may come: a complete group (its `il`, a retained word, `fenil`, END). */
+const BEFORE_SPACE = new Set(['FV', 'RET', 'PHE', 'END']);
 
 /** Classes that may begin a name, a prefix or a compound branch (RETX, PHEX: a retained word before `oxi`, R-5b). */
 const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'RETX', 'PHEX'];
@@ -156,10 +168,13 @@ const FOLLOW = Object.freeze({
   OL: new Set(),
   PHOL: new Set(),
   TPL: new Set(),
+  // R-5b2: after a class name's space, another group (its multiplier first) or `éter`, which ends the name.
+  SPACE: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'START', 'ETHER']),
+  ETHER: new Set(),
 });
 
-/** Classes a valid name may end with (the parent's ending, `benceno`, `fenol`, a template or the suffix `ol`). */
-const FINAL = new Set(['ANO', 'ENE', 'BEN', 'PHOL', 'TPL', 'OL']);
+/** Classes a valid name may end with (the parent's ending, `benceno`, `fenol`, a template, the suffix `ol` or `éter`). */
+const FINAL = new Set(['ANO', 'ENE', 'BEN', 'PHOL', 'TPL', 'OL', 'ETHER']);
 
 /** Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, `fenil`, or an alkoxy prefix's `oxi` (R-5b). */
 const AUTO_CLOSE = new Set(['FV', 'PHE', 'OXI', 'OXIC']);
@@ -172,6 +187,7 @@ const WORD = Object.freeze({ role: 'word' });
 const OPEN = Object.freeze({ role: 'open' });
 const CLOSE = Object.freeze({ role: 'close' });
 const LOCANT = Object.freeze({ role: 'locant' });
+const SPACE_ROLE = Object.freeze({ role: 'space' });
 
 /**
  * The punctuation role of a tile's piece, as the assembler gives it.
@@ -318,6 +334,11 @@ export function tokenize(text, options = {}) {
       return skipped === '' && marks.length === 0 && FINAL.has(prev) && readsAs(ids, target);
     }
     const ch = target[at];
+    if (ch === SPACE) {
+      // A class name's space (R-5b2): right after a complete group, outside every mark, with nothing skipped before it.
+      const fitsSpace = skipped === '' && marks.length === 0 && BEFORE_SPACE.has(prev) && fits(SPACE_ROLE);
+      return fitsSpace ? search(at + SPACE.length, 'SPACE', SPACE_ROLE) : false;
+    }
     if (OPENERS.includes(ch)) {
       return fits(OPEN) ? searchOpening(at, prev, OPENERS.indexOf(ch)) : false;
     }
