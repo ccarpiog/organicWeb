@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -113,6 +113,18 @@
  * OH (`placed`). `oxo` is a one-atom group, kind 'carbonyl', its oxygen
  * double-bonded (build.js); `formil` a retained word.
  *
+ * An acyl prefix (R-5c2) is the SubstituentSpec of its branch with `acyl`
+ * set, as the forward engine's acyl structure is a chain whose attachment
+ * atom is a C=O carbon (substituent.js `acyl`, `ringCarbonyl`): `oil` after a
+ * chain (`propanoil`, `(but-2-enoil)`) a chain branch bonded by its carbon 1,
+ * implicit on the `oil` tile, which build.js makes the C=O carbon; `carbonil`
+ * after a `ciclo` ring (`(ciclohexanocarbonil)`) a ring branch whose free
+ * valence (carbon 1 by rule, or the locant before `carbonil`) bonds the C=O
+ * carbon build.js adds outside it; `benzoil` a phenyl branch bonded to such a
+ * carbon, its own prefixes numbered on its ring (`(4-metilbenzoil)`, carbons
+ * 2…6); `acetil` a retained word (build.js knows its atoms). The prefix's
+ * slots are carbon slots of what it hangs from, as for any branch.
+ *
  * An ether's functional-class name (R-5b2: `etil metil éter`, `dietil
  * éter`) has no parent chain: its parent is the ether oxygen itself
  * (ParentSpec kind 'ether', one atom, no carbons, no bonds of its own), and
@@ -125,7 +137,7 @@
  */
 
 import { slotDomain } from './search.js';
-import { TEMPLATES, SUFFIX_GROUPS, isAtomGroup, isPhenolTemplate, atomGroupElement } from './tiles.js';
+import { TEMPLATES, SUFFIX_GROUPS, isAtomGroup, isPhenolTemplate, atomGroupElement, isAcylTile } from './tiles.js';
 import { groupWordOf } from './parse.js';
 
 /**
@@ -174,6 +186,8 @@ import { groupWordOf } from './parse.js';
  * @property {string} [element] - A one-atom group's element symbol: a halogen's ('F', 'Cl', 'Br', 'I'; the tile's value), or
  *   'O' for `hidroxi` (R-5a2); on those only.
  * @property {boolean} alkoxy - An alkoxy prefix (R-5b): the branch is bonded through an ether oxygen (its `oxi` tile).
+ * @property {boolean} acyl - An acyl prefix (R-5c2): the branch is bonded by a C=O carbon — its chain's carbon 1 (`oil`,
+ *   `acetil`), or a carbon outside its ring bonded to the ring's free-valence carbon (`carbonil`, `benzoil`).
  * @property {boolean} compound - Written as a compound branch (START … END).
  * @property {[number, number]} tiles - Tile range of the branch.
  */
@@ -370,17 +384,19 @@ function chainSubstituent(ctx, chain, items, compound, range) {
   const fvTile = [chain.fv, chain.fv + 1];
   const slot = chain.fvLocants.length > 0
     ? makeSlot('supplied', tiles[chain.fvLocants[0]].value, 'carbon', length, [chain.fvLocants[0], chain.fvLocants[0] + 1])
-    : makeSlot('implicit', 1, 'carbon', length, fvTile); // `il` without a locant: carbon 1 by rule
+    : makeSlot('implicit', 1, 'carbon', length, fvTile); // `il` without a locant: carbon 1 by rule; `oil`, `carbonil` too (R-5c2)
+  const acyl = tiles[chain.fv].kind === 'acyl'; // `propanoil`, `ciclohexanocarbonil`: a single bond from the C=O carbon (R-5c2)
   return {
     kind: chainKind(chain),
     length,
-    freeValence: { slot, order: tiles[chain.fv].value },
+    freeValence: { slot, order: acyl ? 1 : tiles[chain.fv].value },
     double: bonds.double,
     triple: bonds.triple,
     prefixes,
     retained: null,
     word: null,
     alkoxy: hasAlkoxy(chain), // `met il oxi`: `metoxi` (R-5b)
+    acyl,
     compound,
     tiles: [range[0], range[1]],
   };
@@ -421,6 +437,7 @@ function retainedSubstituent(ctx, tile, items, compound, range, alkoxy) {
     retained: ctx.tiles[tile].value,
     word: { text: ctx.tiles[tile].text, tiles: [tile, tile + 1] },
     alkoxy,
+    acyl: isAcylTile(ctx.tiles[tile]), // `acetil` (R-5c2)
     compound,
     tiles: [range[0], range[1]],
   };
@@ -429,11 +446,15 @@ function retainedSubstituent(ctx, tile, items, compound, range, alkoxy) {
 /** Carbons of the benzene ring (`benceno`, `fenil`; R-4b). */
 export const BENZENE_LENGTH = 6;
 
+/** The retained words that are a benzene ring bonded by its carbon 1: `fenil` (R-4b), `benzoil` (R-5c2, through a C=O carbon). */
+const PHENYL_RINGS = Object.freeze(['phenyl', 'benzoyl']);
+
 /**
  * The SubstituentSpec of a `fenil` tile (R-4b), alone or as the own chain of
  * a compound branch: the benzene ring bonded by its carbon 1 (implicit, the
  * `fenil` tile), its own prefixes numbered on it (role `phenylCarbon`:
- * carbons 2…6).
+ * carbons 2…6); for `benzoil` (R-5c2) the same ring with `acyl` set, its
+ * carbon 1 bonded to the C=O carbon build.js adds (`retained` 'benzoyl').
  *
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
  * @param {number} tile - The `fenil` tile index.
@@ -455,15 +476,16 @@ function phenylSubstituent(ctx, tile, items, compound, range, alkoxy) {
     retained: ctx.tiles[tile].value,
     word: { text: ctx.tiles[tile].text, tiles: [tile, tile + 1] },
     alkoxy,
+    acyl: isAcylTile(ctx.tiles[tile]), // `benzoil` (R-5c2)
     compound,
     tiles: [range[0], range[1]],
   };
 } // End of function phenylSubstituent()
 
 /**
- * The SubstituentSpec of a retained word or `fenil` (R-4b), alone or as the
- * own chain of a compound branch, and an alkoxy group's when `oxi` follows
- * it (R-5b).
+ * The SubstituentSpec of a retained word or `fenil` (R-4b; `benzoil`, R-5c2,
+ * a phenyl too), alone or as the own chain of a compound branch, and an
+ * alkoxy group's when `oxi` follows it (R-5b).
  *
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
  * @param {object} node - The retained node (parse.js).
@@ -474,7 +496,7 @@ function phenylSubstituent(ctx, tile, items, compound, range, alkoxy) {
  */
 function wordSubstituent(ctx, node, items, compound, range) {
   const { tile } = node;
-  return ctx.tiles[tile].value === 'phenyl'
+  return PHENYL_RINGS.includes(ctx.tiles[tile].value)
     ? phenylSubstituent(ctx, tile, items, compound, range, hasAlkoxy(node))
     : retainedSubstituent(ctx, tile, items, compound, range, hasAlkoxy(node));
 }
@@ -502,6 +524,7 @@ function atomGroupSubstituent(ctx, tile) {
     word: { text, tiles: [tile, tile + 1] },
     element: atomGroupElement(kind, value), // R-5c1: the oxygen of `oxo` too
     alkoxy: false,
+    acyl: false,
     compound: false,
     tiles: [tile, tile + 1],
   };
@@ -572,6 +595,7 @@ function templateGroupSpec(group, tiles) {
     retained: null,
     word: null,
     alkoxy: Boolean(group.alkoxy),
+    acyl: false,
     compound: false,
     tiles: [tiles[0], tiles[1]],
   };

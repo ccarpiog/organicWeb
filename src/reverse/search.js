@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -53,7 +53,14 @@
  *   or a branch makes a ketone's is right (`feniletanona` →
  *   `1-feniletan-1-ona`), so a placement on a bare end is left to build()
  *   (CARBONYL_POSITION: `butanona` is butan-2-ona, `metanona` fits nowhere);
- *   `al` on a chain has no left-out slot (its ends by rule).
+ *   `al` on a chain has no left-out slot (its ends by rule). An acyl prefix
+ *   (R-5c2) adds no role either: its slots take one bond of the carbon it
+ *   hangs from (the C=O carbon's single bond), its branch's own chain is a
+ *   chain of the model, and on a chain (`propanoil`) the =O takes two more
+ *   bonds of that chain's carbon 1 (`(cloropropanoil)`: its chlorine on 2 or
+ *   3); a ring's (`(metilciclohexanocarbonil)`, `(metilbenzoil)`) has its C=O
+ *   carbon outside the ring, one bond of the ring's carbon 1, as an alkoxy
+ *   group's oxygen.
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -136,6 +143,9 @@ export const ROLE_DOMAINS = Object.freeze({
   bond: (length) => [1, length - 1],
   ringBond: (length) => [1, length],
 });
+
+/** The bond order of the =O on the carbon 1 of a chain's acyl prefix (R-5c2: `propanoil`). */
+const ACYL_OXYGEN_ORDER = 2;
 
 /** The slot roles that place a multiple bond. */
 const BOND_ROLES = Object.freeze(['bond', 'ringBond']);
@@ -327,6 +337,9 @@ function addChain(model, owner, branch) {
     if (hasOwnChain(sub)) { // Not a retained word nor a halogen (R-5a1), which have no numbered chain.
       const own = addChain(model, sub, true);
       addSlots(model, [sub.freeValence.slot], { role: 'carbon', chain: own, amount: sub.freeValence.order });
+      if (sub.acyl && !isRing(sub.kind)) {
+        model.chains[own].used[sub.freeValence.slot.value] += ACYL_OXYGEN_ORDER; // The =O of `propanoil` (R-5c2), on its carbon 1.
+      }
     }
   } // End of the loop over the prefixes
   return id;

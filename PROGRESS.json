@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T05:34:44Z",
+  "updated": "2026-10-15T06:35:12Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -740,9 +740,11 @@
     {
       "id": "I-51c2",
       "title": "v4 R-5c2 Acyl prefixes",
-      "status": "queued",
+      "status": "done",
       "risk": "high",
-      "summary": "Reads acyl prefixes such as acetil, propanoil, benzoil and ciclohexanocarbonil in tile names."
+      "summary": "Reads acyl prefixes such as acetil, propanoil, benzoil and ciclohexanocarbonil in tile names, with left-out locants searched.",
+      "review": "Codex ship, 0 findings — docs/reviews/I-51c2.md",
+      "narrative": "docs/progress-archive/i-51c2.md"
     },
     {
       "id": "I-51c3",

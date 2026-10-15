@@ -1545,6 +1545,7 @@ kbd {
 .nb-tile--halogen,
 .nb-tile--hydroxy,
 .nb-tile--carbonyl,
+.nb-tile--acyl,
 .nb-tile--alkoxy { color: var(--color-part-prefix); }
 
 .nb-tile-mark {

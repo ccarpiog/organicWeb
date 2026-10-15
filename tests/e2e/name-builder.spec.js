@@ -395,7 +395,8 @@ test.describe('phone (375 × 667)', () => {
     }
     expect(await rows.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
     await rows.evaluate((el) => { el.scrollTop = el.scrollHeight; });
-    await expect(rows.getByRole('button', { name: 'acaba rama', exact: true })).toBeInViewport();
+    // Scrolled to the end, the last tile of the rows is on screen (since the acyl tiles of I-51c2 the «Ramas» row is above it).
+    await expect(rows.locator('.nb-tile').last()).toBeInViewport();
     await expect(name).toBeInViewport({ ratio: 1 });
     await expect(draw).toBeInViewport({ ratio: 1 });
     // No horizontal scroll inside the dialog.

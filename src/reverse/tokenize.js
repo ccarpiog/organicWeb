@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -54,7 +54,12 @@
  * spaces (assemble.js rule 7): a space only after a complete group — `il`,
  * a retained word or `fenil`, a closed enclosure — outside every enclosing
  * mark, and after a space another group or the class word `éter`, which ends
- * the name. A step budget bounds the search:
+ * the name. The acyl endings (R-5c2) end a branch where `il` does: `oil`
+ * after a chain's elided ending (`propan` + `oil`, `but-2-en` + `oil`) and
+ * `carbonil` after a ring's whole ending or its locant (`ciclohexano` +
+ * `carbonil`, `ciclohex-2-eno-1-carbonil`), an automatic enclosure closing
+ * right after either (`(but-2-enoil)`, `(ciclohexanocarbonil)`); `acetil` and
+ * `benzoil` stand where a retained branch word does. A step budget bounds the search:
  * running out returns null, never a guess.
  */
 
@@ -95,7 +100,8 @@ const PUNCTUATION = ',-';
  * (with the silent `il` tile before it: `metoxi`), RETX a retained word and
  * PHEX `fenil` without their `il`, only before `oxi` (`isopropoxi`,
  * `fenoxi`); for the class names (R-5b2) ETHER the class word `éter` and
- * SPACE the automatic space between their words.
+ * SPACE the automatic space between their words; for the acyl prefixes
+ * (R-5c2) OIL the ending `oil` and CARB the ending `carbonil`.
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -109,6 +115,9 @@ function tileClass(tile) {
   }
   if (tile.kind === 'benzene' && GROUP_WORD_PARENTS[tile.value]) {
     return 'PHOL'; // `fenol` (R-5a2), `benzaldehído` (R-5c1)
+  }
+  if (tile.kind === 'acyl') {
+    return tile.value === 'ring' ? 'CARB' : 'OIL'; // `carbonil`, `oil` (R-5c2)
   }
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
@@ -142,12 +151,14 @@ const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'TPL'];
  * suffix `ol` after the parent's ending, its locants or its multiplier, and
  * nothing after it; `1(n)` wherever a bond locant of a ring may stand; `oxi`
  * (R-5b) after `il`, after a retained word without its `il`, or contracted
- * right after a root, and a prefix's followers after it.
+ * right after a root, and a prefix's followers after it; `oil` (R-5c2) after
+ * an ending, `carbonil` after an ending or a locant, a prefix's followers
+ * after them.
  */
 const FOLLOW = Object.freeze({
   BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'TPL', 'POS']),
   AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE', 'RETX', 'PHEX']),
-  NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL', 'BEN', 'BENE', 'CLO', 'MULTE', 'OL']),
+  NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL', 'BEN', 'BENE', 'CLO', 'MULTE', 'OL', 'CARB']),
   CLO: new Set(['NUM', 'CLO', 'MULT', 'ENE']),
   POS: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'TPL', 'RETX', 'PHEX']),
   MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'ENE', 'OL', 'RETX', 'PHEX']),
@@ -156,8 +167,8 @@ const FOLLOW = Object.freeze({
   RING: new Set(['ROOT']),
   ROOT: new Set(['ANO', 'NUM', 'CLO', 'MULT', 'ENE', 'FV', 'A', 'OXIC']),
   A: new Set(['NUM', 'CLO', 'MULT']),
-  ANO: new Set(['NUM', 'MULT', 'MULTE', 'OL']),
-  ENE: new Set(['NUM', 'CLO', 'MULT', 'MULTE', 'ENE', 'FV', 'OL']),
+  ANO: new Set(['NUM', 'MULT', 'MULTE', 'OL', 'OIL', 'CARB']),
+  ENE: new Set(['NUM', 'CLO', 'MULT', 'MULTE', 'ENE', 'FV', 'OL', 'OIL', 'CARB']),
   FV: new Set([...AFTER_PREFIX, 'OXI']),
   RET: new Set(AFTER_PREFIX),
   PHE: new Set(AFTER_PREFIX),
@@ -165,6 +176,8 @@ const FOLLOW = Object.freeze({
   PHEX: new Set(['OXI']),
   OXI: new Set(AFTER_PREFIX),
   OXIC: new Set(AFTER_PREFIX),
+  OIL: new Set(AFTER_PREFIX), // R-5c2
+  CARB: new Set(AFTER_PREFIX),
   HAL: new Set(AFTER_PREFIX),
   START: new Set(PREFIX_STARTS),
   END: new Set(AFTER_PREFIX),
@@ -181,8 +194,11 @@ const FOLLOW = Object.freeze({
 /** Classes a valid name may end with (the parent's ending, `benceno`, `fenol`, a template, the suffix `ol` or `éter`). */
 const FINAL = new Set(['ANO', 'ENE', 'BEN', 'PHOL', 'TPL', 'OL', 'ETHER']);
 
-/** Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, `fenil`, or an alkoxy prefix's `oxi` (R-5b). */
-const AUTO_CLOSE = new Set(['FV', 'PHE', 'OXI', 'OXIC']);
+/**
+ * Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, `fenil`, an alkoxy prefix's `oxi` (R-5b), or
+ * an acyl ending (R-5c2: `(but-2-enoil)`, `(ciclohexanocarbonil)`).
+ */
+const AUTO_CLOSE = new Set(['FV', 'PHE', 'OXI', 'OXIC', 'OIL', 'CARB']);
 
 /** What may follow `il` inside an automatic enclosure before it closes: `oxi` (R-5b: `(pentiloxi)`). */
 const IN_ENCLOSURE_AFTER_FV = new Set(['OXI']);

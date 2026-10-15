@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -13,7 +13,21 @@
  * (R-5b: alkoxy prefixes — `metoxi`, `isopropoxi`, `fenoxi`, `(pentiloxi)`,
  * `(2-metilpropoxi)` — and the retained `anisol`) and their aldehydes and
  * ketones (R-5c1: the suffixes `al`, `ona`, `carbaldehído`, the prefixes
- * `oxo` and `formil`, `benzaldehído`). Pure, no DOM.
+ * `oxo` and `formil`, `benzaldehído`; R-5c2: the acyl prefixes `acetil`,
+ * `propanoil`, `(but-2-enoil)`, `benzoil`, `(4-metilbenzoil)`,
+ * `(ciclohexanocarbonil)`). Pure, no DOM.
+ *
+ * The acyl prefixes need nothing of their own here either: their branch and
+ * its C=O are built like any branch (build.js) and searched like one
+ * (search.js), and the engine names the molecule (`3-acetilpentano-2,4-diona`,
+ * `2-(2-metilpropanoil)heptanal`, `2-(ciclohex-2-eno-1-carbonil)heptanal`,
+ * `4-acetilciclohexano-1-carbaldehído` → `correct`;
+ * `2-[4-(propan-2-il)benzoil]heptanal` → `alternative`; `acetilpentanodiona`
+ * → `missingLocants`; `propanoilheptanal` → `ambiguous`; an acyl on a
+ * hydrocarbon ring, on benzene or on a template is a ketone whose chain is the
+ * parent, `butanoilciclohexano` → `otherName` «1-ciclohexilbutan-1-ona»; two
+ * rings through the C=O carbon, `benzoilbenceno`, → `outOfScope`, the engine's
+ * several rings).
  *
  * The aldehydes and ketones need nothing of their own here either: their
  * groups are built on the parent (build.js) and searched like the alcohol's

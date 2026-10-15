@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -74,6 +74,22 @@
  *    `metil (propan-2-il) éter`), never for standing beside the other group
  *    (no crowded level: the groups are words of their own). The engine's
  *    own class names (simple groups) are never enclosed.
+ * 8. the acyl prefixes (R-5c2; render.js acylEndingTokens(),
+ *    ringCarbonylTokens(), needsEnclosure(), isCompoundPrefix()): the acyl
+ *    ending stands in a branch's free-valence place, and the ending before
+ *    it loses its final vowel as before any vowel-initial word (rule 4:
+ *    `prop` + `an` + `oil`, `but-2-en` + `oil`, `buta-2,3-dien` + `oil`), so
+ *    it keeps it before `carbonil` (`ciclohexano` + `carbonil`,
+ *    `ciclohex-2-eno-1-carbonil`); an acyl prefix of a chain is enclosed
+ *    when it has prefixes of its own or a multiple bond (`propanoil`,
+ *    `butanoil`, but `(2-metilpropanoil)`, `(but-2-enoil)`,
+ *    `(prop-2-enoil)`), one of a ring always (`(ciclohexanocarbonil)`,
+ *    `(ciclohex-2-eno-1-carbonil)`), the retained `acetil` and `benzoil`
+ *    never by themselves (`3-acetilpentano-2,4-diona`, `3-benzoilpentano-2,4-diona`;
+ *    with prefixes of its own a compound branch, `(4-metilbenzoil)`); bis… goes
+ *    before an acyl prefix with prefixes of its own only (the student's
+ *    multiplier kept as chosen, as rule 5: `diacetil`, `di(prop-2-enoil)`,
+ *    `bis(2-metilpropanoil)`).
  *
  * A ring (R-4a) is a chain with its `ciclo` tile before the root, and takes
  * the same rules: `ciclohexa-1,3-dieno` (rule 2), `ciclooct-1-en-3-ino` and
@@ -144,7 +160,7 @@
  */
 
 import { ENDINGS, ENCLOSING_MARKS, CONNECTING_VOWEL, SATURATED_INFIX, FREE_VALENCE_SUFFIXES } from '../naming/lexicon.es.js';
-import { isAtomGroup, closingText } from './tiles.js';
+import { isAtomGroup, closingText, ALKOXY_RETAINED } from './tiles.js';
 
 /**
  * Longest alkyl chain whose alkoxy prefix is contracted (rule 6, R-5b:
@@ -186,10 +202,13 @@ export function isAlkoxyNode(node) {
 
 /**
  * Tells whether an alkoxy prefix takes the short form (rule 6, R-5b;
- * render.js isContractedAlkoxy()): a retained word (`isopropoxi`,
- * `tert-butoxi`, `fenoxi`), or a saturated open chain of one to
- * MAX_CONTRACTED_ALKOXY carbons whose free valence sits at its carbon 1 by
- * rule (`il` with no locant, no `ano`): `metoxi`, `butoxi`.
+ * render.js isContractedAlkoxy()): a retained word that takes `oxi`
+ * (`isopropoxi`, `tert-butoxi`, `fenoxi`; tiles.js ALKOXY_RETAINED — never
+ * an acyl word, R-5c2, whose `oxi` render.js writes after it whole,
+ * `(acetiloxi)`, `(formiloxi)`: an ester's prefix the parser refuses until
+ * phase R-6a), or a saturated open chain of one to MAX_CONTRACTED_ALKOXY
+ * carbons whose free valence sits at its carbon 1 by rule (`il` with no
+ * locant, no `ano`): `metoxi`, `butoxi`.
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} core - alkoxyCore() of the prefix.
@@ -197,7 +216,7 @@ export function isAlkoxyNode(node) {
  */
 export function isContractedCore(tiles, core) {
   if (core.type === 'retained') {
-    return true;
+    return ALKOXY_RETAINED.includes(tiles[core.tile].value);
   }
   return core.ring === null && core.root !== null && core.ano === null && core.segments.length === 0
     && core.fvLocants.length === 0 && core.fv !== null && tiles[core.fv].value === 1
@@ -280,7 +299,10 @@ function citesLocant(chain) {
  * Tells whether a substituent is written between enclosing marks
  * (rule 5, render.js needsEnclosure()), whatever stands beside it. An
  * alkoxy prefix (rule 6, R-5b) is enclosed unless contracted:
- * `(pentiloxi)`, `(eteniloxi)`, but `metoxi`, `isopropoxi`.
+ * `(pentiloxi)`, `(eteniloxi)`, but `metoxi`, `isopropoxi`. An acyl prefix
+ * (rule 8, R-5c2) of a chain when it cites a multiple bond or a locant
+ * (`(but-2-enoil)`; `propanoil` not), one of a ring always
+ * (`(ciclohexanocarbonil)`).
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} node - A chain, retained, halogen or branch node.
@@ -300,6 +322,9 @@ export function isEnclosed(tiles, node) {
     return false;
   }
   const unsaturated = node.segments.length > 0;
+  if (node.fv !== null && tiles[node.fv].kind === 'acyl') {
+    return node.ring !== null || unsaturated || citesLocant(node); // `(ciclohexanocarbonil)`, `(but-2-enoil)` (R-5c2)
+  }
   return citesLocant(node) || (unsaturated && node.root !== null && tiles[node.root].value > 2);
 } // End of function isEnclosed()
 
@@ -456,8 +481,11 @@ function locantText(tiles, index, ring = null) {
 /**
  * The pieces of a chain: `ciclo` for a ring, root, connecting `a` (rule 2),
  * `ano` / automatic `an` (rule 4), unsaturation segments with their locants,
- * multipliers and endings (rule 3), free-valence locant and suffix. A
- * `ciclo` without its root (RING_ROOT) is all there is.
+ * multipliers and endings (rule 3), free-valence locant and suffix — or an
+ * acyl ending (rule 8, R-5c2), before which the last ending loses its
+ * vowel only when the ending starts with one (`propanoil`, but
+ * `ciclohexanocarbonil`). A `ciclo` without its root (RING_ROOT) is all
+ * there is.
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} chain - A chain node.
@@ -469,6 +497,8 @@ function locantText(tiles, index, ring = null) {
 function chainPieces(tiles, chain, style, out, beforeVowel = false) {
   const kinds = KINDS[style];
   const hasFreeValence = chain.fv !== null;
+  // The last ending loses its vowel before `il`, `iliden` or `oil`, never before `carbonil` (rule 8, R-5c2).
+  const elides = (hasFreeValence && startsWithVowel(tiles[chain.fv].text)) || beforeVowel;
   if (chain.ring !== null) {
     out.push(piece(tiles[chain.ring].text, chain.ring, kinds.stem, 'word')); // `ciclohexano`, `ciclohexil`
   }
@@ -482,7 +512,7 @@ function chainPieces(tiles, chain, style, out, beforeVowel = false) {
     out.push(piece(CONNECTING_VOWEL, null, kinds.stem, 'word')); // `buta-1,3-dieno`
   }
   if (chain.ano !== null) {
-    const text = hasFreeValence || beforeVowel ? ENDINGS.saturated.slice(0, -1) : ENDINGS.saturated;
+    const text = elides ? ENDINGS.saturated.slice(0, -1) : ENDINGS.saturated;
     out.push(piece(text, chain.ano, kinds.ending, 'word')); // `propan-2-il`, `propan-2-ol`, `hexano`, `butano-1,4-diol`
   } else if (chain.segments.length === 0 && chain.fvLocants.length > 0) {
     out.push(piece(SATURATED_INFIX, null, kinds.ending, 'word')); // `prop 2 il` → `propan-2-il`
@@ -493,7 +523,7 @@ function chainPieces(tiles, chain, style, out, beforeVowel = false) {
       out.push(piece(tiles[segment.multiplier].text, segment.multiplier, kinds.multiplier, 'mult'));
     }
     const text = tiles[segment.ending].text;
-    const elided = i < chain.segments.length - 1 || hasFreeValence || beforeVowel; // `prop-2-en-1-ol` (R-5a2)
+    const elided = i < chain.segments.length - 1 || elides; // `prop-2-en-1-ol` (R-5a2); `ciclohex-2-eno-1-carbonil` (R-5c2)
     out.push(piece(elided ? text.slice(0, -1) : text, segment.ending, kinds.ending, 'word'));
   });
   chain.fvLocants.forEach((index) => out.push(piece(tiles[index].text, index, kinds.locant, 'locant')));
@@ -557,7 +587,9 @@ function ownChainPieces(tiles, node, out) {
   if (node.type === 'retained' || isAtomGroup(node.type)) {
     const tile = tiles[node.tile];
     const alkoxy = isAlkoxyNode(node);
-    const text = alkoxy && tile.text.endsWith(IL) ? tile.text.slice(0, -IL.length) : tile.text; // As render.js alkoxyTokens().
+    // As render.js alkoxyTokens(): `isoprop` + `oxi`, but `acetil` + `oxi` (R-5c2, an out-of-place ester prefix).
+    const cut = alkoxy && node.type === 'retained' && isContractedCore(tiles, node) && tile.text.endsWith(IL);
+    const text = cut ? tile.text.slice(0, -IL.length) : tile.text;
     out.push(piece(text, node.tile, 'prefix', 'word', tile.italic ? { italic: true } : {}));
     if (alkoxy) {
       out.push(piece(tiles[node.oxi].text, node.oxi, 'prefix', 'word')); // `isopropoxi`, `fenoxi` (R-5b)

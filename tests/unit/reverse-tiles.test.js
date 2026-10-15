@@ -20,12 +20,13 @@ import {
   TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, BENZENE_ID, PHENYL_ID, POSITIONAL_IDS, HALOGEN_IDS, TEMPLATES,
   templateGroupWord, MAX_NUM, MAX_MULT, PHENOL_ID, CLOSING_ID, HYDROXY_ID, OL_ID, isPhenolTemplate, ALKOXY_ID, groupPlural,
   ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, SUFFIX_GROUPS, GROUP_WORD_PARENTS, isAtomGroup,
-  atomGroupOrder, atomGroupElement,
+  atomGroupOrder, atomGroupElement, ACETYL_ID, BENZOYL_ID, ACYL_ID, RING_CARBONYL_ID, ACYL_RETAINED, isAcylTile,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
   TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM, BENZENE_DIGROUP_NAMES,
-  ALKOXY_ENDING, ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX,
+  ALKOXY_ENDING, ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX, ACETYL_PREFIX, BENZOYL_PREFIX, ACYL_ENDING,
+  RING_CARBONYL_ENDING,
 } from '../../src/naming/lexicon.es.js';
 import { MAX_CONTRACTED_ALKOXY as RENDER_MAX_CONTRACTED_ALKOXY } from '../../src/naming/render.js';
 import { MAX_CONTRACTED_ALKOXY } from '../../src/reverse/assemble.js';
@@ -53,7 +54,7 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('root'), 30); // met…triacont
   assert.equal(count('ending'), 3);
   assert.equal(count('freeValence'), 2);
-  assert.equal(count('retained'), 5); // isopropil, isopropiliden, tert-butil; fenil (R-4b); formil (R-5c1)
+  assert.equal(count('retained'), 7); // isopropil, isopropiliden, tert-butil; fenil (R-4b); formil (R-5c1); acetil, benzoil (R-5c2)
   assert.equal(count('start'), 1);
   assert.equal(count('end'), 1);
   assert.equal(count('ring'), 1); // ciclo (R-4a)
@@ -67,6 +68,7 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('closing'), 1); // 1(n) (R-5a2)
   assert.equal(count('alkoxy'), 1); // oxi (R-5b)
   assert.equal(count('classWord'), 1); // éter (R-5b2)
+  assert.equal(count('acyl'), 2); // oil, carbonil (R-5c2)
   assert.equal(new Set(TILES.map((tile) => tile.id)).size, TILES.length, 'ids are unique');
   assert.equal(new Set(TILES.map((tile) => tile.text)).size, TILES.length, 'texts are unique');
   assert.ok(TILES.every((tile) => Object.isFrozen(tile)));
@@ -81,9 +83,10 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       root: () => stem(tile.value),
       ending: () => ENDINGS[tile.value],
       freeValence: () => FREE_VALENCE_SUFFIXES[tile.value],
-      // `formil` (R-5c1): the lexicon's formyl prefix; the other retained words, RETAINED_PREFIXES.
-      retained: () => (tile.value === 'formyl' ? FORMYL_PREFIX
-        : `${RETAINED_PREFIXES[tile.value].italic}${RETAINED_PREFIXES[tile.value].text}`),
+      // `formil` (R-5c1), `acetil` and `benzoil` (R-5c2): the lexicon's acyl prefixes; the other retained words,
+      // RETAINED_PREFIXES.
+      retained: () => ({ formyl: FORMYL_PREFIX, acetyl: ACETYL_PREFIX, benzoyl: BENZOYL_PREFIX }[tile.value]
+        || `${RETAINED_PREFIXES[tile.value].italic}${RETAINED_PREFIXES[tile.value].text}`),
       start: () => ENCLOSING_MARKS[0][0],
       end: () => ENCLOSING_MARKS[0][1],
       ring: () => RING_PREFIX,
@@ -105,11 +108,19 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       closing: () => `1${ENCLOSING_MARKS[0][0]}n${ENCLOSING_MARKS[0][1]}`,
       alkoxy: () => ALKOXY_ENDING,
       classWord: () => ETHER_CLASS_WORD, // `éter` (R-5b2)
+      acyl: () => (tile.value === 'ring' ? RING_CARBONYL_ENDING : ACYL_ENDING), // `carbonil`, `oil` (R-5c2)
     }[tile.kind]();
     assert.equal(tile.text, expected, tile.id);
   } // End of the loop over the tiles
   assert.deepEqual(TILES.filter((t) => t.kind === 'retained').map((t) => t.text), ['isopropil', 'isopropiliden', 'tert-butil', 'fenil',
-    'formil']);
+    'benzoil', 'formil', 'acetil']);
+  // R-5c2: the acyl tiles; `formil` (R-5c1) keeps its own messages.
+  assert.deepEqual([ACETYL_ID, ACYL_ID, RING_CARBONYL_ID, BENZOYL_ID].map((id) => [tileById(id).text, tileById(id).kind, tileById(id).value]),
+    [['acetil', 'retained', 'acetyl'], ['oil', 'acyl', 'chain'], ['carbonil', 'acyl', 'ring'], ['benzoil', 'retained', 'benzoyl']]);
+  assert.deepEqual([ACETYL_ID, ACYL_ID, RING_CARBONYL_ID, BENZOYL_ID, FORMYL_ID, PHENYL_ID].map((id) => isAcylTile(tileById(id))),
+    [true, true, true, true, false, false]);
+  assert.deepEqual(ACYL_RETAINED, ['acetyl', 'benzoyl']);
+  assert.deepEqual([tileById(ACETYL_ID).italic, tileById(BENZOYL_ID).italic], ['', '']);
   // R-5c1: the aldehyde and ketone tiles, their groups, and `oxo` as a one-atom group double-bonded to its carbon.
   assert.deepEqual([OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID].map((id) => tileById(id).text),
     ['oxo', 'formil', 'al', 'ona', 'carbaldehído', 'benzaldehído']);
@@ -178,16 +189,17 @@ test('rows and «más» follow design.md §15.2', () => {
   assert.ok(TILES.filter((tile) => ['ending', 'freeValence', 'retained', 'start', 'end', 'ring', 'benzene', 'positional', 'template',
     'halogen'].includes(tile.kind)).every((tile) => !tile.more));
   assert.deepEqual(TILES.filter((tile) => tile.row === 'rings').map((tile) => tile.id),
-    [RING_ID, BENZENE_ID, PHENOL_ID, BENZALDEHYDE_ID, PHENYL_ID, ...Object.values(POSITIONAL_IDS), CLOSING_ID],
-    'R-4a: the ciclo tile; R-4b: benceno and fenil; R-4c: o, m, p; R-5a2: fenol and 1(n); R-5c1: benzaldehído');
+    [RING_ID, BENZENE_ID, PHENOL_ID, BENZALDEHYDE_ID, PHENYL_ID, BENZOYL_ID, ...Object.values(POSITIONAL_IDS), CLOSING_ID],
+    'R-4a: the ciclo tile; R-4b: benceno and fenil; R-4c: o, m, p; R-5a2: fenol and 1(n); R-5c1: benzaldehído; R-5c2: benzoil');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'traditional').map((tile) => tile.id),
     ['template-toluene', 'template-styrene', 'template-xylene', 'template-mesitylene', 'template-anisole', 'template-cresol',
       'template-pyrocatechol', 'template-catechol', 'template-resorcinol', 'template-hydroquinone'],
     'R-4c: «Nombres tradicionales»; R-5b: anisol; R-5a3a: the retained phenols');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'groups').map((tile) => tile.id),
-    ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID,
-      CARBALDEHYDE_ID],
-    'R-5a1: «Grupos», the halogens; R-5a2: hidroxi, ol; R-5b: oxi; R-5b2: éter; R-5c1: oxo, formil, al, ona, carbaldehído');
+    ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, ACETYL_ID,
+      ACYL_ID, RING_CARBONYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID],
+    'R-5a1: «Grupos», the halogens; R-5a2: hidroxi, ol; R-5b: oxi; R-5b2: éter; R-5c1: oxo, formil, al, ona, carbaldehído; '
+      + 'R-5c2: acetil, oil, carbonil');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'branches' && tile.kind === 'retained').map((tile) => tile.value),
     ['isopropyl', 'isopropylidene', 'tert-butyl']);
 });
@@ -213,6 +225,10 @@ test('tileById, tileId and toTiles', () => {
   assert.equal(tileId('suffix', 'ketone'), ONA_ID); // R-5c1
   assert.equal(tileId('carbonyl', 'ketone'), OXO_ID);
   assert.equal(tileId('benzene', 'benzaldehyde'), BENZALDEHYDE_ID);
+  assert.equal(tileId('acyl', 'chain'), ACYL_ID); // R-5c2
+  assert.equal(tileId('acyl', 'ring'), RING_CARBONYL_ID);
+  assert.equal(tileId('retained', 'benzoyl'), BENZOYL_ID);
+  assert.equal(tileId('retained', 'acetyl'), ACETYL_ID);
   assert.deepEqual(toTiles(['num-2', tileById('mult-2')]).map((tile) => tile.text), ['2', 'di']);
   assert.throws(() => tileById('root-31'), /unknown tile/);
   assert.throws(() => tileId('mult', 1), /no mult tile/);

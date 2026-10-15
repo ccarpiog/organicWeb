@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -61,6 +61,18 @@
  * bonded atom to atom to the ring it hangs from (ringRefusal():
  * `fenoxibenceno` has a structural key; the engine refuses it, two rings).
  * `anisol` (R-5b) is a template whose methoxy group is built that way.
+ * An acyl prefix (R-5c2, SubstituentSpec `acyl`) is its branch built as any
+ * other and then its C=O (acylCarbonyl()): on a chain (`propanoil`) an
+ * oxygen double-bonded to the chain's carbon 1, the carbon bonded to what
+ * the branch hangs from (two bonds of it, blamed on the `oil` tile, which
+ * the VALENCE message names: `(prop-1-enoil)` would give that carbon five);
+ * on a ring (`(ciclohexanocarbonil)`, `benzoil`) a new carbon single-bonded
+ * to the ring's free-valence carbon, with the =O on it, which is the
+ * occurrence's `attachment` (one more carbon and two more heavy atoms per
+ * occurrence). `acetil` is a retained word, two carbons with the =O on the
+ * one bonded to the chain. A ring bonded through that carbon is not bonded
+ * atom to atom to the ring it hangs from (`benzoilbenceno` has a structural
+ * key; the engine refuses it, two rings).
  * An ether's functional-class name (R-5b2, ParentSpec kind 'ether': `etil
  * metil éter`) is built from its oxygen: the parent is that one atom
  * (etherOxygen(); `studentParent` lists it alone), its two groups attached
@@ -120,7 +132,9 @@ import {
   MAX_CARBONS, MAX_HEAVY_ATOMS, MAX_CHAIN, MESSAGES as VALIDATION_MESSAGES, RING_SYSTEM_MESSAGES, TOO_MANY_ATOMS_MESSAGE,
   longestCarbonChain, longestSideChain,
 } from '../model/validate.js';
-import { BENZENE_NAME, RETAINED_PREFIXES, GROUP_SUFFIXES, ENDINGS, stem, multiplier } from '../naming/lexicon.es.js';
+import {
+  BENZENE_NAME, RETAINED_PREFIXES, GROUP_SUFFIXES, ENDINGS, HALOGEN_PREFIXES, ACYL_ENDING, ENCLOSING_MARKS, stem, multiplier,
+} from '../naming/lexicon.es.js';
 import {
   templateGroupWord, isAtomGroup, atomGroupOrder, closingText, HYDROXY_ELEMENT, ALKOXY_ELEMENT, OXO_ELEMENT, SUFFIX_GROUPS,
   GROUP_WORD_PARENTS, withArticle,
@@ -151,6 +165,8 @@ const RETAINED_TEMPLATES = Object.freeze({
   'tert-butyl': Object.freeze({ length: 3, attach: 2, order: 1, methyls: Object.freeze([2]), oxo: Object.freeze([]) }),
   // R-5c1: `formil`, the –CHO bonded by its carbon (the engine's one-carbon acyl group with its =O at 1, I-39b).
   formyl: Object.freeze({ length: 1, attach: 1, order: 1, methyls: Object.freeze([]), oxo: Object.freeze([1]) }),
+  // R-5c2: `acetil`, CH₃–CO– bonded by its C=O carbon (the engine's two-carbon acyl group, I-39b).
+  acetyl: Object.freeze({ length: 2, attach: 1, order: 1, methyls: Object.freeze([]), oxo: Object.freeze([1]) }),
 });
 
 /** Spanish words of the bond orders in the messages. */
@@ -237,10 +253,12 @@ function slotValue(slot, values) {
 /**
  * Checks a carbon slot against its chain: within it, and on a phenyl
  * (R-4b, role `phenylCarbon`) not on carbon 1, the one bonded to what the
- * phenyl hangs from (below the slot's domain).
+ * phenyl hangs from (below the slot's domain; on `benzoil`, R-5c2, the one
+ * bonded to its C=O carbon).
  *
  * @param {object} slot - A carbon Slot.
- * @param {{length: number, branch: boolean}} owner - The chain it numbers.
+ * @param {{length: number, branch: boolean, word?: string|null, acyl?: boolean}} owner - The chain it numbers (`word`: a
+ *   phenyl's own word, `fenil` or `benzoil`; `acyl`: a ring bonded through a C=O carbon).
  * @param {Map<object, number>|null} values - Placement values, or null.
  * @returns {object|null} A LOCANT_RANGE error, or null.
  */
@@ -250,8 +268,9 @@ function checkCarbon(slot, owner, values) {
     return null;
   }
   if (value >= 1 && value <= owner.length) {
-    return buildError('LOCANT_RANGE', `En «${FENIL}», el carbono 1 es el que se une a la cadena: las ramas del ${FENIL} `
-      + `van en los carbonos del ${slot.domain[0]} al ${owner.length}.`, slot.tiles);
+    const word = owner.word || FENIL;
+    return buildError('LOCANT_RANGE', `En «${word}», el carbono 1 es el que se une ${owner.acyl ? 'al grupo C=O' : 'a la cadena'}: `
+      + `las ramas del ${word} van en los carbonos del ${slot.domain[0]} al ${owner.length}.`, slot.tiles);
   }
   return buildError('LOCANT_RANGE', rangeMessage(owner, value), slot.tiles);
 } // End of function checkCarbon()
@@ -337,17 +356,45 @@ function checkSubstituent(sub, values) {
     if (sub.prefixes.length === 0) {
       return null;
     }
+    // `acetil` (R-5c2): with branches of its own, the group is written from `etanoil`, `(2-cloroetanoil)`.
+    const acetyl = sub.retained === ACETYL ? ` Con ramas propias, el grupo se escribe a partir de «${ACETYL_WORDS.etanoil}», como en `
+      + `${ACETYL_WORDS.cloroetanoil}.` : '';
     return buildError('TILE_ORDER', `Esta ficha no puede ir aquí: «${sub.word.text}» ya es una rama entera y no lleva `
-      + 'números ni ramas propias.', sub.word.tiles);
+      + `números ni ramas propias.${acetyl}`, sub.word.tiles);
   }
-  const owner = { length: sub.length, branch: true, ring: isRing(sub.kind), double: sub.double, triple: sub.triple };
+  const owner = {
+    length: sub.length, branch: true, ring: isRing(sub.kind), double: sub.double, triple: sub.triple,
+    word: sub.word && sub.word.text, acyl: sub.acyl, // `benzoil` (R-5c2): its carbon 1 is bonded to the C=O carbon.
+  };
   return checkPrefixes(sub.prefixes, owner, values) || checkBonds(owner, values)
     || checkCarbon(sub.freeValence.slot, owner, values);
 } // End of function checkSubstituent()
 
+/** The retained acyl word `acetil` (R-5c2), by its SubstituentSpec `retained` value (tiles.js ACYL_RETAINED). */
+const ACETYL = 'acetyl';
+
+/** Words of the TILE_ORDER message of `acetil` with prefixes of its own (R-5c2), from the lexicon. */
+const ACETYL_WORDS = Object.freeze({
+  etanoil: `${stem(2)}${ENDINGS.saturated.slice(0, -1)}${ACYL_ENDING}`,
+  cloroetanoil: `${ENCLOSING_MARKS[0][0]}2-${HALOGEN_PREFIXES.Cl}${stem(2)}${ENDINGS.saturated.slice(0, -1)}${ACYL_ENDING}`
+    + `${ENCLOSING_MARKS[0][1]}`,
+});
+
+/**
+ * Tells whether a branch is an acyl prefix of a ring (R-5c2: `carbonil`,
+ * `benzoil`): its C=O carbon is outside the ring, one more carbon.
+ *
+ * @param {object} sub - A SubstituentSpec.
+ * @returns {boolean} True for a ring bonded through a C=O carbon.
+ */
+function isRingAcyl(sub) {
+  return Boolean(sub.acyl) && isRing(sub.kind);
+}
+
 /**
  * Carbons of a branch, its own prefixes included (none for a one-atom
- * group: a halogen, R-5a1; `hidroxi`, R-5a2).
+ * group: a halogen, R-5a1; `hidroxi`, R-5a2; the C=O carbon of a ring's
+ * acyl prefix, R-5c2, outside the ring).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
@@ -360,7 +407,7 @@ function substituentCarbons(sub) {
     const template = RETAINED_TEMPLATES[sub.retained];
     return template.length + template.methyls.length;
   }
-  return sub.length + prefixCarbons(sub.prefixes);
+  return sub.length + prefixCarbons(sub.prefixes) + (isRingAcyl(sub) ? 1 : 0); // `ciclohexanocarbonil` (R-5c2)
 }
 
 /**
@@ -376,8 +423,9 @@ function prefixCarbons(prefixes) {
 /**
  * Atoms build() creates for one occurrence of a branch, its own prefixes
  * included: its carbons, one atom per one-atom group (a halogen, R-5a1;
- * the oxygen of `hidroxi`, R-5a2) and the ether oxygen of an alkoxy prefix
- * (R-5b).
+ * the oxygen of `hidroxi`, R-5a2), the ether oxygen of an alkoxy prefix
+ * (R-5b) and the =O of an acyl prefix (R-5c2; with its C=O carbon on a
+ * ring).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
@@ -390,7 +438,9 @@ function substituentAtoms(sub) {
   if (sub.kind === 'retained') {
     return substituentCarbons(sub) + RETAINED_TEMPLATES[sub.retained].oxo.length + oxygen; // The =O of `formil` (R-5c1).
   }
-  return sub.length + prefixAtomCount(sub.prefixes) + oxygen;
+  // R-5c2: the =O of `propanoil`, `benzoil`, and the C=O carbon of a ring's acyl prefix.
+  const acyl = (sub.acyl ? 1 : 0) + (isRingAcyl(sub) ? 1 : 0);
+  return sub.length + prefixAtomCount(sub.prefixes) + oxygen + acyl;
 }
 
 /**
@@ -541,8 +591,9 @@ export function specRings(spec) {
 function ringOnRing(owner, ring) {
   return owner.prefixes.some((prefix) => {
     const sub = prefix.substituent;
-    // An alkoxy ring (R-5b: `fenoxi`, `(ciclohexiloxi)`) is bonded through its ether oxygen, never atom to atom.
-    return (ring && isRing(sub.kind) && !sub.alkoxy) || (hasOwnChain(sub) && ringOnRing(sub, isRing(sub.kind)));
+    // An alkoxy ring (R-5b: `fenoxi`, `(ciclohexiloxi)`) is bonded through its ether oxygen, never atom to atom; a ring's
+    // acyl prefix (R-5c2: `benzoil`, `(ciclohexanocarbonil)`) through its C=O carbon.
+    return (ring && isRing(sub.kind) && !sub.alkoxy && !sub.acyl) || (hasOwnChain(sub) && ringOnRing(sub, isRing(sub.kind)));
   });
 }
 
@@ -755,8 +806,10 @@ function etherOxygen(state) {
 /**
  * Creates a branch: a one-atom group (a halogen atom, R-5a1; the oxygen of
  * `hidroxi`, R-5a2, or of `oxo`, R-5c1, double-bonded), a retained word from
- * its template (`formil` with its =O, R-5c1), or a chain; for an alkoxy
- * prefix (R-5b) that branch and then its ether oxygen (alkoxyOxygen()).
+ * its template (`formil` with its =O, R-5c1; `acetil`, R-5c2), or a chain;
+ * for an alkoxy prefix (R-5b) that branch and then its ether oxygen
+ * (alkoxyOxygen()); for an acyl prefix (R-5c2) that branch and then its C=O
+ * (acylCarbonyl()).
  *
  * @param {object} state - Build state.
  * @param {object} sub - A SubstituentSpec.
@@ -790,9 +843,56 @@ function buildSubstituent(state, sub) {
     const chain = buildChain(state, sub, true);
     const { slot, order } = sub.freeValence;
     branch = { attach: chain.atoms[slotValue(slot, state.values) - 1], order, tiles: slot.tiles };
+    if (sub.acyl) {
+      return acylCarbonyl(state, sub, branch); // `propanoil`, `(ciclohexanocarbonil)`, `benzoil` (R-5c2)
+    }
   }
   return sub.alkoxy ? alkoxyOxygen(state, sub, branch) : branch;
 } // End of function buildSubstituent()
+
+/**
+ * The end of VALENCE on the C=O carbon of a chain's acyl prefix (R-5c2): «…solo puede tener 4: el grupo C=O de «oil» va en
+ * ese carbono.»
+ */
+const ACYL_NOTE = `el grupo C=O de «${ACYL_ENDING}» va en ese carbono`;
+
+/**
+ * Puts the C=O of an acyl prefix (R-5c2) on its branch, already built, after
+ * every atom of the branch (ownPrefixAtoms() cuts a branch's own prefixes
+ * from its atoms in creation order). On a chain (`oil`: `propanoil`) its
+ * free-valence carbon, carbon 1, is the C=O carbon: an oxygen double-bonded
+ * to it, the two bonds blamed on the branch's free-valence tiles (the `oil`
+ * tile) and the carbon remembering it for the VALENCE message. On a ring
+ * (`carbonil`, `benzoil`) a new carbon, single-bonded to the ring's
+ * free-valence carbon (which gets that bond from the tiles that place its
+ * free valence, as it would get the bond to the chain), with an oxygen
+ * double-bonded to it (three bonds: never over its valence), left with one
+ * bond to make, to the carbon the prefix hangs from.
+ *
+ * @param {object} state - Build state.
+ * @param {object} sub - The acyl SubstituentSpec.
+ * @param {{attach: number, order: number, tiles: [number, number]}} branch - The built branch's free valence.
+ * @returns {{attach: number, order: number, tiles: [number, number]}} The C=O carbon, bond order 1, and the tiles to blame.
+ */
+function acylCarbonyl(state, sub, branch) {
+  const { mol } = state;
+  let carbon = branch.attach;
+  if (isRing(sub.kind)) {
+    carbon = addAtom(mol, {}, CARBON);
+    state.atoms.set(carbon, { locant: 1, branch: true, added: [] });
+    addBond(mol, branch.attach, carbon, 1);
+    contribute(state, branch.attach, branch.tiles, 1);
+  }
+  const oxygen = addAtom(mol, {}, OXO_ELEMENT);
+  state.atoms.set(oxygen, { locant: 1, branch: true, added: [] }); // One double bond: never over its valence.
+  addBond(mol, carbon, oxygen, 2);
+  if (isRing(sub.kind)) {
+    return { attach: carbon, order: 1, tiles: sub.tiles };
+  }
+  contribute(state, carbon, branch.tiles, 2);
+  state.atoms.get(carbon).note = ACYL_NOTE;
+  return { attach: carbon, order: 1, tiles: branch.tiles };
+} // End of function acylCarbonyl()
 
 /**
  * Puts the ether oxygen of an alkoxy prefix (R-5b) on its branch, already
@@ -873,7 +973,8 @@ function attachPrefixes(state, prefixes, atoms, record = null, template = null) 
  * each own prefix's occurrences one after another, in tile order, each
  * with all of its atoms before the next (a one-atom group is its one atom,
  * R-5a1, R-5a2; an alkoxy prefix its branch's atoms, then its ether oxygen,
- * R-5b), and an alkoxy branch's own ether oxygen last of all.
+ * R-5b), and an alkoxy branch's own ether oxygen last of all (so are an acyl
+ * branch's C=O carbon outside its ring and its =O, R-5c2).
  * For the diagnosis (diagnose.js), which compares branches inside a compound
  * branch by their structure.
  *

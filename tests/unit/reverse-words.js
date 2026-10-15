@@ -8,7 +8,8 @@
  * their alcohols (R-5a2; the retained phenols, R-5a3a), their ethers
  * (R-5b1: alkoxy prefixes and `anisol`) and their aldehydes and ketones
  * (R-5c1: the suffixes `al`, `ona`, `carbaldehído`, the prefixes `oxo` and
- * `formil`, `benzaldehído`).
+ * `formil`, `benzaldehído`; R-5c2: the acyl prefixes `acetil`, `…oil`,
+ * `…carbonil`, `benzoil`).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -18,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
 import {
   RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, ETHER_CLASS_WORD, ACETYL_PREFIX, ACYL_ENDING,
-  RING_CARBONYL_ENDING,
+  RING_CARBONYL_ENDING, BENZOYL_PREFIX,
 } from '../../src/naming/lexicon.es.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 
@@ -229,22 +230,20 @@ export function isCarbonyl(smiles) {
 }
 
 /**
- * The words of the aldehyde and ketone names the tiles of phase R-5c1 do not
- * write, from the lexicon: the acyl prefixes of phase R-5c2 (`acetil`, the
- * `oil` ending of `propanoil` and `benzoil`, the `carbonil` of
- * `ciclohexanocarbonil`) and the retained names of phase R-5c3
+ * The words of the aldehyde and ketone names the tiles of phases R-5c1 and
+ * R-5c2 do not write, from the lexicon: the retained names of phase R-5c3
  * (`formaldehído`, `acetaldehído` — `fenilacetaldehído`,
  * `2-(4-metilfenil)acetaldehído` too —, `acetona`, `acetofenona`, the
  * ftalaldehídos).
  */
 export const LATER_CARBONYL_WORDS = Object.freeze([
-  ACETYL_PREFIX, ACYL_ENDING, RING_CARBONYL_ENDING, TRADITIONAL_NAMES.formaldehyde, TRADITIONAL_NAMES.acetaldehyde,
-  TRADITIONAL_NAMES.acetone, TRADITIONAL_NAMES.acetophenone, BENZENE_DIGROUP_NAMES.phthalaldehyde,
+  TRADITIONAL_NAMES.formaldehyde, TRADITIONAL_NAMES.acetaldehyde, TRADITIONAL_NAMES.acetone, TRADITIONAL_NAMES.acetophenone,
+  BENZENE_DIGROUP_NAMES.phthalaldehyde,
 ]);
 
 /**
  * Tells whether a name of an aldehyde or a ketone is written with the tiles
- * of phase R-5c1: none of the words left for later phases
+ * of phases R-5c1 and R-5c2: none of the words left for later phases
  * (LATER_CARBONYL_WORDS; `ftalaldehído` covers `isoftalaldehído` and
  * `tereftalaldehído`).
  *
@@ -253,6 +252,25 @@ export const LATER_CARBONYL_WORDS = Object.freeze([
  */
 export function isCarbonylName(name) {
   return !LATER_CARBONYL_WORDS.some((word) => name.includes(word));
+}
+
+/**
+ * The words of the acyl prefixes the tiles of phase R-5c2 write, from the
+ * lexicon: `acetil`, the ending `oil` (`propanoil`, `(but-2-enoil)`), the
+ * ending `carbonil` (`(ciclohexanocarbonil)`) and `benzoil`.
+ */
+export const ACYL_WORDS = Object.freeze([ACETYL_PREFIX, ACYL_ENDING, RING_CARBONYL_ENDING, BENZOYL_PREFIX]);
+
+/**
+ * Tells whether a name has an acyl prefix of phase R-5c2 (ACYL_WORDS) —
+ * also inside an ester's or an amide's prefix (`acetiloxi`, `acetilamino`),
+ * which later phases read.
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for a name with an acyl word.
+ */
+export function isAcylName(name) {
+  return ACYL_WORDS.some((word) => name.includes(word));
 }
 
 /**

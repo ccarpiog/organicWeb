@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -13,7 +13,8 @@
  * from R-5a3a, the alkoxy ending `oxi` and `anisol` from R-5b, the ether
  * functional-class names from R-5b2, the aldehydes and ketones — the
  * suffixes `al`, `ona`, `carbaldehído`, the prefixes `oxo` and `formil`,
- * `benzaldehído` — from R-5c1):
+ * `benzaldehído` — from R-5c1, the acyl prefixes — the endings `oil` and
+ * `carbonil`, `acetil`, `benzoil` — from R-5c2):
  *
  *   name        = { prefix } , parent
  *               | { classGroup } , éter ;   (* R-5b2: exactly two groups *)
@@ -24,7 +25,9 @@
  *   simple      = stem , ( il [ oxi ] | iliden )
  *               | stem , [ ano ] , locant , ( il [ oxi ] | iliden )
  *               | stem , segments , [ locant ] , ( il [ oxi ] | iliden )
- *               | ( isopropil | tert-butil | fenil ) , [ oxi ] | isopropiliden | formil ;
+ *               | ROOT , ( ano | segments ) , oil              (* R-5c2: propanoil, (but-2-enoil) *)
+ *               | ciclo , ROOT , ( ano | segments ) , [ locant ] , carbonil   (* (ciclohexanocarbonil) *)
+ *               | ( isopropil | tert-butil | fenil ) , [ oxi ] | isopropiliden | formil | acetil | benzoil ;
  *   parent      = [ legacy ] , stem , ( ano | segments ) , [ suffix ]
  *               | [ legacy ] , benceno , [ suffix ] | fenol | benzaldehído
  *               | [ locants | letter ] , template ;
@@ -129,6 +132,26 @@
  * (groupWordOf(): no suffix, numbers or letter of its own; it counts as one
  * of the two positions of an orto/meta/para letter, `p-clorobenzaldehído`).
  *
+ * The acyl prefixes (R-5c2) name a branch whose carbon bonded to what it
+ * hangs from is a C=O carbon, as the engine writes them (render.js
+ * acylEndingTokens(), ringCarbonylTokens()): the acyl ending stands where a
+ * branch's `il` stands (the chain node's `fv`, a tile of kind 'acyl'), after
+ * the branch's own ending as in a parent's name — `oil` after a chain
+ * (`prop ano oil`: `propanoil`, the chain's carbon 1 the C=O carbon; `but 2
+ * eno oil`: `(but-2-enoil)`), with no locant of its own (its C=O is always
+ * its carbon 1), and `carbonil` after a `ciclo` ring (`ciclo hex ano
+ * carbonil`: `(ciclohexanocarbonil)`, the C=O carbon outside the ring, bonded
+ * to its carbon 1; `ciclo hex 2 eno 1 carbonil`: `(ciclohex-2-eno-1-carbonil)`,
+ * the locant 1 written as the engine writes it). Either without the ending
+ * before it (`prop oil`), `oil` on a ring, `carbonil` on a chain and numbers
+ * before `oil` are TILE_ORDER, each with its hint, and so is `oxi` after an
+ * acyl branch (an ester's prefix, R-6a) and an acyl group in an ether's class
+ * name. `acetil` (CH₃–CO–, the engine's word for the unsubstituted acyl of
+ * two carbons) is a retained word like `formil`, and `benzoil` (the benzene
+ * ring bonded to a C=O carbon) one like `fenil`, which takes prefixes of its
+ * own inside a compound branch (`START 4 met il benzoil END`:
+ * `(4-metilbenzoil)`); an acyl tile anywhere else is TILE_ORDER.
+ *
  * The tile `1(n)` (R-5a2) is the compound locant of a ring's closing bond,
  * the one from its last carbon n back to carbon 1 (the engine cites it
  * `1(6)`, IUPAC 2013 P-31.1.4.2.4: `ciclohex-1(6)-eno-1,2,4-triol`,
@@ -184,7 +207,8 @@
  *            number|null, segments: segment[], fvLocants: number[], fv:
  *            number|null, oxi: number|null}` (`ring` the `ciclo` tile of a
  *            ring, else null; `root` null only after a `ciclo` with no root,
- *            RING_ROOT; a branch's chain has `fv`; the parent's has none;
+ *            RING_ROOT; a branch's chain has `fv` — `il` / `iliden`, or the
+ *            acyl ending `oil` / `carbonil`, R-5c2 —; the parent's has none;
  *            `oxi` the alkoxy ending after `fv`, R-5b)
  * - segment `{locants: number[], multiplier: number|null, ending: number}`
  * - retained `{type: 'retained', tile, oxi: number|null}` (`oxi` the alkoxy ending after it, R-5b)
@@ -242,11 +266,13 @@
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS, CONNECTING_VOWEL,
   MAX_MULTIPLIER, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, POSITIONAL_LETTERS, GROUP_SUFFIXES, GROUP_PREFIXES,
-  HALOGEN_PREFIXES, ALKOXY_ENDING, ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, FORMYL_PREFIX,
+  HALOGEN_PREFIXES, ALKOXY_ENDING, ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, FORMYL_PREFIX, ACYL_ENDING, RING_CARBONYL_ENDING,
+  BENZOYL_PREFIX,
 } from '../naming/lexicon.es.js';
 import {
   toTiles, TEMPLATES, templateGroupWord, groupPlural, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
   isPhenolTemplate, withArticle, ALKOXY_RETAINED, ETHER_CLASS_GROUPS, SUFFIX_GROUPS, GROUP_WORD_PARENTS, BENZALDEHYDE_ID,
+  isAcylTile,
 } from './tiles.js';
 import { itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore } from './assemble.js';
 
@@ -339,6 +365,10 @@ const EXAMPLES = Object.freeze({
   bencenodicarbaldehido: `${BENZENE_NAME}-1,4-${multiplier(2)}${CARBALDEHIDO}`,
   oxoetil: `${OPEN}2-${OXO}${stem(2)}${IL}${CLOSE}`,
   formilfenil: `${OPEN}4-${FORMYL_PREFIX}${FENIL}${CLOSE}`,
+  // R-5c2: the acyl prefixes.
+  propanoil: `${stem(3)}${ANO.slice(0, -1)}${ACYL_ENDING}`,
+  butenoil: `${OPEN}${stem(4)}-2-${ENDINGS.double.slice(0, -1)}${ACYL_ENDING}${CLOSE}`,
+  ciclohexanocarbonil: `${OPEN}${RING_PREFIX}${stem(6)}${ANO}${RING_CARBONYL_ENDING}${CLOSE}`,
   etilMetilEter: `${stem(2)}${IL} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
   dietilEter: `${multiplier(2)}${stem(2)}${IL} ${ETHER_CLASS_WORD}`,
   cloroetilEter: `${OPEN}2-${HALOGEN_PREFIXES.Cl}${stem(2)}${IL}${CLOSE} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
@@ -405,7 +435,62 @@ const HINTS = Object.freeze({
   formylAlkoxy: `«${ALKOXY_ENDING}» no va detrás de «${FORMYL_PREFIX}»: un grupo CHO unido a un oxígeno no forma un éter.`,
   classFormyl: `«${FORMYL_PREFIX}» no va en un nombre con «${ETHER_CLASS_WORD}»: un grupo CHO unido al oxígeno no forma un `
     + `éter. Los dos grupos de un éter son cadenas o anillos de carbonos (${EXAMPLES.etilMetilEter}).`,
+  // R-5c2: the acyl prefixes.
+  oilEnding: `delante de «${ACYL_ENDING}» va la terminación de la rama, como en la cadena principal: ${stem(3)}, ${ANO} y `
+    + `${ACYL_ENDING} dan ${EXAMPLES.propanoil}; ${stem(4)}, 2, ${ENDINGS.double} y ${ACYL_ENDING} dan ${EXAMPLES.butenoil}.`,
+  carbonilEnding: `delante de «${RING_CARBONYL_ENDING}» va el nombre del anillo con su terminación: ${RING_PREFIX}, ${stem(6)}, `
+    + `${ANO} y ${RING_CARBONYL_ENDING} dan ${EXAMPLES.ciclohexanocarbonil}.`,
+  oilRing: `en un anillo, el grupo C=O unido a él se escribe con «${RING_CARBONYL_ENDING}», detrás del nombre del anillo: `
+    + `${EXAMPLES.ciclohexanocarbonil}; el del ${BENZENE_NAME} es «${BENZOYL_PREFIX}».`,
+  carbonilChain: `«${RING_CARBONYL_ENDING}» va detrás del nombre de un anillo: ${EXAMPLES.ciclohexanocarbonil}; en una cadena, la `
+    + `rama acaba en «${ACYL_ENDING}»: ${EXAMPLES.propanoil}.`,
+  oilLocants: `«${ACYL_ENDING}» no lleva números: su grupo C=O está siempre en el carbono 1 de la rama, el que se une a la cadena `
+    + `(${EXAMPLES.propanoil}, ${EXAMPLES.butenoil}).`,
+  benzeneAcyl: `«${BENZENE_NAME}» es el anillo principal y va al final del nombre; como rama unida a un grupo C=O, el ${BENZENE_NAME} `
+    + `se escribe «${BENZOYL_PREFIX}».`,
 });
+
+/**
+ * The TILE_ORDER hint of an acyl ending out of place (R-5c2): `oil` after a
+ * chain's ending, `carbonil` after a ring's name; `benzoil` for the benzene
+ * ring.
+ *
+ * @param {{value: string}} tile - The `oil` (value 'chain') or `carbonil` (value 'ring') tile.
+ * @returns {string} The hint.
+ */
+function acylHint(tile) {
+  if (tile.value === 'ring') {
+    return `«${RING_CARBONYL_ENDING}» va justo detrás del nombre de un anillo con su terminación: ${RING_PREFIX}, ${stem(6)}, ${ANO} `
+      + `y ${RING_CARBONYL_ENDING} dan ${EXAMPLES.ciclohexanocarbonil}; para el ${BENZENE_NAME} se usa «${BENZOYL_PREFIX}», y para `
+      + `una cadena, «${ACYL_ENDING}» (${EXAMPLES.propanoil}).`;
+  }
+  return `«${ACYL_ENDING}» va justo detrás de la terminación de una rama, y la une a la cadena por su carbono 1, el del grupo `
+    + `C=O: ${stem(3)}, ${ANO} y ${ACYL_ENDING} dan ${EXAMPLES.propanoil}; para un anillo se usa «${RING_CARBONYL_ENDING}» `
+    + `(${EXAMPLES.ciclohexanocarbonil}) y para el ${BENZENE_NAME}, «${BENZOYL_PREFIX}».`;
+} // End of function acylHint()
+
+/**
+ * The TILE_ORDER hint of `oxi` after an acyl branch (R-5c2): a C=O carbon
+ * bonded to an oxygen is an ester's, not an ether's.
+ *
+ * @param {string} word - The acyl word or ending before it, as on its tile (`acetil`, `oil`…).
+ * @returns {string} The hint.
+ */
+function acylAlkoxyHint(word) {
+  return `«${ALKOXY_ENDING}» no va detrás de «${word}»: un grupo C=O unido a un oxígeno no forma un éter.`;
+}
+
+/**
+ * The TILE_ORDER hint of an acyl group written as a group of an ether's class
+ * name (R-5c2), as `formil`'s (R-5c1).
+ *
+ * @param {string} word - The acyl word or ending, as on its tile.
+ * @returns {string} The hint.
+ */
+function classAcylHint(word) {
+  return `«${word}» no va en un nombre con «${ETHER_CLASS_WORD}»: un grupo C=O unido al oxígeno no forma un éter. Los dos `
+    + `grupos de un éter son cadenas o anillos de carbonos (${EXAMPLES.etilMetilEter}).`;
+}
 
 /**
  * The TILE_ORDER hint of a suffix tile out of place (R-5a2: `ol`; R-5c1:
@@ -897,6 +982,8 @@ function takeAlkoxy(state, before) {
   const single = before.kind === 'freeValence' ? before.value === 1 : ALKOXY_RETAINED.includes(before.value);
   if (before.value === 'formyl') {
     addTileOrder(state, oxi, oxi + 1, HINTS.formylAlkoxy); // `formil oxi` (R-5c1): an ester's prefix, not an ether's
+  } else if (isAcylTile(before)) {
+    addTileOrder(state, oxi, oxi + 1, acylAlkoxyHint(before.text)); // `acetil oxi`, `propanoil oxi` (R-5c2): an ester's too
   } else if (!single) {
     addTileOrder(state, oxi, oxi + 1, alkoxyAfterDoubleHint(before.text)); // `metiliden oxi`, `isopropiliden oxi`
   }
@@ -907,8 +994,9 @@ function takeAlkoxy(state, before) {
  * Parses a chain from its stem — a root, or `ciclo` and a root for a ring
  * (RING_ROOT when no root follows `ciclo`, RING_SIZE for a ring of fewer
  * than MIN_RING carbons) —, then `ano` or unsaturation segments, then the
- * free-valence locant and suffix of a branch when they follow, and the
- * alkoxy ending `oxi` after them (R-5b).
+ * free-valence locant and suffix of a branch when they follow — or an acyl
+ * ending, `oil` or `carbonil` (R-5c2, checkAcyl()) —, and the alkoxy ending
+ * `oxi` after them (R-5b).
  *
  * @param {object} state - Parser state (positioned on a root or `ciclo` tile).
  * @returns {object} The chain node.
@@ -939,7 +1027,7 @@ function parseChain(state) {
   }
   const save = state.pos;
   const nums = takeNums(state);
-  if (at(state, 'freeValence')) {
+  if (at(state, 'freeValence') || at(state, 'acyl')) {
     chain.fvLocants = nums;
     chain.fv = state.pos;
     state.pos += 1;
@@ -947,7 +1035,9 @@ function parseChain(state) {
       addError(state, 'LOCANT_COUNT', nums[0], nums[nums.length - 1] + 1,
         `Una rama se une a la cadena por un solo carbono: delante de «${tiles[chain.fv].text}» va un solo número.`);
     }
-    if (chain.ano !== null && nums.length === 0) {
+    if (tiles[chain.fv].kind === 'acyl') {
+      checkAcyl(state, chain); // `propanoil`, `ciclohexanocarbonil` (R-5c2)
+    } else if (chain.ano !== null && nums.length === 0) {
       addTileOrder(state, chain.ano, chain.ano + 1, HINTS.anoBeforeIl); // `prop ano il`: `propil`
     }
     chain.oxi = takeAlkoxy(state, tiles[chain.fv]); // `met il oxi`: `metoxi` (R-5b)
@@ -967,6 +1057,33 @@ function parseChain(state) {
 function chainEnded(chain) {
   return chain.ano !== null || chain.segments.length > 0;
 }
+
+/**
+ * Checks the acyl ending of a branch (R-5c2; its `fv` tile, of kind
+ * 'acyl'): `oil` after a chain, `carbonil` after a `ciclo` ring, each after
+ * the branch's own ending (`propanoil`, `ciclohexanocarbonil`), `oil` with
+ * no number of its own (its C=O is its carbon 1); TILE_ORDER otherwise,
+ * with its hint. A `ciclo` without its root already has RING_ROOT.
+ *
+ * @param {object} state - Parser state.
+ * @param {object} chain - The branch's chain node, its `fv` the acyl tile.
+ * @returns {void}
+ */
+function checkAcyl(state, chain) {
+  const { fv } = chain;
+  const ring = state.tiles[fv].value === 'ring';
+  if (chain.root === null) {
+    return;
+  }
+  if (ring !== (chain.ring !== null)) {
+    addTileOrder(state, fv, fv + 1, ring ? HINTS.carbonilChain : HINTS.oilRing); // `prop ano carbonil`, `ciclo hex ano oil`
+  } else if (!chainEnded(chain)) {
+    addTileOrder(state, fv, fv + 1, ring ? HINTS.carbonilEnding : HINTS.oilEnding); // `prop oil`, `ciclo hex carbonil`
+  } else if (!ring && chain.fvLocants.length > 0) {
+    const nums = chain.fvLocants;
+    addTileOrder(state, nums[0], nums[nums.length - 1] + 1, HINTS.oilLocants); // `prop ano 1 oil`
+  }
+} // End of function checkAcyl()
 
 /**
  * Records ROOT_END for a chain without its ending (or, inside a compound
@@ -1323,10 +1440,14 @@ function checkClassName(state, tree) {
     } else if (isAlkoxyNode(sub)) {
       const { oxi } = alkoxyCore(sub);
       addTileOrder(state, oxi, oxi + 1, HINTS.classAlkoxy); // `metoxi etil éter`
+    } else if (core && core.type === 'chain' && core.fv !== null && isAcylTile(tiles[core.fv])) {
+      addTileOrder(state, core.fv, core.fv + 1, classAcylHint(tiles[core.fv].text)); // `propanoil metil éter` (R-5c2)
     } else if (core && core.type === 'chain' && core.fv !== null && tiles[core.fv].value !== 1) {
       addTileOrder(state, core.fv, core.fv + 1, classDoubleHint(tiles[core.fv].text)); // `metiliden metil éter`
     } else if (core && core.type === 'retained' && tiles[core.tile].value === 'formyl') {
       addTileOrder(state, core.tile, core.tile + 1, HINTS.classFormyl); // `formil metil éter` (R-5c1)
+    } else if (core && core.type === 'retained' && isAcylTile(tiles[core.tile])) {
+      addTileOrder(state, core.tile, core.tile + 1, classAcylHint(tiles[core.tile].text)); // `acetil metil éter` (R-5c2)
     } else if (core && core.type === 'retained' && !ALKOXY_RETAINED.includes(tiles[core.tile].value)) {
       addTileOrder(state, core.tile, core.tile + 1, classDoubleHint(tiles[core.tile].text)); // `isopropiliden metil éter`
     }
@@ -1370,10 +1491,11 @@ function parseItem(state, context) {
   const first = tiles[start];
   const wholeWord = (first.kind === 'benzene' || first.kind === 'template') && context === 'branch';
   const classInBranch = first.kind === 'classWord' && context === 'branch'; // `éter` inside a compound branch (R-5b2)
-  if (['ending', 'freeValence', 'end', 'suffix', 'alkoxy'].includes(first.kind) || wholeWord || classInBranch) { // `oxi` alone: R-5b
+  if (['ending', 'freeValence', 'end', 'suffix', 'alkoxy', 'acyl'].includes(first.kind) || wholeWord || classInBranch) { // `oxi` alone: R-5b
     state.pos += 1;
     const hint = (first.kind === 'end' && HINTS.endWithoutBranch) || (wholeWord && wholeWordHint(first))
-      || (first.kind === 'suffix' && suffixHint(first)) || HINTS[first.kind]; // `ona`, `al`… out of place (R-5c1)
+      || (first.kind === 'suffix' && suffixHint(first)) || (first.kind === 'acyl' && acylHint(first)) // `oil` alone (R-5c2)
+      || HINTS[first.kind]; // `ona`, `al`… out of place (R-5c1)
     addTileOrder(state, start, start + 1, hint);
     return { type: 'stray', tile: start, range: [start, start + 1] };
   }
@@ -1665,8 +1787,12 @@ export function parse(sequence) {
     const { chain } = tree.parent;
     const bonds = chain.type === 'benzene' && !groupWordOf(tiles, chain)
       && tiles.slice(state.pos).every((tile) => ['num', 'mult', 'ending'].includes(tile.kind));
+    // `benceno carbonil` (R-5c2): the benzene ring bonded to a C=O carbon, as a branch, is `benzoil`.
+    const acyl = chain.type === 'benzene' && !groupWordOf(tiles, chain) && tiles[state.pos].kind === 'acyl';
     if (bonds) {
       addError(state, 'BENZENE_BONDS', state.pos, tiles.length, MESSAGES.BENZENE_BONDS);
+    } else if (acyl) {
+      addTileOrder(state, state.pos, tiles.length, HINTS.benzeneAcyl);
     } else {
       addTileOrder(state, state.pos, tiles.length, chain.type === 'classWord' ? HINTS.afterClassWord : HINTS.afterParent);
     }

@@ -10,9 +10,9 @@
  * an alcohol's own mistakes are checked before rule 1) and their ethers
  * (R-5b; «Ethers» below: the wrong side of the oxygen, `di` for `bis` before
  * an alkoxy prefix, and the functional-class names, R-5b2), and their
- * aldehydes and ketones (R-5c1; «Aldehydes and ketones» below: the rules
- * that hold for them, and deliberate nulls where a message of their own is
- * needed).
+ * aldehydes and ketones (R-5c1, R-5c2 — the acyl prefixes —; «Aldehydes and
+ * ketones» below: the rules that hold for them, and deliberate nulls where a
+ * message of their own is needed).
  *
  * The rules, in order (first match wins):
  *
@@ -411,6 +411,27 @@
  * segment's «eno» o «ino»). The shapes for the prefix style: `oxo` is
  * `X:=O`, `formil` the engine's one-carbon formyl group with its oxo.
  *
+ * The acyl prefixes (R-5c2: `acetil`, `propanoil`, `(but-2-enoil)`,
+ * `(2-metilpropanoil)`, `benzoil`, `(4-metilbenzoil)`,
+ * `(ciclohexanocarbonil)`) are carbon branches bonded by their C=O carbon,
+ * and the rules read them as any branch: their C=O carbon lengthens a chain
+ * they stand on the end of (BRANCH_AT_END: `6-acetilhexanal` →
+ * `7-oxooctanal`, `4-(4-yodobenzoil)butanal` → `5-oxo-5-(4-yodofenil)pentanal`);
+ * the chain rules follow the trace (LONGER_CHAIN, MORE_SUBSTITUENTS,
+ * CHAIN_LOCANTS, NUMBERING), MORE_SUBSTITUENTS speaking of «sustituyentes»
+ * since the acyl prefix's C=O is an `oxo` of any chain through its carbon
+ * (hasHalogen(): `4-acetilhexanal` → `4-etil-5-oxohexanal`); the form rules
+ * read their words — ALPHABETICAL_ORDER (`acetil` under a, `benzoil` under b,
+ * `(2-metilpropanoil)` under m, `(ciclohexanocarbonil)` under c), UNGROUPED,
+ * MULTIPLIER_KIND (bis before one with prefixes of its own only:
+ * `bis(2-metilpropanoil)`, but `diacetil`, `di(prop-2-enoil)`) — and
+ * NEEDLESS_LOCANTS the locant 1 before `carbonil` that the engine leaves out
+ * (shortForm(): `(ciclohexano-1-carbonil)` → `(ciclohexanocarbonil)`, never on
+ * a ring with a multiple bond or prefixes of its own). Their shapes for the
+ * prefix style are the engine's acyl groups' (specShape(): the chain with the
+ * oxo on its carbon 1; a ring's, the one-carbon chain of its C=O carbon with
+ * the oxo and the ring).
+ *
  * Deliberate, tested nulls (phase R-5c3 words them):
  *
  * - before any rule (carbonylBeyondRules()): the student's suffix is not the
@@ -429,7 +450,20 @@
  *   `hexano-3,5-diona`), whose messages speak of OH groups;
  * - the suffix's needless locants (`ciclohexan-1-ona`,
  *   `ciclohexano-1-carbaldehído`), whose NEEDLESS_LOCANTS message speaks of
- *   the OH group.
+ *   the OH group;
+ * - (R-5c2) an acyl prefix where the engine's parent is the ketone's chain
+ *   (`acetilbenceno`, `butanoilciclohexano`, `4-acetiltolueno`: no suffix of
+ *   the student's, the first item), or moved to an end carbon whose C=O the
+ *   chain then takes (`1-acetilhexanal` → `octano-2,3-diona`, the suffix
+ *   again);
+ * - (R-5c2) an acyl prefix in words the engine does not write, as a branch
+ *   whose own chain or numbering is not the engine's («No rule covers»
+ *   above): `etanoil` for `acetil`, an `oxo` alkyl group for the acyl word
+ *   (`(1-oxoetil)`, `(1-oxopropil)`), its own chain or numbering otherwise
+ *   (`(3-metilpropanoil)` for `butanoil`, `(2-etilpropanoil)`,
+ *   `(6-metilbenzoil)`, `(6-metilciclohexano-1-carbonil)`,
+ *   `(ciclohexano-2-carbonil)`), or the locant 1 the engine writes before
+ *   `carbonil` left out (`(ciclohex-2-enocarbonil)`).
  *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
@@ -454,7 +488,7 @@ import { assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore } from '
 import { ownPrefixAtoms, specRings, isRing } from './build.js';
 import {
   tileById, tileId, MAX_MULT, isAtomGroup, atomGroupOrder, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
-  FORMYL_ID,
+  FORMYL_ID, ACETYL_ID,
 } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
@@ -525,6 +559,9 @@ const BEYOND = Object.freeze({ code: null });
 
 /** The `formil` tile's value (a retained word, R-5c1). */
 const FORMYL = tileById(FORMYL_ID).value;
+
+/** The `acetil` tile's value (a retained word, R-5c2). */
+const ACETYL = tileById(ACETYL_ID).value;
 
 /** How the branch shapes write the double-bonded oxygen of `oxo` (R-5c1; specShape(), structureShape()). */
 const DOUBLE_OXYGEN = '=O';
@@ -1182,13 +1219,17 @@ function isHeteroGroup(sub) {
 /**
  * Tells whether some prefixes hold a one-atom group (a halogen, R-5a1;
  * `hidroxi`, R-5a2) or an alkoxy prefix (R-5b), at any depth: the messages
- * then speak of «sustituyentes», not «ramas».
+ * then speak of «sustituyentes», not «ramas»; so do they beside an acyl
+ * prefix (R-5c2: `acetil`, `propanoil`, `benzoil`…; `formil`, R-5c1), whose
+ * C=O is an `oxo` substituent of any chain through its carbon
+ * (`4-acetilhexanal` → `4-etil-5-oxohexanal`: two substituents).
  *
  * @param {object[]} prefixes - PrefixSpecs (interpret.js).
  * @returns {boolean} True when one is among them or inside a compound branch.
  */
 function hasHalogen(prefixes) {
-  return prefixes.some((prefix) => isHeteroGroup(prefix.substituent) || hasHalogen(prefix.substituent.prefixes));
+  return prefixes.some((prefix) => isHeteroGroup(prefix.substituent) || prefix.substituent.acyl
+    || prefix.substituent.retained === FORMYL || hasHalogen(prefix.substituent.prefixes));
 }
 
 /**
@@ -2513,7 +2554,12 @@ function needlessLocants(ctx) {
  * compound branch's own chain whose free valence is not at its carbon 1
  * keeps it (R-5a1: `(1-cloroetan-2-il)` is `(2-cloroetil)` numbered from
  * the other end, not `(1-cloroetil)`, a numbering no rule names; likewise
- * `(1-metiletan-2-il)` is `propil`, not `(1-metiletil)`): null.
+ * `(1-metiletan-2-il)` is `propil`, not `(1-metiletil)`): null. A ring's
+ * acyl prefix (R-5c2) keeps its whole ending and loses only the locant 1
+ * before `carbonil`, which the engine writes unless the ring has neither a
+ * multiple bond nor prefixes of its own (render.js ringCarbonylTokens():
+ * `(ciclohexano-1-carbonil)` → `(ciclohexanocarbonil)`; never
+ * `(ciclohex-2-eno-1-carbonil)`); `oil` takes no locant (parse.js).
  *
  * @param {object} tree - The parse() tree.
  * @param {object} chain - A branch's chain node (parse.js, with `fv`).
@@ -2521,6 +2567,11 @@ function needlessLocants(ctx) {
  * @returns {object|null} The chain node in its short form, or null when it has no needless locants.
  */
 function shortForm(tree, chain, owner = null) {
+  if (tree.tiles[chain.fv].kind === 'acyl') {
+    const one = chain.fvLocants.length === 1 && tree.tiles[chain.fvLocants[0]].value === 1;
+    const bare = chain.segments.length === 0 && !(owner && owner.items.length > 0);
+    return one && bare ? { ...chain, fvLocants: [] } : null; // `(ciclohexano-1-carbonil)` → `(ciclohexanocarbonil)` (R-5c2)
+  }
   const length = tree.tiles[chain.root].value;
   const positions = [...chain.segments.flatMap((s) => s.locants), ...chain.fvLocants];
   if (owner && owner.items.length > 0 && chain.fvLocants.some((index) => tree.tiles[index].value !== 1)) {
@@ -2877,7 +2928,11 @@ function chainShape(length, locant, order, nested) {
  * of its chain; an alkoxy prefix (R-5b) is its branch's shape after `O:`
  * (`isopropoxi` is `O:R:isopropyl`, `(propan-2-iloxi)` `O:C3:2:1()`); `oxo`
  * (R-5c1) is `X:=O`, and `formil` the shape the engine gives its formyl
- * group, a one-carbon chain with an oxo (`C1:1:1(X:=O)`).
+ * group, a one-carbon chain with an oxo (`C1:1:1(X:=O)`); an acyl prefix
+ * (R-5c2) the engine's acyl group's, its chain with the oxo on its carbon 1
+ * (`acetil` `C2:1:1(X:=O)`, `propanoil` `C3:1:1(X:=O)`), or for a ring's
+ * (`(ciclohexanocarbonil)`, `benzoil`) the one-carbon chain of the C=O carbon
+ * with its oxo and the ring.
  * Spelling mistakes the later rules name do not change it:
  * `(1-metiletan-1-il)` and `1-metiletil` have one shape.
  *
@@ -2893,10 +2948,20 @@ function specShape(sub) {
   if (sub.kind === 'retained' && sub.retained === FORMYL) {
     return chainShape(1, 1, 1, [`X:${DOUBLE_OXYGEN}`]); // `formil` (R-5c1): the engine's one-carbon acyl group with its oxo.
   }
+  if (sub.kind === 'retained' && sub.retained === ACETYL) {
+    return chainShape(2, 1, 1, [`X:${DOUBLE_OXYGEN}`]); // `acetil` (R-5c2): the engine's two-carbon acyl group with its oxo.
+  }
   if (sub.kind === 'retained') {
     return `${ether}R:${sub.retained}`;
   }
+  if (sub.acyl && isRing(sub.kind)) {
+    // `(ciclohexanocarbonil)`, `benzoil` (R-5c2): the engine's one-carbon acyl group, its oxo and the ring on it.
+    return chainShape(1, 1, 1, [`X:${DOUBLE_OXYGEN}`, specShape({ ...sub, acyl: false })]);
+  }
   const nested = sub.prefixes.flatMap((prefix) => prefix.slots.map(() => specShape(prefix.substituent)));
+  if (sub.acyl) {
+    nested.push(`X:${DOUBLE_OXYGEN}`); // `propanoil` (R-5c2): the =O on its carbon 1, as the engine keeps it among the prefixes.
+  }
   return `${ether}${chainShape(sub.length, sub.freeValence.slot.value, sub.freeValence.order, nested)}`;
 } // End of function specShape()
 

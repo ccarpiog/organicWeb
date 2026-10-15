@@ -9,7 +9,8 @@
  * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
  * TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS,
  * HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING,
- * ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX),
+ * ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX,
+ * ACETYL_PREFIX, ACYL_ENDING, BENZOYL_PREFIX, RING_CARBONYL_ENDING),
  * never retyped here;
  * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
@@ -78,12 +79,27 @@
  *   «Anillos» row `benzaldehído` (kind 'benzene', value 'benzaldehyde': the
  *   benzene parent with its –CHO at carbon 1, as `fenol` with its OH —
  *   `4-metilbenzaldehído`; GROUP_WORD_PARENTS);
+ *   and the acyl prefixes (R-5c2: a C=O carbon X bonded to the carbon the
+ *   prefix's locant gives, render.js acylEndingTokens() / ringCarbonylTokens()):
+ *   'acyl' (an acyl ending written in a branch's free-valence place, after
+ *   the branch's own ending — `oil`, value 'chain': the chain's carbon 1 is
+ *   X, `prop ano oil` → `propanoil`, `but 2 eno oil` → `(but-2-enoil)`; and
+ *   `carbonil`, value 'ring': X is a new carbon bonded to the ring's carbon
+ *   1, `ciclo hex ano carbonil` → `(ciclohexanocarbonil)`, `ciclo hex 2 eno 1
+ *   carbonil` → `(ciclohex-2-eno-1-carbonil)`; the lexicon's ACYL_ENDING and
+ *   RING_CARBONYL_ENDING), `acetil` (kind 'retained', value 'acetyl': CH₃–CO–,
+ *   the engine's retained word for the unsubstituted two-carbon acyl group;
+ *   ACETYL_PREFIX) and in the «Anillos» row `benzoil` (kind 'retained', value
+ *   'benzoyl': the benzene ring bonded to X, which like `fenil` takes
+ *   prefixes of its own inside a compound branch, `(4-metilbenzoil)`;
+ *   BENZOYL_PREFIX);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
  *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2,
- *   `benzaldehído` from R-5c1), 'groups' («Grupos», R-5a1: the halogens;
- *   R-5a2: `hidroxi` and `ol`; R-5b: `oxi`, and `éter` from R-5b2; R-5c1:
- *   `oxo`, `formil`, `al`, `ona`, `carbaldehído`),
+ *   `benzaldehído` from R-5c1, `benzoil` from R-5c2), 'groups' («Grupos»,
+ *   R-5a1: the halogens; R-5a2: `hidroxi` and `ol`; R-5b: `oxi`, and `éter`
+ *   from R-5b2; R-5c1: `oxo`, `formil`, `al`, `ona`, `carbaldehído`; R-5c2:
+ *   `acetil`, `oil`, `carbonil`, after `formil`),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; later phases add acetona, ácido
  *   acético…);
@@ -95,6 +111,7 @@ import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
   RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES,
   GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING, ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX, groupName,
+  ACETYL_PREFIX, ACYL_ENDING, BENZOYL_PREFIX, RING_CARBONYL_ENDING,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -192,6 +209,39 @@ export const CARBALDEHYDE_ID = 'suffix-carbaldehyde';
 
 /** Id of the `benzaldehído` tile (design.md §15.8 R-5c; phase R-5c1: the benzene parent with its –CHO at carbon 1). */
 export const BENZALDEHYDE_ID = 'ring-benzaldehyde';
+
+/** Id of the `acetil` tile (design.md §15.8 R-5c; phase R-5c2: the retained acyl prefix of CH₃–CO–). */
+export const ACETYL_ID = 'retained-acetyl';
+
+/** Id of the `benzoil` tile (design.md §15.8 R-5c; phase R-5c2: the benzene ring bonded to a C=O carbon, as a branch). */
+export const BENZOYL_ID = 'retained-benzoyl';
+
+/** Id of the `oil` tile (design.md §15.8 R-5c; phase R-5c2: the acyl ending of a chain branch, `propanoil`). */
+export const ACYL_ID = 'acyl-chain';
+
+/** Id of the `carbonil` tile (design.md §15.8 R-5c; phase R-5c2: the acyl ending of a ring branch, `ciclohexanocarbonil`). */
+export const RING_CARBONYL_ID = 'acyl-ring';
+
+/**
+ * The retained acyl words (R-5c2), by tile value: `acetil`, a two-carbon
+ * chain whose carbon 1 is the C=O carbon (build.js), and `benzoil`, the
+ * benzene ring bonded to a C=O carbon outside it (interpret.js reads it as
+ * an acyl phenyl). `formil` (R-5c1) is the one-carbon acyl word.
+ */
+export const ACYL_RETAINED = Object.freeze(['acetyl', 'benzoyl']);
+
+/**
+ * Tells whether a tile is an acyl word or ending of R-5c2: `oil`, `carbonil`
+ * (kind 'acyl'), `acetil` or `benzoil` (ACYL_RETAINED) — the C=O carbon of
+ * the branch is bonded to what it hangs from. `formil` (R-5c1), the –CHO,
+ * keeps its own messages and is not one of them.
+ *
+ * @param {{kind: string, value: *}} tile - A catalogue tile.
+ * @returns {boolean} True for an acyl tile of R-5c2.
+ */
+export function isAcylTile(tile) {
+  return tile.kind === 'acyl' || (tile.kind === 'retained' && ACYL_RETAINED.includes(tile.value));
+}
 
 /**
  * The principal groups of the suffix tiles, by tile value (R-5a2, R-5c1):
@@ -423,10 +473,10 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
 /**
  * Builds the whole catalogue in dialog order: numbers, multipliers (simple,
  * then compound), roots, endings, branch words and controls, rings (`ciclo`,
- * `benceno`, `fenol`, `benzaldehído`, `fenil`, the letters `o`, `m`, `p`,
- * `1(n)`), groups (the halogens `fluoro`, `cloro`, `bromo`, `yodo`, then
- * `hidroxi`, `ol`, `oxi`, `éter`, `oxo`, `formil`, `al`, `ona` and
- * `carbaldehído`), traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`,
+ * `benceno`, `fenol`, `benzaldehído`, `fenil`, `benzoil`, the letters `o`,
+ * `m`, `p`, `1(n)`), groups (the halogens `fluoro`, `cloro`, `bromo`,
+ * `yodo`, then `hidroxi`, `ol`, `oxi`, `éter`, `oxo`, `formil`, `acetil`,
+ * `oil`, `carbonil`, `al`, `ona` and `carbaldehído`), traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`,
  * `anisol`, then the retained phenols `cresol`, `pirocatecol`, `catecol`,
  * `resorcinol`, `hidroquinona`).
  *
@@ -466,6 +516,7 @@ function buildCatalogue() {
   tiles.push(makeTile(BENZALDEHYDE_ID, 'benzene', 'benzaldehyde', 'rings', `${benzaldehyde.stem}${benzaldehyde.ending}`)); // R-5c1
   const phenyl = RETAINED_PREFIXES.phenyl;
   tiles.push(makeTile(PHENYL_ID, 'retained', 'phenyl', 'rings', `${phenyl.italic}${phenyl.text}`, false, { italic: phenyl.italic }));
+  tiles.push(makeTile(BENZOYL_ID, 'retained', 'benzoyl', 'rings', BENZOYL_PREFIX, false, { italic: '' })); // `benzoil` (R-5c2)
   for (const [locant, id] of Object.entries(POSITIONAL_IDS)) {
     tiles.push(makeTile(id, 'positional', Number(locant), 'rings', POSITIONAL_LETTERS[locant]));
   }
@@ -479,6 +530,9 @@ function buildCatalogue() {
   tiles.push(makeTile(ETHER_CLASS_ID, 'classWord', 'ether', 'groups', ETHER_CLASS_WORD)); // `éter` (R-5b2)
   tiles.push(makeTile(OXO_ID, 'carbonyl', 'ketone', 'groups', GROUP_PREFIXES.ketone)); // `oxo` (R-5c1)
   tiles.push(makeTile(FORMYL_ID, 'retained', 'formyl', 'groups', FORMYL_PREFIX, false, { italic: '' })); // `formil` (R-5c1)
+  tiles.push(makeTile(ACETYL_ID, 'retained', 'acetyl', 'groups', ACETYL_PREFIX, false, { italic: '' })); // `acetil` (R-5c2)
+  tiles.push(makeTile(ACYL_ID, 'acyl', 'chain', 'groups', ACYL_ENDING)); // `oil` (R-5c2)
+  tiles.push(makeTile(RING_CARBONYL_ID, 'acyl', 'ring', 'groups', RING_CARBONYL_ENDING)); // `carbonil` (R-5c2)
   tiles.push(makeTile(AL_ID, 'suffix', 'aldehyde', 'groups', GROUP_SUFFIXES.aldehyde)); // `al` (R-5c1)
   tiles.push(makeTile(ONA_ID, 'suffix', 'ketone', 'groups', GROUP_SUFFIXES.ketone)); // `ona` (R-5c1)
   tiles.push(makeTile(CARBALDEHYDE_ID, 'suffix', 'carbaldehyde', 'groups', RING_GROUP_SUFFIXES.aldehyde)); // R-5c1

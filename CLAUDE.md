@@ -120,8 +120,19 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   (`butanona` → `butan-2-ona`); a ketone's C=O on a bare end carbon is
   `invalid` (CARBONYL_POSITION), and the diagnosis keeps the rules that
   hold for a carbonyl name, with deliberate nulls under its «Aldehydes and
-  ketones» header. Next is R-5c2 (phase I-51c2): the acyl prefixes
-  (`acetil`, `propanoil`, `benzoil`, `ciclohexanocarbonil`).
+  ketones» header. R-5c2 (phase I-51c2) is done: the «Grupos» row's
+  `acetil` and the acyl endings `oil` (after a chain's ending: `propanoil`,
+  `(but-2-enoil)`, `(2-metilpropanoil)`) and `carbonil` (after a ring's:
+  `(ciclohexanocarbonil)`, `(ciclohex-2-eno-1-carbonil)`), and the
+  «Anillos» row's `benzoil` (`(4-metilbenzoil)` in a compound branch), read
+  acyl prefixes on chains and rings and inside compound branches as the
+  engine writes them, their left-out locants searched; an acyl on a
+  hydrocarbon ring, `benceno` or a template reads as the ketone it is
+  (`otherName`), and the diagnosis keeps the rules that hold for a branch,
+  with deliberate nulls. Next is R-5c3 (phase I-51c3): the retained
+  carbonyl templates (`formaldehído`, `acetaldehído`, `acetona`,
+  `acetofenona`, the ftalaldehídos) and the aldehyde/ketone diagnosis
+  messages filling the nulls.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

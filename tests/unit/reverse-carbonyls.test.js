@@ -17,8 +17,10 @@
  * whose messages are phase R-5c3's), the fixture round trip over every
  * aldehyde and ketone row of tests/fixtures/names.tsv, the closed loop over
  * the oracle's carbonyl generators (pure imports, no Java), the diagnosis
- * sweeps, the out-of-scope syntax of phases R-5c2 and R-5c3, the ordered
- * drawing, the dialog's tooltips and time budgets.
+ * sweeps, the out-of-scope syntax of phase R-5c3, the ordered drawing, the
+ * dialog's tooltips and time budgets. Since phase R-5c2 (I-51c2) the round
+ * trip and the closed loop read the names with acyl prefixes too; their own
+ * tests, sweeps included, are in reverse-acyls.test.js.
  */
 
 import { test } from 'node:test';
@@ -43,23 +45,37 @@ import {
   generateCarbonyls, generateRingAcids, generateRingOutsideBenzenes, generateRingPolysuffixBenzenes, generateRingSubstituents,
   generateSubstitutedPhenyls, generateEthers,
 } from '../../scripts/oracle/generate.mjs';
-import { seq, readFixtures, isCarbonyl, isCarbonylMolecule, isCarbonylName, LATER_CARBONYL_WORDS } from './reverse-words.js';
+import {
+  seq, readFixtures, isCarbonyl, isCarbonylMolecule, isCarbonylName, isAcylName, LATER_CARBONYL_WORDS,
+} from './reverse-words.js';
 
 /**
  * Aldehyde and ketone fixture rows (isCarbonyl(): carbons, halogens, OH and
  * ether oxygens and at least one aldehyde or ketone C=O; no acid, ester or
  * nitrogen), and those of them with at least one name the tiles write
- * (isCarbonylName()), by section: 42 of I-32, 5 of I-34 (beside an ether), 1
- * of I-39b (the acyl section's `2-(2-formilbutoxi)butanodial`), 7 of I-40a,
- * 9 of I-40b, 4 of I-43b, 2 of I-44 and 2 of I-45a.
+ * (isCarbonylName()) — since the acyl prefixes of phase R-5c2, every one —,
+ * by section: 42 of I-32, 5 of I-34 (beside an ether), 6 of I-39b (the acyl
+ * section: `2-(2-formilbutoxi)butanodial`, and since R-5c2
+ * `3-acetilpentano-2,4-diona`, `3,3-diacetilpentano-2,4-diona`,
+ * `4-acetilheptano-2,6-diona`, `3-acetilhexanal`,
+ * `2-acetil-2,3-dimetilbutanal`), 8 of I-40a (`4-acetilciclohexan-1-ona`
+ * since R-5c2), 12 of I-40b (the ring acyl prefixes of
+ * `3-(ciclohexanocarbonil)-`, `3-(2-metilciclohexano-1-carbonil)-` and
+ * `3-benzoilpentano-2,4-diona` since R-5c2), 4 of I-43b, 2 of I-44, 2 of
+ * I-45a and 2 of I-45b (`3-(4-metilbenzoil)pentano-2,4-diona`,
+ * `2-(4-yodobenzoil)butanal`, R-5c2).
  */
 const EXPECTED_ROWS = Object.freeze({
-  total: 83, read: 72, i32: 42, i34: 5, i39b: 1, i40a: 7, i40b: 9, i43b: 4, i44: 2, i45a: 2,
+  total: 83, read: 83, i32: 42, i34: 5, i39b: 6, i40a: 8, i40b: 12, i43b: 4, i44: 2, i45a: 2, i45b: 2,
 });
 
-/** Their names and alternatives the tiles write, read back; and those left to phases R-5c2 and R-5c3 (acyl prefixes, retained names). */
-const EXPECTED_NAMES = 84;
-const EXPECTED_LATER_NAMES = 19;
+/**
+ * Their names and alternatives the tiles write, read back (95; 84 of them without an acyl prefix, those the diagnosis sweeps
+ * below read: the acyl ones are swept in reverse-acyls.test.js), and those left to phase R-5c3 (the retained names).
+ */
+const EXPECTED_NAMES = 95;
+const EXPECTED_SWEPT_NAMES = 84;
+const EXPECTED_LATER_NAMES = 8;
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -333,17 +349,15 @@ test('assembler (R-5c1): every suffix and prefix form is the forward engine\'s o
   assert.deepEqual(tokenize('2-pentanona'), seq('2 pent ano ona'));
 }); // End of test 'assembler (R-5c1)…'
 
-test('tokenizer (R-5c1): texts that only read with errors, and the words of phases R-5c2 and R-5c3, never tokenize', () => {
+test('tokenizer (R-5c1): texts that only read with errors, and the words of phase R-5c3, never tokenize', () => {
   for (const name of ['ciclohexanal', 'bencenal', 'butan-1-al', '1-butanal', 'butano-1,4-dial', 'pentano-2,4-bisona', 'ona', 'al',
     'carbaldehído', '1-benzaldehído', 'p-benzaldehído', 'benzaldehídoal', 'formoximetano', '(2-oxo)etano', 'oxo', '2-oxo',
-    // Phase R-5c2: the acyl prefixes; phase R-5c3: the retained names.
-    '3-acetilpentano-2,4-diona', '2-propanoilbutanodial', '3-benzoilpentano-2,4-diona', '3-(ciclohexanocarbonil)pentano-2,4-diona',
-    '3-(4-metilbenzoil)pentano-2,4-diona', 'formaldehído', 'acetaldehído', 'acetona', 'acetofenona', 'fenilacetaldehído',
-    'ftalaldehído', 'isoftalaldehído', 'tereftalaldehído']) {
+    // Phase R-5c3: the retained names (the acyl prefixes of phase R-5c2 read: reverse-acyls.test.js).
+    'formaldehído', 'acetaldehído', 'acetona', 'acetofenona', 'fenilacetaldehído', 'ftalaldehído', 'isoftalaldehído',
+    'tereftalaldehído']) {
     assert.equal(tokenize(name), null, name);
   }
-  assert.deepEqual(LATER_CARBONYL_WORDS, ['acetil', 'oil', 'carbonil', 'formaldehído', 'acetaldehído', 'acetona', 'acetofenona',
-    'ftalaldehído']);
+  assert.deepEqual(LATER_CARBONYL_WORDS, ['formaldehído', 'acetaldehído', 'acetona', 'acetofenona', 'ftalaldehído']);
 }); // End of test 'tokenizer (R-5c1)…'
 
 // ---------------------------------------------------------------------------
@@ -702,7 +716,7 @@ test('fixture round trip (R-5c1): every aldehyde and ketone name the tiles write
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (!isCarbonylName(name)) {
-        later += 1; // An acyl prefix (R-5c2) or a retained name (R-5c3): no tiles yet.
+        later += 1; // A retained name (R-5c3): no tiles yet.
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
       }
@@ -734,9 +748,9 @@ test('fixture round trip (R-5c1): every aldehyde and ketone name the tiles write
   const inSection = (id) => [...read].filter((row) => /\((I-\d+[a-z]?)[),:]/.exec(row.section)[1] === id).length; // Its own id only.
   assert.equal(rows.length, EXPECTED_ROWS.total);
   assert.equal(read.size, EXPECTED_ROWS.read);
-  assert.deepEqual(['I-32', 'I-34', 'I-39b', 'I-40a', 'I-40b', 'I-43b', 'I-44', 'I-45a'].map(inSection),
+  assert.deepEqual(['I-32', 'I-34', 'I-39b', 'I-40a', 'I-40b', 'I-43b', 'I-44', 'I-45a', 'I-45b'].map(inSection),
     [EXPECTED_ROWS.i32, EXPECTED_ROWS.i34, EXPECTED_ROWS.i39b, EXPECTED_ROWS.i40a, EXPECTED_ROWS.i40b, EXPECTED_ROWS.i43b,
-      EXPECTED_ROWS.i44, EXPECTED_ROWS.i45a]);
+      EXPECTED_ROWS.i44, EXPECTED_ROWS.i45a, EXPECTED_ROWS.i45b]);
   assert.equal(covered, EXPECTED_NAMES);
   assert.equal(later, EXPECTED_LATER_NAMES);
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
@@ -757,12 +771,14 @@ const LOOP = Object.freeze({
  * Minimum coverage of the closed loop: aldehyde and ketone molecules
  * (distinct by aromatic key), names read back, the suffix and prefix forms
  * among them (names ending in `al`, `ona`, `carbaldehído`, `benzaldehído`;
- * names with `oxo`), removed-locant mutations and decisive verdicts among
- * them (the seeds give 805, 861, 316, 298, 181, 66, 122, 2072 and 2071; 77
- * names of the molecules are left to phases R-5c2 and R-5c3).
+ * names with `oxo`), names with an acyl prefix (R-5c2), removed-locant
+ * mutations and decisive verdicts among them (the seeds give 805, 894, 345,
+ * 298, 185, 66, 135, 33, 2169 and 2168; before R-5c2 the 33 acyl names were
+ * left out, 861 names; 44 names of the molecules are left to phase R-5c3).
  */
 const LOOP_MIN = Object.freeze({
-  molecules: 800, names: 850, al: 300, ona: 280, carbaldehido: 170, benzaldehido: 60, oxo: 110, removed: 2050, decisive: 2050,
+  molecules: 800, names: 880, al: 330, ona: 280, carbaldehido: 175, benzaldehido: 60, oxo: 125, acyl: 30, removed: 2150,
+  decisive: 2150,
 });
 
 /**
@@ -831,7 +847,7 @@ function locantLists(tree) {
 
 test('closed loop over the carbonyl generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, al: 0, ona: 0, carbaldehido: 0, benzaldehido: 0, oxo: 0, removed: 0, decisive: 0 };
+  const counts = { names: 0, al: 0, ona: 0, carbaldehido: 0, benzaldehido: 0, oxo: 0, acyl: 0, removed: 0, decisive: 0 };
   const later = [];
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
@@ -840,7 +856,7 @@ test('closed loop over the carbonyl generators: engine name → tiles → readNa
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
       if (!isCarbonylName(name)) {
-        later.push(name); // An acyl prefix (R-5c2) or a retained name (R-5c3).
+        later.push(name); // A retained name (R-5c3).
         continue;
       }
       const ids = tokenize(name);
@@ -855,6 +871,7 @@ test('closed loop over the carbonyl generators: engine name → tiles → readNa
       counts.carbaldehido += /carbaldehído$/.test(name) ? 1 : 0;
       counts.benzaldehido += /benzaldehído$/.test(name) ? 1 : 0;
       counts.oxo += /oxo/.test(name) ? 1 : 0;
+      counts.acyl += isAcylName(name) ? 1 : 0; // R-5c2
       if (i > 0) {
         continue;
       }
@@ -882,7 +899,7 @@ test('closed loop over the carbonyl generators: engine name → tiles → readNa
   const report = JSON.stringify({ molecules: molecules.length, ...counts, later: later.length });
   assert.ok(molecules.length >= LOOP_MIN.molecules, report);
   assert.ok(later.every((name) => LATER_CARBONYL_WORDS.some((word) => name.includes(word))), report);
-  for (const field of ['names', 'al', 'ona', 'carbaldehido', 'benzaldehido', 'oxo', 'removed', 'decisive']) {
+  for (const field of ['names', 'al', 'ona', 'carbaldehido', 'benzaldehido', 'oxo', 'acyl', 'removed', 'decisive']) {
     assert.ok(counts[field] >= LOOP_MIN[field], `${field}: ${report}`);
   }
 }); // End of test 'closed loop over the carbonyl generators…'
@@ -1096,8 +1113,9 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 const FIXTURE_NULLS = Object.freeze({ principal: 87, suffix: 20, otherFamily: 11 });
 
 test('mutations of every carbonyl fixture name: a diagnosis of the family\'s codes, or a deliberate null with its reason', async () => {
-  const names = (await readFixtures()).filter((row) => isCarbonyl(row.smiles)).flatMap((row) => row.names).filter(isCarbonylName);
-  assert.equal(names.length, EXPECTED_NAMES);
+  const names = (await readFixtures()).filter((row) => isCarbonyl(row.smiles)).flatMap((row) => row.names)
+    .filter((name) => isCarbonylName(name) && !isAcylName(name)); // The acyl names: reverse-acyls.test.js.
+  assert.equal(names.length, EXPECTED_SWEPT_NAMES);
   const { otherName, codes, nulls, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
@@ -1110,7 +1128,7 @@ test('mutations of the generated carbonyls: every otherName is diagnosed or a de
   const names = [];
   for (const mol of loopMolecules().slice(0, 320)) {
     const naming = nameMolecule(mol);
-    names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter(isCarbonylName));
+    names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter((name) => isCarbonylName(name) && !isAcylName(name)));
   }
   assert.ok(names.length >= 300, `${names.length} names`);
   const { otherName, codes, nulls, unexpected } = sweep(names);
