@@ -7,7 +7,8 @@
  * centred and ordered — with «¡Correcto!» above «Se llama:»; `4 met il fenol`
  * draws 4-metilfenol (its traditional name announced) and `p met il fenol`
  * is the positional alternative; `ciclohex-1(6)-eno-1,2,4-triol` is built
- * with the `1(n)` tile; the old-style `2-propanol` is drawn with its note;
+ * with the `1(n)` tile; the old-style `2-propanol` is drawn with its OLD_STYLE
+ * diagnosis (R-5a3b) in place of the old-style note;
  * `propanol` (left-out locants) and a misplaced `ol` stay in the dialog with
  * their message, the canvas untouched. Runs on the dev server and on dist
  * (playwright.config.js).
@@ -208,7 +209,7 @@ test('`4 met il fenol` draws 4-metilfenol with its traditional name; `p met il f
   expect(errors).toEqual([]);
 }); // End of test '`4 met il fenol` draws 4-metilfenol…'
 
-test('`1(n)` builds ciclohex-1(6)-eno-1,2,4-triol; `2-propanol` is drawn with its note; `propanol` and a stray `ol` stay in the dialog', async ({ page }) => {
+test('`1(n)` builds ciclohex-1(6)-eno-1,2,4-triol; `2-propanol` is drawn with its diagnosis; `propanol` and a stray `ol` stay in the dialog', async ({ page }) => {
   const errors = await openApp(page);
   const verdict = page.locator('#verdict');
   let dialog = await buildName(page, 'ciclo', 'hex', '1(n)', 'eno', '1', '2', '4', 'tri', 'ol');
@@ -221,14 +222,16 @@ test('`1(n)` builds ciclohex-1(6)-eno-1,2,4-triol; `2-propanol` is drawn with it
   expect(elementsOf(ring)).toEqual(['C', 'C', 'C', 'C', 'C', 'C', 'O', 'O', 'O']);
   expect(ring.bonds.filter((bond) => bond.order === 2)).toHaveLength(1);
 
-  // The old style: drawn, named, and the note with the modern writing (no diagnosis yet for an alcohol's suffix, R-5a3b).
+  // The old style: drawn, named, and the OLD_STYLE diagnosis of the suffix's locants (R-5a3b), which replaces the note.
   dialog = await buildName(page, '2', 'prop', 'ano', 'ol');
   await expect(page.locator('#name-builder-name')).toHaveText('2-propanol');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
-  await expect(verdict).not.toHaveAttribute('data-diagnosis', /.+/);
-  await expect(verdict.locator('.verdict-note')).toHaveText('Es la forma antigua de escribirlo; hoy se escribe «propan-2-ol».');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'OLD_STYLE');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('Has escrito los números delante de la raíz, como se hacía antes. '
+    + 'Hoy van detrás, justo delante de «ol»: «propan-2-ol».');
+  await expect(verdict.locator('.verdict-note')).toHaveCount(0);
   await expect(page.locator('#result-name')).toHaveText('propan-2-ol');
   expect(elementsOf(await moleculeJSON(page))).toEqual(['C', 'C', 'C', 'O']);
 

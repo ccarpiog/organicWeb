@@ -51,6 +51,9 @@ const CHAIN_CODES = Object.freeze(['BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIP
 /** The codes only a ring gives (phase I-50d; their cases are in reverse-diagnose-rings.test.js). */
 const RING_ONLY_CODES = Object.freeze(['RING_IS_PARENT', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'RING_NUMBERING', 'LETTER_LOCANTS']);
 
+/** The codes only an alcohol gives (phase I-51a3b; their cases are in reverse-diagnose-alcohols.test.js). */
+const ALCOHOL_ONLY_CODES = Object.freeze(['HYDROXY_PREFIX', 'HYDROXY_PARENT', 'MORE_HYDROXY_GROUPS', 'PHENOL']);
+
 /**
  * The tile ids of a name: space-separated tile words (reverse-words.js), or
  * a name text read by the tokenizer.
@@ -272,7 +275,7 @@ test('one case per diagnosis code: the code, its trace rule, the step and the me
     assert.equal(d.message, message, name);
     seen.add(code);
   } // End of the loop over the cases
-  const chainCodes = DIAGNOSIS_CODES.filter((code) => !RING_ONLY_CODES.includes(code));
+  const chainCodes = DIAGNOSIS_CODES.filter((code) => !RING_ONLY_CODES.includes(code) && !ALCOHOL_ONLY_CODES.includes(code));
   assert.deepEqual([...seen].sort(), [...chainCodes].sort(), 'every code an open chain can give has a case');
 }); // End of test 'one case per diagnosis code: the code, its trace rule, the step and the message'
 
@@ -342,12 +345,14 @@ test('left-out locants: every placement is a reading, and the kindest diagnosis 
 }); // End of test 'left-out locants: every placement is a reading, and the kindest diagnosis is kept'
 
 test('the drafts: one entry per code in rule order, each message renders from its example, phrases for every rule', () => {
-  // The ring rules of phase I-50d stand beside the chain rules whose place they take (diagnose.js header «Rings»).
-  assert.deepEqual(DIAGNOSIS_CODES, ['BRANCH_AT_END', 'RING_IS_PARENT', 'LONGER_CHAIN', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE',
-    'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL', 'NUMBERING', 'RING_NUMBERING',
-    'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'LOCANT_ORDER', 'NEEDLESS_LOCANTS', 'MISSING_LOCANTS', 'SEGMENT_ORDER',
-    'OLD_STYLE', 'LETTER_LOCANTS']);
-  assert.deepEqual(DIAGNOSIS_CODES.map((code) => DIAGNOSES[code].rule), [1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 9, 10, 11, 11]);
+  // The ring rules of phase I-50d and the alcohol rules of phase I-51a3b stand beside the chain rules whose place they take
+  // (diagnose.js headers «Rings» and «Alcohols»).
+  assert.deepEqual(DIAGNOSIS_CODES, ['HYDROXY_PREFIX', 'HYDROXY_PARENT', 'BRANCH_AT_END', 'RING_IS_PARENT', 'MORE_HYDROXY_GROUPS',
+    'LONGER_CHAIN', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'PHENOL', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS',
+    'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL', 'NUMBERING', 'RING_NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND',
+    'LOCANT_ORDER', 'NEEDLESS_LOCANTS', 'MISSING_LOCANTS', 'SEGMENT_ORDER', 'OLD_STYLE', 'LETTER_LOCANTS']);
+  assert.deepEqual(DIAGNOSIS_CODES.map((code) => DIAGNOSES[code].rule),
+    [1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 6, 7, 8, 9, 9, 10, 11, 11]);
   assert.ok(Object.isFrozen(DIAGNOSES) && Object.isFrozen(DIAGNOSIS_TEXTS) && Object.isFrozen(DIAGNOSIS_PHRASES));
   for (const code of DIAGNOSIS_CODES) {
     const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);
@@ -355,8 +360,9 @@ test('the drafts: one entry per code in rule order, each message renders from it
     assert.doesNotMatch(text, /undefined|null|NaN/, code);
     assert.ok(STEP_FALLBACKS[DIAGNOSES[code].step], `${code}: a known step`);
   }
-  assert.deepEqual(Object.keys(DIAGNOSIS_PHRASES.numberingReasons), ['N1', 'N2', 'N3', 'N4', 'N5']);
-  assert.deepEqual(Object.keys(DIAGNOSIS_PHRASES.lowerLocantsOf), ['N1', 'N2', 'N3', 'N4']);
+  // N0: an alcohol's OH groups (phase I-51a3b).
+  assert.deepEqual(Object.keys(DIAGNOSIS_PHRASES.numberingReasons), ['N0', 'N1', 'N2', 'N3', 'N4', 'N5']);
+  assert.deepEqual(Object.keys(DIAGNOSIS_PHRASES.lowerLocantsOf), ['N0', 'N1', 'N2', 'N3', 'N4']);
 }); // End of test 'the drafts: one entry per code in rule order, each message renders from its example…'
 
 test('diagnosisStepIndex(): the diagnosis\'s step, else its fallbacks, else the last step', () => {

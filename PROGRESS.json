@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T01:45:00Z",
+  "updated": "2026-10-15T02:39:16Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -652,8 +652,8 @@
     {
       "id": "I-51a",
       "title": "v4 R-5a Halogens and alcohols",
-      "status": "in_progress",
-      "summary": "Split into I-51a1 (halogens, done), I-51a2 (alcohols, phenols, the 1(6) locant control, done) and I-51a3 (phenol templates, alcohol diagnosis, Ayuda)."
+      "status": "done",
+      "summary": "Split into I-51a1 (halogens), I-51a2 (alcohols, phenols, the 1(6) locant control) and I-51a3 (phenol templates, alcohol diagnosis, Ayuda), all done."
     },
     {
       "id": "I-51a1",
@@ -676,9 +676,9 @@
     {
       "id": "I-51a3",
       "title": "v4 R-5a3 Phenol templates, alcohol diagnosis, Ayuda",
-      "status": "in_progress",
+      "status": "done",
       "risk": "high",
-      "summary": "Split into I-51a3a (retained phenol templates, Ayuda line, done) and I-51a3b (alcohol diagnosis messages)."
+      "summary": "Split into I-51a3a (retained phenol templates, Ayuda line) and I-51a3b (alcohol diagnosis messages), both done."
     },
     {
       "id": "I-51a3a",
@@ -692,9 +692,11 @@
     {
       "id": "I-51a3b",
       "title": "v4 R-5a3b Alcohol diagnosis messages",
-      "status": "queued",
+      "status": "done",
       "risk": "high",
-      "summary": "Replaces the deliberate alcohol diagnosis nulls with Spanish messages for the student's main mistake."
+      "summary": "Names the student's main mistake in alcohol names: OH numbering, hidroxi for the principal OH, the OH-decided parent, suffix locants, bencenol.",
+      "review": "Codex ship-with-fixes, fixed",
+      "narrative": "docs/progress-archive/i-51a3b.md"
     },
     {
       "id": "I-51b",

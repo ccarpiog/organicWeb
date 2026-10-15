@@ -13,7 +13,9 @@
  * keyboard only; a phone. Rings (phase I-50d): the ring as the parent of a
  * name written on a chain — the student's chain striped beside the ring, the
  * legend naming the ring, «Ver el paso» at «Reconoce el benceno» — and a ring
- * numbered otherwise, «Ver el paso» at «Numera el anillo».
+ * numbered otherwise, «Ver el paso» at «Numera el anillo». Alcohols (phase
+ * I-51a3b): `butan-3-ol`, the OH numbered from the other end, «Ver el paso»
+ * at «Numera la cadena», whose rule puts the OH groups first.
  */
 
 import { test, expect } from '@playwright/test';
@@ -98,6 +100,9 @@ const RING_PARENT = ['1', 'empieza rama compuesta', '4', 'met', 'il', 'fenil', '
 
 /** The tiles of «1,5-dimetilciclohexano» (the ring numbered otherwise: 1,3-dimetilciclohexano). */
 const RING_NUMBERING = ['1', '5', 'di', 'met', 'il', 'ciclo', 'hex', 'ano'];
+
+/** The tiles of «butan-3-ol» (the OH numbered from the other end: butan-2-ol). */
+const ALCOHOL_NUMBERING = ['but', 'ano', '3', 'ol'];
 
 test('a longer chain: the message between the two sentences, the student\'s chain beside the parent, «Ver el paso» at «Busca la cadena»; Deshacer clears it all', async ({ page }) => {
   const errors = await openApp(page);
@@ -215,6 +220,43 @@ test('numbered from the other end: «Ver el paso» at «Numera la cadena», the 
   expect(await locantOf(page, 4)).toBe(2);
   expect(errors).toEqual([]);
 }); // End of test 'numbered from the other end…'
+
+test('an alcohol (I-51a3b): the OH numbered from the other end, the message between the two sentences, «Ver el paso» at «Numera la cadena»', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, ...ALCOHOL_NUMBERING);
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'NUMBERING');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: butan-3-ol');
+  // The three sentences, in order: the verdict, the diagnosis, the hint.
+  const texts = await verdict.locator('.verdict-message, .verdict-style, .verdict-diagnosis, .verdict-hint, .verdict-note')
+    .allTextContents();
+  expect(texts).toEqual([
+    'Esta es la molécula que describe tu nombre, pero se llama «butan-2-ol».',
+    'Hay que numerar la cadena desde el otro extremo: los grupos –OH (el grupo principal) tienen que llevar los números más bajos '
+      + '(2 en vez de 3).',
+    'Pulsa «Ver paso a paso» para ver por qué.',
+  ]);
+  await expect(page.locator('#result-name')).toHaveText('butan-2-ol');
+  await expect(verdict.getByRole('listitem')).toHaveText(['Cadena principal', 'Tu cadena (es la misma)']);
+  // The student's chain is the parent (4 carbons), numbered the other way.
+  const student = await marked(page, 'student');
+  expect(student.atoms).toHaveLength(4);
+  expect((await marked(page, 'parent')).atoms).toEqual(expect.arrayContaining(student.atoms));
+
+  // «Ver el paso»: the stepper opens at «Numera la cadena», the focus on its title; its rule puts the OH groups first.
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'numbering');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 4 de 5');
+  await expect(stepper.locator('.step-title')).toHaveText('Numera la cadena');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  await expect(stepper).toContainText('los grupos –OH (el grupo principal) deben tener los');
+  // The student's carbon 3 (atom 3: the tiles built the chain in their order) holds the OH: carbon 2 in the app's numbering.
+  expect(await locantOf(page, 3)).toBe(2);
+  expect(errors).toEqual([]);
+}); // End of test 'an alcohol (I-51a3b)…'
 
 test('a ring (I-50d): the ring is the parent beside the student\'s chain, «Ver el paso» at «Reconoce el benceno»; a ring numbered otherwise', async ({ page }) => {
   const errors = await openApp(page);

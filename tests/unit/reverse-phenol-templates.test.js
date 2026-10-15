@@ -13,8 +13,9 @@
  * aromatic key with a SMILES; the engine's own list checked (no numeric
  * `cresol`, which the reverse engine refuses); `cresol` without its letter;
  * substituted templates read as `otherName` with the SUBSTITUTED_TEMPLATE
- * diagnosis (from `benceno`, or from `fenol` for `cresol`) and the
- * deliberate nulls left for R-5a3b; the fixture names; the ordered drawing;
+ * diagnosis (from `benceno`, or from `fenol` for `cresol`), and an extra OH
+ * written `hidroxi` on one with HYDROXY_PREFIX (R-5a3b); the fixture names;
+ * the ordered drawing;
  * a seeded no-crash property; time budgets.
  */
 
@@ -467,15 +468,18 @@ test('readName (R-5a3a): a substituted retained phenol draws its molecule, named
   } // End of the loop over the substituted templates
 }); // End of test 'readName (R-5a3a): a substituted retained phenol…'
 
-test('diagnosis (R-5a3a): deliberate nulls — an extra OH written `hidroxi` on a retained phenol is the OH-count case of R-5a3b', () => {
+test('diagnosis (R-5a3b): an extra OH written `hidroxi` on a retained phenol is HYDROXY_PREFIX, never SUBSTITUTED_TEMPLATE', () => {
   for (const [words, name] of [['4 hidroxi catecol', 'benceno-1,2,4-triol'], ['2 hidroxi hidroquinona', 'benceno-1,2,4-triol'],
     ['5 hidroxi resorcinol', 'benceno-1,3,5-triol']]) {
     const verdict = readName(seq(words));
     assert.deepEqual([verdict.kind, verdict.name], ['otherName', name], words);
-    assert.equal(verdict.diagnosis, null, `${words}: null until R-5a3b (diagnose.js «Alcohols»)`);
+    assert.ok(verdict.diagnosis, `${words}: no diagnosis`);
+    assert.deepEqual([verdict.diagnosis.code, verdict.diagnosis.step], ['HYDROXY_PREFIX', 'group'], words);
+    assert.equal(verdict.diagnosis.message, 'Los grupos –OH son el grupo principal: los del anillo se nombran todos juntos con la '
+      + `terminación «-triol», al final del nombre, no con el prefijo «hidroxi». Se escribe «${name}».`, words);
     assert.equal(verdict.draw, true);
   }
-}); // End of test 'diagnosis (R-5a3a): deliberate nulls…'
+}); // End of test 'diagnosis (R-5a3b): an extra OH written `hidroxi` on a retained phenol…'
 
 test('readName (R-5a3a): refused forms and structural errors are invalid with their tiles marked; never a crash', () => {
   for (const [words, [from, to], message] of REFUSED_LETTERS) {

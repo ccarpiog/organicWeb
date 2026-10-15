@@ -9,8 +9,9 @@
  * interpreter and builder (the suffix's carbon slots, one oxygen per OH, the
  * OH of `fenol` at carbon 1), search (left-out suffix locants), readName()
  * on chains, rings and benzene, with each molecule compared with a SMILES,
- * mutations and their diagnosis (the rules that still apply, the deliberate
- * nulls), the fixture round trip over every alcohol row of
+ * mutations and their diagnosis (the rules that still apply; the alcohol
+ * messages of R-5a3b, reverse-diagnose-alcohols.test.js, in place of the
+ * former deliberate nulls), the fixture round trip over every alcohol row of
  * tests/fixtures/names.tsv, the closed loop over the oracle's alcohol
  * generators (pure imports, no Java), the ordered drawing, a no-crash
  * property and time budgets.
@@ -513,15 +514,15 @@ test('readName (R-5a2): left-out locants of the suffix list the structures (`pro
 /**
  * Mutations of correct alcohol names (design.md §15.7): [tile words,
  * assembled text, kind, the engine's name, SMILES of the molecule
- * described, diagnosis code of an `otherName` (null for a deliberate null,
- * diagnose.js header «Alcohols»)].
+ * described, diagnosis code of an `otherName` (diagnose.js header
+ * «Alcohols»)].
  */
 const MUTATIONS = [
   ['but ano 2 ol', 'butan-2-ol', 'correct', 'butan-2-ol', 'CC(O)CC', null],
-  // The OH numbered from the other end (N0): no message yet (R-5a3b).
-  ['but ano 3 ol', 'butan-3-ol', 'otherName', 'butan-2-ol', 'CC(O)CC', null],
-  ['ciclo hex ano 2 ol', 'ciclohexan-2-ol', 'otherName', 'ciclohexanol', 'OC1CCCCC1', null],
-  ['benceno 1 5 di ol', 'benceno-1,5-diol', 'otherName', 'benceno-1,3-diol', 'OC1=CC=CC(O)=C1', null],
+  // The OH numbered from the other end (N0, R-5a3b).
+  ['but ano 3 ol', 'butan-3-ol', 'otherName', 'butan-2-ol', 'CC(O)CC', 'NUMBERING'],
+  ['ciclo hex ano 2 ol', 'ciclohexan-2-ol', 'otherName', 'ciclohexanol', 'OC1CCCCC1', 'RING_NUMBERING'],
+  ['benceno 1 5 di ol', 'benceno-1,5-diol', 'otherName', 'benceno-1,3-diol', 'OC1=CC=CC(O)=C1', 'RING_NUMBERING'],
   // After an N0 tie, the later numbering rules keep their messages.
   ['pent 4 eno 3 ol', 'pent-4-en-3-ol', 'otherName', 'pent-1-en-3-ol', 'C=CC(O)CC', 'NUMBERING'],
   ['4 met il pent ano 3 ol', '4-metilpentan-3-ol', 'otherName', '2-metilpentan-3-ol', 'CC(C)C(O)CC', 'NUMBERING'],
@@ -545,17 +546,18 @@ const MUTATIONS = [
   ['1 1 1 tri cloro met ano ol', '1,1,1-triclorometanol', 'otherName', 'triclorometanol', 'OC(Cl)(Cl)Cl', 'NEEDLESS_LOCANTS'],
   ['2 START 1 hidroxi met il END prop ano 1 3 di ol', '2-(1-hidroximetil)propano-1,3-diol', 'otherName',
     '2-(hidroximetil)propano-1,3-diol', 'OCC(CO)CO', 'NEEDLESS_LOCANTS'],
-  // Deliberate nulls: an OH written as `hidroxi` on the parent, the parent's suffix count otherwise, a ring parent against a
-  // chain one with OH groups, old-style locants of the suffix, needless suffix locants, `bencenol`.
-  ['2 hidroxi prop ano', '2-hidroxipropano', 'otherName', 'propan-2-ol', 'CC(O)C', null],
-  ['2 hidroxi prop ano 1 ol', '2-hidroxipropan-1-ol', 'otherName', 'propano-1,2-diol', 'OCC(O)C', null],
-  ['4 hidroxi tolueno', '4-hidroxitolueno', 'otherName', '4-metilfenol', 'OC1=CC=C(C)C=C1', null], // not SUBSTITUTED_TEMPLATE
-  ['START 2 hidroxi et il END ciclo hex ano', '(2-hidroxietil)ciclohexano', 'otherName', '2-ciclohexiletan-1-ol', 'OCCC1CCCCC1', null],
+  // The alcohol messages (R-5a3b, the former deliberate nulls): an OH written as `hidroxi` on the parent, a ring parent against
+  // a chain one with OH groups, old-style locants of the suffix, needless suffix locants, `bencenol`.
+  ['2 hidroxi prop ano', '2-hidroxipropano', 'otherName', 'propan-2-ol', 'CC(O)C', 'HYDROXY_PREFIX'],
+  ['2 hidroxi prop ano 1 ol', '2-hidroxipropan-1-ol', 'otherName', 'propano-1,2-diol', 'OCC(O)C', 'HYDROXY_PREFIX'],
+  ['4 hidroxi tolueno', '4-hidroxitolueno', 'otherName', '4-metilfenol', 'OC1=CC=C(C)C=C1', 'HYDROXY_PREFIX'], // not SUBSTITUTED_TEMPLATE
+  ['START 2 hidroxi et il END ciclo hex ano', '(2-hidroxietil)ciclohexano', 'otherName', '2-ciclohexiletan-1-ol', 'OCCC1CCCCC1',
+    'HYDROXY_PARENT'],
   ['START 4 hidroxi ciclo hex il END met ano ol', '(4-hidroxiciclohexil)metanol', 'otherName', '4-(hidroximetil)ciclohexan-1-ol',
-    'OCC1CCC(O)CC1', null],
-  ['2 prop ano ol', '2-propanol', 'otherName', 'propan-2-ol', 'CC(O)C', null],
-  ['et ano 1 ol', 'etan-1-ol', 'otherName', 'etanol', 'CCO', null],
-  ['benceno ol', 'bencenol', 'otherName', 'fenol', 'OC1=CC=CC=C1', null],
+    'OCC1CCC(O)CC1', 'HYDROXY_PARENT'],
+  ['2 prop ano ol', '2-propanol', 'otherName', 'propan-2-ol', 'CC(O)C', 'OLD_STYLE'],
+  ['et ano 1 ol', 'etan-1-ol', 'otherName', 'etanol', 'CCO', 'NEEDLESS_LOCANTS'],
+  ['benceno ol', 'bencenol', 'otherName', 'fenol', 'OC1=CC=CC=C1', 'PHENOL'],
   // Removed locants (one structure fits).
   ['2 cloro et ano ol', '2-cloroetanol', 'missingLocants', '2-cloroetan-1-ol', 'ClCCO', null],
 ];
@@ -568,10 +570,6 @@ test('mutations of alcohol names: renumbered, unsorted, ungrouped, di/bis, out o
     assert.equal(verdict.name, engine, name);
     assert.equal(aromaticKey(verdict.molecule), keyOf(smiles), `${name} builds another graph`);
     if (kind !== 'otherName') {
-      continue;
-    }
-    if (code === null) {
-      assert.equal(verdict.diagnosis, null, `${name}: ${verdict.diagnosis && verdict.diagnosis.message}`);
       continue;
     }
     assert.ok(verdict.diagnosis, `${name}: no diagnosis`);
@@ -845,8 +843,9 @@ function rewriteLocants(out, tiles, positions, map) {
 }
 
 /**
- * The diagnosis codes an `otherName` of each mutation family may give when
- * it is not deliberately null (diagnose.js header «Alcohols»).
+ * The diagnosis codes an `otherName` of each mutation family may give
+ * (diagnose.js header «Alcohols»; the OH numbered otherwise is NUMBERING or
+ * RING_NUMBERING at N0, needless suffix locants NEEDLESS_LOCANTS, R-5a3b).
  */
 const FAMILY_CODES = Object.freeze({
   renumbered: ['NUMBERING', 'RING_NUMBERING'],
@@ -855,14 +854,15 @@ const FAMILY_CODES = Object.freeze({
   ungrouped: ['UNGROUPED'],
   diBis: ['MULTIPLIER_KIND'],
   suffixOrder: ['LOCANT_ORDER'],
-  suffixAdded: [],
+  suffixAdded: ['NEEDLESS_LOCANTS'],
 });
 
 /**
- * The families whose `otherName` verdicts may be deliberately null: the OH
- * numbered otherwise (N0), and needless suffix locants (`etan-1-ol`).
+ * The families whose `otherName` verdicts may be deliberately null: none
+ * since R-5a3b (the OH numbered otherwise, N0, and needless suffix locants,
+ * `etan-1-ol`, have their messages).
  */
-const NULL_FAMILIES = Object.freeze(['renumbered', 'swapped', 'suffixAdded']);
+const NULL_FAMILIES = Object.freeze([]);
 
 /**
  * The mutations of one alcohol name: renumbered (reversed on a chain;
@@ -955,7 +955,7 @@ function mutationsOf(ids) {
 const FIXTURE_OTHER_NAME = Object.freeze({
   renumbered: 189, swapped: 33, unsorted: 10, ungrouped: 8, diBis: 9, suffixOrder: 27, suffixAdded: 10,
 });
-const FIXTURE_NULLS = Object.freeze({ renumbered: 151, swapped: 23, suffixAdded: 10 });
+const FIXTURE_NULLS = Object.freeze({});
 
 test('mutations of every alcohol fixture name: a diagnosis of the family\'s codes or a deliberate null, every step resolves', async () => {
   const names = (await readFixtures()).filter((row) => isAlcohol(row.smiles)).flatMap((row) => row.names).filter(isAlcoholName);
