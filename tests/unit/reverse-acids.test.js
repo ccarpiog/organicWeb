@@ -390,11 +390,13 @@ test('tokenizer (R-5d1): texts that only read with errors, and the later familie
     'ácido ciclohexanoico', 'ácido bencenoico', 'ácido butan-1-oico', 'ácido 1-butanoico', 'ácido 1-benzoico', 'ácido p-benzoico',
     'ácido benzoicooico', '2-metilácido propanoico', 'ácido butanoico ácido', 'ácido ácido butanoico', '(carboxioxi)metano',
     'ácido butano-1,4-bisoico', 'carboxi',
-    // Phases R-6b…R-6d: nitriles, amines, amides.
-    'ácido 3-cianopropanoico', 'ácido 2-aminopropanoico', 'ácido 4-carbamoilbenzoico', 'etanamida', 'etanonitrilo', 'benzamida',
-    'benzonitrilo']) {
+    // Phases R-6c, R-6d: amines, amides.
+    'ácido 2-aminopropanoico', 'ácido 4-carbamoilbenzoico', 'etanamida', 'benzamida']) {
     assert.equal(tokenize(name), null, name);
   }
+  // Phase R-6b1: the nitriles read, also as a `ciano` prefix beside an acid (reverse-nitriles.test.js).
+  assert.deepEqual(tokenize('ácido 3-cianopropanoico'), seq('ácido 3 ciano prop ano oico'));
+  assert.deepEqual([tokenize('etanonitrilo'), tokenize('benzonitrilo')], [seq('et ano nitrilo'), seq('benzonitrilo')]);
   // Phase R-6a2b: an ester prefix beside an acid reads (reverse-ester-prefixes.test.js).
   assert.deepEqual(tokenize('ácido 2-(acetiloxi)etanoico'), seq('ácido 2 acetil oxi et ano oico'));
   assert.deepEqual(tokenize('ácido 3-(metoxicarbonil)pentanodioico'), seq('ácido 3 met il oxi carbonil pent ano di oico'));

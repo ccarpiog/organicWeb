@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -73,7 +73,11 @@
  *   =O on its carbon 1, which also takes the bond to the ether oxygen) and
  *   an alkoxycarbonyl prefix as its alkoxy branch; each takes one bond of the
  *   carbon it hangs from (`ácido (acetiloxi)propanoico`: two structures;
- *   `ácido (metoxicarbonil)butanodioico`: one).
+ *   `ácido (metoxicarbonil)butanodioico`: one). The nitriles (R-6b1) add no
+ *   role either: the –C≡N of `nitrilo` takes three bonds of its chain end
+ *   (implicit, never searched; tiles.js suffixBondAmount()), a
+ *   `carbonitrilo`'s one (its own carbon is outside the parent), `ciano` one
+ *   (`metilbutanonitrilo`, `ciclohexanodicarbonitrilo`: several structures).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,

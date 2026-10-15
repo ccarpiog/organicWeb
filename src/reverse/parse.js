@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -21,7 +21,8 @@
  * `oato` and `carboxilato`, `benzoato`, the O-bound side with the ending
  * `ilo` — from R-6a1, the retained ester templates from R-6a2a, the ester
  * prefixes — `oxi` after an acyl branch, `carbonil` after `oxi` — from
- * R-6a2b):
+ * R-6a2b, the nitriles — the suffixes `nitrilo` and `carbonitrilo`,
+ * `benzonitrilo`, the prefix `ciano` — from R-6b1):
  *
  *   name        = [ ácido ] , { prefix } , parent   (* R-5d1: `ácido` with an acid suffix only *)
  *               , [ esterSide ]                   (* R-6a1: after an ester suffix only; R-6a2a: or an ester template *)
@@ -41,12 +42,13 @@
  *               | ROOT , ( ano | segments ) , oil , [ oxi ]   (* R-5c2: propanoil; R-6a2b: (propanoiloxi) *)
  *               | ciclo , ROOT , ( ano | segments ) , [ locant ] , carbonil , [ oxi ]   (* (ciclohexanocarbonil) *)
  *               | ( isopropil | tert-butil | fenil ) , [ alkoxy ] | isopropiliden
- *               | ( formil | acetil | benzoil ) , [ oxi ] | carboxi ;   (* R-6a2b: (acetiloxi) *)
+ *               | ( formil | acetil | benzoil ) , [ oxi ] | carboxi | ciano ;   (* R-6a2b: (acetiloxi); R-6b1: ciano *)
  *   alkoxy      = oxi , [ carbonil ] ;   (* R-6a2b: carbonil, an alkoxycarbonyl prefix, (metoxicarbonil) *)
  *   parent      = [ legacy ] , stem , ( ano | segments ) , [ suffix ]
- *               | [ legacy ] , benceno , [ suffix ] | fenol | benzaldehído | benzoico | benzoato
+ *               | [ legacy ] , benceno , [ suffix ] | fenol | benzaldehído | benzoico | benzoato | benzonitrilo
  *               | [ locants | letter ] , template ;
- *   suffix      = [ locants ] , [ MULT ] , ( ol | al | ona | carbaldehído | oico | carboxílico | oato | carboxilato ) ;
+ *   suffix      = [ locants ] , [ MULT ] , ( ol | al | ona | carbaldehído | oico | carboxílico | oato | carboxilato
+ *                                         | nitrilo | carbonitrilo ) ;   (* R-6b1 *)
  *   template    = tolueno | estireno | xileno | mesitileno | anisol
  *               | cresol | pirocatecol | catecol | resorcinol | hidroquinona
  *               | formaldehído | acetaldehído | acetona | acetofenona | fenilacetaldehído   (* R-5c3a *)
@@ -230,6 +232,22 @@
  * after a compound branch's END are TILE_ORDER with their hints; `oxi` after
  * `carboxi` stays TILE_ORDER (a carbonic acid's ester).
  *
+ * The nitriles (R-6b1) are named as the engine names them (render.js
+ * suffixWords(), substituentTokens()): the suffix `nitrilo` puts the –C≡N at
+ * the ends of a chain by rule, as `oico` puts the –COOH (`butanonitrilo`,
+ * `butanodinitrilo`, `prop-2-enonitrilo`: the parent's `o` kept before its
+ * consonant); numbers on it, or `nitrilo` after a ring or `benceno`, are
+ * TILE_ORDER with their hints (terminalHints()); `carbonitrilo` takes
+ * locants like `carboxílico` (`ciclohexano-1,4-dicarbonitrilo`,
+ * `benceno-1,4-dicarbonitrilo`; after a chain it is read too, and judged by
+ * the engine: `propano-1-carbonitrilo` is butanonitrilo); `benzonitrilo` is a
+ * whole-word parent like `benzoico` (`4-metilbenzonitrilo`; numbers or a
+ * letter of its own are TEMPLATE_LOCANTS, «grupo C≡N»); `ciano` a retained
+ * word like `carboxi`, the –C≡N bonded by its carbon (`ácido
+ * 3-cianopropanoico`, `(cianometil)`, `etanoato de cianometilo`; `oxi` after
+ * it, `ciano` as a group of an ether's class name or as an ester's O-bound
+ * group are TILE_ORDER with their hints). No new error code.
+ *
  * The tile `1(n)` (R-5a2) is the compound locant of a ring's closing bond,
  * the one from its last carbon n back to carbon 1 (the engine cites it
  * `1(6)`, IUPAC 2013 P-31.1.4.2.4: `ciclohex-1(6)-eno-1,2,4-triol`,
@@ -356,8 +374,9 @@
  *            `carbaldehído`, R-5c1)
  * - benzene `{type: 'benzene', tile}` (the `benceno` tile, R-4b; also the
  *            `fenol` tile, R-5a2, value 'phenol', the `benzaldehído`
- *            tile, R-5c1, value 'benzaldehyde', and the `benzoico` tile, R-5d1,
- *            value 'benzoic': groupWordOf())
+ *            tile, R-5c1, value 'benzaldehyde', the `benzoico` tile, R-5d1,
+ *            value 'benzoic', the `benzoato` tile, R-6a1, value 'benzoate', and
+ *            the `benzonitrilo` tile, R-6b1, value 'benzonitrile': groupWordOf())
  * - template `{type: 'template', tile}` (a retained template tile, R-4c)
  * - classWord `{type: 'classWord', tile}` (the `éter` tile of a functional-class name, R-5b2: the
  *            name-level prefixes are its groups; locants, a letter or a
@@ -398,7 +417,7 @@ import {
   isPhenolTemplate, withArticle, ALKOXY_RETAINED, ETHER_CLASS_GROUPS, SUFFIX_GROUPS, GROUP_WORD_PARENTS, BENZALDEHYDE_ID,
   isAcylTile, templateSuffix, isCarbonylTemplate, isChainTemplate, BENZOIC_ID, ACID_KIND, isAcidSuffix, parentWordName,
   isAcidTemplate, ACID_GROUP, ESTER_KIND, isEsterSuffix, ESTER_GROUP, BENZOATE_ID, ESTER_ALKYL_ID, isEsterTemplate,
-  ACID_ESTER_TEMPLATES, isAcyloxyHead,
+  ACID_ESTER_TEMPLATES, isAcyloxyHead, NITRILE_KIND, BENZONITRILE_ID,
 } from './tiles.js';
 import { itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, iloTileOf, esterGroupsOf } from './assemble.js';
 
@@ -442,6 +461,11 @@ const OATO = GROUP_SUFFIXES[ESTER_KIND];
 const CARBOXILATO = RING_GROUP_SUFFIXES[ESTER_KIND];
 const BENZOATO = tileById(BENZOATE_ID).text;
 const ILO = tileById(ESTER_ALKYL_ID).text;
+// R-6b1: the nitriles.
+const NITRILO = GROUP_SUFFIXES[NITRILE_KIND];
+const CARBONITRILO = RING_GROUP_SUFFIXES[NITRILE_KIND];
+const CIANO = GROUP_PREFIXES[NITRILE_KIND];
+const BENZONITRILO = tileById(BENZONITRILE_ID).text;
 const [ORTO, META, PARA] = Object.keys(POSITIONAL_IDS).map((locant) => POSITIONAL_LETTERS[locant]);
 
 /** Spanish number words for the LOCANT_COUNT messages (digits from 11 on). */
@@ -537,6 +561,13 @@ const EXAMPLES = Object.freeze({
   metoxicarbonil: `${OPEN}${stem(1)}${ALKOXY_ENDING}${RING_CARBONYL_ENDING}${CLOSE}`,
   cloroetoxicarbonil: `${ENCLOSING_MARKS[1][0]}${OPEN}2-${HALOGEN_PREFIXES.Cl}${stem(2)}${ALKOXY_ENDING}${CLOSE}${RING_CARBONYL_ENDING}`
     + `${ENCLOSING_MARKS[1][1]}`,
+  // R-6b1: the nitriles.
+  butanonitrilo: `${stem(4)}${ANO}${NITRILO}`,
+  butanodinitrilo: `${stem(4)}${ANO}${multiplier(2)}${NITRILO}`,
+  ciclohexanocarbonitrilo: `${RING_PREFIX}${stem(6)}${ANO}${CARBONITRILO}`,
+  bencenodicarbonitrilo: `${BENZENE_NAME}-1,4-${multiplier(2)}${CARBONITRILO}`,
+  cianometil: `${OPEN}${CIANO}${stem(1)}${IL}${CLOSE}`,
+  cianofenil: `${OPEN}4-${CIANO}${FENIL}${CLOSE}`,
   etilMetilEter: `${stem(2)}${IL} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
   dietilEter: `${multiplier(2)}${stem(2)}${IL} ${ETHER_CLASS_WORD}`,
   cloroetilEter: `${OPEN}2-${HALOGEN_PREFIXES.Cl}${stem(2)}${IL}${CLOSE} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
@@ -657,6 +688,18 @@ const HINTS = Object.freeze({
   iloAlkoxy: `«${ALKOXY_ENDING}» no va detrás de «${ILO}»: el grupo acabado en «${ILO}» ya va unido al oxígeno del éster `
     + `(${EXAMPLES.etanoatoDeMetilo}).`,
   benzeneEster: `el ${BENZENE_NAME} unido al oxígeno de un éster se escribe con «${FENIL}» e «${ILO}»: ${EXAMPLES.benzoatoDeFenilo}.`,
+  // R-6b1: the nitriles.
+  nitriloRing: `«${NITRILO}» solo va detrás de una cadena: en un anillo, el grupo C≡N va unido a un carbono del anillo y se `
+    + `escribe «${CARBONITRILO}» (${EXAMPLES.ciclohexanocarbonitrilo}).`,
+  nitriloBenzene: `«${NITRILO}» no va detrás de «${BENZENE_NAME}»: el ${BENZENE_NAME} con un grupo C≡N es el «${BENZONITRILO}», y con `
+    + `varios se usa «${CARBONITRILO}» (${EXAMPLES.bencenodicarbonitrilo}).`,
+  nitriloLocants: `el grupo C≡N de «${NITRILO}» va siempre en un extremo de la cadena, en el carbono 1 (y en el último, con `
+    + `«${multiplier(2)}${NITRILO}»), así que «${NITRILO}» no lleva números: ${EXAMPLES.butanonitrilo}, ${EXAMPLES.butanodinitrilo}.`,
+  benzonitrileBranch: `«${BENZONITRILO}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es «${FENIL}» y `
+    + `su grupo C≡N se escribe «${CIANO}», como en ${EXAMPLES.cianofenil}.`,
+  cyanoAlkoxy: `«${ALKOXY_ENDING}» no va detrás de «${CIANO}»: un grupo C≡N unido a un oxígeno no forma un éter.`,
+  classCyano: `«${CIANO}» no va en un nombre con «${ETHER_CLASS_WORD}»: un grupo C≡N unido al oxígeno no forma un éter. Los dos `
+    + `grupos de un éter son cadenas o anillos de carbonos (${EXAMPLES.etilMetilEter}).`,
   // R-6a2b: `carbonil` after the END of a compound branch.
   carbonilAfterEnd: `en una rama compuesta, «${RING_CARBONYL_ENDING}» va dentro de ella, antes de cerrarla; detrás de «${ALKOXY_ENDING}» `
     + `forma un éster como rama: ${EXAMPLES.cloroetoxicarbonil}.`,
@@ -716,16 +759,19 @@ function esterGroupsMessage(suffix, esters, count, template = false) {
 
 /**
  * The TILE_ORDER hints of a terminal suffix out of its place (R-5c1: `al`;
- * R-5d1: `oico`; R-6a1: `oato`), whose group sits at the ends of a chain by
- * rule: after a `ciclo` ring (`ring`), after `benceno` (`benzene`) and with
- * locants of its own (`locants`).
+ * R-5d1: `oico`; R-6a1: `oato`; R-6b1: `nitrilo`), whose group sits at the
+ * ends of a chain by rule: after a `ciclo` ring (`ring`), after `benceno`
+ * (`benzene`) and with locants of its own (`locants`).
  *
- * @param {{value: string}} tile - The `al`, `oico` or `oato` tile.
+ * @param {{value: string}} tile - The `al`, `oico`, `oato` or `nitrilo` tile.
  * @returns {{ring: string, benzene: string, locants: string}} The hints.
  */
 function terminalHints(tile) {
   if (tile.value === ESTER_KIND) {
     return { ring: HINTS.oatoRing, benzene: HINTS.oatoBenzene, locants: HINTS.oatoLocants }; // `oato` (R-6a1)
+  }
+  if (tile.value === NITRILE_KIND) {
+    return { ring: HINTS.nitriloRing, benzene: HINTS.nitriloBenzene, locants: HINTS.nitriloLocants }; // `nitrilo` (R-6b1)
   }
   return tile.value === ACID_KIND
     ? { ring: HINTS.oicoRing, benzene: HINTS.oicoBenzene, locants: HINTS.oicoLocants }
@@ -766,9 +812,9 @@ function classAcylHint(word) {
 /**
  * The TILE_ORDER hint of a suffix tile out of place (R-5a2: `ol`; R-5c1:
  * `al`, `ona`, `carbaldehído`; R-5d1: `oico`, `carboxílico`; R-6a1: `oato`,
- * `carboxilato`): it goes at the end of the name, after the parent's ending
- * (an ester's, before its O-bound group); in a branch the group is a
- * prefix.
+ * `carboxilato`; R-6b1: `nitrilo`, `carbonitrilo`): it goes at the end of the
+ * name, after the parent's ending (an ester's, before its O-bound group); in
+ * a branch the group is a prefix.
  *
  * @param {{text: string, value: string}} tile - The suffix tile.
  * @returns {string} The hint.
@@ -797,6 +843,12 @@ function suffixHint(tile) {
     case 'carboxylate': // `carboxilato` (R-6a1)
       return `«${CARBOXILATO}» va detrás del nombre del anillo principal de un éster, y luego el grupo unido al oxígeno, acabado en `
         + `«${ILO}» (${EXAMPLES.ciclohexanocarboxilatoDeEtilo}).`;
+    case NITRILE_KIND: // `nitrilo` (R-6b1)
+      return `«${NITRILO}» va al final del nombre, detrás de la terminación de la cadena principal (${EXAMPLES.butanonitrilo}, `
+        + `${EXAMPLES.butanodinitrilo}); en una rama, el grupo C≡N se escribe «${CIANO}» (${EXAMPLES.cianometil}).`;
+    case 'carbonitrile': // `carbonitrilo` (R-6b1)
+      return `«${CARBONITRILO}» va al final del nombre, detrás del nombre del anillo principal `
+        + `(${EXAMPLES.ciclohexanocarbonitrilo}); en una rama, el grupo C≡N se escribe «${CIANO}».`;
     default:
       return HINTS.suffix;
   }
@@ -816,13 +868,14 @@ function cmultSuffixHint(word) {
 
 /**
  * Tells whether a suffix node is the aldehyde suffix `al` (R-5c1), the
- * acid suffix `oico` (R-5d1) or the ester suffix `oato` (R-6a1), whose
- * –CHO, –COOH or –COO– sits at an end of a chain by rule (tiles.js
- * SUFFIX_GROUPS `terminal`): it takes no locants.
+ * acid suffix `oico` (R-5d1), the ester suffix `oato` (R-6a1) or the
+ * nitrile suffix `nitrilo` (R-6b1), whose –CHO, –COOH, –COO– or –C≡N sits at
+ * an end of a chain by rule (tiles.js SUFFIX_GROUPS `terminal`): it takes no
+ * locants.
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object|null} suffix - A suffix node, or null.
- * @returns {boolean} True for `al`, `oico` and `oato`.
+ * @returns {boolean} True for `al`, `oico`, `oato` and `nitrilo`.
  */
 export function isTerminalSuffix(tiles, suffix) {
   return Boolean(suffix) && SUFFIX_GROUPS[tiles[suffix.tile].value].terminal;
@@ -1340,6 +1393,8 @@ function takeAlkoxy(state, before) {
     addTileOrder(state, oxi, oxi + 1, HINTS.iloAlkoxy); // `met ilo oxi` (R-6a1): the group is bonded to the ester's oxygen already
   } else if (before.value === 'carboxy') {
     addTileOrder(state, oxi, oxi + 1, HINTS.carboxyAlkoxy); // `carboxi oxi` (R-5d1): no ether, nor an ester's prefix either
+  } else if (before.value === 'cyano') {
+    addTileOrder(state, oxi, oxi + 1, HINTS.cyanoAlkoxy); // `ciano oxi` (R-6b1): no ether either
   } else if (!single && !isAcyloxyHead(before)) {
     addTileOrder(state, oxi, oxi + 1, alkoxyAfterDoubleHint(before.text)); // `metiliden oxi`, `isopropiliden oxi`
   }
@@ -1881,6 +1936,8 @@ function checkClassName(state, tree) {
       addTileOrder(state, core.tile, core.tile + 1, HINTS.classFormyl); // `formil metil éter` (R-5c1)
     } else if (core && core.type === 'retained' && tiles[core.tile].value === 'carboxy') {
       addTileOrder(state, core.tile, core.tile + 1, HINTS.classCarboxy); // `carboxi metil éter` (R-5d1)
+    } else if (core && core.type === 'retained' && tiles[core.tile].value === 'cyano') {
+      addTileOrder(state, core.tile, core.tile + 1, HINTS.classCyano); // `ciano metil éter` (R-6b1)
     } else if (core && core.type === 'retained' && isAcylTile(tiles[core.tile])) {
       addTileOrder(state, core.tile, core.tile + 1, classAcylHint(tiles[core.tile].text)); // `acetil metil éter` (R-5c2)
     } else if (core && core.type === 'retained' && !ALKOXY_RETAINED.includes(tiles[core.tile].value)) {
@@ -1896,8 +1953,8 @@ function checkClassName(state, tree) {
 
 /**
  * The hint of a whole-word parent (`benceno`, `fenol`, `benzaldehído`,
- * `benzoico`, `benzoato`, a template) found inside a compound branch, or in
- * an ester's O-bound side (R-6a1).
+ * `benzoico`, `benzoato`, `benzonitrilo`, a template) found inside a compound
+ * branch, or in an ester's O-bound side (R-6a1).
  *
  * @param {object} tile - The tile.
  * @param {boolean} [ester] - In an ester's O-bound side (default false).
@@ -1910,6 +1967,7 @@ function wholeWordHint(tile, ester = false) {
   if (tile.kind === 'benzene') {
     return {
       phenol: HINTS.phenolBranch, benzaldehyde: HINTS.benzaldehydeBranch, benzoic: HINTS.benzoicBranch, benzoate: HINTS.benzoateBranch,
+      benzonitrile: HINTS.benzonitrileBranch, // R-6b1
     }[tile.value] || HINTS.benzeneBranch;
   }
   return templateHint(tile, 'branch');
@@ -2039,8 +2097,10 @@ function checkNameEnd(state, tree) {
   const last = tree.items[tree.items.length - 1];
   if (last && isCompletePrefix(last)) {
     const words = itemText(tree, { ...last, locants: [], letter: null, multiplier: null });
-    // `2-cloro`, `2-hidroxi`, `2-metoxi`: a one-atom group or an alkoxy group is no branch (R-5a1, R-5a2, R-5b).
-    const what = isAtomGroup(last.substituent.type) || isAlkoxyNode(last.substituent) ? 'un grupo' : 'una rama';
+    // `2-cloro`, `2-hidroxi`, `2-metoxi`: a one-atom group or an alkoxy group is no branch (R-5a1, R-5a2, R-5b); nor is the
+    // –C≡N of `2-ciano` (R-6b1), whose carbon is never a chain's.
+    const cyano = last.substituent.type === 'retained' && state.tiles[last.substituent.tile].value === 'cyano';
+    const what = isAtomGroup(last.substituent.type) || isAlkoxyNode(last.substituent) || cyano ? 'un grupo' : 'una rama';
     addError(state, 'ENDS_WITH_BRANCH', last.range[0], last.range[1],
       `El nombre acaba en ${what} («${words}»): falta la cadena principal detrás.`);
     return;
@@ -2467,7 +2527,7 @@ function checkEsterSide(state, tree) {
     if (core.type === 'retained' && !ALKOXY_RETAINED.includes(tiles[core.tile].value)) {
       const word = tiles[core.tile];
       addTileOrder(state, core.tile, core.tile + 1, esterGroupHint(word.text, !isAcylTile(word) && word.value !== 'formyl'
-        && word.value !== 'carboxy')); // `isopropiliden ilo`; `acetil ilo`, `formil ilo`, `carboxi ilo`
+        && word.value !== 'carboxy' && word.value !== 'cyano')); // `isopropiliden ilo`; `acetil ilo`, `carboxi ilo`, `ciano ilo`
     }
   } // End of the loop over the O-bound groups
   // Numbers or a multiplier with nothing after them (`et ano oato 2`): the name context's NO_PARENT, here a TILE_ORDER of its own.

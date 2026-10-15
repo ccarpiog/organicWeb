@@ -145,16 +145,32 @@
  *   carbonil` → `(metoxicarbonil)`, `prop ano 2 il oxi carbonil` →
  *   `[(propan-2-iloxi)carbonil]`); in a compound branch both go before its
  *   END (`START 2 met il prop ano oil oxi END` → `[(2-metilpropanoil)oxi]`);
+ *   and for the nitriles (R-6b1): the suffixes `nitrilo` (value 'nitrile':
+ *   a –C≡N at an end of a chain, terminal by rule like `oico` — its carbon
+ *   is the chain's end carbon, its nitrogen triple-bonded to it:
+ *   `butanonitrilo`, `butanodinitrilo`) and `carbonitrilo` (value
+ *   'carbonitrile': a –C≡N whose carbon is outside the parent, bonded to the
+ *   carbon its locant gives — `ciclohexanocarbonitrilo`,
+ *   `benceno-1,4-dicarbonitrilo`), kind 'suffix' (SUFFIX_GROUPS, `element`
+ *   'N': the group's atom is a nitrogen, not an oxygen); `ciano` (kind
+ *   'retained', value 'cyano': the –C≡N as a prefix, one carbon with its
+ *   nitrogen bonded by that carbon, which is never a carbon of the chain it
+ *   hangs from — `ácido 3-cianopropanoico`, `(cianometil)`; the lexicon's
+ *   GROUP_PREFIXES.nitrile); and in the «Anillos» row `benzonitrilo` (kind
+ *   'benzene', value 'benzonitrile': the benzene parent with its –C≡N at
+ *   carbon 1, as `benzoico` with its –COOH — `4-metilbenzonitrilo`;
+ *   GROUP_WORD_PARENTS);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
  *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2,
  *   `benzaldehído` from R-5c1, `benzoil` from R-5c2, `benzoico` from R-5d1,
- *   `benzoato` from R-6a1),
+ *   `benzoato` from R-6a1, `benzonitrilo` from R-6b1),
  *   'groups' («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`; R-5b:
  *   `oxi`, and `éter` from R-5b2; R-5c1: `oxo`, `formil`, `al`, `ona`,
  *   `carbaldehído`; R-5c2: `acetil`, `oil`, `carbonil`, after `formil`;
  *   R-5d1: `ácido`, `carboxi`, `oico`, `carboxílico`; R-6a1: `oato`,
- *   `carboxilato`, `ilo`, at the end),
+ *   `carboxilato`, `ilo`; R-6b1: `ciano`, `nitrilo`, `carbonitrilo`, at the
+ *   end),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; R-5c3a: the retained carbonyl
  *   names, `formaldehído` … `tereftalaldehído`; R-5d2: the retained acid
@@ -310,6 +326,18 @@ export const BENZOATE_ID = 'ring-benzoate';
  */
 export const ESTER_ALKYL_ID = 'ester-alkyl';
 
+/** Id of the `nitrilo` tile (design.md §15.8 R-6b; phase R-6b1: the nitrile suffix of a chain, `butanonitrilo`). */
+export const NITRILO_ID = 'suffix-nitrile';
+
+/** Id of the `carbonitrilo` tile (design.md §15.8 R-6b; phase R-6b1: the –C≡N suffix whose carbon is outside the parent). */
+export const CARBONITRILE_ID = 'suffix-carbonitrile';
+
+/** Id of the `benzonitrilo` tile (design.md §15.8 R-6b; phase R-6b1: the benzene parent with its –C≡N at carbon 1). */
+export const BENZONITRILE_ID = 'ring-benzonitrile';
+
+/** Id of the `ciano` tile (design.md §15.8 R-6b; phase R-6b1: a –C≡N bonded by its carbon, as a prefix). */
+export const CYANO_ID = 'retained-cyano';
+
 /**
  * The retained acyl words (R-5c2), by tile value: `acetil`, a two-carbon
  * chain whose carbon 1 is the C=O carbon (build.js), and `benzoil`, the
@@ -361,7 +389,11 @@ export function isAcyloxyHead(tile) {
  * carries an OH, single-bonded (the –COOH); for an ester (R-6a1: `oato`,
  * terminal like `oico`, and `carboxilato`, outside like `carboxílico`),
  * `bridge`: the carbon of the C=O also carries the bridge oxygen,
- * single-bonded, to which the O-bound group is bonded (the –COO–).
+ * single-bonded, to which the O-bound group is bonded (the –COO–); for a
+ * nitrile (R-6b1: `nitrilo`, terminal like `oico`, and `carbonitrilo`,
+ * outside like `carboxílico`), `element` 'N': the group's atom is a
+ * nitrogen, bonded by a triple bond (`order` 3) to its carbon (the –C≡N;
+ * suffixElement()).
  */
 export const SUFFIX_GROUPS = Object.freeze({
   alcohol: Object.freeze({ kind: 'alcohol', outside: false, order: 1, terminal: false }),
@@ -373,15 +405,35 @@ export const SUFFIX_GROUPS = Object.freeze({
   // R-6a1: the esters.
   ester: Object.freeze({ kind: 'ester', outside: false, order: 2, terminal: true, bridge: true }),
   carboxylate: Object.freeze({ kind: 'ester', outside: true, order: 2, terminal: false, bridge: true }),
+  // R-6b1: the nitriles, their nitrogen triple-bonded to the group's carbon.
+  nitrile: Object.freeze({ kind: 'nitrile', outside: false, order: 3, terminal: true, element: 'N' }),
+  carbonitrile: Object.freeze({ kind: 'nitrile', outside: true, order: 3, terminal: false, element: 'N' }),
 });
+
+/** The element of the atom a suffix group bonds to its carbon when the SUFFIX_GROUPS entry names none: an oxygen. */
+const SUFFIX_OXYGEN = 'O';
+
+/**
+ * The element of the atom a suffix group bonds to its carbon (build.js): the
+ * oxygen of an OH, a C=O, a –COOH or a –COO–, or (R-6b1) the nitrogen of a
+ * –C≡N (SUFFIX_GROUPS `element`).
+ *
+ * @param {{element?: string}} group - A SUFFIX_GROUPS entry.
+ * @returns {string} The element symbol.
+ */
+export function suffixElement(group) {
+  return group.element || SUFFIX_OXYGEN;
+}
 
 /**
  * The bond order a suffix group takes from the parent's carbon that carries
  * it (search.js, build.js): one for a group whose carbon is outside the
- * parent (`carbaldehído`, `carboxílico`, `carboxilato`: the single bond to
- * that carbon), else the bond to its oxygen — one for the OH, two for a C=O
- * — and one more for the OH of an acid's –COOH (R-5d1: `oico`, three) or the
- * bridge oxygen of an ester's –COO– (R-6a1: `oato`, three).
+ * parent (`carbaldehído`, `carboxílico`, `carboxilato`, `carbonitrilo`: the
+ * single bond to that carbon), else the bond to its oxygen — one for the OH,
+ * two for a C=O — and one more for the OH of an acid's –COOH (R-5d1: `oico`,
+ * three) or the bridge oxygen of an ester's –COO– (R-6a1: `oato`, three), or
+ * the triple bond to the nitrogen of a nitrile's –C≡N (R-6b1: `nitrilo`,
+ * three).
  *
  * @param {{outside: boolean, order: number, hydroxy?: boolean, bridge?: boolean}} group - A SUFFIX_GROUPS entry.
  * @returns {number} 1, 2 or 3.
@@ -427,13 +479,30 @@ export function isAcidSuffix(value) {
 /** How the messages call the –COOH of an acid (R-5d1), as «grupo CHO» for an aldehyde's. */
 export const ACID_GROUP = 'grupo COOH';
 
+/** The principal group of a nitrile (a lexicon GROUP_SUFFIXES key; R-6b1). */
+export const NITRILE_KIND = 'nitrile';
+
+/**
+ * Tells whether a suffix tile value is a nitrile's (R-6b1: `nitrilo`,
+ * `carbonitrilo`).
+ *
+ * @param {string} value - A SUFFIX_GROUPS key.
+ * @returns {boolean} True for a nitrile suffix.
+ */
+export function isNitrileSuffix(value) {
+  return Boolean(SUFFIX_GROUPS[value]) && SUFFIX_GROUPS[value].kind === NITRILE_KIND;
+}
+
+/** How the messages call the –C≡N of a nitrile (R-6b1), as «grupo COOH» for an acid's. */
+export const NITRILE_GROUP = 'grupo C≡N';
+
 /**
  * The whole-word benzene parents that place their principal group at
  * carbon 1 themselves, by tile value: `fenol` (R-5a2, its OH),
  * `benzaldehído` (R-5c1, its –CHO, whose carbon is outside the ring) and
  * `benzoico` (R-5d1, its –COOH, likewise; written after the class word
  * `ácido`) and `benzoato` (R-6a1, its –COO–, likewise; the O-bound group
- * after it):
+ * after it) and `benzonitrilo` (R-6b1, its –C≡N, likewise):
  * `suffix` the SUFFIX_GROUPS key of that group, `group` how the messages
  * call it (the parser's and the builder's «grupo OH», «grupo CHO»).
  */
@@ -442,6 +511,7 @@ export const GROUP_WORD_PARENTS = Object.freeze({
   benzaldehyde: Object.freeze({ suffix: 'carbaldehyde', group: 'grupo CHO' }),
   benzoic: Object.freeze({ suffix: 'carboxylic', group: ACID_GROUP }),
   benzoate: Object.freeze({ suffix: 'carboxylate', group: ESTER_GROUP }),
+  benzonitrile: Object.freeze({ suffix: 'carbonitrile', group: NITRILE_GROUP }),
 });
 
 /**
@@ -948,7 +1018,9 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * `fenilacético`, `ftálico`, `isoftálico`, `tereftálico`, then the retained
  * ester names `formiato`, `acetato`, `fenilacetato`, R-6a2a); R-6a1 adds
  * `benzoato` to the rings, after `benzoico`, and `oato`, `carboxilato` and
- * `ilo` to the groups, at their end.
+ * `ilo` to the groups, at their end; R-6b1 `benzonitrilo` to the rings,
+ * after `benzoato`, and `ciano`, `nitrilo` and `carbonitrilo` to the groups,
+ * at their end.
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -988,6 +1060,8 @@ function buildCatalogue() {
   tiles.push(makeTile(BENZOIC_ID, 'benzene', 'benzoic', 'rings', `${benzoic.stem}${benzoic.ending}`)); // `benzoico` (R-5d1)
   const benzoate = BENZENE_GROUP_NAMES[ESTER_KIND];
   tiles.push(makeTile(BENZOATE_ID, 'benzene', 'benzoate', 'rings', `${benzoate.stem}${benzoate.ending}`)); // `benzoato` (R-6a1)
+  const benzonitrile = BENZENE_GROUP_NAMES[NITRILE_KIND];
+  tiles.push(makeTile(BENZONITRILE_ID, 'benzene', 'benzonitrile', 'rings', `${benzonitrile.stem}${benzonitrile.ending}`)); // R-6b1
   const phenyl = RETAINED_PREFIXES.phenyl;
   tiles.push(makeTile(PHENYL_ID, 'retained', 'phenyl', 'rings', `${phenyl.italic}${phenyl.text}`, false, { italic: phenyl.italic }));
   tiles.push(makeTile(BENZOYL_ID, 'retained', 'benzoyl', 'rings', BENZOYL_PREFIX, false, { italic: '' })); // `benzoil` (R-5c2)
@@ -1018,6 +1092,10 @@ function buildCatalogue() {
   tiles.push(makeTile(CARBOXYLATE_ID, 'suffix', 'carboxylate', 'groups', RING_GROUP_SUFFIXES[ESTER_KIND])); // `carboxilato` (R-6a1)
   // `ilo` (R-6a1): `il` + the ester's `o`, the ending of an O-bound group (value 1: its single bond to the bridge oxygen).
   tiles.push(makeTile(ESTER_ALKYL_ID, 'esterAlkyl', 1, 'groups', `${FREE_VALENCE_SUFFIXES[1]}${ESTER_ALKYL_ENDING}`));
+  // R-6b1: the nitriles' prefix `ciano` (a retained word, as `carboxi`) and their suffixes `nitrilo` and `carbonitrilo`.
+  tiles.push(makeTile(CYANO_ID, 'retained', 'cyano', 'groups', GROUP_PREFIXES[NITRILE_KIND], false, { italic: '' }));
+  tiles.push(makeTile(NITRILO_ID, 'suffix', NITRILE_KIND, 'groups', GROUP_SUFFIXES[NITRILE_KIND]));
+  tiles.push(makeTile(CARBONITRILE_ID, 'suffix', 'carbonitrile', 'groups', RING_GROUP_SUFFIXES[NITRILE_KIND]));
   for (const value of Object.keys(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }

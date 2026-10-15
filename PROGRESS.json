@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T17:26:18Z",
+  "updated": "2026-10-15T18:12:26Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -886,8 +886,29 @@
     {
       "id": "I-52b",
       "title": "v4 R-6b Nitriles",
+      "status": "in_progress",
+      "summary": "Split into I-52b1 (nitrile suffixes and ciano), I-52b2 (retained nitrile names, Ayuda line) and I-52b3 (nitrile diagnoses)."
+    },
+    {
+      "id": "I-52b1",
+      "title": "v4 R-6b1 Nitrile suffixes nitrilo / carbonitrilo, benzonitrilo, ciano prefix",
+      "status": "done",
+      "risk": "high",
+      "summary": "Reads nitrile names built from tiles (butanonitrilo, ciclohexanocarbonitrilo, benzonitrilo, cianometil) and draws them.",
+      "review": "Codex ship, 0 findings — docs/reviews/I-52b1.md",
+      "narrative": "docs/progress-archive/i-52b1.md"
+    },
+    {
+      "id": "I-52b2",
+      "title": "v4 R-6b2 Retained nitrile names, Ayuda nitrile line",
       "status": "queued",
-      "summary": "Extends tile names to nitriles, carbonitriles, ciano prefixes and traditional nitrile names."
+      "summary": "Reads the traditional nitrile names (acetonitrilo, fenilacetonitrilo, ftalonitrilo) and adds the help line."
+    },
+    {
+      "id": "I-52b3",
+      "title": "v4 R-6b3 Nitrile diagnosis messages",
+      "status": "queued",
+      "summary": "Names the student's main mistake in a nitrile name, with its explanation step."
     },
     {
       "id": "I-52c",

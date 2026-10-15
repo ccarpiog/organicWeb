@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -178,6 +178,15 @@
  * chain template like `acético`, its –COO– the placed suffix (kind 'ester',
  * `bridge`, at carbon 1), the O-bound side after it read as after `oato`.
  *
+ * The nitriles (R-6b1) read their suffix like the acids': `nitrilo` on a
+ * chain with its slots at the ends by rule (implicit, `terminal`:
+ * `butanonitrilo`, `butanodinitrilo`), `carbonitrilo` with carbon slots of
+ * the parent and `outside`, `benzonitrilo` the benzene parent with its –C≡N
+ * placed at carbon 1 (`placed`, `outside`); SuffixSpec `kind` 'nitrile'
+ * (build.js puts a nitrogen triple-bonded to the group's carbon, tiles.js
+ * suffixElement()). `ciano` is a retained word (build.js knows its atoms: one
+ * carbon with its nitrogen).
+ *
  * An ether's functional-class name (R-5b2: `etil metil éter`, `dietil
  * éter`) has no parent chain: its parent is the ether oxygen itself
  * (ParentSpec kind 'ether', one atom, no carbons, no bonds of its own), and
@@ -301,13 +310,15 @@ import { esterGroupsOf } from './assemble.js';
 
 /**
  * The principal characteristic group cited as a suffix (R-5a2: `ol`; R-5c1:
- * `al`, `ona`, `carbaldehído`; R-5d1: `oico`, `carboxílico`).
+ * `al`, `ona`, `carbaldehído`; R-5d1: `oico`, `carboxílico`; R-6a1: `oato`,
+ * `carboxilato`; R-6b1: `nitrilo`, `carbonitrilo`).
  *
  * @typedef {object} SuffixSpec
- * @property {'alcohol'|'aldehyde'|'ketone'|'acid'} kind - The group (lexicon GROUP_SUFFIXES key, as the engine's
- *   SuffixStructure).
+ * @property {'alcohol'|'aldehyde'|'ketone'|'acid'|'ester'|'nitrile'} kind - The group (lexicon GROUP_SUFFIXES key, as the
+ *   engine's SuffixStructure).
  * @property {boolean} outside - The group's carbon is outside the parent (R-5c1: `carbaldehído`, `benzaldehído`; R-5d1:
- *   `carboxílico`, `benzoico`): build.js adds that carbon, bonded to the parent's carbon, with the =O on it.
+ *   `carboxílico`, `benzoico`; R-6b1: `carbonitrilo`, `benzonitrilo`): build.js adds that carbon, bonded to the parent's
+ *   carbon, with the =O (the N of a –C≡N) on it.
  * @property {boolean} hydroxy - An acid's –COOH (R-5d1): the group's carbon also carries an OH, single-bonded.
  * @property {boolean} bridge - An ester's –COO– (R-6a1: `oato`, `carboxilato`, `benzoato`): the group's carbon also carries
  *   the bridge oxygen, single-bonded, to which an O-bound group (NameSpec `ester`) is bonded.
@@ -321,9 +332,9 @@ import { esterGroupsOf } from './assemble.js';
  *   as the messages quote it, «ácido benzoico», tiles.js parentWordName()).
  * @property {boolean} phenol - The OH groups of `fenol` or of a retained phenol (R-5a3a), placed by the parent's word.
  * @property {boolean} placed - The group is placed by the parent's word: `phenol`, or the –CHO of `benzaldehído` (R-5c1), or
- *   the –COOH of `benzoico` (R-5d1).
- * @property {boolean} terminal - The aldehyde suffix `al` on a chain (R-5c1), or the acid suffix `oico` (R-5d1): its slots
- *   sit at the chain's ends by rule.
+ *   the –COOH of `benzoico` (R-5d1), the –COO– of `benzoato` (R-6a1), the –C≡N of `benzonitrilo` (R-6b1).
+ * @property {boolean} terminal - The aldehyde suffix `al` on a chain (R-5c1), or the acid suffix `oico` (R-5d1), the ester
+ *   suffix `oato` (R-6a1), the nitrile suffix `nitrilo` (R-6b1): its slots sit at the chain's ends by rule.
  * @property {[number, number]} tiles - Tile range of the suffix (its locants, multiplier and suffix tile; the `fenol`,
  *   `benzaldehído` or template tile).
  */

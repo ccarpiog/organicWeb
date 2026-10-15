@@ -233,7 +233,19 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   prefix written as another kind of branch or with the general acyl word
   (`(1-oxoetoxi)`, `[(metoxi)oxometil]`, `(etanoiloxi)`), and an ester
   written as an ether class name (`(1-oxoetil) metil éter`), each with its
-  «Ver el paso» step. Next is R-6b (phase I-52b): nitriles.
+  «Ver el paso» step. R-6b1 (phase I-52b1) is done: the «Grupos» row's
+  `nitrilo` (the –C≡N at the ends of a chain by rule, no locants:
+  `butanonitrilo`, `butanodinitrilo`, `prop-2-enonitrilo`), `carbonitrilo`
+  (`ciclohexano-1,4-dicarbonitrilo`, `benceno-1,4-dicarbonitrilo`) and
+  `ciano` (`ácido 3-cianopropanoico`, `(cianometil)`, `etanoato de
+  cianometilo`) and the «Anillos» row's `benzonitrilo`
+  (`4-metilbenzonitrilo`) read nitriles on chains, rings and `benceno` and
+  beside acids and esters, their left-out locants searched, the engine's
+  `manyNitriles` and `carbonocyanidic` refusals `outOfScope`; the diagnosis
+  keeps the rules that hold for a nitrile name, the nitrile's own mistakes
+  deliberate «Nitriles» nulls. Next is R-6b2 (phase I-52b2): the retained
+  nitrile names (`acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`) and the
+  Ayuda nitrile line.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

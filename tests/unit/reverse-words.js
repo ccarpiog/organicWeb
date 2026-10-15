@@ -14,7 +14,8 @@
  * the retained acid names) and their esters (R-6a1: the suffixes `oato` and
  * `carboxilato`, `benzoato`, the O-bound groups ending in `ilo`; R-6a2a: the
  * retained ester names; R-6a2b: the ester prefixes, `acetiloxi`,
- * `metoxicarbonil`).
+ * `metoxicarbonil`) and their nitriles (R-6b1: the suffixes `nitrilo` and
+ * `carbonitrilo`, `benzonitrilo`, the prefix `ciano`).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -24,7 +25,8 @@ import { fileURLToPath } from 'node:url';
 import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
 import {
   RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, ETHER_CLASS_WORD, ACETYL_PREFIX, ACYL_ENDING,
-  RING_CARBONYL_ENDING, BENZOYL_PREFIX, ALKOXY_ENDING, FORMYL_PREFIX, SUFFIX_CLASS_WORDS, ESTER_LINK,
+  RING_CARBONYL_ENDING, BENZOYL_PREFIX, ALKOXY_ENDING, FORMYL_PREFIX, SUFFIX_CLASS_WORDS, ESTER_LINK, GROUP_SUFFIXES, GROUP_PREFIXES,
+  RING_GROUP_SUFFIXES,
 } from '../../src/naming/lexicon.es.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 
@@ -392,15 +394,21 @@ export function isEsterOxygen(mol, bonds, id) {
  * carbons only, at least one –COO– (isEsterOxygen()) and no –COOH (beside
  * an acid the ester is a prefix of the acid's name, which the acid round
  * trip reads). Its other oxygens may be OH groups, ether oxygens or the C=O
- * of an aldehyde or a ketone.
+ * of an aldehyde or a ketone. With `nitrile` (phase R-6b1) the N of a –C≡N
+ * is allowed too, a `ciano` prefix beside the ester (`2-cianoetanoato de
+ * metilo`; isNitrileNitrogen()), never an amine's or an amide's.
  *
  * @param {object} mol - A molecule (model/molecule.js).
+ * @param {{nitrile?: boolean}} [options] - `nitrile`: allow the nitrogens of –C≡N groups (default false).
  * @returns {boolean} True for an ester.
  */
-export function isEsterMolecule(mol) {
+export function isEsterMolecule(mol, options = {}) {
   const bonds = [...mol.bonds.values()];
   let esters = 0;
   for (const [id, atom] of mol.atoms) {
+    if (atom.element === 'N' && options.nitrile && isNitrileNitrogen(mol, bonds, id)) {
+      continue;
+    }
     if (!['C', 'F', 'Cl', 'Br', 'I', 'O'].includes(atom.element)) {
       return false;
     }
@@ -418,14 +426,16 @@ export function isEsterMolecule(mol) {
 
 /**
  * Tells whether a fixture SMILES is an ester (isEsterMolecule(), phase
- * R-6a1); a SMILES the model cannot read is not.
+ * R-6a1; with `nitrile`, R-6b1, beside a `ciano` prefix too); a SMILES the
+ * model cannot read is not.
  *
  * @param {string} smiles - The SMILES.
+ * @param {{nitrile?: boolean}} [options] - isEsterMolecule() options.
  * @returns {boolean} True for an ester.
  */
-export function isEster(smiles) {
+export function isEster(smiles, options = {}) {
   try {
-    return isEsterMolecule(parseSmiles(smiles));
+    return isEsterMolecule(parseSmiles(smiles), options);
   } catch (err) {
     return false;
   }
@@ -476,6 +486,99 @@ export function isEsterTemplateName(name) {
 export function isEsterName(name) {
   return name.includes(ESTER_WORD) && !LATER_ESTER_WORDS.some((word) => name.includes(word)) && !ESTER_PREFIX.test(name);
 }
+
+/**
+ * Tells whether a nitrogen of a molecule is the N of a nitrile's –C≡N (phase
+ * R-6b1): one bond, a triple one, to a carbon (so not an amine's or an
+ * amide's N).
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @param {object[]} bonds - Its bonds.
+ * @param {number} id - The nitrogen's atom id.
+ * @returns {boolean} True for a nitrile's N.
+ */
+export function isNitrileNitrogen(mol, bonds, id) {
+  const own = bonds.filter((bond) => bond.a === id || bond.b === id);
+  return own.length === 1 && own[0].order === 3 && mol.atoms.get(own[0].a === id ? own[0].b : own[0].a).element === 'C';
+}
+
+/**
+ * Tells whether a molecule is a nitrile of the families the tiles read
+ * (phase R-6b1): carbons, halogens, oxygens and nitrogens only, every
+ * nitrogen the N of a –C≡N (isNitrileNitrogen(): no amine or amide, phases
+ * R-6c and R-6d), every oxygen bonded to carbons only (an OH, an ether, a
+ * C=O, an acid's or an ester's oxygens, which the tiles write since phases
+ * R-5a2…R-6a2b), at least one –C≡N — the principal group or, beside an
+ * acid or an ester, the prefix `ciano`.
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @returns {boolean} True for a nitrile.
+ */
+export function isNitrileMolecule(mol) {
+  const bonds = [...mol.bonds.values()];
+  let nitriles = 0;
+  for (const [id, atom] of mol.atoms) {
+    if (!['C', 'F', 'Cl', 'Br', 'I', 'O', 'N'].includes(atom.element)) {
+      return false;
+    }
+    if (atom.element === 'N') {
+      if (!isNitrileNitrogen(mol, bonds, id)) {
+        return false;
+      }
+      nitriles += 1;
+      continue;
+    }
+    if (atom.element !== 'O') {
+      continue;
+    }
+    const own = bonds.filter((bond) => bond.a === id || bond.b === id);
+    if (own.some((bond) => mol.atoms.get(bond.a === id ? bond.b : bond.a).element !== 'C')) {
+      return false;
+    }
+  } // End of the loop over the atoms
+  return nitriles > 0;
+} // End of function isNitrileMolecule()
+
+/**
+ * Tells whether a fixture SMILES is a nitrile (isNitrileMolecule(), phase
+ * R-6b1); a SMILES the model cannot read is not.
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True for a nitrile.
+ */
+export function isNitrile(smiles) {
+  try {
+    return isNitrileMolecule(parseSmiles(smiles));
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * The words of the nitrile names the tiles do not write yet (phase I-52b2),
+ * from the lexicon: the retained `acetonitrilo` (also in `fenilacetonitrilo`
+ * and `2-(4-metilfenil)acetonitrilo`) and `ftalonitrilo` (also substituted).
+ */
+export const LATER_NITRILE_WORDS = Object.freeze([TRADITIONAL_NAMES.acetonitrile, BENZENE_DIGROUP_NAMES.phthalonitrile]);
+
+/**
+ * Tells whether a name of a nitrile is written with the tiles of phase
+ * R-6b1: none of the retained nitrile words left for phase I-52b2
+ * (LATER_NITRILE_WORDS).
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True when the tiles read it.
+ */
+export function isNitrileName(name) {
+  return !LATER_NITRILE_WORDS.some((word) => name.includes(word));
+}
+
+/**
+ * The words that mark a nitrile in a name (phase R-6b1), from the lexicon:
+ * the suffixes `nitrilo` and `carbonitrilo` (and so `benzonitrilo`) and the
+ * prefix `ciano`.
+ */
+export const NITRILE_WORD = new RegExp(`${GROUP_SUFFIXES.nitrile}|${RING_GROUP_SUFFIXES.nitrile}|${GROUP_PREFIXES.nitrile}`);
 
 /**
  * The words of the aldehyde and ketone names the tiles do not write yet:

@@ -247,13 +247,18 @@ test('tokenize prefers whole words and automatic marks for simple branches', () 
 test('tokenize returns null outside the grammar, for texts that only read with errors, and past its budget', () => {
   // `clorometano` reads since R-5a1, `propan-2-ol` since R-5a2, `p-cresol` since R-5a3a, `ácido etanoico` since R-5d1 and its
   // retained `ácido acético` since R-5d2 and `etanoato de metilo` since R-6a1, its retained `acetato de metilo` since R-6a2a
-  // (`acético` without `ácido`, `acetato` without its O-bound group, only read with an error); `cloro` alone
+  // (`acético` without `ácido`, `acetato` without its O-bound group, only read with an error), `etanonitrilo` since R-6b1 (its
+  // retained `acetonitrilo` not yet, I-52b2; `nitrilo` alone only reads with an error); `cloro` alone
   // and `(2-cloro)etano` only read with errors, and so do `ol` alone, `2-ol`, `propil-2-ol`, a closing locant on a chain
   // (`but-1(4)-eno`), a number on `cresol` (`4-cresol`) and a letter on `catecol`.
   assert.ok(tokenize('ácido etanoico'));
   assert.ok(tokenize('ácido acético'));
   assert.ok(tokenize('etanoato de metilo'));
   assert.ok(tokenize('acetato de metilo'));
+  assert.ok(tokenize('etanonitrilo'));
+  for (const text of ['acetonitrilo', 'nitrilo', 'ciclohexanonitrilo']) {
+    assert.equal(tokenize(text), null, text);
+  }
   for (const text of ['', 'acético', 'acetato', 'etanoato', 'cloro', '(2-cloro)etano', '4-cresol', 'o-catecol', 'hex ano', 'HEXANO', 'ciclo',
     'cicloetano', 'ol', '2-ol', 'propil-2-ol', 'but-1(4)-eno', 'fenol-2-ol', 'propan-2-diol', 'butano-1,2-bisol']) {
     assert.equal(tokenize(text), null, text);

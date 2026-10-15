@@ -35,7 +35,9 @@
  *   suffixes `oico` and `carboxílico`, phase R-5d1, each with a tooltip, as
  *   `benzoico` in «Anillos»; the esters' suffixes `oato` and `carboxilato`
  *   and the ending `ilo` of an O-bound group, phase R-6a1, each with a
- *   tooltip, as `benzoato` in «Anillos» —, «Nombres tradicionales» — `tolueno`,
+ *   tooltip, as `benzoato` in «Anillos»; the nitriles' `ciano` and the
+ *   suffixes `nitrilo` and `carbonitrilo`, phase R-6b1, each with a tooltip,
+ *   as `benzonitrilo` in «Anillos» —, «Nombres tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
  *   `hidroquinona`, phase R-5a3a, the retained carbonyl names
@@ -69,7 +71,7 @@
 import {
   TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID,
   BENZALDEHYDE_ID, ACETYL_ID, ACYL_ID, RING_CARBONYL_ID, BENZOYL_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID,
-  OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID, tileById,
+  OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID, tileById,
 } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
@@ -126,8 +128,10 @@ export function positionalLabel(tile) {
  * and `ilo`, what each is, where it goes and that ` de ` and ` y ` are the
  * app's; R-6a2a: the retained ester names, what acid part each is, that the
  * O-bound group follows, and which takes a phenyl; R-6a2b: `oxi` and
- * `carbonil` also say how they make an ester's prefix; drafts pending
- * teacher review).
+ * `carbonil` also say how they make an ester's prefix; R-6b1: `ciano`,
+ * `nitrilo`, `carbonitrilo` and `benzonitrilo`, what each is, where it goes
+ * and whether the group's carbon counts in the chain; drafts pending teacher
+ * review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
@@ -178,6 +182,14 @@ export const TILE_HINTS = Object.freeze({
     + 'propan-2-ilo; detrás de isopropil, tert-butil o fenil, isopropilo, tert-butilo, fenilo. Sus ramas van delante (etanoato de '
     + '2-cloroetilo); con «di», el grupo se repite (butanodioato de dimetilo); dos grupos distintos, uno tras otro (propanodioato de '
     + 'etilo y metilo).',
+  // R-6b1: the nitriles.
+  [CYANO_ID]: 'Un grupo C≡N unido por su carbono, cuando no es el grupo principal; su carbono no cuenta en la cadena: ácido '
+    + '3-cianopropanoico; en una rama, (cianometil).',
+  [NITRILO_ID]: 'Nitrilo (grupo C≡N). Va al final, detrás de la terminación de una cadena; el carbono del grupo C≡N es el carbono 1 de '
+    + 'la cadena (con dos, también el último), así que no lleva números: butanonitrilo; con dos, butanodinitrilo.',
+  [CARBONITRILE_ID]: 'Grupo C≡N unido a un anillo. Va al final, detrás del nombre del anillo: ciclohexanocarbonitrilo, '
+    + 'benceno-1,4-dicarbonitrilo.',
+  [BENZONITRILE_ID]: 'Benceno con un grupo C≡N: bencenocarbonitrilo.',
   'template-anisole': 'Benceno con un grupo metoxi: metoxibenceno.',
   'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
   'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',

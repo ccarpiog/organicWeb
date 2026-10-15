@@ -22,7 +22,9 @@
  * «Esters» below: the rules that hold for an ester's acid part and for an
  * ester prefix, the principal –COO– group's own mistakes, checked first with
  * the acid's, then the O-bound side's, and an ester prefix's own words, among
- * the branch-name rules).
+ * the branch-name rules), and their nitriles (R-6b1; «Nitriles» below: the
+ * rules that hold for a nitrile name, the nitrile's own mistakes deliberate
+ * nulls until phase I-52b3).
  *
  * The rules, in order (first match wins):
  *
@@ -970,6 +972,53 @@
  * ether, and how the engine writes the –COO– groups; step `group`; no
  * student's chain, as on any class name.
  *
+ * **Nitriles** (design.md §13.4 I-38, I-39a, I-40c, §15.8 R-6b; phase
+ * R-6b1). The –C≡N of `nitrilo` (terminal by rule, as `oico`: its carbon is
+ * the chain's end carbon), `carbonitrilo` or `benzonitrilo` is the principal
+ * group below an acid, an ester or an amide (naming/seniority.js: ácido >
+ * éster > amida > nitrilo > aldehído > cetona > alcohol > amina); the
+ * engine's trace has P0 (most –C≡N groups on the chain) and N0, and, with a
+ * ring, a `RINGCHAIN` step. The rules keep working wherever they say
+ * something true of a nitrile name: BRANCH_AT_END (`4-metilbutanonitrilo` →
+ * `pentanonitrilo`), LONGER_CHAIN and the other P1–P4 rules after a P0 tie
+ * (`2-etilpropanonitrilo`), NUMBERING and RING_NUMBERING at N1–N4 after an
+ * N0 tie (`5-metilciclohexano-1-carbonitrilo`, `6-metilbenzonitrilo`),
+ * BENZENE_RING (`ciclohexa-1,3,5-trienocarbonitrilo`), the branch-name rules
+ * (`2-(5-metilfenil)etanonitrilo`), ALPHABETICAL_ORDER (`ciano` under c,
+ * `3-ciano-2-cloro…`), UNGROUPED, MULTIPLIER_KIND, LOCANT_ORDER, the
+ * prefixes' NEEDLESS and MISSING_LOCANTS, OLD_STYLE (`2-butenonitrilo` →
+ * «eno»), LETTER_LOCANTS. `ciano` (a retained word, the engine's cyano
+ * prefix, I-39a) has the engine's shape for the prefix style (`X:CN`), is a
+ * hetero group for rule 1 (its carbon is never a carbon of the chain it
+ * hangs from, so on an end it never lengthens it: isHeteroGroup()) and a
+ * «sustituyente» for P4 (hasHalogen()); beside an acid or an ester it is
+ * read as any prefix (`ácido 3-ciano-2-metilbutanoico`).
+ *
+ * Deliberate, tested nulls (the nitrile's own mistakes, whose messages are
+ * phase I-52b3's; nitrileChecks(), first of all the checks, and the guards of
+ * the P0, N0, parent-choice and suffix-locant drafts, BEYOND), each category
+ * read independently in the tests: the student's suffix is not a nitrile's
+ * while the engine's principal group is a –C≡N (a junior group's suffix or
+ * none: the –C≡N written `ciano`, `cianometano` → `etanonitrilo`,
+ * `1-cianopropano`; `4-cianobutan-2-ona` → `4-oxopentanonitrilo`:
+ * `seniority`), or the student's suffix is a nitrile's beside a senior group
+ * of the engine's (`3-carboxipropanonitrilo` → `ácido 3-cianopropanoico`:
+ * `seniority`); the student's nitrile suffix cites another number of –C≡N
+ * groups (`4-cianobutanonitrilo` → `pentanodinitrilo`: `count`); the
+ * –C≡N's carbon on the other side of the parent (`propano-1-carbonitrilo` →
+ * `butanonitrilo`, `ciclohexilmetanonitrilo` → `ciclohexanocarbonitrilo`,
+ * `fenilmetanonitrilo` → `benzonitrilo`: `carbon`); the parent chosen by the
+ * –C≡N groups (P0 and `RINGCHAIN`: chainDropped(), fewerPrincipalGroups(),
+ * principalParent()) or numbered for them (N0: `ciclohexano-1,5-dicarbonitrilo`,
+ * `benceno-1,5-dicarbonitrilo`: `numbering`; CHAIN_LOCANTS at N0 too); and the
+ * suffix's needless or missing locants (`ciclohexano-1-carbonitrilo`,
+ * `benceno-1-carbonitrilo`: `suffix`; needlessLocants(), missingLocants()).
+ * Their present messages would speak of OH or C=O groups, or of a junior
+ * group below the –C≡N that is not there. With the suffix's locant left out
+ * (`5,2-dimetilbencenocarbonitrilo`), a placement that numbers the –C≡N
+ * otherwise is one of the readings diagnose() tries, so its null is the
+ * whole diagnosis's (an acid's names the other mistake, LOCANT_ORDER).
+ *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
  * (the class-name step's in CLASS_NAME_STEP_TEXTS), and DIAGNOSES gives
@@ -999,7 +1048,7 @@ import {
   tileById, tileId, MAX_MULT, isAtomGroup, atomGroupOrder, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
   FORMYL_ID, ACETYL_ID, OXO_ID, OXO_ELEMENT, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, BENZOYL_ID, RING_CARBONYL_ID,
   templateAdmits, isChainTemplate, ACID_KIND, CARBOXY_ID, ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, ESTER_KIND,
-  isEsterTemplate, OATO_ID, CARBOXYLATE_ID, BENZOATE_ID,
+  isEsterTemplate, OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, NITRILE_KIND, CYANO_ID,
 } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
@@ -1103,6 +1152,19 @@ const CARBONYL_GROUPS = Object.freeze([ALDEHYDE, KETONE, ACID, ESTER]);
 /** The `carboxi` tile's value (a retained word, R-5d1). */
 const CARBOXY = tileById(CARBOXY_ID).value;
 
+/**
+ * The principal group of a nitrile (tiles.js NITRILE_KIND, a lexicon GROUP_SUFFIXES key; R-6b1, file header «Nitriles»): its
+ * own mistakes are deliberate nulls until phase I-52b3 (nitrileChecks() and the guards of the P0, N0, parent-choice and
+ * suffix-locant drafts).
+ */
+const NITRILE = NITRILE_KIND;
+
+/** The `ciano` tile's value (a retained word, R-6b1). */
+const CYANO = tileById(CYANO_ID).value;
+
+/** How the branch shapes write the –C≡N of `ciano` (R-6b1; specShape(), structureShape()). */
+const CYANO_SHAPE = 'X:CN';
+
 /** How the branch shapes write the –COOH of `carboxi` (R-5d1; specShape(), structureShape()). */
 const CARBOXY_SHAPE = 'X:COOH';
 
@@ -1118,9 +1180,10 @@ const CARBON = 'C';
  * the engine's that no C=O check names; «Acids»: a student's acid suffix
  * while the engine's principal group is no –COOH; «Esters»: an O-bound side
  * mixing the engine's prefix styles, an ester prefix of the student's the
- * engine names otherwise; all never seen in the sweeps): a draft that stops
- * the diagnosis — firstRule() answers null for the reading, never a later
- * rule.
+ * engine names otherwise; all never seen in the sweeps; «Nitriles»: every
+ * nitrile's own mistake until phase I-52b3, nitrileChecks() and the P0, N0,
+ * parent-choice and suffix-locant guards): a draft that stops the diagnosis —
+ * firstRule() answers null for the reading, never a later rule.
  */
 const BEYOND = Object.freeze({ code: null });
 
@@ -2350,13 +2413,16 @@ function isHalogen(sub) {
  * Tells whether a SubstituentSpec is a group bonded through a heteroatom,
  * which is no carbon of the chain it hangs from and never lengthens it: a
  * one-atom group (isHalogen()) or an alkoxy prefix (R-5b: `metoxi`, the
- * ether oxygen between the chain and its branch).
+ * ether oxygen between the chain and its branch); and `ciano` (R-6b1, file
+ * header «Nitriles»), whose carbon the engine never counts in a chain
+ * (IUPAC 2013 P-66.5: `ácido 3-cianopropanoico`), so on an end it never
+ * lengthens it either.
  *
  * @param {object} sub - A SubstituentSpec (interpret.js).
- * @returns {boolean} True for a halogen, `hidroxi` or an alkoxy prefix.
+ * @returns {boolean} True for a halogen, `hidroxi`, an alkoxy prefix or `ciano`.
  */
 function isHeteroGroup(sub) {
-  return isHalogen(sub) || Boolean(sub.alkoxy);
+  return isHalogen(sub) || Boolean(sub.alkoxy) || sub.retained === CYANO;
 }
 
 /**
@@ -2365,7 +2431,8 @@ function isHeteroGroup(sub) {
  * then speak of «sustituyentes», not «ramas»; so do they beside an acyl
  * prefix (R-5c2: `acetil`, `propanoil`, `benzoil`…; `formil`, R-5c1), whose
  * C=O is an `oxo` substituent of any chain through its carbon
- * (`4-acetilhexanal` → `4-etil-5-oxohexanal`: two substituents).
+ * (`4-acetilhexanal` → `4-etil-5-oxohexanal`: two substituents), and beside
+ * `ciano` (R-6b1), a group whose carbon is never a chain's (isHeteroGroup()).
  *
  * @param {object[]} prefixes - PrefixSpecs (interpret.js).
  * @returns {boolean} True when one is among them or inside a compound branch.
@@ -2826,14 +2893,19 @@ function branchAtEnd(ctx) {
  * 3-(carboximetil)pentanoico`, P0; N0 never drops an acid's chain: its
  * –COOH groups are at its ends, locants 1 and the last), and an ester's
  * (R-6a3a) with the –COO– groups' (`2-[(metoxicarbonil)metil]propanoato de
- * metilo`, P0; nor N0 an ester's chain, for the same reason).
+ * metilo`, P0; nor N0 an ester's chain, for the same reason). A nitrile's P0
+ * and N0 (R-6b1, file header «Nitriles») are deliberate nulls until phase
+ * I-52b3 (BEYOND).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {object} step - The trace step that dropped the chain.
  * @param {(candidate: object) => boolean} sameChain - Tells the student's chain's candidates.
- * @returns {object|null} The draft, or null for a rule this phase does not know.
+ * @returns {object|null} The draft, BEYOND for a nitrile's P0 or N0, or null for a rule this phase does not know.
  */
 function chainDropped(ctx, step, sameChain) {
+  if (nitrilePrincipal(ctx) && ['P0', 'N0'].includes(step.rule)) {
+    return BEYOND; // The –C≡N groups choose or number the chain (R-6b1, file header «Nitriles»): phase I-52b3.
+  }
   const group = carbonylGroup(ctx);
   const code = step.rule === 'P0' && group ? 'MORE_CARBONYL_GROUPS' : DROPPED_AT[step.rule];
   if (!code) {
@@ -2882,11 +2954,14 @@ function chainDropped(ctx, step, sameChain) {
  * them. The data are chainDropped()'s for a P step. An aldehyde's or a
  * ketone's C=O groups (R-5c3b1), an acid's –COOH groups (R-5d3) and an
  * ester's –COO– groups (R-6a3a) choose the chain the same way:
- * MORE_CARBONYL_GROUPS, with the group's words.
+ * MORE_CARBONYL_GROUPS, with the group's words. A nitrile's –C≡N groups
+ * (R-6b1, file header «Nitriles») are a deliberate null until phase I-52b3
+ * (BEYOND).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {object} step - The trace's first chain step.
- * @returns {object|null} The draft, or null when the step is not P0 or a chain it keeps contains the student's.
+ * @returns {object|null} The draft (BEYOND for a nitrile), or null when the step is not P0 or a chain it keeps contains the
+ *   student's.
  */
 function fewerPrincipalGroups(ctx, step) {
   if (step.rule !== 'P0') {
@@ -2896,6 +2971,9 @@ function fewerPrincipalGroups(ctx, step) {
   const atoms = reading.studentParent.atoms;
   if (step.survivors.some((c) => atoms.every((id) => c.atoms.includes(id)))) {
     return null; // Lengthened through its end, the student's chain carries the most OH groups: rule 1.
+  }
+  if (nitrilePrincipal(ctx)) {
+    return BEYOND; // The –C≡N groups choose the chain (R-6b1, file header «Nitriles»): phase I-52b3.
   }
   const winner = step.survivors[0];
   const app = valueOf(step, (c) => c.key === winner.key);
@@ -3118,6 +3196,20 @@ function acidPrincipal(ctx) {
 }
 
 /**
+ * Tells whether the engine's principal group is a nitrile's –C≡N (R-6b1,
+ * file header «Nitriles»): the P0, N0, parent-choice and suffix-locant
+ * messages, which speak of OH or C=O groups, are then deliberate nulls
+ * (BEYOND) until phase I-52b3.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {boolean} True for a nitrile.
+ */
+function nitrilePrincipal(ctx) {
+  const { suffix } = ctx.naming.structure;
+  return Boolean(suffix) && suffix.kind === NITRILE;
+}
+
+/**
  * The draft of a numbering mistake (rule 4: NUMBERING on a chain,
  * RING_NUMBERING on a ring): the trace step that dropped the student's
  * numbering while its chain or ring stayed, the first difference between
@@ -3127,15 +3219,20 @@ function acidPrincipal(ctx) {
  * (`pentan-4-ona`, `ciclohexan-3-ona`), and likewise for an acid (R-5d3:
  * `ácido ciclohexano-1,5-dicarboxílico`, `ácido benceno-1,5-dicarboxílico`)
  * and an ester (R-6a3a: `ciclohexano-1,5-dicarboxilato de dimetilo`,
- * `ciclohexano-2-carboxilato de metilo`).
+ * `ciclohexano-2-carboxilato de metilo`); a nitrile's N0 (R-6b1:
+ * `ciclohexano-1,5-dicarbonitrilo`) is a deliberate null until phase I-52b3
+ * (BEYOND, file header «Nitriles»).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {string} code - 'NUMBERING' or 'RING_NUMBERING'.
  * @param {object} step - The trace step that dropped the student's numbering.
  * @param {(candidate: object) => boolean} isStudent - Tells the student's directed candidate.
- * @returns {object} The draft.
+ * @returns {object} The draft, or BEYOND for a nitrile's N0.
  */
 function directionDraft(ctx, code, step, isStudent) {
+  if (step.rule === 'N0' && nitrilePrincipal(ctx)) {
+    return BEYOND; // The –C≡N groups number the chain or ring (R-6b1, file header «Nitriles»): phase I-52b3.
+  }
   const { naming } = ctx;
   const winner = step.survivors[0];
   const terms = firstDifference(valueOf(step, (c) => c.key === winner.key), valueOf(step, isStudent));
@@ -3264,8 +3361,8 @@ function hydroxyPrefix(ctx) {
  * engine's parent outside the student's; the tiles, the prefix that holds it.
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} The draft (with the step of its case), or null when the parents are of one kind or the molecule
- *   has no principal group.
+ * @returns {object|null} The draft (with the step of its case; BEYOND for a nitrile, R-6b1, file header «Nitriles»), or null
+ *   when the parents are of one kind or the molecule has no principal group.
  */
 function principalParent(ctx) {
   const { naming, reading, spec } = ctx;
@@ -3273,6 +3370,9 @@ function principalParent(ctx) {
   const ringParent = structure.parentKind === 'ring';
   if (!structure.suffix || isRing(spec.parent.kind) === ringParent) {
     return null;
+  }
+  if (nitrilePrincipal(ctx)) {
+    return BEYOND; // The –C≡N groups choose the ring or the chain (R-6b1, file header «Nitriles»): phase I-52b3.
   }
   const choice = naming.trace.find((s) => s.rule === 'RINGCHAIN');
   const ring = choice ? choice.values[0] : structure.suffix.locants.length;
@@ -4832,6 +4932,38 @@ function oBoundChecks(ctx) {
 } // End of function oBoundChecks()
 
 /**
+ * The nitrile's own checks (R-6b1, file header «Nitriles»), every one a
+ * deliberate null until phase I-52b3 words them (BEYOND), first of all the
+ * checks: when the engine's principal group is a –C≡N, the student's suffix
+ * is not a nitrile's (a junior group's, or none: the –C≡N written `ciano`,
+ * `cianometano`), cites another number of –C≡N groups (a principal one
+ * written `ciano`, `4-cianobutanonitrilo`, or the groups of another parent)
+ * or puts their carbon on the other side of the parent (`carbonitrilo` after
+ * a chain, `propano-1-carbonitrilo`; `nitrilo` on a chain beside the ring
+ * that carries the –C≡N, `ciclohexilmetanonitrilo`); and a student's nitrile
+ * suffix beside a principal group senior to it (`3-carboxipropanonitrilo` →
+ * `ácido 3-cianopropanoico`: the acid's CARBONYL_SENIORITY would call the
+ * –C≡N's carbon one of the chain's, which the engine's `ciano` never makes
+ * it).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} BEYOND, or null when no nitrile check applies (the student's –C≡N groups are cited as the engine
+ *   cites them, or neither name is a nitrile's).
+ */
+function nitrileChecks(ctx) {
+  const engine = ctx.naming.structure.suffix;
+  const mine = ctx.spec.suffix;
+  const student = Boolean(mine) && mine.kind === NITRILE;
+  if (!nitrilePrincipal(ctx)) {
+    return student ? BEYOND : null;
+  }
+  if (!student || mine.slots.length !== engine.locants.length || Boolean(mine.outside) !== Boolean(engine.outside)) {
+    return BEYOND;
+  }
+  return null;
+} // End of function nitrileChecks()
+
+/**
  * The acid's own checks (R-5d3, file header «Acids»), when the engine's
  * principal group is a –COOH, in order: ACID_GROUP (a –COOH written as two
  * groups on one carbon), CARBONYL_SENIORITY (a junior group as the suffix),
@@ -5876,10 +6008,12 @@ function parentOmissions(structure) {
  * acid's (R-5d3) of its –COOH groups (`ácido ciclohexano-1-carboxílico`,
  * `ácido benceno-1-carboxílico` → «…el grupo –COOH»); an ester's (R-6a3a) of
  * its –COO– groups (`ciclohexano-1-carboxilato de metilo`,
- * `benceno-1-carboxilato de metilo` → «…el grupo –COO–»).
+ * `benceno-1-carboxilato de metilo` → «…el grupo –COO–»); a nitrile's
+ * (R-6b1) is a deliberate null until phase I-52b3 (BEYOND, file header
+ * «Nitriles»: `ciclohexano-1-carbonitrilo`).
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} The draft, or null.
+ * @returns {object|null} The draft, BEYOND, or null.
  */
 function needlessLocants(ctx) {
   const { tree, spec, naming } = ctx;
@@ -5904,6 +6038,9 @@ function needlessLocants(ctx) {
   const prefixSlots = supplied(spec.prefixes.flatMap((prefix) => prefix.slots));
   // The suffix's locants (R-5a3b: `etan-1-ol`, `ciclohexan-1-ol`) are omitted together with the prefixes'.
   const suffixSlots = spec.suffix ? supplied(spec.suffix.slots) : [];
+  if (suffixSlots.length > 0 && omitted.prefixes && structure.suffix && structure.suffix.kind === NITRILE) {
+    return BEYOND; // `ciclohexano-1-carbonitrilo` (R-6b1, file header «Nitriles»): phase I-52b3.
+  }
   if (prefixSlots.length + suffixSlots.length > 0 && omitted.prefixes) {
     const { what, on } = DIAGNOSIS_PHRASES;
     const single = structure.prefixes.reduce((sum, group) => sum + group.locants.length, 0) === 1;
@@ -6063,10 +6200,11 @@ function shortForm(tree, chain, owner = null) {
  * data's `group`: `ácido 2-clorociclohexanocarboxílico` read with another
  * mistake would say «…y cada grupo –COOH»; alone it is `missingLocants`,
  * never `otherName`, and no later rule meets it on an acid; R-6a3a: «…y cada
- * grupo –COO–» for an ester's).
+ * grupo –COO–» for an ester's); a nitrile's (R-6b1) is a deliberate null
+ * until phase I-52b3 (BEYOND, file header «Nitriles»).
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} The draft, or null.
+ * @returns {object|null} The draft, BEYOND, or null.
  */
 function missingLocants(ctx) {
   const { spec, naming } = ctx;
@@ -6087,6 +6225,9 @@ function missingLocants(ctx) {
   }
   const { suffix } = naming.structure;
   const ofSuffix = Boolean(suffix) && Boolean(spec.suffix) && spec.suffix.slots.includes(missing);
+  if (ofSuffix && suffix.kind === NITRILE) {
+    return BEYOND; // A –C≡N's missing locant (R-6b1, file header «Nitriles»): phase I-52b3.
+  }
   const group = ofSuffix ? DIAGNOSIS_PHRASES.groupWords[CARBONYL_GROUPS.includes(suffix.kind) ? suffix.kind : ALCOHOL].one : null;
   return {
     code: 'MISSING_LOCANTS',
@@ -6426,7 +6567,9 @@ const FORM_RULES = Object.freeze([branchNames, alphabeticalOrder, ungrouped, mul
   missingLocants, segmentOrder, oldStyle, letterLocants]);
 
 /**
- * The first rule that applies to one reading of the name: the ester's own
+ * The first rule that applies to one reading of the name: the nitrile's own
+ * checks (nitrileChecks(), file header «Nitriles», deliberate nulls until
+ * phase I-52b3), the ester's own
  * checks and its O-bound side's (esterChecks(), oBoundChecks(); file header
  * «Esters») or the acid's (acidChecks(), «Acids»), an alcohol's OH written
  * `hidroxi` on the parent (hydroxyPrefix(), file header «Alcohols»),
@@ -6441,24 +6584,30 @@ const FORM_RULES = Object.freeze([branchNames, alphabeticalOrder, ungrouped, mul
  * @returns {object|null} The draft `{code, rule?, traceRule?, data, focus, tiles, step?, style?}`, or null.
  */
 function firstRule(ctx) {
-  const principal = esterChecks(ctx) || oBoundChecks(ctx) || acidChecks(ctx) || hydroxyPrefix(ctx) || carbonylChecks(ctx)
-    || principalParent(ctx);
+  const principal = nitrileChecks(ctx) || esterChecks(ctx) || oBoundChecks(ctx) || acidChecks(ctx) || hydroxyPrefix(ctx)
+    || carbonylChecks(ctx) || principalParent(ctx);
   if (principal === BEYOND) {
     // A student's carbonyl suffix no C=O check names; a student's acid suffix beside another principal group; an O-bound
-    // side mixing prefix styles (all never seen; file header «Aldehydes and ketones», «Acids», «Esters»).
+    // side mixing prefix styles (all never seen; file header «Aldehydes and ketones», «Acids», «Esters»); a nitrile's own
+    // mistake (R-6b1, «Nitriles»: phase I-52b3).
     return null;
   }
   if (principal) {
     return acrossOxygen(ctx, principal); // The ring or chain on the other side of an ether oxygen (R-5b2).
   }
   const parent = substitutedChainTemplate(ctx) || (ctx.naming.structure.parentKind === 'ring' ? ringRules(ctx) : chainRules(ctx));
+  if (parent === BEYOND) {
+    return null; // The –C≡N groups choose or number the parent (R-6b1, «Nitriles»: phase I-52b3).
+  }
   if (parent) {
     return acrossOxygen(ctx, parent); // `etoximetano` (R-5b2).
   }
   for (const rule of FORM_RULES) {
     const draft = rule(ctx);
     if (draft === BEYOND) {
-      return null; // An ester prefix of the student's the engine names otherwise (never seen; branchNames(), «Esters»).
+      // An ester prefix of the student's the engine names otherwise (never seen; branchNames(), «Esters»); a nitrile suffix's
+      // needless or missing locants (R-6b1, «Nitriles»: phase I-52b3).
+      return null;
     }
     if (draft) {
       return draft;
@@ -6495,7 +6644,7 @@ function chainShape(length, locant, order, nested) {
  * (`acetil` `C2:1:1(X:=O)`, `propanoil` `C3:1:1(X:=O)`), or for a ring's
  * (`(ciclohexanocarbonil)`, `benzoil`) the one-carbon chain of the C=O carbon
  * with its oxo and the ring; `carboxi` (R-5d1) the engine's carboxy prefix,
- * `X:COOH`.
+ * `X:COOH`; `ciano` (R-6b1) the engine's cyano prefix, `X:CN`.
  * Spelling mistakes the later rules name do not change it:
  * `(1-metiletan-1-il)` and `1-metiletil` have one shape.
  *
@@ -6522,6 +6671,9 @@ function specShape(sub) {
   }
   if (sub.kind === 'retained' && sub.retained === CARBOXY) {
     return CARBOXY_SHAPE; // `carboxi` (R-5d1): the engine's carboxy prefix, no chain of its own.
+  }
+  if (sub.kind === 'retained' && sub.retained === CYANO) {
+    return CYANO_SHAPE; // `ciano` (R-6b1): the engine's cyano prefix, no chain of its own.
   }
   if (sub.kind === 'retained') {
     return `${ether}R:${sub.retained}`;
@@ -6560,6 +6712,9 @@ function structureShape(structure) {
   }
   if (structure.carboxy) {
     return CARBOXY_SHAPE; // `carboxi` (R-5d1), as specShape() writes it.
+  }
+  if (structure.cyano) {
+    return CYANO_SHAPE; // `ciano` (R-6b1), as specShape() writes it.
   }
   // An alkoxy group (R-5b, substituent.js alkoxySubstituent()): its alkyl group's shape after `O:`, as specShape() writes it.
   const ether = structure.alkoxy ? `${ALKOXY_ELEMENT}:` : '';
@@ -6628,16 +6783,19 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
  * molecule without a principal group, an engine's chain parent in a molecule
  * with a ring (never: such a ring is always the parent, design.md §13.5).
  * The aldehydes and ketones (R-5c3b1) run the rules, their own checks first
- * (carbonylChecks()); so do the acids (R-5d1, R-5d3: acidChecks()) and the
- * esters (R-6a1, R-6a3a: esterChecks()).
+ * (carbonylChecks()); so do the acids (R-5d1, R-5d3: acidChecks()), the
+ * esters (R-6a1, R-6a3a: esterChecks()) and the nitriles (R-6b1:
+ * nitrileChecks(), whose own mistakes are deliberate nulls until phase
+ * I-52b3).
  *
  * @param {{spec: object}} name - The student's NameSpec.
  * @param {object} structure - The engine's name structure.
  * @returns {boolean} True when the diagnosis is null.
  */
 function outsideRules(name, structure) {
-  if (structure.suffix && CARBONYL_GROUPS.includes(structure.suffix.kind)) {
-    // R-5c3b1: file header «Aldehydes and ketones»; R-5d1, R-5d3: «Acids»; R-6a1, R-6a3a: «Esters» (their checks first).
+  if (structure.suffix && (CARBONYL_GROUPS.includes(structure.suffix.kind) || structure.suffix.kind === NITRILE)) {
+    // R-5c3b1: file header «Aldehydes and ketones»; R-5d1, R-5d3: «Acids»; R-6a1, R-6a3a: «Esters»; R-6b1: «Nitriles» (their
+    // checks first).
     return false;
   }
   if (structure.suffix) {

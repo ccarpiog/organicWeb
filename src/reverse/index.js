@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -25,7 +25,23 @@
  * ending in `ilo` after the automatic ` de `; R-6a2a: the retained
  * `formiato`, `acetato` and `fenilacetato`; R-6a2b: the ester prefixes,
  * `acetiloxi`, `[(2-metilpropanoil)oxi]`, `metoxicarbonil`,
- * `[(propan-2-iloxi)carbonil]`). Pure, no DOM.
+ * `[(propan-2-iloxi)carbonil]`) and their nitriles (R-6b1: the suffixes
+ * `nitrilo` and `carbonitrilo`, `benzonitrilo`, the prefix `ciano`). Pure, no
+ * DOM.
+ *
+ * The nitriles (R-6b1) need nothing of their own here either: the parser
+ * reads their tiles, the assembler writes them as render.js does, the
+ * builder puts the –C≡N's nitrogen on the parent's end carbon or on a carbon
+ * outside it, and the engine names the molecule (`butanonitrilo`,
+ * `ciclohexano-1,4-dicarbonitrilo`, `4-metilbenzonitrilo`, `ácido
+ * 3-cianopropanoico` → `correct`; `bencenocarbonitrilo`,
+ * `p-metilbenzonitrilo` → `alternative`; `metilpropanonitrilo` →
+ * `missingLocants`; `metilbutanonitrilo` → `ambiguous`;
+ * `4-metilbutanonitrilo` → `otherName`; `metanodinitrilo` → `invalid`
+ * CARBONYL_POSITION; `propano-1,2,3-tricarbonitrilo` → `outOfScope`, the
+ * engine's `manyNitriles`; `ácido cianometanoico` → `outOfScope`, its
+ * `carbonocyanidic`). A nitrile's own mistakes get a null diagnosis until
+ * phase I-52b3 (diagnose.js «Nitriles»).
  *
  * The ester prefixes (R-6a2b) need nothing of their own here either: the
  * parser reads `oxi` after an acyl branch and `carbonil` after `oxi`, the

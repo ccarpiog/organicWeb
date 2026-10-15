@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -139,6 +139,15 @@
  *    `{[2-(acetiloxi)etanoil]oxi}`): the inner opening mark right after the
  *    outer one, the inner closing mark right before `oxi` or `carbonil`, both
  *    automatic pieces, so text order stays tile order.
+ *
+ * The nitriles (R-6b1) need no rule of their own: the suffixes `nitrilo` and
+ * `carbonitrilo` start with a consonant, so rules 3 and 4 keep the parent's
+ * final `o` before them and before their multiplier (`butanonitrilo`,
+ * `prop-2-enonitrilo`, `butanodinitrilo`, `ciclohexanocarbonitrilo`,
+ * `benceno-1,4-dicarbonitrilo`; render.js suffixWords(), P-16.7.1);
+ * `benzonitrilo` is one whole word like `benzoico`, and `ciano` a retained
+ * word like `carboxi`, never enclosed by itself (`diciano`, `(cianometil)` a
+ * compound branch, `cianometilo` an ester's O-bound group).
  *
  * A ring (R-4a) is a chain with its `ciclo` tile before the root, and takes
  * the same rules: `ciclohexa-1,3-dieno` (rule 2), `ciclooct-1-en-3-ino` and
