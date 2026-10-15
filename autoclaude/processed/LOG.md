@@ -26,3 +26,4 @@ up. The item itself is in this directory, unchanged.
 - 2026-09-27 18:48 · 215-rings-functional-groups-confirmed.md · queued · phases I-21…I-41 — v2: cyclic hydrocarbons + functional groups (21 phases, user-confirmed scope)
 - 2026-10-13 19:01 · 220-polysubstituted-benzenes.md · queued · phases I-42…I-46 — v3: polysubstituted benzenes (8 phases, user-confirmed scope)
 - 2026-10-14 17:15 · 230-name-to-structure.md · queued · phases I-47a…I-53 — v4: from the name to the drawing (16 phases R-1a…R-7, user-confirmed scope)
+- 2026-10-15 10:04 · 240-omp-two-different-groups.md · queued · phase I-54 — o/m/p letters for two different prefixes on benceno, both directions (after I-53)

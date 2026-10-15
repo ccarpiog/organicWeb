@@ -106,6 +106,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-52c | v4 R-6c Amines | same, "R-6c" | queued | — | — |
 | I-52d | v4 R-6d Amides | same, "R-6d" | queued | — | — |
 | I-53 | v4 R-7 Wrap-up | same, "R-7" | queued | — | — |
+| I-54 | o/m/p letters for two different prefixes on plain `benceno`, drawing → name and name → drawing (user decision 2026-10-15, reverses design §14.4) | `autoclaude/processed/240-omp-two-different-groups.md` | queued — after I-53 (user: «after v4») | — | — |
 
 v1 (I-1…I-12), user feedback (I-13…I-20), v2 (I-21…I-41c, plan in `docs/design.md` §13) and v3
 (I-42…I-46, polysubstituted benzenes, user-confirmed 2026-10-13, design §14) are all done; phases
@@ -120,7 +121,11 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 - Pickups 1–9 (2026-09-27): `010-*` … `200-*` → I-1…I-20; `215-*` (v2) → I-21…I-41. Pickup 10
   (2026-10-13): `220-*` (v3) → I-42…I-46. Pickup 11 (2026-10-14): `230-name-to-structure.md`
   (user-confirmed v4: build a name from tiles, the app draws it and judges it; design §15) →
-  I-47a…I-53, one per phase R-1a…R-7 of design §15.8.
+  I-47a…I-53, one per phase R-1a…R-7 of design §15.8. Pickup 12 (2026-10-15):
+  `240-omp-two-different-groups.md` (user decision: o/m/p for two different prefixes on plain `benceno`,
+  both directions) → I-54, queued after I-53 as the item asks. It also asks to record the decision change
+  in design.md §14.4/§14.1/§15 — design.md is the user's uncommitted file (see *Open risks*), so I-54
+  must either wait for the user's commit or record the change in its archive and flag it.
 
 ## Next action
 
