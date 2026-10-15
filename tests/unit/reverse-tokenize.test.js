@@ -17,7 +17,7 @@ import { parse } from '../../src/reverse/parse.js';
 import { assemble } from '../../src/reverse/assemble.js';
 import { tokenize, TOKENIZE_BUDGET, TOKENIZE_MAX_LENGTH } from '../../src/reverse/tokenize.js';
 import {
-  stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES,
+  stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, HALOGEN_PREFIXES,
 } from '../../src/naming/lexicon.es.js';
 import {
   seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName, isBenzeneName, isTemplateName,
@@ -44,8 +44,10 @@ const EXPECTED_RING_NAMES = 59;
 /**
  * Fixture rows of benzene hydrocarbons (phase R-4b scope: the hydrocarbon
  * rows of the sections "Benzene and monosubstituted benzenes (I-28)", 13,
- * and "Polysubstituted benzenes with prefixes only (I-42a)", 12; the 10
- * I-42a rows with halogens or alkoxy groups are R-5a / R-5b).
+ * and "Polysubstituted benzenes with prefixes only (I-42a)", 12; of the 10
+ * I-42a rows with halogens or alkoxy groups, the 8 with halogens only are
+ * tokenized by reverse-halogens.test.js since I-51a1, the 2 with alkoxy
+ * groups are R-5b).
  */
 const EXPECTED_BENZENE_ROWS = 25;
 
@@ -242,7 +244,9 @@ test('tokenize prefers whole words and automatic marks for simple branches', () 
 }); // End of test 'tokenize prefers whole words and automatic marks for simple branches'
 
 test('tokenize returns null outside the grammar, for texts that only read with errors, and past its budget', () => {
-  for (const text of ['', 'ácido etanoico', 'clorometano', 'propan-2-ol', 'p-cresol', 'hex ano', 'HEXANO', 'ciclo', 'cicloetano']) {
+  // `clorometano` reads since R-5a1; `cloro` alone and `(2-cloro)etano` only read with errors.
+  for (const text of ['', 'ácido etanoico', 'cloro', '(2-cloro)etano', 'propan-2-ol', 'p-cresol', 'hex ano', 'HEXANO', 'ciclo',
+    'cicloetano']) {
     assert.equal(tokenize(text), null, text);
   }
   for (const text of ['2,3-trimetilpentano', '1,3-hexenino', 'hexano-2-metil', '2-metil', '5-(2-metilpropil', 'propil']) {
@@ -301,9 +305,11 @@ function mulberry32(seed) {
  * @param {boolean} [rings] - Draw ring stems too (default false: the R-1a sequences, draw for draw).
  * @param {boolean} [benzene] - Draw `fenil` and `benceno` too (default false: the earlier sequences, draw for draw).
  * @param {boolean} [templates] - Draw the templates and the letters too (default false: the earlier sequences, draw for draw).
+ * @param {boolean} [halogens] - Draw halogen prefixes too, at name level and inside compound branches (R-5a1; default
+ *   false: the earlier sequences, draw for draw).
  * @returns {() => string[]} A function returning one sequence of tile words.
  */
-function grammarGenerator(random, rings = false, benzene = false, templates = false) {
+function grammarGenerator(random, rings = false, benzene = false, templates = false, halogens = false) {
   const int = (lo, hi) => lo + Math.floor(random() * (hi - lo + 1));
   const pick = (list) => list[int(0, list.length - 1)];
   const nums = (k) => Array.from({ length: k }, () => String(int(1, 30)));
@@ -357,9 +363,15 @@ function grammarGenerator(random, rings = false, benzene = false, templates = fa
     const k = int(1, 3);
     const branch = depth < 2 && random() < 0.3;
     const mult = k > 1 ? [pick([multiplier(k), compoundMultiplier(k)])] : [];
-    const substituent = branch
-      ? ['START', ...Array.from({ length: int(1, 2) }, () => prefix(depth + 1)).flat(), ...simple(), 'END']
-      : simple();
+    const halogen = halogens && random() < 0.35; // Never a compound branch's own chain (simple() below).
+    let substituent;
+    if (halogen) {
+      substituent = [pick(Object.values(HALOGEN_PREFIXES))];
+    } else {
+      substituent = branch
+        ? ['START', ...Array.from({ length: int(1, 2) }, () => prefix(depth + 1)).flat(), ...simple(), 'END']
+        : simple();
+    }
     return [...(random() < 0.85 ? nums(k) : []), ...mult, ...substituent];
   }; // End of function prefix()
   /**
@@ -487,3 +499,20 @@ test('property (R-4c): random grammatical sequences with the templates and the o
   assert.ok(counts.templates >= 150, `${counts.templates} sequences with a template`);
   assert.ok(counts.letters >= 80, `${counts.letters} sequences with a letter`);
 }); // End of test 'property (R-4c): random grammatical sequences with the templates and the o/m/p letters…'
+
+test('property (R-5a1): random grammatical sequences with halogen prefixes tokenize back to the same text', () => {
+  const next = grammarGenerator(mulberry32(20261019), true, true, true, true);
+  let halogenated = 0;
+  const halogens = Object.values(HALOGEN_PREFIXES);
+  for (let i = 0; i < 400; i += 1) {
+    const list = next();
+    const ids = seq(list.join(' '));
+    const original = readBack(ids);
+    assert.deepEqual(original.errors, [], list.join(' '));
+    halogenated += list.some((word) => halogens.includes(word)) ? 1 : 0;
+    const found = tokenize(original.text);
+    assert.ok(found, `${list.join(' ')} → ${original.text}: no tiles`);
+    assert.equal(readBack(found).text, original.text, list.join(' '));
+  } // End of the loop over the random sequences
+  assert.ok(halogenated >= 150, `${halogenated} sequences with a halogen`);
+}); // End of test 'property (R-5a1): random grammatical sequences with halogen prefixes tokenize back to the same text'

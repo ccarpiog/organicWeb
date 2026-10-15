@@ -24,7 +24,7 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   v4 (from the name to the drawing, built from tiles: «¿Cómo se dibuja?»,
   §15) is in progress: the engine is pure modules in `src/reverse/` — tiles,
   parser, assembler and tokenizer for open-chain and `ciclo` hydrocarbon
-  names, and
+  names and their halogen derivatives, and
   `readName()`, which interprets, builds and judges them (correct,
   alternative, otherName, outOfScope, invalid with structural errors) and
   searches the locants a name leaves out (`search.js`: missingLocants,
@@ -67,7 +67,14 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   chain, benzene written with `ciclo`, a substituted template, the ring
   numbered otherwise, an o/m/p letter the app does not offer, and the R-3
   form rules on a ring), shown by the same panel with the ring named in
-  the legend. Next is R-5a (phase I-51a): halogens and alcohols.
+  the legend. R-5a1 (phase I-51a1) is done: the «Grupos» row's halogen
+  tiles (`fluoro`, `cloro`, `bromo`, `yodo`) read as prefixes on chains,
+  rings, `benceno` and the templates and inside compound branches
+  (`(2-cloroetil)`), their left-out locants searched by the carbons' free
+  valence (`dodecafluorociclohexano` one placement), and the diagnosis
+  reads them as substituents (alphabetical order, numbering, grouping,
+  needless locants), with the Ayuda line. Next is R-5a2 (phase I-51a2):
+  alcohols and phenols.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

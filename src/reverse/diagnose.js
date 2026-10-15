@@ -197,6 +197,24 @@
  * `6-metil-4-(propan-2-il)nonano` the default style numbers the chain as
  * the student did, and its numbering step would contradict the diagnosis.
  *
+ * **Halogens** (design.md §15.8 R-5a; phase R-5a1). A halogen prefix
+ * (`cloro`) is one atom, never a carbon: it never lengthens a chain, so rule
+ * 1 blames only a carbon branch on an end (`1-cloro-1-metilpropano` →
+ * `metil`); it counts as a substituent wherever the engine's trace counts it
+ * (P4, N3, N4 — `2-cloroetano` is NUMBERING, `4-bromo-2-cloropentano` is
+ * NUMBERING at N4), and the form rules read it like any branch word:
+ * alphabetical order (`bromo < cloro < etil < fluoro < metil < yodo`,
+ * multipliers ignored), identical halogens not grouped (UNGROUPED, said of
+ * «sustituyentes»: `1-cloro-2-cloroetano`), locants not ascending, and the
+ * needless prefix locants of a one- or two-carbon parent or of a parent
+ * fully substituted by one halogen (`1-clorometano`, `1-cloroetano`,
+ * `1,1,1,2,2,2-hexacloroetano`; with halogens these are no longer always
+ * preceded by rule 1). The prefix style is recognised as before, a halogen
+ * having the same shape in every style (`X:Cl`). Halogen cases no rule
+ * covers give null, as for hydrocarbons: a compound branch whose own
+ * numbering is not the engine's (`5-(1-cloroetan-2-il)…`, no style offers
+ * it), as in «No rule covers» above.
+ *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS, and DIAGNOSES gives
  * example data for each code so the wording can be listed (R-7). Later
@@ -262,7 +280,7 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
   MORE_DOUBLE_BONDS: (d) => `Hay otra cadena igual de larga, con los mismos enlaces múltiples, pero con más enlaces dobles `
     + `(${d.app}; la tuya tiene ${d.student}). En ese empate gana la que tiene más enlaces dobles.`,
   MORE_SUBSTITUENTS: (d) => `Hay otra cadena igual de larga con más sustituyentes (${d.app}; la tuya tiene ${d.student}). `
-    + 'Entre cadenas igual de largas, gana la que tiene más ramas.',
+    + `Entre cadenas igual de largas, gana la que tiene más ${d.halogen ? 'sustituyentes' : 'ramas'}.`,
   CHAIN_LOCANTS: (d) => `Hay otra cadena igual de larga que, bien numerada, da números más bajos a `
     + `${DIAGNOSIS_PHRASES.lowerLocantsOf[d.rule]}${difference(d)}: esa es la cadena principal.`,
   CHAIN_ALPHABETICAL: () => 'Hay otra cadena igual de larga, con los mismos números, cuyo nombre va antes por orden '
@@ -274,8 +292,9 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
     + `${d.unwritten ? ` En «${d.name}» ese número ni siquiera se escribe.` : ''}`,
   ALPHABETICAL_ORDER: (d) => `Los sustituyentes se escriben por orden alfabético: «${d.first}» va antes que «${d.second}» `
     + `(${d.why}).${d.hint ? ` ${d.hint}` : ''}`,
-  UNGROUPED: (d) => `Las ramas iguales se escriben una sola vez, con ${d.compound ? `«${WORDS.bis}», «${WORDS.tris}»…`
-    : `«${WORDS.di}», «${WORDS.tri}»…`} delante: «${d.right}», no «${d.student}».`,
+  UNGROUPED: (d) => `${d.halogen ? 'Los sustituyentes iguales' : 'Las ramas iguales'} se escriben una sola vez, con `
+    + `${d.compound ? `«${WORDS.bis}», «${WORDS.tris}»…` : `«${WORDS.di}», «${WORDS.tri}»…`} delante: `
+    + `«${d.right}», no «${d.student}».`,
   MULTIPLIER_KIND: (d) => (d.compound
     ? `Delante de una rama que tiene sus propias ramas se usa «${WORDS.bis}», «${WORDS.tris}»…: «${d.right}», `
       + `no «${d.student}».`
@@ -375,7 +394,7 @@ export const DIAGNOSES = Object.freeze({
   }),
   MORE_MULTIPLE_BONDS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 0, app: 1 }) }),
   MORE_DOUBLE_BONDS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 0, app: 1 }) }),
-  MORE_SUBSTITUENTS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 1, app: 2 }) }),
+  MORE_SUBSTITUENTS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 1, app: 2, halogen: false }) }),
   CHAIN_LOCANTS: Object.freeze({ rule: 3, step: 'numbering', example: Object.freeze({ rule: 'N1', app: '1', student: '2' }) }),
   CHAIN_ALPHABETICAL: Object.freeze({ rule: 3, step: 'numbering', example: Object.freeze({}) }),
   NUMBERING: Object.freeze({
@@ -393,7 +412,9 @@ export const DIAGNOSES = Object.freeze({
   }),
   UNGROUPED: Object.freeze({
     rule: 6, step: 'substituents',
-    example: Object.freeze({ compound: false, right: `2,3-${WORDS.di}${WORDS.metil}`, student: `2-${WORDS.metil}-3-${WORDS.metil}` }),
+    example: Object.freeze({
+      compound: false, halogen: false, right: `2,3-${WORDS.di}${WORDS.metil}`, student: `2-${WORDS.metil}-3-${WORDS.metil}`,
+    }),
   }),
   MULTIPLIER_KIND: Object.freeze({
     rule: 7, step: 'substituents',
@@ -591,6 +612,26 @@ function orderReason(first, second) {
 }
 
 /**
+ * Tells whether a SubstituentSpec is a halogen (R-5a1: `cloro`…).
+ *
+ * @param {object} sub - A SubstituentSpec (interpret.js).
+ * @returns {boolean} True for a halogen.
+ */
+function isHalogen(sub) {
+  return sub.kind === 'halogen';
+}
+
+/**
+ * Tells whether some prefixes hold a halogen, at any depth (R-5a1).
+ *
+ * @param {object[]} prefixes - PrefixSpecs (interpret.js).
+ * @returns {boolean} True when a halogen is among them or inside a compound branch.
+ */
+function hasHalogen(prefixes) {
+  return prefixes.some((prefix) => isHalogen(prefix.substituent) || hasHalogen(prefix.substituent.prefixes));
+}
+
+/**
  * Tells whether a branch node takes bis/tris rather than di/tri when
  * multiplied: a compound branch with prefixes of its own (render.js
  * isCompoundPrefix() for hydrocarbon branches); a retained word or a
@@ -699,7 +740,7 @@ function replaceNode(node, target, replacement) {
  * @property {object} molecule - The verdict's molecule (the ids of every reading and of the naming).
  * @property {Map<number, object[]>} adj - Its adjacency (graph.js adjacency()).
  * @property {PrefixList[]} lists - prefixLists() of the tree.
- * @property {{chain: object, top: object|null}[]} chains - chainNodes() of the tree.
+ * @property {{chain: object, top: object|null, owner: object|null}[]} chains - chainNodes() of the tree.
  * @property {{studentParent: {atoms: number[], bonds: number[]}, prefixAtoms: object[]}} reading - The student's reading.
  * @property {Map<object, BranchOccurrence>} occurrences - The first occurrence on the molecule of every prefix node, at
  *   every depth (branchOccurrences() `first`, for this reading).
@@ -834,32 +875,35 @@ function quoted(tree, list, item, items = null) {
 /**
  * The chain nodes of a name: the parent's, then every branch's, in tile
  * order, each with the parent-level prefix it belongs to (null for the
- * parent). A `ciclo` ring is a chain node too; the `benceno` and template
- * parents (whole words with no endings or segments, parse.js) are not.
+ * parent) and the compound branch whose own chain it is (null for the
+ * parent and for a simple branch). A `ciclo` ring is a chain node too; the
+ * `benceno` and template parents (whole words with no endings or segments,
+ * parse.js) are not.
  *
  * @param {object} tree - The parse() tree.
- * @returns {{chain: object, top: object|null}[]} The chains.
+ * @returns {{chain: object, top: object|null, owner: object|null}[]} The chains.
  */
 function chainNodes(tree) {
-  const out = tree.parent.chain.type === 'chain' ? [{ chain: tree.parent.chain, top: null }] : [];
+  const out = tree.parent.chain.type === 'chain' ? [{ chain: tree.parent.chain, top: null, owner: null }] : [];
   /**
    * Collects the chains of a substituent.
    *
    * @param {object} node - A substituent node.
    * @param {object} top - The parent-level prefix it belongs to.
+   * @param {object|null} owner - The compound branch whose own chain `node` is, or null.
    * @returns {void}
    */
-  const visit = (node, top) => {
+  const visit = (node, top, owner) => {
     if (node.type === 'chain') {
-      out.push({ chain: node, top });
+      out.push({ chain: node, top, owner });
     } else if (node.type === 'branch') {
-      node.items.forEach((item) => visit(item.substituent, top));
+      node.items.forEach((item) => visit(item.substituent, top, null));
       if (node.chain) {
-        visit(node.chain, top);
+        visit(node.chain, top, node);
       }
     }
   };
-  tree.items.forEach((item) => visit(item.substituent, item));
+  tree.items.forEach((item) => visit(item.substituent, item, null));
   return out;
 } // End of function chainNodes()
 
@@ -946,15 +990,18 @@ const DROPPED_AT = Object.freeze({
 
 /**
  * Rule 1: the branch on an end carbon of the student's chain (the first in
- * tile order), which the trace shows is not a leaf-to-leaf path.
+ * tile order), which the trace shows is not a leaf-to-leaf path. A halogen
+ * (R-5a1) on an end is no such branch: it is no carbon and never lengthens
+ * the chain.
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} The draft, or null when no branch sits on an end (never for a chain missing from P1).
+ * @returns {object|null} The draft, or null when no carbon branch sits on an end (never for a chain missing from P1).
  */
 function branchAtEnd(ctx) {
   const { reading, tree, naming, spec } = ctx;
   const n = reading.studentParent.atoms.length;
-  const end = reading.prefixAtoms.find((o) => o.locant === 1 || o.locant === n);
+  const end = reading.prefixAtoms
+    .find((o) => (o.locant === 1 || o.locant === n) && !isHalogen(spec.prefixes[o.prefix].substituent));
   if (!end) {
     return null;
   }
@@ -990,7 +1037,8 @@ function chainDropped(ctx, step, sameChain) {
   }
   let data;
   if (step.rule.startsWith('P')) {
-    data = { student: mine[0], app, length: naming.parent.atoms.length };
+    // P4 counts the halogens too (R-5a1): the message then speaks of «sustituyentes», not «ramas».
+    data = { student: mine[0], app, length: naming.parent.atoms.length, halogen: hasHalogen(spec.prefixes) };
   } else {
     const best = mine.reduce((a, b) => (Array.isArray(a) && Array.isArray(b) && compareLocantLists(b, a) < 0 ? b : a));
     data = { rule: step.rule, ...firstDifference(app, best) };
@@ -1409,6 +1457,7 @@ function ungrouped(ctx) {
       code: 'UNGROUPED',
       data: {
         compound,
+        halogen: group[0].substituent.type === 'halogen', // «Los sustituyentes iguales…» (R-5a1).
         right: list.outer ? quoted(grouped, list, item, items) : itemText(grouped, item),
         student: list.outer ? quoted(tree, list, item) : group.map((g) => itemText(tree, g)).join(located ? '-' : ''),
       },
@@ -1538,15 +1587,19 @@ function parentOmissions(structure) {
 /**
  * Rule 9, needless locants: locants the engine's name omits
  * (parentOmissions(): `propeno`, `ciclohexeno`, `metilciclohexano`,
- * `metilbenceno`), or locants inside a branch that the engine's short forms
- * never write (any on a one- or two-carbon branch, `etenil`; the free
- * valence 1 of a saturated branch, `propil` — render.js
- * substituentTokens()). When the engine's name still writes numbers inside
- * a branch (`(butan-2-il)benceno`, `hexa(propan-2-il)benceno`), the message
- * says that only the numbers placing the prefixes on the parent are left
- * out (`kept`); the parent's own multiple-bond locants are left out only on
- * a parent without prefixes (`propeno`, `ciclohexeno`; with a branch on
- * `eteno` rule 1 comes first), whose name has no numbers at all.
+ * `metilbenceno`, `clorometano`, `cloroetano`, `hexacloroetano`), or
+ * locants inside a branch that the engine's short forms never write (any on
+ * a one- or two-carbon branch, `etenil`; the free valence 1 of a saturated
+ * branch, `propil` — render.js substituentTokens(); and, since halogens
+ * (R-5a1) can sit on one, the locants of the prefixes of a one-carbon
+ * compound branch, `(clorometil)`, `(triclorometil)`, which has a single
+ * position, render.js groupTokens() `omitLocants`). When the engine's name
+ * still writes numbers inside a branch (`(butan-2-il)benceno`,
+ * `hexa(propan-2-il)benceno`), the message says that only the numbers
+ * placing the prefixes on the parent are left out (`kept`); the parent's
+ * own multiple-bond locants are left out only on a parent without prefixes
+ * (`propeno`, `ciclohexeno`; with a branch on `eteno` rule 1 comes first),
+ * whose name has no numbers at all.
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.
@@ -1590,16 +1643,26 @@ function needlessLocants(ctx) {
       tiles: slotRange(prefixSlots),
     };
   }
-  for (const { chain, top } of ctx.chains) {
-    const bare = top ? shortForm(tree, chain) : null;
-    if (bare) {
-      return {
-        code: 'NEEDLESS_LOCANTS',
-        data: { branch: true, right: itemText(tree, replaceNode(top, chain, bare)), student: itemText(tree, top) },
-        focus: idsOf(null),
-        tiles: rangeOf([...chain.segments.flatMap((s) => s.locants), ...chain.fvLocants]),
-      };
+  for (const { chain, top, owner } of ctx.chains) {
+    if (!top) {
+      continue; // The parent's own locants: parentOmissions() above.
     }
+    const bare = shortForm(tree, chain, owner);
+    // The prefixes of a one-carbon compound branch have one position only: `(1-clorometil)` → `(clorometil)` (R-5a1).
+    const oneCarbon = owner && chain.ring === null && tree.tiles[chain.root].value === 1;
+    const located = oneCarbon ? owner.items.flatMap((item) => item.locants) : [];
+    if (!bare && located.length === 0) {
+      continue;
+    }
+    const unlocated = owner && { ...owner, items: owner.items.map((item) => ({ ...item, locants: [] })), chain: bare || chain };
+    const fixed = located.length > 0 ? replaceNode(top, owner, unlocated) : replaceNode(top, chain, bare);
+    const own = bare ? [...chain.segments.flatMap((seg) => seg.locants), ...chain.fvLocants] : [];
+    return {
+      code: 'NEEDLESS_LOCANTS',
+      data: { branch: true, right: itemText(tree, fixed), student: itemText(tree, top) },
+      focus: idsOf(null),
+      tiles: rangeOf([...located, ...own]),
+    };
   } // End of the loop over the branch chains
   return null;
 } // End of function needlessLocants()
@@ -1609,15 +1672,23 @@ function needlessLocants(ctx) {
  * (rule 9; render.js substituentTokens()): no `ano`, no free-valence
  * locant, and on a one- or two-carbon branch no locant at all
  * (`(metan-1-il)` → `metil`, `(et-1-enil)` → `etenil`); on a longer
- * saturated branch, the free valence 1 (`(propan-1-il)` → `propil`).
+ * saturated branch, the free valence 1 (`(propan-1-il)` → `propil`). A
+ * compound branch's own chain whose free valence is not at its carbon 1
+ * keeps it (R-5a1: `(1-cloroetan-2-il)` is `(2-cloroetil)` numbered from
+ * the other end, not `(1-cloroetil)`, a numbering no rule names; likewise
+ * `(1-metiletan-2-il)` is `propil`, not `(1-metiletil)`): null.
  *
  * @param {object} tree - The parse() tree.
  * @param {object} chain - A branch's chain node (parse.js, with `fv`).
+ * @param {object|null} [owner] - The compound branch whose own chain it is (chainNodes()), or null.
  * @returns {object|null} The chain node in its short form, or null when it has no needless locants.
  */
-function shortForm(tree, chain) {
+function shortForm(tree, chain, owner = null) {
   const length = tree.tiles[chain.root].value;
   const positions = [...chain.segments.flatMap((s) => s.locants), ...chain.fvLocants];
+  if (owner && owner.items.length > 0 && chain.fvLocants.some((index) => tree.tiles[index].value !== 1)) {
+    return null; // Dropping the free-valence locant would move it to carbon 1, under the branch's own prefixes.
+  }
   const short = length <= 2 && positions.length > 0;
   const saturatedOne = length > 2 && chain.segments.length === 0 && chain.fvLocants.length === 1
     && tree.tiles[chain.fvLocants[0]].value === 1;
@@ -1795,14 +1866,17 @@ function chainShape(length, locant, order, nested) {
 
 /**
  * The shape of a branch as the student wrote it (a SubstituentSpec): a
- * retained word, or chainShape() of its chain. Spelling mistakes the later
- * rules name do not change it: `(1-metiletan-1-il)` and `1-metiletil` have
- * one shape.
+ * halogen (R-5a1; the same in every style), a retained word, or chainShape()
+ * of its chain. Spelling mistakes the later rules name do not change it:
+ * `(1-metiletan-1-il)` and `1-metiletil` have one shape.
  *
  * @param {object} sub - A SubstituentSpec (interpret.js).
  * @returns {string} The shape.
  */
 function specShape(sub) {
+  if (isHalogen(sub)) {
+    return `X:${sub.element}`;
+  }
   if (sub.kind === 'retained') {
     return `R:${sub.retained}`;
   }
@@ -1820,6 +1894,9 @@ function specShape(sub) {
 function structureShape(structure) {
   if (!structure) {
     return '';
+  }
+  if (structure.halogen) {
+    return `X:${structure.halogen}`; // A halogen prefix (R-5a1), as specShape() writes it.
   }
   if (structure.retained) {
     return `R:${structure.retained}`;

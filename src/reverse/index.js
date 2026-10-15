@@ -1,10 +1,18 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c): `readName(tiles) → verdict` for open-chain
- * and monocyclic hydrocarbon names (`ciclo` parents and ring branches; the
- * `benceno` parent with branch prefixes, `fenil` and substituted
- * `(4-metilfenil)` branches; the retained templates `tolueno`, `estireno`,
- * `xileno`, `mesitileno` and the orto/meta/para letters). Pure, no DOM.
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1): `readName(tiles) → verdict` for
+ * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
+ * branches; the `benceno` parent with branch prefixes, `fenil` and
+ * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
+ * `estireno`, `xileno`, `mesitileno` and the orto/meta/para letters) and
+ * their halogen derivatives (`fluoro`, `cloro`, `bromo`, `yodo` prefixes,
+ * also inside compound branches: `(2-cloroetil)`). Pure, no DOM.
+ *
+ * The halogens need nothing of their own here either: they are prefixes
+ * like any branch (build.js adds one atom each; search.js places left-out
+ * ones by the carbons' free valence), and the engine names their molecules
+ * (`clorometano` → `correct`, `dicloroetano` → `ambiguous`,
+ * `dodecafluorociclohexano` → `correct`, one placement).
  *
  * The templates and the letters need nothing of their own here: the engine
  * gives `tolueno`, `1,2-xileno`, `o-xileno`, `mesitileno`… and

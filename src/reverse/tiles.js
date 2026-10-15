@@ -32,18 +32,23 @@
  *   `estireno`, `xileno`, `mesitileno`; value the TEMPLATES key),
  *   'positional' (the old orto/meta/para letters `o`, `m`, `p`, R-4c: the two
  *   occupied positions of a benzene ring; value the locant of the second
- *   one, 2 | 3 | 4, the POSITIONAL_LETTERS keys);
+ *   one, 2 | 3 | 4, the POSITIONAL_LETTERS keys), 'halogen' (the halogen
+ *   prefixes `fluoro`, `cloro`, `bromo`, `yodo`, R-5a1: one atom bonded to
+ *   the carbon its locant says, never a chain of its own; value the element
+ *   symbol, the HALOGEN_PREFIXES keys);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
- *   the letters o, m, p from R-4c), 'traditional' («Nombres tradicionales»,
- *   R-4c: the templates; later phases add acetona, ácido acético…);
+ *   the letters o, m, p from R-4c), 'groups' («Grupos», R-5a1: the halogens;
+ *   the alcohol tiles follow in R-5a2), 'traditional' («Nombres
+ *   tradicionales», R-4c: the templates; later phases add acetona, ácido
+ *   acético…);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
  *   multipliers from hepta / heptakis, roots from undec).
  */
 
 import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
-  RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, POSITIONAL_LETTERS, groupName,
+  RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, groupName,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -81,6 +86,15 @@ export const PHENYL_ID = 'retained-phenyl';
 
 /** Ids of the orto/meta/para letters by the locant of the second occupied position (design.md §14.4; phase R-4c). */
 export const POSITIONAL_IDS = Object.freeze({ 2: 'positional-ortho', 3: 'positional-meta', 4: 'positional-para' });
+
+/**
+ * Ids of the halogen tiles by element symbol (design.md §15.8 R-5a; phase
+ * R-5a1), in the lexicon's HALOGEN_PREFIXES order: `fluoro`, `cloro`,
+ * `bromo`, `yodo`.
+ */
+export const HALOGEN_IDS = Object.freeze(Object.fromEntries(
+  Object.keys(HALOGEN_PREFIXES).map((element) => [element, `halogen-${element}`]),
+));
 
 /**
  * The defining group of a retained benzene template: its chain of carbons
@@ -155,8 +169,9 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
 /**
  * Builds the whole catalogue in dialog order: numbers, multipliers (simple,
  * then compound), roots, endings, branch words and controls, rings (`ciclo`,
- * `benceno`, `fenil`, the letters `o`, `m`, `p`), traditional names
- * (`tolueno`, `estireno`, `xileno`, `mesitileno`).
+ * `benceno`, `fenil`, the letters `o`, `m`, `p`), groups (the halogens
+ * `fluoro`, `cloro`, `bromo`, `yodo`), traditional names (`tolueno`,
+ * `estireno`, `xileno`, `mesitileno`).
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -193,6 +208,9 @@ function buildCatalogue() {
   tiles.push(makeTile(PHENYL_ID, 'retained', 'phenyl', 'rings', `${phenyl.italic}${phenyl.text}`, false, { italic: phenyl.italic }));
   for (const [locant, id] of Object.entries(POSITIONAL_IDS)) {
     tiles.push(makeTile(id, 'positional', Number(locant), 'rings', POSITIONAL_LETTERS[locant]));
+  }
+  for (const [element, id] of Object.entries(HALOGEN_IDS)) {
+    tiles.push(makeTile(id, 'halogen', element, 'groups', HALOGEN_PREFIXES[element]));
   }
   for (const [value, template] of Object.entries(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(template)));

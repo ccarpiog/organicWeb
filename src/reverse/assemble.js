@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -50,6 +50,13 @@
  * level (`metil(fenil)metano`, rule 5), and a compound branch with prefixes
  * of its own is enclosed like any other (`(4-metilfenil)`,
  * `[4-(propan-2-il)fenil]`; render.js isSubstitutedPhenyl()).
+ *
+ * The halogens (R-5a1: `fluoro`, `cloro`, `bromo`, `yodo`) are simple
+ * prefixes with no automatic text of their own, never enclosed (render.js
+ * needsEnclosure()), also when crowded (render.js encloses only alkoxy and
+ * ring prefixes there: `bromoclorofluoroyodometano`, `(clorofluorometil)`);
+ * the student's order, multipliers and locants stay as written
+ * (`2-bromo-1-cloropropano`, `hexacloroetano`, `(2-cloroetil)`).
  *
  * The retained templates (R-4c: `tolueno`, `estireno`, `xileno`,
  * `mesitileno`) are whole words like `benceno`, the positions of `xileno`'s
@@ -130,11 +137,11 @@ function citesLocant(chain) {
  * (rule 5, render.js needsEnclosure()), whatever stands beside it.
  *
  * @param {object[]} tiles - The tile sequence.
- * @param {object} node - A chain, retained or branch node.
+ * @param {object} node - A chain, retained, halogen or branch node.
  * @returns {boolean} True when enclosed.
  */
 export function isEnclosed(tiles, node) {
-  if (node.type === 'retained') {
+  if (node.type === 'retained' || node.type === 'halogen') {
     return false;
   }
   if (node.type === 'branch') {
@@ -227,7 +234,8 @@ function strayPieces(tiles, index, out) {
   const roles = { num: 'locant', positional: 'locant', mult: 'mult', cmult: 'mult', start: 'open', end: 'close' };
   const kinds = {
     num: 'locant', positional: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending',
-    freeValence: 'ending', retained: 'prefix', start: 'punct', end: 'punct', ring: 'stem', benzene: 'stem', template: 'stem',
+    freeValence: 'ending', retained: 'prefix', halogen: 'prefix', start: 'punct', end: 'punct', ring: 'stem', benzene: 'stem',
+    template: 'stem',
   };
   out.push(piece(tile.text, index, kinds[tile.kind], roles[tile.kind] || 'word', tile.italic ? { italic: true } : {}));
 }
@@ -314,16 +322,16 @@ function substituentPieces(tiles, node, enclosed, out) {
 } // End of function substituentPieces()
 
 /**
- * The pieces of a simple branch without enclosing marks: a retained word
- * or a chain.
+ * The pieces of a simple branch without enclosing marks: a retained word, a
+ * halogen (R-5a1) or a chain.
  *
  * @param {object[]} tiles - The tile sequence.
- * @param {object} node - A chain or retained node.
+ * @param {object} node - A chain, retained or halogen node.
  * @param {Piece[]} out - Receives the pieces.
  * @returns {void}
  */
 function ownChainPieces(tiles, node, out) {
-  if (node.type === 'retained') {
+  if (node.type === 'retained' || node.type === 'halogen') {
     const tile = tiles[node.tile];
     out.push(piece(tile.text, node.tile, 'prefix', 'word', tile.italic ? { italic: true } : {}));
   } else {

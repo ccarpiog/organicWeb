@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -43,6 +43,13 @@
  * (build.js draws them): `benceno` is a parent of kind 'benzene', `fenil` a
  * branch of kind 'phenyl', bonded by its carbon 1 by rule, whose own
  * prefixes (`(4-metilfenil)`) are numbered on it.
+ *
+ * A halogen (R-5a1: `fluoro`, `cloro`, `bromo`, `yodo`) is a branch of kind
+ * 'halogen': one atom of its `element`, bonded by a single bond to the
+ * carbon its prefix's slot gives, with no chain, free-valence slot or
+ * prefixes of its own; its carbon slots are those of any prefix (a prefix's
+ * role, `carbon` or `phenylCarbon`), so its left-out locants are searched
+ * like a branch's.
  *
  * A retained template (R-4c, tiles.js TEMPLATES: `tolueno`, `estireno`,
  * `xileno`, `mesitileno`) is a benzene parent too, kind 'benzene', whose
@@ -87,20 +94,22 @@ import { TEMPLATES } from './tiles.js';
 /**
  * A branch: a chain or a ring with its free valence (and, for a compound
  * branch, its own prefixes), a phenyl (`fenil`, R-4b; with prefixes of its
- * own in a compound branch) or a retained word (isopropil, isopropiliden,
- * tert-butil; build.js knows their atoms).
+ * own in a compound branch), a retained word (isopropil, isopropiliden,
+ * tert-butil; build.js knows their atoms) or a halogen atom (R-5a1).
  *
  * @typedef {object} SubstituentSpec
- * @property {'chain'|'ring'|'phenyl'|'retained'} kind - A numbered chain, a numbered ring (`ciclohexil`), a benzene ring
- *   bonded by its carbon 1 (`fenil`) or a retained word.
- * @property {number|null} length - Carbons of the chain or ring (6 for a phenyl; null for a retained word).
+ * @property {'chain'|'ring'|'phenyl'|'retained'|'halogen'} kind - A numbered chain, a numbered ring (`ciclohexil`), a
+ *   benzene ring bonded by its carbon 1 (`fenil`), a retained word or a halogen atom (`cloro`).
+ * @property {number|null} length - Carbons of the chain or ring (6 for a phenyl; null for a retained word or a halogen).
  * @property {{slot: Slot, order: 1|2}|null} freeValence - Where the branch attaches and with which bond order (`il` 1, `iliden` 2;
- *   a phenyl's carbon 1, order 1); null for a retained word.
+ *   a phenyl's carbon 1, order 1); null for a retained word or a halogen (bonded by a single bond).
  * @property {Slot[]} double - Double-bond slots of the branch's chain or ring.
  * @property {Slot[]} triple - Triple-bond slots of the branch's chain or ring.
  * @property {PrefixSpec[]} prefixes - Prefixes of a compound branch, numbered on its own chain.
  * @property {string|null} retained - Retained-name id (lexicon RETAINED_PREFIXES key; 'phenyl' for a phenyl), or null.
- * @property {{text: string, tiles: [number, number]}|null} word - The retained word as on its tile and its tile range (for messages), or null.
+ * @property {{text: string, tiles: [number, number]}|null} word - The retained word or the halogen as on its tile and its
+ *   tile range (for messages), or null.
+ * @property {string} [element] - A halogen's element symbol ('F', 'Cl', 'Br', 'I'; the tile's value), on a halogen only.
  * @property {boolean} compound - Written as a compound branch (START … END).
  * @property {[number, number]} tiles - Tile range of the branch.
  */
@@ -356,13 +365,40 @@ function wordSubstituent(ctx, tile, items, compound, range) {
 }
 
 /**
+ * The SubstituentSpec of a halogen tile (R-5a1): one atom, no chain, no
+ * slot or prefix of its own (parse.js never makes it a branch's own chain).
+ *
+ * @param {{tiles: object[]}} ctx - Interpreter context.
+ * @param {number} tile - The halogen tile index.
+ * @returns {SubstituentSpec} The branch.
+ */
+function halogenSubstituent(ctx, tile) {
+  return {
+    kind: 'halogen',
+    length: null,
+    freeValence: null,
+    double: [],
+    triple: [],
+    prefixes: [],
+    retained: null,
+    word: { text: ctx.tiles[tile].text, tiles: [tile, tile + 1] },
+    element: ctx.tiles[tile].value,
+    compound: false,
+    tiles: [tile, tile + 1],
+  };
+} // End of function halogenSubstituent()
+
+/**
  * The SubstituentSpec of a prefix's substituent node.
  *
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
- * @param {object} node - A chain, retained or branch node (parse.js).
+ * @param {object} node - A chain, retained, halogen or branch node (parse.js).
  * @returns {SubstituentSpec} The branch.
  */
 function substituentSpec(ctx, node) {
+  if (node.type === 'halogen') {
+    return halogenSubstituent(ctx, node.tile);
+  }
   if (node.type === 'retained') {
     return wordSubstituent(ctx, node.tile, [], false, node.range);
   }

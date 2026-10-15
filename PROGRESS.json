@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-14T23:37:53Z",
+  "updated": "2026-10-15T00:14:59Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -610,8 +610,8 @@
     {
       "id": "I-50",
       "title": "v4 R-4 Rings",
-      "status": "in_progress",
-      "summary": "Split into I-50a (ciclo rings, done), I-50b (benzene, phenyl, aromatic key, done), I-50c (retained templates, o/m/p, Ayuda) and I-50d (ring diagnosis)."
+      "status": "done",
+      "summary": "Split into I-50a (ciclo rings), I-50b (benzene, phenyl, aromatic key), I-50c (retained templates, o/m/p, Ayuda) and I-50d (ring diagnosis), all done."
     },
     {
       "id": "I-50a",
@@ -652,8 +652,31 @@
     {
       "id": "I-51a",
       "title": "v4 R-5a Halogens and alcohols",
+      "status": "in_progress",
+      "summary": "Split into I-51a1 (halogens, done), I-51a2 (alcohols, phenols, the 1(6) locant control) and I-51a3 (retained phenol templates, alcohol diagnosis, Ayuda)."
+    },
+    {
+      "id": "I-51a1",
+      "title": "v4 R-5a1 Halogen prefixes",
+      "status": "done",
+      "risk": "high",
+      "summary": "Adds fluoro, cloro, bromo and yodo tiles so halogen derivatives can be built and drawn from a name, with diagnosis.",
+      "review": "Codex ship, 0 findings - docs/reviews/I-51a1.md",
+      "narrative": "docs/progress-archive/i-51a1.md"
+    },
+    {
+      "id": "I-51a2",
+      "title": "v4 R-5a2 Alcohols and phenols",
       "status": "queued",
-      "summary": "Extends tile names to halogen derivatives, alcohols and phenols, with their traditional names."
+      "risk": "high",
+      "summary": "Adds ol and hidroxi tiles, fenol, diol/tetrol morphology and the 1(6) closing-bond locant control."
+    },
+    {
+      "id": "I-51a3",
+      "title": "v4 R-5a3 Phenol templates, alcohol diagnosis, Ayuda",
+      "status": "queued",
+      "risk": "high",
+      "summary": "Adds cresol, catecol, resorcinol and hidroquinona tiles, alcohol diagnosis messages and the Ayuda line."
     },
     {
       "id": "I-51b",

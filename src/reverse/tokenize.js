@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -31,7 +31,9 @@
  * orto/meta/para letter (R-4c) only starts a name (`o-xileno`,
  * `o-dimetilbenceno`, `p-metiltolueno`): parse.js accepts it nowhere else,
  * and the hyphen the assembler writes after it prunes every other reading
- * of a leading `o`, `m` or `p` at once. A step budget bounds the search:
+ * of a leading `o`, `m` or `p` at once. A halogen (R-5a1: `fluoro`, `cloro`,
+ * `bromo`, `yodo`) stands wherever a retained branch word may, and is never
+ * enclosed by itself. A step budget bounds the search:
  * running out returns null, never a guess.
  */
 
@@ -58,9 +60,9 @@ const PUNCTUATION = ',-';
  * Grammar class of a tile for the adjacency table: NUM, MULT, CMULT, ROOT,
  * ANO (`ano`), ENE (`eno` / `ino`), FV (`il` / `iliden`), RET (a retained
  * branch word), PHE (`fenil`, R-4b), BEN (`benceno`, R-4b), TPL (a retained
- * template, R-4c), POS (an orto/meta/para letter, R-4c), START, END, RING
- * (`ciclo`). A is the automatic connecting vowel, AUTO_OPEN an automatic
- * opening mark.
+ * template, R-4c), POS (an orto/meta/para letter, R-4c), HAL (a halogen,
+ * R-5a1), START, END, RING (`ciclo`). A is the automatic connecting vowel,
+ * AUTO_OPEN an automatic opening mark.
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -74,13 +76,13 @@ function tileClass(tile) {
   }
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
-    ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS',
+    ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS', halogen: 'HAL',
   };
   return classes[tile.kind];
 }
 
 /** Classes that may begin a name, a prefix or a compound branch. */
-const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'START'];
+const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START'];
 
 /** Classes that may follow a complete prefix: another prefix, the end of its compound branch, `benceno` or a template. */
 const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'TPL'];
@@ -90,7 +92,7 @@ const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'TPL'];
  * monocyclic hydrocarbon name (design.md §15.5.1); BEGIN is the start of
  * the text. An automatic closing mark does not change the class. `ciclo`
  * stands wherever a root may start a stem, and only a root follows it;
- * `fenil` wherever a retained word may stand; `benceno` at the start or
+ * `fenil` and a halogen wherever a retained word may stand; `benceno` at the start or
  * after a complete prefix, and nothing after it; a template there too, or
  * after locants or a letter; a letter at the start only, before a prefix or
  * a template.
@@ -99,9 +101,9 @@ const FOLLOW = Object.freeze({
   BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'TPL', 'POS']),
   AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE']),
   NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL']),
-  POS: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'START', 'TPL']),
-  MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'START', 'ENE']),
-  CMULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'START']),
+  POS: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'TPL']),
+  MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'ENE']),
+  CMULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START']),
   RING: new Set(['ROOT']),
   ROOT: new Set(['ANO', 'NUM', 'MULT', 'ENE', 'FV', 'A']),
   A: new Set(['NUM', 'MULT']),
@@ -110,6 +112,7 @@ const FOLLOW = Object.freeze({
   FV: new Set(AFTER_PREFIX),
   RET: new Set(AFTER_PREFIX),
   PHE: new Set(AFTER_PREFIX),
+  HAL: new Set(AFTER_PREFIX),
   START: new Set(PREFIX_STARTS),
   END: new Set(AFTER_PREFIX),
   BEN: new Set(),

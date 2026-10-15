@@ -1,7 +1,7 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c). Pure, no DOM, no
- * coordinates.
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1). Pure, no
+ * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
  * types those slots `leftOut`, and this module finds every **placement** —
@@ -22,7 +22,11 @@
  *   are searched on the others, numbered from the template's group; the two
  *   methyls of `xileno` without locants or letter are one group of left-out
  *   slots like those of `dimetilbenceno`, so `xileno` is three structures,
- *   filled as `1,2-` / `1,3-` / `1,4-xileno`.
+ *   filled as `1,2-` / `1,3-` / `1,4-xileno`. A halogen (R-5a1) is a prefix
+ *   with no chain of its own: its left-out slots are carbon slots of the
+ *   chain or ring it hangs from, each adding one bond, so the carbons' free
+ *   valence prunes them (`dodecafluorociclohexano`: two fluorines on each
+ *   ring carbon, one placement; `pentaclorometano`: none, VALENCE).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -77,7 +81,7 @@
 
 import { CARBON_VALENCE, cloneMolecule } from '../model/molecule.js';
 import { aromaticKey, aromaticIsomorphism } from '../model/graph.js';
-import { build, checkSpec, attachmentOrder, ringRefusal, isRing, isAromatic, templateGroups } from './build.js';
+import { build, checkSpec, attachmentOrder, hasOwnChain, ringRefusal, isRing, isAromatic, templateGroups } from './build.js';
 import { TILES } from './tiles.js';
 
 /**
@@ -274,7 +278,7 @@ function addChain(model, owner, branch) {
     const sub = prefix.substituent;
     // `carbon`, or `phenylCarbon` on a phenyl (interpret.js gives every slot of one prefix the same role).
     addSlots(model, prefix.slots, { role: prefix.slots[0].role, chain: id, amount: attachmentOrder(sub) });
-    if (sub.kind !== 'retained') {
+    if (hasOwnChain(sub)) { // Not a retained word nor a halogen (R-5a1), which have no numbered chain.
       const own = addChain(model, sub, true);
       addSlots(model, [sub.freeValence.slot], { role: 'carbon', chain: own, amount: sub.freeValence.order });
     }
@@ -757,7 +761,7 @@ export function filledTree(tree, spec, placement, keep = {}) {
   /**
    * A substituent node, filled.
    *
-   * @param {object} node - A chain, retained or branch node.
+   * @param {object} node - A chain, retained, halogen or branch node.
    * @returns {object} The filled node.
    */
   const fillSubstituent = (node) => {

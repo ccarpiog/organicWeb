@@ -4,7 +4,7 @@
  * ano`, with `START` / `END` for the compound-branch controls, and reads
  * the open-chain, `ciclo` and benzene hydrocarbon rows of
  * tests/fixtures/names.tsv (the benzene ones with the retained templates
- * and the orto/meta/para forms, R-4c).
+ * and the orto/meta/para forms, R-4c) and their halogen derivatives (R-5a1).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -41,6 +41,21 @@ export function isOpenChainHydrocarbon(smiles) {
  */
 export function isMonocyclicHydrocarbon(smiles) {
   return /^[C=#()1]+$/.test(smiles) && smiles.split('1').length === 3;
+}
+
+/**
+ * Tells whether a fixture SMILES is a halogen derivative of an open-chain
+ * or monocyclic hydrocarbon (phase R-5a1): carbons, at least one F, Cl, Br
+ * or I, double and triple bonds, branches and at most one ring closure (the
+ * digit 1, opened and closed once) — no aromatic atom, bracket atom or
+ * other element (no O or N).
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True for a halogen derivative.
+ */
+export function isHalogenDerivative(smiles) {
+  const tokens = smiles.match(/Cl|Br|[CFI]|[=#()]|1/g) || [];
+  return tokens.join('') === smiles && /Cl|Br|F|I/.test(smiles) && smiles.split('1').length <= 3;
 }
 
 /**
@@ -180,7 +195,7 @@ export function leafIndices(node) {
         n.segments.forEach((s) => out.push(...s.locants, ...(s.multiplier === null ? [] : [s.multiplier]), s.ending));
         out.push(...n.fvLocants, ...(n.fv === null ? [] : [n.fv]));
         break;
-      default: // 'retained', 'benzene', 'template', 'stray'
+      default: // 'retained', 'halogen', 'benzene', 'template', 'stray'
         out.push(n.tile);
     }
   }; // End of function visit()

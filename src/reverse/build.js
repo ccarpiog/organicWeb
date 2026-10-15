@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -23,6 +23,10 @@
  * template places by rule belongs to the ring like its double bonds, so a
  * student's branch on that carbon is the VALENCE culprit, with a message
  * that says the template already put a group there.
+ * A halogen (R-5a1, kind 'halogen') is one atom of its element bonded by a
+ * single bond to its carbon: it adds one bond to that carbon (so
+ * `pentaclorometano` is VALENCE) and is never a carbon itself (it counts
+ * for the heavy-atom cap, not for the carbon cap or the chains).
  *
  * The molecule is the student's reading, numbered as the student numbered
  * it: `studentParent` lists the parent's atoms in the student's locant
@@ -42,7 +46,8 @@
  *    `iliden` is the double bond to the carbon it hangs from, so it counts
  *    in the valence below.
  * 2. `TOO_BIG`, the engine's caps (model/validate.js) checked before
- *    building and naming: more than MAX_CARBONS carbons (counted on the
+ *    building and naming: more than MAX_CARBONS carbons, then more than
+ *    MAX_HEAVY_ATOMS atoms (halogens included, R-5a1; both counted on the
  *    NameSpec), then, once built, a chain longer than MAX_CHAIN (with a
  *    ring, a side chain longer than MAX_CHAIN, as the engine counts it).
  * 3. `VALENCE`: a carbon with more than four bonds; the tiles are those of
@@ -67,7 +72,8 @@
 
 import { createMolecule, addAtom, addBond, setBondOrder, bondOrderSum, CARBON_VALENCE } from '../model/molecule.js';
 import {
-  MAX_CARBONS, MAX_CHAIN, MESSAGES as VALIDATION_MESSAGES, RING_SYSTEM_MESSAGES, longestCarbonChain, longestSideChain,
+  MAX_CARBONS, MAX_HEAVY_ATOMS, MAX_CHAIN, MESSAGES as VALIDATION_MESSAGES, RING_SYSTEM_MESSAGES, TOO_MANY_ATOMS_MESSAGE,
+  longestCarbonChain, longestSideChain,
 } from '../model/validate.js';
 import { BENZENE_NAME, RETAINED_PREFIXES } from '../naming/lexicon.es.js';
 import { templateGroupWord } from './tiles.js';
@@ -254,13 +260,17 @@ function checkPrefixes(prefixes, owner, values) {
 
 /**
  * Checks a branch in tile order: a retained word with prefixes of its own,
- * then its prefixes, multiple bonds and free-valence locant.
+ * then its prefixes, multiple bonds and free-valence locant (a halogen,
+ * R-5a1, has none of them).
  *
  * @param {object} sub - A SubstituentSpec.
  * @param {Map<object, number>|null} values - Placement values, or null.
  * @returns {object|null} The first error, or null.
  */
 function checkSubstituent(sub, values) {
+  if (sub.kind === 'halogen') {
+    return null;
+  }
   if (sub.kind === 'retained') {
     if (sub.prefixes.length === 0) {
       return null;
@@ -274,12 +284,15 @@ function checkSubstituent(sub, values) {
 } // End of function checkSubstituent()
 
 /**
- * Carbons of a branch, its own prefixes included.
+ * Carbons of a branch, its own prefixes included (none for a halogen, R-5a1).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
  */
 function substituentCarbons(sub) {
+  if (sub.kind === 'halogen') {
+    return 0;
+  }
   if (sub.kind === 'retained') {
     const template = RETAINED_TEMPLATES[sub.retained];
     return template.length + template.methyls.length;
@@ -295,6 +308,33 @@ function substituentCarbons(sub) {
  */
 function prefixCarbons(prefixes) {
   return prefixes.reduce((sum, prefix) => sum + prefix.slots.length * substituentCarbons(prefix.substituent), 0);
+}
+
+/**
+ * Atoms build() creates for one occurrence of a branch, its own prefixes
+ * included: its carbons, and one atom per halogen (R-5a1).
+ *
+ * @param {object} sub - A SubstituentSpec.
+ * @returns {number} The count.
+ */
+function substituentAtoms(sub) {
+  if (sub.kind === 'halogen') {
+    return 1;
+  }
+  if (sub.kind === 'retained') {
+    return substituentCarbons(sub);
+  }
+  return sub.length + prefixAtomCount(sub.prefixes);
+}
+
+/**
+ * Atoms of a list of prefixes, each counted as often as its multiplier says.
+ *
+ * @param {object[]} prefixes - PrefixSpecs.
+ * @returns {number} The count.
+ */
+function prefixAtomCount(prefixes) {
+  return prefixes.reduce((sum, prefix) => sum + prefix.slots.length * substituentAtoms(prefix.substituent), 0);
 }
 
 /**
@@ -317,6 +357,18 @@ export function templateGroups(spec) {
  */
 export function specCarbons(spec) {
   return spec.parent.length + prefixCarbons(spec.prefixes) + prefixCarbons(templateGroups(spec));
+}
+
+/**
+ * Heavy atoms of the molecule a NameSpec describes (independent of the
+ * locants): its carbons and its halogens (R-5a1), as model/validate.js
+ * counts them against MAX_HEAVY_ATOMS.
+ *
+ * @param {object} spec - A NameSpec.
+ * @returns {number} The count.
+ */
+export function specAtoms(spec) {
+  return spec.parent.length + prefixAtomCount(spec.prefixes) + prefixAtomCount(templateGroups(spec));
 }
 
 /**
@@ -408,7 +460,7 @@ export function ringRefusal(spec) {
  * template's own locants too, R-4c),
  * repeated bonds (left-out slots without a value are skipped, except that
  * a multiple bond on a one-carbon chain has nowhere to go), then the
- * carbon cap.
+ * carbon cap and the heavy-atom cap (halogens, R-5a1).
  *
  * @param {object} spec - A NameSpec (interpret.js).
  * @param {Map<object, number>|null} [values] - Placement values by slot (none: the supplied and implicit slots only).
@@ -433,18 +485,36 @@ export function checkSpec(spec, values = null) {
   if (specCarbons(spec) > MAX_CARBONS) {
     return buildError('TOO_BIG', VALIDATION_MESSAGES.TOO_BIG, spec.tiles);
   }
+  if (specAtoms(spec) > MAX_HEAVY_ATOMS) {
+    return buildError('TOO_BIG', TOO_MANY_ATOMS_MESSAGE, spec.tiles); // Halogens count (R-5a1).
+  }
   return null;
 } // End of function checkSpec()
 
 /**
  * The bond order with which a branch attaches to the carbon it hangs from:
- * its `il` (1) or `iliden` (2), or its retained template's.
+ * its `il` (1) or `iliden` (2), its retained template's, or 1 for a halogen
+ * (R-5a1).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} 1 or 2.
  */
 export function attachmentOrder(sub) {
+  if (sub.kind === 'halogen') {
+    return 1;
+  }
   return sub.kind === 'retained' ? RETAINED_TEMPLATES[sub.retained].order : sub.freeValence.order;
+}
+
+/**
+ * Tells whether a branch has a chain or ring of its own, numbered, that the
+ * search models (search.js): not a retained word, nor a halogen (R-5a1).
+ *
+ * @param {object} sub - A SubstituentSpec.
+ * @returns {boolean} True for a chain, ring or phenyl branch.
+ */
+export function hasOwnChain(sub) {
+  return sub.kind !== 'retained' && sub.kind !== 'halogen';
 }
 
 /**
@@ -505,13 +575,19 @@ function buildChain(state, owner, branch) {
 } // End of function buildChain()
 
 /**
- * Creates a branch: a retained word from its template, or a chain.
+ * Creates a branch: a halogen atom (R-5a1), a retained word from its
+ * template, or a chain.
  *
  * @param {object} state - Build state.
  * @param {object} sub - A SubstituentSpec.
  * @returns {{attach: number, order: number, tiles: [number, number]}} The atom with the free valence, its bond order and the tiles that set it.
  */
 function buildSubstituent(state, sub) {
+  if (sub.kind === 'halogen') {
+    const atom = addAtom(state.mol, {}, sub.element);
+    state.atoms.set(atom, { locant: 1, branch: true, added: [] }); // One bond: never over its valence.
+    return { attach: atom, order: 1, tiles: sub.tiles };
+  }
   if (sub.kind === 'retained') {
     const template = RETAINED_TEMPLATES[sub.retained];
     const chain = buildChain(state, { length: template.length, double: [], triple: [] }, true);
@@ -584,8 +660,9 @@ function attachPrefixes(state, prefixes, atoms, record = null, template = null) 
  * placementReading() keeps: buildSubstituent() creates the branch's own
  * chain first (a retained word's whole template), then attachPrefixes()
  * each own prefix's occurrences one after another, in tile order, each
- * with all of its atoms before the next. For the diagnosis (diagnose.js),
- * which compares branches inside a compound branch by their structure.
+ * with all of its atoms before the next (a halogen is its one atom, R-5a1).
+ * For the diagnosis (diagnose.js), which compares branches inside a compound
+ * branch by their structure.
  *
  * @param {object} sub - The branch's SubstituentSpec.
  * @param {number[]} atoms - The atoms of one occurrence of the branch, in creation order.
@@ -594,7 +671,7 @@ function attachPrefixes(state, prefixes, atoms, record = null, template = null) 
 export function ownPrefixAtoms(sub, atoms) {
   let next = sub.kind === 'retained' ? substituentCarbons(sub) : sub.length;
   return sub.prefixes.map((prefix) => prefix.slots.map(() => {
-    const size = substituentCarbons(prefix.substituent);
+    const size = substituentAtoms(prefix.substituent);
     const slice = atoms.slice(next, next + size);
     next += size;
     return slice;

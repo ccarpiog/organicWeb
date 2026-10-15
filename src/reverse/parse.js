@@ -1,16 +1,18 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
- * Grammar for open-chain and monocyclic hydrocarbons (design.md §15.5.1;
- * the ring prefix `ciclo` from R-4a, `benceno` and `fenil` from R-4b, the
- * retained templates and the orto/meta/para letters from R-4c):
+ * Grammar for open-chain and monocyclic hydrocarbons and their halogen
+ * derivatives (design.md §15.5.1; the ring prefix `ciclo` from R-4a,
+ * `benceno` and `fenil` from R-4b, the retained templates and the
+ * orto/meta/para letters from R-4c, the halogens from R-5a1):
  *
  *   name        = { prefix } , parent ;
  *   prefix      = [ locants ] , [ letter ] , [ MULT | CMULT ] , substituent ;
- *   substituent = simple | START , { prefix } , simple , END ;
+ *   substituent = simple | halogen | START , { prefix } , simple , END ;
+ *   halogen     = fluoro | cloro | bromo | yodo ;
  *   simple      = stem , ( il | iliden )
  *               | stem , [ ano ] , locant , ( il | iliden )
  *               | stem , segments , [ locant ] , ( il | iliden )
@@ -40,6 +42,12 @@
  * compound branch `benceno` is out of place (TILE_ORDER: as a branch it is
  * `fenil`).
  *
+ * A halogen (R-5a1) is a whole-word prefix like a retained branch word, a
+ * substituent of its own (`2-cloropropano`, `1,1-dicloroetano`, also inside a
+ * compound branch: `(2-cloroetil)`), but never a branch's own chain: it is
+ * one atom and takes no prefixes, so a compound branch that ends in a halogen
+ * has no chain of its own (`(2-cloro)`, TILE_ORDER at its END).
+ *
  * The retained templates (R-4c, tiles.js TEMPLATES) are whole-word parents
  * too, a benzene ring with groups of its own: `tolueno`, `estireno` and
  * `mesitileno` say where those groups are, so numbers or a letter right
@@ -67,7 +75,7 @@
  *
  * - name    `{type: 'name', tiles, items: (prefix|stray)[], parent, trailing: stray[]}`
  * - prefix  `{type: 'prefix', locants: number[], letter: number|null, multiplier: number|null,
- *            substituent: chain|retained|branch|null}` (null: numbers, a
+ *            substituent: chain|retained|halogen|branch|null}` (null: numbers, a
  *            letter or a multiplier with nothing after them yet; `letter` the
  *            o / m / p tile, R-4c)
  * - chain   `{type: 'chain', ring: number|null, root: number|null, ano:
@@ -77,6 +85,7 @@
  *            branch's chain has `fv`; the parent's has none)
  * - segment `{locants: number[], multiplier: number|null, ending: number}`
  * - retained `{type: 'retained', tile}`
+ * - halogen `{type: 'halogen', tile}` (a halogen tile, R-5a1)
  * - branch  `{type: 'branch', start, items: (prefix|stray)[], chain:
  *            chain|retained|null, end: number|null}` (`chain` is the
  *            branch's own simple chain, cited last; `end` null while open)
@@ -540,7 +549,8 @@ function addRootEnd(state, chain) {
 
 /**
  * Tells whether a substituent is complete: a chain with its free-valence
- * suffix, a retained word, or a closed compound branch with its own chain.
+ * suffix, a retained word, a halogen (R-5a1), or a closed compound branch
+ * with its own chain.
  *
  * @param {object|null} node - A substituent node.
  * @returns {boolean} True when complete.
@@ -549,7 +559,7 @@ export function isCompleteSubstituent(node) {
   if (!node) {
     return false;
   }
-  if (node.type === 'retained') {
+  if (node.type === 'retained' || node.type === 'halogen') {
     return true;
   }
   if (node.type === 'branch') {
@@ -560,14 +570,16 @@ export function isCompleteSubstituent(node) {
 
 /**
  * Tells whether an item of a compound branch is its own simple chain: no
- * locants, letter or multiplier, a complete chain or retained word.
+ * locants, letter or multiplier, a complete chain or retained word (never a
+ * halogen, R-5a1: one atom, which carries no prefixes).
  *
  * @param {object} item - A prefix or stray node.
  * @returns {boolean} True for the branch's own chain.
  */
 function isOwnChain(item) {
   return item.type === 'prefix' && item.locants.length === 0 && item.letter === null && item.multiplier === null
-    && Boolean(item.substituent) && item.substituent.type !== 'branch' && isCompleteSubstituent(item.substituent);
+    && Boolean(item.substituent) && item.substituent.type !== 'branch' && item.substituent.type !== 'halogen'
+    && isCompleteSubstituent(item.substituent);
 }
 
 /**
@@ -709,7 +721,8 @@ function wholeWordHint(tile) {
 
 /**
  * Parses one item at a prefix position: a prefix (locants, letter,
- * multiplier, substituent), the parent (at name level, a chain or ring
+ * multiplier, substituent — a chain, a retained word, a halogen or a
+ * compound branch), the parent (at name level, a chain or ring
  * without free valence, `benceno` or a template), or a tile that cannot
  * start either (a stray; also `benceno` or a template inside a compound
  * branch).
@@ -740,7 +753,7 @@ function parseItem(state, context) {
   if (next && next.kind === 'template' && context === 'name') {
     return makeTemplateParent(state, locants, letter, mult, start);
   }
-  if (!next || !['start', 'retained', 'root', 'ring'].includes(next.kind)) {
+  if (!next || !['start', 'retained', 'halogen', 'root', 'ring'].includes(next.kind)) {
     if (next) {
       addTileOrder(state, start, state.pos, HINTS[first.kind]); // numbers, a letter or a multiplier with no branch after them
     }
@@ -748,8 +761,8 @@ function parseItem(state, context) {
   }
   if (next.kind === 'start') {
     prefix.substituent = parseBranch(state);
-  } else if (next.kind === 'retained') {
-    prefix.substituent = { type: 'retained', tile: state.pos, range: [state.pos, state.pos + 1] };
+  } else if (next.kind === 'retained' || next.kind === 'halogen') {
+    prefix.substituent = { type: next.kind, tile: state.pos, range: [state.pos, state.pos + 1] }; // `isopropil`, `cloro`
     state.pos += 1;
   } else {
     const chain = parseChain(state);
@@ -782,7 +795,8 @@ function isCompletePrefix(item) {
 
 /**
  * Records why a name without a parent is incomplete: ENDS_WITH_BRANCH when
- * it ends with a complete prefix, else NO_PARENT over the tiles after the
+ * it ends with a complete prefix («…acaba en un grupo («cloro»)…» for a
+ * halogen, R-5a1), else NO_PARENT over the tiles after the
  * last complete prefix. Nothing when a compound branch is still open
  * (BRANCH_OPEN says it first).
  *
@@ -797,8 +811,9 @@ function checkNameEnd(state, tree) {
   const last = tree.items[tree.items.length - 1];
   if (last && isCompletePrefix(last)) {
     const words = itemText(tree, { ...last, locants: [], letter: null, multiplier: null });
+    const what = last.substituent.type === 'halogen' ? 'un grupo' : 'una rama'; // `2-cloro`: a halogen is no branch (R-5a1)
     addError(state, 'ENDS_WITH_BRANCH', last.range[0], last.range[1],
-      `El nombre acaba en una rama («${words}»): falta la cadena principal detrás.`);
+      `El nombre acaba en ${what} («${words}»): falta la cadena principal detrás.`);
     return;
   }
   const from = tree.items.reduce((end, item) => (isCompletePrefix(item) ? item.range[1] : end), 0);

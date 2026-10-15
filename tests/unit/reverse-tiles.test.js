@@ -17,12 +17,12 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import {
-  TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, BENZENE_ID, PHENYL_ID, POSITIONAL_IDS, TEMPLATES, templateGroupWord,
-  MAX_NUM, MAX_MULT,
+  TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, BENZENE_ID, PHENYL_ID, POSITIONAL_IDS, HALOGEN_IDS, TEMPLATES,
+  templateGroupWord, MAX_NUM, MAX_MULT,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
-  TRADITIONAL_NAMES, POSITIONAL_LETTERS,
+  TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES,
 } from '../../src/naming/lexicon.es.js';
 import { bundleModules } from '../../scripts/build.mjs';
 
@@ -55,6 +55,7 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('benzene'), 1); // benceno (R-4b)
   assert.equal(count('positional'), 3); // o, m, p (R-4c)
   assert.equal(count('template'), 4); // tolueno, estireno, xileno, mesitileno (R-4c)
+  assert.equal(count('halogen'), 4); // fluoro, cloro, bromo, yodo (R-5a1)
   assert.equal(new Set(TILES.map((tile) => tile.id)).size, TILES.length, 'ids are unique');
   assert.equal(new Set(TILES.map((tile) => tile.text)).size, TILES.length, 'texts are unique');
   assert.ok(TILES.every((tile) => Object.isFrozen(tile)));
@@ -77,6 +78,7 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       positional: () => POSITIONAL_LETTERS[tile.value],
       // `xileno`: the word of `1,2-xileno` without the locants the student writes on number tiles.
       template: () => TRADITIONAL_NAMES[TEMPLATES[tile.value].id].replace(/^1,2-/, ''),
+      halogen: () => HALOGEN_PREFIXES[tile.value],
     }[tile.kind]();
     assert.equal(tile.text, expected, tile.id);
   } // End of the loop over the tiles
@@ -95,6 +97,9 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
   assert.deepEqual(Object.keys(TEMPLATES).map(templateGroupWord), ['metilo', 'etenilo', 'metilo', 'metilo']);
   // The template words are those of the engine's own alternatives (aromatic.js), so `o-xileno` assembles to its text.
   assert.equal(`${POSITIONAL_LETTERS[2]}-${tileById('template-xylene').text}`, TRADITIONAL_NAMES.oXylene);
+  // R-5a1: the halogens by element symbol, in the lexicon's order.
+  assert.deepEqual(Object.values(HALOGEN_IDS).map((id) => [tileById(id).text, tileById(id).value]),
+    [['fluoro', 'F'], ['cloro', 'Cl'], ['bromo', 'Br'], ['yodo', 'I']]);
 }); // End of test 'every tile text comes from the lexicon (numbers are digits)'
 
 test('rows and «más» follow design.md §15.2', () => {
@@ -104,13 +109,15 @@ test('rows and «más» follow design.md §15.2', () => {
   assert.equal(more('cmult')[0], 7);
   assert.equal(more('root')[0], 11); // undec…
   assert.deepEqual([...new Set(TILES.map((tile) => tile.row))],
-    ['numbers', 'multipliers', 'roots', 'endings', 'branches', 'rings', 'traditional']);
-  assert.ok(TILES.filter((tile) => ['ending', 'freeValence', 'retained', 'start', 'end', 'ring', 'benzene', 'positional', 'template']
-    .includes(tile.kind)).every((tile) => !tile.more));
+    ['numbers', 'multipliers', 'roots', 'endings', 'branches', 'rings', 'groups', 'traditional']);
+  assert.ok(TILES.filter((tile) => ['ending', 'freeValence', 'retained', 'start', 'end', 'ring', 'benzene', 'positional', 'template',
+    'halogen'].includes(tile.kind)).every((tile) => !tile.more));
   assert.deepEqual(TILES.filter((tile) => tile.row === 'rings').map((tile) => tile.id),
     [RING_ID, BENZENE_ID, PHENYL_ID, ...Object.values(POSITIONAL_IDS)], 'R-4a: the ciclo tile; R-4b: benceno and fenil; R-4c: o, m, p');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'traditional').map((tile) => tile.id),
     ['template-toluene', 'template-styrene', 'template-xylene', 'template-mesitylene'], 'R-4c: «Nombres tradicionales»');
+  assert.deepEqual(TILES.filter((tile) => tile.row === 'groups').map((tile) => tile.id),
+    ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I'], 'R-5a1: «Grupos», the halogens');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'branches' && tile.kind === 'retained').map((tile) => tile.value),
     ['isopropyl', 'isopropylidene', 'tert-butyl']);
 });
@@ -127,6 +134,7 @@ test('tileById, tileId and toTiles', () => {
   assert.equal(tileId('retained', 'phenyl'), PHENYL_ID);
   assert.equal(tileId('positional', 4), POSITIONAL_IDS[4]);
   assert.equal(tileId('template', 'xylene'), 'template-xylene');
+  assert.equal(tileId('halogen', 'Cl'), HALOGEN_IDS.Cl);
   assert.deepEqual(toTiles(['num-2', tileById('mult-2')]).map((tile) => tile.text), ['2', 'di']);
   assert.throws(() => tileById('root-31'), /unknown tile/);
   assert.throws(() => tileId('mult', 1), /no mult tile/);

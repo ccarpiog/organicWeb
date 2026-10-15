@@ -19,7 +19,8 @@
  * - the tile rows («Números», «¿Cuántos?», «Raíces (cuántos carbonos)»,
  *   «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a,
  *   `benceno` and `fenil`, phase R-4b, and the letters `o`, `m`, `p`, phase
- *   R-4c, each with its word (orto, meta, para) beside it —, «Nombres
+ *   R-4c, each with its word (orto, meta, para) beside it —, «Grupos» — the
+ *   halogens `fluoro`, `cloro`, `bromo`, `yodo`, phase R-5a1 —, «Nombres
  *   tradicionales» — `tolueno`, `estireno`, `xileno`, `mesitileno`, phase
  *   R-4c; drafts pending teacher review), each with a «más» button for the
  *   tiles the catalogue keeps behind it;
@@ -54,6 +55,7 @@ export const ROWS = Object.freeze([
   Object.freeze({ id: 'endings', label: 'Terminaciones' }),
   Object.freeze({ id: 'branches', label: 'Ramas' }),
   Object.freeze({ id: 'rings', label: 'Anillos' }),
+  Object.freeze({ id: 'groups', label: 'Grupos' }),
   Object.freeze({ id: 'traditional', label: 'Nombres tradicionales' }),
 ]);
 
