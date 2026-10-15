@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -22,7 +22,8 @@
  * `ilo` — from R-6a1, the retained ester templates from R-6a2a, the ester
  * prefixes — `oxi` after an acyl branch, `carbonil` after `oxi` — from
  * R-6a2b, the nitriles — the suffixes `nitrilo` and `carbonitrilo`,
- * `benzonitrilo`, the prefix `ciano` — from R-6b1):
+ * `benzonitrilo`, the prefix `ciano` — from R-6b1, the retained nitrile
+ * templates from R-6b2):
  *
  *   name        = [ ácido ] , { prefix } , parent   (* R-5d1: `ácido` with an acid suffix only *)
  *               , [ esterSide ]                   (* R-6a1: after an ester suffix only; R-6a2a: or an ester template *)
@@ -55,7 +56,8 @@
  *               | ftalaldehído | isoftalaldehído | tereftalaldehído
  *               | fórmico | acético | oxálico | fenilacético                    (* R-5d2, after `ácido` *)
  *               | ftálico | isoftálico | tereftálico
- *               | formiato | acetato | fenilacetato ;                     (* R-6a2a, before the O-bound side *)
+ *               | formiato | acetato | fenilacetato                       (* R-6a2a, before the O-bound side *)
+ *               | acetonitrilo | fenilacetonitrilo | ftalonitrilo ;     (* R-6b2 *)
  *   letter      = o | m | p ;
  *   stem        = [ ciclo ] , ROOT ;   (* ciclo: a ring of ROOT carbons, at least 3 *)
  *   segments    = segment , [ segment ] ;
@@ -318,6 +320,18 @@
  * metilo`); inside a compound branch or the O-bound side their hint says
  * they name the acid part, before the O-bound group.
  *
+ * The retained nitrile templates (R-6b2: `acetonitrilo` and
+ * `fenilacetonitrilo`, open chains, and `ftalonitrilo` on benzene; tiles.js
+ * isNitrileTemplate()) are templates whose word places –C≡N groups, as the
+ * carbonyl templates place their C=O: no class word and no O-bound side
+ * (`ácido acetonitrilo` is ACID_WORD on `ácido`, `acetonitrilo de metilo`
+ * ESTER_SUFFIX, a nitrile suffix after the word TILE_ORDER, as after any
+ * template); numbers or a letter on them are TEMPLATE_LOCANTS («acetonitrilo»
+ * ya dice dónde va su grupo C≡N…), the two –C≡N of `ftalonitrilo` count as
+ * occupied positions for the letters (POSITIONAL), and inside a compound
+ * branch their hint says the –C≡N is written `ciano` there. No new error
+ * code.
+ *
  * A stem starts a branch or the parent: what follows it decides (a
  * free-valence suffix makes a branch), so leading numbers are never
  * consumed greedily — `2 met il 2 but eno` is the prefix `2-metil` and the
@@ -417,7 +431,7 @@ import {
   isPhenolTemplate, withArticle, ALKOXY_RETAINED, ETHER_CLASS_GROUPS, SUFFIX_GROUPS, GROUP_WORD_PARENTS, BENZALDEHYDE_ID,
   isAcylTile, templateSuffix, isCarbonylTemplate, isChainTemplate, BENZOIC_ID, ACID_KIND, isAcidSuffix, parentWordName,
   isAcidTemplate, ACID_GROUP, ESTER_KIND, isEsterSuffix, ESTER_GROUP, BENZOATE_ID, ESTER_ALKYL_ID, isEsterTemplate,
-  ACID_ESTER_TEMPLATES, isAcyloxyHead, NITRILE_KIND, BENZONITRILE_ID,
+  ACID_ESTER_TEMPLATES, isAcyloxyHead, NITRILE_KIND, BENZONITRILE_ID, NITRILE_GROUP, isNitrileTemplate,
 } from './tiles.js';
 import { itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, iloTileOf, esterGroupsOf } from './assemble.js';
 
@@ -998,13 +1012,18 @@ const PHENOL_GROUPS = 'grupos OH';
 /** The plural of the –COOH of an acid as the messages say it (tiles.js ACID_GROUP; R-5d2: `oxálico`, the ftálicos). */
 const ACID_GROUPS = ACID_GROUP.replace(/^grupo /, 'grupos ');
 
+/** The plural of the –C≡N of a nitrile as the messages say it (tiles.js NITRILE_GROUP; R-6b2: `ftalonitrilo`). */
+const NITRILE_GROUPS = NITRILE_GROUP.replace(/^grupo /, 'grupos ');
+
 /**
  * How the messages call the principal group a template's word places, by
  * its SUFFIX_GROUPS key (templateSuffix()): the OH of a retained phenol
  * (R-5a3a), the –CHO of `formaldehído` or of a ftalaldehído and the C=O of
  * `acetona` (R-5c3a; GROUP_WORD_PARENTS: «grupo CHO»), the –COOH of an acid
  * template (R-5d2: «grupo COOH», «grupos COOH»), the –COO– of an ester
- * template (R-6a2a: «grupo COO»).
+ * template (R-6a2a: «grupo COO»), the –C≡N of a nitrile template (R-6b2:
+ * `acetonitrilo`'s on its chain, `ftalonitrilo`'s two outside the ring:
+ * «grupo C≡N», «grupos C≡N»).
  */
 const PLACED_GROUP_WORDS = Object.freeze({
   alcohol: Object.freeze({ one: PHENOL_GROUP, many: PHENOL_GROUPS }),
@@ -1016,6 +1035,9 @@ const PLACED_GROUP_WORDS = Object.freeze({
   carboxylic: Object.freeze({ one: ACID_GROUP, many: ACID_GROUPS }),
   // R-6a2a: the –COO– of an ester template (`formiato`, `acetato`, `fenilacetato`).
   [ESTER_KIND]: Object.freeze({ one: ESTER_GROUP, many: ESTER_GROUP.replace(/^grupo /, 'grupos ') }),
+  // R-6b2: the –C≡N groups of a nitrile template (`acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`).
+  [NITRILE_KIND]: Object.freeze({ one: NITRILE_GROUP, many: NITRILE_GROUPS }),
+  carbonitrile: Object.freeze({ one: NITRILE_GROUP, many: NITRILE_GROUPS }),
 });
 
 /**
@@ -1182,7 +1204,8 @@ function templateCountMessage(tile) {
  * (R-5b) with `metoxi` and `fenil`, `(4-metoxifenil)`; a carbonyl template
  * (R-5c3a) with `oxo` or `formil`; an acid template (R-5d2) with `carboxi`;
  * an ester template (R-6a2a), in a branch or in the O-bound side, names the
- * acid part of an ester, before its O-bound group (`acetato de metilo`).
+ * acid part of an ester, before its O-bound group (`acetato de metilo`); a
+ * nitrile template (R-6b2) with `ciano`.
  *
  * @param {{text: string, kind: string, value: string}} tile - The template tile.
  * @param {'branch'|'multiplier'} where - Where it stands.
@@ -1203,6 +1226,11 @@ function templateHint(tile, where) {
     return `«${tile.text}» es el nombre de la parte ácida de un éster y va delante del grupo unido al oxígeno `
       + `(${tile.text}${ESTER_LINK}${EXAMPLES.metilo}).`;
   }
+  if (where === 'branch' && tile.kind === 'template' && isNitrileTemplate(tile.value)) {
+    // `acetonitrilo`, `ftalonitrilo` (R-6b2): their –C≡N is written `ciano` there, as `benzonitrilo`'s.
+    return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el ${NITRILE_GROUP} se escribe `
+      + `«${CIANO}», como en ${EXAMPLES.cianometil} o ${EXAMPLES.cianofenil}.`;
+  }
   if (where === 'branch' && tile.kind === 'template' && isCarbonylTemplate(tile.value)) {
     // `acetona`, `ftalaldehído` (R-5c3a): their C=O is written as a prefix there.
     return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el grupo C=O se escribe `
@@ -1218,7 +1246,7 @@ function templateHint(tile, where) {
       + `como en ${EXAMPLES.metilfenil}.`;
   }
   return `«${multiplier(2)}», «${multiplier(3)}»… van delante de una rama (${EXAMPLES.dimetil}), no delante de «${tile.text}».`;
-}
+} // End of function templateHint()
 
 /**
  * Records an error.

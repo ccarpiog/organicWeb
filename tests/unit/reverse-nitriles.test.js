@@ -7,8 +7,9 @@
  * carbon, never a carbon of the chain it hangs from), and the «Anillos»
  * row's `benzonitrilo`. Parser (the suffix nodes, the misplaced tiles with
  * their tile ranges and hints, partial names), assembler (every form checked
- * against the forward engine's own text), tokenizer (the retained nitrile
- * names of phase I-52b2 and the amines' and amides' names never read),
+ * against the forward engine's own text), tokenizer (the amines' and amides'
+ * names never read; the retained nitrile names read since phase I-52b2,
+ * reverse-nitrile-templates.test.js),
  * interpreter and builder (the nitrogen triple-bonded to each –C≡N's carbon,
  * the –C≡N's own carbon, CARBONYL_POSITION, VALENCE, LOCANT_RANGE, the caps),
  * search (left-out locants of `carbonitrilo` and of the prefixes; the budget),
@@ -18,9 +19,12 @@
  * a nitrile name; the nitrile's own mistakes, deliberate nulls of
  * diagnose.js «Nitriles» until phase I-52b3, each with its category read
  * independently), the fixture round trip over every row with a –C≡N of
- * tests/fixtures/names.tsv, the closed loop over the oracle's nitrile
- * generators (pure imports, no Java), the diagnosis sweeps with exact counts,
- * the ordered drawing, the dialog's tooltips and time budgets.
+ * tests/fixtures/names.tsv and the closed loop over the oracle's nitrile
+ * generators (pure imports, no Java), the retained names of phase I-52b2
+ * included, the diagnosis sweeps over the names of phase R-6b1 with exact
+ * counts (the retained names are swept apart,
+ * reverse-nitrile-templates.test.js), the ordered drawing, the dialog's
+ * tooltips and time budgets.
  */
 
 import { test } from 'node:test';
@@ -46,6 +50,7 @@ import {
 } from '../../scripts/oracle/generate.mjs';
 import {
   seq, readFixtures, leafIndices, isNitrile, isNitrileMolecule, isNitrileName, LATER_NITRILE_WORDS, NITRILE_WORD, isEster,
+  isNitrileTemplateName, NITRILE_TEMPLATE_WORDS,
 } from './reverse-words.js';
 
 /**
@@ -65,13 +70,15 @@ const EXPECTED_ROWS = Object.freeze({
 });
 
 /**
- * Their names and alternatives: 75 the tiles write, read back, and 4 retained
- * nitrile names of phase I-52b2 (`acetonitrilo`, `fenilacetonitrilo`,
- * `2-(4-metilfenil)acetonitrilo`, `ftalonitrilo`: LATER_NITRILE_WORDS), which
- * never tokenize.
+ * Their names and alternatives the tiles write, read back (79): those of
+ * phase R-6b1 (75, swept below) and, since phase I-52b2, the retained
+ * `acetonitrilo`, `fenilacetonitrilo`, `2-(4-metilfenil)acetonitrilo` and
+ * `ftalonitrilo` (4, swept apart in reverse-nitrile-templates.test.js); none
+ * left for later.
  */
-const EXPECTED_NAMES = 75;
-const EXPECTED_LATER_NAMES = 4;
+const EXPECTED_NAMES = 79;
+const EXPECTED_TEMPLATE_NAMES = 4;
+const EXPECTED_LATER_NAMES = 0;
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -387,18 +394,23 @@ test('assembler (R-6b1): every nitrile form is the forward engine\'s own text; t
   assert.equal(text('1 4 ciclo hex ano di carbonitrilo'), '1,4-ciclohexanodicarbonitrilo');
 }); // End of test 'assembler (R-6b1)…'
 
-test('tokenizer (R-6b1): texts that only read with errors, the retained nitrile names and later families never tokenize', () => {
+test('tokenizer (R-6b1): texts that only read with errors and the later families\' names never tokenize', () => {
   for (const name of ['nitrilo', 'butanonitril', 'butannitrilo', 'butan-1-onitrilo', 'butano-1-nitrilo', '1-butanonitrilo',
     'ciclohexanonitrilo', 'bencenonitrilo', 'ciclohexanocarbonitril', '1-benzonitrilo', 'p-benzonitrilo', 'benzonitrilonitrilo',
     '(cianooxi)metano', 'ciano', '2-ciano', 'ácido butanonitrilo', 'butanonitrilo de metilo', 'etanoato de cianilo',
-    // Phase I-52b2: the retained nitrile names (LATER_NITRILE_WORDS).
-    'acetonitrilo', 'fenilacetonitrilo', '2-(4-metilfenil)acetonitrilo', 'ftalonitrilo', '4-metilftalonitrilo',
     // Phases R-6c, R-6d: amines and amides beside a nitrile.
     '2-aminopropanonitrilo', '4-aminobenzonitrilo', '3-cianopropanamida', '4-cianociclohexano-1-carboxamida',
     '3-cianobenzamida']) {
     assert.equal(tokenize(name), null, name);
   }
-  assert.deepEqual(LATER_NITRILE_WORDS, ['acetonitrilo', 'ftalonitrilo']);
+  // Phase I-52b2: the retained nitrile names read (reverse-nitrile-templates.test.js); none is left for later.
+  assert.deepEqual(LATER_NITRILE_WORDS, []);
+  assert.deepEqual(NITRILE_TEMPLATE_WORDS, ['acetonitrilo', 'fenilacetonitrilo', 'ftalonitrilo']);
+  for (const name of ['acetonitrilo', 'fenilacetonitrilo', '2-(4-metilfenil)acetonitrilo', 'ftalonitrilo', '4-metilftalonitrilo']) {
+    assert.ok(tokenize(name), name);
+    assert.ok(isNitrileName(name) && isNitrileTemplateName(name), name);
+  }
+  assert.ok(isNitrileName('butanonitrilo') && !isNitrileTemplateName('butanonitrilo') && !isNitrileTemplateName('benzonitrilo'));
   assert.ok(['butanonitrilo', 'ciclohexanocarbonitrilo', 'benzonitrilo', 'ácido 3-cianopropanoico'].every((n) => NITRILE_WORD.test(n)));
   assert.ok(!NITRILE_WORD.test('ácido butanoico'));
 }); // End of test 'tokenizer (R-6b1)…'
@@ -771,10 +783,11 @@ test('the deliberate nulls of R-6b1 (diagnose.js «Nitriles»): each category, r
 // Fixture round trip and closed loop (design.md §15.7).
 // ---------------------------------------------------------------------------
 
-test('fixture round trip (R-6b1): every nitrile name the tiles write, read back; graph compared with the SMILES; later names never tokenize', async () => {
+test('fixture round trip (R-6b1, R-6b2): every nitrile name the tiles write, read back; graph compared with the SMILES; later names never tokenize', async () => {
   const fixtures = await readFixtures();
   const rows = fixtures.filter((row) => /C#N|N#C/.test(row.smiles));
   let covered = 0;
+  let templates = 0;
   let later = 0;
   let laterRows = 0;
   let elapsed = 0;
@@ -788,10 +801,11 @@ test('fixture round trip (R-6b1): every nitrile name the tiles write, read back;
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (!isNitrileName(name)) {
-        later += 1; // A retained nitrile name (I-52b2).
+        later += 1; // None since phase I-52b2.
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
       }
+      templates += isNitrileTemplateName(name) ? 1 : 0; // `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo` (R-6b2).
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
       assert.equal(assemble(parse(ids).tree).text, name, `names.tsv:${row.line}: assembly`);
@@ -825,9 +839,10 @@ test('fixture round trip (R-6b1): every nitrile name the tiles write, read back;
     [EXPECTED_ROWS.i38, EXPECTED_ROWS.i39a, EXPECTED_ROWS.i39b, EXPECTED_ROWS.i39c, EXPECTED_ROWS.i40c, EXPECTED_ROWS.i40d,
       EXPECTED_ROWS.i43b, EXPECTED_ROWS.i44, EXPECTED_ROWS.i45a, EXPECTED_ROWS.i45b]);
   assert.equal(covered, EXPECTED_NAMES);
+  assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
   assert.equal(later, EXPECTED_LATER_NAMES);
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
-}); // End of test 'fixture round trip (R-6b1)…'
+}); // End of test 'fixture round trip (R-6b1, R-6b2)…'
 
 /** The closed loop's generators (scripts/oracle/generate.mjs; design.md §15.7), nitrile molecules only. */
 const LOOP = Object.freeze({
@@ -844,22 +859,18 @@ const LOOP = Object.freeze({
 /**
  * Minimum coverage of the closed loop: nitrile molecules (distinct by
  * aromatic key), names read back, the forms among them (names ending in
- * `nitrilo` other than `carbonitrilo` and `benzonitrilo`, `carbonitrilo`,
- * `benzonitrilo`, names with `ciano`), removed-locant mutations and decisive
- * verdicts among them (the seeds give 1224, 1360, 694, 187, 65, 471, 2797
- * and 2796: one removal runs out of budget, `incomplete`).
+ * `nitrilo` other than `carbonitrilo`, `benzonitrilo` and a retained word,
+ * `carbonitrilo`, `benzonitrilo`, names with `ciano`, and since phase I-52b2
+ * the retained `acetonitrilo`, `fenilacetonitrilo`,
+ * `2-(4-metilfenil)acetonitrilo` and ftalonitrilos, until then left out),
+ * removed-locant mutations and decisive verdicts among them (the seeds give
+ * 1224, 1375, 694, 187, 65, 471, 15, 2797 and 2796: one removal runs out of
+ * budget, `incomplete`; no name is left for later).
  */
 const LOOP_MIN = Object.freeze({
-  molecules: 1200, names: 1340, nitrilo: 680, carbonitrilo: 180, benzonitrilo: 60, ciano: 460, removed: 2770, decisive: 2770,
+  molecules: 1200, names: 1355, nitrilo: 680, carbonitrilo: 180, benzonitrilo: 60, ciano: 460, templates: 15, removed: 2770,
+  decisive: 2770,
 });
-
-/**
- * The retained nitrile names among the closed loop's names, left for phase
- * I-52b2 (`acetonitrilo`, `fenilacetonitrilo`, `2-(4-metilfenil)acetonitrilo`,
- * the ftalonitrilos: LATER_NITRILE_WORDS): the seeds give 15, none of which
- * tokenizes.
- */
-const LOOP_LATER = 15;
 
 /**
  * The closed loop's molecules: the nitriles of the generators, distinct by
@@ -927,7 +938,7 @@ function locantLists(tree) {
 
 test('closed loop over the nitrile generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, nitrilo: 0, carbonitrilo: 0, benzonitrilo: 0, ciano: 0, removed: 0, decisive: 0 };
+  const counts = { names: 0, nitrilo: 0, carbonitrilo: 0, benzonitrilo: 0, ciano: 0, templates: 0, removed: 0, decisive: 0 };
   const later = [];
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
@@ -935,7 +946,7 @@ test('closed loop over the nitrile generators: engine name → tiles → readNam
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
       if (!isNitrileName(name)) {
-        later.push(name); // A retained nitrile name (I-52b2).
+        later.push(name); // None since phase I-52b2.
         assert.equal(tokenize(name), null, name);
         continue;
       }
@@ -946,7 +957,9 @@ test('closed loop over the nitrile generators: engine name → tiles → readNam
       assert.equal(verdict.name, naming.name);
       assert.equal(aromaticKey(verdict.molecule), key, `${name} builds another graph`);
       counts.names += 1;
-      counts.nitrilo += /nitrilo$/.test(name) && !/(?:carbo|benzo)nitrilo$/.test(name) ? 1 : 0;
+      const template = isNitrileTemplateName(name); // `acetonitrilo`, `ftalonitrilo`… (R-6b2)
+      counts.templates += template ? 1 : 0;
+      counts.nitrilo += /nitrilo$/.test(name) && !/(?:carbo|benzo)nitrilo$/.test(name) && !template ? 1 : 0;
       counts.carbonitrilo += /carbonitrilo$/.test(name) ? 1 : 0;
       counts.benzonitrilo += /benzonitrilo$/.test(name) ? 1 : 0;
       counts.ciano += /ciano/.test(name) ? 1 : 0;
@@ -976,8 +989,7 @@ test('closed loop over the nitrile generators: engine name → tiles → readNam
   } // End of the loop over the molecules
   const report = JSON.stringify({ molecules: molecules.length, ...counts, later: later.length });
   assert.ok(molecules.length >= LOOP_MIN.molecules, report);
-  assert.equal(later.length, LOOP_LATER, report);
-  assert.ok(later.every((name) => LATER_NITRILE_WORDS.some((word) => name.includes(word))), report);
+  assert.deepEqual(later, [], report);
   for (const field of Object.keys(counts)) {
     assert.ok(counts[field] >= LOOP_MIN[field], `${field}: ${report}`);
   }
@@ -1184,8 +1196,10 @@ function sweep(names) {
 } // End of function sweep()
 
 /**
- * How many mutations of the nitrile fixture names (the 75 the tiles write)
- * give `otherName`, by family (122), and the nitrile's own mistakes among them
+ * How many mutations of the nitrile fixture names of phase R-6b1 (the 75 the
+ * tiles write, the retained names of phase I-52b2 swept apart in
+ * reverse-nitrile-templates.test.js) give `otherName`, by family (122), and
+ * the nitrile's own mistakes among them
  * by category: 72 `numbering`, a ring nitrile's –C≡N groups numbered
  * otherwise by a reflection or a rotation (`2-metilciclohexano-1-carbonitrilo`
  * rotated to `3-metilciclohexano-2-carbonitrilo`), deliberate nulls of
@@ -1200,8 +1214,9 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 const FIXTURE_NULLS = Object.freeze({ numbering: 72 });
 
 test('mutations of every nitrile fixture name: a diagnosis of the family\'s codes, or a deliberate «Nitriles» null with its category', async () => {
-  const names = (await readFixtures()).filter((row) => isNitrile(row.smiles)).flatMap((row) => row.names).filter(isNitrileName);
-  assert.equal(names.length, EXPECTED_NAMES);
+  const names = (await readFixtures()).filter((row) => isNitrile(row.smiles)).flatMap((row) => row.names)
+    .filter((name) => isNitrileName(name) && !isNitrileTemplateName(name));
+  assert.equal(names.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES);
   const { otherName, codes, nulls, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
@@ -1214,7 +1229,9 @@ test('mutations of the generated nitriles: every otherName is diagnosed or a del
   const names = [];
   for (const mol of loopMolecules().filter((_, i) => i % 3 === 0)) { // Every generator's nitriles: chains, rings, benzenes.
     const naming = nameMolecule(mol);
-    names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter(isNitrileName));
+    // The names of phase R-6b1; the retained names (I-52b2) are swept apart (reverse-nitrile-templates.test.js).
+    names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter((name) => isNitrileName(name)
+      && !isNitrileTemplateName(name)));
   }
   assert.ok(names.length >= 450, `${names.length} names`); // The seeds give 460.
   const { otherName, codes, nulls, unexpected } = sweep(names);

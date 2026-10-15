@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T18:12:26Z",
+  "updated": "2026-10-15T18:43:55Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -901,8 +901,11 @@
     {
       "id": "I-52b2",
       "title": "v4 R-6b2 Retained nitrile names, Ayuda nitrile line",
-      "status": "queued",
-      "summary": "Reads the traditional nitrile names (acetonitrilo, fenilacetonitrilo, ftalonitrilo) and adds the help line."
+      "status": "done",
+      "risk": "high",
+      "summary": "Reads the traditional nitrile names (acetonitrilo, fenilacetonitrilo, ftalonitrilo) and adds the help line.",
+      "review": "Codex ship-with-fixes, 1 should-fix recorded as the open user question — docs/reviews/I-52b2.md",
+      "narrative": "docs/progress-archive/i-52b2.md"
     },
     {
       "id": "I-52b3",

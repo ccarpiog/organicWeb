@@ -10,46 +10,9 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 |---|---|---|---|---|---|
 | I-1…I-20 | v1 (scaffold, model, naming engine, oracle, editor, explanations, redraw, release) and user feedback (carbon dots, drag chain, 90° view, highlights, credit, undo fix, deploy) | `autoclaude/processed/010-*` … `200-*` | done — `docs/progress-archive/i-1.md` … `i-20.md` | routine or high / opus | Codex, all ship or fixed — `docs/reviews/I-1.md` … `I-20.md` |
 
-| I-21 | v2.1 Multi-element model (+ v2 plan into design.md, scope lift in CLAUDE.md) | `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.1 | done — `docs/progress-archive/i-21.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-21.md` |
-| I-22 | v2.2 Multi-element SMILES and oracle | same, §3.2 | done — `docs/progress-archive/i-22.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-22.md` |
-| I-23 | v2.3 Element palette | same, §3.3 | done — `docs/progress-archive/i-23.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-23.md` |
-| I-24 | v2.4 Ring infrastructure | same, §3.4 | done — `docs/progress-archive/i-24.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-24.md` |
-| I-25 | v2.5 Simple cycloalkanes | same, §3.5 | done — `docs/progress-archive/i-25.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-25.md` |
-| I-26 | v2.6 Substituted and unsaturated rings | same, §3.6 | done — `docs/progress-archive/i-26.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-26.md` |
-| I-27a | v2.7a Ring templates and inner double-bond lines (split from I-27) | same, §3.7 | done — `docs/progress-archive/i-27a.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-27a.md` |
-| I-27b | v2.7b Ordenar dibujo for rings (split from I-27) | same, §3.7 | done — `docs/progress-archive/i-27b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-27b.md` |
-| I-28 | v2.8 Benzene and hydrocarbon derivatives | same, §3.8 | done — `docs/progress-archive/i-28.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-28.md` |
-| I-29 | v2.9 Functional groups and seniority | same, §3.9 | done — `docs/progress-archive/i-29.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-29.md` |
-| I-30 | v2.10 Halogen derivatives | same, §3.10 | done — `docs/progress-archive/i-30.md` | high / opus | Codex ship-with-fixes, 1 fixed, 1 declined — `docs/reviews/I-30.md` |
-| I-31 | v2.11 Alcohols | same, §3.11 | done — `docs/progress-archive/i-31.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-31.md` |
-| I-32 | v2.12 Aldehydes and ketones | same, §3.12 | done — `docs/progress-archive/i-32.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-32.md` |
-| I-33 | v2.13 Carboxylic acids | same, §3.13 | done — `docs/progress-archive/i-33.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-33.md` |
-| I-34 | v2.14 Ethers | same, §3.14 | done — `docs/progress-archive/i-34.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-34.md` |
-| I-35 | v2.15 Esters | same, §3.15 | done — `docs/progress-archive/i-35.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-35.md` |
-| I-36 | v2.16 Amines | same, §3.16 | done — `docs/progress-archive/i-36.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-36.md` |
-| I-37 | v2.17 Amides | same, §3.17 | done — `docs/progress-archive/i-37.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-37.md` |
-| I-38 | v2.18 Nitriles | same, §3.18 | done — `docs/progress-archive/i-38.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-38.md` |
-| I-39a | v2.19a `ciano-` prefix (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-39a.md` |
-| I-39b | v2.19b Acyl prefixes `formil-`/`acetil-` (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-39b.md` |
-| I-39c | v2.19c Ester prefixes and diesters (split from I-39) | same, §3.19 | done — `docs/progress-archive/i-39c.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-39c.md` |
-| I-39d | v2.19d Amide prefixes and pair matrix (split from I-39c) | same, §3.19 | done — `docs/progress-archive/i-39d.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-39d.md` |
-| I-40a | v2.20a Rings as substituents of a functional chain (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40a.md` |
-| I-40b | v2.20b Acids and aldehydes with a ring, ring acyl prefixes (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40b.md` |
-| I-40c | v2.20c Nitriles and amides with a ring (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40c.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40c.md` |
-| I-40d | v2.20d Ring esters (split from I-40) | same, §3.20 | done — `docs/progress-archive/i-40d.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-40d.md` |
-| I-41a | v2.21a 90° view for acyclic heteroatom molecules (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-41a.md` |
-| I-41b | v2.21b CHO/COOH optional abbreviations (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-41b.md` |
-| I-41c | v2.21c Ayuda, examples and docs wrap-up (split from I-41) | same, §3.21 | done — `docs/progress-archive/i-41c.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-41c.md` |
+| I-21…I-41c | v2 (multi-element model, SMILES, palette, rings, cycloalkanes, benzene, functional groups halogens…nitriles, prefixes, rings as substituents, ring esters, 90° view, abbreviations, wrap-up), splits I-27a/b, I-39a…d, I-40a…d, I-41a…c | `autoclaude/processed/215-rings-functional-groups-confirmed.md` §3.1…§3.21 | done — `docs/progress-archive/i-21.md` … `i-41c.md` | high or routine / opus | Codex, all ship or fixed (I-30: 1 declined) — `docs/reviews/I-21.md` … `I-41c.md` |
 
-| I-42a | v3 Benzene parent with prefixes: naming engine, explanation, design §14 (split from I-42) | `autoclaude/processed/220-polysubstituted-benzenes.md` "I-42" | done — `docs/progress-archive/i-42a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-42a.md` |
-| I-42b | v3 Benzene parent with prefixes: oracle `randomBenzene` 1–6 groups, e2e, Ordenar dibujo / 90° checks (split from I-42) | same, "I-42" | done — `docs/progress-archive/i-42b.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-42b.md` |
-| I-43a | v3 One OH or amine on the ring, plus prefixes | same, "I-43a" | done — `docs/progress-archive/i-43a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-43a.md` |
-| I-43b | v3 One outside-carbon suffix (COOH/CHO/CN/CONH₂) on the ring, plus prefixes | same, "I-43b" | done — `docs/progress-archive/i-43b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-43b.md` |
-| I-44 | v3 Several identical principal groups on the ring | same, "I-44" | done — `docs/progress-archive/i-44.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-44.md` |
-| I-45a | v3 Substituted phenyl and phenoxy as a substituent | same, "I-45a" | done — `docs/progress-archive/i-45a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-45a.md` |
-| I-45b | v3 Substituted benzoyl | same, "I-45b" | done — `docs/progress-archive/i-45b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-45b.md` |
-| I-45c | v3 Esters with substituted rings | same, "I-45c" | done — `docs/progress-archive/i-45c.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-45c.md` |
-| I-46 | v3 Wrap-up (Ayuda, examples, README, CLAUDE.md scope, oracle README) | same, "I-46" | done — `docs/progress-archive/i-46.md` | routine / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-46.md` |
+| I-42a…I-46 | v3 polysubstituted benzenes (benzene parent with prefixes, OH/amine and outside-carbon suffixes on the ring, several identical principal groups, substituted phenyl/phenoxy/benzoyl, substituted-ring esters, wrap-up) | `autoclaude/processed/220-polysubstituted-benzenes.md` "I-42" … "I-46" | done — `docs/progress-archive/i-42a.md` … `i-46.md` | high or routine / opus | Codex, all ship or fixed — `docs/reviews/I-42a.md` … `I-46.md` |
 
 | I-47a | v4 R-1a Tile catalogue, parser, assembler, tokenizer (open-chain hydrocarbons) | `autoclaude/processed/230-name-to-structure.md` + design §15.8 "R-1a" | done — `docs/progress-archive/i-47a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-47a.md` |
 | I-47b | v4 R-1b `interpret.js` + `build.js`, `readName()` for fully located names | same, "R-1b" | done — `docs/progress-archive/i-47b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-47b.md` |
@@ -95,7 +58,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-52a3b | v4 R-6a3b O-bound side (`oBound`), ester prefix words (`words`), an ester written as an ether class name | same, "R-6a" | done — `docs/progress-archive/i-52a3b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52a3b.md` |
 | I-52b | v4 R-6b Nitriles | same, "R-6b" | split into I-52b1, I-52b2, I-52b3 | — | — |
 | I-52b1 | v4 R-6b1 Nitrile suffixes `nitrilo` / `carbonitrilo`, `benzonitrilo`, `ciano` prefix; search, round trips, deliberate «Nitriles» nulls, e2e | same, "R-6b" | done — `docs/progress-archive/i-52b1.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52b1.md` |
-| I-52b2 | v4 R-6b2 Retained nitrile names (`acetonitrilo`, `fenilacetonitrilo`, `2-(4-metilfenil)acetonitrilo`, `ftalonitrilo` family), Ayuda nitrile line, e2e | same, "R-6b" | queued | — | — |
+| I-52b2 | v4 R-6b2 Retained nitrile names (`acetonitrilo`, `fenilacetonitrilo`, `2-(4-metilfenil)acetonitrilo`, `ftalonitrilo` family), Ayuda nitrile line, e2e | same, "R-6b" | done — `docs/progress-archive/i-52b2.md` | high / opus | Codex ship-with-fixes, 1 should-fix recorded as the open user question — `docs/reviews/I-52b2.md` |
 | I-52b3 | v4 R-6b3 Nitrile diagnosis messages (fill the I-52b1/b2 «Nitriles» nulls), e2e | same, "R-6b" | queued | — | — |
 | I-52c | v4 R-6c Amines | same, "R-6c" | queued | — | — |
 | I-52d | v4 R-6d Amides | same, "R-6d" | queued | — | — |
@@ -123,15 +86,17 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-52b2 (v4 R-6b2): the «Nombres tradicionales» row's retained nitrile names exactly as the forward engine writes them
-(`acetonitrilo` for the bare etanonitrilo, `fenilacetonitrilo`, `2-(4-metilfenil)acetonitrilo` with an aryl prefix, `ftalonitrilo`
-also substituted, and `isoftalonitrilo` / `tereftalonitrilo` if the engine writes them — check `src/naming/`), each with a tooltip,
-read as the engine's alternatives, any other prefix `otherName` with the substituted-template diagnosis; parse.js
-PLACED_GROUP_WORDS gains the nitrile entry; the Ayuda «Del nombre al dibujo» nitrile line; the 4 retained names I-52b1 asserted
-untokenisable join the round trip; e2e. Model it on the retained acid / ester sub-phases (`docs/progress-archive/i-51d2.md`,
-`i-52a2a.md`) and build on `i-52b1.md`. Spec: design §15 + §13 — read from the working-tree `docs/design.md`; never edit or commit
-it (see *Open risks*). Risk high; worker opus. Commit by explicit paths. Then I-52b3 (nitrile diagnosis messages, the «Nitriles»
-nulls listed in `i-52b1.md`).
+Select I-52b3 (v4 R-6b3): the nitrile diagnosis messages — fill the deliberate «Nitriles» nulls (`nitrileChecks()` /
+`nitrileCategory()` in `src/reverse/diagnose.js`): R-6b1's categories `seniority`, `count`, `carbon`, `numbering`, `suffix` and the
+guarded `parent` (cases and sweep counts in `docs/progress-archive/i-52b1.md`: fixture 72 / 122, generated 283 / 1149, all
+`numbering`; the benzene `carbonitrilo` name with its suffix locant left out, `5,2-dimetilbencenocarbonitrilo`, which the acid twin
+answers LOCANT_ORDER) and I-52b2's template nulls (`count` / `seniority`: `2-cianoacetonitrilo`, `4-cianoftalonitrilo`,
+`2-carboxiacetonitrilo`; `reverse-nitrile-templates.test.js` NULLS and the template sweeps' `cyano` family, «Notes for I-52b3» in
+`i-52b2.md`), each with its «Ver el paso» step, the messages speaking of «grupos C≡N»; flip the null assertions to codes as I-51d3
+did for the acids (`FORMER_NULLS`); nitrile case in `tests/e2e/diagnosis.spec.js`. Model it on the acid and ester diagnosis
+sub-phases (`docs/progress-archive/i-51d3.md`, `i-52a3a.md`). Spec: design §15 + §13 — read from the working-tree `docs/design.md`;
+never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths. If it looks too big for one worker,
+split it like I-52a3 (principal-group checks first, then the rest). Then I-52c (R-6c, amines).
 
 - **Builds on** the R-1 engine (`src/reverse/`: tiles, parser, assembler, tokenizer, `interpret.js`,
   `build.js`, `search.js`, `readName()` — `docs/progress-archive/i-47a.md` … `i-47c.md`), the dialog
@@ -144,7 +109,8 @@ nulls listed in `i-52b1.md`).
   (`i-51c3b1.md`, `i-51c3b2.md`), acids (`i-51d1.md` … `i-51d3.md`), ester suffixes and the O-bound side
   (`i-52a1.md`), retained ester names and the Ayuda ester line (`i-52a2a.md`), ester prefixes (`i-52a2b.md`), the principal
   ester group's diagnoses (`i-52a3a.md`), the O-bound side / prefix-word / class-name diagnoses (`i-52a3b.md`), nitrile suffixes,
-  `benzonitrilo` and `ciano` (`i-52b1.md`); the forward naming engine already names every
+  `benzonitrilo` and `ciano` (`i-52b1.md`), retained nitrile names and the Ayuda nitrile line (`i-52b2.md`); the forward naming
+  engine already names every
   case (v2 §13, v3 §14; esters I-35, `i-35.md`).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
@@ -333,16 +299,20 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - Nitriles in the reverse engine (I-52b1): `nitrilo`, `carbonitrilo` (suffixes, SUFFIX_GROUPS `element` / `suffixElement()`), `ciano`
   (retained word, RETAINED_TEMPLATES `nitrile`) in «Grupos» and `benzonitrilo` in «Anillos» (`tiles.js`), CARBONYL_POSITION worded for
   –C≡N, `nitrileChecks()` / `nitrileCategory()` «Nitriles» nulls first in `diagnose.js`, `ciano` a hetero group for rule 1; tests
-  `tests/unit/reverse-nitriles.test.js`, `tests/e2e/name-builder-nitriles.spec.js`.
+  `tests/unit/reverse-nitriles.test.js`, `tests/e2e/name-builder-nitriles.spec.js`. Retained nitriles (I-52b2): `acetonitrilo`,
+  `fenilacetonitrilo`, `ftalonitrilo` in `TEMPLATES` (`tiles.js`), nitrile entries in `parse.js` PLACED_GROUP_WORDS, template nulls in
+  the diagnose.js «Nitriles» header, Ayuda `#help-name-to-drawing-nitriles`; tests `tests/unit/reverse-nitrile-templates.test.js`,
+  `tests/e2e/name-builder-nitrile-templates.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51c1 … I-52a3b: see `docs/progress-archive/i-51c1.md` … `i-52a3b.md`.
-- I-52b1 (orchestrator, after the worker): `npm test` 0 (2242 → 2262) · `npm run check` 0 (205 → 207) · `npm run build` 0 ·
-  `npm run e2e -- --reporter=dot` 0 (571 → 577 passed, source + dist). `git diff --stat src/naming src/explain` empty. Nitrile
-  fixture round trip 64 of 74 rows / 75 names read; closed loop 1224 molecules / 1360 names; «Nitriles» sweep nulls fixture 72 / 122,
-  generated 283 / 1149 (all `numbering`); other families' sweeps unchanged. Codex ship, 0 findings (`docs/reviews/I-52b1.md`).
+- I-51c1 … I-52b1: see `docs/progress-archive/i-51c1.md` … `i-52b1.md`.
+- I-52b2 (orchestrator, after the worker): `npm test` 0 fails (2262 → 2282) · `npm run check` 0 (207 → 209) · `npm run build` 0 ·
+  `npm run e2e -- --reporter=dot` 0 (577 → 583 passed, source + dist). `git diff --stat src/naming src/explain` empty; `docs/design.md`
+  untouched (mtime 2026-10-14). Nitrile fixture round trip 75 → 79 names; closed loop 1360 → 1375 names (the 15 retained names read);
+  R-6b1 «Nitriles» sweeps unchanged (72 / 122, 283 / 1149); template sweeps 4 / 8 and 15 / 37 `count` nulls. Codex ship-with-fixes,
+  0 blockers (`docs/reviews/I-52b2.md`).
 
 ## Open risks / deviations
 
@@ -410,8 +380,10 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - I-51d1…I-52a2b (acids, ester suffixes, retained esters, ester prefixes): decisions, deviations and Spanish drafts in
   `docs/progress-archive/i-51d1.md` … `i-52a2b.md`. Still relevant: one deliberate acid null (unbuildable); benzene diesters and
   ester prefixes on `benceno` beside an acid are engine refusals (`outOfScope`); 15 ester rows with a nitrogen wait for
-  R-6b…R-6d. Open questions for the user: (1) a retained word's aryl prefix in the IUPAC-preferred style
-  (`2-[4-(propan-2-il)fenil]acetato de metilo`, also on the retained aldehyde and acid) gets a null no rule covers; (2) the
+  R-6b…R-6d. Open questions for the user: (1) a retained word's prefix in the IUPAC-preferred style
+  (`2-[4-(propan-2-il)fenil]acetato de metilo`, `ácido 4-(propan-2-il)ftálico`, also on the retained aldehyde and, since I-52b2, the
+  nitrile: `4-(propan-2-il)ftalonitrilo` — Codex's I-52b2 should-fix) gets a null no rule covers; a fix (one message for all four
+  families) waits for the user's wording; (2) the
   forward engine writes `bis-(tert-butoxicarbonil)` / `bis-(tert-butoxi)` with a hyphen before the parenthesis (IUPAC usage,
   from memory: `bis(tert-butoxicarbonil)`), followed by the reverse engine — a fix means changing `src/naming/render.js`.
 - I-52a3a (principal ester group diagnoses; decisions and Spanish drafts in `docs/progress-archive/i-52a3a.md`): the O-bound side is not
@@ -423,10 +395,11 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   in one (`pentanodioato de isopropilo y 4-(propan-2-il)fenilo`; 2 of ~4 800 ad hoc names, none in the sweeps); ESTER_ALKYL_NAME is the
   generic message for mistakes inside an O-bound group's own prefixes (`4-metil-2-clorofenilo`). Open question for the user: the forward
   engine always joins two O-bound groups with «y» (`etilo y isopropilo`), where Spanish writes «e» before «i» — not changed.
-- I-52b1 (nitrile suffixes, `benzonitrilo`, `ciano`; decisions, deliberate nulls and Spanish drafts in `docs/progress-archive/i-52b1.md`):
-  `carbonitrilo` after an open chain is read and judged (`propano-1-carbonitrilo` → `otherName` «butanonitrilo», a «Nitriles» `carbon`
-  null), as `carboxílico` was; a benzene `carbonitrilo` name with its suffix locant left out (`5,2-dimetilbencenocarbonitrilo`) gets a
-  null where the acid twin gets LOCANT_ORDER, until I-52b3 words N0; the messages say «grupo C≡N»; Ayuda has no nitrile line yet (I-52b2).
+- I-52b1/I-52b2 (nitrile suffixes, `benzonitrilo`, `ciano`, retained nitrile names; decisions, deliberate nulls and Spanish drafts in
+  `docs/progress-archive/i-52b1.md`, `i-52b2.md`): `carbonitrilo` after an open chain is read and judged (`propano-1-carbonitrilo` →
+  `otherName` «butanonitrilo», a «Nitriles» `carbon` null), as `carboxílico` was; `5,2-dimetilbencenocarbonitrilo` gets a null where the
+  acid twin gets LOCANT_ORDER, until I-52b3 words N0; the forward engine writes no `isoftalonitrilo` / `tereftalonitrilo`, so no tiles;
+  the Ayuda intro now ends «…, y de sus nitrilos.»; the messages say «grupo C≡N».
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -440,5 +413,5 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-52a3b `826aa68`, pushed. I-52b1 committed and pushed right after this checkpoint (see `git log`). User's
+- I-52b1 `fc298db`, pushed. I-52b2 committed and pushed right after this checkpoint (see `git log`). User's
   uncommitted paths, never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

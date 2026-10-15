@@ -15,7 +15,8 @@
  * `carboxilato`, `benzoato`, the O-bound groups ending in `ilo`; R-6a2a: the
  * retained ester names; R-6a2b: the ester prefixes, `acetiloxi`,
  * `metoxicarbonil`) and their nitriles (R-6b1: the suffixes `nitrilo` and
- * `carbonitrilo`, `benzonitrilo`, the prefix `ciano`).
+ * `carbonitrilo`, `benzonitrilo`, the prefix `ciano`; R-6b2: the retained
+ * nitrile names).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -555,16 +556,36 @@ export function isNitrile(smiles) {
 }
 
 /**
- * The words of the nitrile names the tiles do not write yet (phase I-52b2),
- * from the lexicon: the retained `acetonitrilo` (also in `fenilacetonitrilo`
- * and `2-(4-metilfenil)acetonitrilo`) and `ftalonitrilo` (also substituted).
+ * The words of the nitrile names the tiles do not write yet: none since phase
+ * R-6b2, whose «Nombres tradicionales» tiles write the retained
+ * `acetonitrilo` and `ftalonitrilo` (NITRILE_TEMPLATE_WORDS).
  */
-export const LATER_NITRILE_WORDS = Object.freeze([TRADITIONAL_NAMES.acetonitrile, BENZENE_DIGROUP_NAMES.phthalonitrile]);
+export const LATER_NITRILE_WORDS = Object.freeze([]);
 
 /**
- * Tells whether a name of a nitrile is written with the tiles of phase
- * R-6b1: none of the retained nitrile words left for phase I-52b2
- * (LATER_NITRILE_WORDS).
+ * The words of the retained nitrile templates (R-6b2), from the lexicon, in
+ * the order of their tiles: `acetonitrilo`, `fenilacetonitrilo`,
+ * `ftalonitrilo`.
+ */
+export const NITRILE_TEMPLATE_WORDS = Object.freeze([TRADITIONAL_NAMES.acetonitrile, TRADITIONAL_NAMES.phenylacetonitrile,
+  BENZENE_DIGROUP_NAMES.phthalonitrile]);
+
+/**
+ * Tells whether a name uses a retained nitrile template of phase R-6b2
+ * (NITRILE_TEMPLATE_WORDS; `acetonitrilo` covers `fenilacetonitrilo` and
+ * `2-(4-metilfenil)acetonitrilo`, `ftalonitrilo` its substituted forms).
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for `acetonitrilo`, `4-metilftalonitrilo`…
+ */
+export function isNitrileTemplateName(name) {
+  return NITRILE_TEMPLATE_WORDS.some((word) => name.includes(word));
+}
+
+/**
+ * Tells whether a name of a nitrile is written with the tiles of phases
+ * R-6b1 and R-6b2: none of the words left for later phases
+ * (LATER_NITRILE_WORDS, empty since R-6b2).
  *
  * @param {string} name - A name.
  * @returns {boolean} True when the tiles read it.

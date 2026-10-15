@@ -159,7 +159,7 @@ const ALTERNATIVES = [
 // ---------------------------------------------------------------------------
 
 test('«Nombres tradicionales» (R-6a2a): the three ester tiles after the acid ones, each with a tooltip; quoted as on the tile', () => {
-  const esters = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(25);
+  const esters = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(25, 28); // R-6b2's after
   assert.deepEqual(esters.map((tile) => tile.text), [...ESTER_TEMPLATE_WORDS]);
   assert.deepEqual(esters.map((tile) => tile.text), ['formiato', 'acetato', 'fenilacetato']);
   assert.deepEqual(esters.map((tile) => tile.id), ['template-formate', 'template-acetate', 'template-phenylacetate']);

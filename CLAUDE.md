@@ -243,9 +243,17 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   beside acids and esters, their left-out locants searched, the engine's
   `manyNitriles` and `carbonocyanidic` refusals `outOfScope`; the diagnosis
   keeps the rules that hold for a nitrile name, the nitrile's own mistakes
-  deliberate «Nitriles» nulls. Next is R-6b2 (phase I-52b2): the retained
-  nitrile names (`acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`) and the
-  Ayuda nitrile line.
+  deliberate «Nitriles» nulls. R-6b2 (phase I-52b2) is done: the «Nombres
+  tradicionales» row's retained nitrile names (`acetonitrilo`,
+  `fenilacetonitrilo`, `ftalonitrilo`, each with a tooltip; the engine writes
+  no `isoftalonitrilo` or `tereftalonitrilo`) read as the engine's
+  alternatives, also with the prefixes the engine writes on them
+  (`4-metilftalonitrilo`, `2-(4-metilfenil)acetonitrilo`), any other prefix
+  as `otherName` with the substituted-template diagnosis
+  (`2-cloroacetonitrilo`), another –C≡N written `ciano` beside the word or
+  the word beside a senior group deliberate «Nitriles» nulls, and the Ayuda
+  has its nitrile line. Next is R-6b3 (phase I-52b3): the nitrile diagnosis
+  messages.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

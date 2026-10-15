@@ -46,7 +46,10 @@
  *   — the first four on an open chain; R-6a2a: the retained ester names
  *   `formiato`, `acetato`, `fenilacetato`, the acid part of an ester, whose
  *   –COO– is the principal group, followed by the O-bound side as after
- *   `oato` — all three on an open chain; value the TEMPLATES key),
+ *   `oato` — all three on an open chain; R-6b2: the retained nitrile names
+ *   `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`, whose –C≡N groups
+ *   are the principal group — the first two on an open chain; value the
+ *   TEMPLATES key),
  *   'positional' (the old orto/meta/para letters `o`, `m`, `p`, R-4c: the two
  *   occupied positions of a benzene ring; value the locant of the second
  *   one, 2 | 3 | 4, the POSITIONAL_LETTERS keys), 'halogen' (the halogen
@@ -175,7 +178,8 @@
  *   the retained phenols; R-5b: `anisol`; R-5c3a: the retained carbonyl
  *   names, `formaldehído` … `tereftalaldehído`; R-5d2: the retained acid
  *   names, `fórmico` … `tereftálico`; R-6a2a: the retained ester names,
- *   `formiato`, `acetato`, `fenilacetato`);
+ *   `formiato`, `acetato`, `fenilacetato`; R-6b2: the retained nitrile
+ *   names, `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
  *   multipliers from hepta / heptakis, roots from undec).
  */
@@ -701,6 +705,22 @@ function placedSuffix(value, positions) {
  * same word: `2-(4-metilfenil)acetato de etilo`); no diester (an
  * `etanodioato` is no acetate) and no benzene diester (the engine refuses
  * them) has a retained name.
+ * R-6b2 adds the retained nitrile names the forward engine gives
+ * (principal.js carbonylTraditionalId(): 'acetonitrile', 'phenylacetonitrile',
+ * 'arylacetonitrile'; aromatic.js retainedDigroupIds(): 'phthalonitrile'),
+ * whose `suffix` places the –C≡N groups as `acético` places its –COOH:
+ * `acetonitrilo` (etanonitrilo) and, with a phenyl on carbon 2,
+ * `fenilacetonitrilo` (2-feniletanonitrilo) — chain templates, the –C≡N's
+ * carbon the chain's carbon 1 (SUFFIX_GROUPS `nitrile`), keyed by their
+ * TRADITIONAL_NAMES id —, and `ftalonitrilo` (benzene with two –C≡N,
+ * `carbonitrile`, outside the ring at 1 and 2; keyed by its
+ * BENZENE_DIGROUP_NAMES id). The engine writes `fenilacetonitrilo` for the
+ * bare molecule only, `acetonitrilo` also with one substituted phenyl on its
+ * carbon 2 (`arylPrefix`, 'arylacetonitrile', the same word:
+ * `2-(4-metilfenil)acetonitrilo`) and `ftalonitrilo` also with prefixes
+ * (`substitutable`: `4-metilftalonitrilo`); it writes no `isoftalonitrilo` or
+ * `tereftalonitrilo` (aromatic.js: of the benzene dinitriles only the 1,2 one
+ * has a retained name), so neither is a tile.
  * Later phases add the retained parents with another principal group
  * (`anilina`, `acetamida`…).
  */
@@ -779,6 +799,18 @@ export const TEMPLATES = Object.freeze({
     id: 'phenylacetate', chain: 2, group: PHENYL, count: 1, positions: Object.freeze([2]), hydroxy: NONE,
     suffix: placedSuffix(ESTER_KIND, [1]),
   }),
+  // R-6b2: the retained nitrile names; the –C≡N's carbon is the chain's carbon 1, or outside the ring.
+  acetonitrile: Object.freeze({
+    id: 'acetonitrile', chain: 2, group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix(NITRILE_KIND, [1]),
+    arylPrefix: true,
+  }),
+  phenylacetonitrile: Object.freeze({
+    id: 'phenylacetonitrile', chain: 2, group: PHENYL, count: 1, positions: Object.freeze([2]), hydroxy: NONE,
+    suffix: placedSuffix(NITRILE_KIND, [1]),
+  }),
+  phthalonitrile: Object.freeze({
+    group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix('carbonitrile', [1, 2]), substitutable: true,
+  }),
 });
 
 /**
@@ -786,14 +818,29 @@ export const TEMPLATES = Object.freeze({
  * `formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
  * `fenilacetaldehído`, the ftalaldehídos): its word places an aldehyde's or
  * a ketone's C=O (not an acid's –COOH: isAcidTemplate(); nor an ester's
- * –COO–, R-6a2a: isEsterTemplate()).
+ * –COO–, R-6a2a: isEsterTemplate(); nor a nitrile's –C≡N, R-6b2:
+ * isNitrileTemplate()).
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {boolean} True for a carbonyl template.
  */
 export function isCarbonylTemplate(value) {
   const { suffix } = TEMPLATES[value];
-  return Boolean(suffix) && !isAcidSuffix(suffix.value) && !isEsterSuffix(suffix.value);
+  return Boolean(suffix) && !isAcidSuffix(suffix.value) && !isEsterSuffix(suffix.value) && !isNitrileSuffix(suffix.value);
+}
+
+/**
+ * Tells whether a template is one of the retained nitrile names (R-6b2:
+ * `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`): its word places one
+ * or two –C≡N groups, `acetonitrilo`'s carbon 1 the –C≡N's carbon,
+ * `ftalonitrilo`'s outside the ring.
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @returns {boolean} True for a nitrile template.
+ */
+export function isNitrileTemplate(value) {
+  const { suffix } = TEMPLATES[value];
+  return Boolean(suffix) && isNitrileSuffix(suffix.value);
 }
 
 /**
@@ -839,7 +886,8 @@ export const ACID_ESTER_TEMPLATES = Object.freeze({ formicAcid: 'formate', aceti
  * one carbon, `acetaldehído`, `acetofenona` and `fenilacetaldehído` two,
  * `acetona` three; R-5d2: `fórmico` one, `acético`, `oxálico` and
  * `fenilacético` two; R-6a2a: `formiato` one, `acetato` and `fenilacetato`
- * two), not the benzene ring.
+ * two; R-6b2: `acetonitrilo` and `fenilacetonitrilo` two), not the benzene
+ * ring.
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {boolean} True for a chain template.
@@ -866,8 +914,10 @@ export function templateLength(value) {
  * ketone at 2, the two –CHO of `ftalaldehído` at 1 and 2) or the –COOH
  * groups of an acid template (R-5d2: `acético`'s at 1, `oxálico`'s at 1 and
  * 2, the two of `ftálico` outside the ring at 1 and 2) or the –COO– of an
- * ester template (R-6a2a: `acetato`'s at 1); null for a template without one
- * (`tolueno`, `anisol`…).
+ * ester template (R-6a2a: `acetato`'s at 1) or the –C≡N groups of a nitrile
+ * template (R-6b2: `acetonitrilo`'s at 1, the two of `ftalonitrilo` outside
+ * the ring at 1 and 2); null for a template without one (`tolueno`,
+ * `anisol`…).
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {{value: string, positions: readonly number[]}|null} The SUFFIX_GROUPS key and the parent's carbons, or null.
@@ -891,8 +941,10 @@ export function templateSuffix(value) {
  * likewise (R-5d2) the ftálicos (`ácido 4-metilftálico`) and `acético`
  * ('arylaceticAcid': `ácido 2-(3-metilfenil)acético`; bare, the one word
  * `fenilacético`), and (R-6a2a) `acetato` ('arylacetate': `2-(4-metilfenil)acetato
- * de etilo`; bare, the one word `fenilacetato`). The student's prefixes are
- * given as interpret.js PrefixSpecs.
+ * de etilo`; bare, the one word `fenilacetato`), and (R-6b2) `ftalonitrilo`
+ * (`4-metilftalonitrilo`) and `acetonitrilo` ('arylacetonitrile':
+ * `2-(4-metilfenil)acetonitrilo`; bare, the one word `fenilacetonitrilo`). The
+ * student's prefixes are given as interpret.js PrefixSpecs.
  *
  * @param {string} value - A TEMPLATES key.
  * @param {{slots: object[], substituent: {kind: string, retained: string|null, alkoxy: boolean, acyl: boolean,
@@ -967,8 +1019,8 @@ export function groupPlural(word) {
 
 /**
  * The text of a template tile: its TRADITIONAL_NAMES name (or, for a diol of
- * R-5a3a, a ftalaldehído of R-5c3a or a ftálico of R-5d2, its
- * BENZENE_DIGROUP_NAMES word, keyed by the template's own key),
+ * R-5a3a, a ftalaldehído of R-5c3a, a ftálico of R-5d2 or `ftalonitrilo` of
+ * R-6b2, its BENZENE_DIGROUP_NAMES word, keyed by the template's own key),
  * without the locants or letter the student writes on tiles of their own
  * (`1,2-xileno` → `xileno`, `o-cresol` → `cresol`) and without the class
  * word `ácido`, a tile of its own (R-5d2: `ácido acético` → `acético`).
@@ -1016,7 +1068,9 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * `fenilacetaldehído`, `ftalaldehído`, `isoftalaldehído`, `tereftalaldehído`,
  * then the retained acid names `fórmico`, `acético`, `oxálico`,
  * `fenilacético`, `ftálico`, `isoftálico`, `tereftálico`, then the retained
- * ester names `formiato`, `acetato`, `fenilacetato`, R-6a2a); R-6a1 adds
+ * ester names `formiato`, `acetato`, `fenilacetato`, R-6a2a, then the
+ * retained nitrile names `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`,
+ * R-6b2); R-6a1 adds
  * `benzoato` to the rings, after `benzoico`, and `oato`, `carboxilato` and
  * `ilo` to the groups, at their end; R-6b1 `benzonitrilo` to the rings,
  * after `benzoato`, and `ciano`, `nitrilo` and `carbonitrilo` to the groups,

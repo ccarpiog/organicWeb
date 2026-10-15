@@ -46,7 +46,9 @@
  *   `tereftalaldehído`, phase R-5c3a, the retained acid names `fórmico`,
  *   `acético`, `oxálico`, `fenilacético`, `ftálico`, `isoftálico`,
  *   `tereftálico`, phase R-5d2, the retained ester names `formiato`,
- *   `acetato`, `fenilacetato`, phase R-6a2a, these and `anisol` each with a tooltip
+ *   `acetato`, `fenilacetato`, phase R-6a2a, the retained nitrile names
+ *   `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`, phase R-6b2, these
+ *   and `anisol` each with a tooltip
  *   saying what it is; drafts pending teacher review), each with a «más»
  *   button for the tiles the catalogue keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
@@ -130,8 +132,9 @@ export function positionalLabel(tile) {
  * O-bound group follows, and which takes a phenyl; R-6a2b: `oxi` and
  * `carbonil` also say how they make an ester's prefix; R-6b1: `ciano`,
  * `nitrilo`, `carbonitrilo` and `benzonitrilo`, what each is, where it goes
- * and whether the group's carbon counts in the chain; drafts pending teacher
- * review).
+ * and whether the group's carbon counts in the chain; R-6b2: the retained
+ * nitrile names, what molecule each is, and which take prefixes; drafts
+ * pending teacher review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
@@ -227,6 +230,12 @@ export const TILE_HINTS = Object.freeze({
     + 'Admite un fenil en el carbono 2: 2-(4-metilfenil)acetato de etilo.',
   'template-phenylacetate': 'Etanoato con un fenil en el carbono 2: 2-feniletanoato. Detrás va el grupo unido al oxígeno: '
     + 'fenilacetato de metilo.',
+  // R-6b2: the retained nitrile names.
+  'template-acetonitrile': 'Cadena de 2 carbonos con un grupo C≡N: etanonitrilo. Admite un fenil en el carbono 2: '
+    + '2-(4-metilfenil)acetonitrilo.',
+  'template-phenylacetonitrile': 'Etanonitrilo con un fenil en el carbono 2: 2-feniletanonitrilo.',
+  'template-phthalonitrile': 'Benceno con dos grupos C≡N en carbonos vecinos: benceno-1,2-dicarbonitrilo. Admite ramas en el '
+    + 'anillo: 4-metilftalonitrilo.',
 });
 
 /** Text of the empty name line. */
@@ -288,7 +297,7 @@ function make(doc, tag, className, text) {
  * beside their mark (the mark hidden from screen readers); an orto/meta/para
  * letter shows its word, small, beside the letter (R-4c); a tile of
  * TILE_HINTS gets its tooltip (R-5a2: `1(n)`; R-5a3a: the retained phenols; R-5c3a: the retained carbonyl names; R-5d2: the
- * retained acid names; R-6a2a: the retained ester names).
+ * retained acid names; R-6a2a: the retained ester names; R-6b2: the retained nitrile names).
  *
  * @param {Document} doc - The document.
  * @param {{id: string, kind: string, text: string, more: boolean}} tile - A catalogue tile.

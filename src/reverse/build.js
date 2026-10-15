@@ -84,7 +84,12 @@
  * parent with its nitrogen (one more carbon and two more heavy atoms per
  * group; `benzonitrilo`'s, placed at 1 by the word, the ring's own, «…en el
  * benzonitrilo, ese carbono ya lleva un grupo C≡N»); `ciano` is a retained
- * word, one carbon with its nitrogen, bonded by that carbon.
+ * word, one carbon with its nitrogen, bonded by that carbon. A retained
+ * nitrile word (R-6b2: `acetonitrilo`, `fenilacetonitrilo`, a chain template
+ * whose –C≡N, placed at carbon 1 by the word, is the chain's own like
+ * `acético`'s –COOH, «…en el acetonitrilo, ese carbono ya lleva un grupo
+ * C≡N»; `ftalonitrilo`, two outside the ring like `ftálico`'s) is built the
+ * same way.
  * An alkoxy prefix (R-5b, SubstituentSpec `alkoxy`) is its branch built as
  * any other — chain, ring, phenyl or retained word, with its own prefixes —
  * and then an ether oxygen, created last, bonded by single bonds to the
@@ -327,7 +332,8 @@ function oBoundRangeMessage(owner, value) {
  * word holds a ring (R-5c3a) offers for a group on that ring, by TEMPLATES
  * key: `1-(4-metilfenil)etan-1-ona`, `2-(4-metilfenil)etanal`; R-5d2: `ácido
  * 2-(4-metilfenil)etanoico` for `fenilacético`; R-6a2a: `2-(4-metilfenil)etanoato
- * de metilo` for `fenilacetato`.
+ * de metilo` for `fenilacetato`; R-6b2: `2-(4-metilfenil)etanonitrilo` for
+ * `fenilacetonitrilo` (the `o` of `etano` kept before the consonant).
  */
 const RING_TEMPLATE_EXAMPLES = Object.freeze({
   acetophenone: `1-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}`
@@ -338,6 +344,8 @@ const RING_TEMPLATE_EXAMPLES = Object.freeze({
     + `${ENCLOSING_MARKS[0][1]}${stem(2)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[ACID_KIND]}`,
   phenylacetate: `2-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}${stem(2)}`
     + `${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[ESTER_KIND]}${ESTER_LINK}${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${ESTER_ALKYL_ENDING}`,
+  phenylacetonitrile: `2-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}${stem(2)}`
+    + `${ENDINGS.saturated}${GROUP_SUFFIXES[NITRILE_KIND]}`,
 });
 
 /**
@@ -1299,7 +1307,8 @@ const KETONE_GROUP = 'grupo C=O';
  * R-5c1: «…en el benzaldehído, ese carbono ya lleva un grupo CHO»; the
  * retained phenols of R-5a3a: «grupo OH»; the carbonyl templates of
  * R-5c3a: «grupo CHO», and «grupo C=O» for `acetona` and `acetofenona`;
- * R-5d1: «grupo COOH» for `benzoico`; R-6b1: «grupo C≡N» for `benzonitrilo`).
+ * R-5d1: «grupo COOH» for `benzoico`; R-6b1: «grupo C≡N» for `benzonitrilo`;
+ * R-6b2: and for the retained nitrile words, `acetonitrilo`, `ftalonitrilo`).
  *
  * @param {{kind: string}} suffix - A SuffixSpec placed by its parent's word.
  * @returns {string} The group's name.
@@ -1315,7 +1324,7 @@ function placedGroupWord(suffix) {
     return ESTER_GROUP; // `benzoato` (R-6a1)
   }
   if (suffix.kind === NITRILE_KIND) {
-    return NITRILE_GROUP; // `benzonitrilo` (R-6b1)
+    return NITRILE_GROUP; // `benzonitrilo` (R-6b1); `acetonitrilo`, `ftalonitrilo` (R-6b2)
   }
   return suffix.kind === 'alcohol' ? GROUP_WORD_PARENTS.phenol.group : GROUP_WORD_PARENTS.benzaldehyde.group;
 }

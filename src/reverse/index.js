@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -26,8 +26,9 @@
  * `formiato`, `acetato` and `fenilacetato`; R-6a2b: the ester prefixes,
  * `acetiloxi`, `[(2-metilpropanoil)oxi]`, `metoxicarbonil`,
  * `[(propan-2-iloxi)carbonil]`) and their nitriles (R-6b1: the suffixes
- * `nitrilo` and `carbonitrilo`, `benzonitrilo`, the prefix `ciano`). Pure, no
- * DOM.
+ * `nitrilo` and `carbonitrilo`, `benzonitrilo`, the prefix `ciano`; R-6b2:
+ * the retained `acetonitrilo`, `fenilacetonitrilo` and `ftalonitrilo`). Pure,
+ * no DOM.
  *
  * The nitriles (R-6b1) need nothing of their own here either: the parser
  * reads their tiles, the assembler writes them as render.js does, the
@@ -75,6 +76,14 @@
  * refusals). An ester's own mistakes are diagnose.js «Esters»'s (R-6a3a:
  * the principal –COO– group's; R-6a3b: the O-bound side's, and an ether
  * class name whose oxygen is an ester's, ESTER_CLASS_NAME).
+ *
+ * The retained nitrile names (R-6b2) need nothing of their own here either,
+ * as the retained acids: the engine gives them as alternatives
+ * (`acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`, also
+ * `2-(4-metilfenil)acetonitrilo` and `4-metilftalonitrilo`), so they are
+ * `alternative`; one with any other prefix (`2-cloroacetonitrilo`) describes
+ * its molecule and gets `otherName`; `(4-metilfenil)acetonitrilo` is
+ * `missingLocants`, `metilftalonitrilo` `ambiguous`.
  *
  * The retained ester names (R-6a2a) need nothing of their own here either,
  * as the retained acids: the engine gives them as alternatives, with the

@@ -107,7 +107,9 @@ test('the §15.5.1 examples, the ring forms, the benzene forms and the template 
   assert.deepEqual(ERROR_CODES, ['EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER',
     'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS', 'TEMPLATE_LOCANTS', 'POSITIONAL', 'ETHER_GROUPS', 'ACID_WORD', 'ESTER_GROUPS',
     'ESTER_SUFFIX']); // ESTER_GROUPS, ESTER_SUFFIX since R-6a1 (reverse-esters.test.js) // ETHER_GROUPS: R-5b2;
-  // ACID_WORD: R-5d1; R-6b1 adds none (the nitriles' misplaced tiles are TILE_ORDER and TEMPLATE_LOCANTS: reverse-nitriles.test.js)
+  // ACID_WORD: R-5d1; R-6b1 adds none (the nitriles' misplaced tiles are TILE_ORDER and TEMPLATE_LOCANTS: reverse-nitriles.test.js),
+  // nor does R-6b2 (the retained nitrile names reuse TEMPLATE_LOCANTS, POSITIONAL, TILE_ORDER, ACID_WORD and ESTER_SUFFIX:
+  // reverse-nitrile-templates.test.js)
 });
 
 test('the tree is lossless: every tile exactly once, in order, also with mistakes', () => {

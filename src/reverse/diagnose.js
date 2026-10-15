@@ -22,9 +22,9 @@
  * «Esters» below: the rules that hold for an ester's acid part and for an
  * ester prefix, the principal –COO– group's own mistakes, checked first with
  * the acid's, then the O-bound side's, and an ester prefix's own words, among
- * the branch-name rules), and their nitriles (R-6b1; «Nitriles» below: the
- * rules that hold for a nitrile name, the nitrile's own mistakes deliberate
- * nulls until phase I-52b3).
+ * the branch-name rules), and their nitriles (R-6b1, R-6b2 — the retained
+ * names —; «Nitriles» below: the rules that hold for a nitrile name, the
+ * nitrile's own mistakes deliberate nulls until phase I-52b3).
  *
  * The rules, in order (first match wins):
  *
@@ -972,9 +972,10 @@
  * ether, and how the engine writes the –COO– groups; step `group`; no
  * student's chain, as on any class name.
  *
- * **Nitriles** (design.md §13.4 I-38, I-39a, I-40c, §15.8 R-6b; phase
- * R-6b1). The –C≡N of `nitrilo` (terminal by rule, as `oico`: its carbon is
- * the chain's end carbon), `carbonitrilo` or `benzonitrilo` is the principal
+ * **Nitriles** (design.md §13.4 I-38, I-39a, I-40c, §15.8 R-6b; phases
+ * R-6b1, R-6b2 — the retained names —). The –C≡N of `nitrilo` (terminal
+ * by rule, as `oico`: its carbon is the chain's end carbon), `carbonitrilo`
+ * or `benzonitrilo` is the principal
  * group below an acid, an ester or an amide (naming/seniority.js: ácido >
  * éster > amida > nitrilo > aldehído > cetona > alcohol > amina); the
  * engine's trace has P0 (most –C≡N groups on the chain) and N0, and, with a
@@ -1018,6 +1019,28 @@
  * (`5,2-dimetilbencenocarbonitrilo`), a placement that numbers the –C≡N
  * otherwise is one of the readings diagnose() tries, so its null is the
  * whole diagnosis's (an acid's names the other mistake, LOCANT_ORDER).
+ *
+ * The retained nitrile names (R-6b2: `acetonitrilo`, `fenilacetonitrilo`,
+ * `ftalonitrilo`; tiles.js isNitrileTemplate()) are templates whose word
+ * places the –C≡N groups, so they need no rule of their own, as the retained
+ * acids: SUBSTITUTED_TEMPLATE speaks where the engine never writes the
+ * prefixes (substitutedChainTemplate(): `2-cloroacetonitrilo` → «El nombre
+ * tradicional «acetonitrilo» no admite sustituyentes: … «2-cloroetanonitrilo».»,
+ * `metilacetonitrilo`, `2-clorofenilacetonitrilo`), `ftalonitrilo` with any
+ * prefixes and a phenyl on `acetonitrilo` (tiles.js templateAdmits()) are
+ * judged by the other rules (`5-metilftalonitrilo` → RING_NUMBERING at N1,
+ * `2-(5-metilfenil)acetonitrilo` → BRANCH_RING_NUMBERING), and the locant the
+ * engine leaves out of `fenilacetonitrilo`, written, is traditionalLocants()'s
+ * NEEDLESS_LOCANTS (`2-fenilacetonitrilo`). A template whose –C≡N groups are
+ * not the engine's is a nitrile's own mistake, nitrileChecks() coming first:
+ * another –C≡N written `ciano` beside the word (`2-cianoacetonitrilo` →
+ * `propanodinitrilo`, `4-cianoftalonitrilo` → `benceno-1,2,4-tricarbonitrilo`:
+ * `count`), or the word beside a senior group (`2-carboxiacetonitrilo` →
+ * `ácido 2-cianoetanoico`, `4-carboxiftalonitrilo` → `ácido
+ * 3,4-dicianobenzoico`: `seniority`) — deliberate nulls for phase I-52b3 like
+ * the others above. No retained nitrile word puts the –C≡N's carbon on the
+ * other side of a parent (the engine has no `formonitrilo`), so no `carbon`
+ * case comes from them.
  *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
@@ -5047,13 +5070,15 @@ function bencenol(ctx) {
  * SUBSTITUTED_TEMPLATE on a chain template (R-5c3a: `acetona`,
  * `formaldehído`, `acetaldehído`, `acetofenona`, `fenilacetaldehído`; R-5d2:
  * `ácido fórmico`, `ácido acético`, `ácido oxálico`, `ácido fenilacético`,
- * quoted with the class word; R-6a2a: `formiato`, `acetato`, `fenilacetato`)
+ * quoted with the class word; R-6a2a: `formiato`, `acetato`, `fenilacetato`;
+ * R-6b2: `acetonitrilo`, `fenilacetonitrilo`)
  * with prefixes of the student's that the engine never writes on it
- * (tiles.js templateAdmits(): only `acetaldehído`, `acético` or `acetato`
- * with one phenyl, `2-(4-metilfenil)acetaldehído`): the molecule has its
+ * (tiles.js templateAdmits(): only `acetaldehído`, `acético`, `acetato` or
+ * `acetonitrilo` with one phenyl, `2-(4-metilfenil)acetaldehído`): the molecule has its
  * systematic name (`1-cloroacetona` → «1-cloropropan-2-ona», `ácido
  * 2-cloroacético` → «ácido 2-cloroetanoico», `2-cloroacetato de metilo` →
- * «2-cloroetanoato de metilo»), whatever its parent; the
+ * «2-cloroetanoato de metilo», `2-cloroacetonitrilo` → «2-cloroetanonitrilo»),
+ * whatever its parent; the
  * message names no parent (`parent` null). Rule 2, before the chain's and
  * the ring's rules, as for a substituted `tolueno`; its step is the choice
  * of the principal chain.
@@ -6098,7 +6123,8 @@ function needlessLocants(ctx) {
  * (`2-fenilacetaldehído` → `fenilacetaldehído`, the engine's alternative of
  * `2-feniletanal`; on `2-(3-metilfenil)acetaldehído` the engine writes the
  * 2; R-5d2: `ácido 2-fenilacético` → `ácido fenilacético`; R-6a2a:
- * `2-fenilacetato de metilo` → `fenilacetato de metilo`). The message
+ * `2-fenilacetato de metilo` → `fenilacetato de metilo`; R-6b2:
+ * `2-fenilacetonitrilo` → `fenilacetonitrilo`). The message
  * quotes that name; its step is «Monta el nombre», which lists it among the
  * other valid forms.
  *
