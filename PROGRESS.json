@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T14:04:19Z",
+  "updated": "2026-10-15T15:05:19Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -853,8 +853,11 @@
     {
       "id": "I-52a2b",
       "title": "v4 R-6a2b Ester prefixes aciloxi and alcoxicarbonil",
-      "status": "queued",
-      "summary": "Reads the ester prefixes the engine writes, such as acetiloxi and metoxicarbonil, on chains, rings and benzene."
+      "status": "done",
+      "summary": "Reads the ester prefixes the engine writes, such as acetiloxi and metoxicarbonil, on chains, rings and inside branches.",
+      "risk": "high",
+      "review": "Codex ship, 0 findings — docs/reviews/I-52a2b.md",
+      "narrative": "docs/progress-archive/i-52a2b.md"
     },
     {
       "id": "I-52a3",

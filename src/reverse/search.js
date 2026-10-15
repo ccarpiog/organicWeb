@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -68,7 +68,12 @@
  *   `carboxilato`'s one; each O-bound group's own chain is a chain of the
  *   model, its free valence one bond (to the bridge oxygen, which never
  *   limits a placement), its own left-out locants searched like a branch's
- *   (`etanoato de cloroetilo`: two structures).
+ *   (`etanoato de cloroetilo`: two structures). The ester prefixes (R-6a2b)
+ *   add no role either: an acyloxy prefix is modelled as its acyl branch (the
+ *   =O on its carbon 1, which also takes the bond to the ether oxygen) and
+ *   an alkoxycarbonyl prefix as its alkoxy branch; each takes one bond of the
+ *   carbon it hangs from (`ácido (acetiloxi)propanoico`: two structures;
+ *   `ácido (metoxicarbonil)butanodioico`: one).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,

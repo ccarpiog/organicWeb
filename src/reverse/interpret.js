@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -141,6 +141,16 @@
  * 2…6); `acetil` a retained word (build.js knows its atoms). The prefix's
  * slots are carbon slots of what it hangs from, as for any branch.
  *
+ * The ester prefixes (R-6a2b) need no kind of their own: an acyloxy prefix
+ * (`acetil oxi`, `prop ano oil oxi`) is the acyl branch's SubstituentSpec
+ * with `alkoxy` set too, as the forward engine's acyloxy structure is its
+ * acyl group's with `alkoxy` (build.js puts the C=O first, then the ether
+ * oxygen); an alkoxycarbonyl prefix (`met il oxi carbonil`) the alkoxy
+ * group's with `alkoxycarbonyl` set (build.js adds the C=O carbon between
+ * the ether oxygen and the carbon the prefix hangs from). Their slots are
+ * those of any branch: the prefix's on what it hangs from, the inner
+ * branch's own on its chain.
+ *
  * The carboxylic acids (R-5d1) read their suffix like the aldehydes': `oico`
  * on a chain with its slots at the ends by rule (implicit, `terminal`: carbon
  * 1, and the last carbon with `dioico`), `carboxílico` with carbon slots of
@@ -238,6 +248,8 @@ import { esterGroupsOf } from './assemble.js';
  * @property {boolean} compound - Written as a compound branch (START … END).
  * @property {[number, number]} tiles - Tile range of the branch.
  * @property {boolean} [oBound] - An ester's O-bound group (R-6a1, EsterSpec): bonded to the bridge oxygen.
+ * @property {boolean} [alkoxycarbonyl] - An ester's alkoxycarbonyl prefix (R-6a2b; set only then): the alkoxy group (`alkoxy`
+ *   set) is bonded through its ether oxygen to a C=O carbon, which is bonded to the carbon the prefix hangs from.
  */
 
 /**
@@ -465,7 +477,7 @@ function chainSubstituent(ctx, chain, items, compound, range) {
     ? makeSlot('supplied', tiles[chain.fvLocants[0]].value, 'carbon', length, [chain.fvLocants[0], chain.fvLocants[0] + 1])
     : makeSlot('implicit', 1, 'carbon', length, fvTile); // `il` without a locant: carbon 1 by rule; `oil`, `carbonil` too (R-5c2)
   const acyl = tiles[chain.fv].kind === 'acyl'; // `propanoil`, `ciclohexanocarbonil`: a single bond from the C=O carbon (R-5c2)
-  return {
+  return withAlkoxycarbonyl({
     kind: chainKind(chain),
     length,
     freeValence: { slot, order: acyl ? 1 : tiles[chain.fv].value },
@@ -474,12 +486,26 @@ function chainSubstituent(ctx, chain, items, compound, range) {
     prefixes,
     retained: null,
     word: null,
-    alkoxy: hasAlkoxy(chain), // `met il oxi`: `metoxi` (R-5b)
+    alkoxy: hasAlkoxy(chain), // `met il oxi`: `metoxi` (R-5b); with an acyl, `propanoiloxi` (R-6a2b)
     acyl,
     compound,
     tiles: [range[0], range[1]],
-  };
+  }, chain);
 } // End of function chainSubstituent()
+
+/**
+ * A SubstituentSpec with `alkoxycarbonyl` set when its node ends in `oxi`
+ * and `carbonil` (R-6a2b, parse.js `carbonil`: `metoxicarbonil`), as the
+ * forward engine's substituent structure has it; unchanged otherwise (the
+ * field only when set, so every other spec keeps its shape).
+ *
+ * @param {object} spec - The branch's SubstituentSpec (its `alkoxy` set from `oxi`).
+ * @param {object} node - Its chain or retained node (parse.js).
+ * @returns {object} The spec.
+ */
+function withAlkoxycarbonyl(spec, node) {
+  return node.carbonil === undefined ? spec : { ...spec, alkoxycarbonyl: true };
+}
 
 /**
  * Tells whether a chain or retained node ends in the alkoxy ending `oxi`
@@ -575,9 +601,9 @@ function phenylSubstituent(ctx, tile, items, compound, range, alkoxy) {
  */
 function wordSubstituent(ctx, node, items, compound, range) {
   const { tile } = node;
-  return PHENYL_RINGS.includes(ctx.tiles[tile].value)
+  return withAlkoxycarbonyl(PHENYL_RINGS.includes(ctx.tiles[tile].value)
     ? phenylSubstituent(ctx, tile, items, compound, range, hasAlkoxy(node))
-    : retainedSubstituent(ctx, tile, items, compound, range, hasAlkoxy(node));
+    : retainedSubstituent(ctx, tile, items, compound, range, hasAlkoxy(node)), node); // `isopropoxicarbonil` (R-6a2b)
 }
 
 /**

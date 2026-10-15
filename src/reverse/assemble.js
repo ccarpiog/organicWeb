@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -35,7 +35,9 @@
  *    (`isopropil`, `tert-butil`); ( ) then [ ] then { } outwards; the
  *    student's multiplier kept as chosen (`di(propan-2-il)`,
  *    `bis(1-metiletil)`, even a wrong `bis(propan-2-il)`); a hyphen between
- *    a multiplier and an italic descriptor (`di-tert-butil`). The "crowded"
+ *    a multiplier and an italic descriptor (`di-tert-butil`), also when an
+ *    opening mark stands between them, as render.js groupTokens() writes it
+ *    (R-6a2b: `bis-(tert-butoxicarbonil)`). The "crowded"
  *    case of render.js enclosedInName() — prefixes written without locants
  *    beside other prefixes, where a ring prefix after the first one is
  *    enclosed (`cloro(fenil)metanol`, `metil(ciclohexil)metano`) — is
@@ -118,6 +120,25 @@
  *    `4-metilfenilo`: a word of its own), and with the student's multiplier
  *    it is enclosed as a prefix by itself (`di(propan-2-ilo)`,
  *    `bis(2-cloroetilo)`, `dimetilo`, `diisopropilo`, `di-tert-butilo`).
+ * 11. the ester prefixes (R-6a2b; render.js alkoxyTokens(),
+ *    alkoxycarbonylTokens(), needsEnclosure(), enclosureLevel(),
+ *    isCompoundPrefix()): an acyloxy prefix (`oxi` after an acyl branch,
+ *    esterPrefixKind()) is its acyl prefix written whole + `oxi`, never
+ *    contracted (`acetiloxi`, `formiloxi`, `propanoiloxi`, `benzoiloxi`), and
+ *    an alkoxycarbonyl prefix (`carbonil` after `oxi`) its alkoxy prefix,
+ *    contracted by rule 6 (`metoxi`, `isopropoxi`, `fenoxi`), + `carbonil`;
+ *    both are always enclosed and compound (`(acetiloxi)`,
+ *    `(metoxicarbonil)`, `bis(acetiloxi)`, `bis(metoxicarbonil)`, the
+ *    student's multiplier kept as chosen), and their inner part — the acyl
+ *    prefix before `oxi`, the alkoxy prefix before `carbonil` — has marks of
+ *    its own, one level inside, when render.js encloses it
+ *    (esterInnerEnclosed(): `[(prop-2-enoil)oxi]`,
+ *    `[(ciclohexanocarbonil)oxi]`, `[(propan-2-iloxi)carbonil]`; with
+ *    prefixes of its own, a compound branch whose START / END carry the outer
+ *    marks, `[(2-metilpropanoil)oxi]`, `[(2-cloroetoxi)carbonil]`,
+ *    `{[2-(acetiloxi)etanoil]oxi}`): the inner opening mark right after the
+ *    outer one, the inner closing mark right before `oxi` or `carbonil`, both
+ *    automatic pieces, so text order stays tile order.
  *
  * A ring (R-4a) is a chain with its `ciclo` tile before the root, and takes
  * the same rules: `ciclohexa-1,3-dieno` (rule 2), `ciclooct-1-en-3-ino` and
@@ -190,7 +211,7 @@
 import {
   ENDINGS, ENCLOSING_MARKS, CONNECTING_VOWEL, SATURATED_INFIX, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN,
 } from '../naming/lexicon.es.js';
-import { isAtomGroup, closingText, ALKOXY_RETAINED } from './tiles.js';
+import { isAtomGroup, closingText, ALKOXY_RETAINED, isAcyloxyHead } from './tiles.js';
 
 /**
  * Longest alkyl chain whose alkoxy prefix is contracted (rule 6, R-5b:
@@ -229,6 +250,74 @@ export function alkoxyCore(node) {
 export function isAlkoxyNode(node) {
   return alkoxyCore(node) !== null;
 }
+
+/**
+ * The tile before the `oxi` of an alkoxy prefix's core (R-5b): its chain's
+ * free-valence tile (`il`, or an acyl ending `oil` / `carbonil`), or its
+ * retained word (`isopropil`, `acetil`…).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} core - alkoxyCore() of a prefix.
+ * @returns {object} The tile.
+ */
+function headTile(tiles, core) {
+  return tiles[core.type === 'chain' ? core.fv : core.tile];
+}
+
+/**
+ * The kind of ester prefix a substituent is (R-6a2b): 'acyloxy' for an acyl
+ * branch closed by `oxi` (`acetiloxi`, `propanoiloxi`, `benzoiloxi`; tiles.js
+ * isAcyloxyHead()), 'alkoxycarbonyl' for an alkoxy branch closed by `oxi` and
+ * `carbonil` (`metoxicarbonil`, `isopropoxicarbonil`; parse.js `carbonil`);
+ * null for any other substituent, alkoxy prefixes included.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object|null} node - A substituent node (parse.js), or null.
+ * @returns {'acyloxy'|'alkoxycarbonyl'|null} The kind.
+ */
+export function esterPrefixKind(tiles, node) {
+  const core = alkoxyCore(node);
+  if (core === null) {
+    return null;
+  }
+  if (core.carbonil !== undefined) {
+    return 'alkoxycarbonyl';
+  }
+  return isAcyloxyHead(headTile(tiles, core)) ? 'acyloxy' : null;
+} // End of function esterPrefixKind()
+
+/**
+ * Tells whether the inner part of an ester prefix (R-6a2b) — the acyl
+ * prefix before `oxi` of an acyloxy group, the alkoxy prefix before
+ * `carbonil` of an alkoxycarbonyl group — is enclosed inside the prefix's
+ * own marks, as render.js alkoxyTokens() and alkoxycarbonylTokens() enclose
+ * it: always with prefixes of its own (a compound branch:
+ * `[(2-metilpropanoil)oxi]`, `[(2-cloroetoxi)carbonil]`); else, for an acyl
+ * part, a chain's with a multiple bond or a cited locant or a `ciclo`
+ * ring's (`[(prop-2-enoil)oxi]`, `[(ciclohexanocarbonil)oxi]`; never
+ * `acetil`, `formil`, `benzoil` or `propanoil`, isEnclosed() of an acyl
+ * prefix), and for an alkoxy part one that is not contracted
+ * (`[(propan-2-iloxi)carbonil]`, `[(pentiloxi)carbonil]`; never `metoxi`,
+ * `isopropoxi`, `fenoxi`).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} node - A substituent node (parse.js).
+ * @returns {boolean} True when the inner part has marks of its own.
+ */
+export function esterInnerEnclosed(tiles, node) {
+  const kind = esterPrefixKind(tiles, node);
+  if (kind === null) {
+    return false;
+  }
+  if (node.type === 'branch' && node.items.length > 0) {
+    return true;
+  }
+  const core = alkoxyCore(node);
+  if (kind === 'alkoxycarbonyl') {
+    return !isContractedCore(tiles, core);
+  }
+  return core.type === 'chain' && (core.ring !== null || core.segments.length > 0 || citesLocant(core));
+} // End of function esterInnerEnclosed()
 
 /**
  * The `ilo` tile that ends a substituent (R-6a1, an ester's O-bound group):
@@ -286,8 +375,8 @@ export function esterGroupsOf(tiles, items) {
  * render.js isContractedAlkoxy()): a retained word that takes `oxi`
  * (`isopropoxi`, `tert-butoxi`, `fenoxi`; tiles.js ALKOXY_RETAINED — never
  * an acyl word, R-5c2, whose `oxi` render.js writes after it whole,
- * `(acetiloxi)`, `(formiloxi)`: an ester's prefix the parser refuses until
- * phase R-6a), or a saturated open chain of one to MAX_CONTRACTED_ALKOXY
+ * `(acetiloxi)`, `(formiloxi)`: an ester's acyloxy prefix, R-6a2b), or a
+ * saturated open chain of one to MAX_CONTRACTED_ALKOXY
  * carbons whose free valence sits at its carbon 1 by rule (`il` with no
  * locant, no `ano`): `metoxi`, `butoxi`.
  *
@@ -309,7 +398,8 @@ const COMPOUND_RETAINED_ALKOXY = 'tert-butyl';
 
 /**
  * Tells whether an alkoxy prefix is compound for its multiplier (rule 6,
- * R-5b; render.js isCompoundPrefix()) because of its form: not contracted,
+ * R-5b; render.js isCompoundPrefix()) because of its form: an ester prefix
+ * (rule 11, R-6a2b: `bis(acetiloxi)`, `bis(metoxicarbonil)`), not contracted,
  * so written as its branch + `oxi` (`bis(pentiloxi)`, `bis(propan-2-iloxi)`),
  * or `tert-butoxi`, which render.js counts as compound because the engine's
  * tert-butyl structure carries its two methyls as prefixes
@@ -325,6 +415,9 @@ export function isCompoundAlkoxy(tiles, node) {
   const core = alkoxyCore(node);
   if (core === null) {
     return false;
+  }
+  if (esterPrefixKind(tiles, node) !== null) {
+    return true; // R-6a2b: an ester prefix is always compound (render.js isCompoundPrefix(): `bis(acetiloxi)`, `bis(metoxicarbonil)`).
   }
   return core.type === 'retained' ? tiles[core.tile].value === COMPOUND_RETAINED_ALKOXY : !isContractedCore(tiles, core);
 }
@@ -379,7 +472,8 @@ function citesLocant(chain) {
 /**
  * Tells whether a substituent is written between enclosing marks
  * (rule 5, render.js needsEnclosure()), whatever stands beside it. An
- * alkoxy prefix (rule 6, R-5b) is enclosed unless contracted:
+ * ester prefix (rule 11, R-6a2b) always is: `(acetiloxi)`,
+ * `(metoxicarbonil)`. An alkoxy prefix (rule 6, R-5b) is enclosed unless contracted:
  * `(pentiloxi)`, `(eteniloxi)`, but `metoxi`, `isopropoxi`. An acyl prefix
  * (rule 8, R-5c2) of a chain when it cites a multiple bond or a locant
  * (`(but-2-enoil)`; `propanoil` not), one of a ring always
@@ -395,6 +489,9 @@ export function isEnclosed(tiles, node) {
   }
   if (node.type === 'branch') {
     return node.items.length > 0 || (node.chain !== null && isEnclosed(tiles, node.chain));
+  }
+  if (esterPrefixKind(tiles, node) !== null) {
+    return true; // R-6a2b: an ester prefix is always enclosed (render.js needsEnclosure(): `(acetiloxi)`, `(metoxicarbonil)`).
   }
   if (isAlkoxyNode(node)) {
     return !isContractedCore(tiles, node); // `(pentiloxi)`, `(propan-2-iloxi)`, `(ciclohexiloxi)` (R-5b).
@@ -463,15 +560,18 @@ function isRingBranch(tiles, node) {
 /**
  * Nesting level of the enclosing marks of a substituent (render.js
  * enclosureLevel()): 0 for ( ), one more than the highest enclosed prefix
- * inside it.
+ * inside it; one more again for an ester prefix whose inner part has marks
+ * of its own (rule 11, R-6a2b: `[(propan-2-iloxi)carbonil]`).
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} node - A chain, retained or branch node.
  * @returns {number} The level.
  */
 export function enclosureLevel(tiles, node) {
+  // R-6a2b: an ester prefix's marks go round its inner part's (render.js enclosureLevel()): `[(propan-2-iloxi)carbonil]`.
+  const inner = esterInnerEnclosed(tiles, node) ? 1 : 0;
   if (node.type !== 'branch') {
-    return 0;
+    return inner;
   }
   let level = 0;
   node.items.forEach((item, i) => {
@@ -479,7 +579,7 @@ export function enclosureLevel(tiles, node) {
       level = Math.max(level, enclosureLevel(tiles, item.substituent) + 1);
     }
   });
-  return level;
+  return level + inner;
 } // End of function enclosureLevel()
 
 /**
@@ -499,6 +599,7 @@ function strayPieces(tiles, index, out) {
     freeValence: 'ending', retained: 'prefix', halogen: 'prefix', hydroxy: 'prefix', carbonyl: 'prefix', suffix: 'ending', start: 'punct',
     end: 'punct',
     ring: 'stem', benzene: 'stem', template: 'stem', alkoxy: 'ending', classWord: 'ending', suffixClass: 'ending',
+    acyl: 'ending', esterAlkyl: 'ending', // A stray `oil`, `carbonil` (R-5c2; after a compound branch's END, R-6a2b) or `ilo` (R-6a1).
   };
   out.push(piece(tile.text, index, kinds[tile.kind], roles[tile.kind] || 'word', tile.italic ? { italic: true } : {}));
 }
@@ -573,9 +674,11 @@ function locantText(tiles, index, ring = null) {
  * @param {'parent'|'prefix'} style - Part kinds of the parent or of a branch.
  * @param {Piece[]} out - Receives the pieces.
  * @param {boolean} [beforeVowel] - The parent's suffix starts with a vowel: its last ending loses its `o` (rule 4, R-5a2).
+ * @param {string[]|null} [inner] - The marks of an ester prefix's inner part (R-6a2b, rule 11): its closing mark goes
+ *   before `oxi` (acyloxy) or `carbonil` (alkoxycarbonyl); null without them (default).
  * @returns {void}
  */
-function chainPieces(tiles, chain, style, out, beforeVowel = false) {
+function chainPieces(tiles, chain, style, out, beforeVowel = false, inner = null) {
   const kinds = KINDS[style];
   const hasFreeValence = chain.fv !== null;
   // The last ending loses its vowel before `il`, `iliden` or `oil`, never before `carbonil` (rule 8, R-5c2).
@@ -615,14 +718,45 @@ function chainPieces(tiles, chain, style, out, beforeVowel = false) {
     out.push(piece(silent ? '' : tiles[chain.fv].text, chain.fv, kinds.ending, 'word'));
   }
   if (alkoxy) {
-    out.push(piece(tiles[chain.oxi].text, chain.oxi, kinds.ending, 'word')); // `metoxi`, `pentiloxi` (R-5b)
+    esterEndingPieces(tiles, chain, kinds.ending, inner, out); // `metoxi`, `pentiloxi` (R-5b); `(propanoil)oxi`, `metoxicarbonil` (R-6a2b)
   }
 } // End of function chainPieces()
 
 /**
+ * The pieces of an alkoxy prefix's `oxi` and, for an alkoxycarbonyl prefix
+ * (R-6a2b, rule 11), its `carbonil`, with the closing mark of the ester
+ * prefix's inner part where it goes: before `oxi` after an acyl part
+ * (`(prop-2-enoil)` + `oxi`), before `carbonil` after an alkoxy part
+ * (`(propan-2-iloxi)` + `carbonil`).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} core - alkoxyCore() of the prefix (a chain or retained node with `oxi`).
+ * @param {string} kind - The part kind of the pieces.
+ * @param {string[]|null} inner - The inner part's marks, or null.
+ * @param {Piece[]} out - Receives the pieces.
+ * @returns {void}
+ */
+function esterEndingPieces(tiles, core, kind, inner, out) {
+  const carbonil = core.carbonil !== undefined;
+  if (inner && !carbonil) {
+    out.push(piece(inner[1], null, 'punct', 'close')); // `[(prop-2-enoil)oxi]`
+  }
+  out.push(piece(tiles[core.oxi].text, core.oxi, kind, 'word'));
+  if (carbonil) {
+    if (inner) {
+      out.push(piece(inner[1], null, 'punct', 'close')); // `[(propan-2-iloxi)carbonil]`
+    }
+    out.push(piece(tiles[core.carbonil].text, core.carbonil, kind, 'word')); // `metoxicarbonil`
+  }
+} // End of function esterEndingPieces()
+
+/**
  * The pieces of a substituent with its enclosing marks (rule 5): the
  * controls of a compound branch carry the marks (an unfinished branch
- * always shows its opening mark), a simple branch gets automatic ones.
+ * always shows its opening mark), a simple branch gets automatic ones; an
+ * opening mark right before an italic descriptor takes its italic flag, so
+ * a multiplier before it is followed by rule 5's hyphen, as render.js writes
+ * it (`bis-(tert-butoxicarbonil)`, R-6a2b).
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} node - A chain, retained or branch node.
@@ -631,13 +765,40 @@ function chainPieces(tiles, chain, style, out, beforeVowel = false) {
  * @returns {void}
  */
 function substituentPieces(tiles, node, enclosed, out) {
-  const [open, close] = ENCLOSING_MARKS[enclosureLevel(tiles, node) % ENCLOSING_MARKS.length];
+  const first = out.length;
+  substituentPiecesOf(tiles, node, enclosed, out);
+  // Rule 5's hyphen before an italic descriptor, as render.js groupTokens() writes it, also when the substituent's opening mark
+  // stands between them (R-6a2b: `bis-(tert-butoxicarbonil)`): the mark takes the italic flag of the word right after it.
+  const shown = out.slice(first).filter((p) => p.text !== '');
+  if (shown.length > 1 && shown[0].role === 'open' && shown[1].italic) {
+    shown[0].italic = true;
+  }
+} // End of function substituentPieces()
+
+/**
+ * The pieces of a substituent with its enclosing marks (substituentPieces(),
+ * without rule 5's hyphen before a mark).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} node - A chain, retained or branch node.
+ * @param {boolean} enclosed - Whether it is enclosed where it stands (enclosedAt()).
+ * @param {Piece[]} out - Receives the pieces.
+ * @returns {void}
+ */
+function substituentPiecesOf(tiles, node, enclosed, out) {
+  const level = enclosureLevel(tiles, node);
+  const [open, close] = ENCLOSING_MARKS[level % ENCLOSING_MARKS.length];
+  // R-6a2b (rule 11): an ester prefix's inner part, one level inside: `[(2-metilpropanoil)oxi]`, `[(propan-2-iloxi)carbonil]`.
+  const inner = esterInnerEnclosed(tiles, node) ? ENCLOSING_MARKS[(level - 1) % ENCLOSING_MARKS.length] : null;
   if (node.type === 'branch') {
     const pending = node.end === null;
     out.push(piece(enclosed || pending ? open : '', node.start, 'punct', 'open', pending ? { pending: true } : {}));
+    if (inner) {
+      out.push(piece(inner[0], null, 'punct', 'open'));
+    }
     node.items.forEach((item, i) => itemPieces(tiles, node.items, i, true, out));
     if (node.chain) {
-      ownChainPieces(tiles, node.chain, out); // Inside the branch's marks, never enclosed again: `(3-metilbutan-2-il)`.
+      ownChainPieces(tiles, node.chain, out, inner); // Inside the branch's marks, never enclosed again: `(3-metilbutan-2-il)`.
     }
     if (!pending) {
       out.push(piece(enclosed ? close : '', node.end, 'punct', 'close'));
@@ -647,11 +808,14 @@ function substituentPieces(tiles, node, enclosed, out) {
   if (enclosed) {
     out.push(piece(open, null, 'punct', 'open'));
   }
-  ownChainPieces(tiles, node, out);
+  if (inner) {
+    out.push(piece(inner[0], null, 'punct', 'open'));
+  }
+  ownChainPieces(tiles, node, out, inner);
   if (enclosed) {
     out.push(piece(close, null, 'punct', 'close'));
   }
-} // End of function substituentPieces()
+} // End of function substituentPiecesOf()
 
 /**
  * The pieces of a simple branch without enclosing marks: a retained word, a
@@ -662,25 +826,26 @@ function substituentPieces(tiles, node, enclosed, out) {
  * @param {object[]} tiles - The tile sequence.
  * @param {object} node - A chain, retained, halogen or hydroxy node.
  * @param {Piece[]} out - Receives the pieces.
+ * @param {string[]|null} [inner] - The marks of an ester prefix's inner part (R-6a2b; esterEndingPieces()), or null (default).
  * @returns {void}
  */
-function ownChainPieces(tiles, node, out) {
+function ownChainPieces(tiles, node, out, inner = null) {
   if (node.type === 'retained' || isAtomGroup(node.type)) {
     const tile = tiles[node.tile];
     const alkoxy = isAlkoxyNode(node);
     const ilo = node.type === 'retained' && node.ilo !== undefined; // `isopropil ilo` (R-6a1, rule 10)
-    // As render.js alkoxyTokens(): `isoprop` + `oxi`, but `acetil` + `oxi` (R-5c2, an out-of-place ester prefix).
+    // As render.js alkoxyTokens(): `isoprop` + `oxi`, but `acetil` + `oxi` (R-6a2b, an ester's acyloxy prefix).
     const cut = ((alkoxy && node.type === 'retained' && isContractedCore(tiles, node)) || ilo) && tile.text.endsWith(IL);
     const text = cut ? tile.text.slice(0, -IL.length) : tile.text;
     out.push(piece(text, node.tile, 'prefix', 'word', tile.italic ? { italic: true } : {}));
     if (alkoxy) {
-      out.push(piece(tiles[node.oxi].text, node.oxi, 'prefix', 'word')); // `isopropoxi`, `fenoxi` (R-5b)
+      esterEndingPieces(tiles, node, 'prefix', inner, out); // `isopropoxi`, `fenoxi` (R-5b); `acetiloxi`, `isopropoxicarbonil` (R-6a2b)
     }
     if (ilo) {
       out.push(piece(tiles[node.ilo].text, node.ilo, 'prefix', 'word')); // `isopropilo`, `tert-butilo`, `fenilo` (R-6a1)
     }
   } else {
-    chainPieces(tiles, node, 'prefix', out);
+    chainPieces(tiles, node, 'prefix', out, false, inner);
   }
 } // End of function ownChainPieces()
 

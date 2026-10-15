@@ -13,7 +13,8 @@
  * suffixes `oico` and `carboxílico`, `benzoico`, the prefix `carboxi`; R-5d2:
  * the retained acid names) and their esters (R-6a1: the suffixes `oato` and
  * `carboxilato`, `benzoato`, the O-bound groups ending in `ilo`; R-6a2a: the
- * retained ester names).
+ * retained ester names; R-6a2b: the ester prefixes, `acetiloxi`,
+ * `metoxicarbonil`).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -267,8 +268,8 @@ export function isCarbonyl(smiles) {
  * to carbons only, and at least one –COOH (isCarboxylOxygen()). Its other
  * oxygens may be OH groups, ether oxygens, the C=O of an aldehyde or a
  * ketone, or an ester's (whose names the tiles write with `oxi` and `oxo`,
- * `ácido 4-metoxi-4-oxobutanoico`, or with ester prefixes, phase R-6a:
- * isAcidName()).
+ * `ácido 4-metoxi-4-oxobutanoico`, or with ester prefixes, read since phase
+ * R-6a2b: ESTER_PREFIX).
  *
  * @param {object} mol - A molecule (model/molecule.js).
  * @returns {boolean} True for an acid.
@@ -341,11 +342,11 @@ export function isAcidTemplateName(name) {
 }
 
 /**
- * The ester prefixes the tiles do not write yet (phase R-6a), by their
- * words: an `alcoxicarbonil` group (`metoxicarbonil`,
- * `[(propan-2-iloxi)carbonil]`) and an acyloxy group (`acetiloxi`,
- * `(formiloxi)`, `(propanoiloxi)`, `[(4-metilbenzoil)oxi]`,
- * `[(ciclohexanocarbonil)oxi]`).
+ * The ester prefixes, by their words: an `alcoxicarbonil` group
+ * (`metoxicarbonil`, `[(propan-2-iloxi)carbonil]`) and an acyloxy group
+ * (`acetiloxi`, `(formiloxi)`, `(propanoiloxi)`, `[(4-metilbenzoil)oxi]`,
+ * `[(ciclohexanocarbonil)oxi]`). The tiles write them since phase R-6a2b;
+ * the tests sweep their names apart (reverse-ester-prefixes.test.js).
  */
 export const ESTER_PREFIX = new RegExp(`${ALKOXY_ENDING}\\)?${RING_CARBONYL_ENDING}|(?:${ACETYL_PREFIX}|${FORMYL_PREFIX}|${ACYL_ENDING}`
   + `|${RING_CARBONYL_ENDING})[)\\]]?${ALKOXY_ENDING}`);
@@ -354,7 +355,7 @@ export const ESTER_PREFIX = new RegExp(`${ALKOXY_ENDING}\\)?${RING_CARBONYL_ENDI
  * Tells whether a name of a carboxylic acid is written with the tiles of
  * phases R-5d1 and R-5d2: none of the words left for later phases
  * (LATER_ACID_WORDS, empty since R-5d2) and no ester prefix (ESTER_PREFIX,
- * phase R-6a).
+ * read since phase R-6a2b and swept apart).
  *
  * @param {string} name - A name.
  * @returns {boolean} True when the tiles read it.
@@ -436,8 +437,8 @@ export const ESTER_WORD = ESTER_LINK;
 /**
  * The words of the ester names the tiles do not write yet: none since phase
  * R-6a2a, whose «Nombres tradicionales» tiles write the retained `formiato`
- * and `acetato` (ESTER_TEMPLATE_WORDS); the ester prefixes are ESTER_PREFIX
- * (phase R-6a2b).
+ * and `acetato` (ESTER_TEMPLATE_WORDS); the ester prefixes (ESTER_PREFIX)
+ * read since phase R-6a2b, beside an acid.
  */
 export const LATER_ESTER_WORDS = Object.freeze([]);
 
@@ -466,7 +467,8 @@ export function isEsterTemplateName(name) {
  * Tells whether a name is an ester's name the tiles of phases R-6a1 and
  * R-6a2a write: it has the automatic ` de `, none of the words left for later
  * phases (LATER_ESTER_WORDS, empty since R-6a2a) and no ester prefix
- * (ESTER_PREFIX, phase R-6a2b).
+ * (ESTER_PREFIX: an acid's name since phase R-6a2b, or an ester the engine
+ * refuses).
  *
  * @param {string} name - A name.
  * @returns {boolean} True when the tiles read it.
@@ -725,10 +727,12 @@ export function leafIndices(node) {
         out.push(...(n.ring === null ? [] : [n.ring]), ...(n.root === null ? [] : [n.root]), ...(n.ano === null ? [] : [n.ano]));
         n.segments.forEach((s) => out.push(...s.locants, ...(s.multiplier === null ? [] : [s.multiplier]), s.ending));
         out.push(...n.fvLocants, ...(n.fv === null ? [] : [n.fv]), ...(n.oxi === null || n.oxi === undefined ? [] : [n.oxi])); // R-5b
+        out.push(...(n.carbonil === undefined ? [] : [n.carbonil])); // `metoxicarbonil` (R-6a2b)
         break;
       default: // 'retained', 'halogen', 'hydroxy', 'benzene', 'template', 'suffixClass', 'stray'
-        // `isopropoxi` (R-5b); `isopropilo` (R-6a1).
-        out.push(n.tile, ...(n.oxi === null || n.oxi === undefined ? [] : [n.oxi]), ...(n.ilo === undefined ? [] : [n.ilo]));
+        // `isopropoxi` (R-5b); `isopropoxicarbonil` (R-6a2b); `isopropilo` (R-6a1).
+        out.push(n.tile, ...(n.oxi === null || n.oxi === undefined ? [] : [n.oxi]), ...(n.carbonil === undefined ? [] : [n.carbonil]),
+          ...(n.ilo === undefined ? [] : [n.ilo]));
     }
   }; // End of function visit()
   visit(node);

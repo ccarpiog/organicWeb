@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -98,6 +98,17 @@
  * one bonded to the chain. A ring bonded through that carbon is not bonded
  * atom to atom to the ring it hangs from (`benzoilbenceno` has a structural
  * key; the engine refuses it, two rings).
+ * The ester prefixes (R-6a2b) are built from those two: an acyloxy prefix
+ * (SubstituentSpec `acyl` and `alkoxy`: `acetiloxi`, `propanoiloxi`,
+ * `benzoiloxi`) is its acyl branch with its C=O, then the ether oxygen bonded
+ * to the C=O carbon, the oxygen the occurrence's `attachment`; an
+ * alkoxycarbonyl prefix (`alkoxy` and `alkoxycarbonyl`: `metoxicarbonil`) its
+ * alkoxy group with its ether oxygen, then a new C=O carbon single-bonded to
+ * that oxygen with its =O (esterCarbonyl(); one more carbon and two more
+ * heavy atoms per occurrence), the carbon the occurrence's `attachment`.
+ * Neither can overload a carbon of its own beyond what its branch does, and
+ * a ring inside one is bonded to what it hangs from through an oxygen or a
+ * C=O carbon, never atom to atom (ringRefusal()).
  * An ether's functional-class name (R-5b2, ParentSpec kind 'ether': `etil
  * metil éter`) is built from its oxygen: the parent is that one atom
  * (etherOxygen(); `studentParent` lists it alone), its two groups attached
@@ -508,9 +519,22 @@ function substituentCarbons(sub) {
   }
   if (sub.kind === 'retained') {
     const template = RETAINED_TEMPLATES[sub.retained];
-    return template.length + template.methyls.length;
+    return template.length + template.methyls.length + esterCarbonCount(sub); // `isopropoxicarbonil` (R-6a2b)
   }
-  return sub.length + prefixCarbons(sub.prefixes) + (isRingAcyl(sub) ? 1 : 0); // `ciclohexanocarbonil` (R-5c2)
+  // `ciclohexanocarbonil` (R-5c2); the C=O carbon of an alkoxycarbonyl prefix (R-6a2b).
+  return sub.length + prefixCarbons(sub.prefixes) + (isRingAcyl(sub) ? 1 : 0) + esterCarbonCount(sub);
+}
+
+/**
+ * The C=O carbon an alkoxycarbonyl prefix adds (R-6a2b, SubstituentSpec
+ * `alkoxycarbonyl`: `metoxicarbonil`), outside the alkoxy group; none for
+ * any other branch.
+ *
+ * @param {object} sub - A SubstituentSpec.
+ * @returns {number} 1 or 0.
+ */
+function esterCarbonCount(sub) {
+  return sub.alkoxycarbonyl ? 1 : 0;
 }
 
 /**
@@ -538,7 +562,9 @@ function substituentAtoms(sub) {
   if (isAtomGroup(sub.kind)) {
     return 1;
   }
-  const oxygen = sub.alkoxy ? 1 : 0; // The ether oxygen of an alkoxy prefix (R-5b).
+  // The ether oxygen of an alkoxy prefix (R-5b); the =O of an alkoxycarbonyl prefix's C=O carbon (R-6a2b), counted by
+  // substituentCarbons().
+  const oxygen = (sub.alkoxy ? 1 : 0) + esterCarbonCount(sub);
   if (sub.kind === 'retained') {
     // The =O of `formil` (R-5c1); the =O and the OH of `carboxi` (R-5d1).
     const template = RETAINED_TEMPLATES[sub.retained];
@@ -546,7 +572,7 @@ function substituentAtoms(sub) {
   }
   // R-5c2: the =O of `propanoil`, `benzoil`, and the C=O carbon of a ring's acyl prefix.
   const acyl = (sub.acyl ? 1 : 0) + (isRingAcyl(sub) ? 1 : 0);
-  return sub.length + prefixAtomCount(sub.prefixes) + oxygen + acyl;
+  return sub.length + prefixAtomCount(sub.prefixes) + oxygen + acyl + esterCarbonCount(sub); // R-6a2b: the C=O carbon
 }
 
 /**
@@ -1043,11 +1069,40 @@ function buildSubstituent(state, sub) {
     const { slot, order } = sub.freeValence;
     branch = { attach: chain.atoms[slotValue(slot, state.values) - 1], order, tiles: slot.tiles };
     if (sub.acyl) {
-      return acylCarbonyl(state, sub, branch); // `propanoil`, `(ciclohexanocarbonil)`, `benzoil` (R-5c2)
+      branch = acylCarbonyl(state, sub, branch); // `propanoil`, `(ciclohexanocarbonil)`, `benzoil` (R-5c2)
     }
   }
-  return sub.alkoxy ? alkoxyOxygen(state, sub, branch) : branch;
+  if (!sub.alkoxy) {
+    return branch;
+  }
+  // `metoxi` (R-5b); after an acyl branch, `acetiloxi`, `propanoiloxi` (R-6a2b): the ether oxygen after the C=O.
+  const alkoxy = alkoxyOxygen(state, sub, branch);
+  return sub.alkoxycarbonyl ? esterCarbonyl(state, sub, alkoxy) : alkoxy; // `metoxicarbonil` (R-6a2b)
 } // End of function buildSubstituent()
+
+/**
+ * Puts the C=O carbon of an alkoxycarbonyl prefix (R-6a2b) on its alkoxy
+ * group, already built with its ether oxygen: a new carbon single-bonded to
+ * that oxygen, with an oxygen double-bonded to it (three bonds: never over
+ * its valence), created after every atom of the group (ownPrefixAtoms() cuts
+ * a branch's own prefixes from its atoms in creation order), left with one
+ * bond to make, to the carbon the prefix hangs from.
+ *
+ * @param {object} state - Build state.
+ * @param {object} sub - The alkoxycarbonyl SubstituentSpec.
+ * @param {{attach: number, order: number, tiles: [number, number]}} alkoxy - The alkoxy group's ether oxygen.
+ * @returns {{attach: number, order: number, tiles: [number, number]}} The C=O carbon, bond order 1, and the prefix's tiles.
+ */
+function esterCarbonyl(state, sub, alkoxy) {
+  const { mol } = state;
+  const carbon = addAtom(mol, {}, CARBON);
+  state.atoms.set(carbon, { locant: 1, branch: true, added: [] });
+  addBond(mol, alkoxy.attach, carbon, 1);
+  const oxygen = addAtom(mol, {}, OXO_ELEMENT);
+  state.atoms.set(oxygen, { locant: 1, branch: true, added: [] }); // One double bond: never over its valence.
+  addBond(mol, carbon, oxygen, 2);
+  return { attach: carbon, order: 1, tiles: sub.tiles };
+} // End of function esterCarbonyl()
 
 /**
  * The end of VALENCE on the C=O carbon of a chain's acyl prefix (R-5c2): «…solo puede tener 4: el grupo C=O de «oil» va en
@@ -1173,7 +1228,9 @@ function attachPrefixes(state, prefixes, atoms, record = null, template = null) 
  * with all of its atoms before the next (a one-atom group is its one atom,
  * R-5a1, R-5a2; an alkoxy prefix its branch's atoms, then its ether oxygen,
  * R-5b), and an alkoxy branch's own ether oxygen last of all (so are an acyl
- * branch's C=O carbon outside its ring and its =O, R-5c2).
+ * branch's C=O carbon outside its ring and its =O, R-5c2, before that
+ * oxygen in an acyloxy prefix, and an alkoxycarbonyl prefix's C=O carbon
+ * and its =O after it, R-6a2b).
  * For the diagnosis (diagnose.js), which compares branches inside a compound
  * branch by their structure.
  *
@@ -1182,7 +1239,8 @@ function attachPrefixes(state, prefixes, atoms, record = null, template = null) 
  * @returns {number[][][]} Per own prefix (spec order), per occurrence (slot order), its atoms in creation order.
  */
 export function ownPrefixAtoms(sub, atoms) {
-  let next = sub.kind === 'retained' ? substituentCarbons(sub) : sub.length;
+  const template = sub.kind === 'retained' ? RETAINED_TEMPLATES[sub.retained] : null;
+  let next = template ? template.length + template.methyls.length : sub.length;
   return sub.prefixes.map((prefix) => prefix.slots.map(() => {
     const size = substituentAtoms(prefix.substituent);
     const slice = atoms.slice(next, next + size);

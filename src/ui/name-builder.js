@@ -125,14 +125,15 @@ export function positionalLabel(tile) {
  * `ácido`, and which take prefixes; R-6a1: `oato`, `carboxilato`, `benzoato`
  * and `ilo`, what each is, where it goes and that ` de ` and ` y ` are the
  * app's; R-6a2a: the retained ester names, what acid part each is, that the
- * O-bound group follows, and which takes a phenyl; drafts pending teacher
- * review).
+ * O-bound group follows, and which takes a phenyl; R-6a2b: `oxi` and
+ * `carbonil` also say how they make an ester's prefix; drafts pending
+ * teacher review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
   [CLOSING_ID]: 'Número del enlace que cierra un anillo, del último carbono al 1: se escribe 1(6) en un anillo de 6 carbonos.',
   [ALKOXY_ID]: 'Va detrás de una rama acabada en «il» y la une a la cadena por un oxígeno: met, il y oxi dan metoxi; pent, il y '
-    + 'oxi dan (pentiloxi).',
+    + 'oxi dan (pentiloxi). Detrás de una rama con un C=O forma un éster como rama: acetil y oxi dan (acetiloxi).',
   [ETHER_CLASS_ID]: 'Va al final, detrás de los dos grupos unidos al oxígeno, por orden alfabético: et, il, met, il y éter dan '
     + 'etil metil éter; con dos grupos iguales, di, et, il y éter dan dietil éter.',
   // R-5c1: the aldehydes and ketones.
@@ -152,7 +153,8 @@ export const TILE_HINTS = Object.freeze({
   [ACYL_ID]: 'Va detrás de la terminación de una rama y la une a la cadena por su carbono 1, que lleva un C=O: prop, ano y oil '
     + 'dan propanoil; but, 2, eno y oil dan (but-2-enoil).',
   [RING_CARBONYL_ID]: 'Va detrás del nombre de un anillo: un grupo C=O unido al anillo, como rama, por el carbono del C=O: ciclo, '
-    + 'hex, ano y carbonil dan (ciclohexanocarbonil); con números, (ciclohex-2-eno-1-carbonil).',
+    + 'hex, ano y carbonil dan (ciclohexanocarbonil); con números, (ciclohex-2-eno-1-carbonil). Detrás de «oxi» forma un éster '
+    + 'como rama: met, il, oxi y carbonil dan (metoxicarbonil).',
   [BENZOYL_ID]: 'Benceno unido a un grupo C=O, como rama, por el carbono del C=O: 3-benzoilpentano-2,4-diona; con ramas en el '
     + 'anillo, (4-metilbenzoil).',
   // R-5d1: the carboxylic acids.

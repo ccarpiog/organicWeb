@@ -240,7 +240,6 @@ test('parser (R-5c1): misplaced carbonyl tiles are errors with their tile ranges
     ['di benzaldehído', ['TILE_ORDER[0,1)']],
     ['benzaldehído al', ['TILE_ORDER[1,2)']],
     ['START benzaldehído END met ano', ['TILE_ORDER[1,2)', 'TILE_ORDER[2,3)']],
-    ['formil oxi met ano', ['TILE_ORDER[1,2)']],
     ['formil met il éter', ['TILE_ORDER[0,1)']],
     ['oxo met il éter', ['TILE_ORDER[0,1)']],
     ['2 oxo', ['ENDS_WITH_BRANCH[0,2)']],
@@ -273,8 +272,8 @@ test('parser (R-5c1): misplaced carbonyl tiles are errors with their tile ranges
     + 'letras propios.');
   assert.equal(messageOf('START benzaldehído END met ano'), `${lead}«benzaldehído» es el nombre de toda la molécula y va al final; `
     + 'dentro de una rama, el anillo es «fenil» y su grupo CHO se escribe «formil», como en (4-formilfenil).');
-  assert.equal(messageOf('formil oxi met ano'), `${lead}«oxi» no va detrás de «formil»: un grupo CHO unido a un oxígeno no forma un `
-    + 'éter.');
+  // Since phase R-6a2b `formil oxi` is an ester's acyloxy prefix (`(formiloxi)metano`, reverse-ester-prefixes.test.js): no error.
+  assert.deepEqual(errorsOf('formil oxi met ano'), []);
   assert.equal(messageOf('formil met il éter'), `${lead}«formil» no va en un nombre con «éter»: un grupo CHO unido al oxígeno no `
     + 'forma un éter. Los dos grupos de un éter son cadenas o anillos de carbonos (etil metil éter).');
   assert.equal(messageOf('2 oxo'), 'El nombre acaba en un grupo («oxo»): falta la cadena principal detrás.');

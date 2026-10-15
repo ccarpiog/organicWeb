@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -23,7 +23,23 @@
  * oxálico`, `ácido fenilacético` and the ftálicos) and their esters (R-6a1:
  * the suffixes `oato` and `carboxilato`, `benzoato`, the O-bound groups
  * ending in `ilo` after the automatic ` de `; R-6a2a: the retained
- * `formiato`, `acetato` and `fenilacetato`). Pure, no DOM.
+ * `formiato`, `acetato` and `fenilacetato`; R-6a2b: the ester prefixes,
+ * `acetiloxi`, `[(2-metilpropanoil)oxi]`, `metoxicarbonil`,
+ * `[(propan-2-iloxi)carbonil]`). Pure, no DOM.
+ *
+ * The ester prefixes (R-6a2b) need nothing of their own here either: the
+ * parser reads `oxi` after an acyl branch and `carbonil` after `oxi`, the
+ * assembler writes them as render.js does, the builder puts the ether oxygen
+ * after the acyl group's C=O or a C=O carbon after the alkoxy group's
+ * oxygen, and the engine names the molecule (`ácido 2-(acetiloxi)etanoico`,
+ * `ácido 3-(metoxicarbonil)pentanodioico`, `ácido
+ * 4-(acetiloxi)ciclohexano-1-carboxílico` → `correct`; `ácido
+ * 3-[(propan-2-iloxi)carbonil]pentanodioico` → `alternative`; `ácido
+ * (acetiloxi)etanoico` → `missingLocants`; `ácido (acetiloxi)propanoico` →
+ * `ambiguous`; `ácido 3-(metoxicarbonil)propanoico` → `otherName`, the
+ * engine's `ácido 4-metoxi-4-oxobutanoico`; `2-(acetiloxi)etanoato de
+ * metilo` → `outOfScope`, the engine's `esterPrefix`). Their own mistakes
+ * are diagnose.js «Esters» deliberate nulls, for phase R-6a3.
  *
  * The esters (R-6a1) need nothing of their own here either: the parser
  * reads the O-bound side after the ester suffix, the assembler writes the
@@ -37,8 +53,8 @@
  * `metilpropanoato de metilo` → `missingLocants`; `4-metilbutanoato de
  * metilo` → `otherName`; `benceno-1,4-dicarboxilato de dimetilo`,
  * `2-metilbutanodioato de etilo y metilo` → `outOfScope`, the engine's
- * refusals). The ester prefixes are phase R-6a2b's, an ester's own
- * diagnosis messages R-6a3's (diagnose.js «Esters»: deliberate nulls).
+ * refusals). An ester's own diagnosis messages are R-6a3's (diagnose.js
+ * «Esters»: deliberate nulls).
  *
  * The retained ester names (R-6a2a) need nothing of their own here either,
  * as the retained acids: the engine gives them as alternatives, with the

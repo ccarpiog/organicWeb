@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -82,7 +82,18 @@
  * `acetato`, `fenilacetato`; class TPLEST) stand where a template does and,
  * like `benzoato`, take exactly the automatic ` de ` after them (`acetato de
  * etilo`, `2-(4-metilfenil)acetato de etilo`); `fenilacetato` reads as its
- * one tile, the longer surface form. A step budget bounds the search: running
+ * one tile, the longer surface form. The ester prefixes (R-6a2b, assemble.js
+ * rule 11) read `oxi` after an acyl ending or word (`(propanoiloxi)`,
+ * `(acetiloxi)`: OIL, CARB and RET take OXI, an automatic enclosure may start
+ * with RET and hold it with its `oxi`) and `carbonil` after `oxi` (class
+ * ALKCARB, a second surface of the `carbonil` tile: `(metoxicarbonil)`); the
+ * inner part of an ester prefix with marks of its own is a mark of its own
+ * (`inner`), opened right inside an automatic opening mark
+ * (`[(prop-2-enoil)oxi]`, `[(propan-2-iloxi)carbonil]`) or right after a START
+ * control, then read like that compound branch's content (`compound`:
+ * `[(2-metilpropanoil)oxi]`, `{[2-(acetiloxi)etanoil]oxi}`), and closed only
+ * after an acyl part (then `oxi` must follow: INNER_ACYL) or an alkoxy part's
+ * `oxi` (then `carbonil`: INNER_ALK). A step budget bounds the search: running
  * out returns null, never a guess.
  */
 
@@ -132,7 +143,9 @@ const PUNCTUATION = ',-';
  * `carboxilato`, PHEST `benzoato`, ILO the ending `ilo` of an O-bound group,
  * DE the automatic ` de ` and Y the automatic ` y ` (RETX and PHEX also
  * before `ilo`: `isopropilo`, `fenilo`); for the retained ester names
- * (R-6a2a) TPLEST, a template whose word is an ester's acid part.
+ * (R-6a2a) TPLEST, a template whose word is an ester's acid part; for the
+ * ester prefixes (R-6a2b) ALKCARB the `carbonil` after `oxi`, and INNER_ACYL /
+ * INNER_ALK the closing mark of an ester prefix's inner part (innerClass()).
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -154,7 +167,7 @@ function tileClass(tile) {
     return 'TPLEST'; // `formiato`, `acetato`, `fenilacetato` (R-6a2a): ` de ` follows
   }
   if (tile.kind === 'acyl') {
-    return tile.value === 'ring' ? 'CARB' : 'OIL'; // `carbonil`, `oil` (R-5c2)
+    return tile.value === 'ring' ? 'CARB' : 'OIL'; // `carbonil`, `oil` (R-5c2); `carbonil` after `oxi` is ALKCARB (R-6a2b)
   }
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
@@ -193,14 +206,16 @@ const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'PHEST', '
  * (R-5b) after `il`, after a retained word without its `il`, or contracted
  * right after a root, and a prefix's followers after it; `oil` (R-5c2) after
  * an ending, `carbonil` after an ending or a locant, a prefix's followers
- * after them; `ácido` (R-5d1) at the start only, and its space after it.
+ * after them; `ácido` (R-5d1) at the start only, and its space after it;
+ * R-6a2b: `oxi` after an acyl ending or word too, `carbonil` (ALKCARB) after
+ * `oxi`.
  */
 const FOLLOW = Object.freeze({
   BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'PHEST', 'TPL', 'TPLEST', 'POS', 'ACID']),
   // R-5d1: `ácido`, then only its space (search()); after the space, the rest of the name as from the start.
   ACID: new Set(),
   ACIDSPACE: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'TPL', 'POS']),
-  AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE', 'RETX', 'PHEX']),
+  AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE', 'RETX', 'PHEX', 'RET']), // RET: `(acetiloxi)` (R-6a2b)
   NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL', 'TPLEST', 'BEN', 'BENE', 'CLO', 'MULTE', 'OL', 'EST', 'CARB', 'ILO']),
   CLO: new Set(['NUM', 'CLO', 'MULT', 'ENE']),
   POS: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'TPL', 'RETX', 'PHEX']),
@@ -213,14 +228,18 @@ const FOLLOW = Object.freeze({
   ANO: new Set(['NUM', 'MULT', 'MULTE', 'OL', 'EST', 'OIL', 'CARB']),
   ENE: new Set(['NUM', 'CLO', 'MULT', 'MULTE', 'ENE', 'FV', 'OL', 'EST', 'OIL', 'CARB', 'ILO']),
   FV: new Set([...AFTER_PREFIX, 'OXI']),
-  RET: new Set(AFTER_PREFIX),
+  RET: new Set([...AFTER_PREFIX, 'OXI']), // `acetil` + `oxi` (R-6a2b)
   PHE: new Set(AFTER_PREFIX),
   RETX: new Set(['OXI', 'ILO']), // `isoprop` + `oxi` (R-5b), + `ilo` (R-6a1)
   PHEX: new Set(['OXI', 'ILO']),
-  OXI: new Set(AFTER_PREFIX),
-  OXIC: new Set(AFTER_PREFIX),
-  OIL: new Set(AFTER_PREFIX), // R-5c2
-  CARB: new Set(AFTER_PREFIX),
+  OXI: new Set([...AFTER_PREFIX, 'ALKCARB']), // `oxi` + `carbonil` (R-6a2b)
+  OXIC: new Set([...AFTER_PREFIX, 'ALKCARB']),
+  OIL: new Set([...AFTER_PREFIX, 'OXI']), // R-5c2; `oil` + `oxi` (R-6a2b)
+  CARB: new Set([...AFTER_PREFIX, 'OXI']),
+  // R-6a2b: `carbonil` after `oxi`, an alkoxycarbonyl prefix; after the inner part of an ester prefix, `oxi` or `carbonil` only.
+  ALKCARB: new Set(AFTER_PREFIX),
+  INNER_ACYL: new Set(['OXI']),
+  INNER_ALK: new Set(['ALKCARB']),
   HAL: new Set(AFTER_PREFIX),
   START: new Set(PREFIX_STARTS),
   END: new Set(AFTER_PREFIX),
@@ -251,16 +270,47 @@ const FINAL = new Set(['ANO', 'ENE', 'BEN', 'PHOL', 'TPL', 'OL', 'ETHER', 'ILO']
 
 /**
  * Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, `fenil`, an alkoxy prefix's `oxi` (R-5b), or
- * an acyl ending (R-5c2: `(but-2-enoil)`, `(ciclohexanocarbonil)`).
+ * an acyl ending (R-5c2: `(but-2-enoil)`, `(ciclohexanocarbonil)`), or an alkoxycarbonyl prefix's `carbonil` (R-6a2b).
  */
-const AUTO_CLOSE = new Set(['FV', 'PHE', 'OXI', 'OXIC', 'OIL', 'CARB', 'ILO']);
+const AUTO_CLOSE = new Set(['FV', 'PHE', 'OXI', 'OXIC', 'OIL', 'CARB', 'ILO', 'ALKCARB']);
 
-/** What may follow `il` inside an automatic enclosure before it closes: `oxi` (R-5b: `(pentiloxi)`). */
-const IN_ENCLOSURE_AFTER_FV = new Set(['OXI']);
+/**
+ * What may follow a class inside an automatic enclosure before it closes:
+ * `oxi` after `il` (R-5b: `(pentiloxi)`); and for the ester prefixes
+ * (R-6a2b) `oxi` after an acyl ending or word (`(propanoiloxi)`,
+ * `(acetiloxi)`) and `carbonil` after `oxi` (`(metoxicarbonil)`). Nothing
+ * else: the enclosure holds one simple branch.
+ */
+const IN_ENCLOSURE = Object.freeze({
+  FV: new Set(['OXI']),
+  OIL: new Set(['OXI']),
+  CARB: new Set(['OXI']),
+  RET: new Set(['OXI']),
+  OXI: new Set(['ALKCARB']),
+  OXIC: new Set(['ALKCARB']),
+});
+
+/**
+ * The class after the closing mark of an ester prefix's inner part (R-6a2b,
+ * assemble.js rule 11), by the class before it: an acyl part (`oil`,
+ * `carbonil`, `benzoil` in a compound branch) takes `oxi` next, an alkoxy
+ * part (`oxi`) takes `carbonil`; null when no inner part ends there.
+ *
+ * @param {string} prev - The class before the closing mark.
+ * @returns {string|null} 'INNER_ACYL', 'INNER_ALK' or null.
+ */
+function innerClass(prev) {
+  if (prev === 'OXI' || prev === 'OXIC') {
+    return 'INNER_ALK';
+  }
+  return prev === 'OIL' || prev === 'CARB' || prev === 'RET' ? 'INNER_ACYL' : null;
+}
 
 /** Punctuation roles of the pieces (assemble.js separator()). */
 const WORD = Object.freeze({ role: 'word' });
 const OPEN = Object.freeze({ role: 'open' });
+/** An opening mark right before an italic descriptor: rule 5's hyphen after a multiplier (assemble.js, R-6a2b: `bis-(tert-…`). */
+const OPEN_ITALIC = Object.freeze({ role: 'open', italic: true });
 const CLOSE = Object.freeze({ role: 'close' });
 const LOCANT = Object.freeze({ role: 'locant' });
 const SPACE_ROLE = Object.freeze({ role: 'space' });
@@ -316,6 +366,8 @@ function buildSurfaces() {
       surfaces.push({ text: tile.text.slice(0, -il.length), ids, cls: cls === 'PHE' ? 'PHEX' : 'RETX', piece });
     } else if (cls === 'OXI') {
       surfaces.push({ text: tile.text, ids: [tileId('freeValence', 1), tile.id], cls: 'OXIC', piece }); // `met` + `oxi` (R-5b)
+    } else if (cls === 'CARB') {
+      surfaces.push({ text: tile.text, ids, cls: 'ALKCARB', piece }); // `carbonil` after `oxi`: `metoxicarbonil` (R-6a2b)
     }
   } // End of the loop over the tiles
   return surfaces.map((surface, i) => ({ surface, i }))
@@ -436,20 +488,23 @@ export function tokenize(text, options = {}) {
       return fitsSpace ? search(at + SPACE.length, 'SPACE', SPACE_ROLE) : false;
     }
     if (OPENERS.includes(ch)) {
-      return fits(OPEN) ? searchOpening(at, prev, OPENERS.indexOf(ch)) : false;
+      // After a multiplier, a hyphen before the mark when an italic descriptor follows it (`bis-(tert-butoxicarbonil)`, R-6a2b);
+      // readsAs() checks which.
+      return fits(OPEN) || fits(OPEN_ITALIC) ? searchOpening(at, prev, OPENERS.indexOf(ch)) : false;
     }
     if (CLOSERS.includes(ch)) {
       return fits(CLOSE) ? searchClosing(at, prev, CLOSERS.indexOf(ch)) : false;
     }
     const top = marks[marks.length - 1];
     let follow = FOLLOW[prev];
-    if (top && top.automatic && AUTO_CLOSE.has(prev)) {
+    if (top && top.automatic && !top.compound && (AUTO_CLOSE.has(prev) || prev === 'RET')) {
       // An automatic enclosure ends right after its chain's `il` / `iliden`, after `fenil`, or after `oxi` — but `il` may
-      // still take `oxi` first (`(pentiloxi)`, R-5b).
-      if (prev !== 'FV') {
+      // still take `oxi` first (`(pentiloxi)`, R-5b), and an acyl branch `oxi`, `oxi` `carbonil` (`(acetiloxi)`,
+      // `(metoxicarbonil)`, R-6a2b).
+      if (!IN_ENCLOSURE[prev]) {
         return false;
       }
-      follow = IN_ENCLOSURE_AFTER_FV;
+      follow = IN_ENCLOSURE[prev];
     }
     const closing = follow.has('CLO') ? closingAt(target, at) : 0;
     if (closing > 0 && fits(LOCANT)) {
@@ -478,8 +533,10 @@ export function tokenize(text, options = {}) {
 
   /**
    * Explores an opening mark: automatic first (around one simple chain or
-   * ring, or `fenil`, not inside another automatic enclosure), then the
-   * START control.
+   * ring, or `fenil`, not inside another automatic enclosure — but for an
+   * ester prefix's inner part right inside one, R-6a2b), then, right after
+   * a START control, the inner part of an ester prefix written as that
+   * compound branch (R-6a2b), then the START control.
    *
    * @param {number} pos - Position of the mark.
    * @param {string} prev - Class before it.
@@ -488,12 +545,29 @@ export function tokenize(text, options = {}) {
    */
   function searchOpening(pos, prev, level) {
     const top = marks[marks.length - 1];
-    if (top && top.automatic) {
-      return false;
+    if (top && top.automatic && !top.compound) {
+      if (prev !== 'AUTO_OPEN' || top.inner) {
+        return false;
+      }
+      // R-6a2b: an ester prefix's inner part right inside its automatic marks: `[(prop-2-enoil)oxi]`, `[(propan-2-iloxi)carbonil]`.
+      marks.push({ automatic: true, inner: true, level });
+      const found = search(pos + 1, 'AUTO_OPEN', OPEN);
+      marks.pop();
+      return found;
     }
     if (FOLLOW[prev].has('ROOT')) {
       marks.push({ automatic: true, level });
       const found = search(pos + 1, 'AUTO_OPEN', OPEN);
+      marks.pop();
+      if (found !== false) {
+        return found;
+      }
+    }
+    if (prev === 'START') {
+      // R-6a2b: an ester prefix's inner part with prefixes of its own, right inside the START of its compound branch, read like
+      // that branch's content: `[(2-metilpropanoil)oxi]`, `[(2-cloroetoxi)carbonil]`, `{[2-(acetiloxi)etanoil]oxi}`.
+      marks.push({ automatic: true, compound: true, inner: true, level });
+      const found = search(pos + 1, 'START', OPEN);
       marks.pop();
       if (found !== false) {
         return found;
@@ -515,7 +589,8 @@ export function tokenize(text, options = {}) {
   /**
    * Explores a closing mark: it closes the last opening mark, of the same
    * level and the same choice (automatic, right after `il` / `iliden` or
-   * `fenil`; or the END control).
+   * `fenil`; an ester prefix's inner part, R-6a2b, right after its acyl or
+   * alkoxy part, innerClass(); or the END control).
    *
    * @param {number} pos - Position of the mark.
    * @param {string} prev - Class before it.
@@ -524,13 +599,15 @@ export function tokenize(text, options = {}) {
    */
   function searchClosing(pos, prev, level) {
     const open = marks[marks.length - 1];
-    if (!open || open.level !== level || (open.automatic && !AUTO_CLOSE.has(prev))) {
+    // An ester prefix's inner part (R-6a2b) closes after its acyl part (then `oxi`) or its alkoxy part (then `carbonil`).
+    const after = open && open.inner ? innerClass(prev) : prev;
+    if (!open || open.level !== level || after === null || (open.automatic && !open.inner && !AUTO_CLOSE.has(prev))) {
       return false;
     }
     marks.pop();
     let found = false;
     if (open.automatic) {
-      found = search(pos + 1, prev, CLOSE);
+      found = search(pos + 1, after, CLOSE);
     } else if (FOLLOW[prev].has('END')) {
       ids.push(END_ID);
       found = search(pos + 1, 'END', CLOSE);

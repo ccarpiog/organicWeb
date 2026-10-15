@@ -9,9 +9,10 @@
  * bis(2-cloroetilo)`). Parser (the O-bound side, ESTER_GROUPS, ESTER_SUFFIX
  * and the misplaced tiles with their tile ranges, partial names), assembler
  * (every form checked against the forward engine's own text), tokenizer (the
- * ester prefixes of phase R-6a2b and the later families' names never read;
- * the retained `formiato` / `acetato` read since phase R-6a2a,
- * reverse-ester-templates.test.js), interpreter and builder (the =O
+ * later families' names never read; the retained `formiato` / `acetato` read
+ * since phase R-6a2a, reverse-ester-templates.test.js, and the ester
+ * prefixes since phase R-6a2b, reverse-ester-prefixes.test.js), interpreter
+ * and builder (the =O
  * and the bridge oxygen of each –COO–, the O-bound groups bonded to it,
  * CARBONYL_POSITION, VALENCE, LOCANT_RANGE, BOND_RANGE with the O-bound
  * group's words, the caps), search (left-out locants of the acid part, of
@@ -461,14 +462,12 @@ test('assembler (R-6a1): every ester form is the forward engine\'s own text; the
   assert.equal(text('1 4 ciclo hex ano di carboxilato di met ilo'), '1,4-ciclohexanodicarboxilato de dimetilo');
 }); // End of test 'assembler (R-6a1)…'
 
-test('tokenizer (R-6a1): texts that only read with errors, the ester prefixes and the later families\' names never tokenize', () => {
+test('tokenizer (R-6a1): texts that only read with errors and the later families\' names never tokenize; the ester prefixes do', () => {
   for (const name of ['etanoato', 'etanoato de', 'etanoato de ', 'etanoato  de metilo', 'etanoatode metilo', 'etanoato de metil',
     'etanoato de metilo y', 'etanoato de metilo etilo', 'etanoato y metilo', 'etano de metilo', 'metilo', 'metilo etanoato',
     'etanoato de metilo de etilo', 'etanoato de (2-cloroetilo)', 'ciclohexanoato de metilo', 'bencenoato de metilo',
     'etan-1-oato de metilo', 'butano-1,4-dioato de dimetilo', 'etanoato de 2-propilo', 'etanoato de propanilo', 'benzoato',
     'etanoato de metiloxi', 'ácido etanoato de metilo',
-    // Phase R-6a2b: the ester prefixes beside an acid.
-    'ácido 2-(acetiloxi)etanoico', 'ácido 3-(metoxicarbonil)pentanodioico',
     // Phases R-6b…R-6d: nitriles, amines, amides beside an ester.
     '2-aminoetanoato de metilo', '2-cianoetanoato de metilo', 'etanoato de 2-(dimetilamino)etilo', '4-amino-4-oxobutanoato de metilo']) {
     assert.equal(tokenize(name), null, name);
@@ -484,6 +483,10 @@ test('tokenizer (R-6a1): texts that only read with errors, the ester prefixes an
   assert.equal(ESTER_WORD, ESTER_LINK);
   assert.ok(isEsterName('butanodioato de dimetilo') && !isEsterTemplateName('butanodioato de dimetilo') && !isEsterName('ácido etanoico'));
   assert.ok(!isEsterName('ácido 2-(acetiloxi)etanoico') && !isEsterTemplateName('etanoato de 2-acetilhexilo'));
+  // Phase R-6a2b: the ester prefixes read (reverse-ester-prefixes.test.js), beside an acid; beside an ester the engine refuses the
+  // molecule (`esterPrefix`), so `2-(acetiloxi)etanoato de metilo` reads and is out of scope.
+  assert.ok(tokenize('ácido 2-(acetiloxi)etanoico') && tokenize('ácido 3-(metoxicarbonil)pentanodioico'));
+  assert.equal(readName(tokenize('2-(acetiloxi)etanoato de metilo')).kind, 'outOfScope');
   assert.equal(tokenize('butanodioato de di(2-cloroetilo)').length, 11, 'the student\'s own multiplier reads (the engine writes bis)');
 }); // End of test 'tokenizer (R-6a1)…'
 
@@ -889,7 +892,7 @@ test('fixture round trip (R-6a1, R-6a2a): every ester name the tiles write, grap
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (!isEsterName(name)) {
-        later += 1; // An ester prefix (R-6a2b): none among the esters' own rows.
+        later += 1; // An ester prefix (read since R-6a2b, beside an acid): none among the esters' own rows.
         assert.ok(ESTER_PREFIX.test(name), name);
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;

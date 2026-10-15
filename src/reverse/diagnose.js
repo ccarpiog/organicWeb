@@ -18,8 +18,9 @@
  * 5), and their carboxylic acids (R-5d1, R-5d2 — the retained names —,
  * R-5d3; «Acids» below: the rules that hold for an acid name, and the
  * acid's own mistakes, checked first), and their esters (R-6a1, R-6a2a —
- * the retained names —; «Esters» below: the rules that hold for an ester's
- * acid part, the ester's own mistakes deliberate nulls).
+ * the retained names —, R-6a2b — the ester prefixes —; «Esters» below: the
+ * rules that hold for an ester's acid part and for an ester prefix, the
+ * ester's own mistakes deliberate nulls).
  *
  * The rules, in order (first match wins):
  *
@@ -788,6 +789,36 @@
  * mistake: as on the retained aldehyde and acid (`2-[4-(propan-2-il)fenil]
  * acetaldehído`), no rule covers a retained word's prefix style.
  *
+ * The ester prefixes (R-6a2b: an acyloxy prefix, `acetiloxi`,
+ * `[(2-metilpropanoil)oxi]`, and an alkoxycarbonyl prefix, `metoxicarbonil`,
+ * `[(propan-2-iloxi)carbonil]`; beside an acid, the only principal group the
+ * engine puts above an ester) are read as prefixes like an alkoxy prefix,
+ * so the rules read them as any prefix: their shape for the prefix style
+ * (specShape(): an acyloxy group's acyl shape after `O:`, an alkoxycarbonyl
+ * group's one carbon with its oxo and its alkoxy group, as the engine's
+ * structures), a hetero group for rule 1, ALPHABETICAL_ORDER under their
+ * whole word (`acetiloxi` under a), UNGROUPED, MULTIPLIER_KIND with `bis`
+ * (an alkoxycarbonyl prefix is a C=O carbon with groups of its own,
+ * MULTIPLIER_KIND's reason; an acyloxy prefix an `oxi` prefix that is not
+ * shortened, ALKOXY_MULTIPLIER's), NEEDLESS_LOCANTS inside them
+ * (`[(propan-1-iloxi)carbonil]`), and the branch-name rules on their inner
+ * acyl chain (ACYL_CHAIN: `[(3-metilpropanoil)oxi]`) and ring
+ * (BRANCH_RING_NUMBERING: `[(6-metilbenzoil)oxi]`, `[(6-metilfenoxi)carbonil]`;
+ * the engine's words with the opening mark its parts keep apart, partText()).
+ * Deliberate, tested nulls (for phase R-6a3): an ester prefix written as
+ * another kind of branch, or the reverse — an acyloxy group as an alkoxy
+ * group with an `oxo` (`(1-oxoetoxi)`), an alkoxycarbonyl group as a
+ * substituted methyl (`[(metoxi)oxometil]`) —, and an acyloxy group's acyl
+ * part with the general rule's word (`(etanoiloxi)`, `(metanoiloxi)`)
+ * (esterPrefixWords(), first of the branch-name checks: `words`); an
+ * alkoxycarbonyl prefix whose C=O carbon the engine puts in the parent chain,
+ * writing the ester as `alcoxi` and `oxo` (`ácido
+ * 3-(metoxicarbonil)propanoico` → `ácido 4-metoxi-4-oxobutanoico`: rule 1
+ * reads the prefix as a hetero group, which lengthens no chain, `inChain`);
+ * and an ester prefix beside no group
+ * senior to an ester (`2-(acetiloxi)heptanal`, `(acetiloxi)metano`,
+ * `(benzoiloxi)benceno` → `benzoato de fenilo`: esterChecks()' `seniority`).
+ *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
  * (the class-name step's in CLASS_NAME_STEP_TEXTS), and DIAGNOSES gives
@@ -808,7 +839,7 @@ import {
   chainOmitsPrefixLocants, ringOmitsLocants, BENZENE_NAME, RING_PREFIX, POSITIONAL_LETTERS, TRADITIONAL_NAMES, SATURATED_INFIX,
   ALKOXY_ENDING, ETHER_CLASS_WORD, GROUP_PREFIXES, groupSuffix, ringGroupSuffix, ACYL_ENDING, RING_CARBONYL_ENDING, ESTER_LINK,
 } from '../naming/lexicon.es.js';
-import { assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, isClassName } from './assemble.js';
+import { assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, isClassName, esterPrefixKind } from './assemble.js';
 import { ownPrefixAtoms, specRings, isRing, isAromatic } from './build.js';
 import {
   tileById, tileId, MAX_MULT, isAtomGroup, atomGroupOrder, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
@@ -930,6 +961,9 @@ const BEYOND = Object.freeze({ code: null });
 
 /** The `formil` tile's value (a retained word, R-5c1). */
 const FORMYL = tileById(FORMYL_ID).value;
+
+/** The `tert-butil` tile's value (a retained word; ALKOXY_MULTIPLIER's `bis-tert-butoxi`, R-5b2). */
+const TERT_BUTYL = tileById(tileId('retained', 'tert-butyl')).value;
 
 /** The `acetil` tile's value (a retained word, R-5c2). */
 const ACETYL = tileById(ACETYL_ID).value;
@@ -3590,6 +3624,11 @@ function engineRing(structure) {
   if (structure.ring) {
     return structure;
   }
+  if (structure.alkoxycarbonyl) {
+    // R-6a2b: the ring of an alkoxycarbonyl prefix's alkoxy group, `[(2-metilfenoxi)carbonil]`.
+    const alkoxy = structure.prefixes.find((g) => g.substituent.alkoxy);
+    return alkoxy ? engineRing(alkoxy.substituent) : null;
+  }
   const group = structure.ringCarbonyl ? structure.prefixes.find((g) => g.substituent.ring) : null;
   return group ? group.substituent : null;
 }
@@ -3916,11 +3955,63 @@ function prefixWords(ctx, index) {
   const placed = reading.prefixAtoms.filter((o) => o.prefix === index);
   const part = placed.length === 0 ? null
     : (naming.parts || []).find((p) => p.kind === 'prefix' && placed[0].atoms.every((id) => (p.atoms || []).includes(id)));
-  return part ? { right: part.text, student: wordsOf(tree, tree.items[index]), placed } : null;
+  return part ? { right: partText(naming.parts, part), student: wordsOf(tree, tree.items[index]), placed } : null;
 }
 
-/** The branch-name checks (R-5c3b2), in order, each with its code (branchNames()). */
-const BRANCH_NAME_CHECKS = Object.freeze([['ACYL_NAME', acylName], ['ACYL_CHAIN', acylChain],
+/**
+ * The kind of ester prefix a branch is (R-6a2b): 'acyloxy' for an acyl group
+ * bonded through an ether oxygen (`acetiloxi`, `formiloxi`; a SubstituentSpec
+ * with `alkoxy` and `acyl`, or `formil` before `oxi`; an engine structure with
+ * `alkoxy` and `acyl`), 'alkoxycarbonyl' for an alkoxy group on a C=O carbon
+ * (`metoxicarbonil`; `alkoxycarbonyl` set on either); null otherwise.
+ *
+ * @param {object} branch - A SubstituentSpec (interpret.js) or a SubstituentStructure (substituent.js).
+ * @returns {'acyloxy'|'alkoxycarbonyl'|null} The kind.
+ */
+function esterPrefixOf(branch) {
+  if (branch.alkoxycarbonyl) {
+    return 'alkoxycarbonyl';
+  }
+  return branch.alkoxy && (branch.acyl || branch.retained === FORMYL) ? 'acyloxy' : null;
+}
+
+/**
+ * An ester prefix's own words (R-6a2b, file header «Esters»): a deliberate
+ * null (BEYOND) for phase R-6a3 when the student wrote the engine's acyloxy
+ * or alkoxycarbonyl prefix as another kind of branch, or the reverse — an
+ * acyloxy group as an alkoxy group with an `oxo` on its carbon 1
+ * (`(1-oxoetoxi)` for `(acetiloxi)`), an alkoxycarbonyl group as a
+ * substituted methyl (`[metoxi(oxo)metil]` for `(metoxicarbonil)`) — or an
+ * acyloxy group's acyl part with the general rule's word the engine does not
+ * use (`(etanoiloxi)` for `(acetiloxi)`, `(metanoiloxi)` for `(formiloxi)`:
+ * ACYL_NAME's mistake, whose message speaks of a branch bonded by its C=O
+ * carbon). Null otherwise: an ester prefix's acyl chain (ACYL_CHAIN), its
+ * ring's numbering (BRANCH_RING_NUMBERING) and the form rules speak as for
+ * any branch.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {object} node - The student's prefix node.
+ * @param {BranchOccurrence} occurrence - Its first occurrence on the molecule.
+ * @returns {object|null} BEYOND, or null.
+ */
+function esterPrefixWords(ctx, node, occurrence) {
+  const { sub } = occurrence;
+  const engine = engineBranch(ctx, occurrence);
+  const mine = esterPrefixOf(sub);
+  if (!engine || mine !== esterPrefixOf(engine)) {
+    return engine && (mine || esterPrefixOf(engine)) ? BEYOND : null;
+  }
+  const generalWord = mine === 'acyloxy' && sub.acyl && sub.kind === 'chain' && sub.length <= 2 && sub.prefixes.length === 0
+    && sub.double.length + sub.triple.length === 0;
+  return generalWord ? BEYOND : null; // `etanoiloxi`, `metanoiloxi`
+} // End of function esterPrefixWords()
+
+/**
+ * The branch-name checks (R-5c3b2), in order, each with its code
+ * (branchNames()); an ester prefix's own words first (R-6a2b, a deliberate
+ * null: esterPrefixWords()).
+ */
+const BRANCH_NAME_CHECKS = Object.freeze([[null, esterPrefixWords], ['ACYL_NAME', acylName], ['ACYL_CHAIN', acylChain],
   ['BRANCH_RING_NUMBERING', branchRingNumbering]]);
 
 /**
@@ -3952,6 +4043,9 @@ function branchNames(ctx) {
       const occurrence = ctx.occurrences.get(node);
       for (const [code, check] of occurrence ? BRANCH_NAME_CHECKS : []) {
         const data = check(ctx, node, occurrence, words);
+        if (data === BEYOND) {
+          return BEYOND; // An ester prefix's own words (R-6a2b, «Esters»): a deliberate null of phase R-6a3.
+        }
         if (data) {
           return {
             code,
@@ -4089,12 +4183,16 @@ function multiplierKind(ctx) {
       const ownBranches = item.substituent.type === 'branch' && item.substituent.items.length > 0;
       const swapped = withTiles(tree, new Map([[item.multiplier, tileById(tileId(compound ? 'cmult' : 'mult', tile.value))]]));
       const texts = { right: quoted(swapped, list, item), student: quoted(tree, list, item) };
-      if (compound && !ownBranches) {
+      // R-6a2b: an alkoxycarbonyl prefix is a C=O carbon with its own groups, the alkoxy group and the =O (render.js
+      // isCompoundPrefix()), so MULTIPLIER_KIND's reason holds (`di(metoxicarbonil)`); an acyloxy prefix is an `oxi` prefix
+      // that is not shortened (`di(acetiloxi)`), ALKOXY_MULTIPLIER's.
+      if (compound && !ownBranches && esterPrefixKind(tree.tiles, item.substituent) !== 'alkoxycarbonyl') {
         // `di(pentiloxi)`, `di-tert-butoxi` (R-5b2): bis… for the alkoxy prefix's form (assemble.js isCompoundAlkoxy()).
         const core = alkoxyCore(item.substituent);
+        const tertButoxy = core.type === 'retained' && tree.tiles[core.tile].value === TERT_BUTYL;
         return {
           code: 'ALKOXY_MULTIPLIER',
-          data: { tertButoxy: core.type === 'retained', prefix: wordsOf(tree, item), ...texts },
+          data: { tertButoxy, prefix: wordsOf(tree, item), ...texts },
           focus: prefixFocus(ctx, list, [index]),
           tiles: [item.multiplier, item.multiplier + 1],
         };
@@ -4655,8 +4753,40 @@ function oxygenBetween(ctx) {
  */
 function holdingPrefix(naming, atoms) {
   const part = (naming.parts || []).find((p) => p.kind === 'prefix' && atoms.every((id) => (p.atoms || []).includes(id)));
-  return part ? part.text : null;
+  return part ? partText(naming.parts, part) : null;
 }
+
+/**
+ * The text of a naming's `prefix` part as the prefix's words (R-6a2b): the
+ * part's text, with the opening marks the engine's parts keep apart before it
+ * when its words start with an enclosed part of their own — an ester
+ * prefix's inner part: `[(2-metilbenzoil)oxi]` gives the parts `[`, `(` and
+ * `2-metilbenzoil)oxi`, so the words are `(2-metilbenzoil)oxi` — as many of
+ * the punctuation parts right before it as its text has unmatched closing
+ * marks; the text itself for every other prefix.
+ *
+ * @param {object[]} parts - The naming's parts.
+ * @param {{text: string}} part - One of its `prefix` parts.
+ * @returns {string} The words.
+ */
+function partText(parts, part) {
+  const opens = ENCLOSING_MARKS.map(([open]) => open);
+  const closes = ENCLOSING_MARKS.map(([, close]) => close);
+  let depth = 0;
+  let unmatched = 0;
+  for (const ch of part.text) {
+    if (opens.includes(ch)) {
+      depth += 1;
+    } else if (closes.includes(ch) && depth > 0) {
+      depth -= 1;
+    } else if (closes.includes(ch)) {
+      unmatched += 1;
+    }
+  } // End of the loop over the part's characters
+  const index = parts.indexOf(part);
+  const lead = parts.slice(Math.max(0, index - unmatched), index).filter((p) => p.kind === 'punct' && opens.includes(p.text));
+  return `${lead.map((p) => p.text).join('')}${part.text}`;
+} // End of function partText()
 
 /**
  * Tells whether the student's chain lies deeper inside the engine's
@@ -4822,11 +4952,17 @@ function specShape(sub) {
     return `X:${atomGroupOrder(sub.kind) === 2 ? DOUBLE_OXYGEN : sub.element}`;
   }
   const ether = sub.alkoxy ? `${ALKOXY_ELEMENT}:` : '';
+  if (sub.alkoxycarbonyl) {
+    // `metoxicarbonil` (R-6a2b): the engine's one-carbon group of the C=O carbon, its oxo and the alkoxy group on it.
+    return chainShape(1, 1, 1, [`X:${DOUBLE_OXYGEN}`, specShape({ ...sub, alkoxycarbonyl: false })]);
+  }
   if (sub.kind === 'retained' && sub.retained === FORMYL) {
-    return chainShape(1, 1, 1, [`X:${DOUBLE_OXYGEN}`]); // `formil` (R-5c1): the engine's one-carbon acyl group with its oxo.
+    // `formil` (R-5c1): the engine's one-carbon acyl group with its oxo; after `O:`, `formiloxi` (R-6a2b).
+    return `${ether}${chainShape(1, 1, 1, [`X:${DOUBLE_OXYGEN}`])}`;
   }
   if (sub.kind === 'retained' && sub.retained === ACETYL) {
-    return chainShape(2, 1, 1, [`X:${DOUBLE_OXYGEN}`]); // `acetil` (R-5c2): the engine's two-carbon acyl group with its oxo.
+    // `acetil` (R-5c2): the engine's two-carbon acyl group with its oxo; after `O:`, `acetiloxi` (R-6a2b).
+    return `${ether}${chainShape(2, 1, 1, [`X:${DOUBLE_OXYGEN}`])}`;
   }
   if (sub.kind === 'retained' && sub.retained === CARBOXY) {
     return CARBOXY_SHAPE; // `carboxi` (R-5d1): the engine's carboxy prefix, no chain of its own.
@@ -4835,8 +4971,9 @@ function specShape(sub) {
     return `${ether}R:${sub.retained}`;
   }
   if (sub.acyl && isRing(sub.kind)) {
-    // `(ciclohexanocarbonil)`, `benzoil` (R-5c2): the engine's one-carbon acyl group, its oxo and the ring on it.
-    return chainShape(1, 1, 1, [`X:${DOUBLE_OXYGEN}`, specShape({ ...sub, acyl: false })]);
+    // `(ciclohexanocarbonil)`, `benzoil` (R-5c2): the engine's one-carbon acyl group, its oxo and the ring on it; after `O:`,
+    // `benzoiloxi` (R-6a2b).
+    return `${ether}${chainShape(1, 1, 1, [`X:${DOUBLE_OXYGEN}`, specShape({ ...sub, acyl: false, alkoxy: false })])}`;
   }
   const nested = sub.prefixes.flatMap((prefix) => prefix.slots.map(() => specShape(prefix.substituent)));
   if (sub.acyl) {

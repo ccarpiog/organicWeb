@@ -137,6 +137,14 @@
  *   'benzene', value 'benzoate': the benzene parent with its –COO– at carbon
  *   1, as `benzoico` with its –COOH — `4-metilbenzoato de etilo`;
  *   GROUP_WORD_PARENTS);
+ *   and for the ester prefixes (R-6a2b) no new tile: they compose from the
+ *   tiles above, as render.js writes them — an acyloxy prefix is an acyl
+ *   branch closed by `oxi` (`acetil oxi` → `(acetiloxi)`, `prop ano oil oxi`
+ *   → `(propanoiloxi)`, isAcyloxyHead()), and an alkoxycarbonyl prefix an
+ *   alkoxy branch closed by `oxi` and then the `carbonil` tile (`met il oxi
+ *   carbonil` → `(metoxicarbonil)`, `prop ano 2 il oxi carbonil` →
+ *   `[(propan-2-iloxi)carbonil]`); in a compound branch both go before its
+ *   END (`START 2 met il prop ano oil oxi END` → `[(2-metilpropanoil)oxi]`);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
  *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2,
@@ -321,6 +329,23 @@ export const ACYL_RETAINED = Object.freeze(['acetyl', 'benzoyl']);
  */
 export function isAcylTile(tile) {
   return tile.kind === 'acyl' || (tile.kind === 'retained' && ACYL_RETAINED.includes(tile.value));
+}
+
+/**
+ * Tells whether a tile ends a branch whose carbon bonded to what it hangs
+ * from is a C=O carbon, so that `oxi` after it makes an ester's acyloxy
+ * prefix (R-6a2b; render.js alkoxyTokens(): the acyl prefix + `oxi`,
+ * `acetiloxi`, `formiloxi`, `propanoiloxi`, `benzoiloxi`,
+ * `[(ciclohexanocarbonil)oxi]`): an acyl tile of R-5c2 (isAcylTile()) or
+ * `formil` (R-5c1), the one-carbon acyl group. `carboxi` is not one: its
+ * carbon also carries an OH, and with `oxi` it would make a carbonic acid's
+ * ester.
+ *
+ * @param {{kind: string, value: *}} tile - A catalogue tile.
+ * @returns {boolean} True for `oil`, `carbonil`, `acetil`, `benzoil` and `formil`.
+ */
+export function isAcyloxyHead(tile) {
+  return isAcylTile(tile) || (tile.kind === 'retained' && tile.value === 'formyl');
 }
 
 /**

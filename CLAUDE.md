@@ -196,8 +196,20 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   engine's alternatives (`acetato de etilo`, `formiato de isopropilo`,
   `2-(4-metilfenil)acetato de etilo`), any other prefix as `otherName` with
   the substituted-template diagnosis (`2-cloroacetato de metilo`), and the
-  Ayuda has its ester line. Next is R-6a2b (phase I-52a2b): the ester
-  prefixes `aciloxi` / `alcoxicarbonil`.
+  Ayuda has its ester line. R-6a2b (phase I-52a2b) is done, and with it
+  R-6a2: the ester prefixes read as the engine writes them, composed from the
+  tiles that exist — `oxi` after an acyl branch (`acetil`, `formil`,
+  `benzoil`, an `oil` or `carbonil` ending) makes an acyloxy prefix
+  (`(acetiloxi)`, `(propanoiloxi)`, `(benzoiloxi)`, `[(2-metilpropanoil)oxi]`,
+  `[(ciclohexanocarbonil)oxi]`), `carbonil` after `oxi` an alkoxycarbonyl
+  prefix (`(metoxicarbonil)`, `(isopropoxicarbonil)`,
+  `[(propan-2-iloxi)carbonil]`, `[(2-cloroetoxi)carbonil]`), both before a
+  compound branch's END, the inner marks the app's —, beside an acid on
+  chains and rings and inside compound branches (`ácido
+  2-[4-(acetiloxi)ciclohexil]etanoico`), their left-out locants searched; the
+  diagnosis keeps the rules that hold for a prefix, an ester prefix's own
+  mistakes deliberate «Esters» nulls, and the Ayuda ester line says how to
+  build them. Next is R-6a3 (phase I-52a3): the ester diagnosis messages.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.
