@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -38,6 +38,17 @@
  * group placed by its letter.
  * The suffix's oxygens count for the heavy-atom cap and are listed in
  * `suffixAtoms`.
+ * An alkoxy prefix (R-5b, SubstituentSpec `alkoxy`) is its branch built as
+ * any other — chain, ring, phenyl or retained word, with its own prefixes —
+ * and then an ether oxygen, created last, bonded by single bonds to the
+ * branch's free-valence carbon and to the carbon the prefix hangs from: the
+ * oxygen is the occurrence's `attachment`, it counts for the heavy-atom cap
+ * (never for the carbon cap or the chains), its two bonds are within its
+ * valence, and the branch's carbon gets the bond to it as it would get the
+ * bond to the chain (VALENCE). A ring bonded through an ether oxygen is not
+ * bonded atom to atom to the ring it hangs from (ringRefusal():
+ * `fenoxibenceno` has a structural key; the engine refuses it, two rings).
+ * `anisol` (R-5b) is a template whose methoxy group is built that way.
  *
  * The molecule is the student's reading, numbered as the student numbered
  * it: `studentParent` lists the parent's atoms in the student's locant
@@ -89,7 +100,7 @@ import {
   longestCarbonChain, longestSideChain,
 } from '../model/validate.js';
 import { BENZENE_NAME, RETAINED_PREFIXES } from '../naming/lexicon.es.js';
-import { templateGroupWord, isAtomGroup, closingText, HYDROXY_ELEMENT, withArticle } from './tiles.js';
+import { templateGroupWord, isAtomGroup, closingText, HYDROXY_ELEMENT, ALKOXY_ELEMENT, withArticle } from './tiles.js';
 
 /** The structural error codes of design.md §15.6 (TILE_ORDER reused for a retained word with prefixes). */
 export const BUILD_ERROR_CODES = Object.freeze(['TILE_ORDER', 'LOCANT_RANGE', 'BOND_RANGE', 'SAME_BOND', 'VALENCE', 'TOO_BIG']);
@@ -329,8 +340,9 @@ function prefixCarbons(prefixes) {
 
 /**
  * Atoms build() creates for one occurrence of a branch, its own prefixes
- * included: its carbons, and one atom per one-atom group (a halogen, R-5a1;
- * the oxygen of `hidroxi`, R-5a2).
+ * included: its carbons, one atom per one-atom group (a halogen, R-5a1;
+ * the oxygen of `hidroxi`, R-5a2) and the ether oxygen of an alkoxy prefix
+ * (R-5b).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
@@ -339,10 +351,11 @@ function substituentAtoms(sub) {
   if (isAtomGroup(sub.kind)) {
     return 1;
   }
+  const oxygen = sub.alkoxy ? 1 : 0; // The ether oxygen of an alkoxy prefix (R-5b).
   if (sub.kind === 'retained') {
-    return substituentCarbons(sub);
+    return substituentCarbons(sub) + oxygen;
   }
-  return sub.length + prefixAtomCount(sub.prefixes);
+  return sub.length + prefixAtomCount(sub.prefixes) + oxygen;
 }
 
 /**
@@ -391,7 +404,8 @@ function suffixAtomCount(spec) {
 /**
  * Heavy atoms of the molecule a NameSpec describes (independent of the
  * locants): its carbons, its halogens (R-5a1) and its oxygens (R-5a2:
- * `hidroxi` and the suffix's OH groups), as model/validate.js counts them
+ * `hidroxi` and the suffix's OH groups; R-5b: the ether oxygen of each
+ * alkoxy prefix and of `anisol`'s methoxy), as model/validate.js counts them
  * against MAX_HEAVY_ATOMS.
  *
  * @param {object} spec - A NameSpec.
@@ -466,7 +480,8 @@ export function specRings(spec) {
 function ringOnRing(owner, ring) {
   return owner.prefixes.some((prefix) => {
     const sub = prefix.substituent;
-    return (ring && isRing(sub.kind)) || (hasOwnChain(sub) && ringOnRing(sub, isRing(sub.kind)));
+    // An alkoxy ring (R-5b: `fenoxi`, `(ciclohexiloxi)`) is bonded through its ether oxygen, never atom to atom.
+    return (ring && isRing(sub.kind) && !sub.alkoxy) || (hasOwnChain(sub) && ringOnRing(sub, isRing(sub.kind)));
   });
 }
 
@@ -545,13 +560,14 @@ function checkSuffix(spec, parent, values) {
 /**
  * The bond order with which a branch attaches to the carbon it hangs from:
  * its `il` (1) or `iliden` (2), its retained template's, or 1 for a one-atom
- * group (a halogen, R-5a1; `hidroxi`, R-5a2).
+ * group (a halogen, R-5a1; `hidroxi`, R-5a2) and for an alkoxy prefix (R-5b:
+ * the ether oxygen's single bond).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} 1 or 2.
  */
 export function attachmentOrder(sub) {
-  if (isAtomGroup(sub.kind)) {
+  if (isAtomGroup(sub.kind) || sub.alkoxy) {
     return 1;
   }
   return sub.kind === 'retained' ? RETAINED_TEMPLATES[sub.retained].order : sub.freeValence.order;
@@ -628,7 +644,8 @@ function buildChain(state, owner, branch) {
 
 /**
  * Creates a branch: a one-atom group (a halogen atom, R-5a1; the oxygen of
- * `hidroxi`, R-5a2), a retained word from its template, or a chain.
+ * `hidroxi`, R-5a2), a retained word from its template, or a chain; for an
+ * alkoxy prefix (R-5b) that branch and then its ether oxygen (alkoxyOxygen()).
  *
  * @param {object} state - Build state.
  * @param {object} sub - A SubstituentSpec.
@@ -640,6 +657,7 @@ function buildSubstituent(state, sub) {
     state.atoms.set(atom, { locant: 1, branch: true, added: [] }); // One bond: never over its valence.
     return { attach: atom, order: 1, tiles: sub.tiles };
   }
+  let branch;
   if (sub.kind === 'retained') {
     const template = RETAINED_TEMPLATES[sub.retained];
     const chain = buildChain(state, { length: template.length, double: [], triple: [] }, true);
@@ -650,12 +668,36 @@ function buildSubstituent(state, sub) {
       contribute(state, chain.atoms[locant - 1], sub.tiles, 1);
       contribute(state, methyl, sub.tiles, 1);
     }
-    return { attach: chain.atoms[template.attach - 1], order: template.order, tiles: sub.tiles };
+    branch = { attach: chain.atoms[template.attach - 1], order: template.order, tiles: sub.tiles };
+  } else {
+    const chain = buildChain(state, sub, true);
+    const { slot, order } = sub.freeValence;
+    branch = { attach: chain.atoms[slotValue(slot, state.values) - 1], order, tiles: slot.tiles };
   }
-  const chain = buildChain(state, sub, true);
-  const { slot, order } = sub.freeValence;
-  return { attach: chain.atoms[slotValue(slot, state.values) - 1], order, tiles: slot.tiles };
+  return sub.alkoxy ? alkoxyOxygen(state, sub, branch) : branch;
 } // End of function buildSubstituent()
+
+/**
+ * Puts the ether oxygen of an alkoxy prefix (R-5b) on its branch, already
+ * built: one oxygen, created after every atom of the branch
+ * (ownPrefixAtoms() cuts a branch's own prefixes from its atoms in creation
+ * order), single-bonded to the branch's free-valence carbon — which gets
+ * that bond, from the tiles that place its free valence, as it would get the
+ * bond to the chain — and left with one bond to make, to the carbon the
+ * prefix hangs from.
+ *
+ * @param {object} state - Build state.
+ * @param {object} sub - The alkoxy SubstituentSpec.
+ * @param {{attach: number, order: number, tiles: [number, number]}} branch - The built branch's free valence.
+ * @returns {{attach: number, order: number, tiles: [number, number]}} The oxygen, bond order 1, and the alkoxy prefix's tiles.
+ */
+function alkoxyOxygen(state, sub, branch) {
+  const oxygen = addAtom(state.mol, {}, ALKOXY_ELEMENT);
+  state.atoms.set(oxygen, { locant: 1, branch: true, added: [] }); // Two single bonds: never over its valence.
+  addBond(state.mol, branch.attach, oxygen, 1);
+  contribute(state, branch.attach, branch.tiles, 1);
+  return { attach: oxygen, order: 1, tiles: sub.tiles };
+} // End of function alkoxyOxygen()
 
 /**
  * Builds every occurrence of some prefixes and bonds each to its carbon
@@ -713,7 +755,8 @@ function attachPrefixes(state, prefixes, atoms, record = null, template = null) 
  * chain first (a retained word's whole template), then attachPrefixes()
  * each own prefix's occurrences one after another, in tile order, each
  * with all of its atoms before the next (a one-atom group is its one atom,
- * R-5a1, R-5a2).
+ * R-5a1, R-5a2; an alkoxy prefix its branch's atoms, then its ether oxygen,
+ * R-5b), and an alkoxy branch's own ether oxygen last of all.
  * For the diagnosis (diagnose.js), which compares branches inside a compound
  * branch by their structure.
  *

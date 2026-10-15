@@ -92,7 +92,16 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   written `hidroxi` on the parent, the ring or chain carrying more OH
   groups, another chain with more OH groups, the OH numbered otherwise,
   old-style and needless suffix locants, `bencenol` for `fenol`), each with
-  its «Ver el paso» step. Next is R-5b (phase I-51b): ethers.
+  its «Ver el paso» step. R-5b1 (phase I-51b1) is done: the «Grupos» row's
+  `oxi` tile, after a branch ending in `il` (a chain or ring, `isopropil`,
+  `tert-butil`, `fenil`, a compound branch's own chain), reads alkoxy
+  prefixes, contracted and enclosed as the engine writes them (`metoxi`,
+  `isopropoxi`, `fenoxi`, `(2-metilpropoxi)`, but `(pentiloxi)`,
+  `(propan-2-iloxi)`; `cloro(metoxi)metano`), on chains, rings, `benceno`,
+  beside OH groups and halogens and inside compound branches, their
+  left-out locants searched, and `anisol` in «Nombres tradicionales»; the
+  diagnosis reads alkoxy prefixes as substituents. Next is R-5b2 (phase
+  I-51b2): ether class names and the ether diagnosis.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

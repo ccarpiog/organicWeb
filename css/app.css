@@ -1401,7 +1401,7 @@ kbd {
   opacity: 0.45;
 }
 
-/* A compound-branch control that writes no mark: a small dashed box, so it can still be selected. */
+/* A tile that writes nothing (a compound-branch control without marks, the `il` of `metoxi`): a small dashed box, so it can still be selected. */
 .nb-piece--silent {
   display: inline-block;
   width: 0.45em;
@@ -1542,7 +1542,8 @@ kbd {
 .nb-tile--freeValence,
 .nb-tile--retained,
 .nb-tile--halogen,
-.nb-tile--hydroxy { color: var(--color-part-prefix); }
+.nb-tile--hydroxy,
+.nb-tile--alkoxy { color: var(--color-part-prefix); }
 
 .nb-tile-mark {
   margin: 0 0.3rem;

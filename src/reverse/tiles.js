@@ -8,8 +8,8 @@
  * multiplier(), compoundMultiplier(), ENDINGS, FREE_VALENCE_SUFFIXES,
  * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
  * TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS,
- * HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM), never
- * retyped here;
+ * HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING),
+ * never retyped here;
  * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
  *
@@ -50,13 +50,21 @@
  *   OH at carbon 1, `4-metilfenol`) and 'closing' (`1(n)`, R-5a2: the
  *   compound locant of a ring's closing bond, from its last carbon n to
  *   carbon 1, written `1(6)` on a ring of six — `ciclohex-1(6)-eno-1,2,4-triol`,
- *   `ciclopropa-1,1(3),2-trieno`; value null);
+ *   `ciclopropa-1,1(3),2-trieno`; value null), 'alkoxy' (the ending `oxi`,
+ *   R-5b: written right after a branch that ends in `il` — a chain or ring,
+ *   `isopropil`, `tert-butil`, `fenil`, also the own chain of a compound
+ *   branch, before its END — it makes that branch an alkoxy prefix, the
+ *   branch bonded to an ether oxygen that is bonded to the carbon the
+ *   prefix's locant says; the assembler contracts it as render.js
+ *   alkoxyTokens() does: `met il oxi` → `metoxi`, `isopropil oxi` →
+ *   `isopropoxi`, but `pent il oxi` → `(pentiloxi)`; value 'ether');
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
  *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2), 'groups'
- *   («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`),
+ *   («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`; R-5b: `oxi`),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
- *   the retained phenols; later phases add acetona, ácido acético…);
+ *   the retained phenols; R-5b: `anisol`; later phases add acetona, ácido
+ *   acético…);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
  *   multipliers from hepta / heptakis, roots from undec).
  */
@@ -64,7 +72,7 @@
 import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
   RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES,
-  GROUP_SUFFIXES, PHENOL_STEM, groupName,
+  GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING, groupName,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -127,6 +135,20 @@ export const PHENOL_ID = 'ring-phenol';
 /** Id of the `1(n)` tile (design.md §15.4 Slot `closing`, §15.5.2 item 6; phase R-5a2: a ring's closing bond). */
 export const CLOSING_ID = 'ring-closing';
 
+/** Id of the `oxi` tile (design.md §15.5.2 item 6, §15.8 R-5b; phase R-5b: a branch bonded through an ether oxygen). */
+export const ALKOXY_ID = 'group-alkoxy';
+
+/** The element of the ether oxygen an alkoxy prefix adds between its branch and the carbon it hangs from (R-5b). */
+export const ALKOXY_ELEMENT = 'O';
+
+/**
+ * The retained branch words that take `oxi` (R-5b, render.js
+ * isContractedAlkoxy(): `isopropoxi`, `tert-butoxi`, `fenoxi`, always
+ * contracted); `isopropiliden` does not (an iliden is a double bond, an
+ * ether oxygen takes single bonds only).
+ */
+export const ALKOXY_RETAINED = Object.freeze(['isopropyl', 'tert-butyl', 'phenyl']);
+
 /**
  * Tells whether a tile kind, a parse.js node type or an interpret.js
  * SubstituentSpec kind is a one-atom group prefix: a halogen (R-5a1) or
@@ -162,6 +184,9 @@ export function closingText(n) {
 const METHYL = Object.freeze({ length: 1, double: Object.freeze([]) });
 const ETHENYL = Object.freeze({ length: 2, double: Object.freeze([1]) });
 
+/** The defining group of `anisol` (R-5b): a methyl bonded to the ring through an ether oxygen, the methoxy group. */
+const METHOXY = Object.freeze({ length: 1, double: Object.freeze([]), alkoxy: true });
+
 /** No ring carbons: a template without OH groups. */
 const NONE = Object.freeze([]);
 
@@ -186,14 +211,20 @@ const NONE = Object.freeze([]);
  * hidroquinona, aromatic.js); a student's prefixes on a template are still
  * read, numbered on its ring, the defining groups at the carbons the
  * template says. `feminine` marks a word the messages quote with «la»
- * (`de la hidroquinona`; withArticle()). Later phases add the retained
- * parents with another principal group (`anilina`, `ácido benzoico`…).
+ * (`de la hidroquinona`; withArticle()). R-5b adds `anisol`, the benzene
+ * ring with one methoxy group at carbon 1 (its `group` an alkoxy group,
+ * `alkoxy` set: a methyl bonded to the ring through an ether oxygen; the
+ * forward engine gives `anisol` for the bare metoxibenceno only, as
+ * `tolueno` for the bare metilbenceno, aromatic.js traditionalNameId()).
+ * Later phases add the retained parents with another principal group
+ * (`anilina`, `ácido benzoico`…).
  */
 export const TEMPLATES = Object.freeze({
   toluene: Object.freeze({ id: 'toluene', group: METHYL, count: 1, positions: Object.freeze([1]), hydroxy: NONE }),
   styrene: Object.freeze({ id: 'styrene', group: ETHENYL, count: 1, positions: Object.freeze([1]), hydroxy: NONE }),
   xylene: Object.freeze({ id: 'xylene12', group: METHYL, count: 2, positions: null, hydroxy: NONE }),
   mesitylene: Object.freeze({ id: 'mesitylene', group: METHYL, count: 3, positions: Object.freeze([1, 3, 5]), hydroxy: NONE }),
+  anisole: Object.freeze({ id: 'anisole', group: METHOXY, count: 1, positions: Object.freeze([1]), hydroxy: NONE }),
   cresol: Object.freeze({ id: 'oCresol', group: METHYL, count: 1, positions: null, letterOnly: true, hydroxy: Object.freeze([1]) }),
   pyrocatechol: Object.freeze({ group: null, count: 0, positions: NONE, hydroxy: Object.freeze([1, 2]) }),
   catechol: Object.freeze({ group: null, count: 0, positions: NONE, hydroxy: Object.freeze([1, 2]) }),
@@ -213,10 +244,15 @@ export function isPhenolTemplate(value) {
   return TEMPLATES[value].hydroxy.length > 0;
 }
 
+/** How the messages call an alkoxy group (design.md §1.1: «el grupo metoxi», never `metoxilo`; R-5b). */
+const GROUP_WORD = 'grupo';
+
 /**
  * The name of a template's defining group as the messages say it
- * (lexicon groupName()): `metilo`, `etenilo`; null for a template without a
- * carbon group (the diols of R-5a3a).
+ * (lexicon groupName()): `metilo`, `etenilo`; for the alkoxy group of
+ * `anisol` (R-5b) its prefix after «grupo», `grupo metoxi` (design.md §1.1:
+ * the group is called by its prefix, never `metoxilo`); null for a template
+ * without a carbon group (the diols of R-5a3a).
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {string|null} The group's name.
@@ -226,8 +262,23 @@ export function templateGroupWord(value) {
   if (!group) {
     return null;
   }
+  if (group.alkoxy) {
+    return `${GROUP_WORD} ${stem(group.length)}${ALKOXY_ENDING}`; // `grupo metoxi` (a contracted alkoxy prefix).
+  }
   const unsaturation = group.double.length > 0 ? ENDINGS.double.slice(0, -1) : '';
   return groupName(`${stem(group.length)}${unsaturation}${FREE_VALENCE_SUFFIXES[1]}`);
+} // End of function templateGroupWord()
+
+/**
+ * The plural of a group's name as the messages say it: `metilos`; `grupos
+ * metoxi` for an alkoxy group (R-5b), whose prefix stays as it is.
+ *
+ * @param {string} word - templateGroupWord() of a template.
+ * @returns {string} The plural.
+ */
+export function groupPlural(word) {
+  const lead = `${GROUP_WORD} `;
+  return word.startsWith(lead) ? `${GROUP_WORD}s ${word.slice(lead.length)}` : `${word}s`;
 }
 
 /**
@@ -265,10 +316,10 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * Builds the whole catalogue in dialog order: numbers, multipliers (simple,
  * then compound), roots, endings, branch words and controls, rings (`ciclo`,
  * `benceno`, `fenol`, `fenil`, the letters `o`, `m`, `p`, `1(n)`), groups
- * (the halogens `fluoro`, `cloro`, `bromo`, `yodo`, then `hidroxi` and `ol`),
- * traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`, then the
- * retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
- * `hidroquinona`).
+ * (the halogens `fluoro`, `cloro`, `bromo`, `yodo`, then `hidroxi`, `ol` and
+ * `oxi`), traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`,
+ * `anisol`, then the retained phenols `cresol`, `pirocatecol`, `catecol`,
+ * `resorcinol`, `hidroquinona`).
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -313,6 +364,7 @@ function buildCatalogue() {
   }
   tiles.push(makeTile(HYDROXY_ID, 'hydroxy', 'alcohol', 'groups', GROUP_PREFIXES.alcohol)); // `hidroxi` (R-5a2)
   tiles.push(makeTile(OL_ID, 'suffix', 'alcohol', 'groups', GROUP_SUFFIXES.alcohol)); // `ol` (R-5a2)
+  tiles.push(makeTile(ALKOXY_ID, 'alkoxy', 'ether', 'groups', ALKOXY_ENDING)); // `oxi` (R-5b)
   for (const value of Object.keys(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }

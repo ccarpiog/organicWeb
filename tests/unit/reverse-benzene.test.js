@@ -12,7 +12,8 @@
  * alternatives since I-50c, R-4c), the closed loop over the oracle's benzene
  * generators (generateBenzenes() and randomBenzene() without halogens or
  * alkoxy groups — the halogens have their own round trip and closed loop
- * since I-51a1, reverse-halogens.test.js; pure imports, no Java) with
+ * since I-51a1, reverse-halogens.test.js, the alkoxy groups since I-51b1,
+ * reverse-ethers.test.js; pure imports, no Java) with
  * removed-locant mutations, other mutations with their diagnosis (I-50d),
  * the names the app cannot draw, the ordered drawing and time budgets.
  */
@@ -32,7 +33,9 @@ import { cloneMolecule } from '../../src/model/molecule.js';
 import { RING_SYSTEM_MESSAGES, validateForNaming } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { generateBenzenes, randomBenzene, seededRandom, randomInt } from '../../scripts/oracle/generate.mjs';
-import { seq, readFixtures, isMonocyclicHydrocarbon, isHalogenDerivative, isBenzeneName, isTemplateName } from './reverse-words.js';
+import {
+  seq, readFixtures, isMonocyclicHydrocarbon, isHalogenDerivative, isBenzeneName, isTemplateName, isEther,
+} from './reverse-words.js';
 
 /** Benzene hydrocarbon fixture rows (the I-28 and I-42a sections; as in reverse-tokenize.test.js). */
 const EXPECTED_ROWS = 25;
@@ -51,11 +54,11 @@ const EXPECTED_COVERED = 49;
 const EXPECTED_TEMPLATE_NAMES = 18;
 
 /**
- * The I-42a rows with alkoxy prefixes, outside every round trip until R-5b
- * (the eight with halogens only are in reverse-halogens.test.js since
- * I-51a1, R-5a1).
+ * The I-42a rows with alkoxy prefixes, read back by the ether round trip
+ * since I-51b1 (R-5b1, reverse-ethers.test.js; the eight with halogens only
+ * by reverse-halogens.test.js since I-51a1, R-5a1): none is left out.
  */
-const EXPECTED_LATER_ROWS = 2;
+const EXPECTED_ETHER_ROWS = 2;
 
 /** The I-42a rows with halogens only, read back by the halogen round trip (reverse-halogens.test.js). */
 const EXPECTED_HALOGEN_ROWS = 8;
@@ -308,12 +311,18 @@ test('fixture round trip (R-4b, R-4c): the branch-only benzene rows of I-28 and 
   assert.equal(covered, EXPECTED_COVERED);
   assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
-  // The I-42a rows with halogens are the halogen round trip's (R-5a1); only those with alkoxy prefixes stay out (R-5b).
+  // The I-42a rows with halogens are the halogen round trip's (R-5a1), those with alkoxy prefixes the ether round trip's
+  // (R-5b1): no row of the section is left out.
   const rest = fixtures.filter((row) => row.section.includes('(I-42a') && !isMonocyclicHydrocarbon(row.smiles));
   assert.equal(rest.filter((row) => isHalogenDerivative(row.smiles)).length, EXPECTED_HALOGEN_ROWS);
-  const later = rest.filter((row) => !isHalogenDerivative(row.smiles));
-  assert.equal(later.length, EXPECTED_LATER_ROWS);
-  assert.ok(later.every((row) => row.smiles.includes('O')), 'every row left out has an alkoxy group');
+  const ethers = rest.filter((row) => !isHalogenDerivative(row.smiles));
+  assert.equal(ethers.length, EXPECTED_ETHER_ROWS);
+  assert.ok(ethers.every((row) => isEther(row.smiles)), 'every other row is an ether (reverse-ethers.test.js)');
+  for (const row of ethers) {
+    for (const name of row.names) {
+      assert.equal(readName(tokenize(name)).kind, name === row.names[0] ? 'correct' : 'alternative', name);
+    }
+  }
 }); // End of test 'fixture round trip (R-4b, R-4c): the branch-only benzene rows of I-28 and I-42a…'
 
 /** The closed loop's seeded benzenes (scripts/oracle/generate.mjs generateBenzenes(); design.md §15.7). */

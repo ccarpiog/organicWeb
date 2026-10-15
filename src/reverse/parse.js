@@ -1,29 +1,30 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
  * Grammar for open-chain and monocyclic hydrocarbons, their halogen
- * derivatives and their alcohols (design.md §15.5.1; the ring prefix `ciclo`
- * from R-4a, `benceno` and `fenil` from R-4b, the retained templates and the
- * orto/meta/para letters from R-4c, the halogens from R-5a1, the alcohols —
- * `hidroxi`, the suffix `ol`, `fenol`, the closing-bond locant `1(n)` —
- * from R-5a2, the retained phenol templates from R-5a3a):
+ * derivatives, their alcohols and their ethers (design.md §15.5.1; the ring
+ * prefix `ciclo` from R-4a, `benceno` and `fenil` from R-4b, the retained
+ * templates and the orto/meta/para letters from R-4c, the halogens from
+ * R-5a1, the alcohols — `hidroxi`, the suffix `ol`, `fenol`, the
+ * closing-bond locant `1(n)` — from R-5a2, the retained phenol templates
+ * from R-5a3a, the alkoxy ending `oxi` and `anisol` from R-5b):
  *
  *   name        = { prefix } , parent ;
  *   prefix      = [ locants ] , [ letter ] , [ MULT | CMULT ] , substituent ;
  *   substituent = simple | group | START , { prefix } , simple , END ;
  *   group       = fluoro | cloro | bromo | yodo | hidroxi ;
- *   simple      = stem , ( il | iliden )
- *               | stem , [ ano ] , locant , ( il | iliden )
- *               | stem , segments , [ locant ] , ( il | iliden )
- *               | isopropil | isopropiliden | tert-butil | fenil ;
+ *   simple      = stem , ( il [ oxi ] | iliden )
+ *               | stem , [ ano ] , locant , ( il [ oxi ] | iliden )
+ *               | stem , segments , [ locant ] , ( il [ oxi ] | iliden )
+ *               | ( isopropil | tert-butil | fenil ) , [ oxi ] | isopropiliden ;
  *   parent      = [ legacy ] , stem , ( ano | segments ) , [ suffix ]
  *               | [ legacy ] , benceno , [ suffix ] | fenol
  *               | [ locants | letter ] , template ;
  *   suffix      = [ locants ] , [ MULT ] , ol ;
- *   template    = tolueno | estireno | xileno | mesitileno
+ *   template    = tolueno | estireno | xileno | mesitileno | anisol
  *               | cresol | pirocatecol | catecol | resorcinol | hidroquinona ;
  *   letter      = o | m | p ;
  *   stem        = [ ciclo ] , ROOT ;   (* ciclo: a ring of ROOT carbons, at least 3 *)
@@ -69,6 +70,20 @@
  * its own (TEMPLATE_LOCANTS, as a template that places its group), and
  * counts that OH as one of the two positions of an orto/meta/para letter
  * (`p-metilfenol`), as `tolueno` counts its methyl.
+ *
+ * The alkoxy ending `oxi` (R-5b) closes a simple branch that ends in `il`
+ * — a chain or ring, `isopropil`, `tert-butil` or `fenil` —, also the own
+ * chain of a compound branch, right before its END (`START 2 met il prop il
+ * oxi END`: `(2-metilpropoxi)`): the branch is then bonded to an ether
+ * oxygen, which is bonded to the carbon the prefix's locant gives
+ * (`1 met il oxi prop ano`: `1-metoxipropano`). It is a field of the chain
+ * or retained node (`oxi`), so every rule that reads a branch's chain reads
+ * an alkoxy group's too; the assembler contracts it (render.js
+ * alkoxyTokens(): `metoxi`, `isopropoxi`, but `(pentiloxi)`). After `iliden`
+ * or `isopropiliden` (a double bond: an ether oxygen takes single bonds
+ * only), or anywhere else — after a halogen, after the END of a compound
+ * branch, alone —, it is TILE_ORDER with its own hint. `anisol` (R-5b) is a
+ * retained template like `tolueno`, its methoxy group at carbon 1.
  *
  * The tile `1(n)` (R-5a2) is the compound locant of a ring's closing bond,
  * the one from its last carbon n back to carbon 1 (the engine cites it
@@ -123,11 +138,12 @@
  *            o / m / p tile, R-4c)
  * - chain   `{type: 'chain', ring: number|null, root: number|null, ano:
  *            number|null, segments: segment[], fvLocants: number[], fv:
- *            number|null}` (`ring` the `ciclo` tile of a ring, else null;
- *            `root` null only after a `ciclo` with no root, RING_ROOT; a
- *            branch's chain has `fv`; the parent's has none)
+ *            number|null, oxi: number|null}` (`ring` the `ciclo` tile of a
+ *            ring, else null; `root` null only after a `ciclo` with no root,
+ *            RING_ROOT; a branch's chain has `fv`; the parent's has none;
+ *            `oxi` the alkoxy ending after `fv`, R-5b)
  * - segment `{locants: number[], multiplier: number|null, ending: number}`
- * - retained `{type: 'retained', tile}`
+ * - retained `{type: 'retained', tile, oxi: number|null}` (`oxi` the alkoxy ending after it, R-5b)
  * - halogen `{type: 'halogen', tile}` (a halogen tile, R-5a1)
  * - hydroxy `{type: 'hydroxy', tile}` (the `hidroxi` tile, R-5a2)
  * - branch  `{type: 'branch', start, items: (prefix|stray)[], chain:
@@ -174,13 +190,13 @@
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS, CONNECTING_VOWEL,
   MAX_MULTIPLIER, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, POSITIONAL_LETTERS, GROUP_SUFFIXES, GROUP_PREFIXES,
-  HALOGEN_PREFIXES,
+  HALOGEN_PREFIXES, ALKOXY_ENDING,
 } from '../naming/lexicon.es.js';
 import {
-  toTiles, TEMPLATES, templateGroupWord, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText, isPhenolTemplate,
-  withArticle,
+  toTiles, TEMPLATES, templateGroupWord, groupPlural, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
+  isPhenolTemplate, withArticle, ALKOXY_RETAINED,
 } from './tiles.js';
-import { itemText } from './assemble.js';
+import { itemText, isAlkoxyNode, isCompoundAlkoxy } from './assemble.js';
 
 /**
  * The syntactic error codes of design.md §15.6 handled by the parser (RING_ROOT, RING_SIZE from R-4a; BENZENE_BONDS
@@ -252,6 +268,10 @@ const EXAMPLES = Object.freeze({
   hidroxifenil: `${OPEN}4-${HIDROXI}${FENIL}${CLOSE}`,
   cloroMetilfenol: `2-${HALOGEN_PREFIXES.Cl}-4-${stem(1)}${IL}${FENOL}`,
   ciclohexenotriol: `${RING_PREFIX}${stem(6)}-${closingText(6)}-${ENDINGS.double}-1,2,4-${multiplier(3)}${OL}`,
+  metoxi: `${stem(1)}${ALKOXY_ENDING}`,
+  isopropoxi: `${RETAINED_PREFIXES.isopropyl.text.slice(0, -IL.length)}${ALKOXY_ENDING}`,
+  metilpropoxi: `${OPEN}2-${stem(1)}${IL}${stem(3)}${ALKOXY_ENDING}${CLOSE}`,
+  metoxifenil: `${OPEN}4-${stem(1)}${ALKOXY_ENDING}${FENIL}${CLOSE}`,
 });
 
 /** The three letters as the messages quote them: «o», «m» y «p». */
@@ -289,7 +309,23 @@ const HINTS = Object.freeze({
     + `se escribe con «${HIDROXI}» y «${FENIL}», como en ${EXAMPLES.hidroxifenil}.`,
   closing: `«${closingText('n')}» es el número del enlace que cierra un anillo, del último carbono al 1, y solo va delante `
     + `de «${ENDINGS.double}» o «${ENDINGS.triple}» de un anillo (${EXAMPLES.ciclohexenotriol}).`,
+  alkoxy: `«${ALKOXY_ENDING}» va justo detrás de una rama acabada en «${IL}», y la une a la cadena por un oxígeno: `
+    + `${stem(1)}, ${IL} y ${ALKOXY_ENDING} dan ${EXAMPLES.metoxi}; también detrás de «${RETAINED_PREFIXES.isopropyl.text}», `
+    + `«${RETAINED_PREFIXES['tert-butyl'].italic}${RETAINED_PREFIXES['tert-butyl'].text}» o «${FENIL}» (${EXAMPLES.isopropoxi}), `
+    + `y en una rama compuesta, antes de cerrarla: ${EXAMPLES.metilpropoxi}.`,
 });
+
+/**
+ * The TILE_ORDER hint of `oxi` after a doubly bonded branch word (R-5b):
+ * `iliden`, `isopropiliden` — an ether oxygen takes single bonds only.
+ *
+ * @param {string} word - The word before it, as on its tile.
+ * @returns {string} The hint.
+ */
+function alkoxyAfterDoubleHint(word) {
+  return `«${ALKOXY_ENDING}» no va detrás de «${word}»: el oxígeno se une a la rama por un enlace sencillo, así que la rama `
+    + `acaba en «${IL}» (${EXAMPLES.metoxi}).`;
+}
 
 /** Messages of the error codes that take no detail (design.md §15.6 drafts). */
 const MESSAGES = Object.freeze({
@@ -370,7 +406,7 @@ function ownGroups(tiles, chain) {
     const group = templateGroupWord(tile.value);
     const kinds = [
       ...(hydroxy.length > 0 ? [{ count: hydroxy.length, one: PHENOL_GROUP, many: PHENOL_GROUPS }] : []),
-      ...(count > 0 ? [{ count, one: group, many: `${group}s` }] : []),
+      ...(count > 0 ? [{ count, one: group, many: groupPlural(group) }] : []), // `metilos`; `grupos metoxi` (R-5b)
     ];
     return {
       count: count + hydroxy.length,
@@ -473,13 +509,14 @@ function substitutedLetterOnlyMessage(owner) {
 function templateCountMessage(tile) {
   const { count } = TEMPLATES[tile.value];
   return `Con «${tile.text}» van ${numberWord(count)} números, los de sus ${numberWord(count)} `
-    + `${templateGroupWord(tile.value)}s (${EXAMPLES.xileno12}), o una letra (${EXAMPLES.oXileno}).`;
+    + `${groupPlural(templateGroupWord(tile.value))} (${EXAMPLES.xileno12}), o una letra (${EXAMPLES.oXileno}).`;
 }
 
 /**
  * The hint of a TILE_ORDER error on a template tile (R-4c): inside a
  * compound branch, or after a multiplier. A retained phenol (R-5a3a) in a
- * branch is written like `fenol` there, with `hidroxi` and `fenil`.
+ * branch is written like `fenol` there, with `hidroxi` and `fenil`; `anisol`
+ * (R-5b) with `metoxi` and `fenil`, `(4-metoxifenil)`.
  *
  * @param {{text: string, kind: string, value: string}} tile - The template tile.
  * @param {'branch'|'multiplier'} where - Where it stands.
@@ -489,6 +526,11 @@ function templateHint(tile, where) {
   if (where === 'branch' && tile.kind === 'template' && isPhenolTemplate(tile.value)) {
     return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es «${FENIL}» y cada `
       + `${PHENOL_GROUP} se escribe «${HIDROXI}», como en ${EXAMPLES.hidroxifenil}.`;
+  }
+  if (where === 'branch' && tile.kind === 'template' && TEMPLATES[tile.value].group && TEMPLATES[tile.value].group.alkoxy) {
+    // `anisol` (R-5b): its methoxy group is written as a prefix of `fenil` there.
+    return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es «${FENIL}» y su `
+      + `${templateGroupWord(tile.value)} se escribe «${EXAMPLES.metoxi}», como en ${EXAMPLES.metoxifenil}.`;
   }
   if (where === 'branch') {
     return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es «${FENIL}», `
@@ -650,10 +692,34 @@ function parseSegments(state, chain) {
 } // End of function parseSegments()
 
 /**
+ * Consumes the alkoxy ending `oxi` after a branch's free-valence suffix or
+ * retained word when it follows (R-5b), recording TILE_ORDER when that
+ * branch is bonded by a double bond (`iliden`, `isopropiliden`): the tile
+ * stays in the node either way, so the tree stays lossless.
+ *
+ * @param {object} state - Parser state (right after the `il` / `iliden` tile or the retained word).
+ * @param {object} before - The tile before it (`il`, `iliden` or a retained word).
+ * @returns {number|null} The `oxi` tile index, or null.
+ */
+function takeAlkoxy(state, before) {
+  if (!at(state, 'alkoxy')) {
+    return null;
+  }
+  const oxi = state.pos;
+  state.pos += 1;
+  const single = before.kind === 'freeValence' ? before.value === 1 : ALKOXY_RETAINED.includes(before.value);
+  if (!single) {
+    addTileOrder(state, oxi, oxi + 1, alkoxyAfterDoubleHint(before.text)); // `metiliden oxi`, `isopropiliden oxi`
+  }
+  return oxi;
+} // End of function takeAlkoxy()
+
+/**
  * Parses a chain from its stem — a root, or `ciclo` and a root for a ring
  * (RING_ROOT when no root follows `ciclo`, RING_SIZE for a ring of fewer
  * than MIN_RING carbons) —, then `ano` or unsaturation segments, then the
- * free-valence locant and suffix of a branch when they follow.
+ * free-valence locant and suffix of a branch when they follow, and the
+ * alkoxy ending `oxi` after them (R-5b).
  *
  * @param {object} state - Parser state (positioned on a root or `ciclo` tile).
  * @returns {object} The chain node.
@@ -661,7 +727,7 @@ function parseSegments(state, chain) {
 function parseChain(state) {
   const { tiles } = state;
   const start = state.pos;
-  const chain = { type: 'chain', ring: null, root: null, ano: null, segments: [], fvLocants: [], fv: null, range: null };
+  const chain = { type: 'chain', ring: null, root: null, ano: null, segments: [], fvLocants: [], fv: null, oxi: null, range: null };
   if (at(state, 'ring')) {
     chain.ring = state.pos;
     state.pos += 1;
@@ -695,6 +761,7 @@ function parseChain(state) {
     if (chain.ano !== null && nums.length === 0) {
       addTileOrder(state, chain.ano, chain.ano + 1, HINTS.anoBeforeIl); // `prop ano il`: `propil`
     }
+    chain.oxi = takeAlkoxy(state, tiles[chain.fv]); // `met il oxi`: `metoxi` (R-5b)
   } else {
     state.pos = save;
   }
@@ -1010,7 +1077,7 @@ function parseItem(state, context) {
   const start = state.pos;
   const first = tiles[start];
   const wholeWord = (first.kind === 'benzene' || first.kind === 'template') && context === 'branch';
-  if (['ending', 'freeValence', 'end', 'suffix'].includes(first.kind) || wholeWord) {
+  if (['ending', 'freeValence', 'end', 'suffix', 'alkoxy'].includes(first.kind) || wholeWord) { // `oxi` alone: R-5b
     state.pos += 1;
     const hint = (first.kind === 'end' && HINTS.endWithoutBranch) || (wholeWord && wholeWordHint(first)) || HINTS[first.kind];
     addTileOrder(state, start, start + 1, hint);
@@ -1035,8 +1102,14 @@ function parseItem(state, context) {
   }
   if (next.kind === 'start') {
     prefix.substituent = parseBranch(state);
-  } else if (next.kind === 'retained' || isAtomGroup(next.kind)) {
-    prefix.substituent = { type: next.kind, tile: state.pos, range: [state.pos, state.pos + 1] }; // `isopropil`, `cloro`, `hidroxi`
+  } else if (next.kind === 'retained') {
+    const node = { type: 'retained', tile: state.pos, oxi: null, range: null }; // `isopropil`, `fenil`
+    state.pos += 1;
+    node.oxi = takeAlkoxy(state, next); // `isopropoxi`, `fenoxi` (R-5b)
+    node.range = [node.tile, state.pos];
+    prefix.substituent = node;
+  } else if (isAtomGroup(next.kind)) {
+    prefix.substituent = { type: next.kind, tile: state.pos, range: [state.pos, state.pos + 1] }; // `cloro`, `hidroxi`
     state.pos += 1;
   } else {
     const chain = parseChain(state);
@@ -1053,7 +1126,9 @@ function parseItem(state, context) {
     prefix.substituent = chain;
   }
   prefix.range = [start, state.pos];
-  checkLocantCount(state, locants, mult, 'grupos', prefix.substituent.type === 'branch');
+  // bis… for a compound branch, and for an alkoxy prefix written as its branch + `oxi` (R-5b: `bis(pentiloxi)`).
+  const compound = prefix.substituent.type === 'branch' || isCompoundAlkoxy(tiles, prefix.substituent);
+  checkLocantCount(state, locants, mult, 'grupos', compound);
   return prefix;
 } // End of function parseItem()
 
@@ -1085,8 +1160,8 @@ function checkNameEnd(state, tree) {
   const last = tree.items[tree.items.length - 1];
   if (last && isCompletePrefix(last)) {
     const words = itemText(tree, { ...last, locants: [], letter: null, multiplier: null });
-    // `2-cloro`, `2-hidroxi`: a one-atom group is no branch (R-5a1, R-5a2).
-    const what = isAtomGroup(last.substituent.type) ? 'un grupo' : 'una rama';
+    // `2-cloro`, `2-hidroxi`, `2-metoxi`: a one-atom group or an alkoxy group is no branch (R-5a1, R-5a2, R-5b).
+    const what = isAtomGroup(last.substituent.type) || isAlkoxyNode(last.substituent) ? 'un grupo' : 'una rama';
     addError(state, 'ENDS_WITH_BRANCH', last.range[0], last.range[1],
       `El nombre acaba en ${what} («${words}»): falta la cadena principal detrás.`);
     return;

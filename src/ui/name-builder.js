@@ -15,19 +15,23 @@
  *   options (the tiles, plus the insertion point before the first one) are
  *   selected by click or with the arrow keys, Home and End (roving
  *   tabindex, `aria-selected`); `aria-live`, so every change is announced;
- *   the opening mark of an unfinished compound branch shows faintly;
+ *   the opening mark of an unfinished compound branch shows faintly; a tile
+ *   that writes nothing (a compound-branch control without marks, the `il`
+ *   of a contracted alkoxy prefix, R-5b: `met il oxi` → `metoxi`) is a small
+ *   dashed box with an accessible name of its own;
  * - the tile rows («Números», «¿Cuántos?», «Raíces (cuántos carbonos)»,
  *   «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a,
  *   `benceno` and `fenil`, phase R-4b, the letters `o`, `m`, `p`, phase
  *   R-4c, each with its word (orto, meta, para) beside it, `fenol` and the
  *   closing-bond locant `1(n)`, phase R-5a2, the latter with a tooltip —,
  *   «Grupos» — the halogens `fluoro`, `cloro`, `bromo`, `yodo`, phase R-5a1,
- *   `hidroxi` and the suffix `ol`, phase R-5a2 —, «Nombres tradicionales» —
- *   `tolueno`, `estireno`, `xileno`, `mesitileno`, phase R-4c, and the
- *   retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
- *   `hidroquinona`, phase R-5a3a, each with a tooltip saying what it is;
- *   drafts pending teacher review), each with a «más» button for the tiles
- *   the catalogue keeps behind it;
+ *   `hidroxi` and the suffix `ol`, phase R-5a2, the alkoxy ending `oxi`,
+ *   phase R-5b, with a tooltip —, «Nombres tradicionales» — `tolueno`,
+ *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
+ *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
+ *   `hidroquinona`, phase R-5a3a, these and `anisol` each with a tooltip
+ *   saying what it is; drafts pending teacher review), each with a «más»
+ *   button for the tiles the catalogue keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
  *   «Borrar todo», «Dibujar» and «Cerrar» (also Escape and a click on the
  *   backdrop); the focus goes into the dialog on opening and back to the
@@ -47,7 +51,7 @@
  * The DOM is built with createElement/textContent only (never innerHTML).
  */
 
-import { TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID } from '../reverse/tiles.js';
+import { TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, tileById } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
 
@@ -90,11 +94,15 @@ export function positionalLabel(tile) {
  * Tooltips of tiles whose text needs a word of explanation (R-5a2: the
  * closing-bond locant `1(n)`; R-5a3a: the retained phenols, which say
  * nothing of their groups — what molecule each is, and that `cresol` takes
- * a letter; drafts pending teacher review). The tile's text stays its
- * accessible name.
+ * a letter; R-5b: the alkoxy ending `oxi`, where it goes and that the app
+ * writes the short forms, and `anisol`; drafts pending teacher review). The
+ * tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
   [CLOSING_ID]: 'Número del enlace que cierra un anillo, del último carbono al 1: se escribe 1(6) en un anillo de 6 carbonos.',
+  [ALKOXY_ID]: 'Va detrás de una rama acabada en «il» y la une a la cadena por un oxígeno: met, il y oxi dan metoxi; pent, il y '
+    + 'oxi dan (pentiloxi).',
+  'template-anisole': 'Benceno con un grupo metoxi: metoxibenceno.',
   'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
   'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',
   'template-catechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. La IUPAC (2013) acepta pirocatecol.',
@@ -104,6 +112,18 @@ export const TILE_HINTS = Object.freeze({
 
 /** Text of the empty name line. */
 export const PLACEHOLDER = 'Pulsa las fichas de abajo para formar un nombre.';
+
+/**
+ * The accessible name of a tile of the name line that writes nothing where
+ * it stands (R-5b: the `il` of `metoxi`, which `oxi` replaces; draft pending
+ * teacher review): its text and that it is not written.
+ *
+ * @param {string} text - The tile's text.
+ * @returns {string} The name, e.g. «il (no se escribe)».
+ */
+export function silentLabel(text) {
+  return `${text} (no se escribe)`;
+}
 
 /** Accessible name of the insertion point before the first tile. */
 export const START_LABEL = 'Principio del nombre';
@@ -348,6 +368,8 @@ export function buildNameBuilder(doc, options = {}) {
       span.dataset.tile = piece.id;
       if (CONTROL_LABELS[piece.id]) {
         span.setAttribute('aria-label', CONTROL_LABELS[piece.id]);
+      } else if (piece.text === '') {
+        span.setAttribute('aria-label', silentLabel(tileById(piece.id).text)); // The `il` of `metoxi` (R-5b).
       }
       span.classList.toggle('nb-piece--pending', piece.pending);
       span.classList.toggle('nb-piece--silent', piece.text === '');

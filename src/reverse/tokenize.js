@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -39,12 +39,19 @@
  * also the multiplier without its final `a` (`tetr` + `ol`, rule 4); `fenol`
  * ends a name like `benceno`. The closing-bond locant `1(6)` (R-5a2) is read
  * wherever a ring's bond locant may stand, as the `1(n)` tile (the assembler
- * checks the ring size). A step budget bounds the search:
+ * checks the ring size). The alkoxy ending `oxi` (R-5b) is read after `il`
+ * (`pentiloxi`, `propan-2-iloxi`), and, contracted (assemble.js rule 6),
+ * right after a root as the `il` tile that writes nothing and the `oxi` tile
+ * (`met` + `oxi`: one surface, two tiles) or after a retained word without
+ * its `il` (`isoprop`, `tert-but`, `fen` + `oxi`, read only before `oxi`);
+ * an automatic enclosure may hold `il` + `oxi` (`(pentiloxi)`) or a whole
+ * contracted alkoxy prefix of a crowded level (`cloro(metoxi)metano`,
+ * `(fenoxi)`). A step budget bounds the search:
  * running out returns null, never a guess.
  */
 
-import { CONNECTING_VOWEL, ENCLOSING_MARKS } from '../naming/lexicon.es.js';
-import { TILES, START_ID, END_ID, CLOSING_ID } from './tiles.js';
+import { CONNECTING_VOWEL, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES } from '../naming/lexicon.es.js';
+import { TILES, START_ID, END_ID, CLOSING_ID, ALKOXY_RETAINED, tileId } from './tiles.js';
 import { parse } from './parse.js';
 import { assemble, separator } from './assemble.js';
 
@@ -68,11 +75,16 @@ const PUNCTUATION = ',-';
  * branch word), PHE (`fenil`, R-4b), BEN (`benceno`, R-4b), TPL (a retained
  * template, R-4c), POS (an orto/meta/para letter, R-4c), HAL (a one-atom
  * group: a halogen, R-5a1; `hidroxi`, R-5a2), OL (the suffix `ol`, R-5a2),
- * PHOL (`fenol`, R-5a2), CLO (the closing-bond locant `1(n)`, R-5a2), START,
+ * PHOL (`fenol`, R-5a2), CLO (the closing-bond locant `1(n)`, R-5a2), OXI
+ * (the alkoxy ending `oxi` after `il` or a retained word, R-5b), START,
  * END, RING (`ciclo`). A is the automatic connecting vowel, AUTO_OPEN an
  * automatic opening mark; MULTE a multiplier without its final `a`, only
  * before `ol`, and BENE `benceno` without its `o`, only before `ol` or its
- * locants (rule 4: `tetrol`, `bencenol`, `bencen-1-ol`).
+ * locants (rule 4: `tetrol`, `bencenol`, `bencen-1-ol`); for the alkoxy
+ * contraction (R-5b, assemble.js rule 6) OXIC the `oxi` right after a root
+ * (with the silent `il` tile before it: `metoxi`), RETX a retained word and
+ * PHEX `fenil` without their `il`, only before `oxi` (`isopropoxi`,
+ * `fenoxi`).
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -90,13 +102,13 @@ function tileClass(tile) {
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
     ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS', halogen: 'HAL', hydroxy: 'HAL', suffix: 'OL',
-    closing: 'CLO',
+    closing: 'CLO', alkoxy: 'OXI',
   };
   return classes[tile.kind];
 } // End of function tileClass()
 
-/** Classes that may begin a name, a prefix or a compound branch. */
-const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START'];
+/** Classes that may begin a name, a prefix or a compound branch (RETX, PHEX: a retained word before `oxi`, R-5b). */
+const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'RETX', 'PHEX'];
 
 /** Classes that may follow a complete prefix: another prefix, the end of its compound branch, `benceno`, `fenol` or a template. */
 const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'TPL'];
@@ -111,25 +123,31 @@ const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'TPL'];
  * there too (a template also after locants or a letter), and nothing after
  * them; a letter at the start only, before a prefix or a template; the
  * suffix `ol` after the parent's ending, its locants or its multiplier, and
- * nothing after it; `1(n)` wherever a bond locant of a ring may stand.
+ * nothing after it; `1(n)` wherever a bond locant of a ring may stand; `oxi`
+ * (R-5b) after `il`, after a retained word without its `il`, or contracted
+ * right after a root, and a prefix's followers after it.
  */
 const FOLLOW = Object.freeze({
   BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'TPL', 'POS']),
-  AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE']),
+  AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE', 'RETX', 'PHEX']),
   NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL', 'BEN', 'BENE', 'CLO', 'MULTE', 'OL']),
   CLO: new Set(['NUM', 'CLO', 'MULT', 'ENE']),
-  POS: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'TPL']),
-  MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'ENE', 'OL']),
+  POS: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'TPL', 'RETX', 'PHEX']),
+  MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'ENE', 'OL', 'RETX', 'PHEX']),
   MULTE: new Set(['OL']),
-  CMULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START']),
+  CMULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'RETX', 'PHEX']),
   RING: new Set(['ROOT']),
-  ROOT: new Set(['ANO', 'NUM', 'CLO', 'MULT', 'ENE', 'FV', 'A']),
+  ROOT: new Set(['ANO', 'NUM', 'CLO', 'MULT', 'ENE', 'FV', 'A', 'OXIC']),
   A: new Set(['NUM', 'CLO', 'MULT']),
   ANO: new Set(['NUM', 'MULT', 'MULTE', 'OL']),
   ENE: new Set(['NUM', 'CLO', 'MULT', 'MULTE', 'ENE', 'FV', 'OL']),
-  FV: new Set(AFTER_PREFIX),
+  FV: new Set([...AFTER_PREFIX, 'OXI']),
   RET: new Set(AFTER_PREFIX),
   PHE: new Set(AFTER_PREFIX),
+  RETX: new Set(['OXI']),
+  PHEX: new Set(['OXI']),
+  OXI: new Set(AFTER_PREFIX),
+  OXIC: new Set(AFTER_PREFIX),
   HAL: new Set(AFTER_PREFIX),
   START: new Set(PREFIX_STARTS),
   END: new Set(AFTER_PREFIX),
@@ -143,8 +161,11 @@ const FOLLOW = Object.freeze({
 /** Classes a valid name may end with (the parent's ending, `benceno`, `fenol`, a template or the suffix `ol`). */
 const FINAL = new Set(['ANO', 'ENE', 'BEN', 'PHOL', 'TPL', 'OL']);
 
-/** Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, or `fenil`. */
-const AUTO_CLOSE = new Set(['FV', 'PHE']);
+/** Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, `fenil`, or an alkoxy prefix's `oxi` (R-5b). */
+const AUTO_CLOSE = new Set(['FV', 'PHE', 'OXI', 'OXIC']);
+
+/** What may follow `il` inside an automatic enclosure before it closes: `oxi` (R-5b: `(pentiloxi)`). */
+const IN_ENCLOSURE_AFTER_FV = new Set(['OXI']);
 
 /** Punctuation roles of the pieces (assemble.js separator()). */
 const WORD = Object.freeze({ role: 'word' });
@@ -172,27 +193,37 @@ function pieceRole(tile) {
  * Builds the surface forms of the tiles (START / END excepted: they are
  * read from the enclosing marks; and `1(n)`, read with its ring size by
  * search()), longest first: each tile's text, the elided endings `an`,
- * `en`, `in` (rules 3 and 4), and before `ol` (R-5a2, rule 4) the
+ * `en`, `in` (rules 3 and 4), before `ol` (R-5a2, rule 4) the
  * multipliers without their final `a` (`tetr`, class MULTE) and `bencen`
- * (class BENE).
+ * (class BENE), and for the alkoxy contraction (R-5b, rule 6) the retained
+ * words without their `il` (`isoprop`, `tert-but`: class RETX; `fen`: PHEX)
+ * and `oxi` read as two tiles, the silent `il` and `oxi` (class OXIC). Each
+ * surface gives the tile ids it stands for (one, or two for OXIC).
  *
- * @returns {{text: string, id: string, cls: string, piece: object}[]} The surface forms.
+ * @returns {{text: string, ids: string[], cls: string, piece: object}[]} The surface forms.
  */
 function buildSurfaces() {
   const surfaces = [];
+  const il = FREE_VALENCE_SUFFIXES[1];
   for (const tile of TILES) {
     const cls = tileClass(tile);
     if (cls === 'START' || cls === 'END' || cls === 'CLO') {
       continue;
     }
     const piece = pieceRole(tile);
-    surfaces.push({ text: tile.text, id: tile.id, cls, piece });
+    const ids = [tile.id];
+    surfaces.push({ text: tile.text, ids, cls, piece });
     if (tile.kind === 'ending') {
-      surfaces.push({ text: tile.text.slice(0, -1), id: tile.id, cls, piece }); // `an`, `en`, `in` (rules 3 and 4)
+      surfaces.push({ text: tile.text.slice(0, -1), ids, cls, piece }); // `an`, `en`, `in` (rules 3 and 4)
     } else if (cls === 'MULT' && tile.text.endsWith('a')) {
-      surfaces.push({ text: tile.text.slice(0, -1), id: tile.id, cls: 'MULTE', piece }); // `tetr` + `ol` (R-5a2)
+      surfaces.push({ text: tile.text.slice(0, -1), ids, cls: 'MULTE', piece }); // `tetr` + `ol` (R-5a2)
     } else if (cls === 'BEN') {
-      surfaces.push({ text: tile.text.slice(0, -1), id: tile.id, cls: 'BENE', piece }); // `bencen` + `ol` (R-5a2)
+      surfaces.push({ text: tile.text.slice(0, -1), ids, cls: 'BENE', piece }); // `bencen` + `ol` (R-5a2)
+    } else if (tile.kind === 'retained' && ALKOXY_RETAINED.includes(tile.value)) {
+      // `isoprop` / `tert-but` / `fen` + `oxi` (R-5b, rule 6).
+      surfaces.push({ text: tile.text.slice(0, -il.length), ids, cls: cls === 'PHE' ? 'PHEX' : 'RETX', piece });
+    } else if (cls === 'OXI') {
+      surfaces.push({ text: tile.text, ids: [tileId('freeValence', 1), tile.id], cls: 'OXIC', piece }); // `met` + `oxi` (R-5b)
     }
   } // End of the loop over the tiles
   return surfaces.map((surface, i) => ({ surface, i }))
@@ -294,10 +325,15 @@ export function tokenize(text, options = {}) {
       return fits(CLOSE) ? searchClosing(at, prev, CLOSERS.indexOf(ch)) : false;
     }
     const top = marks[marks.length - 1];
+    let follow = FOLLOW[prev];
     if (top && top.automatic && AUTO_CLOSE.has(prev)) {
-      return false; // An automatic enclosure ends right after its chain's `il` / `iliden`, or after `fenil`.
+      // An automatic enclosure ends right after its chain's `il` / `iliden`, after `fenil`, or after `oxi` — but `il` may
+      // still take `oxi` first (`(pentiloxi)`, R-5b).
+      if (prev !== 'FV') {
+        return false;
+      }
+      follow = IN_ENCLOSURE_AFTER_FV;
     }
-    const follow = FOLLOW[prev];
     const closing = follow.has('CLO') ? closingAt(target, at) : 0;
     if (closing > 0 && fits(LOCANT)) {
       ids.push(CLOSING_ID); // `1(6)` (R-5a2): the assembly checks that the ring has six carbons.
@@ -309,12 +345,12 @@ export function tokenize(text, options = {}) {
     }
     for (const surface of SURFACES) {
       if (follow.has(surface.cls) && target.startsWith(surface.text, at) && fits(surface.piece)) {
-        ids.push(surface.id);
+        ids.push(...surface.ids);
         const found = search(at + surface.text.length, surface.cls, surface.piece);
         if (found !== false) {
           return found;
         }
-        ids.pop();
+        ids.length -= surface.ids.length;
       }
     } // End of the loop over the surface forms
     if (follow.has('A') && target.startsWith(CONNECTING_VOWEL, at) && fits(WORD)) {

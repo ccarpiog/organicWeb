@@ -18,7 +18,7 @@ import { assemble } from '../../src/reverse/assemble.js';
 import { tokenize, TOKENIZE_BUDGET, TOKENIZE_MAX_LENGTH } from '../../src/reverse/tokenize.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, HALOGEN_PREFIXES,
-  GROUP_PREFIXES, GROUP_SUFFIXES,
+  GROUP_PREFIXES, GROUP_SUFFIXES, ALKOXY_ENDING, TRADITIONAL_NAMES,
 } from '../../src/naming/lexicon.es.js';
 import {
   seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName, isBenzeneName, isTemplateName,
@@ -48,7 +48,7 @@ const EXPECTED_RING_NAMES = 59;
  * and "Polysubstituted benzenes with prefixes only (I-42a)", 12; of the 10
  * I-42a rows with halogens or alkoxy groups, the 8 with halogens only are
  * tokenized by reverse-halogens.test.js since I-51a1, the 2 with alkoxy
- * groups are R-5b).
+ * groups by reverse-ethers.test.js since I-51b1).
  */
 const EXPECTED_BENZENE_ROWS = 25;
 
@@ -306,7 +306,10 @@ function mulberry32(seed) {
  * one-atom prefixes are `hidroxi`, some parents take the suffix `ol` (with
  * locants, a multiplier, or neither — always located after old-style
  * segment locants), some benzene parents are `fenol`, and some located
- * segments of a ring cite the closing-bond locant `1(n)`.
+ * segments of a ring cite the closing-bond locant `1(n)`. With `ethers`
+ * (R-5b), some simple branches that end in `il` — chains, rings,
+ * `isopropil`, `tert-butil`, `fenil`, also as a compound branch's own chain
+ * — take the alkoxy ending `oxi`, and the templates include `anisol`.
  *
  * @param {() => number} random - The random source.
  * @param {boolean} [rings] - Draw ring stems too (default false: the R-1a sequences, draw for draw).
@@ -316,13 +319,23 @@ function mulberry32(seed) {
  *   false: the earlier sequences, draw for draw).
  * @param {boolean} [alcohols] - Draw `hidroxi`, the suffix `ol`, `fenol` and `1(n)` too (R-5a2; default false: the earlier
  *   sequences, draw for draw).
+ * @param {boolean} [ethers] - Draw the alkoxy ending `oxi` and `anisol` too (R-5b; default false: the earlier sequences,
+ *   draw for draw).
  * @returns {() => string[]} A function returning one sequence of tile words.
  */
-function grammarGenerator(random, rings = false, benzene = false, templates = false, halogens = false, alcohols = false) {
+function grammarGenerator(random, rings = false, benzene = false, templates = false, halogens = false, alcohols = false,
+  ethers = false) {
   const int = (lo, hi) => lo + Math.floor(random() * (hi - lo + 1));
   const pick = (list) => list[int(0, list.length - 1)];
   const nums = (k) => Array.from({ length: k }, () => String(int(1, 30)));
   const fv = () => FREE_VALENCE_SUFFIXES[int(1, 2)];
+  /**
+   * With `ethers` (R-5b), sometimes the alkoxy ending after a branch that may take it.
+   *
+   * @param {boolean} single - The branch ends in `il` (or is a retained word bonded by a single bond).
+   * @returns {string[]} The words.
+   */
+  const alkoxy = (single) => (ethers && single && random() < 0.35 ? [ALKOXY_ENDING] : []);
   /**
    * The words of a stem: a root, or (with `rings`, sometimes) `ciclo` and a root of three or more carbons.
    *
@@ -364,22 +377,32 @@ function grammarGenerator(random, rings = false, benzene = false, templates = fa
    * @returns {string[]} The words.
    */
   const simple = () => {
+    if (ethers && random() < 0.2) {
+      return [stem(int(1, 4)), FREE_VALENCE_SUFFIXES[1], ALKOXY_ENDING]; // A contracted alkoxy prefix: `metoxi`…`butoxi` (R-5b).
+    }
     if (benzene && random() < 0.25) {
-      return [`${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text}`];
+      return [`${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text}`, ...alkoxy(true)];
     }
     const form = int(0, 3);
     const root = stemWords();
     if (form === 0) {
-      return [...root, fv()];
+      const end = fv();
+      return [...root, end, ...alkoxy(end === FREE_VALENCE_SUFFIXES[1])];
     }
     if (form === 1) {
-      return [...root, ...(random() < 0.5 ? [ENDINGS.saturated] : []), ...nums(1), fv()];
+      const ano = random() < 0.5 ? [ENDINGS.saturated] : [];
+      const locant = nums(1);
+      const end = fv();
+      return [...root, ...ano, ...locant, end, ...alkoxy(end === FREE_VALENCE_SUFFIXES[1])];
     }
     if (form === 2) {
       const segments = Array.from({ length: int(1, 2) }, () => segment(random() < 0.7, root.length > 1)).flat();
-      return [...root, ...segments, ...(random() < 0.6 ? nums(1) : []), fv()];
+      const locant = random() < 0.6 ? nums(1) : [];
+      const end = fv();
+      return [...root, ...segments, ...locant, end, ...alkoxy(end === FREE_VALENCE_SUFFIXES[1])];
     }
-    return [pick(['isopropil', 'isopropiliden', 'tert-butil'])];
+    const word = pick(['isopropil', 'isopropiliden', 'tert-butil']);
+    return [word, ...alkoxy(word !== 'isopropiliden')];
   }; // End of function simple()
   /**
    * A prefix: locants (or none), multiplier, substituent.
@@ -425,7 +448,7 @@ function grammarGenerator(random, rings = false, benzene = false, templates = fa
   };
   const parent = () => {
     if (templates && random() < 0.5) {
-      const value = pick(['toluene', 'styrene', 'xylene', 'mesitylene']);
+      const value = pick(['toluene', 'styrene', 'xylene', 'mesitylene', ...(ethers ? ['anisole'] : [])]); // `anisol` (R-5b)
       return [...(value === 'xylene' && random() < 0.7 ? nums(2) : []), templateWord(value)];
     }
     if (benzene && random() < 0.5) {
@@ -547,6 +570,29 @@ test('property (R-5a2): random grammatical sequences with alcohols tokenize back
   } // End of the loop over the random sequences
   assert.ok(seen.ol >= 50 && seen.hidroxi >= 30 && seen.fenol >= 10 && seen.closing >= 8, JSON.stringify(seen)); // The seed gives 64, 41, 15, 10.
 }); // End of test 'property (R-5a2): random grammatical sequences with alcohols tokenize back to the same text'
+
+test('property (R-5b): random grammatical sequences with alkoxy prefixes and `anisol` tokenize back to the same text', () => {
+  const next = grammarGenerator(mulberry32(20261021), true, true, true, true, true, true);
+  const seen = { oxi: 0, contracted: 0, anisol: 0, compound: 0 };
+  for (let i = 0; i < 400; i += 1) {
+    const list = next();
+    const ids = seq(list.join(' '));
+    const original = readBack(ids);
+    assert.deepEqual(original.errors, [], list.join(' '));
+    // One span per tile, in tile order, the silent `il` of a contracted alkoxy prefix too.
+    const spans = assemble(parse(ids).tree).spans;
+    assert.deepEqual(spans.filter((s) => s.tile !== null).map((s) => s.tile), ids.map((_, j) => j), `${list.join(' ')}: one span per tile`);
+    seen.oxi += list.includes(ALKOXY_ENDING) ? 1 : 0;
+    seen.contracted += spans.some((s) => s.tile !== null && s.from === s.to && ids[s.tile] === 'fv-1') ? 1 : 0;
+    seen.anisol += list.includes(TRADITIONAL_NAMES.anisole) ? 1 : 0;
+    seen.compound += list.some((word, k) => word === ALKOXY_ENDING && list[k + 1] === 'END') ? 1 : 0;
+    const found = tokenize(original.text);
+    assert.ok(found, `${list.join(' ')} → ${original.text}: no tiles`);
+    assert.equal(readBack(found).text, original.text, list.join(' '));
+  } // End of the loop over the random sequences
+  // The seed gives 139, 83, 30 and 50.
+  assert.ok(seen.oxi >= 120 && seen.contracted >= 60 && seen.anisol >= 20 && seen.compound >= 35, JSON.stringify(seen));
+}); // End of test 'property (R-5b): random grammatical sequences with alkoxy prefixes and `anisol`…'
 
 test('property (R-5a1): random grammatical sequences with halogen prefixes tokenize back to the same text', () => {
   const next = grammarGenerator(mulberry32(20261019), true, true, true, true);

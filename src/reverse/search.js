@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -35,7 +35,14 @@
  *   prefixes are searched on the other carbons (`metilfenol`: 2-, 3- and
  *   4-metilfenol); so are those of a retained phenol (R-5a3a: `catecol` at
  *   1 and 2), and a bare `cresol`'s methyl is one left-out slot, on 2…6
- *   (three structures, filled as `o-` / `m-` / `p-cresol`).
+ *   (three structures, filled as `o-` / `m-` / `p-cresol`). An alkoxy
+ *   prefix (R-5b) is modelled as its branch: its slots are carbon slots of
+ *   the chain it hangs from, each adding one bond (the ether oxygen's single
+ *   bond, build.js attachmentOrder()), and its branch's own chain is a chain
+ *   of the model whose free valence adds one bond to its carbon (the bond to
+ *   the oxygen); the oxygen itself, two single bonds, never limits a
+ *   placement (`metoxipropano`: two structures; `decametoxidecano`: past the
+ *   budget, `incomplete`).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,

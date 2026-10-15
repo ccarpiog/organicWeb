@@ -337,7 +337,7 @@ test('benzene (R-4b): `benceno` is the parent node, `fenil` a retained word that
   assert.deepEqual([tree.items.length, tree.parent.chain.tile], [0, 0]);
   // `fenil`: a simple retained branch; with prefixes of its own, the own chain of a compound branch.
   ({ tree } = read('fenil met ano'));
-  assert.deepEqual(tree.items[0].substituent, { type: 'retained', tile: 0, range: [0, 1] });
+  assert.deepEqual(tree.items[0].substituent, { type: 'retained', tile: 0, oxi: null, range: [0, 1] }); // `oxi`: R-5b
   ({ tree } = read('START 4 met il fenil END met ano'));
   const branch = tree.items[0].substituent;
   assert.deepEqual([branch.type, branch.items.length, branch.chain.type, branch.chain.tile, branch.end], ['branch', 1, 'retained', 4, 5]);

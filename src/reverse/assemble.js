@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -41,8 +41,30 @@
  *    enclosed (`cloro(fenil)metanol`, `metil(ciclohexil)metano`) — is
  *    read on the student's tree: two or more prefixes at one level (the
  *    name, or a compound branch) and none of them with locants
- *    (crowdedLevel()). Its alkoxy half (`cloro(metoxi)metano`) arrives with
- *    the alkoxy tiles (R-5b).
+ *    (crowdedLevel()). Its alkoxy half (R-5b): an alkoxy prefix of a crowded
+ *    level is enclosed wherever it stands, first too (`cloro(metoxi)metano`,
+ *    `dicloro(metoxi)metano`, `difluorodi(metoxi)metano`,
+ *    `(metoxi)yodometano`; render.js enclosedInName() checks the alkoxy
+ *    before the ring, so a crowded `(fenoxi)` too);
+ * 6. the alkoxy contraction (R-5b, design.md §15.5.2 item 6; render.js
+ *    alkoxyTokens() and isContractedAlkoxy()): the `oxi` tile after a branch
+ *    replaces its `il` — the `il` tile then writes nothing (an empty span)
+ *    and a retained word loses its `il` (`isopropil` → `isoprop`) — when the
+ *    branch is a saturated chain of one to MAX_CONTRACTED_ALKOXY carbons
+ *    bonded by its carbon 1 and citing no locant (`metoxi`, `etoxi`,
+ *    `propoxi`, `butoxi`, also with prefixes of its own inside a compound
+ *    branch: `(2-metilpropoxi)`, `(1-metiletoxi)`, `(2-cloroetoxi)`) or a
+ *    retained word (`isopropoxi`, `tert-butoxi`, `fenoxi`, `(4-metilfenoxi)`);
+ *    any other branch keeps its `il` before `oxi` and the alkoxy prefix is
+ *    enclosed (render.js needsEnclosure(): `(pentiloxi)`, `(propan-2-iloxi)`,
+ *    `(butan-2-iloxi)`, `(eteniloxi)`, `(prop-2-en-1-iloxi)`,
+ *    `(ciclohexiloxi)`). Such an alkoxy prefix, and one with prefixes of its
+ *    own, is compound (render.js isCompoundPrefix(): `bis(pentiloxi)`; also
+ *    `bis-tert-butoxi`, isCompoundAlkoxy()), the other contracted ones
+ *    simple (`dimetoxi`, `diisopropoxi`); the student's multiplier stays as
+ *    chosen, with the hyphen of rule 5 before `tert-`. As with a chain's `il`, a cited locant
+ *    (`prop 1 il oxi`) keeps the `il`: `(propan-1-iloxi)`, never a locant run
+ *    into `oxi`.
  *
  * A ring (R-4a) is a chain with its `ciclo` tile before the root, and takes
  * the same rules: `ciclohexa-1,3-dieno` (rule 2), `ciclooct-1-en-3-ino` and
@@ -100,8 +122,91 @@
  * design.md §15.2).
  */
 
-import { ENDINGS, ENCLOSING_MARKS, CONNECTING_VOWEL, SATURATED_INFIX } from '../naming/lexicon.es.js';
+import { ENDINGS, ENCLOSING_MARKS, CONNECTING_VOWEL, SATURATED_INFIX, FREE_VALENCE_SUFFIXES } from '../naming/lexicon.es.js';
 import { isAtomGroup, closingText } from './tiles.js';
+
+/**
+ * Longest alkyl chain whose alkoxy prefix is contracted (rule 6, R-5b:
+ * `butoxi`, but `pentiloxi`; IUPAC 2013 P-63.2.2.2). The same value as
+ * render.js MAX_CONTRACTED_ALKOXY (the tests check it), kept here because the
+ * assembler never imports the engine's rendering (design.md §15.4).
+ */
+export const MAX_CONTRACTED_ALKOXY = 4;
+
+/** The free-valence suffix an alkoxy contraction drops (`met` + `il` → `met` + `oxi`; R-5b). */
+const IL = FREE_VALENCE_SUFFIXES[1];
+
+/**
+ * The node of a substituent that carries the alkoxy ending `oxi` (R-5b):
+ * the chain or retained node itself, or the own chain of a compound branch
+ * (`START 2 met il prop il oxi END`); null for any other substituent.
+ *
+ * @param {object|null} node - A substituent node (parse.js chain, retained, halogen, hydroxy or branch), or null.
+ * @returns {object|null} The chain or retained node with `oxi`, or null.
+ */
+export function alkoxyCore(node) {
+  if (!node) {
+    return null;
+  }
+  const core = node.type === 'branch' ? node.chain : node;
+  return core && (core.type === 'chain' || core.type === 'retained') && core.oxi !== null && core.oxi !== undefined ? core : null;
+}
+
+/**
+ * Tells whether a substituent is an alkoxy prefix (R-5b): its branch ends in
+ * the `oxi` tile.
+ *
+ * @param {object|null} node - A substituent node, or null.
+ * @returns {boolean} True for an alkoxy prefix.
+ */
+export function isAlkoxyNode(node) {
+  return alkoxyCore(node) !== null;
+}
+
+/**
+ * Tells whether an alkoxy prefix takes the short form (rule 6, R-5b;
+ * render.js isContractedAlkoxy()): a retained word (`isopropoxi`,
+ * `tert-butoxi`, `fenoxi`), or a saturated open chain of one to
+ * MAX_CONTRACTED_ALKOXY carbons whose free valence sits at its carbon 1 by
+ * rule (`il` with no locant, no `ano`): `metoxi`, `butoxi`.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} core - alkoxyCore() of the prefix.
+ * @returns {boolean} True for the short form.
+ */
+export function isContractedCore(tiles, core) {
+  if (core.type === 'retained') {
+    return true;
+  }
+  return core.ring === null && core.root !== null && core.ano === null && core.segments.length === 0
+    && core.fvLocants.length === 0 && core.fv !== null && tiles[core.fv].value === 1
+    && tiles[core.root].value <= MAX_CONTRACTED_ALKOXY;
+} // End of function isContractedCore()
+
+/** The retained word whose alkoxy prefix the engine multiplies with bis… (isCompoundAlkoxy(): `bis-tert-butoxi`). */
+const COMPOUND_RETAINED_ALKOXY = 'tert-butyl';
+
+/**
+ * Tells whether an alkoxy prefix is compound for its multiplier (rule 6,
+ * R-5b; render.js isCompoundPrefix()) because of its form: not contracted,
+ * so written as its branch + `oxi` (`bis(pentiloxi)`, `bis(propan-2-iloxi)`),
+ * or `tert-butoxi`, which render.js counts as compound because the engine's
+ * tert-butyl structure carries its two methyls as prefixes
+ * (`1,6-bis-tert-butoxihexano`; as an alkyl prefix it stays `di-tert-butil`);
+ * `isopropoxi` and `fenoxi` are simple (`diisopropoxi`, `difenoxi`). A
+ * compound branch with prefixes of its own is compound anyway.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object|null} node - A substituent node, or null.
+ * @returns {boolean} True for an alkoxy prefix that takes bis, tris….
+ */
+export function isCompoundAlkoxy(tiles, node) {
+  const core = alkoxyCore(node);
+  if (core === null) {
+    return false;
+  }
+  return core.type === 'retained' ? tiles[core.tile].value === COMPOUND_RETAINED_ALKOXY : !isContractedCore(tiles, core);
+}
 
 /**
  * One piece of text before the automatic punctuation is added.
@@ -151,18 +256,26 @@ function citesLocant(chain) {
 
 /**
  * Tells whether a substituent is written between enclosing marks
- * (rule 5, render.js needsEnclosure()), whatever stands beside it.
+ * (rule 5, render.js needsEnclosure()), whatever stands beside it. An
+ * alkoxy prefix (rule 6, R-5b) is enclosed unless contracted:
+ * `(pentiloxi)`, `(eteniloxi)`, but `metoxi`, `isopropoxi`.
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} node - A chain, retained, halogen or branch node.
  * @returns {boolean} True when enclosed.
  */
 export function isEnclosed(tiles, node) {
-  if (node.type === 'retained' || isAtomGroup(node.type)) {
+  if (isAtomGroup(node.type)) {
     return false;
   }
   if (node.type === 'branch') {
     return node.items.length > 0 || (node.chain !== null && isEnclosed(tiles, node.chain));
+  }
+  if (isAlkoxyNode(node)) {
+    return !isContractedCore(tiles, node); // `(pentiloxi)`, `(propan-2-iloxi)`, `(ciclohexiloxi)` (R-5b).
+  }
+  if (node.type === 'retained') {
+    return false;
   }
   const unsaturated = node.segments.length > 0;
   return citesLocant(node) || (unsaturated && node.root !== null && tiles[node.root].value > 2);
@@ -184,11 +297,12 @@ export function crowdedLevel(items) {
 
 /**
  * Tells whether the prefix at one position of a level is written between
- * enclosing marks (rule 5, render.js enclosedInName()): isEnclosed(), or a
- * ring branch — `ciclo` or `fenil` — after the first prefix of a crowded
- * level (a ring prefix cited first reads unambiguously). A compound branch
- * without prefixes of its own (`START ciclo hex il END`) is judged by its
- * chain, like isEnclosed().
+ * enclosing marks (rule 5, render.js enclosedInName()): isEnclosed(), or,
+ * on a crowded level, an alkoxy prefix wherever it stands (R-5b:
+ * `cloro(metoxi)metano`) and a ring branch — `ciclo` or `fenil` — after the
+ * first prefix (a ring prefix cited first reads unambiguously). A compound
+ * branch without prefixes of its own (`START ciclo hex il END`) is judged by
+ * its chain, like isEnclosed().
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object[]} items - The level's prefix and stray nodes.
@@ -201,8 +315,11 @@ export function enclosedAt(tiles, items, index) {
     return true;
   }
   const core = node.type === 'branch' && node.items.length === 0 ? node.chain : node;
+  if (core !== null && isAlkoxyNode(core)) {
+    return crowdedLevel(items); // The alkoxy before the ring, as render.js enclosedInName(): a crowded `(fenoxi)` too.
+  }
   return index > 0 && core !== null && isRingBranch(tiles, core) && crowdedLevel(items);
-}
+} // End of function enclosedAt()
 
 /**
  * Tells whether a simple branch is a ring: a `ciclo` chain or `fenil` (R-4b).
@@ -252,7 +369,7 @@ function strayPieces(tiles, index, out) {
   const kinds = {
     num: 'locant', positional: 'locant', closing: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending',
     freeValence: 'ending', retained: 'prefix', halogen: 'prefix', hydroxy: 'prefix', suffix: 'ending', start: 'punct', end: 'punct',
-    ring: 'stem', benzene: 'stem', template: 'stem',
+    ring: 'stem', benzene: 'stem', template: 'stem', alkoxy: 'ending',
   };
   out.push(piece(tile.text, index, kinds[tile.kind], roles[tile.kind] || 'word', tile.italic ? { italic: true } : {}));
 }
@@ -357,8 +474,14 @@ function chainPieces(tiles, chain, style, out, beforeVowel = false) {
     out.push(piece(elided ? text.slice(0, -1) : text, segment.ending, kinds.ending, 'word'));
   });
   chain.fvLocants.forEach((index) => out.push(piece(tiles[index].text, index, kinds.locant, 'locant')));
+  const alkoxy = isAlkoxyNode(chain);
   if (hasFreeValence) {
-    out.push(piece(tiles[chain.fv].text, chain.fv, kinds.ending, 'word'));
+    // Rule 6 (R-5b): `oxi` replaces the `il` of a contracted alkoxy prefix (`met` + `oxi`), whose tile then writes nothing.
+    const silent = alkoxy && isContractedCore(tiles, chain);
+    out.push(piece(silent ? '' : tiles[chain.fv].text, chain.fv, kinds.ending, 'word'));
+  }
+  if (alkoxy) {
+    out.push(piece(tiles[chain.oxi].text, chain.oxi, kinds.ending, 'word')); // `metoxi`, `pentiloxi` (R-5b)
   }
 } // End of function chainPieces()
 
@@ -398,7 +521,9 @@ function substituentPieces(tiles, node, enclosed, out) {
 
 /**
  * The pieces of a simple branch without enclosing marks: a retained word, a
- * one-atom group (a halogen, R-5a1; `hidroxi`, R-5a2) or a chain.
+ * one-atom group (a halogen, R-5a1; `hidroxi`, R-5a2) or a chain. A
+ * retained word before `oxi` loses its `il` (rule 6, R-5b: `isoprop` +
+ * `oxi`, `tert-but` + `oxi`, `fen` + `oxi`).
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} node - A chain, retained, halogen or hydroxy node.
@@ -408,11 +533,16 @@ function substituentPieces(tiles, node, enclosed, out) {
 function ownChainPieces(tiles, node, out) {
   if (node.type === 'retained' || isAtomGroup(node.type)) {
     const tile = tiles[node.tile];
-    out.push(piece(tile.text, node.tile, 'prefix', 'word', tile.italic ? { italic: true } : {}));
+    const alkoxy = isAlkoxyNode(node);
+    const text = alkoxy && tile.text.endsWith(IL) ? tile.text.slice(0, -IL.length) : tile.text; // As render.js alkoxyTokens().
+    out.push(piece(text, node.tile, 'prefix', 'word', tile.italic ? { italic: true } : {}));
+    if (alkoxy) {
+      out.push(piece(tiles[node.oxi].text, node.oxi, 'prefix', 'word')); // `isopropoxi`, `fenoxi` (R-5b)
+    }
   } else {
     chainPieces(tiles, node, 'prefix', out);
   }
-}
+} // End of function ownChainPieces()
 
 /**
  * The pieces of a prefix (its locants, letter, multiplier and substituent)

@@ -4,8 +4,9 @@
  * ano`, with `START` / `END` for the compound-branch controls, and reads
  * the open-chain, `ciclo` and benzene hydrocarbon rows of
  * tests/fixtures/names.tsv (the benzene ones with the retained templates
- * and the orto/meta/para forms, R-4c), their halogen derivatives (R-5a1)
- * and their alcohols (R-5a2; the retained phenols, R-5a3a).
+ * and the orto/meta/para forms, R-4c), their halogen derivatives (R-5a1),
+ * their alcohols (R-5a2; the retained phenols, R-5a3a) and their ethers
+ * (R-5b1: alkoxy prefixes and `anisol`).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -13,7 +14,9 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
-import { RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES } from '../../src/naming/lexicon.es.js';
+import {
+  RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, ETHER_CLASS_WORD,
+} from '../../src/naming/lexicon.es.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 
 /** The fixture table (design.md §4.8). */
@@ -102,6 +105,63 @@ export function isAlcohol(smiles) {
   } catch (err) {
     return false;
   }
+}
+
+/**
+ * Tells whether a molecule is an ether of a hydrocarbon, of one of its
+ * halogen derivatives or of one of its alcohols (phase R-5b1): carbons,
+ * halogens and oxygens only, every oxygen single-bonded to carbons only —
+ * an OH (one carbon) or an ether oxygen (two carbons; so no C=O, ester or
+ * acid) —, at least one ether oxygen.
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @returns {boolean} True for an ether.
+ */
+export function isEtherMolecule(mol) {
+  const bonds = [...mol.bonds.values()];
+  let ethers = 0;
+  for (const [id, atom] of mol.atoms) {
+    if (!['C', 'F', 'Cl', 'Br', 'I', 'O'].includes(atom.element)) {
+      return false;
+    }
+    if (atom.element !== 'O') {
+      continue;
+    }
+    const own = bonds.filter((bond) => bond.a === id || bond.b === id);
+    const others = own.map((bond) => mol.atoms.get(bond.a === id ? bond.b : bond.a).element);
+    if (own.some((bond) => bond.order !== 1) || others.some((element) => element !== 'C') || own.length > 2) {
+      return false;
+    }
+    ethers += own.length === 2 ? 1 : 0;
+  } // End of the loop over the atoms
+  return ethers > 0;
+} // End of function isEtherMolecule()
+
+/**
+ * Tells whether a fixture SMILES is an ether (isEtherMolecule(), phase
+ * R-5b1); a SMILES the model cannot read is not.
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True for an ether.
+ */
+export function isEther(smiles) {
+  try {
+    return isEtherMolecule(parseSmiles(smiles));
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Tells whether a name is an ether's functional-class name (`dietil éter`,
+ * `etil metil éter`), which the tiles write from phase R-5b2 on (I-51b2):
+ * it ends in the lexicon's class word.
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for a class name.
+ */
+export function isEtherClassName(name) {
+  return name.endsWith(` ${ETHER_CLASS_WORD}`);
 }
 
 /**
@@ -274,10 +334,10 @@ export function leafIndices(node) {
       case 'chain':
         out.push(...(n.ring === null ? [] : [n.ring]), ...(n.root === null ? [] : [n.root]), ...(n.ano === null ? [] : [n.ano]));
         n.segments.forEach((s) => out.push(...s.locants, ...(s.multiplier === null ? [] : [s.multiplier]), s.ending));
-        out.push(...n.fvLocants, ...(n.fv === null ? [] : [n.fv]));
+        out.push(...n.fvLocants, ...(n.fv === null ? [] : [n.fv]), ...(n.oxi === null || n.oxi === undefined ? [] : [n.oxi])); // R-5b
         break;
       default: // 'retained', 'halogen', 'hydroxy', 'benzene', 'template', 'stray'
-        out.push(n.tile);
+        out.push(n.tile, ...(n.oxi === null || n.oxi === undefined ? [] : [n.oxi])); // `isopropoxi` (R-5b)
     }
   }; // End of function visit()
   visit(node);

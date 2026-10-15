@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -59,6 +59,17 @@
  *
  * `hidroxi` (R-5a2) is such a one-atom branch too, kind 'hydroxy', its atom
  * an oxygen (tiles.js HYDROXY_ELEMENT; its hydrogen implicit).
+ *
+ * An alkoxy prefix (R-5b: a branch closed by the `oxi` tile — `metoxi`,
+ * `isopropoxi`, `fenoxi`, `(pentiloxi)`, `(2-metilpropoxi)`) is the
+ * SubstituentSpec of its branch with `alkoxy` set, as the forward engine's
+ * substituent structure is its alkyl group's with `alkoxy` (substituent.js
+ * alkoxySubstituent()): the branch's chain, free valence and own prefixes
+ * are read as for any branch, and build.js puts an ether oxygen between the
+ * branch's free-valence carbon and the carbon the prefix's slot gives, so
+ * the prefix's slots are carbon slots of what it hangs from and the
+ * branch's own slots are those of its chain, searched alike. `anisol`
+ * (R-5b) is a template whose one group is such a methoxy group, at carbon 1.
  *
  * The alcohol suffix (R-5a2: `ol`, after a chain, a `ciclo` ring or
  * `benceno`) is the name's `suffix`: one carbon slot per OH on the parent
@@ -141,6 +152,7 @@ import { isPhenol } from './parse.js';
  *   its tile range (for messages), or null.
  * @property {string} [element] - A one-atom group's element symbol: a halogen's ('F', 'Cl', 'Br', 'I'; the tile's value), or
  *   'O' for `hidroxi` (R-5a2); on those only.
+ * @property {boolean} alkoxy - An alkoxy prefix (R-5b): the branch is bonded through an ether oxygen (its `oxi` tile).
  * @property {boolean} compound - Written as a compound branch (START … END).
  * @property {[number, number]} tiles - Tile range of the branch.
  */
@@ -340,10 +352,22 @@ function chainSubstituent(ctx, chain, items, compound, range) {
     prefixes,
     retained: null,
     word: null,
+    alkoxy: hasAlkoxy(chain), // `met il oxi`: `metoxi` (R-5b)
     compound,
     tiles: [range[0], range[1]],
   };
 } // End of function chainSubstituent()
+
+/**
+ * Tells whether a chain or retained node ends in the alkoxy ending `oxi`
+ * (R-5b, parse.js `oxi`).
+ *
+ * @param {object} node - A chain or retained node (parse.js).
+ * @returns {boolean} True for an alkoxy group's branch.
+ */
+function hasAlkoxy(node) {
+  return node.oxi !== null && node.oxi !== undefined;
+}
 
 /**
  * The SubstituentSpec of a retained word, alone or as the own chain of a
@@ -355,9 +379,10 @@ function chainSubstituent(ctx, chain, items, compound, range) {
  * @param {object[]} items - Prefix nodes of a compound branch (empty for a bare word).
  * @param {boolean} compound - Written between START and END.
  * @param {[number, number]} range - Tile range of the branch.
+ * @param {boolean} alkoxy - Followed by `oxi` (R-5b: `isopropoxi`, `tert-butoxi`).
  * @returns {SubstituentSpec} The branch.
  */
-function retainedSubstituent(ctx, tile, items, compound, range) {
+function retainedSubstituent(ctx, tile, items, compound, range, alkoxy) {
   return {
     kind: 'retained',
     length: null,
@@ -367,6 +392,7 @@ function retainedSubstituent(ctx, tile, items, compound, range) {
     prefixes: items.map((item) => prefixSpec(ctx, item, 0)),
     retained: ctx.tiles[tile].value,
     word: { text: ctx.tiles[tile].text, tiles: [tile, tile + 1] },
+    alkoxy,
     compound,
     tiles: [range[0], range[1]],
   };
@@ -386,9 +412,10 @@ export const BENZENE_LENGTH = 6;
  * @param {object[]} items - Prefix nodes of a compound branch (empty for a bare `fenil`).
  * @param {boolean} compound - Written between START and END.
  * @param {[number, number]} range - Tile range of the branch.
+ * @param {boolean} alkoxy - Followed by `oxi` (R-5b: `fenoxi`, `(4-metilfenoxi)`).
  * @returns {SubstituentSpec} The branch.
  */
-function phenylSubstituent(ctx, tile, items, compound, range) {
+function phenylSubstituent(ctx, tile, items, compound, range, alkoxy) {
   const prefixes = items.map((item) => prefixSpec(ctx, item, BENZENE_LENGTH, 'phenylCarbon'));
   return {
     kind: 'phenyl',
@@ -399,6 +426,7 @@ function phenylSubstituent(ctx, tile, items, compound, range) {
     prefixes,
     retained: ctx.tiles[tile].value,
     word: { text: ctx.tiles[tile].text, tiles: [tile, tile + 1] },
+    alkoxy,
     compound,
     tiles: [range[0], range[1]],
   };
@@ -406,19 +434,21 @@ function phenylSubstituent(ctx, tile, items, compound, range) {
 
 /**
  * The SubstituentSpec of a retained word or `fenil` (R-4b), alone or as the
- * own chain of a compound branch.
+ * own chain of a compound branch, and an alkoxy group's when `oxi` follows
+ * it (R-5b).
  *
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
- * @param {number} tile - The retained tile index.
+ * @param {object} node - The retained node (parse.js).
  * @param {object[]} items - Prefix nodes of a compound branch (empty for a bare word).
  * @param {boolean} compound - Written between START and END.
  * @param {[number, number]} range - Tile range of the branch.
  * @returns {SubstituentSpec} The branch.
  */
-function wordSubstituent(ctx, tile, items, compound, range) {
+function wordSubstituent(ctx, node, items, compound, range) {
+  const { tile } = node;
   return ctx.tiles[tile].value === 'phenyl'
-    ? phenylSubstituent(ctx, tile, items, compound, range)
-    : retainedSubstituent(ctx, tile, items, compound, range);
+    ? phenylSubstituent(ctx, tile, items, compound, range, hasAlkoxy(node))
+    : retainedSubstituent(ctx, tile, items, compound, range, hasAlkoxy(node));
 }
 
 /**
@@ -442,6 +472,7 @@ function atomGroupSubstituent(ctx, tile) {
     retained: null,
     word: { text, tiles: [tile, tile + 1] },
     element: kind === 'hydroxy' ? HYDROXY_ELEMENT : value,
+    alkoxy: false,
     compound: false,
     tiles: [tile, tile + 1],
   };
@@ -459,14 +490,14 @@ function substituentSpec(ctx, node) {
     return atomGroupSubstituent(ctx, node.tile);
   }
   if (node.type === 'retained') {
-    return wordSubstituent(ctx, node.tile, [], false, node.range);
+    return wordSubstituent(ctx, node, [], false, node.range);
   }
   if (node.type === 'chain') {
     return chainSubstituent(ctx, node, [], false, node.range);
   }
   const own = node.chain;
   return own.type === 'retained'
-    ? wordSubstituent(ctx, own.tile, node.items, true, node.range)
+    ? wordSubstituent(ctx, own, node.items, true, node.range)
     : chainSubstituent(ctx, own, node.items, true, node.range);
 } // End of function substituentSpec()
 
@@ -493,9 +524,11 @@ function prefixSpec(ctx, node, length, role = 'carbon', taken = []) {
 /**
  * The SubstituentSpec of a template's own group (R-4c): an unbranched chain
  * bonded by its carbon 1, its double bonds at the locants the template says
- * (the ethenyl of `estireno`), every slot implicit, on the template's tile.
+ * (the ethenyl of `estireno`), every slot implicit, on the template's tile;
+ * for `anisol` (R-5b) that chain is bonded through an ether oxygen (the
+ * methoxy group, `alkoxy` set).
  *
- * @param {{length: number, double: number[]}} group - The tiles.js TEMPLATES group.
+ * @param {{length: number, double: number[], alkoxy?: boolean}} group - The tiles.js TEMPLATES group.
  * @param {[number, number]} tiles - The template tile's range.
  * @returns {SubstituentSpec} The branch.
  */
@@ -509,6 +542,7 @@ function templateGroupSpec(group, tiles) {
     prefixes: [],
     retained: null,
     word: null,
+    alkoxy: Boolean(group.alkoxy),
     compound: false,
     tiles: [tiles[0], tiles[1]],
   };

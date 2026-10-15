@@ -7,7 +7,8 @@
  * phase I-50d (design.md §15.8 R-4), hydrocarbons with one ring (`ciclo`,
  * `benceno`, `fenil`, the retained templates; see «Rings» below), their
  * halogen derivatives and alcohols (R-5a; «Halogens» and «Alcohols» below:
- * an alcohol's own mistakes are checked before rule 1).
+ * an alcohol's own mistakes are checked before rule 1) and their ethers
+ * (R-5b; «Ethers» below).
  *
  * The rules, in order (first match wins):
  *
@@ -299,6 +300,39 @@
  * OH (outsideRules(): a principal group of a later family gets null until
  * its phase adds its messages; no tile writes one today).
  *
+ * **Ethers** (design.md §13.4 I-34, §15.8 R-5b; phase R-5b1). An alkoxy
+ * prefix (`metoxi`, `isopropoxi`, `fenoxi`, `(pentiloxi)`) is a group bonded
+ * through an ether oxygen: like a halogen it is no carbon of the chain it
+ * hangs from and never lengthens it (rule 1 skips it, isHeteroGroup():
+ * `1-metoxi-1-metilpropano` blames `metil`), it counts as a substituent
+ * wherever the engine's trace counts it (P4, N3, N4: `2-metoxietano` is
+ * NUMBERING, `1-metoxi-4-metilbenceno` RING_NUMBERING at N4, the Spanish
+ * order `metil` < `metoxi`), the messages speak of «sustituyentes»
+ * (MORE_SUBSTITUENTS, UNGROUPED: `1-metoxi-2-metoxietano`), and the form
+ * rules read its words like any branch's: ALPHABETICAL_ORDER, UNGROUPED,
+ * LOCANT_ORDER, NEEDLESS_LOCANTS (`1-metoxietano`; inside it,
+ * `1-(propan-1-iloxi)propano` → «1-propoxi»), MISSING_LOCANTS; its shape for
+ * the prefix style is its branch's after `O:` (specShape()), and di vs bis
+ * follow render.js isCompoundPrefix() (isCompoundNode(): `bis(pentiloxi)`,
+ * `dimetoxi`). The ether oxygen splits the carbon skeleton, and the engine
+ * chooses the parent among the chains of every side (design.md §13.4 I-34),
+ * so a parent on the wrong side of the oxygen is told by the chain rules'
+ * own true messages, which say nothing of the oxygen: `etoximetano` and
+ * `propoxietano` LONGER_CHAIN, `(clorometoxi)metano` MORE_SUBSTITUENTS
+ * (`cloro(metoxi)metano`), `fenoxietano` RING_IS_PARENT (`etoxibenceno`),
+ * `(2-hidroxietoxi)metano` MORE_HYDROXY_GROUPS (`2-metoxietan-1-ol`); a
+ * substituted `anisol` (`4-cloroanisol`, `p-cloroanisol`) is
+ * SUBSTITUTED_TEMPLATE, named from `benceno`. Deliberate, tested nulls, for
+ * the ether messages of phase R-5b2 (I-51b2): di… before an alkoxy prefix
+ * that takes bis… only for its form, a branch + `oxi` with no prefixes of
+ * its own (`1,6-di(pentiloxi)hexano`, `di(propan-2-iloxi)`, and
+ * `1,6-di-tert-butoxihexano`, which the engine writes `bis-tert-butoxi`,
+ * assemble.js isCompoundAlkoxy(); multiplierKind(): rule 7's reason, «una
+ * rama que tiene sus propias ramas», does not hold),
+ * and, as for any branch, an alkoxy group written in a prefix style the
+ * engine does not offer for the molecule (`(1,1-dimetiletoxi)metano`, the
+ * other styles are offered only beside an isopropyl group).
+ *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS, and DIAGNOSES gives
  * example data for each code so the wording can be listed (R-7). Later
@@ -316,9 +350,11 @@ import {
   stem, multiplier, compoundMultiplier, ENDINGS, ENCLOSING_MARKS, RETAINED_PREFIXES, FREE_VALENCE_SUFFIXES, omitsLocants,
   chainOmitsPrefixLocants, ringOmitsLocants, BENZENE_NAME, RING_PREFIX, POSITIONAL_LETTERS, TRADITIONAL_NAMES, SATURATED_INFIX,
 } from '../naming/lexicon.es.js';
-import { assemble, itemText } from './assemble.js';
+import { assemble, itemText, isAlkoxyNode, isCompoundAlkoxy } from './assemble.js';
 import { ownPrefixAtoms, specRings, isRing } from './build.js';
-import { tileById, tileId, MAX_MULT, isAtomGroup, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID } from './tiles.js';
+import {
+  tileById, tileId, MAX_MULT, isAtomGroup, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
+} from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
 export const MAX_READINGS = 16;
@@ -373,8 +409,9 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
     + `sea más larga. Tu cadena de ${d.length} ${d.length === 1 ? 'carbono' : 'carbonos'} va en una rama del anillo: «${d.name}».`,
   MORE_HYDROXY_GROUPS: (d) => `Hay otra cadena con más grupos –OH (${d.app}; la tuya tiene ${d.student}). La cadena principal es `
     + 'la que lleva más grupos –OH, aunque no sea la más larga.',
-  LONGER_CHAIN: (d) => `Hay una cadena más larga que la tuya: la tuya tiene ${d.student} carbonos y la cadena principal `
-    + `tiene ${d.length}.`,
+  // `etoximetano` (R-5b): an ether's student chain may have one carbon.
+  LONGER_CHAIN: (d) => `Hay una cadena más larga que la tuya: la tuya tiene ${d.student} ${d.student === 1 ? 'carbono' : 'carbonos'} `
+    + `y la cadena principal tiene ${d.length}.`,
   BENZENE_RING: (d) => 'Un anillo de 6 carbonos con tres enlaces dobles alternados, uno sí y uno no, es el benceno, y tiene '
     + `nombre propio: «${WORDS.benceno}».${d.name === WORDS.benceno ? '' : ` Se escribe «${d.name}».`}`,
   SUBSTITUTED_TEMPLATE: (d) => `El nombre tradicional «${d.template}» no admite más sustituyentes: con más ramas en el anillo, `
@@ -793,29 +830,46 @@ function isHalogen(sub) {
 }
 
 /**
+ * Tells whether a SubstituentSpec is a group bonded through a heteroatom,
+ * which is no carbon of the chain it hangs from and never lengthens it: a
+ * one-atom group (isHalogen()) or an alkoxy prefix (R-5b: `metoxi`, the
+ * ether oxygen between the chain and its branch).
+ *
+ * @param {object} sub - A SubstituentSpec (interpret.js).
+ * @returns {boolean} True for a halogen, `hidroxi` or an alkoxy prefix.
+ */
+function isHeteroGroup(sub) {
+  return isHalogen(sub) || Boolean(sub.alkoxy);
+}
+
+/**
  * Tells whether some prefixes hold a one-atom group (a halogen, R-5a1;
- * `hidroxi`, R-5a2), at any depth: the messages then speak of
- * «sustituyentes», not «ramas».
+ * `hidroxi`, R-5a2) or an alkoxy prefix (R-5b), at any depth: the messages
+ * then speak of «sustituyentes», not «ramas».
  *
  * @param {object[]} prefixes - PrefixSpecs (interpret.js).
  * @returns {boolean} True when one is among them or inside a compound branch.
  */
 function hasHalogen(prefixes) {
-  return prefixes.some((prefix) => isHalogen(prefix.substituent) || hasHalogen(prefix.substituent.prefixes));
+  return prefixes.some((prefix) => isHeteroGroup(prefix.substituent) || hasHalogen(prefix.substituent.prefixes));
 }
 
 /**
  * Tells whether a branch node takes bis/tris rather than di/tri when
  * multiplied: a compound branch with prefixes of its own (render.js
- * isCompoundPrefix() for hydrocarbon branches); a retained word or a
- * plain chain, even enclosed for its own locants (`di(propan-2-il)`), is
- * simple.
+ * isCompoundPrefix() for hydrocarbon branches), or an alkoxy prefix written
+ * as its branch + `oxi` (R-5b, assemble.js isCompoundAlkoxy():
+ * `bis(pentiloxi)`; and `bis-tert-butoxi`, as the engine writes it); a
+ * retained word or a plain chain, even enclosed for its own locants
+ * (`di(propan-2-il)`), and a contracted alkoxy prefix (`dimetoxi`,
+ * `diisopropoxi`) are simple.
  *
+ * @param {object[]} tiles - The tile sequence.
  * @param {object} node - A substituent node (parse.js chain, retained or branch).
  * @returns {boolean} True for bis/tris.
  */
-function isCompoundNode(node) {
-  return node.type === 'branch' && node.items.length > 0;
+function isCompoundNode(tiles, node) {
+  return (node.type === 'branch' && node.items.length > 0) || isCompoundAlkoxy(tiles, node);
 }
 
 /**
@@ -1179,7 +1233,8 @@ const DROPPED_AT = Object.freeze({
  * Rule 1: the branch on an end carbon of the student's chain (the first in
  * tile order), which the trace shows is not a leaf-to-leaf path. A halogen
  * (R-5a1) on an end is no such branch: it is no carbon and never lengthens
- * the chain.
+ * the chain; nor is an alkoxy prefix (R-5b), whose ether oxygen splits the
+ * carbon skeleton (`1-metoxi-1-metilpropano` blames `metil`).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null when no carbon branch sits on an end (never for a chain missing from P1).
@@ -1188,7 +1243,7 @@ function branchAtEnd(ctx) {
   const { reading, tree, naming, spec } = ctx;
   const n = reading.studentParent.atoms.length;
   const end = reading.prefixAtoms
-    .find((o) => (o.locant === 1 || o.locant === n) && !isHalogen(spec.prefixes[o.prefix].substituent));
+    .find((o) => (o.locant === 1 || o.locant === n) && !isHeteroGroup(spec.prefixes[o.prefix].substituent));
   if (!end) {
     return null;
   }
@@ -1305,7 +1360,7 @@ function citedGroups(ctx) {
     const key = citationKeyOf(wordsOf(ctx.tree, item));
     const group = groups.get(ids[i]);
     if (!group) {
-      groups.set(ids[i], { key, first: i, atoms: [], compound: isCompoundNode(item.substituent) });
+      groups.set(ids[i], { key, first: i, atoms: [], compound: isCompoundNode(ctx.tree.tiles, item.substituent) });
     } else if (compareCitationKeys(key, group.key) < 0) {
       group.key = key;
     }
@@ -1816,7 +1871,7 @@ function ungrouped(ctx) {
     if (count > MAX_MULT) {
       continue; // No multiplier tile so large (never within the engine's caps).
     }
-    const compound = isCompoundNode(group[0].substituent);
+    const compound = isCompoundNode(tree.tiles, group[0].substituent);
     const locants = group.flatMap((item) => item.locants);
     const grouped = { ...tree, tiles: [...tree.tiles, tileById(tileId(compound ? 'cmult' : 'mult', count))] };
     const sorted = [...locants].sort((p, q) => tree.tiles[p].value - tree.tiles[q].value);
@@ -1830,7 +1885,8 @@ function ungrouped(ctx) {
       code: 'UNGROUPED',
       data: {
         compound,
-        halogen: isAtomGroup(group[0].substituent.type), // «Los sustituyentes iguales…» (R-5a1, R-5a2).
+        // «Los sustituyentes iguales…» (R-5a1, R-5a2; R-5b: `1-metoxi-2-metoxietano`).
+        halogen: isAtomGroup(group[0].substituent.type) || isAlkoxyNode(group[0].substituent),
         right: list.outer ? quoted(grouped, list, item, items) : itemText(grouped, item),
         student: list.outer ? quoted(tree, list, item) : group.map((g) => itemText(tree, g)).join(located ? '-' : ''),
       },
@@ -1843,7 +1899,11 @@ function ungrouped(ctx) {
 
 /**
  * Rule 7: a multiplier of the wrong kind — di… before a branch with
- * prefixes of its own, or bis… before a simple one.
+ * prefixes of its own, or bis… before a simple one. An alkoxy prefix that
+ * takes bis… only for its form (R-5b: `di(pentiloxi)`, `di(propan-2-iloxi)`,
+ * `di-tert-butoxi`, a branch + `oxi` with no prefixes of its own) is a deliberate null (file
+ * header «Ethers»): the message's reason, «una rama que tiene sus propias
+ * ramas», does not hold for it.
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.
@@ -1856,9 +1916,13 @@ function multiplierKind(ctx) {
         continue;
       }
       const tile = tree.tiles[item.multiplier];
-      const compound = isCompoundNode(item.substituent);
+      const compound = isCompoundNode(tree.tiles, item.substituent);
       if ((tile.kind === 'cmult') === compound) {
         continue;
+      }
+      const ownBranches = item.substituent.type === 'branch' && item.substituent.items.length > 0;
+      if (compound && !ownBranches) {
+        continue; // `di(pentiloxi)` (R-5b): compound for its form only — an ether message for I-51b2 (file header «Ethers»).
       }
       const swapped = withTiles(tree, new Map([[item.multiplier, tileById(tileId(compound ? 'cmult' : 'mult', tile.value))]]));
       return {
@@ -2267,7 +2331,9 @@ function chainShape(length, locant, order, nested) {
 /**
  * The shape of a branch as the student wrote it (a SubstituentSpec): a
  * halogen (R-5a1; the same in every style), a retained word, or chainShape()
- * of its chain. Spelling mistakes the later rules name do not change it:
+ * of its chain; an alkoxy prefix (R-5b) is its branch's shape after `O:`
+ * (`isopropoxi` is `O:R:isopropyl`, `(propan-2-iloxi)` `O:C3:2:1()`).
+ * Spelling mistakes the later rules name do not change it:
  * `(1-metiletan-1-il)` and `1-metiletil` have one shape.
  *
  * @param {object} sub - A SubstituentSpec (interpret.js).
@@ -2277,12 +2343,13 @@ function specShape(sub) {
   if (isHalogen(sub)) {
     return `X:${sub.element}`; // A halogen, or the O of `hidroxi` (R-5a2).
   }
+  const ether = sub.alkoxy ? `${ALKOXY_ELEMENT}:` : '';
   if (sub.kind === 'retained') {
-    return `R:${sub.retained}`;
+    return `${ether}R:${sub.retained}`;
   }
   const nested = sub.prefixes.flatMap((prefix) => prefix.slots.map(() => specShape(prefix.substituent)));
-  return chainShape(sub.length, sub.freeValence.slot.value, sub.freeValence.order, nested);
-}
+  return `${ether}${chainShape(sub.length, sub.freeValence.slot.value, sub.freeValence.order, nested)}`;
+} // End of function specShape()
 
 /**
  * The shape of a branch as the engine names it (a SubstituentStructure,
@@ -2301,14 +2368,16 @@ function structureShape(structure) {
   if (structure.hydroxy) {
     return `X:${HYDROXY_ELEMENT}`; // `hidroxi` (R-5a2).
   }
+  // An alkoxy group (R-5b, substituent.js alkoxySubstituent()): its alkyl group's shape after `O:`, as specShape() writes it.
+  const ether = structure.alkoxy ? `${ALKOXY_ELEMENT}:` : '';
   if (structure.retained) {
-    return `R:${structure.retained}`;
+    return `${ether}R:${structure.retained}`;
   }
   if (!structure.chain || !structure.freeValence) {
     return '';
   }
   const nested = (structure.prefixes || []).flatMap((group) => group.locants.map(() => structureShape(group.substituent)));
-  return chainShape(structure.chain.length, structure.freeValence.locant, structure.freeValence.order, nested);
+  return `${ether}${chainShape(structure.chain.length, structure.freeValence.locant, structure.freeValence.order, nested)}`;
 } // End of function structureShape()
 
 /**

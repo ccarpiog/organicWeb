@@ -89,7 +89,9 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-51a3 | v4 R-5a3 Retained phenol templates, alcohol diagnosis, Ayuda line | same, "R-5a" | done — split into I-51a3a, I-51a3b | — | — |
 | I-51a3a | v4 R-5a3a Retained phenol templates (`o/m/p-cresol`, `catecol`/`pirocatecol`, `resorcinol`, `hidroquinona`), Ayuda line, e2e | same, "R-5a" | done — `docs/progress-archive/i-51a3a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51a3a.md` |
 | I-51a3b | v4 R-5a3b Alcohol diagnosis messages (fill the deliberate nulls of I-51a2/I-51a3a), e2e | same, "R-5a" | done — `docs/progress-archive/i-51a3b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51a3b.md` |
-| I-51b | v4 R-5b Ethers | same, "R-5b" | queued | — | — |
+| I-51b | v4 R-5b Ethers | same, "R-5b" | split into I-51b1, I-51b2 | — | — |
+| I-51b1 | v4 R-5b1 Alkoxy and phenoxy prefixes (`oxi` tile, automatic contraction), `anisol`, search, round trips, Ayuda line, e2e | same, "R-5b" | done — `docs/progress-archive/i-51b1.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-51b1.md` |
+| I-51b2 | v4 R-5b2 Ether class names (`etil metil éter`, `dietil éter`), ether diagnosis messages (fill the I-51b1 nulls) | same, "R-5b" | queued | — | — |
 | I-51c | v4 R-5c Aldehydes and ketones | same, "R-5c" | queued | — | — |
 | I-51d | v4 R-5d Acids | same, "R-5d" | queued | — | — |
 | I-52a | v4 R-6a Esters | same, "R-6a" | queued | — | — |
@@ -115,24 +117,26 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select and run I-51b (v4 R-5b, ethers; design §15.8 row "R-5b" and the paragraph under the table:
-each family phase adds its tiles, morphology rules §15.5.2 item 6, slot roles §15.5.3 step 2,
-diagnosis messages, fixture rows and generators to the round trips, Ayuda line). Content: alkoxy
-prefix tiles and their contraction (`metoxi`, `isopropoxi`, `tert-butoxi`, `pentiloxi`,
-`(2-metilpropoxi)`, `(propan-2-iloxi)`, `fenoxi`, `(4-metilfenoxi)`), class names (`etil metil
-éter`, `dietil éter`), `anisol`; the `cloro(metoxi)metano` brackets left from I-47…I-50c. Likely
-too big for one worker: split at selection, e.g. I-51b1 (alkoxy tiles, contraction, phenoxy,
-`anisol`, search, round trips, e2e) and I-51b2 (class names, ether diagnosis, Ayuda line, CLAUDE.md
-scope sentence). The forward engine already names ethers (I-34, `docs/progress-archive/i-34.md`;
-substituted phenoxy I-45a). Spec: design §15 + §13 — read from the working-tree `docs/design.md`;
-never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths.
+Select and run I-51b2 (v4 R-5b, second half; design §15.8 row "R-5b"). Content: ether class names
+(`etil metil éter`, `dietil éter`, `tert-butil metil éter`, `butil tert-butil éter` — design §2,
+the forward engine's class-name rule: one O between two simple alkyl groups, alphabetical, `éter`
+class word; a tile for `éter`, the ` ` spacing automatic) read as the engine's alternatives — the
+11 class-name fixture rows the I-51b1 round trip skips must join it (asserted); symmetric ethers
+(`symmetricEther` in `validate.js`) per the forward engine; ether diagnosis messages filling the
+I-51b1 deliberate nulls (`di(pentiloxi)` / `di(propan-2-iloxi)` / `di-tert-butoxi` where the engine
+wants `bis`; the wrong side of the O as parent, `etoximetano` for `metoxietano`, with a message
+naming the oxygen and its «Ver el paso» step), listed in `docs/progress-archive/i-51b1.md`;
+extend the Ayuda ethers paragraph with class names; CLAUDE.md sentence. Spec: design §15 + §2/§13
+— read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk
+high; worker opus. Commit by explicit paths.
 
 - **Builds on** the R-1 engine (`src/reverse/`: tiles, parser, assembler, tokenizer, `interpret.js`,
   `build.js`, `search.js`, `readName()` — `docs/progress-archive/i-47a.md` … `i-47c.md`), the dialog
   and «Dibujar» (`i-48a.md`, `i-48b.md`), the diagnosis engine and panel (`i-49a.md`, `i-49b.md`),
   rings, benzene/phenyl, the aromatic key, templates and o/m/p letters (`i-50a.md` … `i-50c.md`),
   ring diagnoses (`i-50d.md`), halogens, alcohols, phenol templates and alcohol diagnoses
-  (`i-51a1.md` … `i-51a3b.md`); the forward naming engine already names every case (v2 §13, v3 §14).
+  (`i-51a1.md` … `i-51a3b.md`), alkoxy/phenoxy prefixes and `anisol` (`i-51b1.md`); the forward
+  naming engine already names every case (v2 §13, v3 §14; ethers I-34, `i-34.md`).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6, §15.9).
@@ -200,53 +204,16 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - Alcohols (I-31): principal-group chain choice and numbering in `parent.js` /
   `numbering.js`; suffix rendering and multiplier elision in `render.js`; ring closing-bond
   compound locant `1(n)`; tests `tests/unit/alcohols.test.js`, `tests/e2e/alcohols.spec.js`.
-- Carbonyls (I-32): `src/naming/principal.js` (oxygen/principal kind, traditional ids);
-  refusals `ringAldehyde` / `sideChainCarbonyl` / `manyAldehydes` / `acylSubstituent`
-  (`validate.js`, `nameValidated()` in `index.js`); tests `tests/unit/carbonyls.test.js`,
-  `tests/e2e/carbonyls.spec.js`.
-- Acids (I-33): acid kind in `src/naming/principal.js`; refusals `manyAcids` / `ringAcid` /
-  `carboxySubstituent`; tests `tests/unit/acids.test.js`, `tests/e2e/acids.spec.js`.
-- Ethers (I-34): parent-side choice in `parent.js`, alkoxy substituents in `substituent.js`,
-  refusal `symmetricEther`, N5 punctuation tie-break `compareNameKeys()` in `numbering.js`;
-  tests `tests/unit/ethers.test.js`, `tests/e2e/ethers.spec.js`.
-- Esters (I-35): admission and refusals `ringEster` / `esterPrefix` / `manyEsters` in
-  `validate.js`; O-bound group `esterAlkylName()` in `render.js`; explain `esterSpecs()` and
-  step «Separa las dos partes del éster»; tests `tests/unit/esters.test.js`, `tests/e2e/esters.spec.js`.
-- Amines (I-36): amine kind in `principal.js`, `N` locants in `numbering.js` / `render.js`,
-  refusals `sideChainAmine` / `substitutedPolyamine` / `symmetricAmine` in `validate.js`;
-  tests `tests/unit/amines.test.js`, `tests/e2e/amines.spec.js`.
-- Amides (I-37): amide kind in `principal.js` (C(=O)N one group, `N` locants from I-36),
-  refusals `ringAmide` / `amidePrefix` / `manyAmides` / `substitutedPolyamide` / `imide` in
-  `validate.js`; oracle `generateAmides()`; tests `tests/unit/amides.test.js`, `tests/e2e/amides.spec.js`.
-- Nitriles (I-38): nitrile kind in `principal.js` (C≡N carbon chain end, N never a chain atom),
-  refusals `ringNitrile` / `manyNitriles` / `cyanoPrefix`; `assertNoTripleBondLeaves` now C≡C
-  only; P0-aware chain sentence `outsideUnsaturation()` in `explain.js`; oracle
-  `generateNitriles()`; tests `tests/unit/nitriles.test.js`, `tests/e2e/nitriles.spec.js`.
-- `ciano-` (I-39a): `outsideCarbons()` in `principal.js` (carbons never in a chain), parent
-  skeleton without them in `parent.js`; refusal `carbonocyanidic`, `manyNitriles` narrowed; oracle
-  `generateCyano()`; tests `tests/unit/cyano.test.js`, `tests/e2e/cyano.spec.js`.
-- Acyl prefixes (I-39b): acyl branches flagged in `buildSubstituent()` (`substituent.js`), X a
-  normal skeleton carbon (not in `outsideCarbons()`); endings `acylEndingTokens()` in `render.js`;
-  `unnamedAcyl()` safety net (`index.js`); tests `tests/unit/acyl.test.js`, `tests/e2e/acyl.spec.js`.
-- Ester / amide prefixes (I-39c/d): refusals in `validate.js`, prefixes (`carbamoil`/`acilamino`) in
-  `substituent.js` / `render.js`, explain step `diester`, P4 tweak in `numbering.js`; tests
-  `tests/unit/{ester,amide}-prefixes.test.js`, `tests/e2e/{ester,amide}-prefixes.spec.js`.
-- Ring prefixes (I-40a): ring vs chain principal-group count in `parent.js`, ring prefixes
-  (`ciclohexil`, `fenil`, `fenoxi`, …) in `substituent.js` / `render.js`, refusals `symmetricRing` /
-  `ringAcyl` (`validate.js`, `index.js`), explain step «Anillo o cadena»; tests
-  `tests/unit/ring-substituents.test.js`, `tests/e2e/ring-substituents.spec.js`.
-- Ring acids (I-40b): `-carboxílico`/`-carbaldehído` on rings, `carboxi-`, `benzoil` /
-  `(ciclohexanocarbonil)` in `principal.js` / `rings.js` / `substituent.js` / `render.js`;
-  explain `acidCompanions()`; oracle `generateRingAcids()`; tests `tests/unit/ring-acids.test.js`,
-  `tests/e2e/ring-acids.spec.js`.
-- Ring nitriles/amides (I-40c): `-carbonitrilo`/`-carboxamida` on rings, `N-fenil…amida`, `ciano-` /
-  `carbamoil-` on rings in `principal.js` / `rings.js` / `substituent.js` / `render.js`; explain
-  `branchAmideHow()`; oracle `generateRingNitrilesAmides()`; tests
-  `tests/unit/ring-nitriles-amides.test.js`, `tests/e2e/ring-nitriles-amides.spec.js`.
-- Ring esters (I-40d): `ringEster` retired; `esterRingSplit()` / `isLactone()` in `validate.js`
-  (two-ring `benzoato de fenilo`, lactone refusal), two-ring key in `graph.js`, two-part naming in
-  `naming/index.js`; oracle `generateRingEsters()`; tests `tests/unit/ring-esters.test.js`,
-  `tests/e2e/ring-esters.spec.js`.
+- v2 functional groups (I-32…I-40d; tests `tests/unit/<family>.test.js` + `tests/e2e/<family>.spec.js`,
+  details in each `docs/progress-archive/i-*.md`): kinds in `src/naming/principal.js` (carbonyl, acid,
+  amine, amide, nitrile; `outsideCarbons()` for `ciano-`), refusals in `validate.js` (`ringAldehyde`,
+  `sideChainCarbonyl`, `manyAcids`, `symmetricEther`, `esterPrefix`, `symmetricAmine`, `imide`,
+  `manyNitriles`, `symmetricRing`, `esterRingSplit()` / `isLactone()`, …); ether parent side in
+  `parent.js`, alkoxy prefixes in `substituent.js`, N5 tie-break `compareNameKeys()` in `numbering.js`;
+  ester O-bound group `esterAlkylName()`, acyl endings `acylEndingTokens()`, `N` locants in `render.js`;
+  ring prefixes (`ciclohexil`, `fenil`, `fenoxi`, `benzoil`, `(ciclohexanocarbonil)`) in
+  `substituent.js` / `render.js`; ring suffixes (`-carboxílico`, `-carbaldehído`, `-carbonitrilo`,
+  `-carboxamida`) in `rings.js`; oracle generators `generateAmides()` … `generateRingEsters()`.
 - 90° heteroatoms / CHO-COOH abbreviations / v2 wrap-up (I-41a…c): `projectRightAngles()` and group
   detection in `src/layout/rightangle.js`, labels in `src/editor/labels.js` / `render.js`, toggle in
   `src/ui/canvasbar.js` (localStorage `organicWeb.abbreviations`); Ayuda in `index.html`, grouped
@@ -312,17 +279,19 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   `tests/e2e/name-builder-phenol-templates.spec.js`. Alcohol diagnoses (I-51a3b): codes
   HYDROXY_PREFIX / HYDROXY_PARENT / MORE_HYDROXY_GROUPS / PHENOL and N0 / suffix variants in
   `diagnose.js`; tests `tests/unit/reverse-diagnose-alcohols.test.js`, alcohol case in `diagnosis.spec.js`.
+- Ethers in the reverse engine (I-51b1): `oxi` tile («Grupos», after the branch it turns into an alkoxy
+  group; contraction in `assemble.js`), `anisol` in `TEMPLATES`, «Ethers» nulls in `diagnose.js`; tests
+  `tests/unit/reverse-ethers.test.js`, `tests/e2e/name-builder-ethers.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51a3b (orchestrator, before the review: `npm test` 0 (2008) · check 0 (182) · build 0 · e2e 0
-  (503); re-run after the review fix): `npm test` 0 (2009) · `npm run check` 0 (182) · `npm run
-  build` 0 · `npm run e2e -- --reporter=dot` 0 (503, source + dist), no flakes. Codex review
-  ship-with-fixes, 1 should-fix (`1-metil-2-(hidroximetil)hexan-1-ol` got BRANCH_AT_END before the
-  P0 OH-count check): fixed by a second opus worker — `fewerHydroxyGroups()` runs first and gives
-  MORE_HYDROXY_GROUPS when no chain P0 keeps contains the student's; regression tests added.
-  `docs/reviews/I-51a3b.md`, resolution in `docs/progress-archive/i-51a3b.md`.
+- I-51b1 (orchestrator, after the worker): `npm test` 0 (2032) · `npm run check` 0 (184) · `npm run
+  build` 0 · `npm run e2e -- --reporter=dot` 0 (509 passed, source + dist, no flakes). Codex review
+  ship, 0 findings (`docs/reviews/I-51b1.md`; its own 40 targeted tests, 6118 round trips, 7631
+  omitted-locant probes, 44 hit the documented budget). Coverage: 40 ether fixture rows (46 names)
+  incl. the 2 I-42a alkoxy benzene rows, 11 class-name and 7 carbonyl-beside-ether rows skipped
+  (asserted); closed loop 563 generated molecules; no null in either mutation sweep.
 
 ## Open risks / deviations
 
@@ -369,8 +338,7 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 - I-47a…I-50c (v4 engine, dialog, «Dibujar», chain diagnosis, rings, benzene, templates):
   deviations, decisions and review resolutions in `docs/progress-archive/i-47a.md` … `i-50c.md`.
-  Still relevant: every v4 Spanish string is a draft pending teacher review; `cloro(metoxi)metano`
-  brackets → R-5b; tile cap 100; «Tu nombre: …» verdict line not in spec; `ciclohex-1-eno` →
+  Still relevant: every v4 Spanish string is a draft pending teacher review; tile cap 100; «Tu nombre: …» verdict line not in spec; `ciclohex-1-eno` →
   `otherName`; left-out locants → kindest of up to 16 readings; e2e has load-dependent flakes
   (`diagnosis.spec.js` keyboard, `polish.spec.js` phone toolbar, dist only).
 - I-50d, I-51a1: deliberate diagnosis nulls (a chain branch of a ring numbered wrongly or in an
@@ -387,6 +355,14 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   BRANCH_AT_END even when the OH count differs (`1-(hidroximetil)propan-1-ol` → `butano-1,2-diol`:
   its step says «una sola cadena»), the review's own-count suggestion declined for that reason; new
   Spanish drafts listed in `docs/progress-archive/i-51a3b.md`.
+- I-51b1: `cloro(metoxi)metano` brackets closed. The student always writes `il` before `oxi` (the
+  hidden `il` a small selectable box with an accessible name). Deliberate «Ethers» nulls for I-51b2:
+  `di` for `bis` on an unbranched alkoxy group (`di(pentiloxi)`, `di(propan-2-iloxi)`,
+  `di-tert-butoxi`); the wrong side of the O as parent (`etoximetano`) gets the true but O-blind chain
+  messages; class names have no tile. Open question for the user: the forward engine writes
+  `1,6-bis-tert-butoxihexano` where usage is `di-tert-butoxi` — followed (so `di-tert-butoxi` is
+  `otherName`); changing it means changing `render.js`. LONGER_CHAIN now says «1 carbono» in the
+  singular. New Spanish drafts (hints, tooltips, Ayuda ethers paragraph) in `docs/progress-archive/i-51b1.md`.
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -400,6 +376,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-51a3a `863fabe`, pushed. I-51a3b committed and pushed right after this checkpoint (see
-  `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
+- I-51a3b `db8614a`, pushed (checkpoint refresh `0235c00`). I-51b1 committed and pushed right after
+  this checkpoint (see `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
   `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

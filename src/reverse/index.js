@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -9,7 +9,22 @@
  * inside compound branches: `(2-cloroetil)`) and their alcohols (R-5a2: the
  * suffix `ol` on chains, rings and `benceno`, `fenol`, the prefix `hidroxi`,
  * the closing-bond locant `1(6)`; R-5a3a: the retained phenols `cresol`,
- * `pirocatecol`, `catecol`, `resorcinol`, `hidroquinona`). Pure, no DOM.
+ * `pirocatecol`, `catecol`, `resorcinol`, `hidroquinona`) and their ethers
+ * (R-5b: alkoxy prefixes — `metoxi`, `isopropoxi`, `fenoxi`, `(pentiloxi)`,
+ * `(2-metilpropoxi)` — and the retained `anisol`). Pure, no DOM.
+ *
+ * The ethers need nothing of their own here either: an alkoxy prefix is
+ * built as its branch and an ether oxygen (build.js) and searched like any
+ * prefix (search.js), and the engine names the molecule (`metoxietano`,
+ * `cloro(metoxi)metano`, `1-(propan-2-iloxi)butano` → `correct` /
+ * `alternative`; `metoxipropano` → `ambiguous`; `anisol` → `alternative`, a
+ * substituted `4-cloroanisol` → `otherName`). A molecule the engine refuses
+ * gets `outOfScope` with its message: two rings joined by an ether oxygen
+ * (`fenoxibenceno`, several rings), or an ether whose two identical halves
+ * carry the principal group (`2-(2-hidroxietoxi)etan-1-ol`, the engine's
+ * `symmetricEther`, named with `oxidi-`). An ether's functional-class name
+ * (`dietil éter`) has no tiles yet (phase R-5b2): `etoxietano`, the name
+ * the engine gives first, is `correct`.
  *
  * The retained phenols need nothing of their own here either, but one
  * message: the engine gives `o-cresol`, `pirocatecol`, `catecol`,
