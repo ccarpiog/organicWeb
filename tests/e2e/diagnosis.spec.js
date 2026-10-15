@@ -34,7 +34,10 @@
  * metilo`, the –COO–'s carbon taken out of the chain — the message between
  * the two sentences, the student's chain striped beside the longer parent,
  * «Ver el paso» at «Reconoce el grupo funcional», which says the molecule is
- * an ester and the –COO–'s carbon a carbon of the chain.
+ * an ester and the –COO–'s carbon a carbon of the chain; and (phase I-52a3b)
+ * `etanoato de butan-3-ilo`, the O-bound group numbered from the other end —
+ * the same chain in the legend, «Ver el paso» at «Separa las dos partes del
+ * éster», which names the group.
  */
 
 import { test, expect } from '@playwright/test';
@@ -137,6 +140,9 @@ const ACID_CARBON = ['ácido', 'prop', 'ano', '1', 'carboxílico'];
 
 /** The tiles of «propano-1-carboxilato de metilo» (on a chain the –COO–'s carbon is a chain carbon: butanoato de metilo). */
 const ESTER_CARBON = ['prop', 'ano', '1', 'carboxilato', 'met', 'ilo'];
+
+/** The tiles of «etanoato de butan-3-ilo» (the O-bound group numbered from the other end: etanoato de butan-2-ilo). */
+const ESTER_SIDE = ['et', 'ano', 'oato', 'but', 'ano', '3', 'ilo'];
 
 test('a longer chain: the message between the two sentences, the student\'s chain beside the parent, «Ver el paso» at «Busca la cadena»; Deshacer clears it all', async ({ page }) => {
   const errors = await openApp(page);
@@ -452,7 +458,7 @@ test('an acid (I-51d3): `carboxílico` on a chain, the student\'s chain beside t
   expect(errors).toEqual([]);
 }); // End of test 'an acid (I-51d3)…'
 
-test('an ester (I-52a3a): `carboxilato` on a chain, the student\'s chain beside the parent, «Ver el paso» at «Reconoce el grupo funcional»', async ({ page }) => {
+test('an ester (I-52a3a): `carboxilato` on a chain, «Ver el paso» at «Reconoce el grupo funcional»; the O-bound side (I-52a3b) at «Separa las dos partes del éster»', async ({ page }) => {
   const errors = await openApp(page);
   await drawName(page, ...ESTER_CARBON);
   const verdict = page.locator('#verdict');
@@ -492,6 +498,28 @@ test('an ester (I-52a3a): `carboxilato` on a chain, the student\'s chain beside 
   await expect(stepper).toContainText('la molécula es un éster');
   await expect(stepper).toContainText('Ese carbono es un carbono más de la cadena');
   expect(await marked(page, 'student')).toEqual(student);
+
+  // The O-bound side (I-52a3b): `etanoato de butan-3-ilo`, the group bonded to the oxygen numbered from the other end. The acid
+  // part is the student's chain; «Ver el paso» opens «Separa las dos partes del éster», which names the group.
+  await drawName(page, ...ESTER_SIDE);
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'ESTER_ALKYL_CHAIN');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: etanoato de butan-3-ilo');
+  await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
+    + '«etanoato de butan-2-ilo».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('La cadena del grupo unido al oxígeno se numera para que el carbono '
+    + 'unido al oxígeno lleve el número más bajo posible: «butan-2-ilo», no «butan-3-ilo».');
+  await expect(verdict.getByRole('list', { name: 'Qué se ve en el dibujo' }).getByRole('listitem'))
+    .toHaveText(['Cadena principal', 'Tu cadena (es la misma)']);
+  const acidPart = await marked(page, 'student');
+  expect([acidPart.atoms.length, acidPart.bonds.length]).toEqual([2, 1]);
+  expect((await marked(page, 'parent')).atoms).toEqual(expect.arrayContaining(acidPart.atoms));
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'ester');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 3 de 6');
+  await expect(stepper.locator('.step-title')).toHaveText('Separa las dos partes del éster');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  await expect(stepper).toContainText('El número 2 que va justo antes de «-ilo» dice por qué carbono del grupo se une al oxígeno');
   expect(errors).toEqual([]);
 }); // End of test 'an ester (I-52a3a)…'
 

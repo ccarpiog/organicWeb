@@ -283,8 +283,10 @@ test('one case per ring rule and per R-3 rule on a ring: the code, its trace rul
   // Every R-3 form rule (5–11) has a ring case too; MISSING_LOCANTS cannot be the main mistake on a ring (tested below), nor
   // can the rules of an ether's class name (phase I-51b2: a class name has no parent ring). The branch-name rules of phase
   // I-51c3b2 are no R-3 rules: their cases, a ring parent's acyl branch among them, are in reverse-diagnose-carbonyls.test.js
-  // (a ring branch beside a ring parent is a second ring, refused).
-  const branchNames = ['ACYL_NAME', 'ACYL_CHAIN', 'BRANCH_RING_NUMBERING'];
+  // (a ring branch beside a ring parent is a second ring, refused); nor is an ester's own code of phase I-52a3b (an ester prefix's
+  // kind, an O-bound group's chain or words: reverse-diagnose-esters.test.js).
+  const branchNames = ['ACYL_NAME', 'ACYL_CHAIN', 'BRANCH_RING_NUMBERING', 'ESTER_PREFIX_NAME', 'ESTER_ALKYL_CHAIN',
+    'ESTER_ALKYL_NAME'];
   const formCodes = DIAGNOSIS_CODES.filter((c) => DIAGNOSES[c].rule >= 5 && c !== 'MISSING_LOCANTS' && !c.startsWith('CLASS_')
     && !branchNames.includes(c));
   assert.deepEqual(formCodes.filter((c) => !seen.has(c)), []);

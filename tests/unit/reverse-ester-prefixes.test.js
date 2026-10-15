@@ -19,8 +19,8 @@
  * describes (compared by aromatic key with a SMILES), the diagnosis of the
  * rules that hold for an ester prefix and of an ester prefix's own mistakes,
  * each with its category read independently (deliberate «Esters» nulls of
- * diagnose.js until phase I-52a3a, which names `inChain` and `seniority`;
- * `words` still a deliberate null for phase I-52a3b),
+ * diagnose.js until phase I-52a3a, which names `inChain` and `seniority`,
+ * and phase I-52a3b, which names `words`),
  * the fixture names with an ester prefix, a closed loop over the acids the
  * ester generators write (scripts/oracle/generate.mjs: the molecules the
  * ester closed loop of reverse-esters.test.js leaves out), the diagnosis
@@ -601,7 +601,7 @@ function prefixKind(branch) {
  * The category of an ester prefix's own mistake, read independently of
  * diagnose.js from the engine's naming and the student's reading (each a
  * deliberate null of diagnose.js «Esters» until phase I-52a3a, which names
- * all but `words`, still a null for phase I-52a3b): `seniority` —
+ * all but `words`, named since phase I-52a3b): `seniority` —
  * the student's suffix is no –COO– beside the engine's, or the reverse (an
  * ester prefix beside no group senior to an ester: `(acetiloxi)metano` →
  * `etanoato de metilo`); `inChain` — the C=O carbon of the student's
@@ -645,12 +645,14 @@ function prefixCategory(ids, verdict) {
  * carbon the engine takes into the chain (ESTER_IN_CHAIN); an ester prefix
  * beside no group senior to an ester, the molecule the ester itself — the
  * principal –COO– written as the prefix (CARBONYL_PREFIX) or beside a junior
- * suffix (CARBONYL_SENIORITY). `words` has none: a deliberate null for phase
- * I-52a3b.
+ * suffix (CARBONYL_SENIORITY); and since phase I-52a3b an ester prefix
+ * written as another kind of branch (ESTER_PREFIX_NAME) or an acyloxy
+ * prefix's acyl part with the general word (ACYL_NAME).
  */
 const CATEGORY_CODES = Object.freeze({
   inChain: ['ESTER_IN_CHAIN'],
   seniority: ['CARBONYL_PREFIX', 'CARBONYL_SENIORITY'],
+  words: ['ESTER_PREFIX_NAME', 'ACYL_NAME'],
 });
 
 /**
@@ -703,33 +705,55 @@ test('the former deliberate «Esters» nulls of R-6a2b (diagnose.js): `inChain` 
   } // End of the loop over the former deliberate nulls
 }); // End of test 'the former deliberate «Esters» nulls of R-6a2b…'
 
-/** Deliberate «Esters» nulls of the ester prefixes (for phase I-52a3b): tile words and the category. */
-const NULLS = Object.freeze([
-  ['ácido 2 START 1 oxo et il oxi END et ano oico', 'words'],
-  ['ácido 2 START 1 oxo met il oxi END et ano oico', 'words'], // Before R-6a2b's check, NEEDLESS_LOCANTS «(oxometoxi)»: wrong.
-  ['ácido 2 et ano oil oxi et ano oico', 'words'],
-  ['ácido 2 met ano oil oxi et ano oico', 'words'],
-  ['ácido 3 START met il oxi oxo met il END pent ano di oico', 'words'],
+/** The start of an acyloxy prefix's ESTER_PREFIX_NAME (draft pending teacher review). */
+const ACYLOXY_LEAD = 'Un éster (–COO–) unido por su oxígeno del medio se nombra con el prefijo «aciloxi-»: el nombre del grupo acilo, aquí ';
+
+/**
+ * The former deliberate «Esters» `words` nulls of the ester prefixes (phases I-52a2b, I-52a3a), named since phase I-52a3b:
+ * tile words, the code, the step «Ver el paso» opens, the tiles and the whole message.
+ */
+const FORMER_WORDS_NULLS = Object.freeze([
+  ['ácido 2 START 1 oxo et il oxi END et ano oico', 'ESTER_PREFIX_NAME', 'substituents', [1, 9], `${ACYLOXY_LEAD}«acetil», más «oxi», `
+    + 'que es el oxígeno; su C=O no se nombra con «oxo». Se escribe «acetiloxi», no «1-oxoetoxi».'],
+  ['ácido 2 START 1 oxo met il oxi END et ano oico', 'ESTER_PREFIX_NAME', 'substituents', [1, 9], `${ACYLOXY_LEAD}«formil», más «oxi», `
+    + 'que es el oxígeno; su C=O no se nombra con «oxo». Se escribe «formiloxi», no «1-oxometoxi».'],
+  ['ácido 2 et ano oil oxi et ano oico', 'ACYL_NAME', 'substituents', [1, 6], 'El grupo acilo de 2 carbonos (CH₃–CO–) tiene nombre '
+    + 'propio, que la IUPAC (2013) prefiere: «acetil», no «etanoil». Se escribe «acetiloxi», no «etanoiloxi».'],
+  ['ácido 2 met ano oil oxi et ano oico', 'ACYL_NAME', 'substituents', [1, 6], 'El grupo acilo de 1 carbono (H–CO–, un –CHO) tiene '
+    + 'nombre propio, que la IUPAC (2013) prefiere: «formil», no «metanoil». Se escribe «formiloxi», no «metanoiloxi».'],
+  ['ácido 3 START met il oxi oxo met il END pent ano di oico', 'ESTER_PREFIX_NAME', 'substituents', [1, 10], 'Un éster (–COO–) unido '
+    + 'por el carbono de su C=O se nombra con un solo prefijo que lo incluye todo, «alcoxicarbonil-»: el nombre del grupo unido al '
+    + 'oxígeno acabado en «-oxi», aquí «metoxi», más «carbonil», que es el C=O; su C=O no se nombra con «oxo». Se escribe '
+    + '«metoxicarbonil», no «(metoxi)oxometil».'],
 ]);
 
-test('deliberate «Esters» nulls (diagnose.js, for I-52a3b): an ester prefix\'s own words, each with its category, drawn', () => {
-  for (const [words, category] of NULLS) {
+test('the former deliberate «Esters» nulls of R-6a2b (diagnose.js): `words`, an ester prefix\'s own words, have their I-52a3b codes', () => {
+  for (const [words, code, opened, tiles, message] of FORMER_WORDS_NULLS) {
     const ids = seq(words);
     const verdict = readName(ids);
     assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
-    assert.equal(prefixCategory(ids, verdict), category, words);
-    assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    assert.equal(prefixCategory(ids, verdict), 'words', words);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.deepEqual([d.code, d.rule, d.traceRule, d.message], [code, 5, null, message], words);
+    assert.ok(CATEGORY_CODES.words.includes(code), words);
+    assert.deepEqual(d.tiles, tiles, `${words}: the prefix's tiles`);
+    const explanation = diagnosisExplanation(verdict, explain);
+    const step = explanation.steps[explanation.index];
+    assert.equal(step.id, opened, `${words}: the step «Ver el paso» opens`);
+    // The step describes the engine's ester prefix: its acyl group, or its alkoxy group and «carbonil».
+    assert.match(step.text.join(' '), /es el \[\[prefijo\]\] de un éster \(–COO–\)/, words);
     assert.ok(verdict.draw && verdict.molecule, words);
-  } // End of the loop over the deliberate nulls
-  // Not an «Esters» null, a pre-existing pattern: a branch in a style the engine does not list for the molecule (it lists the
-  // styles only beside an isopropyl group), as `1-(1,1-dimetiletoxi)butano` for `1-tert-butoxibutano`.
+  } // End of the loop over the former deliberate nulls
+  // Not an «Esters» `words` case, a pre-existing pattern: a branch in a style the engine does not list for the molecule (it lists
+  // the styles only beside an isopropyl group), as `1-(1,1-dimetiletoxi)butano` for `1-tert-butoxibutano`: no diagnosis.
   for (const words of ['ácido 3 START 1 1 di met il et il oxi carbonil END pent ano di oico', '1 START 1 1 di met il et il oxi END but ano']) {
     const ids = seq(words);
     const verdict = readName(ids);
     assert.deepEqual([verdict.kind, verdict.diagnosis], ['otherName', null], words);
     assert.equal(prefixCategory(ids, verdict), null, words);
   }
-}); // End of test 'deliberate «Esters» nulls…'
+}); // End of test 'the former deliberate «Esters» nulls of R-6a2b: `words`…'
 
 // ---------------------------------------------------------------------------
 // Fixture round trip and closed loop (design.md §15.7).
@@ -1061,8 +1085,8 @@ function mutationsOf(ids) {
 /**
  * Reads every mutation of some names with an ester prefix: every `otherName`
  * carries a diagnosis of its family's codes whose step resolves in its
- * explanation, or is a deliberate «Esters» `words` null (prefixCategory();
- * phase I-52a3b's); any other null is unexpected. The ester prefixes' own
+ * explanation; a null is unexpected (no deliberate «Esters» null is left
+ * since phase I-52a3b, which names `words`). The ester prefixes' own
  * mistakes diagnosed since phase I-52a3a are counted by category, each with
  * a code of its category (CATEGORY_CODES).
  *
@@ -1088,15 +1112,10 @@ function sweep(names) {
       const d = verdict.diagnosis;
       const category = prefixCategory(mutation.ids, verdict);
       if (!d) {
-        if (category === 'words') {
-          nulls[category] = (nulls[category] || 0) + 1;
-        } else {
-          unexpected.push(`${label}${category ? ` (${category})` : ''}`);
-        }
+        unexpected.push(`${label}${category ? ` (${category})` : ''}`);
         continue;
       }
       codes.add(d.code);
-      assert.notEqual(category, 'words', `${label}: words diagnosed ${d.code}`);
       if (category) {
         own[category] = (own[category] || 0) + 1;
         assert.ok(CATEGORY_CODES[category].includes(d.code), `${label}: ${category}, ${d.code}`);

@@ -65,8 +65,13 @@ const CARBONYL_ONLY_CODES = Object.freeze(['CARBONYL_SENIORITY', 'KETONE_NOT_ALD
 /** The codes only an acid gives (phase I-51d3; their cases are in reverse-diagnose-acids.test.js). */
 const ACID_ONLY_CODES = Object.freeze(['ACID_GROUP', 'ACID_CARBON']);
 
-/** The codes only an ester gives (phase I-52a3a; their cases are in reverse-diagnose-esters.test.js). */
-const ESTER_ONLY_CODES = Object.freeze(['ESTER_GROUP', 'ESTER_CARBON', 'ESTER_IN_CHAIN']);
+/**
+ * The codes only an ester gives (phases I-52a3a, I-52a3b; their cases are in reverse-diagnose-esters.test.js): the principal
+ * –COO– group's, an ether class name whose oxygen is an ester's, a retained ester word's O-bound side, an ester prefix's kind,
+ * an O-bound group's chain and words.
+ */
+const ESTER_ONLY_CODES = Object.freeze(['ESTER_GROUP', 'ESTER_CARBON', 'ESTER_IN_CHAIN', 'ESTER_CLASS_NAME', 'ESTER_TRADITIONAL',
+  'ESTER_PREFIX_NAME', 'ESTER_ALKYL_CHAIN', 'ESTER_ALKYL_NAME']);
 
 /**
  * The branch-name codes (phase I-51c3b2): an acyl group's word or chain, a ring branch's numbering — branches a
@@ -372,18 +377,22 @@ test('the drafts: one entry per code in rule order, each message renders from it
   // ketone rules of phase I-51c3b1, the acid rules of phase I-51d3 and the ester rules of phase I-52a3a stand beside the rules
   // whose place they take (diagnose.js headers «Rings», «Alcohols», «Ethers», «Aldehydes and ketones», «Acids» and «Esters»: the
   // acid's and the ester's checks run first, ACID_CARBON and ESTER_CARBON beside ALDEHYDE_CARBON, ESTER_IN_CHAIN beside
-  // BRANCH_AT_END); the branch-name rules of phase I-51c3b2 come before ALPHABETICAL_ORDER, with its number.
-  assert.deepEqual(DIAGNOSIS_CODES, ['ACID_GROUP', 'ESTER_GROUP', 'HYDROXY_PREFIX', 'CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE',
-    'ALDEHYDE_CARBON', 'ACID_CARBON', 'ESTER_CARBON', 'CARBONYL_PREFIX', 'HYDROXY_PARENT', 'CARBONYL_PARENT', 'BRANCH_AT_END',
-    'ESTER_IN_CHAIN', 'RING_IS_PARENT', 'MORE_HYDROXY_GROUPS',
-    'MORE_CARBONYL_GROUPS', 'LONGER_CHAIN', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'PHENOL', 'ETHER_SIDE', 'CLASS_NAME_NONE',
+  // BRANCH_AT_END); the branch-name rules of phase I-51c3b2 come before ALPHABETICAL_ORDER, with its number. The ester codes of
+  // phase I-52a3b beside the code they parallel: ESTER_CLASS_NAME after ESTER_GROUP, ESTER_TRADITIONAL after SUBSTITUTED_TEMPLATE,
+  // ESTER_PREFIX_NAME first of the branch-name rules, ESTER_ALKYL_CHAIN and ESTER_ALKYL_NAME after BRANCH_RING_NUMBERING.
+  assert.deepEqual(DIAGNOSIS_CODES, ['ACID_GROUP', 'ESTER_GROUP', 'ESTER_CLASS_NAME', 'HYDROXY_PREFIX', 'CARBONYL_SENIORITY',
+    'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON', 'ACID_CARBON', 'ESTER_CARBON', 'CARBONYL_PREFIX', 'HYDROXY_PARENT', 'CARBONYL_PARENT',
+    'BRANCH_AT_END', 'ESTER_IN_CHAIN', 'RING_IS_PARENT', 'MORE_HYDROXY_GROUPS',
+    'MORE_CARBONYL_GROUPS', 'LONGER_CHAIN', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'ESTER_TRADITIONAL', 'PHENOL', 'ETHER_SIDE',
+    'CLASS_NAME_NONE',
     'CLASS_GROUP_WORDS', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL',
-    'NUMBERING', 'RING_NUMBERING', 'ACYL_NAME', 'ACYL_CHAIN', 'BRANCH_RING_NUMBERING', 'ALPHABETICAL_ORDER', 'CLASS_ORDER',
+    'NUMBERING', 'RING_NUMBERING', 'ESTER_PREFIX_NAME', 'ACYL_NAME', 'ACYL_CHAIN', 'BRANCH_RING_NUMBERING', 'ESTER_ALKYL_CHAIN',
+    'ESTER_ALKYL_NAME', 'ALPHABETICAL_ORDER', 'CLASS_ORDER',
     'UNGROUPED', 'CLASS_DI', 'MULTIPLIER_KIND',
     'ALKOXY_MULTIPLIER', 'LOCANT_ORDER', 'NEEDLESS_LOCANTS', 'MISSING_LOCANTS', 'SEGMENT_ORDER', 'OLD_STYLE', 'LETTER_LOCANTS']);
   assert.deepEqual(DIAGNOSIS_CODES.map((code) => DIAGNOSES[code].rule),
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5, 5, 6, 6, 7, 7, 8, 9, 9,
-      10, 11, 11]);
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6,
+      7, 7, 8, 9, 9, 10, 11, 11]);
   assert.ok(Object.isFrozen(DIAGNOSES) && Object.isFrozen(DIAGNOSIS_TEXTS) && Object.isFrozen(DIAGNOSIS_PHRASES));
   for (const code of DIAGNOSIS_CODES) {
     const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);

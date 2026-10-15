@@ -220,8 +220,20 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   prefix whose C=O carbon the engine takes into an acid's chain, `ácido
   3-(metoxicarbonil)propanoico`), and the parent choice, P0, N0 numbering and
   the suffix's needless locants speak of «grupos –COO–», each with its «Ver el
-  paso» step. Next is R-6a3b (phase I-52a3b): the O-bound side, ester prefix
-  words and an ester written as an ether class name.
+  paso» step. R-6a3b (phase I-52a3b) is done, and with it R-6a: `diagnose.js`
+  names the O-bound side's mistakes (header «Esters», right after the –COO–
+  group's own checks and before the parent choice: a retained ester word with
+  the group in another style than its traditional name's, `acetato de
+  propan-2-ilo` → «acetato de isopropilo» or «etanoato de propan-2-ilo»; a
+  group whose chain or ring is chosen or numbered otherwise, `etanoato de
+  butan-3-ilo`, `acetato de 1,2-dimetilpropilo`, `etanoato de 6-metilfenilo`;
+  its needless locants, `etanoato de propan-1-ilo`; two groups out of
+  alphabetical order, the same group written twice, the wrong multiplier,
+  `de metilo y etilo`, `de metilo y metilo`, `de di(2-cloroetilo)`), an ester
+  prefix written as another kind of branch or with the general acyl word
+  (`(1-oxoetoxi)`, `[(metoxi)oxometil]`, `(etanoiloxi)`), and an ester
+  written as an ether class name (`(1-oxoetil) metil éter`), each with its
+  «Ver el paso» step. Next is R-6b (phase I-52b): nitriles.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

@@ -19,9 +19,15 @@
  * says the rule; two sweeps over the ester fixture names (every single `oato`
  * written as `oxo` and an alkoxy prefix on carbon 1, every single
  * `carboxilato` and `benzoato` as an alkoxycarbonyl prefix); MISSING_LOCANTS
- * with the –COO– groups' words; the deliberate nulls left for phase I-52a3b
- * (the O-bound side, an ester prefix's own words, an ester written as an
- * ether class name); controls; the drafts.
+ * with the –COO– groups' words; controls; the drafts. Phase I-52a3b
+ * (R-6a3b): the former deliberate nulls — the O-bound side (a retained ester
+ * word with the group in another style, ESTER_TRADITIONAL; a group's ring
+ * numbering, chain, needless locants or other words, BRANCH_RING_NUMBERING,
+ * ESTER_ALKYL_CHAIN, NEEDLESS_LOCANTS, ESTER_ALKYL_NAME; the side's order,
+ * grouping and multiplier, ALPHABETICAL_ORDER, UNGROUPED, MULTIPLIER_KIND),
+ * an ester prefix's own words (ESTER_PREFIX_NAME, ACYL_NAME) and an ester
+ * written as an ether class name (ESTER_CLASS_NAME) — each with its code,
+ * message, the step «Ver el paso» opens, its tiles and the student's chain.
  */
 
 import { test } from 'node:test';
@@ -45,6 +51,16 @@ import { seq, readFixtures, isEster, isEsterName, isEsterTemplateName } from './
 
 /** The codes only an ester gives (diagnose.js header «Esters»). */
 const ESTER_CODES = Object.freeze(['ESTER_GROUP', 'ESTER_CARBON', 'ESTER_IN_CHAIN']);
+
+/**
+ * The codes of phase I-52a3b only an ester gives (diagnose.js «Esters»: an ether class name whose oxygen is an ester's, a
+ * retained ester word's O-bound side, an ester prefix's kind, an O-bound group's chain or words), in DIAGNOSES order.
+ */
+const SIDE_CODES = Object.freeze(['ESTER_CLASS_NAME', 'ESTER_TRADITIONAL', 'ESTER_PREFIX_NAME', 'ESTER_ALKYL_CHAIN', 'ESTER_ALKYL_NAME']);
+
+/** The codes whose message holds for the O-bound side, with its own words (`oBound`; phase I-52a3b). */
+const OBOUND_SHARED_CODES = Object.freeze(['BRANCH_RING_NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND',
+  'NEEDLESS_LOCANTS']);
 
 /** The codes an ester shares with the aldehydes, ketones and acids, their words keyed by the –COO– (diagnose.js «Esters»). */
 const SHARED_CODES = Object.freeze(['CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'CARBONYL_PREFIX', 'CARBONYL_PARENT',
@@ -489,14 +505,162 @@ test('MISSING_LOCANTS names the –COO– groups when the suffix\'s locant is th
     + 'como en «2-clorociclohexano-1-carboxilato de metilo».');
 }); // End of test 'MISSING_LOCANTS names the –COO– groups…'
 
-test('the deliberate nulls left for phase I-52a3b: the O-bound side, an ester prefix\'s own words, an ester written as an ether class name', () => {
-  for (const name of ['etanoato de propan-1-ilo', 'propanodioato de metilo y etilo', 'butanodioato de metilo y metilo',
-    'acetato de propan-2-ilo', 'acetato de propan-1-ilo', 'ácido 2-(1-oxoetoxi)etanoico', 'ácido 2-(etanoiloxi)etanoico',
-    'ácido 2-(metanoiloxi)etanoico', 'ácido 3-[(metoxi)oxometil]pentanodioico', '(1-oxoetil) metil éter']) {
+/** The start of an ESTER_ALKYL_CHAIN message on the numbering (draft pending teacher review). */
+const ALKYL_NUMBERING = 'La cadena del grupo unido al oxígeno se numera para que el carbono unido al oxígeno lleve el número más bajo '
+  + 'posible';
+
+/** The start of ESTER_PREFIX_NAME for an acyloxy prefix. */
+const ACYLOXY = 'Un éster (–COO–) unido por su oxígeno del medio se nombra con el prefijo «aciloxi-»: el nombre del grupo acilo, aquí ';
+
+/** The ESTER_CLASS_NAME message before the engine's name. */
+const CLASS_ESTER = 'El oxígeno de tu nombre está unido a un carbono con un C=O: juntos forman un solo grupo, el –COO– de los ésteres, así '
+  + `que la molécula es un éster, no un éter, y no se nombra con «éter». El grupo –COO– es el grupo principal: se nombra ${WRITTEN('oato')}.`;
+
+/**
+ * One case per mistake of phase I-52a3b (the former deliberate nulls: the
+ * O-bound side, an ester prefix's own words, an ester written as an ether
+ * class name, then the variants): [name or tile words, code, rule, the step
+ * «Ver el paso» opens, tiles, message].
+ */
+const SIDE_CASES = [
+  // The O-bound side: a group's needless locants, its chain and numbering, a ring numbered otherwise, its other words.
+  ['etanoato de propan-1-ilo', 'NEEDLESS_LOCANTS', 9, 'ester', [5, 6], 'Sobran números en el nombre del grupo unido al oxígeno: se '
+    + 'escribe «propilo», no «propan-1-ilo».'],
+  ['etanoato de 1-clorometilo', 'NEEDLESS_LOCANTS', 9, 'ester', [3, 4], 'Sobran números en el nombre del grupo unido al oxígeno: se '
+    + 'escribe «clorometilo», no «1-clorometilo».'],
+  ['etanoato de ciclohexan-1-ilo', 'NEEDLESS_LOCANTS', 9, 'ester', [6, 7], 'Sobran números en el nombre del grupo unido al oxígeno: '
+    + 'se escribe «ciclohexilo», no «ciclohexan-1-ilo».'],
+  ['etanoato de butan-3-ilo', 'ESTER_ALKYL_CHAIN', 5, 'ester', [3, 7], `${ALKYL_NUMBERING}: «butan-2-ilo», no «butan-3-ilo».`],
+  ['etanoato de propan-3-ilo', 'ESTER_ALKYL_CHAIN', 5, 'ester', [3, 7], `${ALKYL_NUMBERING}: «propilo», no «propan-3-ilo». En «propilo» `
+    + 'ese número ni siquiera se escribe.'],
+  ['etanoato de 4-metilpentan-3-ilo', 'ESTER_ALKYL_CHAIN', 5, 'ester', [3, 10], `${ALKYL_NUMBERING}; si así empatan, en el sentido que `
+    + 'da los números más bajos a sus sustituyentes: «2-metilpentan-3-ilo», no «4-metilpentan-3-ilo».'],
+  ['etanoato de 1-metilpropilo', 'ESTER_ALKYL_CHAIN', 5, 'ester', [3, 8], 'La cadena del grupo unido al oxígeno es la más larga que '
+    + 'pasa por el carbono unido al oxígeno: aquí tiene 4 carbonos, no 3. Se escribe «butan-2-ilo», no «1-metilpropilo».'],
+  ['etanoato de 2-etenilbutilo', 'ESTER_ALKYL_CHAIN', 5, 'ester', [3, 9], 'La cadena del grupo unido al oxígeno pasa por el carbono '
+    + 'unido al oxígeno y, entre las más largas, es la que tiene más enlaces dobles o triples. Se escribe «2-etilbut-3-en-1-ilo», no '
+    + '«2-etenilbutilo».'],
+  // Review of phase I-52a3b: two six-carbon chains with one multiple bond each; the double bond decides.
+  ['etanoato de 3-etenilhex-1-in-3-ilo', 'ESTER_ALKYL_CHAIN', 5, 'ester', [3, 12], 'La cadena del grupo unido al oxígeno pasa por el '
+    + 'carbono unido al oxígeno y, entre las más largas, con los mismos enlaces múltiples, gana la que tiene más enlaces dobles. Se '
+    + 'escribe «3-etinilhex-1-en-3-ilo», no «3-etenilhex-1-in-3-ilo».'],
+  ['etanoato de 6-metilfenilo', 'BRANCH_RING_NUMBERING', 5, 'ester', [3, 8], 'Un anillo unido al oxígeno se numera empezando por el '
+    + 'carbono unido al oxígeno, que es el 1, y siguiendo en el sentido que da los números más bajos a sus sustituyentes: '
+    + '«2-metilfenilo», no «6-metilfenilo».'],
+  ['etanoato de 1,1-dimetiletilo', 'ESTER_ALKYL_NAME', 5, 'ester', [3, 10], 'El grupo unido al oxígeno se nombra como una rama, pero '
+    + 'como palabra suelta y acabado en «-ilo»: aquí, «tert-butilo», no «1,1-dimetiletilo».'],
+  ['etanoato de 4-metil-2-clorofenilo', 'ESTER_ALKYL_NAME', 5, 'ester', [3, 10], 'El grupo unido al oxígeno se nombra como una rama, '
+    + 'pero como palabra suelta y acabado en «-ilo»: aquí, «2-cloro-4-metilfenilo», no «4-metil-2-clorofenilo».'],
+  // The retained word with the group in another style than its traditional name's.
+  ['acetato de propan-2-ilo', 'ESTER_TRADITIONAL', 2, 'assemble', [1, 5], 'El nombre tradicional «acetato» solo lo uso con el nombre '
+    + 'del grupo unido al oxígeno que doy primero, «isopropilo»: «acetato de isopropilo». Con «propan-2-ilo», la primera palabra es '
+    + 'la sistemática: «etanoato de propan-2-ilo».'],
+  // The side's form: two groups out of order, the same group written twice, the wrong multiplier.
+  ['propanodioato de metilo y etilo', 'ALPHABETICAL_ORDER', 5, 'diester', [4, 8], 'Los grupos unidos a los oxígenos se escriben por '
+    + 'orden alfabético, unidos por «y»: «etilo» va antes que «metilo» (e antes que m). Se escribe «etilo y metilo», no «metilo y '
+    + 'etilo».'],
+  ['butanodioato de metilo y metilo', 'UNGROUPED', 6, 'diester', [4, 8], 'Los grupos iguales unidos a los oxígenos se escriben una sola '
+    + 'vez, con «di», «tri»… delante: «dimetilo», no «metilo y metilo».'],
+  ['propanodioato de propan-2-ilo y propan-2-ilo', 'UNGROUPED', 6, 'diester', [4, 12], 'Los grupos iguales unidos a los oxígenos se '
+    + 'escriben una sola vez, con «di», «tri»… delante: «di(propan-2-ilo)», no «propan-2-ilo y propan-2-ilo».'],
+  ['butanodioato de di(2-cloroetilo)', 'MULTIPLIER_KIND', 7, 'diester', [4, 5], 'Delante de un grupo que tiene sus propios '
+    + 'sustituyentes se usa «bis», «tris»…: «bis(2-cloroetilo)», no «di(2-cloroetilo)».'],
+  ['butanodioato de bismetilo', 'MULTIPLIER_KIND', 7, 'diester', [4, 5], '«bis», «tris»… solo van delante de grupos que tienen sus '
+    + 'propios sustituyentes; aquí va «di», «tri»…: «dimetilo», no «bismetilo».'],
+  // Review of phase I-52a3b: a group the engine writes otherwise keeps its own mistake, never another word's multiplier (the
+  // engine's `di-tert-butilo` is no reason for `di(1,1-dimetiletilo)`); the substituted style's side, quoted as the engine writes it.
+  ['propanodioato de bis(1,1-dimetiletilo)', 'ESTER_ALKYL_NAME', 5, 'diester', [4, 14], 'El grupo unido al oxígeno se nombra como '
+    + 'una rama, pero como palabra suelta y acabado en «-ilo»: aquí, «tert-butilo», no «1,1-dimetiletilo».'],
+  ['propanodioato de 1-metiletilo y 1-metiletilo', 'UNGROUPED', 6, 'diester', [4, 14], 'Los grupos iguales unidos a los oxígenos '
+    + 'se escriben una sola vez, con «bis», «tris»… delante: «bis(1-metiletilo)», no «1-metiletilo y 1-metiletilo».'],
+  ['propanodioato de di(1-metiletilo)', 'MULTIPLIER_KIND', 7, 'diester', [4, 5], 'Delante de un grupo que tiene sus propios '
+    + 'sustituyentes se usa «bis», «tris»…: «bis(1-metiletilo)», no «di(1-metiletilo)».'],
+  // An ester prefix written as another kind of branch, or with the general acyl word.
+  ['ácido 2-(1-oxoetoxi)etanoico', 'ESTER_PREFIX_NAME', 5, 'substituents', [1, 9], `${ACYLOXY}«acetil», más «oxi», que es el oxígeno; su `
+    + 'C=O no se nombra con «oxo». Se escribe «acetiloxi», no «1-oxoetoxi».'],
+  ['ácido 3-[(metoxi)oxometil]pentanodioico', 'ESTER_PREFIX_NAME', 5, 'substituents', [1, 10], 'Un éster (–COO–) unido por el carbono '
+    + 'de su C=O se nombra con un solo prefijo que lo incluye todo, «alcoxicarbonil-»: el nombre del grupo unido al oxígeno acabado '
+    + 'en «-oxi», aquí «metoxi», más «carbonil», que es el C=O; su C=O no se nombra con «oxo». Se escribe «metoxicarbonil», no '
+    + '«(metoxi)oxometil».'],
+  ['ácido 2-(etanoiloxi)etanoico', 'ACYL_NAME', 5, 'substituents', [1, 6], 'El grupo acilo de 2 carbonos (CH₃–CO–) tiene nombre propio, '
+    + 'que la IUPAC (2013) prefiere: «acetil», no «etanoil». Se escribe «acetiloxi», no «etanoiloxi».'],
+  // An ester written as an ether class name.
+  ['(1-oxoetil) metil éter', 'ESTER_CLASS_NAME', 1, 'group', [8, 9], `${CLASS_ESTER} Se escribe «etanoato de metilo».`],
+];
+
+test('one case per mistake of phase I-52a3b: the O-bound side, an ester prefix\'s own words, an ester written as an ether class name', () => {
+  const seen = new Set();
+  for (const [name, code, rule, opened, tiles, message] of SIDE_CASES) {
     const verdict = read(name);
-    assert.deepEqual([verdict.kind, verdict.diagnosis], ['otherName', null], name);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${name}: no diagnosis`);
+    assert.deepEqual([d.code, d.rule, d.traceRule], [code, rule, null], `${name}: ${d.message}`);
+    assert.equal(d.message, message, name);
+    assert.deepEqual(d.tiles, tiles, `${name}: tiles`);
+    assert.deepEqual(JSON.parse(JSON.stringify(d)), d, `${name}: JSON-safe`);
+    if (code === 'ESTER_CLASS_NAME') {
+      assert.deepEqual(d.student, { atoms: [], bonds: [] }, `${name}: a class name has no chain`);
+    } else {
+      assertEsterDiagnosis(verdict, name);
+    }
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${name}: the step «Ver el paso» opens`);
+    seen.add(code);
+  } // End of the loop over the cases
+  assert.deepEqual([...SIDE_CODES, ...OBOUND_SHARED_CODES, 'ACYL_NAME'].filter((code) => !seen.has(code)), [], 'every code has a case');
+}); // End of test 'one case per mistake of phase I-52a3b…'
+
+test('the O-bound side: the acid part stays the student\'s chain, the focus is the O-bound groups, the step names them', () => {
+  /**
+   * The text of the step «Ver el paso» opens for a name.
+   *
+   * @param {string} name - A name.
+   * @returns {string} The step's paragraphs, joined.
+   */
+  const opened = (name) => {
+    const explanation = diagnosisExplanation(read(name), explain);
+    return explanation.steps[explanation.index].text.join(' ');
+  };
+  for (const name of ['etanoato de propan-1-ilo', 'propanodioato de metilo y etilo', 'butanodioato de metilo y metilo']) {
+    const verdict = read(name);
+    const d = verdict.diagnosis;
+    // The acid part is the engine's parent; the focus is every O-bound group the message is about, with its bond to the oxygen.
+    assert.deepEqual(d.student, d.parent, `${name}: the same chain`);
+    assert.deepEqual(diagnosisLegend(d).map((e) => e.text), ['Cadena principal', 'Tu cadena (es la misma)'], name);
+    const groups = verdict.esterAtoms;
+    assert.deepEqual(sorted(d.focus.atoms), sorted(groups.flatMap((o) => o.atoms)), name);
+    assert.deepEqual(sorted(d.focus.bonds), sorted(groups.flatMap((o) => [o.bond, ...o.bonds])), name);
   }
-}); // End of test 'the deliberate nulls left for phase I-52a3b…'
+  // The steps: the ester's one O-bound group, «Separa las dos partes del éster»; two, «Separa las partes del diéster», which says
+  // how two groups are written; the traditional pairing, «Monta el nombre», which lists both names.
+  assert.match(opened('etanoato de propan-1-ilo'), /La otra parte es el grupo unido al otro lado del oxígeno.*«propilo»/);
+  assert.match(opened('propanodioato de metilo y etilo'), /se escriben los dos, en orden alfabético y unidos por «y»: «etilo y metilo»/);
+  assert.match(opened('butanodioato de metilo y metilo'), /se escribe su nombre una vez, con «di» delante/);
+  assert.match(opened('butanodioato de di(2-cloroetilo)'), /con «bis» delante y entre paréntesis porque el grupo tiene sus propios sustituyentes/);
+  assert.match(opened('etanoato de butan-3-ilo'), /El número 2 que va justo antes de «-ilo» dice por qué carbono del grupo se une al oxígeno/);
+  assert.match(opened('etanoato de 6-metilfenilo'), /Sus carbonos se numeran empezando por el que está unido al oxígeno, que es el 1/);
+  assert.match(opened('acetato de propan-2-ilo'), /«etanoato de propan-2-ilo».*«acetato de isopropilo»/);
+  assert.match(opened('ácido 2-(1-oxoetoxi)etanoico'), /«acetiloxi» es el \[\[prefijo\]\] de un éster \(–COO–\) unido .* por su oxígeno del medio/);
+  // The O-bound checks run right after the principal –COO– group's own and before the parent's rules: an acid-part mistake beside
+  // an O-bound one gives way to it; with the O-bound side the engine's, the acid part's rule speaks.
+  assert.equal(read('4-metilbutanoato de propan-1-ilo').diagnosis.code, 'NEEDLESS_LOCANTS');
+  assert.equal(read('4-metilbutanoato de propilo').diagnosis.code, 'BRANCH_AT_END');
+  // A side the engine writes in one of its styles is no mistake, whatever the acid part's style (`etilo y propan-2-ilo`).
+  assert.equal(read('propanodioato de etilo y propan-2-ilo').kind, 'alternative');
+  // Review of phase I-52a3b: a side quoted in the style of the student's groups opens the explanation in that style, whose diester
+  // step writes the side as the message does (the substituted style's `bis(1-metiletilo)`, not the default's `diisopropilo`).
+  for (const [name, style, side] of [['propanodioato de 1-metiletilo y 1-metiletilo', 'substituted', 'bis(1-metiletilo)'],
+    ['propanodioato de di(1-metiletilo)', 'substituted', 'bis(1-metiletilo)'],
+    ['propanodioato de propan-2-ilo y etilo', 'pin', 'etilo y propan-2-ilo']]) {
+    const verdict = read(name);
+    assert.equal(verdict.diagnosis.style, style, name);
+    assert.deepEqual(verdict.diagnosis.parent, diagnosisNaming(verdict).parent, name);
+    const text = opened(name);
+    assert.ok(text.includes(`«${side}»`) && text.includes(`«propanodioato de ${side}»`), `${name}: ${text}`);
+    assert.doesNotMatch(text, /diisopropilo|isopropilo/, name);
+  }
+  assert.match(opened('propanodioato de 1-metiletilo y 1-metiletilo'), /con «bis» delante y entre paréntesis porque el grupo tiene sus propios sustituyentes/);
+}); // End of test 'the O-bound side…'
 
 test('controls: correct ester names have no diagnosis; a mistake the earlier rules name stays theirs', () => {
   for (const name of ['etanoato de metilo', 'butanodioato de dimetilo', 'ciclohexanocarboxilato de metilo', 'benzoato de metilo',
@@ -525,11 +689,19 @@ test('controls: correct ester names have no diagnosis; a mistake the earlier rul
 test('the drafts of the ester rules: their place among the rules, their steps, every variant renders', () => {
   assert.deepEqual(ESTER_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]), [[1, 'group'], [1, 'group'],
     [1, 'groupChain']]);
+  // Phase I-52a3b: each beside the code it parallels — ESTER_CLASS_NAME after ESTER_GROUP, ESTER_TRADITIONAL after
+  // SUBSTITUTED_TEMPLATE, ESTER_PREFIX_NAME first of the branch-name rules, ESTER_ALKYL_CHAIN and ESTER_ALKYL_NAME after
+  // BRANCH_RING_NUMBERING —, the O-bound side's steps the explanation's ester step (or «Monta el nombre»).
+  assert.deepEqual(SIDE_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]), [[1, 'group'], [2, 'assemble'],
+    [5, 'substituents'], [5, 'ester'], [5, 'ester']]);
   // ESTER_GROUP right after ACID_GROUP, as esterChecks() runs with acidChecks(); ESTER_CARBON after ACID_CARBON, its twin;
   // ESTER_IN_CHAIN after BRANCH_AT_END, its twin.
   const after = (code) => DIAGNOSIS_CODES[DIAGNOSIS_CODES.indexOf(code) - 1];
   assert.deepEqual(ESTER_CODES.map(after), ['ACID_GROUP', 'ACID_CARBON', 'BRANCH_AT_END']);
-  for (const code of [...ESTER_CODES, ...SHARED_CODES]) {
+  assert.deepEqual(SIDE_CODES.map(after), ['ESTER_GROUP', 'SUBSTITUTED_TEMPLATE', 'RING_NUMBERING', 'BRANCH_RING_NUMBERING',
+    'ESTER_ALKYL_CHAIN']);
+  assert.deepEqual([STEP_FALLBACKS.ester, STEP_FALLBACKS.diester], [['diester', 'group', 'count'], ['ester', 'group', 'count']]);
+  for (const code of [...ESTER_CODES, ...SHARED_CODES, ...SIDE_CODES]) {
     const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);
     assert.match(text, /^[«¿A-ZÁÉÍÓÚ].*\.$/u, code);
     assert.doesNotMatch(text, /undefined|null|NaN/, code);
@@ -589,4 +761,36 @@ test('the drafts of the ester rules: their place among the rules, their steps, e
     + 'la cadena desde el otro extremo: los grupos –COO– (el grupo principal) tienen que llevar los números más bajos (1 en vez de 2).');
   assert.equal(DIAGNOSIS_PHRASES.etherSide({ reason: 'CARBONYL_PARENT', group: 'ester', ring: 1, chain: 1, chainParent: false }),
     'primero cuenta el grupo principal, y los dos lados llevan un grupo –COO– cada uno; en el empate, manda el anillo');
+  // Phase I-52a3b: the examples, and the variants no case above reaches.
+  assert.equal(DIAGNOSES.ESTER_CLASS_NAME.example.name, 'etanoato de metilo');
+  assert.equal(DIAGNOSIS_TEXTS.ESTER_TRADITIONAL(DIAGNOSES.ESTER_TRADITIONAL.example), 'El nombre tradicional «acetato» solo lo uso '
+    + 'con el nombre del grupo unido al oxígeno que doy primero, «isopropilo»: «acetato de isopropilo». Con «propan-2-ilo», la primera '
+    + 'palabra es la sistemática: «etanoato de propan-2-ilo».');
+  assert.equal(DIAGNOSIS_TEXTS.ESTER_ALKYL_CHAIN({ reason: 'longer', length: 4, studentLength: 2, starts: true, right: 'X', student: 'Y' }),
+    'La cadena del grupo unido al oxígeno es la más larga que empieza en el carbono unido al oxígeno: aquí tiene 4 carbonos, no 2. '
+    + 'Se escribe «X», no «Y».');
+  assert.equal(DIAGNOSIS_TEXTS.ESTER_ALKYL_CHAIN({ reason: 'bondsOnly', unwritten: false, right: 'X', student: 'Y' }), `${ALKYL_NUMBERING}; `
+    + 'si así empatan, en el sentido que da los números más bajos a sus enlaces dobles y triples: «X», no «Y».');
+  // The double-bond tie-break shares its words with MORE_DOUBLE_BONDS (review of phase I-52a3b), whose message is unchanged.
+  assert.deepEqual(DIAGNOSIS_PHRASES.doubleBondTie, { tie: 'con los mismos enlaces múltiples', wins: 'gana la que tiene más enlaces dobles' });
+  assert.equal(DIAGNOSIS_TEXTS.MORE_DOUBLE_BONDS({ app: 2, student: 1 }), 'Hay otra cadena igual de larga, con los mismos enlaces '
+    + 'múltiples, pero con más enlaces dobles (2; la tuya tiene 1). En ese empate gana la que tiene más enlaces dobles.');
+  assert.equal(DIAGNOSIS_TEXTS.ESTER_PREFIX_NAME({ kind: 'acyloxy', part: 'acetil', oxo: false, right: 'X', student: 'Y' }),
+    `${ACYLOXY}«acetil», más «oxi», que es el oxígeno. Se escribe «X», no «Y».`);
+  assert.equal(DIAGNOSIS_TEXTS.ESTER_CLASS_NAME({ count: 2, ending: 'dioato', ester: true, benzoate: false, groups: 2, on: 'chain',
+    name: 'X' }), 'El oxígeno de tu nombre está unido a un carbono con un C=O: juntos forman un solo grupo, el –COO– de los ésteres, '
+    + 'así que la molécula es un éster, no un éter, y no se nombra con «éter». Los grupos –COO– son el grupo principal: los de la '
+    + `cadena principal se nombran todos juntos ${WRITTEN_MANY('dioato')}. Se escribe «X».`);
+  assert.equal(DIAGNOSIS_TEXTS.UNGROUPED({ oBound: true, compound: true, halogen: false, right: 'X', student: 'Y' }), 'Los grupos iguales '
+    + 'unidos a los oxígenos se escriben una sola vez, con «bis», «tris»… delante: «X», no «Y».');
+  assert.equal(DIAGNOSIS_TEXTS.BRANCH_RING_NUMBERING({ oBound: true, reason: null, unwritten: true, benzene: false, right: 'X',
+    student: 'Y' }), 'Un anillo unido al oxígeno se numera empezando por el carbono unido al oxígeno, que es el 1: «X», no «Y». En «X» '
+    + 'ese 1 ni siquiera se escribe.');
+  // The other families' wording unchanged beside the O-bound variants.
+  assert.equal(DIAGNOSIS_TEXTS.ALPHABETICAL_ORDER({ first: 'etil', second: 'metil', why: 'e antes que m', hint: '' }), 'Los sustituyentes '
+    + 'se escriben por orden alfabético: «etil» va antes que «metil» (e antes que m).');
+  assert.equal(DIAGNOSIS_TEXTS.MULTIPLIER_KIND({ compound: true, right: 'X', student: 'Y' }), 'Delante de una rama que tiene sus propias '
+    + 'ramas se usa «bis», «tris»…: «X», no «Y».');
+  assert.equal(DIAGNOSIS_TEXTS.NEEDLESS_LOCANTS({ branch: true, right: 'X', student: 'Y' }), 'Sobran números dentro de la rama: se '
+    + 'escribe «X», no «Y».');
 }); // End of test 'the drafts of the ester rules…'

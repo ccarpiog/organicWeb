@@ -18,7 +18,10 @@
  * ester's own mistakes on a template, each with its category read
  * independently — the –COO–'s carbon on the other side of a ring, a
  * deliberate «Esters» null until phase I-52a3a, now ESTER_CARBON; the
- * O-bound side still a deliberate null of diagnose.js for phase I-52a3b;
+ * O-bound side, a deliberate null until phase I-52a3b, now ESTER_TRADITIONAL
+ * (the traditional word with the group in another style) or the O-bound
+ * group's own mistakes (NEEDLESS_LOCANTS, ESTER_ALKYL_CHAIN,
+ * BRANCH_RING_NUMBERING);
  * the tooltips; the fixture names; a closed loop over the engine's retained
  * ester names with each locant list removed; the diagnosis sweeps over the
  * retained names (fixture and generated), apart from those of phase R-6a1
@@ -465,7 +468,7 @@ test('readName (R-6a2a): prefixes the engine admits on an ester template are jud
 /**
  * The category of an ester's own mistake on a retained ester name, read
  * independently of diagnose.js (file header «Esters»; `carbon` named since
- * phase I-52a3a, `oBound` for phase I-52a3b):
+ * phase I-52a3a, `oBound` since phase I-52a3b):
  * `carbon` — the student's –COO– carbon is the chain's, the engine's
  * outside a ring (`fenilformiato de metilo` → `benzoato de metilo`);
  * `oBound` — the O-bound side is not the one the engine writes with the
@@ -521,32 +524,58 @@ test('the former deliberate «Esters» nulls of R-6a2a (diagnose.js): the –COO
   } // End of the loop over the former deliberate nulls
 }); // End of test 'the former deliberate «Esters» nulls of R-6a2a…'
 
+/** The codes an ester template's O-bound side gets (diagnose.js «Esters», oBoundChecks(); phase I-52a3b). */
+const OBOUND_CODES = Object.freeze(['ESTER_TRADITIONAL', 'BRANCH_RING_NUMBERING', 'ESTER_ALKYL_CHAIN', 'NEEDLESS_LOCANTS',
+  'ESTER_ALKYL_NAME']);
+
+/** ESTER_TRADITIONAL for `acetato` with the group in the pin or substituted style (draft pending teacher review). */
+const TRADITIONAL = (word, mine, systematic) => `El nombre tradicional «${word}» solo lo uso con el nombre del grupo unido al oxígeno `
+  + `que doy primero, «isopropilo»: «${word} de isopropilo». Con «${mine}», la primera palabra es la sistemática: «${systematic}».`;
+
 /**
  * Ester templates whose O-bound side is not the engine's: deliberate nulls of
- * diagnose.js «Esters» for phase I-52a3b — [tile words, the engine's name,
- * the category].
+ * diagnose.js «Esters» until phase I-52a3b, now diagnosed — [tile words, the
+ * engine's name, the category, the code, the step «Ver el paso» opens, the
+ * tiles, the message].
  */
-const NULLS = [
+const FORMER_OBOUND_NULLS = [
   // The traditional word beside an O-bound group in another style than the engine writes with it.
-  ['acetato prop ano 2 ilo', 'etanoato de isopropilo', 'oBound'],
-  ['acetato 1 met il et ilo', 'etanoato de isopropilo', 'oBound'],
-  ['formiato prop ano 2 ilo', 'metanoato de isopropilo', 'oBound'],
+  ['acetato prop ano 2 ilo', 'etanoato de isopropilo', 'oBound', 'ESTER_TRADITIONAL', 'assemble', [1, 5],
+    TRADITIONAL('acetato', 'propan-2-ilo', 'etanoato de propan-2-ilo')],
+  ['acetato 1 met il et ilo', 'etanoato de isopropilo', 'oBound', 'ESTER_TRADITIONAL', 'assemble', [1, 6],
+    TRADITIONAL('acetato', '1-metiletilo', 'etanoato de 1-metiletilo')],
+  ['formiato prop ano 2 ilo', 'metanoato de isopropilo', 'oBound', 'ESTER_TRADITIONAL', 'assemble', [1, 5],
+    TRADITIONAL('formiato', 'propan-2-ilo', 'metanoato de propan-2-ilo')],
   // An O-bound group the engine never writes, as after `oato`.
-  ['acetato prop ano 1 ilo', 'etanoato de propilo', 'oBound'],
-  ['acetato 1 2 di met il prop ilo', 'etanoato de 3-metilbutan-2-ilo', 'oBound'],
-  ['acetato 6 met il fenil ilo', 'etanoato de 2-metilfenilo', 'oBound'],
+  ['acetato prop ano 1 ilo', 'etanoato de propilo', 'oBound', 'NEEDLESS_LOCANTS', 'ester', [3, 4], 'Sobran números en el nombre del '
+    + 'grupo unido al oxígeno: se escribe «propilo», no «propan-1-ilo».'],
+  ['acetato 1 2 di met il prop ilo', 'etanoato de 3-metilbutan-2-ilo', 'oBound', 'ESTER_ALKYL_CHAIN', 'ester', [1, 8], 'La cadena '
+    + 'del grupo unido al oxígeno es la más larga que pasa por el carbono unido al oxígeno: aquí tiene 4 carbonos, no 3. Se escribe '
+    + '«3-metilbutan-2-ilo», no «1,2-dimetilpropilo».'],
+  ['acetato 6 met il fenil ilo', 'etanoato de 2-metilfenilo', 'oBound', 'BRANCH_RING_NUMBERING', 'ester', [1, 6], 'Un anillo unido '
+    + 'al oxígeno se numera empezando por el carbono unido al oxígeno, que es el 1, y siguiendo en el sentido que da los números '
+    + 'más bajos a sus sustituyentes: «2-metilfenilo», no «6-metilfenilo».'],
 ];
 
-test('deliberate «Esters» nulls (diagnose.js, for I-52a3b): an ester template\'s O-bound side, with its category, drawn', () => {
-  for (const [words, name, category] of NULLS) {
+test('the former deliberate «Esters» nulls of R-6a2a (diagnose.js): an ester template\'s O-bound side, with its I-52a3b code', () => {
+  for (const [words, name, category, code, opened, tiles, message] of FORMER_OBOUND_NULLS) {
     const ids = seq(words);
     const verdict = readName(ids);
     assert.deepEqual([verdict.kind, verdict.name], ['otherName', name], `${words}: ${verdict.message}`);
     assert.equal(templateCategory(ids, verdict), category, words);
-    assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.deepEqual([d.code, d.traceRule, d.message], [code, null, message], words);
+    assert.ok(OBOUND_CODES.includes(code), words);
+    assert.deepEqual(d.tiles, tiles, `${words}: tiles`);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${words}: the step «Ver el paso» opens`);
     assert.ok(verdict.draw && verdict.molecule, words);
-  } // End of the loop over the deliberate nulls
-  // The engine's own retained form is no null: `acetato de isopropilo` is its alternative.
+  } // End of the loop over the former deliberate nulls
+  // The step ESTER_TRADITIONAL opens, «Monta el nombre», lists both names among the other valid forms.
+  const listed = diagnosisExplanation(readName(seq('acetato prop ano 2 ilo')), explain);
+  assert.match(listed.steps[listed.index].text.join(' '), /«etanoato de propan-2-ilo».*«acetato de isopropilo»/);
+  // The engine's own retained form is no mistake: `acetato de isopropilo` is its alternative.
   assert.equal(readName(seq('acetato isopropil ilo')).kind, 'alternative');
   // Not an ester's own mistake, and no «Esters» category: an aryl prefix in another style than the engine's default beside the
   // retained word (the engine writes its retained names in that style only). The same null as on the retained aldehyde
@@ -558,7 +587,7 @@ test('deliberate «Esters» nulls (diagnose.js, for I-52a3b): an ester template\
     assert.deepEqual([verdict.kind, verdict.diagnosis], ['otherName', null], name);
     assert.equal(templateCategory(ids, verdict), null, name);
   }
-}); // End of test 'deliberate «Esters» nulls…'
+}); // End of test 'the former deliberate «Esters» nulls of R-6a2a: an ester template's O-bound side…'
 
 // ---------------------------------------------------------------------------
 // Fixtures, closed loop, sweeps, drawing and time.
@@ -718,13 +747,17 @@ test('closed loop (R-6a2a): the generators\' retained ester names read back as t
   assert.deepEqual(words, { formiato: 96, acetato: 78, fenilacetato: 6, arylAcetato: 7 });
 }); // End of test 'closed loop (R-6a2a): the generators\'…'
 
-/** The diagnosis codes an `otherName` of each mutation family may give (none: a deliberate null). */
+/**
+ * The diagnosis codes an `otherName` of each mutation family may give (the O-bound families deliberate nulls until phase
+ * I-52a3b: the traditional word with the group in another style, ESTER_TRADITIONAL; an O-bound phenyl reflected,
+ * BRANCH_RING_NUMBERING).
+ */
 const FAMILY_CODES = Object.freeze({
   substituted: ['SUBSTITUTED_TEMPLATE'],
   phenylLocant: ['NEEDLESS_LOCANTS'],
   arylReflected: ['BRANCH_RING_NUMBERING'],
-  oBoundStyle: [],
-  oBoundReflected: [],
+  oBoundStyle: ['ESTER_TRADITIONAL'],
+  oBoundReflected: ['BRANCH_RING_NUMBERING'],
 });
 
 /**
@@ -807,17 +840,18 @@ function mutationsOf(ids, naming) {
 /**
  * Reads every mutation of some retained ester names: every `otherName`
  * carries a diagnosis of its family's codes whose step resolves in its
- * explanation, or is a deliberate «Esters» null with its category
- * (templateCategory()); any other null is unexpected.
+ * explanation; a null is unexpected (no deliberate «Esters» null is left
+ * since phase I-52a3b). The ester's own mistakes are counted by category
+ * (templateCategory()), the `oBound` ones with an O-bound code.
  *
  * @param {{name: string, naming: object}[]} names - Retained ester names and the engine's naming of each molecule.
- * @returns {{otherName: Object<string, number>, codes: Set<string>, nulls: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the deliberate nulls by category and the unexpected ones.
+ * @returns {{otherName: Object<string, number>, codes: Set<string>, own: Object<string, number>, unexpected: string[]}}
+ *   `otherName` counts by family, the codes seen, the ester's own mistakes by category and the unexpected nulls.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
   const codes = new Set();
-  const nulls = {};
+  const own = {};
   const unexpected = [];
   for (const { name, naming } of names) {
     for (const mutation of mutationsOf(idsOf(name), naming)) {
@@ -830,22 +864,21 @@ function sweep(names) {
       const d = verdict.diagnosis;
       const category = templateCategory(mutation.ids, verdict);
       if (!d) {
-        if (category) {
-          nulls[category] = (nulls[category] || 0) + 1;
-        } else {
-          unexpected.push(label);
-        }
+        unexpected.push(`${label}${category ? ` (${category})` : ''}`);
         continue;
       }
       codes.add(d.code);
-      assert.equal(category, null, `${label}: ${category} diagnosed ${d.code}`);
+      if (category) {
+        own[category] = (own[category] || 0) + 1;
+        assert.ok(category === 'oBound' && OBOUND_CODES.includes(d.code), `${label}: ${category}, ${d.code}`);
+      }
       assert.ok(FAMILY_CODES[mutation.family].includes(d.code), `${label}: ${d.code}, ${d.message}`);
       assert.ok(!/undefined|null|NaN|\[object|–OH|–CHO|–COOH|C=O/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
     } // End of the loop over the mutations of one name
   } // End of the loop over the names
-  return { otherName, codes, nulls, unexpected };
+  return { otherName, codes, own, unexpected };
 } // End of function sweep()
 
 test('mutations of the fixture\'s retained ester names: a diagnosis of the family\'s codes, or a deliberate «Esters» null', async () => {
@@ -855,24 +888,26 @@ test('mutations of the fixture\'s retained ester names: a diagnosis of the famil
     row.names.filter(isEsterTemplateName).forEach((name) => names.push({ name, naming }));
   }
   assert.equal(names.length, 39);
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  const { otherName, codes, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   // A methyl on every template's free carbon: SUBSTITUTED_TEMPLATE; `2 fenil acetato`: NEEDLESS_LOCANTS. The O-bound side in the
-  // engine's pin or substituted style (`acetato de propan-2-ilo`, `acetato de 4-(propan-2-il)fenilo`) or its phenyl reflected
-  // (`acetato de 4,6-diclorofenilo`): deliberate «Esters» `oBound` nulls for phase I-52a3.
+  // engine's pin or substituted style (`acetato de propan-2-ilo`, `acetato de 4-(propan-2-il)fenilo`): ESTER_TRADITIONAL; its
+  // phenyl reflected (`acetato de 4,6-diclorofenilo`): BRANCH_RING_NUMBERING (deliberate «Esters» `oBound` nulls until phase
+  // I-52a3b).
   assert.deepEqual(otherName, { substituted: 39, phenylLocant: 3, arylReflected: 0, oBoundStyle: 6, oBoundReflected: 3 });
-  assert.deepEqual(nulls, { oBound: 9 }); // Every O-bound mutation: the engine never writes them beside the retained word.
-  assert.deepEqual([...codes].sort(), ['NEEDLESS_LOCANTS', 'SUBSTITUTED_TEMPLATE']);
+  assert.deepEqual(own, { oBound: 9 }); // Every O-bound mutation: the engine never writes them beside the retained word.
+  assert.deepEqual([...codes].sort(), ['BRANCH_RING_NUMBERING', 'ESTER_TRADITIONAL', 'NEEDLESS_LOCANTS', 'SUBSTITUTED_TEMPLATE']);
 }); // End of test 'mutations of the fixture\'s retained ester names…'
 
 test('mutations of the generated retained ester names: every otherName is diagnosed or a deliberate «Esters» null', () => {
-  const { otherName, codes, nulls, unexpected } = sweep(generatedTemplateNames());
+  const { otherName, codes, own, unexpected } = sweep(generatedTemplateNames());
   assert.deepEqual(unexpected, []);
-  // The seeds give 253 `otherName`: 199 diagnosed (187 SUBSTITUTED_TEMPLATE, 6 NEEDLESS_LOCANTS, 6 BRANCH_RING_NUMBERING on an
-  // aryl-acetate's reflected phenyl) and 54 deliberate «Esters» `oBound` nulls (10 in another style, 44 a phenyl reflected).
+  // The seeds give 253 `otherName`, every one diagnosed: 187 SUBSTITUTED_TEMPLATE, 6 NEEDLESS_LOCANTS, 6 BRANCH_RING_NUMBERING on an
+  // aryl-acetate's reflected phenyl, and the 54 `oBound` ones, deliberate «Esters» nulls until phase I-52a3b (10 in another style,
+  // ESTER_TRADITIONAL; 44 an O-bound phenyl reflected, BRANCH_RING_NUMBERING).
   assert.deepEqual(otherName, { substituted: 187, phenylLocant: 6, arylReflected: 6, oBoundStyle: 10, oBoundReflected: 44 });
-  assert.deepEqual(nulls, { oBound: 54 });
-  assert.deepEqual([...codes].sort(), ['BRANCH_RING_NUMBERING', 'NEEDLESS_LOCANTS', 'SUBSTITUTED_TEMPLATE']);
+  assert.deepEqual(own, { oBound: 54 });
+  assert.deepEqual([...codes].sort(), ['BRANCH_RING_NUMBERING', 'ESTER_TRADITIONAL', 'NEEDLESS_LOCANTS', 'SUBSTITUTED_TEMPLATE']);
 }); // End of test 'mutations of the generated retained ester names…'
 
 test('«Dibujar» (R-6a2a): ester template verdicts have an ordered drawing (canonical layout without problems)', () => {

@@ -12,7 +12,8 @@
  * paso» opens, the message, the tiles), the focus and the canvas legend,
  * negatives (the same mistakes on one side of the oxygen keep their own
  * messages; correct names have no diagnosis), the deliberate null
- * (`di-tert-butil éter`), the drafts' examples, and a property sweep:
+ * (`di-tert-butil éter`), a class name whose oxygen is an ester's (phase
+ * I-52a3b: ESTER_CLASS_NAME), the drafts' examples, and a property sweep:
  * ETHER_SIDE exactly when the student's chain and the parent lie on two
  * sides of an ether oxygen. Review of phase I-51b2: every class-name
  * diagnosis opens the class-name step (CLASS_NAME_STEP), whose text agrees
@@ -387,14 +388,39 @@ test('the deliberate null: `di-tert-butil éter`, which the engine writes `diter
   assert.match(read('tert-butil tert-butil éter').diagnosis.message, /«di-tert-butil éter», no «tert-butil tert-butil éter»\.$/);
 }); // End of test 'the deliberate null…'
 
-test('the deliberate null: a class name whose oxygen is an ester\'s (review of phase I-51c1)', () => {
-  for (const [name, engine] of [
-    ['(1-oxoetil) metil éter', 'etanoato de metilo'],
-    ['metil (1-oxoetil) éter', 'etanoato de metilo'],
-    ['(1-oxopropil) metil éter', 'propanoato de metilo'],
+test('a class name whose oxygen is an ester\'s (review of phase I-51c1; ESTER_CLASS_NAME since phase I-52a3b)', () => {
+  /**
+   * The ESTER_CLASS_NAME message for a name the engine writes (draft pending teacher review).
+   *
+   * @param {string} engine - The engine's name.
+   * @returns {string} The message.
+   */
+  const message = (engine) => 'El oxígeno de tu nombre está unido a un carbono con un C=O: juntos forman un solo grupo, el –COO– de '
+    + 'los ésteres, así que la molécula es un éster, no un éter, y no se nombra con «éter». El grupo –COO– es el grupo principal: '
+    + 'se nombra con la terminación «-oato» y, después de «de», el grupo unido al otro oxígeno, acabado en «-ilo». Se escribe '
+    + `«${engine}».`;
+  for (const [name, engine, tiles] of [
+    ['(1-oxoetil) metil éter', 'etanoato de metilo', [8, 9]],
+    ['metil (1-oxoetil) éter', 'etanoato de metilo', [8, 9]],
+    ['(1-oxopropil) metil éter', 'propanoato de metilo', [8, 9]],
   ]) {
     const verdict = read(name);
-    assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis], ['otherName', engine, null], name);
+    const d = verdict.diagnosis;
+    assert.deepEqual([verdict.kind, verdict.name, d.code, d.rule, d.traceRule, d.step], ['otherName', engine, 'ESTER_CLASS_NAME', 1,
+      null, 'group'], name);
+    assert.equal(d.message, message(engine), name);
+    assert.deepEqual(d.tiles, tiles, `${name}: the «éter» tile`);
+    assert.deepEqual(d.student, { atoms: [], bonds: [] }, `${name}: a class name has no chain`);
+    assert.equal('className' in d, false, `${name}: no class-name step`);
+    // The focus: the –COO– (its carbon, both oxygens and their two bonds); the class name's oxygen is its bridge oxygen.
+    const oxygen = verdict.studentParent.atoms[0];
+    assert.ok(d.focus.atoms.includes(oxygen), name);
+    assert.deepEqual([d.focus.atoms.length, d.focus.bonds.length], [3, 2], name);
+    // «Ver el paso» opens «Reconoce el grupo funcional», which says the molecule is an ester; no class-name step is added.
+    const opened = diagnosisExplanation(verdict, explain);
+    assert.equal(opened.steps[opened.index].id, 'group', name);
+    assert.match(opened.steps[opened.index].text.join(' '), /la molécula es un éster/, name);
+    assert.ok(!opened.steps.some((step) => step.id === CLASS_NAME_STEP), name);
   } // End of the loop over the ester class names
   // An ether beside a ketone or an OH is still an ether: its `-oxi` prefix is in the engine's name.
   for (const [name, engine] of [['(2-oxopropil) metil éter', '1-metoxipropan-2-ona'], ['(2-hidroxietil) metil éter', '2-metoxietan-1-ol']]) {
@@ -402,7 +428,7 @@ test('the deliberate null: a class name whose oxygen is an ester\'s (review of p
     assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis.code], ['otherName', engine, 'CLASS_NAME_NONE'], name);
     assert.ok(verdict.diagnosis.message.endsWith(`«${engine}».`), name);
   } // End of the loop over the ethers with a suffix
-}); // End of test 'the deliberate null: a class name whose oxygen is an ester's'
+}); // End of test 'a class name whose oxygen is an ester's'
 
 test('the drafts of the ether rules: their place among the rules, their steps, every variant renders', () => {
   assert.deepEqual(DIAGNOSIS_CODES.filter((code) => ETHER_CODES.includes(code)), ETHER_CODES);

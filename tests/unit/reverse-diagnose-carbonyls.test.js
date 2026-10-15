@@ -751,9 +751,11 @@ test('the drafts of the aldehyde and ketone rules: their place among the rules, 
 test('the drafts of the branch-name rules (I-51c3b2): their place before ALPHABETICAL_ORDER, their step, every variant renders', () => {
   assert.deepEqual(BRANCH_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]),
     [[5, 'substituents'], [5, 'substituents'], [5, 'substituents']]);
-  // After the parent's rules (the ring numbering last), before the alphabetical order, which reads the branches' words.
+  // After the parent's rules (the ring numbering last), before the alphabetical order, which reads the branches' words (the
+  // ester codes of phase I-52a3b among them left out: reverse-diagnose-esters.test.js).
   const at = (code) => DIAGNOSIS_CODES.indexOf(code);
-  assert.deepEqual(DIAGNOSIS_CODES.slice(at('RING_NUMBERING') + 1, at('ALPHABETICAL_ORDER')), BRANCH_CODES);
+  const between = DIAGNOSIS_CODES.slice(at('RING_NUMBERING') + 1, at('ALPHABETICAL_ORDER'));
+  assert.deepEqual(between.filter((code) => !code.startsWith('ESTER_')), BRANCH_CODES);
   for (const code of BRANCH_CODES) {
     const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);
     assert.match(text, /^[«¿A-ZÁÉÍÓÚ].*\.$/u, code);
