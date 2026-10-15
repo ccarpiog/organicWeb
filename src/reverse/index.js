@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -27,8 +27,24 @@
  * `acetiloxi`, `[(2-metilpropanoil)oxi]`, `metoxicarbonil`,
  * `[(propan-2-iloxi)carbonil]`) and their nitriles (R-6b1: the suffixes
  * `nitrilo` and `carbonitrilo`, `benzonitrilo`, the prefix `ciano`; R-6b2:
- * the retained `acetonitrilo`, `fenilacetonitrilo` and `ftalonitrilo`). Pure,
- * no DOM.
+ * the retained `acetonitrilo`, `fenilacetonitrilo` and `ftalonitrilo`) and
+ * their amines (R-6c1: the suffix `amina` and the locant `N` of a group on
+ * the principal amine's nitrogen). Pure, no DOM.
+ *
+ * The amines (R-6c1) need nothing of their own here either: the parser
+ * reads `amina` as a suffix and `N` among a name-level prefix's locants, the
+ * interpreter gives an `N` slot the value N_VALUE below every carbon, the
+ * builder bonds such a prefix to the amine's nitrogen, the search places
+ * left-out locants on the nitrogen too (search.js fillVariants() also tries
+ * the suffix's list alone left out, as the engine omits it beside an `N`),
+ * and the engine names the molecule (`N-metiletanamina`,
+ * `N,2-dimetilpropan-1-amina`, `bencenamina` → `correct`;
+ * `N-(propan-2-il)ciclohexanamina` → `alternative`; `metiletanamina` →
+ * `missingLocants` «N-metiletanamina»; `metilpropan-2-amina` → `ambiguous`;
+ * `N-etilmetanamina` → `otherName`; `N,N,N-trimetiletanamina` → `invalid`
+ * VALENCE; `N-metilbutano-1,4-diamina` → `outOfScope`, the engine's
+ * `substitutedPolyamine`). An amine's own mistakes are diagnose.js
+ * «Amines»'s deliberate nulls (phase I-52c4).
  *
  * The nitriles (R-6b1) need nothing of their own here either: the parser
  * reads their tiles, the assembler writes them as render.js does, the
@@ -275,7 +291,7 @@ import { nameMolecule } from '../naming/index.js';
 import { parse } from './parse.js';
 import { assemble } from './assemble.js';
 import { interpret } from './interpret.js';
-import { checkSpec, ringRefusal } from './build.js';
+import { checkSpec, ringRefusal, polyamineRefusal } from './build.js';
 import { searchStructures, filledTree, fillVariants, placementReading } from './search.js';
 import { diagnose, MAX_READINGS } from './diagnose.js';
 import { TEMPLATES } from './tiles.js';
@@ -607,7 +623,7 @@ export function readName(tiles, options = {}) {
     return invalid(early);
   }
   const notes = spec.oldStyle ? [`${VERDICT_TEXTS.oldStyle} «${modernText(tree)}».`] : [];
-  const refusal = ringRefusal(spec);
+  const refusal = ringRefusal(spec) || polyamineRefusal(spec);
   if (refusal) {
     return verdict('outOfScope', `${VERDICT_TEXTS.outOfScope} ${refusal.message}`, assembled, { notes });
   }

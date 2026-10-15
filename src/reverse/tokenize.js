@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -99,8 +99,12 @@
  * (PHOL) and `ciano` where a retained branch word is (RET: `(cianometil)`,
  * `cianometilo`); the retained nitrile names (R-6b2: `acetonitrilo`,
  * `ftalonitrilo`) are templates (TPL), `fenilacetonitrilo` read as its one
- * tile, the longer surface form. A step budget bounds the search: running out
- * returns null, never a guess.
+ * tile, the longer surface form. The amines (R-6c1) need none either: `amina`
+ * is read where `ol` is (OL, with the elisions before its vowel:
+ * `etanamina`, `bencen-1-amina`, `butano-1,2,3,4-tetramina`), and the locant
+ * `N` where a number is (NUM: `N,2-dimetil…`; parse() keeps it to an amine's
+ * prefixes). A step budget bounds the search: running out returns null,
+ * never a guess.
  */
 
 import { CONNECTING_VOWEL, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN } from '../naming/lexicon.es.js';
@@ -179,6 +183,7 @@ function tileClass(tile) {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
     ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS', halogen: 'HAL', hydroxy: 'HAL', carbonyl: 'HAL', suffix: 'OL',
     closing: 'CLO', alkoxy: 'OXI', classWord: 'ETHER', suffixClass: 'ACID', esterAlkyl: 'ILO',
+    nitrogen: 'NUM', // The locant `N` (R-6c1), read wherever a number is; parse() keeps it to an amine's prefixes.
   };
   return classes[tile.kind];
 } // End of function tileClass()
@@ -328,8 +333,8 @@ const SPACE_ROLE = Object.freeze({ role: 'space' });
  * @returns {{role: string, italic?: boolean}} The role.
  */
 function pieceRole(tile) {
-  if (tile.kind === 'num' || tile.kind === 'positional' || tile.kind === 'closing') {
-    return LOCANT;
+  if (tile.kind === 'num' || tile.kind === 'positional' || tile.kind === 'closing' || tile.kind === 'nitrogen') {
+    return LOCANT; // `N` (R-6c1) too
   }
   if (tile.kind === 'mult' || tile.kind === 'cmult') {
     return Object.freeze({ role: 'mult' });

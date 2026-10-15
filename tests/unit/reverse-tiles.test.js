@@ -24,7 +24,8 @@ import {
   isCarbonylTemplate, templateSuffix, templateLength, ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, CARBOXY_ID, isAcidSuffix,
   suffixBondAmount, parentWordName, ACID_KIND, ACID_GROUP, isAcidTemplate, OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID,
   ESTER_KIND, ESTER_GROUP, isEsterSuffix, isEsterTemplate, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID, CYANO_ID, NITRILE_KIND,
-  NITRILE_GROUP, isNitrileSuffix, suffixElement, isNitrileTemplate,
+  NITRILE_GROUP, isNitrileSuffix, suffixElement, isNitrileTemplate, AMINA_ID, NITROGEN_ID, N_VALUE, N_TEXT, AMINE_KIND,
+  isAmineSuffix, NITROGEN_VALENCE, AMINE_NITROGEN_FREE,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
@@ -35,6 +36,8 @@ import {
 import { MAX_CONTRACTED_ALKOXY as RENDER_MAX_CONTRACTED_ALKOXY } from '../../src/naming/render.js';
 import { MAX_CONTRACTED_ALKOXY } from '../../src/reverse/assemble.js';
 import { bundleModules } from '../../scripts/build.mjs';
+import { N_LOCANT, locantText } from '../../src/naming/structure.js';
+import { VALENCES } from '../../src/model/elements.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const REVERSE = path.join(ROOT, 'src', 'reverse');
@@ -71,8 +74,10 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('template'), 31);
   assert.equal(count('halogen'), 4); // fluoro, cloro, bromo, yodo (R-5a1)
   assert.equal(count('hydroxy'), 1); // hidroxi (R-5a2)
-  // ol (R-5a2); al, ona, carbaldehído (R-5c1); oico, carboxílico (R-5d1); oato, carboxilato (R-6a1); nitrilo, carbonitrilo (R-6b1)
-  assert.equal(count('suffix'), 10);
+  // ol (R-5a2); al, ona, carbaldehído (R-5c1); oico, carboxílico (R-5d1); oato, carboxilato (R-6a1); nitrilo, carbonitrilo (R-6b1);
+  // amina (R-6c1)
+  assert.equal(count('suffix'), 11);
+  assert.equal(count('nitrogen'), 1); // the locant N (R-6c1)
   assert.equal(count('carbonyl'), 1); // oxo (R-5c1)
   assert.equal(count('closing'), 1); // 1(n) (R-5a2)
   assert.equal(count('alkoxy'), 1); // oxi (R-5b)
@@ -127,6 +132,7 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       }[tile.value] || GROUP_SUFFIXES[tile.value]),
       carbonyl: () => GROUP_PREFIXES[tile.value], // `oxo` (R-5c1)
       closing: () => `1${ENCLOSING_MARKS[0][0]}n${ENCLOSING_MARKS[0][1]}`,
+      nitrogen: () => locantText(N_LOCANT), // `N` (R-6c1): the engine's own text of its locant
       alkoxy: () => ALKOXY_ENDING,
       classWord: () => ETHER_CLASS_WORD, // `éter` (R-5b2)
       acyl: () => (tile.value === 'ring' ? RING_CARBONYL_ENDING : ACYL_ENDING), // `carbonil`, `oil` (R-5c2)
@@ -291,6 +297,14 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
   assert.equal(`${POSITIONAL_LETTERS[4]}-${tileById('template-cresol').text}`, TRADITIONAL_NAMES.pCresol);
   assert.deepEqual(['pyrocatechol', 'catechol', 'resorcinol', 'hydroquinone'].map((value) => tileById(`template-${value}`).text),
     ['pyrocatechol', 'catechol', 'resorcinol', 'hydroquinone'].map((id) => BENZENE_DIGROUP_NAMES[id]));
+  // R-6c1: the amine suffix, the locant `N` and the nitrogen's bonds, the engine's and the model's own.
+  assert.deepEqual([tileById(AMINA_ID).text, tileById(AMINA_ID).kind, tileById(AMINA_ID).value, tileById(AMINA_ID).row],
+    [GROUP_SUFFIXES.amine, 'suffix', AMINE_KIND, 'groups']);
+  assert.deepEqual([N_VALUE, N_TEXT, tileById(NITROGEN_ID).kind, tileById(NITROGEN_ID).value, tileById(NITROGEN_ID).text],
+    [N_LOCANT, locantText(N_LOCANT), 'nitrogen', N_LOCANT, 'N']);
+  assert.deepEqual([NITROGEN_VALENCE, AMINE_NITROGEN_FREE], [VALENCES.N, VALENCES.N - 1]);
+  assert.deepEqual([isAmineSuffix('amine'), isAmineSuffix('alcohol'), isAmineSuffix('nope'), suffixElement(SUFFIX_GROUPS.amine),
+    suffixBondAmount(SUFFIX_GROUPS.amine)], [true, false, false, 'N', 1]);
   // R-5a1: the halogens by element symbol, in the lexicon's order.
   assert.deepEqual(Object.values(HALOGEN_IDS).map((id) => [tileById(id).text, tileById(id).value]),
     [['fluoro', 'F'], ['cloro', 'Cl'], ['bromo', 'Br'], ['yodo', 'I']]);
@@ -299,6 +313,8 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
 test('rows and «más» follow design.md §15.2', () => {
   const more = (kind) => TILES.filter((tile) => tile.kind === kind && tile.more).map((tile) => tile.value);
   assert.deepEqual(more('num'), Array.from({ length: 18 }, (_, i) => i + 13)); // 13–30
+  // R-6c1: the locant N right after the numbers, always shown.
+  assert.deepEqual(TILES.filter((tile) => tile.row === 'numbers').slice(-1).map((tile) => [tile.id, tile.more]), [[NITROGEN_ID, false]]);
   assert.equal(more('mult')[0], 7); // hepta…
   assert.equal(more('cmult')[0], 7);
   assert.equal(more('root')[0], 11); // undec…
@@ -324,10 +340,10 @@ test('rows and «más» follow design.md §15.2', () => {
   assert.deepEqual(TILES.filter((tile) => tile.row === 'groups').map((tile) => tile.id),
     ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, ACETYL_ID,
       ACYL_ID, RING_CARBONYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, OATO_ID, CARBOXYLATE_ID,
-      ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID],
+      ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, AMINA_ID],
     'R-5a1: «Grupos», the halogens; R-5a2: hidroxi, ol; R-5b: oxi; R-5b2: éter; R-5c1: oxo, formil, al, ona, carbaldehído; '
       + 'R-5c2: acetil, oil, carbonil; R-5d1: ácido, carboxi, oico, carboxílico; R-6a1: oato, carboxilato, ilo; R-6b1: ciano, nitrilo, '
-      + 'carbonitrilo');
+      + 'carbonitrilo; R-6c1: amina');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'branches' && tile.kind === 'retained').map((tile) => tile.value),
     ['isopropyl', 'isopropylidene', 'tert-butyl']);
 });
@@ -370,6 +386,8 @@ test('tileById, tileId and toTiles', () => {
   assert.equal(tileId('suffix', 'carbonitrile'), CARBONITRILE_ID);
   assert.equal(tileId('benzene', 'benzonitrile'), BENZONITRILE_ID);
   assert.equal(tileId('retained', 'cyano'), CYANO_ID);
+  assert.equal(tileId('suffix', 'amine'), AMINA_ID); // R-6c1
+  assert.equal(tileId('nitrogen', N_VALUE), NITROGEN_ID);
   assert.deepEqual(toTiles(['num-2', tileById('mult-2')]).map((tile) => tile.text), ['2', 'di']);
   assert.throws(() => tileById('root-31'), /unknown tile/);
   assert.throws(() => tileId('mult', 1), /no mult tile/);

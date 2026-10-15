@@ -16,7 +16,8 @@
  * retained ester names; R-6a2b: the ester prefixes, `acetiloxi`,
  * `metoxicarbonil`) and their nitriles (R-6b1: the suffixes `nitrilo` and
  * `carbonitrilo`, `benzonitrilo`, the prefix `ciano`; R-6b2: the retained
- * nitrile names).
+ * nitrile names) and their amines (R-6c1: the suffix `amina` and the locant
+ * `N`; the `amino` prefixes, `anilina` and the class names later).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -27,9 +28,10 @@ import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
 import {
   RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, ETHER_CLASS_WORD, ACETYL_PREFIX, ACYL_ENDING,
   RING_CARBONYL_ENDING, BENZOYL_PREFIX, ALKOXY_ENDING, FORMYL_PREFIX, SUFFIX_CLASS_WORDS, ESTER_LINK, GROUP_SUFFIXES, GROUP_PREFIXES,
-  RING_GROUP_SUFFIXES,
+  RING_GROUP_SUFFIXES, FREE_VALENCE_SUFFIXES,
 } from '../../src/naming/lexicon.es.js';
 import { parseSmiles } from '../../src/model/smiles.js';
+import { amineNitrogens } from '../../src/model/validate.js';
 
 /** The fixture table (design.md §4.8). */
 const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'names.tsv');
@@ -600,6 +602,61 @@ export function isNitrileName(name) {
  * prefix `ciano`.
  */
 export const NITRILE_WORD = new RegExp(`${GROUP_SUFFIXES.nitrile}|${RING_GROUP_SUFFIXES.nitrile}|${GROUP_PREFIXES.nitrile}`);
+
+/**
+ * Tells whether a molecule has an amine nitrogen (phase R-6c1;
+ * model/validate.js isAmineNitrogen(): a nitrogen single-bonded to one to
+ * three carbons, none of them a C=O carbon — so no amide's N, no –C≡N's).
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @returns {boolean} True when it has one.
+ */
+export function isAmineMolecule(mol) {
+  return amineNitrogens(mol).length > 0;
+}
+
+/**
+ * Tells whether a fixture SMILES has an amine nitrogen (isAmineMolecule(),
+ * phase R-6c1); a SMILES the model cannot read has none.
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True when it has one.
+ */
+export function isAmine(smiles) {
+  try {
+    return isAmineMolecule(parseSmiles(smiles));
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Words of amine names the tiles write only in later phases (R-6c2: the
+ * prefix `amino`, also inside `(metilamino)`, `(dimetilamino)`; R-6c3: the
+ * retained `anilina`, also `N,4-dimetilanilina`).
+ */
+export const LATER_AMINE_WORDS = Object.freeze([GROUP_PREFIXES.amine, TRADITIONAL_NAMES.aniline]);
+
+/**
+ * An amine's functional-class name (phase R-6c3: `metilamina`,
+ * `dimetilamina`, `etilmetilamina`, `trimetilamina`, and the traditional
+ * `bencilamina`): the groups on the nitrogen, ending in `il`, then `amina`,
+ * in one word. No substitutive name ends that way: a parent's ending before
+ * `amina` is `an`, `en`, `in` or `bencen`.
+ */
+export const AMINE_CLASS_NAME = new RegExp(`${FREE_VALENCE_SUFFIXES[1]}${GROUP_SUFFIXES.amine}$`);
+
+/**
+ * Tells whether an amine's name (or an alternative) is one the tiles write
+ * from phase R-6c1 on: no word of the later amine phases
+ * (LATER_AMINE_WORDS) and no class name (AMINE_CLASS_NAME).
+ *
+ * @param {string} name - The name.
+ * @returns {boolean} True when it can be built from the tiles.
+ */
+export function isAmineName(name) {
+  return !LATER_AMINE_WORDS.some((word) => name.includes(word)) && !AMINE_CLASS_NAME.test(name);
+}
 
 /**
  * The words of the aldehyde and ketone names the tiles do not write yet:

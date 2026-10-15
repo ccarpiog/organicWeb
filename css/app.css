@@ -1536,7 +1536,8 @@ kbd {
 .nb-tile--benzene,
 .nb-tile--template { color: var(--color-part-parent); }
 .nb-tile--positional,
-.nb-tile--closing { color: var(--color-part-locant); }
+.nb-tile--closing,
+.nb-tile--nitrogen { color: var(--color-part-locant); }
 .nb-tile--ending,
 .nb-tile--suffix,
 .nb-tile--classWord,

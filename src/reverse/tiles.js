@@ -163,7 +163,18 @@
  *   'benzene', value 'benzonitrile': the benzene parent with its –C≡N at
  *   carbon 1, as `benzoico` with its –COOH — `4-metilbenzonitrilo`;
  *   GROUP_WORD_PARENTS);
- * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
+ *   and for the amines (R-6c1): the suffix `amina` (kind 'suffix', value
+ *   'amine': an amine's nitrogen single-bonded to the carbon its locant
+ *   gives, as `ol` puts an OH — `etanamina`, `propan-2-amina`,
+ *   `butano-1,4-diamina`, `bencen-1-amina`; SUFFIX_GROUPS `element` 'N'; the
+ *   lexicon's GROUP_SUFFIXES.amine) and 'nitrogen' (the locant `N`, value
+ *   N_VALUE, the forward engine's own value for it, structure.js N_LOCANT: a
+ *   prefix bonded to the nitrogen of the principal amine, not to a carbon —
+ *   `N-metiletanamina`, `N,N-dimetilmetanamina`, `N,2-dimetilpropan-1-amina`;
+ *   its text N_TEXT, structure.js locantText(N_LOCANT)), in the «Números»
+ *   row after the numbers;
+ * - `row` — the tile row of the dialog (design.md §15.2): 'numbers' (the
+ *   locant `N` after them from R-6c1),
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
  *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2,
  *   `benzaldehído` from R-5c1, `benzoil` from R-5c2, `benzoico` from R-5d1,
@@ -172,8 +183,8 @@
  *   `oxi`, and `éter` from R-5b2; R-5c1: `oxo`, `formil`, `al`, `ona`,
  *   `carbaldehído`; R-5c2: `acetil`, `oil`, `carbonil`, after `formil`;
  *   R-5d1: `ácido`, `carboxi`, `oico`, `carboxílico`; R-6a1: `oato`,
- *   `carboxilato`, `ilo`; R-6b1: `ciano`, `nitrilo`, `carbonitrilo`, at the
- *   end),
+ *   `carboxilato`, `ilo`; R-6b1: `ciano`, `nitrilo`, `carbonitrilo`; R-6c1:
+ *   `amina`, at the end),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; R-5c3a: the retained carbonyl
  *   names, `formaldehído` … `tereftalaldehído`; R-5d2: the retained acid
@@ -342,6 +353,29 @@ export const BENZONITRILE_ID = 'ring-benzonitrile';
 /** Id of the `ciano` tile (design.md §15.8 R-6b; phase R-6b1: a –C≡N bonded by its carbon, as a prefix). */
 export const CYANO_ID = 'retained-cyano';
 
+/** Id of the `amina` tile (design.md §15.8 R-6c; phase R-6c1: the amine suffix, `etanamina`, `propan-2-amina`). */
+export const AMINA_ID = 'suffix-amine';
+
+/**
+ * Id of the locant tile `N` (design.md §15.5.2 item 6, §15.8 R-6c; phase
+ * R-6c1: a prefix on the nitrogen of the principal amine, `N-metiletanamina`).
+ */
+export const NITROGEN_ID = 'locant-nitrogen';
+
+/**
+ * The value of the locant `N` (R-6c1): the forward engine's own
+ * (structure.js N_LOCANT, 0), below every carbon locant, so a mixed list
+ * sorts as the engine cites it (`N,2-dimetil`, `N,N-dimetil`) and a slot
+ * that may take it has the domain `[N_VALUE, n]` (interpret.js). Kept here,
+ * with N_TEXT, because the tiles, the parser and the assembler import
+ * nothing of the engine but the lexicon (design.md §15.4); the tests check
+ * both against structure.js.
+ */
+export const N_VALUE = 0;
+
+/** The text of the locant `N` (R-6c1), as structure.js locantText(N_LOCANT) writes it. */
+export const N_TEXT = 'N';
+
 /**
  * The retained acyl words (R-5c2), by tile value: `acetil`, a two-carbon
  * chain whose carbon 1 is the C=O carbon (build.js), and `benzoil`, the
@@ -412,6 +446,8 @@ export const SUFFIX_GROUPS = Object.freeze({
   // R-6b1: the nitriles, their nitrogen triple-bonded to the group's carbon.
   nitrile: Object.freeze({ kind: 'nitrile', outside: false, order: 3, terminal: true, element: 'N' }),
   carbonitrile: Object.freeze({ kind: 'nitrile', outside: true, order: 3, terminal: false, element: 'N' }),
+  // R-6c1: the amines, their nitrogen single-bonded to the parent's carbon as an alcohol's OH is.
+  amine: Object.freeze({ kind: 'amine', outside: false, order: 1, terminal: false, element: 'N' }),
 });
 
 /** The element of the atom a suffix group bonds to its carbon when the SUFFIX_GROUPS entry names none: an oxygen. */
@@ -499,6 +535,32 @@ export function isNitrileSuffix(value) {
 
 /** How the messages call the –C≡N of a nitrile (R-6b1), as «grupo COOH» for an acid's. */
 export const NITRILE_GROUP = 'grupo C≡N';
+
+/** The principal group of an amine (a lexicon GROUP_SUFFIXES key; R-6c1). */
+export const AMINE_KIND = 'amine';
+
+/**
+ * Tells whether a suffix tile value is an amine's (R-6c1: `amina`).
+ *
+ * @param {string} value - A SUFFIX_GROUPS key.
+ * @returns {boolean} True for an amine suffix.
+ */
+export function isAmineSuffix(value) {
+  return Boolean(SUFFIX_GROUPS[value]) && SUFFIX_GROUPS[value].kind === AMINE_KIND;
+}
+
+/**
+ * The bonds a nitrogen holds (R-6c1), as model/elements.js VALENCES.N (the
+ * tests check it): an amine's nitrogen takes one from its carbon, so two are
+ * left for the groups written `N` (AMINE_NITROGEN_FREE).
+ */
+export const NITROGEN_VALENCE = 3;
+
+/** The bonds an amine's nitrogen has besides the one to its carbon (R-6c1): two, its NH₂ hydrogens, for groups on `N`. */
+export const AMINE_NITROGEN_FREE = NITROGEN_VALENCE - 1;
+
+/** How the messages call the nitrogen of an amine (R-6c1), as «grupo C≡N» for a nitrile's group. */
+export const AMINE_NITROGEN = 'nitrógeno de la amina';
 
 /**
  * The whole-word benzene parents that place their principal group at
@@ -1074,7 +1136,8 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * `benzoato` to the rings, after `benzoico`, and `oato`, `carboxilato` and
  * `ilo` to the groups, at their end; R-6b1 `benzonitrilo` to the rings,
  * after `benzoato`, and `ciano`, `nitrilo` and `carbonitrilo` to the groups,
- * at their end.
+ * at their end; R-6c1 the locant `N` after the numbers and `amina` to the
+ * groups, at their end.
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -1083,6 +1146,8 @@ function buildCatalogue() {
   for (let n = 1; n <= MAX_NUM; n += 1) {
     tiles.push(makeTile(`num-${n}`, 'num', n, 'numbers', String(n), n > NUM_VISIBLE));
   }
+  // R-6c1: the locant `N`, a prefix on the principal amine's nitrogen; shown with the numbers 1–12.
+  tiles.push(makeTile(NITROGEN_ID, 'nitrogen', N_VALUE, 'numbers', N_TEXT));
   for (let n = 2; n <= MAX_MULT; n += 1) {
     tiles.push(makeTile(`mult-${n}`, 'mult', n, 'multipliers', multiplier(n), n > MULT_VISIBLE));
   }
@@ -1150,6 +1215,7 @@ function buildCatalogue() {
   tiles.push(makeTile(CYANO_ID, 'retained', 'cyano', 'groups', GROUP_PREFIXES[NITRILE_KIND], false, { italic: '' }));
   tiles.push(makeTile(NITRILO_ID, 'suffix', NITRILE_KIND, 'groups', GROUP_SUFFIXES[NITRILE_KIND]));
   tiles.push(makeTile(CARBONITRILE_ID, 'suffix', 'carbonitrile', 'groups', RING_GROUP_SUFFIXES[NITRILE_KIND]));
+  tiles.push(makeTile(AMINA_ID, 'suffix', AMINE_KIND, 'groups', GROUP_SUFFIXES[AMINE_KIND])); // `amina` (R-6c1)
   for (const value of Object.keys(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }

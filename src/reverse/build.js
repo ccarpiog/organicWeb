@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -90,6 +90,18 @@
  * `acético`'s –COOH, «…en el acetonitrilo, ese carbono ya lleva un grupo
  * C≡N»; `ftalonitrilo`, two outside the ring like `ftálico`'s) is built the
  * same way.
+ * The amines (R-6c1) are built as the alcohols, with a nitrogen
+ * single-bonded to the group's carbon in place of the OH (`amina`; tiles.js
+ * suffixElement()); a name-level prefix whose slot is `N` (tiles.js N_VALUE)
+ * is bonded to that nitrogen — the first amine group's, the only one the
+ * engine names with groups on it (more amine groups with an `N` are its
+ * `substitutedPolyamine` refusal, read from the name by polyamineRefusal()
+ * even beside a senior group) — instead of a parent carbon. The nitrogen
+ * holds three bonds (tiles.js NITROGEN_VALENCE), so a third group on it is VALENCE,
+ * blamed on the `N` that adds it («El nitrógeno de la amina tendría 4
+ * enlaces, y un nitrógeno solo puede tener 3.»). Which groups may stand on
+ * it is the engine's: a halogen, an oxygen or a double bond there is a
+ * molecule it refuses (`outOfScope`), an acyl group makes an amide it names.
  * An alkoxy prefix (R-5b, SubstituentSpec `alkoxy`) is its branch built as
  * any other — chain, ring, phenyl or retained word, with its own prefixes —
  * and then an ether oxygen, created last, bonded by single bonds to the
@@ -181,7 +193,7 @@
 import { createMolecule, addAtom, addBond, setBondOrder, bondOrderSum, CARBON_VALENCE } from '../model/molecule.js';
 import {
   MAX_CARBONS, MAX_HEAVY_ATOMS, MAX_CHAIN, MESSAGES as VALIDATION_MESSAGES, RING_SYSTEM_MESSAGES, TOO_MANY_ATOMS_MESSAGE,
-  longestCarbonChain, longestSideChain,
+  SUBSTITUTED_POLYAMINE_MESSAGE, SUBSTITUTED_BENZENE_POLYAMINE_MESSAGE, longestCarbonChain, longestSideChain,
 } from '../model/validate.js';
 import {
   BENZENE_NAME, RETAINED_PREFIXES, GROUP_SUFFIXES, ENDINGS, HALOGEN_PREFIXES, ACYL_ENDING, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, stem,
@@ -190,7 +202,7 @@ import {
 import {
   templateGroupWord, isAtomGroup, atomGroupOrder, closingText, HYDROXY_ELEMENT, ALKOXY_ELEMENT, OXO_ELEMENT, SUFFIX_GROUPS,
   GROUP_WORD_PARENTS, withArticle, suffixBondAmount, ACID_KIND, ACID_GROUP, ESTER_KIND, ESTER_GROUP, NITRILE_KIND, NITRILE_GROUP,
-  suffixElement,
+  suffixElement, AMINE_KIND, N_VALUE, AMINE_NITROGEN, NITROGEN_VALENCE,
 } from './tiles.js';
 
 /**
@@ -796,6 +808,33 @@ export function ringRefusal(spec) {
 }
 
 /**
+ * The engine's `substitutedPolyamine` refusal, read from the name (R-6c1): a
+ * supplied `N` beside an amine suffix of two or more groups names no one
+ * nitrogen — IUPAC 2013 tells them apart with N¹, N²…, which the app does
+ * not write. The engine refuses such a molecule while the amine is its
+ * principal group; beside a senior group (`N-metil-4-oxociclohexano-1,3-
+ * diamina`) it names it, so the builder would put the group on a nitrogen
+ * of its own choosing (attachSuffix() keeps the first): refused before any
+ * placement instead, with the engine's message (the benzene one on
+ * `benceno`).
+ *
+ * @param {object} spec - A NameSpec.
+ * @returns {{code: string, message: string, tiles: [number, number]}|null} The refusal, or null.
+ */
+export function polyamineRefusal(spec) {
+  const { suffix } = spec;
+  if (!suffix || suffix.kind !== AMINE_KIND || suffix.slots.length < 2) {
+    return null;
+  }
+  const named = spec.prefixes.some((prefix) => prefix.slots.some((slot) => slot.kind === 'supplied' && slot.value === N_VALUE));
+  if (!named) {
+    return null;
+  }
+  const message = spec.parent.kind === 'benzene' ? SUBSTITUTED_BENZENE_POLYAMINE_MESSAGE : SUBSTITUTED_POLYAMINE_MESSAGE;
+  return buildError('HETEROATOM', message, spec.tiles);
+}
+
+/**
  * The structural errors that need no placement, or that a placement's
  * values give (design.md §15.6): retained words with prefixes, ranges (a
  * template's own locants too, R-4c), repeated bonds (left-out slots without
@@ -1242,7 +1281,8 @@ function attachPrefixes(state, prefixes, atoms, record = null, template = null) 
       const firstBond = mol.nextBondId;
       const branch = buildSubstituent(state, prefix.substituent);
       const locant = slotValue(slot, values);
-      const target = atoms[locant - 1];
+      // `N` (R-6c1): the principal amine's nitrogen (a name-level prefix only, parse.js checkNitrogen()).
+      const target = locant === N_VALUE && state.nitrogen !== undefined ? state.nitrogen : atoms[locant - 1];
       const bond = addBond(mol, target, branch.attach, branch.order);
       if (template && slot.kind === 'implicit') {
         state.atoms.get(target).template = { word: template.word.text, group: templateGroupWord(template.value) };
@@ -1375,6 +1415,11 @@ function attachSuffix(state, suffix, atoms) {
     }
     const oxygen = addAtom(mol, {}, element);
     state.atoms.set(oxygen, { locant: 1, branch: true, added: [] }); // One bond (a triple one for a –C≡N): never over its valence.
+    if (suffix.kind === AMINE_KIND) {
+      // An amine's nitrogen (R-6c1): three bonds at most, two left for the groups written `N` (valenceError()).
+      Object.assign(state.atoms.get(oxygen), { valence: NITROGEN_VALENCE, amine: true });
+      state.nitrogen = state.nitrogen === undefined ? oxygen : state.nitrogen;
+    }
     const bond = addBond(mol, holder, oxygen, order);
     if (suffix.hydroxy) {
       // The OH of a –COOH (R-5d1), after its =O: three bonds of the group's carbon, never over its valence on its own.
@@ -1508,14 +1553,15 @@ function valenceError(state) {
   let best = null;
   for (const [id, info] of state.atoms) {
     const total = bondOrderSum(state.mol, id);
-    if (total <= CARBON_VALENCE) {
+    const valence = info.valence || CARBON_VALENCE; // An amine's nitrogen: three (R-6c1).
+    if (total <= valence) {
       continue;
     }
     const added = [...info.added].sort((p, q) => p.tiles[0] - q.tiles[0]);
     let sum = total - added.reduce((s, a) => s + a.amount, 0);
     const culprit = added.find((a) => {
       sum += a.amount;
-      return sum > CARBON_VALENCE;
+      return sum > valence;
     }) || { tiles: state.tiles }; // Never reached: a chain's own single bonds are at most two.
     if (!best || culprit.tiles[0] < best.tiles[0]) {
       best = { tiles: culprit.tiles, total, info };
@@ -1523,6 +1569,11 @@ function valenceError(state) {
   } // End of the loop over the atoms
   if (!best) {
     return null;
+  }
+  if (best.info.amine) {
+    // R-6c1: «El nitrógeno de la amina tendría 4 enlaces, y un nitrógeno solo puede tener 3.»
+    return buildError('VALENCE', `El ${AMINE_NITROGEN} tendría ${best.total} enlaces, y un nitrógeno solo puede tener `
+      + `${best.info.valence}.`, best.tiles);
   }
   let where = best.info.branch ? `El carbono ${best.info.locant} de la rama` : `El carbono ${best.info.locant}`;
   where = best.info.oBound ? `El carbono ${best.info.locant} del grupo unido al oxígeno` : where; // R-6a1

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T19:28:50Z",
+  "updated": "2026-10-15T20:25:40Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -919,8 +919,35 @@
     {
       "id": "I-52c",
       "title": "v4 R-6c Amines",
+      "status": "in_progress",
+      "summary": "Split into I-52c1 (amina suffix, N locants), I-52c2 (amino prefixes), I-52c3 (anilina, class names, Ayuda) and I-52c4 (amine diagnoses)."
+    },
+    {
+      "id": "I-52c1",
+      "title": "v4 R-6c1 Amine suffix amina and N locants",
+      "status": "done",
+      "risk": "high",
+      "summary": "Reads amine names built from tiles (etanamina, N-metiletanamina, N,2-dimetilpropan-1-amina, ciclohexanamina) and draws them.",
+      "review": "Codex ship-with-fixes, 1 should-fix fixed — docs/reviews/I-52c1.md",
+      "narrative": "docs/progress-archive/i-52c1.md"
+    },
+    {
+      "id": "I-52c2",
+      "title": "v4 R-6c2 Amino prefixes (amino, (metilamino), (dimetilamino))",
       "status": "queued",
-      "summary": "Extends tile names to amines with N locants, amino prefixes, anilina templates and class names."
+      "summary": "Reads amino prefixes beside senior groups (ácido 2-aminopropanoico, 2-(dimetilamino)etan-1-ol) and draws them."
+    },
+    {
+      "id": "I-52c3",
+      "title": "v4 R-6c3 anilina templates, amine class names, Ayuda amine line",
+      "status": "queued",
+      "summary": "Reads anilina names (N,4-dimetilanilina) and class names (metilamina, trimetilamina) and adds the help line."
+    },
+    {
+      "id": "I-52c4",
+      "title": "v4 R-6c4 Amine diagnosis messages",
+      "status": "queued",
+      "summary": "Names the student's main mistake in an amine name, with its explanation step."
     },
     {
       "id": "I-52d",

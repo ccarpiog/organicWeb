@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -200,12 +200,27 @@
  * attach them as any prefix and the left-out locants inside a compound
  * group (`(cloroetil) metil éter`) are searched as usual. `classWord` holds
  * the class word and its tile.
+ *
+ * The amines (R-6c1): the suffix `amina` is read as `ol` is (one carbon
+ * slot per group, kind 'amine'), its nitrogen single-bonded to the carbon
+ * (build.js). The locant `N` (tiles.js N_VALUE, the engine's N_LOCANT, 0)
+ * of a name-level prefix puts that prefix on the nitrogen of the principal
+ * amine (`N-metiletanamina`): its slot is a carbon slot whose value is
+ * N_VALUE, its domain widened to `[N_VALUE, n]` (amineSlots()), so the
+ * ranges, the search's multisets and the student's order treat `N` as the
+ * locant below 1, as the engine ranks it (`N,2-dimetil`). A left-out slot
+ * of such a prefix may take `N` too when the amine is one group and the
+ * prefix is a group the engine puts on an amine's nitrogen — a carbon
+ * branch bonded by a single bond through a carbon of its own (a chain or
+ * ring ending in `il`, `fenil`, `isopropil`, `tert-butil`; no `iliden`, no
+ * acyl, alkoxy or one-atom group, nor `formil`, `carboxi`, `ciano`):
+ * `metiletanamina` is searched on carbons 1, 2 and `N`.
  */
 
 import { slotDomain } from './search.js';
 import {
   TEMPLATES, SUFFIX_GROUPS, isAtomGroup, atomGroupElement, isAcylTile, templateSuffix, isChainTemplate,
-  templateLength, parentWordName,
+  templateLength, parentWordName, N_VALUE, AMINE_KIND,
 } from './tiles.js';
 import { groupWordOf } from './parse.js';
 import { esterGroupsOf } from './assemble.js';
@@ -222,6 +237,8 @@ import { esterGroupsOf } from './assemble.js';
  * @property {boolean} [letter] - Given by an orto/meta/para letter (R-4c; a supplied slot).
  * @property {number} [closing] - Written as the closing-bond locant `1(n)` (R-5a2; a supplied ring-bond slot): the ring's
  *   carbons n, which is also its `value` (bond n joins carbon n to carbon 1).
+ * @property {boolean} [nitrogen] - May name the principal amine's nitrogen (R-6c1: a name-level prefix's slot of an amine
+ *   name, written `N` or left out for a group the engine puts there; amineSlots()): its domain starts at N_VALUE.
  */
 
 /**
@@ -316,11 +333,11 @@ import { esterGroupsOf } from './assemble.js';
 /**
  * The principal characteristic group cited as a suffix (R-5a2: `ol`; R-5c1:
  * `al`, `ona`, `carbaldehído`; R-5d1: `oico`, `carboxílico`; R-6a1: `oato`,
- * `carboxilato`; R-6b1: `nitrilo`, `carbonitrilo`).
+ * `carboxilato`; R-6b1: `nitrilo`, `carbonitrilo`; R-6c1: `amina`).
  *
  * @typedef {object} SuffixSpec
- * @property {'alcohol'|'aldehyde'|'ketone'|'acid'|'ester'|'nitrile'} kind - The group (lexicon GROUP_SUFFIXES key, as the
- *   engine's SuffixStructure).
+ * @property {'alcohol'|'aldehyde'|'ketone'|'acid'|'ester'|'nitrile'|'amine'} kind - The group (lexicon GROUP_SUFFIXES key, as
+ *   the engine's SuffixStructure; R-6c1: 'amine', `amina`).
  * @property {boolean} outside - The group's carbon is outside the parent (R-5c1: `carbaldehído`, `benzaldehído`; R-5d1:
  *   `carboxílico`, `benzoico`; R-6b1: `carbonitrilo`, `benzonitrilo`): build.js adds that carbon, bonded to the parent's
  *   carbon, with the =O (the N of a –C≡N) on it.
@@ -834,7 +851,7 @@ function suffixSpec(ctx, parent) {
     ? Array.from({ length: multiplier.count }, (_, i) => makeSlot('implicit', i === 1 ? length : 1, 'carbon', length, suffix.range))
     : locantSlots(ctx, locants, multiplier.count, 'carbon', length, suffix.range);
   return {
-    kind: group.kind, // 'alcohol', 'aldehyde', 'ketone', 'acid' or 'ester' (lexicon GROUP_SUFFIXES keys)
+    kind: group.kind, // 'alcohol', 'aldehyde', 'ketone', 'acid', 'ester', 'nitrile' or 'amine' (lexicon GROUP_SUFFIXES keys)
     outside: group.outside, // `carbaldehído` (R-5c1), `carboxílico` (R-5d1), `carboxilato` (R-6a1)
     hydroxy: Boolean(group.hydroxy), // The OH of a –COOH (R-5d1)
     bridge: Boolean(group.bridge), // The bridge oxygen of a –COO– (R-6a1)
@@ -917,6 +934,55 @@ function esterSpec(ctx, tree) {
   };
 } // End of function esterSpec()
 
+/** The retained branch words the engine puts on an amine's nitrogen (R-6c1): carbon branches bonded by a single bond. */
+const NITROGEN_RETAINED = Object.freeze(['isopropyl', 'tert-butyl']);
+
+/**
+ * Tells whether a branch is one the engine puts on an amine's nitrogen as an
+ * `N` prefix (R-6c1; model/validate.js isAmineNitrogen(): single bonds to
+ * carbons that are no functional carbon): a chain, ring or phenyl bonded by
+ * a single bond (`il`, `fenil`), `isopropil` or `tert-butil` — no `iliden`,
+ * acyl, alkoxy or one-atom group, nor `formil`, `carboxi` or `ciano`.
+ *
+ * @param {SubstituentSpec} sub - The branch.
+ * @returns {boolean} True when a left-out locant of it may be `N`.
+ */
+function bondsToNitrogen(sub) {
+  if (sub.alkoxy || sub.acyl || isAtomGroup(sub.kind)) {
+    return false;
+  }
+  return sub.kind === 'retained' ? NITROGEN_RETAINED.includes(sub.retained) : sub.freeValence.order === 1;
+}
+
+/**
+ * Widens the slots of the name-level prefixes of an amine name that may
+ * name the amine's nitrogen (R-6c1; file header): a supplied `N` (value
+ * N_VALUE), and, when the amine is one group, a left-out slot of a branch
+ * the engine puts on the nitrogen (bondsToNitrogen()) — domain `[N_VALUE,
+ * n]`, `nitrogen` set. A name without `amina` has no `N` (parse.js
+ * checkNitrogen()).
+ *
+ * @param {PrefixSpec[]} prefixes - The name-level prefixes.
+ * @param {SuffixSpec|null} suffix - The name's suffix.
+ * @param {number} length - Carbons of the parent.
+ * @returns {void}
+ */
+function amineSlots(prefixes, suffix, length) {
+  if (!suffix || suffix.kind !== AMINE_KIND) {
+    return;
+  }
+  const single = suffix.slots.length === 1;
+  for (const prefix of prefixes) {
+    for (const slot of prefix.slots) {
+      const named = slot.kind === 'supplied' && slot.value === N_VALUE;
+      if (named || (slot.kind === 'leftOut' && single && bondsToNitrogen(prefix.substituent))) {
+        slot.domain = [N_VALUE, length];
+        slot.nitrogen = true;
+      }
+    } // End of the loop over a prefix's slots
+  } // End of the loop over the prefixes
+} // End of function amineSlots()
+
 /**
  * Tells whether a tree is one interpret() accepts: a parent, no tile out of
  * place, every prefix complete (what an error-free parse gives), an ester's
@@ -973,6 +1039,7 @@ export function interpret(tree) {
     ? { double: [], triple: [] }
     : segmentSlots(ctx, chain, length, { locants: legacy, segment: segmentLegacy });
   const suffixRead = suffixSpec(ctx, tree.parent); // After the segments: tile order (R-5a2).
+  amineSlots(prefixes, suffixRead, length); // The locant `N` of an amine's prefixes (R-6c1).
   const ester = tree.ester ? esterSpec(ctx, tree) : null; // After the suffix: tile order (R-6a1).
   const lead = tree.suffixClass ? tree.suffixClass.tile : null; // `ácido` (R-5d1)
   return {

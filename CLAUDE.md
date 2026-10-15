@@ -260,8 +260,24 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   `3-carboxipropanonitrilo`, whose `ciano` takes the –C≡N's carbon out of the
   chain; the ring or chain the –C≡N groups choose; another chain with more
   –C≡N groups), and N0 numbering and the suffix's needless locants speak of
-  «grupos –C≡N», each with its «Ver el paso» step. Next is R-6c (phase
-  I-52c): amines.
+  «grupos –C≡N», each with its «Ver el paso» step. R-6c1 (phase I-52c1) is
+  done: the «Grupos» row's suffix `amina` (`etanamina`, `propan-2-amina`,
+  `butano-1,4-diamina`, `ciclohexanamina`, `bencenamina`,
+  `4-metilbencen-1-amina`) and the «Números» row's locant `N` (tiles.js
+  N_VALUE, the engine's N_LOCANT 0: a prefix on the principal amine's
+  nitrogen, `N-metiletanamina`, `N,N-dimetilmetanamina`, mixed lists
+  `N,2-dimetilpropan-1-amina`, `1-cloro-N-metilmetanamina`; `N` without
+  `amina` or off a name-level prefix TILE_ORDER, a third group on the
+  nitrogen VALENCE) read amines on chains, rings and `benceno`, their
+  left-out locants searched with `N` among the places (`metiletanamina` →
+  `N-metiletanamina`), the engine's `substitutedPolyamine` and two-ring
+  refusals `outOfScope`; the diagnosis keeps the rules that hold for an
+  amine name, and the amine's own mistakes (a junior `amina` beside a senior
+  group, the parent on the other side of the nitrogen, the amine groups'
+  parent choice and N0 numbering, the suffix's needless or missing locants)
+  are deliberate nulls of diagnose.js «Amines» (AMINE_NULLS, ranked among
+  the readings). Next is R-6c2 (phase I-52c2): the `amino` prefixes,
+  `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

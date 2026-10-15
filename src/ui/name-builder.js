@@ -19,7 +19,9 @@
  *   that writes nothing (a compound-branch control without marks, the `il`
  *   of a contracted alkoxy prefix, R-5b: `met il oxi` → `metoxi`) is a small
  *   dashed box with an accessible name of its own;
- * - the tile rows («Números», «¿Cuántos?», «Raíces (cuántos carbonos)»,
+ * - the tile rows («Números» — with the locant `N` of a group on the
+ *   principal amine's nitrogen after the numbers, phase R-6c1, with a
+ *   tooltip —, «¿Cuántos?», «Raíces (cuántos carbonos)»,
  *   «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a,
  *   `benceno` and `fenil`, phase R-4b, the letters `o`, `m`, `p`, phase
  *   R-4c, each with its word (orto, meta, para) beside it, `fenol` and the
@@ -37,7 +39,8 @@
  *   and the ending `ilo` of an O-bound group, phase R-6a1, each with a
  *   tooltip, as `benzoato` in «Anillos»; the nitriles' `ciano` and the
  *   suffixes `nitrilo` and `carbonitrilo`, phase R-6b1, each with a tooltip,
- *   as `benzonitrilo` in «Anillos» —, «Nombres tradicionales» — `tolueno`,
+ *   as `benzonitrilo` in «Anillos»; the amines' suffix `amina`, phase R-6c1,
+ *   with a tooltip —, «Nombres tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
  *   `hidroquinona`, phase R-5a3a, the retained carbonyl names
@@ -73,7 +76,8 @@
 import {
   TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID,
   BENZALDEHYDE_ID, ACETYL_ID, ACYL_ID, RING_CARBONYL_ID, BENZOYL_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID,
-  OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID, tileById,
+  OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID, AMINA_ID, NITROGEN_ID,
+  tileById,
 } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
@@ -133,7 +137,8 @@ export function positionalLabel(tile) {
  * `carbonil` also say how they make an ester's prefix; R-6b1: `ciano`,
  * `nitrilo`, `carbonitrilo` and `benzonitrilo`, what each is, where it goes
  * and whether the group's carbon counts in the chain; R-6b2: the retained
- * nitrile names, what molecule each is, and which take prefixes; drafts
+ * nitrile names, what molecule each is, and which take prefixes; R-6c1:
+ * `amina` and the locant `N`, what each is and where it goes; drafts
  * pending teacher review).
  * The tile's text stays its accessible name.
  */
@@ -193,6 +198,11 @@ export const TILE_HINTS = Object.freeze({
   [CARBONITRILE_ID]: 'Grupo C≡N unido a un anillo. Va al final, detrás del nombre del anillo: ciclohexanocarbonitrilo, '
     + 'benceno-1,4-dicarbonitrilo.',
   [BENZONITRILE_ID]: 'Benceno con un grupo C≡N: bencenocarbonitrilo.',
+  // R-6c1: the amines.
+  [AMINA_ID]: 'Amina (grupo NH₂). Va al final, detrás de la terminación de la cadena o del anillo, con su número: '
+    + 'propan-2-amina, butano-1,4-diamina, ciclohexanamina, bencenamina.',
+  [NITROGEN_ID]: 'Dice que una rama va unida al nitrógeno de la amina, no a un carbono. Va delante de la rama, como un número: '
+    + 'N-metiletanamina; con dos ramas, N,N-dimetilmetanamina; junto a números, N,2-dimetilpropan-1-amina.',
   'template-anisole': 'Benceno con un grupo metoxi: metoxibenceno.',
   'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
   'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',
@@ -297,7 +307,7 @@ function make(doc, tag, className, text) {
  * beside their mark (the mark hidden from screen readers); an orto/meta/para
  * letter shows its word, small, beside the letter (R-4c); a tile of
  * TILE_HINTS gets its tooltip (R-5a2: `1(n)`; R-5a3a: the retained phenols; R-5c3a: the retained carbonyl names; R-5d2: the
- * retained acid names; R-6a2a: the retained ester names; R-6b2: the retained nitrile names).
+ * retained acid names; R-6a2a: the retained ester names; R-6b2: the retained nitrile names; R-6c1: `amina`, `N`).
  *
  * @param {Document} doc - The document.
  * @param {{id: string, kind: string, text: string, more: boolean}} tile - A catalogue tile.

@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -148,6 +148,15 @@
  * `benzonitrilo` is one whole word like `benzoico`, and `ciano` a retained
  * word like `carboxi`, never enclosed by itself (`diciano`, `(cianometil)` a
  * compound branch, `cianometilo` an ester's O-bound group).
+ *
+ * The amines (R-6c1) need no rule of their own either: the suffix `amina`
+ * starts with a vowel, so rule 4 elides the parent's last vowel before it
+ * and a multiplier's final `a` (`etanamina`, `propan-2-amina`,
+ * `ciclohexanamina`, `bencenamina`, `bencen-1-amina`,
+ * `butano-1,2,3,4-tetramina`, but `butano-1,4-diamina`), as render.js
+ * suffixWords() does; the locant `N` is punctuated as any locant, in the
+ * student's order (rule 1: `N-metiletanamina`, `N,N-dimetilmetanamina`,
+ * `N,2-dimetilpropan-1-amina`, `1-cloro-N-metilmetanamina`).
  *
  * A ring (R-4a) is a chain with its `ciclo` tile before the root, and takes
  * the same rules: `ciclohexa-1,3-dieno` (rule 2), `ciclooct-1-en-3-ino` and
@@ -602,9 +611,13 @@ export function enclosureLevel(tiles, node) {
  */
 function strayPieces(tiles, index, out) {
   const tile = tiles[index];
-  const roles = { num: 'locant', positional: 'locant', closing: 'locant', mult: 'mult', cmult: 'mult', start: 'open', end: 'close' };
+  const roles = {
+    num: 'locant', positional: 'locant', closing: 'locant', nitrogen: 'locant', mult: 'mult', cmult: 'mult', start: 'open',
+    end: 'close',
+  };
   const kinds = {
     num: 'locant', positional: 'locant', closing: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending',
+    nitrogen: 'locant', // A stray `N` (R-6c1).
     freeValence: 'ending', retained: 'prefix', halogen: 'prefix', hydroxy: 'prefix', carbonyl: 'prefix', suffix: 'ending', start: 'punct',
     end: 'punct',
     ring: 'stem', benzene: 'stem', template: 'stem', alkoxy: 'ending', classWord: 'ending', suffixClass: 'ending',
