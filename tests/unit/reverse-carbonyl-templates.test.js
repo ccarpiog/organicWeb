@@ -15,7 +15,9 @@
  * alternatives, the others as `otherName` with the SUBSTITUTED_TEMPLATE
  * diagnosis (the chain wording without a parent), the principal C=O group's
  * codes of phase I-51c3b1 (a –CHO's carbon made a ketone's or taken out of a
- * ring, another –CHO as `oxo`), or a deliberate null left to phase I-51c3b2;
+ * ring, another –CHO as `oxo`), or, for the phenyl the engine admits on
+ * `acetaldehído`, the codes of phase I-51c3b2 (its left-out locant written,
+ * NEEDLESS_LOCANTS; the phenyl numbered otherwise, BRANCH_RING_NUMBERING);
  * the tooltips; the fixture names; a closed loop over the
  * engine's template names with each locant list removed; the ordered
  * drawing; time budgets.
@@ -318,22 +320,35 @@ test('readName (R-5c3a): prefixes the engine admits on a template are judged by 
 }); // End of test 'readName (R-5c3a): prefixes the engine admits…'
 
 /**
- * The deliberate nulls left to phase I-51c3b2 (diagnose.js «Aldehydes and
- * ketones»): [tile words, the engine's name, why no rule speaks].
+ * The former deliberate nulls of phase I-51c3a, a phenyl on `acetaldehído`
+ * (admitted: the engine's `fenilacetaldehído`, `2-(aryl)acetaldehído`, so
+ * SUBSTITUTED_TEMPLATE does not speak), worded by phase I-51c3b2 (diagnose.js
+ * «Aldehydes and ketones»): [tile words, the engine's name, the code, the step
+ * «Ver el paso» opens, the message].
  */
-const NULLS = [
-  // A phenyl on `acetaldehído` is admitted (the engine's `fenilacetaldehído`, `2-(aryl)acetaldehído`): the locant the engine
-  // leaves out (`2-fenilacetaldehído`) or a phenyl numbered otherwise.
-  ['2 fenil acetaldehído', '2-feniletanal', 'needless locant'],
-  ['2 START 5 met il fenil END acetaldehído', '2-(3-metilfenil)etanal', 'phenyl numbering'],
+const PHENYL_ON_ACETALDEHYDE = [
+  // The locant the engine's traditional form leaves out (`fenilacetaldehído`), written: «Monta el nombre» lists that form.
+  ['2 fenil acetaldehído', '2-feniletanal', 'NEEDLESS_LOCANTS', 'assemble', 'El nombre tradicional «fenilacetaldehído» se escribe '
+    + 'sin números: «fenilacetaldehído», no «2-fenilacetaldehído».'],
+  // The phenyl numbered otherwise: «Nombra los sustituyentes» numbers it from the carbon bonded to the chain.
+  ['2 START 5 met il fenil END acetaldehído', '2-(3-metilfenil)etanal', 'BRANCH_RING_NUMBERING', 'substituents', 'Un anillo que va '
+    + 'en una rama se numera empezando por el carbono por el que se une, que es el 1, y siguiendo en el sentido que da los números '
+    + 'más bajos a sus sustituyentes: «3-metilfenil», no «5-metilfenil».'],
 ];
 
-test('readName (R-5c3a): the deliberate nulls left to phase I-51c3b2', () => {
-  for (const [words, name] of NULLS) {
+test('readName (R-5c3a): a phenyl on `acetaldehído` with its locant written or numbered otherwise, worded by phase I-51c3b2', () => {
+  for (const [words, name, code, step, message] of PHENYL_ON_ACETALDEHYDE) {
     const verdict = readName(seq(words));
-    assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis], ['otherName', name, null], words);
+    assert.deepEqual([verdict.kind, verdict.name], ['otherName', name], words);
+    assert.deepEqual([verdict.diagnosis.code, verdict.diagnosis.step, verdict.diagnosis.message], [code, step, message], words);
+    const opened = diagnosisExplanation(verdict, explain);
+    assert.equal(opened.steps[opened.index].id, step, words);
   }
-}); // End of test 'readName (R-5c3a): the deliberate nulls…'
+  // The forms the engine writes stay its alternatives.
+  for (const words of ['fenilacetaldehído', 'fenil acetaldehído', '2 START 3 met il fenil END acetaldehído']) {
+    assert.equal(readName(seq(words)).kind, 'alternative', words);
+  }
+}); // End of test 'readName (R-5c3a): a phenyl on `acetaldehído`…'
 
 /**
  * The former deliberate nulls of phase I-51c3a that concern the principal

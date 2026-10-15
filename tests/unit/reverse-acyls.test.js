@@ -18,9 +18,10 @@
  * inside compound branches, mutations and their diagnosis (the rules that
  * hold; since phase R-5c3b1 the principal C=O group's codes — an acyl prefix
  * whose C=O the engine's chain takes, CARBONYL_PREFIX, or on an `al`'s
- * carbon, KETONE_NOT_ALDEHYDE —; and the deliberate nulls of diagnose.js
- * «Aldehydes and ketones» left to phase R-5c3b2, acyl words the engine does
- * not write), the fixture round trip over every row with an acyl prefix
+ * carbon, KETONE_NOT_ALDEHYDE —; since phase R-5c3b2 the acyl words the
+ * engine does not write, formerly deliberate nulls — ACYL_NAME, ACYL_CHAIN,
+ * BRANCH_RING_NUMBERING, MISSING_LOCANTS inside the branch), the fixture
+ * round trip over every row with an acyl prefix
  * (the aldehydes and ketones read back; acids, esters, amides and nitriles,
  * later phases, never tokenize), the closed loop over the oracle's acyl
  * generators (generateAcyl(), generateSubstitutedBenzoyls(),
@@ -38,7 +39,9 @@ import { interpret } from '../../src/reverse/interpret.js';
 import { build, specAtoms, specCarbons, ringRefusal } from '../../src/reverse/build.js';
 import { slotGroups } from '../../src/reverse/search.js';
 import { tokenize } from '../../src/reverse/tokenize.js';
-import { ACETYL_ID, BENZOYL_ID, ACYL_ID, RING_CARBONYL_ID } from '../../src/reverse/tiles.js';
+import {
+  ACETYL_ID, BENZOYL_ID, ACYL_ID, RING_CARBONYL_ID, START_ID, END_ID, OXO_ID, PHENYL_ID, tileId,
+} from '../../src/reverse/tiles.js';
 import { STEP_FALLBACKS, diagnosisExplanation } from '../../src/reverse/diagnose.js';
 import { explain } from '../../src/explain/explain.js';
 import { verdictLayout } from '../../src/ui/draw-name.js';
@@ -546,8 +549,7 @@ test('readName (R-5c2): verdicts and the molecule each name describes, against a
 
 /**
  * Mutations of acyl names (design.md §15.7): tile words, the verdict and the
- * diagnosis code (null: a deliberate null of diagnose.js «Aldehydes and
- * ketones», the deliberate-null test below says why).
+ * diagnosis code.
  */
 const MUTATIONS = Object.freeze([
   ['3 acetil 3 acetil pent ano 2 4 di ona', 'otherName', 'UNGROUPED'],
@@ -568,11 +570,11 @@ const MUTATIONS = Object.freeze([
   // The principal C=O group's codes (phase R-5c3b1): the acyl prefix's C=O is the engine's ketone, or on the `al`'s carbon.
   ['acetil benceno', 'otherName', 'CARBONYL_PREFIX'],
   ['1 acetil hex ano al', 'otherName', 'KETONE_NOT_ALDEHYDE'],
-  // Deliberate nulls (phase R-5c3b2's messages): acyl words the engine does not write.
-  ['2 et ano oil hept ano al', 'otherName', null],
-  ['2 START 3 met il prop ano oil END hept ano al', 'otherName', null],
-  ['2 START 6 met il benzoil END hept ano al', 'otherName', null],
-  ['2 ciclo hex 2 eno carbonil hept ano al', 'otherName', null],
+  // The branch-name codes (phase R-5c3b2, formerly deliberate nulls): acyl words the engine does not write.
+  ['2 et ano oil hept ano al', 'otherName', 'ACYL_NAME'],
+  ['2 START 3 met il prop ano oil END hept ano al', 'otherName', 'ACYL_CHAIN'],
+  ['2 START 6 met il benzoil END hept ano al', 'otherName', 'BRANCH_RING_NUMBERING'],
+  ['2 ciclo hex 2 eno carbonil hept ano al', 'otherName', 'MISSING_LOCANTS'],
   // Other verdicts.
   ['2 prop ano oil hept ano al', 'correct', null],
   ['acetil pent ano di ona', 'missingLocants', null],
@@ -621,12 +623,13 @@ test('mutations (R-5c2): the expected verdict, and the diagnosis of every rule t
   }
 }); // End of test 'mutations (R-5c2)…'
 
-/** The acyl words of the engine's prefixes (ACYL_WORDS, and `formil`), for nullReason()'s `acylWords`. */
+/** The acyl words of the engine's prefixes (ACYL_WORDS, and `formil`), for onlyAcylWordsDiffer(). */
 const ENGINE_ACYL_WORDS = Object.freeze([...ACYL_WORDS, FORMYL_PREFIX]);
 
 /**
  * Tells whether the student's name and the engine's differ only in the words
- * of one acyl prefix (nullReason()'s `acylWords`): the engine's name with one
+ * of one acyl prefix (the former deliberate nulls of R-5c2, coded since phase
+ * R-5c3b2; read independently of diagnose.js): the engine's name with one
  * of its prefix parts that has an acyl word, and the student's with the words
  * of one of its prefixes, each replaced by a mark, read alike once the
  * enclosing marks are left out (the first occurrence of the student's words is
@@ -660,17 +663,12 @@ function onlyAcylWordsDiffer(tree, verdict) {
 
 /**
  * Why the diagnosis of an acyl name's `otherName` is null, read independently
- * of diagnose.js from the student's tiles and the engine's naming (file
- * header «Aldehydes and ketones» of diagnose.js; the messages are phase
- * R-5c3b2's): `otherFamily` as in reverse-carbonyls.test.js (an OH on a
- * –CHO's carbon makes an acid); `acylWords` — only the words of one acyl
- * prefix differ from the engine's (onlyAcylWordsDiffer(): `etanoil` for
- * `acetil`, `(1-oxoetil)` for `acetil`, its own chain or numbering not the
- * engine's — `(3-metilpropanoil)`, `(6-metilbenzoil)` —, the locant 1 left out
- * before `carbonil` where the engine writes it, `(ciclohex-2-enocarbonil)`).
- * Since phase R-5c3b1 the other former reasons (an acyl prefix whose C=O the
- * engine's chain takes, the ring numbered otherwise at N0) have their codes
- * (test below). Null when none applies (an unexpected null).
+ * of diagnose.js from the engine's naming (file header «Aldehydes and
+ * ketones» of diagnose.js): `otherFamily` as in reverse-carbonyls.test.js (an
+ * OH on a –CHO's carbon makes an acid, phase R-5d). Since phase R-5c3b1 the
+ * principal C=O group's former reasons have their codes, and since phase
+ * R-5c3b2 the acyl words the engine does not write, formerly `acylWords`
+ * (tests below). Null when none applies (an unexpected null).
  *
  * @param {string[]} ids - The name's tile ids.
  * @param {object} verdict - Its `otherName` verdict.
@@ -678,32 +676,34 @@ function onlyAcylWordsDiffer(tree, verdict) {
  */
 function nullReason(ids, verdict) {
   const engine = verdict.naming.structure.suffix;
-  if (!engine || !['aldehyde', 'ketone'].includes(engine.kind)) {
-    return engine ? 'otherFamily' : null;
-  }
-  return onlyAcylWordsDiffer(parse(ids).tree, verdict) ? 'acylWords' : null;
+  return engine && !['aldehyde', 'ketone'].includes(engine.kind) ? 'otherFamily' : null;
 } // End of function nullReason()
 
-test('deliberate nulls (R-5c2, diagnose.js «Aldehydes and ketones», left to R-5c3b2): each case and its reason', () => {
+test('the former deliberate nulls of R-5c2, acyl words the engine does not write: each now has its R-5c3b2 code', () => {
   const cases = [
-    ['2 et ano oil hept ano al', 'acylWords'], // `etanoil` for the engine's `acetil`
-    ['3 START 1 oxo et il END pent ano 2 4 di ona', 'acylWords'], // `(1-oxoetil)` for `acetil`
-    ['2 START 1 oxo prop il END hept ano al', 'acylWords'], // `(1-oxopropil)` for `propanoil`
-    ['2 START 3 met il prop ano oil END hept ano al', 'acylWords'], // the acyl's own chain not the engine's: `butanoil`
-    ['2 START 2 et il prop ano oil END hept ano al', 'acylWords'], // `(2-metilbutanoil)`
-    ['2 START 6 met il benzoil END hept ano al', 'acylWords'], // the benzoyl numbered from the other side: `(2-metilbenzoil)`
-    ['2 START 6 met il ciclo hex ano 1 carbonil END hept ano al', 'acylWords'], // `(2-metilciclohexano-1-carbonil)`
-    ['2 ciclo hex 2 eno carbonil hept ano al', 'acylWords'], // the locant 1 the engine writes left out
-    ['2 ciclo hex ano 2 carbonil hept ano al', 'acylWords'], // a free-valence locant other than 1 on the ring
+    ['2 et ano oil hept ano al', 'ACYL_NAME'], // `etanoil` for the engine's `acetil`
+    ['3 START 1 oxo et il END pent ano 2 4 di ona', 'ACYL_NAME'], // `(1-oxoetil)` for `acetil`
+    ['2 START 1 oxo prop il END hept ano al', 'ACYL_NAME'], // `(1-oxopropil)` for `propanoil`
+    ['2 START 3 met il prop ano oil END hept ano al', 'ACYL_CHAIN'], // the acyl's own chain not the engine's: `butanoil`
+    ['2 START 2 et il prop ano oil END hept ano al', 'ACYL_CHAIN'], // `(2-metilbutanoil)`
+    ['2 START 6 met il benzoil END hept ano al', 'BRANCH_RING_NUMBERING'], // the benzoyl numbered from the other side
+    ['2 START 6 met il ciclo hex ano 1 carbonil END hept ano al', 'BRANCH_RING_NUMBERING'], // `(2-metilciclohexano-1-carbonil)`
+    ['2 ciclo hex 2 eno carbonil hept ano al', 'MISSING_LOCANTS'], // the locant 1 the engine writes left out
+    ['2 ciclo hex ano 2 carbonil hept ano al', 'BRANCH_RING_NUMBERING'], // a free-valence locant other than 1 on the ring
   ];
-  for (const [words, reason] of cases) {
+  for (const [words, code] of cases) {
     const ids = seq(words);
     const verdict = readName(ids);
     assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
-    assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.code}`);
-    assert.equal(nullReason(ids, verdict), reason, words);
-  }
-}); // End of test 'deliberate nulls (R-5c2…)'
+    // Only the words of one acyl prefix differ from the engine's name (read without diagnose.js).
+    assert.ok(onlyAcylWordsDiffer(parse(ids).tree, verdict), words);
+    assert.equal(verdict.diagnosis && verdict.diagnosis.code, code, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    assert.equal(verdict.diagnosis.step, 'substituents', words);
+    const opened = diagnosisExplanation(verdict, explain);
+    assert.equal(opened.steps[opened.index].id, 'substituents', words);
+    assert.equal(nullReason(ids, verdict), null, words);
+  } // End of the loop over the former nulls
+}); // End of test 'the former deliberate nulls of R-5c2, acyl words…'
 
 test('the former deliberate nulls of R-5c2 that concern the principal C=O group: each now has its R-5c3b1 code', () => {
   const cases = [
@@ -1188,9 +1188,140 @@ test('mutations of the generated acyl names: every otherName is diagnosed or a d
     'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'RING_NUMBERING', 'CARBONYL_PREFIX', 'KETONE_NOT_ALDEHYDE']) {
     assert.ok(codes.has(code), `${code}: ${[...codes]}`);
   }
-  assert.ok(Object.keys(nulls).every((reason) => ['otherFamily', 'acylWords'].includes(reason)), JSON.stringify(nulls));
+  assert.ok(Object.keys(nulls).every((reason) => reason === 'otherFamily'), JSON.stringify(nulls));
   assert.ok(deliberate < total / 20, JSON.stringify(nulls));
 }); // End of test 'mutations of the generated acyl names…'
+
+/** The tile id of the free-valence ending `il` (a branch's `il`, R-1a), and of `ano`. */
+const IL_ID = tileId('freeValence', 1);
+const ANO_ID = tileId('ending', 'saturated');
+
+/** The branch-name code each branch-internal mutation family must give (phase R-5c3b2, diagnose.js branchNames()). */
+const BRANCH_FAMILY_CODES = Object.freeze({
+  etanoil: 'ACYL_NAME', oxoetil: 'ACYL_NAME', oxoalkyl: 'ACYL_NAME', acylChain: 'ACYL_CHAIN', ringReflect: 'BRANCH_RING_NUMBERING',
+  noOne: 'MISSING_LOCANTS',
+});
+
+/**
+ * The mutations inside the branches of one acyl name (phase R-5c3b2): `acetil`
+ * written `etanoil` or `(1-oxoetil)`; a chain's acyl group `Xanoil` written
+ * as an `oxo` alkyl group, `(1-oxoXil)` (inside its compound branch, or as one);
+ * a parent-level `Xanoil` (four carbons or more) written on a chain one carbon
+ * shorter with a methyl on its end, `(n-metil…anoil)`; a ring in a compound
+ * branch (`ciclo`, `fenil`, `benzoil`) with its own locants reflected around
+ * its carbon 1, each list kept ascending; the locant 1 before `carbonil` left
+ * out.
+ *
+ * @param {string[]} ids - The name's tile ids.
+ * @returns {{family: string, ids: string[]}[]} The mutations.
+ */
+function branchMutationsOf(ids) {
+  const { tree } = parse(ids);
+  const out = [];
+  /**
+   * Records one mutation unless it changes nothing.
+   *
+   * @param {string} family - Its family.
+   * @param {string[]} mutated - Its tile ids.
+   * @returns {void}
+   */
+  const push = (family, mutated) => {
+    if (mutated.join() !== ids.join()) {
+      out.push({ family, ids: mutated });
+    }
+  };
+  ids.forEach((id, i) => {
+    if (id === ACETYL_ID) {
+      push('etanoil', [...ids.slice(0, i), tileId('root', 2), ANO_ID, ACYL_ID, ...ids.slice(i + 1)]);
+      push('oxoetil', [...ids.slice(0, i), START_ID, num(1), OXO_ID, tileId('root', 2), IL_ID, END_ID, ...ids.slice(i + 1)]);
+    }
+    if (id === RING_CARBONYL_ID && ids[i - 1] === num(1)) {
+      push('noOne', [...ids.slice(0, i - 1), ...ids.slice(i)]);
+    }
+  });
+  /**
+   * Collects the mutations of a prefix's branch, then of its own prefixes'.
+   *
+   * @param {object} item - A prefix node.
+   * @param {boolean} top - A parent-level prefix.
+   * @returns {void}
+   */
+  const visit = (item, top) => {
+    const sub = item.substituent;
+    const chain = sub.type === 'branch' ? sub.chain : sub;
+    if (chain && chain.type === 'chain' && chain.ring === null && ids[chain.fv] === ACYL_ID && chain.segments.length === 0) {
+      const core = [num(1), OXO_ID, ids[chain.root], IL_ID];
+      push('oxoalkyl', [...ids.slice(0, chain.range[0]), ...(sub.type === 'branch' ? core : [START_ID, ...core, END_ID]),
+        ...ids.slice(chain.range[1])]);
+      const n = tree.tiles[chain.root].value;
+      if (top && sub.type === 'chain' && n >= 4) {
+        push('acylChain', [...ids.slice(0, chain.range[0]), START_ID, num(n - 1), tileId('root', 1), IL_ID, tileId('root', n - 1),
+          ANO_ID, ACYL_ID, END_ID, ...ids.slice(chain.range[1])]);
+      }
+    }
+    if (sub.type !== 'branch') {
+      return;
+    }
+    sub.items.forEach((own) => visit(own, false));
+    let n = null;
+    if (chain.type === 'chain' && chain.ring !== null) {
+      n = tree.tiles[chain.root].value;
+    } else if (chain.type === 'retained' && [PHENYL_ID, BENZOYL_ID].includes(ids[chain.tile])) {
+      n = 6;
+    }
+    if (n !== null) {
+      const reflected = [...ids];
+      for (const list of [...sub.items.map((own) => own.locants), ...(chain.segments || []).map((segment) => segment.locants)]) {
+        const values = list.map((p) => tree.tiles[p].value).map((v) => (v === 1 ? 1 : n + 2 - v)).sort((a, b) => a - b);
+        list.forEach((p, k) => {
+          reflected[p] = num(values[k]);
+        });
+      }
+      push('ringReflect', reflected);
+    }
+  }; // End of function visit()
+  tree.items.forEach((item) => visit(item, true));
+  return out;
+} // End of function branchMutationsOf()
+
+/**
+ * Minimum branch-internal mutations of the generated acyl names that give
+ * `otherName`, by family (the seeds give 41, 41, 47, 10, 51 and 21, 211 in
+ * all; before phase R-5c3b2, 156 of them were nulls and 55 ALPHABETICAL_ORDER
+ * or UNGROUPED, read in the student's own words before the branch's name).
+ */
+const BRANCH_SWEEP_MIN = Object.freeze({ etanoil: 40, oxoetil: 40, oxoalkyl: 45, acylChain: 10, ringReflect: 50, noOne: 20 });
+
+test('mutations inside the branches of the generated acyl names (R-5c3b2): every otherName has its branch-name code', () => {
+  const names = [];
+  for (const mol of loopMolecules()) {
+    const naming = nameMolecule(mol);
+    names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter(isAcylName));
+  }
+  const counts = Object.fromEntries(Object.keys(BRANCH_FAMILY_CODES).map((family) => [family, 0]));
+  for (const name of names) {
+    for (const mutation of branchMutationsOf(tokenize(name))) {
+      const verdict = readName(mutation.ids);
+      const label = `${name} → ${mutation.family} ${verdict.text}`;
+      // A reflection that gives the same locants is the engine's name; the others name the same molecule otherwise.
+      assert.ok(['otherName', 'correct', 'alternative'].includes(verdict.kind), `${label}: ${verdict.kind}, ${verdict.message}`);
+      if (verdict.kind !== 'otherName') {
+        continue;
+      }
+      counts[mutation.family] += 1;
+      const d = verdict.diagnosis;
+      assert.ok(d, `${label}: no diagnosis`);
+      assert.equal(d.code, BRANCH_FAMILY_CODES[mutation.family], `${label}: ${d.message}`);
+      assert.equal(verdict.name, readName(tokenize(name)).name, `${label}: the same molecule`);
+      assert.ok(!/undefined|null|NaN|\[object/.test(d.message), `${label}: ${d.message}`);
+      const opened = diagnosisExplanation(verdict, explain);
+      assert.equal(opened.steps[opened.index].id, 'substituents', label);
+    } // End of the loop over the mutations of one name
+  } // End of the loop over the names
+  for (const [family, min] of Object.entries(BRANCH_SWEEP_MIN)) {
+    assert.ok(counts[family] >= min, `${family}: ${JSON.stringify(counts)}`);
+  }
+}); // End of test 'mutations inside the branches of the generated acyl names…'
 
 // ---------------------------------------------------------------------------
 // The drawing, the dialog, robustness and time.

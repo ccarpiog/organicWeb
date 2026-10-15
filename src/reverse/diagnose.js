@@ -11,9 +11,11 @@
  * (R-5b; «Ethers» below: the wrong side of the oxygen, `di` for `bis` before
  * an alkoxy prefix, and the functional-class names, R-5b2), and their
  * aldehydes and ketones (R-5c1, R-5c2 — the acyl prefixes —, R-5c3a — the
- * retained names —, R-5c3b1; «Aldehydes and ketones» below: the rules that
- * hold for them, the principal C=O group's own mistakes, checked before rule
- * 1 as an alcohol's are, and the deliberate nulls phase R-5c3b2 words).
+ * retained names —, R-5c3b1, R-5c3b2; «Aldehydes and ketones» below: the
+ * rules that hold for them, the principal C=O group's own mistakes, checked
+ * before rule 1 as an alcohol's are, and a branch's own name — an acyl
+ * group's word and chain, a ring branch's numbering —, checked before rule
+ * 5).
  *
  * The rules, in order (first match wins):
  *
@@ -29,7 +31,9 @@
  *    same name) but numbered from the other end (`4-metilpentano`,
  *    `hex-4-eno`), with the trace rule (N1–N5) that decided;
  * 5. `ALPHABETICAL_ORDER` — prefixes not in alphabetical order (di/tri…
- *    multipliers and `tert-` ignored);
+ *    multipliers and `tert-` ignored); since phase R-5c3b2 the branch-name
+ *    rules come first, with its number (a branch's own name decides the
+ *    words the order reads: «Aldehydes and ketones» below);
  * 6. `UNGROUPED` — identical branches not grouped (`2-metil-3-metil…`);
  * 7. `MULTIPLIER_KIND` — di vs bis;
  * 8. `LOCANT_ORDER` — locants not ascending (`3,2-dimetil…`);
@@ -179,8 +183,10 @@
  * (`4-(1,1-dimetiletil)heptano`: the other styles are offered only beside an
  * isopropyl group, design.md §1.1), also when its words change the citation
  * order the numbering follows (`5-etil-7-(1-metilpropil)undecano`, above),
- * and a branch whose own chain or numbering is not the engine's
- * (`5-(butan-3-il)nonano`, `7-[2-(2-metilpropil)propil]tridecano`).
+ * and an alkyl branch whose own chain or numbering is not the engine's
+ * (`5-(butan-3-il)nonano`, `7-[2-(2-metilpropil)propil]tridecano`; an acyl
+ * group's word and chain and a ring branch's numbering are named since phase
+ * R-5c3b2, «Aldehydes and ketones» below).
  *
  * A name with left-out locants (`metiletano`) is read through one placement
  * (readName() draws the first); every placement of the drawn structure is a
@@ -307,7 +313,9 @@
  * OH (outsideRules(): a principal group of a later family gets null until
  * its phase adds its messages — an acid, which an OH on an aldehyde's carbon
  * makes, `1-hidroxipropanal` —; the aldehydes and ketones have their own
- * codes and phrases, below).
+ * codes and phrases, below). A ring branch of an alcohol's chain numbered
+ * otherwise (`2-(5-metilfenil)etan-1-ol`) is BRANCH_RING_NUMBERING (phase
+ * R-5c3b2, «Aldehydes and ketones» below).
  *
  * **Ethers** (design.md §13.4 I-34, §15.8 R-5b; phase R-5b1). An alkoxy
  * prefix (`metoxi`, `isopropoxi`, `fenoxi`, `(pentiloxi)`) is a group bonded
@@ -514,23 +522,71 @@
  * oxo on its carbon 1; a ring's, the one-carbon chain of its C=O carbon with
  * the oxo and the ring).
  *
- * Deliberate, tested nulls (phase R-5c3b2 words them):
+ * A branch's own name (phase R-5c3b2; branchNames(), after the parent's
+ * rules 1–4 and before ALPHABETICAL_ORDER, with its rule number 5: a
+ * branch's name decides the words the order reads; each opens «Nombra los
+ * sustituyentes», `substituents`, which describes that branch). A
+ * parent-level prefix whose words are not the engine's for the same atoms
+ * (the naming's `prefix` part, on the same parent) is searched, from itself
+ * inward, for a branch whose own name the engine writes otherwise; the
+ * message quotes the two words of that parent-level prefix, without its
+ * locants (`acetil`, `4-acetilfenil`: the engine's from its naming, never
+ * retyped):
  *
- * - (R-5c2) an acyl prefix in words the engine does not write, as a branch
- *   whose own chain or numbering is not the engine's («No rule covers»
- *   above): `etanoil` for `acetil`, an `oxo` alkyl group for the acyl word
- *   (`(1-oxoetil)`, `(1-oxopropil)`), its own chain or numbering otherwise
- *   (`(3-metilpropanoil)` for `butanoil`, `(2-etilpropanoil)`,
- *   `(6-metilbenzoil)`, `(6-metilciclohexano-1-carbonil)`,
- *   `(ciclohexano-2-carbonil)`), or the locant 1 the engine writes before
- *   `carbonil` left out (`(ciclohex-2-enocarbonil)`);
- * - (R-5c3a) a phenyl on `acetaldehído`, which the engine admits there
- *   (tiles.js templateAdmits(): `fenilacetaldehído`,
- *   `2-(4-metilfenil)acetaldehído`), so SUBSTITUTED_TEMPLATE does not speak:
- *   the locant the engine leaves out (`2-fenilacetaldehído` →
- *   `2-feniletanal`, whose alternative `fenilacetaldehído` writes none) or the
- *   phenyl's own numbering (`2-(5-metilfenil)acetaldehído`). (On carbon 1 the
- *   phenyl makes a ketone: KETONE_NOT_ALDEHYDE.)
+ * - `ACYL_NAME` — an acyl group written in words the engine does not use
+ *   for it: `etanoil` for `acetil` and `metanoil` for `formil`, the acyl
+ *   groups with a name of their own («…tiene nombre propio, que la IUPAC
+ *   (2013) prefiere…», as the explanation's acyl sentence says), or its C=O
+ *   written `oxo` on an alkyl group, `(1-oxoetil)` for `acetil`,
+ *   `(1-oxopropil)` for `propanoil`, `(ciclohexiloxometil)` for
+ *   `(ciclohexanocarbonil)` (an acyl group's C=O is named by its ending,
+ *   `-oil`, or `-carbonil` on a ring);
+ * - `ACYL_CHAIN` — the chain of an acyl group written with `oil` is not the
+ *   engine's: it starts at the C=O carbon, its carbon 1, and is chosen like
+ *   any chain, the longest first (`(3-metilpropanoil)` for `butanoil`,
+ *   `(2-etilpropanoil)` for `(2-metilbutanoil)`, `(2-etenilbutanoil)` for
+ *   `(2-etilbut-3-enoil)`), when a criterion that compares no words decides
+ *   (review of phase I-51c3b2: chains that tie but for their prefixes' words,
+ *   `[4-bromo-2-(2-cloroetil)butanoil]`, get null);
+ * - `BRANCH_RING_NUMBERING` — a ring in a branch (`fenil`, `ciclohexil`,
+ *   `fenoxi`, `benzoil`, `…carbonil`) numbered otherwise than from the carbon
+ *   by which it is bonded, 1, then with the lowest locants for its multiple
+ *   bonds and prefixes, then by the alphabetical order (`(6-metilbenzoil)`,
+ *   `(6-metilciclohexano-1-carbonil)`, `(ciclohexano-2-carbonil)`,
+ *   `(ciclohexan-2-il)`, and on `acetaldehído`, which admits a phenyl
+ *   (tiles.js templateAdmits()), `2-(5-metilfenil)acetaldehído`); compared on
+ *   the molecule, each prefix by its structure, a benzene by the engine's
+ *   recognition whatever its spelling (review of phase I-51c3b2: its Kekulé
+ *   bonds never count, `(6-metilciclohexa-1,3,5-trien-1-il)` → «…sus enlaces
+ *   dobles no cuentan para numerar»), the reason the first criterion that
+ *   differs, and the alphabetical tie-break only when the student's own
+ *   words lose it too (`2-cloro-6-(1,1-dimetiletil)…` stands, as on any tie).
+ *   Not an aldehyde's or a ketone's alone:
+ *   a ring branch hangs from a chain parent only beside a principal group (a
+ *   second ring is refused, and a hydrocarbon's ring is its parent, «Rings»
+ *   above), so an alcohol's ring branch gets it too
+ *   (`2-(5-metilfenil)etan-1-ol`).
+ *
+ * Rule 9 gains two cases (R-5c3b2): NEEDLESS_LOCANTS on a traditional name
+ * the engine writes without locants (traditionalLocants():
+ * `2-fenilacetaldehído` → «El nombre tradicional «fenilacetaldehído» se
+ * escribe sin números…», the alternative of `2-feniletanal`; step
+ * `assemble`, which lists it; on carbon 1 the phenyl makes a ketone,
+ * KETONE_NOT_ALDEHYDE), and MISSING_LOCANTS inside a branch for the locant 1
+ * the engine writes before `carbonil` on a ring with a multiple bond or
+ * prefixes of its own (carbonylLocant(): `(ciclohex-2-enocarbonil)`,
+ * `(2-metilciclohexanocarbonil)`; step `substituents`), the reverse of
+ * shortForm()'s needless 1, only when the 1 gives the engine's own words (not
+ * `(ciclohexa-1,3,5-trienocarbonil)`, a benzene: `benzoil`).
+ *
+ * Still null for an aldehyde or a ketone, as for any family («No rule
+ * covers» above): an alkyl branch's own chain or numbering, and a branch in a
+ * prefix style the engine does not offer, unless a rule names another mistake
+ * in it; a benzene ring in a branch written with `ciclo` and numbered as the
+ * engine numbers it (`(2-metilciclohexa-1,3,5-trien-1-il)`,
+ * `(ciclohexa-1,3,5-trienocarbonil)`: the parent's BENZENE_RING has no branch
+ * form); and an `otherName` whose principal group is a later family's (an
+ * acid, which an OH on a –CHO's carbon makes: R-5d, outsideRules()).
  *
  * The retained carbonyl templates (R-5c3a) take SUBSTITUTED_TEMPLATE like
  * the benzene ones where the engine never writes them with prefixes: on a
@@ -559,13 +615,14 @@ import { adjacency, rootedBranchKey } from '../model/graph.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, ENCLOSING_MARKS, RETAINED_PREFIXES, FREE_VALENCE_SUFFIXES, omitsLocants,
   chainOmitsPrefixLocants, ringOmitsLocants, BENZENE_NAME, RING_PREFIX, POSITIONAL_LETTERS, TRADITIONAL_NAMES, SATURATED_INFIX,
-  ALKOXY_ENDING, ETHER_CLASS_WORD, GROUP_PREFIXES, groupSuffix, ringGroupSuffix,
+  ALKOXY_ENDING, ETHER_CLASS_WORD, GROUP_PREFIXES, groupSuffix, ringGroupSuffix, ACYL_ENDING, RING_CARBONYL_ENDING,
 } from '../naming/lexicon.es.js';
 import { assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore } from './assemble.js';
-import { ownPrefixAtoms, specRings, isRing } from './build.js';
+import { ownPrefixAtoms, specRings, isRing, isAromatic } from './build.js';
 import {
   tileById, tileId, MAX_MULT, isAtomGroup, atomGroupOrder, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
-  FORMYL_ID, ACETYL_ID, OXO_ID, OXO_ELEMENT, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, templateAdmits, isChainTemplate,
+  FORMYL_ID, ACETYL_ID, OXO_ID, OXO_ELEMENT, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, BENZOYL_ID, RING_CARBONYL_ID,
+  templateAdmits, isChainTemplate,
 } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
@@ -610,6 +667,10 @@ const WORDS = Object.freeze({
   ona: tileById(ONA_ID).text,
   carbaldehido: tileById(CARBALDEHYDE_ID).text,
   benzaldehido: tileById(BENZALDEHYDE_ID).text,
+  // Acyl prefixes (R-5c3b2): the endings of their words.
+  oil: ACYL_ENDING,
+  carbonil: RING_CARBONYL_ENDING,
+  benzoil: tileById(BENZOYL_ID).text,
 });
 
 /** The style of the engine's functional-class alternative (naming/index.js etherClassAlternative(); R-5b2). */
@@ -735,6 +796,24 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
   RING_NUMBERING: (d) => 'Hay que numerar el anillo de otra manera, empezando en otro carbono o contando hacia el otro lado: '
     + `${numberingReason(d)}${difference(d)}.`
     + `${d.unwritten ? ` En «${d.name}» ese número ni siquiera se escribe.` : ''}`,
+  // A branch's own name (R-5c3b2, file header «Aldehydes and ketones»): an acyl group's word and chain, a ring branch's numbering.
+  ACYL_NAME: (d) => {
+    if (d.word) {
+      const holder = d.right === d.word ? '' : ` Se escribe «${d.right}», no «${d.student}».`;
+      return `${DIAGNOSIS_PHRASES.acylGroup[d.carbons]} tiene nombre propio, que la IUPAC (2013) prefiere: «${d.word}», no `
+        + `«${d.written}».${holder}`;
+    }
+    return 'Una rama que se une por el carbono de un C=O es un grupo acilo: su C=O no se nombra con el prefijo '
+      + `«${WORDS.oxo}», sino con ${d.ring ? DIAGNOSIS_PHRASES.acylEnding.ring : DIAGNOSIS_PHRASES.acylEnding.chain}. `
+      + `Se escribe «${d.right}», no «${d.student}».`;
+  }, // End of the ACYL_NAME template
+  ACYL_CHAIN: (d) => 'La cadena de un grupo acilo empieza en el carbono del C=O, que es el 1, y '
+    + `${d.longer ? `es la más larga posible: aquí tiene ${d.length} carbonos, no ${d.studentLength}`
+      : 'se elige con las mismas reglas que la cadena principal'}. Se escribe «${d.right}», no «${d.student}».`,
+  BRANCH_RING_NUMBERING: (d) => 'Un anillo que va en una rama se numera empezando por el carbono por el que se une, que es el 1'
+    + `${d.reason ? `, y siguiendo en el sentido que ${DIAGNOSIS_PHRASES.branchRingReasons[d.reason]}` : ''}: «${d.right}», `
+    + `no «${d.student}».${d.unwritten ? ` En «${d.right}» ese 1 ni siquiera se escribe.` : ''}`
+    + `${d.benzene ? ' Ese anillo es un benceno: sus enlaces dobles no cuentan para numerar.' : ''}`,
   ALPHABETICAL_ORDER: (d) => `Los sustituyentes se escriben por orden alfabético: «${d.first}» va antes que «${d.second}» `
     + `(${d.why}).${d.hint ? ` ${d.hint}` : ''}`,
   UNGROUPED: (d) => `${d.halogen ? 'Los sustituyentes iguales' : 'Las ramas iguales'} se escriben una sola vez, con `
@@ -747,6 +826,10 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
       + `«${WORDS.di}», «${WORDS.tri}»…: «${d.right}», no «${d.student}».`),
   LOCANT_ORDER: (d) => `Los números de un mismo grupo se escriben de menor a mayor: «${d.right}», no «${d.student}».`,
   NEEDLESS_LOCANTS: (d) => {
+    if (d.traditional) {
+      // R-5c3b2: a locant on a traditional name the engine writes without any (`2-fenilacetaldehído`).
+      return `El nombre tradicional «${d.name}» se escribe sin números: «${d.name}», no «${d.student}».`;
+    }
     if (d.branch) {
       return `Sobran números dentro de la rama: se escribe «${d.right}», no «${d.student}».`;
     }
@@ -760,8 +843,11 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
       : `En «${d.name}» no se escribe el número que dice en qué carbono ${d.on} va ${d.what}: solo hay una manera `
         + 'de colocarlo. Los números de dentro de la rama sí se escriben.';
   }, // End of the NEEDLESS_LOCANTS template
-  MISSING_LOCANTS: (d) => `Faltan números: hay que decir en qué carbono va cada rama y cada enlace doble o triple, `
-    + `como en «${d.name}».`,
+  MISSING_LOCANTS: (d) => (d.branch
+    // R-5c3b2: the locant 1 the engine writes before `carbonil` on a ring with a multiple bond or prefixes of its own.
+    ? 'Falta un número dentro de la rama: cuando el anillo lleva enlaces dobles o sustituyentes, el carbono unido al C=O, que es '
+      + `el 1, lleva su número delante de «${WORDS.carbonil}»: «${d.right}», no «${d.student}».`
+    : `Faltan números: hay que decir en qué carbono va cada rama y cada enlace doble o triple, como en «${d.name}».`),
   SEGMENT_ORDER: (d) => `Cuando hay enlaces dobles y triples, «${WORDS.en}» se escribe antes que «${WORDS.ino}»: `
     + `«${d.name}», no «${d.student}».`,
   OLD_STYLE: (d) => `Has escrito los números delante de la raíz, como se hacía antes. Hoy van detrás, justo delante de `
@@ -858,6 +944,31 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
    */
   ending: (d) => (d.benzaldehyde ? `con «${WORDS.benzaldehido}» (el benceno con un grupo –CHO)`
     : `con la terminación «-${d.ending}», al final del nombre`),
+  /**
+   * The acyl groups with a name of their own, by carbons (ACYL_NAME, R-5c3b2), as the explanation's acyl sentences say them
+   * (explain.js acylIntro(): «Con 2 carbonos (CH₃–CO–) se llama «acetil»…»).
+   */
+  acylGroup: Object.freeze({
+    1: 'El grupo acilo de 1 carbono (H–CO–, un –CHO)',
+    2: 'El grupo acilo de 2 carbonos (CH₃–CO–)',
+  }),
+  /** How an acyl group's C=O is named in its word (ACYL_NAME, R-5c3b2): `-oil` after a chain, `-carbonil` after a ring. */
+  acylEnding: Object.freeze({
+    chain: `la terminación «-${WORDS.oil}» (salvo «${WORDS.formil}», de 1 carbono, y «${WORDS.acetil}», de 2)`,
+    ring: `la terminación «-${WORDS.carbonil}», porque está unido a un anillo («${WORDS.benzoil}» con el benceno)`,
+  }),
+  /**
+   * Which way a ring in a branch is numbered from its carbon 1 (BRANCH_RING_NUMBERING, R-5c3b2), by what decides it, as the
+   * explanation's ring-branch sentences say it (explain.js ringDescription(), ringCarbonylDescription(),
+   * benzeneOwnPrefixSentences()).
+   */
+  branchRingReasons: Object.freeze({
+    lower: 'da los números más bajos a sus sustituyentes',
+    bonds: 'da los números más bajos a sus enlaces dobles y triples, y luego a sus sustituyentes',
+    bondsOnly: 'da los números más bajos a sus enlaces dobles y triples',
+    alphabetical: 'da los números más bajos a sus sustituyentes y, con los mismos números, el más bajo al que va primero por '
+      + 'orden alfabético',
+  }),
   /** Why one prefix goes before another (ALPHABETICAL_ORDER). */
   why: Object.freeze({
     letters: (a, b) => `${a} antes que ${b}`,
@@ -1050,7 +1161,8 @@ export const CLASS_NAME_STEP_TEXTS = Object.freeze({
 /**
  * Every diagnosis code, in the order of the rules (design.md §15.8 R-3; the
  * ring rules of R-4, the alcohol rules of R-5a and the aldehyde and ketone
- * rules of R-5c3b1 beside the rules whose place they take, file header): its
+ * rules of R-5c3b1 beside the rules whose place they take, the branch-name
+ * rules of R-5c3b2 before ALPHABETICAL_ORDER, file header): its
  * rule number (1–11), the
  * explanation step it points at (an explain() step id, design.md §5; a draft
  * may give its own case's step, `benzene` for RING_IS_PARENT on the benzene
@@ -1163,6 +1275,31 @@ export const DIAGNOSES = Object.freeze({
   RING_NUMBERING: Object.freeze({
     rule: 4, step: 'ringNumbering', example: Object.freeze({ rule: 'N3', app: '3', student: '5', unwritten: false, name: '' }),
   }),
+  // A branch's own name (R-5c3b2): after the parent's rules 1–4, before ALPHABETICAL_ORDER, which reads the branches' words.
+  ACYL_NAME: Object.freeze({
+    rule: 5,
+    step: 'substituents',
+    example: Object.freeze({
+      carbons: 2, word: WORDS.acetil, written: `${stem(2)}${SATURATED_INFIX}${WORDS.oil}`, ring: false, right: WORDS.acetil,
+      student: `${stem(2)}${SATURATED_INFIX}${WORDS.oil}`,
+    }),
+  }),
+  ACYL_CHAIN: Object.freeze({
+    rule: 5,
+    step: 'substituents',
+    example: Object.freeze({
+      longer: true, length: 4, studentLength: 3, right: `${stem(4)}${SATURATED_INFIX}${WORDS.oil}`,
+      student: `3-${WORDS.metil}${stem(3)}${SATURATED_INFIX}${WORDS.oil}`,
+    }),
+  }),
+  BRANCH_RING_NUMBERING: Object.freeze({
+    rule: 5,
+    step: 'substituents',
+    example: Object.freeze({
+      reason: 'lower', unwritten: false, benzene: false, right: `2-${WORDS.metil}${WORDS.benzoil}`,
+      student: `6-${WORDS.metil}${WORDS.benzoil}`,
+    }),
+  }),
   ALPHABETICAL_ORDER: Object.freeze({
     rule: 5,
     step: 'order',
@@ -1211,12 +1348,12 @@ export const DIAGNOSES = Object.freeze({
     rule: 9,
     step: 'numbering',
     example: Object.freeze({
-      branch: false, name: `${stem(3)}${WORDS.eno}`, what: DIAGNOSIS_PHRASES.what.double, right: '', student: '', kept: false,
-      plural: false, on: '',
+      traditional: false, branch: false, name: `${stem(3)}${WORDS.eno}`, what: DIAGNOSIS_PHRASES.what.double, right: '', student: '',
+      kept: false, plural: false, on: '',
     }),
   }),
   MISSING_LOCANTS: Object.freeze({
-    rule: 9, step: 'numbering', example: Object.freeze({ name: `2-${WORDS.metil}${stem(5)}${ENDINGS.saturated}` }),
+    rule: 9, step: 'numbering', example: Object.freeze({ branch: false, name: `2-${WORDS.metil}${stem(5)}${ENDINGS.saturated}` }),
   }),
   SEGMENT_ORDER: Object.freeze({
     rule: 10,
@@ -1251,7 +1388,9 @@ export const DIAGNOSIS_CODES = Object.freeze(Object.keys(DIAGNOSES));
  * itself (it names `benzene` or `ring` otherwise); a monosubstituted
  * benzene or a one-carbon parent has no numbering step (`triclorometanol`:
  * «Monta el nombre»); so do an aldehyde and a ketone (R-5c3b1: CARBONYL_PARENT
- * as HYDROXY_PARENT; `benzaldehído` has no numbering step). An ether (R-5b2)
+ * as HYDROXY_PARENT; `benzaldehído` has no numbering step); a branch-name
+ * rule (R-5c3b2) points at a prefix of the engine's name, which therefore
+ * has «Nombra los sustituyentes». An ether (R-5b2)
  * always has «Reconoce el éter»
  * (`ether`): its oxygen is an alkoxy prefix of the engine's name, at some
  * depth; the fallbacks are the chain or ring steps that follow it. The
@@ -1605,6 +1744,8 @@ function replaceNode(node, target, replacement) {
  * @property {object} tree - The student's parse() tree.
  * @property {object} spec - Its NameSpec (interpret.js).
  * @property {object} naming - The engine's naming in the student's prefix style (trace, parent, structure, name, parts).
+ * @property {string} style - That prefix style (substituent.js PREFIX_STYLES), in which the branch-name rules name a branch
+ *   (R-5c3b2, engineBranch()).
  * @property {object} molecule - The verdict's molecule (the ids of every reading and of the naming).
  * @property {Map<number, object[]>} adj - Its adjacency (graph.js adjacency()).
  * @property {PrefixList[]} lists - prefixLists() of the tree.
@@ -1622,6 +1763,8 @@ function replaceNode(node, target, replacement) {
  * @property {number} attachment - The atom with the free valence.
  * @property {number} parentAtom - The atom it hangs from (on the parent, or on the chain of a compound branch).
  * @property {number} order - The order of the bond between them (1 `il`, 2 `iliden`).
+ * @property {number[]} atoms - Its atoms in the order build() created them: its own chain or ring first, in the student's
+ *   locant order (build.js ownPrefixAtoms(); R-5c3b2, the branch-name rules).
  */
 
 /**
@@ -1671,7 +1814,7 @@ function branchOccurrences(name, reading, molecule, adj) {
    * @returns {void}
    */
   const record = (node, sub, join, atoms) => {
-    const occurrence = { sub, ...join };
+    const occurrence = { sub, ...join, atoms };
     all.push(occurrence);
     if (!first.has(node)) {
       first.set(node, occurrence);
@@ -2772,6 +2915,414 @@ function prefixFocus(ctx, list, indices) {
 }
 
 /**
+ * The engine's name of one of the student's branches, as a structure
+ * (R-5c3b2, the branch-name rules): substituent.js nameSubstituent() of the
+ * same atoms, seen from the same carrying atom, in the diagnosis's prefix
+ * style — its chain (an acyl group's), its ring numbered as the engine
+ * numbers it, whether it is an acyl group.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {BranchOccurrence} occurrence - The branch on the molecule.
+ * @returns {object|null} The SubstituentStructure, or null.
+ */
+function engineBranch(ctx, occurrence) {
+  return nameSubstituent(ctx.molecule, occurrence.parentAtom, occurrence.attachment, ctx.style);
+}
+
+/**
+ * The ring of an engine's branch structure (R-5c3b2): the branch itself for
+ * a ring bonded by one of its carbons (`fenil`, `ciclohexil`, also through an
+ * ether oxygen, `fenoxi`), or the ring beyond the C=O of a ring's acyl group
+ * (`benzoil`, `ciclohexanocarbonil`); its `chain.atoms` are the ring in the
+ * engine's locant order, the attachment first.
+ *
+ * @param {object|null} structure - A SubstituentStructure (engineBranch()).
+ * @returns {object|null} The ring's SubstituentStructure, or null for a branch without one.
+ */
+function engineRing(structure) {
+  if (!structure) {
+    return null;
+  }
+  if (structure.ring) {
+    return structure;
+  }
+  const group = structure.ringCarbonyl ? structure.prefixes.find((g) => g.substituent.ring) : null;
+  return group ? group.substituent : null;
+}
+
+/**
+ * The prefix nodes of a parent-level prefix (R-5c3b2): itself, then the own
+ * prefixes of its compound branch at every depth, in tile order.
+ *
+ * @param {object} item - A prefix node.
+ * @returns {object[]} The nodes.
+ */
+function prefixNodes(item) {
+  const sub = item.substituent;
+  return [item, ...(sub.type === 'branch' ? sub.items.flatMap(prefixNodes) : [])];
+}
+
+/**
+ * The atoms and bonds of one occurrence of a branch, at any depth (R-5c3b2):
+ * its atoms, the bonds between them and the bond that joins it to the atom it
+ * hangs from.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {BranchOccurrence} occurrence - The branch on the molecule.
+ * @returns {{atoms: number[], bonds: number[]}} The ids.
+ */
+function branchIds(ctx, occurrence) {
+  const inside = new Set(occurrence.atoms);
+  const bonds = new Set();
+  for (const id of occurrence.atoms) {
+    for (const n of ctx.adj.get(id)) {
+      if (inside.has(n.atom) || (id === occurrence.attachment && n.atom === occurrence.parentAtom)) {
+        bonds.add(n.bond);
+      }
+    }
+  }
+  return { atoms: [...occurrence.atoms], bonds: [...bonds] };
+} // End of function branchIds()
+
+/**
+ * Tells whether two atom lists hold the same atoms.
+ *
+ * @param {number[]} a - Atom ids.
+ * @param {number[]} b - Atom ids.
+ * @returns {boolean} True for the same set.
+ */
+function sameAtoms(a, b) {
+  const set = new Set(a);
+  return a.length === b.length && b.every((id) => set.has(id));
+}
+
+/**
+ * ACYL_NAME (R-5c3b2): an acyl group — a branch bonded by the carbon of a
+ * C=O of its own — written in words the engine does not use for it: the
+ * acyl groups with a name of their own written by the general rule,
+ * `etanoil` for `acetil` and `metanoil` for `formil` (`word`, the name, and
+ * `written`, the student's), or the C=O written as an `oxo` prefix of an
+ * alkyl group, `(1-oxoetil)` for `acetil`, `(1-oxopropil)` for `propanoil`
+ * (the engine names it as an acyl group: `ring` when its C=O is bonded to a
+ * ring, `-carbonil`). Not an ether's or ester's oxygen (an alkoxy prefix).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {object} node - The student's prefix node.
+ * @param {BranchOccurrence} occurrence - Its first occurrence on the molecule.
+ * @param {{right: string, student: string}} words - The engine's and the student's words of the parent-level prefix that holds it.
+ * @returns {object|null} The data, or null.
+ */
+function acylName(ctx, node, occurrence, words) {
+  const { sub } = occurrence;
+  const { molecule, adj } = ctx;
+  const carbonyl = molecule.atoms.get(occurrence.attachment).element === CARBON && adj.get(occurrence.attachment)
+    .some((n) => n.order === 2 && molecule.atoms.get(n.atom).element === OXO_ELEMENT && occurrence.atoms.includes(n.atom));
+  if (sub.alkoxy || !carbonyl) {
+    return null;
+  }
+  const engine = engineBranch(ctx, occurrence);
+  if (!engine || !engine.acyl || engine.alkoxycarbonyl || engine.carbamoyl) {
+    return null; // Not named as an acyl group by the engine (never seen for a C=O carbon bonded to a chain).
+  }
+  if (sub.acyl && sub.kind === 'chain' && sub.length <= 2 && sub.prefixes.length === 0 && sub.double.length + sub.triple.length === 0) {
+    // `etanoil`, `metanoil`: the engine writes `acetil`, `formil` (explain.js acylIntro()).
+    return { carbons: sub.length, word: sub.length === 1 ? WORDS.formil : WORDS.acetil, written: wordsOf(ctx.tree, node), ...words };
+  }
+  if (sub.acyl || sub.retained === FORMYL || sub.retained === ACETYL) {
+    return null; // Written as an acyl group: its chain or ring is ACYL_CHAIN's or BRANCH_RING_NUMBERING's.
+  }
+  return { ring: Boolean(engine.ringCarbonyl), ...words };
+} // End of function acylName()
+
+/**
+ * What the engine's choice of a substituent's chain compares (substituent.js
+ * buildSubstituent(): the longest, the most multiple bonds, the most double
+ * bonds, then the numbering: the lowest locants for the multiple bonds and
+ * for the prefixes), for an acyl chain read on the molecule from its C=O
+ * carbon, carbon 1 (R-5c3b2 review). Its prefixes are every atom bonded to
+ * the chain outside it, but the carrying atom and the acyl group's own =O.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {number[]} chain - The chain's atoms, the C=O carbon first.
+ * @param {number} carrier - The atom the acyl group hangs from.
+ * @returns {number[][]} The criteria, in order: [length], [multiple bonds], [double bonds], bond locants, prefix locants.
+ */
+function acylChainCriteria(ctx, chain, carrier) {
+  const { adj, molecule } = ctx;
+  const inside = new Set(chain);
+  const bonds = [];
+  let double = 0;
+  for (let i = 0; i + 1 < chain.length; i += 1) {
+    const link = adj.get(chain[i]).find((n) => n.atom === chain[i + 1]);
+    if (link && link.order > 1) {
+      bonds.push(i + 1);
+      double += link.order === 2 ? 1 : 0;
+    }
+  }
+  const prefixes = chain.flatMap((id, i) => adj.get(id)
+    .filter((n) => !inside.has(n.atom) && n.atom !== carrier
+      && !(i === 0 && n.order === 2 && molecule.atoms.get(n.atom).element === OXO_ELEMENT))
+    .map(() => i + 1));
+  return [[chain.length], [bonds.length], [double], bonds, prefixes.sort((p, q) => p - q)];
+} // End of function acylChainCriteria()
+
+/**
+ * ACYL_CHAIN (R-5c3b2): the chain of an acyl group written with `oil` is not
+ * the engine's — the chain starts at the C=O carbon, its carbon 1, and is
+ * chosen like any chain (substituent.js: the longest, then the most
+ * multiple bonds…): `(3-metilpropanoil)` for `butanoil`, `(2-etilpropanoil)`
+ * for `(2-metilbutanoil)` (`longer`: the engine's chain has more carbons).
+ * The student's chain is the first atoms build() created for the branch.
+ * Only when a criterion that compares no words tells the two chains apart, in
+ * the engine's favour (acylChainCriteria(): length, multiple and double bonds,
+ * their locants, the prefixes' locants; review of phase I-51c3b2): two chains
+ * that tie there are chosen by the alphabetical order of their prefixes' words,
+ * which the student's own words may decide otherwise — null, as on any tie.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {object} node - The student's prefix node.
+ * @param {BranchOccurrence} occurrence - Its first occurrence on the molecule.
+ * @param {{right: string, student: string}} words - The engine's and the student's words of the parent-level prefix that holds it.
+ * @returns {object|null} The data, or null.
+ */
+function acylChain(ctx, node, occurrence, words) {
+  const { sub } = occurrence;
+  if (!sub.acyl || sub.kind !== 'chain') {
+    return null;
+  }
+  const engine = engineBranch(ctx, occurrence);
+  if (!engine || !engine.acyl || engine.ringCarbonyl || !engine.chain) {
+    return null;
+  }
+  const mine = occurrence.atoms.slice(0, sub.length);
+  const theirs = engine.chain.atoms;
+  if (sameAtoms(mine, theirs)) {
+    return null;
+  }
+  const [a, b] = [mine, theirs].map((chain) => acylChainCriteria(ctx, chain, occurrence.parentAtom));
+  // Length and bond counts: more is better; locants: lower is better. The first criterion that differs decides.
+  const decided = a.map((criterion, i) => (i < 3 ? compareLocantLists(a[i], b[i]) : compareLocantLists(b[i], a[i])))
+    .find((order) => order !== 0);
+  if (decided === undefined || decided > 0) {
+    return null; // A tie the words decide, or (never) the student's chain ahead.
+  }
+  return { longer: theirs.length > mine.length, length: theirs.length, studentLength: mine.length, ...words };
+} // End of function acylChain()
+
+/**
+ * The locant of a ring bond between two atoms in a ring numbering: the lower
+ * of the two, or n for the closing bond between carbons n and 1.
+ *
+ * @param {number[]} order - The ring's atoms in locant order.
+ * @param {number} a - One atom of the bond.
+ * @param {number} b - The other.
+ * @returns {number} The locant.
+ */
+function ringBondLocant(order, a, b) {
+  const [p, q] = [order.indexOf(a), order.indexOf(b)];
+  return Math.abs(p - q) === 1 ? Math.min(p, q) + 1 : order.length;
+}
+
+/**
+ * Tells whether the student's own words cite a ring branch's prefixes so that
+ * the engine's numbering wins the alphabetical tie-break (R-5c3b2 review; the
+ * ring's N4, as judgedInOwnWords() guards the parent's): the ring's own
+ * prefixes grouped by structure, each group cited by the student's words
+ * (citationKeyOf(); a group written in several words takes the one cited
+ * first), in that citation order; each numbering's locants per group,
+ * ascending, in that order; the engine's list lower than the student's.
+ * A branch in a style the engine does not offer can be cited in another
+ * order (`2-cloro-6-(1,1-dimetiletil)…`: `cloro` before `dimetiletil`), and
+ * then the student's numbering is the right one for the student's words.
+ *
+ * @param {object[]} groups - The ring's own prefix groups: `key` (the student's citation key), `first` (tile order), `mine`
+ *   and `theirs` (the locants in the student's and the engine's numbering).
+ * @returns {boolean} True when the engine's numbering wins in the student's own words.
+ */
+function losesInOwnWords(groups) {
+  const cited = [...groups].sort((g, h) => compareCitationKeys(g.key, h.key) || g.first - h.first);
+  /**
+   * One numbering's N4 value in the student's citation order.
+   *
+   * @param {string} side - 'mine' or 'theirs'.
+   * @returns {number[]} The locants.
+   */
+  const value = (side) => cited.flatMap((g) => [...g[side]].sort((p, q) => p - q));
+  return compareLocantLists(value('theirs'), value('mine')) < 0;
+}
+
+/**
+ * BRANCH_RING_NUMBERING (R-5c3b2): a ring in a branch — `fenil`,
+ * `ciclohexil`, `fenoxi`, `benzoil`, `…carbonil` — numbered otherwise than the
+ * engine numbers it (substituent.js: from the carbon by which it is bonded,
+ * 1, then the lowest locants for its multiple bonds and its prefixes, then
+ * the alphabetical order): `(6-metilbenzoil)`, `(5-metilfenil)`,
+ * `(6-metilciclohexano-1-carbonil)`, `(ciclohexano-2-carbonil)`. Compared on
+ * the molecule: the student's ring is the first atoms build() created for the
+ * branch, in the student's locant order; each of its own prefixes (by
+ * structure, graph.js rootedBranchKey(), whatever its words) and each
+ * multiple bond gets its locant in both numberings, and the carbon by which
+ * the ring is bonded must be its carbon 1. Whether the ring is a benzene, whose
+ * Kekulé bonds never count, is the engine's recognition (its ring's `retained`
+ * 'benzene'), not the student's spelling: a benzene written with `ciclo`
+ * (`(6-metilciclohexa-1,3,5-trien-1-il)`) is numbered as a `fenil` (review of
+ * phase I-51c3b2), and the message says its double bonds do not count
+ * (`benzene`). The reason is the first criterion that differs (review of phase
+ * I-51c3b2): the multiple bonds' locants, then the prefixes' locants, then the
+ * alphabetical tie-break, which compares words and is blamed only when the
+ * engine's numbering also wins in the student's own words (losesInOwnWords());
+ * otherwise, as on a tie, the student's numbering stands (null). The data:
+ * that reason (`reason`, DIAGNOSIS_PHRASES.branchRingReasons; null for a bare
+ * ring) and whether its numbers are not even written (`unwritten`:
+ * `ciclohexanocarbonil`, `ciclohexil`).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {object} node - The student's prefix node.
+ * @param {BranchOccurrence} occurrence - Its first occurrence on the molecule.
+ * @param {{right: string, student: string}} words - The engine's and the student's words of the parent-level prefix that holds it.
+ * @returns {object|null} The data, or null.
+ */
+function branchRingNumbering(ctx, node, occurrence, words) {
+  const { sub } = occurrence;
+  if (!isRing(sub.kind)) {
+    return null;
+  }
+  const ring = engineRing(engineBranch(ctx, occurrence));
+  const mine = occurrence.atoms.slice(0, sub.length);
+  if (!ring || !ring.chain || !sameAtoms(mine, ring.chain.atoms)) {
+    return null;
+  }
+  const theirs = ring.chain.atoms;
+  const benzene = ring.chain.retained === 'benzene'; // The engine's aromatic recognition (naming/aromatic.js).
+  const { molecule, adj, tree } = ctx;
+  /**
+   * A list as a comparable text, whatever its order.
+   *
+   * @param {Array<number|string>} list - Locants.
+   * @returns {string} The text.
+   */
+  const bag = (list) => list.map(String).sort().join(',');
+  const items = node.substituent.type === 'branch' ? node.substituent.items : [];
+  const own = new Map(); // Each own prefix's locants in both numberings, by its structure, with the student's citation key.
+  ownPrefixAtoms(sub, occurrence.atoms).forEach((slices, k) => {
+    const key = citationKeyOf(items[k] ? wordsOf(tree, items[k]) : '');
+    for (const slice of slices) {
+      const join = joinOf(slice, adj);
+      if (join) {
+        const id = `${join.order}:${rootedBranchKey(molecule, join.attachment, join.parentAtom, adj)}`;
+        const entry = own.get(id) || { key, first: k, mine: [], theirs: [] };
+        if (compareCitationKeys(key, entry.key) < 0) {
+          entry.key = key;
+        }
+        entry.mine.push(mine.indexOf(join.parentAtom) + 1);
+        entry.theirs.push(theirs.indexOf(join.parentAtom) + 1);
+        own.set(id, entry);
+      }
+    }
+  }); // End of the loop over the ring's own prefixes
+  const bonds = { mine: [], theirs: [] }; // Its multiple bonds (a benzene's Kekulé bonds never count).
+  mine.forEach((id, i) => {
+    const next = mine[(i + 1) % mine.length];
+    const link = benzene ? null : adj.get(id).find((n) => n.atom === next);
+    if (link && link.order > 1) {
+      bonds.mine.push(`${link.order}:${i + 1}`);
+      bonds.theirs.push(`${link.order}:${ringBondLocant(theirs, id, next)}`);
+    }
+  });
+  const start = mine[0] !== theirs[0];
+  const groups = [...own.values()];
+  const all = (side) => bag(groups.flatMap((e) => e[side]));
+  const bondsDiffer = bag(bonds.mine) !== bag(bonds.theirs);
+  const groupsDiffer = groups.some((e) => bag(e.mine) !== bag(e.theirs));
+  if (!start && !bondsDiffer && !groupsDiffer) {
+    return null; // The engine's numbering, or one that gives the same locants.
+  }
+  let reason = null;
+  if (bonds.mine.length > 0) {
+    reason = groups.length > 0 ? 'bonds' : 'bondsOnly';
+  } else if (groups.length > 0) {
+    reason = 'lower';
+  }
+  if (!start && !bondsDiffer && all('mine') === all('theirs')) {
+    // Only the alphabetical tie-break is left: blamed only when the student's own words lose it too.
+    if (!losesInOwnWords(groups)) {
+      return null;
+    }
+    reason = 'alphabetical';
+  }
+  return { reason, unwritten: reason === null, benzene: benzene && sub.kind === 'ring', ...words };
+} // End of function branchRingNumbering()
+
+/**
+ * The engine's and the student's words of a parent-level prefix (R-5c3b2):
+ * the naming's `prefix` part that holds the atoms of its first occurrence,
+ * and the student's words (wordsOf()); only on the same parent as the
+ * engine's (otherwise its branches are other atoms: an alphabetical step
+ * read other words, chainRules()).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {number} index - The prefix's index in the tree's items.
+ * @returns {{right: string, student: string, placed: object[]}|null} The words and the prefix's occurrences, or null.
+ */
+function prefixWords(ctx, index) {
+  const { tree, naming, reading } = ctx;
+  if (!sameAtoms(naming.parent.atoms, reading.studentParent.atoms)) {
+    return null;
+  }
+  const placed = reading.prefixAtoms.filter((o) => o.prefix === index);
+  const part = placed.length === 0 ? null
+    : (naming.parts || []).find((p) => p.kind === 'prefix' && placed[0].atoms.every((id) => (p.atoms || []).includes(id)));
+  return part ? { right: part.text, student: wordsOf(tree, tree.items[index]), placed } : null;
+}
+
+/** The branch-name checks (R-5c3b2), in order, each with its code (branchNames()). */
+const BRANCH_NAME_CHECKS = Object.freeze([['ACYL_NAME', acylName], ['ACYL_CHAIN', acylChain],
+  ['BRANCH_RING_NUMBERING', branchRingNumbering]]);
+
+/**
+ * The branch-name rules (R-5c3b2, file header «Aldehydes and ketones»),
+ * after the parent's rules 1–4 and before rule 5, ALPHABETICAL_ORDER, which
+ * reads the branches' words: a parent-level prefix whose words are not the
+ * engine's for the same atoms (the naming's `prefix` part that holds them,
+ * on the same parent), then, from that prefix inward, the first of its
+ * branches whose own name is not the engine's — an acyl group's word
+ * (ACYL_NAME) or chain (ACYL_CHAIN), a ring's numbering
+ * (BRANCH_RING_NUMBERING). The messages quote the two words of that
+ * parent-level prefix, without its locants (the engine's from its naming,
+ * never retyped). Null when no check names the difference: the form rules
+ * that follow, or none (a branch in a style the engine does not offer, an
+ * alkyl branch's own chain or numbering: «No rule covers»).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function branchNames(ctx) {
+  const { tree } = ctx;
+  for (const [index, item] of tree.items.entries()) {
+    const found = prefixWords(ctx, index);
+    if (!found || found.right.normalize('NFC') === found.student.normalize('NFC')) {
+      continue;
+    }
+    const { placed, ...words } = found;
+    for (const node of prefixNodes(item)) {
+      const occurrence = ctx.occurrences.get(node);
+      for (const [code, check] of occurrence ? BRANCH_NAME_CHECKS : []) {
+        const data = check(ctx, node, occurrence, words);
+        if (data) {
+          return {
+            code,
+            data,
+            focus: node === item ? occurrenceIds(placed) : branchIds(ctx, occurrence),
+            tiles: [node.range[0], node.range[1]],
+          };
+        }
+      }
+    } // End of the loop over the branches of a parent-level prefix
+  } // End of the loop over the parent-level prefixes
+  return null;
+} // End of function branchNames()
+
+/**
  * Rule 5: two different branches of one list not in alphabetical order
  * (compareCitationKeys() over the student's words; identical branches are
  * rule 6's).
@@ -3096,8 +3647,40 @@ function needlessLocants(ctx) {
       tiles: rangeOf([...located, ...own]),
     };
   } // End of the loop over the branch chains
-  return null;
+  return traditionalLocants(ctx);
 } // End of function needlessLocants()
+
+/**
+ * Rule 9 on a traditional name (R-5c3b2): locants on the prefixes of a
+ * template the engine writes without them — the student's name with every
+ * parent-level prefix locant left out is one of the engine's names
+ * (`2-fenilacetaldehído` → `fenilacetaldehído`, the engine's alternative of
+ * `2-feniletanal`; on `2-(3-metilfenil)acetaldehído` the engine writes the
+ * 2). The message quotes that name; its step is «Monta el nombre», which
+ * lists it among the other valid forms.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function traditionalLocants(ctx) {
+  const { tree, spec, naming } = ctx;
+  const located = tree.items.flatMap((item) => item.locants);
+  if (!spec.parent.template || located.length === 0) {
+    return null;
+  }
+  const bare = assemble({ ...tree, items: tree.items.map((item) => ({ ...item, locants: [] })) }).text.normalize('NFC');
+  const names = [naming.name, ...(naming.alternatives || []).map((alt) => alt.name)].map((name) => name.normalize('NFC'));
+  if (!names.includes(bare)) {
+    return null;
+  }
+  return {
+    code: 'NEEDLESS_LOCANTS',
+    data: { traditional: true, name: bare, student: assemble(tree).text },
+    focus: idsOf(null),
+    tiles: rangeOf(located),
+    step: 'assemble',
+  };
+} // End of function traditionalLocants()
 
 /**
  * What the suffix's groups are called in NEEDLESS_LOCANTS (DIAGNOSIS_PHRASES
@@ -3187,10 +3770,53 @@ function missingLocants(ctx) {
     return parentPrefixes.has(slot) ? !omitted.prefixes : true;
   });
   if (!missing) {
-    return null;
+    return carbonylLocant(ctx);
   }
-  return { code: 'MISSING_LOCANTS', data: { name: naming.name }, focus: idsOf(null), tiles: [missing.tiles[0], missing.tiles[1]] };
+  return {
+    code: 'MISSING_LOCANTS', data: { branch: false, name: naming.name }, focus: idsOf(null), tiles: [missing.tiles[0], missing.tiles[1]],
+  };
 } // End of function missingLocants()
+
+/**
+ * Rule 9 inside a branch (R-5c3b2): the locant 1 before `carbonil` left out
+ * where the engine writes it — on a ring with a multiple bond or prefixes of
+ * its own (render.js ringCarbonylTokens(); shortForm() is the reverse case,
+ * a needless 1 on a bare ring): `(ciclohex-2-enocarbonil)` →
+ * `(ciclohex-2-eno-1-carbonil)`, `(2-metilciclohexanocarbonil)`. The right
+ * form is the student's parent-level prefix with a number tile 1 put before
+ * `carbonil`, and only when it is the engine's own words for that prefix
+ * (prefixWords(); review of phase I-51c3b2: the student's spelling alone would
+ * tell `(ciclohexa-1,3,5-trienocarbonil)` to write a 1 where the engine
+ * writes `benzoil`); the step, «Nombra los sustituyentes», which says the
+ * ring is numbered from the carbon bonded to the C=O.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function carbonylLocant(ctx) {
+  const { tree } = ctx;
+  for (const { chain, top, owner } of ctx.chains) {
+    const ownPrefixes = Boolean(owner && owner.items.length > 0);
+    if (!top || chain.fv === null || tree.tiles[chain.fv].id !== RING_CARBONYL_ID || chain.fvLocants.length > 0
+      || (chain.segments.length === 0 && !ownPrefixes)) {
+      continue;
+    }
+    const grown = { ...tree, tiles: [...tree.tiles, tileById(tileId('num', 1))] };
+    const fixed = replaceNode(top, chain, { ...chain, fvLocants: [grown.tiles.length - 1] });
+    const words = prefixWords(ctx, tree.items.indexOf(top));
+    if (!words || wordsOf(grown, fixed).normalize('NFC') !== words.right.normalize('NFC')) {
+      continue; // The engine writes that branch otherwise (a benzene ring spelt with `ciclo` is `benzoil`; review of I-51c3b2).
+    }
+    return {
+      code: 'MISSING_LOCANTS',
+      data: { branch: true, right: itemText(grown, fixed), student: itemText(tree, top) },
+      focus: idsOf(null),
+      tiles: [chain.fv, chain.fv + 1],
+      step: 'substituents',
+    };
+  } // End of the loop over the branch chains
+  return null;
+} // End of function carbonylLocant()
 
 /**
  * Rule 10: a chain whose `ino` segment is written before its `eno` segment.
@@ -3442,10 +4068,11 @@ function acrossOxygen(ctx, draft) {
 } // End of function acrossOxygen()
 
 /**
- * The checks of rules 5–11, in order. Later families insert theirs.
+ * The checks of rules 5–11, in order, the branch-name rules (R-5c3b2) first.
+ * Later families insert theirs.
  */
-const FORM_RULES = Object.freeze([alphabeticalOrder, ungrouped, multiplierKind, locantOrder, needlessLocants, missingLocants,
-  segmentOrder, oldStyle, letterLocants]);
+const FORM_RULES = Object.freeze([branchNames, alphabeticalOrder, ungrouped, multiplierKind, locantOrder, needlessLocants,
+  missingLocants, segmentOrder, oldStyle, letterLocants]);
 
 /**
  * The first rule that applies to one reading of the name: an alcohol's OH
@@ -3870,6 +4497,7 @@ export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
     tree: name.tree,
     spec: name.spec,
     naming,
+    style,
     molecule,
     adj,
     lists: prefixLists(name.tree),

@@ -119,8 +119,7 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   `(2-oxoetil)`, `(4-formilciclohexil)`), their left-out locants searched
   (`butanona` → `butan-2-ona`); a ketone's C=O on a bare end carbon is
   `invalid` (CARBONYL_POSITION), and the diagnosis keeps the rules that
-  hold for a carbonyl name, with deliberate nulls under its «Aldehydes and
-  ketones» header. R-5c2 (phase I-51c2) is done: the «Grupos» row's
+  hold for a carbonyl name. R-5c2 (phase I-51c2) is done: the «Grupos» row's
   `acetil` and the acyl endings `oil` (after a chain's ending: `propanoil`,
   `(but-2-enoil)`, `(2-metilpropanoil)`) and `carbonil` (after a ring's:
   `(ciclohexanocarbonil)`, `(ciclohex-2-eno-1-carbonil)`), and the
@@ -128,8 +127,8 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   acyl prefixes on chains and rings and inside compound branches as the
   engine writes them, their left-out locants searched; an acyl on a
   hydrocarbon ring, `benceno` or a template reads as the ketone it is
-  (`otherName`), and the diagnosis keeps the rules that hold for a branch,
-  with deliberate nulls. R-5c3a (phase I-51c3a) is done: the «Nombres
+  (`otherName`), and the diagnosis keeps the rules that hold for a branch.
+  R-5c3a (phase I-51c3a) is done: the «Nombres
   tradicionales» row's retained carbonyl names (`formaldehído`,
   `acetaldehído`, `acetona`, `acetofenona`, `fenilacetaldehído` on an open
   chain; `ftalaldehído`, `isoftalaldehído`, `tereftalaldehído` on benzene,
@@ -146,11 +145,14 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   principal C=O written `oxo`, `formil` or an acyl prefix, `2-oxopropano`,
   `acetilbenceno`; the ring or chain the C=O groups choose; another chain
   with more C=O groups), and P0, N0 and the suffix's needless locants speak
-  of «grupos –CHO» / «grupos C=O», each with its «Ver el paso» step. Next is
-  R-5c3b2 (phase I-51c3b2): the acyl-word and `acetaldehído`-phenyl messages
-  (`etanoil` for `acetil`, `(1-oxoetil)`, `(ciclohex-2-enocarbonil)`,
-  `2-fenilacetaldehído`, `2-(5-metilfenil)acetaldehído`), still deliberate
-  nulls.
+  of «grupos –CHO» / «grupos C=O», each with its «Ver el paso» step.
+  R-5c3b2 (phase I-51c3b2) is done, and with it R-5c: `diagnose.js` names a
+  branch's own name before the alphabetical order (an acyl word, `etanoil`
+  for `acetil`, `(1-oxopropil)` for `propanoil`; an acyl chain,
+  `(3-metilpropanoil)` for `butanoil`; a ring branch numbered otherwise,
+  `(6-metilbenzoil)`, `2-(5-metilfenil)acetaldehído`, an alcohol's too), the
+  1 left out before `carbonil` and a locant on `fenilacetaldehído`, each
+  with its «Ver el paso» step. Next is R-5d (phase I-51d): acids.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

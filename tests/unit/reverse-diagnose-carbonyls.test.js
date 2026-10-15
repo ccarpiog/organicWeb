@@ -15,8 +15,13 @@
  * the step «Ver el paso» opens; the student's chain beside the parent, the
  * focus and the tiles; the explanation step each opens says the rule; the
  * ether side told from the C=O groups; a sweep over the carbonyl fixture
- * names (every suffix rewritten as `oxo` or `formil` prefixes); the
- * deliberate nulls left to phase I-51c3b2; controls; the drafts.
+ * names (every suffix rewritten as `oxo` or `formil` prefixes); controls; the
+ * drafts. Phase I-51c3b2 (R-5c3b2): a branch's own name, the last
+ * deliberate nulls of I-51c2 and I-51c3a — an acyl group's word (ACYL_NAME)
+ * or chain (ACYL_CHAIN), a ring branch's numbering (BRANCH_RING_NUMBERING),
+ * the locant 1 before `carbonil` left out (MISSING_LOCANTS) and a locant on
+ * `fenilacetaldehído` (NEEDLESS_LOCANTS) — with their steps, the engine's
+ * own spellings unchanged, the nulls that stay, and the drafts.
  */
 
 import { test } from 'node:test';
@@ -36,6 +41,9 @@ import { seq, readFixtures, isCarbonyl, isCarbonylName } from './reverse-words.j
 /** The codes only an aldehyde or a ketone gives (diagnose.js header «Aldehydes and ketones»). */
 const CARBONYL_CODES = Object.freeze(['CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON', 'CARBONYL_PREFIX',
   'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS']);
+
+/** The branch-name codes of phase I-51c3b2 (diagnose.js header «Aldehydes and ketones», branchNames()). */
+const BRANCH_CODES = Object.freeze(['ACYL_NAME', 'ACYL_CHAIN', 'BRANCH_RING_NUMBERING']);
 
 /**
  * Reads a name text (the tokenizer gives its tiles) or space-separated tile
@@ -434,24 +442,244 @@ test('a sweep over the carbonyl fixture names: the suffix as `oxo` or `formil` p
   assert.equal(count, SWEEP_COUNT);
 }); // End of test 'a sweep over the carbonyl fixture names…'
 
-test('the deliberate nulls left to phase I-51c3b2: acyl words the engine does not write, a phenyl on `acetaldehído`', () => {
-  for (const [words, engine] of [
-    ['2 et ano oil hept ano al', '2-acetilheptanal'], // `etanoil` for `acetil`
-    ['3 START 1 oxo et il END pent ano 2 4 di ona', '3-acetilpentano-2,4-diona'], // `(1-oxoetil)` for `acetil`
-    ['2 START 1 oxo prop il END hept ano al', '2-propanoilheptanal'], // `(1-oxopropil)` for `propanoil`
-    ['2 START 3 met il prop ano oil END hept ano al', '2-butanoilheptanal'], // the acyl's own chain
-    ['2 START 2 et il prop ano oil END hept ano al', '2-(2-metilbutanoil)heptanal'],
-    ['2 START 6 met il benzoil END hept ano al', '2-(2-metilbenzoil)heptanal'], // the benzoyl numbered otherwise
-    ['2 START 6 met il ciclo hex ano 1 carbonil END hept ano al', '2-(2-metilciclohexano-1-carbonil)heptanal'],
-    ['2 ciclo hex ano 2 carbonil hept ano al', '2-(ciclohexanocarbonil)heptanal'], // a free-valence locant other than 1
-    ['2 ciclo hex 2 eno carbonil hept ano al', '2-(ciclohex-2-eno-1-carbonil)heptanal'], // the locant 1 left out
-    ['2 fenil acetaldehído', '2-feniletanal'], // the locant the engine leaves out
-    ['2 START 5 met il fenil END acetaldehído', '2-(3-metilfenil)etanal'], // the phenyl numbered otherwise
-  ]) {
-    const verdict = readName(seq(words));
-    assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis], ['otherName', engine, null], words);
+/** The first sentence of ACYL_NAME for an acyl group's C=O written `oxo` on an alkyl group, by the ending its word takes. */
+const ACYL_OXO = (ending) => 'Una rama que se une por el carbono de un C=O es un grupo acilo: su C=O no se nombra con el prefijo '
+  + `«oxo», sino con ${ending}. `;
+
+/** ACYL_OXO's ending after a chain. */
+const OIL = 'la terminación «-oil» (salvo «formil», de 1 carbono, y «acetil», de 2)';
+
+/** The rule BRANCH_RING_NUMBERING states, before the direction (if any). */
+const RING_FROM = 'Un anillo que va en una rama se numera empezando por el carbono por el que se une, que es el 1';
+
+/**
+ * One case per branch-name mistake (phase I-51c3b2: the former deliberate
+ * nulls of I-51c2 and I-51c3a, then the variants): [tile words or name, the
+ * engine's name, code, the step «Ver el paso» opens, message].
+ */
+const BRANCH_CASES = [
+  // 1. ACYL_NAME: `etanoil` for `acetil` (and `metanoil` for `formil`, inside a ring branch: the parent-level prefix quoted).
+  ['2 et ano oil hept ano al', '2-acetilheptanal', 'ACYL_NAME', 'substituents', 'El grupo acilo de 2 carbonos (CH₃–CO–) tiene '
+    + 'nombre propio, que la IUPAC (2013) prefiere: «acetil», no «etanoil».'],
+  ['2 START 2 met ano oil ciclo hex il END prop ano di al', '2-(2-formilciclohexil)propanodial', 'ACYL_NAME', 'substituents',
+    'El grupo acilo de 1 carbono (H–CO–, un –CHO) tiene nombre propio, que la IUPAC (2013) prefiere: «formil», no «metanoil». '
+    + 'Se escribe «2-formilciclohexil», no «2-metanoilciclohexil».'],
+  // On a ring parent too.
+  ['2 et ano oil ciclo hex ano 1 ona', '2-acetilciclohexan-1-ona', 'ACYL_NAME', 'substituents', 'El grupo acilo de 2 carbonos '
+    + '(CH₃–CO–) tiene nombre propio, que la IUPAC (2013) prefiere: «acetil», no «etanoil».'],
+  // An acyl group's C=O written `oxo` on an alkyl group: `-oil`, or `-carbonil` when the C=O is bonded to a ring.
+  ['3 START 1 oxo et il END pent ano 2 4 di ona', '3-acetilpentano-2,4-diona', 'ACYL_NAME', 'substituents',
+    `${ACYL_OXO(OIL)}Se escribe «acetil», no «1-oxoetil».`],
+  ['2 START 1 oxo prop il END hept ano al', '2-propanoilheptanal', 'ACYL_NAME', 'substituents',
+    `${ACYL_OXO(OIL)}Se escribe «propanoil», no «1-oxopropil».`],
+  ['2 START ciclo hex il oxo met il END hept ano al', '2-(ciclohexanocarbonil)heptanal', 'ACYL_NAME', 'substituents',
+    `${ACYL_OXO('la terminación «-carbonil», porque está unido a un anillo («benzoil» con el benceno)')}Se escribe `
+    + '«ciclohexanocarbonil», no «ciclohexiloxometil».'],
+  // 2. ACYL_CHAIN: the acyl group's own chain, the longest from its C=O carbon (on a chain and on a ring parent).
+  ['2 START 3 met il prop ano oil END hept ano al', '2-butanoilheptanal', 'ACYL_CHAIN', 'substituents', 'La cadena de un grupo '
+    + 'acilo empieza en el carbono del C=O, que es el 1, y es la más larga posible: aquí tiene 4 carbonos, no 3. Se escribe '
+    + '«butanoil», no «3-metilpropanoil».'],
+  ['2 START 2 et il prop ano oil END hept ano al', '2-(2-metilbutanoil)heptanal', 'ACYL_CHAIN', 'substituents', 'La cadena de un '
+    + 'grupo acilo empieza en el carbono del C=O, que es el 1, y es la más larga posible: aquí tiene 4 carbonos, no 3. Se escribe '
+    + '«2-metilbutanoil», no «2-etilpropanoil».'],
+  ['2 START 3 met il prop ano oil END ciclo hex ano 1 ona', '2-butanoilciclohexan-1-ona', 'ACYL_CHAIN', 'substituents', 'La cadena '
+    + 'de un grupo acilo empieza en el carbono del C=O, que es el 1, y es la más larga posible: aquí tiene 4 carbonos, no 3. Se '
+    + 'escribe «butanoil», no «3-metilpropanoil».'],
+  // 3. BRANCH_RING_NUMBERING: a benzoyl, a ring carbonyl, a phenyl on `acetaldehído`, a phenoxy; the bare ring's 1 unwritten.
+  ['2 START 6 met il benzoil END hept ano al', '2-(2-metilbenzoil)heptanal', 'BRANCH_RING_NUMBERING', 'substituents',
+    `${RING_FROM}, y siguiendo en el sentido que da los números más bajos a sus sustituyentes: «2-metilbenzoil», no `
+    + '«6-metilbenzoil».'],
+  ['2 START 6 met il ciclo hex ano 1 carbonil END hept ano al', '2-(2-metilciclohexano-1-carbonil)heptanal',
+    'BRANCH_RING_NUMBERING', 'substituents', `${RING_FROM}, y siguiendo en el sentido que da los números más bajos a sus `
+    + 'sustituyentes: «2-metilciclohexano-1-carbonil», no «6-metilciclohexano-1-carbonil».'],
+  ['2 ciclo hex ano 2 carbonil hept ano al', '2-(ciclohexanocarbonil)heptanal', 'BRANCH_RING_NUMBERING', 'substituents',
+    `${RING_FROM}: «ciclohexanocarbonil», no «ciclohexano-2-carbonil». En «ciclohexanocarbonil» ese 1 ni siquiera se escribe.`],
+  ['2 START 5 met il fenil END acetaldehído', '2-(3-metilfenil)etanal', 'BRANCH_RING_NUMBERING', 'substituents', `${RING_FROM}, `
+    + 'y siguiendo en el sentido que da los números más bajos a sus sustituyentes: «3-metilfenil», no «5-metilfenil».'],
+  ['1-(5-metilfenoxi)propan-2-ona', '1-(3-metilfenoxi)propan-2-ona', 'BRANCH_RING_NUMBERING', 'substituents', `${RING_FROM}, y `
+    + 'siguiendo en el sentido que da los números más bajos a sus sustituyentes: «3-metilfenoxi», no «5-metilfenoxi».'],
+  ['2 ciclo hex ano 2 il prop ano al', '2-ciclohexilpropanal', 'BRANCH_RING_NUMBERING', 'substituents', `${RING_FROM}: `
+    + '«ciclohexil», no «ciclohexan-2-il». En «ciclohexil» ese 1 ni siquiera se escribe.'],
+  // The ring's multiple bonds first; the alphabetical order when the locants tie.
+  ['2-(ciclohex-5-en-1-il)propanal', '2-(ciclohex-2-en-1-il)propanal', 'BRANCH_RING_NUMBERING', 'substituents', `${RING_FROM}, `
+    + 'y siguiendo en el sentido que da los números más bajos a sus enlaces dobles y triples: «ciclohex-2-en-1-il», no '
+    + '«ciclohex-5-en-1-il».'],
+  ['2-(6-cloro-2-metilfenil)propanal', '2-(2-cloro-6-metilfenil)propanal', 'BRANCH_RING_NUMBERING', 'substituents', `${RING_FROM}, `
+    + 'y siguiendo en el sentido que da los números más bajos a sus sustituyentes y, con los mismos números, el más bajo al que '
+    + 'va primero por orden alfabético: «2-cloro-6-metilfenil», no «6-cloro-2-metilfenil».'],
+  // 4. Rule 9: the locant 1 before `carbonil` the engine writes, left out; a locant on `fenilacetaldehído`.
+  ['2 ciclo hex 2 eno carbonil hept ano al', '2-(ciclohex-2-eno-1-carbonil)heptanal', 'MISSING_LOCANTS', 'substituents', 'Falta un '
+    + 'número dentro de la rama: cuando el anillo lleva enlaces dobles o sustituyentes, el carbono unido al C=O, que es el 1, '
+    + 'lleva su número delante de «carbonil»: «2-(ciclohex-2-eno-1-carbonil)», no «2-(ciclohex-2-enocarbonil)».'],
+  ['2 START 2 met il ciclo hex ano carbonil END hept ano al', '2-(2-metilciclohexano-1-carbonil)heptanal', 'MISSING_LOCANTS',
+    'substituents', 'Falta un número dentro de la rama: cuando el anillo lleva enlaces dobles o sustituyentes, el carbono unido '
+    + 'al C=O, que es el 1, lleva su número delante de «carbonil»: «2-(2-metilciclohexano-1-carbonil)», no '
+    + '«2-(2-metilciclohexanocarbonil)».'],
+  ['2 fenil acetaldehído', '2-feniletanal', 'NEEDLESS_LOCANTS', 'assemble', 'El nombre tradicional «fenilacetaldehído» se escribe '
+    + 'sin números: «fenilacetaldehído», no «2-fenilacetaldehído».'],
+];
+
+test('a branch\'s own name (I-51c3b2): the acyl words, the ring branches\' numbering, `carbonil`\'s 1, `fenilacetaldehído`', () => {
+  const seen = new Set();
+  for (const [words, engine, code, opened, message] of BRANCH_CASES) {
+    const verdict = read(words);
+    const step = assertCarbonylDiagnosis(verdict, words);
+    const d = verdict.diagnosis;
+    assert.equal(verdict.name, engine, words);
+    assert.deepEqual([d.code, d.rule, d.traceRule], [code, DIAGNOSES[code].rule, null], `${words}: ${d.message}`);
+    assert.equal(step.id, opened, `${words}: the step «Ver el paso» opens`);
+    assert.equal(d.message, message, words);
+    // The student's chain (or ring) is the parent: the mistake is inside a branch.
+    const legend = verdict.naming.structure.parentKind === 'ring' ? ['Cadena principal (el anillo)', 'Tu anillo (es el mismo)']
+      : ['Cadena principal', 'Tu cadena (es la misma)'];
+    assert.deepEqual(diagnosisLegend(d).map((e) => e.text), legend, words);
+    seen.add(code);
+  } // End of the loop over the cases
+  assert.deepEqual(BRANCH_CODES.filter((code) => !seen.has(code)), [], 'every branch-name code has a case');
+}); // End of test 'a branch's own name (I-51c3b2)…'
+
+test('the branch-name rules point at the branch: its atoms and bonds, its tiles; the step says the rule', () => {
+  // A parent-level prefix: every atom of the benzoyl and the bond to the chain; the prefix's tiles, locant included.
+  const benzoyl = read('2 START 6 met il benzoil END hept ano al');
+  const placed = benzoyl.prefixAtoms[0];
+  assert.deepEqual(benzoyl.diagnosis.focus, { atoms: placed.atoms, bonds: [placed.bond, ...placed.bonds] });
+  assert.deepEqual(benzoyl.diagnosis.tiles, [0, 7], '«2-(6-metilbenzoil)»');
+  // Inside a compound branch: the formyl's carbon and oxygen, its two bonds; the tiles of `2-metanoil`.
+  const nested = read('2 START 2 met ano oil ciclo hex il END prop ano di al');
+  const d = nested.diagnosis;
+  assert.deepEqual(d.focus.atoms.map((id) => nested.molecule.atoms.get(id).element).sort(), ['C', 'O']);
+  assert.equal(d.focus.bonds.length, 2);
+  assert.deepEqual(d.tiles, [2, 6], '«2-metanoil»');
+  // MISSING_LOCANTS inside the branch points at `carbonil`; NEEDLESS_LOCANTS on the template at the locant written.
+  assert.deepEqual(read('2 ciclo hex 2 eno carbonil hept ano al').diagnosis.tiles, [5, 6], '«carbonil»');
+  assert.deepEqual(read('2 fenil acetaldehído').diagnosis.tiles, [0, 1], '«2»');
+  /**
+   * The text of the step «Ver el paso» opens for a name.
+   *
+   * @param {string} words - Tile words.
+   * @returns {string} The step's paragraphs, joined.
+   */
+  const opened = (words) => {
+    const explanation = diagnosisExplanation(read(words), explain);
+    return explanation.steps[explanation.index].text.join(' ');
+  };
+  assert.match(opened('2 et ano oil hept ano al'), /Con 2 carbonos \(CH₃–CO–\) se llama «acetil»: es un nombre tradicional que la IUPAC \(2013\) prefiere a «etanoil»/);
+  assert.match(opened('2 START 1 oxo prop il END hept ano al'), /es un grupo acilo: su nombre acaba en «-oil» \(como «propanoil»\)/);
+  assert.match(opened('2 START 3 met il prop ano oil END hept ano al'), /del «ácido butanoico» sale «butanoil»/);
+  assert.match(opened('2 START 6 met il benzoil END hept ano al'), /Sus carbonos se numeran empezando por el que está unido al C=O, que es el 1/);
+  assert.match(opened('2 START 5 met il fenil END acetaldehído'), /Sus carbonos se numeran empezando por el que está unido a la cadena principal, que es el 1/);
+  assert.match(opened('2 ciclo hex 2 eno carbonil hept ano al'), /Los carbonos del anillo se numeran empezando por el que está unido al C=O, que es el 1/);
+  assert.match(opened('2 fenil acetaldehído'), /«fenilacetaldehído»: nombre tradicional/);
+}); // End of test 'the branch-name rules point at the branch…'
+
+test('the branch-name rules are no carbonyl\'s alone: an alcohol\'s ring branch numbered otherwise (formerly null)', () => {
+  // A ring branch hangs from a chain parent only beside a principal group: an alcohol's gets the same diagnosis (the alcohol
+  // tests never had this case; diagnose.js header «Aldehydes and ketones»).
+  const verdict = read('2-(5-metilfenil)etan-1-ol');
+  const step = assertCarbonylDiagnosis(verdict, '2-(5-metilfenil)etan-1-ol');
+  assert.deepEqual([verdict.name, verdict.diagnosis.code, step.id], ['2-(3-metilfenil)etan-1-ol', 'BRANCH_RING_NUMBERING',
+    'substituents']);
+  assert.equal(verdict.diagnosis.message, `${RING_FROM}, y siguiendo en el sentido que da los números más bajos a sus `
+    + 'sustituyentes: «3-metilfenil», no «5-metilfenil».');
+}); // End of test 'the branch-name rules are no carbonyl's alone…'
+
+test('the engine\'s own spellings stay correct or alternative; the near misses keep their rule or their null', () => {
+  for (const name of ['2-acetilheptanal', '3-acetilpentano-2,4-diona', '2-propanoilheptanal', '2-butanoilheptanal',
+    '2-(2-metilbutanoil)heptanal', '2-(2-metilbenzoil)heptanal', '2-(2,6-dimetilbenzoil)heptanal',
+    '2-(2-metilciclohexano-1-carbonil)heptanal', '2-(ciclohexanocarbonil)heptanal', '2-(ciclohex-2-eno-1-carbonil)heptanal',
+    '2-(2-formilciclohexil)propanodial', '2-acetilciclohexan-1-ona', '2-feniletanal', '2-(3-metilfenil)etanal',
+    '1-(3-metilfenoxi)propan-2-ona', '2-ciclohexilpropanal', '2-(ciclohex-2-en-1-il)propanal', '2-(2-cloro-6-metilfenil)propanal',
+    '2-(3-metilfenil)etan-1-ol']) {
+    const verdict = read(name);
+    assert.equal(verdict.kind, 'correct', `${name}: ${verdict.message}`);
+    assert.ok(!('diagnosis' in verdict), name);
   }
-}); // End of test 'the deliberate nulls left to phase I-51c3b2…'
+  // The traditional forms, `fenil` and `acetaldehído` as two tiles too.
+  for (const [words, name] of [['fenilacetaldehído', '2-feniletanal'], ['fenil acetaldehído', '2-feniletanal'],
+    ['2-(3-metilfenil)acetaldehído', '2-(3-metilfenil)etanal']]) {
+    const verdict = read(words);
+    assert.deepEqual([verdict.kind, verdict.name], ['alternative', name], words);
+  }
+  // A needless 1 before `carbonil` on a bare ring stays NEEDLESS_LOCANTS (the ring is numbered from its carbon 1).
+  assert.equal(read('2 ciclo hex ano 1 carbonil hept ano al').diagnosis.code, 'NEEDLESS_LOCANTS');
+  // No rule covers an alkyl branch's own numbering, nor a branch in a style the engine does not offer here (the ring
+  // numbered as the engine does): null, as for a hydrocarbon (diagnose.js header «No rule covers»).
+  for (const [name, engine] of [['3-(butan-3-il)pentano-2,4-diona', '3-(butan-2-il)pentano-2,4-diona'],
+    ['2-[4-(1,1-dimetiletil)fenil]propanal', '2-(4-tert-butilfenil)propanal']]) {
+    const verdict = read(name);
+    assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis], ['otherName', engine, null], name);
+  }
+}); // End of test 'the engine's own spellings stay correct or alternative…'
+
+/** The sentence BRANCH_RING_NUMBERING adds for a benzene ring written with `ciclo` (review of phase I-51c3b2). */
+const KEKULE = ' Ese anillo es un benceno: sus enlaces dobles no cuentan para numerar.';
+
+test('review of I-51c3b2: a benzene ring in a branch is a benzene whatever its spelling, its Kekulé bonds never count', () => {
+  // [name, code or null, message]: both alternating-bond patterns, `fenil`, a benzoyl spelt with `ciclo`, and their mirrors.
+  for (const [name, code, message] of [
+    ['2-(6-metilciclohexa-1,3,5-trien-1-il)heptanal', 'BRANCH_RING_NUMBERING', `${RING_FROM}, y siguiendo en el sentido que da `
+      + `los números más bajos a sus sustituyentes: «2-metilfenil», no «6-metilciclohexa-1,3,5-trien-1-il».${KEKULE}`],
+    ['2-(6-metilciclohexa-2,4,6-trien-1-il)heptanal', 'BRANCH_RING_NUMBERING', `${RING_FROM}, y siguiendo en el sentido que da `
+      + `los números más bajos a sus sustituyentes: «2-metilfenil», no «6-metilciclohexa-2,4,6-trien-1-il».${KEKULE}`],
+    ['2-(6-metilfenil)heptanal', 'BRANCH_RING_NUMBERING', `${RING_FROM}, y siguiendo en el sentido que da los números más bajos `
+      + 'a sus sustituyentes: «2-metilfenil», no «6-metilfenil».'],
+    ['2-(6-metilciclohexa-1,3,5-trieno-1-carbonil)heptanal', 'BRANCH_RING_NUMBERING', `${RING_FROM}, y siguiendo en el sentido `
+      + `que da los números más bajos a sus sustituyentes: «2-metilbenzoil», no «6-metilciclohexa-1,3,5-trieno-1-carbonil».${KEKULE}`],
+    // Numbered as the engine numbers the benzene: no rule names a benzene written with `ciclo` in a branch (diagnose.js header).
+    ['2-(2-metilciclohexa-1,3,5-trien-1-il)heptanal', null, null],
+    ['2-(2-metilciclohexa-2,4,6-trien-1-il)heptanal', null, null],
+    ['2-(ciclohexa-1,3,5-trieno-1-carbonil)heptanal', null, null],
+    // The benzoyl's 1 before `carbonil` is no missing locant: the engine writes `benzoil`.
+    ['2-(ciclohexa-1,3,5-trienocarbonil)heptanal', null, null],
+  ]) {
+    const verdict = read(name);
+    assert.equal(verdict.kind, 'otherName', name);
+    if (code === null) {
+      assert.equal(verdict.diagnosis, null, `${name}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+      continue;
+    }
+    const step = assertCarbonylDiagnosis(verdict, name);
+    assert.deepEqual([verdict.diagnosis.code, step.id, verdict.diagnosis.message], [code, 'substituents', message], name);
+  } // End of the loop over the benzene branches
+  for (const name of ['2-(2-metilfenil)heptanal', '2-(2-metilbenzoil)heptanal', '2-benzoilheptanal']) {
+    assert.equal(read(name).kind, 'correct', name);
+  }
+}); // End of test 'review of I-51c3b2: a benzene ring in a branch…'
+
+test('review of I-51c3b2: the first criterion that differs names the reason; a tie the words decide stands in the student\'s own words', () => {
+  const alphabetical = `${RING_FROM}, y siguiendo en el sentido que da los números más bajos a sus sustituyentes y, con los mismos `
+    + 'números, el más bajo al que va primero por orden alfabético: «2-tert-butil-6-clorociclohexa-2,5-dien-1-il», no ';
+  for (const [name, message] of [
+    // The bonds (2,5) and the substituents (2,6) tie both ways; `cloro` before `dimetiletil` in the student's words: it stands.
+    ['2-[2-cloro-6-(1,1-dimetiletil)ciclohexa-2,5-dien-1-il]propanal', null],
+    // The mirror: numbered as the engine numbers it, in a prefix style the engine does not offer here.
+    ['2-[6-cloro-2-(1,1-dimetiletil)ciclohexa-2,5-dien-1-il]propanal', null],
+    // In the engine's words `tert-butil` (b) goes before `cloro`: the alphabetical tie-break, both orders of writing.
+    ['2-(2-cloro-6-tert-butilciclohexa-2,5-dien-1-il)propanal', `${alphabetical}«2-cloro-6-tert-butilciclohexa-2,5-dien-1-il».`],
+    ['2-(6-tert-butil-2-clorociclohexa-2,5-dien-1-il)propanal', `${alphabetical}«6-tert-butil-2-clorociclohexa-2,5-dien-1-il».`],
+  ]) {
+    const verdict = read(name);
+    assert.deepEqual([verdict.kind, verdict.name], ['otherName', '2-(2-tert-butil-6-clorociclohexa-2,5-dien-1-il)propanal'], name);
+    if (message === null) {
+      assert.equal(verdict.diagnosis, null, `${name}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+      continue;
+    }
+    assertCarbonylDiagnosis(verdict, name);
+    assert.deepEqual([verdict.diagnosis.code, verdict.diagnosis.message], ['BRANCH_RING_NUMBERING', message], name);
+  } // End of the loop over the ties
+  assert.equal(read('2-(2-tert-butil-6-clorociclohexa-2,5-dien-1-il)propanal').kind, 'correct');
+  // ACYL_CHAIN: a chain with more multiple bonds wins, as long; two chains that tie but for their prefixes' words: null.
+  const bonds = read('2-(2-etenilbutanoil)heptanal');
+  assertCarbonylDiagnosis(bonds, '2-(2-etenilbutanoil)heptanal');
+  assert.deepEqual([bonds.diagnosis.code, bonds.diagnosis.message], ['ACYL_CHAIN', 'La cadena de un grupo acilo empieza en el '
+    + 'carbono del C=O, que es el 1, y se elige con las mismas reglas que la cadena principal. Se escribe «2-etilbut-3-enoil», no '
+    + '«2-etenilbutanoil».']);
+  const tie = read('2-[4-bromo-2-(2-cloroetil)butanoil]heptanal');
+  assert.deepEqual([tie.kind, tie.name, tie.diagnosis], ['otherName', '2-[2-(2-bromoetil)-4-clorobutanoil]heptanal', null]);
+  for (const name of ['2-(2-etilbut-3-enoil)heptanal', '2-[2-(2-bromoetil)-4-clorobutanoil]heptanal']) {
+    assert.equal(read(name).kind, 'correct', name);
+  }
+}); // End of test 'review of I-51c3b2: the first criterion that differs…'
 
 test('controls: correct carbonyl names have no diagnosis; a mistake the earlier rules name stays theirs', () => {
   for (const name of ['butanal', 'pentan-2-ona', 'propanona', 'pentanodial', 'ciclohexanona', 'ciclohexanocarbaldehído',
@@ -510,3 +738,39 @@ test('the drafts of the aldehyde and ketone rules: their place among the rules, 
   assert.equal(ending({ ending: 'carbaldehído', benzaldehyde: true }), 'con «benzaldehído» (el benceno con un grupo –CHO)');
   assert.deepEqual([DIAGNOSIS_PHRASES.what.aldehyde, DIAGNOSIS_PHRASES.what.ketones], ['el grupo –CHO', 'los grupos C=O']);
 }); // End of test 'the drafts of the aldehyde and ketone rules…'
+
+test('the drafts of the branch-name rules (I-51c3b2): their place before ALPHABETICAL_ORDER, their step, every variant renders', () => {
+  assert.deepEqual(BRANCH_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]),
+    [[5, 'substituents'], [5, 'substituents'], [5, 'substituents']]);
+  // After the parent's rules (the ring numbering last), before the alphabetical order, which reads the branches' words.
+  const at = (code) => DIAGNOSIS_CODES.indexOf(code);
+  assert.deepEqual(DIAGNOSIS_CODES.slice(at('RING_NUMBERING') + 1, at('ALPHABETICAL_ORDER')), BRANCH_CODES);
+  for (const code of BRANCH_CODES) {
+    const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);
+    assert.match(text, /^[«¿A-ZÁÉÍÓÚ].*\.$/u, code);
+    assert.doesNotMatch(text, /undefined|null|NaN/, code);
+  }
+  const { ACYL_NAME, ACYL_CHAIN, BRANCH_RING_NUMBERING, NEEDLESS_LOCANTS, MISSING_LOCANTS } = DIAGNOSIS_TEXTS;
+  // ACYL_NAME: the named acyl group alone, or inside a parent-level prefix (quoted too).
+  assert.equal(ACYL_NAME({ carbons: 2, word: 'acetil', written: 'etanoil', right: '4-acetilfenil', student: '4-etanoilfenil' }),
+    'El grupo acilo de 2 carbonos (CH₃–CO–) tiene nombre propio, que la IUPAC (2013) prefiere: «acetil», no «etanoil». Se '
+    + 'escribe «4-acetilfenil», no «4-etanoilfenil».');
+  assert.deepEqual(Object.keys(DIAGNOSIS_PHRASES.acylGroup), ['1', '2']);
+  // ACYL_CHAIN: a chain as long as the engine's, chosen otherwise.
+  assert.equal(ACYL_CHAIN({ longer: false, length: 4, studentLength: 4, right: 'X', student: 'Y' }), 'La cadena de un grupo acilo '
+    + 'empieza en el carbono del C=O, que es el 1, y se elige con las mismas reglas que la cadena principal. Se escribe «X», no «Y».');
+  // BRANCH_RING_NUMBERING: every reason renders; a bare ring has none, and its 1 is not written.
+  assert.deepEqual(Object.keys(DIAGNOSIS_PHRASES.branchRingReasons), ['lower', 'bonds', 'bondsOnly', 'alphabetical']);
+  assert.ok(BRANCH_RING_NUMBERING({ reason: 'lower', unwritten: false, benzene: true, right: 'X', student: 'Y' })
+    .endsWith('«X», no «Y». Ese anillo es un benceno: sus enlaces dobles no cuentan para numerar.'));
+  for (const reason of Object.keys(DIAGNOSIS_PHRASES.branchRingReasons)) {
+    assert.match(BRANCH_RING_NUMBERING({ reason, unwritten: false, right: 'X', student: 'Y' }),
+      new RegExp(`que es el 1, y siguiendo en el sentido que ${DIAGNOSIS_PHRASES.branchRingReasons[reason]}: «X», no «Y»\\.$`), reason);
+  }
+  // Rule 9's new variants: a traditional name without locants, the 1 before `carbonil`; the old ones unchanged.
+  assert.equal(NEEDLESS_LOCANTS({ traditional: true, name: 'X', student: '2-X' }), 'El nombre tradicional «X» se escribe sin '
+    + 'números: «X», no «2-X».');
+  assert.match(MISSING_LOCANTS({ branch: true, right: 'X', student: 'Y' }), /^Falta un número dentro de la rama: .*: «X», no «Y»\.$/);
+  assert.equal(MISSING_LOCANTS({ branch: false, name: 'X' }), 'Faltan números: hay que decir en qué carbono va cada rama y cada '
+    + 'enlace doble o triple, como en «X».');
+}); // End of test 'the drafts of the branch-name rules (I-51c3b2)…'

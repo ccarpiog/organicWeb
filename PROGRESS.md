@@ -92,14 +92,14 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-51b | v4 R-5b Ethers | same, "R-5b" | done — split into I-51b1, I-51b2 | — | — |
 | I-51b1 | v4 R-5b1 Alkoxy and phenoxy prefixes (`oxi` tile, automatic contraction), `anisol`, search, round trips, Ayuda line, e2e | same, "R-5b" | done — `docs/progress-archive/i-51b1.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-51b1.md` |
 | I-51b2 | v4 R-5b2 Ether class names (`etil metil éter`, `dietil éter`), ether diagnosis messages (fill the I-51b1 nulls) | same, "R-5b" | done — `docs/progress-archive/i-51b2.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51b2.md` |
-| I-51c | v4 R-5c Aldehydes and ketones | same, "R-5c" | split into I-51c1, I-51c2, I-51c3 | — | — |
+| I-51c | v4 R-5c Aldehydes and ketones | same, "R-5c" | done — split into I-51c1, I-51c2, I-51c3 | — | — |
 | I-51c1 | v4 R-5c1 Suffixes `al`/`ona`/`carbaldehído`, `benzaldehído`, `oxo`/`formil` prefixes, search, round trips, deliberate «Aldehydes and ketones» nulls, e2e | same, "R-5c" | done — `docs/progress-archive/i-51c1.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51c1.md` |
 | I-51c2 | v4 R-5c2 Acyl prefixes (`acetil`, `propanoil`, `benzoil`, `(4-metilbenzoil)`, `ciclohexanocarbonil`) | same, "R-5c" | done — `docs/progress-archive/i-51c2.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-51c2.md` |
-| I-51c3 | v4 R-5c3 Retained carbonyl templates, aldehyde/ketone diagnosis (fill the I-51c1/c2 nulls), Ayuda line | same, "R-5c" | split into I-51c3a, I-51c3b | — | — |
+| I-51c3 | v4 R-5c3 Retained carbonyl templates, aldehyde/ketone diagnosis (fill the I-51c1/c2 nulls), Ayuda line | same, "R-5c" | done — split into I-51c3a, I-51c3b | — | — |
 | I-51c3a | v4 R-5c3a Retained carbonyl templates (`formaldehído` … `tereftalaldehído`), Ayuda carbonyl line, e2e | same, "R-5c" | done — `docs/progress-archive/i-51c3a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-51c3a.md` |
-| I-51c3b | v4 R-5c3b Aldehyde/ketone diagnosis messages (fill the I-51c1/c2/c3a nulls), e2e | same, "R-5c" | split into I-51c3b1, I-51c3b2 | — | — |
+| I-51c3b | v4 R-5c3b Aldehyde/ketone diagnosis messages (fill the I-51c1/c2/c3a nulls), e2e | same, "R-5c" | done — split into I-51c3b1, I-51c3b2 | — | — |
 | I-51c3b1 | v4 R-5c3b1 Principal-group carbonyl diagnoses (suffix not the engine's, C=O parent, P0/N0, needless suffix locants), e2e | same, "R-5c" | done — `docs/progress-archive/i-51c3b1.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51c3b1.md` |
-| I-51c3b2 | v4 R-5c3b2 Acyl-word and `acetaldehído`-phenyl diagnoses (the last carbonyl nulls) | same, "R-5c" | queued | — | — |
+| I-51c3b2 | v4 R-5c3b2 Acyl-word and `acetaldehído`-phenyl diagnoses (the last carbonyl nulls) | same, "R-5c" | done — `docs/progress-archive/i-51c3b2.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51c3b2.md` |
 | I-51d | v4 R-5d Acids | same, "R-5d" | queued | — | — |
 | I-52a | v4 R-6a Esters | same, "R-6a" | queued | — | — |
 | I-52b | v4 R-6b Nitriles | same, "R-6b" | queued | — | — |
@@ -124,17 +124,15 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-51c3b2 (v4 R-5c3b2, design §15.8 row "R-5c"): the last deliberate «Aldehydes and ketones» nulls in
-`src/reverse/diagnose.js` (listed in its header under «phase R-5c3b2 words them» and in
-`docs/progress-archive/i-51c3b1.md` "Deliberate nulls left for I-51c3b2"): acyl words the engine does not write
-(`etanoil` for `acetil`, `(1-oxoetil)`, `(1-oxopropil)`, `(3-metilpropanoil)`, `(2-etilpropanoil)`,
-`(6-metilbenzoil)`, `(6-metilciclohexano-1-carbonil)`, `(ciclohexano-2-carbonil)`), the `1` before `carbonil` left
-out (`(ciclohex-2-enocarbonil)`), a phenyl on `acetaldehído` with its left-out locant written (`2-fenilacetaldehído`)
-or numbered otherwise (`2-(5-metilfenil)acetaldehído`); each with its «Ver el paso» step (pattern: I-51c3b1's codes in
-`tests/unit/reverse-diagnose-carbonyls.test.js`), the null assertions in that file, `reverse-acyls.test.js`
-(`acylWords`) and `reverse-carbonyl-templates.test.js` (NULLS) turned into coded ones; CLAUDE.md scope sentence to
-«R-5c done». Spec: design §15 + §13 — read from the working-tree `docs/design.md`; never edit or commit it (see
-*Open risks*). Risk high; worker opus. Commit by explicit paths. Then I-51d (R-5d, acids).
+Select I-51d (v4 R-5d, design §15.8 row "R-5d", status Pending): acids in «¿Cómo se dibuja?» — the `ácido` class
+word as a template slot (prefixes go after it: `ácido 2-(3-metilfenil)acético`), `oico`, `carboxílico`, `ácido
+benzoico`, `carboxi`; `ácido fórmico` / `acético` / `oxálico`, `ácido fenilacético`, the ftálico family. It is
+large: split it on selection like R-5c (e.g. I-51d1 tiles/parse/build/search and round trips for `ácido … oico` /
+`carboxílico` / `carboxi` on chains, rings and benceno; I-51d2 retained acid templates and Ayuda line; I-51d3 acid
+diagnosis messages, filling the acid nulls the carbonyl sweeps leave — 11 fixture / 21 generated / 6 acyl generated,
+see `docs/progress-archive/i-51c3b2.md` "Sweeps") and record the split in the table. Pattern: the R-5c phases
+(`i-51c1.md` … `i-51c3b2.md`). Spec: design §15 + §13 (acids I-33, `i-33.md`) — read from the working-tree
+`docs/design.md`; never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths.
 
 - **Builds on** the R-1 engine (`src/reverse/`: tiles, parser, assembler, tokenizer, `interpret.js`,
   `build.js`, `search.js`, `readName()` — `docs/progress-archive/i-47a.md` … `i-47c.md`), the dialog
@@ -143,9 +141,9 @@ or numbered otherwise (`2-(5-metilfenil)acetaldehído`); each with its «Ver el 
   ring diagnoses (`i-50d.md`), halogens, alcohols, phenol templates and alcohol diagnoses
   (`i-51a1.md` … `i-51a3b.md`), alkoxy/phenoxy prefixes and `anisol` (`i-51b1.md`), ether class
   names and the ether diagnosis (`i-51b2.md`), carbonyl suffixes, `oxo`/`formil` and `benzaldehído`
-  (`i-51c1.md`), acyl prefixes (`i-51c2.md`), carbonyl templates (`i-51c3a.md`), principal-group carbonyl
-  diagnoses (`i-51c3b1.md`); the forward naming engine already names every case
-  (v2 §13, v3 §14; aldehydes and ketones I-32, `i-32.md`).
+  (`i-51c1.md`), acyl prefixes (`i-51c2.md`), carbonyl templates (`i-51c3a.md`), carbonyl diagnoses
+  (`i-51c3b1.md`, `i-51c3b2.md`); the forward naming engine already names every case
+  (v2 §13, v3 §14; acids I-33, `i-33.md`).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6, §15.9).
@@ -304,15 +302,19 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   (I-51c3b1): codes CARBONYL_SENIORITY / KETONE_NOT_ALDEHYDE / ALDEHYDE_CARBON / CARBONYL_PREFIX / CARBONYL_PARENT /
   MORE_CARBONYL_GROUPS and –CHO/C=O N0 and NEEDLESS_LOCANTS phrases in `diagnose.js` (`seniorityRank()` imported from
   `naming/seniority.js`); tests `tests/unit/reverse-diagnose-carbonyls.test.js`, carbonyl case in `diagnosis.spec.js`.
+  Acyl-word / branch-ring diagnoses (I-51c3b2): rule-5 codes ACYL_NAME / ACYL_CHAIN / BRANCH_RING_NUMBERING
+  (`branchRingNumbering()`, `losesInOwnWords()`, `acylChainCriteria()`, `prefixWords()`) and branch MISSING_LOCANTS /
+  NEEDLESS_LOCANTS variants in `diagnose.js`; tests in the same file, `reverse-acyls.test.js`, acyl case in
+  `diagnosis.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51c1 … I-51c3a: see `docs/progress-archive/i-51c1.md` … `i-51c3a.md`.
-- I-51c3b1 (orchestrator, after the worker and again after the review fix): `npm test` 0 (2120) · `npm run check` 0
-  (193) · `npm run build` 0 · `npm run e2e -- --reporter=dot` 0 (533 passed, source + dist). Null sweeps: carbonyl
-  fixtures 119 → 11, generated 742 → 21, acyl fixtures 20 → 0, generated 362 → 6 (all left are acids or the
-  I-51c3b2 acyl words). Codex review ship-with-fixes, 1 should-fix, fixed (`docs/reviews/I-51c3b1.md`).
+- I-51c1 … I-51c3b1: see `docs/progress-archive/i-51c1.md` … `i-51c3b1.md`.
+- I-51c3b2 (orchestrator, after the worker and again after the review fix): `npm test` 0 (2125 → 2127) · `npm run
+  check` 0 (193) · `npm run build` 0 · `npm run e2e -- --reporter=dot` 0 (535 passed, source + dist, both runs).
+  Deliberate nulls 11/9/2 → 0; branch-internal sweep 156 nulls → 0 of 211; the carbonyl/acyl sweeps' leftover nulls
+  (11/21/0/6) are all acids (R-5d). Codex review ship-with-fixes, 2 should-fix, fixed (`docs/reviews/I-51c3b2.md`).
 
 ## Open risks / deviations
 
@@ -385,6 +387,16 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   engine alternative, not NEEDLESS_LOCANTS. Review should-fix (Codex): ALDEHYDE_CARBON fired on a ring-vs-chain
   parent choice (`2-(4-formilciclohexil)etanal`) — now only when the student's –CHO groups are the engine's atoms,
   else CARBONYL_PARENT; regressions both ways. Spanish drafts in the archive.
+- I-51c3b2 (acyl-word and branch-ring diagnoses; `docs/progress-archive/i-51c3b2.md`): new rule-5 codes ACYL_NAME,
+  ACYL_CHAIN, BRANCH_RING_NUMBERING (after the parent rules, before ALPHABETICAL_ORDER); BRANCH_RING_NUMBERING is not
+  carbonyl-only, so a misnumbered ring branch of any family (`2-(5-metilfenil)etan-1-ol`) is now diagnosed, and it
+  wins over LOCANT_ORDER when both apply. Review should-fixes (Codex): aromaticity read from the spelling (Kekulé
+  `ciclohexa-1,3,5-trien-1-il` branches told to number their double bonds) and a bond-locant tie skipping the
+  alphabetical safeguard — fixed (engine benzene recognition; first differing criterion; `losesInOwnWords()`); the same
+  tie flaw fixed in ACYL_CHAIN and a spelling-read branch MISSING_LOCANTS. Still null (open): a benzene written with
+  `ciclo` in a branch, numbered as the engine numbers it (no branch form of BENZENE_RING). Open wording question: the
+  ring-numbering message quotes the engine's form of the whole prefix, so it may also show a style change
+  («3-tert-butilfenil» for «5-(1,1-dimetiletil)fenil»). Spanish drafts in the archive.
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -398,6 +410,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-51c3a `eb30bb8`, pushed. I-51c3b1 committed and pushed right after this checkpoint (see `git log`).
+- I-51c3b1 `c748287`, pushed. I-51c3b2 committed and pushed right after this checkpoint (see `git log`).
   User's uncommitted paths, never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`,
   `.DS_Store`.
