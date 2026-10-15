@@ -215,7 +215,7 @@ test('halogens that fit nowhere, or left-out locants, stay in the dialog with th
   for (const phrase of ['«Grupos»', 'fluoro, cloro, bromo y yodo', 'orden alfabético', '2-bromo-1-cloropropano', '(2-cloroetil)']) {
     await expect(line).toContainText(phrase);
   }
-  await expect(help.locator('#help-name-to-drawing')).toContainText('y de sus derivados halogenados');
+  await expect(help.locator('#help-name-to-drawing')).toContainText('de sus derivados halogenados');
   await page.keyboard.press('Escape');
   expect(errors).toEqual([]);
 }); // End of test 'halogens that fit nowhere, or left-out locants, stay in the dialog…'

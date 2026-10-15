@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -8,7 +8,22 @@
  * halogen derivatives (`fluoro`, `cloro`, `bromo`, `yodo` prefixes, also
  * inside compound branches: `(2-cloroetil)`) and their alcohols (R-5a2: the
  * suffix `ol` on chains, rings and `benceno`, `fenol`, the prefix `hidroxi`,
- * the closing-bond locant `1(6)`). Pure, no DOM.
+ * the closing-bond locant `1(6)`; R-5a3a: the retained phenols `cresol`,
+ * `pirocatecol`, `catecol`, `resorcinol`, `hidroquinona`). Pure, no DOM.
+ *
+ * The retained phenols need nothing of their own here either, but one
+ * message: the engine gives `o-cresol`, `pirocatecol`, `catecol`,
+ * `resorcinol`, `hidroquinona` as alternatives of the bare molecules
+ * (design.md §14.5), so they are `alternative`; a substituted one
+ * (`4-clorocatecol`) describes its molecule and gets `otherName`; `cresol`
+ * without its letter is three structures, filled as `o-cresol`, `m-cresol`
+ * and `p-cresol`, and since what is missing is a letter, not a number (the
+ * engine writes no `4-cresol`), the `ambiguous` message says so: «Falta la
+ * letra: puede ser o-cresol, m-cresol o p-cresol.»; a `cresol` with prefixes
+ * of the student's and no letter (`4-clorocresol`) can take neither a letter
+ * nor numbers, so its message sends the student to the engine's names it
+ * lists («El nombre «cresol» no admite más sustituyentes: se escribe con
+ * números. Puede ser 4-cloro-2-metilfenol o 4-cloro-3-metilfenol.»).
  *
  * The alcohols need nothing of their own here either: the suffix's OH
  * groups are built on the parent (build.js) and searched like a prefix's
@@ -103,6 +118,7 @@ import { interpret } from './interpret.js';
 import { checkSpec, ringRefusal } from './build.js';
 import { searchStructures, filledTree, fillVariants, placementReading } from './search.js';
 import { diagnose, MAX_READINGS } from './diagnose.js';
+import { TEMPLATES } from './tiles.js';
 
 /** Verdict kinds (design.md §15.3), in the order of its table. */
 export const VERDICT_KINDS = Object.freeze([
@@ -121,6 +137,8 @@ export const VERDICT_TEXTS = Object.freeze({
   almost: 'Casi: faltan los números.',
   stepByStep: 'Pulsa «Ver paso a paso» para ver por qué.',
   ambiguous: 'Faltan números: puede ser',
+  /** Start of an `ambiguous` message when only the letter of `cresol` is missing (R-5a3a). */
+  ambiguousLetter: 'Falta la letra: puede ser',
   incomplete: 'Faltan números: escribe en qué carbono va cada grupo.',
   outOfScope: 'Entiendo tu nombre, pero esa molécula queda fuera de lo que sé dibujar:',
   /** Start of the old-style note (`notes`), followed by the modern writing in «…» and a full stop. */
@@ -229,9 +247,11 @@ export function orBefore(next) {
  * too).
  *
  * @param {Candidate[]} candidates - The structures, in search order.
+ * @param {string} [lead] - The start of the message (default VERDICT_TEXTS.ambiguous; another for `cresol`, R-5a3a:
+ *   ambiguousLead()).
  * @returns {string} The message.
  */
-export function ambiguousMessage(candidates) {
+export function ambiguousMessage(candidates, lead = VERDICT_TEXTS.ambiguous) {
   const texts = candidates.map((c) => c.text).filter((text) => text !== null);
   const shown = texts.slice(0, MAX_LISTED);
   const rest = candidates.length - shown.length;
@@ -240,14 +260,53 @@ export function ambiguousMessage(candidates) {
   }
   if (rest > 0) {
     const others = rest === 1 ? 'otra molécula' : `otras ${rest} moléculas`;
-    return `${VERDICT_TEXTS.ambiguous} ${shown.join(', ')} ${orBefore(others)} ${others}.`;
+    return `${lead} ${shown.join(', ')} ${orBefore(others)} ${others}.`;
   }
   if (shown.length === 1) {
-    return `${VERDICT_TEXTS.ambiguous} ${shown[0]}.`; // Defensive: an ambiguous verdict has several structures.
+    return `${lead} ${shown[0]}.`; // Defensive: an ambiguous verdict has several structures.
   }
   const last = shown[shown.length - 1];
-  return `${VERDICT_TEXTS.ambiguous} ${shown.slice(0, -1).join(', ')} ${orBefore(last)} ${last}.`;
+  return `${lead} ${shown.slice(0, -1).join(', ')} ${orBefore(last)} ${last}.`;
 } // End of function ambiguousMessage()
+
+/**
+ * The start of an `ambiguous` message, by what is missing: «Faltan números:
+ * puede ser» as a rule; for a template that takes its position as a letter
+ * only (R-5a3a: `cresol`, whose methyl's place the engine writes `o-`, `m-`
+ * or `p-`, never as a number), «Falta la letra: puede ser» when the bare
+ * template leaves out its letter, and — with prefixes of the student's
+ * (`4-clorocresol`), where neither a letter (three ring positions,
+ * POSITIONAL) nor a number (TEMPLATE_LOCANTS) would be accepted — a lead
+ * that sends the student to the names listed, the engine's own, with
+ * numbers (review of I-51a3a: no loop between messages).
+ *
+ * @param {object} spec - A NameSpec with left-out locants.
+ * @returns {string} The lead.
+ */
+function ambiguousLead(spec) {
+  const { template } = spec.parent;
+  if (!template || !TEMPLATES[template.value].letterOnly) {
+    return VERDICT_TEXTS.ambiguous;
+  }
+  const own = new Set(template.groups.flatMap((group) => group.slots));
+  if (!spec.leftOut.some((slot) => own.has(slot))) {
+    return VERDICT_TEXTS.ambiguous; // Never: a letter beside prefixes is POSITIONAL, numbers TEMPLATE_LOCANTS.
+  }
+  return spec.prefixes.length === 0 ? VERDICT_TEXTS.ambiguousLetter : substitutedLead(template.word.text);
+} // End of function ambiguousLead()
+
+/**
+ * The lead of the `ambiguous` message of a substituted letter-only template
+ * (R-5a3a review: `4-clorocresol`): «El nombre «cresol» no admite más
+ * sustituyentes: se escribe con números. Puede ser» — the engine's names
+ * follow (`4-cloro-2-metilfenol`…), which the app reads.
+ *
+ * @param {string} word - The template's word.
+ * @returns {string} The lead.
+ */
+export function substitutedLead(word) {
+  return `El nombre «${word}» no admite más sustituyentes: se escribe con números. Puede ser`;
+}
 
 /**
  * A verdict with every field at its empty value.
@@ -459,7 +518,7 @@ export function readName(tiles, options = {}) {
     const candidates = list.map(({ text: shown, structure }) => ({
       text: shown, name: structure.naming.ok ? structure.naming.name : null, molecule: structure.built.molecule,
     }));
-    return verdict('ambiguous', ambiguousMessage(candidates), assembled, { candidates, notes });
+    return verdict('ambiguous', ambiguousMessage(candidates, ambiguousLead(spec)), assembled, { candidates, notes });
   };
 
   /**

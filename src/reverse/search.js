@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -33,7 +33,9 @@
  *   structure, `propanol` two (`propan-1-ol`, `propan-2-ol`), `bencenodiol`
  *   three; the OH of `fenol` is implicit at carbon 1, so the student's
  *   prefixes are searched on the other carbons (`metilfenol`: 2-, 3- and
- *   4-metilfenol).
+ *   4-metilfenol); so are those of a retained phenol (R-5a3a: `catecol` at
+ *   1 and 2), and a bare `cresol`'s methyl is one left-out slot, on 2…6
+ *   (three structures, filled as `o-` / `m-` / `p-cresol`).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -82,14 +84,14 @@
  * pending teacher review.
  *
  * filledTree() writes a placement's values into the student's syntax tree
- * as number tiles, so that assemble.js gives the student's own name with its
+ * as number tiles (a letter for `cresol`, R-5a3a), so that assemble.js gives the student's own name with its
  * locants filled in (§15.5.3 step 6), never the engine's rendering.
  */
 
 import { CARBON_VALENCE, cloneMolecule } from '../model/molecule.js';
 import { aromaticKey, aromaticIsomorphism } from '../model/graph.js';
 import { build, checkSpec, attachmentOrder, hasOwnChain, ringRefusal, isRing, isAromatic, templateGroups } from './build.js';
-import { TILES, CLOSING_ID, tileById } from './tiles.js';
+import { TILES, CLOSING_ID, POSITIONAL_IDS, TEMPLATES, tileById } from './tiles.js';
 
 /**
  * Default limits of one search (design.md §15.5.3 step 3): valid
@@ -134,6 +136,21 @@ const NUM_TILES = new Map(TILES.filter((tile) => tile.kind === 'num').map((tile)
 
 /** The `1(n)` tile, to write a ring's closing bond into a tree (R-5a2). */
 const CLOSING_TILE = tileById(CLOSING_ID);
+
+/** Carbons of the benzene ring (interpret.js BENZENE_LENGTH, which imports this module). */
+const BENZENE_CARBONS = 6;
+
+/**
+ * The orto/meta/para letter tile of a benzene ring position seen from
+ * carbon 1 (R-5a3a, the methyl of `cresol`): `o` for 2 or 6, `m` for 3 or
+ * 5, `p` for 4 (design.md §14.4).
+ *
+ * @param {number} value - A ring carbon, 2…6.
+ * @returns {object} The letter tile.
+ */
+function letterTile(value) {
+  return tileById(POSITIONAL_IDS[1 + Math.min(value - 1, BENZENE_CARBONS + 1 - value)]);
+}
 
 /**
  * The domain of a slot role on a chain or ring (design.md §15.5.3 step 2).
@@ -732,7 +749,9 @@ export function fillVariants(spec) {
  * ending), whatever their role (`carbon`, `phenylCarbon`, `bond`,
  * `ringBond`); `benceno` (R-4b) has no list of its own, and `xileno` (R-4c)
  * gets its methyls' positions before it (`1,2-xileno`), its list found by
- * the template tile's range. A letter is never left out.
+ * the template tile's range; `cresol` (R-5a3a), which the engine writes with
+ * a letter only, gets the letter of its methyl's position instead
+ * (letterTile(): `o-cresol`). A letter the student wrote is never left out.
  *
  * @param {object} tree - The error-free parse() tree the NameSpec was read from.
  * @param {object} spec - Its NameSpec.
@@ -808,8 +827,15 @@ export function filledTree(tree, spec, placement, keep = {}) {
   }
   const items = tree.items.map(fillItem);
   const { parent } = tree;
-  const legacy = parent.chain.type === 'template' ? numbers(parent.chain.range, parent.legacy) : parent.legacy;
+  let { legacy, letter } = parent;
+  if (parent.chain.type === 'template' && TEMPLATES[tiles[parent.chain.tile].value].letterOnly) {
+    // `cresol` (R-5a3a): its methyl's position as a letter (`o-cresol`), the only form the engine writes.
+    const values = letter === null ? byRange.get(`${parent.chain.range[0]}:${parent.chain.range[1]}`) : null;
+    letter = values ? tiles.push(letterTile(values[0].value)) - 1 : letter;
+  } else if (parent.chain.type === 'template') {
+    legacy = numbers(parent.chain.range, parent.legacy);
+  }
   // The suffix's left-out locants (R-5a2); old-style ones before the root are supplied, never left out.
   const suffix = parent.suffix && { ...parent.suffix, locants: numbers(parent.suffix.range, parent.suffix.locants) };
-  return { ...tree, tiles, items, parent: { ...parent, legacy, chain: fillChain(parent.chain), suffix } };
+  return { ...tree, tiles, items, parent: { ...parent, legacy, letter, chain: fillChain(parent.chain), suffix } };
 } // End of function filledTree()

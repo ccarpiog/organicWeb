@@ -18,11 +18,11 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import {
   TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, BENZENE_ID, PHENYL_ID, POSITIONAL_IDS, HALOGEN_IDS, TEMPLATES,
-  templateGroupWord, MAX_NUM, MAX_MULT, PHENOL_ID, CLOSING_ID, HYDROXY_ID, OL_ID,
+  templateGroupWord, MAX_NUM, MAX_MULT, PHENOL_ID, CLOSING_ID, HYDROXY_ID, OL_ID, isPhenolTemplate,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
-  TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM,
+  TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM, BENZENE_DIGROUP_NAMES,
 } from '../../src/naming/lexicon.es.js';
 import { bundleModules } from '../../scripts/build.mjs';
 
@@ -54,7 +54,7 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('ring'), 1); // ciclo (R-4a)
   assert.equal(count('benzene'), 2); // benceno (R-4b), fenol (R-5a2)
   assert.equal(count('positional'), 3); // o, m, p (R-4c)
-  assert.equal(count('template'), 4); // tolueno, estireno, xileno, mesitileno (R-4c)
+  assert.equal(count('template'), 9); // tolueno, estireno, xileno, mesitileno (R-4c); cresol…hidroquinona (R-5a3a)
   assert.equal(count('halogen'), 4); // fluoro, cloro, bromo, yodo (R-5a1)
   assert.equal(count('hydroxy'), 1); // hidroxi (R-5a2)
   assert.equal(count('suffix'), 1); // ol (R-5a2)
@@ -79,8 +79,11 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       ring: () => RING_PREFIX,
       benzene: () => (tile.value === 'phenol' ? `${PHENOL_STEM}${GROUP_SUFFIXES.alcohol}` : BENZENE_NAME),
       positional: () => POSITIONAL_LETTERS[tile.value],
-      // `xileno`: the word of `1,2-xileno` without the locants the student writes on number tiles.
-      template: () => TRADITIONAL_NAMES[TEMPLATES[tile.value].id].replace(/^1,2-/, ''),
+      // `xileno`: the word of `1,2-xileno` without the locants the student writes on number tiles; `cresol` (R-5a3a) that of
+      // `o-cresol` without its letter; the diols (R-5a3a) the lexicon's words of benzene with two OH groups.
+      template: () => (TEMPLATES[tile.value].id
+        ? TRADITIONAL_NAMES[TEMPLATES[tile.value].id].replace(/^(?:1,2|o)-/, '')
+        : BENZENE_DIGROUP_NAMES[tile.value]),
       halogen: () => HALOGEN_PREFIXES[tile.value],
       hydroxy: () => GROUP_PREFIXES[tile.value],
       suffix: () => GROUP_SUFFIXES[tile.value],
@@ -96,13 +99,26 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
   assert.deepEqual([tileById(PHENYL_ID).text, tileById(PHENYL_ID).value, tileById(PHENYL_ID).italic], ['fenil', 'phenyl', '']);
   // R-4c: the letters by the locant of the second position, the templates with their groups.
   assert.deepEqual(Object.values(POSITIONAL_IDS).map((id) => [tileById(id).text, tileById(id).value]), [['o', 2], ['m', 3], ['p', 4]]);
-  assert.deepEqual(TILES.filter((t) => t.kind === 'template').map((t) => t.text), ['tolueno', 'estireno', 'xileno', 'mesitileno']);
-  assert.deepEqual(Object.entries(TEMPLATES).map(([value, t]) => [value, t.count, t.positions, t.group.length, t.group.double]), [
-    ['toluene', 1, [1], 1, []], ['styrene', 1, [1], 2, [1]], ['xylene', 2, null, 1, []], ['mesitylene', 3, [1, 3, 5], 1, []],
+  assert.deepEqual(TILES.filter((t) => t.kind === 'template').map((t) => t.text), ['tolueno', 'estireno', 'xileno', 'mesitileno',
+    'cresol', 'pirocatecol', 'catecol', 'resorcinol', 'hidroquinona']);
+  assert.deepEqual(Object.entries(TEMPLATES).map(([value, t]) => [value, t.count, t.positions, t.group && t.group.length,
+    t.group && t.group.double, t.hydroxy, Boolean(t.letterOnly)]), [
+    ['toluene', 1, [1], 1, [], [], false], ['styrene', 1, [1], 2, [1], [], false], ['xylene', 2, null, 1, [], [], false],
+    ['mesitylene', 3, [1, 3, 5], 1, [], [], false],
+    // R-5a3a: the retained phenols, their OH groups where their word puts them; `cresol`'s methyl where its letter says.
+    ['cresol', 1, null, 1, [], [1], true], ['pyrocatechol', 0, [], null, null, [1, 2], false],
+    ['catechol', 0, [], null, null, [1, 2], false], ['resorcinol', 0, [], null, null, [1, 3], false],
+    ['hydroquinone', 0, [], null, null, [1, 4], false],
   ]);
-  assert.deepEqual(Object.keys(TEMPLATES).map(templateGroupWord), ['metilo', 'etenilo', 'metilo', 'metilo']);
-  // The template words are those of the engine's own alternatives (aromatic.js), so `o-xileno` assembles to its text.
+  assert.deepEqual(Object.keys(TEMPLATES).map(templateGroupWord), ['metilo', 'etenilo', 'metilo', 'metilo', 'metilo', null, null, null,
+    null]);
+  assert.deepEqual(Object.keys(TEMPLATES).filter(isPhenolTemplate), ['cresol', 'pyrocatechol', 'catechol', 'resorcinol', 'hydroquinone']);
+  // The template words are those of the engine's own alternatives (aromatic.js), so `o-xileno` and `p-cresol` assemble to their
+  // texts.
   assert.equal(`${POSITIONAL_LETTERS[2]}-${tileById('template-xylene').text}`, TRADITIONAL_NAMES.oXylene);
+  assert.equal(`${POSITIONAL_LETTERS[4]}-${tileById('template-cresol').text}`, TRADITIONAL_NAMES.pCresol);
+  assert.deepEqual(['pyrocatechol', 'catechol', 'resorcinol', 'hydroquinone'].map((value) => tileById(`template-${value}`).text),
+    ['pyrocatechol', 'catechol', 'resorcinol', 'hydroquinone'].map((id) => BENZENE_DIGROUP_NAMES[id]));
   // R-5a1: the halogens by element symbol, in the lexicon's order.
   assert.deepEqual(Object.values(HALOGEN_IDS).map((id) => [tileById(id).text, tileById(id).value]),
     [['fluoro', 'F'], ['cloro', 'Cl'], ['bromo', 'Br'], ['yodo', 'I']]);
@@ -122,7 +138,9 @@ test('rows and «más» follow design.md §15.2', () => {
     [RING_ID, BENZENE_ID, PHENOL_ID, PHENYL_ID, ...Object.values(POSITIONAL_IDS), CLOSING_ID],
     'R-4a: the ciclo tile; R-4b: benceno and fenil; R-4c: o, m, p; R-5a2: fenol and 1(n)');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'traditional').map((tile) => tile.id),
-    ['template-toluene', 'template-styrene', 'template-xylene', 'template-mesitylene'], 'R-4c: «Nombres tradicionales»');
+    ['template-toluene', 'template-styrene', 'template-xylene', 'template-mesitylene', 'template-cresol', 'template-pyrocatechol',
+      'template-catechol', 'template-resorcinol', 'template-hydroquinone'],
+    'R-4c: «Nombres tradicionales»; R-5a3a: the retained phenols');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'groups').map((tile) => tile.id),
     ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID], 'R-5a1: «Grupos», the halogens; R-5a2: hidroxi, ol');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'branches' && tile.kind === 'retained').map((tile) => tile.value),

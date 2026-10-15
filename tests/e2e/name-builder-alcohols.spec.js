@@ -221,7 +221,7 @@ test('`1(n)` builds ciclohex-1(6)-eno-1,2,4-triol; `2-propanol` is drawn with it
   expect(elementsOf(ring)).toEqual(['C', 'C', 'C', 'C', 'C', 'C', 'O', 'O', 'O']);
   expect(ring.bonds.filter((bond) => bond.order === 2)).toHaveLength(1);
 
-  // The old style: drawn, named, and the note with the modern writing (no diagnosis yet for an alcohol's suffix, R-5a3).
+  // The old style: drawn, named, and the note with the modern writing (no diagnosis yet for an alcohol's suffix, R-5a3b).
   dialog = await buildName(page, '2', 'prop', 'ano', 'ol');
   await expect(page.locator('#name-builder-name')).toHaveText('2-propanol');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();

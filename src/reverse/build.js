@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -32,7 +32,10 @@
  * of its parent carbons, single-bonded, after the parent is built and
  * before its prefixes; the OH of `fenol`, placed at carbon 1 by the word, is
  * the ring's own like a template's group (a student's branch on that carbon
- * is the VALENCE culprit, «…en el fenol, ese carbono ya lleva un grupo OH»).
+ * is the VALENCE culprit, «…en el fenol, ese carbono ya lleva un grupo OH»),
+ * and so are the OH groups of a retained phenol (R-5a3a: «…en el catecol,
+ * ese carbono ya lleva un grupo OH»), whose methyl (`cresol`) is a template
+ * group placed by its letter.
  * The suffix's oxygens count for the heavy-atom cap and are listed in
  * `suffixAtoms`.
  *
@@ -86,7 +89,7 @@ import {
   longestCarbonChain, longestSideChain,
 } from '../model/validate.js';
 import { BENZENE_NAME, RETAINED_PREFIXES } from '../naming/lexicon.es.js';
-import { templateGroupWord, isAtomGroup, closingText, HYDROXY_ELEMENT } from './tiles.js';
+import { templateGroupWord, isAtomGroup, closingText, HYDROXY_ELEMENT, withArticle } from './tiles.js';
 
 /** The structural error codes of design.md §15.6 (TILE_ORDER reused for a retained word with prefixes). */
 export const BUILD_ERROR_CODES = Object.freeze(['TILE_ORDER', 'LOCANT_RANGE', 'BOND_RANGE', 'SAME_BOND', 'VALENCE', 'TOO_BIG']);
@@ -147,13 +150,14 @@ const FENIL = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text
  *
  * @param {{length: number, branch: boolean, ring?: boolean, benzene?: boolean, template?: string|null}} owner - The chain
  *   or ring numbered (`template`: the word of a template parent, R-4c: «El anillo del xileno tiene 6 carbonos…», or of
- *   `fenol`, R-5a2).
+ *   `fenol`, R-5a2; «El anillo de la hidroquinona…», R-5a3a).
  * @param {number} value - The locant.
  * @returns {string} The message.
  */
 function rangeMessage(owner, value) {
   if (owner.template) {
-    return `El anillo del ${owner.template} tiene ${carbons(owner.length)}, del 1 al ${owner.length}: no hay carbono ${value}.`;
+    return `El anillo ${withArticle(owner.template, 'de')} tiene ${carbons(owner.length)}, del 1 al ${owner.length}: `
+      + `no hay carbono ${value}.`;
   }
   if (owner.benzene && !owner.branch) {
     return `El ${BENZENE_NAME} tiene ${carbons(owner.length)}, del 1 al ${owner.length}: no hay carbono ${value}.`;
@@ -809,7 +813,7 @@ function valenceError(state) {
   }
   const where = best.info.branch ? `El carbono ${best.info.locant} de la rama` : `El carbono ${best.info.locant}`;
   const { template } = best.info; // A carbon a template placed its group on (R-4c).
-  const why = template ? `: en el ${template.word}, ese carbono ya lleva un ${template.group}` : '';
+  const why = template ? `: ${withArticle(template.word, 'en')}, ese carbono ya lleva un ${template.group}` : '';
   return buildError('VALENCE', `${where} tendría ${best.total} enlaces, y un carbono solo puede tener ${CARBON_VALENCE}${why}.`, best.tiles);
 } // End of function valenceError()
 

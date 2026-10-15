@@ -7,8 +7,9 @@
  * Every Spanish text comes from the naming lexicon (lexicon.es.js: stem(),
  * multiplier(), compoundMultiplier(), ENDINGS, FREE_VALENCE_SUFFIXES,
  * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
- * TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES,
- * GROUP_SUFFIXES, PHENOL_STEM), never retyped here;
+ * TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS,
+ * HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM), never
+ * retyped here;
  * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
  *
@@ -30,7 +31,9 @@
  *   'cyclo'), 'benzene' (the retained parent `benceno`, a whole word: the
  *   benzene ring as the parent, R-4b; value 'benzene'), 'template' (a
  *   retained benzene parent with groups of its own, R-4c: `tolueno`,
- *   `estireno`, `xileno`, `mesitileno`; value the TEMPLATES key),
+ *   `estireno`, `xileno`, `mesitileno`; R-5a3a: the retained phenols
+ *   `cresol`, `pirocatecol`, `catecol`, `resorcinol`, `hidroquinona`, whose
+ *   OH groups are the principal group; value the TEMPLATES key),
  *   'positional' (the old orto/meta/para letters `o`, `m`, `p`, R-4c: the two
  *   occupied positions of a benzene ring; value the locant of the second
  *   one, 2 | 3 | 4, the POSITIONAL_LETTERS keys), 'halogen' (the halogen
@@ -52,16 +55,16 @@
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
  *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2), 'groups'
  *   («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`),
- *   'traditional' («Nombres tradicionales», R-4c: the templates; later
- *   phases add the retained phenols, acetona, ácido acético…);
+ *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
+ *   the retained phenols; later phases add acetona, ácido acético…);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
  *   multipliers from hepta / heptakis, roots from undec).
  */
 
 import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
-  RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM,
-  groupName,
+  RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES,
+  GROUP_SUFFIXES, PHENOL_STEM, groupName,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -159,49 +162,86 @@ export function closingText(n) {
 const METHYL = Object.freeze({ length: 1, double: Object.freeze([]) });
 const ETHENYL = Object.freeze({ length: 2, double: Object.freeze([1]) });
 
+/** No ring carbons: a template without OH groups. */
+const NONE = Object.freeze([]);
+
 /**
  * The retained benzene parents of the «Nombres tradicionales» row (design.md
- * §14.5, §15.8 R-4; phase R-4c), keyed by the tile value: a benzene ring
- * with `count` identical defining groups `group`, at the ring carbons
- * `positions` — or, for `xileno`, where the student says (`1,2-xileno`, two
- * number tiles, or `o-xileno`, a letter; left out, they are searched).
- * `id` is the TRADITIONAL_NAMES id of the tile's text. The forward engine
+ * §14.5, §15.8 R-4 and R-5a; phases R-4c and R-5a3a), keyed by the tile
+ * value: a benzene ring with `count` identical defining groups `group`, at
+ * the ring carbons `positions` — or, for `xileno` and `cresol` (`positions`
+ * null), where the student says (`1,2-xileno`, two number tiles, or
+ * `o-xileno`, a letter; `cresol` a letter only, `letterOnly`: the engine
+ * writes `o-cresol`, never a number; left out, they are searched) — and, for
+ * the retained phenols (R-5a3a), OH groups at the ring carbons `hydroxy`, the
+ * principal group cited by the word itself as `fenol` cites its OH (the
+ * suffix of the reading, interpret.js): `cresol` (one OH at 1 and a methyl,
+ * the letter giving the methyl's position, `p-cresol` = 4-metilfenol),
+ * `pirocatecol` and `catecol` (OH at 1 and 2), `resorcinol` (1 and 3),
+ * `hidroquinona` (1 and 4), which have no carbon group (`count` 0, `group`
+ * null, `positions` empty). `id` is the TRADITIONAL_NAMES id of the tile's
+ * text; a diol has none, its key being its BENZENE_DIGROUP_NAMES id. The forward engine
  * gives these names for the bare molecules only (never a substituted
- * tolueno, estireno, xileno or mesitileno, aromatic.js); a student's prefixes
- * on a template are still read, numbered on its ring, the defining group at
- * the carbons the template says. Later phases add the retained parents with
- * a principal group (`fenol`, `anilina`, `ácido benzoico`…).
+ * tolueno, estireno, xileno, mesitileno, cresol, catecol, resorcinol or
+ * hidroquinona, aromatic.js); a student's prefixes on a template are still
+ * read, numbered on its ring, the defining groups at the carbons the
+ * template says. `feminine` marks a word the messages quote with «la»
+ * (`de la hidroquinona`; withArticle()). Later phases add the retained
+ * parents with another principal group (`anilina`, `ácido benzoico`…).
  */
 export const TEMPLATES = Object.freeze({
-  toluene: Object.freeze({ id: 'toluene', group: METHYL, count: 1, positions: Object.freeze([1]) }),
-  styrene: Object.freeze({ id: 'styrene', group: ETHENYL, count: 1, positions: Object.freeze([1]) }),
-  xylene: Object.freeze({ id: 'xylene12', group: METHYL, count: 2, positions: null }),
-  mesitylene: Object.freeze({ id: 'mesitylene', group: METHYL, count: 3, positions: Object.freeze([1, 3, 5]) }),
+  toluene: Object.freeze({ id: 'toluene', group: METHYL, count: 1, positions: Object.freeze([1]), hydroxy: NONE }),
+  styrene: Object.freeze({ id: 'styrene', group: ETHENYL, count: 1, positions: Object.freeze([1]), hydroxy: NONE }),
+  xylene: Object.freeze({ id: 'xylene12', group: METHYL, count: 2, positions: null, hydroxy: NONE }),
+  mesitylene: Object.freeze({ id: 'mesitylene', group: METHYL, count: 3, positions: Object.freeze([1, 3, 5]), hydroxy: NONE }),
+  cresol: Object.freeze({ id: 'oCresol', group: METHYL, count: 1, positions: null, letterOnly: true, hydroxy: Object.freeze([1]) }),
+  pyrocatechol: Object.freeze({ group: null, count: 0, positions: NONE, hydroxy: Object.freeze([1, 2]) }),
+  catechol: Object.freeze({ group: null, count: 0, positions: NONE, hydroxy: Object.freeze([1, 2]) }),
+  resorcinol: Object.freeze({ group: null, count: 0, positions: NONE, hydroxy: Object.freeze([1, 3]) }),
+  hydroquinone: Object.freeze({ group: null, count: 0, positions: NONE, hydroxy: Object.freeze([1, 4]), feminine: true }),
 });
 
 /**
- * The name of a template's defining group as the messages say it
- * (lexicon groupName()): `metilo`, `etenilo`.
+ * Tells whether a template is a retained phenol (R-5a3a: `cresol`,
+ * `pirocatecol`, `catecol`, `resorcinol`, `hidroquinona`): its word places
+ * OH groups on the ring.
  *
  * @param {string} value - A TEMPLATES key.
- * @returns {string} The group's name.
+ * @returns {boolean} True for a retained phenol.
+ */
+export function isPhenolTemplate(value) {
+  return TEMPLATES[value].hydroxy.length > 0;
+}
+
+/**
+ * The name of a template's defining group as the messages say it
+ * (lexicon groupName()): `metilo`, `etenilo`; null for a template without a
+ * carbon group (the diols of R-5a3a).
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @returns {string|null} The group's name.
  */
 export function templateGroupWord(value) {
   const { group } = TEMPLATES[value];
+  if (!group) {
+    return null;
+  }
   const unsaturation = group.double.length > 0 ? ENDINGS.double.slice(0, -1) : '';
   return groupName(`${stem(group.length)}${unsaturation}${FREE_VALENCE_SUFFIXES[1]}`);
 }
 
 /**
- * The text of a template tile: its TRADITIONAL_NAMES name, without the
- * locants the student writes on tiles of their own (`1,2-xileno` →
- * `xileno`).
+ * The text of a template tile: its TRADITIONAL_NAMES name (or, for a diol of
+ * R-5a3a, its BENZENE_DIGROUP_NAMES word, keyed by the template's own key),
+ * without the locants or letter the student writes on tiles of their own
+ * (`1,2-xileno` → `xileno`, `o-cresol` → `cresol`).
  *
- * @param {{id: string, positions: number[]|null}} template - A TEMPLATES entry.
+ * @param {string} value - A TEMPLATES key.
  * @returns {string} The word.
  */
-function templateWord(template) {
-  const name = TRADITIONAL_NAMES[template.id];
+function templateWord(value) {
+  const template = TEMPLATES[value];
+  const name = template.id ? TRADITIONAL_NAMES[template.id] : BENZENE_DIGROUP_NAMES[value];
   return template.positions ? name : name.slice(name.indexOf('-') + 1);
 }
 
@@ -226,7 +266,9 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * then compound), roots, endings, branch words and controls, rings (`ciclo`,
  * `benceno`, `fenol`, `fenil`, the letters `o`, `m`, `p`, `1(n)`), groups
  * (the halogens `fluoro`, `cloro`, `bromo`, `yodo`, then `hidroxi` and `ol`),
- * traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`).
+ * traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`, then the
+ * retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
+ * `hidroquinona`).
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -271,8 +313,8 @@ function buildCatalogue() {
   }
   tiles.push(makeTile(HYDROXY_ID, 'hydroxy', 'alcohol', 'groups', GROUP_PREFIXES.alcohol)); // `hidroxi` (R-5a2)
   tiles.push(makeTile(OL_ID, 'suffix', 'alcohol', 'groups', GROUP_SUFFIXES.alcohol)); // `ol` (R-5a2)
-  for (const [value, template] of Object.entries(TEMPLATES)) {
-    tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(template)));
+  for (const value of Object.keys(TEMPLATES)) {
+    tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }
   return tiles;
 } // End of function buildCatalogue()
@@ -282,6 +324,25 @@ export const TILES = Object.freeze(buildCatalogue());
 
 /** The tiles keyed by id. */
 const BY_ID = new Map(TILES.map((tile) => [tile.id, tile]));
+
+/**
+ * A parent's word with its Spanish definite article, after a preposition
+ * when one is given, as the messages quote it: «del tolueno», «en el
+ * fenol», and for a feminine template (TEMPLATES `feminine`, R-5a3a) «de la
+ * hidroquinona», «en la hidroquinona» (`de` + `el` contract to `del`).
+ *
+ * @param {string} word - A whole-word parent as on its tile (`tolueno`, `fenol`, `hidroquinona`).
+ * @param {string} [preposition] - `de`, `en`… (default none).
+ * @returns {string} The phrase.
+ */
+export function withArticle(word, preposition = '') {
+  const template = TILES.find((tile) => tile.kind === 'template' && tile.text === word);
+  const article = template && TEMPLATES[template.value].feminine ? 'la' : 'el';
+  if (preposition === 'de' && article === 'el') {
+    return `del ${word}`;
+  }
+  return preposition ? `${preposition} ${article} ${word}` : `${article} ${word}`;
+} // End of function withArticle()
 
 /**
  * Returns the tile with an id.

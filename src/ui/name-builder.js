@@ -23,9 +23,11 @@
  *   closing-bond locant `1(n)`, phase R-5a2, the latter with a tooltip —,
  *   «Grupos» — the halogens `fluoro`, `cloro`, `bromo`, `yodo`, phase R-5a1,
  *   `hidroxi` and the suffix `ol`, phase R-5a2 —, «Nombres tradicionales» —
- *   `tolueno`, `estireno`, `xileno`, `mesitileno`, phase R-4c; drafts pending
- *   teacher review), each with a «más» button for the tiles the catalogue
- *   keeps behind it;
+ *   `tolueno`, `estireno`, `xileno`, `mesitileno`, phase R-4c, and the
+ *   retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
+ *   `hidroquinona`, phase R-5a3a, each with a tooltip saying what it is;
+ *   drafts pending teacher review), each with a «más» button for the tiles
+ *   the catalogue keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
  *   «Borrar todo», «Dibujar» and «Cerrar» (also Escape and a click on the
  *   backdrop); the focus goes into the dialog on opening and back to the
@@ -86,11 +88,18 @@ export function positionalLabel(tile) {
 
 /**
  * Tooltips of tiles whose text needs a word of explanation (R-5a2: the
- * closing-bond locant `1(n)`; a draft pending teacher review). The tile's
- * text stays its accessible name.
+ * closing-bond locant `1(n)`; R-5a3a: the retained phenols, which say
+ * nothing of their groups — what molecule each is, and that `cresol` takes
+ * a letter; drafts pending teacher review). The tile's text stays its
+ * accessible name.
  */
 export const TILE_HINTS = Object.freeze({
   [CLOSING_ID]: 'Número del enlace que cierra un anillo, del último carbono al 1: se escribe 1(6) en un anillo de 6 carbonos.',
+  'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
+  'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',
+  'template-catechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. La IUPAC (2013) acepta pirocatecol.',
+  'template-resorcinol': 'Benceno con dos grupos OH en los carbonos 1 y 3: benceno-1,3-diol.',
+  'template-hydroquinone': 'Benceno con dos grupos OH en los carbonos 1 y 4: benceno-1,4-diol.',
 });
 
 /** Text of the empty name line. */
@@ -139,7 +148,7 @@ function make(doc, tag, className, text) {
  * Builds one tile button. The compound-branch controls show their label
  * beside their mark (the mark hidden from screen readers); an orto/meta/para
  * letter shows its word, small, beside the letter (R-4c); a tile of
- * TILE_HINTS gets its tooltip (R-5a2: `1(n)`).
+ * TILE_HINTS gets its tooltip (R-5a2: `1(n)`; R-5a3a: the retained phenols).
  *
  * @param {Document} doc - The document.
  * @param {{id: string, kind: string, text: string, more: boolean}} tile - A catalogue tile.

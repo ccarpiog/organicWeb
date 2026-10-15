@@ -57,7 +57,11 @@
  *    student's (`4-metiltolueno`, `p-metiltolueno`, `4-metil-1,2-xileno`,
  *    `pentametiltolueno`, `4-metilestireno`): the engine never substitutes
  *    tolueno, xileno, estireno or mesitileno (design.md §14.5), so the
- *    molecule is named from `benceno`;
+ *    molecule is named from `benceno`; nor, since phase R-5a3a, the retained
+ *    phenols (`4-clorocatecol`, `2-metilhidroquinona`, `tetrametilcresol`),
+ *    named from `benceno` with their two OH groups as the suffix
+ *    (`4-clorobenceno-1,2-diol`) or, with one (`cresol`), from `fenol`
+ *    (`2,3,4,5,6-pentametilfenol`) — the message names that parent;
  * 4. `RING_NUMBERING` — the student's ring numbering (start and direction,
  *    studentParent in the student's locant order) leaves the engine's ring
  *    numbering trace (N1–N4, design.md §13.5; N1 and N2 never on benzene,
@@ -215,10 +219,18 @@
  * numbering is not the engine's (`5-(1-cloroetan-2-il)…`, no style offers
  * it), as in «No rule covers» above.
  *
- * **Alcohols** (design.md §15.8 R-5a; phase R-5a2). The rules above keep
- * working when the molecule has OH groups, wherever they say something true
- * of an alcohol, and the diagnosis is deliberately null where an
- * alcohol-specific message is needed (phase R-5a3 adds those). `hidroxi` is
+ * **Alcohols** (design.md §15.8 R-5a; phases R-5a2, R-5a3a). The rules above
+ * keep working when the molecule has OH groups, wherever they say something
+ * true of an alcohol, and the diagnosis is deliberately null where an
+ * alcohol-specific message is needed (phase R-5a3b adds those: the nulls
+ * listed in this paragraph). A retained phenol with prefixes of the
+ * student's (R-5a3a: `4-clorocatecol`) is SUBSTITUTED_TEMPLATE (above): its
+ * OH groups are the suffix the engine writes too — unless a prefix is
+ * `hidroxi` (`4-hidroxicatecol`, the engine's `benceno-1,2,4-triol`), when
+ * the OH counts differ: a null below, for R-5a3b; a retained phenol needs no
+ * message of its own otherwise (its bare forms are alternatives, its
+ * numbers and letters refused by the parser, a letter beside a prefix being
+ * three positions). `hidroxi` is
  * a one-atom group like a halogen (never lengthens a chain, `X:O` in every
  * style, «sustituyentes»). The engine's trace has P0 (most principal
  * groups) before P1 and N0 (lowest locants for the principal groups) before
@@ -258,7 +270,7 @@ import {
 } from '../naming/lexicon.es.js';
 import { assemble, itemText } from './assemble.js';
 import { ownPrefixAtoms, specRings, isRing } from './build.js';
-import { tileById, tileId, MAX_MULT, isAtomGroup, HYDROXY_ELEMENT } from './tiles.js';
+import { tileById, tileId, MAX_MULT, isAtomGroup, HYDROXY_ELEMENT, PHENOL_ID } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
 export const MAX_READINGS = 16;
@@ -276,6 +288,7 @@ const WORDS = Object.freeze({
   metil: `${stem(1)}${FREE_VALENCE_SUFFIXES[1]}`,
   etil: `${stem(2)}${FREE_VALENCE_SUFFIXES[1]}`,
   benceno: BENZENE_NAME,
+  fenol: tileById(PHENOL_ID).text,
   tolueno: TRADITIONAL_NAMES.toluene,
   /** The orto/meta/para letters, quoted «o», «m» y «p». */
   letters: Object.values(POSITIONAL_LETTERS).map((letter) => `«${letter}»`),
@@ -298,7 +311,7 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
   BENZENE_RING: (d) => 'Un anillo de 6 carbonos con tres enlaces dobles alternados, uno sí y uno no, es el benceno, y tiene '
     + `nombre propio: «${WORDS.benceno}».${d.name === WORDS.benceno ? '' : ` Se escribe «${d.name}».`}`,
   SUBSTITUTED_TEMPLATE: (d) => `El nombre tradicional «${d.template}» no admite más sustituyentes: con más ramas en el anillo, `
-    + `la molécula se nombra a partir de «${WORDS.benceno}», con todas las ramas delante: «${d.name}».`,
+    + `la molécula se nombra a partir de «${d.parent}», con todas las ramas delante: «${d.name}».`,
   MORE_MULTIPLE_BONDS: (d) => `Hay otra cadena igual de larga con más enlaces dobles o triples (${d.app}; la tuya tiene `
     + `${d.student}). Entre cadenas igual de largas, gana la que tiene más.`,
   MORE_DOUBLE_BONDS: (d) => `Hay otra cadena igual de larga, con los mismos enlaces múltiples, pero con más enlaces dobles `
@@ -414,7 +427,9 @@ export const DIAGNOSES = Object.freeze({
   LONGER_CHAIN: Object.freeze({ rule: 2, step: 'chain', example: Object.freeze({ student: 4, length: 5 }) }),
   BENZENE_RING: Object.freeze({ rule: 2, step: 'benzene', example: Object.freeze({ name: `${WORDS.metil}${WORDS.benceno}` }) }),
   SUBSTITUTED_TEMPLATE: Object.freeze({
-    rule: 2, step: 'benzene', example: Object.freeze({ template: WORDS.tolueno, name: `1,4-${WORDS.di}${WORDS.metil}${WORDS.benceno}` }),
+    rule: 2,
+    step: 'benzene',
+    example: Object.freeze({ template: WORDS.tolueno, parent: WORDS.benceno, name: `1,4-${WORDS.di}${WORDS.metil}${WORDS.benceno}` }),
   }),
   MORE_MULTIPLE_BONDS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 0, app: 1 }) }),
   MORE_DOUBLE_BONDS: Object.freeze({ rule: 3, step: 'tiebreak', example: Object.freeze({ student: 0, app: 1 }) }),
@@ -1249,7 +1264,7 @@ function chainRules(ctx) {
       direction = { step, ownWords };
     }
   } // End of the loop over the trace steps
-  // A direction dropped at N0 (the alcohol's OH groups, R-5a2) has no message yet (R-5a3): null.
+  // A direction dropped at N0 (the alcohol's OH groups, R-5a2) has no message yet (R-5a3b): null.
   return direction && direction.ownWords && DIAGNOSIS_PHRASES.numberingReasons[direction.step.rule]
     ? directionDraft(ctx, 'NUMBERING', direction.step, isStudent) : null;
 } // End of function chainRules()
@@ -1336,9 +1351,11 @@ function ringRules(ctx) {
   }
   const { template } = spec.parent;
   if (template && spec.prefixes.length > 0) {
+    // A retained phenol (R-5a3a) keeps its OH groups: with one (`cresol`) the molecule is named from `fenol`.
+    const one = spec.suffix && spec.suffix.slots.length === 1;
     return {
       code: 'SUBSTITUTED_TEMPLATE',
-      data: { template: template.word.text, name: naming.name },
+      data: { template: template.word.text, parent: one ? WORDS.fenol : WORDS.benceno, name: naming.name },
       focus: occurrenceIds(reading.prefixAtoms),
       tiles: template.word.tiles,
     };
@@ -2002,7 +2019,7 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
 
 /**
  * Tells whether an `otherName` needs a message no rule of this phase has
- * (file header, «Alcohols»; phase R-5a3 adds them): the student's suffix
+ * (file header, «Alcohols»; phase R-5a3b adds them): the student's suffix
  * has not as many OH groups as the engine's (an OH written as `hidroxi` on
  * the parent, or the suffix of another parent); the engine's parent is a
  * ring and the student's a chain, or the reverse, in a molecule with OH

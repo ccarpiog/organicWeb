@@ -80,9 +80,15 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   `ciclohex-1(6)-eno-1,2,4-triol`, `4-metilfenol`, `p-metilfenol`,
   `2-propanol` old style), their left-out suffix locants searched, and the
   diagnosis keeps its rules where they hold for an OH, null where an
-  alcohol needs a message of its own. Next is R-5a3 (phase I-51a3): the
-  retained phenol templates, the alcohol diagnosis messages and the Ayuda
-  line.
+  alcohol needs a message of its own. R-5a3a (phase I-51a3a) is done: the
+  «Nombres tradicionales» row's retained phenols (`cresol` with its o/m/p
+  letter only, `pirocatecol`, `catecol`, `resorcinol`, `hidroquinona`, each
+  with a tooltip) read as the engine's alternatives, `cresol` without its
+  letter searched («Falta la letra…»), a substituted one (`4-clorocatecol`)
+  as `otherName` with the substituted-template diagnosis, and the Ayuda says
+  alcohols and phenols are read, with the alcohol and phenol-template
+  lines. Next is R-5a3b (phase I-51a3b): the alcohol diagnosis messages
+  that fill the deliberate nulls (`diagnose.js` «Alcohols» header).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

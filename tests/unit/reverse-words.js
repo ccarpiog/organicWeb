@@ -5,7 +5,7 @@
  * the open-chain, `ciclo` and benzene hydrocarbon rows of
  * tests/fixtures/names.tsv (the benzene ones with the retained templates
  * and the orto/meta/para forms, R-4c), their halogen derivatives (R-5a1)
- * and their alcohols (R-5a2).
+ * and their alcohols (R-5a2; the retained phenols, R-5a3a).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -105,22 +105,29 @@ export function isAlcohol(smiles) {
 }
 
 /**
- * The retained names of alcohols and phenols the tiles of phase R-5a2 do not
- * write (the phenol templates of R-5a3 — `o-cresol`, `pirocatecol`,
- * `catecol`, `resorcinol`, `hidroquinona` — and the class name `alcohol
- * bencílico`), from the lexicon.
+ * The retained names of alcohols the tiles do not write yet: since the
+ * phenol templates of R-5a3a (`o-cresol`, `pirocatecol`, `catecol`,
+ * `resorcinol`, `hidroquinona`) only the class name `alcohol bencílico`,
+ * from the lexicon.
  */
-const LATER_ALCOHOL_WORDS = Object.freeze([
-  TRADITIONAL_NAMES.oCresol.slice(2), TRADITIONAL_NAMES.benzylAlcohol.split(' ')[0], BENZENE_DIGROUP_NAMES.catechol,
+const LATER_ALCOHOL_WORDS = Object.freeze([TRADITIONAL_NAMES.benzylAlcohol.split(' ')[0]]);
+
+/**
+ * The words of the retained phenol templates (R-5a3a), from the lexicon:
+ * `cresol`, `pirocatecol`, `catecol`, `resorcinol`, `hidroquinona`.
+ */
+export const PHENOL_TEMPLATE_WORDS = Object.freeze([
+  TRADITIONAL_NAMES.oCresol.slice(2), BENZENE_DIGROUP_NAMES.pyrocatechol, BENZENE_DIGROUP_NAMES.catechol,
   BENZENE_DIGROUP_NAMES.resorcinol, BENZENE_DIGROUP_NAMES.hydroquinone,
 ]);
 
 /**
- * Tells whether a name of an alcohol is written with the tiles of phase
- * R-5a2: none of the retained names left for R-5a3 (LATER_ALCOHOL_WORDS).
+ * Tells whether a name of an alcohol is written with the tiles of phases
+ * R-5a2 and R-5a3a: none of the retained names left for later phases
+ * (LATER_ALCOHOL_WORDS).
  *
  * @param {string} name - A name.
- * @returns {boolean} True when R-5a2 reads it.
+ * @returns {boolean} True when the tiles read it.
  */
 export function isAlcoholName(name) {
   return !LATER_ALCOHOL_WORDS.some((word) => name.includes(word));

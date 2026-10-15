@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -9,7 +9,7 @@
  * from R-4a, `benceno` and `fenil` from R-4b, the retained templates and the
  * orto/meta/para letters from R-4c, the halogens from R-5a1, the alcohols —
  * `hidroxi`, the suffix `ol`, `fenol`, the closing-bond locant `1(n)` —
- * from R-5a2):
+ * from R-5a2, the retained phenol templates from R-5a3a):
  *
  *   name        = { prefix } , parent ;
  *   prefix      = [ locants ] , [ letter ] , [ MULT | CMULT ] , substituent ;
@@ -23,7 +23,8 @@
  *               | [ legacy ] , benceno , [ suffix ] | fenol
  *               | [ locants | letter ] , template ;
  *   suffix      = [ locants ] , [ MULT ] , ol ;
- *   template    = tolueno | estireno | xileno | mesitileno ;
+ *   template    = tolueno | estireno | xileno | mesitileno
+ *               | cresol | pirocatecol | catecol | resorcinol | hidroquinona ;
  *   letter      = o | m | p ;
  *   stem        = [ ciclo ] , ROOT ;   (* ciclo: a ring of ROOT carbons, at least 3 *)
  *   segments    = segment , [ segment ] ;
@@ -87,9 +88,23 @@
  * occupied positions of the parent benzene ring — 1,2 / 1,3 / 1,4, the
  * template's group at 1 counting as one of them — and checkLetters() keeps
  * them to the forms that have a meaning (POSITIONAL otherwise): on a
- * name-level prefix or on `xileno`, with a benzene or template parent,
- * exactly two occupied positions, never two different prefixes on
+ * name-level prefix or on `xileno` or `cresol`, with a benzene or template
+ * parent, exactly two occupied positions, never two different prefixes on
  * `benceno`, never beside numbers on the same prefix.
+ *
+ * The retained phenols (R-5a3a, tiles.js TEMPLATES with `hydroxy`) are
+ * templates too, whose OH groups count as occupied positions like a
+ * template's groups: `pirocatecol`, `catecol`, `resorcinol` and
+ * `hidroquinona` say where their two OH groups are (numbers or a letter on
+ * them are TEMPLATE_LOCANTS); `cresol` has its OH at 1 and takes the position
+ * of its methyl as a letter only (`p-cresol`, the engine's only form) —
+ * numbers before it are TEMPLATE_LOCANTS, with their own message — or
+ * neither (left out, searched); so a prefix on a lettered `cresol` makes
+ * three positions (POSITIONAL, as `4-metil-o-xileno`). With prefixes of the
+ * student's, neither a letter nor numbers can mend a `cresol`, so both
+ * errors then point at the systematic name from `fenol`
+ * (substitutedLetterOnlyMessage(): `2-cloro-4-metilfenol`), which the app
+ * reads.
  *
  * A stem starts a branch or the parent: what follows it decides (a
  * free-valence suffix makes a branch), so leading numbers are never
@@ -128,8 +143,9 @@
  *            for `benceno` they are BENZENE_BONDS unless its suffix takes
  *            them, `1,2-bencenodiol`; for `xileno` its methyls' positions,
  *            `1,2-xileno` —; `letter` an o / m / p before the stem, the
- *            methyls' positions of `o-xileno`, out of place before any other
- *            stem; `suffix` the alcohol suffix, R-5a2)
+ *            methyls' positions of `o-xileno` or the methyl's of `o-cresol`
+ *            (R-5a3a), out of place before any other stem; `suffix` the
+ *            alcohol suffix, R-5a2)
  * - suffix  `{type: 'suffix', locants: number[], multiplier: number|null, tile}` (the
  *            `ol` tile with its locants and multiplier, R-5a2)
  * - benzene `{type: 'benzene', tile}` (the `benceno` tile, R-4b; also the
@@ -146,8 +162,9 @@
  * RING_SIZE (a ring of fewer than three carbons), for benzene (R-4b)
  * BENZENE_BONDS (numbers of its own on `benceno`, which has none), and for
  * the templates and the letters (R-4c) TEMPLATE_LOCANTS (numbers or a letter
- * on a template that places its own groups — on `fenol` too, R-5a2) and
- * POSITIONAL (an o / m / p letter where it has no meaning, design.md §14.4).
+ * on a template that places its own groups — on `fenol` too, R-5a2 —, and
+ * numbers on `cresol`, which takes a letter only, R-5a3a) and POSITIONAL (an
+ * o / m / p letter where it has no meaning, design.md §14.4).
  * The structural codes (LOCANT_RANGE, BOND_RANGE, SAME_BOND, VALENCE,
  * TOO_BIG) need the chemistry and belong to R-1b. The Spanish messages are
  * drafts pending teacher review (design.md §15, last paragraph); their
@@ -157,9 +174,11 @@
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS, CONNECTING_VOWEL,
   MAX_MULTIPLIER, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, POSITIONAL_LETTERS, GROUP_SUFFIXES, GROUP_PREFIXES,
+  HALOGEN_PREFIXES,
 } from '../naming/lexicon.es.js';
 import {
-  toTiles, TEMPLATES, templateGroupWord, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
+  toTiles, TEMPLATES, templateGroupWord, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText, isPhenolTemplate,
+  withArticle,
 } from './tiles.js';
 import { itemText } from './assemble.js';
 
@@ -180,10 +199,11 @@ const ILIDEN = FREE_VALENCE_SUFFIXES[2];
 const FENIL = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text}`;
 const [OPEN, CLOSE] = ENCLOSING_MARKS[0];
 const XILENO = tileById('template-xylene').text;
+const CRESOL = tileById('template-cresol').text;
 const OL = GROUP_SUFFIXES.alcohol;
 const HIDROXI = GROUP_PREFIXES.alcohol;
 const FENOL = tileById(PHENOL_ID).text;
-const [ORTO, , PARA] = Object.keys(POSITIONAL_IDS).map((locant) => POSITIONAL_LETTERS[locant]);
+const [ORTO, META, PARA] = Object.keys(POSITIONAL_IDS).map((locant) => POSITIONAL_LETTERS[locant]);
 
 /** Spanish number words for the LOCANT_COUNT messages (digits from 11 on). */
 const NUMBER_WORDS = Object.freeze(['cero', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez']);
@@ -224,9 +244,13 @@ const EXAMPLES = Object.freeze({
   xileno12: `1,2-${XILENO}`,
   oXileno: `${ORTO}-${XILENO}`,
   pXileno: `${PARA}-${XILENO}`,
+  oCresol: `${ORTO}-${CRESOL}`,
+  mCresol: `${META}-${CRESOL}`,
+  pCresol: `${PARA}-${CRESOL}`,
   propan2ol: `${stem(3)}${ENDINGS.saturated.slice(0, -1)}-2-${OL}`,
   butanodiol: `${stem(4)}${ENDINGS.saturated}-1,4-${multiplier(2)}${OL}`,
   hidroxifenil: `${OPEN}4-${HIDROXI}${FENIL}${CLOSE}`,
+  cloroMetilfenol: `2-${HALOGEN_PREFIXES.Cl}-4-${stem(1)}${IL}${FENOL}`,
   ciclohexenotriol: `${RING_PREFIX}${stem(6)}-${closingText(6)}-${ENDINGS.double}-1,2,4-${multiplier(3)}${OL}`,
 });
 
@@ -255,7 +279,8 @@ const HINTS = Object.freeze({
   benzeneBranch: `«${BENZENE_NAME}» es el anillo principal y va al final del nombre; como rama, el benceno se escribe `
     + `«${FENIL}».`,
   positional: `las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} van delante de los dos grupos del ${BENZENE_NAME} `
-    + `que sitúan (${EXAMPLES.oDimetilbenceno}) o delante de «${XILENO}» (${EXAMPLES.pXileno}).`,
+    + `que sitúan (${EXAMPLES.oDimetilbenceno}) o delante de «${XILENO}» o «${CRESOL}» (${EXAMPLES.pXileno}, `
+    + `${EXAMPLES.pCresol}).`,
   suffix: `«${OL}» va al final del nombre, detrás de la terminación de la cadena principal (${EXAMPLES.propan2ol}, `
     + `${EXAMPLES.butanodiol}); en una rama, el grupo OH se escribe «${HIDROXI}».`,
   cmultSuffix: `delante de «${OL}» va «${multiplier(2)}», «${multiplier(3)}»…, no «${compoundMultiplier(2)}» ni `
@@ -298,8 +323,9 @@ const POSITIONAL_MESSAGES = Object.freeze({
     + `escribe los números (${EXAMPLES.etilMetilbenceno}).`,
 });
 
-/** The group `fenol` places itself at carbon 1, as the messages say it (R-5a2). */
+/** The group `fenol` places itself at carbon 1, as the messages say it (R-5a2), and its plural (R-5a3a: `catecol`). */
 const PHENOL_GROUP = 'grupo OH';
+const PHENOL_GROUPS = 'grupos OH';
 
 /**
  * Tells whether a parent's chain node is `fenol` (R-5a2): a benzene node
@@ -314,28 +340,66 @@ export function isPhenol(tiles, node) {
 }
 
 /**
+ * One kind of group a whole-word parent places itself, as the messages
+ * count it: how many, and its name in the singular and the plural.
+ *
+ * @typedef {object} OwnGroupKind
+ * @property {number} count - How many.
+ * @property {string} one - The name of one (`metilo`, `grupo OH`).
+ * @property {string} many - The plural (`metilos`, `grupos OH`).
+ */
+
+/**
  * The groups a whole-word benzene parent places itself (design.md §14.4,
  * §14.5): a retained template's (R-4c: the methyl of `tolueno` at 1, those
  * of `mesitileno` at 1, 3 and 5, the two of `xileno` where the student
- * says) or the OH of `fenol` at 1 (R-5a2); null for `benceno` and any other
- * parent.
+ * says; R-5a3a: the OH groups of the retained phenols, `catecol` at 1 and 2,
+ * and for `cresol` its OH at 1 and its methyl where the letter says) or the
+ * OH of `fenol` at 1 (R-5a2); null for `benceno` and any other parent.
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} chain - The parent's chain node.
- * @returns {{count: number, positions: number[]|null, group: string, word: string}|null} How many groups, where (null
- *   for `xileno`), the group's name and the parent's word — or null.
+ * @returns {{count: number, positions: number[]|null, kinds: OwnGroupKind[], letterOnly: boolean, word: string}|null} How
+ *   many groups in all, where (null for `xileno` and `cresol`, whose positions the student gives), each kind of group (the
+ *   OH groups first), whether those positions are a letter only (`cresol`) and the parent's word — or null.
  */
 function ownGroups(tiles, chain) {
   if (chain.type === 'template') {
     const tile = tiles[chain.tile];
-    const { count, positions } = TEMPLATES[tile.value];
-    return { count, positions, group: templateGroupWord(tile.value), word: tile.text };
+    const { count, positions, hydroxy, letterOnly } = TEMPLATES[tile.value];
+    const group = templateGroupWord(tile.value);
+    const kinds = [
+      ...(hydroxy.length > 0 ? [{ count: hydroxy.length, one: PHENOL_GROUP, many: PHENOL_GROUPS }] : []),
+      ...(count > 0 ? [{ count, one: group, many: `${group}s` }] : []),
+    ];
+    return {
+      count: count + hydroxy.length,
+      positions: positions && [...hydroxy, ...positions].sort((a, b) => a - b),
+      kinds,
+      letterOnly: Boolean(letterOnly),
+      word: tile.text,
+    };
   }
   if (isPhenol(tiles, chain)) {
-    return { count: 1, positions: [1], group: PHENOL_GROUP, word: tiles[chain.tile].text };
+    return {
+      count: 1, positions: [1], kinds: [{ count: 1, one: PHENOL_GROUP, many: PHENOL_GROUPS }], letterOnly: false, word: tiles[chain.tile].text,
+    };
   }
   return null;
 } // End of function ownGroups()
+
+/**
+ * The groups of a whole-word parent with their articles, joined by «y»:
+ * «el metilo», «los dos metilos», «el grupo OH y el metilo» (R-5a3a,
+ * `cresol`).
+ *
+ * @param {OwnGroupKind[]} kinds - ownGroups() `kinds`.
+ * @param {[string, string]} articles - The articles for one and for several: ['el', 'los'] or ['su', 'sus'].
+ * @returns {string} The phrase.
+ */
+function ownGroupsPhrase(kinds, [one, many]) {
+  return kinds.map((kind) => (kind.count === 1 ? `${one} ${kind.one}` : `${many} ${numberWord(kind.count)} ${kind.many}`)).join(' y ');
+}
 
 /**
  * The POSITIONAL message for a benzene with three or more occupied
@@ -343,15 +407,11 @@ function ownGroups(tiles, chain) {
  * itself (design.md §14.4: never with three or more positions).
  *
  * @param {number} positions - Occupied ring positions the name describes.
- * @param {{count: number, group: string, word: string}|null} owner - ownGroups() of the parent, or null for `benceno`.
+ * @param {{kinds: OwnGroupKind[], word: string}|null} owner - ownGroups() of the parent, or null for `benceno`.
  * @returns {string} The message.
  */
 function threePositionsMessage(positions, owner) {
-  let counted = '';
-  if (owner) {
-    counted = owner.count === 1 ? ` (contando el ${owner.group} del ${owner.word})`
-      : ` (contando los ${numberWord(owner.count)} ${owner.group}s del ${owner.word})`;
-  }
+  const counted = owner ? ` (contando ${ownGroupsPhrase(owner.kinds, ['el', 'los'])} ${withArticle(owner.word, 'de')})` : '';
   return `Las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} solo sirven cuando el ${BENZENE_NAME} lleva dos grupos, `
     + `y tu nombre pone ${numberWord(positions)}${counted}: escribe los números (${EXAMPLES.trimetilbenceno}).`;
 } // End of function threePositionsMessage()
@@ -360,17 +420,47 @@ function threePositionsMessage(positions, owner) {
  * The TEMPLATE_LOCANTS message (R-4c): a template that places its own groups
  * takes no numbers or letter of its own — «tolueno» ya dice dónde va su
  * metilo, en el carbono 1… —; nor does `fenol` (R-5a2): «fenol» ya dice
- * dónde va su grupo OH…
+ * dónde va su grupo OH…; nor do the diols of R-5a3a: «catecol» ya dice dónde
+ * van sus dos grupos OH, en los carbonos 1 y 2…
  *
- * @param {{count: number, positions: number[], group: string, word: string}} owner - ownGroups() of the parent.
+ * @param {{count: number, positions: number[], kinds: OwnGroupKind[], word: string}} owner - ownGroups() of the parent.
  * @returns {string} The message.
  */
 function templateLocantsMessage(owner) {
-  const { count, positions, group } = owner;
+  const { count, positions } = owner;
   const where = positions.length === 1 ? `el carbono ${positions[0]}`
     : `los carbonos ${positions.slice(0, -1).join(', ')} y ${positions[positions.length - 1]}`;
-  const which = count === 1 ? `va su ${group}` : `van sus ${numberWord(count)} ${group}s`;
+  const which = `${count === 1 ? 'va' : 'van'} ${ownGroupsPhrase(owner.kinds, ['su', 'sus'])}`;
   return `«${owner.word}» ya dice dónde ${which}, en ${where}: no lleva números ni letras propios.`;
+}
+
+/**
+ * The TEMPLATE_LOCANTS message of numbers before `cresol` (R-5a3a): the
+ * engine writes its methyl's position as a letter only (`o-cresol`,
+ * `m-cresol`, `p-cresol`; never `4-cresol`).
+ *
+ * @param {{kinds: OwnGroupKind[], word: string}} owner - ownGroups() of the `cresol` parent.
+ * @returns {string} The message.
+ */
+function letterOnlyMessage(owner) {
+  const group = owner.kinds[owner.kinds.length - 1].one;
+  return `Con «${owner.word}» no van números: una letra dice dónde está su ${group} respecto al ${PHENOL_GROUP} `
+    + `(${EXAMPLES.oCresol}, ${EXAMPLES.mCresol} o ${EXAMPLES.pCresol}).`;
+}
+
+/**
+ * The message of a `cresol` with prefixes of the student's beside numbers
+ * or a letter (R-5a3a review): neither can fix it — a letter makes three
+ * ring positions, and `cresol` takes no numbers —, since the name admits no
+ * more substituents; the way out is the systematic name, from `fenol`,
+ * with numbers (`2-cloro-4-metilfenol`), which the app reads.
+ *
+ * @param {{word: string}} owner - ownGroups() of the `cresol` parent.
+ * @returns {string} The message.
+ */
+function substitutedLetterOnlyMessage(owner) {
+  return `El nombre «${owner.word}» no admite más sustituyentes, ni con números ni con letras: escribe el nombre a partir `
+    + `de «${FENOL}», con el ${PHENOL_GROUP} en el carbono 1 y números para todos los demás grupos (${EXAMPLES.cloroMetilfenol}).`;
 }
 
 /**
@@ -388,13 +478,18 @@ function templateCountMessage(tile) {
 
 /**
  * The hint of a TILE_ORDER error on a template tile (R-4c): inside a
- * compound branch, or after a multiplier.
+ * compound branch, or after a multiplier. A retained phenol (R-5a3a) in a
+ * branch is written like `fenol` there, with `hidroxi` and `fenil`.
  *
- * @param {{text: string}} tile - The template tile.
+ * @param {{text: string, kind: string, value: string}} tile - The template tile.
  * @param {'branch'|'multiplier'} where - Where it stands.
  * @returns {string} The hint.
  */
 function templateHint(tile, where) {
+  if (where === 'branch' && tile.kind === 'template' && isPhenolTemplate(tile.value)) {
+    return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es «${FENIL}» y cada `
+      + `${PHENOL_GROUP} se escribe «${HIDROXI}», como en ${EXAMPLES.hidroxifenil}.`;
+  }
   if (where === 'branch') {
     return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es «${FENIL}», `
       + `como en ${EXAMPLES.metilfenil}.`;
@@ -840,10 +935,14 @@ function makeBenzeneParent(state, legacy, letter, mult, start) {
  * Builds the parent node of a retained template (R-4c), the tile at the
  * parser position. `xileno` takes the positions of its two methyls before
  * it, two numbers (`legacy`; another count is LOCANT_COUNT) or a letter
- * (`letter`, checked by checkLetters()) — or neither, left out; the other
- * templates place their groups themselves, so numbers or a letter before
- * them are TEMPLATE_LOCANTS. A multiplier before a template is TILE_ORDER.
- * Everything stays in the node, so the tree stays lossless.
+ * (`letter`, checked by checkLetters()) — or neither, left out; `cresol`
+ * (R-5a3a) takes its methyl's position as a letter only, or none (numbers
+ * before it are TEMPLATE_LOCANTS, letterOnlyMessage(); with prefixes of the
+ * student's, substitutedLetterOnlyMessage()); the other templates
+ * place their groups themselves (the diols of R-5a3a their OH groups), so
+ * numbers or a letter before them are TEMPLATE_LOCANTS. A multiplier before
+ * a template is TILE_ORDER. Everything stays in the node, so the tree stays
+ * lossless.
  *
  * @param {object} state - Parser state (positioned on the template tile).
  * @param {number[]} legacy - Locant tiles before it.
@@ -862,6 +961,13 @@ function makeTemplateParent(state, legacy, letter, mult, start) {
     const from = legacy.length > 0 ? legacy[0] : letter;
     const to = (letter === null ? legacy[legacy.length - 1] : letter) + 1;
     addError(state, 'TEMPLATE_LOCANTS', from, to, templateLocantsMessage(ownGroups(tiles, chain)));
+  } else if (template.letterOnly && legacy.length > 0) {
+    // `4-cresol`, `4-p-cresol` (R-5a3a): the numbers only; checkLetters() leaves the letter alone. With prefixes of the
+    // student's (`2-cloro-4-cresol`) no letter would do either: the message points at the name from `fenol` (review).
+    const owner = ownGroups(tiles, chain);
+    const prefixed = state.items.some((item) => item.type === 'prefix');
+    addError(state, 'TEMPLATE_LOCANTS', legacy[0], legacy[legacy.length - 1] + 1,
+      prefixed ? substitutedLetterOnlyMessage(owner) : letterOnlyMessage(owner));
   } else if (!template.positions && letter === null && legacy.length > 0 && legacy.length !== template.count) {
     addError(state, 'LOCANT_COUNT', legacy[0], legacy[legacy.length - 1] + 1, templateCountMessage(tiles[tile]));
   }
@@ -1019,11 +1125,14 @@ function checkBranchLetters(state, branch) {
  * 1,3 / 1,4 — a template's own groups counting (the methyl of `tolueno` is
  * one), the groups on a prefix as many as its multiplier says. So a letter
  * stands on a name-level prefix (`o-dimetilbenceno`, `p-metiltolueno`) or on
- * `xileno` (`o-xileno`); never inside a compound branch, with another
+ * `xileno` or `cresol` (`o-xileno`, `p-cresol`: R-5a3a, its OH and its methyl
+ * the two positions); never inside a compound branch, with another
  * parent, before `benceno`, beside numbers on the same prefix, with one or
- * three or more occupied positions, nor for two different prefixes on
- * `benceno` (`m-etilmetilbenceno`). A letter before `tolueno`, `estireno` or
- * `mesitileno` is their TEMPLATE_LOCANTS (makeTemplateParent()).
+ * three or more occupied positions (`2-cloro-p-cresol`, `p-metilcatecol`:
+ * the OH groups of a retained phenol count), nor for two different prefixes
+ * on `benceno` (`m-etilmetilbenceno`). A letter before `tolueno`, `estireno`,
+ * `mesitileno` or a diol of R-5a3a is their TEMPLATE_LOCANTS
+ * (makeTemplateParent()), and so are numbers before `cresol`.
  *
  * @param {object} state - Parser state.
  * @param {object} tree - The name tree.
@@ -1054,11 +1163,11 @@ function checkLetters(state, tree) {
       .forEach((holder) => report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.notBenzene));
     return;
   }
-  const owner = ownGroups(tiles, chain); // A template's groups, or the OH of `fenol` (R-5a2).
+  const owner = ownGroups(tiles, chain); // A template's groups (R-4c; the OH groups of R-5a3a), or the OH of `fenol` (R-5a2).
   if (chain.type === 'benzene' && parent.letter !== null && !owner) {
     report(parent.letter, parent.letter + 1, POSITIONAL_MESSAGES.beforeStem); // Before `fenol`: TEMPLATE_LOCANTS.
   }
-  const own = owner && !owner.positions && parent.letter !== null ? [parent] : []; // `o-xileno`
+  const own = owner && !owner.positions && parent.letter !== null ? [parent] : []; // `o-xileno`, `p-cresol` (R-5a3a)
   // The groups of a suffix on `benceno` (R-5a2) occupy ring positions too.
   const suffixGroups = parent.suffix ? multiplierCount(tiles, parent.suffix.multiplier) : 0;
   const positions = (owner ? owner.count : 0) + suffixGroups
@@ -1068,9 +1177,13 @@ function checkLetters(state, tree) {
     const locants = holder.type === 'parent' ? holder.legacy : holder.locants;
     const count = holder.type === 'parent' || holder.multiplier === null ? 1 : tiles[holder.multiplier].value;
     if (locants.length > 0) {
-      report(locants[0], holder.letter + 1, holder.type === 'parent' ? POSITIONAL_MESSAGES.bothXylene : POSITIONAL_MESSAGES.both);
+      if (holder.type !== 'parent' || !owner.letterOnly) { // Numbers before `cresol` are its TEMPLATE_LOCANTS (R-5a3a).
+        report(locants[0], holder.letter + 1, holder.type === 'parent' ? POSITIONAL_MESSAGES.bothXylene : POSITIONAL_MESSAGES.both);
+      }
     } else if (positions >= 3) {
-      report(holder.letter, holder.letter + 1, threePositionsMessage(positions, owner));
+      // `2-cloro-p-cresol` (R-5a3a review): numbers would not do either, so the message points at the name from `fenol`.
+      report(holder.letter, holder.letter + 1, owner && owner.letterOnly ? substitutedLetterOnlyMessage(owner)
+        : threePositionsMessage(positions, owner));
     } else if (positions < 2) {
       report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.one);
     } else if (!owner && count !== 2) {
@@ -1156,7 +1269,7 @@ function checkClosing(state, tree) {
 export function parse(sequence) {
   const tiles = toTiles(sequence);
   const tree = { type: 'name', tiles, items: [], parent: null, trailing: [], range: [0, tiles.length] };
-  const state = { tiles, pos: 0, errors: [] };
+  const state = { tiles, pos: 0, errors: [], items: tree.items }; // `items`: the name-level prefixes read so far.
   if (tiles.length === 0) {
     addError(state, 'EMPTY', 0, 0, MESSAGES.EMPTY);
     return { tree, errors: state.errors };

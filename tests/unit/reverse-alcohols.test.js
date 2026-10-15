@@ -41,15 +41,14 @@ import { seq, readFixtures, isAlcohol, isAlcoholMolecule, isAlcoholName } from '
 /** Alcohol fixture rows: 59 of I-31, 18 of I-40a, 8 of I-43a, 8 of I-44, 9 of I-45a. */
 const EXPECTED_ROWS = Object.freeze({ total: 102, i31: 59, i40a: 18, i43a: 8, i44: 8, i45a: 9 });
 
-/** Their names and alternatives written with the tiles of this phase. */
-const EXPECTED_NAMES = 117;
-
 /**
- * Their names left for later phases: the retained phenols of R-5a3
- * (`p-cresol` twice, `o-cresol`, `m-cresol`, `pirocatecol`, `catecol`,
- * `resorcinol`, `hidroquinona`) and `alcohol bencílico`.
+ * Their names and alternatives written with the tiles: 117 of this phase and, since R-5a3a, the retained phenols
+ * (`p-cresol` twice, `o-cresol`, `m-cresol`, `pirocatecol`, `catecol`, `resorcinol`, `hidroquinona`).
  */
-const EXPECTED_LATER_NAMES = 9;
+const EXPECTED_NAMES = 125;
+
+/** Their names left for later phases: `alcohol bencílico`. */
+const EXPECTED_LATER_NAMES = 1;
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -519,7 +518,7 @@ test('readName (R-5a2): left-out locants of the suffix list the structures (`pro
  */
 const MUTATIONS = [
   ['but ano 2 ol', 'butan-2-ol', 'correct', 'butan-2-ol', 'CC(O)CC', null],
-  // The OH numbered from the other end (N0): no message yet (R-5a3).
+  // The OH numbered from the other end (N0): no message yet (R-5a3b).
   ['but ano 3 ol', 'butan-3-ol', 'otherName', 'butan-2-ol', 'CC(O)CC', null],
   ['ciclo hex ano 2 ol', 'ciclohexan-2-ol', 'otherName', 'ciclohexanol', 'OC1CCCCC1', null],
   ['benceno 1 5 di ol', 'benceno-1,5-diol', 'otherName', 'benceno-1,3-diol', 'OC1=CC=CC(O)=C1', null],
@@ -630,7 +629,7 @@ test('fixture round trip (R-5a2): every alcohol row of I-31, I-40a, I-43a, I-44,
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (!isAlcoholName(name)) {
-        later += 1; // A retained phenol of R-5a3, or `alcohol bencílico`.
+        later += 1; // `alcohol bencílico` (the retained phenols read since R-5a3a).
         continue;
       }
       const ids = tokenize(name);
@@ -756,7 +755,7 @@ test('closed loop over the alcohol generators: engine name → tiles → readNam
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
       if (!isAlcoholName(name)) {
-        continue; // A retained phenol of R-5a3 (`p-cresol`, `catecol`…) or `alcohol bencílico`.
+        continue; // `alcohol bencílico` (the retained phenols, `p-cresol`, `catecol`…, read since R-5a3a).
       }
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);
