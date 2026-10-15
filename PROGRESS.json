@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T11:52:21Z",
+  "updated": "2026-10-15T13:21:28Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -790,8 +790,8 @@
     {
       "id": "I-51d",
       "title": "v4 R-5d Acids",
-      "status": "in_progress",
-      "summary": "Extends tile names to carboxylic acids; split into I-51d1 (suffixes, ácido, carboxi), I-51d2 (templates, Ayuda) and I-51d3 (diagnosis)."
+      "status": "done",
+      "summary": "Extends tile names to carboxylic acids; split into I-51d1 (suffixes, ácido, carboxi), I-51d2 (templates, Ayuda) and I-51d3 (diagnosis), all done."
     },
     {
       "id": "I-51d1",
@@ -823,8 +823,29 @@
     {
       "id": "I-52a",
       "title": "v4 R-6a Esters",
+      "status": "in_progress",
+      "summary": "Extends tile names to esters; split into I-52a1 (suffixes, O-bound side), I-52a2 (templates, ester prefixes, Ayuda) and I-52a3 (diagnosis)."
+    },
+    {
+      "id": "I-52a1",
+      "title": "v4 R-6a1 Ester suffixes oato/carboxilato, benzoato and the O-bound side",
+      "status": "done",
+      "risk": "high",
+      "summary": "Reads ester names built from tiles: oato, carboxilato and benzoato with the automatic de and y and the O-bound side multipliers.",
+      "review": "Codex ship, 0 findings — docs/reviews/I-52a1.md",
+      "narrative": "docs/progress-archive/i-52a1.md"
+    },
+    {
+      "id": "I-52a2",
+      "title": "v4 R-6a2 Retained ester names, ester prefixes and Ayuda ester line",
       "status": "queued",
-      "summary": "Extends tile names to esters, with the automatic de and y and the O-bound side multipliers."
+      "summary": "Reads formiato and acetato, the aciloxi and alcoxicarbonil ester prefixes, and adds the Ayuda ester line."
+    },
+    {
+      "id": "I-52a3",
+      "title": "v4 R-6a3 Ester diagnosis messages",
+      "status": "queued",
+      "summary": "Names the mistakes in an ester name built from tiles, each with its step in the explanation."
     },
     {
       "id": "I-52b",

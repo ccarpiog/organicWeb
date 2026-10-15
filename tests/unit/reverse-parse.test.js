@@ -105,7 +105,8 @@ test('the §15.5.1 examples, the ring forms, the benzene forms and the template 
     assert.deepEqual(errorsOf(words), [], words);
   }
   assert.deepEqual(ERROR_CODES, ['EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER',
-    'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS', 'TEMPLATE_LOCANTS', 'POSITIONAL', 'ETHER_GROUPS', 'ACID_WORD']); // ETHER_GROUPS: R-5b2;
+    'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS', 'TEMPLATE_LOCANTS', 'POSITIONAL', 'ETHER_GROUPS', 'ACID_WORD', 'ESTER_GROUPS',
+    'ESTER_SUFFIX']); // ESTER_GROUPS, ESTER_SUFFIX since R-6a1 (reverse-esters.test.js) // ETHER_GROUPS: R-5b2;
   // ACID_WORD: R-5d1
 });
 

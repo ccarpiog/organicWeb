@@ -33,7 +33,9 @@
  *   endings `oil` and `carbonil`, phase R-5c2, each with a tooltip, as
  *   `benzoil` in «Anillos»; the acids' class word `ácido`, `carboxi` and the
  *   suffixes `oico` and `carboxílico`, phase R-5d1, each with a tooltip, as
- *   `benzoico` in «Anillos» —, «Nombres tradicionales» — `tolueno`,
+ *   `benzoico` in «Anillos»; the esters' suffixes `oato` and `carboxilato`
+ *   and the ending `ilo` of an O-bound group, phase R-6a1, each with a
+ *   tooltip, as `benzoato` in «Anillos» —, «Nombres tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
  *   `hidroquinona`, phase R-5a3a, the retained carbonyl names
@@ -66,7 +68,7 @@
 import {
   TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID,
   BENZALDEHYDE_ID, ACETYL_ID, ACYL_ID, RING_CARBONYL_ID, BENZOYL_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID,
-  tileById,
+  OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID, tileById,
 } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
@@ -119,7 +121,9 @@ export function positionalLabel(tile) {
  * molecule each is, and which take prefixes; R-5d1: `ácido`, `carboxi`,
  * `oico`, `carboxílico` and `benzoico`, what each is and where it goes;
  * R-5d2: the retained acid names, what molecule each is, that they go after
- * `ácido`, and which take prefixes; drafts pending teacher review).
+ * `ácido`, and which take prefixes; R-6a1: `oato`, `carboxilato`, `benzoato`
+ * and `ilo`, what each is, where it goes and that ` de ` and ` y ` are the
+ * app's; drafts pending teacher review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
@@ -158,6 +162,17 @@ export const TILE_HINTS = Object.freeze({
   [CARBOXYLIC_ID]: 'Grupo COOH unido a un anillo. Va al final, detrás del nombre del anillo, y el nombre empieza por «ácido»: ácido '
     + 'ciclohexanocarboxílico, ácido benceno-1,3-dicarboxílico.',
   [BENZOIC_ID]: 'Benceno con un grupo COOH: ácido bencenocarboxílico. Va detrás de «ácido»: ácido benzoico.',
+  // R-6a1: the esters.
+  [OATO_ID]: 'Éster (grupo COO). Va detrás de la terminación de una cadena, y luego el grupo unido al oxígeno, acabado en «ilo» '
+    + '(el «de» lo pone la app); el grupo COO está siempre en un extremo, así que no lleva números: et, ano, oato, met e ilo dan '
+    + 'etanoato de metilo; con dos, butanodioato de dimetilo.',
+  [CARBOXYLATE_ID]: 'Grupo COO unido a un anillo. Va detrás del nombre del anillo, y luego el grupo unido al oxígeno: '
+    + 'ciclohexanocarboxilato de etilo, ciclohexano-1,4-dicarboxilato de dimetilo.',
+  [BENZOATE_ID]: 'Benceno con un grupo COO: bencenocarboxilato. Detrás va el grupo unido al oxígeno: benzoato de metilo.',
+  [ESTER_ALKYL_ID]: 'Acaba el grupo unido al oxígeno de un éster, en lugar de «il»: met e ilo dan metilo; prop, ano, 2 e ilo dan '
+    + 'propan-2-ilo; detrás de isopropil, tert-butil o fenil, isopropilo, tert-butilo, fenilo. Sus ramas van delante (etanoato de '
+    + '2-cloroetilo); con «di», el grupo se repite (butanodioato de dimetilo); dos grupos distintos, uno tras otro (propanodioato de '
+    + 'etilo y metilo).',
   'template-anisole': 'Benceno con un grupo metoxi: metoxibenceno.',
   'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
   'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',

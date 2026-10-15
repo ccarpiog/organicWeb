@@ -11,7 +11,7 @@
  * HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING,
  * ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX,
  * ACETYL_PREFIX, ACYL_ENDING, BENZOYL_PREFIX, RING_CARBONYL_ENDING,
- * SUFFIX_CLASS_WORDS),
+ * SUFFIX_CLASS_WORDS, ESTER_ALKYL_ENDING),
  * never retyped here;
  * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
@@ -116,14 +116,34 @@
  *   'benzene', value 'benzoic': the benzene parent with its –COOH at carbon
  *   1, as `benzaldehído` with its –CHO — `ácido 4-metilbenzoico`;
  *   GROUP_WORD_PARENTS);
+ *   and for the esters (R-6a1): the suffixes `oato` (value 'ester': a –COO–
+ *   at an end of a chain, terminal by rule like `oico` — `etanoato de
+ *   metilo`, `butanodioato de dimetilo`) and `carboxilato` (value
+ *   'carboxylate': a –COO– whose carbon is outside the parent, bonded to the
+ *   carbon its locant gives — `ciclohexanocarboxilato de etilo`), kind
+ *   'suffix' (SUFFIX_GROUPS, `bridge`: the group's carbon also carries the
+ *   bridge oxygen, single-bonded, to which the O-bound group is bonded);
+ *   'esterAlkyl' (the ending `ilo`, value 1: written in a branch's
+ *   free-valence place, in place of `il`, it makes that branch an ester's
+ *   O-bound group, the word after the automatic ` de ` — `met ilo` →
+ *   `metilo`, `prop ano 2 ilo` → `propan-2-ilo` —, and after a retained word
+ *   that ends in `il` it takes that `il`'s place, as `oxi` does —
+ *   `isopropil ilo` → `isopropilo`, `tert-butil ilo` → `tert-butilo`, `fenil
+ *   ilo` → `fenilo`; the lexicon's FREE_VALENCE_SUFFIXES[1] and
+ *   ESTER_ALKYL_ENDING); and in the «Anillos» row `benzoato` (kind
+ *   'benzene', value 'benzoate': the benzene parent with its –COO– at carbon
+ *   1, as `benzoico` with its –COOH — `4-metilbenzoato de etilo`;
+ *   GROUP_WORD_PARENTS);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
  *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2,
- *   `benzaldehído` from R-5c1, `benzoil` from R-5c2, `benzoico` from R-5d1),
+ *   `benzaldehído` from R-5c1, `benzoil` from R-5c2, `benzoico` from R-5d1,
+ *   `benzoato` from R-6a1),
  *   'groups' («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`; R-5b:
  *   `oxi`, and `éter` from R-5b2; R-5c1: `oxo`, `formil`, `al`, `ona`,
  *   `carbaldehído`; R-5c2: `acetil`, `oil`, `carbonil`, after `formil`;
- *   R-5d1: `ácido`, `carboxi`, `oico`, `carboxílico`, at the end),
+ *   R-5d1: `ácido`, `carboxi`, `oico`, `carboxílico`; R-6a1: `oato`,
+ *   `carboxilato`, `ilo`, at the end),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; R-5c3a: the retained carbonyl
  *   names, `formaldehído` … `tereftalaldehído`; R-5d2: the retained acid
@@ -136,7 +156,7 @@ import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
   RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES,
   GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING, ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX, groupName,
-  ACETYL_PREFIX, ACYL_ENDING, BENZOYL_PREFIX, RING_CARBONYL_ENDING, SUFFIX_CLASS_WORDS,
+  ACETYL_PREFIX, ACYL_ENDING, BENZOYL_PREFIX, RING_CARBONYL_ENDING, SUFFIX_CLASS_WORDS, ESTER_ALKYL_ENDING,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -262,6 +282,22 @@ export const BENZOIC_ID = 'ring-benzoic';
 /** Id of the `carboxi` tile (design.md §15.8 R-5d; phase R-5d1: a –COOH bonded by its carbon, as a branch). */
 export const CARBOXY_ID = 'retained-carboxy';
 
+/** Id of the `oato` tile (design.md §15.8 R-6a; phase R-6a1: the ester suffix of a chain, `etanoato de metilo`). */
+export const OATO_ID = 'suffix-ester';
+
+/** Id of the `carboxilato` tile (design.md §15.8 R-6a; phase R-6a1: the –COO– suffix whose carbon is outside the parent). */
+export const CARBOXYLATE_ID = 'suffix-carboxylate';
+
+/** Id of the `benzoato` tile (design.md §15.8 R-6a; phase R-6a1: the benzene parent with its –COO– at carbon 1). */
+export const BENZOATE_ID = 'ring-benzoate';
+
+/**
+ * Id of the `ilo` tile (design.md §15.5.2 item 6, §15.8 R-6a; phase R-6a1:
+ * the ending of an ester's O-bound group, written in place of `il`:
+ * `metilo`, `propan-2-ilo`, `isopropilo`).
+ */
+export const ESTER_ALKYL_ID = 'ester-alkyl';
+
 /**
  * The retained acyl words (R-5c2), by tile value: `acetil`, a two-carbon
  * chain whose carbon 1 is the C=O carbon (build.js), and `benzoil`, the
@@ -293,7 +329,10 @@ export function isAcylTile(tile) {
  * for a C=O), whether it sits at a chain end by rule (`terminal`: `al`,
  * `oico`, render.js TERMINAL_SUFFIXES; never cited on a chain) and, for an
  * acid (R-5d1: `oico`, `carboxílico`), `hydroxy`: the carbon of the C=O also
- * carries an OH, single-bonded (the –COOH).
+ * carries an OH, single-bonded (the –COOH); for an ester (R-6a1: `oato`,
+ * terminal like `oico`, and `carboxilato`, outside like `carboxílico`),
+ * `bridge`: the carbon of the C=O also carries the bridge oxygen,
+ * single-bonded, to which the O-bound group is bonded (the –COO–).
  */
 export const SUFFIX_GROUPS = Object.freeze({
   alcohol: Object.freeze({ kind: 'alcohol', outside: false, order: 1, terminal: false }),
@@ -302,24 +341,45 @@ export const SUFFIX_GROUPS = Object.freeze({
   carbaldehyde: Object.freeze({ kind: 'aldehyde', outside: true, order: 2, terminal: false }),
   acid: Object.freeze({ kind: 'acid', outside: false, order: 2, terminal: true, hydroxy: true }),
   carboxylic: Object.freeze({ kind: 'acid', outside: true, order: 2, terminal: false, hydroxy: true }),
+  // R-6a1: the esters.
+  ester: Object.freeze({ kind: 'ester', outside: false, order: 2, terminal: true, bridge: true }),
+  carboxylate: Object.freeze({ kind: 'ester', outside: true, order: 2, terminal: false, bridge: true }),
 });
 
 /**
  * The bond order a suffix group takes from the parent's carbon that carries
  * it (search.js, build.js): one for a group whose carbon is outside the
- * parent (`carbaldehído`, `carboxílico`: the single bond to that carbon),
- * else the bond to its oxygen — one for the OH, two for a C=O — and one
- * more for the OH of an acid's –COOH (R-5d1: `oico`, three).
+ * parent (`carbaldehído`, `carboxílico`, `carboxilato`: the single bond to
+ * that carbon), else the bond to its oxygen — one for the OH, two for a C=O
+ * — and one more for the OH of an acid's –COOH (R-5d1: `oico`, three) or the
+ * bridge oxygen of an ester's –COO– (R-6a1: `oato`, three).
  *
- * @param {{outside: boolean, order: number, hydroxy?: boolean}} group - A SUFFIX_GROUPS entry.
+ * @param {{outside: boolean, order: number, hydroxy?: boolean, bridge?: boolean}} group - A SUFFIX_GROUPS entry.
  * @returns {number} 1, 2 or 3.
  */
 export function suffixBondAmount(group) {
   if (group.outside) {
     return 1;
   }
-  return group.order + (group.hydroxy ? 1 : 0);
+  return group.order + (group.hydroxy || group.bridge ? 1 : 0);
 }
+
+/** The principal group of an ester (a lexicon GROUP_SUFFIXES key; R-6a1). */
+export const ESTER_KIND = 'ester';
+
+/**
+ * Tells whether a suffix tile value is an ester's (R-6a1: `oato`,
+ * `carboxilato`), whose name ends with the O-bound groups after ` de `.
+ *
+ * @param {string} value - A SUFFIX_GROUPS key.
+ * @returns {boolean} True for an ester suffix.
+ */
+export function isEsterSuffix(value) {
+  return Boolean(SUFFIX_GROUPS[value]) && SUFFIX_GROUPS[value].kind === ESTER_KIND;
+}
+
+/** How the messages call the –COO– of an ester (R-6a1), as «grupo COOH» for an acid's. */
+export const ESTER_GROUP = 'grupo COO';
 
 /** The principal group of an acid (a lexicon GROUP_SUFFIXES and SUFFIX_CLASS_WORDS key; R-5d1). */
 export const ACID_KIND = 'acid';
@@ -343,7 +403,8 @@ export const ACID_GROUP = 'grupo COOH';
  * carbon 1 themselves, by tile value: `fenol` (R-5a2, its OH),
  * `benzaldehído` (R-5c1, its –CHO, whose carbon is outside the ring) and
  * `benzoico` (R-5d1, its –COOH, likewise; written after the class word
- * `ácido`):
+ * `ácido`) and `benzoato` (R-6a1, its –COO–, likewise; the O-bound group
+ * after it):
  * `suffix` the SUFFIX_GROUPS key of that group, `group` how the messages
  * call it (the parser's and the builder's «grupo OH», «grupo CHO»).
  */
@@ -351,6 +412,7 @@ export const GROUP_WORD_PARENTS = Object.freeze({
   phenol: Object.freeze({ suffix: 'alcohol', group: 'grupo OH' }),
   benzaldehyde: Object.freeze({ suffix: 'carbaldehyde', group: 'grupo CHO' }),
   benzoic: Object.freeze({ suffix: 'carboxylic', group: ACID_GROUP }),
+  benzoate: Object.freeze({ suffix: 'carboxylate', group: ESTER_GROUP }),
 });
 
 /**
@@ -799,7 +861,9 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * `formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
  * `fenilacetaldehído`, `ftalaldehído`, `isoftalaldehído`, `tereftalaldehído`,
  * then the retained acid names `fórmico`, `acético`, `oxálico`,
- * `fenilacético`, `ftálico`, `isoftálico`, `tereftálico`).
+ * `fenilacético`, `ftálico`, `isoftálico`, `tereftálico`); R-6a1 adds
+ * `benzoato` to the rings, after `benzoico`, and `oato`, `carboxilato` and
+ * `ilo` to the groups, at their end.
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -837,6 +901,8 @@ function buildCatalogue() {
   tiles.push(makeTile(BENZALDEHYDE_ID, 'benzene', 'benzaldehyde', 'rings', `${benzaldehyde.stem}${benzaldehyde.ending}`)); // R-5c1
   const benzoic = BENZENE_GROUP_NAMES.acid;
   tiles.push(makeTile(BENZOIC_ID, 'benzene', 'benzoic', 'rings', `${benzoic.stem}${benzoic.ending}`)); // `benzoico` (R-5d1)
+  const benzoate = BENZENE_GROUP_NAMES[ESTER_KIND];
+  tiles.push(makeTile(BENZOATE_ID, 'benzene', 'benzoate', 'rings', `${benzoate.stem}${benzoate.ending}`)); // `benzoato` (R-6a1)
   const phenyl = RETAINED_PREFIXES.phenyl;
   tiles.push(makeTile(PHENYL_ID, 'retained', 'phenyl', 'rings', `${phenyl.italic}${phenyl.text}`, false, { italic: phenyl.italic }));
   tiles.push(makeTile(BENZOYL_ID, 'retained', 'benzoyl', 'rings', BENZOYL_PREFIX, false, { italic: '' })); // `benzoil` (R-5c2)
@@ -863,6 +929,10 @@ function buildCatalogue() {
   tiles.push(makeTile(CARBOXY_ID, 'retained', 'carboxy', 'groups', GROUP_PREFIXES[ACID_KIND], false, { italic: '' })); // `carboxi`
   tiles.push(makeTile(OICO_ID, 'suffix', ACID_KIND, 'groups', GROUP_SUFFIXES[ACID_KIND])); // `oico` (R-5d1)
   tiles.push(makeTile(CARBOXYLIC_ID, 'suffix', 'carboxylic', 'groups', RING_GROUP_SUFFIXES[ACID_KIND])); // `carboxílico` (R-5d1)
+  tiles.push(makeTile(OATO_ID, 'suffix', ESTER_KIND, 'groups', GROUP_SUFFIXES[ESTER_KIND])); // `oato` (R-6a1)
+  tiles.push(makeTile(CARBOXYLATE_ID, 'suffix', 'carboxylate', 'groups', RING_GROUP_SUFFIXES[ESTER_KIND])); // `carboxilato` (R-6a1)
+  // `ilo` (R-6a1): `il` + the ester's `o`, the ending of an O-bound group (value 1: its single bond to the bridge oxygen).
+  tiles.push(makeTile(ESTER_ALKYL_ID, 'esterAlkyl', 1, 'groups', `${FREE_VALENCE_SUFFIXES[1]}${ESTER_ALKYL_ENDING}`));
   for (const value of Object.keys(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }

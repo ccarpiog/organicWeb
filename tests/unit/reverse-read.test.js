@@ -771,7 +771,8 @@ test('names are compared in NFC, with the name and every alternative', () => {
 
 test('every verdict has the documented shape', () => {
   const fields = ['kind', 'message', 'text', 'spans', 'name', 'alternatives', 'matched', 'filled', 'candidates', 'molecule',
-    'studentParent', 'prefixAtoms', 'suffixAtoms', 'naming', 'errors', 'notes', 'draw']; // `suffixAtoms` since R-5a2.
+    'studentParent', 'prefixAtoms', 'suffixAtoms', 'esterAtoms', 'naming', 'errors', 'notes', 'draw']; // `suffixAtoms` since R-5a2,
+  // `esterAtoms` since R-6a1.
   const verdicts = [
     read('hex ano'), read('4 prop ano 2 il hept ano'), read('met il prop ano'), read('4 met il pent ano'), read('met il pent ano'),
     read('met il pent ano', { budget: { placements: 1 } }), read('7 met il pent ano'), read('2 met il'),

@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -68,12 +68,22 @@
  * start; `oico` and `carboxílico` are read where `ol` is, `benzoico` where
  * `fenol` is, `carboxi` where a retained branch word is, and the retained
  * acid names (R-5d2: `ácido acético`, `ácido 4-metilftálico`) as the other
- * templates, `fenilacético` as its one tile like `fenilacetaldehído`. A step budget bounds the search:
- * running out returns null, never a guess.
+ * templates, `fenilacético` as its one tile like `fenilacetaldehído`. An
+ * ester's name (R-6a1: `etanoato de metilo`, `propanodioato de etilo y
+ * metilo`) reads `oato` and `carboxilato` where `ol` is (class EST) and
+ * `benzoato` where `fenol` is (PHEST), followed by exactly the automatic ` de
+ * ` (assemble.js rule 10), then the O-bound groups: each ends in `ilo`
+ * (class ILO), right after a root, an elided ending or a locant (`metilo`,
+ * `etenilo`, `propan-2-ilo`) or after a retained word without its `il`
+ * (`isoprop` + `ilo`, `fen` + `ilo`), an automatic enclosure closing right
+ * after it (`di(propan-2-ilo)`), a compound branch's END too (`bis(2-cloroetilo)`,
+ * which may end the name); the automatic ` y ` only after a complete group,
+ * outside every mark. A step budget bounds the search: running out returns
+ * null, never a guess.
  */
 
-import { CONNECTING_VOWEL, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES } from '../naming/lexicon.es.js';
-import { TILES, START_ID, END_ID, CLOSING_ID, ALKOXY_RETAINED, GROUP_WORD_PARENTS, tileId } from './tiles.js';
+import { CONNECTING_VOWEL, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN } from '../naming/lexicon.es.js';
+import { TILES, START_ID, END_ID, CLOSING_ID, ALKOXY_RETAINED, GROUP_WORD_PARENTS, tileId, isEsterSuffix } from './tiles.js';
 import { parse } from './parse.js';
 import { assemble, separator } from './assemble.js';
 
@@ -112,7 +122,10 @@ const PUNCTUATION = ',-';
  * SPACE the automatic space between their words; for the acyl prefixes
  * (R-5c2) OIL the ending `oil` and CARB the ending `carbonil`; for the acids
  * (R-5d1) ACID the class word `ácido` and ACIDSPACE the automatic space
- * after it.
+ * after it; for the esters (R-6a1) EST the suffixes `oato` and
+ * `carboxilato`, PHEST `benzoato`, ILO the ending `ilo` of an O-bound group,
+ * DE the automatic ` de ` and Y the automatic ` y ` (RETX and PHEX also
+ * before `ilo`: `isopropilo`, `fenilo`).
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -125,7 +138,10 @@ function tileClass(tile) {
     return 'PHE';
   }
   if (tile.kind === 'benzene' && GROUP_WORD_PARENTS[tile.value]) {
-    return 'PHOL'; // `fenol` (R-5a2), `benzaldehído` (R-5c1)
+    return isEsterSuffix(GROUP_WORD_PARENTS[tile.value].suffix) ? 'PHEST' : 'PHOL'; // `fenol` (R-5a2), `benzaldehído`; `benzoato` (R-6a1)
+  }
+  if (tile.kind === 'suffix' && isEsterSuffix(tile.value)) {
+    return 'EST'; // `oato`, `carboxilato` (R-6a1): ` de ` follows
   }
   if (tile.kind === 'acyl') {
     return tile.value === 'ring' ? 'CARB' : 'OIL'; // `carbonil`, `oil` (R-5c2)
@@ -133,10 +149,13 @@ function tileClass(tile) {
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
     ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS', halogen: 'HAL', hydroxy: 'HAL', carbonyl: 'HAL', suffix: 'OL',
-    closing: 'CLO', alkoxy: 'OXI', classWord: 'ETHER', suffixClass: 'ACID',
+    closing: 'CLO', alkoxy: 'OXI', classWord: 'ETHER', suffixClass: 'ACID', esterAlkyl: 'ILO',
   };
   return classes[tile.kind];
 } // End of function tileClass()
+
+/** The automatic words of an ester's name (assemble.js rule 10, R-6a1): ` de ` after the acid part, ` y ` between groups. */
+const ESTER_WORDS = Object.freeze({ link: ESTER_LINK, join: ESTER_ALKYL_JOIN });
 
 /** The automatic space between the words of a class name (assemble.js rule 7, R-5b2). */
 const SPACE = ' ';
@@ -148,7 +167,7 @@ const BEFORE_SPACE = new Set(['FV', 'RET', 'PHE', 'END']);
 const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'RETX', 'PHEX'];
 
 /** Classes that may follow a complete prefix: another prefix, the end of its compound branch, `benceno`, `fenol` or a template. */
-const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'TPL'];
+const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'PHEST', 'TPL'];
 
 /**
  * The classes that may follow each class in a valid name (design.md
@@ -167,27 +186,27 @@ const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'TPL'];
  * after them; `ácido` (R-5d1) at the start only, and its space after it.
  */
 const FOLLOW = Object.freeze({
-  BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'TPL', 'POS', 'ACID']),
+  BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'PHEST', 'TPL', 'POS', 'ACID']),
   // R-5d1: `ácido`, then only its space (search()); after the space, the rest of the name as from the start.
   ACID: new Set(),
   ACIDSPACE: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'TPL', 'POS']),
   AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE', 'RETX', 'PHEX']),
-  NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL', 'BEN', 'BENE', 'CLO', 'MULTE', 'OL', 'CARB']),
+  NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL', 'BEN', 'BENE', 'CLO', 'MULTE', 'OL', 'EST', 'CARB', 'ILO']),
   CLO: new Set(['NUM', 'CLO', 'MULT', 'ENE']),
   POS: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'TPL', 'RETX', 'PHEX']),
-  MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'ENE', 'OL', 'RETX', 'PHEX']),
-  MULTE: new Set(['OL']),
+  MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'ENE', 'OL', 'EST', 'RETX', 'PHEX']),
+  MULTE: new Set(['OL', 'EST']),
   CMULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'RETX', 'PHEX']),
   RING: new Set(['ROOT']),
-  ROOT: new Set(['ANO', 'NUM', 'CLO', 'MULT', 'ENE', 'FV', 'A', 'OXIC']),
+  ROOT: new Set(['ANO', 'NUM', 'CLO', 'MULT', 'ENE', 'FV', 'A', 'OXIC', 'ILO']),
   A: new Set(['NUM', 'CLO', 'MULT']),
-  ANO: new Set(['NUM', 'MULT', 'MULTE', 'OL', 'OIL', 'CARB']),
-  ENE: new Set(['NUM', 'CLO', 'MULT', 'MULTE', 'ENE', 'FV', 'OL', 'OIL', 'CARB']),
+  ANO: new Set(['NUM', 'MULT', 'MULTE', 'OL', 'EST', 'OIL', 'CARB']),
+  ENE: new Set(['NUM', 'CLO', 'MULT', 'MULTE', 'ENE', 'FV', 'OL', 'EST', 'OIL', 'CARB', 'ILO']),
   FV: new Set([...AFTER_PREFIX, 'OXI']),
   RET: new Set(AFTER_PREFIX),
   PHE: new Set(AFTER_PREFIX),
-  RETX: new Set(['OXI']),
-  PHEX: new Set(['OXI']),
+  RETX: new Set(['OXI', 'ILO']), // `isoprop` + `oxi` (R-5b), + `ilo` (R-6a1)
+  PHEX: new Set(['OXI', 'ILO']),
   OXI: new Set(AFTER_PREFIX),
   OXIC: new Set(AFTER_PREFIX),
   OIL: new Set(AFTER_PREFIX), // R-5c2
@@ -195,7 +214,7 @@ const FOLLOW = Object.freeze({
   HAL: new Set(AFTER_PREFIX),
   START: new Set(PREFIX_STARTS),
   END: new Set(AFTER_PREFIX),
-  BEN: new Set(['NUM', 'MULT', 'MULTE', 'OL']),
+  BEN: new Set(['NUM', 'MULT', 'MULTE', 'OL', 'EST']),
   BENE: new Set(['NUM', 'OL']),
   OL: new Set(),
   PHOL: new Set(),
@@ -203,16 +222,26 @@ const FOLLOW = Object.freeze({
   // R-5b2: after a class name's space, another group (its multiplier first) or `éter`, which ends the name.
   SPACE: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'START', 'ETHER']),
   ETHER: new Set(),
+  // R-6a1: after an ester suffix or `benzoato`, only ` de ` (search()); after ` de ` or ` y `, an O-bound group (its
+  // multiplier or its bare prefixes first); after `ilo`, the END of its compound branch, ` y ` or the end of the name.
+  EST: new Set(),
+  PHEST: new Set(),
+  DE: new Set(PREFIX_STARTS),
+  Y: new Set(PREFIX_STARTS),
+  ILO: new Set(['END']),
 });
 
-/** Classes a valid name may end with (the parent's ending, `benceno`, `fenol`, a template, the suffix `ol` or `éter`). */
-const FINAL = new Set(['ANO', 'ENE', 'BEN', 'PHOL', 'TPL', 'OL', 'ETHER']);
+/**
+ * Classes a valid name may end with (the parent's ending, `benceno`, `fenol`, a template, the suffix `ol` or `éter`; R-6a1: an
+ * ester's last O-bound group, `ilo`).
+ */
+const FINAL = new Set(['ANO', 'ENE', 'BEN', 'PHOL', 'TPL', 'OL', 'ETHER', 'ILO']);
 
 /**
  * Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, `fenil`, an alkoxy prefix's `oxi` (R-5b), or
  * an acyl ending (R-5c2: `(but-2-enoil)`, `(ciclohexanocarbonil)`).
  */
-const AUTO_CLOSE = new Set(['FV', 'PHE', 'OXI', 'OXIC', 'OIL', 'CARB']);
+const AUTO_CLOSE = new Set(['FV', 'PHE', 'OXI', 'OXIC', 'OIL', 'CARB', 'ILO']);
 
 /** What may follow `il` inside an automatic enclosure before it closes: `oxi` (R-5b: `(pentiloxi)`). */
 const IN_ENCLOSURE_AFTER_FV = new Set(['OXI']);
@@ -339,6 +368,7 @@ export function tokenize(text, options = {}) {
   const ids = [];
   const marks = [];
   let steps = 0;
+  let ester = false; // Past an ester's ` de ` (R-6a1): ` y ` may join two O-bound groups.
 
   /**
    * Explores the readings of the text from a position.
@@ -366,13 +396,27 @@ export function tokenize(text, options = {}) {
      */
     const fits = (next) => separator(last, next) === skipped;
     if (at === target.length) {
-      return skipped === '' && marks.length === 0 && FINAL.has(prev) && readsAs(ids, target);
+      // An ester's last O-bound group may be a compound branch (R-6a1: `bis(2-cloroetilo)`), ending in its END.
+      const final = FINAL.has(prev) || (ester && prev === 'END');
+      return skipped === '' && marks.length === 0 && final && readsAs(ids, target);
     }
     const ch = target[at];
     if (ch === SPACE) {
       if (prev === 'ACID') {
         // The space after `ácido` (R-5d1, assemble.js rule 9), nothing skipped before it.
         return skipped === '' ? search(at + SPACE.length, 'ACIDSPACE', SPACE_ROLE) : false;
+      }
+      const word = (prev === 'EST' || prev === 'PHEST') ? ESTER_WORDS.link : null; // ` de ` after the acid part (R-6a1)
+      const join = ester && (prev === 'ILO' || prev === 'END') ? ESTER_WORDS.join : null; // ` y ` between two O-bound groups
+      if (word || join) {
+        if (skipped !== '' || marks.length > 0 || !target.startsWith(word || join, at)) {
+          return false;
+        }
+        const before = ester;
+        ester = true;
+        const found = search(at + (word || join).length, word ? 'DE' : 'Y', SPACE_ROLE);
+        ester = before;
+        return found;
       }
       // A class name's space (R-5b2): right after a complete group, outside every mark, with nothing skipped before it.
       const fitsSpace = skipped === '' && marks.length === 0 && BEFORE_SPACE.has(prev) && fits(SPACE_ROLE);

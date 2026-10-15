@@ -11,7 +11,8 @@
  * `formil`, `benzaldehído`; R-5c2: the acyl prefixes `acetil`, `…oil`,
  * `…carbonil`, `benzoil`) and their carboxylic acids (R-5d1: `ácido`, the
  * suffixes `oico` and `carboxílico`, `benzoico`, the prefix `carboxi`; R-5d2:
- * the retained acid names).
+ * the retained acid names) and their esters (R-6a1: the suffixes `oato` and
+ * `carboxilato`, `benzoato`, the O-bound groups ending in `ilo`).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -21,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
 import {
   RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, ETHER_CLASS_WORD, ACETYL_PREFIX, ACYL_ENDING,
-  RING_CARBONYL_ENDING, BENZOYL_PREFIX, ALKOXY_ENDING, FORMYL_PREFIX, SUFFIX_CLASS_WORDS,
+  RING_CARBONYL_ENDING, BENZOYL_PREFIX, ALKOXY_ENDING, FORMYL_PREFIX, SUFFIX_CLASS_WORDS, ESTER_LINK,
 } from '../../src/naming/lexicon.es.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 
@@ -362,6 +363,94 @@ export function isAcidName(name) {
 }
 
 /**
+ * Tells whether an oxygen of a molecule is the =O of an ester's –COO–
+ * (phase R-6a1): one double bond, to a carbon whose only other oxygen is
+ * bonded to two carbons (the bridge oxygen; so not an acid's OH).
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @param {object[]} bonds - Its bonds.
+ * @param {number} id - The oxygen's atom id.
+ * @returns {boolean} True for an ester's =O.
+ */
+export function isEsterOxygen(mol, bonds, id) {
+  const own = bonds.filter((bond) => bond.a === id || bond.b === id);
+  if (own.length !== 1 || own[0].order !== 2) {
+    return false;
+  }
+  const carbon = own[0].a === id ? own[0].b : own[0].a;
+  const others = bonds.filter((bond) => (bond.a === carbon || bond.b === carbon) && bond !== own[0])
+    .map((bond) => (bond.a === carbon ? bond.b : bond.a)).filter((atom) => mol.atoms.get(atom).element === 'O');
+  return mol.atoms.get(carbon).element === 'C' && others.length === 1
+    && bonds.filter((bond) => bond.a === others[0] || bond.b === others[0]).length === 2;
+} // End of function isEsterOxygen()
+
+/**
+ * Tells whether a molecule is an ester of the families the tiles read (phase
+ * R-6a1): carbons, halogens and oxygens only, every oxygen bonded to
+ * carbons only, at least one –COO– (isEsterOxygen()) and no –COOH (beside
+ * an acid the ester is a prefix of the acid's name, which the acid round
+ * trip reads). Its other oxygens may be OH groups, ether oxygens or the C=O
+ * of an aldehyde or a ketone.
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @returns {boolean} True for an ester.
+ */
+export function isEsterMolecule(mol) {
+  const bonds = [...mol.bonds.values()];
+  let esters = 0;
+  for (const [id, atom] of mol.atoms) {
+    if (!['C', 'F', 'Cl', 'Br', 'I', 'O'].includes(atom.element)) {
+      return false;
+    }
+    if (atom.element !== 'O') {
+      continue;
+    }
+    const own = bonds.filter((bond) => bond.a === id || bond.b === id);
+    if (own.some((bond) => mol.atoms.get(bond.a === id ? bond.b : bond.a).element !== 'C') || isCarboxylOxygen(mol, bonds, id)) {
+      return false;
+    }
+    esters += isEsterOxygen(mol, bonds, id) ? 1 : 0;
+  } // End of the loop over the atoms
+  return esters > 0;
+} // End of function isEsterMolecule()
+
+/**
+ * Tells whether a fixture SMILES is an ester (isEsterMolecule(), phase
+ * R-6a1); a SMILES the model cannot read is not.
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True for an ester.
+ */
+export function isEster(smiles) {
+  try {
+    return isEsterMolecule(parseSmiles(smiles));
+  } catch (err) {
+    return false;
+  }
+}
+
+/** The automatic words between an ester's acid part and its O-bound groups (R-6a1), from the lexicon: ` de `. */
+export const ESTER_WORD = ESTER_LINK;
+
+/**
+ * The words of the ester names the tiles do not write yet (phase R-6a2): the
+ * retained `formiato` and `acetato` (which `fenilacetato` and `2-(4-metilfenil)acetato` contain), from the lexicon.
+ */
+export const LATER_ESTER_WORDS = Object.freeze([TRADITIONAL_NAMES.formate, TRADITIONAL_NAMES.acetate]);
+
+/**
+ * Tells whether a name is an ester's name the tiles of phase R-6a1 write:
+ * it has the automatic ` de `, none of the retained words of phase R-6a2
+ * (LATER_ESTER_WORDS) and no ester prefix (ESTER_PREFIX).
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True when the tiles read it.
+ */
+export function isEsterName(name) {
+  return name.includes(ESTER_WORD) && !LATER_ESTER_WORDS.some((word) => name.includes(word)) && !ESTER_PREFIX.test(name);
+}
+
+/**
  * The words of the aldehyde and ketone names the tiles do not write yet:
  * none since phase R-5c3a, whose «Nombres tradicionales» tiles write the
  * retained names (CARBONYL_TEMPLATE_WORDS).
@@ -581,7 +670,11 @@ export function leafIndices(node) {
         visit(n.suffixClass); // `ácido` (R-5d1)
         n.items.forEach(visit);
         visit(n.parent);
+        visit(n.ester); // An ester's O-bound side (R-6a1)
         n.trailing.forEach(visit);
+        break;
+      case 'ester':
+        n.items.forEach(visit);
         break;
       case 'parent':
         out.push(...n.legacy, ...(n.letter === null ? [] : [n.letter]), ...(n.legacyMultiplier === null ? [] : [n.legacyMultiplier]));
@@ -609,7 +702,8 @@ export function leafIndices(node) {
         out.push(...n.fvLocants, ...(n.fv === null ? [] : [n.fv]), ...(n.oxi === null || n.oxi === undefined ? [] : [n.oxi])); // R-5b
         break;
       default: // 'retained', 'halogen', 'hydroxy', 'benzene', 'template', 'suffixClass', 'stray'
-        out.push(n.tile, ...(n.oxi === null || n.oxi === undefined ? [] : [n.oxi])); // `isopropoxi` (R-5b)
+        // `isopropoxi` (R-5b); `isopropilo` (R-6a1).
+        out.push(n.tile, ...(n.oxi === null || n.oxi === undefined ? [] : [n.oxi]), ...(n.ilo === undefined ? [] : [n.ilo]));
     }
   }; // End of function visit()
   visit(node);

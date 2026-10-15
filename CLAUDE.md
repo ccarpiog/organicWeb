@@ -178,8 +178,20 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   the principal –COOH written `carboxi`, `carboxiciclohexano`, `ácido
   3-carboxipropanoico`; the ring or chain the –COOH groups choose; another
   chain with more –COOH groups), and N0 numbering and the suffix's needless
-  locants speak of «grupos –COOH», each with its «Ver el paso» step. Next
-  is R-6a (phase I-52a): esters.
+  locants speak of «grupos –COOH», each with its «Ver el paso» step. R-6a1
+  (phase I-52a1) is done: the «Grupos» row's ester suffixes `oato` (the
+  –COO– at the ends of a chain by rule: `etanoato de metilo`, `butanodioato
+  de dimetilo`) and `carboxilato` (`ciclohexanocarboxilato de etilo`) and the
+  «Anillos» row's `benzoato` (`4-metilbenzoato de etilo`) read esters, their
+  O-bound groups after the automatic ` de ` written with the «Grupos» row's
+  ending `ilo` in place of `il` (`metilo`, `propan-2-ilo`, `isopropilo`,
+  `fenilo`, `2-cloroetilo`, `4-metilfenilo`), with their own multipliers
+  (`dimetilo`, `di(propan-2-ilo)`, `bis(2-cloroetilo)`) and the automatic
+  ` y ` (`propanodioato de etilo y metilo`), their left-out locants searched
+  and the engine's refusals `outOfScope`; the diagnosis keeps the rules that
+  hold for an ester's acid part, the ester's own mistakes deliberate
+  «Esters» nulls. Next is R-6a2 (phase I-52a2): `formiato` / `acetato`, the
+  ester prefixes and the Ayuda ester line.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

@@ -387,8 +387,9 @@ test('tokenizer (R-5d1): texts that only read with errors, and the later familie
     'ácido ciclohexanoico', 'ácido bencenoico', 'ácido butan-1-oico', 'ácido 1-butanoico', 'ácido 1-benzoico', 'ácido p-benzoico',
     'ácido benzoicooico', '2-metilácido propanoico', 'ácido butanoico ácido', 'ácido ácido butanoico', '(carboxioxi)metano',
     'ácido butano-1,4-bisoico', 'carboxi',
-    // Phase R-6a…R-6d: esters (an ester prefix beside an acid too), nitriles, amines, amides.
-    'etanoato de metilo', 'benzoato de metilo', 'ciclohexanocarboxilato de etilo', 'ácido 2-(acetiloxi)etanoico',
+    // Phase R-6a…R-6d: esters (an ester prefix beside an acid too; the esters' own names read since R-6a1, but for their
+    // retained `formiato` and `acetato`, R-6a2), nitriles, amines, amides.
+    'acetato de metilo', 'formiato de etilo', 'fenilacetato de metilo', 'ácido 2-(acetiloxi)etanoico',
     'ácido 3-(metoxicarbonil)pentanodioico', 'ácido 3-cianopropanoico', 'ácido 2-aminopropanoico', 'ácido 4-carbamoilbenzoico',
     'etanamida', 'etanonitrilo', 'benzamida', 'benzonitrilo']) {
     assert.equal(tokenize(name), null, name);

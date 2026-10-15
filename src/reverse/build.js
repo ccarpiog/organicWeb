@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -60,6 +60,18 @@
  * the word, the ring's own, «…en el ácido benzoico, ese carbono ya lleva un
  * grupo COOH»); `carboxi` is a retained word, one carbon with its =O and its
  * OH, bonded by that carbon.
+ * The esters (R-6a1) are built as the acids, with the bridge oxygen
+ * single-bonded beside the =O on the group's carbon (SuffixSpec `bridge`,
+ * suffixAtoms `bridge` / `bridgeBond`) in place of the OH: `oato` at the ends
+ * of the chain by rule (more groups than ends is CARBONYL_POSITION, worded for
+ * the –COO–; the VALENCE note of an end carbon names «oato»), `carboxilato`
+ * and `benzoato` a new carbon outside the parent («…en el benzoato, ese
+ * carbono ya lleva un grupo COO»). Each O-bound group (NameSpec `ester`) is
+ * then built as a branch and bonded by its free-valence carbon to the bridge
+ * oxygen of its –COO– (attachEsterGroups(), `esterAtoms`); its carbons and
+ * atoms count for the caps, its rings for ringRefusal() (`benzoato de
+ * fenilo`: two rings, keyed), and its messages name «el grupo unido al
+ * oxígeno» (LOCANT_RANGE, BOND_RANGE, VALENCE).
  * An alkoxy prefix (R-5b, SubstituentSpec `alkoxy`) is its branch built as
  * any other — chain, ring, phenyl or retained word, with its own prefixes —
  * and then an ether oxygen, created last, bonded by single bonds to the
@@ -144,11 +156,11 @@ import {
 } from '../model/validate.js';
 import {
   BENZENE_NAME, RETAINED_PREFIXES, GROUP_SUFFIXES, ENDINGS, HALOGEN_PREFIXES, ACYL_ENDING, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, stem,
-  multiplier, SUFFIX_CLASS_WORDS,
+  multiplier, SUFFIX_CLASS_WORDS, ESTER_LINK, ESTER_ALKYL_ENDING,
 } from '../naming/lexicon.es.js';
 import {
   templateGroupWord, isAtomGroup, atomGroupOrder, closingText, HYDROXY_ELEMENT, ALKOXY_ELEMENT, OXO_ELEMENT, SUFFIX_GROUPS,
-  GROUP_WORD_PARENTS, withArticle, suffixBondAmount, ACID_KIND, ACID_GROUP,
+  GROUP_WORD_PARENTS, withArticle, suffixBondAmount, ACID_KIND, ACID_GROUP, ESTER_KIND, ESTER_GROUP,
 } from './tiles.js';
 
 /**
@@ -233,6 +245,9 @@ const FENIL = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text
  * @returns {string} The message.
  */
 function rangeMessage(owner, value) {
+  if (owner.oBound) {
+    return oBoundRangeMessage(owner, value); // An ester's O-bound group (R-6a1)
+  }
   if (owner.template && !owner.ring && !owner.benzene) {
     return chainTemplateRangeMessage(owner, value); // `acetona` (R-5c3a)
   }
@@ -253,6 +268,26 @@ function rangeMessage(owner, value) {
   }
   return `${noun} de ${carbons(owner.length)} va del 1 al ${owner.length}: no hay carbono ${value}.`;
 }
+
+/**
+ * The LOCANT_RANGE message of an ester's O-bound group (R-6a1; drafts
+ * pending teacher review): «El grupo unido al oxígeno tiene 3 carbonos, del
+ * 1 al 3: no hay carbono 5.», «El anillo del grupo unido al oxígeno va del 1
+ * al 6…», «…solo tiene el carbono 1…» for a one-carbon group.
+ *
+ * @param {{length: number, ring?: boolean}} owner - The O-bound group's chain or ring.
+ * @param {number} value - The locant.
+ * @returns {string} The message.
+ */
+function oBoundRangeMessage(owner, value) {
+  if (owner.ring) {
+    return `El anillo del grupo unido al oxígeno va del 1 al ${owner.length}: no hay carbono ${value}.`;
+  }
+  if (owner.length === 1) {
+    return `El grupo unido al oxígeno tiene 1 carbono: no hay carbono ${value}.`;
+  }
+  return `El grupo unido al oxígeno tiene ${carbons(owner.length)}, del 1 al ${owner.length}: no hay carbono ${value}.`;
+} // End of function oBoundRangeMessage()
 
 /**
  * The systematic names the LOCANT_RANGE message of a chain template whose
@@ -327,7 +362,9 @@ function checkCarbon(slot, owner, values) {
   }
   if (value >= 1 && value <= owner.length) {
     const word = owner.word || FENIL;
-    return buildError('LOCANT_RANGE', `En «${word}», el carbono 1 es el que se une ${owner.acyl ? 'al grupo C=O' : 'a la cadena'}: `
+    let joined = owner.acyl ? 'al grupo C=O' : 'a la cadena';
+    joined = owner.oBound ? 'al oxígeno' : joined; // `fenilo` (R-6a1): the ester's O-bound phenyl.
+    return buildError('LOCANT_RANGE', `En «${word}», el carbono 1 es el que se une ${joined}: `
       + `las ramas del ${word} van en los carbonos del ${slot.domain[0]} al ${owner.length}.`, slot.tiles);
   }
   return buildError('LOCANT_RANGE', rangeMessage(owner, value), slot.tiles);
@@ -358,7 +395,8 @@ function checkBonds(owner, values) {
       return buildError('LOCANT_RANGE', rangeMessage(owner, value), slot.tiles);
     }
     if (value === owner.length && !owner.ring) {
-      const noun = owner.branch ? 'la rama' : 'la cadena';
+      let noun = owner.branch ? 'la rama' : 'la cadena';
+      noun = owner.oBound ? 'el grupo unido al oxígeno' : noun; // R-6a1
       return buildError('BOND_RANGE', `El enlace ${BOND_WORDS[order]} del carbono ${value} iría al carbono ${value + 1}, `
         + `y ${noun} solo tiene ${carbons(owner.length)}.`, slot.tiles);
     }
@@ -423,6 +461,7 @@ function checkSubstituent(sub, values) {
   const owner = {
     length: sub.length, branch: true, ring: isRing(sub.kind), double: sub.double, triple: sub.triple,
     word: sub.word && sub.word.text, acyl: sub.acyl, // `benzoil` (R-5c2): its carbon 1 is bonded to the C=O carbon.
+    oBound: Boolean(sub.oBound), // An ester's O-bound group (R-6a1): its messages say so.
   };
   return checkPrefixes(sub.prefixes, owner, values) || checkBonds(owner, values)
     || checkCarbon(sub.freeValence.slot, owner, values);
@@ -533,7 +572,21 @@ export function templateGroups(spec) {
  * @returns {number} The count.
  */
 export function specCarbons(spec) {
-  return parentCarbons(spec.parent) + prefixCarbons(spec.prefixes) + prefixCarbons(templateGroups(spec)) + suffixCarbons(spec);
+  return parentCarbons(spec.parent) + prefixCarbons(spec.prefixes) + prefixCarbons(templateGroups(spec)) + suffixCarbons(spec)
+    + esterTotal(spec, substituentCarbons);
+}
+
+/**
+ * A count over every occurrence of an ester's O-bound groups (R-6a1,
+ * NameSpec `ester`): each group's count times its multiplier; 0 without
+ * them.
+ *
+ * @param {object} spec - A NameSpec.
+ * @param {(sub: object) => number} count - Counts one occurrence (substituentCarbons(), substituentAtoms(), substituentRings()).
+ * @returns {number} The total.
+ */
+function esterTotal(spec, count) {
+  return spec.ester ? spec.ester.groups.reduce((sum, group) => sum + group.multiplier.count * count(group.substituent), 0) : 0;
 }
 
 /**
@@ -573,7 +626,8 @@ function suffixAtomCount(spec) {
   if (!spec.suffix) {
     return 0;
   }
-  return spec.suffix.slots.length * (spec.suffix.hydroxy ? 2 : 1) + suffixCarbons(spec);
+  // A –COOH's OH (R-5d1), a –COO–'s bridge oxygen (R-6a1): two oxygens per group.
+  return spec.suffix.slots.length * (spec.suffix.hydroxy || spec.suffix.bridge ? 2 : 1) + suffixCarbons(spec);
 }
 
 /**
@@ -588,7 +642,8 @@ function suffixAtomCount(spec) {
  * @returns {number} The count.
  */
 export function specAtoms(spec) {
-  return spec.parent.length + prefixAtomCount(spec.prefixes) + prefixAtomCount(templateGroups(spec)) + suffixAtomCount(spec);
+  return spec.parent.length + prefixAtomCount(spec.prefixes) + prefixAtomCount(templateGroups(spec)) + suffixAtomCount(spec)
+    + esterTotal(spec, substituentAtoms); // An ester's O-bound groups (R-6a1)
 }
 
 /**
@@ -641,7 +696,8 @@ function prefixRings(prefixes) {
  * @returns {number} The count.
  */
 export function specRings(spec) {
-  return (isRing(spec.parent.kind) ? 1 : 0) + prefixRings(spec.prefixes) + prefixRings(templateGroups(spec));
+  return (isRing(spec.parent.kind) ? 1 : 0) + prefixRings(spec.prefixes) + prefixRings(templateGroups(spec))
+    + esterTotal(spec, substituentRings); // `benzoato de fenilo` (R-6a1): a ring on each side of the –COO–
 }
 
 /**
@@ -672,7 +728,10 @@ function ringOnRing(owner, ring) {
  * @returns {{code: string, message: string, tiles: [number, number]}|null} The refusal, or null.
  */
 export function ringRefusal(spec) {
-  const unkeyed = specRings(spec) > MAX_KEYED_RINGS || ringOnRing({ prefixes: spec.prefixes }, isRing(spec.parent.kind));
+  // An ester's O-bound group (R-6a1) hangs from the bridge oxygen: only a ring inside it can touch another ring.
+  const groups = spec.ester ? spec.ester.groups.map((group) => group.substituent).filter(hasOwnChain) : [];
+  const unkeyed = specRings(spec) > MAX_KEYED_RINGS || ringOnRing({ prefixes: spec.prefixes }, isRing(spec.parent.kind))
+    || groups.some((sub) => ringOnRing(sub, isRing(sub.kind)));
   return unkeyed ? buildError('RING_SYSTEM', RING_SYSTEM_MESSAGES.several, spec.tiles) : null;
 }
 
@@ -703,7 +762,7 @@ export function checkSpec(spec, values = null) {
   // The template's own groups come after the prefixes in the tiles (`4-metil-1,2-xileno`), the suffix after the parent's
   // bonds (`but-3-en-2-ol`, R-5a2).
   const error = checkPrefixes(spec.prefixes, parent, values) || checkPrefixes(templateGroups(spec), parent, values)
-    || checkBonds(parent, values) || checkSuffix(spec, parent, values);
+    || checkBonds(parent, values) || checkSuffix(spec, parent, values) || checkEsterGroups(spec, values);
   if (error) {
     return error;
   }
@@ -716,7 +775,27 @@ export function checkSpec(spec, values = null) {
   return null;
 } // End of function checkSpec()
 
-/** Words of the CARBONYL_POSITION messages (R-5c1; R-5d1: the acids'), from the lexicon. */
+/**
+ * Checks an ester's O-bound groups in tile order (R-6a1, NameSpec `ester`):
+ * each as a branch (checkSubstituent(): its own prefixes, bonds and
+ * free-valence locant, the messages worded for the group bonded to the
+ * oxygen).
+ *
+ * @param {object} spec - A NameSpec.
+ * @param {Map<object, number>|null} values - Placement values, or null.
+ * @returns {object|null} The first error, or null.
+ */
+function checkEsterGroups(spec, values) {
+  for (const group of spec.ester ? spec.ester.groups : []) {
+    const error = checkSubstituent(group.substituent, values);
+    if (error) {
+      return error;
+    }
+  }
+  return null;
+} // End of function checkEsterGroups()
+
+/** Words of the CARBONYL_POSITION messages (R-5c1; R-5d1: the acids'; R-6a1: the esters'), from the lexicon. */
 const CARBONYL_WORDS = Object.freeze({
   al: GROUP_SUFFIXES.aldehyde,
   ona: GROUP_SUFFIXES.ketone,
@@ -725,6 +804,11 @@ const CARBONYL_WORDS = Object.freeze({
   oico: GROUP_SUFFIXES[ACID_KIND],
   acidoMetanoico: `${SUFFIX_CLASS_WORDS[ACID_KIND]} ${stem(1)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[ACID_KIND]}`,
   acidoButanodioico: `${SUFFIX_CLASS_WORDS[ACID_KIND]} ${stem(4)}${ENDINGS.saturated}${multiplier(2)}${GROUP_SUFFIXES[ACID_KIND]}`,
+  oato: GROUP_SUFFIXES[ESTER_KIND],
+  metanoatoDeMetilo: `${stem(1)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[ESTER_KIND]}${ESTER_LINK}${stem(1)}`
+    + `${FREE_VALENCE_SUFFIXES[1]}${ESTER_ALKYL_ENDING}`,
+  butanodioatoDeDimetilo: `${stem(4)}${ENDINGS.saturated}${multiplier(2)}${GROUP_SUFFIXES[ESTER_KIND]}${ESTER_LINK}${multiplier(2)}`
+    + `${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${ESTER_ALKYL_ENDING}`,
 });
 
 /**
@@ -751,7 +835,33 @@ const CARBONYL_MESSAGES = Object.freeze({
   terminalNote: `el grupo CHO de «${CARBONYL_WORDS.al}» va en ese carbono`,
   /** The same for `oico` (R-5d1): «…el grupo COOH de «oico» va en ese carbono.» */
   acidTerminalNote: `el ${ACID_GROUP} de «${CARBONYL_WORDS.oico}» va en ese carbono`,
+  // R-6a1: the same for the –COO– groups of `oato`.
+  esterEnds: (length) => (length === 1
+    ? `La cadena de 1 carbono solo tiene un extremo: lleva un solo ${ESTER_GROUP} (${CARBONYL_WORDS.metanoatoDeMetilo}).`
+    : `La cadena tiene dos extremos: con «${CARBONYL_WORDS.oato}» lleva como mucho dos grupos COO, uno en cada extremo `
+      + `(${CARBONYL_WORDS.butanodioatoDeDimetilo}).`),
+  /** The end of VALENCE on a chain end that `oato` takes by rule (R-6a1): «…el grupo COO de «oato» va en ese carbono.» */
+  esterTerminalNote: `el ${ESTER_GROUP} de «${CARBONYL_WORDS.oato}» va en ese carbono`,
 });
+
+/**
+ * The CARBONYL_POSITION message of more groups of a terminal suffix than
+ * the chain has ends, and the end of the VALENCE message on an end it takes
+ * by rule, by the suffix's group (R-5c1: the –CHO of `al`; R-5d1: the –COOH
+ * of `oico`; R-6a1: the –COO– of `oato`).
+ *
+ * @param {string} kind - The SuffixSpec's kind ('aldehyde', 'acid' or 'ester').
+ * @returns {{ends: (length: number) => string, note: string}} The message and the note.
+ */
+function terminalWords(kind) {
+  if (kind === ACID_KIND) {
+    return { ends: CARBONYL_MESSAGES.acidEnds, note: CARBONYL_MESSAGES.acidTerminalNote };
+  }
+  if (kind === ESTER_KIND) {
+    return { ends: CARBONYL_MESSAGES.esterEnds, note: CARBONYL_MESSAGES.esterTerminalNote };
+  }
+  return { ends: CARBONYL_MESSAGES.ends, note: CARBONYL_MESSAGES.terminalNote };
+}
 
 /**
  * Checks the suffix's carbon slots against the parent (R-5a2): each within
@@ -766,9 +876,8 @@ const CARBONYL_MESSAGES = Object.freeze({
  */
 function checkSuffix(spec, parent, values) {
   if (spec.suffix && spec.suffix.terminal && spec.suffix.slots.length > Math.min(2, parent.length)) {
-    // `metanodial`, `butanotrial`; `ácido metanodioico` (R-5d1).
-    const message = spec.suffix.kind === ACID_KIND ? CARBONYL_MESSAGES.acidEnds : CARBONYL_MESSAGES.ends;
-    return buildError('CARBONYL_POSITION', message(parent.length), spec.suffix.tiles);
+    // `metanodial`, `butanotrial`; `ácido metanodioico` (R-5d1); `metanodioato de dimetilo` (R-6a1).
+    return buildError('CARBONYL_POSITION', terminalWords(spec.suffix.kind).ends(parent.length), spec.suffix.tiles);
   }
   for (const slot of spec.suffix ? spec.suffix.slots : []) {
     const error = checkCarbon(slot, parent, values);
@@ -1097,6 +1206,9 @@ function placedGroupWord(suffix) {
   if (suffix.kind === ACID_KIND) {
     return ACID_GROUP; // `benzoico` (R-5d1)
   }
+  if (suffix.kind === ESTER_KIND) {
+    return ESTER_GROUP; // `benzoato` (R-6a1)
+  }
   return suffix.kind === 'alcohol' ? GROUP_WORD_PARENTS.phenol.group : GROUP_WORD_PARENTS.benzaldehyde.group;
 }
 
@@ -1128,7 +1240,8 @@ function attachSuffix(state, suffix, atoms) {
   }
   const { mol, values } = state;
   const { order } = SUFFIX_GROUPS[suffix.kind];
-  const amount = suffixBondAmount({ outside: suffix.outside, order, hydroxy: suffix.hydroxy }); // 3 for `oico` (R-5d1)
+  // 3 for `oico` (R-5d1) and `oato` (R-6a1).
+  const amount = suffixBondAmount({ outside: suffix.outside, order, hydroxy: suffix.hydroxy, bridge: suffix.bridge });
   return suffix.slots.map((slot) => {
     const locant = slotValue(slot, values);
     const target = atoms[locant - 1];
@@ -1149,17 +1262,76 @@ function attachSuffix(state, suffix, atoms) {
       state.atoms.set(extra.hydroxy, { locant: 1, branch: true, added: [] });
       extra.hydroxyBond = addBond(mol, holder, extra.hydroxy, 1);
     }
+    if (suffix.bridge) {
+      // The bridge oxygen of a –COO– (R-6a1), after its =O; its O-bound group is bonded to it later (attachEsterGroups()).
+      extra.bridge = addAtom(mol, {}, ALKOXY_ELEMENT);
+      state.atoms.set(extra.bridge, { locant: 1, branch: true, added: [] });
+      extra.bridgeBond = addBond(mol, holder, extra.bridge, 1);
+    }
     if (slot.kind === 'implicit' && suffix.placed) {
       state.atoms.get(target).template = { word: suffix.word.text, group: placedGroupWord(suffix) };
     } else if (slot.kind === 'implicit') {
-      // `al` (R-5c1), `oico` (R-5d1): blame the locant that overloads its end.
-      state.atoms.get(target).note = suffix.kind === ACID_KIND ? CARBONYL_MESSAGES.acidTerminalNote : CARBONYL_MESSAGES.terminalNote;
+      // `al` (R-5c1), `oico` (R-5d1), `oato` (R-6a1): blame the locant that overloads its end.
+      state.atoms.get(target).note = terminalWords(suffix.kind).note;
     } else {
       contribute(state, target, slot.tiles, amount);
     }
     return { locant, parentAtom: target, attachment: oxygen, bond, tiles: [slot.tiles[0], slot.tiles[1]], ...extra };
   });
 } // End of function attachSuffix()
+
+/**
+ * Builds every occurrence of an ester's O-bound groups (R-6a1, NameSpec
+ * `ester`) and bonds each to the bridge oxygen of its –COO– (attachSuffix()
+ * `bridge`): occurrence k of the groups, expanded by their multipliers in the
+ * student's order, to the suffix's k-th group (parse.js ESTER_GROUPS makes
+ * them as many), by a single bond from the group's free-valence carbon (carbon
+ * 1 by rule, or the locant before `ilo`), which gets that bond from the tiles
+ * that place its free valence. The carbons of the group's own chain remember
+ * it for the VALENCE message («…del grupo unido al oxígeno…»).
+ *
+ * @param {object} state - Build state.
+ * @param {object} spec - The NameSpec.
+ * @param {object[]} groups - attachSuffix() of its suffix (each –COO– with its `bridge`).
+ * @returns {{group: number, occurrence: number, tiles: [number, number], bridge: number, attachment: number, bond: number,
+ *   atoms: number[], bonds: number[]}[]} One entry per occurrence: the bridge oxygen, the group's carbon bonded to it and that
+ *   bond, and the group's atoms and inner bonds.
+ */
+function attachEsterGroups(state, spec, groups) {
+  if (!spec.ester) {
+    return [];
+  }
+  const { mol } = state;
+  const sites = groups.filter((group) => group.bridge !== undefined);
+  const record = [];
+  spec.ester.groups.forEach((group, index) => {
+    for (let occurrence = 0; occurrence < group.multiplier.count; occurrence += 1) {
+      const site = sites[record.length];
+      if (!site) {
+        return; // Never: parse.js ESTER_GROUPS gives one O-bound group per –COO–.
+      }
+      const firstAtom = mol.nextAtomId;
+      const firstBond = mol.nextBondId;
+      const sub = group.substituent;
+      const branch = buildSubstituent(state, sub);
+      const own = sub.kind === 'retained' ? RETAINED_TEMPLATES[sub.retained].length : sub.length;
+      idsBetween(firstAtom, firstAtom + own).forEach((id) => { state.atoms.get(id).oBound = true; });
+      const bond = addBond(mol, site.bridge, branch.attach, branch.order);
+      contribute(state, branch.attach, branch.tiles, branch.order);
+      record.push({
+        group: index,
+        occurrence,
+        tiles: [group.tiles[0], group.tiles[1]],
+        bridge: site.bridge,
+        attachment: branch.attach,
+        bond,
+        atoms: idsBetween(firstAtom, mol.nextAtomId),
+        bonds: idsBetween(firstBond, mol.nextBondId).filter((id) => id !== bond),
+      });
+    } // End of the loop over the occurrences of a group
+  }); // End of the loop over the O-bound groups
+  return record;
+} // End of function attachEsterGroups()
 
 /**
  * The CARBONYL_POSITION error of a ketone's C=O (R-5c1, `ona`) on a carbon
@@ -1232,7 +1404,8 @@ function valenceError(state) {
   if (!best) {
     return null;
   }
-  const where = best.info.branch ? `El carbono ${best.info.locant} de la rama` : `El carbono ${best.info.locant}`;
+  let where = best.info.branch ? `El carbono ${best.info.locant} de la rama` : `El carbono ${best.info.locant}`;
+  where = best.info.oBound ? `El carbono ${best.info.locant} del grupo unido al oxígeno` : where; // R-6a1
   const { template, note } = best.info; // A carbon a template placed its group on (R-4c); one `al` takes by rule (R-5c1).
   let why = template ? `: ${withArticle(template.word, 'en')}, ese carbono ya lleva un ${template.group}` : '';
   why = why || (note ? `: ${note}` : '');
@@ -1245,11 +1418,13 @@ function valenceError(state) {
  * @param {object} spec - A NameSpec (interpret.js).
  * @param {number[]} [placement] - One value per `spec.leftOut` entry (empty when there is none).
  * @returns {{ok: true, molecule: object, studentParent: {atoms: number[], bonds: number[]}, prefixAtoms: object[],
- *   suffixAtoms: object[]}|{ok: false, error: {code: string, message: string, tiles: [number, number]}}} The molecule
- *   (atoms without meaningful coordinates), the parent's atoms and bonds in the student's locant order, per prefix
- *   occurrence `{prefix, occurrence, tiles, locant, parentAtom, attachment, bond, atoms, bonds}` (the branch's atoms and
- *   inner bonds; `bond` joins `attachment` to `parentAtom`), and per suffix group (R-5a2) `{locant, parentAtom,
- *   attachment, bond, tiles}` (`attachment` its oxygen) — or the first structural error.
+ *   suffixAtoms: object[], esterAtoms: object[]}|{ok: false, error: {code: string, message: string, tiles: [number, number]}}}
+ *   The molecule (atoms without meaningful coordinates), the parent's atoms and bonds in the student's locant order, per
+ *   prefix occurrence `{prefix, occurrence, tiles, locant, parentAtom, attachment, bond, atoms, bonds}` (the branch's atoms
+ *   and inner bonds; `bond` joins `attachment` to `parentAtom`), per suffix group (R-5a2) `{locant, parentAtom,
+ *   attachment, bond, tiles}` (`attachment` its oxygen; R-6a1: an ester's `bridge` and `bridgeBond`), and per occurrence
+ *   of an ester's O-bound groups (R-6a1) `{group, occurrence, tiles, bridge, attachment, bond, atoms, bonds}`
+ *   (attachEsterGroups()) — or the first structural error.
  * @throws {Error} When the placement does not give one value per left-out slot.
  */
 export function build(spec, placement = []) {
@@ -1270,6 +1445,7 @@ export function build(spec, placement = []) {
   }
   const prefixAtoms = [];
   attachPrefixes(state, spec.prefixes, parent.atoms, prefixAtoms);
+  const esterAtoms = attachEsterGroups(state, spec, suffixAtoms); // `etanoato de metilo` (R-6a1)
   const valence = valenceError(state) || ketoneEndError(state, spec.suffix, suffixAtoms); // R-5c1: `propan-1-ona`
   if (valence) {
     return { ok: false, error: valence };
@@ -1279,5 +1455,7 @@ export function build(spec, placement = []) {
   if (chain > MAX_CHAIN) {
     return { ok: false, error: buildError('TOO_BIG', VALIDATION_MESSAGES.TOO_BIG, spec.tiles) };
   }
-  return { ok: true, molecule: state.mol, studentParent: { atoms: parent.atoms, bonds: parent.bonds }, prefixAtoms, suffixAtoms };
+  return {
+    ok: true, molecule: state.mol, studentParent: { atoms: parent.atoms, bonds: parent.bonds }, prefixAtoms, suffixAtoms, esterAtoms,
+  };
 } // End of function build()

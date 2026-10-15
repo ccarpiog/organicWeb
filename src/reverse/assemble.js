@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -102,6 +102,22 @@
  *    `benzoico` is one whole word like `benzaldehído`, and `carboxi` a
  *    retained word like `formil`, never enclosed by itself (`(carboximetil)`
  *    is a compound branch).
+ * 10. an ester's ` de `, ` y `, final `o` and own multipliers (R-6a1,
+ *    design.md §15.5.2 item 6; render.js esterAlkylParts(), assembleEster()):
+ *    the suffixes `oato` and `carboxilato` take rule 4 as `oico` and
+ *    `carboxílico` do (`etanoato`, `but-2-enoato`, `butanodioato`,
+ *    `ciclohexanocarboxilato`), `benzoato` is one whole word; after the
+ *    parent, the automatic ` de ` (a 'punct' piece, only when something
+ *    follows) and the O-bound groups (esterPieces()), the automatic ` y `
+ *    between two different ones (`propanodioato de etilo y metilo`). The
+ *    final `o` is the `ilo` tile's own (`il` + `o`), in the free-valence place
+ *    of a chain (`metilo`, `propan-2-ilo`, `prop-2-en-1-ilo`, the ending
+ *    elided before its vowel as before `il`) or after a retained word, whose
+ *    `il` it replaces as `oxi` does (`isopropilo`, `tert-butilo`,
+ *    `fenilo`); a group is never enclosed alone (`2-cloroetilo`,
+ *    `4-metilfenilo`: a word of its own), and with the student's multiplier
+ *    it is enclosed as a prefix by itself (`di(propan-2-ilo)`,
+ *    `bis(2-cloroetilo)`, `dimetilo`, `diisopropilo`, `di-tert-butilo`).
  *
  * A ring (R-4a) is a chain with its `ciclo` tile before the root, and takes
  * the same rules: `ciclohexa-1,3-dieno` (rule 2), `ciclooct-1-en-3-ino` and
@@ -171,7 +187,9 @@
  * design.md §15.2).
  */
 
-import { ENDINGS, ENCLOSING_MARKS, CONNECTING_VOWEL, SATURATED_INFIX, FREE_VALENCE_SUFFIXES } from '../naming/lexicon.es.js';
+import {
+  ENDINGS, ENCLOSING_MARKS, CONNECTING_VOWEL, SATURATED_INFIX, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN,
+} from '../naming/lexicon.es.js';
 import { isAtomGroup, closingText, ALKOXY_RETAINED } from './tiles.js';
 
 /**
@@ -211,6 +229,57 @@ export function alkoxyCore(node) {
 export function isAlkoxyNode(node) {
   return alkoxyCore(node) !== null;
 }
+
+/**
+ * The `ilo` tile that ends a substituent (R-6a1, an ester's O-bound group):
+ * the free-valence tile of a chain when it is `ilo` (`metilo`,
+ * `propan-2-ilo`), the `ilo` after a retained word (parse.js `ilo`:
+ * `isopropilo`, `fenilo`), or that of a compound branch's own chain
+ * (`START 2 cloro et ilo END`); null for any other substituent.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object|null} node - A substituent node (parse.js), or null.
+ * @returns {number|null} The `ilo` tile index, or null.
+ */
+export function iloTileOf(tiles, node) {
+  if (!node) {
+    return null;
+  }
+  if (node.type === 'branch') {
+    return iloTileOf(tiles, node.chain);
+  }
+  if (node.type === 'chain') {
+    return node.fv !== null && tiles[node.fv].kind === 'esterAlkyl' ? node.fv : null;
+  }
+  return node.type === 'retained' && node.ilo !== undefined ? node.ilo : null;
+} // End of function iloTileOf()
+
+/**
+ * The O-bound groups of an ester's O-bound side (R-6a1, parse.js `ester`
+ * node), in the student's order: each group is the item whose substituent
+ * ends in `ilo` (iloTileOf(): its chain, multiplier and, for a compound
+ * branch, its own prefixes) with the bare prefixes written before it since
+ * the previous group (`2 cloro et ilo` → `2-cloroetilo`: the prefix `2
+ * cloro` and the chain `et ilo`); `rest` holds the items after the last
+ * group, which belong to none.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object[]} items - The O-bound side's prefix and stray nodes.
+ * @returns {{groups: {items: object[], end: object}[], rest: object[]}} The groups and the items left over.
+ */
+export function esterGroupsOf(tiles, items) {
+  const groups = [];
+  let pending = [];
+  for (const item of items) {
+    if (item.type === 'prefix' && iloTileOf(tiles, item.substituent) !== null) {
+      groups.push({ items: pending, end: item });
+      pending = [];
+    } else {
+      pending.push(item);
+    }
+  } // End of the loop over the O-bound side's items
+  return { groups, rest: pending };
+} // End of function esterGroupsOf()
 
 /**
  * Tells whether an alkoxy prefix takes the short form (rule 6, R-5b;
@@ -599,12 +668,16 @@ function ownChainPieces(tiles, node, out) {
   if (node.type === 'retained' || isAtomGroup(node.type)) {
     const tile = tiles[node.tile];
     const alkoxy = isAlkoxyNode(node);
+    const ilo = node.type === 'retained' && node.ilo !== undefined; // `isopropil ilo` (R-6a1, rule 10)
     // As render.js alkoxyTokens(): `isoprop` + `oxi`, but `acetil` + `oxi` (R-5c2, an out-of-place ester prefix).
-    const cut = alkoxy && node.type === 'retained' && isContractedCore(tiles, node) && tile.text.endsWith(IL);
+    const cut = ((alkoxy && node.type === 'retained' && isContractedCore(tiles, node)) || ilo) && tile.text.endsWith(IL);
     const text = cut ? tile.text.slice(0, -IL.length) : tile.text;
     out.push(piece(text, node.tile, 'prefix', 'word', tile.italic ? { italic: true } : {}));
     if (alkoxy) {
       out.push(piece(tiles[node.oxi].text, node.oxi, 'prefix', 'word')); // `isopropoxi`, `fenoxi` (R-5b)
+    }
+    if (ilo) {
+      out.push(piece(tiles[node.ilo].text, node.ilo, 'prefix', 'word')); // `isopropilo`, `tert-butilo`, `fenilo` (R-6a1)
     }
   } else {
     chainPieces(tiles, node, 'prefix', out);
@@ -810,9 +883,58 @@ export function assemble(tree) {
     }
     parentPieces(tree.tiles, tree.parent, out);
   }
+  if (tree.ester) {
+    esterPieces(tree.tiles, tree.ester, out); // ` de metilo` (rule 10, R-6a1)
+  }
   tree.trailing.forEach((stray) => strayPieces(tree.tiles, stray.tile, out));
   return join(out);
 } // End of function assemble()
+
+/**
+ * The pieces of an ester's O-bound side (rule 10, R-6a1; render.js
+ * esterAlkylParts(), assembleEster()): the automatic ` de ` (only when
+ * something follows the parent), then each O-bound group (esterGroupsOf()),
+ * the automatic ` y ` between two of them. A group's bare prefixes are the
+ * prefixes of its chain, written as inside a compound branch (part kind
+ * 'prefix', each enclosed as enclosedAt() says on their level:
+ * `2-(4-metilfenil)etilo`); the group itself is a word of its own, never
+ * enclosed alone (`2-cloroetilo`, `4-metilfenilo`, `propan-2-ilo`), and with
+ * a multiplier enclosed as a prefix by itself is (isEnclosed():
+ * `di(propan-2-ilo)`, `bis(2-cloroetilo)`, but `dimetilo`, `diisopropilo`,
+ * `di-tert-butilo` with rule 5's hyphen), the student's multiplier kept as
+ * chosen; its multiplier is a 'multiplier' part, as render.js gives it. Items
+ * after the last group (an error) are written as they stand.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {{items: object[]}} side - The parse.js `ester` node.
+ * @param {Piece[]} out - Receives the pieces.
+ * @returns {void}
+ */
+function esterPieces(tiles, side, out) {
+  if (side.items.length === 0) {
+    return;
+  }
+  out.push(piece(ESTER_LINK, null, 'punct', 'space'));
+  const { groups, rest } = esterGroupsOf(tiles, side.items);
+  groups.forEach(({ items, end }, k) => {
+    if (k > 0) {
+      out.push(piece(ESTER_ALKYL_JOIN, null, 'punct', 'space')); // `etilo y metilo`
+    }
+    items.forEach((_, i) => itemPieces(tiles, items, i, true, out));
+    end.locants.forEach((i) => out.push(piece(tiles[i].text, i, 'prefix', 'locant'))); // Out of place (parse.js), kept.
+    if (end.letter !== null) {
+      out.push(piece(tiles[end.letter].text, end.letter, 'prefix', 'locant'));
+    }
+    if (end.multiplier !== null) {
+      out.push(piece(tiles[end.multiplier].text, end.multiplier, 'multiplier', 'mult'));
+    }
+    substituentPieces(tiles, end.substituent, end.multiplier !== null && isEnclosed(tiles, end.substituent), out);
+  }); // End of the loop over the O-bound groups
+  if (groups.length > 0 && rest.length > 0) {
+    out.push(piece(ESTER_ALKYL_JOIN, null, 'punct', 'space'));
+  }
+  rest.forEach((_, i) => itemPieces(tiles, rest, i, true, out));
+} // End of function esterPieces()
 
 /**
  * Tells whether a tree is an ether's functional-class name (R-5b2): its

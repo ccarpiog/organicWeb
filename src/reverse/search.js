@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -63,7 +63,12 @@
  *   group's oxygen. The acids (R-5d1) add no role either: the –COOH of `oico`
  *   takes three bonds of its chain end (implicit, never searched), a
  *   `carboxílico`'s one (its own carbon is outside the parent, as a
- *   `carbaldehído`'s), `carboxi` one.
+ *   `carbaldehído`'s), `carboxi` one. The esters (R-6a1) add no role
+ *   either: the –COO– of `oato` takes three bonds of its chain end, a
+ *   `carboxilato`'s one; each O-bound group's own chain is a chain of the
+ *   model, its free valence one bond (to the bridge oxygen, which never
+ *   limits a placement), its own left-out locants searched like a branch's
+ *   (`etanoato de cloroetilo`: two structures).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -329,6 +334,7 @@ function addSlots(model, slots, kind) {
 function addChain(model, owner, branch) {
   const ring = isRing(owner.kind);
   const id = model.chains.push(chainModel(owner.length, branch, ring, isAromatic(owner.kind))) - 1;
+  model.chains[id].oBound = Boolean(owner.oBound); // An ester's O-bound group (R-6a1), for the messages.
   for (const [order, slots] of [[2, owner.double], [3, owner.triple]]) {
     model.chains[id].multiple += slots.length;
     addSlots(model, slots, { role: ring ? 'ringBond' : 'bond', chain: id, amount: order - 1 });
@@ -361,11 +367,19 @@ function modelOf(spec) {
   const parent = addChain(model, { ...spec.parent, prefixes: [...spec.prefixes, ...templateGroups(spec)] }, false); // A template's groups too (R-4c).
   if (spec.suffix) {
     // One OH per slot (R-5a2); a C=O of `al` or `ona` takes two bonds, a –CHO of `carbaldehído` one (its own carbon; R-5c1); a
-    // –COOH of `oico` three, of `carboxílico` one (R-5d1).
+    // –COOH of `oico` three, of `carboxílico` one (R-5d1); a –COO– of `oato` three, of `carboxilato` one (R-6a1).
     const { order } = SUFFIX_GROUPS[spec.suffix.kind];
-    const amount = suffixBondAmount({ outside: spec.suffix.outside, order, hydroxy: spec.suffix.hydroxy });
+    const amount = suffixBondAmount({ outside: spec.suffix.outside, order, hydroxy: spec.suffix.hydroxy, bridge: spec.suffix.bridge });
     addSlots(model, spec.suffix.slots, { role: 'carbon', chain: parent, amount });
   }
+  for (const group of spec.ester ? spec.ester.groups : []) {
+    // An ester's O-bound group (R-6a1): its own chain, its free valence one bond (to the bridge oxygen, which never limits).
+    const sub = group.substituent;
+    if (hasOwnChain(sub)) {
+      const own = addChain(model, sub, true);
+      addSlots(model, [sub.freeValence.slot], { role: 'carbon', chain: own, amount: sub.freeValence.order });
+    }
+  } // End of the loop over the O-bound groups
   model.groups.sort((p, q) => p.indices[0] - q.indices[0]);
   return model;
 } // End of function modelOf()
@@ -500,7 +514,7 @@ function crowdedBonds(model) {
     const chain = model.chains[group.chain];
     const count = bondCount(chain);
     if (isBondRole(group.role) && chain.multiple > count) {
-      const noun = (chain.ring && 'el anillo') || (chain.branch ? 'la rama' : 'la cadena');
+      const noun = (chain.ring && 'el anillo') || (chain.oBound && 'el grupo unido al oxígeno') || (chain.branch ? 'la rama' : 'la cadena');
       const bonds = count === 1 ? '1 enlace' : `${count} enlaces`;
       return searchError('SAME_BOND', `No caben tantos enlaces múltiples: ${noun} de ${chain.length} carbonos solo tiene `
         + `${bonds} entre carbonos.`, group.tiles);
@@ -711,9 +725,9 @@ export function searchStructures(spec, options) {
  * @param {object} spec - The NameSpec searched.
  * @param {Structure} structure - A named structure of its search.
  * @param {number[]} placement - One of the structure's placements.
- * @returns {{molecule: object, studentParent: {atoms: number[], bonds: number[]}, prefixAtoms: object[], suffixAtoms: object[]}}
- *   The verdict's own copy of the named graph (the cache's is never handed out) and the reading in its ids (the suffix's
- *   OH groups too, R-5a2).
+ * @returns {{molecule: object, studentParent: {atoms: number[], bonds: number[]}, prefixAtoms: object[], suffixAtoms: object[],
+ *   esterAtoms: object[]}} The verdict's own copy of the named graph (the cache's is never handed out) and the reading in its
+ *   ids (the suffix's OH groups too, R-5a2; an ester's O-bound groups, R-6a1).
  * @throws {Error} When the build is not isomorphic to the named graph (never: they share a structural key).
  */
 export function placementReading(spec, structure, placement) {
@@ -740,9 +754,18 @@ export function placementReading(spec, structure, placement) {
       parentAtom: atom(group.parentAtom),
       attachment: atom(group.attachment),
       bond: bond(group.bond),
-      // The –CHO's own carbon of `carbaldehído` (R-5c1); the OH of a –COOH (R-5d1).
+      // The –CHO's own carbon of `carbaldehído` (R-5c1); the OH of a –COOH (R-5d1); the bridge oxygen of a –COO– (R-6a1).
       ...(group.carbon === undefined ? {} : { carbon: atom(group.carbon), carbonBond: bond(group.carbonBond) }),
       ...(group.hydroxy === undefined ? {} : { hydroxy: atom(group.hydroxy), hydroxyBond: bond(group.hydroxyBond) }),
+      ...(group.bridge === undefined ? {} : { bridge: atom(group.bridge), bridgeBond: bond(group.bridgeBond) }),
+    })),
+    esterAtoms: built.esterAtoms.map((occurrence) => ({ // An ester's O-bound groups (R-6a1).
+      ...occurrence,
+      bridge: atom(occurrence.bridge),
+      attachment: atom(occurrence.attachment),
+      bond: bond(occurrence.bond),
+      atoms: occurrence.atoms.map(atom),
+      bonds: occurrence.bonds.map(bond),
     })),
   };
 } // End of function placementReading()
@@ -872,6 +895,8 @@ export function filledTree(tree, spec, placement, keep = {}) {
     return { ...item, locants: numbers(item.range, item.locants), substituent: fillSubstituent(item.substituent) };
   }
   const items = tree.items.map(fillItem);
+  // An ester's O-bound side (R-6a1): its groups' own locants are a branch's, always filled.
+  const ester = tree.ester && { ...tree.ester, items: tree.ester.items.map(fillItem) };
   const { parent } = tree;
   let { legacy, letter } = parent;
   if (parent.chain.type === 'template' && TEMPLATES[tiles[parent.chain.tile].value].letterOnly) {
@@ -883,5 +908,5 @@ export function filledTree(tree, spec, placement, keep = {}) {
   }
   // The suffix's left-out locants (R-5a2); old-style ones before the root are supplied, never left out.
   const suffix = parent.suffix && { ...parent.suffix, locants: numbers(parent.suffix.range, parent.suffix.locants) };
-  return { ...tree, tiles, items, parent: { ...parent, legacy, letter, chain: fillChain(parent.chain), suffix } };
+  return { ...tree, tiles, items, ester, parent: { ...parent, legacy, letter, chain: fillChain(parent.chain), suffix } };
 } // End of function filledTree()

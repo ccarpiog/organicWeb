@@ -641,8 +641,9 @@ test('mutations (R-5c1): the expected verdict, and the diagnosis of every rule t
  * Why the diagnosis of an aldehyde's or a ketone's `otherName` is null, read
  * independently of diagnose.js from the engine's naming: `otherFamily` — the
  * engine's principal group is a later family's (an alkoxy group moved onto
- * the –CHO's carbon makes an ester, phase R-6a: `1-metoxipropanal` →
- * `propanoato de metilo`). Since phase R-5c3b1 every other carbonyl
+ * the –CHO's carbon makes an ester: `1-metoxipropanal` → `propanoato de
+ * metilo`; since phase R-6a1 a deliberate «Esters» null of diagnose.js,
+ * esterChecks() `seniority`, for phase R-6a3). Since phase R-5c3b1 every other carbonyl
  * `otherName` of these names is diagnosed (the deliberate nulls of phase
  * R-5c1 — the student's suffix not the engine's, the parent's kind, P0/N0,
  * the suffix's needless locants — have their codes, test below), and since
@@ -1131,8 +1132,9 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 });
 // R-5c3a: the retained names joined the sweep; one rotation of `2-(4-metilfenil)acetaldehído` puts its aryl on carbon 1, a
 // ketone (`1-(4-metilfenil)etan-1-ona`): one more `rotated` otherName, KETONE_NOT_ALDEHYDE since R-5c3b1.
-// The 11 `otherFamily` nulls before R-5d3: 8 esters (an alkoxy group moved onto the –CHO's carbon, `1-metoxipropanal`: phase
-// R-6a), still null; 3 acids (an OH moved there), ACID_GROUP since R-5d3.
+// The 11 `otherFamily` nulls before R-5d3: 8 esters (an alkoxy group moved onto the –CHO's carbon, `1-metoxipropanal`), still
+// null — since R-6a1 deliberate «Esters» nulls (`seniority`, diagnose.js esterChecks()) for R-6a3; 3 acids (an OH moved there),
+// ACID_GROUP since R-5d3.
 const FIXTURE_NULLS = Object.freeze({ otherFamily: 8 });
 const FIXTURE_ACIDS = Object.freeze({ ACID_GROUP: 3 });
 

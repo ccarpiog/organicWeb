@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -20,7 +20,25 @@
  * ftalaldehídos) and their carboxylic acids (R-5d1: the class word `ácido`,
  * the suffixes `oico` and `carboxílico`, `ácido benzoico`, the prefix
  * `carboxi`; R-5d2: the retained `ácido fórmico`, `ácido acético`, `ácido
- * oxálico`, `ácido fenilacético` and the ftálicos). Pure, no DOM.
+ * oxálico`, `ácido fenilacético` and the ftálicos) and their esters (R-6a1:
+ * the suffixes `oato` and `carboxilato`, `benzoato`, the O-bound groups
+ * ending in `ilo` after the automatic ` de `). Pure, no DOM.
+ *
+ * The esters (R-6a1) need nothing of their own here either: the parser
+ * reads the O-bound side after the ester suffix, the assembler writes the
+ * automatic ` de ` and ` y ` (`propanodioato de etilo y metilo`), the
+ * builder bonds each O-bound group to the bridge oxygen of its –COO–, and the
+ * engine names the molecule (`etanoato de metilo`, `butanodioato de
+ * dimetilo`, `ciclohexanocarboxilato de etilo`, `4-metilbenzoato de etilo`,
+ * `benzoato de fenilo` → `correct`; `etanoato de propan-2-ilo`,
+ * `bencenocarboxilato de metilo`, `p-metilbenzoato de etilo` →
+ * `alternative`; `ciclohexanodicarboxilato de dimetilo` → `ambiguous`;
+ * `metilpropanoato de metilo` → `missingLocants`; `4-metilbutanoato de
+ * metilo` → `otherName`; `benceno-1,4-dicarboxilato de dimetilo`,
+ * `2-metilbutanodioato de etilo y metilo` → `outOfScope`, the engine's
+ * refusals). The retained `formiato` / `acetato` and the ester prefixes are
+ * phase R-6a2's, an ester's own diagnosis messages R-6a3's (diagnose.js
+ * «Esters»: deliberate nulls).
  *
  * The retained acid names need nothing of their own here either, as the
  * carbonyl ones: the engine gives them as alternatives (`ácido acético`,
@@ -272,6 +290,8 @@ export const VERDICT_TEXTS = Object.freeze({
  * @property {object[]} prefixAtoms - Atoms of each prefix occurrence (build.js build()); [] without `molecule`.
  * @property {object[]} suffixAtoms - The carbon and oxygen of each suffix group (R-5a2, build.js build()); [] without
  *   `molecule` or without a suffix.
+ * @property {object[]} esterAtoms - The atoms of each occurrence of an ester's O-bound groups and the bond to its bridge
+ *   oxygen (R-6a1, build.js attachEsterGroups()); [] without `molecule` or without an ester.
  * @property {object|null} naming - The engine's whole result (nameMolecule(); a refusal for outOfScope), when named.
  * @property {VerdictError[]} errors - `invalid`: the parser's errors, or the one structural error; else [].
  * @property {string[]} notes - Extra lines shown beside the verdict (the old-style note).
@@ -417,6 +437,7 @@ function verdict(kind, message, assembled, extra = {}) {
     studentParent: null,
     prefixAtoms: [],
     suffixAtoms: [],
+    esterAtoms: [],
     naming: null,
     errors: [],
     notes: [],
