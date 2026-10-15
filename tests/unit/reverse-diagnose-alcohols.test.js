@@ -412,9 +412,11 @@ test('controls: correct alcohol names have no diagnosis; a mistake the rules abo
 test('the drafts of the alcohol rules: their place among the rules, their steps, every variant renders', () => {
   assert.deepEqual(ALCOHOL_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]),
     [[1, 'group'], [1, 'ringChain'], [2, 'groupChain'], [2, 'group']]);
-  // Each beside the rule whose place it takes: before BRANCH_AT_END, after LONGER_CHAIN, after SUBSTITUTED_TEMPLATE.
-  assert.deepEqual(DIAGNOSIS_CODES.slice(0, 9), ['HYDROXY_PREFIX', 'HYDROXY_PARENT', 'BRANCH_AT_END', 'RING_IS_PARENT',
-    'MORE_HYDROXY_GROUPS', 'LONGER_CHAIN', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'PHENOL']);
+  // Each beside the rule whose place it takes: before BRANCH_AT_END, after LONGER_CHAIN, after SUBSTITUTED_TEMPLATE (the
+  // aldehyde and ketone codes of phase I-51c3b1, beside them, left out: reverse-diagnose-carbonyls.test.js).
+  assert.deepEqual(DIAGNOSIS_CODES.filter((code) => !/CARBONYL|ALDEHYDE/.test(code)).slice(0, 9), ['HYDROXY_PREFIX',
+    'HYDROXY_PARENT', 'BRANCH_AT_END', 'RING_IS_PARENT', 'MORE_HYDROXY_GROUPS', 'LONGER_CHAIN', 'BENZENE_RING',
+    'SUBSTITUTED_TEMPLATE', 'PHENOL']);
   for (const code of ALCOHOL_CODES) {
     const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);
     assert.match(text, /^[«¿A-ZÁÉÍÓÚ].*\.$/u, code);

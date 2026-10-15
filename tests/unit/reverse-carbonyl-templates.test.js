@@ -13,8 +13,10 @@
  * a SMILES; the substituted forms the engine writes itself
  * (`4-metilftalaldehído`, `2-(4-metilfenil)acetaldehído`) read as
  * alternatives, the others as `otherName` with the SUBSTITUTED_TEMPLATE
- * diagnosis (the chain wording without a parent), or a deliberate null left
- * to phase I-51c3b; the tooltips; the fixture names; a closed loop over the
+ * diagnosis (the chain wording without a parent), the principal C=O group's
+ * codes of phase I-51c3b1 (a –CHO's carbon made a ketone's or taken out of a
+ * ring, another –CHO as `oxo`), or a deliberate null left to phase I-51c3b2;
+ * the tooltips; the fixture names; a closed loop over the
  * engine's template names with each locant list removed; the ordered
  * drawing; time budgets.
  */
@@ -316,26 +318,45 @@ test('readName (R-5c3a): prefixes the engine admits on a template are judged by 
 }); // End of test 'readName (R-5c3a): prefixes the engine admits…'
 
 /**
- * The deliberate nulls this phase leaves to I-51c3b (diagnose.js «Aldehydes
- * and ketones»): [tile words, the engine's name, why no rule speaks].
+ * The deliberate nulls left to phase I-51c3b2 (diagnose.js «Aldehydes and
+ * ketones»): [tile words, the engine's name, why no rule speaks].
  */
 const NULLS = [
   // A phenyl on `acetaldehído` is admitted (the engine's `fenilacetaldehído`, `2-(aryl)acetaldehído`): the locant the engine
-  // leaves out (`2-fenilacetaldehído`), the aryl on carbon 1 (a ketone) or a phenyl numbered otherwise.
+  // leaves out (`2-fenilacetaldehído`) or a phenyl numbered otherwise.
   ['2 fenil acetaldehído', '2-feniletanal', 'needless locant'],
-  ['1 START 4 met il fenil END acetaldehído', '1-(4-metilfenil)etan-1-ona', 'suffix'],
   ['2 START 5 met il fenil END acetaldehído', '2-(3-metilfenil)etanal', 'phenyl numbering'],
-  // The student's suffix is not the engine's (carbonylBeyondRules()): another number of C=O groups, or a –CHO outside a ring.
-  ['oxo acetaldehído', 'etanodial', 'suffix'],
-  ['ciclo hex il formaldehído', 'ciclohexanocarbaldehído', 'suffix'],
 ];
 
-test('readName (R-5c3a): the deliberate nulls left to phase I-51c3b', () => {
+test('readName (R-5c3a): the deliberate nulls left to phase I-51c3b2', () => {
   for (const [words, name] of NULLS) {
     const verdict = readName(seq(words));
     assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis], ['otherName', name, null], words);
   }
 }); // End of test 'readName (R-5c3a): the deliberate nulls…'
+
+/**
+ * The former deliberate nulls of phase I-51c3a that concern the principal
+ * C=O group, worded by phase I-51c3b1 before SUBSTITUTED_TEMPLATE (diagnose.js
+ * carbonylChecks()): [tile words, the engine's name, the code].
+ */
+const PRINCIPAL_GROUP = [
+  // The aryl on carbon 1 of `acetaldehído`: its –CHO's carbon bonded to two carbons, a ketone.
+  ['1 START 4 met il fenil END acetaldehído', '1-(4-metilfenil)etan-1-ona', 'KETONE_NOT_ALDEHYDE'],
+  // Another –CHO written `oxo`; the –CHO's carbon taken as the chain beside a ring.
+  ['oxo acetaldehído', 'etanodial', 'CARBONYL_PREFIX'],
+  ['ciclo hex il formaldehído', 'ciclohexanocarbaldehído', 'ALDEHYDE_CARBON'],
+];
+
+test('readName (R-5c3b1): a substituted template whose C=O groups are not the engine\'s has the principal group\'s code', () => {
+  for (const [words, name, code] of PRINCIPAL_GROUP) {
+    const verdict = readName(seq(words));
+    assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis && verdict.diagnosis.code], ['otherName', name, code], words);
+    const opened = diagnosisExplanation(verdict, explain);
+    assert.equal(opened.steps[opened.index].id, 'group', words);
+  }
+  assert.equal(readName(seq('ciclo hex il formaldehído')).diagnosis.tiles[0], 3, 'the template word');
+}); // End of test 'readName (R-5c3b1): a substituted template…'
 
 // ---------------------------------------------------------------------------
 // Fixtures, closed loop, drawing and time.

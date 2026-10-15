@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T07:08:14Z",
+  "updated": "2026-10-15T07:57:59Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -765,9 +765,25 @@
     {
       "id": "I-51c3b",
       "title": "v4 R-5c3b Aldehyde and ketone diagnosis messages",
+      "status": "in_progress",
+      "risk": "high",
+      "summary": "Names carbonyl mistakes; split into I-51c3b1 (principal-group messages) and I-51c3b2 (acyl-word and template-phenyl messages)."
+    },
+    {
+      "id": "I-51c3b1",
+      "title": "v4 R-5c3b1 Aldehyde and ketone principal-group diagnosis messages",
+      "status": "done",
+      "risk": "high",
+      "summary": "Names a carbonyl name's principal-group mistakes: wrong suffix, C=O numbering, chain or ring parent, needless suffix locants.",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-51c3b1.md",
+      "narrative": "docs/progress-archive/i-51c3b1.md"
+    },
+    {
+      "id": "I-51c3b2",
+      "title": "v4 R-5c3b2 Acyl-word and acetaldehído-phenyl diagnosis messages",
       "status": "queued",
       "risk": "high",
-      "summary": "Names the main mistake of an aldehyde, ketone or acyl-prefix name, filling the deliberate nulls of I-51c1 and I-51c2."
+      "summary": "Names mistakes in acyl prefix words (etanoil, (1-oxoetil), carbonil locant) and a phenyl on acetaldehído numbered otherwise."
     },
     {
       "id": "I-51d",

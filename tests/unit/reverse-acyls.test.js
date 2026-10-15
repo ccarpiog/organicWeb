@@ -16,8 +16,11 @@
  * (left-out acyl locants), readName() verdicts with the molecule each
  * describes (against a SMILES) on chains, rings, benzene, templates and
  * inside compound branches, mutations and their diagnosis (the rules that
- * hold, and the deliberate nulls of diagnose.js «Aldehydes and ketones»,
- * phase R-5c3b's), the fixture round trip over every row with an acyl prefix
+ * hold; since phase R-5c3b1 the principal C=O group's codes — an acyl prefix
+ * whose C=O the engine's chain takes, CARBONYL_PREFIX, or on an `al`'s
+ * carbon, KETONE_NOT_ALDEHYDE —; and the deliberate nulls of diagnose.js
+ * «Aldehydes and ketones» left to phase R-5c3b2, acyl words the engine does
+ * not write), the fixture round trip over every row with an acyl prefix
  * (the aldehydes and ketones read back; acids, esters, amides and nitriles,
  * later phases, never tokenize), the closed loop over the oracle's acyl
  * generators (generateAcyl(), generateSubstitutedBenzoyls(),
@@ -32,7 +35,7 @@ import { readName } from '../../src/reverse/index.js';
 import { parse, isTerminalSuffix } from '../../src/reverse/parse.js';
 import { assemble, itemText } from '../../src/reverse/assemble.js';
 import { interpret } from '../../src/reverse/interpret.js';
-import { build, specAtoms, specCarbons, isRing, ringRefusal } from '../../src/reverse/build.js';
+import { build, specAtoms, specCarbons, ringRefusal } from '../../src/reverse/build.js';
 import { slotGroups } from '../../src/reverse/search.js';
 import { tokenize } from '../../src/reverse/tokenize.js';
 import { ACETYL_ID, BENZOYL_ID, ACYL_ID, RING_CARBONYL_ID } from '../../src/reverse/tiles.js';
@@ -44,7 +47,7 @@ import { parseSmiles } from '../../src/model/smiles.js';
 import { aromaticKey } from '../../src/model/graph.js';
 import { MAX_CARBONS, MAX_HEAVY_ATOMS, TOO_MANY_ATOMS_MESSAGE } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
-import { GROUP_SUFFIXES, RING_GROUP_SUFFIXES, FORMYL_PREFIX, multiplier } from '../../src/naming/lexicon.es.js';
+import { FORMYL_PREFIX, multiplier } from '../../src/naming/lexicon.es.js';
 import { generateAcyl, generateSubstitutedBenzoyls, generateRingAcids } from '../../scripts/oracle/generate.mjs';
 import {
   seq, readFixtures, isCarbonyl, isCarbonylMolecule, isCarbonylName, isAcylName, ACYL_WORDS,
@@ -562,13 +565,14 @@ const MUTATIONS = Object.freeze([
   ['4 prop ano oil pent ano di al', 'otherName', 'NUMBERING'],
   ['3 oxo 2 pent ano oil but ano di al', 'otherName', 'NUMBERING'],
   ['2 ciclo hex ano 1 carbonil hept ano al', 'otherName', 'NEEDLESS_LOCANTS'],
-  // Deliberate nulls (phase R-5c3b's messages).
+  // The principal C=O group's codes (phase R-5c3b1): the acyl prefix's C=O is the engine's ketone, or on the `al`'s carbon.
+  ['acetil benceno', 'otherName', 'CARBONYL_PREFIX'],
+  ['1 acetil hex ano al', 'otherName', 'KETONE_NOT_ALDEHYDE'],
+  // Deliberate nulls (phase R-5c3b2's messages): acyl words the engine does not write.
   ['2 et ano oil hept ano al', 'otherName', null],
   ['2 START 3 met il prop ano oil END hept ano al', 'otherName', null],
   ['2 START 6 met il benzoil END hept ano al', 'otherName', null],
   ['2 ciclo hex 2 eno carbonil hept ano al', 'otherName', null],
-  ['acetil benceno', 'otherName', null],
-  ['1 acetil hex ano al', 'otherName', null],
   // Other verdicts.
   ['2 prop ano oil hept ano al', 'correct', null],
   ['acetil pent ano di ona', 'missingLocants', null],
@@ -656,57 +660,31 @@ function onlyAcylWordsDiffer(tree, verdict) {
 
 /**
  * Why the diagnosis of an acyl name's `otherName` is null, read independently
- * of diagnose.js from the student's NameSpec and the engine's naming (file
- * header «Aldehydes and ketones» of diagnose.js, phases R-5c1 and R-5c2; the
- * messages are phase R-5c3b's): `suffix`, `parent`, `principal`, `needless`
- * and `otherFamily` as in reverse-carbonyls.test.js (an acyl prefix moved where
- * the chain takes its C=O, `1-acetilhexanal` → `octano-2,3-diona`; an acyl on
- * a hydrocarbon ring, benzene or a template whose ketone's chain is the parent,
- * `acetilbenceno`); `acylWords` — only the words of one acyl prefix differ from
- * the engine's (onlyAcylWordsDiffer(): `etanoil` for `acetil`, `(1-oxoetil)`
- * for `acetil`, its own chain or numbering not the engine's —
- * `(3-metilpropanoil)`, `(6-metilbenzoil)` —, the locant 1 left out before
- * `carbonil` where the engine writes it, `(ciclohex-2-enocarbonil)`). Null
- * when none applies (an unexpected null).
+ * of diagnose.js from the student's tiles and the engine's naming (file
+ * header «Aldehydes and ketones» of diagnose.js; the messages are phase
+ * R-5c3b2's): `otherFamily` as in reverse-carbonyls.test.js (an OH on a
+ * –CHO's carbon makes an acid); `acylWords` — only the words of one acyl
+ * prefix differ from the engine's (onlyAcylWordsDiffer(): `etanoil` for
+ * `acetil`, `(1-oxoetil)` for `acetil`, its own chain or numbering not the
+ * engine's — `(3-metilpropanoil)`, `(6-metilbenzoil)` —, the locant 1 left out
+ * before `carbonil` where the engine writes it, `(ciclohex-2-enocarbonil)`).
+ * Since phase R-5c3b1 the other former reasons (an acyl prefix whose C=O the
+ * engine's chain takes, the ring numbered otherwise at N0) have their codes
+ * (test below). Null when none applies (an unexpected null).
  *
  * @param {string[]} ids - The name's tile ids.
  * @param {object} verdict - Its `otherName` verdict.
  * @returns {string|null} The reason.
  */
 function nullReason(ids, verdict) {
-  const { tree } = parse(ids);
-  const spec = interpret(tree);
-  const { structure } = verdict.naming;
-  const engine = structure.suffix;
+  const engine = verdict.naming.structure.suffix;
   if (!engine || !['aldehyde', 'ketone'].includes(engine.kind)) {
     return engine ? 'otherFamily' : null;
   }
-  const mine = spec.suffix;
-  if (!mine || mine.kind !== engine.kind || mine.slots.length !== engine.locants.length || mine.outside !== Boolean(engine.outside)) {
-    return 'suffix';
-  }
-  if (isRing(spec.parent.kind) !== (structure.parentKind === 'ring')) {
-    return 'parent';
-  }
-  const studentLocants = verdict.suffixAtoms.map((g) => g.locant).sort((a, b) => a - b);
-  const engineLocants = engine.locants.map((site) => site.locant).sort((a, b) => a - b);
-  // The atoms too: on a chain of two C=O carbons (`2-oxoetanal`), the student's `al` may sit on the engine's ketone carbon.
-  const studentAtoms = verdict.suffixAtoms.map((g) => g.parentAtom).sort((a, b) => a - b);
-  const engineAtoms = engine.locants.map((site) => site.atom).sort((a, b) => a - b);
-  const sameChain = verdict.studentParent.atoms.length === verdict.naming.parent.atoms.length
-    && verdict.studentParent.atoms.every((id) => verdict.naming.parent.atoms.includes(id));
-  if (!sameChain || studentLocants.join() !== engineLocants.join() || studentAtoms.join() !== engineAtoms.join()) {
-    return 'principal';
-  }
-  const word = engine.outside ? RING_GROUP_SUFFIXES.aldehyde : GROUP_SUFFIXES[engine.kind];
-  const cited = new RegExp(`\\d-[a-z]*${word}$`).test(verdict.naming.name);
-  if (mine.slots.some((slot) => slot.kind === 'supplied') && !cited) {
-    return 'needless';
-  }
-  return onlyAcylWordsDiffer(tree, verdict) ? 'acylWords' : null;
+  return onlyAcylWordsDiffer(parse(ids).tree, verdict) ? 'acylWords' : null;
 } // End of function nullReason()
 
-test('deliberate nulls (R-5c2, diagnose.js «Aldehydes and ketones»): each case and its reason', () => {
+test('deliberate nulls (R-5c2, diagnose.js «Aldehydes and ketones», left to R-5c3b2): each case and its reason', () => {
   const cases = [
     ['2 et ano oil hept ano al', 'acylWords'], // `etanoil` for the engine's `acetil`
     ['3 START 1 oxo et il END pent ano 2 4 di ona', 'acylWords'], // `(1-oxoetil)` for `acetil`
@@ -717,12 +695,6 @@ test('deliberate nulls (R-5c2, diagnose.js «Aldehydes and ketones»): each case
     ['2 START 6 met il ciclo hex ano 1 carbonil END hept ano al', 'acylWords'], // `(2-metilciclohexano-1-carbonil)`
     ['2 ciclo hex 2 eno carbonil hept ano al', 'acylWords'], // the locant 1 the engine writes left out
     ['2 ciclo hex ano 2 carbonil hept ano al', 'acylWords'], // a free-valence locant other than 1 on the ring
-    ['acetil benceno', 'suffix'], // no suffix: the ketone's chain is the parent, `1-feniletan-1-ona`
-    ['but ano oil ciclo hex ano', 'suffix'],
-    ['4 acetil tolueno', 'suffix'],
-    ['1 acetil hex ano al', 'suffix'], // the acyl's C=O in the chain: `octano-2,3-diona`
-    ['2 met ano oil hept ano al', 'suffix'], // `metanoil`, a –CHO: `2-pentilpropanodial`
-    ['5 acetil ciclo hex ano 2 ona', 'principal'], // the ring numbered otherwise at N0
   ];
   for (const [words, reason] of cases) {
     const ids = seq(words);
@@ -732,6 +704,26 @@ test('deliberate nulls (R-5c2, diagnose.js «Aldehydes and ketones»): each case
     assert.equal(nullReason(ids, verdict), reason, words);
   }
 }); // End of test 'deliberate nulls (R-5c2…)'
+
+test('the former deliberate nulls of R-5c2 that concern the principal C=O group: each now has its R-5c3b1 code', () => {
+  const cases = [
+    ['acetil benceno', 'CARBONYL_PREFIX'], // no suffix: the ketone's chain is the parent, `1-feniletan-1-ona`
+    ['but ano oil ciclo hex ano', 'CARBONYL_PREFIX'],
+    ['4 acetil tolueno', 'CARBONYL_PREFIX'],
+    ['1 acetil hex ano al', 'KETONE_NOT_ALDEHYDE'], // the acyl's C=O in the chain: `octano-2,3-diona`
+    ['2 met ano oil hept ano al', 'CARBONYL_PREFIX'], // `metanoil`, a –CHO: `2-pentilpropanodial`
+    ['5 acetil ciclo hex ano 2 ona', 'RING_NUMBERING'], // the ring numbered otherwise at N0
+  ];
+  for (const [words, code] of cases) {
+    const verdict = readName(seq(words));
+    assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
+    assert.equal(verdict.diagnosis && verdict.diagnosis.code, code, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    assert.ok(!/undefined|null|NaN|\[object|grupo –OH|grupos –OH/.test(verdict.diagnosis.message), words);
+  }
+  assert.equal(read('acetil benceno').diagnosis.message, 'El grupo C=O es el grupo principal: se nombra con la terminación «-ona», '
+    + 'al final del nombre, no dentro del prefijo «acetil». Su carbono entra en la cadena principal, y el anillo pasa a ser una '
+    + 'rama. Se escribe «1-feniletan-1-ona».');
+}); // End of test 'the former deliberate nulls of R-5c2…'
 
 // ---------------------------------------------------------------------------
 // Fixture round trip and closed loop (design.md §15.7).
@@ -1006,13 +998,17 @@ const FAMILY_CODES = Object.freeze({
   shifted: ['NUMBERING', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS'],
   reflected: ['RING_NUMBERING'],
   rotated: ['RING_NUMBERING'],
+  // CARBONYL_PREFIX (R-5c3b1): an acyl prefix swapped onto an end carbon, whose C=O the chain then takes.
   swapped: ['NUMBERING', 'RING_NUMBERING', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS',
-    'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS'],
+    'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CARBONYL_PREFIX'],
   unsorted: ['ALPHABETICAL_ORDER'],
   ungrouped: ['UNGROUPED'],
   diBis: ['MULTIPLIER_KIND'],
-  toEnd: ['BRANCH_AT_END', 'NUMBERING'],
-  heteroToEnd: ['NUMBERING', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS'],
+  // R-5c3b1: an acyl prefix on an end carbon whose C=O the chain takes (CARBONYL_PREFIX: `1-acetilpentano-2,4-diona` →
+  // `heptano-2,4,6-triona`), or a branch on an `al`'s carbon (KETONE_NOT_ALDEHYDE: `1-acetilhexanal`).
+  toEnd: ['BRANCH_AT_END', 'NUMBERING', 'CARBONYL_PREFIX', 'KETONE_NOT_ALDEHYDE'],
+  // CARBONYL_PREFIX: an `oxo` moved to the bare end of an aldehyde's chain is a second –CHO (R-5c3b1).
+  heteroToEnd: ['NUMBERING', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CARBONYL_PREFIX'],
   removed: [],
   added: ['NEEDLESS_LOCANTS', 'NUMBERING', 'RING_NUMBERING'],
 });
@@ -1148,17 +1144,18 @@ function sweep(names) {
 
 /**
  * How many mutations of the acyl fixture names give `otherName`, by family,
- * and how many of them are deliberate nulls, by reason (nullReason()): an acyl
- * prefix moved to an end carbon of a chain whose C=O groups then choose
- * another chain (`1-acetilhexanal` → `octano-2,3-diona`: `suffix`), a ring
- * numbered otherwise at N0 (`principal`). Every other one is diagnosed with one
- * of its family's codes.
+ * and how many of them are deliberate nulls, by reason (nullReason()): none
+ * since phase R-5c3b1 — an acyl prefix moved to an end carbon of a chain
+ * whose C=O groups then choose another chain (formerly 15 `suffix` nulls) is
+ * CARBONYL_PREFIX or KETONE_NOT_ALDEHYDE, a ring numbered otherwise at N0
+ * (formerly 5 `principal` nulls) RING_NUMBERING. Every one is diagnosed with
+ * one of its family's codes.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 0, shifted: 3, reflected: 0, rotated: 5, swapped: 0, unsorted: 1, ungrouped: 2, diBis: 2, toEnd: 18, heteroToEnd: 0,
   removed: 0, added: 0,
 });
-const FIXTURE_NULLS = Object.freeze({ suffix: 15, principal: 5 });
+const FIXTURE_NULLS = Object.freeze({});
 
 test('mutations of every acyl fixture name: a diagnosis of the family\'s codes, or a deliberate null with its reason', async () => {
   const names = (await readFixtures()).filter((row) => isCarbonyl(row.smiles)).flatMap((row) => row.names)
@@ -1168,8 +1165,8 @@ test('mutations of every acyl fixture name: a diagnosis of the family\'s codes, 
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
   assert.deepEqual(nulls, { ...FIXTURE_NULLS });
-  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND',
-    'UNGROUPED']);
+  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'CARBONYL_PREFIX', 'KETONE_NOT_ALDEHYDE', 'LONGER_CHAIN',
+    'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND', 'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of every acyl fixture name…'
 
 test('mutations of the generated acyl names: every otherName is diagnosed or a deliberate null, every step resolves', () => {
@@ -1183,15 +1180,16 @@ test('mutations of the generated acyl names: every otherName is diagnosed or a d
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
   const deliberate = Object.values(nulls).reduce((sum, count) => sum + count, 0);
-  // The seeds give 791 (362 deliberate nulls: 340 suffix, 16 principal, 6 otherFamily; 429 diagnosed).
+  // The seeds give 791: 6 nulls, every one an acid (`otherFamily`); 785 diagnosed (before R-5c3b1: 362 deliberate nulls,
+  // 340 suffix, 16 principal, 6 otherFamily).
   assert.ok(total >= 780, `${total} otherName verdicts`);
   assert.deepEqual([otherName.removed, otherName.added], [0, 0]);
   for (const code of ['NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'BRANCH_AT_END', 'LONGER_CHAIN',
-    'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'RING_NUMBERING']) {
+    'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'RING_NUMBERING', 'CARBONYL_PREFIX', 'KETONE_NOT_ALDEHYDE']) {
     assert.ok(codes.has(code), `${code}: ${[...codes]}`);
   }
-  assert.ok(Object.keys(nulls).every((reason) => ['suffix', 'principal', 'otherFamily', 'acylWords'].includes(reason)), JSON.stringify(nulls));
-  assert.ok(deliberate < total, JSON.stringify(nulls));
+  assert.ok(Object.keys(nulls).every((reason) => ['otherFamily', 'acylWords'].includes(reason)), JSON.stringify(nulls));
+  assert.ok(deliberate < total / 20, JSON.stringify(nulls));
 }); // End of test 'mutations of the generated acyl names…'
 
 // ---------------------------------------------------------------------------

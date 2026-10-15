@@ -10,9 +10,10 @@
  * an alcohol's own mistakes are checked before rule 1) and their ethers
  * (R-5b; «Ethers» below: the wrong side of the oxygen, `di` for `bis` before
  * an alkoxy prefix, and the functional-class names, R-5b2), and their
- * aldehydes and ketones (R-5c1, R-5c2 — the acyl prefixes —; «Aldehydes and
- * ketones» below: the rules that hold for them, and deliberate nulls where a
- * message of their own is needed).
+ * aldehydes and ketones (R-5c1, R-5c2 — the acyl prefixes —, R-5c3a — the
+ * retained names —, R-5c3b1; «Aldehydes and ketones» below: the rules that
+ * hold for them, the principal C=O group's own mistakes, checked before rule
+ * 1 as an alcohol's are, and the deliberate nulls phase R-5c3b2 words).
  *
  * The rules, in order (first match wins):
  *
@@ -200,9 +201,9 @@
  * `style` — `chain`, `tiebreak`, `numbering`, `substituents`, `order` or
  * `assemble`, for a ring `ring`, `benzene` or `ringNumbering` (a draft
  * may name the step of its own case: `ring` on a `ciclo` ring, `benzene` on
- * the benzene ring), for an alcohol `group`, `ringChain` or
- * `groupChain`, and for an ether `ether`, R-5b2 — or, for an ether's class
- * name, CLASS_NAME_STEP, the step diagnosisExplanation() adds to them);
+ * the benzene ring), for an alcohol, an aldehyde or a ketone `group`,
+ * `ringChain` or `groupChain`, and for an ether `ether`, R-5b2 — or, for an
+ * ether's class name, CLASS_NAME_STEP, the step diagnosisExplanation() adds to them);
  * diagnosisExplanation() builds those steps and finds it, with
  * the fallbacks of diagnosisStepIndex()), the student's chain and the
  * parent (atom and bond ids of the verdict's molecule, each in its own
@@ -265,7 +266,7 @@
  *    chain with a branch on its end that no chain P0 keeps contains — one
  *    P0 drops however lengthened — is MORE_HYDROXY_GROUPS
  *    (`1-metil-2-(hidroximetil)hexan-1-ol` → `2-butilbutano-1,3-diol`;
- *    fewerHydroxyGroups(), the student's count its chain's own, as P0 counts
+ *    fewerPrincipalGroups(), the student's count its chain's own, as P0 counts
  *    it), since the OH groups choose the chain before its length;
  *    BRANCH_AT_END stays for a chain that a chain P0 keeps contains
  *    (`1-metilpropan-2-ol`, `1-(hidroximetil)propan-1-ol` →
@@ -305,7 +306,8 @@
  * groups, so they are given only when the engine's principal group is the
  * OH (outsideRules(): a principal group of a later family gets null until
  * its phase adds its messages — an acid, which an OH on an aldehyde's carbon
- * makes, `1-hidroxipropanal` —; for the aldehydes and ketones see below).
+ * makes, `1-hidroxipropanal` —; the aldehydes and ketones have their own
+ * codes and phrases, below).
  *
  * **Ethers** (design.md §13.4 I-34, §15.8 R-5b; phase R-5b1). An alkoxy
  * prefix (`metoxi`, `isopropoxi`, `fenoxi`, `(pentiloxi)`) is a group bonded
@@ -394,22 +396,102 @@
  * is no ether, and CLASS_NAME_NONE's «-oxi» prefix would be false; review of
  * phase I-51c1 — the ester messages are R-6a's).
  *
- * **Aldehydes and ketones** (design.md §13.4 I-32, I-40b, §15.8 R-5c; phase
- * R-5c1). The C=O of an aldehyde (`al`, `carbaldehído`, `benzaldehído`) or a
- * ketone (`ona`) is the principal group: the engine's trace has P0 (most C=O
- * groups on the chain) and N0 (lowest locants for them), as for an alcohol.
- * The rules keep working wherever they say something true of a carbonyl
- * name: BRANCH_AT_END (`1-metilpropan-1-ona`, a branch on the ketone's end
- * carbon; an `oxo` is a one-atom group, kind 'carbonyl', that never
- * lengthens a chain), LONGER_CHAIN and the other P1–P4 rules after a P0 tie
- * (`3-etilbutan-2-ona`), NUMBERING and RING_NUMBERING at N1–N4 after an N0
- * tie (`4-metilpentan-3-ona`, `6-metilciclohexan-1-ona`), ALPHABETICAL_ORDER
- * (`oxo` under o: `4-oxo-2-metilpentanal`), UNGROUPED, MULTIPLIER_KIND,
- * LOCANT_ORDER (the suffix's too: `pentano-4,2-diona`), MISSING_LOCANTS, and
- * OLD_STYLE with the suffix's words (suffixWordOf(): `2-pentanona` → «…justo
- * delante de «ona»», `2,4-pentanodiona` → «diona»; `2-butenal` keeps the
- * segment's «eno» o «ino»). The shapes for the prefix style: `oxo` is
- * `X:=O`, `formil` the engine's one-carbon formyl group with its oxo.
+ * **Aldehydes and ketones** (design.md §13.4 I-32, I-40b, §15.8 R-5c;
+ * phases R-5c1, R-5c2, R-5c3a, R-5c3b1). The C=O of an aldehyde (`al`,
+ * `carbaldehído`, `benzaldehído`) or a ketone (`ona`) is the principal group:
+ * the engine's trace has P0 (most C=O groups on the chain) and N0 (lowest
+ * locants for them), as for an alcohol, and the messages call them «grupos
+ * –CHO» or «grupos C=O», as the explanation does (DIAGNOSIS_PHRASES
+ * `groupWords`). The rules keep working wherever they say something true of
+ * a carbonyl name: BRANCH_AT_END (`1-metilpropan-1-ona`, a branch on the
+ * ketone's end carbon; an `oxo` is a one-atom group, kind 'carbonyl', that
+ * never lengthens a chain), LONGER_CHAIN and the other P1–P4 rules after a
+ * P0 tie (`3-etilbutan-2-ona`), NUMBERING and RING_NUMBERING at N1–N4 after
+ * an N0 tie (`4-metilpentan-3-ona`, `6-metilciclohexan-1-ona`),
+ * ALPHABETICAL_ORDER (`oxo` under o: `4-oxo-2-metilpentanal`), UNGROUPED,
+ * MULTIPLIER_KIND, LOCANT_ORDER (the suffix's too: `pentano-4,2-diona`),
+ * MISSING_LOCANTS, and OLD_STYLE with the suffix's words (suffixWordOf():
+ * `2-pentanona` → «…justo delante de «ona»», `2,4-pentanodiona` → «diona»;
+ * `2-butenal` keeps the segment's «eno» o «ino»). The shapes for the prefix
+ * style: `oxo` is `X:=O`, `formil` the engine's one-carbon formyl group with
+ * its oxo.
+ *
+ * The principal C=O group's own mistakes (phase R-5c3b1) are checked right
+ * after HYDROXY_PREFIX, before every other rule (carbonylChecks(), in this
+ * order), each opening «Reconoce el grupo funcional» (`group`), which says
+ * which group is principal, how it is written and, beside other oxygen
+ * groups, the seniority aldehído > cetona > alcohol (design.md §13.4 I-32):
+ *
+ * 1. `CARBONYL_SENIORITY` — the student's suffix is a junior group's
+ *    (naming/seniority.js seniorityRank(): `ona` beside the engine's
+ *    aldehyde, `5-oxopentan-2-ona` → `4-oxopentanal`, `1-oxoacetona`; `ol`
+ *    beside a C=O, `4-oxopentan-2-ol` → `4-hidroxipentan-2-ona`,
+ *    `4-oxobutan-1-ol`; `fenol` beside a –CHO, `4-formilfenol` →
+ *    `4-hidroxibenzaldehído`): the order, the principal group and how it is
+ *    written, and the student's groups as prefixes (`oxo`, `hidroxi`,
+ *    lexicon GROUP_PREFIXES, when their carbons are the engine's parent's;
+ *    «en los prefijos» otherwise);
+ * 1. `KETONE_NOT_ALDEHYDE` — the student's `al` (or an aldehyde template's
+ *    –CHO) on a carbon a carbon branch of the student's bonds to a second
+ *    carbon (`1-metilpropanal` → `butan-2-ona`, `1-acetilhexanal` →
+ *    `octano-2,3-diona`, `1-metilbutanodial` → `4-oxopentanal`,
+ *    `1-(4-metilfenil)acetaldehído`, `dimetilformaldehído` → `propanona`):
+ *    that C=O is a ketone's; the branch named as the student wrote it;
+ * 1. `ALDEHYDE_CARBON` — the –CHO's carbon on the other side of the parent:
+ *    `carbaldehído` after a chain (`butano-1-carbaldehído` → `pentanal`: on a
+ *    chain the –CHO's carbon is a chain carbon, `-al`), or the –CHO's carbon
+ *    taken as the student's chain beside a ring (`ciclohexilformaldehído`,
+ *    `ciclohexilmetanal` → `ciclohexanocarbaldehído`, `fenilformaldehído` →
+ *    `benzaldehído`: on a ring it is neither a ring carbon nor a chain); only
+ *    when the student's –CHO groups are the engine's own (their carbons
+ *    among the engine's suffix –CHO carbons; review of phase I-51c3b1): an
+ *    `al` ending a side chain beside the ring's –CHO
+ *    (`2-(4-formilciclohexil)etanal`), or a ring's `carbaldehído` beside a
+ *    chain with more –CHO groups, is the parent choice, CARBONYL_PARENT;
+ * 1. `CARBONYL_PREFIX` — HYDROXY_PREFIX's analogue: a C=O the engine cites in
+ *    the suffix written by the student as a parent-level prefix whose own C=O
+ *    it is (ownCarbonylOxygen(): an `oxo`, a `formil`, an acyl prefix), while
+ *    the student's suffix cites fewer groups than the engine's
+ *    (`2-oxopropano` → `propanona`, `formilciclohexano`, `formilbenceno` →
+ *    `benzaldehído`, `5-oxopentanal` → `pentanodial`, `oxoacetaldehído` →
+ *    `etanodial`, `2-formilbutano` → `2-metilbutanal`); the carbon of a
+ *    `formil` or an acyl prefix then joins the engine's parent chain
+ *    («Su carbono entra en la cadena principal»), and a student's ring
+ *    parent becomes a branch (`acetilbenceno` → `1-feniletan-1-ona`,
+ *    `butanoilciclohexano`, `4-acetiltolueno`, `2-acetilpentano` →
+ *    `3-metilhexan-2-ona`, `1-acetilpentano-2,4-diona` →
+ *    `heptano-2,4,6-triona`). With as many groups in the student's suffix as
+ *    in the engine's, an acyl prefix's carbon belongs to a chain the chain
+ *    rules compare (`4-propanoilheptano-2,6-diona` → CHAIN_LOCANTS at N0);
+ * 1. `CARBONYL_PARENT` — HYDROXY_PARENT's place and data for the C=O groups
+ *    (principalParent()): the student's parent is an open chain and the
+ *    engine's the ring, or the reverse (`1-(2-oxociclohexil)propan-2-ona`, a
+ *    tie: the ring; `(4-formilfenil)metano`, the ring; `(2-oxoetil)ciclohexano`,
+ *    the chain); step `ringChain` (`benzene` or `ring` without a `RINGCHAIN`
+ *    step);
+ * 2. `MORE_CARBONYL_GROUPS` — MORE_HYDROXY_GROUPS's place for the C=O
+ *    groups: P0 dropped the student's chain (`3-(2-oxopropil)hexan-2-ona`,
+ *    `2-(2-oxoetil)propanal`, `3-(2-oxoetil)pentano`, `(4-acetilfenil)metano`),
+ *    also before BRANCH_AT_END as for an alcohol (fewerPrincipalGroups());
+ *    step `groupChain`;
+ * 3–4. at N0, CHAIN_LOCANTS, NUMBERING and RING_NUMBERING with the C=O
+ *    groups' phrases (DIAGNOSIS_PHRASES `carbonylN0`: `pentan-4-ona`,
+ *    `hexano-3,5-diona`, `ciclohexan-3-ona`, `benceno-1,5-dicarbaldehído`,
+ *    `5-acetilciclohexan-2-ona`, `4-propanoilheptano-2,6-diona`);
+ * 9. NEEDLESS_LOCANTS for the suffix's locants with the C=O group's words
+ *    (suffixWhat(): `ciclohexan-1-ona` → «…solo hay una manera de colocar el
+ *    grupo C=O.», `ciclohexano-1-carbaldehído` → «…el grupo –CHO.»).
+ *
+ * A C=O check's draft has the student's chain and the engine's parent like
+ * any other, so the stripe and its legend need nothing new (src/ui
+ * unchanged); its focus is the C=O groups concerned (and the branch of
+ * KETONE_NOT_ALDEHYDE, the prefixes of CARBONYL_PREFIX), its tiles the
+ * student's suffix (CARBONYL_SENIORITY, KETONE_NOT_ALDEHYDE, ALDEHYDE_CARBON)
+ * or prefix (CARBONYL_PREFIX). After the checks, a student's suffix of
+ * another kind than the engine's is a null no case is known for (BEYOND); a
+ * suffix with fewer groups than the engine's, or none, or other –CHO groups
+ * than the engine's on the other side of a parent, goes on to the parent
+ * choice and the rules, whose P0 names a chain with fewer C=O groups.
  *
  * The acyl prefixes (R-5c2: `acetil`, `propanoil`, `(but-2-enoil)`,
  * `(2-metilpropanoil)`, `benzoil`, `(4-metilbenzoil)`,
@@ -432,30 +514,8 @@
  * oxo on its carbon 1; a ring's, the one-carbon chain of its C=O carbon with
  * the oxo and the ring).
  *
- * Deliberate, tested nulls (phase R-5c3b words them):
+ * Deliberate, tested nulls (phase R-5c3b2 words them):
  *
- * - before any rule (carbonylBeyondRules()): the student's suffix is not the
- *   engine's — another group or none (the principal C=O written `oxo` or
- *   `formil`: `2-oxopropano`, `formilciclohexano`, `(4-formilfenil)metano`;
- *   `ona` where the engine's group is the aldehyde, `5-oxopentan-2-ona`;
- *   `ol` beside a ketone, `4-oxopentan-2-ol`; `al` on a carbon a branch makes
- *   a ketone's, `1-metilpropanal`), another number of groups
- *   (`5-oxopentanal` for `pentanodial`), the –CHO's carbon on the other side
- *   of the parent (`carbaldehído` on a chain, `butano-1-carbaldehído` for
- *   `pentanal`) —, or the student's parent is a chain and the engine's the
- *   ring, or the reverse (`1-(2-oxociclohexil)propan-2-ona`: the C=O groups
- *   choose, the ring on a tie);
- * - a chain or numbering the engine drops at P0 or N0 (PRINCIPAL_RULES,
- *   principalBeyond(): `pentan-4-ona`, `ciclohexan-3-ona`,
- *   `hexano-3,5-diona`), whose messages speak of OH groups;
- * - the suffix's needless locants (`ciclohexan-1-ona`,
- *   `ciclohexano-1-carbaldehído`), whose NEEDLESS_LOCANTS message speaks of
- *   the OH group;
- * - (R-5c2) an acyl prefix where the engine's parent is the ketone's chain
- *   (`acetilbenceno`, `butanoilciclohexano`, `4-acetiltolueno`: no suffix of
- *   the student's, the first item), or moved to an end carbon whose C=O the
- *   chain then takes (`1-acetilhexanal` → `octano-2,3-diona`, the suffix
- *   again);
  * - (R-5c2) an acyl prefix in words the engine does not write, as a branch
  *   whose own chain or numbering is not the engine's («No rule covers»
  *   above): `etanoil` for `acetil`, an `oxo` alkyl group for the acyl word
@@ -467,12 +527,10 @@
  * - (R-5c3a) a phenyl on `acetaldehído`, which the engine admits there
  *   (tiles.js templateAdmits(): `fenilacetaldehído`,
  *   `2-(4-metilfenil)acetaldehído`), so SUBSTITUTED_TEMPLATE does not speak:
- *   the locant the engine leaves out (`2-fenilacetaldehído`), the phenyl's
- *   own numbering (`2-(5-metilfenil)acetaldehído`), or on carbon 1, a ketone
- *   (`1-(4-metilfenil)acetaldehído`, the first item); and a substituted
- *   carbonyl template whose student's suffix is not the engine's (the first
- *   item, before SUBSTITUTED_TEMPLATE: `oxoacetaldehído` → `etanodial`,
- *   `ciclohexilformaldehído` → `ciclohexanocarbaldehído`).
+ *   the locant the engine leaves out (`2-fenilacetaldehído` →
+ *   `2-feniletanal`, whose alternative `fenilacetaldehído` writes none) or the
+ *   phenyl's own numbering (`2-(5-metilfenil)acetaldehído`). (On carbon 1 the
+ *   phenyl makes a ketone: KETONE_NOT_ALDEHYDE.)
  *
  * The retained carbonyl templates (R-5c3a) take SUBSTITUTED_TEMPLATE like
  * the benzene ones where the engine never writes them with prefixes: on a
@@ -496,17 +554,18 @@ import { compareLocantLists, compareCitationKeys } from '../naming/numbering.js'
 import { chainKey } from '../naming/parent.js';
 import { locantText } from '../naming/structure.js';
 import { PREFIX_STYLES, nameSubstituent, suffixSites } from '../naming/substituent.js';
+import { seniorityRank } from '../naming/seniority.js';
 import { adjacency, rootedBranchKey } from '../model/graph.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, ENCLOSING_MARKS, RETAINED_PREFIXES, FREE_VALENCE_SUFFIXES, omitsLocants,
   chainOmitsPrefixLocants, ringOmitsLocants, BENZENE_NAME, RING_PREFIX, POSITIONAL_LETTERS, TRADITIONAL_NAMES, SATURATED_INFIX,
-  ALKOXY_ENDING, ETHER_CLASS_WORD, groupSuffix, ringGroupSuffix,
+  ALKOXY_ENDING, ETHER_CLASS_WORD, GROUP_PREFIXES, groupSuffix, ringGroupSuffix,
 } from '../naming/lexicon.es.js';
 import { assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore } from './assemble.js';
 import { ownPrefixAtoms, specRings, isRing } from './build.js';
 import {
   tileById, tileId, MAX_MULT, isAtomGroup, atomGroupOrder, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
-  FORMYL_ID, ACETYL_ID, templateAdmits, isChainTemplate,
+  FORMYL_ID, ACETYL_ID, OXO_ID, OXO_ELEMENT, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, templateAdmits, isChainTemplate,
 } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
@@ -543,6 +602,14 @@ const WORDS = Object.freeze({
   tertButil: `${RETAINED_PREFIXES['tert-butyl'].italic}${RETAINED_PREFIXES['tert-butyl'].text}`,
   /** The systematic form of `tert-butoxi` (explain.js alkoxyFormation() says it too). */
   dimetiletoxi: `1,1-${multiplier(2)}${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${stem(2)}${ALKOXY_ENDING}`,
+  // Aldehydes and ketones (R-5c3b1).
+  oxo: tileById(OXO_ID).text,
+  formil: tileById(FORMYL_ID).text,
+  acetil: tileById(ACETYL_ID).text,
+  al: tileById(AL_ID).text,
+  ona: tileById(ONA_ID).text,
+  carbaldehido: tileById(CARBALDEHYDE_ID).text,
+  benzaldehido: tileById(BENZALDEHYDE_ID).text,
 });
 
 /** The style of the engine's functional-class alternative (naming/index.js etherClassAlternative(); R-5b2). */
@@ -554,23 +621,28 @@ const HYDROXY_KIND = tileById(HYDROXY_ID).kind;
 /** The principal group the alcohol messages speak of (the `ol` tile's value, a lexicon GROUP_SUFFIXES key; R-5a3b). */
 const ALCOHOL = tileById(OL_ID).value;
 
+/** The principal group of an aldehyde (the `al` tile's value, a lexicon GROUP_SUFFIXES key; R-5c3b1). */
+const ALDEHYDE = tileById(AL_ID).value;
+
+/** The principal group of a ketone (the `ona` tile's value, a lexicon GROUP_SUFFIXES key; R-5c3b1). */
+const KETONE = tileById(ONA_ID).value;
+
 /** The principal groups of the aldehydes and ketones (lexicon GROUP_SUFFIXES keys; file header «Aldehydes and ketones»). */
-const CARBONYLS = Object.freeze(['aldehyde', 'ketone']);
+const CARBONYLS = Object.freeze([ALDEHYDE, KETONE]);
+
+/** The SubstituentSpec kind of an `oxo` prefix (tiles.js; R-5c1). */
+const OXO_KIND = tileById(OXO_ID).kind;
+
+/** The element of a carbon atom (model/elements.js; build.js keeps the same constant). */
+const CARBON = 'C';
 
 /** The principal group of an ester (a lexicon GROUP_SUFFIXES key): no ether class name fits it (classNameDiagnosis()). */
 const ESTER = 'ester';
 
 /**
- * The trace rules that compare the principal groups (P0: how many on the
- * chain; N0: their locants), whose messages speak of OH groups (R-5a3b):
- * for an aldehyde or a ketone the diagnosis is deliberately null there
- * (file header «Aldehydes and ketones»; phase R-5c3b words them).
- */
-const PRINCIPAL_RULES = Object.freeze(['P0', 'N0']);
-
-/**
- * The deliberate null of a rule that would need an aldehyde or ketone
- * message (file header «Aldehydes and ketones»): a draft that stops the
+ * The null of a check that finds a case no message covers (file header
+ * «Aldehydes and ketones»: a student's carbonyl suffix of another kind than
+ * the engine's that no C=O check names, never seen): a draft that stops the
  * diagnosis — firstRule() answers null for the reading, never a later rule.
  */
 const BEYOND = Object.freeze({ code: null });
@@ -597,14 +669,44 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
       + `«${WORDS.hidroxi}». Se escribe «${d.name}».`
     : `Los grupos –OH son el grupo principal: los ${d.ring ? 'del anillo' : 'de la cadena principal'} se nombran todos juntos `
       + `con la terminación «-${d.ending}», al final del nombre, no con el prefijo «${WORDS.hidroxi}». Se escribe «${d.name}».`),
+  // Aldehydes and ketones (R-5c3b1, file header «Aldehydes and ketones»): the principal C=O group's own mistakes.
+  CARBONYL_SENIORITY: (d) => `Cuando hay grupos distintos, solo uno es el grupo principal, y se elige por este orden: `
+    + `${DIAGNOSIS_PHRASES.seniority}. Aquí manda ${DIAGNOSIS_PHRASES.principal[d.group]}, que se nombra `
+    + `${DIAGNOSIS_PHRASES.ending(d)}; ${DIAGNOSIS_PHRASES.junior[d.junior][d.count === 1 ? 0 : 1]} va delante, `
+    + `${d.prefix ? `con el prefijo «${d.prefix}»` : 'en los prefijos'}. Se escribe «${d.name}».`,
+  KETONE_NOT_ALDEHYDE: (d) => 'El grupo –CHO de un aldehído va en un extremo de la cadena: su carbono solo puede unirse a un '
+    + `carbono más. Aquí ${d.branch ? `la rama «${d.branch}» está en el carbono ${d.locant}, que así queda unido`
+      : `el carbono ${d.locant} está unido`} a dos carbonos: su C=O es el de una cetona, no el de un aldehído. `
+    + `Se escribe «${d.name}».`,
+  ALDEHYDE_CARBON: (d) => (d.ring
+    ? 'Cuando el grupo –CHO está unido a un anillo, su carbono no forma parte del anillo ni es una cadena aparte: la cadena '
+      + `principal es el anillo, y el grupo se nombra ${DIAGNOSIS_PHRASES.ending(d)}. Se escribe «${d.name}».`
+    : `La terminación «-${WORDS.carbaldehido}» solo se usa cuando el grupo –CHO está unido a un anillo. En una cadena, el `
+      + 'carbono del –CHO es un carbono más de la cadena principal, siempre en un extremo, y el grupo se nombra '
+      + `${DIAGNOSIS_PHRASES.ending(d)}. Se escribe «${d.name}».`),
+  CARBONYL_PREFIX: (d) => {
+    const words = DIAGNOSIS_PHRASES.groupWords[d.group];
+    const how = `${d.acyl ? 'dentro del' : 'con el'} prefijo «${d.prefix}»`;
+    const joins = d.joins ? ` Su carbono entra en la cadena principal${d.ringBranch ? ', y el anillo pasa a ser una rama' : ''}.` : '';
+    return (d.count === 1
+      ? `El ${words.one} es el grupo principal: se nombra ${DIAGNOSIS_PHRASES.ending(d)}, no ${how}.`
+      : `Los ${words.many} son el grupo principal: ${DIAGNOSIS_PHRASES.groupsOn[d.on]} se nombran todos juntos `
+        + `${DIAGNOSIS_PHRASES.ending(d)}, no ${how}.`)
+      + `${joins} Se escribe «${d.name}».`;
+  }, // End of the CARBONYL_PREFIX template
   HYDROXY_PARENT: (d) => 'La cadena principal es la que lleva más grupos –OH, sea el anillo o una cadena abierta; solo si '
     + `empatan manda el anillo. Aquí ${DIAGNOSIS_PHRASES.hydroxyChoice(d)}: «${d.name}».`,
+  CARBONYL_PARENT: (d) => `La cadena principal es la que lleva más ${DIAGNOSIS_PHRASES.groupWords[d.group].many}, sea el anillo `
+    + `o una cadena abierta; solo si empatan manda el anillo. Aquí ${DIAGNOSIS_PHRASES.hydroxyChoice(d)}: «${d.name}».`,
   BRANCH_AT_END: (d) => `La rama «${d.branch}» está en el extremo de la cadena, así que la alarga: `
     + `la cadena principal tiene ${d.length} carbonos.`,
   RING_IS_PARENT: (d) => 'El anillo es la cadena principal: un anillo manda siempre sobre una cadena abierta, aunque la cadena '
     + `sea más larga. Tu cadena de ${d.length} ${d.length === 1 ? 'carbono' : 'carbonos'} va en una rama del anillo: «${d.name}».`,
   MORE_HYDROXY_GROUPS: (d) => `Hay otra cadena con más grupos –OH (${d.app}; la tuya tiene ${d.student}). La cadena principal es `
     + 'la que lleva más grupos –OH, aunque no sea la más larga.',
+  MORE_CARBONYL_GROUPS: (d) => `Hay otra cadena con más ${DIAGNOSIS_PHRASES.groupWords[d.group].many} (${d.app}; la tuya tiene `
+    + `${d.student}). La cadena principal es la que lleva más ${DIAGNOSIS_PHRASES.groupWords[d.group].many}, aunque no sea la más `
+    + 'larga.',
   // `etoximetano` (R-5b): an ether's student chain may have one carbon.
   LONGER_CHAIN: (d) => `Hay una cadena más larga que la tuya: la tuya tiene ${d.student} ${d.student === 1 ? 'carbono' : 'carbonos'} `
     + `y la cadena principal tiene ${d.length}.`,
@@ -625,13 +727,13 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
   MORE_SUBSTITUENTS: (d) => `Hay otra cadena igual de larga con más sustituyentes (${d.app}; la tuya tiene ${d.student}). `
     + `Entre cadenas igual de largas, gana la que tiene más ${d.halogen ? 'sustituyentes' : 'ramas'}.`,
   CHAIN_LOCANTS: (d) => `Hay otra cadena igual de larga que, bien numerada, da números más bajos a `
-    + `${DIAGNOSIS_PHRASES.lowerLocantsOf[d.rule]}${difference(d)}: esa es la cadena principal.`,
+    + `${lowerLocants(d)}${difference(d)}: esa es la cadena principal.`,
   CHAIN_ALPHABETICAL: () => 'Hay otra cadena igual de larga, con los mismos números, cuyo nombre va antes por orden '
     + 'alfabético: esa es la cadena principal.',
-  NUMBERING: (d) => `Hay que numerar la cadena desde el otro extremo: ${DIAGNOSIS_PHRASES.numberingReasons[d.rule]}`
+  NUMBERING: (d) => `Hay que numerar la cadena desde el otro extremo: ${numberingReason(d)}`
     + `${difference(d)}.${d.unwritten ? ` En «${d.name}» ese número ni siquiera se escribe.` : ''}`,
   RING_NUMBERING: (d) => 'Hay que numerar el anillo de otra manera, empezando en otro carbono o contando hacia el otro lado: '
-    + `${DIAGNOSIS_PHRASES.numberingReasons[d.rule]}${difference(d)}.`
+    + `${numberingReason(d)}${difference(d)}.`
     + `${d.unwritten ? ` En «${d.name}» ese número ni siquiera se escribe.` : ''}`,
   ALPHABETICAL_ORDER: (d) => `Los sustituyentes se escriben por orden alfabético: «${d.first}» va antes que «${d.second}» `
     + `(${d.why}).${d.hint ? ` ${d.hint}` : ''}`,
@@ -711,6 +813,51 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
     N4: 'con los mismos números, el sustituyente que va primero por orden alfabético tiene que llevar el más bajo',
     N5: 'con los mismos números, gana la numeración cuyo nombre va antes por orden alfabético',
   }),
+  /**
+   * N0 for an aldehyde or a ketone (R-5c3b1), by principal group: why the other numbering is right (NUMBERING,
+   * RING_NUMBERING) and what another chain numbers lower (CHAIN_LOCANTS), as `numberingReasons.N0` and `lowerLocantsOf.N0`
+   * say it of the OH groups and the explanation's numbering step of the C=O groups.
+   */
+  carbonylN0: Object.freeze({
+    numberingReasons: Object.freeze({
+      aldehyde: 'los grupos –CHO (el grupo principal) tienen que llevar los números más bajos',
+      ketone: 'los grupos C=O (el grupo principal) tienen que llevar los números más bajos',
+    }),
+    lowerLocantsOf: Object.freeze({ aldehyde: 'los grupos –CHO', ketone: 'los grupos C=O' }),
+  }),
+  /**
+   * How the messages call one or several principal groups, by group (R-5c3b1; the explanation's SUFFIX_GROUP_WORDS): the
+   * C=O of a ketone «grupo C=O», an aldehyde's «grupo –CHO», as the explanation's group step says them.
+   */
+  groupWords: Object.freeze({
+    alcohol: Object.freeze({ one: 'grupo –OH', many: 'grupos –OH' }),
+    aldehyde: Object.freeze({ one: 'grupo –CHO', many: 'grupos –CHO' }),
+    ketone: Object.freeze({ one: 'grupo C=O', many: 'grupos C=O' }),
+  }),
+  /** The seniority of the principal groups the tiles write (CARBONYL_SENIORITY, R-5c3b1; design.md §13.4 I-32). */
+  seniority: 'aldehído > cetona > alcohol',
+  /** The principal group that wins, by group (CARBONYL_SENIORITY). */
+  principal: Object.freeze({ aldehyde: 'el aldehído (–CHO)', ketone: 'la cetona (C=O)' }),
+  /** The student's junior group, written as the suffix, one or several (CARBONYL_SENIORITY). */
+  junior: Object.freeze({
+    ketone: Object.freeze(['el C=O de la cetona', 'cada C=O de cetona']),
+    alcohol: Object.freeze(['el –OH', 'cada –OH']),
+  }),
+  /** Which of several principal groups the suffix cites together (CARBONYL_PREFIX), by where they are. */
+  groupsOn: Object.freeze({
+    chain: 'los de la cadena principal',
+    ring: 'los del anillo',
+    outside: 'los unidos al anillo',
+  }),
+  /**
+   * How the engine's principal C=O group is written (R-5c3b1): its suffix at the end of the name (`-al`, `-diona`,
+   * `-carbaldehído`), or, for benzene with one –CHO, the name `benzaldehído`.
+   *
+   * @param {{ending: string, benzaldehyde: boolean}} d - The suffix's words (suffixWordOf()) and the benzaldehído case.
+   * @returns {string} The phrase.
+   */
+  ending: (d) => (d.benzaldehyde ? `con «${WORDS.benzaldehido}» (el benceno con un grupo –CHO)`
+    : `con la terminación «-${d.ending}», al final del nombre`),
   /** Why one prefix goes before another (ALPHABETICAL_ORDER). */
   why: Object.freeze({
     letters: (a, b) => `${a} antes que ${b}`,
@@ -733,6 +880,11 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
     prefixes: 'los sustituyentes',
     hydroxy: 'el grupo –OH',
     hydroxys: 'los grupos –OH',
+    // The suffix's C=O groups (R-5c3b1: `ciclohexan-1-ona`, `ciclohexano-1-carbaldehído`).
+    aldehyde: 'el grupo –CHO',
+    aldehydes: 'los grupos –CHO',
+    ketone: 'el grupo C=O',
+    ketones: 'los grupos C=O',
     /** The prefixes and the suffix's OH groups, both written with needless locants (`1,1,1-triclorometan-1-ol`). */
     together: (prefixes, hydroxy) => `${prefixes} y ${hydroxy}`,
   }),
@@ -743,7 +895,8 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
   }),
   /**
    * How many OH groups the ring and the best chain carry, and which one wins (HYDROXY_PARENT, R-5a3b; the explanation's
-   * «Anillo o cadena» step says it the same way).
+   * «Anillo o cadena» step says it the same way); or how many C=O groups (CARBONYL_PARENT, R-5c3b1: the phrase names no
+   * group).
    *
    * @param {{ring: number, chain: number, chainParent: boolean}} d - The counts, and whether the chain is the parent.
    * @returns {string} The phrase.
@@ -779,17 +932,19 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
    * (the code that rule gives on its own, `reason`, with its data), as the explanation's «Reconoce el éter» step words it
    * (explain.js etherSideReason()).
    *
-   * @param {object} d - The ETHER_SIDE data: `reason`, the counts or locants of that rule, `benzene`.
+   * @param {object} d - The ETHER_SIDE data: `reason`, the counts or locants of that rule, `benzene`; `group` for an aldehyde's
+   *   or a ketone's C=O groups (R-5c3b1: CARBONYL_PARENT, MORE_CARBONYL_GROUPS, CHAIN_LOCANTS at N0).
    * @returns {string} The phrase.
    */
   etherSide: (d) => {
+    const words = DIAGNOSIS_PHRASES.groupWords[CARBONYLS.includes(d.group) ? d.group : ALCOHOL];
     /**
-     * Some OH groups as the phrase says them.
+     * Some principal groups as the phrase says them.
      *
      * @param {number} n - The count.
-     * @returns {string} «ningún grupo –OH», «un grupo –OH», «2 grupos –OH».
+     * @returns {string} «ningún grupo –OH», «un grupo –OH», «2 grupos –OH» (or –CHO, C=O).
      */
-    const groups = (n) => ['ningún grupo –OH', 'un grupo –OH'][n] || `${n} grupos –OH`;
+    const groups = (n) => [`ningún ${words.one}`, `un ${words.one}`][n] || `${n} ${words.many}`;
     /**
      * A count of OH groups after the first one is named.
      *
@@ -802,13 +957,15 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
     switch (d.reason) {
       case 'RING_IS_PARENT':
         return `en ese lado ${d.benzene ? 'está el benceno' : 'hay un anillo'}, y un anillo manda siempre sobre una cadena abierta`;
-      case 'HYDROXY_PARENT': {
+      case 'HYDROXY_PARENT':
+      case 'CARBONYL_PARENT': {
         const [there, mine] = d.chainParent ? [d.chain, d.ring] : [d.ring, d.chain];
         return there === mine
           ? `${lead} los dos lados llevan ${groups(there)} cada uno; en el empate, manda el anillo`
           : `${lead} en ese lado hay ${groups(there)} y en el tuyo, ${count(mine)}`;
       }
       case 'MORE_HYDROXY_GROUPS':
+      case 'MORE_CARBONYL_GROUPS':
         return `${lead} en ese lado hay ${groups(d.app)} y en ${d.studentRing ? 'tu anillo' : 'tu cadena'}, ${count(d.student)}`;
       case 'LONGER_CHAIN':
         return `en ese lado hay una cadena de ${d.length} carbonos, más larga que la tuya, de ${d.student}`;
@@ -820,7 +977,7 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
         return `${tied} y en enlaces dobles o triples, y la de ese lado tiene más sustituyentes (${d.app}; la tuya, ${d.student})`;
       case 'CHAIN_LOCANTS':
         return `${tied}, en enlaces múltiples y en sustituyentes, y la de ese lado, bien numerada, da números más bajos a `
-          + `${DIAGNOSIS_PHRASES.lowerLocantsOf[d.rule]}${difference(d)}`;
+          + `${lowerLocants(d)}${difference(d)}`;
       default: // CHAIN_ALPHABETICAL
         return `${tied} y en todo lo demás, y la de ese lado da un nombre que va antes por orden alfabético`;
     }
@@ -892,8 +1049,9 @@ export const CLASS_NAME_STEP_TEXTS = Object.freeze({
 
 /**
  * Every diagnosis code, in the order of the rules (design.md §15.8 R-3; the
- * ring rules of R-4 and the alcohol rules of R-5a beside the chain rules
- * whose place they take, file header): its rule number (1–11), the
+ * ring rules of R-4, the alcohol rules of R-5a and the aldehyde and ketone
+ * rules of R-5c3b1 beside the rules whose place they take, file header): its
+ * rule number (1–11), the
  * explanation step it points at (an explain() step id, design.md §5; a draft
  * may give its own case's step, `benzene` for RING_IS_PARENT on the benzene
  * ring; the class names CLASS_NAME_STEP, which diagnosisExplanation() adds)
@@ -906,6 +1064,33 @@ export const DIAGNOSES = Object.freeze({
     step: 'group',
     example: Object.freeze({ count: 1, ending: WORDS.ol, ring: false, name: `${stem(3)}${SATURATED_INFIX}-2-${WORDS.ol}` }),
   }),
+  // Aldehydes and ketones (R-5c3b1): the principal C=O group's own mistakes, beside HYDROXY_PREFIX, before the parent choice.
+  CARBONYL_SENIORITY: Object.freeze({
+    rule: 1,
+    step: 'group',
+    example: Object.freeze({
+      group: ALDEHYDE, ending: WORDS.al, benzaldehyde: false, junior: KETONE, count: 1, prefix: WORDS.oxo,
+      name: `4-${WORDS.oxo}${stem(5)}${SATURATED_INFIX}${WORDS.al}`,
+    }),
+  }),
+  KETONE_NOT_ALDEHYDE: Object.freeze({
+    rule: 1,
+    step: 'group',
+    example: Object.freeze({ branch: WORDS.metil, locant: 1, name: `${stem(4)}${SATURATED_INFIX}-2-${WORDS.ona}` }),
+  }),
+  ALDEHYDE_CARBON: Object.freeze({
+    rule: 1,
+    step: 'group',
+    example: Object.freeze({ ring: false, ending: WORDS.al, benzaldehyde: false, name: `${stem(5)}${SATURATED_INFIX}${WORDS.al}` }),
+  }),
+  CARBONYL_PREFIX: Object.freeze({
+    rule: 1,
+    step: 'group',
+    example: Object.freeze({
+      group: KETONE, count: 1, ending: WORDS.ona, benzaldehyde: false, prefix: WORDS.oxo, acyl: false, joins: false,
+      ringBranch: false, on: 'chain', name: `${stem(3)}${SATURATED_INFIX}${WORDS.ona}`,
+    }),
+  }),
   HYDROXY_PARENT: Object.freeze({
     rule: 1,
     step: 'ringChain',
@@ -916,6 +1101,17 @@ export const DIAGNOSES = Object.freeze({
       name: `2-${RING_PREFIX}${stem(6)}${FREE_VALENCE_SUFFIXES[1]}${stem(2)}${SATURATED_INFIX}-1-${WORDS.ol}`,
     }),
   }),
+  CARBONYL_PARENT: Object.freeze({
+    rule: 1,
+    step: 'ringChain',
+    example: Object.freeze({
+      group: KETONE,
+      ring: 1,
+      chain: 1,
+      chainParent: false,
+      name: `2-(2-${WORDS.oxo}${stem(3)}${FREE_VALENCE_SUFFIXES[1]})${RING_PREFIX}${stem(6)}${SATURATED_INFIX}-1-${WORDS.ona}`,
+    }),
+  }),
   BRANCH_AT_END: Object.freeze({ rule: 1, step: 'chain', example: Object.freeze({ branch: WORDS.metil, length: 4 }) }),
   RING_IS_PARENT: Object.freeze({
     rule: 1,
@@ -924,6 +1120,9 @@ export const DIAGNOSES = Object.freeze({
   }),
   MORE_HYDROXY_GROUPS: Object.freeze({
     rule: 2, step: 'groupChain', example: Object.freeze({ student: 1, app: 2, length: 3, halogen: false }),
+  }),
+  MORE_CARBONYL_GROUPS: Object.freeze({
+    rule: 2, step: 'groupChain', example: Object.freeze({ group: KETONE, student: 1, app: 2, length: 6, halogen: false }),
   }),
   LONGER_CHAIN: Object.freeze({ rule: 2, step: 'chain', example: Object.freeze({ student: 4, length: 5 }) }),
   BENZENE_RING: Object.freeze({ rule: 2, step: 'benzene', example: Object.freeze({ name: `${WORDS.metil}${WORDS.benceno}` }) }),
@@ -1051,7 +1250,9 @@ export const DIAGNOSIS_CODES = Object.freeze(Object.keys(DIAGNOSES));
  * when a side chain carries OH groups too, which HYDROXY_PARENT checks
  * itself (it names `benzene` or `ring` otherwise); a monosubstituted
  * benzene or a one-carbon parent has no numbering step (`triclorometanol`:
- * «Monta el nombre»). An ether (R-5b2) always has «Reconoce el éter»
+ * «Monta el nombre»); so do an aldehyde and a ketone (R-5c3b1: CARBONYL_PARENT
+ * as HYDROXY_PARENT; `benzaldehído` has no numbering step). An ether (R-5b2)
+ * always has «Reconoce el éter»
  * (`ether`): its oxygen is an alkoxy prefix of the engine's name, at some
  * depth; the fallbacks are the chain or ring steps that follow it. The
  * class-name step (CLASS_NAME_STEP) is always among diagnosisExplanation()'s
@@ -1083,8 +1284,9 @@ export const STEP_FALLBACKS = Object.freeze({
  * @property {number} rule - Its rule number in design.md §15.8 R-3 (1–11; a ring or alcohol rule takes the number of the
  *   rule whose place it takes, file header; ETHER_SIDE that of the draft it replaces, R-5b2).
  * @property {string|null} traceRule - The engine trace rule the diagnosis follows ('P0'…'P4', 'N0'…'N5'; 'RING' for
- *   RING_IS_PARENT; 'RINGCHAIN' or 'RING' for HYDROXY_PARENT; ETHER_SIDE that of the draft it replaces, R-5b2), or null
- *   for HYDROXY_PREFIX, BENZENE_RING, SUBSTITUTED_TEMPLATE, PHENOL, the class-name codes and rules 5–11.
+ *   RING_IS_PARENT; 'RINGCHAIN' or 'RING' for HYDROXY_PARENT and CARBONYL_PARENT; ETHER_SIDE that of the draft it replaces,
+ *   R-5b2), or null for HYDROXY_PREFIX, the C=O checks CARBONYL_SENIORITY, KETONE_NOT_ALDEHYDE, ALDEHYDE_CARBON and
+ *   CARBONYL_PREFIX (R-5c3b1), BENZENE_RING, SUBSTITUTED_TEMPLATE, PHENOL, the class-name codes and rules 5–11.
  * @property {string} message - The Spanish message (DIAGNOSIS_TEXTS).
  * @property {string} step - The `id` of the explain() step that explains the rule, a step of the explanation of the naming
  *   in `style` (diagnosisExplanation() builds it and finds the step; diagnosisStepIndex()); for a class name,
@@ -1112,6 +1314,33 @@ export const STEP_FALLBACKS = Object.freeze({
  */
 function difference(d) {
   return d.app === null || d.app === undefined ? '' : ` (${d.app} en vez de ${d.student})`;
+}
+
+/**
+ * Why the other numbering is right (NUMBERING, RING_NUMBERING), by trace
+ * rule: at N0 for an aldehyde or a ketone (R-5c3b1, the data's `group`) the
+ * C=O groups' phrase, else DIAGNOSIS_PHRASES.numberingReasons (N0: the OH
+ * groups).
+ *
+ * @param {{rule: string, group?: string}} d - The diagnosis data.
+ * @returns {string} The phrase.
+ */
+function numberingReason(d) {
+  return d.rule === 'N0' && CARBONYLS.includes(d.group) ? DIAGNOSIS_PHRASES.carbonylN0.numberingReasons[d.group]
+    : DIAGNOSIS_PHRASES.numberingReasons[d.rule];
+}
+
+/**
+ * What another chain numbers lower (CHAIN_LOCANTS, and ETHER_SIDE told from
+ * it), by trace rule: at N0 for an aldehyde or a ketone (R-5c3b1) the C=O
+ * groups, else DIAGNOSIS_PHRASES.lowerLocantsOf (N0: the OH groups).
+ *
+ * @param {{rule: string, group?: string}} d - The diagnosis data.
+ * @returns {string} The phrase.
+ */
+function lowerLocants(d) {
+  return d.rule === 'N0' && CARBONYLS.includes(d.group) ? DIAGNOSIS_PHRASES.carbonylN0.lowerLocantsOf[d.group]
+    : DIAGNOSIS_PHRASES.lowerLocantsOf[d.rule];
 }
 
 /**
@@ -1614,7 +1843,10 @@ function outsideStudent(parent, student) {
   return { atoms: parent.atoms.filter((id) => !atoms.has(id)), bonds: parent.bonds.filter((id) => !bonds.has(id)) };
 }
 
-/** The diagnosis code of a chain dropped at a trace rule (rule 3; P0 and P1 are rule 2; P0 and N0 count an alcohol's OH groups). */
+/**
+ * The diagnosis code of a chain dropped at a trace rule (rule 3; P0 and P1 are rule 2; P0 and N0 count an alcohol's OH
+ * groups — an aldehyde's or a ketone's C=O groups at P0 are MORE_CARBONYL_GROUPS, chainDropped()).
+ */
 const DROPPED_AT = Object.freeze({
   P0: 'MORE_HYDROXY_GROUPS',
   P1: 'LONGER_CHAIN',
@@ -1660,7 +1892,9 @@ function branchAtEnd(ctx) {
  * Rules 2 and 3: the student's chain was dropped by a trace step; the data
  * are the step's own values (the student's best one and the survivors').
  * An alcohol's P0 is rule 2 too (MORE_HYDROXY_GROUPS: another chain carries
- * more OH groups) and its N0 rule 3 (CHAIN_LOCANTS: lower locants for them).
+ * more OH groups) and its N0 rule 3 (CHAIN_LOCANTS: lower locants for them);
+ * an aldehyde's or a ketone's (R-5c3b1) are MORE_CARBONYL_GROUPS and
+ * CHAIN_LOCANTS with the C=O groups' words (the data's `group`).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {object} step - The trace step that dropped the chain.
@@ -1668,7 +1902,8 @@ function branchAtEnd(ctx) {
  * @returns {object|null} The draft, or null for a rule this phase does not know (later families).
  */
 function chainDropped(ctx, step, sameChain) {
-  const code = DROPPED_AT[step.rule];
+  const group = carbonylGroup(ctx);
+  const code = step.rule === 'P0' && group ? 'MORE_CARBONYL_GROUPS' : DROPPED_AT[step.rule];
   if (!code) {
     return null;
   }
@@ -1686,6 +1921,9 @@ function chainDropped(ctx, step, sameChain) {
   } else {
     const best = mine.reduce((a, b) => (Array.isArray(a) && Array.isArray(b) && compareLocantLists(b, a) < 0 ? b : a));
     data = { rule: step.rule, ...firstDifference(app, best) };
+  }
+  if (group) {
+    data.group = group; // The C=O groups' words at P0 and N0 (R-5c3b1).
   }
   return {
     code,
@@ -1709,13 +1947,15 @@ function chainDropped(ctx, step, sameChain) {
  * `butano-1,2-diol`, whose one chain the explanation shows). The student's
  * count is its chain's own, as P0 counts it: the engine's suffix sites on
  * its carbons (substituent.js suffixSites()), however the student wrote
- * them. The data are chainDropped()'s for a P step.
+ * them. The data are chainDropped()'s for a P step. An aldehyde's or a
+ * ketone's C=O groups (R-5c3b1) choose the chain the same way:
+ * MORE_CARBONYL_GROUPS, with the group's words.
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {object} step - The trace's first chain step.
  * @returns {object|null} The draft, or null when the step is not P0 or a chain it keeps contains the student's.
  */
-function fewerHydroxyGroups(ctx, step) {
+function fewerPrincipalGroups(ctx, step) {
   if (step.rule !== 'P0') {
     return null; // No principal group (a hydrocarbon, a halogen derivative): the old path.
   }
@@ -1730,14 +1970,16 @@ function fewerHydroxyGroups(ctx, step) {
   if (student >= app) {
     return null; // Never: every chain that contains the student's carries at least its OH groups, and P0 dropped them all.
   }
+  const group = carbonylGroup(ctx);
+  const data = { student, app, length: naming.parent.atoms.length, halogen: hasHalogen(spec.prefixes) };
   return {
-    code: 'MORE_HYDROXY_GROUPS',
+    code: group ? 'MORE_CARBONYL_GROUPS' : 'MORE_HYDROXY_GROUPS',
     traceRule: step.rule,
-    data: { student, app, length: naming.parent.atoms.length, halogen: hasHalogen(spec.prefixes) },
+    data: group ? { ...data, group } : data,
     focus: outsideStudent(naming.parent, reading.studentParent),
     tiles: spec.parent.tiles,
   };
-} // End of function fewerHydroxyGroups()
+} // End of function fewerPrincipalGroups()
 
 /**
  * The student's parent-level branches as the alphabetical rules of the
@@ -1846,14 +2088,16 @@ function judgedInOwnWords(ctx, step, mine) {
  * missing from the first chain step — P0 for an alcohol (every leaf-to-leaf
  * chain, before their OH groups are counted), else P1 — is no leaf-to-leaf
  * path (rule 1), unless no chain P0 keeps contains it (rule 2,
- * fewerHydroxyGroups(): the OH groups decide before the length). An
+ * fewerPrincipalGroups(): the OH or C=O groups decide before the length). An
  * alphabetical step (N4, N5) that did not read the student's chain in the
  * student's own words (judgedInOwnWords()) blames nothing, from then on:
  * neither the chain dropped there or later nor a direction dropped there (a
  * direction dropped before it, by a rule that compares no words, stays the
- * diagnosis). A `RINGCHAIN` step (an alcohol
+ * diagnosis). A `RINGCHAIN` step (an alcohol, an aldehyde or a ketone
  * whose chain parent beats its ring, R-5a3b) lists the best chains only and
- * drops none of them: a chain it does not list is followed into P0.
+ * drops none of them: a chain it does not list is followed into P0. P0 and
+ * N0 speak of the engine's principal group (an aldehyde's or a ketone's C=O
+ * groups since R-5c3b1: chainDropped(), directionDraft()).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null when the chain and its numbering are the engine's (or give the same name), or
@@ -1879,14 +2123,13 @@ function chainRules(ctx) {
    * @returns {boolean} True for the student's chain in the student's direction.
    */
   const isStudent = (c) => c.direction !== undefined && c.key === directed;
-  const first = trace.find((s) => s.rule === 'P0' || s.rule === 'P1'); // P0 only for an alcohol (R-5a2).
+  const first = trace.find((s) => s.rule === 'P0' || s.rule === 'P1'); // P0 only with a principal group (R-5a2, R-5c1).
   if (!first) {
     return null; // Never: a ring parent goes through ringRules() (firstRule()).
   }
   if (!first.candidatesBefore.some(sameChain)) {
-    // An alcohol's chain is chosen by its OH groups first: dropped at P0 however lengthened, the branch on the end is not the mistake.
-    const fewer = fewerHydroxyGroups(ctx, first);
-    return (fewer && !hydroxyPrincipal(ctx) ? BEYOND : fewer) || branchAtEnd(ctx); // A C=O's P0: R-5c1's null.
+    // A chain is chosen by its OH or C=O groups first: dropped at P0 however lengthened, the branch on the end is not the mistake.
+    return fewerPrincipalGroups(ctx, first) || branchAtEnd(ctx);
   }
   let direction = null;
   let ownWords = true; // Every alphabetical step so far read the student's chain in the student's words.
@@ -1899,47 +2142,32 @@ function chainRules(ctx) {
     }
     ownWords = ownWords && judgedInOwnWords(ctx, step, sameChain);
     if (!step.survivors.some(sameChain)) {
-      if (ownWords && principalBeyond(ctx, step)) {
-        return BEYOND; // More C=O groups, or lower locants for them, on another chain (R-5c1's null).
-      }
       return ownWords ? chainDropped(ctx, step, sameChain) : null;
     }
     if (!direction && step.candidatesBefore.some(isStudent) && !step.survivors.some(isStudent)) {
       direction = { step, ownWords };
     }
   } // End of the loop over the trace steps
-  // Every numbering rule has its reason (N0: the alcohol's OH groups, R-5a3b); the guard keeps a later family's rule safe.
+  // Every numbering rule has its reason (N0: the alcohol's OH groups, R-5a3b, or the C=O groups, R-5c3b1); the guard keeps a
+  // later family's rule safe.
   if (!direction || !direction.ownWords || !DIAGNOSIS_PHRASES.numberingReasons[direction.step.rule]) {
     return null;
   }
-  // N0 for a C=O (R-5c1): the reason speaks of OH groups, so the deliberate null.
-  return principalBeyond(ctx, direction.step) ? BEYOND : directionDraft(ctx, 'NUMBERING', direction.step, isStudent);
+  return directionDraft(ctx, 'NUMBERING', direction.step, isStudent);
 } // End of function chainRules()
 
 /**
- * Tells whether the engine's principal group is the OH (the alcohol
- * messages of R-5a3b apply), not an aldehyde's or a ketone's C=O (R-5c1).
+ * The engine's principal group when it is an aldehyde's or a ketone's C=O
+ * (file header «Aldehydes and ketones», R-5c3b1): the group whose words the
+ * P0 and N0 messages and the C=O checks use; null for an alcohol's OH (the
+ * messages of R-5a3b) or no principal group.
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {boolean} True for an alcohol (or no principal group).
+ * @returns {string|null} 'aldehyde', 'ketone' or null.
  */
-function hydroxyPrincipal(ctx) {
+function carbonylGroup(ctx) {
   const { suffix } = ctx.naming.structure;
-  return !suffix || suffix.kind === ALCOHOL;
-}
-
-/**
- * Tells whether a trace step that drops the student's chain or numbering
- * compares the principal groups (PRINCIPAL_RULES) of an aldehyde or a
- * ketone, whose messages are phase R-5c3b's: the deliberate null (file
- * header «Aldehydes and ketones»).
- *
- * @param {ReadingContext} ctx - The reading's context.
- * @param {{rule: string}} step - The trace step.
- * @returns {boolean} True for the null.
- */
-function principalBeyond(ctx, step) {
-  return PRINCIPAL_RULES.includes(step.rule) && !hydroxyPrincipal(ctx);
+  return suffix && CARBONYLS.includes(suffix.kind) ? suffix.kind : null;
 }
 
 /**
@@ -1947,7 +2175,9 @@ function principalBeyond(ctx, step) {
  * RING_NUMBERING on a ring): the trace step that dropped the student's
  * numbering while its chain or ring stayed, the first difference between
  * the survivors' value and the student's, and whether the engine's name
- * writes no locant at all (`propeno`, `metilciclohexano`).
+ * writes no locant at all (`propeno`, `metilciclohexano`); for an aldehyde or
+ * a ketone (R-5c3b1) the principal group, whose words N0 uses
+ * (`pentan-4-ona`, `ciclohexan-3-ona`).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {string} code - 'NUMBERING' or 'RING_NUMBERING'.
@@ -1960,10 +2190,11 @@ function directionDraft(ctx, code, step, isStudent) {
   const winner = step.survivors[0];
   const terms = firstDifference(valueOf(step, (c) => c.key === winner.key), valueOf(step, isStudent));
   const unwritten = !naming.parts.some((p) => p.kind === 'locant');
+  const group = carbonylGroup(ctx);
   return {
     code,
     traceRule: step.rule,
-    data: { rule: step.rule, ...terms, unwritten, name: naming.name },
+    data: { rule: step.rule, ...terms, unwritten, name: naming.name, ...(group ? { group } : {}) },
     focus: idsOf(null),
     tiles: null,
   };
@@ -2066,20 +2297,22 @@ function hydroxyPrefix(ctx) {
 } // End of function hydroxyPrefix()
 
 /**
- * The alcohol's parent choice between the ring and a chain (file header
- * «Alcohols», R-5a3b; design.md §13.4 I-40a): the student's parent is an
- * open chain and the engine's the ring, or the reverse, in a molecule with
- * OH groups. The engine's parent is the one carrying more OH groups, the
- * ring on a tie: the counts are the `RINGCHAIN` step's (the ring's first,
- * then the best chains'); without that step the parent is the ring, which
- * carries every OH. The focus is the engine's parent outside the student's;
- * the tiles, the prefix that holds it.
+ * The parent choice between the ring and a chain made by the principal
+ * groups (file header «Alcohols», R-5a3b; «Aldehydes and ketones», R-5c3b1;
+ * design.md §13.4 I-40a): the student's parent is an open chain and the
+ * engine's the ring, or the reverse, in a molecule with OH groups
+ * (HYDROXY_PARENT) or with an aldehyde's or a ketone's C=O groups
+ * (CARBONYL_PARENT, the data's `group` naming them). The engine's parent is
+ * the one carrying more of them, the ring on a tie: the counts are the
+ * `RINGCHAIN` step's (the ring's first, then the best chains'); without that
+ * step the parent is the ring, which carries every one. The focus is the
+ * engine's parent outside the student's; the tiles, the prefix that holds it.
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft (with the step of its case), or null when the parents are of one kind or the molecule
- *   has no OH group.
+ *   has no principal group.
  */
-function hydroxyParent(ctx) {
+function principalParent(ctx) {
   const { naming, reading, spec } = ctx;
   const { structure } = naming;
   const ringParent = structure.parentKind === 'ring';
@@ -2093,15 +2326,285 @@ function hydroxyParent(ctx) {
   if (!choice) {
     step = benzeneParent(naming) ? 'benzene' : 'ring';
   }
+  const group = carbonylGroup(ctx);
+  const data = { ring, chain, chainParent: !ringParent, name: naming.name };
   return {
-    code: 'HYDROXY_PARENT',
+    code: group ? 'CARBONYL_PARENT' : 'HYDROXY_PARENT',
     traceRule: choice ? 'RINGCHAIN' : 'RING',
-    data: { ring, chain, chainParent: !ringParent, name: naming.name },
+    data: group ? { ...data, group } : data,
     focus: outsideStudent(naming.parent, reading.studentParent),
     tiles: parentHolderTiles(ctx),
     step,
   };
-} // End of function hydroxyParent()
+} // End of function principalParent()
+
+/**
+ * How the engine writes its principal C=O group (R-5c3b1, the messages'
+ * DIAGNOSIS_PHRASES.ending()): the suffix's words (suffixWordOf(): `al`,
+ * `diona`, `carbaldehído`), and whether the name is built on `benzaldehído`
+ * instead (benzene with one –CHO: `4-metilbenzaldehído`).
+ *
+ * @param {object} naming - The naming compared with, its suffix an aldehyde's or a ketone's.
+ * @returns {{ending: string, benzaldehyde: boolean}} The words.
+ */
+function principalEnding(naming) {
+  const { suffix } = naming.structure;
+  const benzaldehyde = benzeneParent(naming) && suffix.kind === ALDEHYDE && Boolean(suffix.outside) && suffix.locants.length === 1;
+  return { ending: suffixWordOf(suffix), benzaldehyde };
+}
+
+/**
+ * The atoms and bonds of some suffix groups of the student's (build.js
+ * `suffixAtoms` of the reading): each group's carbon — the –CHO's own carbon
+ * of `carbaldehído`, else the parent carbon that carries it — and its oxygen,
+ * with the bonds between them.
+ *
+ * @param {object[]} groups - The reading's suffixAtoms entries.
+ * @returns {{atoms: number[], bonds: number[]}} The ids.
+ */
+function suffixFocus(groups) {
+  return {
+    atoms: groups.flatMap((g) => [g.carbon === undefined ? g.parentAtom : g.carbon, g.attachment]),
+    bonds: groups.flatMap((g) => [g.bond]),
+  };
+}
+
+/**
+ * CARBONYL_SENIORITY (R-5c3b1, file header «Aldehydes and ketones»): the
+ * student's suffix is a group junior to the engine's principal one
+ * (naming/seniority.js seniorityRank(): `ona` beside an aldehyde,
+ * `5-oxopentan-2-ona` → `4-oxopentanal`; `ol` beside a ketone,
+ * `4-oxopentan-2-ol` → `4-hidroxipentan-2-ona`; `fenol` beside a –CHO). The
+ * student's groups become prefixes of the engine's name: `oxo` or `hidroxi`
+ * (lexicon GROUP_PREFIXES) when every one of their carbons is a carbon of
+ * the engine's parent, else part of another prefix (`prefix` null: the
+ * ketone's carbon in an `acetil` branch). The focus is the student's suffix
+ * groups; the tiles, the suffix's.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function carbonylSeniority(ctx) {
+  const { naming, spec, reading } = ctx;
+  const mine = spec.suffix;
+  const engine = naming.structure.suffix;
+  if (!mine || seniorityRank(mine.kind) <= seniorityRank(engine.kind)) {
+    return null;
+  }
+  const groups = reading.suffixAtoms || [];
+  const parent = new Set(naming.parent.atoms);
+  const onParent = groups.length > 0 && groups.every((g) => parent.has(g.parentAtom));
+  return {
+    code: 'CARBONYL_SENIORITY',
+    data: {
+      group: engine.kind,
+      ...principalEnding(naming),
+      junior: mine.kind,
+      count: mine.slots.length,
+      prefix: onParent ? GROUP_PREFIXES[mine.kind] : null,
+      name: naming.name,
+    },
+    focus: suffixFocus(groups),
+    tiles: [mine.tiles[0], mine.tiles[1]],
+  };
+} // End of function carbonylSeniority()
+
+/**
+ * KETONE_NOT_ALDEHYDE (R-5c3b1): the student's `al` (or an aldehyde
+ * template's –CHO) on a carbon bonded to two carbons — by a carbon branch of
+ * the student's on it (`1-metilpropanal` → `butan-2-ona`, `1-acetilhexanal`
+ * → `octano-2,3-diona`, `1-metilbutanodial` → `4-oxopentanal`,
+ * `1-(4-metilfenil)acetaldehído`): that C=O is a ketone's. The data name the
+ * branch as the student wrote it and the carbon's locant; the focus is the
+ * C=O and the branch; the tiles, the suffix's.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function ketoneNotAldehyde(ctx) {
+  const { spec, reading, molecule, adj, tree, naming } = ctx;
+  const mine = spec.suffix;
+  if (!mine || mine.kind !== ALDEHYDE || mine.outside) {
+    return null;
+  }
+  /**
+   * The carbons bonded to an atom.
+   *
+   * @param {number} id - Atom id.
+   * @returns {number} How many.
+   */
+  const carbons = (id) => adj.get(id).filter((n) => molecule.atoms.get(n.atom).element === CARBON).length;
+  const group = (reading.suffixAtoms || []).find((g) => carbons(g.parentAtom) >= 2);
+  if (!group) {
+    return null;
+  }
+  const branch = reading.prefixAtoms
+    .find((o) => o.parentAtom === group.parentAtom && !isHeteroGroup(spec.prefixes[o.prefix].substituent));
+  const focus = suffixFocus([group]);
+  if (branch) {
+    focus.atoms.push(...branch.atoms);
+    focus.bonds.push(branch.bond, ...branch.bonds);
+  }
+  return {
+    code: 'KETONE_NOT_ALDEHYDE',
+    data: { branch: branch ? wordsOf(tree, tree.items[branch.prefix]) : null, locant: group.locant, name: naming.name },
+    focus,
+    tiles: [mine.tiles[0], mine.tiles[1]],
+  };
+} // End of function ketoneNotAldehyde()
+
+/**
+ * The –CHO carbons of some suffix groups: a `carbaldehído` group's own carbon
+ * (SuffixLocant or build.js suffixAtoms `carbon`), else the carbon that
+ * carries the C=O (the engine's `atom`, the student's `parentAtom`).
+ *
+ * @param {object[]} groups - The engine's suffix sites, or the reading's suffixAtoms entries.
+ * @param {string} key - The key of the carrying carbon: 'atom' (the engine's) or 'parentAtom' (the student's).
+ * @returns {number[]} The carbons' atom ids.
+ */
+function aldehydeCarbons(groups, key) {
+  return groups.map((g) => (g.carbon === undefined ? g[key] : g.carbon));
+}
+
+/**
+ * ALDEHYDE_CARBON (R-5c3b1): the –CHO's carbon on the other side of the
+ * parent — `carbaldehído` after a chain, whose –CHO carbon is a chain carbon
+ * (`butano-1-carbaldehído` → `pentanal`), or the –CHO's carbon taken into
+ * the student's chain beside a ring, which carries it as `carbaldehído`
+ * (`ciclohexilformaldehído`, `ciclohexilmetanal` →
+ * `ciclohexanocarbaldehído`; `fenilformaldehído` → `benzaldehído`). Only
+ * when the student's –CHO groups are the engine's own (every –CHO carbon of
+ * the student's suffix one of the engine's suffix –CHO carbons; review of
+ * phase I-51c3b1): with other groups the parent choice is the mistake
+ * (`2-(4-formilciclohexil)etanal`, whose `al` ends a side chain while the
+ * engine's `carbaldehído` is the ring's: CARBONYL_PARENT). The focus is the
+ * student's –CHO groups; the tiles, the suffix's.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function aldehydeCarbon(ctx) {
+  const { spec, naming, reading } = ctx;
+  const mine = spec.suffix;
+  const engine = naming.structure.suffix;
+  if (!mine || mine.kind !== ALDEHYDE || engine.kind !== ALDEHYDE || Boolean(mine.outside) === Boolean(engine.outside)) {
+    return null;
+  }
+  const groups = reading.suffixAtoms || [];
+  const engineCarbons = new Set(aldehydeCarbons(engine.locants, 'atom'));
+  if (groups.length === 0 || !aldehydeCarbons(groups, 'parentAtom').every((id) => engineCarbons.has(id))) {
+    return null; // Other –CHO groups than the engine's: the parent choice or the chain rules speak.
+  }
+  return {
+    code: 'ALDEHYDE_CARBON',
+    data: { ring: Boolean(engine.outside), ...principalEnding(naming), name: naming.name },
+    focus: suffixFocus(reading.suffixAtoms || []),
+    tiles: [mine.tiles[0], mine.tiles[1]],
+  };
+} // End of function aldehydeCarbon()
+
+/**
+ * The oxygen of a parent-level prefix's own C=O (R-5c3b1): an `oxo`'s one
+ * atom, or the oxygen double-bonded to the carbon by which a `formil` or an
+ * acyl prefix (`acetil`, `propanoil`, `benzoil`, `…carbonil`) is bonded;
+ * null for any other prefix (a C=O deeper inside a compound branch is not
+ * its own).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {object} occurrence - A prefixAtoms entry of the reading.
+ * @returns {number|null} The oxygen's atom id, or null.
+ */
+function ownCarbonylOxygen(ctx, occurrence) {
+  const sub = ctx.spec.prefixes[occurrence.prefix].substituent;
+  if (sub.kind === OXO_KIND) {
+    return occurrence.attachment;
+  }
+  if (!sub.acyl && sub.retained !== FORMYL) {
+    return null;
+  }
+  const link = ctx.adj.get(occurrence.attachment)
+    .find((n) => n.order === 2 && ctx.molecule.atoms.get(n.atom).element === OXO_ELEMENT);
+  return link ? link.atom : null;
+} // End of function ownCarbonylOxygen()
+
+/**
+ * CARBONYL_PREFIX (R-5c3b1), HYDROXY_PREFIX's analogue: a C=O the engine
+ * cites in the suffix, written by the student as a parent-level prefix whose
+ * own C=O it is (ownCarbonylOxygen(): `2-oxopropano`, `formilciclohexano`,
+ * `5-oxopentanal` → `pentanodial`, `oxoacetaldehído` → `etanodial`; an acyl
+ * prefix, `acetilbenceno` → `1-feniletan-1-ona`), while the student's
+ * suffix cites fewer groups than the engine's (or none): with as many, the
+ * student did write the principal groups in the suffix, and the acyl
+ * prefix's carbon belongs to a chain the chain rules compare
+ * (`4-propanoilheptano-2,6-diona` → CHAIN_LOCANTS at N0). A `formil` or acyl
+ * prefix's carbon then joins the engine's parent chain (`joins`, unless the
+ * –CHO is a ring's `carbaldehído`), and a student's ring parent becomes a
+ * branch (`ringBranch`). The focus is those prefixes; the tiles, the first
+ * one's.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function carbonylPrefix(ctx) {
+  const { naming, reading, spec, tree } = ctx;
+  const { suffix, parentKind } = naming.structure;
+  if ((spec.suffix ? spec.suffix.slots.length : 0) >= suffix.locants.length) {
+    return null; // The student's suffix cites every principal group.
+  }
+  const oxygens = new Set(suffix.locants.map((site) => site.attachAtom));
+  const written = reading.prefixAtoms.filter((o) => oxygens.has(ownCarbonylOxygen(ctx, o)));
+  if (written.length === 0) {
+    return null;
+  }
+  const sub = spec.prefixes[written[0].prefix].substituent;
+  const count = suffix.locants.length;
+  let on = 'chain';
+  if (parentKind === 'ring') {
+    on = suffix.outside ? 'outside' : 'ring';
+  }
+  return {
+    code: 'CARBONYL_PREFIX',
+    data: {
+      group: suffix.kind,
+      count,
+      ...principalEnding(naming),
+      prefix: wordsOf(tree, tree.items[written[0].prefix]),
+      acyl: Boolean(sub.acyl),
+      joins: Boolean(sub.acyl || sub.retained === FORMYL) && !suffix.outside,
+      ringBranch: isRing(spec.parent.kind) && parentKind !== 'ring',
+      on,
+      name: naming.name,
+    },
+    focus: occurrenceIds(written),
+    tiles: written[0].tiles || spec.parent.tiles,
+  };
+} // End of function carbonylPrefix()
+
+/**
+ * The principal C=O group's own checks (R-5c3b1, file header «Aldehydes and
+ * ketones»), when the engine's principal group is an aldehyde's or a
+ * ketone's, in order: CARBONYL_SENIORITY, KETONE_NOT_ALDEHYDE,
+ * ALDEHYDE_CARBON, CARBONYL_PREFIX. After them a student's suffix of another
+ * kind than the engine's is no case any message covers (never seen): the
+ * null. A suffix with fewer groups than the engine's, or none, or other –CHO
+ * groups than the engine's on the other side of a parent (review of phase
+ * I-51c3b1: `2-(4-formilciclohexil)etanal`), goes on to the parent choice and
+ * the rules (CARBONYL_PARENT; P0 names a chain with fewer C=O groups).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, BEYOND, or null (no C=O check applies, or the principal group is no C=O).
+ */
+function carbonylChecks(ctx) {
+  if (!carbonylGroup(ctx)) {
+    return null;
+  }
+  const draft = carbonylSeniority(ctx) || ketoneNotAldehyde(ctx) || aldehydeCarbon(ctx) || carbonylPrefix(ctx);
+  if (draft) {
+    return draft;
+  }
+  const mine = ctx.spec.suffix;
+  return mine && mine.kind !== ctx.naming.structure.suffix.kind ? BEYOND : null;
+} // End of function carbonylChecks()
 
 /**
  * Ring rule 2 for an alcohol (R-5a3b, PHENOL): benzene with one OH written
@@ -2164,7 +2667,8 @@ function substitutedChainTemplate(ctx) {
  * first); a `ciclo` ring that is the benzene ring; a retained template with
  * the student's prefixes; `bencenol` for `fenol` (R-5a3b, PHENOL); the ring
  * numbered otherwise (followed through the engine's ring numbering trace
- * like rule 4 follows a chain's direction; N0 for an alcohol's OH groups).
+ * like rule 4 follows a chain's direction; N0 for an alcohol's OH groups or
+ * an aldehyde's or a ketone's C=O groups).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null when the ring and its numbering are the engine's (or give the same name).
@@ -2222,8 +2726,7 @@ function ringRules(ctx) {
       if (!ownWords || !DIAGNOSIS_PHRASES.numberingReasons[step.rule]) {
         return null;
       }
-      // N0 for a C=O (R-5c1): its reason speaks of OH groups, so the deliberate null.
-      return principalBeyond(ctx, step) ? BEYOND : directionDraft(ctx, 'RING_NUMBERING', step, isStudent);
+      return directionDraft(ctx, 'RING_NUMBERING', step, isStudent); // N0: the OH or the C=O groups (R-5a3b, R-5c3b1).
     }
   } // End of the loop over the ring numbering trace
   return null;
@@ -2516,7 +3019,9 @@ function parentOmissions(structure) {
  * whose name has no numbers at all. An alcohol's suffix locants (R-5a3b) are
  * omitted with the prefixes' (render.js omitsPrefixLocants()): the message
  * then speaks of the OH groups (`etan-1-ol` → `etanol`, `ciclohexan-1-ol`,
- * `triclorometan-1-ol`), or of both (`1,1,1-triclorometan-1-ol`).
+ * `triclorometan-1-ol`), or of both (`1,1,1-triclorometan-1-ol`); an
+ * aldehyde's or a ketone's (R-5c3b1) of its C=O groups (suffixWhat():
+ * `ciclohexan-1-ona`, `propan-2-ona`, `ciclohexano-1-carbaldehído`).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.
@@ -2544,19 +3049,16 @@ function needlessLocants(ctx) {
   const prefixSlots = supplied(spec.prefixes.flatMap((prefix) => prefix.slots));
   // The suffix's locants (R-5a3b: `etan-1-ol`, `ciclohexan-1-ol`) are omitted together with the prefixes'.
   const suffixSlots = spec.suffix ? supplied(spec.suffix.slots) : [];
-  if (suffixSlots.length > 0 && omitted.prefixes && spec.suffix.kind !== ALCOHOL) {
-    return BEYOND; // `ciclohexan-1-ona`, `ciclohexano-1-carbaldehído` (R-5c1): the message speaks of OH groups.
-  }
   if (prefixSlots.length + suffixSlots.length > 0 && omitted.prefixes) {
     const { what, on } = DIAGNOSIS_PHRASES;
     const single = structure.prefixes.reduce((sum, group) => sum + group.locants.length, 0) === 1;
     const prefixWhat = single ? what.prefix : what.prefixes;
-    const hydroxyCount = structure.suffix ? structure.suffix.locants.length : 0;
-    const hydroxyWhat = hydroxyCount === 1 ? what.hydroxy : what.hydroxys;
+    const groupCount = structure.suffix ? structure.suffix.locants.length : 0;
+    const groupWhat = suffixWhat(structure.suffix ? structure.suffix.kind : ALCOHOL, groupCount);
     let phrase = { text: prefixWhat, plural: !single };
     if (suffixSlots.length > 0) {
-      phrase = prefixSlots.length > 0 ? { text: what.together(prefixWhat, hydroxyWhat), plural: true }
-        : { text: hydroxyWhat, plural: hydroxyCount > 1 };
+      phrase = prefixSlots.length > 0 ? { text: what.together(prefixWhat, groupWhat), plural: true }
+        : { text: groupWhat, plural: groupCount > 1 };
     }
     return {
       code: 'NEEDLESS_LOCANTS',
@@ -2596,6 +3098,25 @@ function needlessLocants(ctx) {
   } // End of the loop over the branch chains
   return null;
 } // End of function needlessLocants()
+
+/**
+ * What the suffix's groups are called in NEEDLESS_LOCANTS (DIAGNOSIS_PHRASES
+ * `what`): «el grupo –OH» / «los grupos –OH» for an alcohol (R-5a3b), «el
+ * grupo –CHO» or «el grupo C=O» and their plurals for an aldehyde or a ketone
+ * (R-5c3b1).
+ *
+ * @param {string} kind - The engine's suffix kind ('alcohol', 'aldehyde', 'ketone').
+ * @param {number} count - How many groups it cites.
+ * @returns {string} The phrase.
+ */
+function suffixWhat(kind, count) {
+  const { what } = DIAGNOSIS_PHRASES;
+  const [one, many] = {
+    [ALDEHYDE]: [what.aldehyde, what.aldehydes],
+    [KETONE]: [what.ketone, what.ketones],
+  }[kind] || [what.hydroxy, what.hydroxys];
+  return count === 1 ? one : many;
+}
 
 /**
  * The engine's short form of a branch chain written with needless locants
@@ -2787,8 +3308,9 @@ function letterLocants(ctx) {
  * is on the other side of an ether oxygen from the engine's parent (R-5b2,
  * file header «Ethers»): the ring or chain choice and the chain rules 2–3.
  */
-const ACROSS_OXYGEN = Object.freeze(['RING_IS_PARENT', 'HYDROXY_PARENT', 'MORE_HYDROXY_GROUPS', 'LONGER_CHAIN',
-  'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL']);
+const ACROSS_OXYGEN = Object.freeze(['RING_IS_PARENT', 'HYDROXY_PARENT', 'CARBONYL_PARENT', 'MORE_HYDROXY_GROUPS',
+  'MORE_CARBONYL_GROUPS', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS',
+  'CHAIN_ALPHABETICAL']);
 
 /**
  * The ether oxygen between the student's chain and the engine's parent
@@ -2927,31 +3449,33 @@ const FORM_RULES = Object.freeze([alphabeticalOrder, ungrouped, multiplierKind, 
 
 /**
  * The first rule that applies to one reading of the name: an alcohol's OH
- * written `hidroxi` on the parent, then its parent's kind (ring or chain:
- * hydroxyPrefix(), hydroxyParent(); file header «Alcohols»), the parent's
- * rules (chainRules(), rules 1–4; ringRules() when the engine's parent is
- * the ring) — a parent choice told from the ether oxygen when the student's
- * chain is on its other side (acrossOxygen(), R-5b2) —, then the form rules.
+ * written `hidroxi` on the parent (hydroxyPrefix(), file header «Alcohols»),
+ * the principal C=O group's own checks (carbonylChecks(), «Aldehydes and
+ * ketones»), then the parent's kind decided by the principal groups (ring or
+ * chain: principalParent()), the parent's rules (chainRules(), rules 1–4;
+ * ringRules() when the engine's parent is the ring) — a parent choice told
+ * from the ether oxygen when the student's chain is on its other side
+ * (acrossOxygen(), R-5b2) —, then the form rules.
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft `{code, rule?, traceRule?, data, focus, tiles, step?}`, or null.
  */
 function firstRule(ctx) {
-  const alcohol = hydroxyPrefix(ctx) || hydroxyParent(ctx);
-  if (alcohol) {
-    return acrossOxygen(ctx, alcohol); // The ring or chain on the other side of an ether oxygen (R-5b2).
+  const principal = hydroxyPrefix(ctx) || carbonylChecks(ctx) || principalParent(ctx);
+  if (principal === BEYOND) {
+    return null; // A student's carbonyl suffix no C=O check names (never seen; file header «Aldehydes and ketones»).
+  }
+  if (principal) {
+    return acrossOxygen(ctx, principal); // The ring or chain on the other side of an ether oxygen (R-5b2).
   }
   const parent = substitutedChainTemplate(ctx) || (ctx.naming.structure.parentKind === 'ring' ? ringRules(ctx) : chainRules(ctx));
-  if (parent === BEYOND) {
-    return null; // An aldehyde's or ketone's P0 or N0 (R-5c1's deliberate null).
-  }
   if (parent) {
     return acrossOxygen(ctx, parent); // `etoximetano` (R-5b2).
   }
   for (const rule of FORM_RULES) {
     const draft = rule(ctx);
     if (draft) {
-      return draft === BEYOND ? null : draft; // `ciclohexan-1-ona` (R-5c1's deliberate null).
+      return draft;
     }
   }
   return null;
@@ -3096,13 +3620,15 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
 
 /**
  * Tells whether an `otherName` lies outside every rule (the diagnosis is
- * null; file header «Alcohols»): a principal group other than the OH, which
- * the alcohol messages would misname (a later family's, until its phase adds
- * its messages: an acid, which `1-hidroxipropanal` builds; R-5c1: the
- * aldehydes and ketones run the rules unless carbonylBeyondRules() says
- * otherwise), or, for a molecule without a
- * principal group, an engine's chain parent in a molecule with a ring (never:
- * such a ring is always the parent, design.md §13.5).
+ * null; file header «Alcohols»): a principal group other than the OH or an
+ * aldehyde's or a ketone's C=O, which the messages would misname (a later
+ * family's, until its phase adds its messages: an acid, which
+ * `1-hidroxipropanal` builds), a student's suffix other than `ol` beside the
+ * engine's OH (never: a C=O suffix makes the C=O principal), or, for a
+ * molecule without a principal group, an engine's chain parent in a molecule
+ * with a ring (never: such a ring is always the parent, design.md §13.5).
+ * The aldehydes and ketones (R-5c3b1) run the rules, their own checks first
+ * (carbonylChecks()).
  *
  * @param {{spec: object}} name - The student's NameSpec.
  * @param {object} structure - The engine's name structure.
@@ -3110,38 +3636,13 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
  */
 function outsideRules(name, structure) {
   if (structure.suffix && CARBONYLS.includes(structure.suffix.kind)) {
-    return carbonylBeyondRules(name.spec, structure); // R-5c1: file header «Aldehydes and ketones».
+    return false; // R-5c3b1: file header «Aldehydes and ketones».
   }
   if (structure.suffix) {
     return structure.suffix.kind !== ALCOHOL || Boolean(name.spec.suffix && name.spec.suffix.kind !== ALCOHOL);
   }
   return structure.parentKind === 'chain' && specRings(name.spec) > 0;
 } // End of function outsideRules()
-
-/**
- * Tells whether an aldehyde's or ketone's `otherName` needs a message of
- * phase R-5c3b before any rule (file header «Aldehydes and ketones»; the
- * deliberate nulls): the student's suffix is not the engine's — another
- * group or none (the principal C=O written `oxo` or `formil`, `2-oxopropano`;
- * the ketone as the suffix beside an aldehyde, `5-oxopentan-2-ona`; an
- * alcohol's `ol` beside a ketone, `4-oxopentan-2-ol`), another number of
- * groups (`5-oxopentanal` for `pentanodial`), or with its carbon on the
- * other side of the parent (`butano-1-carbaldehído` for `pentanal`); or the
- * student's parent is a chain and the engine's the ring, or the reverse
- * (`(2-oxoetil)ciclohexano`, the ring or chain the C=O groups choose).
- *
- * @param {object} spec - The student's NameSpec.
- * @param {object} structure - The engine's name structure, its suffix an aldehyde's or a ketone's.
- * @returns {boolean} True when the diagnosis is null.
- */
-function carbonylBeyondRules(spec, structure) {
-  const mine = spec.suffix;
-  const engine = structure.suffix;
-  if (!mine || mine.kind !== engine.kind || mine.slots.length !== engine.locants.length) {
-    return true;
-  }
-  return Boolean(mine.outside) !== Boolean(engine.outside) || isRing(spec.parent.kind) !== (structure.parentKind === 'ring');
-} // End of function carbonylBeyondRules()
 
 /**
  * The rule number of a draft: its own (ETHER_SIDE takes the number of the

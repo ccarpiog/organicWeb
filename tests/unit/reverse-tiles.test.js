@@ -276,14 +276,15 @@ test('src/reverse never retypes a tile word', async () => {
  * the lexicon: the molecule model and its caps to build (R-1b), the naming
  * entry point to judge, the carbon valence and the structural key to search
  * (R-1c), and for the diagnosis (R-3) the engine's own comparators, chain
- * key, locant text, prefix styles and naming, and the branch key. Never
+ * key, locant text, prefix styles and naming, and the branch key, and the
+ * principal groups' seniority (R-5c3b1, CARBONYL_SENIORITY). Never
  * render.js or the engine's grouping (design.md §15.4): the assembler works
  * from the tree alone.
  */
 const ENGINE_IMPORTS = Object.freeze({
   'build.js': ['../model/molecule.js', '../model/validate.js'],
   'diagnose.js': ['../naming/index.js', '../naming/numbering.js', '../naming/parent.js', '../naming/structure.js',
-    '../naming/substituent.js', '../model/graph.js'],
+    '../naming/substituent.js', '../naming/seniority.js', '../model/graph.js'],
   'index.js': ['../naming/index.js'],
   'search.js': ['../model/molecule.js', '../model/graph.js'],
 });

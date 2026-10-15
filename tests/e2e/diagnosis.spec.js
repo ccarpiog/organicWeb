@@ -18,7 +18,11 @@
  * at «Numera la cadena», whose rule puts the OH groups first. Ethers (phase
  * I-51b2): `etoximetano`, the parent on the other side of the oxygen — the
  * message names the oxygen, the student's chain striped apart from the
- * parent, «Ver el paso» at «Reconoce el éter».
+ * parent, «Ver el paso» at «Reconoce el éter». Aldehydes and ketones (phase
+ * I-51c3b1): `1-metilpropanal`, a branch on the –CHO's carbon makes it a
+ * ketone's — the message between the two sentences, the student's chain
+ * striped beside the longer parent, «Ver el paso» at «Reconoce el grupo
+ * funcional», which says the molecule is a ketone.
  */
 
 import { test, expect } from '@playwright/test';
@@ -109,6 +113,9 @@ const ALCOHOL_NUMBERING = ['but', 'ano', '3', 'ol'];
 
 /** The tiles of «etoximetano» (the parent is on the other side of the oxygen: metoxietano). */
 const ETHER_SIDE = ['et', 'il', 'oxi', 'met', 'ano'];
+
+/** The tiles of «1-metilpropanal» (a branch on the –CHO's carbon makes it a ketone's: butan-2-ona). */
+const KETONE = ['1', 'met', 'il', 'prop', 'ano', 'al'];
 
 test('a longer chain: the message between the two sentences, the student\'s chain beside the parent, «Ver el paso» at «Busca la cadena»; Deshacer clears it all', async ({ page }) => {
   const errors = await openApp(page);
@@ -302,6 +309,47 @@ test('an ether (I-51b2): the parent on the other side of the oxygen, the student
   await expect(stepper).toContainText('Gana la más larga, y el otro lado es el sustituyente «metoxi».');
   expect(errors).toEqual([]);
 }); // End of test 'an ether (I-51b2)…'
+
+test('a ketone (I-51c3b1): `al` on a carbon a branch makes a ketone\'s, the student\'s chain beside the parent, «Ver el paso» at «Reconoce el grupo funcional»', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, ...KETONE);
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'KETONE_NOT_ALDEHYDE');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: 1-metilpropanal');
+  // The three sentences, in order: the verdict, the diagnosis, the hint.
+  const texts = await verdict.locator('.verdict-message, .verdict-style, .verdict-diagnosis, .verdict-hint, .verdict-note')
+    .allTextContents();
+  expect(texts).toEqual([
+    'Esta es la molécula que describe tu nombre, pero se llama «butan-2-ona».',
+    'El grupo –CHO de un aldehído va en un extremo de la cadena: su carbono solo puede unirse a un carbono más. Aquí la rama '
+      + '«metil» está en el carbono 1, que así queda unido a dos carbonos: su C=O es el de una cetona, no el de un aldehído. Se '
+      + 'escribe «butan-2-ona».',
+    'Pulsa «Ver paso a paso» para ver por qué.',
+  ]);
+  await expect(page.locator('#result-name')).toHaveText('butan-2-ona');
+  // The legend names both marks; the student's three carbons are striped beside the parent that holds them and the branch.
+  await expect(verdict.getByRole('list', { name: 'Qué se ve en el dibujo' }).getByRole('listitem'))
+    .toHaveText(['Cadena principal', 'Tu cadena']);
+  const student = await marked(page, 'student');
+  const parent = await marked(page, 'parent');
+  expect(student.atoms).toHaveLength(3);
+  expect(student.bonds).toHaveLength(2);
+  expect(parent.atoms).toEqual(expect.arrayContaining(student.atoms));
+  expect(parent.atoms.some((id) => !student.atoms.includes(id))).toBe(true);
+
+  // «Ver el paso»: the stepper opens at «Reconoce el grupo funcional», the focus on its title; it says the molecule is a ketone.
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'group');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 2 de 5');
+  await expect(stepper.locator('.step-title')).toHaveText('Reconoce el grupo funcional');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  await expect(stepper).toContainText('la molécula es una cetona');
+  expect(await marked(page, 'student')).toEqual(student);
+  expect(errors).toEqual([]);
+}); // End of test 'a ketone (I-51c3b1)…'
 
 test('a ring (I-50d): the ring is the parent beside the student\'s chain, «Ver el paso» at «Reconoce el benceno»; a ring numbered otherwise', async ({ page }) => {
   const errors = await openApp(page);

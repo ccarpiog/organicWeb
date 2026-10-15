@@ -137,8 +137,20 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   prefixes the engine writes on them (`4-metilftalaldehído`,
   `2-(4-metilfenil)acetaldehído`), any other prefix as `otherName` with the
   substituted-template diagnosis (`1-cloroacetona`), and the Ayuda has its
-  aldehyde, ketone and acyl line. Next is R-5c3b (phase I-51c3b): the
-  aldehyde/ketone diagnosis messages filling the deliberate nulls.
+  aldehyde, ketone and acyl line. R-5c3b1 (phase I-51c3b1) is done:
+  `diagnose.js` names the principal C=O group's own mistakes (header
+  «Aldehydes and ketones», checked right after HYDROXY_PREFIX: a junior group
+  as the suffix, `5-oxopentan-2-ona`, `4-oxopentan-2-ol`; `al` on a carbon a
+  branch makes a ketone's, `1-metilpropanal`; the –CHO's carbon on the other
+  side of the parent, `butano-1-carbaldehído`, `ciclohexilformaldehído`; the
+  principal C=O written `oxo`, `formil` or an acyl prefix, `2-oxopropano`,
+  `acetilbenceno`; the ring or chain the C=O groups choose; another chain
+  with more C=O groups), and P0, N0 and the suffix's needless locants speak
+  of «grupos –CHO» / «grupos C=O», each with its «Ver el paso» step. Next is
+  R-5c3b2 (phase I-51c3b2): the acyl-word and `acetaldehído`-phenyl messages
+  (`etanoil` for `acetil`, `(1-oxoetil)`, `(ciclohex-2-enocarbonil)`,
+  `2-fenilacetaldehído`, `2-(5-metilfenil)acetaldehído`), still deliberate
+  nulls.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.
