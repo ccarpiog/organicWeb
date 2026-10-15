@@ -215,6 +215,30 @@
  * numbering is not the engine's (`5-(1-cloroetan-2-il)…`, no style offers
  * it), as in «No rule covers» above.
  *
+ * **Alcohols** (design.md §15.8 R-5a; phase R-5a2). The rules above keep
+ * working when the molecule has OH groups, wherever they say something true
+ * of an alcohol, and the diagnosis is deliberately null where an
+ * alcohol-specific message is needed (phase R-5a3 adds those). `hidroxi` is
+ * a one-atom group like a halogen (never lengthens a chain, `X:O` in every
+ * style, «sustituyentes»). The engine's trace has P0 (most principal
+ * groups) before P1 and N0 (lowest locants for the principal groups) before
+ * N1: a chain or numbering dropped there gets null (`butan-3-ol`,
+ * `ciclohexan-2-ol`), while N1–N4 after an N0 tie keep their rule
+ * (`pent-4-en-3-ol` → NUMBERING at N1, `6-metilciclohexan-1-ol` →
+ * RING_NUMBERING at N3). Null too, before any rule: an OH the student wrote
+ * as `hidroxi` on the parent, or as the suffix of another parent, so that
+ * the student's suffix has not as many groups as the engine's
+ * (`2-hidroxipropano`, `2-(hidroximetil)propan-1-ol`); a ring that is the
+ * parent of an alcohol written on a chain, or the reverse (RING_IS_PARENT
+ * says «un anillo manda siempre», which the OH groups decide otherwise);
+ * and old-style locants of the suffix (`2-propanol`: OLD_STYLE would say
+ * «delante de «eno» o «ino»»; the verdict's note already gives
+ * `propan-2-ol`). A suffix's needless locants (`etan-1-ol`) are no rule's
+ * (null); its missing ones follow the prefixes' omission rule, as the
+ * engine omits both together (`bencenol` → `fenol`: not MISSING_LOCANTS),
+ * and its locants out of order are LOCANT_ORDER (`butano-4,1-diol`). The
+ * closing-bond locant `1(n)` sorts between 1 and 2 (`1,1(3),2`).
+ *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS, and DIAGNOSES gives
  * example data for each code so the wording can be listed (R-7). Later
@@ -233,8 +257,8 @@ import {
   chainOmitsPrefixLocants, ringOmitsLocants, BENZENE_NAME, RING_PREFIX, POSITIONAL_LETTERS, TRADITIONAL_NAMES,
 } from '../naming/lexicon.es.js';
 import { assemble, itemText } from './assemble.js';
-import { ownPrefixAtoms, specRings } from './build.js';
-import { tileById, tileId, MAX_MULT } from './tiles.js';
+import { ownPrefixAtoms, specRings, isRing } from './build.js';
+import { tileById, tileId, MAX_MULT, isAtomGroup, HYDROXY_ELEMENT } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
 export const MAX_READINGS = 16;
@@ -612,20 +636,23 @@ function orderReason(first, second) {
 }
 
 /**
- * Tells whether a SubstituentSpec is a halogen (R-5a1: `cloro`…).
+ * Tells whether a SubstituentSpec is a one-atom group: a halogen (R-5a1:
+ * `cloro`…) or `hidroxi` (R-5a2).
  *
  * @param {object} sub - A SubstituentSpec (interpret.js).
- * @returns {boolean} True for a halogen.
+ * @returns {boolean} True for a one-atom group.
  */
 function isHalogen(sub) {
-  return sub.kind === 'halogen';
+  return isAtomGroup(sub.kind);
 }
 
 /**
- * Tells whether some prefixes hold a halogen, at any depth (R-5a1).
+ * Tells whether some prefixes hold a one-atom group (a halogen, R-5a1;
+ * `hidroxi`, R-5a2), at any depth: the messages then speak of
+ * «sustituyentes», not «ramas».
  *
  * @param {object[]} prefixes - PrefixSpecs (interpret.js).
- * @returns {boolean} True when a halogen is among them or inside a compound branch.
+ * @returns {boolean} True when one is among them or inside a compound branch.
  */
 function hasHalogen(prefixes) {
   return prefixes.some((prefix) => isHalogen(prefix.substituent) || hasHalogen(prefix.substituent.prefixes));
@@ -669,6 +696,18 @@ function withTiles(tree, changes) {
 }
 
 /**
+ * The value a locant tile sorts by: its number, or for the closing-bond
+ * locant `1(n)` (R-5a2) a value between 1 and 2, where the engine cites it
+ * (structure.js compoundLocant(): 1 < 1(n) < 2).
+ *
+ * @param {object} tile - A number or `1(n)` tile.
+ * @returns {number} The sort value.
+ */
+function sortValue(tile) {
+  return tile.kind === 'closing' ? 1.5 : tile.value;
+}
+
+/**
  * The changes that put a locant list in ascending order (its own number
  * tiles, reordered over the same positions).
  *
@@ -677,7 +716,7 @@ function withTiles(tree, changes) {
  * @returns {Map<number, object>} New tile by position.
  */
 function sortedLocants(tiles, positions) {
-  const sorted = positions.map((p) => tiles[p]).sort((a, b) => a.value - b.value);
+  const sorted = positions.map((p) => tiles[p]).sort((a, b) => sortValue(a) - sortValue(b));
   return new Map(positions.map((p, k) => [p, sorted[k]]));
 }
 
@@ -689,7 +728,7 @@ function sortedLocants(tiles, positions) {
  * @returns {boolean} True when ascending.
  */
 function ascending(tiles, positions) {
-  return positions.every((p, k) => k === 0 || tiles[positions[k - 1]].value <= tiles[p].value);
+  return positions.every((p, k) => k === 0 || sortValue(tiles[positions[k - 1]]) <= sortValue(tiles[p]));
 }
 
 /**
@@ -1210,7 +1249,9 @@ function chainRules(ctx) {
       direction = { step, ownWords };
     }
   } // End of the loop over the trace steps
-  return direction && direction.ownWords ? directionDraft(ctx, 'NUMBERING', direction.step, isStudent) : null;
+  // A direction dropped at N0 (the alcohol's OH groups, R-5a2) has no message yet (R-5a3): null.
+  return direction && direction.ownWords && DIAGNOSIS_PHRASES.numberingReasons[direction.step.rule]
+    ? directionDraft(ctx, 'NUMBERING', direction.step, isStudent) : null;
 } // End of function chainRules()
 
 /**
@@ -1457,7 +1498,7 @@ function ungrouped(ctx) {
       code: 'UNGROUPED',
       data: {
         compound,
-        halogen: group[0].substituent.type === 'halogen', // «Los sustituyentes iguales…» (R-5a1).
+        halogen: isAtomGroup(group[0].substituent.type), // «Los sustituyentes iguales…» (R-5a1, R-5a2).
         right: list.outer ? quoted(grouped, list, item, items) : itemText(grouped, item),
         student: list.outer ? quoted(tree, list, item) : group.map((g) => itemText(tree, g)).join(located ? '-' : ''),
       },
@@ -1501,8 +1542,8 @@ function multiplierKind(ctx) {
 
 /**
  * Rule 8: a locant list not in ascending order — a prefix's (quoted alone),
- * a chain's multiple bonds or the old-style locants (quoted with the whole
- * name, or with the parent-level prefix of a branch).
+ * a chain's multiple bonds, the suffix's (R-5a2) or the old-style locants
+ * (quoted with the whole name, or with the parent-level prefix of a branch).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.
@@ -1525,6 +1566,7 @@ function locantOrder(ctx) {
   const others = [
     { positions: tree.parent.legacy, top: null },
     ...ctx.chains.flatMap(({ chain, top }) => chain.segments.map((segment) => ({ positions: segment.locants, top }))),
+    ...(tree.parent.suffix ? [{ positions: tree.parent.suffix.locants, top: null }] : []), // `butano-4,1-diol` (R-5a2)
   ];
   for (const { positions, top } of others) {
     if (!ascending(tree.tiles, positions)) {
@@ -1703,8 +1745,10 @@ function shortForm(tree, chain, owner = null) {
  * Rule 9, missing locants: a left-out locant with more than one possible
  * value (search.js domains) where the engine's name writes one — the
  * parent's multiple bonds and prefixes unless the omission rules leave
- * them out (parentOmissions(), chain or ring), and always inside a branch
- * (and on `xileno`, whose methyls are always located).
+ * them out (parentOmissions(), chain or ring; the suffix's, R-5a2, with the
+ * prefixes': render.js omitsPrefixLocants() omits both together), and
+ * always inside a branch (and on `xileno`, whose methyls are always
+ * located).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.
@@ -1712,7 +1756,7 @@ function shortForm(tree, chain, owner = null) {
 function missingLocants(ctx) {
   const { spec, naming } = ctx;
   const parentBonds = new Set([...spec.parent.double, ...spec.parent.triple]);
-  const parentPrefixes = new Set(spec.prefixes.flatMap((prefix) => prefix.slots));
+  const parentPrefixes = new Set([...spec.prefixes.flatMap((prefix) => prefix.slots), ...(spec.suffix ? spec.suffix.slots : [])]);
   const omitted = parentOmissions(naming.structure);
   const missing = spec.leftOut.find((slot) => {
     if (slot.domain[1] <= slot.domain[0]) {
@@ -1875,7 +1919,7 @@ function chainShape(length, locant, order, nested) {
  */
 function specShape(sub) {
   if (isHalogen(sub)) {
-    return `X:${sub.element}`;
+    return `X:${sub.element}`; // A halogen, or the O of `hidroxi` (R-5a2).
   }
   if (sub.kind === 'retained') {
     return `R:${sub.retained}`;
@@ -1897,6 +1941,9 @@ function structureShape(structure) {
   }
   if (structure.halogen) {
     return `X:${structure.halogen}`; // A halogen prefix (R-5a1), as specShape() writes it.
+  }
+  if (structure.hydroxy) {
+    return `X:${HYDROXY_ELEMENT}`; // `hidroxi` (R-5a2).
   }
   if (structure.retained) {
     return `R:${structure.retained}`;
@@ -1954,6 +2001,32 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
 } // End of function namingInStudentStyle()
 
 /**
+ * Tells whether an `otherName` needs a message no rule of this phase has
+ * (file header, «Alcohols»; phase R-5a3 adds them): the student's suffix
+ * has not as many OH groups as the engine's (an OH written as `hidroxi` on
+ * the parent, or the suffix of another parent); the engine's parent is a
+ * ring and the student's a chain, or the reverse, in a molecule with OH
+ * groups; the old-style locants belong to the suffix (`2-propanol`). For a
+ * hydrocarbon, only an engine's chain parent in a molecule with a ring
+ * (never: a ring in it is always the parent, design.md §13.5).
+ *
+ * @param {{tree: object, spec: object}} name - The student's tree and NameSpec.
+ * @param {object} structure - The engine's name structure.
+ * @returns {boolean} True when the diagnosis is null.
+ */
+function alcoholBeyondRules(name, structure) {
+  const { spec, tree } = name;
+  const mine = spec.suffix ? spec.suffix.slots.length : 0;
+  const engine = structure.suffix ? structure.suffix.locants.length : 0;
+  if (mine === 0 && engine === 0) {
+    return structure.parentKind === 'chain' && specRings(spec) > 0;
+  }
+  const ringParent = isRing(spec.parent.kind);
+  return mine !== engine || structure.suffix.kind !== spec.suffix.kind
+    || ringParent !== (structure.parentKind === 'ring') || Boolean(tree.parent.legacySuffix);
+} // End of function alcoholBeyondRules()
+
+/**
  * Names the main mistake of an `otherName` verdict (design.md §15.3, §15.8
  * R-3): the first rule of the list (file header) that applies, compared with
  * the engine's naming in the student's prefix style, on the most charitable
@@ -1974,8 +2047,8 @@ export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
     return null;
   }
   const { parentKind } = verdict.naming.structure;
-  if (!['chain', 'ring'].includes(parentKind) || (parentKind === 'chain' && specRings(name.spec) > 0)) {
-    return null; // Never for a hydrocarbon: a ring in the molecule is always the parent (design.md §13.5).
+  if (!['chain', 'ring'].includes(parentKind) || alcoholBeyondRules(name, verdict.naming.structure)) {
+    return null;
   }
   const adj = adjacency(molecule);
   const drawn = branchOccurrences(name, verdict, molecule, adj);

@@ -7,7 +7,8 @@
  * Every Spanish text comes from the naming lexicon (lexicon.es.js: stem(),
  * multiplier(), compoundMultiplier(), ENDINGS, FREE_VALENCE_SUFFIXES,
  * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
- * TRADITIONAL_NAMES, POSITIONAL_LETTERS), never retyped here;
+ * TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES,
+ * GROUP_SUFFIXES, PHENOL_STEM), never retyped here;
  * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
  *
@@ -35,20 +36,32 @@
  *   one, 2 | 3 | 4, the POSITIONAL_LETTERS keys), 'halogen' (the halogen
  *   prefixes `fluoro`, `cloro`, `bromo`, `yodo`, R-5a1: one atom bonded to
  *   the carbon its locant says, never a chain of its own; value the element
- *   symbol, the HALOGEN_PREFIXES keys);
+ *   symbol, the HALOGEN_PREFIXES keys), 'hydroxy' (the prefix `hidroxi`,
+ *   R-5a2: the OH of an alcohol that is not the principal group, one oxygen
+ *   bonded to its carbon like a halogen; value 'alcohol', the
+ *   GROUP_PREFIXES key; HYDROXY_ELEMENT is its atom), 'suffix' (the
+ *   principal-group suffix `ol`, R-5a2: after the parent's ending, with its
+ *   locants and multiplier, `propan-2-ol`, `butano-1,4-diol`; value
+ *   'alcohol', the GROUP_SUFFIXES key), and in the «Anillos» row `fenol`
+ *   (R-5a2: kind 'benzene', value 'phenol' — the benzene parent with its
+ *   OH at carbon 1, `4-metilfenol`) and 'closing' (`1(n)`, R-5a2: the
+ *   compound locant of a ring's closing bond, from its last carbon n to
+ *   carbon 1, written `1(6)` on a ring of six — `ciclohex-1(6)-eno-1,2,4-triol`,
+ *   `ciclopropa-1,1(3),2-trieno`; value null);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
- *   the letters o, m, p from R-4c), 'groups' («Grupos», R-5a1: the halogens;
- *   the alcohol tiles follow in R-5a2), 'traditional' («Nombres
- *   tradicionales», R-4c: the templates; later phases add acetona, ácido
- *   acético…);
+ *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2), 'groups'
+ *   («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`),
+ *   'traditional' («Nombres tradicionales», R-4c: the templates; later
+ *   phases add the retained phenols, acetona, ácido acético…);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
  *   multipliers from hepta / heptakis, roots from undec).
  */
 
 import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
-  RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, groupName,
+  RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM,
+  groupName,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -95,6 +108,48 @@ export const POSITIONAL_IDS = Object.freeze({ 2: 'positional-ortho', 3: 'positio
 export const HALOGEN_IDS = Object.freeze(Object.fromEntries(
   Object.keys(HALOGEN_PREFIXES).map((element) => [element, `halogen-${element}`]),
 ));
+
+/** Id of the `hidroxi` tile (design.md §15.8 R-5a; phase R-5a2: the OH as a prefix). */
+export const HYDROXY_ID = 'group-hydroxy';
+
+/** The element of the atom a `hidroxi` prefix adds (its hydrogen is implicit, model/molecule.js). */
+export const HYDROXY_ELEMENT = 'O';
+
+/** Id of the `ol` tile (design.md §15.8 R-5a; phase R-5a2: the alcohol suffix). */
+export const OL_ID = 'suffix-alcohol';
+
+/** Id of the `fenol` tile (design.md §15.8 R-5a; phase R-5a2: the benzene parent with its OH at carbon 1). */
+export const PHENOL_ID = 'ring-phenol';
+
+/** Id of the `1(n)` tile (design.md §15.4 Slot `closing`, §15.5.2 item 6; phase R-5a2: a ring's closing bond). */
+export const CLOSING_ID = 'ring-closing';
+
+/**
+ * Tells whether a tile kind, a parse.js node type or an interpret.js
+ * SubstituentSpec kind is a one-atom group prefix: a halogen (R-5a1) or
+ * `hidroxi` (R-5a2) — one heteroatom single-bonded to its carbon, never a
+ * chain of its own, never enclosed by itself, no prefixes, no slots of its
+ * own.
+ *
+ * @param {string} kind - A tile kind, node type or spec kind.
+ * @returns {boolean} True for 'halogen' and 'hydroxy'.
+ */
+export function isAtomGroup(kind) {
+  return kind === 'halogen' || kind === 'hydroxy';
+}
+
+/**
+ * The text of the `1(n)` tile, or of the compound locant it writes on a
+ * ring of `n` carbons (structure.js locantText() of compoundLocant(1, n):
+ * `1(6)`).
+ *
+ * @param {number|string} n - The ring's carbons, or the letter `n` for the tile itself.
+ * @returns {string} `1(6)`, or `1(n)`.
+ */
+export function closingText(n) {
+  const [open, close] = ENCLOSING_MARKS[0];
+  return `1${open}${n}${close}`;
+}
 
 /**
  * The defining group of a retained benzene template: its chain of carbons
@@ -169,9 +224,9 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
 /**
  * Builds the whole catalogue in dialog order: numbers, multipliers (simple,
  * then compound), roots, endings, branch words and controls, rings (`ciclo`,
- * `benceno`, `fenil`, the letters `o`, `m`, `p`), groups (the halogens
- * `fluoro`, `cloro`, `bromo`, `yodo`), traditional names (`tolueno`,
- * `estireno`, `xileno`, `mesitileno`).
+ * `benceno`, `fenol`, `fenil`, the letters `o`, `m`, `p`, `1(n)`), groups
+ * (the halogens `fluoro`, `cloro`, `bromo`, `yodo`, then `hidroxi` and `ol`),
+ * traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`).
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -204,14 +259,18 @@ function buildCatalogue() {
   tiles.push(makeTile(END_ID, 'end', null, 'branches', close));
   tiles.push(makeTile(RING_ID, 'ring', 'cyclo', 'rings', RING_PREFIX));
   tiles.push(makeTile(BENZENE_ID, 'benzene', 'benzene', 'rings', BENZENE_NAME));
+  tiles.push(makeTile(PHENOL_ID, 'benzene', 'phenol', 'rings', `${PHENOL_STEM}${GROUP_SUFFIXES.alcohol}`)); // `fenol` (R-5a2)
   const phenyl = RETAINED_PREFIXES.phenyl;
   tiles.push(makeTile(PHENYL_ID, 'retained', 'phenyl', 'rings', `${phenyl.italic}${phenyl.text}`, false, { italic: phenyl.italic }));
   for (const [locant, id] of Object.entries(POSITIONAL_IDS)) {
     tiles.push(makeTile(id, 'positional', Number(locant), 'rings', POSITIONAL_LETTERS[locant]));
   }
+  tiles.push(makeTile(CLOSING_ID, 'closing', null, 'rings', closingText('n'))); // `1(n)` (R-5a2)
   for (const [element, id] of Object.entries(HALOGEN_IDS)) {
     tiles.push(makeTile(id, 'halogen', element, 'groups', HALOGEN_PREFIXES[element]));
   }
+  tiles.push(makeTile(HYDROXY_ID, 'hydroxy', 'alcohol', 'groups', GROUP_PREFIXES.alcohol)); // `hidroxi` (R-5a2)
+  tiles.push(makeTile(OL_ID, 'suffix', 'alcohol', 'groups', GROUP_SUFFIXES.alcohol)); // `ol` (R-5a2)
   for (const [value, template] of Object.entries(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(template)));
   }

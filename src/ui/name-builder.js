@@ -18,12 +18,14 @@
  *   the opening mark of an unfinished compound branch shows faintly;
  * - the tile rows («Números», «¿Cuántos?», «Raíces (cuántos carbonos)»,
  *   «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a,
- *   `benceno` and `fenil`, phase R-4b, and the letters `o`, `m`, `p`, phase
- *   R-4c, each with its word (orto, meta, para) beside it —, «Grupos» — the
- *   halogens `fluoro`, `cloro`, `bromo`, `yodo`, phase R-5a1 —, «Nombres
- *   tradicionales» — `tolueno`, `estireno`, `xileno`, `mesitileno`, phase
- *   R-4c; drafts pending teacher review), each with a «más» button for the
- *   tiles the catalogue keeps behind it;
+ *   `benceno` and `fenil`, phase R-4b, the letters `o`, `m`, `p`, phase
+ *   R-4c, each with its word (orto, meta, para) beside it, `fenol` and the
+ *   closing-bond locant `1(n)`, phase R-5a2, the latter with a tooltip —,
+ *   «Grupos» — the halogens `fluoro`, `cloro`, `bromo`, `yodo`, phase R-5a1,
+ *   `hidroxi` and the suffix `ol`, phase R-5a2 —, «Nombres tradicionales» —
+ *   `tolueno`, `estireno`, `xileno`, `mesitileno`, phase R-4c; drafts pending
+ *   teacher review), each with a «más» button for the tiles the catalogue
+ *   keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
  *   «Borrar todo», «Dibujar» and «Cerrar» (also Escape and a click on the
  *   backdrop); the focus goes into the dialog on opening and back to the
@@ -43,7 +45,7 @@
  * The DOM is built with createElement/textContent only (never innerHTML).
  */
 
-import { TILES, START_ID, END_ID, POSITIONAL_IDS } from '../reverse/tiles.js';
+import { TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
 
@@ -81,6 +83,15 @@ export const POSITIONAL_WORDS = Object.freeze({
 export function positionalLabel(tile) {
   return `${tile.text} (${POSITIONAL_WORDS[tile.id]}, 1,${tile.value})`;
 }
+
+/**
+ * Tooltips of tiles whose text needs a word of explanation (R-5a2: the
+ * closing-bond locant `1(n)`; a draft pending teacher review). The tile's
+ * text stays its accessible name.
+ */
+export const TILE_HINTS = Object.freeze({
+  [CLOSING_ID]: 'Número del enlace que cierra un anillo, del último carbono al 1: se escribe 1(6) en un anillo de 6 carbonos.',
+});
 
 /** Text of the empty name line. */
 export const PLACEHOLDER = 'Pulsa las fichas de abajo para formar un nombre.';
@@ -127,7 +138,8 @@ function make(doc, tag, className, text) {
 /**
  * Builds one tile button. The compound-branch controls show their label
  * beside their mark (the mark hidden from screen readers); an orto/meta/para
- * letter shows its word, small, beside the letter (R-4c).
+ * letter shows its word, small, beside the letter (R-4c); a tile of
+ * TILE_HINTS gets its tooltip (R-5a2: `1(n)`).
  *
  * @param {Document} doc - The document.
  * @param {{id: string, kind: string, text: string, more: boolean}} tile - A catalogue tile.
@@ -155,6 +167,9 @@ function makeTileButton(doc, tile) {
     button.title = positionalLabel(tile);
   } else {
     button.textContent = tile.text;
+  }
+  if (TILE_HINTS[tile.id]) {
+    button.title = TILE_HINTS[tile.id];
   }
   if (tile.more) {
     button.classList.add('nb-tile--extra');

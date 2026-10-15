@@ -18,11 +18,12 @@ import { assemble } from '../../src/reverse/assemble.js';
 import { tokenize, TOKENIZE_BUDGET, TOKENIZE_MAX_LENGTH } from '../../src/reverse/tokenize.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, HALOGEN_PREFIXES,
+  GROUP_PREFIXES, GROUP_SUFFIXES,
 } from '../../src/naming/lexicon.es.js';
 import {
   seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName, isBenzeneName, isTemplateName,
 } from './reverse-words.js';
-import { TILES } from '../../src/reverse/tiles.js';
+import { TILES, tileById, PHENOL_ID, CLOSING_ID } from '../../src/reverse/tiles.js';
 
 /** Fixture rows of open-chain hydrocarbons (phase R-1a scope). */
 const EXPECTED_ROWS = 176;
@@ -244,9 +245,10 @@ test('tokenize prefers whole words and automatic marks for simple branches', () 
 }); // End of test 'tokenize prefers whole words and automatic marks for simple branches'
 
 test('tokenize returns null outside the grammar, for texts that only read with errors, and past its budget', () => {
-  // `clorometano` reads since R-5a1; `cloro` alone and `(2-cloro)etano` only read with errors.
-  for (const text of ['', 'ácido etanoico', 'cloro', '(2-cloro)etano', 'propan-2-ol', 'p-cresol', 'hex ano', 'HEXANO', 'ciclo',
-    'cicloetano']) {
+  // `clorometano` reads since R-5a1, `propan-2-ol` since R-5a2; `cloro` alone and `(2-cloro)etano` only read with errors, and so
+  // do `ol` alone, `2-ol`, `propil-2-ol` and a closing locant on a chain (`but-1(4)-eno`).
+  for (const text of ['', 'ácido etanoico', 'cloro', '(2-cloro)etano', 'p-cresol', 'hex ano', 'HEXANO', 'ciclo', 'cicloetano',
+    'ol', '2-ol', 'propil-2-ol', 'but-1(4)-eno', 'fenol-2-ol', 'propan-2-diol', 'butano-1,2-bisol']) {
     assert.equal(tokenize(text), null, text);
   }
   for (const text of ['2,3-trimetilpentano', '1,3-hexenino', 'hexano-2-metil', '2-metil', '5-(2-metilpropil', 'propil']) {
@@ -299,7 +301,11 @@ function mulberry32(seed) {
  * templates — `xileno` with two locants or none — and some names an
  * orto/meta/para form with exactly two occupied positions: a letter, `di` /
  * `bis` and one branch on `benceno`, a letter and one branch on `tolueno` or
- * `estireno`, or a letter on `xileno`.
+ * `estireno`, or a letter on `xileno`. With `alcohols` (R-5a2), some
+ * one-atom prefixes are `hidroxi`, some parents take the suffix `ol` (with
+ * locants, a multiplier, or neither — always located after old-style
+ * segment locants), some benzene parents are `fenol`, and some located
+ * segments of a ring cite the closing-bond locant `1(n)`.
  *
  * @param {() => number} random - The random source.
  * @param {boolean} [rings] - Draw ring stems too (default false: the R-1a sequences, draw for draw).
@@ -307,9 +313,11 @@ function mulberry32(seed) {
  * @param {boolean} [templates] - Draw the templates and the letters too (default false: the earlier sequences, draw for draw).
  * @param {boolean} [halogens] - Draw halogen prefixes too, at name level and inside compound branches (R-5a1; default
  *   false: the earlier sequences, draw for draw).
+ * @param {boolean} [alcohols] - Draw `hidroxi`, the suffix `ol`, `fenol` and `1(n)` too (R-5a2; default false: the earlier
+ *   sequences, draw for draw).
  * @returns {() => string[]} A function returning one sequence of tile words.
  */
-function grammarGenerator(random, rings = false, benzene = false, templates = false, halogens = false) {
+function grammarGenerator(random, rings = false, benzene = false, templates = false, halogens = false, alcohols = false) {
   const int = (lo, hi) => lo + Math.floor(random() * (hi - lo + 1));
   const pick = (list) => list[int(0, list.length - 1)];
   const nums = (k) => Array.from({ length: k }, () => String(int(1, 30)));
@@ -321,14 +329,33 @@ function grammarGenerator(random, rings = false, benzene = false, templates = fa
    */
   const stemWords = () => (rings && random() < 0.4 ? [RING_PREFIX, stem(int(3, 30))] : [stem(int(1, 30))]);
   /**
-   * One unsaturation segment, with or without its locants.
+   * One unsaturation segment, with or without its locants; on a ring, with
+   * `alcohols`, sometimes with the closing-bond locant `1(n)` first (R-5a2).
    *
    * @param {boolean} located - Whether to cite its locants.
+   * @param {boolean} [ring] - The segment's stem is a ring.
    * @returns {string[]} The words.
    */
-  const segment = (located) => {
+  const segment = (located, ring = false) => {
     const k = int(1, 3);
-    return [...(located ? nums(k) : []), ...(k > 1 ? [multiplier(k)] : []), pick([ENDINGS.double, ENDINGS.triple])];
+    const locants = located ? nums(k) : [];
+    if (alcohols && ring && located && random() < 0.4) {
+      locants[0] = tileById(CLOSING_ID).text;
+    }
+    return [...locants, ...(k > 1 ? [multiplier(k)] : []), pick([ENDINGS.double, ENDINGS.triple])];
+  };
+  /**
+   * With `alcohols` (R-5a2), the alcohol suffix after a parent's ending, or nothing.
+   *
+   * @param {boolean} [located] - Always cite its locants (after old-style segment locants).
+   * @returns {string[]} The words.
+   */
+  const suffix = (located = false) => {
+    if (!alcohols || random() < 0.4) {
+      return [];
+    }
+    const k = int(1, 4);
+    return [...(located || random() < 0.8 ? nums(k) : []), ...(k > 1 ? [multiplier(k)] : []), GROUP_SUFFIXES.alcohol];
   };
   /**
    * A simple branch (design.md §15.5.1 `simple`).
@@ -348,7 +375,7 @@ function grammarGenerator(random, rings = false, benzene = false, templates = fa
       return [...root, ...(random() < 0.5 ? [ENDINGS.saturated] : []), ...nums(1), fv()];
     }
     if (form === 2) {
-      const segments = Array.from({ length: int(1, 2) }, () => segment(random() < 0.7)).flat();
+      const segments = Array.from({ length: int(1, 2) }, () => segment(random() < 0.7, root.length > 1)).flat();
       return [...root, ...segments, ...(random() < 0.6 ? nums(1) : []), fv()];
     }
     return [pick(['isopropil', 'isopropiliden', 'tert-butil'])];
@@ -366,7 +393,7 @@ function grammarGenerator(random, rings = false, benzene = false, templates = fa
     const halogen = halogens && random() < 0.35; // Never a compound branch's own chain (simple() below).
     let substituent;
     if (halogen) {
-      substituent = [pick(Object.values(HALOGEN_PREFIXES))];
+      substituent = [pick([...Object.values(HALOGEN_PREFIXES), ...(alcohols ? [GROUP_PREFIXES.alcohol] : [])])];
     } else {
       substituent = branch
         ? ['START', ...Array.from({ length: int(1, 2) }, () => prefix(depth + 1)).flat(), ...simple(), 'END']
@@ -401,18 +428,21 @@ function grammarGenerator(random, rings = false, benzene = false, templates = fa
       return [...(value === 'xylene' && random() < 0.7 ? nums(2) : []), templateWord(value)];
     }
     if (benzene && random() < 0.5) {
-      return [BENZENE_NAME];
+      if (alcohols && random() < 0.3) {
+        return [tileById(PHENOL_ID).text];
+      }
+      return [BENZENE_NAME, ...suffix()];
     }
     const root = stemWords();
     const form = int(0, 2);
     if (form === 0) {
-      return [...root, ENDINGS.saturated];
+      return [...root, ENDINGS.saturated, ...suffix()];
     }
     if (form === 1) {
-      return [...root, ...Array.from({ length: int(1, 2) }, () => segment(random() < 0.8)).flat()];
+      return [...root, ...Array.from({ length: int(1, 2) }, () => segment(random() < 0.8, root.length > 1)).flat(), ...suffix()];
     }
     const k = int(1, 2); // old style: the locants of the only segment without them go first
-    return [...nums(k), ...root, ...(k > 1 ? [multiplier(k)] : []), pick([ENDINGS.double, ENDINGS.triple])];
+    return [...nums(k), ...root, ...(k > 1 ? [multiplier(k)] : []), pick([ENDINGS.double, ENDINGS.triple]), ...suffix(true)];
   }; // End of function parent()
   /**
    * An orto/meta/para name (R-4c): two occupied positions, one of them the letter's prefix or a template's group.
@@ -499,6 +529,23 @@ test('property (R-4c): random grammatical sequences with the templates and the o
   assert.ok(counts.templates >= 150, `${counts.templates} sequences with a template`);
   assert.ok(counts.letters >= 80, `${counts.letters} sequences with a letter`);
 }); // End of test 'property (R-4c): random grammatical sequences with the templates and the o/m/p letters…'
+
+test('property (R-5a2): random grammatical sequences with alcohols tokenize back to the same text', () => {
+  const next = grammarGenerator(mulberry32(20261020), true, true, true, true, true);
+  const seen = { ol: 0, hidroxi: 0, fenol: 0, closing: 0 };
+  const words = { ol: GROUP_SUFFIXES.alcohol, hidroxi: GROUP_PREFIXES.alcohol, fenol: tileById(PHENOL_ID).text, closing: tileById(CLOSING_ID).text };
+  for (let i = 0; i < 400; i += 1) {
+    const list = next();
+    const ids = seq(list.join(' '));
+    const original = readBack(ids);
+    assert.deepEqual(original.errors, [], list.join(' '));
+    Object.entries(words).forEach(([key, word]) => { seen[key] += list.includes(word) ? 1 : 0; });
+    const found = tokenize(original.text);
+    assert.ok(found, `${list.join(' ')} → ${original.text}: no tiles`);
+    assert.equal(readBack(found).text, original.text, list.join(' '));
+  } // End of the loop over the random sequences
+  assert.ok(seen.ol >= 50 && seen.hidroxi >= 30 && seen.fenol >= 10 && seen.closing >= 8, JSON.stringify(seen)); // The seed gives 64, 41, 15, 10.
+}); // End of test 'property (R-5a2): random grammatical sequences with alcohols tokenize back to the same text'
 
 test('property (R-5a1): random grammatical sequences with halogen prefixes tokenize back to the same text', () => {
   const next = grammarGenerator(mulberry32(20261019), true, true, true, true);

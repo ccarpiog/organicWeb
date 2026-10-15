@@ -1535,11 +1535,14 @@ kbd {
 .nb-tile--ring,
 .nb-tile--benzene,
 .nb-tile--template { color: var(--color-part-parent); }
-.nb-tile--positional { color: var(--color-part-locant); }
-.nb-tile--ending { color: var(--color-part-ending); }
+.nb-tile--positional,
+.nb-tile--closing { color: var(--color-part-locant); }
+.nb-tile--ending,
+.nb-tile--suffix { color: var(--color-part-ending); }
 .nb-tile--freeValence,
 .nb-tile--retained,
-.nb-tile--halogen { color: var(--color-part-prefix); }
+.nb-tile--halogen,
+.nb-tile--hydroxy { color: var(--color-part-prefix); }
 
 .nb-tile-mark {
   margin: 0 0.3rem;

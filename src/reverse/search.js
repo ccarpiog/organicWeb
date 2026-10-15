@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -26,7 +26,14 @@
  *   with no chain of its own: its left-out slots are carbon slots of the
  *   chain or ring it hangs from, each adding one bond, so the carbons' free
  *   valence prunes them (`dodecafluorociclohexano`: two fluorines on each
- *   ring carbon, one placement; `pentaclorometano`: none, VALENCE).
+ *   ring carbon, one placement; `pentaclorometano`: none, VALENCE); so is
+ *   `hidroxi` (R-5a2). The alcohol suffix (R-5a2) is one group of carbon
+ *   slots of the parent (§15.5.3 step 2: its carbons 1…n, the principal
+ *   group's), each OH adding one bond: `etanol` and `ciclohexanol` are one
+ *   structure, `propanol` two (`propan-1-ol`, `propan-2-ol`), `bencenodiol`
+ *   three; the OH of `fenol` is implicit at carbon 1, so the student's
+ *   prefixes are searched on the other carbons (`metilfenol`: 2-, 3- and
+ *   4-metilfenol).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -82,7 +89,7 @@
 import { CARBON_VALENCE, cloneMolecule } from '../model/molecule.js';
 import { aromaticKey, aromaticIsomorphism } from '../model/graph.js';
 import { build, checkSpec, attachmentOrder, hasOwnChain, ringRefusal, isRing, isAromatic, templateGroups } from './build.js';
-import { TILES } from './tiles.js';
+import { TILES, CLOSING_ID, tileById } from './tiles.js';
 
 /**
  * Default limits of one search (design.md §15.5.3 step 3): valid
@@ -124,6 +131,9 @@ export function isBondRole(role) {
 
 /** The number tiles by value, to write a placement into a tree. */
 const NUM_TILES = new Map(TILES.filter((tile) => tile.kind === 'num').map((tile) => [tile.value, tile]));
+
+/** The `1(n)` tile, to write a ring's closing bond into a tree (R-5a2). */
+const CLOSING_TILE = tileById(CLOSING_ID);
 
 /**
  * The domain of a slot role on a chain or ring (design.md §15.5.3 step 2).
@@ -288,18 +298,21 @@ function addChain(model, owner, branch) {
 
 /**
  * The search model of a NameSpec: its chains with what the supplied and
- * implicit locants already use, and its groups of left-out slots in tile
- * order.
+ * implicit locants already use (the suffix's OH groups too, R-5a2), and its
+ * groups of left-out slots in tile order.
  *
  * @param {object} spec - A NameSpec (interpret.js).
  * @returns {{chains: ChainModel[], groups: SlotGroup[], index: Map<object, number>}} The model.
  */
 function modelOf(spec) {
   const model = { chains: [], groups: [], index: new Map(spec.leftOut.map((slot, i) => [slot, i])) };
-  addChain(model, { ...spec.parent, prefixes: [...spec.prefixes, ...templateGroups(spec)] }, false); // A template's groups too (R-4c).
+  const parent = addChain(model, { ...spec.parent, prefixes: [...spec.prefixes, ...templateGroups(spec)] }, false); // A template's groups too (R-4c).
+  if (spec.suffix) {
+    addSlots(model, spec.suffix.slots, { role: 'carbon', chain: parent, amount: 1 }); // One OH per slot (R-5a2).
+  }
   model.groups.sort((p, q) => p.indices[0] - q.indices[0]);
   return model;
-}
+} // End of function modelOf()
 
 /**
  * The identical-occurrence groups of a NameSpec's left-out slots, in tile
@@ -642,8 +655,9 @@ export function searchStructures(spec, options) {
  * @param {object} spec - The NameSpec searched.
  * @param {Structure} structure - A named structure of its search.
  * @param {number[]} placement - One of the structure's placements.
- * @returns {{molecule: object, studentParent: {atoms: number[], bonds: number[]}, prefixAtoms: object[]}} The
- *   verdict's own copy of the named graph (the cache's is never handed out) and the reading in its ids.
+ * @returns {{molecule: object, studentParent: {atoms: number[], bonds: number[]}, prefixAtoms: object[], suffixAtoms: object[]}}
+ *   The verdict's own copy of the named graph (the cache's is never handed out) and the reading in its ids (the suffix's
+ *   OH groups too, R-5a2).
  * @throws {Error} When the build is not isomorphic to the named graph (never: they share a structural key).
  */
 export function placementReading(spec, structure, placement) {
@@ -665,6 +679,9 @@ export function placementReading(spec, structure, placement) {
       atoms: occurrence.atoms.map(atom),
       bonds: occurrence.bonds.map(bond),
     })),
+    suffixAtoms: built.suffixAtoms.map((group) => ({
+      ...group, parentAtom: atom(group.parentAtom), attachment: atom(group.attachment), bond: bond(group.bond),
+    })),
   };
 } // End of function placementReading()
 
@@ -672,11 +689,14 @@ export function placementReading(spec, structure, placement) {
  * The ways of filling a NameSpec's left-out locants worth comparing with
  * the engine's names (design.md §15.5.3 step 6, phase R-4a): every list
  * filled first; then, when the student left them out, the name-level
- * prefix lists kept without locants (`prefixes`), the parent's
- * multiple-bond lists kept without locants (`parent`), and both. The engine
- * omits each of those two kinds of locants all together or not at all
- * (render.js renderPrefixes() / renderEnding(): `metilciclohexano`,
- * `ciclohexeno`), so a student who left out those and another list too —
+ * prefix lists kept without locants (`prefixes`; with them the suffix's,
+ * which the engine omits together with them, render.js
+ * omitsPrefixLocants(): `etanol`, `ciclohexanol`, `triclorometanol`,
+ * R-5a2), the parent's multiple-bond lists kept without locants (`parent`),
+ * and both. The engine omits each of those two kinds of locants all
+ * together or not at all (render.js renderPrefixes() / renderEnding():
+ * `metilciclohexano`, `ciclohexeno`), so a student who left out those and
+ * another list too —
  * `(buten-3-in-1-il)ciclopropano` — is still told the name
  * `(but-1-en-3-in-1-il)ciclopropano`. A branch's own locants are always
  * filled (the engine omits none with more than one possible value).
@@ -687,7 +707,7 @@ export function placementReading(spec, structure, placement) {
  */
 export function fillVariants(spec) {
   const leftOut = (slots) => slots.some((slot) => slot.kind === 'leftOut' && slot.domain[0] !== slot.domain[1]);
-  const prefixes = spec.prefixes.some((prefix) => leftOut(prefix.slots));
+  const prefixes = spec.prefixes.some((prefix) => leftOut(prefix.slots)) || Boolean(spec.suffix && leftOut(spec.suffix.slots));
   const parent = leftOut([...spec.parent.double, ...spec.parent.triple]);
   return [
     { prefixes: false, parent: false },
@@ -698,10 +718,12 @@ export function fillVariants(spec) {
 } // End of function fillVariants()
 
 /**
- * Writes a placement into the student's syntax tree: each prefix or
- * segment without locants gets number tiles with its slots' values, in
- * increasing order (design.md §15.5.3 step 6), except the lists a
- * fillVariants() entry keeps without locants. A slot whose domain holds
+ * Writes a placement into the student's syntax tree: each prefix, segment
+ * or suffix (R-5a2) without locants gets number tiles with its slots'
+ * values, in increasing order (design.md §15.5.3 step 6), except the lists a
+ * fillVariants() entry keeps without locants. A ring's closing bond (bond
+ * n) is written with the `1(n)` tile, as the engine cites it (`1(6)`,
+ * between 1 and 2: `ciclopropa-1,1(3),2-trieno`; R-5a2). A slot whose domain holds
  * one value is not written: no name cites it (`etenil`, `etinil`, `eteno`,
  * never `et-1-enil`), so it is not a missing locant. The new tiles are
  * appended to the tree's tile list; the student's tiles are untouched. The
@@ -722,18 +744,22 @@ export function fillVariants(spec) {
 export function filledTree(tree, spec, placement, keep = {}) {
   const kept = new Set([
     ...(keep.prefixes ? spec.prefixes.flatMap((prefix) => prefix.slots) : []),
+    ...(keep.prefixes && spec.suffix ? spec.suffix.slots : []),
     ...(keep.parent ? [...spec.parent.double, ...spec.parent.triple] : []),
   ]);
   const byRange = new Map();
   spec.leftOut.forEach((slot, i) => {
     if (slot.domain[0] !== slot.domain[1] && !kept.has(slot)) {
       const key = `${slot.tiles[0]}:${slot.tiles[1]}`;
-      byRange.set(key, [...(byRange.get(key) || []), placement[i]]);
+      // A ring's bond n is its closing bond, cited `1(n)` (R-5a2): sorted as compound locants are, 1 < 1(n) < 2.
+      const closing = slot.role === 'ringBond' && placement[i] === slot.domain[1];
+      byRange.set(key, [...(byRange.get(key) || []), { value: placement[i], closing, order: closing ? 1.5 : placement[i] }]);
     }
   });
   const tiles = [...tree.tiles];
   /**
-   * The values of a left-out locant list as new number tiles.
+   * The values of a left-out locant list as new number tiles (the `1(n)`
+   * tile for a ring's closing bond).
    *
    * @param {[number, number]} range - The node's tile range.
    * @param {number[]} locants - The node's own locant tiles.
@@ -744,7 +770,8 @@ export function filledTree(tree, spec, placement, keep = {}) {
     if (!values) {
       return locants;
     }
-    return [...values].sort((p, q) => p - q).map((value) => tiles.push(NUM_TILES.get(value)) - 1);
+    return [...values].sort((p, q) => p.order - q.order)
+      .map((entry) => tiles.push(entry.closing ? CLOSING_TILE : NUM_TILES.get(entry.value)) - 1);
   };
   /**
    * A chain node with its segments filled (ring bonds for a ring); `benceno` and a template as they are.
@@ -782,5 +809,7 @@ export function filledTree(tree, spec, placement, keep = {}) {
   const items = tree.items.map(fillItem);
   const { parent } = tree;
   const legacy = parent.chain.type === 'template' ? numbers(parent.chain.range, parent.legacy) : parent.legacy;
-  return { ...tree, tiles, items, parent: { ...parent, legacy, chain: fillChain(parent.chain) } };
+  // The suffix's left-out locants (R-5a2); old-style ones before the root are supplied, never left out.
+  const suffix = parent.suffix && { ...parent.suffix, locants: numbers(parent.suffix.range, parent.suffix.locants) };
+  return { ...tree, tiles, items, parent: { ...parent, legacy, chain: fillChain(parent.chain), suffix } };
 } // End of function filledTree()

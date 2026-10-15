@@ -5,7 +5,9 @@
  * rule (§15.5.2 items 1–5), the spans, and partial or wrong sequences
  * (assembled as written, never repaired); the ring forms of R-4a (`ciclo`
  * parents and branches, and the crowded case of rule 5); the benzene words
- * of R-4b (`benceno`, `fenil`, `(4-metilfenil)`).
+ * of R-4b (`benceno`, `fenil`, `(4-metilfenil)`); the suffix half of rule 4
+ * (R-5a2: `propan-2-ol`, `butano-1,4-diol`, `butano-1,2,3,4-tetrol`; more in
+ * reverse-alcohols.test.js).
  */
 
 import { test } from 'node:test';
@@ -97,6 +99,20 @@ test('rule 4: ano → an before a cited free-valence locant, automatic an withou
   const tile = build('4 prop ano 2 il hept ano');
   assert.deepEqual(tile.spans.filter((s) => tile.text.slice(s.from, s.to) === 'an').map((s) => s.tile), [2]);
 }); // End of test 'rule 4: ano → an before a cited free-valence locant, automatic an without the tile'
+
+test('rule 4, suffix half (R-5a2): a suffix multiplier loses its a before a vowel, then the parent its o', () => {
+  assert.equal(text('prop ano 2 ol'), 'propan-2-ol'); // `ano` → `an` before the vowel of `ol`
+  assert.equal(text('but ano 1 4 di ol'), 'butano-1,4-diol'); // kept before the consonant of `diol`
+  assert.equal(text('but ano 1 2 3 4 tetra ol'), 'butano-1,2,3,4-tetrol'); // `tetra` → `tetr` first; then `o` kept before `t`
+  assert.equal(text('prop 2 eno 1 ol'), 'prop-2-en-1-ol'); // the last segment's `eno` → `en`
+  assert.equal(text('but 2 eno 1 4 di ol'), 'but-2-eno-1,4-diol');
+  assert.equal(text('benceno 1 2 di ol'), 'benceno-1,2-diol');
+  // The `an` before `ol` is the `ano` tile's own span; the elided multiplier is its tile's span.
+  const ol = build('prop ano 2 ol');
+  assert.deepEqual(ol.spans.filter((s) => ol.text.slice(s.from, s.to) === 'an').map((s) => s.tile), [1]);
+  const tetrol = build('but ano 1 2 3 4 tetra ol');
+  assert.deepEqual(tetrol.spans.filter((s) => s.tile === 6).map((s) => tetrol.text.slice(s.from, s.to)), ['tetr']);
+}); // End of test 'rule 4, suffix half (R-5a2)…'
 
 test('rule 5: enclosure, marks by nesting level, the student\'s multiplier, di-tert-', () => {
   // Enclosed: own locants or prefixes, or unsaturation in three or more carbons; never a retained word.

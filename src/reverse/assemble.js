@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -18,9 +18,16 @@
  *    suffix (`pent-1-en-4-ino`, `prop-2-en-1-il`, `prop-2-in-1-iliden`);
  * 4. `ano` → `an` before a free-valence suffix (`propan-2-il`), and the
  *    automatic `an` (lexicon SATURATED_INFIX) when the student cites the
- *    free-valence locant of a saturated branch without the `ano` tile; the
- *    suffix part of the rule (`propan-2-ol`, `butano-1,4-diol`, `tetrol`)
- *    arrives with the suffixes (R-5a);
+ *    free-valence locant of a saturated branch without the `ano` tile; and
+ *    its suffix half (R-5a2, render.js suffixWords() / renderEnding()): a
+ *    suffix multiplier first loses its final `a` before a vowel-initial
+ *    suffix (`tetra` + `ol` → `tetrol`, `penta` → `pentol`; `di`, `tri`
+ *    unchanged), and only then does the parent's last ending — `ano`, the
+ *    last `eno` / `ino`, or the word `benceno` — lose its final `o` when what
+ *    follows (multiplier and suffix) starts with a vowel: `propan-2-ol`,
+ *    `etanol`, `prop-2-en-1-ol`, `bencenol`, but `butano-1,4-diol`,
+ *    `but-2-eno-1,4-diol`, `butano-1,2,3,4-tetrol`, `benceno-1,2-diol`,
+ *    `bencenohexol`;
  * 5. enclosing marks as render.js needsEnclosure() / enclosureLevel(): a
  *    branch is enclosed when it has prefixes of its own, an unsaturated
  *    chain of three or more carbons, or a cited locant (`(propan-2-il)`,
@@ -56,7 +63,16 @@
  * needsEnclosure()), also when crowded (render.js encloses only alkoxy and
  * ring prefixes there: `bromoclorofluoroyodometano`, `(clorofluorometil)`);
  * the student's order, multipliers and locants stay as written
- * (`2-bromo-1-cloropropano`, `hexacloroetano`, `(2-cloroetil)`).
+ * (`2-bromo-1-cloropropano`, `hexacloroetano`, `(2-cloroetil)`). So is
+ * `hidroxi` (R-5a2: `(hidroximetil)`, `(4-hidroxifenil)`).
+ *
+ * The alcohol suffix (R-5a2) follows the parent's ending with its locants
+ * (rule 1: `butano-1,4-diol`), its multiplier and `ol` (rule 4 above); the
+ * `fenol` tile is one whole word, like `benceno`. The closing-bond locant
+ * `1(n)` (R-5a2) is written with the ring's own size, `1(6)` on a ring of six
+ * (structure.js locantText(): `ciclohex-1(6)-eno-1,2,4-triol`), and
+ * punctuated as any locant (`ciclopropa-1,1(3),2-trieno`); out of place it
+ * keeps the tile's text, `1(n)`.
  *
  * The retained templates (R-4c: `tolueno`, `estireno`, `xileno`,
  * `mesitileno`) are whole words like `benceno`, the positions of `xileno`'s
@@ -85,6 +101,7 @@
  */
 
 import { ENDINGS, ENCLOSING_MARKS, CONNECTING_VOWEL, SATURATED_INFIX } from '../naming/lexicon.es.js';
+import { isAtomGroup, closingText } from './tiles.js';
 
 /**
  * One piece of text before the automatic punctuation is added.
@@ -141,7 +158,7 @@ function citesLocant(chain) {
  * @returns {boolean} True when enclosed.
  */
 export function isEnclosed(tiles, node) {
-  if (node.type === 'retained' || node.type === 'halogen') {
+  if (node.type === 'retained' || isAtomGroup(node.type)) {
     return false;
   }
   if (node.type === 'branch') {
@@ -231,13 +248,69 @@ export function enclosureLevel(tiles, node) {
  */
 function strayPieces(tiles, index, out) {
   const tile = tiles[index];
-  const roles = { num: 'locant', positional: 'locant', mult: 'mult', cmult: 'mult', start: 'open', end: 'close' };
+  const roles = { num: 'locant', positional: 'locant', closing: 'locant', mult: 'mult', cmult: 'mult', start: 'open', end: 'close' };
   const kinds = {
-    num: 'locant', positional: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending',
-    freeValence: 'ending', retained: 'prefix', halogen: 'prefix', start: 'punct', end: 'punct', ring: 'stem', benzene: 'stem',
-    template: 'stem',
+    num: 'locant', positional: 'locant', closing: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending',
+    freeValence: 'ending', retained: 'prefix', halogen: 'prefix', hydroxy: 'prefix', suffix: 'ending', start: 'punct', end: 'punct',
+    ring: 'stem', benzene: 'stem', template: 'stem',
   };
   out.push(piece(tile.text, index, kinds[tile.kind], roles[tile.kind] || 'word', tile.italic ? { italic: true } : {}));
+}
+
+/**
+ * Tells whether a text starts with a vowel (render.js suffixWords(): the
+ * elisions of rule 4).
+ *
+ * @param {string} text - The text.
+ * @returns {boolean} True before a vowel.
+ */
+function startsWithVowel(text) {
+  return /^[aeiou]/.test(text);
+}
+
+/**
+ * The text of a suffix's multiplier (R-5a2, rule 4): its tile's text, the
+ * final `a` elided before a vowel-initial suffix (`tetr` + `ol`); '' without
+ * one.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} suffix - A suffix node (parse.js).
+ * @returns {string} The text.
+ */
+function suffixMultiplierText(tiles, suffix) {
+  if (suffix.multiplier === null) {
+    return '';
+  }
+  const text = tiles[suffix.multiplier].text;
+  return /a$/.test(text) && startsWithVowel(tiles[suffix.tile].text) ? text.slice(0, -1) : text; // As render.js suffixWords().
+}
+
+/**
+ * Tells whether a suffix makes the parent's last ending lose its final
+ * vowel (R-5a2, rule 4): its multiplier and word start with a vowel
+ * (`an` + `ol`, but `ano` + `diol`, `ano` + `tetrol`).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object|null} suffix - A suffix node, or null.
+ * @returns {boolean} True when the parent's final vowel is elided.
+ */
+function suffixElides(tiles, suffix) {
+  return Boolean(suffix) && startsWithVowel(`${suffixMultiplierText(tiles, suffix)}${tiles[suffix.tile].text}`);
+}
+
+/**
+ * The text of a locant tile: a number, or the closing-bond locant `1(n)`
+ * (R-5a2) written with the size of the ring it numbers (`1(6)`), its tile's
+ * text where no ring gives one.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {number} index - The tile index.
+ * @param {number|null} [ring] - Carbons of the ring whose bond it numbers, or null.
+ * @returns {string} The text.
+ */
+function locantText(tiles, index, ring = null) {
+  const tile = tiles[index];
+  return tile.kind === 'closing' && ring !== null ? closingText(ring) : tile.text;
 }
 
 /**
@@ -250,9 +323,10 @@ function strayPieces(tiles, index, out) {
  * @param {object} chain - A chain node.
  * @param {'parent'|'prefix'} style - Part kinds of the parent or of a branch.
  * @param {Piece[]} out - Receives the pieces.
+ * @param {boolean} [beforeVowel] - The parent's suffix starts with a vowel: its last ending loses its `o` (rule 4, R-5a2).
  * @returns {void}
  */
-function chainPieces(tiles, chain, style, out) {
+function chainPieces(tiles, chain, style, out, beforeVowel = false) {
   const kinds = KINDS[style];
   const hasFreeValence = chain.fv !== null;
   if (chain.ring !== null) {
@@ -262,23 +336,24 @@ function chainPieces(tiles, chain, style, out) {
     return;
   }
   out.push(piece(tiles[chain.root].text, chain.root, kinds.stem, 'word'));
+  const ring = chain.ring === null ? null : tiles[chain.root].value; // `1(n)` is written with the ring's size (R-5a2).
   const first = chain.segments[0];
   if (first && first.multiplier !== null) {
     out.push(piece(CONNECTING_VOWEL, null, kinds.stem, 'word')); // `buta-1,3-dieno`
   }
   if (chain.ano !== null) {
-    const text = hasFreeValence ? ENDINGS.saturated.slice(0, -1) : ENDINGS.saturated;
-    out.push(piece(text, chain.ano, kinds.ending, 'word')); // `propan-2-il`, `hexano`
+    const text = hasFreeValence || beforeVowel ? ENDINGS.saturated.slice(0, -1) : ENDINGS.saturated;
+    out.push(piece(text, chain.ano, kinds.ending, 'word')); // `propan-2-il`, `propan-2-ol`, `hexano`, `butano-1,4-diol`
   } else if (chain.segments.length === 0 && chain.fvLocants.length > 0) {
     out.push(piece(SATURATED_INFIX, null, kinds.ending, 'word')); // `prop 2 il` → `propan-2-il`
   }
   chain.segments.forEach((segment, i) => {
-    segment.locants.forEach((index) => out.push(piece(tiles[index].text, index, kinds.locant, 'locant')));
+    segment.locants.forEach((index) => out.push(piece(locantText(tiles, index, ring), index, kinds.locant, 'locant')));
     if (segment.multiplier !== null) {
       out.push(piece(tiles[segment.multiplier].text, segment.multiplier, kinds.multiplier, 'mult'));
     }
     const text = tiles[segment.ending].text;
-    const elided = i < chain.segments.length - 1 || hasFreeValence;
+    const elided = i < chain.segments.length - 1 || hasFreeValence || beforeVowel; // `prop-2-en-1-ol` (R-5a2)
     out.push(piece(elided ? text.slice(0, -1) : text, segment.ending, kinds.ending, 'word'));
   });
   chain.fvLocants.forEach((index) => out.push(piece(tiles[index].text, index, kinds.locant, 'locant')));
@@ -323,15 +398,15 @@ function substituentPieces(tiles, node, enclosed, out) {
 
 /**
  * The pieces of a simple branch without enclosing marks: a retained word, a
- * halogen (R-5a1) or a chain.
+ * one-atom group (a halogen, R-5a1; `hidroxi`, R-5a2) or a chain.
  *
  * @param {object[]} tiles - The tile sequence.
- * @param {object} node - A chain, retained or halogen node.
+ * @param {object} node - A chain, retained, halogen or hydroxy node.
  * @param {Piece[]} out - Receives the pieces.
  * @returns {void}
  */
 function ownChainPieces(tiles, node, out) {
-  if (node.type === 'retained' || node.type === 'halogen') {
+  if (node.type === 'retained' || isAtomGroup(node.type)) {
     const tile = tiles[node.tile];
     out.push(piece(tile.text, node.tile, 'prefix', 'word', tile.italic ? { italic: true } : {}));
   } else {
@@ -370,11 +445,31 @@ function itemPieces(tiles, items, index, nested, out) {
 } // End of function itemPieces()
 
 /**
+ * The pieces of the alcohol suffix (R-5a2): its locants, its multiplier (the
+ * final `a` elided before `ol`, rule 4: `tetrol`) and `ol`.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} suffix - A suffix node (parse.js).
+ * @param {Piece[]} out - Receives the pieces.
+ * @returns {void}
+ */
+function suffixPieces(tiles, suffix, out) {
+  suffix.locants.forEach((index) => out.push(piece(tiles[index].text, index, 'locant', 'locant')));
+  if (suffix.multiplier !== null) {
+    out.push(piece(suffixMultiplierText(tiles, suffix), suffix.multiplier, 'multiplier', 'mult'));
+  }
+  out.push(piece(tiles[suffix.tile].text, suffix.tile, 'ending', 'word'));
+}
+
+/**
  * The pieces of the parent: the locants before its stem (old-style ones, or
  * the positions of `xileno`'s methyls) and a letter (`o-xileno`; out of place
  * before another stem), a multiplier out of place between them and the
- * stem, then its chain — or the `benceno` word (R-4b; numbers before it are
- * a BENZENE_BONDS error, kept as written), or a template word (R-4c).
+ * stem, then its chain — or the `benceno` or `fenol` word (R-4b, R-5a2;
+ * numbers before `benceno` are a BENZENE_BONDS error unless they are the
+ * old-style locants of its suffix, kept as written), or a template word
+ * (R-4c) —, then its suffix (R-5a2), before which the last ending loses its
+ * `o` when the suffix starts with a vowel (rule 4: `propan-2-ol`, `bencenol`).
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} parent - The parent node.
@@ -389,12 +484,19 @@ function parentPieces(tiles, parent, out) {
   if (parent.legacyMultiplier !== null) {
     out.push(piece(tiles[parent.legacyMultiplier].text, parent.legacyMultiplier, 'multiplier', 'mult'));
   }
+  const { suffix } = parent;
+  const beforeVowel = suffixElides(tiles, suffix);
   if (parent.chain.type === 'benzene' || parent.chain.type === 'template') {
-    out.push(piece(tiles[parent.chain.tile].text, parent.chain.tile, KINDS.parent.stem, 'word')); // `1,2-dimetilbenceno`, `tolueno`
-    return;
+    const word = tiles[parent.chain.tile].text;
+    // `1,2-dimetilbenceno`, `tolueno`, `fenol`; `bencenol`, `benceno-1,2-diol` (R-5a2).
+    out.push(piece(beforeVowel ? word.slice(0, -1) : word, parent.chain.tile, KINDS.parent.stem, 'word'));
+  } else {
+    chainPieces(tiles, parent.chain, 'parent', out, beforeVowel);
   }
-  chainPieces(tiles, parent.chain, 'parent', out);
-}
+  if (suffix) {
+    suffixPieces(tiles, suffix, out);
+  }
+} // End of function parentPieces()
 
 /**
  * The automatic punctuation between two pieces (rules 1 and 5). Exported

@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -33,12 +33,18 @@
  * and the hyphen the assembler writes after it prunes every other reading
  * of a leading `o`, `m` or `p` at once. A halogen (R-5a1: `fluoro`, `cloro`,
  * `bromo`, `yodo`) stands wherever a retained branch word may, and is never
- * enclosed by itself. A step budget bounds the search:
+ * enclosed by itself; so does `hidroxi` (R-5a2). The alcohol suffix (R-5a2)
+ * ends a name after the parent's ending (`an` / `en` / `in` or the whole
+ * one, `benceno` or its elided `bencen`), its locants or its multiplier —
+ * also the multiplier without its final `a` (`tetr` + `ol`, rule 4); `fenol`
+ * ends a name like `benceno`. The closing-bond locant `1(6)` (R-5a2) is read
+ * wherever a ring's bond locant may stand, as the `1(n)` tile (the assembler
+ * checks the ring size). A step budget bounds the search:
  * running out returns null, never a guess.
  */
 
 import { CONNECTING_VOWEL, ENCLOSING_MARKS } from '../naming/lexicon.es.js';
-import { TILES, START_ID, END_ID } from './tiles.js';
+import { TILES, START_ID, END_ID, CLOSING_ID } from './tiles.js';
 import { parse } from './parse.js';
 import { assemble, separator } from './assemble.js';
 
@@ -60,9 +66,13 @@ const PUNCTUATION = ',-';
  * Grammar class of a tile for the adjacency table: NUM, MULT, CMULT, ROOT,
  * ANO (`ano`), ENE (`eno` / `ino`), FV (`il` / `iliden`), RET (a retained
  * branch word), PHE (`fenil`, R-4b), BEN (`benceno`, R-4b), TPL (a retained
- * template, R-4c), POS (an orto/meta/para letter, R-4c), HAL (a halogen,
- * R-5a1), START, END, RING (`ciclo`). A is the automatic connecting vowel,
- * AUTO_OPEN an automatic opening mark.
+ * template, R-4c), POS (an orto/meta/para letter, R-4c), HAL (a one-atom
+ * group: a halogen, R-5a1; `hidroxi`, R-5a2), OL (the suffix `ol`, R-5a2),
+ * PHOL (`fenol`, R-5a2), CLO (the closing-bond locant `1(n)`, R-5a2), START,
+ * END, RING (`ciclo`). A is the automatic connecting vowel, AUTO_OPEN an
+ * automatic opening mark; MULTE a multiplier without its final `a`, only
+ * before `ol`, and BENE `benceno` without its `o`, only before `ol` or its
+ * locants (rule 4: `tetrol`, `bencenol`, `bencen-1-ol`).
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -74,53 +84,64 @@ function tileClass(tile) {
   if (tile.kind === 'retained' && tile.value === 'phenyl') {
     return 'PHE';
   }
+  if (tile.kind === 'benzene' && tile.value === 'phenol') {
+    return 'PHOL';
+  }
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
-    ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS', halogen: 'HAL',
+    ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS', halogen: 'HAL', hydroxy: 'HAL', suffix: 'OL',
+    closing: 'CLO',
   };
   return classes[tile.kind];
-}
+} // End of function tileClass()
 
 /** Classes that may begin a name, a prefix or a compound branch. */
 const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START'];
 
-/** Classes that may follow a complete prefix: another prefix, the end of its compound branch, `benceno` or a template. */
-const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'TPL'];
+/** Classes that may follow a complete prefix: another prefix, the end of its compound branch, `benceno`, `fenol` or a template. */
+const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'TPL'];
 
 /**
- * The classes that may follow each class in a valid open-chain or
- * monocyclic hydrocarbon name (design.md §15.5.1); BEGIN is the start of
- * the text. An automatic closing mark does not change the class. `ciclo`
- * stands wherever a root may start a stem, and only a root follows it;
- * `fenil` and a halogen wherever a retained word may stand; `benceno` at the start or
- * after a complete prefix, and nothing after it; a template there too, or
- * after locants or a letter; a letter at the start only, before a prefix or
- * a template.
+ * The classes that may follow each class in a valid name (design.md
+ * §15.5.1); BEGIN is the start of the text. An automatic closing mark does
+ * not change the class. `ciclo` stands wherever a root may start a stem, and
+ * only a root follows it; `fenil` and a one-atom group wherever a retained
+ * word may stand; `benceno` at the start, after a complete prefix or after
+ * old-style locants, and only its suffix after it; `fenol` and a template
+ * there too (a template also after locants or a letter), and nothing after
+ * them; a letter at the start only, before a prefix or a template; the
+ * suffix `ol` after the parent's ending, its locants or its multiplier, and
+ * nothing after it; `1(n)` wherever a bond locant of a ring may stand.
  */
 const FOLLOW = Object.freeze({
-  BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'TPL', 'POS']),
+  BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'TPL', 'POS']),
   AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE']),
-  NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL']),
+  NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL', 'BEN', 'BENE', 'CLO', 'MULTE', 'OL']),
+  CLO: new Set(['NUM', 'CLO', 'MULT', 'ENE']),
   POS: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'TPL']),
-  MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'ENE']),
+  MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'ENE', 'OL']),
+  MULTE: new Set(['OL']),
   CMULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START']),
   RING: new Set(['ROOT']),
-  ROOT: new Set(['ANO', 'NUM', 'MULT', 'ENE', 'FV', 'A']),
-  A: new Set(['NUM', 'MULT']),
-  ANO: new Set(['NUM']),
-  ENE: new Set(['NUM', 'MULT', 'ENE', 'FV']),
+  ROOT: new Set(['ANO', 'NUM', 'CLO', 'MULT', 'ENE', 'FV', 'A']),
+  A: new Set(['NUM', 'CLO', 'MULT']),
+  ANO: new Set(['NUM', 'MULT', 'MULTE', 'OL']),
+  ENE: new Set(['NUM', 'CLO', 'MULT', 'MULTE', 'ENE', 'FV', 'OL']),
   FV: new Set(AFTER_PREFIX),
   RET: new Set(AFTER_PREFIX),
   PHE: new Set(AFTER_PREFIX),
   HAL: new Set(AFTER_PREFIX),
   START: new Set(PREFIX_STARTS),
   END: new Set(AFTER_PREFIX),
-  BEN: new Set(),
+  BEN: new Set(['NUM', 'MULT', 'MULTE', 'OL']),
+  BENE: new Set(['NUM', 'OL']),
+  OL: new Set(),
+  PHOL: new Set(),
   TPL: new Set(),
 });
 
-/** Classes a valid name may end with (the parent's ending, `benceno` or a template). */
-const FINAL = new Set(['ANO', 'ENE', 'BEN', 'TPL']);
+/** Classes a valid name may end with (the parent's ending, `benceno`, `fenol`, a template or the suffix `ol`). */
+const FINAL = new Set(['ANO', 'ENE', 'BEN', 'PHOL', 'TPL', 'OL']);
 
 /** Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, or `fenil`. */
 const AUTO_CLOSE = new Set(['FV', 'PHE']);
@@ -129,6 +150,7 @@ const AUTO_CLOSE = new Set(['FV', 'PHE']);
 const WORD = Object.freeze({ role: 'word' });
 const OPEN = Object.freeze({ role: 'open' });
 const CLOSE = Object.freeze({ role: 'close' });
+const LOCANT = Object.freeze({ role: 'locant' });
 
 /**
  * The punctuation role of a tile's piece, as the assembler gives it.
@@ -137,8 +159,8 @@ const CLOSE = Object.freeze({ role: 'close' });
  * @returns {{role: string, italic?: boolean}} The role.
  */
 function pieceRole(tile) {
-  if (tile.kind === 'num' || tile.kind === 'positional') {
-    return Object.freeze({ role: 'locant' });
+  if (tile.kind === 'num' || tile.kind === 'positional' || tile.kind === 'closing') {
+    return LOCANT;
   }
   if (tile.kind === 'mult' || tile.kind === 'cmult') {
     return Object.freeze({ role: 'mult' });
@@ -148,7 +170,11 @@ function pieceRole(tile) {
 
 /**
  * Builds the surface forms of the tiles (START / END excepted: they are
- * read from the enclosing marks), longest first.
+ * read from the enclosing marks; and `1(n)`, read with its ring size by
+ * search()), longest first: each tile's text, the elided endings `an`,
+ * `en`, `in` (rules 3 and 4), and before `ol` (R-5a2, rule 4) the
+ * multipliers without their final `a` (`tetr`, class MULTE) and `bencen`
+ * (class BENE).
  *
  * @returns {{text: string, id: string, cls: string, piece: object}[]} The surface forms.
  */
@@ -156,13 +182,17 @@ function buildSurfaces() {
   const surfaces = [];
   for (const tile of TILES) {
     const cls = tileClass(tile);
-    if (cls === 'START' || cls === 'END') {
+    if (cls === 'START' || cls === 'END' || cls === 'CLO') {
       continue;
     }
     const piece = pieceRole(tile);
     surfaces.push({ text: tile.text, id: tile.id, cls, piece });
     if (tile.kind === 'ending') {
       surfaces.push({ text: tile.text.slice(0, -1), id: tile.id, cls, piece }); // `an`, `en`, `in` (rules 3 and 4)
+    } else if (cls === 'MULT' && tile.text.endsWith('a')) {
+      surfaces.push({ text: tile.text.slice(0, -1), id: tile.id, cls: 'MULTE', piece }); // `tetr` + `ol` (R-5a2)
+    } else if (cls === 'BEN') {
+      surfaces.push({ text: tile.text.slice(0, -1), id: tile.id, cls: 'BENE', piece }); // `bencen` + `ol` (R-5a2)
     }
   } // End of the loop over the tiles
   return surfaces.map((surface, i) => ({ surface, i }))
@@ -176,6 +206,26 @@ const SURFACES = Object.freeze(buildSurfaces());
 /** Opening and closing characters of the enclosing marks, by level. */
 const OPENERS = ENCLOSING_MARKS.map(([open]) => open);
 const CLOSERS = ENCLOSING_MARKS.map(([, close]) => close);
+
+/**
+ * The length of a closing-bond locant (R-5a2: `1(6)`, `1(12)`) starting at
+ * a position of a text, or 0 when there is none.
+ *
+ * @param {string} text - The text.
+ * @param {number} at - The position.
+ * @returns {number} The locant's length in characters, or 0.
+ */
+function closingAt(text, at) {
+  const lead = `1${OPENERS[0]}`;
+  if (!text.startsWith(lead, at)) {
+    return 0;
+  }
+  let end = at + lead.length;
+  while (end < text.length && text[end] >= '0' && text[end] <= '9') {
+    end += 1;
+  }
+  return end > at + lead.length && text[end] === CLOSERS[0] ? end + 1 - at : 0;
+} // End of function closingAt()
 
 /**
  * Tells whether a tile sequence is a valid reading of a text: it parses
@@ -248,6 +298,15 @@ export function tokenize(text, options = {}) {
       return false; // An automatic enclosure ends right after its chain's `il` / `iliden`, or after `fenil`.
     }
     const follow = FOLLOW[prev];
+    const closing = follow.has('CLO') ? closingAt(target, at) : 0;
+    if (closing > 0 && fits(LOCANT)) {
+      ids.push(CLOSING_ID); // `1(6)` (R-5a2): the assembly checks that the ring has six carbons.
+      const found = search(at + closing, 'CLO', LOCANT);
+      if (found !== false) {
+        return found;
+      }
+      ids.pop();
+    }
     for (const surface of SURFACES) {
       if (follow.has(surface.cls) && target.startsWith(surface.text, at) && fits(surface.piece)) {
         ids.push(surface.id);

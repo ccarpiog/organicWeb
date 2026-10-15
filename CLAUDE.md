@@ -24,7 +24,7 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   v4 (from the name to the drawing, built from tiles: «¿Cómo se dibuja?»,
   §15) is in progress: the engine is pure modules in `src/reverse/` — tiles,
   parser, assembler and tokenizer for open-chain and `ciclo` hydrocarbon
-  names and their halogen derivatives, and
+  names, their halogen derivatives and their alcohols, and
   `readName()`, which interprets, builds and judges them (correct,
   alternative, otherName, outOfScope, invalid with structural errors) and
   searches the locants a name leaves out (`search.js`: missingLocants,
@@ -73,8 +73,16 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   (`(2-cloroetil)`), their left-out locants searched by the carbons' free
   valence (`dodecafluorociclohexano` one placement), and the diagnosis
   reads them as substituents (alphabetical order, numbering, grouping,
-  needless locants), with the Ayuda line. Next is R-5a2 (phase I-51a2):
-  alcohols and phenols.
+  needless locants), with the Ayuda line. R-5a2 (phase I-51a2) is done:
+  the «Grupos» row's `hidroxi` and `ol` tiles and the «Anillos» row's
+  `fenol` and closing-bond locant `1(n)` read alcohols and phenols on
+  chains, rings and `benceno` (`propan-2-ol`, `butano-1,2,3,4-tetrol`,
+  `ciclohex-1(6)-eno-1,2,4-triol`, `4-metilfenol`, `p-metilfenol`,
+  `2-propanol` old style), their left-out suffix locants searched, and the
+  diagnosis keeps its rules where they hold for an OH, null where an
+  alcohol needs a message of its own. Next is R-5a3 (phase I-51a3): the
+  retained phenol templates, the alcohol diagnosis messages and the Ayuda
+  line.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -26,12 +26,21 @@
  * A halogen (R-5a1, kind 'halogen') is one atom of its element bonded by a
  * single bond to its carbon: it adds one bond to that carbon (so
  * `pentaclorometano` is VALENCE) and is never a carbon itself (it counts
- * for the heavy-atom cap, not for the carbon cap or the chains).
+ * for the heavy-atom cap, not for the carbon cap or the chains); so is the
+ * oxygen of `hidroxi` (R-5a2, kind 'hydroxy', its hydrogen implicit).
+ * The alcohol suffix (R-5a2, NameSpec `suffix`) puts one OH oxygen on each
+ * of its parent carbons, single-bonded, after the parent is built and
+ * before its prefixes; the OH of `fenol`, placed at carbon 1 by the word, is
+ * the ring's own like a template's group (a student's branch on that carbon
+ * is the VALENCE culprit, «…en el fenol, ese carbono ya lleva un grupo OH»).
+ * The suffix's oxygens count for the heavy-atom cap and are listed in
+ * `suffixAtoms`.
  *
  * The molecule is the student's reading, numbered as the student numbered
  * it: `studentParent` lists the parent's atoms in the student's locant
- * order, and `prefixAtoms` the atoms of each prefix occurrence (for the
- * highlights and the diagnosis of later phases).
+ * order, `prefixAtoms` the atoms of each prefix occurrence and `suffixAtoms`
+ * the oxygen of each suffix group (for the highlights and the diagnosis of
+ * later phases).
  *
  * Structural errors (design.md §15.6; Spanish drafts pending teacher
  * review), each `{code, message, tiles: [from, to)}`, checked in this order:
@@ -40,7 +49,8 @@
  *    compound branch (`TILE_ORDER`, it has no numbering); a locant beyond
  *    its chain or ring (`LOCANT_RANGE`; the chain of the prefix, the
  *    branch's own chain inside a branch, the branch for its free-valence
- *    locant); a multiple bond from the last carbon of a chain (`BOND_RANGE`,
+ *    locant, the parent for a suffix's locant); a multiple bond from the
+ *    last carbon of a chain (`BOND_RANGE`,
  *    also any multiple bond on a one-carbon chain; on a ring that is the
  *    closing bond); two multiple bonds on one bond (`SAME_BOND`). An
  *    `iliden` is the double bond to the carbon it hangs from, so it counts
@@ -76,7 +86,7 @@ import {
   longestCarbonChain, longestSideChain,
 } from '../model/validate.js';
 import { BENZENE_NAME, RETAINED_PREFIXES } from '../naming/lexicon.es.js';
-import { templateGroupWord } from './tiles.js';
+import { templateGroupWord, isAtomGroup, closingText, HYDROXY_ELEMENT } from './tiles.js';
 
 /** The structural error codes of design.md §15.6 (TILE_ORDER reused for a retained word with prefixes). */
 export const BUILD_ERROR_CODES = Object.freeze(['TILE_ORDER', 'LOCANT_RANGE', 'BOND_RANGE', 'SAME_BOND', 'VALENCE', 'TOO_BIG']);
@@ -136,7 +146,8 @@ const FENIL = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text
  * ring; «El benceno tiene 6 carbonos, del 1 al 6…» for `benceno` (R-4b).
  *
  * @param {{length: number, branch: boolean, ring?: boolean, benzene?: boolean, template?: string|null}} owner - The chain
- *   or ring numbered (`template`: the word of a template parent, R-4c: «El anillo del xileno tiene 6 carbonos…»).
+ *   or ring numbered (`template`: the word of a template parent, R-4c: «El anillo del xileno tiene 6 carbonos…», or of
+ *   `fenol`, R-5a2).
  * @param {number} value - The locant.
  * @returns {string} The message.
  */
@@ -226,7 +237,8 @@ function checkBonds(owner, values) {
     }
     if (taken.has(value)) {
       const first = taken.get(value);
-      return buildError('SAME_BOND', `Hay dos enlaces múltiples en el mismo sitio (${value}).`, [first.tiles[0], slot.tiles[1]]);
+      const where = slot.closing ? closingText(slot.closing) : value; // `1(6)` as written (R-5a2).
+      return buildError('SAME_BOND', `Hay dos enlaces múltiples en el mismo sitio (${where}).`, [first.tiles[0], slot.tiles[1]]);
     }
     taken.set(value, slot);
   } // End of the loop over the bond slots
@@ -260,15 +272,15 @@ function checkPrefixes(prefixes, owner, values) {
 
 /**
  * Checks a branch in tile order: a retained word with prefixes of its own,
- * then its prefixes, multiple bonds and free-valence locant (a halogen,
- * R-5a1, has none of them).
+ * then its prefixes, multiple bonds and free-valence locant (a one-atom
+ * group, R-5a1 / R-5a2, has none of them).
  *
  * @param {object} sub - A SubstituentSpec.
  * @param {Map<object, number>|null} values - Placement values, or null.
  * @returns {object|null} The first error, or null.
  */
 function checkSubstituent(sub, values) {
-  if (sub.kind === 'halogen') {
+  if (isAtomGroup(sub.kind)) {
     return null;
   }
   if (sub.kind === 'retained') {
@@ -284,13 +296,14 @@ function checkSubstituent(sub, values) {
 } // End of function checkSubstituent()
 
 /**
- * Carbons of a branch, its own prefixes included (none for a halogen, R-5a1).
+ * Carbons of a branch, its own prefixes included (none for a one-atom
+ * group: a halogen, R-5a1; `hidroxi`, R-5a2).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
  */
 function substituentCarbons(sub) {
-  if (sub.kind === 'halogen') {
+  if (isAtomGroup(sub.kind)) {
     return 0;
   }
   if (sub.kind === 'retained') {
@@ -312,13 +325,14 @@ function prefixCarbons(prefixes) {
 
 /**
  * Atoms build() creates for one occurrence of a branch, its own prefixes
- * included: its carbons, and one atom per halogen (R-5a1).
+ * included: its carbons, and one atom per one-atom group (a halogen, R-5a1;
+ * the oxygen of `hidroxi`, R-5a2).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
  */
 function substituentAtoms(sub) {
-  if (sub.kind === 'halogen') {
+  if (isAtomGroup(sub.kind)) {
     return 1;
   }
   if (sub.kind === 'retained') {
@@ -360,15 +374,27 @@ export function specCarbons(spec) {
 }
 
 /**
+ * The oxygens of a NameSpec's suffix groups (R-5a2: one per OH; none
+ * without a suffix).
+ *
+ * @param {object} spec - A NameSpec.
+ * @returns {number} The count.
+ */
+function suffixAtomCount(spec) {
+  return spec.suffix ? spec.suffix.slots.length : 0;
+}
+
+/**
  * Heavy atoms of the molecule a NameSpec describes (independent of the
- * locants): its carbons and its halogens (R-5a1), as model/validate.js
- * counts them against MAX_HEAVY_ATOMS.
+ * locants): its carbons, its halogens (R-5a1) and its oxygens (R-5a2:
+ * `hidroxi` and the suffix's OH groups), as model/validate.js counts them
+ * against MAX_HEAVY_ATOMS.
  *
  * @param {object} spec - A NameSpec.
  * @returns {number} The count.
  */
 export function specAtoms(spec) {
-  return spec.parent.length + prefixAtomCount(spec.prefixes) + prefixAtomCount(templateGroups(spec));
+  return spec.parent.length + prefixAtomCount(spec.prefixes) + prefixAtomCount(templateGroups(spec)) + suffixAtomCount(spec);
 }
 
 /**
@@ -436,7 +462,7 @@ export function specRings(spec) {
 function ringOnRing(owner, ring) {
   return owner.prefixes.some((prefix) => {
     const sub = prefix.substituent;
-    return (ring && isRing(sub.kind)) || (sub.kind !== 'retained' && ringOnRing(sub, isRing(sub.kind)));
+    return (ring && isRing(sub.kind)) || (hasOwnChain(sub) && ringOnRing(sub, isRing(sub.kind)));
   });
 }
 
@@ -457,10 +483,10 @@ export function ringRefusal(spec) {
 /**
  * The structural errors that need no placement, or that a placement's
  * values give (design.md §15.6): retained words with prefixes, ranges (a
- * template's own locants too, R-4c),
- * repeated bonds (left-out slots without a value are skipped, except that
- * a multiple bond on a one-carbon chain has nowhere to go), then the
- * carbon cap and the heavy-atom cap (halogens, R-5a1).
+ * template's own locants too, R-4c), repeated bonds (left-out slots without
+ * a value are skipped, except that a multiple bond on a one-carbon chain has
+ * nowhere to go), the ranges of the suffix's locants (R-5a2), then the
+ * carbon cap and the heavy-atom cap (halogens, R-5a1; oxygens, R-5a2).
  *
  * @param {object} spec - A NameSpec (interpret.js).
  * @param {Map<object, number>|null} [values] - Placement values by slot (none: the supplied and implicit slots only).
@@ -472,13 +498,15 @@ export function checkSpec(spec, values = null) {
     branch: false,
     ring: isRing(spec.parent.kind),
     benzene: spec.parent.kind === 'benzene',
-    template: spec.parent.template ? spec.parent.template.word.text : null,
+    // «El anillo del xileno tiene 6 carbonos…» (R-4c); «El anillo del fenol…» (R-5a2).
+    template: (spec.parent.template && spec.parent.template.word.text) || (spec.suffix && spec.suffix.phenol ? spec.suffix.word.text : null),
     double: spec.parent.double,
     triple: spec.parent.triple,
   };
-  // The template's own groups come after the prefixes in the tiles (`4-metil-1,2-xileno`).
+  // The template's own groups come after the prefixes in the tiles (`4-metil-1,2-xileno`), the suffix after the parent's
+  // bonds (`but-3-en-2-ol`, R-5a2).
   const error = checkPrefixes(spec.prefixes, parent, values) || checkPrefixes(templateGroups(spec), parent, values)
-    || checkBonds(parent, values);
+    || checkBonds(parent, values) || checkSuffix(spec, parent, values);
   if (error) {
     return error;
   }
@@ -492,15 +520,34 @@ export function checkSpec(spec, values = null) {
 } // End of function checkSpec()
 
 /**
+ * Checks the suffix's carbon slots against the parent (R-5a2): each within
+ * it (LOCANT_RANGE).
+ *
+ * @param {object} spec - A NameSpec.
+ * @param {{length: number, branch: boolean}} parent - The parent, as checkSpec() describes it.
+ * @param {Map<object, number>|null} values - Placement values, or null.
+ * @returns {object|null} The first error, or null.
+ */
+function checkSuffix(spec, parent, values) {
+  for (const slot of spec.suffix ? spec.suffix.slots : []) {
+    const error = checkCarbon(slot, parent, values);
+    if (error) {
+      return error;
+    }
+  }
+  return null;
+}
+
+/**
  * The bond order with which a branch attaches to the carbon it hangs from:
- * its `il` (1) or `iliden` (2), its retained template's, or 1 for a halogen
- * (R-5a1).
+ * its `il` (1) or `iliden` (2), its retained template's, or 1 for a one-atom
+ * group (a halogen, R-5a1; `hidroxi`, R-5a2).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} 1 or 2.
  */
 export function attachmentOrder(sub) {
-  if (sub.kind === 'halogen') {
+  if (isAtomGroup(sub.kind)) {
     return 1;
   }
   return sub.kind === 'retained' ? RETAINED_TEMPLATES[sub.retained].order : sub.freeValence.order;
@@ -508,13 +555,14 @@ export function attachmentOrder(sub) {
 
 /**
  * Tells whether a branch has a chain or ring of its own, numbered, that the
- * search models (search.js): not a retained word, nor a halogen (R-5a1).
+ * search models (search.js): not a retained word, nor a one-atom group (a
+ * halogen, R-5a1; `hidroxi`, R-5a2).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {boolean} True for a chain, ring or phenyl branch.
  */
 export function hasOwnChain(sub) {
-  return sub.kind !== 'retained' && sub.kind !== 'halogen';
+  return sub.kind !== 'retained' && !isAtomGroup(sub.kind);
 }
 
 /**
@@ -575,15 +623,15 @@ function buildChain(state, owner, branch) {
 } // End of function buildChain()
 
 /**
- * Creates a branch: a halogen atom (R-5a1), a retained word from its
- * template, or a chain.
+ * Creates a branch: a one-atom group (a halogen atom, R-5a1; the oxygen of
+ * `hidroxi`, R-5a2), a retained word from its template, or a chain.
  *
  * @param {object} state - Build state.
  * @param {object} sub - A SubstituentSpec.
  * @returns {{attach: number, order: number, tiles: [number, number]}} The atom with the free valence, its bond order and the tiles that set it.
  */
 function buildSubstituent(state, sub) {
-  if (sub.kind === 'halogen') {
+  if (isAtomGroup(sub.kind)) {
     const atom = addAtom(state.mol, {}, sub.element);
     state.atoms.set(atom, { locant: 1, branch: true, added: [] }); // One bond: never over its valence.
     return { attach: atom, order: 1, tiles: sub.tiles };
@@ -660,7 +708,8 @@ function attachPrefixes(state, prefixes, atoms, record = null, template = null) 
  * placementReading() keeps: buildSubstituent() creates the branch's own
  * chain first (a retained word's whole template), then attachPrefixes()
  * each own prefix's occurrences one after another, in tile order, each
- * with all of its atoms before the next (a halogen is its one atom, R-5a1).
+ * with all of its atoms before the next (a one-atom group is its one atom,
+ * R-5a1, R-5a2).
  * For the diagnosis (diagnose.js), which compares branches inside a compound
  * branch by their structure.
  *
@@ -677,6 +726,45 @@ export function ownPrefixAtoms(sub, atoms) {
     return slice;
   }));
 }
+
+/**
+ * The group the `fenol` word places at its carbon 1, as the VALENCE message
+ * says it (R-5a2: «…en el fenol, ese carbono ya lleva un grupo OH»).
+ */
+const PHENOL_GROUP = 'grupo OH';
+
+/**
+ * Puts the oxygen of each suffix group on its parent carbon (R-5a2: the OH
+ * of an alcohol, single-bonded). A slot the parent's word places by rule
+ * (the OH of `fenol`, implicit) is the ring's own, as a template's group:
+ * it adds no bond order to blame, and its carbon remembers the word for the
+ * VALENCE message.
+ *
+ * @param {object} state - Build state.
+ * @param {object|null} suffix - The NameSpec's SuffixSpec, or null.
+ * @param {number[]} atoms - The parent's atoms in locant order.
+ * @returns {{locant: number, parentAtom: number, attachment: number, bond: number, tiles: [number, number]}[]} One entry per
+ *   suffix group, in slot order: its carbon, its oxygen and the bond between them.
+ */
+function attachSuffix(state, suffix, atoms) {
+  if (!suffix) {
+    return [];
+  }
+  const { mol, values } = state;
+  return suffix.slots.map((slot) => {
+    const locant = slotValue(slot, values);
+    const target = atoms[locant - 1];
+    const oxygen = addAtom(mol, {}, HYDROXY_ELEMENT);
+    state.atoms.set(oxygen, { locant: 1, branch: true, added: [] }); // One bond: never over its valence.
+    const bond = addBond(mol, target, oxygen, 1);
+    if (slot.kind === 'implicit') {
+      state.atoms.get(target).template = { word: suffix.word.text, group: PHENOL_GROUP };
+    } else {
+      contribute(state, target, slot.tiles, 1);
+    }
+    return { locant, parentAtom: target, attachment: oxygen, bond, tiles: [slot.tiles[0], slot.tiles[1]] };
+  });
+} // End of function attachSuffix()
 
 /**
  * The ids handed out between two counter values (model/molecule.js hands
@@ -730,11 +818,12 @@ function valenceError(state) {
  *
  * @param {object} spec - A NameSpec (interpret.js).
  * @param {number[]} [placement] - One value per `spec.leftOut` entry (empty when there is none).
- * @returns {{ok: true, molecule: object, studentParent: {atoms: number[], bonds: number[]}, prefixAtoms: object[]}
- *   |{ok: false, error: {code: string, message: string, tiles: [number, number]}}} The molecule (atoms without
- *   meaningful coordinates), the parent's atoms and bonds in the student's locant order, and per prefix occurrence
- *   `{prefix, occurrence, tiles, locant, parentAtom, attachment, bond, atoms, bonds}` (the branch's atoms and inner
- *   bonds; `bond` joins `attachment` to `parentAtom`) — or the first structural error.
+ * @returns {{ok: true, molecule: object, studentParent: {atoms: number[], bonds: number[]}, prefixAtoms: object[],
+ *   suffixAtoms: object[]}|{ok: false, error: {code: string, message: string, tiles: [number, number]}}} The molecule
+ *   (atoms without meaningful coordinates), the parent's atoms and bonds in the student's locant order, per prefix
+ *   occurrence `{prefix, occurrence, tiles, locant, parentAtom, attachment, bond, atoms, bonds}` (the branch's atoms and
+ *   inner bonds; `bond` joins `attachment` to `parentAtom`), and per suffix group (R-5a2) `{locant, parentAtom,
+ *   attachment, bond, tiles}` (`attachment` its oxygen) — or the first structural error.
  * @throws {Error} When the placement does not give one value per left-out slot.
  */
 export function build(spec, placement = []) {
@@ -748,6 +837,7 @@ export function build(spec, placement = []) {
   }
   const state = { mol: createMolecule(), values, atoms: new Map(), tiles: spec.tiles };
   const parent = buildChain(state, { ...spec.parent, prefixes: [] }, false);
+  const suffixAtoms = attachSuffix(state, spec.suffix, parent.atoms); // `propan-2-ol`, `fenol` (R-5a2).
   if (spec.parent.template) {
     attachPrefixes(state, spec.parent.template.groups, parent.atoms, null, spec.parent.template); // `tolueno`'s methyl…
   }
@@ -762,5 +852,5 @@ export function build(spec, placement = []) {
   if (chain > MAX_CHAIN) {
     return { ok: false, error: buildError('TOO_BIG', VALIDATION_MESSAGES.TOO_BIG, spec.tiles) };
   }
-  return { ok: true, molecule: state.mol, studentParent: { atoms: parent.atoms, bonds: parent.bonds }, prefixAtoms };
+  return { ok: true, molecule: state.mol, studentParent: { atoms: parent.atoms, bonds: parent.bonds }, prefixAtoms, suffixAtoms };
 } // End of function build()

@@ -4,7 +4,8 @@
  * ano`, with `START` / `END` for the compound-branch controls, and reads
  * the open-chain, `ciclo` and benzene hydrocarbon rows of
  * tests/fixtures/names.tsv (the benzene ones with the retained templates
- * and the orto/meta/para forms, R-4c) and their halogen derivatives (R-5a1).
+ * and the orto/meta/para forms, R-4c), their halogen derivatives (R-5a1)
+ * and their alcohols (R-5a2).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -12,7 +13,8 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
-import { RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES } from '../../src/naming/lexicon.es.js';
+import { RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES } from '../../src/naming/lexicon.es.js';
+import { parseSmiles } from '../../src/model/smiles.js';
 
 /** The fixture table (design.md §4.8). */
 const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'names.tsv');
@@ -59,17 +61,85 @@ export function isHalogenDerivative(smiles) {
 }
 
 /**
- * Tells whether a name is written with the syntax of phase R-4a: a `ciclo`
- * name (its parent or a branch a `ciclo` ring), letters without accents,
- * digits, hyphens, commas and enclosing marks only, and no compound locant
- * of a ring's closing bond (`1(3)`, the locant control of R-5a). Benzene
- * and `fenil` names (R-4b) have no `ciclo`.
+ * Tells whether a molecule is an alcohol of a hydrocarbon or of one of its
+ * halogen derivatives (phase R-5a2): carbons, halogens and at least one
+ * oxygen, every oxygen an OH — single-bonded to one carbon and nothing else
+ * (so no C=O, ether, ester or acid) —, and no other element.
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @returns {boolean} True for an alcohol.
+ */
+export function isAlcoholMolecule(mol) {
+  const bonds = [...mol.bonds.values()];
+  let oxygens = 0;
+  for (const [id, atom] of mol.atoms) {
+    if (!['C', 'F', 'Cl', 'Br', 'I', 'O'].includes(atom.element)) {
+      return false;
+    }
+    if (atom.element !== 'O') {
+      continue;
+    }
+    oxygens += 1;
+    const own = bonds.filter((bond) => bond.a === id || bond.b === id);
+    const other = own.length === 1 ? (own[0].a === id ? own[0].b : own[0].a) : null;
+    if (own.length !== 1 || own[0].order !== 1 || mol.atoms.get(other).element !== 'C') {
+      return false;
+    }
+  } // End of the loop over the atoms
+  return oxygens > 0;
+} // End of function isAlcoholMolecule()
+
+/**
+ * Tells whether a fixture SMILES is an alcohol (isAlcoholMolecule(), phase
+ * R-5a2); a SMILES the model cannot read is not.
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True for an alcohol.
+ */
+export function isAlcohol(smiles) {
+  try {
+    return isAlcoholMolecule(parseSmiles(smiles));
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * The retained names of alcohols and phenols the tiles of phase R-5a2 do not
+ * write (the phenol templates of R-5a3 — `o-cresol`, `pirocatecol`,
+ * `catecol`, `resorcinol`, `hidroquinona` — and the class name `alcohol
+ * bencílico`), from the lexicon.
+ */
+const LATER_ALCOHOL_WORDS = Object.freeze([
+  TRADITIONAL_NAMES.oCresol.slice(2), TRADITIONAL_NAMES.benzylAlcohol.split(' ')[0], BENZENE_DIGROUP_NAMES.catechol,
+  BENZENE_DIGROUP_NAMES.resorcinol, BENZENE_DIGROUP_NAMES.hydroquinone,
+]);
+
+/**
+ * Tells whether a name of an alcohol is written with the tiles of phase
+ * R-5a2: none of the retained names left for R-5a3 (LATER_ALCOHOL_WORDS).
  *
  * @param {string} name - A name.
- * @returns {boolean} True when R-4a reads it.
+ * @returns {boolean} True when R-5a2 reads it.
  */
-export function isCycloName(name) {
-  return name.includes(RING_PREFIX) && /^[a-z0-9,()[\]{}-]+$/.test(name) && !/\d\(\d/.test(name);
+export function isAlcoholName(name) {
+  return !LATER_ALCOHOL_WORDS.some((word) => name.includes(word));
+}
+
+/**
+ * Tells whether a name is written with the syntax of phase R-4a: a `ciclo`
+ * name (its parent or a branch a `ciclo` ring), letters without accents,
+ * digits, hyphens, commas and enclosing marks only, and — unless `closing`
+ * — no compound locant of a ring's closing bond (`1(3)`, the `1(n)` tile of
+ * R-5a2, which the mutation sweeps of the diagnosis tests do not rewrite).
+ * Benzene and `fenil` names (R-4b) have no `ciclo`.
+ *
+ * @param {string} name - A name.
+ * @param {boolean} [closing] - Accept the compound locant `1(3)` too (R-5a2; default false).
+ * @returns {boolean} True when R-4a (with `closing`, R-5a2) reads it.
+ */
+export function isCycloName(name, closing = false) {
+  return name.includes(RING_PREFIX) && /^[a-z0-9,()[\]{}-]+$/.test(name) && (closing || !/\d\(\d/.test(name));
 }
 
 /** The words of the retained templates (R-4c): `tolueno`, `estireno`, `xileno`, `mesitileno`. */
@@ -177,6 +247,10 @@ export function leafIndices(node) {
       case 'parent':
         out.push(...n.legacy, ...(n.letter === null ? [] : [n.letter]), ...(n.legacyMultiplier === null ? [] : [n.legacyMultiplier]));
         visit(n.chain);
+        visit(n.suffix); // R-5a2
+        break;
+      case 'suffix':
+        out.push(...n.locants, ...(n.multiplier === null ? [] : [n.multiplier]), n.tile);
         break;
       case 'prefix':
         out.push(...n.locants, ...(n.letter === null ? [] : [n.letter]), ...(n.multiplier === null ? [] : [n.multiplier]));
@@ -195,7 +269,7 @@ export function leafIndices(node) {
         n.segments.forEach((s) => out.push(...s.locants, ...(s.multiplier === null ? [] : [s.multiplier]), s.ending));
         out.push(...n.fvLocants, ...(n.fv === null ? [] : [n.fv]));
         break;
-      default: // 'retained', 'halogen', 'benzene', 'template', 'stray'
+      default: // 'retained', 'halogen', 'hydroxy', 'benzene', 'template', 'stray'
         out.push(n.tile);
     }
   }; // End of function visit()

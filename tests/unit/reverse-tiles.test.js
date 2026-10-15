@@ -18,11 +18,11 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import {
   TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, BENZENE_ID, PHENYL_ID, POSITIONAL_IDS, HALOGEN_IDS, TEMPLATES,
-  templateGroupWord, MAX_NUM, MAX_MULT,
+  templateGroupWord, MAX_NUM, MAX_MULT, PHENOL_ID, CLOSING_ID, HYDROXY_ID, OL_ID,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
-  TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES,
+  TRADITIONAL_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM,
 } from '../../src/naming/lexicon.es.js';
 import { bundleModules } from '../../scripts/build.mjs';
 
@@ -52,10 +52,13 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('start'), 1);
   assert.equal(count('end'), 1);
   assert.equal(count('ring'), 1); // ciclo (R-4a)
-  assert.equal(count('benzene'), 1); // benceno (R-4b)
+  assert.equal(count('benzene'), 2); // benceno (R-4b), fenol (R-5a2)
   assert.equal(count('positional'), 3); // o, m, p (R-4c)
   assert.equal(count('template'), 4); // tolueno, estireno, xileno, mesitileno (R-4c)
   assert.equal(count('halogen'), 4); // fluoro, cloro, bromo, yodo (R-5a1)
+  assert.equal(count('hydroxy'), 1); // hidroxi (R-5a2)
+  assert.equal(count('suffix'), 1); // ol (R-5a2)
+  assert.equal(count('closing'), 1); // 1(n) (R-5a2)
   assert.equal(new Set(TILES.map((tile) => tile.id)).size, TILES.length, 'ids are unique');
   assert.equal(new Set(TILES.map((tile) => tile.text)).size, TILES.length, 'texts are unique');
   assert.ok(TILES.every((tile) => Object.isFrozen(tile)));
@@ -74,11 +77,14 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       start: () => ENCLOSING_MARKS[0][0],
       end: () => ENCLOSING_MARKS[0][1],
       ring: () => RING_PREFIX,
-      benzene: () => BENZENE_NAME,
+      benzene: () => (tile.value === 'phenol' ? `${PHENOL_STEM}${GROUP_SUFFIXES.alcohol}` : BENZENE_NAME),
       positional: () => POSITIONAL_LETTERS[tile.value],
       // `xileno`: the word of `1,2-xileno` without the locants the student writes on number tiles.
       template: () => TRADITIONAL_NAMES[TEMPLATES[tile.value].id].replace(/^1,2-/, ''),
       halogen: () => HALOGEN_PREFIXES[tile.value],
+      hydroxy: () => GROUP_PREFIXES[tile.value],
+      suffix: () => GROUP_SUFFIXES[tile.value],
+      closing: () => `1${ENCLOSING_MARKS[0][0]}n${ENCLOSING_MARKS[0][1]}`,
     }[tile.kind]();
     assert.equal(tile.text, expected, tile.id);
   } // End of the loop over the tiles
@@ -113,11 +119,12 @@ test('rows and «más» follow design.md §15.2', () => {
   assert.ok(TILES.filter((tile) => ['ending', 'freeValence', 'retained', 'start', 'end', 'ring', 'benzene', 'positional', 'template',
     'halogen'].includes(tile.kind)).every((tile) => !tile.more));
   assert.deepEqual(TILES.filter((tile) => tile.row === 'rings').map((tile) => tile.id),
-    [RING_ID, BENZENE_ID, PHENYL_ID, ...Object.values(POSITIONAL_IDS)], 'R-4a: the ciclo tile; R-4b: benceno and fenil; R-4c: o, m, p');
+    [RING_ID, BENZENE_ID, PHENOL_ID, PHENYL_ID, ...Object.values(POSITIONAL_IDS), CLOSING_ID],
+    'R-4a: the ciclo tile; R-4b: benceno and fenil; R-4c: o, m, p; R-5a2: fenol and 1(n)');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'traditional').map((tile) => tile.id),
     ['template-toluene', 'template-styrene', 'template-xylene', 'template-mesitylene'], 'R-4c: «Nombres tradicionales»');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'groups').map((tile) => tile.id),
-    ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I'], 'R-5a1: «Grupos», the halogens');
+    ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID], 'R-5a1: «Grupos», the halogens; R-5a2: hidroxi, ol');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'branches' && tile.kind === 'retained').map((tile) => tile.value),
     ['isopropyl', 'isopropylidene', 'tert-butyl']);
 });
@@ -135,6 +142,10 @@ test('tileById, tileId and toTiles', () => {
   assert.equal(tileId('positional', 4), POSITIONAL_IDS[4]);
   assert.equal(tileId('template', 'xylene'), 'template-xylene');
   assert.equal(tileId('halogen', 'Cl'), HALOGEN_IDS.Cl);
+  assert.equal(tileId('benzene', 'phenol'), PHENOL_ID);
+  assert.equal(tileId('hydroxy', 'alcohol'), HYDROXY_ID);
+  assert.equal(tileId('suffix', 'alcohol'), OL_ID);
+  assert.equal(tileId('closing'), CLOSING_ID);
   assert.deepEqual(toTiles(['num-2', tileById('mult-2')]).map((tile) => tile.text), ['2', 'di']);
   assert.throws(() => tileById('root-31'), /unknown tile/);
   assert.throws(() => tileId('mult', 1), /no mult tile/);

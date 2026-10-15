@@ -1,12 +1,23 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
- * `estireno`, `xileno`, `mesitileno` and the orto/meta/para letters) and
- * their halogen derivatives (`fluoro`, `cloro`, `bromo`, `yodo` prefixes,
- * also inside compound branches: `(2-cloroetil)`). Pure, no DOM.
+ * `estireno`, `xileno`, `mesitileno` and the orto/meta/para letters), their
+ * halogen derivatives (`fluoro`, `cloro`, `bromo`, `yodo` prefixes, also
+ * inside compound branches: `(2-cloroetil)`) and their alcohols (R-5a2: the
+ * suffix `ol` on chains, rings and `benceno`, `fenol`, the prefix `hidroxi`,
+ * the closing-bond locant `1(6)`). Pure, no DOM.
+ *
+ * The alcohols need nothing of their own here either: the suffix's OH
+ * groups are built on the parent (build.js) and searched like a prefix's
+ * carbon slots (search.js), so `etanol`, `ciclohexanol`, `fenol` are
+ * `correct`, `propanol` `ambiguous` («puede ser propan-1-ol o
+ * propan-2-ol»); the filled comparison keeps the suffix's locants out
+ * together with the prefixes' (search.js fillVariants()), as the engine
+ * omits them; `p-metilfenol` is the engine's positional alternative. The
+ * old-style `2-propanol` gets the note «…hoy se escribe «propan-2-ol»».
  *
  * The halogens need nothing of their own here either: they are prefixes
  * like any branch (build.js adds one atom each; search.js places left-out
@@ -156,6 +167,8 @@ export const VERDICT_TEXTS = Object.freeze({
  *   outOfScope name with too many rings, or whose every structure the engine refuses).
  * @property {{atoms: number[], bonds: number[]}|null} studentParent - The parent in the student's locant order (with `molecule`).
  * @property {object[]} prefixAtoms - Atoms of each prefix occurrence (build.js build()); [] without `molecule`.
+ * @property {object[]} suffixAtoms - The carbon and oxygen of each suffix group (R-5a2, build.js build()); [] without
+ *   `molecule` or without a suffix.
  * @property {object|null} naming - The engine's whole result (nameMolecule(); a refusal for outOfScope), when named.
  * @property {VerdictError[]} errors - `invalid`: the parser's errors, or the one structural error; else [].
  * @property {string[]} notes - Extra lines shown beside the verdict (the old-style note).
@@ -180,14 +193,19 @@ export function sameName(a, b) {
 
 /**
  * The modern writing of an old-style name: its old-style locants moved
- * behind the root, into the segment they belong to (`2-buteno` →
- * `but-2-eno`, `1,3-butadieno` → `buta-1,3-dieno`), assembled from the tree.
+ * behind the root, into the segment or the suffix they belong to
+ * (`2-buteno` → `but-2-eno`, `1,3-butadieno` → `buta-1,3-dieno`,
+ * `2-propanol` → `propan-2-ol`), assembled from the tree.
  *
  * @param {object} tree - An error-free parse() tree with old-style locants.
  * @returns {string} The text.
  */
 export function modernText(tree) {
   const { parent } = tree;
+  if (parent.legacySuffix) {
+    // `2-propanol` → `propan-2-ol`, `1,2-bencenodiol` → `benceno-1,2-diol` (R-5a2).
+    return assemble({ ...tree, parent: { ...parent, legacy: [], legacySuffix: false, suffix: { ...parent.suffix, locants: parent.legacy } } }).text;
+  }
   const segments = parent.chain.segments.map((segment, i) => (i === parent.legacySegment ? { ...segment, locants: parent.legacy } : segment));
   return assemble({ ...tree, parent: { ...parent, legacy: [], chain: { ...parent.chain, segments } } }).text;
 }
@@ -254,6 +272,7 @@ function verdict(kind, message, assembled, extra = {}) {
     molecule: null,
     studentParent: null,
     prefixAtoms: [],
+    suffixAtoms: [],
     naming: null,
     errors: [],
     notes: [],

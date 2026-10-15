@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -9,10 +9,13 @@
  * Every locant position of the name is a **slot** typed by how the student
  * gave it (design.md §15.5.3 step 2):
  *
- * - `supplied` — written by the student (a number tile), also the
- *   old-style locants written before the root (`2-buteno`), which belong to
- *   the one segment without locants of their own (parse.js
- *   `legacySegment`); the name is then marked `oldStyle`; and the positions
+ * - `supplied` — written by the student (a number tile; the closing-bond
+ *   locant `1(n)` of a ring, R-5a2, is the ring's bond n, the one from
+ *   carbon n to carbon 1, with `closing` n), also the
+ *   old-style locants written before the root (`2-buteno`, `2-propanol`),
+ *   which belong to the one segment or suffix without locants of their own
+ *   (parse.js `legacySegment`, `legacySuffix`); the name is then marked
+ *   `oldStyle`; and the positions
  *   an orto/meta/para letter stands for (R-4c: `o-dimetilbenceno` 1 and 2,
  *   `p-metiltolueno` 4, `o-xileno` 1 and 2), each slot of the letter's tile
  *   with `letter` set;
@@ -20,8 +23,9 @@
  *   free valence at the branch's carbon 1 (on a ring branch too:
  *   `ciclohexil`, `ciclohexiliden`), and so does `fenil` (R-4b); a retained
  *   template's groups are at the carbons it says (R-4c: `tolueno` 1,
- *   `mesitileno` 1, 3 and 5);
- * - `leftOut` — not written: a prefix or a segment without its locants.
+ *   `mesitileno` 1, 3 and 5), and the OH of `fenol` at carbon 1 (R-5a2);
+ * - `leftOut` — not written: a prefix, a segment or a suffix without its
+ *   locants (`etanol`, `ciclohexanol`, `propanol`, R-5a2).
  *   build.js needs a value for each, the *placement*, which search.js
  *   searches (R-1c).
  *
@@ -51,6 +55,18 @@
  * role, `carbon` or `phenylCarbon`), so its left-out locants are searched
  * like a branch's.
  *
+ * `hidroxi` (R-5a2) is such a one-atom branch too, kind 'hydroxy', its atom
+ * an oxygen (tiles.js HYDROXY_ELEMENT; its hydrogen implicit).
+ *
+ * The alcohol suffix (R-5a2: `ol`, after a chain, a `ciclo` ring or
+ * `benceno`) is the name's `suffix`: one carbon slot per OH on the parent
+ * (role `carbon`, the parent's carbons 1…n, as a prefix's; design.md
+ * §15.5.3 step 2), its multiplier, the `ol` tile. `fenol` is the benzene
+ * parent with that suffix already placed: one implicit slot at carbon 1 on
+ * the `fenol` tile (`phenol` set), so the student's prefixes are numbered
+ * from it (`4-metilfenol`) and an orto/meta/para letter counts it
+ * (`p-metilfenol`: the methyl at 4).
+ *
  * A retained template (R-4c, tiles.js TEMPLATES: `tolueno`, `estireno`,
  * `xileno`, `mesitileno`) is a benzene parent too, kind 'benzene', whose
  * `template` holds its own groups as PrefixSpecs (a methyl, the ethenyl of
@@ -66,7 +82,8 @@
  */
 
 import { slotDomain } from './search.js';
-import { TEMPLATES } from './tiles.js';
+import { TEMPLATES, HYDROXY_ELEMENT, isAtomGroup } from './tiles.js';
+import { isPhenol } from './parse.js';
 
 /**
  * A locant position (design.md §15.4).
@@ -78,6 +95,8 @@ import { TEMPLATES } from './tiles.js';
  * @property {[number, number]} domain - Values the role allows on its chain, `[min, max]` inclusive (min > max when none).
  * @property {[number, number]} tiles - Tile range `[from, to)` it comes from.
  * @property {boolean} [letter] - Given by an orto/meta/para letter (R-4c; a supplied slot).
+ * @property {number} [closing] - Written as the closing-bond locant `1(n)` (R-5a2; a supplied ring-bond slot): the ring's
+ *   carbons n, which is also its `value` (bond n joins carbon n to carbon 1).
  */
 
 /**
@@ -98,18 +117,19 @@ import { TEMPLATES } from './tiles.js';
  * tert-butil; build.js knows their atoms) or a halogen atom (R-5a1).
  *
  * @typedef {object} SubstituentSpec
- * @property {'chain'|'ring'|'phenyl'|'retained'|'halogen'} kind - A numbered chain, a numbered ring (`ciclohexil`), a
- *   benzene ring bonded by its carbon 1 (`fenil`), a retained word or a halogen atom (`cloro`).
- * @property {number|null} length - Carbons of the chain or ring (6 for a phenyl; null for a retained word or a halogen).
+ * @property {'chain'|'ring'|'phenyl'|'retained'|'halogen'|'hydroxy'} kind - A numbered chain, a numbered ring (`ciclohexil`),
+ *   a benzene ring bonded by its carbon 1 (`fenil`), a retained word, a halogen atom (`cloro`) or the oxygen of `hidroxi`.
+ * @property {number|null} length - Carbons of the chain or ring (6 for a phenyl; null for a retained word or a one-atom group).
  * @property {{slot: Slot, order: 1|2}|null} freeValence - Where the branch attaches and with which bond order (`il` 1, `iliden` 2;
- *   a phenyl's carbon 1, order 1); null for a retained word or a halogen (bonded by a single bond).
+ *   a phenyl's carbon 1, order 1); null for a retained word or a one-atom group (bonded by a single bond).
  * @property {Slot[]} double - Double-bond slots of the branch's chain or ring.
  * @property {Slot[]} triple - Triple-bond slots of the branch's chain or ring.
  * @property {PrefixSpec[]} prefixes - Prefixes of a compound branch, numbered on its own chain.
  * @property {string|null} retained - Retained-name id (lexicon RETAINED_PREFIXES key; 'phenyl' for a phenyl), or null.
- * @property {{text: string, tiles: [number, number]}|null} word - The retained word or the halogen as on its tile and its
- *   tile range (for messages), or null.
- * @property {string} [element] - A halogen's element symbol ('F', 'Cl', 'Br', 'I'; the tile's value), on a halogen only.
+ * @property {{text: string, tiles: [number, number]}|null} word - The retained word or the one-atom group as on its tile and
+ *   its tile range (for messages), or null.
+ * @property {string} [element] - A one-atom group's element symbol: a halogen's ('F', 'Cl', 'Br', 'I'; the tile's value), or
+ *   'O' for `hidroxi` (R-5a2); on those only.
  * @property {boolean} compound - Written as a compound branch (START … END).
  * @property {[number, number]} tiles - Tile range of the branch.
  */
@@ -137,17 +157,30 @@ import { TEMPLATES } from './tiles.js';
  */
 
 /**
+ * The principal characteristic group cited as a suffix (R-5a2: `ol`).
+ *
+ * @typedef {object} SuffixSpec
+ * @property {'alcohol'} kind - The group (lexicon GROUP_SUFFIXES key).
+ * @property {Slot[]} slots - One carbon slot of the parent per group, in the student's order (`fenol`: one implicit at 1).
+ * @property {{count: number, compound: boolean}} multiplier - The student's multiplier (count 1 without one).
+ * @property {{text: string, tiles: [number, number]}} word - The suffix as on its tile (`ol`; the `fenol` tile for `fenol`).
+ * @property {boolean} phenol - The OH of `fenol`, placed by the parent's word.
+ * @property {[number, number]} tiles - Tile range of the suffix (its locants, multiplier and `ol`; the `fenol` tile).
+ */
+
+/**
  * The reading of a whole name (design.md §15.4).
  *
  * @typedef {object} NameSpec
  * @property {ParentSpec} parent - The parent chain or ring.
  * @property {PrefixSpec[]} prefixes - The prefixes in the student's order.
- * @property {null} suffix - Principal characteristic group (from R-5a; none for hydrocarbons).
+ * @property {SuffixSpec|null} suffix - The principal characteristic group cited as a suffix (R-5a2: the alcohol's `ol`, or the
+ *   OH of `fenol`), or null.
  * @property {null} classWord - `ácido`… (from R-5d; none for hydrocarbons).
  * @property {null} ester - The O-bound side of an ester (from R-6a).
  * @property {{value: string, tiles: [number, number]}|null} traditional - A traditional name tile: the retained template
  *   (R-4c; its TEMPLATES key and tile range), or null.
- * @property {boolean} oldStyle - Old-style locants before the root (`2-buteno`).
+ * @property {boolean} oldStyle - Old-style locants before the root (`2-buteno`, `2-propanol`, `1,2-bencenodiol`).
  * @property {[number, number]} tiles - The whole tile range.
  * @property {Slot[]} leftOut - Every left-out slot, in tile order: the placement of build.js gives one value per entry.
  */
@@ -171,8 +204,9 @@ function makeSlot(kind, value, role, length, tiles) {
 }
 
 /**
- * The slots of one locant list: one supplied slot per number tile, or as
- * many left-out slots as the multiplier says when the list is missing.
+ * The slots of one locant list: one supplied slot per number tile (the
+ * closing-bond locant `1(n)` of a ring, R-5a2, is its bond n), or as many
+ * left-out slots as the multiplier says when the list is missing.
  *
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
  * @param {number[]} locants - Number tile indices (may be empty).
@@ -184,12 +218,18 @@ function makeSlot(kind, value, role, length, tiles) {
  */
 function locantSlots(ctx, locants, count, role, length, missing) {
   if (locants.length > 0) {
-    return locants.map((index) => makeSlot('supplied', ctx.tiles[index].value, role, length, [index, index + 1]));
+    return locants.map((index) => {
+      if (ctx.tiles[index].kind === 'closing') {
+        // `1(6)` (R-5a2): the ring's bond n, from carbon n to carbon 1 (parse.js allows it on a ring's segments only).
+        return { ...makeSlot('supplied', length, role, length, [index, index + 1]), closing: length };
+      }
+      return makeSlot('supplied', ctx.tiles[index].value, role, length, [index, index + 1]);
+    });
   }
   const slots = Array.from({ length: count }, () => makeSlot('leftOut', null, role, length, missing));
   ctx.leftOut.push(...slots);
   return slots;
-}
+} // End of function locantSlots()
 
 /**
  * The slots of an orto/meta/para letter (R-4c, design.md §14.4): the ring
@@ -365,39 +405,41 @@ function wordSubstituent(ctx, tile, items, compound, range) {
 }
 
 /**
- * The SubstituentSpec of a halogen tile (R-5a1): one atom, no chain, no
- * slot or prefix of its own (parse.js never makes it a branch's own chain).
+ * The SubstituentSpec of a one-atom group tile — a halogen (R-5a1) or
+ * `hidroxi` (R-5a2, an oxygen): one atom, no chain, no slot or prefix of
+ * its own (parse.js never makes it a branch's own chain).
  *
  * @param {{tiles: object[]}} ctx - Interpreter context.
- * @param {number} tile - The halogen tile index.
+ * @param {number} tile - The group's tile index.
  * @returns {SubstituentSpec} The branch.
  */
-function halogenSubstituent(ctx, tile) {
+function atomGroupSubstituent(ctx, tile) {
+  const { kind, value, text } = ctx.tiles[tile];
   return {
-    kind: 'halogen',
+    kind,
     length: null,
     freeValence: null,
     double: [],
     triple: [],
     prefixes: [],
     retained: null,
-    word: { text: ctx.tiles[tile].text, tiles: [tile, tile + 1] },
-    element: ctx.tiles[tile].value,
+    word: { text, tiles: [tile, tile + 1] },
+    element: kind === 'hydroxy' ? HYDROXY_ELEMENT : value,
     compound: false,
     tiles: [tile, tile + 1],
   };
-} // End of function halogenSubstituent()
+} // End of function atomGroupSubstituent()
 
 /**
  * The SubstituentSpec of a prefix's substituent node.
  *
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
- * @param {object} node - A chain, retained, halogen or branch node (parse.js).
+ * @param {object} node - A chain, retained, halogen, hydroxy or branch node (parse.js).
  * @returns {SubstituentSpec} The branch.
  */
 function substituentSpec(ctx, node) {
-  if (node.type === 'halogen') {
-    return halogenSubstituent(ctx, node.tile);
+  if (isAtomGroup(node.type)) {
+    return atomGroupSubstituent(ctx, node.tile);
   }
   if (node.type === 'retained') {
     return wordSubstituent(ctx, node.tile, [], false, node.range);
@@ -488,6 +530,46 @@ function templateSpec(ctx, parent) {
 } // End of function templateSpec()
 
 /**
+ * The SuffixSpec of a parent (R-5a2): the `ol` suffix node with its slots on
+ * the parent's carbons — its own locants, the old-style ones before the root
+ * (parse.js `legacySuffix`: `2-propanol`) or as many left-out slots as its
+ * multiplier says (`etanol`, `propanol`) —, or the OH of `fenol` (one
+ * implicit slot at carbon 1, on the `fenol` tile); null without either.
+ *
+ * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
+ * @param {object} parent - The parent node (parse.js).
+ * @returns {SuffixSpec|null} The suffix.
+ */
+function suffixSpec(ctx, parent) {
+  const { chain, suffix } = parent;
+  const length = chain.type === 'chain' ? ctx.tiles[chain.root].value : BENZENE_LENGTH;
+  if (isPhenol(ctx.tiles, chain)) {
+    const own = [chain.tile, chain.tile + 1];
+    return {
+      kind: 'alcohol',
+      slots: [makeSlot('implicit', 1, 'carbon', BENZENE_LENGTH, own)],
+      multiplier: { count: 1, compound: false },
+      word: { text: ctx.tiles[chain.tile].text, tiles: own },
+      phenol: true,
+      tiles: own,
+    };
+  }
+  if (!suffix) {
+    return null;
+  }
+  const multiplier = multiplierOf(ctx.tiles, suffix.multiplier);
+  const locants = parent.legacySuffix ? parent.legacy : suffix.locants;
+  return {
+    kind: ctx.tiles[suffix.tile].value, // 'alcohol' (lexicon GROUP_SUFFIXES key)
+    slots: locantSlots(ctx, locants, multiplier.count, 'carbon', length, suffix.range),
+    multiplier,
+    word: { text: ctx.tiles[suffix.tile].text, tiles: [suffix.tile, suffix.tile + 1] },
+    phenol: false,
+    tiles: [suffix.range[0], suffix.range[1]],
+  };
+} // End of function suffixSpec()
+
+/**
  * Tells whether a tree is one interpret() accepts: a parent, no tile out of
  * place, every prefix complete (what an error-free parse gives).
  *
@@ -511,16 +593,22 @@ export function interpret(tree) {
     throw new Error('interpret: the tree is incomplete (parse() reported errors)');
   }
   const ctx = { tiles: tree.tiles, leftOut: [] };
-  const { chain, legacy, legacySegment } = tree.parent;
-  // `benceno` (R-4b) or a template (R-4c): no segments, no old-style locants (parse.js BENZENE_BONDS, TEMPLATE_LOCANTS).
+  const { chain, legacy, legacySegment, legacySuffix, suffix } = tree.parent;
+  // `benceno` (R-4b), `fenol` (R-5a2) or a template (R-4c): no segments, no old-style locants of their own (parse.js
+  // BENZENE_BONDS, TEMPLATE_LOCANTS; those of a suffix, `1,2-bencenodiol`, are the suffix's).
   const benzene = chain.type === 'benzene' || chain.type === 'template';
   const length = benzene ? BENZENE_LENGTH : ctx.tiles[chain.root].value;
-  const placed = chain.type === 'template' ? TEMPLATES[ctx.tiles[chain.tile].value].positions : null;
+  let placed = chain.type === 'template' ? TEMPLATES[ctx.tiles[chain.tile].value].positions : null;
+  if (isPhenol(ctx.tiles, chain)) {
+    placed = [1]; // The OH of `fenol` (R-5a2), for an orto/meta/para letter: `p-metilfenol` puts the methyl at 4.
+  }
   const prefixes = tree.items.map((item) => prefixSpec(ctx, item, length, 'carbon', placed || []));
   const template = chain.type === 'template' ? templateSpec(ctx, tree.parent) : null; // After the prefixes: tile order.
+  const segmentLegacy = legacy.length > 0 && !legacySuffix ? legacySegment : null;
   const bonds = benzene
     ? { double: [], triple: [] }
-    : segmentSlots(ctx, chain, length, { locants: legacy, segment: legacy.length > 0 ? legacySegment : null });
+    : segmentSlots(ctx, chain, length, { locants: legacy, segment: segmentLegacy });
+  const suffixRead = suffixSpec(ctx, tree.parent); // After the segments: tile order (R-5a2).
   return {
     parent: {
       kind: benzene ? 'benzene' : chainKind(chain),
@@ -528,14 +616,14 @@ export function interpret(tree) {
       double: bonds.double,
       triple: bonds.triple,
       template,
-      tiles: [tree.parent.range[0], tree.parent.range[1]],
+      tiles: [tree.parent.range[0], suffix ? suffix.range[0] : tree.parent.range[1]],
     },
     prefixes,
-    suffix: null,
+    suffix: suffixRead,
     classWord: null,
     ester: null,
     traditional: template ? { value: template.value, tiles: [template.word.tiles[0], template.word.tiles[1]] } : null,
-    oldStyle: chain.type === 'chain' && legacy.length > 0,
+    oldStyle: (chain.type === 'chain' && legacy.length > 0) || legacySuffix,
     tiles: [0, tree.tiles.length],
     leftOut: ctx.leftOut,
   };

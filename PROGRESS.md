@@ -85,7 +85,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-50d | v4 R-4d Ring diagnosis messages (incl. «el anillo es la cadena principal»), shown by the I-49b panel, e2e | same, "R-4" | done — `docs/progress-archive/i-50d.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-50d.md` |
 | I-51a | v4 R-5a Halogens and alcohols | same, "R-5a" | split into I-51a1, I-51a2, I-51a3 | — | — |
 | I-51a1 | v4 R-5a1 Halogen prefixes (`fluoro`/`cloro`/`bromo`/`yodo` tiles, «Grupos» row, search, diagnosis, Ayuda line, e2e) | same, "R-5a" | done — `docs/progress-archive/i-51a1.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-51a1.md` |
-| I-51a2 | v4 R-5a2 Alcohols and phenols (`ol`, `hidroxi`, `fenol`, diol/`tetrol` morphology, the `1(6)` locant control) | same, "R-5a" | queued | — | — |
+| I-51a2 | v4 R-5a2 Alcohols and phenols (`ol`, `hidroxi`, `fenol`, diol/`tetrol` morphology, the `1(6)` locant control) | same, "R-5a" | done — `docs/progress-archive/i-51a2.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-51a2.md` |
 | I-51a3 | v4 R-5a3 Retained phenol templates (`o/m/p-cresol`, `catecol`/`pirocatecol`, `resorcinol`, `hidroquinona`), alcohol diagnosis, Ayuda line, e2e | same, "R-5a" | queued | — | — |
 | I-51b | v4 R-5b Ethers | same, "R-5b" | queued | — | — |
 | I-51c | v4 R-5c Aldehydes and ketones | same, "R-5c" | queued | — | — |
@@ -115,19 +115,18 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select and run I-51a2 (v4 R-5a, second of three sub-phases, design §15.8 row "R-5a"): alcohols and
-phenols in «¿Cómo se dibuja?» — `ol` and `hidroxi` tiles in the «Grupos» row I-51a1 created; the
-suffix with its multipliers (`diol`, `triol`, `tetrol`) and the suffix half of assembler rule 4
-(`propan-2-ol`, `butano-1,4-diol`, `butano-1,2,3,4-tetrol`; deferred from I-47a); the suffix slot
-role (§15.5.3 step 2: carbons, principal-group lowest locants) on chains, rings (`ciclohexanol`)
-and benzene (`fenol`, substituted `4-metilfenol`, `benceno-1,2-diol`, `p-metilfenol` via the I-50c
-letter rule); the `1(6)` / `1(3)` closing-bond locant control (deferred from I-50a: e.g.
-`ciclopropa-1,1(3),2-trieno`, and ring alcohols); `hidroxi` as a prefix where the engine writes it;
-fixture rows with OH and alcohol generators in the round trips; existing diagnosis rules working
-(or deliberately null) with an OH. NOT the retained phenol templates or alcohol-specific diagnosis
-messages (I-51a3). Builds on I-51a1 (`docs/progress-archive/i-51a1.md`). Spec: design §15 + §13.6
-— read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk
-high; worker opus. Commit by explicit paths.
+Select and run I-51a3 (v4 R-5a, last of three sub-phases, design §15.8 row "R-5a"): retained phenol
+templates in the «Nombres tradicionales» row (`o/m/p-cresol`, `catecol`/`pirocatecol`, `resorcinol`,
+`hidroquinona`, per I-50c `TEMPLATES` and the forward engine's aliases — read as alternatives,
+substituted ones as `otherName`); alcohol-specific diagnosis messages filling the deliberate nulls
+I-51a2 left (listed under *Decisions* in `docs/progress-archive/i-51a2.md` and in the «Alcohols»
+header of `src/reverse/diagnose.js`: N0 suffix numbering, OH count / `hidroxi` where the OH is
+principal, ring-vs-chain parent with OH groups, old-style and needless suffix locants, `bencenol`);
+the Ayuda line — update the `#help-name-to-drawing` sentence in `index.html` that still says only
+hydrocarbons and halogen derivatives are read; e2e for templates and an alcohol diagnosis. Builds on
+I-51a2 (`docs/progress-archive/i-51a2.md`). Spec: design §15 + §13.6 + §14.4 — read from the
+working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high; worker opus.
+Commit by explicit paths.
 
 - **Builds on** the R-1 engine (`src/reverse/`: tiles, parser, assembler, tokenizer, `interpret.js`,
   `build.js`, `search.js`, `readName()` — `docs/progress-archive/i-47a.md` … `i-47c.md`), the dialog
@@ -314,14 +313,17 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - Halogens in the reverse engine (I-51a1): `fluoro`/`cloro`/`bromo`/`yodo` tiles in the «Grupos» row
   (`src/reverse/tiles.js`), through the same modules; tests `tests/unit/reverse-halogens.test.js`,
   `tests/e2e/name-builder-halogens.spec.js`.
+- Alcohols in the reverse engine (I-51a2): `hidroxi`/`ol` tiles («Grupos»), `fenol` and `1(n)` tiles
+  («Anillos») in `tiles.js`, suffix morphology in `assemble.js`, nulls in `diagnose.js` («Alcohols»
+  header); tests `tests/unit/reverse-alcohols.test.js`, `tests/e2e/name-builder-alcohols.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-50d: after the review fixes `npm test` 0 (1936) · `npm run check` 0 (175) · `npm run build` 0 ·
-  `npm run e2e -- --reporter=dot` 0 (483, source + dist), no flakes.
 - I-51a1 (orchestrator re-run): `npm test` 0 (1957) · `npm run check` 0 (177) · `npm run build` 0 ·
   `npm run e2e -- --reporter=dot` 0 (489, source + dist), no flakes. Review ship, no fixes.
+- I-51a2 (orchestrator re-run): `npm test` 0 (1980) · `npm run check` 0 (179) · `npm run build` 0 ·
+  `npm run e2e -- --reporter=dot` 0 (495, source + dist), no flakes. Review ship, no fixes.
 
 ## Open risks / deviations
 
@@ -373,18 +375,16 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   brackets → R-5b; tile cap 100; «Tu nombre: …» verdict line not in spec; `ciclohex-1-eno` →
   `otherName`; left-out locants → kindest of up to 16 readings; e2e has load-dependent flakes
   (`diagnosis.spec.js` keyboard, `polish.spec.js` phone toolbar, dist only).
-- I-50d: ring rules share rule numbers with chain rules (1, 2, 4, 11); deliberate nulls for a chain
-  branch of a ring with its own numbering wrong or in an unoffered style, and — after the review
-  fix — for any numbering whose alphabetical tie-break the student's prefix style would order
-  differently (`2-etil-1-(1-metilpropil)benceno` → null even though its numbering is wrong); with
-  left-out locants, a mistake-free reading now nulls the whole diagnosis (chains too, no chain test
-  changed); new Spanish drafts (`docs/progress-archive/i-50d.md`).
-- I-51a1: a branch numbered from its wrong end (`5-(1-metiletan-2-il)nonano`, halogen twin
-  `5-(1-cloroetan-2-il)nonano`) now gets a deliberate null diagnosis instead of a message naming a
-  different molecule (hydrocarbon behaviour change, regression-tested); the engine's 80-heavy-atom
-  cap is checked before building; `triacontafluorotriacontano` with left-out locants → `incomplete`
-  (budget); new Spanish drafts: «Grupos» row label, grouping message «Los sustituyentes iguales…»,
-  Ayuda halogens line (`docs/progress-archive/i-51a1.md`).
+- I-50d, I-51a1: deliberate diagnosis nulls (a chain branch of a ring numbered wrongly or in an
+  unoffered style; tie-breaks the student's prefix style orders differently; a branch numbered from
+  its wrong end, `5-(1-metiletan-2-il)nonano`; with left-out locants, a mistake-free reading nulls
+  the whole diagnosis); ring rules share rule numbers with chain rules; 80-heavy-atom cap checked
+  before building; new Spanish drafts (`docs/progress-archive/i-50d.md`, `i-51a1.md`).
+- I-51a2: `fenol` is one whole-word tile (no locants of its own; `benceno ol` reads → `otherName`);
+  `1(n)` is one tile writing the ring's own size (only before a ring's `eno`/`ino`); deliberate
+  diagnosis nulls for alcohol cases until I-51a3 writes their messages; the Ayuda sentence still says
+  only hydrocarbons and halogen derivatives are read (→ I-51a3); new Spanish drafts (tile hints,
+  `1(n)` tooltip, phenol error texts) pending teacher review (`docs/progress-archive/i-51a2.md`).
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -399,6 +399,6 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-50d `2273264`, pushed. I-51a1 committed and pushed right after this checkpoint (see
+- I-51a1 `4b183e9`, pushed. I-51a2 committed and pushed right after this checkpoint (see
   `git log`). User's uncommitted paths, never ours to commit: `docs/design.md`,
   `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

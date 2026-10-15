@@ -240,8 +240,8 @@ test('closed loop over the ring generators: engine name → tiles → readName()
     const key = canonicalKey(mol);
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
-      if (!isCycloName(name)) {
-        continue; // A compound locant of the closing bond (`ciclopropa-1,1(3),2-trieno`): the locant control of R-5a.
+      if (!isCycloName(name, true)) {
+        continue; // Not a `ciclo` name. Since R-5a2 the compound locant of the closing bond reads too (`ciclopropa-1,1(3),2-trieno`).
       }
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);

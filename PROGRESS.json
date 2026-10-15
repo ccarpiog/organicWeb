@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T00:14:59Z",
+  "updated": "2026-10-15T01:07:04Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -667,9 +667,11 @@
     {
       "id": "I-51a2",
       "title": "v4 R-5a2 Alcohols and phenols",
-      "status": "queued",
+      "status": "done",
       "risk": "high",
-      "summary": "Adds ol and hidroxi tiles, fenol, diol/tetrol morphology and the 1(6) closing-bond locant control."
+      "summary": "Adds ol and hidroxi tiles, fenol, diol/tetrol morphology and the 1(6) closing-bond locant control.",
+      "review": "Codex ship, 0 findings - docs/reviews/I-51a2.md",
+      "narrative": "docs/progress-archive/i-51a2.md"
     },
     {
       "id": "I-51a3",
