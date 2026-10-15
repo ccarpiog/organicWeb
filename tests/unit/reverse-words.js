@@ -9,7 +9,8 @@
  * (R-5b1: alkoxy prefixes and `anisol`) and their aldehydes and ketones
  * (R-5c1: the suffixes `al`, `ona`, `carbaldehído`, the prefixes `oxo` and
  * `formil`, `benzaldehído`; R-5c2: the acyl prefixes `acetil`, `…oil`,
- * `…carbonil`, `benzoil`).
+ * `…carbonil`, `benzoil`) and their carboxylic acids (R-5d1: `ácido`, the
+ * suffixes `oico` and `carboxílico`, `benzoico`, the prefix `carboxi`).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -19,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
 import {
   RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, ETHER_CLASS_WORD, ACETYL_PREFIX, ACYL_ENDING,
-  RING_CARBONYL_ENDING, BENZOYL_PREFIX,
+  RING_CARBONYL_ENDING, BENZOYL_PREFIX, ALKOXY_ENDING, FORMYL_PREFIX, SUFFIX_CLASS_WORDS,
 } from '../../src/naming/lexicon.es.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 
@@ -132,16 +133,42 @@ function isCarbonylOxygen(mol, bonds, id) {
 } // End of function isCarbonylOxygen()
 
 /**
+ * Tells whether an oxygen of a molecule is the =O of a carboxylic acid's
+ * –COOH (phase R-5d1): one double bond, to a carbon whose only other oxygen
+ * is an OH (one single bond; so not an ester's C=O, whose other oxygen is
+ * bonded to two carbons).
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @param {object[]} bonds - Its bonds.
+ * @param {number} id - The oxygen's atom id.
+ * @returns {boolean} True for an acid's =O.
+ */
+export function isCarboxylOxygen(mol, bonds, id) {
+  const own = bonds.filter((bond) => bond.a === id || bond.b === id);
+  if (own.length !== 1 || own[0].order !== 2) {
+    return false;
+  }
+  const carbon = own[0].a === id ? own[0].b : own[0].a;
+  const others = bonds.filter((bond) => (bond.a === carbon || bond.b === carbon) && bond !== own[0])
+    .map((bond) => (bond.a === carbon ? bond.b : bond.a)).filter((atom) => mol.atoms.get(atom).element === 'O');
+  return mol.atoms.get(carbon).element === 'C' && others.length === 1
+    && bonds.filter((bond) => bond.a === others[0] || bond.b === others[0]).length === 1;
+} // End of function isCarboxylOxygen()
+
+/**
  * Tells whether a molecule is an ether of a hydrocarbon, of one of its
  * halogen derivatives or of one of its alcohols (phase R-5b1): carbons,
  * halogens and oxygens only, every oxygen single-bonded to carbons only —
  * an OH (one carbon) or an ether oxygen (two carbons; so no C=O, ester or
  * acid) —, at least one ether oxygen. With `carbonyl` (phase R-5c1) the =O
  * of an aldehyde or a ketone is allowed too (`3-metoxipropanal`), never an
- * acid's or an ester's.
+ * acid's or an ester's; with `acid` (phase R-5d1) the =O of a carboxylic
+ * acid's –COOH too (`ácido 2-metoxietanoico`; its OH is an OH), never an
+ * ester's.
  *
  * @param {object} mol - A molecule (model/molecule.js).
- * @param {{carbonyl?: boolean}} [options] - `carbonyl`: allow aldehyde and ketone C=O groups (default false).
+ * @param {{carbonyl?: boolean, acid?: boolean}} [options] - `carbonyl`: allow aldehyde and ketone C=O groups; `acid`: allow
+ *   the C=O of a –COOH (default false).
  * @returns {boolean} True for an ether.
  */
 export function isEtherMolecule(mol, options = {}) {
@@ -151,7 +178,8 @@ export function isEtherMolecule(mol, options = {}) {
     if (!['C', 'F', 'Cl', 'Br', 'I', 'O'].includes(atom.element)) {
       return false;
     }
-    if (atom.element !== 'O' || (options.carbonyl && isCarbonylOxygen(mol, bonds, id))) {
+    if (atom.element !== 'O' || (options.carbonyl && isCarbonylOxygen(mol, bonds, id))
+      || (options.acid && isCarboxylOxygen(mol, bonds, id))) {
       continue;
     }
     const own = bonds.filter((bond) => bond.a === id || bond.b === id);
@@ -166,11 +194,12 @@ export function isEtherMolecule(mol, options = {}) {
 
 /**
  * Tells whether a fixture SMILES is an ether (isEtherMolecule(), phase
- * R-5b1; with `carbonyl`, R-5c1, beside an aldehyde or a ketone too); a
- * SMILES the model cannot read is not.
+ * R-5b1; with `carbonyl`, R-5c1, beside an aldehyde or a ketone too; with
+ * `acid`, R-5d1, beside a carboxylic acid too); a SMILES the model cannot
+ * read is not.
  *
  * @param {string} smiles - The SMILES.
- * @param {{carbonyl?: boolean}} [options] - isEtherMolecule() options.
+ * @param {{carbonyl?: boolean, acid?: boolean}} [options] - isEtherMolecule() options.
  * @returns {boolean} True for an ether.
  */
 export function isEther(smiles, options = {}) {
@@ -227,6 +256,88 @@ export function isCarbonyl(smiles) {
   } catch (err) {
     return false;
   }
+}
+
+/**
+ * Tells whether a molecule is a carboxylic acid of the families the tiles
+ * read (phase R-5d1): carbons, halogens and oxygens only, every oxygen bonded
+ * to carbons only, and at least one –COOH (isCarboxylOxygen()). Its other
+ * oxygens may be OH groups, ether oxygens, the C=O of an aldehyde or a
+ * ketone, or an ester's (whose names the tiles write with `oxi` and `oxo`,
+ * `ácido 4-metoxi-4-oxobutanoico`, or with ester prefixes, phase R-6a:
+ * isAcidName()).
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @returns {boolean} True for an acid.
+ */
+export function isAcidMolecule(mol) {
+  const bonds = [...mol.bonds.values()];
+  let acids = 0;
+  for (const [id, atom] of mol.atoms) {
+    if (!['C', 'F', 'Cl', 'Br', 'I', 'O'].includes(atom.element)) {
+      return false;
+    }
+    if (atom.element !== 'O') {
+      continue;
+    }
+    const own = bonds.filter((bond) => bond.a === id || bond.b === id);
+    if (own.some((bond) => mol.atoms.get(bond.a === id ? bond.b : bond.a).element !== 'C')) {
+      return false;
+    }
+    acids += isCarboxylOxygen(mol, bonds, id) ? 1 : 0;
+  } // End of the loop over the atoms
+  return acids > 0;
+} // End of function isAcidMolecule()
+
+/**
+ * Tells whether a fixture SMILES is a carboxylic acid (isAcidMolecule(),
+ * phase R-5d1); a SMILES the model cannot read is not.
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True for an acid.
+ */
+export function isAcid(smiles) {
+  try {
+    return isAcidMolecule(parseSmiles(smiles));
+  } catch (err) {
+    return false;
+  }
+}
+
+/** The class word of an acid's name (R-5d1), from the lexicon: `ácido`. */
+export const ACID_WORD = SUFFIX_CLASS_WORDS.acid;
+
+/**
+ * The words of the acid names the tiles do not write yet, from the lexicon:
+ * the retained acid names of phase I-51d2 (`ácido fórmico`, `ácido acético`
+ * — also `fenilacético` and `2-(3-metilfenil)acético` —, `ácido oxálico`,
+ * `ácido ftálico` — also `isoftálico`, `tereftálico`).
+ */
+export const LATER_ACID_WORDS = Object.freeze([
+  TRADITIONAL_NAMES.formicAcid.split(' ')[1], TRADITIONAL_NAMES.aceticAcid.split(' ')[1], TRADITIONAL_NAMES.oxalicAcid.split(' ')[1],
+  BENZENE_DIGROUP_NAMES.phthalicAcid,
+]);
+
+/**
+ * The ester prefixes the tiles do not write yet (phase R-6a), by their
+ * words: an `alcoxicarbonil` group (`metoxicarbonil`,
+ * `[(propan-2-iloxi)carbonil]`) and an acyloxy group (`acetiloxi`,
+ * `(formiloxi)`, `(propanoiloxi)`, `[(4-metilbenzoil)oxi]`,
+ * `[(ciclohexanocarbonil)oxi]`).
+ */
+export const ESTER_PREFIX = new RegExp(`${ALKOXY_ENDING}\\)?${RING_CARBONYL_ENDING}|(?:${ACETYL_PREFIX}|${FORMYL_PREFIX}|${ACYL_ENDING}`
+  + `|${RING_CARBONYL_ENDING})[)\\]]?${ALKOXY_ENDING}`);
+
+/**
+ * Tells whether a name of a carboxylic acid is written with the tiles of
+ * phase R-5d1: none of the retained acid words of phase I-51d2
+ * (LATER_ACID_WORDS) and no ester prefix (ESTER_PREFIX, phase R-6a).
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True when the tiles read it.
+ */
+export function isAcidName(name) {
+  return !LATER_ACID_WORDS.some((word) => name.includes(word)) && !ESTER_PREFIX.test(name);
 }
 
 /**
@@ -446,6 +557,7 @@ export function leafIndices(node) {
     }
     switch (n.type) {
       case 'name':
+        visit(n.suffixClass); // `ácido` (R-5d1)
         n.items.forEach(visit);
         visit(n.parent);
         n.trailing.forEach(visit);
@@ -475,7 +587,7 @@ export function leafIndices(node) {
         n.segments.forEach((s) => out.push(...s.locants, ...(s.multiplier === null ? [] : [s.multiplier]), s.ending));
         out.push(...n.fvLocants, ...(n.fv === null ? [] : [n.fv]), ...(n.oxi === null || n.oxi === undefined ? [] : [n.oxi])); // R-5b
         break;
-      default: // 'retained', 'halogen', 'hydroxy', 'benzene', 'template', 'stray'
+      default: // 'retained', 'halogen', 'hydroxy', 'benzene', 'template', 'suffixClass', 'stray'
         out.push(n.tile, ...(n.oxi === null || n.oxi === undefined ? [] : [n.oxi])); // `isopropoxi` (R-5b)
     }
   }; // End of function visit()

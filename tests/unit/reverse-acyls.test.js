@@ -53,26 +53,38 @@ import { nameMolecule } from '../../src/naming/index.js';
 import { FORMYL_PREFIX, multiplier } from '../../src/naming/lexicon.es.js';
 import { generateAcyl, generateSubstitutedBenzoyls, generateRingAcids } from '../../scripts/oracle/generate.mjs';
 import {
-  seq, readFixtures, isCarbonyl, isCarbonylMolecule, isCarbonylName, isAcylName, ACYL_WORDS,
+  seq, readFixtures, isCarbonyl, isCarbonylMolecule, isCarbonylName, isAcylName, ACYL_WORDS, isAcid, isAcidName, ESTER_PREFIX,
 } from './reverse-words.js';
 
 /**
  * The fixture rows with an acyl prefix in a name (isAcylName()): 104, of
- * which 11 are aldehydes or ketones (isCarbonyl()), read back — 5 of I-39b
+ * which 41 are read back: 11 aldehydes or ketones (isCarbonyl()) — 5 of I-39b
  * (`3-acetilpentano-2,4-diona`, `3,3-diacetilpentano-2,4-diona`,
  * `4-acetilheptano-2,6-diona`, `3-acetilhexanal`,
  * `2-acetil-2,3-dimetilbutanal`), 1 of I-40a (`4-acetilciclohexan-1-ona`), 3
  * of I-40b (`3-(ciclohexanocarbonil)-`, `3-(2-metilciclohexano-1-carbonil)-`,
  * `3-benzoilpentano-2,4-diona`) and 2 of I-45b
- * (`3-(4-metilbenzoil)pentano-2,4-diona`, `2-(4-yodobenzoil)butanal`) —, and
- * 93 of later families, which never tokenize: 74 acids (`ácido`, R-5d), 8
- * esters (R-6a, also `acetiloxi`, `alcoxicarbonil`), 8 amides (R-6d, also
- * `acetilamino`) and 3 nitriles (R-6b).
+ * (`3-(4-metilbenzoil)pentano-2,4-diona`, `2-(4-yodobenzoil)butanal`) — and,
+ * since phase R-5d1, 30 acids (isAcid(): 16 of I-39b, `ácido
+ * 2-acetilhexanoico`…, 4 of I-40b, 10 of I-45b; until then later rows) —, and
+ * 63 of later families, which never tokenize: 29 esters (R-6a: ` de `, and
+ * since phase R-5d1 the 21 acids with an ester prefix, `acetiloxi`,
+ * `alcoxicarbonil`), 31 amides (R-6d: and the 23 acids with `acetilamino`,
+ * `carbamoil`…) and 3 nitriles (R-6b). No acid row is left: the retained acid
+ * names of phase I-51d2 carry no acyl prefix.
  */
-const EXPECTED_ROWS = Object.freeze({ total: 104, read: 11, i39b: 5, i40a: 1, i40b: 3, i45b: 2, acid: 74, ester: 8, amide: 8, nitrile: 3 });
+const EXPECTED_ROWS = Object.freeze({
+  total: 104, read: 41, i39b: 21, i40a: 1, i40b: 7, i45b: 12, acid: 0, ester: 29, amide: 31, nitrile: 3,
+});
 
-/** Their acyl names: 11 read back (one per row, no alternative), 105 of later families (84, 10, 8, 3). */
-const EXPECTED_NAMES = Object.freeze({ read: 11, acid: 84, ester: 10, amide: 8, nitrile: 3 });
+/**
+ * Their acyl names: 43 read back (11 of the aldehydes and ketones, one per row, no alternative; 32 of the acids, R-5d1), 73 of
+ * later families (33 esters, 37 amides, 3 nitriles; until phase R-5d1 the 84 acid names were later ones too).
+ */
+const EXPECTED_NAMES = Object.freeze({ read: 43, acid: 0, ester: 33, amide: 37, nitrile: 3 });
+
+/** The acid rows among those read back, and their acyl names (phase R-5d1). */
+const EXPECTED_ACID_ROWS = Object.freeze({ rows: 30, names: 32 });
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -185,23 +197,26 @@ function oxygenBonds(mol) {
 
 /**
  * The family of a name with an acyl prefix that a later phase reads, by its
- * words: an acid (`ácido`, R-5d), an ester (` de `, R-6a), a nitrile
- * (`nitrilo`, R-6b) or an amide (`amida`, `amino`, `carbamoil`, R-6d).
+ * words: an ester (` de `, or an ester prefix beside an acid — `acetiloxi`,
+ * `metoxicarbonil` —, R-6a), a nitrile (`nitrilo`, `ciano`, R-6b), an amide
+ * (`amida`, `amino`, `carbamoil`, R-6d), or an acid the tiles do not write
+ * yet (`ácido`, a retained acid name, phase I-51d2; since phase R-5d1 the
+ * other acids read).
  *
  * @param {string} name - A name.
  * @returns {string} 'acid', 'ester', 'nitrile', 'amide' or 'other'.
  */
 function laterFamily(name) {
-  if (/^ácido /.test(name)) {
-    return 'acid';
-  }
-  if (/ de /.test(name)) {
+  if (/ de /.test(name) || ESTER_PREFIX.test(name)) {
     return 'ester';
   }
-  if (/nitrilo/.test(name)) {
+  if (/nitrilo|ciano/.test(name)) {
     return 'nitrile';
   }
-  return /amida|amino|carbamoil/.test(name) ? 'amide' : 'other';
+  if (/amida|amino|carbamoil/.test(name)) {
+    return 'amide';
+  }
+  return /^ácido /.test(name) ? 'acid' : 'other';
 } // End of function laterFamily()
 
 // ---------------------------------------------------------------------------
@@ -379,11 +394,12 @@ test('tokenizer (R-5c2): acyl names read back; forms the engine never writes, an
   }
   for (const name of ['2-propoilheptanal', '2-(ciclohexancarbonil)heptanal', '2-ciclohexanocarbonilheptanal', '2-(propanoil)heptanal',
     '2-acetoxiheptanal', '2-(acetiloxi)heptanal', 'propanoil', '2-(propan-1-oil)heptanal', 'bencenocarbonilmetano',
-    // Later families: acids (R-5d), esters (R-6a), amides (R-6d), nitriles (R-6b).
-    'ácido 2-acetilhexanoico', 'etanoato de 2-acetilhexilo', '2-acetilpentanamida', '2-acetilpentanonitrilo',
-    'ácido 2-(acetilamino)etanoico']) {
+    // Later families: esters (R-6a; an ester prefix beside an acid too), amides (R-6d), nitriles (R-6b).
+    'etanoato de 2-acetilhexilo', '2-acetilpentanamida', '2-acetilpentanonitrilo', 'ácido 2-(acetilamino)etanoico',
+    'ácido 2-(acetiloxi)etanoico']) {
     assert.equal(tokenize(name), null, name);
   }
+  assert.ok(tokenize('ácido 2-acetilhexanoico'), 'an acid with an acyl prefix reads since phase R-5d1');
   assert.deepEqual(ACYL_WORDS, ['acetil', 'oil', 'carbonil', 'benzoil']);
 }); // End of test 'tokenizer (R-5c2)…'
 
@@ -729,15 +745,20 @@ test('the former deliberate nulls of R-5c2 that concern the principal C=O group:
 // Fixture round trip and closed loop (design.md §15.7).
 // ---------------------------------------------------------------------------
 
-test('fixture round trip (R-5c2): every acyl name of an aldehyde or a ketone reads back; later families never tokenize', async () => {
+test('fixture round trip (R-5c2, R-5d1): every acyl name of an aldehyde, a ketone or an acid reads back; later families never tokenize', async () => {
   const fixtures = await readFixtures();
   const rows = fixtures.filter((row) => row.names.some(isAcylName));
   const read = new Set();
   const names = { read: 0, acid: 0, ester: 0, amide: 0, nitrile: 0 };
   const later = { acid: 0, ester: 0, amide: 0, nitrile: 0 };
+  const acids = { rows: 0, names: 0 };
   let elapsed = 0;
   for (const row of rows) {
-    if (!isCarbonyl(row.smiles)) {
+    // Since phase R-5d1 an acid's acyl names read too, but for an ester prefix beside it (R-6a: isAcidName()).
+    const acid = isAcid(row.smiles);
+    const readable = isCarbonyl(row.smiles) || acid
+      ? row.names.filter((n) => isAcylName(n) && isCarbonylName(n) && (!acid || isAcidName(n))) : [];
+    if (!isCarbonyl(row.smiles) && readable.length === 0) {
       later[laterFamily(row.names.find(isAcylName))] += 1;
       for (const name of row.names.filter(isAcylName)) {
         names[laterFamily(name)] += 1;
@@ -745,8 +766,10 @@ test('fixture round trip (R-5c2): every acyl name of an aldehyde or a ketone rea
       }
       continue;
     }
+    acids.rows += acid ? 1 : 0;
+    acids.names += acid ? readable.length : 0;
     const expected = keyOf(row.smiles);
-    for (const name of row.names.filter((n) => isAcylName(n) && isCarbonylName(n))) {
+    for (const name of readable) {
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
       assert.equal(assemble(parse(ids).tree).text, name, `names.tsv:${row.line}: assembly`);
@@ -774,6 +797,7 @@ test('fixture round trip (R-5c2): every acyl name of an aldehyde or a ketone rea
     EXPECTED_ROWS.i45b]);
   assert.deepEqual(later, { acid: EXPECTED_ROWS.acid, ester: EXPECTED_ROWS.ester, amide: EXPECTED_ROWS.amide, nitrile: EXPECTED_ROWS.nitrile });
   assert.deepEqual(names, { ...EXPECTED_NAMES });
+  assert.deepEqual(acids, { rows: EXPECTED_ACID_ROWS.rows, names: EXPECTED_ACID_ROWS.names });
   assert.ok(elapsed / names.read < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / names.read).toFixed(2)} ms on average`);
 }); // End of test 'fixture round trip (R-5c2)…'
 
@@ -1160,7 +1184,8 @@ const FIXTURE_NULLS = Object.freeze({});
 test('mutations of every acyl fixture name: a diagnosis of the family\'s codes, or a deliberate null with its reason', async () => {
   const names = (await readFixtures()).filter((row) => isCarbonyl(row.smiles)).flatMap((row) => row.names)
     .filter((name) => isCarbonylName(name) && isAcylName(name));
-  assert.equal(names.length, EXPECTED_NAMES.read);
+  // The acids' acyl names (R-5d1) are swept with the acids (reverse-acids.test.js).
+  assert.equal(names.length, EXPECTED_NAMES.read - EXPECTED_ACID_ROWS.names);
   const { otherName, codes, nulls, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });

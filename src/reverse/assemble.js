@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -90,6 +90,18 @@
  *    before an acyl prefix with prefixes of its own only (the student's
  *    multiplier kept as chosen, as rule 5: `diacetil`, `di(prop-2-enoil)`,
  *    `bis(2-metilpropanoil)`).
+ * 9. an acid's class word (R-5d1, design.md §15.5.2 item 6: `ácido` +
+ *    space; render.js renderName()): the `ácido` tile that starts the name
+ *    is written first, part kind 'ending' as render.js gives it, and the
+ *    space after it is automatic (a 'punct' piece, only when something
+ *    follows); the rest of the name follows unchanged (`ácido
+ *    2-metilpropanoico`: no hyphen after the space). The suffixes `oico` and
+ *    `carboxílico` take rule 4 as `al` and `carbaldehído` do (`ácido
+ *    butanoico`, `ácido but-2-enoico`, `ácido butanodioico`, `ácido
+ *    ciclohexanocarboxílico`, `ácido ciclohexano-1,4-dicarboxílico`);
+ *    `benzoico` is one whole word like `benzaldehído`, and `carboxi` a
+ *    retained word like `formil`, never enclosed by itself (`(carboximetil)`
+ *    is a compound branch).
  *
  * A ring (R-4a) is a chain with its `ciclo` tile before the root, and takes
  * the same rules: `ciclohexa-1,3-dieno` (rule 2), `ciclooct-1-en-3-ino` and
@@ -417,7 +429,7 @@ function strayPieces(tiles, index, out) {
     num: 'locant', positional: 'locant', closing: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending',
     freeValence: 'ending', retained: 'prefix', halogen: 'prefix', hydroxy: 'prefix', carbonyl: 'prefix', suffix: 'ending', start: 'punct',
     end: 'punct',
-    ring: 'stem', benzene: 'stem', template: 'stem', alkoxy: 'ending', classWord: 'ending',
+    ring: 'stem', benzene: 'stem', template: 'stem', alkoxy: 'ending', classWord: 'ending', suffixClass: 'ending',
   };
   out.push(piece(tile.text, index, kinds[tile.kind], roles[tile.kind] || 'word', tile.italic ? { italic: true } : {}));
 }
@@ -777,6 +789,14 @@ function join(pieces) {
  */
 export function assemble(tree) {
   const out = [];
+  if (tree.suffixClass) {
+    // `ácido` and its space (rule 9, R-5d1); the space only when something follows it.
+    const { tile } = tree.suffixClass;
+    out.push(piece(tree.tiles[tile].text, tile, KINDS.parent.ending, 'word'));
+    if (tree.items.length > 0 || tree.parent || tree.trailing.length > 0) {
+      out.push(spacePiece());
+    }
+  }
   const classWord = Boolean(tree.parent) && isClassName(tree);
   tree.items.forEach((item, i) => {
     if (classWord && i > 0) {
@@ -806,7 +826,8 @@ export function isClassName(tree) {
 }
 
 /**
- * The automatic space between two words of a class name (rule 7, R-5b2).
+ * The automatic space between two words of a class name (rule 7, R-5b2), or
+ * after the class word `ácido` (rule 9, R-5d1).
  *
  * @returns {Piece} The piece.
  */

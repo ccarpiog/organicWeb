@@ -10,7 +10,8 @@
  * TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS,
  * HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING,
  * ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX,
- * ACETYL_PREFIX, ACYL_ENDING, BENZOYL_PREFIX, RING_CARBONYL_ENDING),
+ * ACETYL_PREFIX, ACYL_ENDING, BENZOYL_PREFIX, RING_CARBONYL_ENDING,
+ * SUFFIX_CLASS_WORDS),
  * never retyped here;
  * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
@@ -97,13 +98,29 @@
  *   'benzoyl': the benzene ring bonded to X, which like `fenil` takes
  *   prefixes of its own inside a compound branch, `(4-metilbenzoil)`;
  *   BENZOYL_PREFIX);
+ *   and for the carboxylic acids (R-5d1): the suffixes `oico` (value 'acid':
+ *   a –COOH at an end of a chain, terminal by rule like `al` — `ácido
+ *   butanoico`, `ácido butanodioico`) and `carboxílico` (value 'carboxylic':
+ *   a –COOH whose carbon is outside the parent, bonded to the carbon its
+ *   locant gives — `ácido ciclohexanocarboxílico`, `ácido
+ *   benceno-1,3-dicarboxílico`), kind 'suffix' (SUFFIX_GROUPS); `carboxi`
+ *   (kind 'retained', value 'carboxy': the –COOH as a branch, one carbon with
+ *   its =O and its OH bonded by that carbon — `(carboximetil)`; the lexicon's
+ *   GROUP_PREFIXES.acid); 'suffixClass' (the class word `ácido`, value 'acid',
+ *   the lexicon's SUFFIX_CLASS_WORDS key: the first word of an acid's name,
+ *   before the whole substitutive name — `ácido 2-metilpropanoico` —, the
+ *   space after it automatic); and in the «Anillos» row `benzoico` (kind
+ *   'benzene', value 'benzoic': the benzene parent with its –COOH at carbon
+ *   1, as `benzaldehído` with its –CHO — `ácido 4-metilbenzoico`;
+ *   GROUP_WORD_PARENTS);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
  *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2,
- *   `benzaldehído` from R-5c1, `benzoil` from R-5c2), 'groups' («Grupos»,
- *   R-5a1: the halogens; R-5a2: `hidroxi` and `ol`; R-5b: `oxi`, and `éter`
- *   from R-5b2; R-5c1: `oxo`, `formil`, `al`, `ona`, `carbaldehído`; R-5c2:
- *   `acetil`, `oil`, `carbonil`, after `formil`),
+ *   `benzaldehído` from R-5c1, `benzoil` from R-5c2, `benzoico` from R-5d1),
+ *   'groups' («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`; R-5b:
+ *   `oxi`, and `éter` from R-5b2; R-5c1: `oxo`, `formil`, `al`, `ona`,
+ *   `carbaldehído`; R-5c2: `acetil`, `oil`, `carbonil`, after `formil`;
+ *   R-5d1: `ácido`, `carboxi`, `oico`, `carboxílico`, at the end),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; R-5c3a: the retained carbonyl
  *   names, `formaldehído` … `tereftalaldehído`; later phases add ácido
@@ -116,7 +133,7 @@ import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
   RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES,
   GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING, ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX, groupName,
-  ACETYL_PREFIX, ACYL_ENDING, BENZOYL_PREFIX, RING_CARBONYL_ENDING,
+  ACETYL_PREFIX, ACYL_ENDING, BENZOYL_PREFIX, RING_CARBONYL_ENDING, SUFFIX_CLASS_WORDS,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -227,6 +244,21 @@ export const ACYL_ID = 'acyl-chain';
 /** Id of the `carbonil` tile (design.md §15.8 R-5c; phase R-5c2: the acyl ending of a ring branch, `ciclohexanocarbonil`). */
 export const RING_CARBONYL_ID = 'acyl-ring';
 
+/** Id of the `ácido` tile (design.md §15.8 R-5d; phase R-5d1: the class word that starts an acid's name). */
+export const ACID_WORD_ID = 'class-acid';
+
+/** Id of the `oico` tile (design.md §15.8 R-5d; phase R-5d1: the acid suffix of a chain, `ácido butanoico`). */
+export const OICO_ID = 'suffix-acid';
+
+/** Id of the `carboxílico` tile (design.md §15.8 R-5d; phase R-5d1: the –COOH suffix whose carbon is outside the parent). */
+export const CARBOXYLIC_ID = 'suffix-carboxylic';
+
+/** Id of the `benzoico` tile (design.md §15.8 R-5d; phase R-5d1: the benzene parent with its –COOH at carbon 1). */
+export const BENZOIC_ID = 'ring-benzoic';
+
+/** Id of the `carboxi` tile (design.md §15.8 R-5d; phase R-5d1: a –COOH bonded by its carbon, as a branch). */
+export const CARBOXY_ID = 'retained-carboxy';
+
 /**
  * The retained acyl words (R-5c2), by tile value: `acetil`, a two-carbon
  * chain whose carbon 1 is the C=O carbon (build.js), and `benzoil`, the
@@ -249,33 +281,88 @@ export function isAcylTile(tile) {
 }
 
 /**
- * The principal groups of the suffix tiles, by tile value (R-5a2, R-5c1):
- * the group (`kind`, a lexicon GROUP_SUFFIXES key, as the engine's
+ * The principal groups of the suffix tiles, by tile value (R-5a2, R-5c1,
+ * R-5d1): the group (`kind`, a lexicon GROUP_SUFFIXES key, as the engine's
  * SuffixStructure says it), whether its carbon is outside the parent
- * (`outside`: `carbaldehído`, a new carbon bonded to the parent's carbon,
- * the =O on it — render.js suffixWords() `outside`), the order of the bond
- * from the carbon to its oxygen (`order`: 1 for the OH, 2 for a C=O) and
- * whether it sits at a chain end by rule (`terminal`: `al`, render.js
- * TERMINAL_SUFFIXES; never cited on a chain).
+ * (`outside`: `carbaldehído`, `carboxílico`, a new carbon bonded to the
+ * parent's carbon, the =O on it — render.js suffixWords() `outside`), the
+ * order of the bond from the carbon to its oxygen (`order`: 1 for the OH, 2
+ * for a C=O), whether it sits at a chain end by rule (`terminal`: `al`,
+ * `oico`, render.js TERMINAL_SUFFIXES; never cited on a chain) and, for an
+ * acid (R-5d1: `oico`, `carboxílico`), `hydroxy`: the carbon of the C=O also
+ * carries an OH, single-bonded (the –COOH).
  */
 export const SUFFIX_GROUPS = Object.freeze({
   alcohol: Object.freeze({ kind: 'alcohol', outside: false, order: 1, terminal: false }),
   aldehyde: Object.freeze({ kind: 'aldehyde', outside: false, order: 2, terminal: true }),
   ketone: Object.freeze({ kind: 'ketone', outside: false, order: 2, terminal: false }),
   carbaldehyde: Object.freeze({ kind: 'aldehyde', outside: true, order: 2, terminal: false }),
+  acid: Object.freeze({ kind: 'acid', outside: false, order: 2, terminal: true, hydroxy: true }),
+  carboxylic: Object.freeze({ kind: 'acid', outside: true, order: 2, terminal: false, hydroxy: true }),
 });
 
 /**
+ * The bond order a suffix group takes from the parent's carbon that carries
+ * it (search.js, build.js): one for a group whose carbon is outside the
+ * parent (`carbaldehído`, `carboxílico`: the single bond to that carbon),
+ * else the bond to its oxygen — one for the OH, two for a C=O — and one
+ * more for the OH of an acid's –COOH (R-5d1: `oico`, three).
+ *
+ * @param {{outside: boolean, order: number, hydroxy?: boolean}} group - A SUFFIX_GROUPS entry.
+ * @returns {number} 1, 2 or 3.
+ */
+export function suffixBondAmount(group) {
+  if (group.outside) {
+    return 1;
+  }
+  return group.order + (group.hydroxy ? 1 : 0);
+}
+
+/** The principal group of an acid (a lexicon GROUP_SUFFIXES and SUFFIX_CLASS_WORDS key; R-5d1). */
+export const ACID_KIND = 'acid';
+
+/**
+ * Tells whether a suffix tile value is an acid's (R-5d1: `oico`,
+ * `carboxílico`), whose name starts with the class word `ácido`.
+ *
+ * @param {string} value - A SUFFIX_GROUPS key.
+ * @returns {boolean} True for an acid suffix.
+ */
+export function isAcidSuffix(value) {
+  return Boolean(SUFFIX_GROUPS[value]) && SUFFIX_GROUPS[value].kind === ACID_KIND;
+}
+
+/** How the messages call the –COOH of an acid (R-5d1), as «grupo CHO» for an aldehyde's. */
+export const ACID_GROUP = 'grupo COOH';
+
+/**
  * The whole-word benzene parents that place their principal group at
- * carbon 1 themselves, by tile value: `fenol` (R-5a2, its OH) and
- * `benzaldehído` (R-5c1, its –CHO, whose carbon is outside the ring):
+ * carbon 1 themselves, by tile value: `fenol` (R-5a2, its OH),
+ * `benzaldehído` (R-5c1, its –CHO, whose carbon is outside the ring) and
+ * `benzoico` (R-5d1, its –COOH, likewise; written after the class word
+ * `ácido`):
  * `suffix` the SUFFIX_GROUPS key of that group, `group` how the messages
  * call it (the parser's and the builder's «grupo OH», «grupo CHO»).
  */
 export const GROUP_WORD_PARENTS = Object.freeze({
   phenol: Object.freeze({ suffix: 'alcohol', group: 'grupo OH' }),
   benzaldehyde: Object.freeze({ suffix: 'carbaldehyde', group: 'grupo CHO' }),
+  benzoic: Object.freeze({ suffix: 'carboxylic', group: ACID_GROUP }),
 });
+
+/**
+ * The name of a whole-word parent as the messages quote it: its tile's text
+ * (`fenol`, `benzaldehído`, `tolueno`), with the class word before it for a
+ * benzene parent that places an acid's –COOH (R-5d1: «ácido benzoico», as
+ * the engine writes the name; GROUP_WORD_PARENTS).
+ *
+ * @param {{kind: string, value: *, text: string}} tile - A catalogue tile (`benceno`, `fenol`, `benzoico`, a template…).
+ * @returns {string} The name.
+ */
+export function parentWordName(tile) {
+  const placed = tile.kind === 'benzene' ? GROUP_WORD_PARENTS[tile.value] : null;
+  return placed && isAcidSuffix(placed.suffix) ? `${SUFFIX_CLASS_WORDS[ACID_KIND]} ${tile.text}` : tile.text;
+}
 
 /**
  * The retained branch words that take `oxi` (R-5b, render.js
@@ -632,10 +719,11 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
 /**
  * Builds the whole catalogue in dialog order: numbers, multipliers (simple,
  * then compound), roots, endings, branch words and controls, rings (`ciclo`,
- * `benceno`, `fenol`, `benzaldehído`, `fenil`, `benzoil`, the letters `o`,
- * `m`, `p`, `1(n)`), groups (the halogens `fluoro`, `cloro`, `bromo`,
- * `yodo`, then `hidroxi`, `ol`, `oxi`, `éter`, `oxo`, `formil`, `acetil`,
- * `oil`, `carbonil`, `al`, `ona` and `carbaldehído`), traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`,
+ * `benceno`, `fenol`, `benzaldehído`, `benzoico`, `fenil`, `benzoil`, the
+ * letters `o`, `m`, `p`, `1(n)`), groups (the halogens `fluoro`, `cloro`,
+ * `bromo`, `yodo`, then `hidroxi`, `ol`, `oxi`, `éter`, `oxo`, `formil`,
+ * `acetil`, `oil`, `carbonil`, `al`, `ona`, `carbaldehído`, then the acids'
+ * `ácido`, `carboxi`, `oico` and `carboxílico`), traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`,
  * `anisol`, then the retained phenols `cresol`, `pirocatecol`, `catecol`,
  * `resorcinol`, `hidroquinona`, then the retained carbonyl names
  * `formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
@@ -675,6 +763,8 @@ function buildCatalogue() {
   tiles.push(makeTile(PHENOL_ID, 'benzene', 'phenol', 'rings', `${PHENOL_STEM}${GROUP_SUFFIXES.alcohol}`)); // `fenol` (R-5a2)
   const benzaldehyde = BENZENE_GROUP_NAMES.aldehyde;
   tiles.push(makeTile(BENZALDEHYDE_ID, 'benzene', 'benzaldehyde', 'rings', `${benzaldehyde.stem}${benzaldehyde.ending}`)); // R-5c1
+  const benzoic = BENZENE_GROUP_NAMES.acid;
+  tiles.push(makeTile(BENZOIC_ID, 'benzene', 'benzoic', 'rings', `${benzoic.stem}${benzoic.ending}`)); // `benzoico` (R-5d1)
   const phenyl = RETAINED_PREFIXES.phenyl;
   tiles.push(makeTile(PHENYL_ID, 'retained', 'phenyl', 'rings', `${phenyl.italic}${phenyl.text}`, false, { italic: phenyl.italic }));
   tiles.push(makeTile(BENZOYL_ID, 'retained', 'benzoyl', 'rings', BENZOYL_PREFIX, false, { italic: '' })); // `benzoil` (R-5c2)
@@ -697,6 +787,10 @@ function buildCatalogue() {
   tiles.push(makeTile(AL_ID, 'suffix', 'aldehyde', 'groups', GROUP_SUFFIXES.aldehyde)); // `al` (R-5c1)
   tiles.push(makeTile(ONA_ID, 'suffix', 'ketone', 'groups', GROUP_SUFFIXES.ketone)); // `ona` (R-5c1)
   tiles.push(makeTile(CARBALDEHYDE_ID, 'suffix', 'carbaldehyde', 'groups', RING_GROUP_SUFFIXES.aldehyde)); // R-5c1
+  tiles.push(makeTile(ACID_WORD_ID, 'suffixClass', ACID_KIND, 'groups', SUFFIX_CLASS_WORDS[ACID_KIND])); // `ácido` (R-5d1)
+  tiles.push(makeTile(CARBOXY_ID, 'retained', 'carboxy', 'groups', GROUP_PREFIXES[ACID_KIND], false, { italic: '' })); // `carboxi`
+  tiles.push(makeTile(OICO_ID, 'suffix', ACID_KIND, 'groups', GROUP_SUFFIXES[ACID_KIND])); // `oico` (R-5d1)
+  tiles.push(makeTile(CARBOXYLIC_ID, 'suffix', 'carboxylic', 'groups', RING_GROUP_SUFFIXES[ACID_KIND])); // `carboxílico` (R-5d1)
   for (const value of Object.keys(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }

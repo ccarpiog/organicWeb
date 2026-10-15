@@ -152,7 +152,20 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   `(3-metilpropanoil)` for `butanoil`; a ring branch numbered otherwise,
   `(6-metilbenzoil)`, `2-(5-metilfenil)acetaldehído`, an alcohol's too), the
   1 left out before `carbonil` and a locant on `fenilacetaldehído`, each
-  with its «Ver el paso» step. Next is R-5d (phase I-51d): acids.
+  with its «Ver el paso» step. R-5d1 (phase I-51d1) is done: the «Grupos»
+  row's class word `ácido` (the first tile of an acid's name, the space
+  after it automatic; ACID_WORD when it and an acid suffix do not go
+  together), the suffixes `oico` (the –COOH at the ends of a chain by rule,
+  no locants: `ácido butanoico`, `ácido butanodioico`) and `carboxílico`
+  (`ácido ciclohexano-1,4-dicarboxílico`, `ácido
+  benceno-1,3-dicarboxílico`), the prefix `carboxi` (`(carboximetil)`) and
+  the «Anillos» row's `benzoico` (`ácido 4-metilbenzoico`) read acids on
+  chains, rings and `benceno`, beside the earlier families' groups, their
+  left-out locants searched, the engine's `manyAcids` `outOfScope`; the
+  diagnosis keeps the rules that hold for an acid name, and the acid's own
+  mistakes are deliberate nulls (`diagnose.js` «Acids»). Next is R-5d2
+  (phase I-51d2): the retained acid names (`ácido fórmico`, `acético`,
+  `oxálico`, `fenilacético`, the ftálico family) and the Ayuda acid line.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

@@ -31,7 +31,9 @@
  *   suffixes `al`, `ona`, `carbaldehído`, phase R-5c1, each with a tooltip,
  *   as `benzaldehído` in «Anillos»; the acyl prefixes `acetil` and the
  *   endings `oil` and `carbonil`, phase R-5c2, each with a tooltip, as
- *   `benzoil` in «Anillos» —, «Nombres tradicionales» — `tolueno`,
+ *   `benzoil` in «Anillos»; the acids' class word `ácido`, `carboxi` and the
+ *   suffixes `oico` and `carboxílico`, phase R-5d1, each with a tooltip, as
+ *   `benzoico` in «Anillos» —, «Nombres tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
  *   `hidroquinona`, phase R-5a3a, the retained carbonyl names
@@ -61,7 +63,8 @@
 
 import {
   TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID,
-  BENZALDEHYDE_ID, ACETYL_ID, ACYL_ID, RING_CARBONYL_ID, BENZOYL_ID, tileById,
+  BENZALDEHYDE_ID, ACETYL_ID, ACYL_ID, RING_CARBONYL_ID, BENZOYL_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID,
+  tileById,
 } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
@@ -111,7 +114,9 @@ export function positionalLabel(tile) {
  * `benzaldehído`, what group each is and where it goes; R-5c2: `acetil`,
  * `oil`, `carbonil` and `benzoil`, the C=O group bonded by its carbon as a
  * branch and where each goes; R-5c3a: the retained carbonyl names, what
- * molecule each is, and which take prefixes; drafts pending teacher review).
+ * molecule each is, and which take prefixes; R-5d1: `ácido`, `carboxi`,
+ * `oico`, `carboxílico` and `benzoico`, what each is and where it goes;
+ * drafts pending teacher review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
@@ -140,6 +145,16 @@ export const TILE_HINTS = Object.freeze({
     + 'hex, ano y carbonil dan (ciclohexanocarbonil); con números, (ciclohex-2-eno-1-carbonil).',
   [BENZOYL_ID]: 'Benceno unido a un grupo C=O, como rama, por el carbono del C=O: 3-benzoilpentano-2,4-diona; con ramas en el '
     + 'anillo, (4-metilbenzoil).',
+  // R-5d1: the carboxylic acids.
+  [ACID_WORD_ID]: 'Va al principio del nombre de un ácido (grupo COOH), delante de todo lo demás: ácido, but, ano y oico dan ácido '
+    + 'butanoico; ácido, 2, met, il, prop, ano y oico dan ácido 2-metilpropanoico.',
+  [CARBOXY_ID]: 'Un grupo COOH unido por su carbono, cuando no es el grupo principal y su carbono no es de la cadena ni del anillo: '
+    + '(carboximetil).',
+  [OICO_ID]: 'Ácido (grupo COOH). Va al final, detrás de la terminación de una cadena, y el nombre empieza por «ácido»; el grupo '
+    + 'COOH está siempre en un extremo, así que no lleva números: ácido butanoico; con dos, ácido butanodioico.',
+  [CARBOXYLIC_ID]: 'Grupo COOH unido a un anillo. Va al final, detrás del nombre del anillo, y el nombre empieza por «ácido»: ácido '
+    + 'ciclohexanocarboxílico, ácido benceno-1,3-dicarboxílico.',
+  [BENZOIC_ID]: 'Benceno con un grupo COOH: ácido bencenocarboxílico. Va detrás de «ácido»: ácido benzoico.',
   'template-anisole': 'Benceno con un grupo metoxi: metoxibenceno.',
   'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
   'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',

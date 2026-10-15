@@ -245,10 +245,12 @@ test('tokenize prefers whole words and automatic marks for simple branches', () 
 }); // End of test 'tokenize prefers whole words and automatic marks for simple branches'
 
 test('tokenize returns null outside the grammar, for texts that only read with errors, and past its budget', () => {
-  // `clorometano` reads since R-5a1, `propan-2-ol` since R-5a2, `p-cresol` since R-5a3a; `cloro` alone and `(2-cloro)etano`
+  // `clorometano` reads since R-5a1, `propan-2-ol` since R-5a2, `p-cresol` since R-5a3a, `ácido etanoico` since R-5d1 (its
+  // retained `ácido acético` is phase I-51d2's, an ester R-6a's); `cloro` alone and `(2-cloro)etano`
   // only read with errors, and so do `ol` alone, `2-ol`, `propil-2-ol`, a closing locant on a chain (`but-1(4)-eno`), a number
   // on `cresol` (`4-cresol`) and a letter on `catecol`.
-  for (const text of ['', 'ácido etanoico', 'cloro', '(2-cloro)etano', '4-cresol', 'o-catecol', 'hex ano', 'HEXANO', 'ciclo',
+  assert.ok(tokenize('ácido etanoico'));
+  for (const text of ['', 'ácido acético', 'etanoato de metilo', 'cloro', '(2-cloro)etano', '4-cresol', 'o-catecol', 'hex ano', 'HEXANO', 'ciclo',
     'cicloetano', 'ol', '2-ol', 'propil-2-ol', 'but-1(4)-eno', 'fenol-2-ol', 'propan-2-diol', 'butano-1,2-bisol']) {
     assert.equal(tokenize(text), null, text);
   }

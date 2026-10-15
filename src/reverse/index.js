@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -17,7 +17,21 @@
  * `propanoil`, `(but-2-enoil)`, `benzoil`, `(4-metilbenzoil)`,
  * `(ciclohexanocarbonil)`; R-5c3a: the retained `formaldehído`,
  * `acetaldehído`, `acetona`, `acetofenona`, `fenilacetaldehído` and the
- * ftalaldehídos). Pure, no DOM.
+ * ftalaldehídos) and their carboxylic acids (R-5d1: the class word `ácido`,
+ * the suffixes `oico` and `carboxílico`, `ácido benzoico`, the prefix
+ * `carboxi`). Pure, no DOM.
+ *
+ * The acids need nothing of their own here either: the class word is read
+ * by the parser and written by the assembler (`ácido 2-metilpropanoico`),
+ * the –COOH is built on the parent or outside it (build.js) and searched
+ * like the aldehydes' –CHO (search.js), and the engine names the molecule
+ * (`ácido butanoico`, `ácido ciclohexano-1,4-dicarboxílico`, `ácido
+ * 4-metilbenzoico` → `correct`; `ácido bencenocarboxílico`, `ácido
+ * p-metilbenzoico` → `alternative`; `ácido metilbutanoico` → `ambiguous`;
+ * `ácido 4-metilbutanoico` → `otherName`; `ácido metanodioico` → `invalid`
+ * CARBONYL_POSITION; `ácido propano-1,2,3-tricarboxílico` → `outOfScope`, the
+ * engine's `manyAcids`). An acid's own mistakes get a null diagnosis until
+ * phase I-51d3 (diagnose.js «Acids»).
  *
  * The retained carbonyl names need nothing of their own here either: the
  * engine gives them as alternatives (`acetona`, `ftalaldehído`, also

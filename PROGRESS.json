@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T09:03:01Z",
+  "updated": "2026-10-15T09:48:56Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -790,8 +790,29 @@
     {
       "id": "I-51d",
       "title": "v4 R-5d Acids",
+      "status": "in_progress",
+      "summary": "Extends tile names to carboxylic acids; split into I-51d1 (suffixes, ácido, carboxi), I-51d2 (templates, Ayuda) and I-51d3 (diagnosis)."
+    },
+    {
+      "id": "I-51d1",
+      "title": "v4 R-5d1 ácido class word, oico/carboxílico suffixes, ácido benzoico, carboxi prefix",
+      "status": "done",
+      "risk": "high",
+      "summary": "Reads acid names built from tiles: the ácido class word, oico and carboxílico suffixes, ácido benzoico and the carboxi prefix.",
+      "review": "docs/reviews/I-51d1.md",
+      "narrative": "docs/progress-archive/i-51d1.md"
+    },
+    {
+      "id": "I-51d2",
+      "title": "v4 R-5d2 Retained acid templates and Ayuda acid line",
       "status": "queued",
-      "summary": "Extends tile names to carboxylic acids with the ácido class word and traditional acid names."
+      "summary": "Reads traditional acid names such as ácido acético, ácido oxálico and the ftálico family, and adds the Ayuda acid line."
+    },
+    {
+      "id": "I-51d3",
+      "title": "v4 R-5d3 Acid diagnosis messages",
+      "status": "queued",
+      "summary": "Names the mistakes in an acid name built from tiles, each with its step in the explanation."
     },
     {
       "id": "I-52a",
@@ -822,6 +843,12 @@
       "title": "v4 R-7 Wrap-up",
       "status": "queued",
       "summary": "Runs the closed loop over every generator and finishes help, README, CLAUDE.md and the wording list for teacher review."
+    },
+    {
+      "id": "I-54",
+      "title": "o/m/p letters for two different prefixes on benceno, both directions",
+      "status": "queued",
+      "summary": "Names and reads benzenes with two different groups by orto/meta/para letters, such as m-cloroetilbenceno (user decision 2026-10-15)."
     }
   ]
 }

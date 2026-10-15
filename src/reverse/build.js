@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -50,6 +50,16 @@
  * the word, is the ring's own like `fenol`'s OH). `oxo` (R-5c1) is a
  * one-atom group whose oxygen is double-bonded to its carbon (two bonds of
  * it), and `formil` a retained word: one carbon with its =O.
+ * The carboxylic acids (R-5d1) are built as the aldehydes, with an OH
+ * single-bonded beside the =O on the group's carbon (SuffixSpec `hydroxy`):
+ * `oico` at the ends of the chain by rule (the carbon gets three bonds from
+ * its –COOH; more groups than ends is CARBONYL_POSITION, worded for the
+ * –COOH; the VALENCE note of an end carbon names «oico»), `carboxílico` and
+ * `benzoico` a new carbon outside the parent with its =O and its OH (one more
+ * carbon and three more heavy atoms per group; `benzoico`'s, placed at 1 by
+ * the word, the ring's own, «…en el ácido benzoico, ese carbono ya lleva un
+ * grupo COOH»); `carboxi` is a retained word, one carbon with its =O and its
+ * OH, bonded by that carbon.
  * An alkoxy prefix (R-5b, SubstituentSpec `alkoxy`) is its branch built as
  * any other — chain, ring, phenyl or retained word, with its own prefixes —
  * and then an ether oxygen, created last, bonded by single bonds to the
@@ -134,11 +144,11 @@ import {
 } from '../model/validate.js';
 import {
   BENZENE_NAME, RETAINED_PREFIXES, GROUP_SUFFIXES, ENDINGS, HALOGEN_PREFIXES, ACYL_ENDING, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, stem,
-  multiplier,
+  multiplier, SUFFIX_CLASS_WORDS,
 } from '../naming/lexicon.es.js';
 import {
   templateGroupWord, isAtomGroup, atomGroupOrder, closingText, HYDROXY_ELEMENT, ALKOXY_ELEMENT, OXO_ELEMENT, SUFFIX_GROUPS,
-  GROUP_WORD_PARENTS, withArticle,
+  GROUP_WORD_PARENTS, withArticle, suffixBondAmount, ACID_KIND, ACID_GROUP,
 } from './tiles.js';
 
 /**
@@ -158,16 +168,20 @@ const CARBON = 'C';
  * propan-2-iliden, tert-butil = 2-metilpropan-2-il; and `formil` (R-5c1),
  * the –CHO: one carbon with its =O. `attach` is the carbon with the free
  * valence, `order` its bond order, `methyls` the carbons that carry one more
- * methyl, `oxo` those that carry a double-bonded oxygen.
+ * methyl, `oxo` those that carry a double-bonded oxygen, `hydroxy` those that
+ * carry an OH (R-5d1: `carboxi`, the –COOH bonded by its carbon).
  */
+const NONE = Object.freeze([]);
 const RETAINED_TEMPLATES = Object.freeze({
-  isopropyl: Object.freeze({ length: 3, attach: 2, order: 1, methyls: Object.freeze([]), oxo: Object.freeze([]) }),
-  isopropylidene: Object.freeze({ length: 3, attach: 2, order: 2, methyls: Object.freeze([]), oxo: Object.freeze([]) }),
-  'tert-butyl': Object.freeze({ length: 3, attach: 2, order: 1, methyls: Object.freeze([2]), oxo: Object.freeze([]) }),
+  isopropyl: Object.freeze({ length: 3, attach: 2, order: 1, methyls: NONE, oxo: NONE, hydroxy: NONE }),
+  isopropylidene: Object.freeze({ length: 3, attach: 2, order: 2, methyls: NONE, oxo: NONE, hydroxy: NONE }),
+  'tert-butyl': Object.freeze({ length: 3, attach: 2, order: 1, methyls: Object.freeze([2]), oxo: NONE, hydroxy: NONE }),
   // R-5c1: `formil`, the –CHO bonded by its carbon (the engine's one-carbon acyl group with its =O at 1, I-39b).
-  formyl: Object.freeze({ length: 1, attach: 1, order: 1, methyls: Object.freeze([]), oxo: Object.freeze([1]) }),
+  formyl: Object.freeze({ length: 1, attach: 1, order: 1, methyls: NONE, oxo: Object.freeze([1]), hydroxy: NONE }),
   // R-5c2: `acetil`, CH₃–CO– bonded by its C=O carbon (the engine's two-carbon acyl group, I-39b).
-  acetyl: Object.freeze({ length: 2, attach: 1, order: 1, methyls: Object.freeze([]), oxo: Object.freeze([1]) }),
+  acetyl: Object.freeze({ length: 2, attach: 1, order: 1, methyls: NONE, oxo: Object.freeze([1]), hydroxy: NONE }),
+  // R-5d1: `carboxi`, the –COOH bonded by its carbon (the engine's carboxy prefix, I-40b).
+  carboxy: Object.freeze({ length: 1, attach: 1, order: 1, methyls: NONE, oxo: Object.freeze([1]), hydroxy: Object.freeze([1]) }),
 });
 
 /** Spanish words of the bond orders in the messages. */
@@ -465,8 +479,9 @@ function prefixCarbons(prefixes) {
  * Atoms build() creates for one occurrence of a branch, its own prefixes
  * included: its carbons, one atom per one-atom group (a halogen, R-5a1;
  * the oxygen of `hidroxi`, R-5a2), the ether oxygen of an alkoxy prefix
- * (R-5b) and the =O of an acyl prefix (R-5c2; with its C=O carbon on a
- * ring).
+ * (R-5b), the =O of an acyl prefix (R-5c2; with its C=O carbon on a
+ * ring) and the oxygens of a retained word (`formil`'s =O; `carboxi`'s =O
+ * and OH, R-5d1).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
@@ -477,7 +492,9 @@ function substituentAtoms(sub) {
   }
   const oxygen = sub.alkoxy ? 1 : 0; // The ether oxygen of an alkoxy prefix (R-5b).
   if (sub.kind === 'retained') {
-    return substituentCarbons(sub) + RETAINED_TEMPLATES[sub.retained].oxo.length + oxygen; // The =O of `formil` (R-5c1).
+    // The =O of `formil` (R-5c1); the =O and the OH of `carboxi` (R-5d1).
+    const template = RETAINED_TEMPLATES[sub.retained];
+    return substituentCarbons(sub) + template.oxo.length + template.hydroxy.length + oxygen;
   }
   // R-5c2: the =O of `propanoil`, `benzoil`, and the C=O carbon of a ring's acyl prefix.
   const acyl = (sub.acyl ? 1 : 0) + (isRingAcyl(sub) ? 1 : 0);
@@ -543,13 +560,17 @@ function parentCarbons(parent) {
 /**
  * The atoms of a NameSpec's suffix groups (R-5a2: one oxygen per OH; R-5c1:
  * one per C=O of `al` and `ona`, two — the carbon and its oxygen — per –CHO
- * of `carbaldehído` and `benzaldehído`; none without a suffix).
+ * of `carbaldehído` and `benzaldehído`; R-5d1: one more per –COOH, its OH;
+ * none without a suffix).
  *
  * @param {object} spec - A NameSpec.
  * @returns {number} The count.
  */
 function suffixAtomCount(spec) {
-  return spec.suffix ? spec.suffix.slots.length + suffixCarbons(spec) : 0;
+  if (!spec.suffix) {
+    return 0;
+  }
+  return spec.suffix.slots.length * (spec.suffix.hydroxy ? 2 : 1) + suffixCarbons(spec);
 }
 
 /**
@@ -692,12 +713,15 @@ export function checkSpec(spec, values = null) {
   return null;
 } // End of function checkSpec()
 
-/** Words of the CARBONYL_POSITION messages (R-5c1), from the lexicon. */
+/** Words of the CARBONYL_POSITION messages (R-5c1; R-5d1: the acids'), from the lexicon. */
 const CARBONYL_WORDS = Object.freeze({
   al: GROUP_SUFFIXES.aldehyde,
   ona: GROUP_SUFFIXES.ketone,
   metanal: `${stem(1)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES.aldehyde}`,
   butanodial: `${stem(4)}${ENDINGS.saturated}${multiplier(2)}${GROUP_SUFFIXES.aldehyde}`,
+  oico: GROUP_SUFFIXES[ACID_KIND],
+  acidoMetanoico: `${SUFFIX_CLASS_WORDS[ACID_KIND]} ${stem(1)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[ACID_KIND]}`,
+  acidoButanodioico: `${SUFFIX_CLASS_WORDS[ACID_KIND]} ${stem(4)}${ENDINGS.saturated}${multiplier(2)}${GROUP_SUFFIXES[ACID_KIND]}`,
 });
 
 /**
@@ -713,17 +737,24 @@ const CARBONYL_MESSAGES = Object.freeze({
     ? `La cadena de 1 carbono solo tiene un extremo: lleva un solo grupo CHO (${CARBONYL_WORDS.metanal}).`
     : `La cadena tiene dos extremos: con «${CARBONYL_WORDS.al}» lleva como mucho dos grupos CHO, uno en cada extremo `
       + `(${CARBONYL_WORDS.butanodial}).`),
+  // R-5d1: the same for the –COOH groups of `oico`.
+  acidEnds: (length) => (length === 1
+    ? `La cadena de 1 carbono solo tiene un extremo: lleva un solo ${ACID_GROUP} (${CARBONYL_WORDS.acidoMetanoico}).`
+    : `La cadena tiene dos extremos: con «${CARBONYL_WORDS.oico}» lleva como mucho dos grupos COOH, uno en cada extremo `
+      + `(${CARBONYL_WORDS.acidoButanodioico}).`),
   ketoneEnd: `La terminación «${CARBONYL_WORDS.ona}» va en un carbono unido a otros dos carbonos, como los del interior de la `
     + `cadena; en un extremo sería un aldehído («${CARBONYL_WORDS.al}»).`,
   /** The end of VALENCE on a chain end that `al` takes by rule: «…solo puede tener 4: el grupo CHO de «al» va en ese carbono.» */
   terminalNote: `el grupo CHO de «${CARBONYL_WORDS.al}» va en ese carbono`,
+  /** The same for `oico` (R-5d1): «…el grupo COOH de «oico» va en ese carbono.» */
+  acidTerminalNote: `el ${ACID_GROUP} de «${CARBONYL_WORDS.oico}» va en ese carbono`,
 });
 
 /**
  * Checks the suffix's carbon slots against the parent (R-5a2): each within
  * it (LOCANT_RANGE); and (R-5c1) no more –CHO groups of `al` than the chain
  * has ends (CARBONYL_POSITION: two, one on a one-carbon chain, whose only
- * carbon would take two =O).
+ * carbon would take two =O), nor –COOH groups of `oico` (R-5d1).
  *
  * @param {object} spec - A NameSpec.
  * @param {{length: number, branch: boolean}} parent - The parent, as checkSpec() describes it.
@@ -732,7 +763,9 @@ const CARBONYL_MESSAGES = Object.freeze({
  */
 function checkSuffix(spec, parent, values) {
   if (spec.suffix && spec.suffix.terminal && spec.suffix.slots.length > Math.min(2, parent.length)) {
-    return buildError('CARBONYL_POSITION', CARBONYL_MESSAGES.ends(parent.length), spec.suffix.tiles); // `metanodial`, `butanotrial`
+    // `metanodial`, `butanotrial`; `ácido metanodioico` (R-5d1).
+    const message = spec.suffix.kind === ACID_KIND ? CARBONYL_MESSAGES.acidEnds : CARBONYL_MESSAGES.ends;
+    return buildError('CARBONYL_POSITION', message(parent.length), spec.suffix.tiles);
   }
   for (const slot of spec.suffix ? spec.suffix.slots : []) {
     const error = checkCarbon(slot, parent, values);
@@ -874,11 +907,17 @@ function buildSubstituent(state, sub) {
       contribute(state, chain.atoms[locant - 1], sub.tiles, 1);
       contribute(state, methyl, sub.tiles, 1);
     }
-    for (const locant of template.oxo) { // The =O of `formil` (R-5c1).
+    for (const locant of template.oxo) { // The =O of `formil` (R-5c1) and `carboxi` (R-5d1).
       const oxygen = addAtom(state.mol, {}, OXO_ELEMENT);
       state.atoms.set(oxygen, { locant: 1, branch: true, added: [] });
       addBond(state.mol, chain.atoms[locant - 1], oxygen, 2);
       contribute(state, chain.atoms[locant - 1], sub.tiles, 2);
+    }
+    for (const locant of template.hydroxy) { // The OH of `carboxi` (R-5d1).
+      const oxygen = addAtom(state.mol, {}, HYDROXY_ELEMENT);
+      state.atoms.set(oxygen, { locant: 1, branch: true, added: [] });
+      addBond(state.mol, chain.atoms[locant - 1], oxygen, 1);
+      contribute(state, chain.atoms[locant - 1], sub.tiles, 1);
     }
     branch = { attach: chain.atoms[template.attach - 1], order: template.order, tiles: sub.tiles };
   } else {
@@ -1042,7 +1081,8 @@ const KETONE_GROUP = 'grupo C=O';
  * message says it (R-5a2: «…en el fenol, ese carbono ya lleva un grupo OH»;
  * R-5c1: «…en el benzaldehído, ese carbono ya lleva un grupo CHO»; the
  * retained phenols of R-5a3a: «grupo OH»; the carbonyl templates of
- * R-5c3a: «grupo CHO», and «grupo C=O» for `acetona` and `acetofenona`).
+ * R-5c3a: «grupo CHO», and «grupo C=O» for `acetona` and `acetofenona`;
+ * R-5d1: «grupo COOH» for `benzoico`).
  *
  * @param {{kind: string}} suffix - A SuffixSpec placed by its parent's word.
  * @returns {string} The group's name.
@@ -1051,6 +1091,9 @@ function placedGroupWord(suffix) {
   if (suffix.kind === 'ketone') {
     return KETONE_GROUP; // `acetona`, `acetofenona` (R-5c3a)
   }
+  if (suffix.kind === ACID_KIND) {
+    return ACID_GROUP; // `benzoico` (R-5d1)
+  }
   return suffix.kind === 'alcohol' ? GROUP_WORD_PARENTS.phenol.group : GROUP_WORD_PARENTS.benzaldehyde.group;
 }
 
@@ -1058,19 +1101,23 @@ function placedGroupWord(suffix) {
  * Puts each suffix group on its parent carbon: its oxygen (R-5a2: the OH of
  * an alcohol, single-bonded; R-5c1: the =O of `al` and `ona`,
  * double-bonded), or (R-5c1: `carbaldehído`, `benzaldehído`) a new carbon
- * single-bonded to the parent's carbon with the =O on it. A slot the
+ * single-bonded to the parent's carbon with the =O on it; an acid's –COOH
+ * (R-5d1: `oico`, `carboxílico`, `benzoico`) has an OH too, single-bonded
+ * to the =O's carbon after the =O (`hydroxy`, `hydroxyBond`). A slot the
  * parent's word places by rule (the OH of `fenol`, the –CHO of
  * `benzaldehído`, implicit and `placed`) is the ring's own, as a template's
  * group: it adds no bond order to blame, and its carbon remembers the word
- * for the VALENCE message; the ends of a chain that `al` takes by rule
- * (implicit, not placed) are blamed on the `al` tile.
+ * for the VALENCE message; the ends of a chain that `al` or `oico` takes by
+ * rule (implicit, not placed) remember the rule, and the VALENCE message
+ * blames the student's locant that overloads them.
  *
  * @param {object} state - Build state.
  * @param {object|null} suffix - The NameSpec's SuffixSpec, or null.
  * @param {number[]} atoms - The parent's atoms in locant order.
  * @returns {{locant: number, parentAtom: number, attachment: number, bond: number, tiles: [number, number], carbon?: number,
- *   carbonBond?: number}[]} One entry per suffix group, in slot order: the parent's carbon, the oxygen and the bond to it
- *   (from the parent's carbon, or from the group's own carbon `carbon`, bonded to the parent's by `carbonBond`).
+ *   carbonBond?: number, hydroxy?: number, hydroxyBond?: number}[]} One entry per suffix group, in slot order: the parent's
+ *   carbon, the oxygen and the bond to it (from the parent's carbon, or from the group's own carbon `carbon`, bonded to the
+ *   parent's by `carbonBond`), and an acid's OH and its bond (R-5d1).
  */
 function attachSuffix(state, suffix, atoms) {
   if (!suffix) {
@@ -1078,6 +1125,7 @@ function attachSuffix(state, suffix, atoms) {
   }
   const { mol, values } = state;
   const { order } = SUFFIX_GROUPS[suffix.kind];
+  const amount = suffixBondAmount({ outside: suffix.outside, order, hydroxy: suffix.hydroxy }); // 3 for `oico` (R-5d1)
   return suffix.slots.map((slot) => {
     const locant = slotValue(slot, values);
     const target = atoms[locant - 1];
@@ -1092,12 +1140,19 @@ function attachSuffix(state, suffix, atoms) {
     const oxygen = addAtom(mol, {}, HYDROXY_ELEMENT);
     state.atoms.set(oxygen, { locant: 1, branch: true, added: [] }); // One bond: never over its valence.
     const bond = addBond(mol, holder, oxygen, order);
+    if (suffix.hydroxy) {
+      // The OH of a –COOH (R-5d1), after its =O: three bonds of the group's carbon, never over its valence on its own.
+      extra.hydroxy = addAtom(mol, {}, HYDROXY_ELEMENT);
+      state.atoms.set(extra.hydroxy, { locant: 1, branch: true, added: [] });
+      extra.hydroxyBond = addBond(mol, holder, extra.hydroxy, 1);
+    }
     if (slot.kind === 'implicit' && suffix.placed) {
       state.atoms.get(target).template = { word: suffix.word.text, group: placedGroupWord(suffix) };
     } else if (slot.kind === 'implicit') {
-      state.atoms.get(target).note = CARBONYL_MESSAGES.terminalNote; // `al` (R-5c1): blame the locant that overloads its end.
+      // `al` (R-5c1), `oico` (R-5d1): blame the locant that overloads its end.
+      state.atoms.get(target).note = suffix.kind === ACID_KIND ? CARBONYL_MESSAGES.acidTerminalNote : CARBONYL_MESSAGES.terminalNote;
     } else {
-      contribute(state, target, slot.tiles, suffix.outside ? 1 : order);
+      contribute(state, target, slot.tiles, amount);
     }
     return { locant, parentAtom: target, attachment: oxygen, bond, tiles: [slot.tiles[0], slot.tiles[1]], ...extra };
   });

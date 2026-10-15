@@ -72,8 +72,13 @@ const EXPECTED_CLASS_NAMES = 11;
  */
 const EXPECTED_CARBONYL_ROWS = Object.freeze({ total: 7, i34: 5, i39b: 1, i43b: 1, names: 9 });
 
-/** The I-34 rows with an acid's C=O beside the ether (`ácido 2-metoxietanoico`…): phase R-5d. */
-const EXPECTED_ACID_ROWS = 2;
+/**
+ * The ether rows with a carboxylic acid beside the ether, read since phase R-5d1 (I-51d1): the 2 of the I-34 section the round
+ * trip had left out (`ácido 2-metoxietanoico`, `ácido 2-metoxipropanoico`), 2 of I-40b (`ácido 3-(carboximetoxi)propanoico`,
+ * `ácido 2-(carboximetoxi)propanodioico`), 1 of I-45a (`ácido 2-(4-clorofenoxi)etanoico`) and 1 of I-45b (`ácido
+ * 2-(4-metoxibenzoil)butanoico`); 6 names.
+ */
+const EXPECTED_ACID_ROWS = Object.freeze({ total: 6, i34: 2, i40b: 2, i45a: 1, i45b: 1, names: 6 });
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -732,10 +737,10 @@ test('dialog (R-5b): `oxi` and `anisol` have tooltips; the silent `il` of `metox
 // Fixture round trip and closed loop (design.md §15.7).
 // ---------------------------------------------------------------------------
 
-test('fixture round trip (R-5b1, R-5b2, R-5c1): every ether row and its class name, graph compared with the SMILES', async () => {
+test('fixture round trip (R-5b1, R-5b2, R-5c1, R-5d1): every ether row and its class name, graph compared with the SMILES', async () => {
   const fixtures = await readFixtures();
-  // The ethers beside an aldehyde or a ketone too, since phase R-5c1 (I-51c1).
-  const rows = fixtures.filter((row) => isEther(row.smiles, { carbonyl: true }));
+  // The ethers beside an aldehyde or a ketone too, since phase R-5c1 (I-51c1), and beside an acid, since R-5d1 (I-51d1).
+  const rows = fixtures.filter((row) => isEther(row.smiles, { carbonyl: true, acid: true }));
   let covered = 0;
   let classNames = 0;
   let elapsed = 0;
@@ -767,21 +772,27 @@ test('fixture round trip (R-5b1, R-5b2, R-5c1): every ether row and its class na
    * @param {string} id - The section's phase id (`I-34`…).
    * @returns {number} The count.
    */
-  const inSection = (id) => rows.filter((row) => row.section.includes(`(${id})`) || row.section.includes(`(${id},`)).length;
-  const carbonyl = rows.filter((row) => !isEther(row.smiles));
-  assert.equal(rows.length, EXPECTED_ROWS.total + EXPECTED_CARBONYL_ROWS.total);
+  // Its own id only, the first of its header (R-5d1: the I-40b header cites I-40a too).
+  const inSection = (id) => rows.filter((row) => /\((I-\d+[a-z]?)[),:]/.exec(row.section)[1] === id).length;
+  const carbonyl = rows.filter((row) => !isEther(row.smiles) && isEther(row.smiles, { carbonyl: true }));
+  const acid = rows.filter((row) => !isEther(row.smiles, { carbonyl: true })); // R-5d1
+  assert.equal(rows.length, EXPECTED_ROWS.total + EXPECTED_CARBONYL_ROWS.total + EXPECTED_ACID_ROWS.total);
   assert.deepEqual([inSection('I-34'), inSection('I-40a'), inSection('I-42a'), inSection('I-43a'), inSection('I-45a'),
-    inSection('I-39b'), inSection('I-43b')], [EXPECTED_ROWS.i34 + EXPECTED_CARBONYL_ROWS.i34, EXPECTED_ROWS.i40a, EXPECTED_ROWS.i42a,
-    EXPECTED_ROWS.i43a, EXPECTED_ROWS.i45a, EXPECTED_CARBONYL_ROWS.i39b, EXPECTED_CARBONYL_ROWS.i43b]);
+    inSection('I-39b'), inSection('I-43b'), inSection('I-40b'), inSection('I-45b')], [
+    EXPECTED_ROWS.i34 + EXPECTED_CARBONYL_ROWS.i34 + EXPECTED_ACID_ROWS.i34, EXPECTED_ROWS.i40a, EXPECTED_ROWS.i42a,
+    EXPECTED_ROWS.i43a, EXPECTED_ROWS.i45a + EXPECTED_ACID_ROWS.i45a, EXPECTED_CARBONYL_ROWS.i39b, EXPECTED_CARBONYL_ROWS.i43b,
+    EXPECTED_ACID_ROWS.i40b, EXPECTED_ACID_ROWS.i45b]);
   assert.equal(carbonyl.length, EXPECTED_CARBONYL_ROWS.total);
   assert.equal(carbonyl.flatMap((row) => row.names).length, EXPECTED_CARBONYL_ROWS.names);
-  assert.equal(covered, EXPECTED_NAMES + EXPECTED_CARBONYL_ROWS.names);
+  assert.equal(acid.length, EXPECTED_ACID_ROWS.total);
+  assert.equal(acid.flatMap((row) => row.names).length, EXPECTED_ACID_ROWS.names);
+  assert.ok(acid.every((row) => row.names[0].startsWith('ácido ')), 'every acid row is named as an acid');
+  assert.equal(covered, EXPECTED_NAMES + EXPECTED_CARBONYL_ROWS.names + EXPECTED_ACID_ROWS.names);
   assert.equal(classNames, EXPECTED_CLASS_NAMES);
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
-  // Every I-34 row is read but those with an acid's C=O beside the ether (phase R-5d).
-  const later = fixtures.filter((row) => row.section.includes('(I-34)') && !isEther(row.smiles, { carbonyl: true }));
-  assert.equal(later.length, EXPECTED_ACID_ROWS);
-  assert.ok(later.every((row) => row.names[0].startsWith('ácido ')), 'every I-34 row left out is an acid');
+  // Every I-34 row is read (the acids beside the ether since phase R-5d1).
+  const later = fixtures.filter((row) => row.section.includes('(I-34)') && !isEther(row.smiles, { carbonyl: true, acid: true }));
+  assert.equal(later.length, 0);
 }); // End of test 'fixture round trip (R-5b1, R-5b2, R-5c1): every ether row and its class name…'
 
 /** The closed loop's generators (scripts/oracle/generate.mjs; design.md §15.7), ether molecules only. */

@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -60,7 +60,10 @@
  *   bonds of that chain's carbon 1 (`(cloropropanoil)`: its chlorine on 2 or
  *   3); a ring's (`(metilciclohexanocarbonil)`, `(metilbenzoil)`) has its C=O
  *   carbon outside the ring, one bond of the ring's carbon 1, as an alkoxy
- *   group's oxygen.
+ *   group's oxygen. The acids (R-5d1) add no role either: the –COOH of `oico`
+ *   takes three bonds of its chain end (implicit, never searched), a
+ *   `carboxílico`'s one (its own carbon is outside the parent, as a
+ *   `carbaldehído`'s), `carboxi` one.
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -117,7 +120,7 @@
 import { CARBON_VALENCE, cloneMolecule } from '../model/molecule.js';
 import { aromaticKey, aromaticIsomorphism } from '../model/graph.js';
 import { build, checkSpec, attachmentOrder, hasOwnChain, ringRefusal, isRing, isAromatic, templateGroups } from './build.js';
-import { TILES, CLOSING_ID, POSITIONAL_IDS, TEMPLATES, SUFFIX_GROUPS, tileById } from './tiles.js';
+import { TILES, CLOSING_ID, POSITIONAL_IDS, TEMPLATES, SUFFIX_GROUPS, tileById, suffixBondAmount } from './tiles.js';
 
 /**
  * Default limits of one search (design.md §15.5.3 step 3): valid
@@ -357,8 +360,10 @@ function modelOf(spec) {
   const model = { chains: [], groups: [], index: new Map(spec.leftOut.map((slot, i) => [slot, i])) };
   const parent = addChain(model, { ...spec.parent, prefixes: [...spec.prefixes, ...templateGroups(spec)] }, false); // A template's groups too (R-4c).
   if (spec.suffix) {
-    // One OH per slot (R-5a2); a C=O of `al` or `ona` takes two bonds, a –CHO of `carbaldehído` one (its own carbon; R-5c1).
-    const amount = spec.suffix.outside ? 1 : SUFFIX_GROUPS[spec.suffix.kind].order;
+    // One OH per slot (R-5a2); a C=O of `al` or `ona` takes two bonds, a –CHO of `carbaldehído` one (its own carbon; R-5c1); a
+    // –COOH of `oico` three, of `carboxílico` one (R-5d1).
+    const { order } = SUFFIX_GROUPS[spec.suffix.kind];
+    const amount = suffixBondAmount({ outside: spec.suffix.outside, order, hydroxy: spec.suffix.hydroxy });
     addSlots(model, spec.suffix.slots, { role: 'carbon', chain: parent, amount });
   }
   model.groups.sort((p, q) => p.indices[0] - q.indices[0]);
@@ -735,8 +740,9 @@ export function placementReading(spec, structure, placement) {
       parentAtom: atom(group.parentAtom),
       attachment: atom(group.attachment),
       bond: bond(group.bond),
-      // The –CHO's own carbon of `carbaldehído` (R-5c1).
+      // The –CHO's own carbon of `carbaldehído` (R-5c1); the OH of a –COOH (R-5d1).
       ...(group.carbon === undefined ? {} : { carbon: atom(group.carbon), carbonBond: bond(group.carbonBond) }),
+      ...(group.hydroxy === undefined ? {} : { hydroxy: atom(group.hydroxy), hydroxyBond: bond(group.hydroxyBond) }),
     })),
   };
 } // End of function placementReading()

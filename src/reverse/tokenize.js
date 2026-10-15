@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -61,7 +61,12 @@
  * `carbonil` after a ring's whole ending or its locant (`ciclohexano` +
  * `carbonil`, `ciclohex-2-eno-1-carbonil`), an automatic enclosure closing
  * right after either (`(but-2-enoil)`, `(ciclohexanocarbonil)`); `acetil` and
- * `benzoil` stand where a retained branch word does. A step budget bounds the search:
+ * `benzoil` stand where a retained branch word does. An acid's name (R-5d1:
+ * `ácido 2-metilpropanoico`) starts with the class word `ácido`, read only
+ * at the start of the text and followed by exactly its automatic space
+ * (assemble.js rule 9), after which the rest of the name reads as from the
+ * start; `oico` and `carboxílico` are read where `ol` is, `benzoico` where
+ * `fenol` is, `carboxi` where a retained branch word is. A step budget bounds the search:
  * running out returns null, never a guess.
  */
 
@@ -103,7 +108,9 @@ const PUNCTUATION = ',-';
  * PHEX `fenil` without their `il`, only before `oxi` (`isopropoxi`,
  * `fenoxi`); for the class names (R-5b2) ETHER the class word `éter` and
  * SPACE the automatic space between their words; for the acyl prefixes
- * (R-5c2) OIL the ending `oil` and CARB the ending `carbonil`.
+ * (R-5c2) OIL the ending `oil` and CARB the ending `carbonil`; for the acids
+ * (R-5d1) ACID the class word `ácido` and ACIDSPACE the automatic space
+ * after it.
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -124,7 +131,7 @@ function tileClass(tile) {
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
     ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS', halogen: 'HAL', hydroxy: 'HAL', carbonyl: 'HAL', suffix: 'OL',
-    closing: 'CLO', alkoxy: 'OXI', classWord: 'ETHER',
+    closing: 'CLO', alkoxy: 'OXI', classWord: 'ETHER', suffixClass: 'ACID',
   };
   return classes[tile.kind];
 } // End of function tileClass()
@@ -155,10 +162,13 @@ const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'TPL'];
  * (R-5b) after `il`, after a retained word without its `il`, or contracted
  * right after a root, and a prefix's followers after it; `oil` (R-5c2) after
  * an ending, `carbonil` after an ending or a locant, a prefix's followers
- * after them.
+ * after them; `ácido` (R-5d1) at the start only, and its space after it.
  */
 const FOLLOW = Object.freeze({
-  BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'TPL', 'POS']),
+  BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'TPL', 'POS', 'ACID']),
+  // R-5d1: `ácido`, then only its space (search()); after the space, the rest of the name as from the start.
+  ACID: new Set(),
+  ACIDSPACE: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'TPL', 'POS']),
   AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE', 'RETX', 'PHEX']),
   NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL', 'BEN', 'BENE', 'CLO', 'MULTE', 'OL', 'CARB']),
   CLO: new Set(['NUM', 'CLO', 'MULT', 'ENE']),
@@ -358,6 +368,10 @@ export function tokenize(text, options = {}) {
     }
     const ch = target[at];
     if (ch === SPACE) {
+      if (prev === 'ACID') {
+        // The space after `ácido` (R-5d1, assemble.js rule 9), nothing skipped before it.
+        return skipped === '' ? search(at + SPACE.length, 'ACIDSPACE', SPACE_ROLE) : false;
+      }
       // A class name's space (R-5b2): right after a complete group, outside every mark, with nothing skipped before it.
       const fitsSpace = skipped === '' && marks.length === 0 && BEFORE_SPACE.has(prev) && fits(SPACE_ROLE);
       return fitsSpace ? search(at + SPACE.length, 'SPACE', SPACE_ROLE) : false;
