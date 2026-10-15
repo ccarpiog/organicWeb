@@ -35,7 +35,11 @@
  *   retained benzene parent with groups of its own, R-4c: `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`; R-5a3a: the retained phenols
  *   `cresol`, `pirocatecol`, `catecol`, `resorcinol`, `hidroquinona`, whose
- *   OH groups are the principal group; value the TEMPLATES key),
+ *   OH groups are the principal group; R-5c3a: the retained carbonyl names
+ *   `formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
+ *   `fenilacetaldehído`, `ftalaldehído`, `isoftalaldehído`,
+ *   `tereftalaldehído`, whose C=O is the principal group — the first five on
+ *   an open chain; value the TEMPLATES key),
  *   'positional' (the old orto/meta/para letters `o`, `m`, `p`, R-4c: the two
  *   occupied positions of a benzene ring; value the locant of the second
  *   one, 2 | 3 | 4, the POSITIONAL_LETTERS keys), 'halogen' (the halogen
@@ -101,7 +105,8 @@
  *   from R-5b2; R-5c1: `oxo`, `formil`, `al`, `ona`, `carbaldehído`; R-5c2:
  *   `acetil`, `oil`, `carbonil`, after `formil`),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
- *   the retained phenols; R-5b: `anisol`; later phases add acetona, ácido
+ *   the retained phenols; R-5b: `anisol`; R-5c3a: the retained carbonyl
+ *   names, `formaldehído` … `tereftalaldehído`; later phases add ácido
  *   acético…);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
  *   multipliers from hepta / heptakis, roots from undec).
@@ -348,6 +353,27 @@ const METHOXY = Object.freeze({ length: 1, double: Object.freeze([]), alkoxy: tr
 /** No ring carbons: a template without OH groups. */
 const NONE = Object.freeze([]);
 
+/** Carbons of the benzene ring of a template (interpret.js BENZENE_LENGTH, which imports this module). */
+const BENZENE_CARBONS = 6;
+
+/**
+ * The defining group of `acetofenona` and `fenilacetaldehído` (R-5c3a): a
+ * benzene ring bonded by its carbon 1, the phenyl group.
+ */
+const PHENYL = Object.freeze({ phenyl: true });
+
+/**
+ * The principal group a carbonyl template places itself (R-5c3a): its
+ * SUFFIX_GROUPS key and the carbons of its parent that carry it.
+ *
+ * @param {string} value - A SUFFIX_GROUPS key ('aldehyde', 'ketone', 'carbaldehyde').
+ * @param {number[]} positions - The parent's carbons.
+ * @returns {Readonly<{value: string, positions: readonly number[]}>} The group.
+ */
+function placedSuffix(value, positions) {
+  return Object.freeze({ value, positions: Object.freeze([...positions]) });
+}
+
 /**
  * The retained benzene parents of the «Nombres tradicionales» row (design.md
  * §14.5, §15.8 R-4 and R-5a; phases R-4c and R-5a3a), keyed by the tile
@@ -374,6 +400,24 @@ const NONE = Object.freeze([]);
  * `alkoxy` set: a methyl bonded to the ring through an ether oxygen; the
  * forward engine gives `anisol` for the bare metoxibenceno only, as
  * `tolueno` for the bare metilbenceno, aromatic.js traditionalNameId()).
+ * R-5c3a adds the retained carbonyl names the forward engine gives
+ * (principal.js carbonylTraditionalId(), aromatic.js retainedDigroupIds()),
+ * whose `suffix` is the principal group their word places (placedSuffix():
+ * the SUFFIX_GROUPS key and the parent's carbons; templateSuffix()):
+ * `formaldehído` (metanal), `acetaldehído` (etanal), `acetona` (propanona)
+ * and, with a phenyl as their defining group (PHENYL), `acetofenona`
+ * (1-feniletan-1-ona: the phenyl and the C=O on carbon 1) and
+ * `fenilacetaldehído` (2-feniletanal: the phenyl on carbon 2) — templates
+ * whose parent is an open chain of `chain` carbons, numbered as the
+ * systematic name (the C=O or –CHO carbon first, `acetona`'s at 2), so the
+ * student's prefixes are numbered on that chain —, and the ftalaldehídos
+ * `ftalaldehído`, `isoftalaldehído`, `tereftalaldehído` (benzene with two
+ * –CHO, `carbaldehyde`, at 1 and 2 / 3 / 4; keyed by their
+ * BENZENE_DIGROUP_NAMES id). The engine writes `formaldehído`, `acetona`,
+ * `acetofenona` and `fenilacetaldehído` for the bare molecules only; the
+ * ftalaldehídos also with prefixes (`substitutable`: `4-metilftalaldehído`),
+ * and `acetaldehído` with one substituted phenyl on its carbon 2
+ * (`arylPrefix`: `2-(4-metilfenil)acetaldehído`); templateAdmits() says so.
  * Later phases add the retained parents with another principal group
  * (`anilina`, `ácido benzoico`…).
  */
@@ -388,7 +432,116 @@ export const TEMPLATES = Object.freeze({
   catechol: Object.freeze({ group: null, count: 0, positions: NONE, hydroxy: Object.freeze([1, 2]) }),
   resorcinol: Object.freeze({ group: null, count: 0, positions: NONE, hydroxy: Object.freeze([1, 3]) }),
   hydroquinone: Object.freeze({ group: null, count: 0, positions: NONE, hydroxy: Object.freeze([1, 4]), feminine: true }),
+  formaldehyde: Object.freeze({
+    id: 'formaldehyde', chain: 1, group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix('aldehyde', [1]),
+  }),
+  acetaldehyde: Object.freeze({
+    id: 'acetaldehyde', chain: 2, group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix('aldehyde', [1]),
+    arylPrefix: true,
+  }),
+  acetone: Object.freeze({
+    id: 'acetone', chain: 3, group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix('ketone', [2]),
+    feminine: true,
+  }),
+  acetophenone: Object.freeze({
+    id: 'acetophenone', chain: 2, group: PHENYL, count: 1, positions: Object.freeze([1]), hydroxy: NONE,
+    suffix: placedSuffix('ketone', [1]), feminine: true,
+  }),
+  phenylacetaldehyde: Object.freeze({
+    id: 'phenylacetaldehyde', chain: 2, group: PHENYL, count: 1, positions: Object.freeze([2]), hydroxy: NONE,
+    suffix: placedSuffix('aldehyde', [1]),
+  }),
+  phthalaldehyde: Object.freeze({
+    group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix('carbaldehyde', [1, 2]), substitutable: true,
+  }),
+  isophthalaldehyde: Object.freeze({
+    group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix('carbaldehyde', [1, 3]), substitutable: true,
+  }),
+  terephthalaldehyde: Object.freeze({
+    group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix('carbaldehyde', [1, 4]), substitutable: true,
+  }),
 });
+
+/**
+ * Tells whether a template is one of the retained carbonyl names (R-5c3a:
+ * `formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
+ * `fenilacetaldehído`, the ftalaldehídos): its word places an aldehyde's or
+ * a ketone's C=O.
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @returns {boolean} True for a carbonyl template.
+ */
+export function isCarbonylTemplate(value) {
+  return Boolean(TEMPLATES[value].suffix);
+}
+
+/**
+ * Tells whether a template's parent is an open chain (R-5c3a: `formaldehído`
+ * one carbon, `acetaldehído`, `acetofenona` and `fenilacetaldehído` two,
+ * `acetona` three), not the benzene ring.
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @returns {boolean} True for a chain template.
+ */
+export function isChainTemplate(value) {
+  return Boolean(TEMPLATES[value].chain);
+}
+
+/**
+ * The carbons of a template's parent: its chain's (R-5c3a), else the six of
+ * the benzene ring.
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @returns {number} The carbons.
+ */
+export function templateLength(value) {
+  return TEMPLATES[value].chain || BENZENE_CARBONS;
+}
+
+/**
+ * The principal group a template's word places itself, as a suffix group:
+ * the OH groups of a retained phenol (R-5a3a: SUFFIX_GROUPS 'alcohol' at its
+ * `hydroxy` carbons) or the C=O of a carbonyl template (R-5c3a: `acetona`'s
+ * ketone at 2, the two –CHO of `ftalaldehído` at 1 and 2); null for a
+ * template without one (`tolueno`, `anisol`…).
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @returns {{value: string, positions: readonly number[]}|null} The SUFFIX_GROUPS key and the parent's carbons, or null.
+ */
+export function templateSuffix(value) {
+  const template = TEMPLATES[value];
+  if (template.suffix) {
+    return template.suffix;
+  }
+  return template.hydroxy.length > 0 ? { value: 'alcohol', positions: template.hydroxy } : null;
+}
+
+/**
+ * Tells whether the forward engine writes a template with prefixes, so that
+ * a student's prefixes on it are no SUBSTITUTED_TEMPLATE mistake (R-5c3a):
+ * the ftalaldehídos with any prefixes (aromatic.js retainedDigroupIds():
+ * `4-metilftalaldehído`), and `acetaldehído` with one phenyl branch, with
+ * prefixes of its own on its carbon 2 (principal.js carbonylTraditionalId()
+ * 'arylacetaldehyde': `2-(4-metilfenil)acetaldehído`) or bare (the one word
+ * `fenilacetaldehído`, 'phenylacetaldehyde'), wherever the student puts it.
+ * The student's prefixes are given as interpret.js PrefixSpecs.
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @param {{slots: object[], substituent: {kind: string, retained: string|null, alkoxy: boolean, acyl: boolean,
+ *   prefixes: object[]}}[]} prefixes - The student's prefixes.
+ * @returns {boolean} True when the engine admits them.
+ */
+export function templateAdmits(value, prefixes) {
+  const template = TEMPLATES[value];
+  if (template.substitutable) {
+    return true;
+  }
+  if (!template.arylPrefix || prefixes.length !== 1 || prefixes[0].slots.length !== 1) {
+    return false;
+  }
+  const sub = prefixes[0].substituent;
+  return sub.kind === 'phenyl' && sub.retained === 'phenyl' && !sub.alkoxy && !sub.acyl;
+} // End of function templateAdmits()
 
 /**
  * Tells whether a template is a retained phenol (R-5a3a: `cresol`,
@@ -409,8 +562,10 @@ const GROUP_WORD = 'grupo';
  * The name of a template's defining group as the messages say it
  * (lexicon groupName()): `metilo`, `etenilo`; for the alkoxy group of
  * `anisol` (R-5b) its prefix after «grupo», `grupo metoxi` (design.md §1.1:
- * the group is called by its prefix, never `metoxilo`); null for a template
- * without a carbon group (the diols of R-5a3a).
+ * the group is called by its prefix, never `metoxilo`); `fenilo` for the
+ * phenyl of `acetofenona` and `fenilacetaldehído` (R-5c3a); null for a
+ * template without a carbon group (the diols of R-5a3a, the other carbonyl
+ * templates).
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {string|null} The group's name.
@@ -419,6 +574,9 @@ export function templateGroupWord(value) {
   const { group } = TEMPLATES[value];
   if (!group) {
     return null;
+  }
+  if (group.phenyl) {
+    return groupName(RETAINED_PREFIXES.phenyl.text); // `fenilo`: the ring of `acetofenona`, `fenilacetaldehído` (R-5c3a).
   }
   if (group.alkoxy) {
     return `${GROUP_WORD} ${stem(group.length)}${ALKOXY_ENDING}`; // `grupo metoxi` (a contracted alkoxy prefix).
@@ -441,7 +599,8 @@ export function groupPlural(word) {
 
 /**
  * The text of a template tile: its TRADITIONAL_NAMES name (or, for a diol of
- * R-5a3a, its BENZENE_DIGROUP_NAMES word, keyed by the template's own key),
+ * R-5a3a or a ftalaldehído of R-5c3a, its BENZENE_DIGROUP_NAMES word, keyed
+ * by the template's own key),
  * without the locants or letter the student writes on tiles of their own
  * (`1,2-xileno` → `xileno`, `o-cresol` → `cresol`).
  *
@@ -478,7 +637,9 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * `yodo`, then `hidroxi`, `ol`, `oxi`, `éter`, `oxo`, `formil`, `acetil`,
  * `oil`, `carbonil`, `al`, `ona` and `carbaldehído`), traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`,
  * `anisol`, then the retained phenols `cresol`, `pirocatecol`, `catecol`,
- * `resorcinol`, `hidroquinona`).
+ * `resorcinol`, `hidroquinona`, then the retained carbonyl names
+ * `formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
+ * `fenilacetaldehído`, `ftalaldehído`, `isoftalaldehído`, `tereftalaldehído`).
  *
  * @returns {Readonly<object>[]} The tiles.
  */

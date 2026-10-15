@@ -129,10 +129,16 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   engine writes them, their left-out locants searched; an acyl on a
   hydrocarbon ring, `benceno` or a template reads as the ketone it is
   (`otherName`), and the diagnosis keeps the rules that hold for a branch,
-  with deliberate nulls. Next is R-5c3 (phase I-51c3): the retained
-  carbonyl templates (`formaldehído`, `acetaldehído`, `acetona`,
-  `acetofenona`, the ftalaldehídos) and the aldehyde/ketone diagnosis
-  messages filling the nulls.
+  with deliberate nulls. R-5c3a (phase I-51c3a) is done: the «Nombres
+  tradicionales» row's retained carbonyl names (`formaldehído`,
+  `acetaldehído`, `acetona`, `acetofenona`, `fenilacetaldehído` on an open
+  chain; `ftalaldehído`, `isoftalaldehído`, `tereftalaldehído` on benzene,
+  each with a tooltip) read as the engine's alternatives, also with the
+  prefixes the engine writes on them (`4-metilftalaldehído`,
+  `2-(4-metilfenil)acetaldehído`), any other prefix as `otherName` with the
+  substituted-template diagnosis (`1-cloroacetona`), and the Ayuda has its
+  aldehyde, ketone and acyl line. Next is R-5c3b (phase I-51c3b): the
+  aldehyde/ketone diagnosis messages filling the deliberate nulls.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

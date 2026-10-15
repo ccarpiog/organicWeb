@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T06:35:12Z",
+  "updated": "2026-10-15T07:08:14Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -749,9 +749,25 @@
     {
       "id": "I-51c3",
       "title": "v4 R-5c3 Carbonyl templates, aldehyde and ketone diagnosis, Ayuda line",
+      "status": "in_progress",
+      "risk": "high",
+      "summary": "Reads retained carbonyl names and names carbonyl mistakes; split into I-51c3a (templates, Ayuda line) and I-51c3b (diagnosis)."
+    },
+    {
+      "id": "I-51c3a",
+      "title": "v4 R-5c3a Retained carbonyl templates and the Ayuda carbonyl line",
+      "status": "done",
+      "risk": "high",
+      "summary": "Reads retained carbonyl names such as acetona, acetofenona and the ftalaldehídos in tile names, with the Ayuda line for carbonyls.",
+      "review": "Codex ship, 0 findings — docs/reviews/I-51c3a.md",
+      "narrative": "docs/progress-archive/i-51c3a.md"
+    },
+    {
+      "id": "I-51c3b",
+      "title": "v4 R-5c3b Aldehyde and ketone diagnosis messages",
       "status": "queued",
       "risk": "high",
-      "summary": "Reads retained carbonyl names such as acetona and acetofenona and names the main mistake of a carbonyl name."
+      "summary": "Names the main mistake of an aldehyde, ketone or acyl-prefix name, filling the deliberate nulls of I-51c1 and I-51c2."
     },
     {
       "id": "I-51d",

@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -133,7 +133,8 @@ import {
   longestCarbonChain, longestSideChain,
 } from '../model/validate.js';
 import {
-  BENZENE_NAME, RETAINED_PREFIXES, GROUP_SUFFIXES, ENDINGS, HALOGEN_PREFIXES, ACYL_ENDING, ENCLOSING_MARKS, stem, multiplier,
+  BENZENE_NAME, RETAINED_PREFIXES, GROUP_SUFFIXES, ENDINGS, HALOGEN_PREFIXES, ACYL_ENDING, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, stem,
+  multiplier,
 } from '../naming/lexicon.es.js';
 import {
   templateGroupWord, isAtomGroup, atomGroupOrder, closingText, HYDROXY_ELEMENT, ALKOXY_ELEMENT, OXO_ELEMENT, SUFFIX_GROUPS,
@@ -212,11 +213,15 @@ const FENIL = `${RETAINED_PREFIXES.phenyl.italic}${RETAINED_PREFIXES.phenyl.text
  *
  * @param {{length: number, branch: boolean, ring?: boolean, benzene?: boolean, template?: string|null}} owner - The chain
  *   or ring numbered (`template`: the word of a template parent, R-4c: «El anillo del xileno tiene 6 carbonos…», or of
- *   `fenol`, R-5a2; «El anillo de la hidroquinona…», R-5a3a).
+ *   `fenol`, R-5a2; «El anillo de la hidroquinona…», R-5a3a; of a chain template, R-5c3a: «La cadena de la acetona tiene 3
+ *   carbonos…», chainTemplateRangeMessage()).
  * @param {number} value - The locant.
  * @returns {string} The message.
  */
 function rangeMessage(owner, value) {
+  if (owner.template && !owner.ring && !owner.benzene) {
+    return chainTemplateRangeMessage(owner, value); // `acetona` (R-5c3a)
+  }
   if (owner.template) {
     return `El anillo ${withArticle(owner.template, 'de')} tiene ${carbons(owner.length)}, del 1 al ${owner.length}: `
       + `no hay carbono ${value}.`;
@@ -233,6 +238,42 @@ function rangeMessage(owner, value) {
     return `${noun} de 1 carbono solo tiene el carbono 1: no hay carbono ${value}.`;
   }
   return `${noun} de ${carbons(owner.length)} va del 1 al ${owner.length}: no hay carbono ${value}.`;
+}
+
+/**
+ * The systematic names the LOCANT_RANGE message of a chain template whose
+ * word holds a ring (R-5c3a) offers for a group on that ring, by TEMPLATES
+ * key: `1-(4-metilfenil)etan-1-ona`, `2-(4-metilfenil)etanal`.
+ */
+const RING_TEMPLATE_EXAMPLES = Object.freeze({
+  acetophenone: `1-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}`
+    + `${stem(2)}${ENDINGS.saturated.slice(0, -1)}-1-${GROUP_SUFFIXES.ketone}`,
+  phenylacetaldehyde: `2-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}`
+    + `${stem(2)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES.aldehyde}`,
+});
+
+/**
+ * The LOCANT_RANGE message of a chain template (R-5c3a; drafts pending
+ * teacher review): «La cadena de la acetona tiene 3 carbonos, del 1 al 3: no
+ * hay carbono 4.», «El formaldehído solo tiene 1 carbono: no hay carbono 2.»;
+ * for one whose word holds a ring too (`acetofenona`, `fenilacetaldehído`:
+ * RING_TEMPLATE_EXAMPLES) it adds that the name does not number the ring and
+ * gives the systematic name with a group on it, which the app reads.
+ *
+ * @param {{length: number, template: string, templateValue?: string|null}} owner - The chain template's parent
+ *   (`template`: its word; `templateValue`: its TEMPLATES key).
+ * @param {number} value - The locant.
+ * @returns {string} The message.
+ */
+function chainTemplateRangeMessage(owner, value) {
+  const lead = withArticle(owner.template);
+  const base = owner.length === 1
+    ? `${lead.charAt(0).toUpperCase()}${lead.slice(1)} solo tiene 1 carbono: no hay carbono ${value}.`
+    : `La cadena ${withArticle(owner.template, 'de')} tiene ${carbons(owner.length)}, del 1 al ${owner.length}: no hay carbono ${value}.`;
+  const example = RING_TEMPLATE_EXAMPLES[owner.templateValue];
+  return example
+    ? `${base} En «${owner.template}» el anillo no se numera: con grupos en el anillo, escribe el nombre sistemático (${example}).`
+    : base;
 }
 
 /**
@@ -631,6 +672,7 @@ export function checkSpec(spec, values = null) {
     benzene: spec.parent.kind === 'benzene',
     // «El anillo del xileno tiene 6 carbonos…» (R-4c); «El anillo del fenol…» (R-5a2); «…del benzaldehído…» (R-5c1).
     template: (spec.parent.template && spec.parent.template.word.text) || (spec.suffix && spec.suffix.placed ? spec.suffix.word.text : null),
+    templateValue: spec.parent.template ? spec.parent.template.value : null, // `acetofenona` (R-5c3a): chainTemplateRangeMessage()
     double: spec.parent.double,
     triple: spec.parent.triple,
   };
@@ -992,16 +1034,23 @@ export function ownPrefixAtoms(sub, atoms) {
   }));
 }
 
+/** How the VALENCE message calls the C=O a ketone template places (R-5c3a: «…en la acetona, ese carbono ya lleva un grupo C=O»). */
+const KETONE_GROUP = 'grupo C=O';
+
 /**
  * The group a whole-word parent places at its carbon 1, as the VALENCE
  * message says it (R-5a2: «…en el fenol, ese carbono ya lleva un grupo OH»;
  * R-5c1: «…en el benzaldehído, ese carbono ya lleva un grupo CHO»; the
- * retained phenols of R-5a3a: «grupo OH»).
+ * retained phenols of R-5a3a: «grupo OH»; the carbonyl templates of
+ * R-5c3a: «grupo CHO», and «grupo C=O» for `acetona` and `acetofenona`).
  *
  * @param {{kind: string}} suffix - A SuffixSpec placed by its parent's word.
  * @returns {string} The group's name.
  */
 function placedGroupWord(suffix) {
+  if (suffix.kind === 'ketone') {
+    return KETONE_GROUP; // `acetona`, `acetofenona` (R-5c3a)
+  }
   return suffix.kind === 'alcohol' ? GROUP_WORD_PARENTS.phenol.group : GROUP_WORD_PARENTS.benzaldehyde.group;
 }
 

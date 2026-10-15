@@ -230,28 +230,46 @@ export function isCarbonyl(smiles) {
 }
 
 /**
- * The words of the aldehyde and ketone names the tiles of phases R-5c1 and
- * R-5c2 do not write, from the lexicon: the retained names of phase R-5c3
- * (`formaldehído`, `acetaldehído` — `fenilacetaldehído`,
- * `2-(4-metilfenil)acetaldehído` too —, `acetona`, `acetofenona`, the
- * ftalaldehídos).
+ * The words of the aldehyde and ketone names the tiles do not write yet:
+ * none since phase R-5c3a, whose «Nombres tradicionales» tiles write the
+ * retained names (CARBONYL_TEMPLATE_WORDS).
  */
-export const LATER_CARBONYL_WORDS = Object.freeze([
-  TRADITIONAL_NAMES.formaldehyde, TRADITIONAL_NAMES.acetaldehyde, TRADITIONAL_NAMES.acetone, TRADITIONAL_NAMES.acetophenone,
-  BENZENE_DIGROUP_NAMES.phthalaldehyde,
-]);
+export const LATER_CARBONYL_WORDS = Object.freeze([]);
 
 /**
  * Tells whether a name of an aldehyde or a ketone is written with the tiles
- * of phases R-5c1 and R-5c2: none of the words left for later phases
- * (LATER_CARBONYL_WORDS; `ftalaldehído` covers `isoftalaldehído` and
- * `tereftalaldehído`).
+ * (phases R-5c1, R-5c2 and R-5c3a): none of the words left for later phases
+ * (LATER_CARBONYL_WORDS, empty since R-5c3a).
  *
  * @param {string} name - A name.
  * @returns {boolean} True when the tiles read it.
  */
 export function isCarbonylName(name) {
   return !LATER_CARBONYL_WORDS.some((word) => name.includes(word));
+}
+
+/**
+ * The words of the retained carbonyl templates (R-5c3a), from the lexicon,
+ * in the order of their tiles: `formaldehído`, `acetaldehído`, `acetona`,
+ * `acetofenona`, `fenilacetaldehído`, `ftalaldehído`, `isoftalaldehído`,
+ * `tereftalaldehído`.
+ */
+export const CARBONYL_TEMPLATE_WORDS = Object.freeze([
+  TRADITIONAL_NAMES.formaldehyde, TRADITIONAL_NAMES.acetaldehyde, TRADITIONAL_NAMES.acetone, TRADITIONAL_NAMES.acetophenone,
+  TRADITIONAL_NAMES.phenylacetaldehyde, BENZENE_DIGROUP_NAMES.phthalaldehyde, BENZENE_DIGROUP_NAMES.isophthalaldehyde,
+  BENZENE_DIGROUP_NAMES.terephthalaldehyde,
+]);
+
+/**
+ * Tells whether a name uses a retained carbonyl template of phase R-5c3a
+ * (CARBONYL_TEMPLATE_WORDS; `acetaldehído` covers `fenilacetaldehído` and
+ * `2-(4-metilfenil)acetaldehído`, `ftalaldehído` the other two).
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for `acetona`, `4-metilftalaldehído`…
+ */
+export function isCarbonylTemplateName(name) {
+  return CARBONYL_TEMPLATE_WORDS.some((word) => name.includes(word));
 }
 
 /**

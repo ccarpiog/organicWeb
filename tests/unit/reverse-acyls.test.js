@@ -17,7 +17,7 @@
  * describes (against a SMILES) on chains, rings, benzene, templates and
  * inside compound branches, mutations and their diagnosis (the rules that
  * hold, and the deliberate nulls of diagnose.js «Aldehydes and ketones»,
- * phase R-5c3's), the fixture round trip over every row with an acyl prefix
+ * phase R-5c3b's), the fixture round trip over every row with an acyl prefix
  * (the aldehydes and ketones read back; acids, esters, amides and nitriles,
  * later phases, never tokenize), the closed loop over the oracle's acyl
  * generators (generateAcyl(), generateSubstitutedBenzoyls(),
@@ -562,7 +562,7 @@ const MUTATIONS = Object.freeze([
   ['4 prop ano oil pent ano di al', 'otherName', 'NUMBERING'],
   ['3 oxo 2 pent ano oil but ano di al', 'otherName', 'NUMBERING'],
   ['2 ciclo hex ano 1 carbonil hept ano al', 'otherName', 'NEEDLESS_LOCANTS'],
-  // Deliberate nulls (phase R-5c3's messages).
+  // Deliberate nulls (phase R-5c3b's messages).
   ['2 et ano oil hept ano al', 'otherName', null],
   ['2 START 3 met il prop ano oil END hept ano al', 'otherName', null],
   ['2 START 6 met il benzoil END hept ano al', 'otherName', null],
@@ -658,7 +658,7 @@ function onlyAcylWordsDiffer(tree, verdict) {
  * Why the diagnosis of an acyl name's `otherName` is null, read independently
  * of diagnose.js from the student's NameSpec and the engine's naming (file
  * header «Aldehydes and ketones» of diagnose.js, phases R-5c1 and R-5c2; the
- * messages are phase R-5c3's): `suffix`, `parent`, `principal`, `needless`
+ * messages are phase R-5c3b's): `suffix`, `parent`, `principal`, `needless`
  * and `otherFamily` as in reverse-carbonyls.test.js (an acyl prefix moved where
  * the chain takes its C=O, `1-acetilhexanal` → `octano-2,3-diona`; an acyl on
  * a hydrocarbon ring, benzene or a template whose ketone's chain is the parent,

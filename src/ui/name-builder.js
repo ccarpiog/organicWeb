@@ -34,7 +34,10 @@
  *   `benzoil` in «Anillos» —, «Nombres tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
- *   `hidroquinona`, phase R-5a3a, these and `anisol` each with a tooltip
+ *   `hidroquinona`, phase R-5a3a, the retained carbonyl names
+ *   `formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
+ *   `fenilacetaldehído`, `ftalaldehído`, `isoftalaldehído`,
+ *   `tereftalaldehído`, phase R-5c3a, these and `anisol` each with a tooltip
  *   saying what it is; drafts pending teacher review), each with a «más»
  *   button for the tiles the catalogue keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
@@ -107,8 +110,9 @@ export function positionalLabel(tile) {
  * of the oxygen; R-5c1: `oxo`, `formil`, `al`, `ona`, `carbaldehído` and
  * `benzaldehído`, what group each is and where it goes; R-5c2: `acetil`,
  * `oil`, `carbonil` and `benzoil`, the C=O group bonded by its carbon as a
- * branch and where each goes; drafts pending teacher review). The tile's
- * text stays its accessible name.
+ * branch and where each goes; R-5c3a: the retained carbonyl names, what
+ * molecule each is, and which take prefixes; drafts pending teacher review).
+ * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
   [CLOSING_ID]: 'Número del enlace que cierra un anillo, del último carbono al 1: se escribe 1(6) en un anillo de 6 carbonos.',
@@ -142,6 +146,17 @@ export const TILE_HINTS = Object.freeze({
   'template-catechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. La IUPAC (2013) acepta pirocatecol.',
   'template-resorcinol': 'Benceno con dos grupos OH en los carbonos 1 y 3: benceno-1,3-diol.',
   'template-hydroquinone': 'Benceno con dos grupos OH en los carbonos 1 y 4: benceno-1,4-diol.',
+  // R-5c3a: the retained carbonyl names.
+  'template-formaldehyde': 'Un solo carbono con un grupo CHO: metanal.',
+  'template-acetaldehyde': 'Cadena de 2 carbonos con un grupo CHO: etanal. Admite un fenil en el carbono 2: '
+    + '2-(4-metilfenil)acetaldehído.',
+  'template-acetone': 'Cadena de 3 carbonos con el C=O en el carbono del medio: propanona.',
+  'template-acetophenone': 'Un grupo C=O unido a un metilo y a un benceno: 1-feniletan-1-ona.',
+  'template-phenylacetaldehyde': 'Etanal con un fenil en el carbono 2: 2-feniletanal.',
+  'template-phthalaldehyde': 'Benceno con dos grupos CHO en carbonos vecinos: benceno-1,2-dicarbaldehído. Admite ramas en el '
+    + 'anillo: 4-metilftalaldehído.',
+  'template-isophthalaldehyde': 'Benceno con dos grupos CHO en los carbonos 1 y 3: benceno-1,3-dicarbaldehído.',
+  'template-terephthalaldehyde': 'Benceno con dos grupos CHO en los carbonos 1 y 4: benceno-1,4-dicarbaldehído.',
 });
 
 /** Text of the empty name line. */
@@ -202,7 +217,7 @@ function make(doc, tag, className, text) {
  * Builds one tile button. The compound-branch controls show their label
  * beside their mark (the mark hidden from screen readers); an orto/meta/para
  * letter shows its word, small, beside the letter (R-4c); a tile of
- * TILE_HINTS gets its tooltip (R-5a2: `1(n)`; R-5a3a: the retained phenols).
+ * TILE_HINTS gets its tooltip (R-5a2: `1(n)`; R-5a3a: the retained phenols; R-5c3a: the retained carbonyl names).
  *
  * @param {Document} doc - The document.
  * @param {{id: string, kind: string, text: string, more: boolean}} tile - A catalogue tile.

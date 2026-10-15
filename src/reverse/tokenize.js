@@ -27,7 +27,9 @@
  * the one word `fenil` (a crowded ring prefix, `metil(fenil)metano`, R-4b).
  * `benceno` (R-4b) ends a name, right after its prefixes or at the start;
  * so does a retained template (R-4c: `tolueno`, `estireno`, `xileno`,
- * `mesitileno`), also right after locants (`1,2-xileno`) or a letter. An
+ * `mesitileno`; R-5c3a: `acetona`, `ftalaldehído`…), also right after
+ * locants (`1,2-xileno`) or a letter; `fenilacetaldehído` (R-5c3a) reads as
+ * its one tile, the longer surface form, never as `fenil` + `acetaldehído`. An
  * orto/meta/para letter (R-4c) only starts a name (`o-xileno`,
  * `o-dimetilbenceno`, `p-metiltolueno`): parse.js accepts it nowhere else,
  * and the hyphen the assembler writes after it prunes every other reading

@@ -14,13 +14,15 @@
  * verdicts with the molecule each describes (compared by aromatic key with a
  * SMILES), mutations and their diagnosis (the rules that hold for a carbonyl
  * name, and the deliberate nulls of diagnose.js «Aldehydes and ketones»,
- * whose messages are phase R-5c3's), the fixture round trip over every
+ * whose messages are phase R-5c3b's), the fixture round trip over every
  * aldehyde and ketone row of tests/fixtures/names.tsv, the closed loop over
  * the oracle's carbonyl generators (pure imports, no Java), the diagnosis
- * sweeps, the out-of-scope syntax of phase R-5c3, the ordered drawing, the
- * dialog's tooltips and time budgets. Since phase R-5c2 (I-51c2) the round
- * trip and the closed loop read the names with acyl prefixes too; their own
- * tests, sweeps included, are in reverse-acyls.test.js.
+ * sweeps, the ordered drawing, the dialog's tooltips and time budgets.
+ * Since phase R-5c2 (I-51c2) the round trip and the closed loop read the
+ * names with acyl prefixes too; their own tests, sweeps included, are in
+ * reverse-acyls.test.js. Since phase R-5c3a (I-51c3a) they read the retained
+ * carbonyl names too (`acetona`, `ftalaldehído`…), and the fixture sweep
+ * mutates them; their own tests are in reverse-carbonyl-templates.test.js.
  */
 
 import { test } from 'node:test';
@@ -46,7 +48,7 @@ import {
   generateSubstitutedPhenyls, generateEthers,
 } from '../../scripts/oracle/generate.mjs';
 import {
-  seq, readFixtures, isCarbonyl, isCarbonylMolecule, isCarbonylName, isAcylName, LATER_CARBONYL_WORDS,
+  seq, readFixtures, isCarbonyl, isCarbonylMolecule, isCarbonylName, isAcylName, LATER_CARBONYL_WORDS, isCarbonylTemplateName,
 } from './reverse-words.js';
 
 /**
@@ -70,12 +72,14 @@ const EXPECTED_ROWS = Object.freeze({
 });
 
 /**
- * Their names and alternatives the tiles write, read back (95; 84 of them without an acyl prefix, those the diagnosis sweeps
- * below read: the acyl ones are swept in reverse-acyls.test.js), and those left to phase R-5c3 (the retained names).
+ * Their names and alternatives the tiles write, read back (103 since the retained names of phase R-5c3a; 92 of them without
+ * an acyl prefix, those the diagnosis sweeps below read: the acyl ones are swept in reverse-acyls.test.js), and those left
+ * to later phases (none since R-5c3a, which reads the 8 retained names of the fixtures: `formaldehído`, `acetaldehído`,
+ * `acetona`, `acetofenona`, `fenilacetaldehído`, `ftalaldehído`, `tereftalaldehído`, `2-(4-metilfenil)acetaldehído`).
  */
-const EXPECTED_NAMES = 95;
-const EXPECTED_SWEPT_NAMES = 84;
-const EXPECTED_LATER_NAMES = 8;
+const EXPECTED_NAMES = 103;
+const EXPECTED_SWEPT_NAMES = 92;
+const EXPECTED_LATER_NAMES = 0;
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -349,15 +353,20 @@ test('assembler (R-5c1): every suffix and prefix form is the forward engine\'s o
   assert.deepEqual(tokenize('2-pentanona'), seq('2 pent ano ona'));
 }); // End of test 'assembler (R-5c1)…'
 
-test('tokenizer (R-5c1): texts that only read with errors, and the words of phase R-5c3, never tokenize', () => {
+test('tokenizer (R-5c1): texts that only read with errors never tokenize; the retained names of phase R-5c3a do', () => {
   for (const name of ['ciclohexanal', 'bencenal', 'butan-1-al', '1-butanal', 'butano-1,4-dial', 'pentano-2,4-bisona', 'ona', 'al',
     'carbaldehído', '1-benzaldehído', 'p-benzaldehído', 'benzaldehídoal', 'formoximetano', '(2-oxo)etano', 'oxo', '2-oxo',
-    // Phase R-5c3: the retained names (the acyl prefixes of phase R-5c2 read: reverse-acyls.test.js).
-    'formaldehído', 'acetaldehído', 'acetona', 'acetofenona', 'fenilacetaldehído', 'ftalaldehído', 'isoftalaldehído',
-    'tereftalaldehído']) {
+    // Phase R-5c3a: a retained carbonyl name takes no numbers or letter of its own, and is the whole parent.
+    '1-acetona', 'o-ftalaldehído', 'acetonaal', 'acetona-2-ona']) {
     assert.equal(tokenize(name), null, name);
   }
-  assert.deepEqual(LATER_CARBONYL_WORDS, ['formaldehído', 'acetaldehído', 'acetona', 'acetofenona', 'ftalaldehído']);
+  // Phase R-5c3a: the retained names read, each as its one «Nombres tradicionales» tile (reverse-carbonyl-templates.test.js).
+  for (const name of ['formaldehído', 'acetaldehído', 'acetona', 'acetofenona', 'fenilacetaldehído', 'ftalaldehído', 'isoftalaldehído',
+    'tereftalaldehído']) {
+    const ids = tokenize(name);
+    assert.ok(ids && ids.length === 1 && ids[0].startsWith('template-'), name);
+  }
+  assert.deepEqual(LATER_CARBONYL_WORDS, []);
 }); // End of test 'tokenizer (R-5c1)…'
 
 // ---------------------------------------------------------------------------
@@ -584,7 +593,7 @@ const MUTATIONS = Object.freeze([
   ['2 4 pent ano di ona', 'otherName', 'OLD_STYLE'],
   ['2 but eno al', 'otherName', 'OLD_STYLE'],
   ['4 cloro pent ano 3 ona', 'otherName', 'NUMBERING'],
-  // Deliberate nulls (phase R-5c3's messages).
+  // Deliberate nulls (phase R-5c3b's messages).
   ['pent ano 4 ona', 'otherName', null],
   ['ciclo hex ano 3 ona', 'otherName', null],
   ['ciclo hex ano 1 ona', 'otherName', null],
@@ -632,7 +641,7 @@ test('mutations (R-5c1): the expected verdict, and the diagnosis of every rule t
  * Why the diagnosis of an aldehyde's or a ketone's `otherName` is null, read
  * independently of diagnose.js from the student's NameSpec and the engine's
  * naming (file header «Aldehydes and ketones» of diagnose.js, phase R-5c1;
- * the messages are phase R-5c3's): `suffix` — the student's suffix is not
+ * the messages are phase R-5c3b's): `suffix` — the student's suffix is not
  * the engine's (another group or none: the principal C=O written `oxo` or
  * `formil`; another number of groups; the –CHO's carbon on the other side of
  * the parent, `carbaldehído` on a chain); `parent` — the student's parent is
@@ -716,7 +725,7 @@ test('fixture round trip (R-5c1): every aldehyde and ketone name the tiles write
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (!isCarbonylName(name)) {
-        later += 1; // A retained name (R-5c3): no tiles yet.
+        later += 1; // A name of a later phase (none since R-5c3a): no tiles yet.
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
       }
@@ -771,14 +780,15 @@ const LOOP = Object.freeze({
  * Minimum coverage of the closed loop: aldehyde and ketone molecules
  * (distinct by aromatic key), names read back, the suffix and prefix forms
  * among them (names ending in `al`, `ona`, `carbaldehído`, `benzaldehído`;
- * names with `oxo`), names with an acyl prefix (R-5c2), removed-locant
- * mutations and decisive verdicts among them (the seeds give 805, 894, 345,
- * 298, 185, 66, 135, 33, 2169 and 2168; before R-5c2 the 33 acyl names were
- * left out, 861 names; 44 names of the molecules are left to phase R-5c3).
+ * names with `oxo`), names with an acyl prefix (R-5c2), names with a
+ * retained carbonyl template (R-5c3a), removed-locant mutations and decisive
+ * verdicts among them (the seeds give 805, 938, 345, 300, 185, 66, 135, 33,
+ * 44, 2169 and 2168; before R-5c2 the 33 acyl names were left out, 861
+ * names; before R-5c3a the 44 template names, 894 names).
  */
 const LOOP_MIN = Object.freeze({
-  molecules: 800, names: 880, al: 330, ona: 280, carbaldehido: 175, benzaldehido: 60, oxo: 125, acyl: 30, removed: 2150,
-  decisive: 2150,
+  molecules: 800, names: 925, al: 330, ona: 280, carbaldehido: 175, benzaldehido: 60, oxo: 125, acyl: 30, templates: 40,
+  removed: 2150, decisive: 2150,
 });
 
 /**
@@ -847,7 +857,7 @@ function locantLists(tree) {
 
 test('closed loop over the carbonyl generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, al: 0, ona: 0, carbaldehido: 0, benzaldehido: 0, oxo: 0, acyl: 0, removed: 0, decisive: 0 };
+  const counts = { names: 0, al: 0, ona: 0, carbaldehido: 0, benzaldehido: 0, oxo: 0, acyl: 0, templates: 0, removed: 0, decisive: 0 };
   const later = [];
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
@@ -856,7 +866,7 @@ test('closed loop over the carbonyl generators: engine name → tiles → readNa
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
       if (!isCarbonylName(name)) {
-        later.push(name); // A retained name (R-5c3).
+        later.push(name); // A name of a later phase (none since R-5c3a).
         continue;
       }
       const ids = tokenize(name);
@@ -872,6 +882,7 @@ test('closed loop over the carbonyl generators: engine name → tiles → readNa
       counts.benzaldehido += /benzaldehído$/.test(name) ? 1 : 0;
       counts.oxo += /oxo/.test(name) ? 1 : 0;
       counts.acyl += isAcylName(name) ? 1 : 0; // R-5c2
+      counts.templates += isCarbonylTemplateName(name) ? 1 : 0; // R-5c3a
       if (i > 0) {
         continue;
       }
@@ -899,7 +910,7 @@ test('closed loop over the carbonyl generators: engine name → tiles → readNa
   const report = JSON.stringify({ molecules: molecules.length, ...counts, later: later.length });
   assert.ok(molecules.length >= LOOP_MIN.molecules, report);
   assert.ok(later.every((name) => LATER_CARBONYL_WORDS.some((word) => name.includes(word))), report);
-  for (const field of ['names', 'al', 'ona', 'carbaldehido', 'benzaldehido', 'oxo', 'acyl', 'removed', 'decisive']) {
+  for (const field of ['names', 'al', 'ona', 'carbaldehido', 'benzaldehido', 'oxo', 'acyl', 'templates', 'removed', 'decisive']) {
     assert.ok(counts[field] >= LOOP_MIN[field], `${field}: ${report}`);
   }
 }); // End of test 'closed loop over the carbonyl generators…'
@@ -1107,10 +1118,12 @@ function sweep(names) {
  * codes. Removing or adding locants never gives `otherName`.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
-  reversed: 16, shifted: 10, reflected: 12, rotated: 84, swapped: 2, unsorted: 3, ungrouped: 3, diBis: 3, toEnd: 24, heteroToEnd: 11,
+  reversed: 16, shifted: 10, reflected: 12, rotated: 85, swapped: 2, unsorted: 3, ungrouped: 3, diBis: 3, toEnd: 24, heteroToEnd: 11,
   removed: 0, added: 0,
 });
-const FIXTURE_NULLS = Object.freeze({ principal: 87, suffix: 20, otherFamily: 11 });
+// R-5c3a: the retained names joined the sweep; one rotation of `2-(4-metilfenil)acetaldehído` puts its aryl on carbon 1, a
+// ketone (`1-(4-metilfenil)etan-1-ona`): one more `rotated` otherName, one more `suffix` null (phase I-51c3b words it).
+const FIXTURE_NULLS = Object.freeze({ principal: 87, suffix: 21, otherFamily: 11 });
 
 test('mutations of every carbonyl fixture name: a diagnosis of the family\'s codes, or a deliberate null with its reason', async () => {
   const names = (await readFixtures()).filter((row) => isCarbonyl(row.smiles)).flatMap((row) => row.names)

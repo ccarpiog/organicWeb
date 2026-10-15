@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -14,7 +14,8 @@
  * functional-class names from R-5b2, the aldehydes and ketones — the
  * suffixes `al`, `ona`, `carbaldehído`, the prefixes `oxo` and `formil`,
  * `benzaldehído` — from R-5c1, the acyl prefixes — the endings `oil` and
- * `carbonil`, `acetil`, `benzoil` — from R-5c2):
+ * `carbonil`, `acetil`, `benzoil` — from R-5c2, the retained carbonyl
+ * templates from R-5c3a):
  *
  *   name        = { prefix } , parent
  *               | { classGroup } , éter ;   (* R-5b2: exactly two groups *)
@@ -33,7 +34,9 @@
  *               | [ locants | letter ] , template ;
  *   suffix      = [ locants ] , [ MULT ] , ( ol | al | ona | carbaldehído ) ;
  *   template    = tolueno | estireno | xileno | mesitileno | anisol
- *               | cresol | pirocatecol | catecol | resorcinol | hidroquinona ;
+ *               | cresol | pirocatecol | catecol | resorcinol | hidroquinona
+ *               | formaldehído | acetaldehído | acetona | acetofenona | fenilacetaldehído   (* R-5c3a *)
+ *               | ftalaldehído | isoftalaldehído | tereftalaldehído ;
  *   letter      = o | m | p ;
  *   stem        = [ ciclo ] , ROOT ;   (* ciclo: a ring of ROOT carbons, at least 3 *)
  *   segments    = segment , [ segment ] ;
@@ -188,6 +191,14 @@
  * (substitutedLetterOnlyMessage(): `2-cloro-4-metilfenol`), which the app
  * reads.
  *
+ * The retained carbonyl templates (R-5c3a, tiles.js TEMPLATES with
+ * `suffix`) say where their C=O is, so numbers or a letter on them are
+ * TEMPLATE_LOCANTS too («acetona» ya dice dónde va su grupo C=O, en el
+ * carbono 2…), the ftalaldehídos' two –CHO counting as occupied positions for
+ * the letters as a diol's OH groups do; `formaldehído`, `acetaldehído`,
+ * `acetona`, `acetofenona` and `fenilacetaldehído` are open chains, so a
+ * letter on a prefix before them is POSITIONAL as before any chain.
+ *
  * A stem starts a branch or the parent: what follows it decides (a
  * free-valence suffix makes a branch), so leading numbers are never
  * consumed greedily — `2 met il 2 but eno` is the prefix `2-metil` and the
@@ -272,7 +283,7 @@ import {
 import {
   toTiles, TEMPLATES, templateGroupWord, groupPlural, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
   isPhenolTemplate, withArticle, ALKOXY_RETAINED, ETHER_CLASS_GROUPS, SUFFIX_GROUPS, GROUP_WORD_PARENTS, BENZALDEHYDE_ID,
-  isAcylTile,
+  isAcylTile, templateSuffix, isCarbonylTemplate, isChainTemplate,
 } from './tiles.js';
 import { itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore } from './assemble.js';
 
@@ -634,6 +645,19 @@ const PHENOL_GROUP = 'grupo OH';
 const PHENOL_GROUPS = 'grupos OH';
 
 /**
+ * How the messages call the principal group a template's word places, by
+ * its SUFFIX_GROUPS key (templateSuffix()): the OH of a retained phenol
+ * (R-5a3a), the –CHO of `formaldehído` or of a ftalaldehído and the C=O of
+ * `acetona` (R-5c3a; GROUP_WORD_PARENTS: «grupo CHO»).
+ */
+const PLACED_GROUP_WORDS = Object.freeze({
+  alcohol: Object.freeze({ one: PHENOL_GROUP, many: PHENOL_GROUPS }),
+  aldehyde: Object.freeze({ one: GROUP_WORD_PARENTS.benzaldehyde.group, many: 'grupos CHO' }),
+  carbaldehyde: Object.freeze({ one: GROUP_WORD_PARENTS.benzaldehyde.group, many: 'grupos CHO' }),
+  ketone: Object.freeze({ one: 'grupo C=O', many: 'grupos C=O' }),
+});
+
+/**
  * The principal group a whole-word benzene parent places at its carbon 1
  * (tiles.js GROUP_WORD_PARENTS): the OH of `fenol` (R-5a2), the –CHO of
  * `benzaldehído` (R-5c1); null for `benceno` and any other node.
@@ -674,15 +698,18 @@ export function groupWordOf(tiles, node) {
 function ownGroups(tiles, chain) {
   if (chain.type === 'template') {
     const tile = tiles[chain.tile];
-    const { count, positions, hydroxy, letterOnly } = TEMPLATES[tile.value];
+    const { count, positions, letterOnly } = TEMPLATES[tile.value];
     const group = templateGroupWord(tile.value);
+    const suffix = templateSuffix(tile.value); // The OH groups of R-5a3a; the C=O of a carbonyl template (R-5c3a).
+    const placed = suffix ? suffix.positions : [];
     const kinds = [
-      ...(hydroxy.length > 0 ? [{ count: hydroxy.length, one: PHENOL_GROUP, many: PHENOL_GROUPS }] : []),
+      ...(suffix ? [{ count: placed.length, ...PLACED_GROUP_WORDS[suffix.value] }] : []),
       ...(count > 0 ? [{ count, one: group, many: groupPlural(group) }] : []), // `metilos`; `grupos metoxi` (R-5b)
     ];
     return {
-      count: count + hydroxy.length,
-      positions: positions && [...hydroxy, ...positions].sort((a, b) => a - b),
+      count: count + placed.length,
+      // `acetofenona` (R-5c3a): its C=O and its phenyl both on carbon 1, one position.
+      positions: positions && [...new Set([...placed, ...positions])].sort((a, b) => a - b),
       kinds,
       letterOnly: Boolean(letterOnly),
       word: tile.text,
@@ -798,6 +825,11 @@ function templateHint(tile, where) {
   if (where === 'branch' && tile.kind === 'template' && isPhenolTemplate(tile.value)) {
     return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es «${FENIL}» y cada `
       + `${PHENOL_GROUP} se escribe «${HIDROXI}», como en ${EXAMPLES.hidroxifenil}.`;
+  }
+  if (where === 'branch' && tile.kind === 'template' && isCarbonylTemplate(tile.value)) {
+    // `acetona`, `ftalaldehído` (R-5c3a): their C=O is written as a prefix there.
+    return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el grupo C=O se escribe `
+      + `«${OXO}» y el grupo CHO, «${FORMYL_PREFIX}», como en ${EXAMPLES.oxoetil} o ${EXAMPLES.formilfenil}.`;
   }
   if (where === 'branch' && tile.kind === 'template' && TEMPLATES[tile.value].group && TEMPLATES[tile.value].group.alkoxy) {
     // `anisol` (R-5b): its methoxy group is written as a prefix of `fenil` there.
@@ -1654,6 +1686,11 @@ function checkLetters(state, tree) {
   const { chain } = parent;
   if (chain.type === 'classWord') {
     return; // The groups of an ether's class name take no letter: checkClassName() says so (R-5b2).
+  }
+  if (chain.type === 'template' && isChainTemplate(tiles[chain.tile].value)) {
+    // `acetona` (R-5c3a): an open chain; a letter before the word itself is its TEMPLATE_LOCANTS (makeTemplateParent()).
+    lettered.forEach((holder) => report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.notBenzene));
+    return;
   }
   if (chain.type === 'chain') {
     [...lettered, ...(parent.letter === null ? [] : [parent])]

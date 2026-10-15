@@ -432,7 +432,7 @@
  * oxo on its carbon 1; a ring's, the one-carbon chain of its C=O carbon with
  * the oxo and the ring).
  *
- * Deliberate, tested nulls (phase R-5c3 words them):
+ * Deliberate, tested nulls (phase R-5c3b words them):
  *
  * - before any rule (carbonylBeyondRules()): the student's suffix is not the
  *   engine's — another group or none (the principal C=O written `oxo` or
@@ -463,7 +463,25 @@
  *   (`(3-metilpropanoil)` for `butanoil`, `(2-etilpropanoil)`,
  *   `(6-metilbenzoil)`, `(6-metilciclohexano-1-carbonil)`,
  *   `(ciclohexano-2-carbonil)`), or the locant 1 the engine writes before
- *   `carbonil` left out (`(ciclohex-2-enocarbonil)`).
+ *   `carbonil` left out (`(ciclohex-2-enocarbonil)`);
+ * - (R-5c3a) a phenyl on `acetaldehído`, which the engine admits there
+ *   (tiles.js templateAdmits(): `fenilacetaldehído`,
+ *   `2-(4-metilfenil)acetaldehído`), so SUBSTITUTED_TEMPLATE does not speak:
+ *   the locant the engine leaves out (`2-fenilacetaldehído`), the phenyl's
+ *   own numbering (`2-(5-metilfenil)acetaldehído`), or on carbon 1, a ketone
+ *   (`1-(4-metilfenil)acetaldehído`, the first item); and a substituted
+ *   carbonyl template whose student's suffix is not the engine's (the first
+ *   item, before SUBSTITUTED_TEMPLATE: `oxoacetaldehído` → `etanodial`,
+ *   `ciclohexilformaldehído` → `ciclohexanocarbaldehído`).
+ *
+ * The retained carbonyl templates (R-5c3a) take SUBSTITUTED_TEMPLATE like
+ * the benzene ones where the engine never writes them with prefixes: on a
+ * ring template (a ftalaldehído takes any prefixes, so only the other ring
+ * rules judge it: `5-metilftalaldehído` → RING_NUMBERING), and on a chain
+ * template (`formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
+ * `fenilacetaldehído`) through substitutedChainTemplate(), before the chain's
+ * rules, its message naming no parent (`1-cloroacetona` → «El nombre
+ * tradicional «acetona» no admite sustituyentes: … «1-cloropropan-2-ona».»).
  *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
@@ -488,7 +506,7 @@ import { assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore } from '
 import { ownPrefixAtoms, specRings, isRing } from './build.js';
 import {
   tileById, tileId, MAX_MULT, isAtomGroup, atomGroupOrder, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
-  FORMYL_ID, ACETYL_ID,
+  FORMYL_ID, ACETYL_ID, templateAdmits, isChainTemplate,
 } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
@@ -546,7 +564,7 @@ const ESTER = 'ester';
  * The trace rules that compare the principal groups (P0: how many on the
  * chain; N0: their locants), whose messages speak of OH groups (R-5a3b):
  * for an aldehyde or a ketone the diagnosis is deliberately null there
- * (file header «Aldehydes and ketones»; phase R-5c3 words them).
+ * (file header «Aldehydes and ketones»; phase R-5c3b words them).
  */
 const PRINCIPAL_RULES = Object.freeze(['P0', 'N0']);
 
@@ -592,8 +610,12 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
     + `y la cadena principal tiene ${d.length}.`,
   BENZENE_RING: (d) => 'Un anillo de 6 carbonos con tres enlaces dobles alternados, uno sí y uno no, es el benceno, y tiene '
     + `nombre propio: «${WORDS.benceno}».${d.name === WORDS.benceno ? '' : ` Se escribe «${d.name}».`}`,
-  SUBSTITUTED_TEMPLATE: (d) => `El nombre tradicional «${d.template}» no admite más sustituyentes: con más ramas en el anillo, `
-    + `la molécula se nombra a partir de «${d.parent}», con todas las ramas delante: «${d.name}».`,
+  // A chain template (R-5c3a: `acetona`, `acetaldehído`…) has no ring: `parent` null, the systematic name.
+  SUBSTITUTED_TEMPLATE: (d) => (d.parent === null
+    ? `El nombre tradicional «${d.template}» no admite sustituyentes: con más grupos, la molécula se nombra con su nombre `
+      + `sistemático: «${d.name}».`
+    : `El nombre tradicional «${d.template}» no admite más sustituyentes: con más ramas en el anillo, `
+      + `la molécula se nombra a partir de «${d.parent}», con todas las ramas delante: «${d.name}».`),
   PHENOL: (d) => `Un benceno con un solo grupo –OH tiene nombre propio: «${WORDS.fenol}», no «${WORDS.bencenol}».`
     + `${d.name === WORDS.fenol ? '' : ` Se escribe «${d.name}».`}`,
   MORE_MULTIPLE_BONDS: (d) => `Hay otra cadena igual de larga con más enlaces dobles o triples (${d.app}; la tuya tiene `
@@ -1909,7 +1931,7 @@ function hydroxyPrincipal(ctx) {
 /**
  * Tells whether a trace step that drops the student's chain or numbering
  * compares the principal groups (PRINCIPAL_RULES) of an aldehyde or a
- * ketone, whose messages are phase R-5c3's: the deliberate null (file
+ * ketone, whose messages are phase R-5c3b's: the deliberate null (file
  * header «Aldehydes and ketones»).
  *
  * @param {ReadingContext} ctx - The reading's context.
@@ -2107,6 +2129,35 @@ function bencenol(ctx) {
 } // End of function bencenol()
 
 /**
+ * SUBSTITUTED_TEMPLATE on a chain template (R-5c3a: `acetona`,
+ * `formaldehído`, `acetaldehído`, `acetofenona`, `fenilacetaldehído`) with
+ * prefixes of the student's that the engine never writes on it
+ * (tiles.js templateAdmits(): only `acetaldehído` with one phenyl,
+ * `2-(4-metilfenil)acetaldehído`): the molecule has its systematic name
+ * (`1-cloroacetona` → «1-cloropropan-2-ona»), whatever its parent; the
+ * message names no parent (`parent` null). Rule 2, before the chain's and
+ * the ring's rules, as for a substituted `tolueno`; its step is the choice
+ * of the principal chain.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function substitutedChainTemplate(ctx) {
+  const { naming, reading, spec } = ctx;
+  const { template } = spec.parent;
+  if (!template || !isChainTemplate(template.value) || spec.prefixes.length === 0 || templateAdmits(template.value, spec.prefixes)) {
+    return null;
+  }
+  return {
+    code: 'SUBSTITUTED_TEMPLATE',
+    data: { template: template.word.text, parent: null, name: naming.name },
+    focus: occurrenceIds(reading.prefixAtoms),
+    tiles: template.word.tiles,
+    step: 'groupChain',
+  };
+} // End of function substitutedChainTemplate()
+
+/**
  * Ring rules 1, 2 and 4 (file header «Rings»), in place of the chain rules
  * 1–4 when the engine's parent is the ring: the ring as a branch of the
  * student's chain (a hydrocarbon's: an alcohol's is HYDROXY_PARENT, checked
@@ -2127,8 +2178,9 @@ function ringRules(ctx) {
     return { code: 'BENZENE_RING', data: { name: naming.name }, focus: idsOf(null), tiles: spec.parent.tiles };
   }
   const { template } = spec.parent;
-  if (template && spec.prefixes.length > 0) {
-    // A retained phenol (R-5a3a) keeps its OH groups: with one (`cresol`) the molecule is named from `fenol`.
+  if (template && spec.prefixes.length > 0 && !templateAdmits(template.value, spec.prefixes)) {
+    // A retained phenol (R-5a3a) keeps its OH groups: with one (`cresol`) the molecule is named from `fenol`. The engine
+    // writes a ftalaldehído with prefixes itself (R-5c3a: `4-metilftalaldehído`), so the other ring rules judge those.
     const one = spec.suffix && spec.suffix.slots.length === 1;
     return {
       code: 'SUBSTITUTED_TEMPLATE',
@@ -2889,7 +2941,7 @@ function firstRule(ctx) {
   if (alcohol) {
     return acrossOxygen(ctx, alcohol); // The ring or chain on the other side of an ether oxygen (R-5b2).
   }
-  const parent = ctx.naming.structure.parentKind === 'ring' ? ringRules(ctx) : chainRules(ctx);
+  const parent = substitutedChainTemplate(ctx) || (ctx.naming.structure.parentKind === 'ring' ? ringRules(ctx) : chainRules(ctx));
   if (parent === BEYOND) {
     return null; // An aldehyde's or ketone's P0 or N0 (R-5c1's deliberate null).
   }
@@ -3068,7 +3120,7 @@ function outsideRules(name, structure) {
 
 /**
  * Tells whether an aldehyde's or ketone's `otherName` needs a message of
- * phase R-5c3 before any rule (file header «Aldehydes and ketones»; the
+ * phase R-5c3b before any rule (file header «Aldehydes and ketones»; the
  * deliberate nulls): the student's suffix is not the engine's — another
  * group or none (the principal C=O written `oxo` or `formil`, `2-oxopropano`;
  * the ketone as the suffix beside an aldehyde, `5-oxopentan-2-ona`; an

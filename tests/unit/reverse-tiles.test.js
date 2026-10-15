@@ -20,7 +20,8 @@ import {
   TILES, tileById, tileId, toTiles, START_ID, END_ID, RING_ID, BENZENE_ID, PHENYL_ID, POSITIONAL_IDS, HALOGEN_IDS, TEMPLATES,
   templateGroupWord, MAX_NUM, MAX_MULT, PHENOL_ID, CLOSING_ID, HYDROXY_ID, OL_ID, isPhenolTemplate, ALKOXY_ID, groupPlural,
   ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, SUFFIX_GROUPS, GROUP_WORD_PARENTS, isAtomGroup,
-  atomGroupOrder, atomGroupElement, ACETYL_ID, BENZOYL_ID, ACYL_ID, RING_CARBONYL_ID, ACYL_RETAINED, isAcylTile,
+  atomGroupOrder, atomGroupElement, ACETYL_ID, BENZOYL_ID, ACYL_ID, RING_CARBONYL_ID, ACYL_RETAINED, isAcylTile, isChainTemplate,
+  isCarbonylTemplate, templateSuffix, templateLength,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
@@ -60,7 +61,8 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('ring'), 1); // ciclo (R-4a)
   assert.equal(count('benzene'), 3); // benceno (R-4b), fenol (R-5a2), benzaldehído (R-5c1)
   assert.equal(count('positional'), 3); // o, m, p (R-4c)
-  assert.equal(count('template'), 10); // tolueno, estireno, xileno, mesitileno (R-4c); anisol (R-5b); cresol…hidroquinona (R-5a3a)
+  // tolueno, estireno, xileno, mesitileno (R-4c); anisol (R-5b); cresol…hidroquinona (R-5a3a); formaldehído…tereftalaldehído (R-5c3a)
+  assert.equal(count('template'), 18);
   assert.equal(count('halogen'), 4); // fluoro, cloro, bromo, yodo (R-5a1)
   assert.equal(count('hydroxy'), 1); // hidroxi (R-5a2)
   assert.equal(count('suffix'), 4); // ol (R-5a2); al, ona, carbaldehído (R-5c1)
@@ -143,7 +145,8 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
   // R-4c: the letters by the locant of the second position, the templates with their groups.
   assert.deepEqual(Object.values(POSITIONAL_IDS).map((id) => [tileById(id).text, tileById(id).value]), [['o', 2], ['m', 3], ['p', 4]]);
   assert.deepEqual(TILES.filter((t) => t.kind === 'template').map((t) => t.text), ['tolueno', 'estireno', 'xileno', 'mesitileno',
-    'anisol', 'cresol', 'pirocatecol', 'catecol', 'resorcinol', 'hidroquinona']);
+    'anisol', 'cresol', 'pirocatecol', 'catecol', 'resorcinol', 'hidroquinona', 'formaldehído', 'acetaldehído', 'acetona',
+    'acetofenona', 'fenilacetaldehído', 'ftalaldehído', 'isoftalaldehído', 'tereftalaldehído']);
   assert.deepEqual(Object.entries(TEMPLATES).map(([value, t]) => [value, t.count, t.positions, t.group && t.group.length,
     t.group && t.group.double, t.hydroxy, Boolean(t.letterOnly)]), [
     ['toluene', 1, [1], 1, [], [], false], ['styrene', 1, [1], 2, [1], [], false], ['xylene', 2, null, 1, [], [], false],
@@ -154,9 +157,25 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
     ['cresol', 1, null, 1, [], [1], true], ['pyrocatechol', 0, [], null, null, [1, 2], false],
     ['catechol', 0, [], null, null, [1, 2], false], ['resorcinol', 0, [], null, null, [1, 3], false],
     ['hydroquinone', 0, [], null, null, [1, 4], false],
+    // R-5c3a: the retained carbonyl names, their C=O as a placed suffix (below); `acetofenona`'s and `fenilacetaldehído`'s phenyl.
+    ['formaldehyde', 0, [], null, null, [], false], ['acetaldehyde', 0, [], null, null, [], false],
+    ['acetone', 0, [], null, null, [], false], ['acetophenone', 1, [1], undefined, undefined, [], false],
+    ['phenylacetaldehyde', 1, [2], undefined, undefined, [], false], ['phthalaldehyde', 0, [], null, null, [], false],
+    ['isophthalaldehyde', 0, [], null, null, [], false], ['terephthalaldehyde', 0, [], null, null, [], false],
   ]);
   assert.deepEqual(Object.keys(TEMPLATES).map(templateGroupWord), ['metilo', 'etenilo', 'metilo', 'metilo', 'grupo metoxi', 'metilo',
-    null, null, null, null]);
+    null, null, null, null, null, null, null, 'fenilo', 'fenilo', null, null, null]);
+  // R-5c3a: the chain templates' carbons and every template's placed principal group.
+  assert.deepEqual(Object.keys(TEMPLATES).filter(isChainTemplate).map((value) => [value, templateLength(value)]), [
+    ['formaldehyde', 1], ['acetaldehyde', 2], ['acetone', 3], ['acetophenone', 2], ['phenylacetaldehyde', 2]]);
+  assert.deepEqual(Object.keys(TEMPLATES).filter(isCarbonylTemplate).map((value) => [value, templateSuffix(value)]), [
+    ['formaldehyde', { value: 'aldehyde', positions: [1] }], ['acetaldehyde', { value: 'aldehyde', positions: [1] }],
+    ['acetone', { value: 'ketone', positions: [2] }], ['acetophenone', { value: 'ketone', positions: [1] }],
+    ['phenylacetaldehyde', { value: 'aldehyde', positions: [1] }], ['phthalaldehyde', { value: 'carbaldehyde', positions: [1, 2] }],
+    ['isophthalaldehyde', { value: 'carbaldehyde', positions: [1, 3] }],
+    ['terephthalaldehyde', { value: 'carbaldehyde', positions: [1, 4] }]]);
+  assert.deepEqual([templateSuffix('catechol'), templateSuffix('toluene'), templateLength('toluene')],
+    [{ value: 'alcohol', positions: [1, 2] }, null, 6]);
   assert.deepEqual([TEMPLATES.anisole.group.alkoxy, groupPlural('metilo'), groupPlural('grupo metoxi')], [true, 'metilos',
     'grupos metoxi']);
   assert.equal(tileById('template-anisole').text, TRADITIONAL_NAMES.anisole);
@@ -193,8 +212,10 @@ test('rows and «más» follow design.md §15.2', () => {
     'R-4a: the ciclo tile; R-4b: benceno and fenil; R-4c: o, m, p; R-5a2: fenol and 1(n); R-5c1: benzaldehído; R-5c2: benzoil');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'traditional').map((tile) => tile.id),
     ['template-toluene', 'template-styrene', 'template-xylene', 'template-mesitylene', 'template-anisole', 'template-cresol',
-      'template-pyrocatechol', 'template-catechol', 'template-resorcinol', 'template-hydroquinone'],
-    'R-4c: «Nombres tradicionales»; R-5b: anisol; R-5a3a: the retained phenols');
+      'template-pyrocatechol', 'template-catechol', 'template-resorcinol', 'template-hydroquinone', 'template-formaldehyde',
+      'template-acetaldehyde', 'template-acetone', 'template-acetophenone', 'template-phenylacetaldehyde', 'template-phthalaldehyde',
+      'template-isophthalaldehyde', 'template-terephthalaldehyde'],
+    'R-4c: «Nombres tradicionales»; R-5b: anisol; R-5a3a: the retained phenols; R-5c3a: the retained carbonyl names');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'groups').map((tile) => tile.id),
     ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, ACETYL_ID,
       ACYL_ID, RING_CARBONYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID],

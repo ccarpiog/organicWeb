@@ -520,7 +520,8 @@ test('fixture round trip (R-5a3a): every retained phenol name of tests/fixtures/
 }); // End of test 'fixture round trip (R-5a3a)…'
 
 test('«Nombres tradicionales» (R-5a3a): the five tiles, each with a tooltip in the dialog', () => {
-  const phenols = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(5); // After `anisol` (R-5b).
+  // After `anisol` (R-5b), before the carbonyl templates (R-5c3a).
+  const phenols = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(5, 10);
   assert.deepEqual(phenols.map((tile) => tile.text), [...PHENOL_TEMPLATE_WORDS]);
   for (const tile of phenols) {
     assert.ok(TILE_HINTS[tile.id] && TILE_HINTS[tile.id].endsWith('.'), tile.id);

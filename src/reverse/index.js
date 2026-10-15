@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -15,7 +15,17 @@
  * ketones (R-5c1: the suffixes `al`, `ona`, `carbaldehído`, the prefixes
  * `oxo` and `formil`, `benzaldehído`; R-5c2: the acyl prefixes `acetil`,
  * `propanoil`, `(but-2-enoil)`, `benzoil`, `(4-metilbenzoil)`,
- * `(ciclohexanocarbonil)`). Pure, no DOM.
+ * `(ciclohexanocarbonil)`; R-5c3a: the retained `formaldehído`,
+ * `acetaldehído`, `acetona`, `acetofenona`, `fenilacetaldehído` and the
+ * ftalaldehídos). Pure, no DOM.
+ *
+ * The retained carbonyl names need nothing of their own here either: the
+ * engine gives them as alternatives (`acetona`, `ftalaldehído`, also
+ * `4-metilftalaldehído` and `2-(4-metilfenil)acetaldehído`), so they are
+ * `alternative`; any other prefix on one (`1-cloroacetona`) describes its
+ * molecule and gets `otherName` (diagnose.js SUBSTITUTED_TEMPLATE);
+ * `metilftalaldehído` is `ambiguous`, `(4-metilfenil)acetaldehído`
+ * `missingLocants`.
  *
  * The acyl prefixes need nothing of their own here either: their branch and
  * its C=O are built like any branch (build.js) and searched like one
