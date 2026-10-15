@@ -698,15 +698,17 @@ test('controls: correct carbonyl names have no diagnosis; a mistake the earlier 
     assert.equal(verdict.diagnosis.code, code, `${name}: ${verdict.diagnosis.message}`);
   }
   assert.match(read('4-metilpentan-3-ona').diagnosis.message, /los sustituyentes tienen que llevar los números más bajos/);
-  // An OH on the –CHO's carbon builds an acid, a later family's principal group: null.
-  assert.equal(read('1 hidroxi prop ano al').diagnosis, null);
+  // An OH on the –CHO's carbon builds an acid: since phase I-51d3 the acid's own code (reverse-diagnose-acids.test.js).
+  assert.equal(read('1 hidroxi prop ano al').diagnosis.code, 'ACID_GROUP');
 }); // End of test 'controls…'
 
 test('the drafts of the aldehyde and ketone rules: their place among the rules, their steps, every variant renders', () => {
   assert.deepEqual(CARBONYL_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]),
     [[1, 'group'], [1, 'group'], [1, 'group'], [1, 'group'], [1, 'ringChain'], [2, 'groupChain']]);
-  // Beside the alcohol code whose place each takes: after HYDROXY_PREFIX, HYDROXY_PARENT, MORE_HYDROXY_GROUPS.
-  const after = (code) => DIAGNOSIS_CODES[DIAGNOSIS_CODES.indexOf(code) - 1];
+  // Beside the alcohol code whose place each takes: after HYDROXY_PREFIX, HYDROXY_PARENT, MORE_HYDROXY_GROUPS (the acid codes of
+  // phase I-51d3, ACID_CARBON beside ALDEHYDE_CARBON, left out: reverse-diagnose-acids.test.js).
+  const codes = DIAGNOSIS_CODES.filter((code) => !code.startsWith('ACID_'));
+  const after = (code) => codes[codes.indexOf(code) - 1];
   assert.deepEqual(CARBONYL_CODES.map(after), ['HYDROXY_PREFIX', 'CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON',
     'HYDROXY_PARENT', 'MORE_HYDROXY_GROUPS']);
   for (const code of CARBONYL_CODES) {
@@ -715,12 +717,14 @@ test('the drafts of the aldehyde and ketone rules: their place among the rules, 
     assert.doesNotMatch(text, /undefined|null|NaN|–OH/, code);
   }
   const { carbonylN0, groupWords, junior, groupsOn, ending } = DIAGNOSIS_PHRASES;
+  // The acid's –COOH groups (phase I-51d3) beside them: reverse-diagnose-acids.test.js.
   assert.deepEqual(carbonylN0.numberingReasons, {
     aldehyde: 'los grupos –CHO (el grupo principal) tienen que llevar los números más bajos',
     ketone: 'los grupos C=O (el grupo principal) tienen que llevar los números más bajos',
+    acid: 'los grupos –COOH (el grupo principal) tienen que llevar los números más bajos',
   });
-  assert.deepEqual(carbonylN0.lowerLocantsOf, { aldehyde: 'los grupos –CHO', ketone: 'los grupos C=O' });
-  assert.deepEqual(Object.keys(groupWords), ['alcohol', 'aldehyde', 'ketone']);
+  assert.deepEqual(carbonylN0.lowerLocantsOf, { aldehyde: 'los grupos –CHO', ketone: 'los grupos C=O', acid: 'los grupos –COOH' });
+  assert.deepEqual(Object.keys(groupWords), ['alcohol', 'aldehyde', 'ketone', 'acid']);
   // The OH groups keep their N0 phrases (phase I-51a3b).
   assert.equal(DIAGNOSIS_TEXTS.NUMBERING({ rule: 'N0', app: '2', student: '3', unwritten: false }), 'Hay que numerar la cadena '
     + 'desde el otro extremo: los grupos –OH (el grupo principal) tienen que llevar los números más bajos (2 en vez de 3).');
@@ -728,6 +732,7 @@ test('the drafts of the aldehyde and ketone rules: their place among the rules, 
     + 'de larga que, bien numerada, da números más bajos a los grupos –CHO (1 en vez de 2): esa es la cadena principal.');
   // The variants: several junior groups, KETONE_NOT_ALDEHYDE without a branch, CARBONYL_PREFIX on a ring and outside it.
   assert.deepEqual([...junior.ketone, ...junior.alcohol], ['el C=O de la cetona', 'cada C=O de cetona', 'el –OH', 'cada –OH']);
+  assert.deepEqual([...junior.aldehyde], ['el –CHO del aldehído', 'cada –CHO'], 'beside an acid (phase I-51d3)');
   assert.equal(DIAGNOSIS_TEXTS.CARBONYL_SENIORITY({ group: 'ketone', ending: 'diona', benzaldehyde: false, junior: 'alcohol',
     count: 2, prefix: 'hidroxi', name: 'X' }), `${SENIORITY}la cetona (C=O), que se nombra con la terminación «-diona», al final `
     + 'del nombre; cada –OH va delante, con el prefijo «hidroxi». Se escribe «X».');

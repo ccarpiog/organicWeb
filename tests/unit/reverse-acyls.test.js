@@ -680,11 +680,13 @@ function onlyAcylWordsDiffer(tree, verdict) {
 /**
  * Why the diagnosis of an acyl name's `otherName` is null, read independently
  * of diagnose.js from the engine's naming (file header «Aldehydes and
- * ketones» of diagnose.js): `otherFamily` as in reverse-carbonyls.test.js (an
- * OH on a –CHO's carbon makes an acid, phase R-5d). Since phase R-5c3b1 the
- * principal C=O group's former reasons have their codes, and since phase
- * R-5c3b2 the acyl words the engine does not write, formerly `acylWords`
- * (tests below). Null when none applies (an unexpected null).
+ * ketones» of diagnose.js): `otherFamily` as in reverse-carbonyls.test.js
+ * (the engine's principal group a later family's: an ester, phase R-6a).
+ * Since phase R-5c3b1 the principal C=O group's former reasons have their
+ * codes, since phase R-5c3b2 the acyl words the engine does not write,
+ * formerly `acylWords` (tests below), and since phase I-51d3 an acid's (an
+ * OH on a –CHO's carbon, formerly `otherFamily`: acidPrincipal()). Null when
+ * none applies (an unexpected null).
  *
  * @param {string[]} ids - The name's tile ids.
  * @param {object} verdict - Its `otherName` verdict.
@@ -692,8 +694,21 @@ function onlyAcylWordsDiffer(tree, verdict) {
  */
 function nullReason(ids, verdict) {
   const engine = verdict.naming.structure.suffix;
-  return engine && !['aldehyde', 'ketone'].includes(engine.kind) ? 'otherFamily' : null;
+  return engine && !['aldehyde', 'ketone', 'acid'].includes(engine.kind) ? 'otherFamily' : null;
 } // End of function nullReason()
+
+/**
+ * Tells whether the engine's principal group of an `otherName` is an acid's
+ * –COOH (an OH on a –CHO's carbon): deliberate nulls (`otherFamily`) until
+ * phase I-51d3, since then diagnosed (diagnose.js «Acids», ACID_GROUP).
+ *
+ * @param {object} verdict - An `otherName` verdict.
+ * @returns {boolean} True when the engine's principal group is an acid's.
+ */
+function acidPrincipal(verdict) {
+  const engine = verdict.naming.structure.suffix;
+  return Boolean(engine) && engine.kind === 'acid';
+} // End of function acidPrincipal()
 
 test('the former deliberate nulls of R-5c2, acyl words the engine does not write: each now has its R-5c3b2 code', () => {
   const cases = [
@@ -1018,8 +1033,10 @@ function isHeteroNode(node) {
 const FAMILY_CODES = Object.freeze({
   reversed: ['NUMBERING'],
   // A chain with `al` keeps its –CHO at carbon 1: renumbered from the other end, its prefixes move, so the name describes
-  // another molecule, whose chain the trace may choose otherwise (the acyl's C=O carbon may join it).
-  shifted: ['NUMBERING', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS'],
+  // another molecule, whose chain the trace may choose otherwise (the acyl's C=O carbon may join it); an OH shifted onto the
+  // –CHO's carbon makes an acid's –COOH (R-5d3: ACID_GROUP, `4-acetil-1-hidroxi-3-oxohexanal`).
+  shifted: ['NUMBERING', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS',
+    'ACID_GROUP'],
   reflected: ['RING_NUMBERING'],
   rotated: ['RING_NUMBERING'],
   // CARBONYL_PREFIX (R-5c3b1): an acyl prefix swapped onto an end carbon, whose C=O the chain then takes.
@@ -1031,8 +1048,9 @@ const FAMILY_CODES = Object.freeze({
   // R-5c3b1: an acyl prefix on an end carbon whose C=O the chain takes (CARBONYL_PREFIX: `1-acetilpentano-2,4-diona` →
   // `heptano-2,4,6-triona`), or a branch on an `al`'s carbon (KETONE_NOT_ALDEHYDE: `1-acetilhexanal`).
   toEnd: ['BRANCH_AT_END', 'NUMBERING', 'CARBONYL_PREFIX', 'KETONE_NOT_ALDEHYDE'],
-  // CARBONYL_PREFIX: an `oxo` moved to the bare end of an aldehyde's chain is a second –CHO (R-5c3b1).
-  heteroToEnd: ['NUMBERING', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CARBONYL_PREFIX'],
+  // CARBONYL_PREFIX: an `oxo` moved to the bare end of an aldehyde's chain is a second –CHO (R-5c3b1); ACID_GROUP: a `hidroxi`
+  // moved onto the –CHO's carbon makes an acid's –COOH (R-5d3).
+  heteroToEnd: ['NUMBERING', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CARBONYL_PREFIX', 'ACID_GROUP'],
   removed: [],
   added: ['NEEDLESS_LOCANTS', 'NUMBERING', 'RING_NUMBERING'],
 });
@@ -1127,16 +1145,20 @@ function mutationsOf(ids) {
 /**
  * Reads every mutation of some acyl names: every `otherName` must carry a
  * diagnosis of its family's codes whose step resolves in its explanation, or
- * be a deliberate null with its reason (nullReason()).
+ * be a deliberate null with its reason (nullReason()). Those whose engine's
+ * principal group is an acid's (acidPrincipal(); deliberate nulls until
+ * phase I-51d3) are counted by code.
  *
  * @param {string[]} names - Acyl names (engine names or alternatives).
- * @returns {{otherName: Object<string, number>, codes: Set<string>, nulls: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the deliberate nulls by reason and the nulls without one.
+ * @returns {{otherName: Object<string, number>, codes: Set<string>, nulls: Object<string, number>,
+ *   acids: Object<string, number>, unexpected: string[]}} `otherName` counts by family, the codes seen, the deliberate nulls
+ *   by reason, the acids' diagnoses by code and the nulls without a reason.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
   const codes = new Set();
   const nulls = {};
+  const acids = {};
   const unexpected = [];
   for (const name of names) {
     for (const mutation of mutationsOf(idsOf(name))) {
@@ -1157,13 +1179,16 @@ function sweep(names) {
         continue;
       }
       codes.add(d.code);
+      if (acidPrincipal(verdict)) {
+        acids[d.code] = (acids[d.code] || 0) + 1;
+      }
       assert.ok(FAMILY_CODES[mutation.family].includes(d.code), `${label}: ${d.code}, ${d.message}`);
       assert.ok(!/undefined|null|NaN|\[object|grupo –OH|grupos –OH/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
     } // End of the loop over the mutations of one name
   } // End of the loop over the names
-  return { otherName, codes, nulls, unexpected };
+  return { otherName, codes, nulls, acids, unexpected };
 } // End of function sweep()
 
 /**
@@ -1186,10 +1211,10 @@ test('mutations of every acyl fixture name: a diagnosis of the family\'s codes, 
     .filter((name) => isCarbonylName(name) && isAcylName(name));
   // The acids' acyl names (R-5d1) are swept with the acids (reverse-acids.test.js).
   assert.equal(names.length, EXPECTED_NAMES.read - EXPECTED_ACID_ROWS.names);
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  const { otherName, codes, nulls, acids, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
-  assert.deepEqual(nulls, { ...FIXTURE_NULLS });
+  assert.deepEqual([nulls, acids], [{ ...FIXTURE_NULLS }, {}]);
   assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'CARBONYL_PREFIX', 'KETONE_NOT_ALDEHYDE', 'LONGER_CHAIN',
     'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND', 'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of every acyl fixture name…'
@@ -1201,20 +1226,18 @@ test('mutations of the generated acyl names: every otherName is diagnosed or a d
     names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter(isAcylName));
   }
   assert.ok(names.length >= 180, `${names.length} names`); // The seeds give 185.
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  const { otherName, codes, nulls, acids, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
-  const deliberate = Object.values(nulls).reduce((sum, count) => sum + count, 0);
-  // The seeds give 791: 6 nulls, every one an acid (`otherFamily`); 785 diagnosed (before R-5c3b1: 362 deliberate nulls,
-  // 340 suffix, 16 principal, 6 otherFamily).
-  assert.ok(total >= 780, `${total} otherName verdicts`);
+  // The seeds give 791, every one diagnosed (before R-5c3b1: 362 deliberate nulls, 340 suffix, 16 principal, 6 otherFamily;
+  // until R-5d3, 6 nulls, every one an acid, `otherFamily`: an OH on the –CHO's carbon, now ACID_GROUP).
+  assert.equal(total, 791);
+  assert.deepEqual([nulls, acids], [{}, { ACID_GROUP: 6 }]);
   assert.deepEqual([otherName.removed, otherName.added], [0, 0]);
   for (const code of ['NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'BRANCH_AT_END', 'LONGER_CHAIN',
-    'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'RING_NUMBERING', 'CARBONYL_PREFIX', 'KETONE_NOT_ALDEHYDE']) {
+    'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'RING_NUMBERING', 'CARBONYL_PREFIX', 'KETONE_NOT_ALDEHYDE', 'ACID_GROUP']) {
     assert.ok(codes.has(code), `${code}: ${[...codes]}`);
   }
-  assert.ok(Object.keys(nulls).every((reason) => reason === 'otherFamily'), JSON.stringify(nulls));
-  assert.ok(deliberate < total / 20, JSON.stringify(nulls));
 }); // End of test 'mutations of the generated acyl names…'
 
 /** The tile id of the free-valence ending `il` (a branch's `il`, R-1a), and of `ano`. */

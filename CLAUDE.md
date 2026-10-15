@@ -162,15 +162,24 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   the «Anillos» row's `benzoico` (`ácido 4-metilbenzoico`) read acids on
   chains, rings and `benceno`, beside the earlier families' groups, their
   left-out locants searched, the engine's `manyAcids` `outOfScope`; the
-  diagnosis keeps the rules that hold for an acid name, and the acid's own
-  mistakes are deliberate nulls (`diagnose.js` «Acids»). R-5d2 (phase
+  diagnosis keeps the rules that hold for an acid name. R-5d2 (phase
   I-51d2) is done: the «Nombres tradicionales» row's retained acid names
   (`fórmico`, `acético`, `oxálico`, `fenilacético`, `ftálico`, `isoftálico`,
   `tereftálico`, after `ácido`, each with a tooltip) read as the engine's
   alternatives, also with the prefixes the engine writes on them (`ácido
   4-metilftálico`, `ácido 2-(3-metilfenil)acético`), any other prefix as
   `otherName` with the substituted-template diagnosis, and the Ayuda has its
-  acid line. Next is R-5d3 (phase I-51d3): the acid diagnosis messages.
+  acid line. R-5d3 (phase I-51d3) is done, and with it R-5d: `diagnose.js`
+  names an acid's own mistakes (header «Acids», checked first: a –COOH
+  written as two groups on one carbon, `1-hidroxipropanal`; a junior group
+  as the suffix, `4-carboxibutan-2-ona`, with the seniority
+  `ácido > aldehído > cetona > alcohol`; the –COOH's carbon on the other
+  side of the parent, `ácido propano-1-carboxílico`, `ácido fenilfórmico`;
+  the principal –COOH written `carboxi`, `carboxiciclohexano`, `ácido
+  3-carboxipropanoico`; the ring or chain the –COOH groups choose; another
+  chain with more –COOH groups), and N0 numbering and the suffix's needless
+  locants speak of «grupos –COOH», each with its «Ver el paso» step. Next
+  is R-6a (phase I-52a): esters.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

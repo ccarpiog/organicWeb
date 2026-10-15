@@ -40,8 +40,10 @@
  * p-metilbenzoico` → `alternative`; `ácido metilbutanoico` → `ambiguous`;
  * `ácido 4-metilbutanoico` → `otherName`; `ácido metanodioico` → `invalid`
  * CARBONYL_POSITION; `ácido propano-1,2,3-tricarboxílico` → `outOfScope`, the
- * engine's `manyAcids`). An acid's own mistakes get a null diagnosis until
- * phase I-51d3 (diagnose.js «Acids»).
+ * engine's `manyAcids`). An acid's own mistakes have their diagnoses
+ * (diagnose.js «Acids»: `1-hidroxipropanal` → ACID_GROUP, `ácido
+ * propano-1-carboxílico` → ACID_CARBON, `carboxiciclohexano` →
+ * CARBONYL_PREFIX).
  *
  * The retained carbonyl names need nothing of their own here either: the
  * engine gives them as alternatives (`acetona`, `ftalaldehído`, also

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T10:20:15Z",
+  "updated": "2026-10-15T11:52:21Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -814,7 +814,10 @@
     {
       "id": "I-51d3",
       "title": "v4 R-5d3 Acid diagnosis messages",
-      "status": "queued",
+      "status": "done",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-51d3.md",
+      "narrative": "docs/progress-archive/i-51d3.md",
       "summary": "Names the mistakes in an acid name built from tiles, each with its step in the explanation."
     },
     {

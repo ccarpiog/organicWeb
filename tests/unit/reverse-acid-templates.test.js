@@ -17,7 +17,8 @@
  * quoted with its class word), or `invalid` where they cannot go; the
  * prefixes the engine admits judged by the other rules (RING_NUMBERING,
  * BRANCH_RING_NUMBERING, the NEEDLESS_LOCANTS of `ácido 2-fenilacético`);
- * the acid's own deliberate nulls (phase I-51d3); the tooltips; the fixture
+ * the acid's own mistakes on a template, deliberate nulls until phase I-51d3
+ * (ACID_CARBON, CARBONYL_PREFIX); the tooltips; the fixture
  * names; a closed loop over the engine's retained acid names with each
  * locant list removed; the ordered drawing; time budgets.
  */
@@ -401,34 +402,50 @@ test('readName (R-5d2): prefixes the engine admits on an acid template are judge
 
 /**
  * Acid templates whose –COOH groups are not the engine's: deliberate nulls
- * of diagnose.js «Acids» for phase I-51d3 (acidChecks() first), with their
- * reason read from the engine's naming and the student's reading: `carbon`
- * — the engine's –COOH carbon is outside a ring, the student's the chain's
- * carbon 1; `count` — the student's word cites fewer –COOH groups than the
- * engine's name (another written `carboxi`). [tile words, the engine's name,
- * the reason].
+ * of diagnose.js «Acids» until phase I-51d3 (acidChecks() first), now the
+ * acid's own diagnoses — `carbon`: the engine's –COOH carbon is outside a
+ * ring, the student's the chain's carbon 1 (ACID_CARBON); `count`: the
+ * student's word cites fewer –COOH groups than the engine's name, another
+ * written `carboxi` (CARBONYL_PREFIX). [tile words, the engine's name, the
+ * category, the code, the message].
  */
-const NULLS = [
-  ['ácido fenil fórmico', 'ácido benzoico', 'carbon'],
-  ['ácido START 4 met il fenil END fórmico', 'ácido 4-metilbenzoico', 'carbon'],
-  ['ácido 2 carboxi acético', 'ácido propanodioico', 'count'],
-  ['ácido 4 carboxi ftálico', 'ácido benceno-1,2,4-tricarboxílico', 'count'],
+const FORMER_NULLS = [
+  ['ácido fenil fórmico', 'ácido benzoico', 'carbon', 'ACID_CARBON', 'Cuando el grupo –COOH está unido a un anillo, su carbono no '
+    + 'forma parte del anillo ni es una cadena aparte: la cadena principal es el anillo, y el grupo se nombra con «ácido benzoico» '
+    + '(el benceno con un grupo –COOH). Se escribe «ácido benzoico».'],
+  ['ácido START 4 met il fenil END fórmico', 'ácido 4-metilbenzoico', 'carbon', 'ACID_CARBON', 'Cuando el grupo –COOH está unido '
+    + 'a un anillo, su carbono no forma parte del anillo ni es una cadena aparte: la cadena principal es el anillo, y el grupo se '
+    + 'nombra con «ácido benzoico» (el benceno con un grupo –COOH). Se escribe «ácido 4-metilbenzoico».'],
+  ['ácido 2 carboxi acético', 'ácido propanodioico', 'count', 'CARBONYL_PREFIX', 'Los grupos –COOH son el grupo principal: los de '
+    + 'la cadena principal se nombran todos juntos con la palabra «ácido» al principio del nombre y la terminación «-dioico» al '
+    + 'final, no con el prefijo «carboxi». Su carbono entra en la cadena principal. Se escribe «ácido propanodioico».'],
+  ['ácido 4 carboxi ftálico', 'ácido benceno-1,2,4-tricarboxílico', 'count', 'CARBONYL_PREFIX', 'Los grupos –COOH son el grupo '
+    + 'principal: los unidos al anillo se nombran todos juntos con la palabra «ácido» al principio del nombre y la terminación '
+    + '«-tricarboxílico» al final, no con el prefijo «carboxi». Se escribe «ácido benceno-1,2,4-tricarboxílico».'],
 ];
 
-test('readName (R-5d2): a template whose –COOH groups are not the engine\'s is one of the acid\'s deliberate nulls (I-51d3)', () => {
-  for (const [words, name, reason] of NULLS) {
-    const verdict = readName(seq(words));
-    assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis], ['otherName', name, null], words);
+test('readName (R-5d2, R-5d3): a template whose –COOH groups are not the engine\'s gets the acid\'s own diagnosis', () => {
+  for (const [words, name, category, code, message] of FORMER_NULLS) {
+    const ids = seq(words);
+    const verdict = readName(ids);
+    assert.deepEqual([verdict.kind, verdict.name], ['otherName', name], words);
     const engine = verdict.naming.structure.suffix;
     const mine = verdict.suffixAtoms.filter((g) => g.hydroxy !== undefined);
     const why = mine.length === engine.locants.length ? 'carbon' : 'count';
-    assert.equal(why, reason, words);
-    if (reason === 'carbon') {
+    assert.equal(why, category, words);
+    if (category === 'carbon') {
       assert.deepEqual([mine.some((g) => g.carbon !== undefined), Boolean(engine.outside)], [false, true], words);
     }
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.deepEqual([d.code, d.rule, d.traceRule, d.step, d.message], [code, 1, null, 'group', message], words);
+    // The tiles: the template's word (ACID_CARBON, the suffix), or the `carboxi` prefix with its locant (CARBONYL_PREFIX).
+    assert.deepEqual(d.tiles, code === 'ACID_CARBON' ? [ids.length - 1, ids.length] : [1, 3], words);
+    const opened = diagnosisExplanation(verdict, explain);
+    assert.equal(opened.steps[opened.index].id, 'group', words);
     assert.ok(verdict.draw && verdict.molecule, words);
-  } // End of the loop over the deliberate nulls
-}); // End of test 'readName (R-5d2): a template whose –COOH groups…'
+  } // End of the loop over the former deliberate nulls
+}); // End of test 'readName (R-5d2, R-5d3): a template whose –COOH groups…' 
 
 // ---------------------------------------------------------------------------
 // Fixtures, closed loop, drawing and time.

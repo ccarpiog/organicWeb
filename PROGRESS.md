@@ -84,7 +84,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-51d | v4 R-5d Acids | same, "R-5d" | split into I-51d1, I-51d2, I-51d3 | — | — |
 | I-51d1 | v4 R-5d1 `ácido` class word, `oico` / `carboxílico` suffixes, `ácido benzoico`, `carboxi` prefix; search, round trips, deliberate «Acids» nulls, e2e | same, "R-5d" | done — `docs/progress-archive/i-51d1.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-51d1.md` |
 | I-51d2 | v4 R-5d2 Retained acid templates (`fórmico`, `acético`, `oxálico`, `fenilacético`, the ftálico family), Ayuda acid line, e2e | same, "R-5d" | done — `docs/progress-archive/i-51d2.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-51d2.md` |
-| I-51d3 | v4 R-5d3 Acid diagnosis messages (fill the I-51d1/d2 nulls and the carbonyl sweeps' acid nulls), e2e | same, "R-5d" | queued | — | — |
+| I-51d3 | v4 R-5d3 Acid diagnosis messages (fill the I-51d1/d2 nulls and the carbonyl sweeps' acid nulls), e2e | same, "R-5d" | done — `docs/progress-archive/i-51d3.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51d3.md` |
 | I-52a | v4 R-6a Esters | same, "R-6a" | queued | — | — |
 | I-52b | v4 R-6b Nitriles | same, "R-6b" | queued | — | — |
 | I-52c | v4 R-6c Amines | same, "R-6c" | queued | — | — |
@@ -113,17 +113,15 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-51d3 (v4 R-5d3, last of three acid sub-phases, design §15.8 row "R-5d"): the acid diagnosis messages in
-`src/reverse/diagnose.js` — fill the «Acids» deliberate nulls (seniority: an acid's –COOH written as a junior group or
-another group as the suffix; the ring or chain the –COOH groups choose / more –COOH groups; the –COOH carbon on the other
-side, `ácido butano-1-carboxílico`, `ácido fenilfórmico`; the –COOH numbered otherwise, incl. the ring N0 renumberings
-that are ~380 of the generated acid nulls; needless / missing suffix locants; fewer –COOH cited than the engine's,
-`ácido 2-carboxiacético`, `ácido 4-carboxiftálico`) and the carbonyl sweeps' acid nulls, each with its «Ver el paso» step,
-wording «grupos –COOH» like I-51c3b1's «grupos –CHO»; acid case in `tests/e2e/diagnosis.spec.js`. Pattern: I-51c3b1
-(`docs/progress-archive/i-51c3b1.md`, carbonyl principal-group diagnoses) and I-51a3b (alcohol diagnoses); the null list
-and sweep counts are in `i-51d1.md` and `i-51d2.md`. If it does not fit one worker, split as I-51c3b was (principal-group
-rules first, the rest second). Spec: design §15 + §13 (acids I-33, I-40b) — read from the working-tree `docs/design.md`;
-never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths. Then R-6a (I-52a, esters).
+Select I-52a (v4 R-6a, esters, design §15.8 row "R-6a": `oato`, `carboxilato`, `benzoato`; the O-bound side with automatic
+` de ` and ` y ` and its own multipliers — `de dimetilo`, `de di(propan-2-ilo)`, `de bis(2-cloroetilo)`; `formiato` /
+`acetato`; ester prefixes `aciloxi`, `alcoxicarbonil`). It is as big as R-5d was (three sub-phases): split it first, as
+I-51d was — I-52a1 tiles/parse/assemble/build/search for the ester suffixes and the O-bound side, round trips, deliberate
+«Esters» nulls, e2e; I-52a2 `formiato`/`acetato` templates, ester prefixes, Ayuda ester line; I-52a3 the ester diagnosis
+messages (incl. the carbonyl fixture sweep's 8 ester nulls, `1-metoxipropanal`, and an ester written as an ether class
+name) — record the split in the table and `PROGRESS.json`. Pattern: R-5d (`docs/progress-archive/i-51d1.md` …
+`i-51d3.md`); forward engine esters I-35, I-39c, I-40d, I-45c (`i-35.md`, …). Spec: design §15 + §13 — read from the
+working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths.
 
 - **Builds on** the R-1 engine (`src/reverse/`: tiles, parser, assembler, tokenizer, `interpret.js`,
   `build.js`, `search.js`, `readName()` — `docs/progress-archive/i-47a.md` … `i-47c.md`), the dialog
@@ -133,9 +131,8 @@ never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by ex
   (`i-51a1.md` … `i-51a3b.md`), alkoxy/phenoxy prefixes and `anisol` (`i-51b1.md`), ether class
   names and the ether diagnosis (`i-51b2.md`), carbonyl suffixes, `oxo`/`formil` and `benzaldehído`
   (`i-51c1.md`), acyl prefixes (`i-51c2.md`), carbonyl templates (`i-51c3a.md`), carbonyl diagnoses
-  (`i-51c3b1.md`, `i-51c3b2.md`), acid suffixes, `ácido`, `benzoico` and `carboxi` (`i-51d1.md`), retained acid
-  names and the Ayuda acid line (`i-51d2.md`); the forward naming engine already names every case
-  (v2 §13, v3 §14; acids I-33, `i-33.md`).
+  (`i-51c3b1.md`, `i-51c3b2.md`), acids (`i-51d1.md` … `i-51d3.md`); the forward naming engine already names every
+  case (v2 §13, v3 §14; esters I-35, `i-35.md`).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6, §15.9).
@@ -302,16 +299,18 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   `carboxílico` («Grupos») and `benzoico` («Anillos») in `tiles.js`, parse code ACID_WORD, «Acids» nulls in `diagnose.js`;
   tests `tests/unit/reverse-acids.test.js`, `tests/e2e/name-builder-acids.spec.js`. Retained acids (I-51d2): `fórmico` …
   `tereftálico` in `TEMPLATES`, `isAcidTemplate()` in `tiles.js`, `checkAcidWord()` in `parse.js`; tests
-  `tests/unit/reverse-acid-templates.test.js`, `tests/e2e/name-builder-acid-templates.spec.js`.
+  `tests/unit/reverse-acid-templates.test.js`, `tests/e2e/name-builder-acid-templates.spec.js`. Acid diagnoses (I-51d3):
+  codes ACID_GROUP (`acidSplit()`, `moleculeCarboxyls()`) / ACID_CARBON and the carbonyl codes with `group` 'acid' in
+  `diagnose.js`; tests `tests/unit/reverse-diagnose-acids.test.js`, acid case in `diagnosis.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51c1 … I-51d1: see `docs/progress-archive/i-51c1.md` … `i-51d1.md`.
-- I-51d2 (orchestrator, after the worker): `npm test` 0 (2146 → 2161) · `npm run check` 0 (197) · `npm run build` 0 ·
-  `npm run e2e -- --reporter=dot` 0 (541 → 547 passed, source + dist). Acid round trip 136 → 146 names, closed loop 965 →
-  995; earlier acid sweeps unchanged (fixture 306 `otherName` / 145 nulls, generated 911 / 380), template sweeps fixture 3 /
-  generated 13 `otherName`, no nulls. Codex review ship, 0 findings (`docs/reviews/I-51d2.md`).
+- I-51c1 … I-51d2: see `docs/progress-archive/i-51c1.md` … `i-51d2.md`.
+- I-51d3 (orchestrator, after the worker and again after the review fix): `npm test` 0 (2161 → 2170) · `npm run check` 0
+  (198) · `npm run build` 0 · `npm run e2e -- --reporter=dot` 0 (547 → 549 passed, source + dist). Acid sweeps: fixture
+  306 `otherName`, nulls 145 → 0; generated 911, nulls 380 → 0; carbonyl fixture nulls 11 → 8 (esters), generated 21 → 0;
+  acyl generated 6 → 0; other families unchanged. Codex ship-with-fixes, 1 blocker fixed (`docs/reviews/I-51d3.md`).
 
 ## Open risks / deviations
 
@@ -376,11 +375,11 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   runs on any family and wins over LOCANT_ORDER; still null: a benzene written with `ciclo` in a branch, numbered as the
   engine numbers it; open wording question — the ring-numbering message quotes the engine's form of the whole prefix, so
   it may also show a style change («3-tert-butilfenil» for «5-(1,1-dimetiletil)fenil»).
-- I-51d1/I-51d2 (acid suffixes, `ácido`, `benzoico`, `carboxi`, retained acid names, Ayuda «Ácidos»; decisions and
-  Spanish drafts in `docs/progress-archive/i-51d1.md`, `i-51d2.md`): `ácido` is tree kind `suffixClass`, parse code
-  ACID_WORD; retained acids always `alternative`, a prefix on `oxálico` `invalid`. Deliberate «Acids» nulls await I-51d3
-  (~40% of generated acid `otherName` verdicts undiagnosed), plus `ácido fenilfórmico`, `ácido 2-carboxiacético`, `ácido
-  4-carboxiftálico`.
+- I-51d1…I-51d3 (acids; decisions and Spanish drafts in `docs/progress-archive/i-51d1.md` … `i-51d3.md`): `ácido` is
+  tree kind `suffixClass`, parse code ACID_WORD; retained acids always `alternative`, a prefix on `oxálico` `invalid`.
+  One deliberate acid null left (a student's acid suffix while the engine's principal group is no –COOH — unbuildable);
+  CHAIN_LOCANTS / NUMBERING at N0 worded for acids but unreachable. Correction: of the carbonyl fixture sweep's 11 nulls
+  only 3 were acids, 8 are esters (R-6a's) — the I-51c3b1 / I-51d1 archives said 11 acids.
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -394,5 +393,5 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-51d1 `5a2732d`, pushed. I-51d2 committed and pushed right after this checkpoint (see `git log`). User's
+- I-51d2 `651f775`, pushed. I-51d3 committed and pushed right after this checkpoint (see `git log`). User's
   uncommitted paths, never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

@@ -62,6 +62,9 @@ const ETHER_ONLY_CODES = Object.freeze(['ETHER_SIDE', 'CLASS_NAME_NONE', 'CLASS_
 const CARBONYL_ONLY_CODES = Object.freeze(['CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON', 'CARBONYL_PREFIX',
   'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS']);
 
+/** The codes only an acid gives (phase I-51d3; their cases are in reverse-diagnose-acids.test.js). */
+const ACID_ONLY_CODES = Object.freeze(['ACID_GROUP', 'ACID_CARBON']);
+
 /**
  * The branch-name codes (phase I-51c3b2): an acyl group's word or chain, a ring branch's numbering — branches a
  * hydrocarbon's open chain never carries (an acyl group is a C=O; a ring is a hydrocarbon's parent); their cases are in
@@ -291,7 +294,7 @@ test('one case per diagnosis code: the code, its trace rule, the step and the me
     seen.add(code);
   } // End of the loop over the cases
   const chainCodes = DIAGNOSIS_CODES
-    .filter((code) => ![...RING_ONLY_CODES, ...ALCOHOL_ONLY_CODES, ...ETHER_ONLY_CODES, ...CARBONYL_ONLY_CODES,
+    .filter((code) => ![...RING_ONLY_CODES, ...ALCOHOL_ONLY_CODES, ...ETHER_ONLY_CODES, ...CARBONYL_ONLY_CODES, ...ACID_ONLY_CODES,
       ...BRANCH_NAME_CODES].includes(code));
   assert.deepEqual([...seen].sort(), [...chainCodes].sort(), 'every code an open chain can give has a case');
 }); // End of test 'one case per diagnosis code: the code, its trace rule, the step and the message'
@@ -362,19 +365,20 @@ test('left-out locants: every placement is a reading, and the kindest diagnosis 
 }); // End of test 'left-out locants: every placement is a reading, and the kindest diagnosis is kept'
 
 test('the drafts: one entry per code in rule order, each message renders from its example, phrases for every rule', () => {
-  // The ring rules of phase I-50d, the alcohol rules of phase I-51a3b, the ether rules of phase I-51b2 and the aldehyde and
-  // ketone rules of phase I-51c3b1 stand beside the rules whose place they take (diagnose.js headers «Rings», «Alcohols»,
-  // «Ethers» and «Aldehydes and ketones»); the branch-name rules of phase I-51c3b2 come before ALPHABETICAL_ORDER, with its
-  // number.
-  assert.deepEqual(DIAGNOSIS_CODES, ['HYDROXY_PREFIX', 'CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON',
-    'CARBONYL_PREFIX', 'HYDROXY_PARENT', 'CARBONYL_PARENT', 'BRANCH_AT_END', 'RING_IS_PARENT', 'MORE_HYDROXY_GROUPS',
+  // The ring rules of phase I-50d, the alcohol rules of phase I-51a3b, the ether rules of phase I-51b2, the aldehyde and
+  // ketone rules of phase I-51c3b1 and the acid rules of phase I-51d3 stand beside the rules whose place they take (diagnose.js
+  // headers «Rings», «Alcohols», «Ethers», «Aldehydes and ketones» and «Acids»: the acid's checks run first, ACID_CARBON beside
+  // ALDEHYDE_CARBON); the branch-name rules of phase I-51c3b2 come before ALPHABETICAL_ORDER, with its number.
+  assert.deepEqual(DIAGNOSIS_CODES, ['ACID_GROUP', 'HYDROXY_PREFIX', 'CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON',
+    'ACID_CARBON', 'CARBONYL_PREFIX', 'HYDROXY_PARENT', 'CARBONYL_PARENT', 'BRANCH_AT_END', 'RING_IS_PARENT', 'MORE_HYDROXY_GROUPS',
     'MORE_CARBONYL_GROUPS', 'LONGER_CHAIN', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'PHENOL', 'ETHER_SIDE', 'CLASS_NAME_NONE',
     'CLASS_GROUP_WORDS', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL',
     'NUMBERING', 'RING_NUMBERING', 'ACYL_NAME', 'ACYL_CHAIN', 'BRANCH_RING_NUMBERING', 'ALPHABETICAL_ORDER', 'CLASS_ORDER',
     'UNGROUPED', 'CLASS_DI', 'MULTIPLIER_KIND',
     'ALKOXY_MULTIPLIER', 'LOCANT_ORDER', 'NEEDLESS_LOCANTS', 'MISSING_LOCANTS', 'SEGMENT_ORDER', 'OLD_STYLE', 'LETTER_LOCANTS']);
   assert.deepEqual(DIAGNOSIS_CODES.map((code) => DIAGNOSES[code].rule),
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5, 5, 6, 6, 7, 7, 8, 9, 9, 10, 11, 11]);
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5, 5, 6, 6, 7, 7, 8, 9, 9, 10, 11,
+      11]);
   assert.ok(Object.isFrozen(DIAGNOSES) && Object.isFrozen(DIAGNOSIS_TEXTS) && Object.isFrozen(DIAGNOSIS_PHRASES));
   for (const code of DIAGNOSIS_CODES) {
     const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);

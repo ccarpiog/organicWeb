@@ -18,11 +18,12 @@
  * verdicts with the molecule each describes (compared by aromatic key with a
  * SMILES), out-of-scope acids, mutations and their diagnosis (the rules that
  * hold for an acid name; the acid's own mistakes, deliberate nulls of
- * diagnose.js «Acids» until phase I-51d3, each with its reason read
- * independently), the fixture round trip over every acid row of
- * tests/fixtures/names.tsv, the closed loop over the oracle's acid generators
- * (pure imports, no Java), the diagnosis sweeps, the ordered drawing, the
- * dialog's tooltips and time budgets.
+ * diagnose.js «Acids» until phase I-51d3, each with its category read
+ * independently and, since I-51d3, its code — the messages themselves are
+ * tested in reverse-diagnose-acids.test.js), the fixture round trip over
+ * every acid row of tests/fixtures/names.tsv, the closed loop over the
+ * oracle's acid generators (pure imports, no Java), the diagnosis sweeps (no
+ * null left), the ordered drawing, the dialog's tooltips and time budgets.
  */
 
 import { test } from 'node:test';
@@ -588,8 +589,8 @@ test('search (R-5d1): left-out locants give ambiguous lists; the budget gives in
 
 /**
  * Mutations of acid names (design.md §15.7): tile words, the verdict and
- * the diagnosis code (null: a deliberate null of diagnose.js «Acids», the
- * deliberate-null test below says why).
+ * the diagnosis code (the acid's own mistakes: the test of the former
+ * deliberate nulls below).
  */
 const MUTATIONS = Object.freeze([
   // Rules that hold for an acid name.
@@ -652,24 +653,24 @@ test('mutations (R-5d1): the expected verdict, and the diagnosis of every rule t
 }); // End of test 'mutations (R-5d1)…'
 
 /**
- * Why the diagnosis of an `otherName` whose engine's principal group is a
- * –COOH is null, read independently of diagnose.js from the engine's naming
- * and the student's reading (diagnose.js «Acids»: the acid's own mistakes,
- * phase I-51d3): `seniority` — the student's suffix is no –COOH (a junior
- * group's, or none: `1-hidroxipropanal`, `carboxiciclohexano`); `count` —
- * the student's –COOH suffix cites another number of groups (`ácido
- * 3-carboxipropanoico`); `carbon` — the –COOH's carbon on the other side of
- * the parent (`ácido propano-1-carboxílico`, `ácido ciclohexilmetanoico`);
- * `numbering` — the same –COOH groups numbered otherwise (N0: `ácido
+ * The category of an acid's own mistake, read independently of diagnose.js
+ * from the engine's naming and the student's reading (diagnose.js «Acids»;
+ * until phase I-51d3 each was a deliberate null): `seniority` — the
+ * student's suffix is no –COOH (a junior group's, or none:
+ * `1-hidroxipropanal`, `carboxiciclohexano`); `count` — the student's –COOH
+ * suffix cites another number of groups (`ácido 3-carboxipropanoico`);
+ * `carbon` — the –COOH's carbon on the other side of the parent (`ácido
+ * propano-1-carboxílico`, `ácido ciclohexilmetanoico`); `numbering` — the
+ * same –COOH groups numbered otherwise (N0: `ácido
  * ciclohexano-1,5-dicarboxílico`); `suffix` — the suffix's locants, which the
  * engine leaves out (`ácido ciclohexano-1-carboxílico`). Null when none
- * applies (an unexpected null) or when the principal group is no –COOH.
+ * applies or when the principal group is no –COOH.
  *
  * @param {string[]} ids - The name's tile ids.
  * @param {object} verdict - Its `otherName` verdict.
- * @returns {string|null} The reason.
+ * @returns {string|null} The category.
  */
-function nullReason(ids, verdict) {
+function acidCategory(ids, verdict) {
   const engine = verdict.naming.structure.suffix;
   if (!engine || engine.kind !== 'acid') {
     return null;
@@ -697,33 +698,60 @@ function nullReason(ids, verdict) {
     }
   }
   return null;
-} // End of function nullReason()
+} // End of function acidCategory()
 
-test('the deliberate nulls of R-5d1 (diagnose.js «Acids»): each with its reason, the molecule drawn with its name', () => {
+/**
+ * The codes an acid's own mistake gets, by category (acidCategory();
+ * diagnose.js «Acids», phase I-51d3): the –COOH written as two groups
+ * (ACID_GROUP), beside a junior suffix (CARBONYL_SENIORITY) or as `carboxi`
+ * (CARBONYL_PREFIX); a principal –COOH written `carboxi` or the groups of
+ * another parent (CARBONYL_PREFIX, CARBONYL_PARENT, MORE_CARBONYL_GROUPS);
+ * the –COOH's carbon (ACID_CARBON); N0 (RING_NUMBERING); the suffix's
+ * needless locants (NEEDLESS_LOCANTS).
+ */
+const CATEGORY_CODES = Object.freeze({
+  seniority: ['ACID_GROUP', 'CARBONYL_SENIORITY', 'CARBONYL_PREFIX'],
+  count: ['CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS'],
+  carbon: ['ACID_CARBON'],
+  numbering: ['RING_NUMBERING'],
+  suffix: ['NEEDLESS_LOCANTS'],
+});
+
+test('the former deliberate nulls of R-5d1 (diagnose.js «Acids»): each category has its I-51d3 code, step and words', () => {
   const cases = [
-    ['1 hidroxi prop ano al', 'seniority'], // the –COOH written as an aldehyde with `hidroxi`
-    ['carboxi ciclo hex ano', 'seniority'], // … or as `carboxi`, no suffix
-    ['1 oxo prop ano 1 ol', 'seniority'], // an alcohol's `ol` and `oxo` on one carbon
-    ['ácido 3 carboxi prop ano oico', 'count'], // a principal –COOH written `carboxi`
-    ['ácido 2 carboxi ciclo hex ano 1 carboxílico', 'count'],
-    ['ácido 4 START 1 2 di carboxi et il END ciclo hex ano 1 carboxílico', 'count'], // the chain carries more –COOH groups
-    ['ácido prop ano 1 carboxílico', 'carbon'], // `carboxílico` on a chain: ácido butanoico
-    ['ácido ciclo hex il met ano oico', 'carbon'], // the –COOH's carbon as the chain beside a ring
-    ['ácido fenil met ano oico', 'carbon'],
-    ['ácido ciclo hex ano 1 5 di carboxílico', 'numbering'], // N0
-    ['ácido benceno 1 5 di carboxílico', 'numbering'],
-    ['ácido ciclo hex ano 1 carboxílico', 'suffix'], // the engine writes `ácido ciclohexanocarboxílico`
-    ['ácido benceno 1 carboxílico', 'suffix'], // … and `ácido benzoico` / `ácido bencenocarboxílico`
+    // [tile words, category, code, step, a phrase of the message]
+    ['1 hidroxi prop ano al', 'seniority', 'ACID_GROUP', 'group', 'juntos forman un solo grupo, el –COOH'],
+    ['carboxi ciclo hex ano', 'seniority', 'CARBONYL_PREFIX', 'group', 'no con el prefijo «carboxi»'],
+    ['1 oxo prop ano 1 ol', 'seniority', 'ACID_GROUP', 'group', 'su –OH no es un alcohol'],
+    ['ácido 3 carboxi prop ano oico', 'count', 'CARBONYL_PREFIX', 'group', 'Su carbono entra en la cadena principal'],
+    ['ácido 2 carboxi ciclo hex ano 1 carboxílico', 'count', 'CARBONYL_PREFIX', 'group', 'los unidos al anillo'],
+    ['ácido 4 START 1 2 di carboxi et il END ciclo hex ano 1 carboxílico', 'count', 'CARBONYL_PARENT', 'ringChain',
+      'la que lleva más grupos –COOH'],
+    ['ácido prop ano 1 carboxílico', 'carbon', 'ACID_CARBON', 'group', 'solo se usa cuando el grupo –COOH está unido a un anillo'],
+    ['ácido ciclo hex il met ano oico', 'carbon', 'ACID_CARBON', 'group', 'su carbono no forma parte del anillo'],
+    ['ácido fenil met ano oico', 'carbon', 'ACID_CARBON', 'group', '«ácido benzoico» (el benceno con un grupo –COOH)'],
+    ['ácido ciclo hex ano 1 5 di carboxílico', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'los grupos –COOH (el grupo principal)'],
+    ['ácido benceno 1 5 di carboxílico', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'los grupos –COOH (el grupo principal)'],
+    ['ácido ciclo hex ano 1 carboxílico', 'suffix', 'NEEDLESS_LOCANTS', 'ringNumbering', 'de colocar el grupo –COOH'],
+    ['ácido benceno 1 carboxílico', 'suffix', 'NEEDLESS_LOCANTS', 'assemble', 'de colocar el grupo –COOH'],
   ];
-  for (const [words, reason] of cases) {
+  for (const [words, category, code, opened, phrase] of cases) {
     const ids = seq(words);
     const verdict = readName(ids);
     assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
     assert.equal(verdict.naming.structure.suffix.kind, 'acid', words);
-    assert.deepEqual([verdict.diagnosis, nullReason(ids, verdict)], [null, reason], `${words}: ${verdict.diagnosis && verdict.diagnosis.code}`);
+    assert.equal(acidCategory(ids, verdict), category, words);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.equal(d.code, code, `${words}: ${d.message}`);
+    assert.ok(CATEGORY_CODES[category].includes(d.code), words);
+    assert.ok(d.message.includes(phrase), `${words}: ${d.message}`);
+    assert.ok(!/undefined|null|NaN|\[object|grupo –OH|grupos –OH|–CHO/.test(d.message), `${words}: ${d.message}`);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${words}: the step «Ver el paso» opens`);
     assert.ok(verdict.draw && verdict.molecule, words);
-  } // End of the loop over the deliberate nulls
-}); // End of test 'the deliberate nulls of R-5d1…'
+  } // End of the loop over the former deliberate nulls
+}); // End of test 'the former deliberate nulls of R-5d1…' 
 
 // ---------------------------------------------------------------------------
 // Fixture round trip and closed loop (design.md §15.7).
@@ -1089,17 +1117,20 @@ function mutationsOf(ids) {
 
 /**
  * Reads every mutation of some acid names: every `otherName` must carry a
- * diagnosis of its family's codes whose step resolves in its explanation, or
- * be a deliberate null with its reason (nullReason()).
+ * diagnosis of its family's codes whose step resolves in its explanation;
+ * none is null (since phase I-51d3, diagnose.js «Acids»). The acid's own
+ * mistakes among them, the deliberate nulls of phases I-51d1 and I-51d2, are
+ * counted by category (acidCategory()), each with a code of its category
+ * (CATEGORY_CODES) and, for `numbering`, the trace rule N0.
  *
  * @param {string[]} names - Acid names (engine names or alternatives).
- * @returns {{otherName: Object<string, number>, codes: Set<string>, nulls: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the deliberate nulls by reason and the nulls without one.
+ * @returns {{otherName: Object<string, number>, codes: Set<string>, own: Object<string, number>, unexpected: string[]}}
+ *   `otherName` counts by family, the codes seen, the acid's own mistakes by category and the nulls.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
   const codes = new Set();
-  const nulls = {};
+  const own = {};
   const unexpected = [];
   for (const name of names) {
     for (const mutation of mutationsOf(idsOf(name))) {
@@ -1111,12 +1142,7 @@ function sweep(names) {
       const label = `${name} → ${mutation.family} ${verdict.text}`;
       const d = verdict.diagnosis;
       if (!d) {
-        const reason = nullReason(mutation.ids, verdict);
-        if (reason) {
-          nulls[reason] = (nulls[reason] || 0) + 1;
-        } else {
-          unexpected.push(label);
-        }
+        unexpected.push(label);
         continue;
       }
       codes.add(d.code);
@@ -1124,60 +1150,68 @@ function sweep(names) {
       assert.ok(!/undefined|null|NaN|\[object|grupo –OH|grupos –OH|–CHO|C=O/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
+      const category = acidCategory(mutation.ids, verdict);
+      if (category) {
+        own[category] = (own[category] || 0) + 1;
+        assert.ok(CATEGORY_CODES[category].includes(d.code), `${label}: ${category}, ${d.code}`);
+        assert.ok(category !== 'numbering' || (d.traceRule === 'N0' && d.message.includes('los grupos –COOH')), `${label}: ${d.message}`);
+      }
     } // End of the loop over the mutations of one name
   } // End of the loop over the names
-  return { otherName, codes, nulls, unexpected };
+  return { otherName, codes, own, unexpected };
 } // End of function sweep()
 
 /**
  * How many mutations of the acid fixture names of phase R-5d1 (the 136 names
- * without a retained acid word) give `otherName`, by family, and how many of
- * them are deliberate nulls, by reason (nullReason()): 145 `numbering`, a
- * ring acid's –COOH groups numbered otherwise by a reflection or a rotation
- * (N0, phase I-51d3). Every other one (161) is diagnosed with one of its
- * family's codes. Removing or adding locants never gives `otherName`. These
- * counts are unchanged by phase R-5d2.
+ * without a retained acid word) give `otherName`, by family: every one is
+ * diagnosed with one of its family's codes (306). Among them, the acid's own
+ * mistakes by category (acidCategory()): 145 `numbering`, a ring acid's
+ * –COOH groups numbered otherwise by a reflection or a rotation —
+ * deliberate nulls until phase I-51d3, now RING_NUMBERING at N0. Removing or
+ * adding locants never gives `otherName`. These counts are unchanged by
+ * phases R-5d2 and R-5d3.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 0, shifted: 37, reflected: 11, rotated: 151, swapped: 11, unsorted: 25, ungrouped: 13, diBis: 13, toEnd: 43, heteroToEnd: 2,
   removed: 0, added: 0,
 });
-const FIXTURE_NULLS = Object.freeze({ numbering: 145 });
+const FIXTURE_OWN = Object.freeze({ numbering: 145 });
 
 /**
  * The same for the 10 retained acid names of the fixtures (phase R-5d2),
  * swept apart: 3 `otherName`, the substituted ftálicos rotated (`ácido
  * 5-metilftálico`, `ácido 6-metilftálico`, `ácido 6-cloroisoftálico`), every
- * one RING_NUMBERING; no null. (The other rotations give another molecule's
- * valid form, `ácido 3-metilftálico`, or a carbon its word already fills.)
+ * one RING_NUMBERING; none of the acid's own. (The other rotations give
+ * another molecule's valid form, `ácido 3-metilftálico`, or a carbon its word
+ * already fills.)
  */
 const TEMPLATE_FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 0, shifted: 0, reflected: 0, rotated: 3, swapped: 0, unsorted: 0, ungrouped: 0, diBis: 0, toEnd: 0, heteroToEnd: 0,
   removed: 0, added: 0,
 });
-const TEMPLATE_FIXTURE_NULLS = Object.freeze({});
+const TEMPLATE_FIXTURE_OWN = Object.freeze({});
 
-test('mutations of every acid fixture name: a diagnosis of the family\'s codes, or a deliberate null with its reason', async () => {
+test('mutations of every acid fixture name: a diagnosis of the family\'s codes, never null', async () => {
   const names = (await readFixtures()).filter((row) => isAcid(row.smiles)).flatMap((row) => row.names).filter(isAcidName);
   assert.equal(names.length, EXPECTED_NAMES);
   // The names of phase R-5d1: the same counts as before the retained acid names read.
   const earlier = names.filter((name) => !isAcidTemplateName(name));
   assert.equal(earlier.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES);
-  const { otherName, codes, nulls, unexpected } = sweep(earlier);
+  const { otherName, codes, own, unexpected } = sweep(earlier);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
-  assert.deepEqual(nulls, { ...FIXTURE_NULLS });
+  assert.deepEqual(own, { ...FIXTURE_OWN });
   assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'CHAIN_LOCANTS', 'LONGER_CHAIN', 'MORE_SUBSTITUENTS',
     'MULTIPLIER_KIND', 'NUMBERING', 'RING_NUMBERING', 'UNGROUPED']);
   // The retained acid names (R-5d2), swept apart.
   const templates = sweep(names.filter(isAcidTemplateName));
   assert.deepEqual(templates.unexpected, []);
   assert.deepEqual(templates.otherName, { ...TEMPLATE_FIXTURE_OTHER_NAME });
-  assert.deepEqual(templates.nulls, { ...TEMPLATE_FIXTURE_NULLS });
+  assert.deepEqual(templates.own, { ...TEMPLATE_FIXTURE_OWN });
   assert.deepEqual([...templates.codes], ['RING_NUMBERING']);
 }); // End of test 'mutations of every acid fixture name…'
 
-test('mutations of the generated acids: every otherName is diagnosed or a deliberate null, every step resolves', () => {
+test('mutations of the generated acids: every otherName is diagnosed, every step resolves', () => {
   const names = [];
   for (const mol of loopMolecules().filter((_, i) => i % 3 === 0)) { // Every generator's acids: chains, rings, benzenes.
     const naming = nameMolecule(mol);
@@ -1185,28 +1219,26 @@ test('mutations of the generated acids: every otherName is diagnosed or a delibe
   }
   // The names of phase R-5d1 (the seeds give 323) and, swept apart, the retained acid names of phase R-5d2 (11: the seeds give
   // 13 `otherName`, every one diagnosed — RING_NUMBERING on a ftálico renumbered, ALPHABETICAL_ORDER, UNGROUPED and
-  // MULTIPLIER_KIND —, no null).
+  // MULTIPLIER_KIND —, none of the acid's own).
   const earlier = names.filter((name) => !isAcidTemplateName(name));
   assert.ok(earlier.length >= 320, `${earlier.length} names`);
   const templates = sweep(names.filter(isAcidTemplateName));
   assert.deepEqual(templates.unexpected, []);
   assert.equal(names.length - earlier.length, 11);
-  assert.deepEqual([Object.values(templates.otherName).reduce((sum, count) => sum + count, 0), templates.nulls], [13, {}]);
+  assert.deepEqual([Object.values(templates.otherName).reduce((sum, count) => sum + count, 0), templates.own], [13, {}]);
   assert.deepEqual([...templates.codes].sort(), ['ALPHABETICAL_ORDER', 'MULTIPLIER_KIND', 'RING_NUMBERING', 'UNGROUPED']);
-  const { otherName, codes, nulls, unexpected } = sweep(earlier);
+  const { otherName, codes, own, unexpected } = sweep(earlier);
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
-  // The seeds give 911, unchanged by phase R-5d2: 380 deliberate nulls, every one a ring acid's –COOH groups numbered otherwise
-  // (N0, `numbering`); 531 diagnosed.
-  assert.deepEqual([total, nulls], [911, { numbering: 380 }]);
+  // The seeds give 911, unchanged by phases R-5d2 and R-5d3, every one diagnosed; 380 of them the acid's own mistakes, a ring
+  // acid's –COOH groups numbered otherwise (`numbering`: deliberate nulls until phase I-51d3, now RING_NUMBERING at N0).
+  assert.deepEqual([total, own], [911, { numbering: 380 }]);
   assert.deepEqual([otherName.removed, otherName.added], [0, 0]);
   for (const code of ['NUMBERING', 'RING_NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'BRANCH_AT_END',
     'LONGER_CHAIN', 'MORE_SUBSTITUENTS', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS']) {
     assert.ok(codes.has(code), `${code}: ${[...codes]}`);
   }
-  assert.deepEqual(Object.keys(nulls), ['numbering'], JSON.stringify(nulls));
-  assert.ok(nulls.numbering < total / 2, JSON.stringify(nulls));
-}); // End of test 'mutations of the generated acids…'
+}); // End of test 'mutations of the generated acids…' 
 
 // ---------------------------------------------------------------------------
 // The drawing, the dialog, robustness and time.
