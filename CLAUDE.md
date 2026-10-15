@@ -163,9 +163,14 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   chains, rings and `benceno`, beside the earlier families' groups, their
   left-out locants searched, the engine's `manyAcids` `outOfScope`; the
   diagnosis keeps the rules that hold for an acid name, and the acid's own
-  mistakes are deliberate nulls (`diagnose.js` «Acids»). Next is R-5d2
-  (phase I-51d2): the retained acid names (`ácido fórmico`, `acético`,
-  `oxálico`, `fenilacético`, the ftálico family) and the Ayuda acid line.
+  mistakes are deliberate nulls (`diagnose.js` «Acids»). R-5d2 (phase
+  I-51d2) is done: the «Nombres tradicionales» row's retained acid names
+  (`fórmico`, `acético`, `oxálico`, `fenilacético`, `ftálico`, `isoftálico`,
+  `tereftálico`, after `ácido`, each with a tooltip) read as the engine's
+  alternatives, also with the prefixes the engine writes on them (`ácido
+  4-metilftálico`, `ácido 2-(3-metilfenil)acético`), any other prefix as
+  `otherName` with the substituted-template diagnosis, and the Ayuda has its
+  acid line. Next is R-5d3 (phase I-51d3): the acid diagnosis messages.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

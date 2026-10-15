@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T09:48:56Z",
+  "updated": "2026-10-15T10:20:15Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -805,8 +805,11 @@
     {
       "id": "I-51d2",
       "title": "v4 R-5d2 Retained acid templates and Ayuda acid line",
-      "status": "queued",
-      "summary": "Reads traditional acid names such as ácido acético, ácido oxálico and the ftálico family, and adds the Ayuda acid line."
+      "status": "done",
+      "summary": "Reads traditional acid names such as ácido acético, ácido oxálico and the ftálico family, and adds the Ayuda acid line.",
+      "risk": "high",
+      "review": "Codex ship, 0 findings — docs/reviews/I-51d2.md",
+      "narrative": "docs/progress-archive/i-51d2.md"
     },
     {
       "id": "I-51d3",

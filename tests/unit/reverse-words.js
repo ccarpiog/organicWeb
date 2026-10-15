@@ -10,7 +10,8 @@
  * (R-5c1: the suffixes `al`, `ona`, `carbaldehído`, the prefixes `oxo` and
  * `formil`, `benzaldehído`; R-5c2: the acyl prefixes `acetil`, `…oil`,
  * `…carbonil`, `benzoil`) and their carboxylic acids (R-5d1: `ácido`, the
- * suffixes `oico` and `carboxílico`, `benzoico`, the prefix `carboxi`).
+ * suffixes `oico` and `carboxílico`, `benzoico`, the prefix `carboxi`; R-5d2:
+ * the retained acid names).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -308,15 +309,34 @@ export function isAcid(smiles) {
 export const ACID_WORD = SUFFIX_CLASS_WORDS.acid;
 
 /**
- * The words of the acid names the tiles do not write yet, from the lexicon:
- * the retained acid names of phase I-51d2 (`ácido fórmico`, `ácido acético`
- * — also `fenilacético` and `2-(3-metilfenil)acético` —, `ácido oxálico`,
- * `ácido ftálico` — also `isoftálico`, `tereftálico`).
+ * The words of the acid names the tiles do not write yet: none since phase
+ * R-5d2, whose «Nombres tradicionales» tiles write the retained acid names
+ * (ACID_TEMPLATE_WORDS); the ester prefixes are ESTER_PREFIX.
  */
-export const LATER_ACID_WORDS = Object.freeze([
-  TRADITIONAL_NAMES.formicAcid.split(' ')[1], TRADITIONAL_NAMES.aceticAcid.split(' ')[1], TRADITIONAL_NAMES.oxalicAcid.split(' ')[1],
-  BENZENE_DIGROUP_NAMES.phthalicAcid,
+export const LATER_ACID_WORDS = Object.freeze([]);
+
+/**
+ * The words of the retained acid templates (R-5d2), from the lexicon, in the
+ * order of their tiles, without the class word: `fórmico`, `acético`,
+ * `oxálico`, `fenilacético`, `ftálico`, `isoftálico`, `tereftálico`.
+ */
+export const ACID_TEMPLATE_WORDS = Object.freeze([
+  ...[TRADITIONAL_NAMES.formicAcid, TRADITIONAL_NAMES.aceticAcid, TRADITIONAL_NAMES.oxalicAcid, TRADITIONAL_NAMES.phenylaceticAcid]
+    .map((name) => name.slice(`${SUFFIX_CLASS_WORDS.acid} `.length)),
+  BENZENE_DIGROUP_NAMES.phthalicAcid, BENZENE_DIGROUP_NAMES.isophthalicAcid, BENZENE_DIGROUP_NAMES.terephthalicAcid,
 ]);
+
+/**
+ * Tells whether a name uses a retained acid template of phase R-5d2
+ * (ACID_TEMPLATE_WORDS; `acético` covers `fenilacético` and `ácido
+ * 2-(3-metilfenil)acético`, `ftálico` the other two).
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for `ácido acético`, `ácido 4-metilftálico`…
+ */
+export function isAcidTemplateName(name) {
+  return ACID_TEMPLATE_WORDS.some((word) => name.includes(word));
+}
 
 /**
  * The ester prefixes the tiles do not write yet (phase R-6a), by their
@@ -330,8 +350,9 @@ export const ESTER_PREFIX = new RegExp(`${ALKOXY_ENDING}\\)?${RING_CARBONYL_ENDI
 
 /**
  * Tells whether a name of a carboxylic acid is written with the tiles of
- * phase R-5d1: none of the retained acid words of phase I-51d2
- * (LATER_ACID_WORDS) and no ester prefix (ESTER_PREFIX, phase R-6a).
+ * phases R-5d1 and R-5d2: none of the words left for later phases
+ * (LATER_ACID_WORDS, empty since R-5d2) and no ester prefix (ESTER_PREFIX,
+ * phase R-6a).
  *
  * @param {string} name - A name.
  * @returns {boolean} True when the tiles read it.

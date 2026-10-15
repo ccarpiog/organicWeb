@@ -200,8 +200,8 @@ function oxygenBonds(mol) {
  * words: an ester (` de `, or an ester prefix beside an acid — `acetiloxi`,
  * `metoxicarbonil` —, R-6a), a nitrile (`nitrilo`, `ciano`, R-6b), an amide
  * (`amida`, `amino`, `carbamoil`, R-6d), or an acid the tiles do not write
- * yet (`ácido`, a retained acid name, phase I-51d2; since phase R-5d1 the
- * other acids read).
+ * yet (`ácido`: none since phase R-5d2, which reads the retained acid names,
+ * the other acids reading since phase R-5d1).
  *
  * @param {string} name - A name.
  * @returns {string} 'acid', 'ester', 'nitrile', 'amide' or 'other'.

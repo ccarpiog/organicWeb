@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -17,7 +17,7 @@
  * `carbonil`, `acetil`, `benzoil` — from R-5c2, the retained carbonyl
  * templates from R-5c3a, the carboxylic acids — the class word `ácido`, the
  * suffixes `oico` and `carboxílico`, `benzoico`, the prefix `carboxi` — from
- * R-5d1):
+ * R-5d1, the retained acid templates from R-5d2):
  *
  *   name        = [ ácido ] , { prefix } , parent   (* R-5d1: `ácido` with an acid suffix only *)
  *               | { classGroup } , éter ;   (* R-5b2: exactly two groups *)
@@ -38,7 +38,9 @@
  *   template    = tolueno | estireno | xileno | mesitileno | anisol
  *               | cresol | pirocatecol | catecol | resorcinol | hidroquinona
  *               | formaldehído | acetaldehído | acetona | acetofenona | fenilacetaldehído   (* R-5c3a *)
- *               | ftalaldehído | isoftalaldehído | tereftalaldehído ;
+ *               | ftalaldehído | isoftalaldehído | tereftalaldehído
+ *               | fórmico | acético | oxálico | fenilacético                    (* R-5d2, after `ácido` *)
+ *               | ftálico | isoftálico | tereftálico ;
  *   letter      = o | m | p ;
  *   stem        = [ ciclo ] , ROOT ;   (* ciclo: a ring of ROOT carbons, at least 3 *)
  *   segments    = segment , [ segment ] ;
@@ -221,6 +223,17 @@
  * `acetona`, `acetofenona` and `fenilacetaldehído` are open chains, so a
  * letter on a prefix before them is POSITIONAL as before any chain.
  *
+ * The retained acid templates (R-5d2: `fórmico`, `acético`, `oxálico`,
+ * `fenilacético` on an open chain, the ftálico family on benzene; tiles.js
+ * isAcidTemplate()) are carbonyl templates whose word places –COOH groups:
+ * they follow the class word `ácido` like `benzoico` (ACID_WORD both ways,
+ * acidSuffixTile(): `acético` without `ácido`, the error on the template's
+ * tile, its message's example the student's own word, `ácido acético`;
+ * `ácido acetona`, the error on `ácido`, with a message naming the retained
+ * acid words), take numbers or a letter of their own as TEMPLATE_LOCANTS
+ * («ácido acético» ya dice dónde va su grupo COOH…), and inside a compound
+ * branch their hint says the –COOH is written `carboxi` there.
+ *
  * A stem starts a branch or the parent: what follows it decides (a
  * free-valence suffix makes a branch), so leading numbers are never
  * consumed greedily — `2 met il 2 but eno` is the prefix `2-metil` and the
@@ -310,6 +323,7 @@ import {
   toTiles, TEMPLATES, templateGroupWord, groupPlural, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
   isPhenolTemplate, withArticle, ALKOXY_RETAINED, ETHER_CLASS_GROUPS, SUFFIX_GROUPS, GROUP_WORD_PARENTS, BENZALDEHYDE_ID,
   isAcylTile, templateSuffix, isCarbonylTemplate, isChainTemplate, BENZOIC_ID, ACID_KIND, isAcidSuffix, parentWordName,
+  isAcidTemplate, ACID_GROUP,
 } from './tiles.js';
 import { itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore } from './assemble.js';
 
@@ -684,13 +698,24 @@ function alkoxyAfterDoubleHint(word) {
     + `acaba en «${IL}» (${EXAMPLES.metoxi}).`;
 }
 
+/**
+ * The ACID_WORD message of an acid suffix without `ácido` (R-5d1), with an
+ * example of the name written right: `ácido butanoico`, or (R-5d2) the
+ * student's own retained acid name, `ácido acético`.
+ *
+ * @param {string} example - The example name.
+ * @returns {string} The message.
+ */
+function acidWordMissingMessage(example) {
+  return `El nombre de un ácido empieza por la palabra «${ACIDO}»: pon esa ficha al principio, como en ${example}.`;
+}
+
 /** Messages of the error codes that take no detail (design.md §15.6 drafts). */
 const MESSAGES = Object.freeze({
   // R-5d1: `ácido` without an acid suffix, and an acid suffix without `ácido` (ACID_WORD).
   ACID_WORD_ALONE: `La palabra «${ACIDO}» va delante del nombre de un ácido, que termina en «${OICO}» (${EXAMPLES.acidoButanoico}), `
     + `en «${CARBOXILICO}» (${EXAMPLES.acidoCiclohexanocarboxilico}) o en «${BENZOICO}» (${EXAMPLES.acidoBenzoico}).`,
-  ACID_WORD_MISSING: `El nombre de un ácido empieza por la palabra «${ACIDO}»: pon esa ficha al principio, como en `
-    + `${EXAMPLES.acidoButanoico}.`,
+  ACID_WORD_MISSING: acidWordMissingMessage(EXAMPLES.acidoButanoico),
   EMPTY: 'Elige fichas para formar un nombre.',
   NO_PARENT: `Falta la cadena principal: una raíz (${stem(1)}, ${stem(2)}, ${stem(3)}…) y su terminación `
     + `(${ENDINGS.saturated}, ${ENDINGS.double}, ${ENDINGS.triple}).`,
@@ -725,17 +750,24 @@ const POSITIONAL_MESSAGES = Object.freeze({
 const PHENOL_GROUP = 'grupo OH';
 const PHENOL_GROUPS = 'grupos OH';
 
+/** The plural of the –COOH of an acid as the messages say it (tiles.js ACID_GROUP; R-5d2: `oxálico`, the ftálicos). */
+const ACID_GROUPS = ACID_GROUP.replace(/^grupo /, 'grupos ');
+
 /**
  * How the messages call the principal group a template's word places, by
  * its SUFFIX_GROUPS key (templateSuffix()): the OH of a retained phenol
  * (R-5a3a), the –CHO of `formaldehído` or of a ftalaldehído and the C=O of
- * `acetona` (R-5c3a; GROUP_WORD_PARENTS: «grupo CHO»).
+ * `acetona` (R-5c3a; GROUP_WORD_PARENTS: «grupo CHO»), the –COOH of an acid
+ * template (R-5d2: «grupo COOH», «grupos COOH»).
  */
 const PLACED_GROUP_WORDS = Object.freeze({
   alcohol: Object.freeze({ one: PHENOL_GROUP, many: PHENOL_GROUPS }),
   aldehyde: Object.freeze({ one: GROUP_WORD_PARENTS.benzaldehyde.group, many: 'grupos CHO' }),
   carbaldehyde: Object.freeze({ one: GROUP_WORD_PARENTS.benzaldehyde.group, many: 'grupos CHO' }),
   ketone: Object.freeze({ one: 'grupo C=O', many: 'grupos C=O' }),
+  // R-5d2: the –COOH groups of an acid template (`acético`, `oxálico`, the ftálicos).
+  [ACID_KIND]: Object.freeze({ one: ACID_GROUP, many: ACID_GROUPS }),
+  carboxylic: Object.freeze({ one: ACID_GROUP, many: ACID_GROUPS }),
 });
 
 /**
@@ -795,7 +827,7 @@ function ownGroups(tiles, chain) {
       positions: positions && [...new Set([...placed, ...positions])].sort((a, b) => a - b),
       kinds,
       letterOnly: Boolean(letterOnly),
-      word: tile.text,
+      word: parentWordName(tile), // «ácido acético» (R-5d2): the class word with the word, as the name is written.
     };
   }
   const placed = groupWordOf(tiles, chain); // `fenol` (R-5a2), `benzaldehído` (R-5c1), `benzoico` (R-5d1)
@@ -899,7 +931,8 @@ function templateCountMessage(tile) {
  * The hint of a TILE_ORDER error on a template tile (R-4c): inside a
  * compound branch, or after a multiplier. A retained phenol (R-5a3a) in a
  * branch is written like `fenol` there, with `hidroxi` and `fenil`; `anisol`
- * (R-5b) with `metoxi` and `fenil`, `(4-metoxifenil)`.
+ * (R-5b) with `metoxi` and `fenil`, `(4-metoxifenil)`; a carbonyl template
+ * (R-5c3a) with `oxo` or `formil`; an acid template (R-5d2) with `carboxi`.
  *
  * @param {{text: string, kind: string, value: string}} tile - The template tile.
  * @param {'branch'|'multiplier'} where - Where it stands.
@@ -909,6 +942,11 @@ function templateHint(tile, where) {
   if (where === 'branch' && tile.kind === 'template' && isPhenolTemplate(tile.value)) {
     return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es «${FENIL}» y cada `
       + `${PHENOL_GROUP} se escribe «${HIDROXI}», como en ${EXAMPLES.hidroxifenil}.`;
+  }
+  if (where === 'branch' && tile.kind === 'template' && isAcidTemplate(tile.value)) {
+    // `acético`, `ftálico` (R-5d2): their –COOH is written `carboxi` there.
+    return `«${tile.text}» es el nombre de toda la molécula y va al final, detrás de «${ACIDO}»; dentro de una rama, el grupo `
+      + `COOH se escribe «${CARBOXI}», como en ${EXAMPLES.carboximetil} o ${EXAMPLES.carboxifenil}.`;
   }
   if (where === 'branch' && tile.kind === 'template' && isCarbonylTemplate(tile.value)) {
     // `acetona`, `ftalaldehído` (R-5c3a): their C=O is written as a prefix there.
@@ -1887,8 +1925,9 @@ function checkClosing(state, tree) {
 
 /**
  * The tile of a parent's acid suffix (R-5d1): its `oico` or `carboxílico`
- * suffix tile, or the `benzoico` word, which places its –COOH; null for a
- * parent without one.
+ * suffix tile, or the `benzoico` word, which places its –COOH, or (R-5d2) a
+ * retained acid template, which places its –COOH groups (`acético`,
+ * `ftálico`); null for a parent without one.
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} parent - A parent node.
@@ -1898,8 +1937,29 @@ export function acidSuffixTile(tiles, parent) {
   if (parent.suffix && isAcidSuffix(tiles[parent.suffix.tile].value)) {
     return parent.suffix.tile;
   }
+  if (parent.chain.type === 'template') {
+    return isAcidTemplate(tiles[parent.chain.tile].value) ? parent.chain.tile : null; // R-5d2
+  }
   const placed = groupWordOf(tiles, parent.chain);
   return placed && isAcidSuffix(placed.suffix) ? parent.chain.tile : null;
+}
+
+/** The words of the retained acid templates (R-5d2), in tile order, as the ACID_WORD message lists them. */
+const ACID_TEMPLATE_WORDS = Object.freeze(Object.keys(TEMPLATES).filter(isAcidTemplate).map((value) => tileById(`template-${value}`).text));
+
+/**
+ * The ACID_WORD message of `ácido` before a retained template that is no
+ * acid's (R-5d2: `ácido acetona`): the template's word is not an acid's name,
+ * and the retained acid words that do go after `ácido` (drafts pending
+ * teacher review).
+ *
+ * @param {{text: string}} tile - The template tile.
+ * @returns {string} The message.
+ */
+function acidWordTemplateMessage(tile) {
+  const words = `${ACID_TEMPLATE_WORDS.slice(0, -1).join(', ')} y ${ACID_TEMPLATE_WORDS[ACID_TEMPLATE_WORDS.length - 1]}`;
+  return `La palabra «${ACIDO}» va delante del nombre de un ácido, y «${tile.text}» no es el nombre de un ácido. Los nombres `
+    + `tradicionales que van detrás de «${ACIDO}» son ${words} (${ACIDO} ${tileById('template-aceticAcid').text}).`;
 }
 
 /**
@@ -1907,8 +1967,11 @@ export function acidSuffixTile(tiles, parent) {
  * ACID_WORD): `ácido` first with a parent that has no acid suffix (`ácido
  * butanal`), the error on `ácido`; an acid suffix (`oico`, `carboxílico`,
  * `benzoico`) without `ácido` anywhere (`butanoico`), the error on the
- * suffix's tile. An `ácido` out of place already has its TILE_ORDER; a name
- * without a parent its NO_PARENT, ENDS_WITH_BRANCH or BRANCH_OPEN.
+ * suffix's tile. R-5d2: a retained acid template is such a suffix
+ * (`acético`, the message's example then the student's own word, `ácido
+ * acético`), and `ácido` before another template (`ácido acetona`) names the
+ * retained acid words. An `ácido` out of place already has its TILE_ORDER; a
+ * name without a parent its NO_PARENT, ENDS_WITH_BRANCH or BRANCH_OPEN.
  *
  * @param {object} state - Parser state.
  * @param {object} tree - The name tree.
@@ -1920,10 +1983,14 @@ function checkAcidWord(state, tree) {
     return;
   }
   const acid = acidSuffixTile(tiles, tree.parent);
+  const { chain } = tree.parent;
+  const template = chain.type === 'template' ? tiles[chain.tile] : null; // R-5d2
   if (tree.suffixClass && acid === null) {
-    addError(state, 'ACID_WORD', tree.suffixClass.tile, tree.suffixClass.tile + 1, MESSAGES.ACID_WORD_ALONE);
+    addError(state, 'ACID_WORD', tree.suffixClass.tile, tree.suffixClass.tile + 1,
+      template ? acidWordTemplateMessage(template) : MESSAGES.ACID_WORD_ALONE);
   } else if (!tree.suffixClass && acid !== null && !tiles.some((tile) => tile.kind === 'suffixClass')) {
-    addError(state, 'ACID_WORD', acid, acid + 1, MESSAGES.ACID_WORD_MISSING);
+    addError(state, 'ACID_WORD', acid, acid + 1, template ? acidWordMissingMessage(`${ACIDO} ${template.text}`)
+      : MESSAGES.ACID_WORD_MISSING);
   }
 } // End of function checkAcidWord()
 

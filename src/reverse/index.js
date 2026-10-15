@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -19,7 +19,17 @@
  * `acetaldehído`, `acetona`, `acetofenona`, `fenilacetaldehído` and the
  * ftalaldehídos) and their carboxylic acids (R-5d1: the class word `ácido`,
  * the suffixes `oico` and `carboxílico`, `ácido benzoico`, the prefix
- * `carboxi`). Pure, no DOM.
+ * `carboxi`; R-5d2: the retained `ácido fórmico`, `ácido acético`, `ácido
+ * oxálico`, `ácido fenilacético` and the ftálicos). Pure, no DOM.
+ *
+ * The retained acid names need nothing of their own here either, as the
+ * carbonyl ones: the engine gives them as alternatives (`ácido acético`,
+ * `ácido ftálico`, also `ácido 4-metilftálico` and `ácido
+ * 2-(3-metilfenil)acético`), so they are `alternative`; any other prefix on
+ * one (`ácido 2-cloroacético`) describes its molecule and gets `otherName`
+ * (diagnose.js SUBSTITUTED_TEMPLATE), or `invalid` where it cannot go
+ * (`ácido 2-clorooxálico`: VALENCE); `ácido metilftálico` is `ambiguous`,
+ * `ácido (4-metilfenil)acético` `missingLocants`.
  *
  * The acids need nothing of their own here either: the class word is read
  * by the parser and written by the assembler (`ácido 2-metilpropanoico`),

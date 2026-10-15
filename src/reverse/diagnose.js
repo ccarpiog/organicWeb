@@ -15,9 +15,9 @@
  * rules that hold for them, the principal C=O group's own mistakes, checked
  * before rule 1 as an alcohol's are, and a branch's own name — an acyl
  * group's word and chain, a ring branch's numbering —, checked before rule
- * 5), and their carboxylic acids (R-5d1; «Acids» below: the rules that hold
- * for an acid name, the acid's own mistakes deliberate nulls until phase
- * I-51d3).
+ * 5), and their carboxylic acids (R-5d1, R-5d2 — the retained names —;
+ * «Acids» below: the rules that hold for an acid name, the acid's own
+ * mistakes deliberate nulls until phase I-51d3).
  *
  * The rules, in order (first match wins):
  *
@@ -637,6 +637,27 @@
  * them (N0: `ácido ciclohexano-1,5-dicarboxílico`; CHAIN_LOCANTS at N0); and
  * the suffix's needless locants (`ácido ciclohexano-1-carboxílico`). Their
  * messages would speak of OH or C=O groups.
+ *
+ * The retained acid names (R-5d2: `ácido fórmico`, `ácido acético`, `ácido
+ * oxálico`, `ácido fenilacético`, the ftálicos; tiles.js isAcidTemplate())
+ * are carbonyl templates whose word places the –COOH groups, so they need no
+ * rule of their own: SUBSTITUTED_TEMPLATE speaks where the engine never
+ * writes the prefixes (substitutedChainTemplate(): `ácido 2-cloroacético` →
+ * «El nombre tradicional «ácido acético» no admite sustituyentes: …
+ * «ácido 2-cloroetanoico».», `ácido metilfórmico`, `ácido
+ * 2-clorofenilacético`; a prefix on `oxálico` never builds: its two carbons
+ * are full), the ftálicos and a phenyl on `acético` (tiles.js
+ * templateAdmits()) are judged by the other rules (`ácido 5-metilftálico` →
+ * RING_NUMBERING, `ácido 2-(5-metilfenil)acético` → BRANCH_RING_NUMBERING),
+ * and the locant the engine leaves out of `ácido fenilacético`, written, is
+ * traditionalLocants()'s NEEDLESS_LOCANTS (`ácido 2-fenilacético`). A
+ * template whose –COOH groups are not the engine's stays one of the acid's
+ * deliberate nulls above, acidChecks() coming first: the –COOH's carbon on
+ * the other side of a ring (`ácido fenilfórmico`, `ácido
+ * (4-metilfenil)fórmico` → `ácido benzoico`, `ácido 4-metilbenzoico`:
+ * `carbon`), a principal –COOH written `carboxi` beside one (`ácido
+ * 2-carboxiacético` → `ácido propanodioico`, `ácido 4-carboxiftálico`:
+ * `count`).
  *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
@@ -2882,11 +2903,13 @@ function bencenol(ctx) {
 
 /**
  * SUBSTITUTED_TEMPLATE on a chain template (R-5c3a: `acetona`,
- * `formaldehído`, `acetaldehído`, `acetofenona`, `fenilacetaldehído`) with
- * prefixes of the student's that the engine never writes on it
- * (tiles.js templateAdmits(): only `acetaldehído` with one phenyl,
- * `2-(4-metilfenil)acetaldehído`): the molecule has its systematic name
- * (`1-cloroacetona` → «1-cloropropan-2-ona»), whatever its parent; the
+ * `formaldehído`, `acetaldehído`, `acetofenona`, `fenilacetaldehído`; R-5d2:
+ * `ácido fórmico`, `ácido acético`, `ácido oxálico`, `ácido fenilacético`,
+ * quoted with the class word) with prefixes of the student's that the engine
+ * never writes on it (tiles.js templateAdmits(): only `acetaldehído` or
+ * `acético` with one phenyl, `2-(4-metilfenil)acetaldehído`): the molecule
+ * has its systematic name (`1-cloroacetona` → «1-cloropropan-2-ona», `ácido
+ * 2-cloroacético` → «ácido 2-cloroetanoico»), whatever its parent; the
  * message names no parent (`parent` null). Rule 2, before the chain's and
  * the ring's rules, as for a substituted `tolueno`; its step is the choice
  * of the principal chain.
@@ -3767,8 +3790,9 @@ function needlessLocants(ctx) {
  * parent-level prefix locant left out is one of the engine's names
  * (`2-fenilacetaldehído` → `fenilacetaldehído`, the engine's alternative of
  * `2-feniletanal`; on `2-(3-metilfenil)acetaldehído` the engine writes the
- * 2). The message quotes that name; its step is «Monta el nombre», which
- * lists it among the other valid forms.
+ * 2; R-5d2: `ácido 2-fenilacético` → `ácido fenilacético`). The message
+ * quotes that name; its step is «Monta el nombre», which lists it among the
+ * other valid forms.
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.

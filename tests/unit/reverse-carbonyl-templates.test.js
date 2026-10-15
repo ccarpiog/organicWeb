@@ -114,7 +114,7 @@ const ALTERNATIVES = [
 // ---------------------------------------------------------------------------
 
 test('«Nombres tradicionales» (R-5c3a): the eight tiles after the phenols, each with a tooltip; their articles', () => {
-  const carbonyls = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(10);
+  const carbonyls = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(10, 18); // R-5d2's after
   assert.deepEqual(carbonyls.map((tile) => tile.text), [...CARBONYL_TEMPLATE_WORDS]);
   for (const tile of carbonyls) {
     assert.ok(TILE_HINTS[tile.id] && TILE_HINTS[tile.id].endsWith('.'), tile.id);

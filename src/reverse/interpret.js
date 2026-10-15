@@ -112,7 +112,11 @@
  * at 1, `acetona`'s at 2 — so the student's prefixes are numbered on that
  * chain (`2-(4-metilfenil)acetaldehído`); `acetofenona` and
  * `fenilacetaldehído` have a phenyl as their one group (`fenil` at 1 and at
- * 2), as `tolueno` has its methyl.
+ * 2), as `tolueno` has its methyl. A retained acid template (R-5d2:
+ * `fórmico`, `acético`, `oxálico`, `fenilacético` on an open chain, the
+ * ftálicos on benzene) is read the same way, its –COOH groups the placed
+ * suffix (kind 'acid', `hydroxy`; `outside` for the ftálicos, as
+ * `carboxílico`), after the class word `ácido` (`classWord`).
  *
  * The aldehydes and ketones (R-5c1) read their suffix like the alcohol's:
  * `ona` and `carbaldehído` with carbon slots of the parent (supplied, old
@@ -223,8 +227,10 @@ import { groupWordOf } from './parse.js';
  *
  * @typedef {object} TemplateSpec
  * @property {string} value - Its tiles.js TEMPLATES key ('toluene', 'styrene', 'xylene', 'mesitylene'; R-5a3a 'cresol',
- *   'pyrocatechol', 'catechol', 'resorcinol', 'hydroquinone'; R-5c3a 'acetone', 'phthalaldehyde'…).
- * @property {{text: string, tiles: [number, number]}} word - The template word as on its tile and its tile range.
+ *   'pyrocatechol', 'catechol', 'resorcinol', 'hydroquinone'; R-5c3a 'acetone', 'phthalaldehyde'…; R-5d2 'aceticAcid',
+ *   'phthalicAcid'…).
+ * @property {{text: string, tiles: [number, number]}} word - The template word as the messages quote it (tiles.js
+ *   parentWordName(): its tile's text, with the class word for an acid template, R-5d2: «ácido acético») and its tile range.
  * @property {PrefixSpec[]} groups - Its own carbon groups on the ring (one PrefixSpec: `xileno`'s two methyls share one;
  *   none for the diols of R-5a3a, whose OH groups are the NameSpec's suffix).
  */
@@ -667,7 +673,7 @@ function templateSpec(ctx, parent) {
   const value = ctx.tiles[tile].value;
   const template = TEMPLATES[value];
   const own = [tile, tile + 1];
-  const word = { text: ctx.tiles[tile].text, tiles: own };
+  const word = { text: parentWordName(ctx.tiles[tile]), tiles: own }; // «ácido acético» (R-5d2): as the name is written.
   if (template.count === 0) {
     return { value, word, groups: [] }; // `catecol`… (R-5a3a), `acetona` (R-5c3a): their OH or C=O is the suffix (suffixSpec()).
   }

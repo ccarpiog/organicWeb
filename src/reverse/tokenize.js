@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -66,7 +66,9 @@
  * at the start of the text and followed by exactly its automatic space
  * (assemble.js rule 9), after which the rest of the name reads as from the
  * start; `oico` and `carboxílico` are read where `ol` is, `benzoico` where
- * `fenol` is, `carboxi` where a retained branch word is. A step budget bounds the search:
+ * `fenol` is, `carboxi` where a retained branch word is, and the retained
+ * acid names (R-5d2: `ácido acético`, `ácido 4-metilftálico`) as the other
+ * templates, `fenilacético` as its one tile like `fenilacetaldehído`. A step budget bounds the search:
  * running out returns null, never a guess.
  */
 

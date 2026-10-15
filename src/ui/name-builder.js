@@ -39,7 +39,9 @@
  *   `hidroquinona`, phase R-5a3a, the retained carbonyl names
  *   `formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
  *   `fenilacetaldehído`, `ftalaldehído`, `isoftalaldehído`,
- *   `tereftalaldehído`, phase R-5c3a, these and `anisol` each with a tooltip
+ *   `tereftalaldehído`, phase R-5c3a, the retained acid names `fórmico`,
+ *   `acético`, `oxálico`, `fenilacético`, `ftálico`, `isoftálico`,
+ *   `tereftálico`, phase R-5d2, these and `anisol` each with a tooltip
  *   saying what it is; drafts pending teacher review), each with a «más»
  *   button for the tiles the catalogue keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
@@ -116,7 +118,8 @@ export function positionalLabel(tile) {
  * branch and where each goes; R-5c3a: the retained carbonyl names, what
  * molecule each is, and which take prefixes; R-5d1: `ácido`, `carboxi`,
  * `oico`, `carboxílico` and `benzoico`, what each is and where it goes;
- * drafts pending teacher review).
+ * R-5d2: the retained acid names, what molecule each is, that they go after
+ * `ácido`, and which take prefixes; drafts pending teacher review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
@@ -172,6 +175,20 @@ export const TILE_HINTS = Object.freeze({
     + 'anillo: 4-metilftalaldehído.',
   'template-isophthalaldehyde': 'Benceno con dos grupos CHO en los carbonos 1 y 3: benceno-1,3-dicarbaldehído.',
   'template-terephthalaldehyde': 'Benceno con dos grupos CHO en los carbonos 1 y 4: benceno-1,4-dicarbaldehído.',
+  // R-5d2: the retained acid names, after `ácido`.
+  'template-formicAcid': 'Un solo carbono con un grupo COOH: ácido metanoico. Va detrás de «ácido»: ácido fórmico.',
+  'template-aceticAcid': 'Cadena de 2 carbonos con un grupo COOH: ácido etanoico. Va detrás de «ácido»: ácido acético. Admite '
+    + 'un fenil en el carbono 2: ácido 2-(3-metilfenil)acético.',
+  'template-oxalicAcid': 'Cadena de 2 carbonos con un grupo COOH en cada uno: ácido etanodioico. Va detrás de «ácido»: ácido '
+    + 'oxálico.',
+  'template-phenylaceticAcid': 'Ácido etanoico con un fenil en el carbono 2: ácido 2-feniletanoico. Va detrás de «ácido»: ácido '
+    + 'fenilacético.',
+  'template-phthalicAcid': 'Benceno con dos grupos COOH en carbonos vecinos: ácido benceno-1,2-dicarboxílico. Va detrás de '
+    + '«ácido» y admite ramas en el anillo: ácido 4-metilftálico.',
+  'template-isophthalicAcid': 'Benceno con dos grupos COOH en los carbonos 1 y 3: ácido benceno-1,3-dicarboxílico. Va detrás de '
+    + '«ácido»: ácido isoftálico.',
+  'template-terephthalicAcid': 'Benceno con dos grupos COOH en los carbonos 1 y 4: ácido benceno-1,4-dicarboxílico. Va detrás de '
+    + '«ácido»: ácido tereftálico.',
 });
 
 /** Text of the empty name line. */
@@ -232,7 +249,8 @@ function make(doc, tag, className, text) {
  * Builds one tile button. The compound-branch controls show their label
  * beside their mark (the mark hidden from screen readers); an orto/meta/para
  * letter shows its word, small, beside the letter (R-4c); a tile of
- * TILE_HINTS gets its tooltip (R-5a2: `1(n)`; R-5a3a: the retained phenols; R-5c3a: the retained carbonyl names).
+ * TILE_HINTS gets its tooltip (R-5a2: `1(n)`; R-5a3a: the retained phenols; R-5c3a: the retained carbonyl names; R-5d2: the
+ * retained acid names).
  *
  * @param {Document} doc - The document.
  * @param {{id: string, kind: string, text: string, more: boolean}} tile - A catalogue tile.

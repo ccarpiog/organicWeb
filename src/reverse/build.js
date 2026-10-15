@@ -257,13 +257,16 @@ function rangeMessage(owner, value) {
 /**
  * The systematic names the LOCANT_RANGE message of a chain template whose
  * word holds a ring (R-5c3a) offers for a group on that ring, by TEMPLATES
- * key: `1-(4-metilfenil)etan-1-ona`, `2-(4-metilfenil)etanal`.
+ * key: `1-(4-metilfenil)etan-1-ona`, `2-(4-metilfenil)etanal`; R-5d2: `ácido
+ * 2-(4-metilfenil)etanoico` for `fenilacético`.
  */
 const RING_TEMPLATE_EXAMPLES = Object.freeze({
   acetophenone: `1-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}`
     + `${stem(2)}${ENDINGS.saturated.slice(0, -1)}-1-${GROUP_SUFFIXES.ketone}`,
   phenylacetaldehyde: `2-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}`
     + `${stem(2)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES.aldehyde}`,
+  phenylaceticAcid: `${SUFFIX_CLASS_WORDS[ACID_KIND]} 2-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}`
+    + `${ENCLOSING_MARKS[0][1]}${stem(2)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[ACID_KIND]}`,
 });
 
 /**

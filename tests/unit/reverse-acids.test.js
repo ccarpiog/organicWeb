@@ -8,7 +8,10 @@
  * and the «Anillos» row's `benzoico`. Parser (the class word and the suffix
  * nodes, ACID_WORD and the misplaced tiles with their tile ranges, partial
  * names), assembler (every form checked against the forward engine's own
- * text), tokenizer (the later families' names never read), interpreter and
+ * text), tokenizer (the later families' names never read; since phase
+ * I-51d2 the retained acid names read, their own tests in
+ * reverse-acid-templates.test.js, and the round trips, closed loop and
+ * sweeps here count them apart), interpreter and
  * builder (the =O and the OH of each –COOH, the –COOH's own carbon,
  * CARBONYL_POSITION, VALENCE, LOCANT_RANGE, the caps), search (left-out
  * locants of `carboxílico` and of the prefixes; the budget), readName()
@@ -30,7 +33,9 @@ import { assemble } from '../../src/reverse/assemble.js';
 import { interpret } from '../../src/reverse/interpret.js';
 import { build, specAtoms, specCarbons } from '../../src/reverse/build.js';
 import { tokenize } from '../../src/reverse/tokenize.js';
-import { ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, CARBOXY_ID, tileById } from '../../src/reverse/tiles.js';
+import {
+  ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, CARBOXY_ID, tileById, isChainTemplate, templateLength,
+} from '../../src/reverse/tiles.js';
 import { STEP_FALLBACKS, diagnosisExplanation } from '../../src/reverse/diagnose.js';
 import { explain } from '../../src/explain/explain.js';
 import { verdictLayout } from '../../src/ui/draw-name.js';
@@ -44,14 +49,14 @@ import {
   generateSubstitutedPhenyls, generateSubstitutedBenzoyls, generateEthers,
 } from '../../scripts/oracle/generate.mjs';
 import {
-  seq, readFixtures, leafIndices, isAcid, isAcidMolecule, isAcidName, LATER_ACID_WORDS, ESTER_PREFIX, ACID_WORD,
+  seq, readFixtures, leafIndices, isAcid, isAcidMolecule, isAcidName, LATER_ACID_WORDS, ESTER_PREFIX, ACID_WORD, isAcidTemplateName,
 } from './reverse-words.js';
 
 /**
  * Acid fixture rows (isAcid(): carbons, halogens and oxygens, at least one
  * –COOH; no nitrogen), and those of them with at least one name the tiles
- * write (isAcidName(): no retained acid name of phase I-51d2, no ester
- * prefix of phase R-6a), by section: 30 of I-33 (the acids' own section),
+ * write (isAcidName(): no ester prefix of phase R-6a; the retained acid
+ * names read since phase R-5d2, in rows read already), by section: 30 of I-33 (the acids' own section),
  * 2 of I-34 (beside an ether), 20 of I-39b (acyl prefixes), 7 of I-39c (an
  * ester written as `alcoxi` and `oxo`, `ácido 4-metoxi-4-oxobutanoico`), 30
  * of I-40b (ring acids), 1 of I-40d, 7 of I-43b (benzoic acids with ring
@@ -63,13 +68,15 @@ const EXPECTED_ROWS = Object.freeze({
 });
 
 /**
- * Their names and alternatives the tiles write, read back, and those left to later phases (34: the 10 retained acid names
- * of phase I-51d2 — `ácido fórmico`, `ácido acético`, `ácido oxálico`, `ácido fenilacético`, `ácido 2-(3-metilfenil)acético`,
- * `ácido ftálico`, `ácido isoftálico`, `ácido tereftálico`, `ácido 4-metilftálico`, `ácido 5-cloroisoftálico` — and the 24 with
- * an ester prefix, `acetiloxi`, `metoxicarbonil`…, phase R-6a).
+ * Their names and alternatives the tiles write, read back (146: the 136 of phase R-5d1 and, since phase R-5d2, the 10
+ * retained acid names — `ácido fórmico`, `ácido acético`, `ácido oxálico`, `ácido fenilacético`, `ácido
+ * 2-(3-metilfenil)acético`, `ácido ftálico`, `ácido isoftálico`, `ácido tereftálico`, `ácido 4-metilftálico`, `ácido
+ * 5-cloroisoftálico`), and those left to later phases (the 24 with an ester prefix, `acetiloxi`, `metoxicarbonil`…, phase
+ * R-6a).
  */
-const EXPECTED_NAMES = 136;
-const EXPECTED_LATER_NAMES = Object.freeze({ retained: 10, ester: 24 });
+const EXPECTED_NAMES = 146;
+const EXPECTED_TEMPLATE_NAMES = 10;
+const EXPECTED_LATER_NAMES = Object.freeze({ retained: 0, ester: 24 });
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -379,16 +386,18 @@ test('tokenizer (R-5d1): texts that only read with errors, and the later familie
     'ácido ciclohexanoico', 'ácido bencenoico', 'ácido butan-1-oico', 'ácido 1-butanoico', 'ácido 1-benzoico', 'ácido p-benzoico',
     'ácido benzoicooico', '2-metilácido propanoico', 'ácido butanoico ácido', 'ácido ácido butanoico', '(carboxioxi)metano',
     'ácido butano-1,4-bisoico', 'carboxi',
-    // Phase I-51d2: the retained acid names.
-    'ácido fórmico', 'ácido acético', 'ácido oxálico', 'ácido fenilacético', 'ácido 2-(3-metilfenil)acético', 'ácido ftálico',
-    'ácido isoftálico', 'ácido tereftálico', 'ácido 4-metilftálico',
     // Phase R-6a…R-6d: esters (an ester prefix beside an acid too), nitriles, amines, amides.
     'etanoato de metilo', 'benzoato de metilo', 'ciclohexanocarboxilato de etilo', 'ácido 2-(acetiloxi)etanoico',
     'ácido 3-(metoxicarbonil)pentanodioico', 'ácido 3-cianopropanoico', 'ácido 2-aminopropanoico', 'ácido 4-carbamoilbenzoico',
     'etanamida', 'etanonitrilo', 'benzamida', 'benzonitrilo']) {
     assert.equal(tokenize(name), null, name);
   }
-  assert.deepEqual(LATER_ACID_WORDS, ['fórmico', 'acético', 'oxálico', 'ftálico']);
+  // Phase I-51d2: the retained acid names read (reverse-acid-templates.test.js); none is left for later.
+  assert.deepEqual(LATER_ACID_WORDS, []);
+  for (const name of ['ácido fórmico', 'ácido acético', 'ácido oxálico', 'ácido fenilacético', 'ácido 2-(3-metilfenil)acético',
+    'ácido ftálico', 'ácido isoftálico', 'ácido tereftálico', 'ácido 4-metilftálico']) {
+    assert.ok(tokenize(name), name);
+  }
   assert.equal(ACID_WORD, tileById(ACID_WORD_ID).text);
   assert.ok(ESTER_PREFIX.test('ácido 2-[(2-metilpropanoil)oxi]etanoico') && !ESTER_PREFIX.test('ácido 3-(pentiloxi)propanoico'));
 }); // End of test 'tokenizer (R-5d1)…'
@@ -720,10 +729,11 @@ test('the deliberate nulls of R-5d1 (diagnose.js «Acids»): each with its reaso
 // Fixture round trip and closed loop (design.md §15.7).
 // ---------------------------------------------------------------------------
 
-test('fixture round trip (R-5d1): every acid name the tiles write, graph compared with the SMILES; later names never tokenize', async () => {
+test('fixture round trip (R-5d1, R-5d2): every acid name the tiles write, graph compared with the SMILES; later names never tokenize', async () => {
   const fixtures = await readFixtures();
   const rows = fixtures.filter((row) => isAcid(row.smiles));
   let covered = 0;
+  let templates = 0;
   const later = { retained: 0, ester: 0 };
   let elapsed = 0;
   const readRows = new Set();
@@ -731,7 +741,7 @@ test('fixture round trip (R-5d1): every acid name the tiles write, graph compare
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (!isAcidName(name)) {
-        later[ESTER_PREFIX.test(name) ? 'ester' : 'retained'] += 1; // Phase I-51d2 (retained acid names), R-6a (ester prefixes).
+        later[ESTER_PREFIX.test(name) ? 'ester' : 'retained'] += 1; // R-6a (ester prefixes); no retained acid name since R-5d2.
         assert.ok(LATER_ACID_WORDS.some((word) => name.includes(word)) || ESTER_PREFIX.test(name), name);
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
@@ -752,6 +762,7 @@ test('fixture round trip (R-5d1): every acid name the tiles write, graph compare
         assert.equal(verdict.matched.name, name);
       }
       covered += 1;
+      templates += isAcidTemplateName(name) ? 1 : 0; // R-5d2
       readRows.add(row);
     } // End of the loop over the names of a row
   } // End of the loop over the fixture rows
@@ -768,9 +779,10 @@ test('fixture round trip (R-5d1): every acid name the tiles write, graph compare
     [EXPECTED_ROWS.i33, EXPECTED_ROWS.i34, EXPECTED_ROWS.i39b, EXPECTED_ROWS.i39c, EXPECTED_ROWS.i40b, EXPECTED_ROWS.i40d,
       EXPECTED_ROWS.i43b, EXPECTED_ROWS.i44, EXPECTED_ROWS.i45a, EXPECTED_ROWS.i45b, EXPECTED_ROWS.i45c]);
   assert.equal(covered, EXPECTED_NAMES);
+  assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
   assert.deepEqual(later, { ...EXPECTED_LATER_NAMES });
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
-}); // End of test 'fixture round trip (R-5d1)…'
+}); // End of test 'fixture round trip (R-5d1, R-5d2)…'
 
 /** The closed loop's generators (scripts/oracle/generate.mjs; design.md §15.7), acid molecules only. */
 const LOOP = Object.freeze({
@@ -788,12 +800,13 @@ const LOOP = Object.freeze({
  * Minimum coverage of the closed loop: acid molecules (distinct by aromatic
  * key), names read back, the suffix forms among them (names ending in
  * `oico` other than `benzoico`, `carboxílico`, `benzoico`), names with
- * `carboxi`, removed-locant mutations and decisive verdicts among them (the
- * seeds give 884, 965, 682, 230, 53, 8, 2035 and 2035; 30 names of later
- * phases left out, retained acid names and ester prefixes).
+ * `carboxi`, retained acid names (R-5d2), removed-locant mutations and
+ * decisive verdicts among them (the seeds give 884, 995, 682, 230, 53, 8, 30,
+ * 2035 and 2035; before R-5d2, 965 names, the 30 retained acid names left
+ * out; no name of a later phase is left out).
  */
 const LOOP_MIN = Object.freeze({
-  molecules: 870, names: 950, oico: 670, carboxilico: 225, benzoico: 50, carboxi: 8, removed: 2000, decisive: 2000,
+  molecules: 870, names: 980, oico: 670, carboxilico: 225, benzoico: 50, carboxi: 8, templates: 28, removed: 2000, decisive: 2000,
 });
 
 /**
@@ -862,7 +875,7 @@ function locantLists(tree) {
 
 test('closed loop over the acid generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, oico: 0, carboxilico: 0, benzoico: 0, carboxi: 0, removed: 0, decisive: 0 };
+  const counts = { names: 0, oico: 0, carboxilico: 0, benzoico: 0, carboxi: 0, templates: 0, removed: 0, decisive: 0 };
   const later = [];
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
@@ -870,7 +883,7 @@ test('closed loop over the acid generators: engine name → tiles → readName()
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
       if (!isAcidName(name)) {
-        later.push(name); // A retained acid name (phase I-51d2) or an ester prefix (R-6a).
+        later.push(name); // An ester prefix (R-6a); the retained acid names read since R-5d2.
         assert.equal(tokenize(name), null, name);
         continue;
       }
@@ -885,6 +898,7 @@ test('closed loop over the acid generators: engine name → tiles → readName()
       counts.carboxilico += /carboxílico$/.test(name) ? 1 : 0;
       counts.benzoico += /benzoico$/.test(name) ? 1 : 0;
       counts.carboxi += /carboxi[^l]/.test(name) ? 1 : 0;
+      counts.templates += isAcidTemplateName(name) ? 1 : 0; // R-5d2
       if (i > 0) {
         continue;
       }
@@ -989,7 +1003,9 @@ const FAMILY_CODES = Object.freeze({
  * prefixes written one by one, di ↔ bis, a single-locant prefix moved to an
  * end of a chain (a carbon branch: BRANCH_AT_END; an `oxo`, a halogen,
  * `hidroxi` or an alkoxy prefix: another molecule), a prefix's locants
- * removed, or added (1… and 2…) where it has none.
+ * removed, or added (1… and 2…) where it has none. A retained acid template
+ * (R-5d2) is numbered on its parent: the benzene ring of the ftálicos, the
+ * chain of `acético` (`reversed`, its –COOH placed by the word).
  *
  * @param {string[]} ids - The name's tile ids.
  * @returns {{family: string, ids: string[]}[]} The mutations.
@@ -998,8 +1014,10 @@ function mutationsOf(ids) {
   const { tree } = parse(ids);
   const { tiles, items } = tree;
   const parent = tree.parent.chain;
-  const ring = parent.type !== 'chain' || parent.ring !== null;
-  const n = parent.type === 'chain' ? tiles[parent.root].value : 6;
+  const template = parent.type === 'template' ? tiles[parent.tile].value : null;
+  const chainTemplate = template !== null && isChainTemplate(template); // `acético` (R-5d2)
+  const ring = parent.type === 'chain' ? parent.ring !== null : !chainTemplate;
+  const n = (parent.type === 'chain' && tiles[parent.root].value) || (chainTemplate && templateLength(template)) || 6;
   const segments = parent.type === 'chain' ? parent.segments : [];
   const suffix = tree.parent.suffix ? tree.parent.suffix.locants : [];
   const lead = tree.suffixClass ? tree.suffixClass.range[1] : 0; // `ácido` stays first.
@@ -1112,12 +1130,13 @@ function sweep(names) {
 } // End of function sweep()
 
 /**
- * How many mutations of the acid fixture names give `otherName`, by family,
- * and how many of them are deliberate nulls, by reason (nullReason()): 145
- * `numbering`, a ring acid's –COOH groups numbered otherwise by a reflection
- * or a rotation (N0, phase I-51d3). Every other one (161) is diagnosed with
- * one of its family's codes. Removing or adding locants never gives
- * `otherName`.
+ * How many mutations of the acid fixture names of phase R-5d1 (the 136 names
+ * without a retained acid word) give `otherName`, by family, and how many of
+ * them are deliberate nulls, by reason (nullReason()): 145 `numbering`, a
+ * ring acid's –COOH groups numbered otherwise by a reflection or a rotation
+ * (N0, phase I-51d3). Every other one (161) is diagnosed with one of its
+ * family's codes. Removing or adding locants never gives `otherName`. These
+ * counts are unchanged by phase R-5d2.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 0, shifted: 37, reflected: 11, rotated: 151, swapped: 11, unsorted: 25, ungrouped: 13, diBis: 13, toEnd: 43, heteroToEnd: 2,
@@ -1125,15 +1144,37 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 });
 const FIXTURE_NULLS = Object.freeze({ numbering: 145 });
 
+/**
+ * The same for the 10 retained acid names of the fixtures (phase R-5d2),
+ * swept apart: 3 `otherName`, the substituted ftálicos rotated (`ácido
+ * 5-metilftálico`, `ácido 6-metilftálico`, `ácido 6-cloroisoftálico`), every
+ * one RING_NUMBERING; no null. (The other rotations give another molecule's
+ * valid form, `ácido 3-metilftálico`, or a carbon its word already fills.)
+ */
+const TEMPLATE_FIXTURE_OTHER_NAME = Object.freeze({
+  reversed: 0, shifted: 0, reflected: 0, rotated: 3, swapped: 0, unsorted: 0, ungrouped: 0, diBis: 0, toEnd: 0, heteroToEnd: 0,
+  removed: 0, added: 0,
+});
+const TEMPLATE_FIXTURE_NULLS = Object.freeze({});
+
 test('mutations of every acid fixture name: a diagnosis of the family\'s codes, or a deliberate null with its reason', async () => {
   const names = (await readFixtures()).filter((row) => isAcid(row.smiles)).flatMap((row) => row.names).filter(isAcidName);
   assert.equal(names.length, EXPECTED_NAMES);
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  // The names of phase R-5d1: the same counts as before the retained acid names read.
+  const earlier = names.filter((name) => !isAcidTemplateName(name));
+  assert.equal(earlier.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES);
+  const { otherName, codes, nulls, unexpected } = sweep(earlier);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
   assert.deepEqual(nulls, { ...FIXTURE_NULLS });
   assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'CHAIN_LOCANTS', 'LONGER_CHAIN', 'MORE_SUBSTITUENTS',
     'MULTIPLIER_KIND', 'NUMBERING', 'RING_NUMBERING', 'UNGROUPED']);
+  // The retained acid names (R-5d2), swept apart.
+  const templates = sweep(names.filter(isAcidTemplateName));
+  assert.deepEqual(templates.unexpected, []);
+  assert.deepEqual(templates.otherName, { ...TEMPLATE_FIXTURE_OTHER_NAME });
+  assert.deepEqual(templates.nulls, { ...TEMPLATE_FIXTURE_NULLS });
+  assert.deepEqual([...templates.codes], ['RING_NUMBERING']);
 }); // End of test 'mutations of every acid fixture name…'
 
 test('mutations of the generated acids: every otherName is diagnosed or a deliberate null, every step resolves', () => {
@@ -1142,13 +1183,22 @@ test('mutations of the generated acids: every otherName is diagnosed or a delibe
     const naming = nameMolecule(mol);
     names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter(isAcidName));
   }
-  assert.ok(names.length >= 320, `${names.length} names`); // The seeds give 323.
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  // The names of phase R-5d1 (the seeds give 323) and, swept apart, the retained acid names of phase R-5d2 (11: the seeds give
+  // 13 `otherName`, every one diagnosed — RING_NUMBERING on a ftálico renumbered, ALPHABETICAL_ORDER, UNGROUPED and
+  // MULTIPLIER_KIND —, no null).
+  const earlier = names.filter((name) => !isAcidTemplateName(name));
+  assert.ok(earlier.length >= 320, `${earlier.length} names`);
+  const templates = sweep(names.filter(isAcidTemplateName));
+  assert.deepEqual(templates.unexpected, []);
+  assert.equal(names.length - earlier.length, 11);
+  assert.deepEqual([Object.values(templates.otherName).reduce((sum, count) => sum + count, 0), templates.nulls], [13, {}]);
+  assert.deepEqual([...templates.codes].sort(), ['ALPHABETICAL_ORDER', 'MULTIPLIER_KIND', 'RING_NUMBERING', 'UNGROUPED']);
+  const { otherName, codes, nulls, unexpected } = sweep(earlier);
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
-  // The seeds give 911: 380 deliberate nulls, every one a ring acid's –COOH groups numbered otherwise (N0, `numbering`); 531
-  // diagnosed.
-  assert.ok(total >= 900, `${total} otherName verdicts`);
+  // The seeds give 911, unchanged by phase R-5d2: 380 deliberate nulls, every one a ring acid's –COOH groups numbered otherwise
+  // (N0, `numbering`); 531 diagnosed.
+  assert.deepEqual([total, nulls], [911, { numbering: 380 }]);
   assert.deepEqual([otherName.removed, otherName.added], [0, 0]);
   for (const code of ['NUMBERING', 'RING_NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'BRANCH_AT_END',
     'LONGER_CHAIN', 'MORE_SUBSTITUENTS', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS']) {
