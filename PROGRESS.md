@@ -56,10 +56,10 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-52a3 | v4 R-6a3 Ester diagnosis messages (fill the I-52a1/a2 nulls, the carbonyl fixture sweep's 8 ester nulls, `1-metoxipropanal`, an ester written as an ether class name), e2e | same, "R-6a" | done — split into I-52a3a, I-52a3b | — | — |
 | I-52a3a | v4 R-6a3a Principal ester group diagnoses (`seniority`, `count`, `carbon`, `numbering`, `suffix`, `inChain` nulls), e2e | same, "R-6a" | done — `docs/progress-archive/i-52a3a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52a3a.md` |
 | I-52a3b | v4 R-6a3b O-bound side (`oBound`), ester prefix words (`words`), an ester written as an ether class name | same, "R-6a" | done — `docs/progress-archive/i-52a3b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52a3b.md` |
-| I-52b | v4 R-6b Nitriles | same, "R-6b" | split into I-52b1, I-52b2, I-52b3 | — | — |
+| I-52b | v4 R-6b Nitriles | same, "R-6b" | done — split into I-52b1, I-52b2, I-52b3 | — | — |
 | I-52b1 | v4 R-6b1 Nitrile suffixes `nitrilo` / `carbonitrilo`, `benzonitrilo`, `ciano` prefix; search, round trips, deliberate «Nitriles» nulls, e2e | same, "R-6b" | done — `docs/progress-archive/i-52b1.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52b1.md` |
 | I-52b2 | v4 R-6b2 Retained nitrile names (`acetonitrilo`, `fenilacetonitrilo`, `2-(4-metilfenil)acetonitrilo`, `ftalonitrilo` family), Ayuda nitrile line, e2e | same, "R-6b" | done — `docs/progress-archive/i-52b2.md` | high / opus | Codex ship-with-fixes, 1 should-fix recorded as the open user question — `docs/reviews/I-52b2.md` |
-| I-52b3 | v4 R-6b3 Nitrile diagnosis messages (fill the I-52b1/b2 «Nitriles» nulls), e2e | same, "R-6b" | queued | — | — |
+| I-52b3 | v4 R-6b3 Nitrile diagnosis messages (fill the I-52b1/b2 «Nitriles» nulls), e2e | same, "R-6b" | done — `docs/progress-archive/i-52b3.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52b3.md` |
 | I-52c | v4 R-6c Amines | same, "R-6c" | queued | — | — |
 | I-52d | v4 R-6d Amides | same, "R-6d" | queued | — | — |
 | I-53 | v4 R-7 Wrap-up | same, "R-7" | queued | — | — |
@@ -86,32 +86,20 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-52b3 (v4 R-6b3): the nitrile diagnosis messages — fill the deliberate «Nitriles» nulls (`nitrileChecks()` /
-`nitrileCategory()` in `src/reverse/diagnose.js`): R-6b1's categories `seniority`, `count`, `carbon`, `numbering`, `suffix` and the
-guarded `parent` (cases and sweep counts in `docs/progress-archive/i-52b1.md`: fixture 72 / 122, generated 283 / 1149, all
-`numbering`; the benzene `carbonitrilo` name with its suffix locant left out, `5,2-dimetilbencenocarbonitrilo`, which the acid twin
-answers LOCANT_ORDER) and I-52b2's template nulls (`count` / `seniority`: `2-cianoacetonitrilo`, `4-cianoftalonitrilo`,
-`2-carboxiacetonitrilo`; `reverse-nitrile-templates.test.js` NULLS and the template sweeps' `cyano` family, «Notes for I-52b3» in
-`i-52b2.md`), each with its «Ver el paso» step, the messages speaking of «grupos C≡N»; flip the null assertions to codes as I-51d3
-did for the acids (`FORMER_NULLS`); nitrile case in `tests/e2e/diagnosis.spec.js`. Model it on the acid and ester diagnosis
-sub-phases (`docs/progress-archive/i-51d3.md`, `i-52a3a.md`). Spec: design §15 + §13 — read from the working-tree `docs/design.md`;
-never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths. If it looks too big for one worker,
-split it like I-52a3 (principal-group checks first, then the rest). Then I-52c (R-6c, amines).
+Select I-52c (v4 R-6c, amines; design §15.8 row R-6c): `amina`, `N` locants and mixed `N,2` lists (the N is not a carbon
+position), `amino`, `(dimetilamino)`, `bencen-1-amina` / `anilina` templates (`N,4-dimetilanilina`; no `N,p-` forms), class names
+(`metilamina`, `dimetilamina`) — plus, as every family phase, its tiles, morphology rules (§15.5.2 item 6), slot roles (§15.5.3
+step 2), diagnosis messages, fixture rows and generators in the round trips, and its Ayuda line. **Split it before the first
+worker**, as R-5d / R-6a / R-6b were (e.g. I-52c1 suffix `amina` + `amino` prefix + `N` locants with search, round trips and
+deliberate «Amines» nulls; I-52c2 `anilina` templates, class names, Ayuda line; I-52c3 the amine diagnosis messages), recording the
+split in the table and PROGRESS.json. Model I-52c1 on `docs/progress-archive/i-52b1.md` / `i-52a1.md`; the forward engine's amines
+are v2 §13 (I-36, `docs/progress-archive/i-36.md`) and v3 (I-43a, `bencen-1-amina`, `i-43a.md`). Spec: design §15 + §13 — read from the
+working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths. Then
+I-52d (R-6d, amides).
 
-- **Builds on** the R-1 engine (`src/reverse/`: tiles, parser, assembler, tokenizer, `interpret.js`,
-  `build.js`, `search.js`, `readName()` — `docs/progress-archive/i-47a.md` … `i-47c.md`), the dialog
-  and «Dibujar» (`i-48a.md`, `i-48b.md`), the diagnosis engine and panel (`i-49a.md`, `i-49b.md`),
-  rings, benzene/phenyl, the aromatic key, templates and o/m/p letters (`i-50a.md` … `i-50c.md`),
-  ring diagnoses (`i-50d.md`), halogens, alcohols, phenol templates and alcohol diagnoses
-  (`i-51a1.md` … `i-51a3b.md`), alkoxy/phenoxy prefixes and `anisol` (`i-51b1.md`), ether class
-  names and the ether diagnosis (`i-51b2.md`), carbonyl suffixes, `oxo`/`formil` and `benzaldehído`
-  (`i-51c1.md`), acyl prefixes (`i-51c2.md`), carbonyl templates (`i-51c3a.md`), carbonyl diagnoses
-  (`i-51c3b1.md`, `i-51c3b2.md`), acids (`i-51d1.md` … `i-51d3.md`), ester suffixes and the O-bound side
-  (`i-52a1.md`), retained ester names and the Ayuda ester line (`i-52a2a.md`), ester prefixes (`i-52a2b.md`), the principal
-  ester group's diagnoses (`i-52a3a.md`), the O-bound side / prefix-word / class-name diagnoses (`i-52a3b.md`), nitrile suffixes,
-  `benzonitrilo` and `ciano` (`i-52b1.md`), retained nitrile names and the Ayuda nitrile line (`i-52b2.md`); the forward naming
-  engine already names every
-  case (v2 §13, v3 §14; esters I-35, `i-35.md`).
+- **Builds on** every v4 phase so far — the R-1 engine, dialog, «Dibujar», diagnosis engine and panel, rings, benzene,
+  templates, and the halogen … nitrile families with their diagnoses (`docs/progress-archive/i-47a.md` … `i-52b3.md`; the
+  "Key paths" below); the forward naming engine already names every case (v2 §13, v3 §14).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6, §15.9).
@@ -302,17 +290,18 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   `tests/unit/reverse-nitriles.test.js`, `tests/e2e/name-builder-nitriles.spec.js`. Retained nitriles (I-52b2): `acetonitrilo`,
   `fenilacetonitrilo`, `ftalonitrilo` in `TEMPLATES` (`tiles.js`), nitrile entries in `parse.js` PLACED_GROUP_WORDS, template nulls in
   the diagnose.js «Nitriles» header, Ayuda `#help-name-to-drawing-nitriles`; tests `tests/unit/reverse-nitrile-templates.test.js`,
-  `tests/e2e/name-builder-nitrile-templates.spec.js`.
+  `tests/e2e/name-builder-nitrile-templates.spec.js`. Nitrile diagnoses (I-52b3): new code NITRILE_CARBON (`nitrileCarbon()`,
+  `groupCarbonText()`), `NAMED_GROUPS` (C=O groups + nitrile) for the shared codes' «grupo(s) –C≡N» words in `diagnose.js`; tests
+  `tests/unit/reverse-diagnose-nitriles.test.js`, nitrile case in `diagnosis.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51c1 … I-52b1: see `docs/progress-archive/i-51c1.md` … `i-52b1.md`.
-- I-52b2 (orchestrator, after the worker): `npm test` 0 fails (2262 → 2282) · `npm run check` 0 (207 → 209) · `npm run build` 0 ·
-  `npm run e2e -- --reporter=dot` 0 (577 → 583 passed, source + dist). `git diff --stat src/naming src/explain` empty; `docs/design.md`
-  untouched (mtime 2026-10-14). Nitrile fixture round trip 75 → 79 names; closed loop 1360 → 1375 names (the 15 retained names read);
-  R-6b1 «Nitriles» sweeps unchanged (72 / 122, 283 / 1149); template sweeps 4 / 8 and 15 / 37 `count` nulls. Codex ship-with-fixes,
-  0 blockers (`docs/reviews/I-52b2.md`).
+- I-51c1 … I-52b2: see `docs/progress-archive/i-51c1.md` … `i-52b2.md`.
+- I-52b3 (orchestrator, after the worker): `npm test` exit 0 (2282 → 2290 pass) · `npm run check` exit 0 (209 → 210 files) ·
+  `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (583 → 585 passed, source + dist). `git diff --stat src/naming
+  src/explain` empty; `docs/design.md` untouched (mtime 2026-10-14). «Nitriles» sweeps' nulls 72 → 0, 283 → 0, template 4 → 0,
+  15 → 0; other families' sweeps unchanged. Codex ship, 0 findings (`docs/reviews/I-52b3.md`).
 
 ## Open risks / deviations
 
@@ -395,11 +384,13 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   in one (`pentanodioato de isopropilo y 4-(propan-2-il)fenilo`; 2 of ~4 800 ad hoc names, none in the sweeps); ESTER_ALKYL_NAME is the
   generic message for mistakes inside an O-bound group's own prefixes (`4-metil-2-clorofenilo`). Open question for the user: the forward
   engine always joins two O-bound groups with «y» (`etilo y isopropilo`), where Spanish writes «e» before «i» — not changed.
-- I-52b1/I-52b2 (nitrile suffixes, `benzonitrilo`, `ciano`, retained nitrile names; decisions, deliberate nulls and Spanish drafts in
-  `docs/progress-archive/i-52b1.md`, `i-52b2.md`): `carbonitrilo` after an open chain is read and judged (`propano-1-carbonitrilo` →
-  `otherName` «butanonitrilo», a «Nitriles» `carbon` null), as `carboxílico` was; `5,2-dimetilbencenocarbonitrilo` gets a null where the
-  acid twin gets LOCANT_ORDER, until I-52b3 words N0; the forward engine writes no `isoftalonitrilo` / `tereftalonitrilo`, so no tiles;
-  the Ayuda intro now ends «…, y de sus nitrilos.»; the messages say «grupo C≡N».
+- I-52b1…I-52b3 (nitriles: suffixes, `benzonitrilo`, `ciano`, retained names, diagnoses; decisions and Spanish drafts in
+  `docs/progress-archive/i-52b1.md` … `i-52b3.md`): `carbonitrilo` after an open chain is read and judged (`propano-1-carbonitrilo` →
+  NITRILE_CARBON «butanonitrilo»); the forward engine writes no `isoftalonitrilo` / `tereftalonitrilo`, so no tiles; one deliberate
+  nitrile null left (a nitrile suffix beside a junior principal group, unbuildable, pinned). For teacher review: the seniority order
+  beside a nitrile names `amida` and `amina` (tiles not yet written; it matches the opened step); CARBONYL_SENIORITY beside an acid
+  with a `ciano` elsewhere omits «nitrilo» from its order (pre-existing, still true). CLAUDE.md's stale R-6a1 / R-6a2b
+  «deliberate «Esters» nulls» clauses (stale since I-52a3) were removed in this phase by the orchestrator.
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -413,5 +404,5 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-52b1 `fc298db`, pushed. I-52b2 committed and pushed right after this checkpoint (see `git log`). User's
+- I-52b2 `49a8d96`, pushed. I-52b3 committed and pushed right after this checkpoint (see `git log`). User's
   uncommitted paths, never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

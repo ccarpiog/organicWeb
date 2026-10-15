@@ -74,6 +74,12 @@ const ESTER_ONLY_CODES = Object.freeze(['ESTER_GROUP', 'ESTER_CARBON', 'ESTER_IN
   'ESTER_PREFIX_NAME', 'ESTER_ALKYL_CHAIN', 'ESTER_ALKYL_NAME']);
 
 /**
+ * The codes only a nitrile gives (phase I-52b3; their cases are in reverse-diagnose-nitriles.test.js): the –C≡N's carbon on the
+ * other side of the parent (its other mistakes take the shared C=O codes with the –C≡N's words).
+ */
+const NITRILE_ONLY_CODES = Object.freeze(['NITRILE_CARBON']);
+
+/**
  * The branch-name codes (phase I-51c3b2): an acyl group's word or chain, a ring branch's numbering — branches a
  * hydrocarbon's open chain never carries (an acyl group is a C=O; a ring is a hydrocarbon's parent); their cases are in
  * reverse-diagnose-carbonyls.test.js.
@@ -303,7 +309,7 @@ test('one case per diagnosis code: the code, its trace rule, the step and the me
   } // End of the loop over the cases
   const chainCodes = DIAGNOSIS_CODES
     .filter((code) => ![...RING_ONLY_CODES, ...ALCOHOL_ONLY_CODES, ...ETHER_ONLY_CODES, ...CARBONYL_ONLY_CODES, ...ACID_ONLY_CODES,
-      ...ESTER_ONLY_CODES, ...BRANCH_NAME_CODES].includes(code));
+      ...ESTER_ONLY_CODES, ...NITRILE_ONLY_CODES, ...BRANCH_NAME_CODES].includes(code));
   assert.deepEqual([...seen].sort(), [...chainCodes].sort(), 'every code an open chain can give has a case');
 }); // End of test 'one case per diagnosis code: the code, its trace rule, the step and the message'
 
@@ -379,10 +385,11 @@ test('the drafts: one entry per code in rule order, each message renders from it
   // acid's and the ester's checks run first, ACID_CARBON and ESTER_CARBON beside ALDEHYDE_CARBON, ESTER_IN_CHAIN beside
   // BRANCH_AT_END); the branch-name rules of phase I-51c3b2 come before ALPHABETICAL_ORDER, with its number. The ester codes of
   // phase I-52a3b beside the code they parallel: ESTER_CLASS_NAME after ESTER_GROUP, ESTER_TRADITIONAL after SUBSTITUTED_TEMPLATE,
-  // ESTER_PREFIX_NAME first of the branch-name rules, ESTER_ALKYL_CHAIN and ESTER_ALKYL_NAME after BRANCH_RING_NUMBERING.
+  // ESTER_PREFIX_NAME first of the branch-name rules, ESTER_ALKYL_CHAIN and ESTER_ALKYL_NAME after BRANCH_RING_NUMBERING. The
+  // nitrile's own code of phase I-52b3, NITRILE_CARBON, after ESTER_CARBON, its twin.
   assert.deepEqual(DIAGNOSIS_CODES, ['ACID_GROUP', 'ESTER_GROUP', 'ESTER_CLASS_NAME', 'HYDROXY_PREFIX', 'CARBONYL_SENIORITY',
-    'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON', 'ACID_CARBON', 'ESTER_CARBON', 'CARBONYL_PREFIX', 'HYDROXY_PARENT', 'CARBONYL_PARENT',
-    'BRANCH_AT_END', 'ESTER_IN_CHAIN', 'RING_IS_PARENT', 'MORE_HYDROXY_GROUPS',
+    'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON', 'ACID_CARBON', 'ESTER_CARBON', 'NITRILE_CARBON', 'CARBONYL_PREFIX', 'HYDROXY_PARENT',
+    'CARBONYL_PARENT', 'BRANCH_AT_END', 'ESTER_IN_CHAIN', 'RING_IS_PARENT', 'MORE_HYDROXY_GROUPS',
     'MORE_CARBONYL_GROUPS', 'LONGER_CHAIN', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'ESTER_TRADITIONAL', 'PHENOL', 'ETHER_SIDE',
     'CLASS_NAME_NONE',
     'CLASS_GROUP_WORDS', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL',
@@ -391,8 +398,8 @@ test('the drafts: one entry per code in rule order, each message renders from it
     'UNGROUPED', 'CLASS_DI', 'MULTIPLIER_KIND',
     'ALKOXY_MULTIPLIER', 'LOCANT_ORDER', 'NEEDLESS_LOCANTS', 'MISSING_LOCANTS', 'SEGMENT_ORDER', 'OLD_STYLE', 'LETTER_LOCANTS']);
   assert.deepEqual(DIAGNOSIS_CODES.map((code) => DIAGNOSES[code].rule),
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6, 6,
-      7, 7, 8, 9, 9, 10, 11, 11]);
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 6,
+      6, 7, 7, 8, 9, 9, 10, 11, 11]);
   assert.ok(Object.isFrozen(DIAGNOSES) && Object.isFrozen(DIAGNOSIS_TEXTS) && Object.isFrozen(DIAGNOSIS_PHRASES));
   for (const code of DIAGNOSIS_CODES) {
     const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);

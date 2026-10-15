@@ -11,7 +11,7 @@
  * `ácido 3-cianopropanoico` (the –C≡N's carbon outside the chain) are correct;
  * the old-style `2-butenonitrilo` draws its molecule with the app's name and
  * the OLD_STYLE diagnosis; `cianometano`, a nitrile's own mistake, draws
- * etanonitrilo with no diagnosis yet (phase I-52b3); `metilpropanonitrilo`
+ * etanonitrilo with its diagnosis (CARBONYL_PREFIX since phase I-52b3); `metilpropanonitrilo`
  * draws the molecule with «Casi: faltan los números…»; `nitrilo` after a ring
  * and left-out locants with two molecules stay in the dialog with their
  * message, the canvas untouched.
@@ -230,20 +230,22 @@ test('`4-metilbenzonitrilo`, `ciclohexano-1,4-dicarbonitrilo` and `ácido 3-cian
   expect(errors).toEqual([]);
 }); // End of test '`4-metilbenzonitrilo`, `ciclohexano-1,4-dicarbonitrilo`…'
 
-test('a nitrile\'s own mistake has no diagnosis yet; left-out locants; `nitrilo` after a ring and two molecules stay in the dialog', async ({ page }) => {
+test('a nitrile\'s own mistake has its diagnosis; left-out locants; `nitrilo` after a ring and two molecules stay in the dialog', async ({ page }) => {
   const errors = await openApp(page);
   const verdict = page.locator('#verdict');
   // `cianometano`: the –C≡N written `ciano` while it is the principal group, a deliberate null of diagnose.js «Nitriles» until
-  // phase I-52b3: drawn and named, today's block without a diagnosis.
+  // phase I-52b3, now CARBONYL_PREFIX: drawn and named, the diagnosis between the verdict's two sentences.
   let dialog = await buildName(page, 'ciano', 'met', 'ano');
   await expect(page.locator('#name-builder-name')).toHaveText('cianometano');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
-  expect(await verdict.getAttribute('data-diagnosis')).toBeNull();
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'CARBONYL_PREFIX');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«etanonitrilo». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);
+    + '«etanonitrilo».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('El grupo –C≡N es el grupo principal: se nombra con la terminación '
+    + '«-nitrilo», al final del nombre, no con el prefijo «ciano». Su carbono entra en la cadena principal. Se escribe «etanonitrilo».');
+  await expect(verdict.locator('.verdict-hint')).toHaveText('Pulsa «Ver paso a paso» para ver por qué.');
   await expect(page.locator('#result-name')).toHaveText('etanonitrilo');
   expect(elementsOf(await moleculeJSON(page))).toEqual(['C', 'C', 'N']);
 

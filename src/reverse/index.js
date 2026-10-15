@@ -41,8 +41,11 @@
  * `4-metilbutanonitrilo` → `otherName`; `metanodinitrilo` → `invalid`
  * CARBONYL_POSITION; `propano-1,2,3-tricarbonitrilo` → `outOfScope`, the
  * engine's `manyNitriles`; `ácido cianometanoico` → `outOfScope`, its
- * `carbonocyanidic`). A nitrile's own mistakes get a null diagnosis until
- * phase I-52b3 (diagnose.js «Nitriles»).
+ * `carbonocyanidic`). A nitrile's own mistakes are diagnose.js «Nitriles»'s
+ * (R-6b3): the –C≡N's carbon on the other side of the parent
+ * (NITRILE_CARBON: `propano-1-carbonitrilo`), and the shared codes with the
+ * –C≡N's words (`cianometano` → CARBONYL_PREFIX, `3-carboxipropanonitrilo` →
+ * CARBONYL_SENIORITY, `ciclohexano-1,5-dicarbonitrilo` → RING_NUMBERING at N0).
  *
  * The ester prefixes (R-6a2b) need nothing of their own here either: the
  * parser reads `oxi` after an acyl branch and `carbonil` after `oxi`, the

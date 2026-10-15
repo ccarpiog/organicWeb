@@ -189,8 +189,7 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   (`dimetilo`, `di(propan-2-ilo)`, `bis(2-cloroetilo)`) and the automatic
   ` y ` (`propanodioato de etilo y metilo`), their left-out locants searched
   and the engine's refusals `outOfScope`; the diagnosis keeps the rules that
-  hold for an ester's acid part, the ester's own mistakes deliberate
-  «Esters» nulls. R-6a2a (phase I-52a2a) is done: the «Nombres
+  hold for an ester's acid part. R-6a2a (phase I-52a2a) is done: the «Nombres
   tradicionales» row's retained ester names (`formiato`, `acetato`,
   `fenilacetato`, each with a tooltip) read before the O-bound side as the
   engine's alternatives (`acetato de etilo`, `formiato de isopropilo`,
@@ -207,9 +206,8 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   compound branch's END, the inner marks the app's —, beside an acid on
   chains and rings and inside compound branches (`ácido
   2-[4-(acetiloxi)ciclohexil]etanoico`), their left-out locants searched; the
-  diagnosis keeps the rules that hold for a prefix, an ester prefix's own
-  mistakes deliberate «Esters» nulls, and the Ayuda ester line says how to
-  build them. R-6a3a (phase I-52a3a) is done: `diagnose.js` names the
+  diagnosis keeps the rules that hold for a prefix, and the Ayuda ester line
+  says how to build them. R-6a3a (phase I-52a3a) is done: `diagnose.js` names the
   principal –COO– group's own mistakes (header «Esters», checked first with
   the acid's: a –COO– written as two groups on one carbon,
   `1-metoxipropanal`; a junior group as the suffix, with the seniority
@@ -242,18 +240,28 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   (`4-metilbenzonitrilo`) read nitriles on chains, rings and `benceno` and
   beside acids and esters, their left-out locants searched, the engine's
   `manyNitriles` and `carbonocyanidic` refusals `outOfScope`; the diagnosis
-  keeps the rules that hold for a nitrile name, the nitrile's own mistakes
-  deliberate «Nitriles» nulls. R-6b2 (phase I-52b2) is done: the «Nombres
+  keeps the rules that hold for a nitrile name. R-6b2 (phase I-52b2) is done: the «Nombres
   tradicionales» row's retained nitrile names (`acetonitrilo`,
   `fenilacetonitrilo`, `ftalonitrilo`, each with a tooltip; the engine writes
   no `isoftalonitrilo` or `tereftalonitrilo`) read as the engine's
   alternatives, also with the prefixes the engine writes on them
   (`4-metilftalonitrilo`, `2-(4-metilfenil)acetonitrilo`), any other prefix
   as `otherName` with the substituted-template diagnosis
-  (`2-cloroacetonitrilo`), another –C≡N written `ciano` beside the word or
-  the word beside a senior group deliberate «Nitriles» nulls, and the Ayuda
-  has its nitrile line. Next is R-6b3 (phase I-52b3): the nitrile diagnosis
-  messages.
+  (`2-cloroacetonitrilo`), and the Ayuda has its nitrile line. R-6b3 (phase
+  I-52b3) is done, and with it R-6b: `diagnose.js` names the nitrile's own
+  mistakes (header «Nitriles», checked first with the acid's and the
+  ester's: the –C≡N's carbon on the other side of the parent,
+  `propano-1-carbonitrilo`, `ciclohexilmetanonitrilo`, the one new code
+  NITRILE_CARBON; and in the shared codes with the –C≡N's words a principal
+  –C≡N written `ciano`, `cianometano`, `4-cianobutanonitrilo`,
+  `2-cianoacetonitrilo`; a junior group as the suffix, with the seniority
+  `ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina`,
+  `4-cianobutan-2-ona`; a nitrile's suffix beside an acid or an ester,
+  `3-carboxipropanonitrilo`, whose `ciano` takes the –C≡N's carbon out of the
+  chain; the ring or chain the –C≡N groups choose; another chain with more
+  –C≡N groups), and N0 numbering and the suffix's needless locants speak of
+  «grupos –C≡N», each with its «Ver el paso» step. Next is R-6c (phase
+  I-52c): amines.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

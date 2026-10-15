@@ -17,9 +17,10 @@
  * diagnosis, the prefixes the engine admits judged by the other rules
  * (RING_NUMBERING, BRANCH_RING_NUMBERING, the NEEDLESS_LOCANTS of
  * `2-fenilacetonitrilo`); the nitrile's own mistakes on a template, each with
- * its category read independently — another –C≡N written `ciano` (`count`),
- * the word beside a senior group (`seniority`) —, deliberate nulls of
- * diagnose.js «Nitriles» until phase I-52b3; the tooltips; the fixture names;
+ * its category read independently — another –C≡N written `ciano` (`count`,
+ * CARBONYL_PREFIX), the word beside a senior group (`seniority`,
+ * CARBONYL_SENIORITY) —, deliberate nulls of diagnose.js «Nitriles» until
+ * phase I-52b3, now each with its code, message and step; the tooltips; the fixture names;
  * a closed loop over the engine's retained nitrile names with each locant
  * list removed, and over the generators' ones; the diagnosis sweeps over the
  * retained names (fixture and generated), apart from those of phase R-6b1
@@ -434,10 +435,10 @@ test('readName (R-6b2): prefixes the engine admits on a nitrile template are jud
 /**
  * The category of a nitrile template's own mistake, read from the verdict
  * apart from diagnose.js (as reverse-nitriles.test.js nitrileCategory()
- * does): `seniority` — the engine's principal group is not a –C≡N (the word
- * beside a senior group); `count` — the student's –C≡N groups are not as
- * many as the engine's suffix cites (another one written `ciano`); null
- * otherwise.
+ * does; until phase I-52b3 each was a deliberate null): `seniority` — the
+ * engine's principal group is not a –C≡N (the word beside a senior group);
+ * `count` — the student's –C≡N groups are not as many as the engine's suffix
+ * cites (another one written `ciano`); null otherwise.
  *
  * @param {object} verdict - An `otherName` verdict.
  * @returns {string|null} The category, or null.
@@ -451,29 +452,57 @@ function templateCategory(verdict) {
   return mine.length !== engine.locants.length ? 'count' : null;
 }
 
+/** The codes a nitrile template's own mistake gets, by category (templateCategory(); diagnose.js «Nitriles», phase I-52b3). */
+const CATEGORY_CODES = Object.freeze({ count: ['CARBONYL_PREFIX'], seniority: ['CARBONYL_SENIORITY'] });
+
+/** The seniority sentence CARBONYL_SENIORITY starts with beside an acid, when the student's suffix is a nitrile's. */
+const ACID_FIRST = 'Cuando hay grupos distintos, solo uno es el grupo principal, y se elige por este orden: ácido > nitrilo > '
+  + 'aldehído > cetona > alcohol. Aquí manda el ácido (–COOH), que se nombra ';
+
 /**
  * A nitrile template whose –C≡N groups are not the engine's: deliberate
- * nulls of diagnose.js «Nitriles» until phase I-52b3 (nitrileChecks() first,
- * so neither SUBSTITUTED_TEMPLATE nor an acid's rule speaks): [tile words,
- * the engine's name, the category].
+ * nulls of diagnose.js «Nitriles» until phase I-52b3, now the nitrile's own
+ * diagnosis, nitrileChecks() and acidChecks() before SUBSTITUTED_TEMPLATE —
+ * another –C≡N written `ciano` beside the word (CARBONYL_PREFIX, the acids'
+ * `ácido 2-carboxiacético` twin), the word beside a senior group
+ * (CARBONYL_SENIORITY, the `ciano` taking the –C≡N's carbon with it):
+ * [tile words, the engine's name, the category, the code, the tiles, the
+ * message].
  */
-const NULLS = [
-  ['2 ciano acetonitrilo', 'propanodinitrilo', 'count'],
-  ['2 ciano fenilacetonitrilo', '2-fenilpropanodinitrilo', 'count'],
-  ['4 ciano ftalonitrilo', 'benceno-1,2,4-tricarbonitrilo', 'count'],
-  ['2 carboxi acetonitrilo', 'ácido 2-cianoetanoico', 'seniority'],
-  ['4 carboxi ftalonitrilo', 'ácido 3,4-dicianobenzoico', 'seniority'],
+const FORMER_NULLS = [
+  ['2 ciano acetonitrilo', 'propanodinitrilo', 'count', 'CARBONYL_PREFIX', [0, 2], 'Los grupos –C≡N son el grupo principal: los de '
+    + 'la cadena principal se nombran todos juntos con la terminación «-dinitrilo», al final del nombre, no con el prefijo «ciano». '
+    + 'Su carbono entra en la cadena principal. Se escribe «propanodinitrilo».'],
+  ['2 ciano fenilacetonitrilo', '2-fenilpropanodinitrilo', 'count', 'CARBONYL_PREFIX', [0, 2], 'Los grupos –C≡N son el grupo '
+    + 'principal: los de la cadena principal se nombran todos juntos con la terminación «-dinitrilo», al final del nombre, no con el '
+    + 'prefijo «ciano». Su carbono entra en la cadena principal. Se escribe «2-fenilpropanodinitrilo».'],
+  ['4 ciano ftalonitrilo', 'benceno-1,2,4-tricarbonitrilo', 'count', 'CARBONYL_PREFIX', [0, 2], 'Los grupos –C≡N son el grupo '
+    + 'principal: los unidos al anillo se nombran todos juntos con la terminación «-tricarbonitrilo», al final del nombre, no con el '
+    + 'prefijo «ciano». Se escribe «benceno-1,2,4-tricarbonitrilo».'],
+  ['2 carboxi acetonitrilo', 'ácido 2-cianoetanoico', 'seniority', 'CARBONYL_SENIORITY', [2, 3], `${ACID_FIRST}con la palabra «ácido» `
+    + 'al principio del nombre y la terminación «-oico» al final; el –C≡N del nitrilo va delante, con el prefijo «ciano», que incluye '
+    + 'su carbono: ese carbono no se cuenta en la cadena principal. Se escribe «ácido 2-cianoetanoico».'],
+  ['4 carboxi ftalonitrilo', 'ácido 3,4-dicianobenzoico', 'seniority', 'CARBONYL_SENIORITY', [2, 3], `${ACID_FIRST}con «ácido `
+    + 'benzoico» (el benceno con un grupo –COOH); cada –C≡N va delante, con el prefijo «ciano», que incluye su carbono: ese carbono no '
+    + 'se cuenta en el anillo. Se escribe «ácido 3,4-dicianobenzoico».'],
 ];
 
-test('readName (R-6b2): a template whose –C≡N groups are not the engine\'s is a deliberate «Nitriles» null, by category', () => {
-  for (const [words, name, category] of NULLS) {
+test('readName (R-6b2, R-6b3): a template whose –C≡N groups are not the engine\'s gets the nitrile\'s own diagnosis, by category', () => {
+  for (const [words, name, category, code, tiles, message] of FORMER_NULLS) {
     const verdict = readName(seq(words));
     assert.deepEqual([verdict.kind, verdict.name], ['otherName', name], words);
     assert.equal(templateCategory(verdict), category, words);
-    assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.ok(CATEGORY_CODES[category].includes(d.code), words);
+    assert.deepEqual([d.code, d.rule, d.traceRule, d.step, d.message], [code, 1, null, 'group', message], words);
+    // The tiles: the `ciano` prefix with its locant (CARBONYL_PREFIX), or the template's word, the student's suffix (CARBONYL_SENIORITY).
+    assert.deepEqual(d.tiles, tiles, words);
+    const opened = diagnosisExplanation(verdict, explain);
+    assert.equal(opened.steps[opened.index].id, 'group', words);
     assert.ok(verdict.draw && verdict.molecule, words);
-  }
-}); // End of test 'readName (R-6b2): a template whose –C≡N groups…'
+  } // End of the loop over the former deliberate nulls
+}); // End of test 'readName (R-6b2, R-6b3): a template whose –C≡N groups…'
 
 // ---------------------------------------------------------------------------
 // Fixtures, closed loops, sweeps, drawing and time.
@@ -611,15 +640,15 @@ test('closed loop (R-6b2): the generators\' retained nitrile names read back as 
 
 /**
  * The diagnosis codes an `otherName` of each mutation family may give; the
- * `cyano` family's are all deliberate «Nitriles» nulls (`count`) until phase
- * I-52b3.
+ * `cyano` family's, the nitrile's own mistake (`count`), deliberate
+ * «Nitriles» nulls until phase I-52b3, are CARBONYL_PREFIX.
  */
 const FAMILY_CODES = Object.freeze({
   substituted: ['SUBSTITUTED_TEMPLATE'],
   phenylLocant: ['NEEDLESS_LOCANTS'],
   arylReflected: ['BRANCH_RING_NUMBERING'],
   ringReflected: ['RING_NUMBERING'],
-  cyano: [],
+  cyano: ['CARBONYL_PREFIX'],
 });
 
 /**
@@ -698,19 +727,20 @@ function mutationsOf(ids) {
 
 /**
  * Reads every mutation of some retained nitrile names: every `otherName`
- * either is a nitrile's own mistake (templateCategory()), a deliberate null
- * of diagnose.js «Nitriles» until phase I-52b3, counted by category, or
- * carries a diagnosis of its family's codes whose step resolves in its
- * explanation; any other null is unexpected.
+ * must carry a diagnosis of its family's codes whose step resolves in its
+ * explanation; none is null (since phase I-52b3, diagnose.js «Nitriles»).
+ * The nitrile's own mistakes among them (templateCategory()), deliberate
+ * nulls until phase I-52b3, are counted by category, each with a code of its
+ * category (CATEGORY_CODES).
  *
  * @param {{name: string}[]} names - Retained nitrile names.
- * @returns {{otherName: Object<string, number>, codes: Set<string>, nulls: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the deliberate nulls by category and the unexpected nulls.
+ * @returns {{otherName: Object<string, number>, codes: Set<string>, own: Object<string, number>, unexpected: string[]}}
+ *   `otherName` counts by family, the codes seen, the nitrile's own mistakes by category and the nulls.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
   const codes = new Set();
-  const nulls = {};
+  const own = {};
   const unexpected = [];
   for (const { name } of names) {
     for (const mutation of mutationsOf(idsOf(name))) {
@@ -720,13 +750,7 @@ function sweep(names) {
       }
       otherName[mutation.family] += 1;
       const label = `${name} → ${mutation.family} ${verdict.text}`;
-      const category = templateCategory(verdict);
       const d = verdict.diagnosis;
-      if (category) {
-        nulls[category] = (nulls[category] || 0) + 1;
-        assert.equal(d, null, `${label}: ${category}, ${d && d.message}`);
-        continue;
-      }
       if (!d) {
         unexpected.push(label);
         continue;
@@ -736,34 +760,41 @@ function sweep(names) {
       assert.ok(!/undefined|null|NaN|\[object|grupo –OH|grupos –OH|–CHO|C=O/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
+      const category = templateCategory(verdict);
+      if (category) {
+        own[category] = (own[category] || 0) + 1;
+        assert.ok(CATEGORY_CODES[category].includes(d.code), `${label}: ${category}, ${d.code}`);
+      }
     } // End of the loop over the mutations of one name
   } // End of the loop over the names
-  return { otherName, codes, nulls, unexpected };
+  return { otherName, codes, own, unexpected };
 } // End of function sweep()
 
-test('mutations of the fixture\'s retained nitrile names: a diagnosis of the family\'s codes, or a deliberate «Nitriles» null', async () => {
+test('mutations of the fixture\'s retained nitrile names: a diagnosis of the family\'s codes, never null', async () => {
   const names = (await readFixtures()).filter((row) => isNitrile(row.smiles)).flatMap((row) => row.names)
     .filter(isNitrileTemplateName).map((name) => ({ name }));
   assert.equal(names.length, 4);
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  const { otherName, codes, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   // A methyl on a chain template's free carbon: SUBSTITUTED_TEMPLATE; `2 fenil acetonitrilo`: NEEDLESS_LOCANTS; a `ciano` beside the
-  // word: the nitrile's own mistake (`count`, a deliberate «Nitriles» null until phase I-52b3). The phenyl of
+  // word: the nitrile's own mistake (`count`, a deliberate «Nitriles» null until phase I-52b3, now CARBONYL_PREFIX). The phenyl of
   // `2-(4-metilfenil)acetonitrilo` reflects onto itself, and bare `ftalonitrilo` has no prefix to renumber.
   assert.deepEqual(otherName, { substituted: 3, phenylLocant: 1, arylReflected: 0, ringReflected: 0, cyano: 4 });
-  assert.deepEqual(nulls, { count: 4 });
-  assert.deepEqual([...codes].sort(), ['NEEDLESS_LOCANTS', 'SUBSTITUTED_TEMPLATE']);
+  assert.deepEqual(own, { count: 4 });
+  assert.deepEqual([...codes].sort(), ['CARBONYL_PREFIX', 'NEEDLESS_LOCANTS', 'SUBSTITUTED_TEMPLATE']);
 }); // End of test 'mutations of the fixture\'s retained nitrile names…'
 
-test('mutations of the generated retained nitrile names: every otherName is diagnosed or a deliberate «Nitriles» null', () => {
-  const { otherName, codes, nulls, unexpected } = sweep(generatedTemplateNames());
+test('mutations of the generated retained nitrile names: every otherName is diagnosed, every step resolves', () => {
+  const { otherName, codes, own, unexpected } = sweep(generatedTemplateNames());
   assert.deepEqual(unexpected, []);
   // The seeds give 15 names: SUBSTITUTED_TEMPLATE on every chain template, NEEDLESS_LOCANTS on `fenilacetonitrilo`,
   // BRANCH_RING_NUMBERING on a reflected aryl phenyl (7 of 8: `2-(4-etoxifenil)` reflects onto itself), RING_NUMBERING on a
-  // reflected substituted ftalonitrilo, and every `ciano` beside the word a deliberate «Nitriles» `count` null until phase I-52b3.
+  // reflected substituted ftalonitrilo, and every `ciano` beside the word the nitrile's own mistake (`count`, a deliberate
+  // «Nitriles» null until phase I-52b3, now CARBONYL_PREFIX).
   assert.deepEqual(otherName, { substituted: 10, phenylLocant: 1, arylReflected: 7, ringReflected: 4, cyano: 15 });
-  assert.deepEqual(nulls, { count: 15 });
-  assert.deepEqual([...codes].sort(), ['BRANCH_RING_NUMBERING', 'NEEDLESS_LOCANTS', 'RING_NUMBERING', 'SUBSTITUTED_TEMPLATE']);
+  assert.deepEqual(own, { count: 15 });
+  assert.deepEqual([...codes].sort(), ['BRANCH_RING_NUMBERING', 'CARBONYL_PREFIX', 'NEEDLESS_LOCANTS', 'RING_NUMBERING',
+    'SUBSTITUTED_TEMPLATE']);
 }); // End of test 'mutations of the generated retained nitrile names…'
 
 test('«Dibujar» (R-6b2): nitrile template verdicts have an ordered drawing (canonical layout without problems)', () => {

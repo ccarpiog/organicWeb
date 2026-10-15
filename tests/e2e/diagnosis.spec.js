@@ -37,7 +37,14 @@
  * an ester and the –COO–'s carbon a carbon of the chain; and (phase I-52a3b)
  * `etanoato de butan-3-ilo`, the O-bound group numbered from the other end —
  * the same chain in the legend, «Ver el paso» at «Separa las dos partes del
- * éster», which names the group.
+ * éster», which names the group. Nitriles (phase I-52b3):
+ * `propano-1-carbonitrilo`, the –C≡N's carbon taken out of the chain — the
+ * message between the two sentences, the student's chain striped beside the
+ * longer parent, «Ver el paso» at «Reconoce el grupo funcional», which says
+ * the molecule is a nitrile and the –C≡N's carbon a carbon of the chain; and
+ * `3-carboxipropanonitrilo`, the nitrile's suffix beside an acid — the
+ * message says the `ciano` takes the –C≡N's carbon out of the chain, and the
+ * acid's group step it opens says so too.
  */
 
 import { test, expect } from '@playwright/test';
@@ -143,6 +150,12 @@ const ESTER_CARBON = ['prop', 'ano', '1', 'carboxilato', 'met', 'ilo'];
 
 /** The tiles of «etanoato de butan-3-ilo» (the O-bound group numbered from the other end: etanoato de butan-2-ilo). */
 const ESTER_SIDE = ['et', 'ano', 'oato', 'but', 'ano', '3', 'ilo'];
+
+/** The tiles of «propano-1-carbonitrilo» (on a chain the –C≡N's carbon is a chain carbon: butanonitrilo). */
+const NITRILE_CARBON = ['prop', 'ano', '1', 'carbonitrilo'];
+
+/** The tiles of «3-carboxipropanonitrilo» (the acid is the principal group: ácido 3-cianopropanoico). */
+const NITRILE_JUNIOR = ['3', 'carboxi', 'prop', 'ano', 'nitrilo'];
 
 test('a longer chain: the message between the two sentences, the student\'s chain beside the parent, «Ver el paso» at «Busca la cadena»; Deshacer clears it all', async ({ page }) => {
   const errors = await openApp(page);
@@ -522,6 +535,69 @@ test('an ester (I-52a3a): `carboxilato` on a chain, «Ver el paso» at «Reconoc
   await expect(stepper).toContainText('El número 2 que va justo antes de «-ilo» dice por qué carbono del grupo se une al oxígeno');
   expect(errors).toEqual([]);
 }); // End of test 'an ester (I-52a3a)…'
+
+test('a nitrile (I-52b3): `carbonitrilo` on a chain, «Ver el paso» at «Reconoce el grupo funcional»; the nitrile\'s suffix beside an acid', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, ...NITRILE_CARBON);
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'NITRILE_CARBON');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: propano-1-carbonitrilo');
+  // The three sentences, in order: the verdict, the diagnosis, the hint.
+  const texts = await verdict.locator('.verdict-message, .verdict-style, .verdict-diagnosis, .verdict-hint, .verdict-note')
+    .allTextContents();
+  expect(texts).toEqual([
+    'Esta es la molécula que describe tu nombre, pero se llama «butanonitrilo».',
+    'La terminación «-carbonitrilo» solo se usa cuando el grupo –C≡N está unido a un anillo. En una cadena, el carbono del –C≡N '
+      + 'es un carbono más de la cadena principal, siempre en un extremo, y el grupo se nombra con la terminación «-nitrilo», al '
+      + 'final del nombre. Se escribe «butanonitrilo».',
+    'Pulsa «Ver paso a paso» para ver por qué.',
+  ]);
+  await expect(page.locator('#result-name')).toHaveText('butanonitrilo');
+  // The legend names both marks; the student's three carbons are striped beside the parent, which adds the –C≡N's carbon.
+  await expect(verdict.getByRole('list', { name: 'Qué se ve en el dibujo' }).getByRole('listitem'))
+    .toHaveText(['Cadena principal', 'Tu cadena']);
+  const student = await marked(page, 'student');
+  const parent = await marked(page, 'parent');
+  expect(student.atoms).toHaveLength(3);
+  expect(student.bonds).toHaveLength(2);
+  expect(parent.atoms).toEqual(expect.arrayContaining(student.atoms));
+  expect(parent.atoms.some((id) => !student.atoms.includes(id))).toBe(true);
+
+  // «Ver el paso»: the stepper opens at «Reconoce el grupo funcional», the focus on its title; it says the molecule is a nitrile
+  // and that the –C≡N's carbon is a carbon of the chain.
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'group');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 2 de 5');
+  await expect(stepper.locator('.step-title')).toHaveText('Reconoce el grupo funcional');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  await expect(stepper).toContainText('la molécula es un nitrilo');
+  await expect(stepper).toContainText('Ese carbono es un carbono más de la cadena');
+  expect(await marked(page, 'student')).toEqual(student);
+
+  // The nitrile's suffix beside an acid: `3-carboxipropanonitrilo`. The message says the `ciano` takes the –C≡N's carbon out of
+  // the chain; «Ver el paso» opens the acid's «Reconoce el grupo funcional», which lists «nitrilo» in the order and says so too.
+  await drawName(page, ...NITRILE_JUNIOR);
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'CARBONYL_SENIORITY');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: 3-carboxipropanonitrilo');
+  await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama «ácido '
+    + '3-cianopropanoico».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('Cuando hay grupos distintos, solo uno es el grupo principal, y se '
+    + 'elige por este orden: ácido > nitrilo > aldehído > cetona > alcohol. Aquí manda el ácido (–COOH), que se nombra con la '
+    + 'palabra «ácido» al principio del nombre y la terminación «-oico» al final; el –C≡N del nitrilo va delante, con el prefijo '
+    + '«ciano», que incluye su carbono: ese carbono no se cuenta en la cadena principal. Se escribe «ácido 3-cianopropanoico».');
+  await expect(verdict.getByRole('list', { name: 'Qué se ve en el dibujo' }).getByRole('listitem'))
+    .toHaveText(['Cadena principal', 'Tu cadena']);
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'group');
+  await expect(stepper.locator('.step-title')).toHaveText('Reconoce el grupo funcional');
+  await expect(stepper).toContainText('ácido > nitrilo > aldehído > cetona > alcohol');
+  await expect(stepper).toContainText('incluye el carbono del –C≡N: ese carbono no se cuenta en la cadena principal');
+  expect(errors).toEqual([]);
+}); // End of test 'a nitrile (I-52b3)…'
 
 test('a ring (I-50d): the ring is the parent beside the student\'s chain, «Ver el paso» at «Reconoce el benceno»; a ring numbered otherwise', async ({ page }) => {
   const errors = await openApp(page);

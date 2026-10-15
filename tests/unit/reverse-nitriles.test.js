@@ -16,15 +16,16 @@
  * readName() verdicts with the molecule each describes (compared by aromatic
  * key with a SMILES), out-of-scope nitriles (the engine's `manyNitriles` and
  * `carbonocyanidic`), mutations and their diagnosis (the rules that hold for
- * a nitrile name; the nitrile's own mistakes, deliberate nulls of
- * diagnose.js «Nitriles» until phase I-52b3, each with its category read
- * independently), the fixture round trip over every row with a –C≡N of
- * tests/fixtures/names.tsv and the closed loop over the oracle's nitrile
- * generators (pure imports, no Java), the retained names of phase I-52b2
- * included, the diagnosis sweeps over the names of phase R-6b1 with exact
- * counts (the retained names are swept apart,
- * reverse-nitrile-templates.test.js), the ordered drawing, the dialog's
- * tooltips and time budgets.
+ * a nitrile name; the nitrile's own mistakes, each with its category read
+ * independently — deliberate nulls of diagnose.js «Nitriles» until phase
+ * I-52b3, now each with its code, step and words; their whole messages are in
+ * reverse-diagnose-nitriles.test.js), the fixture round trip over every row
+ * with a –C≡N of tests/fixtures/names.tsv and the closed loop over the
+ * oracle's nitrile generators (pure imports, no Java), the retained names of
+ * phase I-52b2 included, the diagnosis sweeps over the names of phase R-6b1
+ * with exact counts, none null since phase I-52b3 (the retained names are
+ * swept apart, reverse-nitrile-templates.test.js), the ordered drawing, the
+ * dialog's tooltips and time budgets.
  */
 
 import { test } from 'node:test';
@@ -303,7 +304,7 @@ test('parser (R-6b1): misplaced nitrile tiles are errors with their tile ranges 
   // A letter counts the –C≡N of `benzonitrilo` as one of its two positions.
   assert.deepEqual(errorsOf('p met il benzonitrilo'), []);
   // `carbonitrilo` after a chain is read, as `carboxílico` and `carbaldehído` are, and judged by the engine (`propano-1-carbonitrilo`
-  // is butanonitrilo: readName() below, a deliberate «Nitriles» null for phase I-52b3).
+  // is butanonitrilo: readName() below, NITRILE_CARBON since phase I-52b3).
   assert.deepEqual(errorsOf('prop ano 1 carbonitrilo'), []);
 }); // End of test 'parser (R-6b1): misplaced nitrile tiles…'
 
@@ -610,7 +611,7 @@ test('search (R-6b1): left-out locants give ambiguous lists; the budget gives in
 /**
  * Mutations of nitrile names (design.md §15.7): tile words, the verdict and
  * the diagnosis code of a rule that holds for a nitrile name (the nitrile's
- * own mistakes are the deliberate nulls of the next test).
+ * own mistakes: the test of the former deliberate nulls below).
  */
 const MUTATIONS = Object.freeze([
   ['4 met il but ano nitrilo', 'otherName', 'BRANCH_AT_END'],
@@ -686,14 +687,16 @@ function sameSet(a, b) {
 
 /**
  * The category of a nitrile's own mistake, read independently of diagnose.js
- * from the engine's naming and the student's reading (diagnose.js «Nitriles»:
- * deliberate nulls until phase I-52b3): `seniority` — the student's suffix
- * cites no –C≡N while the engine's principal group is one (a junior group's
- * suffix or none: `cianometano`), or cites one while the engine's principal
- * group is senior (`3-carboxipropanonitrilo`); `count` — the student's
- * nitrile suffix cites another number of –C≡N groups (`4-cianobutanonitrilo`);
- * `carbon` — the –C≡N's carbon on the other side of the parent
- * (`propano-1-carbonitrilo`, `ciclohexilmetanonitrilo`); `numbering` — the
+ * from the engine's naming and the student's reading (diagnose.js «Nitriles»;
+ * until phase I-52b3 each was a deliberate null): `seniority` — the student's
+ * suffix cites no –C≡N while the engine's principal group is one (a junior
+ * group's suffix or none: `cianometano`), or cites one while the engine's
+ * principal group is senior (`3-carboxipropanonitrilo`); `count` — the
+ * student's nitrile suffix cites another number of –C≡N groups (`4-cianobutanonitrilo`);
+ * `carbon` — the engine's own –C≡N groups, their carbon on the other side of
+ * the parent (`propano-1-carbonitrilo`, `ciclohexilmetanonitrilo`; other
+ * –C≡N groups than the engine's on the other side are the parent choice,
+ * `2-(4-cianociclohexil)etanonitrilo`, phase I-52b3); `numbering` — the
  * same –C≡N groups numbered otherwise (N0: `ciclohexano-1,5-dicarbonitrilo`);
  * `suffix` — the suffix's locants, which the engine leaves out
  * (`ciclohexano-1-carbonitrilo`); `parent` — the –C≡N groups choose another
@@ -718,7 +721,9 @@ function nitrileCategory(ids, verdict) {
   if (mine.length !== engine.locants.length) {
     return 'count';
   }
-  if (mine.some((g) => g.carbon !== undefined) !== Boolean(engine.outside)) {
+  const carbons = (groups, key) => groups.map((g) => (g.carbon === undefined ? g[key] : g.carbon)); // Each –C≡N's own carbon.
+  if (mine.some((g) => g.carbon !== undefined) !== Boolean(engine.outside)
+    && sameSet(carbons(mine, 'parentAtom'), carbons(engine.locants, 'atom'))) {
     return 'carbon';
   }
   if (sameSet(mine.map((g) => g.parentAtom), engine.locants.map((site) => site.atom))
@@ -742,42 +747,74 @@ function nitrileCategory(ids, verdict) {
   return !studentRing && p0 && !p0.survivors.some((c) => student.every((id) => c.atoms.includes(id))) ? 'parent' : null;
 } // End of function nitrileCategory()
 
-test('the deliberate nulls of R-6b1 (diagnose.js «Nitriles»): each category, read independently, gets no diagnosis', () => {
+/**
+ * The codes a nitrile's own mistake gets, by category (nitrileCategory();
+ * diagnose.js «Nitriles», phase I-52b3): a principal –C≡N written `ciano`
+ * (CARBONYL_PREFIX), beside a junior suffix (CARBONYL_SENIORITY, or
+ * KETONE_NOT_ALDEHYDE for an `al` a `ciano` makes a ketone's), a –C≡N in a
+ * compound branch (CARBONYL_PARENT, MORE_CARBONYL_GROUPS, told from an ether
+ * oxygen as ETHER_SIDE), or a student's nitrile suffix beside a senior group
+ * (CARBONYL_SENIORITY); another number of –C≡N groups (CARBONYL_PREFIX,
+ * CARBONYL_PARENT, MORE_CARBONYL_GROUPS); the –C≡N's carbon (NITRILE_CARBON);
+ * N0 (RING_NUMBERING); the suffix's needless locants (NEEDLESS_LOCANTS); the
+ * parent chosen by the –C≡N groups (CARBONYL_PARENT, MORE_CARBONYL_GROUPS,
+ * ETHER_SIDE).
+ */
+const CATEGORY_CODES = Object.freeze({
+  seniority: ['CARBONYL_PREFIX', 'CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'ETHER_SIDE'],
+  count: ['CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS'],
+  carbon: ['NITRILE_CARBON'],
+  numbering: ['RING_NUMBERING'],
+  suffix: ['NEEDLESS_LOCANTS'],
+  parent: ['CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'ETHER_SIDE'],
+});
+
+test('the former deliberate nulls of R-6b1 (diagnose.js «Nitriles»): each category has its I-52b3 code, step and words', () => {
   const cases = [
-    // [tile words, category]
-    ['ciano met ano', 'seniority'],
-    ['1 ciano prop ano', 'seniority'],
-    ['ciano benceno', 'seniority'],
-    ['4 ciano but an 2 ona', 'seniority'],
-    ['3 carboxi prop ano nitrilo', 'seniority'],
-    ['4 ciano but ano nitrilo', 'count'],
-    ['3 ciano 2 cloro prop ano nitrilo', 'count'],
-    ['prop ano 1 carbonitrilo', 'carbon'],
-    ['ciclo hex il met ano nitrilo', 'carbon'],
-    ['fenil met ano nitrilo', 'carbon'],
-    ['ciclo hex ano 1 5 di carbonitrilo', 'numbering'],
-    ['benceno 1 5 di carbonitrilo', 'numbering'],
-    ['ciclo hex ano 1 carbonitrilo', 'suffix'],
-    ['benceno 1 carbonitrilo', 'suffix'],
+    // [tile words, category, code, step, a phrase of the message]
+    ['ciano met ano', 'seniority', 'CARBONYL_PREFIX', 'group', 'no con el prefijo «ciano». Su carbono entra en la cadena principal'],
+    ['1 ciano prop ano', 'seniority', 'CARBONYL_PREFIX', 'group', 'con la terminación «-nitrilo», al final del nombre, no con'],
+    ['ciano benceno', 'seniority', 'CARBONYL_PREFIX', 'group', 'con «benzonitrilo» (el benceno con un grupo –C≡N)'],
+    ['4 ciano but ano 2 ona', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Aquí manda el nitrilo (–C≡N)'],
+    ['3 carboxi prop ano nitrilo', 'seniority', 'CARBONYL_SENIORITY', 'group', 'con el prefijo «ciano», que incluye su carbono: ese '
+      + 'carbono no se cuenta en la cadena principal'],
+    ['4 ciano but ano nitrilo', 'count', 'CARBONYL_PREFIX', 'group', 'se nombran todos juntos con la terminación «-dinitrilo»'],
+    ['3 ciano 2 cloro prop ano nitrilo', 'count', 'CARBONYL_PREFIX', 'group', 'Los grupos –C≡N son el grupo principal'],
+    ['prop ano 1 carbonitrilo', 'carbon', 'NITRILE_CARBON', 'group', 'solo se usa cuando el grupo –C≡N está unido a un anillo'],
+    ['ciclo hex il met ano nitrilo', 'carbon', 'NITRILE_CARBON', 'group', 'su carbono no forma parte del anillo'],
+    ['fenil met ano nitrilo', 'carbon', 'NITRILE_CARBON', 'group', '«benzonitrilo» (el benceno con un grupo –C≡N)'],
+    ['ciclo hex ano 1 5 di carbonitrilo', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'los grupos –C≡N (el grupo principal)'],
+    ['benceno 1 5 di carbonitrilo', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'los grupos –C≡N (el grupo principal)'],
+    ['ciclo hex ano 1 carbonitrilo', 'suffix', 'NEEDLESS_LOCANTS', 'ringNumbering', 'de colocar el grupo –C≡N'],
+    ['benceno 1 carbonitrilo', 'suffix', 'NEEDLESS_LOCANTS', 'assemble', 'de colocar el grupo –C≡N'],
+    // The guarded parent choice of phase I-52b1, reached: P0 (a chain with no –C≡N), `RINGCHAIN` (the chain or the ring).
+    ['3 START ciano met il END pent ano', 'seniority', 'MORE_CARBONYL_GROUPS', 'groupChain', 'Hay otra cadena con más grupos –C≡N'],
+    ['START 2 ciano et il END ciclo hex ano', 'seniority', 'CARBONYL_PARENT', 'ringChain', 'la que lleva más grupos –C≡N'],
+    ['2 START 4 ciano ciclo hex il END et ano nitrilo', 'parent', 'CARBONYL_PARENT', 'ringChain', 'así que gana el anillo'],
   ];
-  for (const [words, category] of cases) {
-    const ids = seq(words.replace('an 2', 'ano 2'));
+  for (const [words, category, code, opened, phrase] of cases) {
+    const ids = seq(words);
     const verdict = readName(ids);
     assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
     assert.equal(nitrileCategory(ids, verdict), category, words);
-    assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.equal(d.code, code, `${words}: ${d.message}`);
+    assert.ok(CATEGORY_CODES[category].includes(d.code), words);
+    assert.ok(d.message.includes(phrase), `${words}: ${d.message}`);
+    assert.ok(!/undefined|null|NaN|\[object|grupo –OH|grupos –OH|–CHO/.test(d.message), `${words}: ${d.message}`);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${words}: the step «Ver el paso» opens`);
     assert.ok(verdict.draw && verdict.molecule, words);
-  } // End of the loop over the deliberate nulls
-  // With the suffix's locant left out, every placement of one molecule is a reading of the name (search.js, diagnose()); one on
-  // which the –C≡N is numbered otherwise is the nitrile's own mistake (N0), so the diagnosis is null, where an acid's names the
-  // other mistake (LOCANT_ORDER, RING_NUMBERING) until phase I-52b3 words the N0 of the –C≡N groups.
-  for (const words of ['5 2 di met il benceno carbonitrilo', '3 6 di met il oxi benceno carbonitrilo']) {
-    const verdict = read(words);
-    assert.deepEqual([verdict.kind, verdict.diagnosis], ['otherName', null], words);
-  }
+  } // End of the loop over the former deliberate nulls
+  // With the suffix's locant left out, every placement of one molecule is a reading of the name (search.js, diagnose()); since
+  // phase I-52b3 one on which the –C≡N is numbered otherwise is RING_NUMBERING at N0 (rule 4), so the kindest reading names the
+  // other mistake, as the acid's twins do: LOCANT_ORDER (rule 8) and RING_NUMBERING at N3.
+  assert.deepEqual(['5 2 di met il benceno carbonitrilo', '3 6 di met il oxi benceno carbonitrilo']
+    .map((words) => [read(words).diagnosis.code, read(words).diagnosis.traceRule]), [['LOCANT_ORDER', null], ['RING_NUMBERING', 'N3']]);
   assert.deepEqual(['ácido 5 2 di met il benceno carboxílico', 'ácido 3 6 di met il oxi benceno carboxílico']
     .map((words) => read(words).diagnosis.code), ['LOCANT_ORDER', 'RING_NUMBERING']);
-}); // End of test 'the deliberate nulls of R-6b1…'
+}); // End of test 'the former deliberate nulls of R-6b1…'
 
 // ---------------------------------------------------------------------------
 // Fixture round trip and closed loop (design.md §15.7).
@@ -1151,20 +1188,22 @@ function mutationsOf(ids) {
 } // End of function mutationsOf()
 
 /**
- * Reads every mutation of some nitrile names: every `otherName` either
- * carries a diagnosis of its family's codes whose step resolves in its
- * explanation, or is a nitrile's own mistake (nitrileCategory()), a
- * deliberate null of diagnose.js «Nitriles» until phase I-52b3, counted by
- * category; any other null is unexpected.
+ * Reads every mutation of some nitrile names: every `otherName` must carry a
+ * diagnosis of its family's codes whose step resolves in its explanation;
+ * none is null (since phase I-52b3, diagnose.js «Nitriles»). The nitrile's
+ * own mistakes among them, the deliberate nulls of phase I-52b1, are counted
+ * by category (nitrileCategory()), each with a code of its category
+ * (CATEGORY_CODES) and, for `numbering`, the trace rule N0 and the –C≡N
+ * groups' words.
  *
  * @param {string[]} names - Nitrile names (engine names or alternatives).
- * @returns {{otherName: Object<string, number>, codes: Set<string>, nulls: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the deliberate nulls by category and the unexpected nulls.
+ * @returns {{otherName: Object<string, number>, codes: Set<string>, own: Object<string, number>, unexpected: string[]}}
+ *   `otherName` counts by family, the codes seen, the nitrile's own mistakes by category and the nulls.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
   const codes = new Set();
-  const nulls = {};
+  const own = {};
   const unexpected = [];
   for (const name of names) {
     for (const mutation of mutationsOf(idsOf(name))) {
@@ -1174,13 +1213,7 @@ function sweep(names) {
       }
       otherName[mutation.family] += 1;
       const label = `${name} → ${mutation.family} ${verdict.text}`;
-      const category = nitrileCategory(mutation.ids, verdict);
       const d = verdict.diagnosis;
-      if (category) {
-        nulls[category] = (nulls[category] || 0) + 1;
-        assert.equal(d, null, `${label}: ${category}, ${d && d.message}`);
-        continue;
-      }
       if (!d) {
         unexpected.push(label);
         continue;
@@ -1190,42 +1223,48 @@ function sweep(names) {
       assert.ok(!/undefined|null|NaN|\[object|grupo –OH|grupos –OH|–CHO|C=O/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
+      const category = nitrileCategory(mutation.ids, verdict);
+      if (category) {
+        own[category] = (own[category] || 0) + 1;
+        assert.ok(CATEGORY_CODES[category].includes(d.code), `${label}: ${category}, ${d.code}`);
+        assert.ok(category !== 'numbering' || (d.traceRule === 'N0' && d.message.includes('los grupos –C≡N')), `${label}: ${d.message}`);
+      }
     } // End of the loop over the mutations of one name
   } // End of the loop over the names
-  return { otherName, codes, nulls, unexpected };
+  return { otherName, codes, own, unexpected };
 } // End of function sweep()
 
 /**
  * How many mutations of the nitrile fixture names of phase R-6b1 (the 75 the
  * tiles write, the retained names of phase I-52b2 swept apart in
- * reverse-nitrile-templates.test.js) give `otherName`, by family (122), and
- * the nitrile's own mistakes among them
- * by category: 72 `numbering`, a ring nitrile's –C≡N groups numbered
- * otherwise by a reflection or a rotation (`2-metilciclohexano-1-carbonitrilo`
- * rotated to `3-metilciclohexano-2-carbonitrilo`), deliberate nulls of
- * diagnose.js «Nitriles» until phase I-52b3 (N0). The other 50 are diagnosed
- * by the rules that hold for a nitrile name. Removing or adding locants never
- * gives `otherName`.
+ * reverse-nitrile-templates.test.js) give `otherName`, by family: every one
+ * is diagnosed with one of its family's codes (122). Among them, the
+ * nitrile's own mistakes by category (nitrileCategory()): 72 `numbering`, a
+ * ring nitrile's –C≡N groups numbered otherwise by a reflection or a rotation
+ * (`2-metilciclohexano-1-carbonitrilo` rotated to
+ * `3-metilciclohexano-2-carbonitrilo`) — deliberate nulls until phase
+ * I-52b3, now RING_NUMBERING at N0. Removing or adding locants never gives
+ * `otherName`. These counts are unchanged by phases R-6b2 and R-6b3.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 0, shifted: 4, reflected: 6, rotated: 91, swapped: 1, unsorted: 6, ungrouped: 3, diBis: 3, toEnd: 8, heteroToEnd: 0,
   removed: 0, added: 0,
 });
-const FIXTURE_NULLS = Object.freeze({ numbering: 72 });
+const FIXTURE_OWN = Object.freeze({ numbering: 72 });
 
-test('mutations of every nitrile fixture name: a diagnosis of the family\'s codes, or a deliberate «Nitriles» null with its category', async () => {
+test('mutations of every nitrile fixture name: a diagnosis of the family\'s codes, never null', async () => {
   const names = (await readFixtures()).filter((row) => isNitrile(row.smiles)).flatMap((row) => row.names)
     .filter((name) => isNitrileName(name) && !isNitrileTemplateName(name));
   assert.equal(names.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES);
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  const { otherName, codes, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
-  assert.deepEqual(nulls, { ...FIXTURE_NULLS });
+  assert.deepEqual(own, { ...FIXTURE_OWN });
   assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND',
     'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of every nitrile fixture name…'
 
-test('mutations of the generated nitriles: every otherName is diagnosed or a deliberate null, every step resolves', () => {
+test('mutations of the generated nitriles: every otherName is diagnosed, every step resolves', () => {
   const names = [];
   for (const mol of loopMolecules().filter((_, i) => i % 3 === 0)) { // Every generator's nitriles: chains, rings, benzenes.
     const naming = nameMolecule(mol);
@@ -1234,12 +1273,13 @@ test('mutations of the generated nitriles: every otherName is diagnosed or a del
       && !isNitrileTemplateName(name)));
   }
   assert.ok(names.length >= 450, `${names.length} names`); // The seeds give 460.
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  const { otherName, codes, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
-  // The seeds give 1149 `otherName`, 866 diagnosed and 283 the nitrile's own mistakes, a ring nitrile's –C≡N groups numbered
-  // otherwise (`numbering`: deliberate nulls of diagnose.js «Nitriles» until phase I-52b3).
-  assert.deepEqual([total, nulls], [1149, { numbering: 283 }]);
+  // The seeds give 1149 `otherName`, unchanged by phases R-6b2 and R-6b3, every one diagnosed; 283 of them the nitrile's own
+  // mistakes, a ring nitrile's –C≡N groups numbered otherwise (`numbering`: deliberate nulls until phase I-52b3, now
+  // RING_NUMBERING at N0).
+  assert.deepEqual([total, own], [1149, { numbering: 283 }]);
   assert.deepEqual([otherName.removed, otherName.added], [0, 0]);
   for (const code of ['NUMBERING', 'RING_NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'BRANCH_AT_END',
     'LONGER_CHAIN', 'MORE_SUBSTITUENTS', 'MORE_MULTIPLE_BONDS', 'CHAIN_LOCANTS']) {
