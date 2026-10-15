@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1, R-6c2): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -152,7 +152,13 @@
  * (etherOxygen(); `studentParent` lists it alone), its two groups attached
  * to it as prefixes, each by a single bond (parse.js keeps `iliden` out).
  * The oxygen counts for the heavy-atom cap, never for the carbons
- * (parentCarbons()).
+ * (parentCarbons()). An amine's functional-class name (R-6c3, ParentSpec
+ * kind 'amine': `metilamina`, `trimetilamina`) is built the same way from its
+ * nitrogen (amineClassNitrogen()), which holds three bonds, so a fourth
+ * group is VALENCE «El nitrógeno de la amina tendría 4 enlaces…»; the
+ * retained `anilina` and `bencilamina` (R-6c3) place their nitrogen as the
+ * amine suffix's (attachSuffix(): `N` groups bonded to it, «…en la anilina,
+ * ese carbono ya lleva un grupo NH₂»).
  *
  * The molecule is the student's reading, numbered as the student numbered
  * it: `studentParent` lists the parent's atoms in the student's locant
@@ -213,7 +219,7 @@ import {
 import {
   templateGroupWord, isAtomGroup, atomGroupOrder, closingText, HYDROXY_ELEMENT, ALKOXY_ELEMENT, OXO_ELEMENT, SUFFIX_GROUPS,
   GROUP_WORD_PARENTS, withArticle, suffixBondAmount, ACID_KIND, ACID_GROUP, ESTER_KIND, ESTER_GROUP, NITRILE_KIND, NITRILE_GROUP,
-  suffixElement, AMINE_KIND, N_VALUE, AMINE_NITROGEN, NITROGEN_VALENCE, AMINO_KIND, AMINO_ELEMENT, AMINO_NITROGEN,
+  suffixElement, AMINE_KIND, N_VALUE, AMINE_NITROGEN, NITROGEN_VALENCE, AMINO_KIND, AMINO_ELEMENT, AMINO_NITROGEN, AMINE_GROUP,
 } from './tiles.js';
 
 /**
@@ -226,6 +232,9 @@ export const BUILD_ERROR_CODES = Object.freeze([
 
 /** The element of the carbon an outside suffix group adds (R-5c1: the –CHO of `carbaldehído`, `benzaldehído`). */
 const CARBON = 'C';
+
+/** The element of the nitrogen of an amine's class name (R-6c3), as tiles.js suffixElement() gives the amine suffix's. */
+const AMINE_CLASS_ELEMENT = suffixElement(SUFFIX_GROUPS[AMINE_KIND]);
 
 /** The element of the nitrogen of `ciano`'s –C≡N (R-6b1), as tiles.js suffixElement() gives a nitrile suffix's. */
 const NITRILE_NITROGEN = suffixElement(SUFFIX_GROUPS[NITRILE_KIND]);
@@ -356,7 +365,8 @@ function oBoundRangeMessage(owner, value) {
  * key: `1-(4-metilfenil)etan-1-ona`, `2-(4-metilfenil)etanal`; R-5d2: `ácido
  * 2-(4-metilfenil)etanoico` for `fenilacético`; R-6a2a: `2-(4-metilfenil)etanoato
  * de metilo` for `fenilacetato`; R-6b2: `2-(4-metilfenil)etanonitrilo` for
- * `fenilacetonitrilo` (the `o` of `etano` kept before the consonant).
+ * `fenilacetonitrilo` (the `o` of `etano` kept before the consonant); R-6c3:
+ * `(4-metilfenil)metanamina` for `bencilamina`.
  */
 const RING_TEMPLATE_EXAMPLES = Object.freeze({
   acetophenone: `1-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}`
@@ -369,6 +379,9 @@ const RING_TEMPLATE_EXAMPLES = Object.freeze({
     + `${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[ESTER_KIND]}${ESTER_LINK}${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${ESTER_ALKYL_ENDING}`,
   phenylacetonitrile: `2-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}${stem(2)}`
     + `${ENDINGS.saturated}${GROUP_SUFFIXES[NITRILE_KIND]}`,
+  // R-6c3: `bencilamina`, the engine's `(4-metilfenil)metanamina` (no locant: one carbon).
+  benzylamine: `${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}${stem(1)}`
+    + `${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[AMINE_KIND]}`,
 });
 
 /**
@@ -390,8 +403,10 @@ function chainTemplateRangeMessage(owner, value) {
     ? `${lead.charAt(0).toUpperCase()}${lead.slice(1)} solo tiene 1 carbono: no hay carbono ${value}.`
     : `La cadena ${withArticle(owner.template, 'de')} tiene ${carbons(owner.length)}, del 1 al ${owner.length}: no hay carbono ${value}.`;
   const example = RING_TEMPLATE_EXAMPLES[owner.templateValue];
+  // A name that starts with its own mark is quoted, not put between more marks (R-6c3: «(4-metilfenil)metanamina»).
+  const shown = example && example.startsWith(ENCLOSING_MARKS[0][0]) ? `: «${example}»` : ` (${example})`;
   return example
-    ? `${base} En «${owner.template}» el anillo no se numera: con grupos en el anillo, escribe el nombre sistemático (${example}).`
+    ? `${base} En «${owner.template}» el anillo no se numera: con grupos en el anillo, escribe el nombre sistemático${shown}.`
     : base;
 }
 
@@ -691,13 +706,14 @@ function suffixCarbons(spec) {
 
 /**
  * Carbons of a NameSpec's parent: its length, or none for the oxygen of an
- * ether's functional-class name (R-5b2, kind 'ether': one atom, an oxygen).
+ * ether's functional-class name (R-5b2, kind 'ether': one atom, an oxygen)
+ * or the nitrogen of an amine's (R-6c3, kind 'amine': one atom, a nitrogen).
  *
  * @param {{kind: string, length: number}} parent - A ParentSpec.
  * @returns {number} The count.
  */
 function parentCarbons(parent) {
-  return parent.kind === 'ether' ? 0 : parent.length;
+  return parent.kind === 'ether' || parent.kind === AMINE_KIND ? 0 : parent.length;
 }
 
 /**
@@ -723,7 +739,8 @@ function suffixAtomCount(spec) {
  * locants): its carbons, its halogens (R-5a1) and its oxygens (R-5a2:
  * `hidroxi` and the suffix's OH groups; R-5b: the ether oxygen of each
  * alkoxy prefix and of `anisol`'s methoxy; R-5b2: the oxygen parent of a
- * class name, its one atom), as model/validate.js counts them
+ * class name, its one atom; R-6c3: the nitrogen parent of an amine's class
+ * name), as model/validate.js counts them
  * against MAX_HEAVY_ATOMS.
  *
  * @param {object} spec - A NameSpec.
@@ -1120,6 +1137,22 @@ function etherOxygen(state) {
 }
 
 /**
+ * Creates the parent of an amine's functional-class name (R-6c3:
+ * `metilamina`, `trimetilamina`): its nitrogen, one atom whose groups are
+ * attached as prefixes; it holds three bonds (NITROGEN_VALENCE), so a
+ * fourth group is VALENCE «El nitrógeno de la amina tendría 4 enlaces…»,
+ * blamed on the group that adds it (valenceError()).
+ *
+ * @param {object} state - Build state.
+ * @returns {{atoms: number[], bonds: number[]}} The nitrogen, and no bonds.
+ */
+function amineClassNitrogen(state) {
+  const nitrogen = addAtom(state.mol, {}, AMINE_CLASS_ELEMENT);
+  state.atoms.set(nitrogen, { locant: 1, branch: false, added: [], valence: NITROGEN_VALENCE, nitrogenWord: AMINE_NITROGEN });
+  return { atoms: [nitrogen], bonds: [] };
+}
+
+/**
  * Creates a branch: a one-atom group (a halogen atom, R-5a1; the oxygen of
  * `hidroxi`, R-5a2, or of `oxo`, R-5c1, double-bonded), a retained word from
  * its template (`formil` with its =O, R-5c1; `acetil`, R-5c2; `ciano` with
@@ -1387,7 +1420,8 @@ const KETONE_GROUP = 'grupo C=O';
  * retained phenols of R-5a3a: «grupo OH»; the carbonyl templates of
  * R-5c3a: «grupo CHO», and «grupo C=O» for `acetona` and `acetofenona`;
  * R-5d1: «grupo COOH» for `benzoico`; R-6b1: «grupo C≡N» for `benzonitrilo`;
- * R-6b2: and for the retained nitrile words, `acetonitrilo`, `ftalonitrilo`).
+ * R-6b2: and for the retained nitrile words, `acetonitrilo`, `ftalonitrilo`;
+ * R-6c3: «grupo NH₂» for the retained amine words, `anilina`, `bencilamina`).
  *
  * @param {{kind: string}} suffix - A SuffixSpec placed by its parent's word.
  * @returns {string} The group's name.
@@ -1404,6 +1438,9 @@ function placedGroupWord(suffix) {
   }
   if (suffix.kind === NITRILE_KIND) {
     return NITRILE_GROUP; // `benzonitrilo` (R-6b1); `acetonitrilo`, `ftalonitrilo` (R-6b2)
+  }
+  if (suffix.kind === AMINE_KIND) {
+    return AMINE_GROUP; // `anilina`, `bencilamina` (R-6c3)
   }
   return suffix.kind === 'alcohol' ? GROUP_WORD_PARENTS.phenol.group : GROUP_WORD_PARENTS.benzaldehyde.group;
 }
@@ -1647,8 +1684,15 @@ export function build(spec, placement = []) {
     return { ok: false, error };
   }
   const state = { mol: createMolecule(), values, atoms: new Map(), tiles: spec.tiles };
-  // The oxygen of an ether's class name (R-5b2), else the parent chain or ring.
-  const parent = spec.parent.kind === 'ether' ? etherOxygen(state) : buildChain(state, { ...spec.parent, prefixes: [] }, false);
+  // The oxygen of an ether's class name (R-5b2), the nitrogen of an amine's (R-6c3), else the parent chain or ring.
+  let parent;
+  if (spec.parent.kind === 'ether') {
+    parent = etherOxygen(state);
+  } else if (spec.parent.kind === AMINE_KIND) {
+    parent = amineClassNitrogen(state);
+  } else {
+    parent = buildChain(state, { ...spec.parent, prefixes: [] }, false);
+  }
   const suffixAtoms = attachSuffix(state, spec.suffix, parent.atoms); // `propan-2-ol`, `fenol` (R-5a2).
   if (spec.parent.template) {
     attachPrefixes(state, spec.parent.template.groups, parent.atoms, null, spec.parent.template); // `tolueno`'s methyl…

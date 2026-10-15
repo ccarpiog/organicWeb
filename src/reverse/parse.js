@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -25,11 +25,13 @@
  * `benzonitrilo`, the prefix `ciano` — from R-6b1, the retained nitrile
  * templates from R-6b2, the amines — the suffix `amina` and the locant `N`
  * — from R-6c1, the prefix `amino` and the groups on its nitrogen from
- * R-6c2):
+ * R-6c2, the retained amine templates and the amines' class names from
+ * R-6c3):
  *
  *   name        = [ ácido ] , { prefix } , parent   (* R-5d1: `ácido` with an acid suffix only *)
  *               , [ esterSide ]                   (* R-6a1: after an ester suffix only; R-6a2a: or an ester template *)
- *               | { classGroup } , éter ;   (* R-5b2: exactly two groups *)
+ *               | { classGroup } , éter     (* R-5b2: exactly two groups *)
+               | { classGroup } , amina ;  (* R-6c3: the `amina` tile right after the groups, one to three *)
  *   esterSide   = esterGroup , { esterGroup } ;   (* R-6a1: one group per –COO–, multipliers counted *)
  *   esterGroup  = { prefix } , oBound
  *               | ( MULT | CMULT ) , ( oBound | START , { prefix } , oBound , END ) ;
@@ -60,7 +62,8 @@
  *               | fórmico | acético | oxálico | fenilacético                    (* R-5d2, after `ácido` *)
  *               | ftálico | isoftálico | tereftálico
  *               | formiato | acetato | fenilacetato                       (* R-6a2a, before the O-bound side *)
- *               | acetonitrilo | fenilacetonitrilo | ftalonitrilo ;     (* R-6b2 *)
+ *               | acetonitrilo | fenilacetonitrilo | ftalonitrilo      (* R-6b2 *)
+               | anilina | bencilamina ;                              (* R-6c3: `N` locants on their nitrogen *)
  *   letter      = o | m | p ;
  *   stem        = [ ciclo ] , ROOT ;   (* ciclo: a ring of ROOT carbons, at least 3 *)
  *   segments    = segment , [ segment ] ;
@@ -292,6 +295,35 @@
  * are TILE_ORDER with their hints; a name that ends in an amino prefix says
  * «un grupo». No new error code.
  *
+ * The retained amine names (R-6c3: `anilina`, benzene with its NH₂ at
+ * carbon 1, and `bencilamina`, an open chain of one carbon with the NH₂ and a
+ * phenyl; tiles.js isAmineTemplate()) are templates whose word places the
+ * amine's nitrogen, as `amina` does: the locant `N` of a name-level prefix
+ * names that nitrogen (checkNitrogen(): `N-metilanilina`,
+ * `N,N-dimetilanilina`, `N,4-dimetilanilina`); numbers, `N` or a letter on
+ * the word itself are TEMPLATE_LOCANTS («anilina» ya dice dónde va su grupo
+ * NH₂…), and inside a compound branch their hint says the NH₂ is written
+ * `amino` there. A group written `N` occupies no ring position, so a letter
+ * reads beside it on another prefix as the engine writes it
+ * (`N-etil-p-metilanilina`, `p-bromo-N,N-dimetilanilina`), and an `N` and a
+ * letter on one prefix are POSITIONAL (`N,p-dimetilanilina`, no used form:
+ * the engine writes `N,4-dimetilanilina`; checkLetters()).
+ *
+ * An amine's functional-class name (R-6c3, design.md §2: `metilamina`,
+ * `dimetilamina`, `trimetilamina`, `etildimetilamina`, `di-tert-butilamina`,
+ * one word) needs no tile of its own: the `amina` tile right after the
+ * groups — a complete name-level prefix, no parent read yet
+ * (startsAmineClass()) — is its class word, a parent node whose chain is a
+ * `classWord` node as for `éter`; the name-level prefixes before it are the
+ * groups bonded to the nitrogen, each a branch as in a prefix, one of them
+ * multiplied when it repeats (`di met il amina`). checkAmineClassName() keeps
+ * that shape: no locants, `N` or letter on a group, no one-atom, alkoxy,
+ * `ciano`, `carboxi` or `amino` group, no group bonded by a C=O carbon (an
+ * amide) and no doubly bonded branch (TILE_ORDER, each with its hint); how
+ * many groups (one to three) is the nitrogen's valence (build.js VALENCE).
+ * Numbers or a multiplier right before that `amina`, and tiles after it, are
+ * TILE_ORDER. No new error code.
+ *
  * The tile `1(n)` (R-5a2) is the compound locant of a ring's closing bond,
  * the one from its last carbon n back to carbon 1 (the engine cites it
  * `1(6)`, IUPAC 2013 P-31.1.4.2.4: `ciclohex-1(6)-eno-1,2,4-triol`,
@@ -474,7 +506,7 @@ import {
   isAcylTile, templateSuffix, isCarbonylTemplate, isChainTemplate, BENZOIC_ID, ACID_KIND, isAcidSuffix, parentWordName,
   isAcidTemplate, ACID_GROUP, ESTER_KIND, isEsterSuffix, ESTER_GROUP, BENZOATE_ID, ESTER_ALKYL_ID, isEsterTemplate,
   ACID_ESTER_TEMPLATES, isAcyloxyHead, NITRILE_KIND, BENZONITRILE_ID, NITRILE_GROUP, isNitrileTemplate, AMINE_KIND, isAmineSuffix,
-  NITROGEN_ID, isAminoTile,
+  NITROGEN_ID, isAminoTile, isAmineTemplate, AMINE_GROUP, isAmineClassWord,
 } from './tiles.js';
 import { itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, iloTileOf, esterGroupsOf, isAminoNode } from './assemble.js';
 
@@ -528,6 +560,8 @@ const AMINA = GROUP_SUFFIXES[AMINE_KIND];
 const N_TEXT = tileById(NITROGEN_ID).text;
 // R-6c2: the amino prefixes.
 const AMINO = GROUP_PREFIXES[AMINE_KIND];
+// R-6c3: the retained amine names.
+const ANILINA = tileById('template-aniline').text;
 const [ORTO, META, PARA] = Object.keys(POSITIONAL_IDS).map((locant) => POSITIONAL_LETTERS[locant]);
 
 /** Spanish number words for the LOCANT_COUNT messages (digits from 11 on). */
@@ -641,6 +675,18 @@ const EXAMPLES = Object.freeze({
   dimetilamino: `${OPEN}${multiplier(2)}${stem(1)}${IL}${AMINO}${CLOSE}`,
   etilMetilamino: `${ENCLOSING_MARKS[1][0]}${stem(2)}${IL}${OPEN}${stem(1)}${IL}${CLOSE}${AMINO}${ENCLOSING_MARKS[1][1]}`,
   cloroetilamino: `${ENCLOSING_MARKS[1][0]}${OPEN}2-${HALOGEN_PREFIXES.Cl}${stem(2)}${IL}${CLOSE}${AMINO}${ENCLOSING_MARKS[1][1]}`,
+  // R-6c3: the retained amine names and the amines' class names.
+  nMetilanilina: `${N_TEXT}-${stem(1)}${IL}${ANILINA}`,
+  n4Dimetilanilina: `${N_TEXT},4-${multiplier(2)}${stem(1)}${IL}${ANILINA}`,
+  pMetilanilina: `${PARA}-${stem(1)}${IL}${ANILINA}`,
+  nEtilPMetilanilina: `${N_TEXT}-${stem(2)}${IL}-${PARA}-${stem(1)}${IL}${ANILINA}`,
+  bencenamina: `${BENZENE_NAME.slice(0, -1)}${AMINA}`,
+  metilbencenamina: `4-${stem(1)}${IL}${BENZENE_NAME.slice(0, -1)}-1-${AMINA}`,
+  aminofenil: `${OPEN}4-${AMINO}${FENIL}${CLOSE}`,
+  aminometil: `${OPEN}${AMINO}${stem(1)}${IL}${CLOSE}`,
+  metilamina: `${stem(1)}${IL}${AMINA}`,
+  dimetilamina: `${multiplier(2)}${stem(1)}${IL}${AMINA}`,
+  etilmetilamina: `${stem(2)}${IL}${stem(1)}${IL}${AMINA}`,
   etilMetilEter: `${stem(2)}${IL} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
   dietilEter: `${multiplier(2)}${stem(2)}${IL} ${ETHER_CLASS_WORD}`,
   cloroetilEter: `${OPEN}2-${HALOGEN_PREFIXES.Cl}${stem(2)}${IL}${CLOSE} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
@@ -789,6 +835,12 @@ const HINTS = Object.freeze({
   aminoLocant: `los grupos unidos al nitrógeno de «${AMINO}» van delante de «${AMINO}», sin números ni letras: ${EXAMPLES.metilamino}, `
     + `${EXAMPLES.dimetilamino}, ${EXAMPLES.etilMetilamino}. Si un grupo lleva sus propias ramas, va en su propia rama compuesta, con `
     + `sus números dentro: ${EXAMPLES.cloroetilamino}.`,
+  // R-6c3: the amines' class names (`metilamina`, `dimetilamina`), whose class word is the `amina` tile.
+  amineClassLocant: `en un nombre como «${EXAMPLES.dimetilamina}» no hay cadena principal que numerar: los grupos unidos al nitrógeno `
+    + `van delante de «${AMINA}», sin números ni «${N_TEXT}» (${EXAMPLES.etilmetilamina}).`,
+  amineClassMultiplier: `«${multiplier(2)}», «${multiplier(3)}»… van delante del grupo que se repite: ${multiplier(2)}, ${stem(1)}, `
+    + `${IL} y ${AMINA} dan ${EXAMPLES.dimetilamina}.`,
+  afterAmineClassWord: `el nombre termina con «${AMINA}»; los grupos unidos al nitrógeno van delante (${EXAMPLES.etilmetilamina}).`,
 });
 
 /**
@@ -801,6 +853,39 @@ const HINTS = Object.freeze({
  */
 function aminoAcylHint(word) {
   return `«${word}» no va unido al nitrógeno de «${AMINO}»: un grupo C=O unido al nitrógeno no forma una amina, sino una amida.`;
+}
+
+/**
+ * The TILE_ORDER hint of a group of an amine's class name (R-6c3:
+ * `metilamina`) that is no carbon group bonded to the nitrogen by a single
+ * bond through a carbon: a one-atom group (`cloro`, `hidroxi`, `oxo`), an
+ * alkoxy group (its `oxi`), `ciano`, `carboxi` or `amino` (`acyl` false); or
+ * a group bonded by a C=O carbon (`acetil`, `formil`, `benzoil`, an acyl
+ * ending: `acyl` true), which on the nitrogen makes an amide.
+ *
+ * @param {string} word - The word or ending, as on its tile.
+ * @param {boolean} acyl - A group bonded by a C=O carbon.
+ * @returns {string} The hint.
+ */
+function amineClassGroupHint(word, acyl) {
+  if (acyl) {
+    return `«${word}» no va unido al nitrógeno de una amina: un grupo C=O unido al nitrógeno no forma una amina, sino una amida.`;
+  }
+  return `«${word}» no va en un nombre como «${EXAMPLES.metilamina}»: delante de «${AMINA}» solo van los grupos de carbonos unidos al `
+    + `nitrógeno, acabados en «${IL}» (${EXAMPLES.etilmetilamina}).`;
+} // End of function amineClassGroupHint()
+
+/**
+ * The TILE_ORDER hint of a doubly bonded group (`iliden`, `isopropiliden`)
+ * in an amine's class name (R-6c3): the groups take one bond each of the
+ * nitrogen.
+ *
+ * @param {string} word - The word or ending, as on its tile.
+ * @returns {string} The hint.
+ */
+function amineClassDoubleHint(word) {
+  return `en un nombre como «${EXAMPLES.metilamina}», cada grupo se une al nitrógeno por un enlace sencillo, así que acaba en `
+    + `«${IL}» (${EXAMPLES.etilmetilamina}), no en «${word}».`;
 }
 
 /**
@@ -1090,6 +1175,11 @@ const POSITIONAL_MESSAGES = Object.freeze({
   // R-6a1: a letter in an ester's O-bound group.
   ester: `En el grupo unido al oxígeno de un éster no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: escribe los números, `
     + `como en ${EXAMPLES.etanoatoDeMetilfenilo}.`,
+  // R-6c3: a letter beside an `N` on one prefix (`N,p-dimetilanilina`: no used form, design.md §14.4), and a letter on `bencenamina`.
+  nitrogen: `«${N_TEXT}» y las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} no van juntas delante de un mismo grupo: con un `
+    + `grupo en el nitrógeno y otro en el anillo, escribe los números (${EXAMPLES.n4Dimetilanilina}).`,
+  amine: `Con «${EXAMPLES.bencenamina}» no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: escribe los números `
+    + `(${EXAMPLES.metilbencenamina}) o usa «${ANILINA}», de «Nombres tradicionales» (${EXAMPLES.pMetilanilina}).`,
 });
 
 /** The group `fenol` places itself at carbon 1, as the messages say it (R-5a2), and its plural (R-5a3a: `catecol`). */
@@ -1110,7 +1200,8 @@ const NITRILE_GROUPS = NITRILE_GROUP.replace(/^grupo /, 'grupos ');
  * template (R-5d2: «grupo COOH», «grupos COOH»), the –COO– of an ester
  * template (R-6a2a: «grupo COO»), the –C≡N of a nitrile template (R-6b2:
  * `acetonitrilo`'s on its chain, `ftalonitrilo`'s two outside the ring:
- * «grupo C≡N», «grupos C≡N»).
+ * «grupo C≡N», «grupos C≡N»), the NH₂ of an amine template (R-6c3:
+ * `anilina`'s, `bencilamina`'s: «grupo NH₂»).
  */
 const PLACED_GROUP_WORDS = Object.freeze({
   alcohol: Object.freeze({ one: PHENOL_GROUP, many: PHENOL_GROUPS }),
@@ -1125,6 +1216,8 @@ const PLACED_GROUP_WORDS = Object.freeze({
   // R-6b2: the –C≡N groups of a nitrile template (`acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`).
   [NITRILE_KIND]: Object.freeze({ one: NITRILE_GROUP, many: NITRILE_GROUPS }),
   carbonitrile: Object.freeze({ one: NITRILE_GROUP, many: NITRILE_GROUPS }),
+  // R-6c3: the NH₂ of an amine template (`anilina`, `bencilamina`).
+  [AMINE_KIND]: Object.freeze({ one: AMINE_GROUP, many: AMINE_GROUP.replace(/^grupo /, 'grupos ') }),
 });
 
 /**
@@ -1216,12 +1309,16 @@ function ownGroupsPhrase(kinds, [one, many]) {
  *
  * @param {number} positions - Occupied ring positions the name describes.
  * @param {{kinds: OwnGroupKind[], word: string}|null} owner - ownGroups() of the parent, or null for `benceno`.
+ * @param {boolean} [nitrogen] - An amine's name with a group written without numbers that may stand on its nitrogen (R-6c3:
+ *   `etil-p-metilanilina`): the message adds that such a group takes `N` (default false).
  * @returns {string} The message.
  */
-function threePositionsMessage(positions, owner) {
+function threePositionsMessage(positions, owner, nitrogen = false) {
   const counted = owner ? ` (contando ${ownGroupsPhrase(owner.kinds, ['el', 'los'])} ${withArticle(owner.word, 'de')})` : '';
+  // R-6c3: on an amine, a group without numbers may be the one the student meant on the nitrogen.
+  const hint = nitrogen ? ` Si un grupo va unido al nitrógeno, escribe «${N_TEXT}» delante (${EXAMPLES.nEtilPMetilanilina}).` : '';
   return `Las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} solo sirven cuando el ${BENZENE_NAME} lleva dos grupos, `
-    + `y tu nombre pone ${numberWord(positions)}${counted}: escribe los números (${EXAMPLES.trimetilbenceno}).`;
+    + `y tu nombre pone ${numberWord(positions)}${counted}: escribe los números (${EXAMPLES.trimetilbenceno}).${hint}`;
 } // End of function threePositionsMessage()
 
 /**
@@ -1292,7 +1389,8 @@ function templateCountMessage(tile) {
  * (R-5c3a) with `oxo` or `formil`; an acid template (R-5d2) with `carboxi`;
  * an ester template (R-6a2a), in a branch or in the O-bound side, names the
  * acid part of an ester, before its O-bound group (`acetato de metilo`); a
- * nitrile template (R-6b2) with `ciano`.
+ * nitrile template (R-6b2) with `ciano`; an amine template (R-6c3) with
+ * `amino`.
  *
  * @param {{text: string, kind: string, value: string}} tile - The template tile.
  * @param {'branch'|'multiplier'} where - Where it stands.
@@ -1312,6 +1410,11 @@ function templateHint(tile, where) {
     // `acetato` (R-6a2a): the acid part of an ester, before its O-bound group, as `benzoato`.
     return `«${tile.text}» es el nombre de la parte ácida de un éster y va delante del grupo unido al oxígeno `
       + `(${tile.text}${ESTER_LINK}${EXAMPLES.metilo}).`;
+  }
+  if (where === 'branch' && tile.kind === 'template' && isAmineTemplate(tile.value)) {
+    // `anilina`, `bencilamina` (R-6c3): their NH₂ is written `amino` there, as `bencenamina`'s.
+    return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el ${AMINE_GROUP} se escribe `
+      + `«${AMINO}», como en ${EXAMPLES.aminofenil} o ${EXAMPLES.aminometil}.`;
   }
   if (where === 'branch' && tile.kind === 'template' && isNitrileTemplate(tile.value)) {
     // `acetonitrilo`, `ftalonitrilo` (R-6b2): their –C≡N is written `ciano` there, as `benzonitrilo`'s.
@@ -1981,13 +2084,15 @@ function makeTemplateParent(state, legacy, letter, mult, start) {
 
 /**
  * Builds the parent node of an ether's functional-class name (R-5b2), the
- * `éter` tile at the parser position: its chain a `classWord` node; the
- * name-level prefixes read so far are its groups (checkClassName()).
- * Numbers or a letter right before `éter`, and a multiplier there, are
- * TILE_ORDER (a group takes neither; `di` goes before the group it
- * repeats), kept in the node so the tree stays lossless.
+ * `éter` tile at the parser position, or of an amine's (R-6c3), the `amina`
+ * tile right after its groups (startsAmineClass()): its chain a `classWord`
+ * node; the name-level prefixes read so far are its groups
+ * (checkClassName(), checkAmineClassName()). Numbers, `N` or a letter right
+ * before the class word, and a multiplier there, are TILE_ORDER (a group
+ * takes neither; `di` goes before the group it repeats), kept in the node so
+ * the tree stays lossless.
  *
- * @param {object} state - Parser state (positioned on the `éter` tile).
+ * @param {object} state - Parser state (positioned on the `éter` or `amina` tile).
  * @param {number[]} legacy - Locant tiles before it.
  * @param {number|null} letter - An o / m / p tile before it, or null.
  * @param {number|null} mult - Multiplier tile before it, or null.
@@ -1996,13 +2101,15 @@ function makeTemplateParent(state, legacy, letter, mult, start) {
  */
 function makeClassParent(state, legacy, letter, mult, start) {
   const tile = state.pos;
+  const amine = isAmineClassWord(state.tiles[tile]); // `metilamina` (R-6c3)
   state.pos += 1;
   const marks = [...legacy, ...(letter === null ? [] : [letter])];
   if (marks.length > 0) {
-    addTileOrder(state, marks[0], marks[marks.length - 1] + 1, HINTS.classLocant); // `etil metil 2 éter`
+    // `etil metil 2 éter`; `metil 2 amina` (R-6c3).
+    addTileOrder(state, marks[0], marks[marks.length - 1] + 1, amine ? HINTS.amineClassLocant : HINTS.classLocant);
   }
   if (mult !== null) {
-    addTileOrder(state, mult, mult + 1, HINTS.classMultiplier); // `etil di éter`
+    addTileOrder(state, mult, mult + 1, amine ? HINTS.amineClassMultiplier : HINTS.classMultiplier); // `etil di éter`, `metil di amina`
   }
   return {
     type: 'parent',
@@ -2072,6 +2179,76 @@ function checkClassName(state, tree) {
 } // End of function checkClassName()
 
 /**
+ * Keeps the groups of an amine's functional-class name (R-6c3: `metilamina`,
+ * `dimetilamina`, `etildimetilamina`) to what an amine's nitrogen carries as
+ * the engine names it: each name-level prefix a carbon group bonded by a
+ * single bond through a carbon — a chain or ring ending in `il`,
+ * `isopropil`, `tert-butil`, `fenil`, or a compound branch with prefixes of
+ * its own —, with no locants, `N` or letter (TILE_ORDER, amineClassLocant:
+ * the nitrogen has one place), no one-atom group, alkoxy group, `ciano`,
+ * `carboxi` or `amino` (amineClassGroupHint()), no group bonded by a C=O
+ * carbon (an amide: amineClassGroupHint() with `acyl`) and no doubly bonded
+ * branch (amineClassDoubleHint()). How many groups — one to three — is the
+ * builder's (VALENCE on the nitrogen, its three bonds); which words and
+ * which order the engine uses is the verdict's (an `otherName` otherwise).
+ * A prefix left unfinished or a stray tile already has its error.
+ *
+ * @param {object} state - Parser state.
+ * @param {object} tree - The name tree, its parent an amine class-name parent.
+ * @returns {void}
+ */
+function checkAmineClassName(state, tree) {
+  const { tiles } = state;
+  for (const item of tree.items.filter((it) => it.type === 'prefix' && it.substituent)) {
+    const sub = item.substituent;
+    const marks = [...item.locants, ...(item.letter === null ? [] : [item.letter])];
+    if (marks.length > 0) {
+      addTileOrder(state, marks[0], marks[marks.length - 1] + 1, HINTS.amineClassLocant); // `N met il amina`, `2 met il amina`
+    }
+    const core = sub.type === 'branch' ? sub.chain : sub;
+    let head = null; // The tile that would bond the group to the nitrogen: a chain's ending, or a retained word.
+    if (core && core.type === 'chain' && core.fv !== null) {
+      head = core.fv;
+    } else if (core && core.type === 'retained') {
+      head = core.tile;
+    }
+    if (isAtomGroup(sub.type)) {
+      addTileOrder(state, sub.tile, sub.tile + 1, amineClassGroupHint(tiles[sub.tile].text, false)); // `cloro metil amina`
+    } else if (isAlkoxyNode(sub)) {
+      const { oxi } = alkoxyCore(sub);
+      addTileOrder(state, oxi, oxi + 1, amineClassGroupHint(tiles[oxi].text, false)); // `met il oxi amina`: N–O
+    } else if (head !== null && isAcyloxyHead(tiles[head])) {
+      addTileOrder(state, head, head + 1, amineClassGroupHint(tiles[head].text, true)); // `acetil metil amina`: an amide
+    } else if (head !== null && core.type === 'chain' && tiles[head].value !== 1) {
+      addTileOrder(state, head, head + 1, amineClassDoubleHint(tiles[head].text)); // `metiliden amina`
+    } else if (head !== null && core.type === 'retained' && !ALKOXY_RETAINED.includes(tiles[head].value)) {
+      // `ciano`, `carboxi`, `amino`; `isopropiliden` (its double bond).
+      const double = tiles[head].value === 'isopropylidene';
+      addTileOrder(state, head, head + 1, double ? amineClassDoubleHint(tiles[head].text) : amineClassGroupHint(tiles[head].text, false));
+    }
+  } // End of the loop over the groups
+} // End of function checkAmineClassName()
+
+/**
+ * Tells whether the `amina` tile at the parser position starts an amine's
+ * functional-class name (R-6c3): at name level, right after a complete
+ * name-level prefix — a group ending in `il`, a retained word, a compound
+ * branch —, as no parent is read yet (`met il amina`, `di met il amina`;
+ * also after numbers or a multiplier with no branch, makeClassParent()'s
+ * TILE_ORDER). Elsewhere `amina` is the suffix after a parent's ending, or
+ * out of place (`amina` alone: TILE_ORDER with its own hint).
+ *
+ * @param {object} state - Parser state.
+ * @param {object|undefined} tile - The tile at the position.
+ * @param {'name'|'branch'|'ester'} context - Where the parser reads.
+ * @returns {boolean} True when `amina` is the class word there.
+ */
+function startsAmineClass(state, tile, context) {
+  const last = state.items[state.items.length - 1];
+  return Boolean(tile) && isAmineClassWord(tile) && context === 'name' && !state.ester && Boolean(last) && isCompletePrefix(last);
+}
+
+/**
  * The hint of a whole-word parent (`benceno`, `fenol`, `benzaldehído`,
  * `benzoico`, `benzoato`, `benzonitrilo`, a template) found inside a compound
  * branch, or in an ester's O-bound side (R-6a1).
@@ -2113,6 +2290,9 @@ function parseItem(state, context) {
   const { tiles } = state;
   const start = state.pos;
   const first = tiles[start];
+  if (startsAmineClass(state, first, context)) {
+    return makeClassParent(state, [], null, null, start); // `metilamina` (R-6c3): `amina` right after the groups.
+  }
   const wholeWord = (first.kind === 'benzene' || first.kind === 'template') && context !== 'name';
   const classInBranch = first.kind === 'classWord' && context !== 'name'; // `éter` inside a compound branch (R-5b2)
   // `oxi` alone: R-5b; `ácido` anywhere but first: R-5d1; `ilo` alone: R-6a1.
@@ -2142,6 +2322,9 @@ function parseItem(state, context) {
   }
   if (next && next.kind === 'classWord' && context === 'name') {
     return makeClassParent(state, locants, letter, mult, start); // `etil metil éter` (R-5b2)
+  }
+  if (state.pos > start && startsAmineClass(state, next, context)) {
+    return makeClassParent(state, locants, letter, mult, start); // `metil 2 amina`, `metil di amina` (R-6c3): TILE_ORDER there.
   }
   if (!next || !['start', 'retained', 'halogen', 'hydroxy', 'carbonyl', 'root', 'ring'].includes(next.kind)) {
     if (next) {
@@ -2185,7 +2368,11 @@ function parseItem(state, context) {
   prefix.range = [start, state.pos];
   // bis… for a compound branch, and for an alkoxy prefix written as its branch + `oxi` (R-5b: `bis(pentiloxi)`).
   const compound = prefix.substituent.type === 'branch' || isCompoundAlkoxy(tiles, prefix.substituent);
-  checkLocantCount(state, locants, mult, 'grupos', compound);
+  // `N,p-dimetil` (R-6c3): the `N` and the letter together are checkLetters()' POSITIONAL, which says what to write instead.
+  const nitrogenLetter = letter !== null && locants.some((i) => tiles[i].kind === 'nitrogen');
+  if (!nitrogenLetter) {
+    checkLocantCount(state, locants, mult, 'grupos', compound);
+  }
   return prefix;
 } // End of function parseItem()
 
@@ -2271,7 +2458,13 @@ function checkBranchLetters(state, branch) {
  * the OH groups of a retained phenol count), nor for two different prefixes
  * on `benceno` (`m-etilmetilbenceno`). A letter before `tolueno`, `estireno`,
  * `mesitileno` or a diol of R-5a3a is their TEMPLATE_LOCANTS
- * (makeTemplateParent()), and so are numbers before `cresol`.
+ * (makeTemplateParent()), and so are numbers before `cresol`. A group
+ * written `N` (R-6c3) stands on the amine's nitrogen, not on the ring, so it
+ * occupies no position (`N-etil-p-metilanilina`, `p-bromo-N,N-dimetilanilina`,
+ * the engine's forms), and a letter beside an `N` on one prefix is
+ * POSITIONAL (`N,p-dimetilanilina`: no used form, design.md §14.4, the
+ * engine writes `N,4-dimetilanilina`); on `bencenamina` a letter gets its
+ * own message (the engine letters only `anilina`: `p-metilanilina`).
  *
  * @param {object} state - Parser state.
  * @param {object} tree - The name tree.
@@ -2298,7 +2491,7 @@ function checkLetters(state, tree) {
   const lettered = prefixes.filter((item) => item.letter !== null && item.substituent); // An unfinished one is TILE_ORDER.
   const { chain } = parent;
   if (chain.type === 'classWord') {
-    return; // The groups of an ether's class name take no letter: checkClassName() says so (R-5b2).
+    return; // The groups of a class name take no letter: checkClassName() (R-5b2), checkAmineClassName() (R-6c3) say so.
   }
   if (chain.type === 'template' && isChainTemplate(tiles[chain.tile].value)) {
     // `acetona` (R-5c3a): an open chain; a letter before the word itself is its TEMPLATE_LOCANTS (makeTemplateParent()).
@@ -2317,27 +2510,65 @@ function checkLetters(state, tree) {
   const own = owner && !owner.positions && parent.letter !== null ? [parent] : []; // `o-xileno`, `p-cresol` (R-5a3a)
   // The groups of a suffix on `benceno` (R-5a2) occupy ring positions too.
   const suffixGroups = parent.suffix ? multiplierCount(tiles, parent.suffix.multiplier) : 0;
+  /**
+   * How many tile indices of a list are the locant `N` (R-6c1).
+   *
+   * @param {number[]} list - Locant tile indices.
+   * @returns {number} How many are `N`.
+   */
+  const nitrogens = (list) => list.filter((i) => tiles[i].kind === 'nitrogen').length;
+  // A group written `N` is on the amine's nitrogen, not on the ring (R-6c3: `N-etil-p-metilanilina`, `p-bromo-N,N-dimetil…`).
   const positions = (owner ? owner.count : 0) + suffixGroups
     + prefixes.filter((item) => item.substituent)
-      .reduce((sum, item) => sum + (item.multiplier === null ? 1 : tiles[item.multiplier].value), 0);
+      .reduce((sum, item) => sum + Math.max(0, (item.multiplier === null ? 1 : tiles[item.multiplier].value) - nitrogens(item.locants)), 0);
+  // `p-metilbencenamina` (R-6c3): the letters on an amine of benzene go with `anilina`, the engine's only lettered form.
+  const amine = chain.type === 'benzene' && !owner && Boolean(parent.suffix) && isAmineSuffix(tiles[parent.suffix.tile].value);
+  // R-6c3: a carbon group without numbers on an amine's name may be the one the student meant on the nitrogen.
+  const amineParent = amine || (chain.type === 'template' && isAmineTemplate(tiles[chain.tile].value));
+  const unplaced = amineParent && prefixes.some((item) => item.substituent && item.locants.length === 0 && item.letter === null
+    && mayStandOnNitrogen(tiles, item.substituent));
   for (const holder of [...lettered, ...own]) {
     const locants = holder.type === 'parent' ? holder.legacy : holder.locants;
     const count = holder.type === 'parent' || holder.multiplier === null ? 1 : tiles[holder.multiplier].value;
-    if (locants.length > 0) {
+    if (holder.type !== 'parent' && nitrogens(locants) > 0) {
+      report(locants[0], holder.letter + 1, POSITIONAL_MESSAGES.nitrogen); // `N,p-dimetilanilina` (R-6c3): no used form.
+    } else if (locants.length > 0) {
       if (holder.type !== 'parent' || !owner.letterOnly) { // Numbers before `cresol` are its TEMPLATE_LOCANTS (R-5a3a).
         report(locants[0], holder.letter + 1, holder.type === 'parent' ? POSITIONAL_MESSAGES.bothXylene : POSITIONAL_MESSAGES.both);
       }
     } else if (positions >= 3) {
       // `2-cloro-p-cresol` (R-5a3a review): numbers would not do either, so the message points at the name from `fenol`.
       report(holder.letter, holder.letter + 1, owner && owner.letterOnly ? substitutedLetterOnlyMessage(owner)
-        : threePositionsMessage(positions, owner));
+        : threePositionsMessage(positions, owner, unplaced));
     } else if (positions < 2) {
       report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.one);
     } else if (!owner && count !== 2) {
-      report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.different);
+      report(holder.letter, holder.letter + 1, amine ? POSITIONAL_MESSAGES.amine : POSITIONAL_MESSAGES.different);
     }
   } // End of the loop over the letters
 } // End of function checkLetters()
+
+/**
+ * Tells whether a prefix's substituent is a group the engine may put on an
+ * amine's nitrogen (R-6c3; interpret.js bondsToNitrogen() reads the same on
+ * the NameSpec): a chain or ring ending in `il`, `isopropil`, `tert-butil`
+ * or `fenil` — no alkoxy, acyl, doubly bonded or one-atom group —, also as a
+ * compound branch's own chain.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} node - A substituent node.
+ * @returns {boolean} True when it may stand on the nitrogen.
+ */
+function mayStandOnNitrogen(tiles, node) {
+  const core = node.type === 'branch' ? node.chain : node;
+  if (!core || (core.oxi !== null && core.oxi !== undefined)) {
+    return false;
+  }
+  if (core.type === 'retained') {
+    return ['isopropyl', 'tert-butyl', 'phenyl'].includes(tiles[core.tile].value);
+  }
+  return core.type === 'chain' && core.fv !== null && tiles[core.fv].kind === 'freeValence' && tiles[core.fv].value === 1;
+} // End of function mayStandOnNitrogen()
 
 /**
  * Keeps the closing-bond locant `1(n)` (R-5a2) to the `eno` / `ino`
@@ -2411,12 +2642,16 @@ function checkClosing(state, tree) {
 /**
  * Keeps the locant `N` (R-6c1) to the locants of the name-level prefixes of
  * a name whose parent carries the amine suffix `amina` (the nitrogen it
- * names is that suffix's), recording TILE_ORDER on each one anywhere else: a
- * name without `amina` (HINTS.nitrogen), or in such a name a compound
- * branch's own prefixes, a free-valence locant, a segment, the old-style
- * locants before the root or the suffix's locants (HINTS.nitrogenPlace), and
- * an ester's O-bound side. A name with no parent yet has its own error, and
- * so has a tile already inside another error's range.
+ * names is that suffix's) or is an amine template (R-6c3: `anilina`,
+ * `bencilamina`, whose word places that nitrogen: `N-metilanilina`),
+ * recording TILE_ORDER on each one anywhere else: a name without `amina`
+ * (HINTS.nitrogen), or in such a name a compound branch's own prefixes, a
+ * free-valence locant, a segment, the old-style locants before the root or
+ * the suffix's locants (HINTS.nitrogenPlace), and an ester's O-bound side.
+ * In an amine's class name (R-6c3) every group is on the nitrogen and takes
+ * no `N` (checkAmineClassName() says so first; one inside a compound group
+ * gets HINTS.nitrogenPlace). A name with no parent yet has its own error,
+ * and so has a tile already inside another error's range.
  *
  * @param {object} state - Parser state.
  * @param {object} tree - The name tree.
@@ -2427,14 +2662,16 @@ function checkNitrogen(state, tree) {
   if (!tree.parent || !tiles.some((tile) => tile.kind === 'nitrogen')) {
     return;
   }
-  const { suffix } = tree.parent;
-  const amine = Boolean(suffix) && isAmineSuffix(tiles[suffix.tile].value);
+  const { suffix, chain } = tree.parent;
+  const template = chain.type === 'template' && isAmineTemplate(tiles[chain.tile].value); // `anilina` (R-6c3)
+  const amine = (Boolean(suffix) && isAmineSuffix(tiles[suffix.tile].value)) || template;
+  const classed = chain.type === 'classWord' && isAmineClassWord(tiles[chain.tile]); // `metilamina` (R-6c3): no `N` at all
   const allowed = new Set(amine ? tree.items.filter((item) => item.type === 'prefix').flatMap((item) => item.locants) : []);
   // A tile already inside another error's range (a stray `N`, numbers with no branch after them) keeps that error alone.
   const covered = (i) => state.errors.some((error) => error.from <= i && i < error.to);
   tiles.forEach((tile, i) => {
     if (tile.kind === 'nitrogen' && !allowed.has(i) && !covered(i)) {
-      addTileOrder(state, i, i + 1, amine ? HINTS.nitrogenPlace : HINTS.nitrogen);
+      addTileOrder(state, i, i + 1, amine || classed ? HINTS.nitrogenPlace : HINTS.nitrogen);
     }
   });
 } // End of function checkNitrogen()
@@ -2865,11 +3102,15 @@ export function parse(sequence) {
     } else if (tiles[state.pos].kind === 'suffixClass') {
       addTileOrder(state, state.pos, tiles.length, HINTS.acidWord); // `ácido` after the parent (R-5d1)
     } else {
-      addTileOrder(state, state.pos, tiles.length, chain.type === 'classWord' ? HINTS.afterClassWord : HINTS.afterParent);
+      let hint = chain.type === 'classWord' ? HINTS.afterClassWord : HINTS.afterParent;
+      hint = chain.type === 'classWord' && isAmineClassWord(tiles[chain.tile]) ? HINTS.afterAmineClassWord : hint; // R-6c3
+      addTileOrder(state, state.pos, tiles.length, hint);
     }
   }
   if (!tree.parent) {
     checkNameEnd(state, tree);
+  } else if (tree.parent.chain.type === 'classWord' && isAmineClassWord(tiles[tree.parent.chain.tile])) {
+    checkAmineClassName(state, tree); // `metilamina`, `dimetilamina` (R-6c3)
   } else if (tree.parent.chain.type === 'classWord') {
     checkClassName(state, tree); // `etil metil éter` (R-5b2)
   }

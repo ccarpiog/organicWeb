@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T21:39:08Z",
+  "updated": "2026-10-15T22:31:50Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -943,8 +943,11 @@
     {
       "id": "I-52c3",
       "title": "v4 R-6c3 anilina templates, amine class names, Ayuda amine line",
-      "status": "queued",
-      "summary": "Reads anilina names (N,4-dimetilanilina) and class names (metilamina, trimetilamina) and adds the help line."
+      "status": "done",
+      "summary": "Reads anilina and bencilamina names (N,4-dimetilanilina, p-cloroanilina) and amine class names (dimetilamina, trimetilamina) and adds the help line.",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, 1 should-fix fixed — docs/reviews/I-52c3.md",
+      "narrative": "docs/progress-archive/i-52c3.md"
     },
     {
       "id": "I-52c4",

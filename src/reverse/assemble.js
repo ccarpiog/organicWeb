@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -172,6 +172,17 @@
  *    (`(metilamino)`, `(dimetilamino)`, `bis(metilamino)`, the student's
  *    multipliers kept as chosen, with rule 5's hyphen before `tert-`:
  *    `bis-(tert-butilamino)`).
+ * 13. an amine's functional-class name (R-6c3, design.md §2; naming/index.js
+ *    amineClassName()): one word — the groups on the nitrogen written one
+ *    after the other with no space and no mark between them, then the
+ *    `amina` tile, the class word (`metilamina`, `dimetilamina`,
+ *    `etildimetilamina`, `tert-butiletilamina`, and `butiltert-butilamina`,
+ *    as the engine writes it, with no hyphen between two groups), rule 5's
+ *    hyphen between a multiplier and `tert-` (`di-tert-butilamina`); each
+ *    group enclosed as a prefix by itself, as rule 7 encloses an ether's
+ *    (isEnclosed(): `(propan-2-il)amina`, `(2-cloroetil)metilamina`, the
+ *    app's convention for names the engine never writes), never for its
+ *    level. The engine's own class names (simple groups) are never enclosed.
  *
  * A ring (R-4a) is a chain with its `ciclo` tile before the root, and takes
  * the same rules: `ciclohexa-1,3-dieno` (rule 2), `ciclooct-1-en-3-ino` and
@@ -244,7 +255,7 @@
 import {
   ENDINGS, ENCLOSING_MARKS, CONNECTING_VOWEL, SATURATED_INFIX, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN,
 } from '../naming/lexicon.es.js';
-import { isAtomGroup, closingText, ALKOXY_RETAINED, isAcyloxyHead, isAminoTile } from './tiles.js';
+import { isAtomGroup, closingText, ALKOXY_RETAINED, isAcyloxyHead, isAminoTile, isAmineClassWord } from './tiles.js';
 
 /**
  * Longest alkyl chain whose alkoxy prefix is contracted (rule 6, R-5b:
@@ -1099,14 +1110,16 @@ export function assemble(tree) {
     }
   }
   const classWord = Boolean(tree.parent) && isClassName(tree);
+  // `etil metil éter` (rule 7, R-5b2): spaced words; `etilmetilamina` (rule 13, R-6c3): one word.
+  const spaced = classWord && !isAmineClassName(tree);
   tree.items.forEach((item, i) => {
-    if (classWord && i > 0) {
-      out.push(spacePiece()); // `etil metil éter` (rule 7, R-5b2)
+    if (spaced && i > 0) {
+      out.push(spacePiece());
     }
     itemPieces(tree.tiles, tree.items, i, false, out, classWord);
   });
   if (tree.parent) {
-    if (classWord && tree.items.length > 0) {
+    if (spaced && tree.items.length > 0) {
       out.push(spacePiece());
     }
     parentPieces(tree.tiles, tree.parent, out);
@@ -1165,19 +1178,33 @@ function esterPieces(tiles, side, out) {
 } // End of function esterPieces()
 
 /**
- * Tells whether a tree is an ether's functional-class name (R-5b2): its
- * parent is the class word `éter`.
+ * Tells whether a tree is a functional-class name: an ether's (R-5b2), its
+ * parent the class word `éter`, or an amine's (R-6c3), its parent the
+ * `amina` tile read as the class word (isAmineClassName()).
  *
  * @param {object} tree - A parse() tree.
- * @returns {boolean} True for `etil metil éter`, `dietil éter`…
+ * @returns {boolean} True for `etil metil éter`, `dietil éter`, `metilamina`…
  */
 export function isClassName(tree) {
   return Boolean(tree.parent) && tree.parent.chain.type === 'classWord';
 }
 
 /**
- * The automatic space between two words of a class name (rule 7, R-5b2), or
- * after the class word `ácido` (rule 9, R-5d1).
+ * Tells whether a tree is an amine's functional-class name (R-6c3:
+ * `metilamina`, `dimetilamina`, `etildimetilamina`): its parent is the
+ * `amina` tile read as the class word, right after the groups (parse.js
+ * makeClassParent()).
+ *
+ * @param {object} tree - A parse() tree.
+ * @returns {boolean} True for an amine's class name.
+ */
+export function isAmineClassName(tree) {
+  return isClassName(tree) && isAmineClassWord(tree.tiles[tree.parent.chain.tile]);
+}
+
+/**
+ * The automatic space between two words of an ether's class name (rule 7,
+ * R-5b2), or after the class word `ácido` (rule 9, R-5d1).
  *
  * @returns {Piece} The piece.
  */

@@ -40,7 +40,8 @@
  *   tooltip, as `benzoato` in «Anillos»; the nitriles' `ciano` and the
  *   suffixes `nitrilo` and `carbonitrilo`, phase R-6b1, each with a tooltip,
  *   as `benzonitrilo` in «Anillos»; the amines' suffix `amina`, phase R-6c1,
- *   and the prefix `amino`, phase R-6c2, each with a tooltip —, «Nombres
+ *   and the prefix `amino`, phase R-6c2, each with a tooltip (`amina`'s
+ *   also says it ends an amine's class name, `metilamina`, phase R-6c3) —, «Nombres
  *   tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
@@ -51,7 +52,8 @@
  *   `acético`, `oxálico`, `fenilacético`, `ftálico`, `isoftálico`,
  *   `tereftálico`, phase R-5d2, the retained ester names `formiato`,
  *   `acetato`, `fenilacetato`, phase R-6a2a, the retained nitrile names
- *   `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`, phase R-6b2, these
+ *   `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`, phase R-6b2, the
+ *   retained amine names `anilina` and `bencilamina`, phase R-6c3, these
  *   and `anisol` each with a tooltip
  *   saying what it is; drafts pending teacher review), each with a «más»
  *   button for the tiles the catalogue keeps behind it;
@@ -140,8 +142,9 @@ export function positionalLabel(tile) {
  * and whether the group's carbon counts in the chain; R-6b2: the retained
  * nitrile names, what molecule each is, and which take prefixes; R-6c1:
  * `amina` and the locant `N`, what each is and where it goes; R-6c2: `amino`
- * and how the groups on its nitrogen are written; drafts pending teacher
- * review).
+ * and how the groups on its nitrogen are written; R-6c3: the retained amine
+ * names, what molecule each is and which takes prefixes, and `amina` after
+ * the groups of a class name; drafts pending teacher review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
@@ -202,7 +205,8 @@ export const TILE_HINTS = Object.freeze({
   [BENZONITRILE_ID]: 'Benceno con un grupo C≡N: bencenocarbonitrilo.',
   // R-6c1: the amines.
   [AMINA_ID]: 'Amina (grupo NH₂). Va al final, detrás de la terminación de la cadena o del anillo, con su número: '
-    + 'propan-2-amina, butano-1,4-diamina, ciclohexanamina, bencenamina.',
+    + 'propan-2-amina, butano-1,4-diamina, ciclohexanamina, bencenamina. También va justo detrás de los grupos unidos al '
+    + 'nitrógeno, sin números: met, il y amina dan metilamina; di, met, il y amina, dimetilamina.',
   [NITROGEN_ID]: 'Dice que una rama va unida al nitrógeno de la amina, no a un carbono. Va delante de la rama, como un número: '
     + 'N-metiletanamina; con dos ramas, N,N-dimetilmetanamina; junto a números, N,2-dimetilpropan-1-amina.',
   // R-6c2: the amino prefixes.
@@ -252,6 +256,10 @@ export const TILE_HINTS = Object.freeze({
   'template-phenylacetonitrile': 'Etanonitrilo con un fenil en el carbono 2: 2-feniletanonitrilo.',
   'template-phthalonitrile': 'Benceno con dos grupos C≡N en carbonos vecinos: benceno-1,2-dicarbonitrilo. Admite ramas en el '
     + 'anillo: 4-metilftalonitrilo.',
+  // R-6c3: the retained amine names; their nitrogen takes `N` locants.
+  'template-aniline': 'Benceno con un grupo NH₂: bencenamina. Admite ramas en el anillo y, con «N», en el nitrógeno: '
+    + '4-cloroanilina, N-metilanilina, N,4-dimetilanilina.',
+  'template-benzylamine': 'Un carbono con un grupo NH₂ y un fenil: fenilmetanamina.',
 });
 
 /** Text of the empty name line. */
@@ -313,7 +321,8 @@ function make(doc, tag, className, text) {
  * beside their mark (the mark hidden from screen readers); an orto/meta/para
  * letter shows its word, small, beside the letter (R-4c); a tile of
  * TILE_HINTS gets its tooltip (R-5a2: `1(n)`; R-5a3a: the retained phenols; R-5c3a: the retained carbonyl names; R-5d2: the
- * retained acid names; R-6a2a: the retained ester names; R-6b2: the retained nitrile names; R-6c1: `amina`, `N`).
+ * retained acid names; R-6a2a: the retained ester names; R-6b2: the retained nitrile names; R-6c1: `amina`, `N`; R-6c3: the
+ * retained amine names).
  *
  * @param {Document} doc - The document.
  * @param {{id: string, kind: string, text: string, more: boolean}} tile - A catalogue tile.

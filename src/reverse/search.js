@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -95,7 +95,13 @@
  *   groups take one implicit slot each and whose valence is three
  *   (NITROGEN_VALENCE: one less than a carbon's), so only the left-out
  *   locants inside a group are searched (`[(cloroetil)amino]`) and the
- *   prefix's own (`aminopropanol`: amino and OH on any carbons).
+ *   prefix's own (`aminopropanol`: amino and OH on any carbons). The
+ *   nitrogen of an amine's class name (R-6c3, ParentSpec kind 'amine') is
+ *   such a one-atom chain too, the parent, whose groups take one implicit
+ *   slot each (`(cloroetil)metilamina`: the chlorine's locant searched); the
+ *   retained `anilina` and `bencilamina` (R-6c3) are templates whose
+ *   nitrogen, the placed suffix, counts its bonds at index N_VALUE as an
+ *   `amina` suffix's (`metilanilina`: `N`, 2, 3 or 4).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -404,6 +410,9 @@ function addChain(model, owner, branch) {
 function modelOf(spec) {
   const model = { chains: [], groups: [], index: new Map(spec.leftOut.map((slot, i) => [slot, i])) };
   const parent = addChain(model, { ...spec.parent, prefixes: [...spec.prefixes, ...templateGroups(spec)] }, false); // A template's groups too (R-4c).
+  if (spec.parent.kind === AMINE_KIND) {
+    model.chains[parent].used[1] += CARBON_VALENCE - NITROGEN_VALENCE; // The nitrogen of an amine's class name: three bonds (R-6c3).
+  }
   if (spec.suffix) {
     // One OH per slot (R-5a2); a C=O of `al` or `ona` takes two bonds, a –CHO of `carbaldehído` one (its own carbon; R-5c1); a
     // –COOH of `oico` three, of `carboxílico` one (R-5d1); a –COO– of `oato` three, of `carboxilato` one (R-6a1).
@@ -926,8 +935,8 @@ export function filledTree(tree, spec, placement, keep = {}) {
     return [...values].sort((p, q) => p.order - q.order).map((entry) => tiles.push(tileOf(entry)) - 1);
   };
   /**
-   * A chain node with its segments filled (ring bonds for a ring); `benceno`, a template and the `éter` of a class name
-   * (R-5b2) as they are.
+   * A chain node with its segments filled (ring bonds for a ring); `benceno`, a template and the class word of a class name
+   * (R-5b2: `éter`; R-6c3: `amina`) as they are.
    *
    * @param {object} chain - A chain, benzene, template or classWord node.
    * @returns {object} The filled node.

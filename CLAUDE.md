@@ -291,9 +291,21 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   keeps the shared rules (the groups on the nitrogen read first:
   `[metil(metil)amino]` UNGROUPED), a principal amine written `amino` and an
   amine group written `amino` beside `amina` being the «Amines» `seniority`
-  and `count` nulls. Next is R-6c3 (phase I-52c3): `anilina` templates,
-  class names (`metilamina`, `dimetilamina`, `trimetilamina`), Ayuda amine
-  line.
+  and `count` nulls. R-6c3 (phase I-52c3) is done: the «Nombres
+  tradicionales» row's `anilina` and `bencilamina` read the retained amine
+  names as the engine writes them (`anilina`, `N-metilanilina`,
+  `N,4-dimetilanilina`, `4-cloroanilina`, `p-cloroanilina`,
+  `N-etil-p-metilanilina`, `p-bromo-N,N-dimetilanilina`; `bencilamina` bare
+  only, a prefix on it SUBSTITUTED_TEMPLATE), their nitrogen taking `N`
+  locants, an `N` and an o/m/p letter on one prefix POSITIONAL
+  (`N,p-dimetilanilina`); the `amina` tile right after the groups on the
+  nitrogen is an amine class name's class word, the name one word
+  (`metilamina`, `dimetilamina`, `trimetilamina`, `etildimetilamina`,
+  `di-tert-butilamina`), read as the engine's alternatives and any other
+  class name as `otherName`; the class names' and the templates' own
+  mistakes are deliberate «Amines» nulls; the Ayuda has its amine line. Next
+  is R-6c4 (phase I-52c4): amine diagnosis messages (fill the «Amines»
+  nulls).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

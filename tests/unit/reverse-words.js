@@ -17,7 +17,8 @@
  * `metoxicarbonil`) and their nitriles (R-6b1: the suffixes `nitrilo` and
  * `carbonitrilo`, `benzonitrilo`, the prefix `ciano`; R-6b2: the retained
  * nitrile names) and their amines (R-6c1: the suffix `amina` and the locant
- * `N`; R-6c2: the `amino` prefixes; `anilina` and the class names later) —
+ * `N`; R-6c2: the `amino` prefixes; R-6c3: the retained `anilina` and
+ * `bencilamina` and the class names, `metilamina`, `dimetilamina`) —
  * the amides' own words (`amida`, `carbamoil`, the acylamino prefixes) being
  * a later phase's (R-6d; isAmideName()), though an amide prefix the engine
  * writes `amino` + `oxo` reads since R-6c2.
@@ -635,11 +636,30 @@ export function isAmine(smiles) {
 }
 
 /**
- * Words of amine names the tiles write only in later phases (R-6c3: the
- * retained `anilina`, also `N,4-dimetilanilina`); until phase R-6c2 the
- * prefix `amino` too, also inside `(metilamino)`, `(dimetilamino)`.
+ * Words of amine names the tiles write only in later phases: none since
+ * phase R-6c3, whose «Nombres tradicionales» tiles write `anilina` (also
+ * `N,4-dimetilanilina`) and `bencilamina`; until then `anilina`, and until
+ * phase R-6c2 the prefix `amino` too, also inside `(metilamino)`.
  */
-export const LATER_AMINE_WORDS = Object.freeze([TRADITIONAL_NAMES.aniline]);
+export const LATER_AMINE_WORDS = Object.freeze([]);
+
+/**
+ * The words of the retained amine templates (R-6c3), from the lexicon, in
+ * the order of their tiles: `anilina`, `bencilamina`.
+ */
+export const AMINE_TEMPLATE_WORDS = Object.freeze([TRADITIONAL_NAMES.aniline, TRADITIONAL_NAMES.benzylamine]);
+
+/**
+ * Tells whether a name uses a retained amine template of phase R-6c3
+ * (AMINE_TEMPLATE_WORDS: `anilina`, `N-metilanilina`, `p-cloroanilina`,
+ * `bencilamina`).
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for a name with `anilina` or `bencilamina`.
+ */
+export function isAmineTemplateName(name) {
+  return AMINE_TEMPLATE_WORDS.some((word) => name.includes(word));
+}
 
 /** The amino prefix (R-6c2), from the lexicon: `amino`, also in `(metilamino)`, `[etil(metil)amino]`. */
 export const AMINO_WORD = GROUP_PREFIXES.amine;
@@ -746,25 +766,38 @@ export function isAmide(smiles) {
 
 /**
  * An amine's functional-class name (phase R-6c3: `metilamina`,
- * `dimetilamina`, `etilmetilamina`, `trimetilamina`, and the traditional
- * `bencilamina`): the groups on the nitrogen, ending in `il`, then `amina`,
- * in one word. No substitutive name ends that way: a parent's ending before
- * `amina` is `an`, `en`, `in` or `bencen`.
+ * `dimetilamina`, `etilmetilamina`, `trimetilamina`) — and the retained
+ * `bencilamina`, which ends the same way: the groups on the nitrogen, ending
+ * in `il`, then `amina`, in one word. No substitutive name ends that way: a
+ * parent's ending before `amina` is `an`, `en`, `in` or `bencen`.
  */
 export const AMINE_CLASS_NAME = new RegExp(`${FREE_VALENCE_SUFFIXES[1]}${GROUP_SUFFIXES.amine}$`);
 
 /**
+ * Tells whether a name is an amine's functional-class name (R-6c3:
+ * `metilamina`, `di-tert-butilamina`; AMINE_CLASS_NAME), not the retained
+ * `bencilamina`.
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for a class name.
+ */
+export function isAmineClassName(name) {
+  return AMINE_CLASS_NAME.test(name) && !isAmineTemplateName(name);
+}
+
+/**
  * Tells whether an amine's name (or an alternative) is one the tiles write
- * (phases R-6c1 and R-6c2: the amino prefixes too): no word of the later
- * amine phases (LATER_AMINE_WORDS), no class name (AMINE_CLASS_NAME) and no
- * word of the amides (isAmideName(), R-6d: a molecule with an amine and an
- * amide, `3-amino-N-metilpropanamida`).
+ * (phases R-6c1 and R-6c2: the amino prefixes too; R-6c3: `anilina`,
+ * `bencilamina` and the class names too): no word of a later amine phase
+ * (LATER_AMINE_WORDS, none since R-6c3) and no word of the amides
+ * (isAmideName(), R-6d: a molecule with an amine and an amide,
+ * `3-amino-N-metilpropanamida`).
  *
  * @param {string} name - The name.
  * @returns {boolean} True when it can be built from the tiles.
  */
 export function isAmineName(name) {
-  return !LATER_AMINE_WORDS.some((word) => name.includes(word)) && !AMINE_CLASS_NAME.test(name) && !isAmideName(name);
+  return !LATER_AMINE_WORDS.some((word) => name.includes(word)) && !isAmideName(name);
 }
 
 /**

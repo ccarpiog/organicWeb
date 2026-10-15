@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -30,7 +30,27 @@
  * the retained `acetonitrilo`, `fenilacetonitrilo` and `ftalonitrilo`) and
  * their amines (R-6c1: the suffix `amina` and the locant `N` of a group on
  * the principal amine's nitrogen; R-6c2: the amino prefixes, `amino`,
- * `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`). Pure, no DOM.
+ * `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`; R-6c3: the
+ * retained `anilina` and `bencilamina` and the class names, `metilamina`,
+ * `dimetilamina`, `trimetilamina`). Pure, no DOM.
+ *
+ * The retained amine names and the amines' class names (R-6c3) need nothing
+ * of their own here either: the parser reads `anilina` and `bencilamina` as
+ * templates whose nitrogen takes `N` locants, and the `amina` tile right
+ * after the groups as a class name's class word; the assembler writes a
+ * class name in one word; the builder puts the template's nitrogen at its
+ * carbon 1, or makes a class name's nitrogen the parent; and the engine names
+ * the molecule (`anilina`, `N-metilanilina`, `N,4-dimetilanilina`,
+ * `4-cloroanilina`, `p-cloroanilina`, `p-bromo-N,N-dimetilanilina`,
+ * `bencilamina`, `metilamina`, `dimetilamina`, `trimetilamina`,
+ * `etildimetilamina`, `di-tert-butilamina` → `alternative`; `metilanilina`,
+ * `cloroanilina` → `ambiguous`; `N-metilbencilamina`, `4-hidroxianilina`,
+ * `metiletilamina`, `ciclohexilamina` → `otherName`; `N,p-dimetilanilina` →
+ * `invalid` POSITIONAL; `tetrametilamina`, `N,N,N-trimetilanilina` →
+ * `invalid` VALENCE on the nitrogen; `N-fenilanilina`, `difenilamina` →
+ * `outOfScope`, two rings). Their own mistakes are diagnose.js «Amines»'s
+ * deliberate nulls (phase I-52c4), but SUBSTITUTED_TEMPLATE on
+ * `bencilamina` and the shared rules on `anilina`'s prefixes.
  *
  * The amino prefixes (R-6c2) need nothing of their own here either: the
  * parser reads `amino` as a retained word and, as a compound branch's own

@@ -1174,6 +1174,33 @@
  * is a prefix the engine writes `amino` + `oxo` (`ácido
  * 4-amino-4-oxobutanoico`), and the rules run as for any prefixes.
  *
+ * The retained amine names (R-6c3, phase I-52c3: `anilina`, `bencilamina`;
+ * their nitrogen the placed suffix, kind 'amine') run the rules as `fenol`
+ * and `fenilacetonitrilo` do, and the amine nulls above stay theirs: an
+ * `anilina` beside a senior group (`4-hidroxianilina` → «4-aminofenol»,
+ * `N-acetilanilina` → «N-feniletanamida») is `seniority`, a second amine
+ * group written `amino` (`4-aminoanilina` → «benceno-1,4-diamina») is
+ * `count`, a `bencilamina` whose group on the nitrogen takes the parent
+ * (`N-etilbencilamina`) is `side`. The engine writes `anilina` with every
+ * prefix it names (tiles.js templateAdmits(): `substitutable`), so the ring
+ * rules judge its prefixes (RING_NUMBERING `6-metilanilina`,
+ * ALPHABETICAL_ORDER `N-metil-4-cloroanilina`, UNGROUPED
+ * `N-metil-N-metilanilina`; a letter is no word of a prefix, wordsOf(), so
+ * `N-metil-p-etilanilina` reads «etil» before «metil»); `bencilamina` only
+ * bare, so any prefix the engine names otherwise is SUBSTITUTED_TEMPLATE
+ * (`N-metilbencilamina` → «1-fenil-N-metilmetanamina»). A prefix in a style
+ * the engine never writes on `anilina` (`4-(propan-2-il)anilina`, which it
+ * writes `4-isopropilanilina`) is the cross-family open question of the
+ * retained words' prefix style, a null as for `ftalonitrilo`. An amine's
+ * functional-class name (R-6c3: `metilamina`, `dimetilamina`; assemble.js
+ * isAmineClassName()) the engine does not list — its groups out of
+ * alphabetical order (`metiletilamina`), a repeated group written twice
+ * (`metilmetilamina`), other words (`(propan-2-il)amina`), or an amine
+ * with no class name (`ciclohexilamina`, `fenilamina`, `etenilamina`,
+ * `(2-cloroetil)metilamina`) — gets a deliberate null before every rule
+ * (diagnose()), for phase I-52c4 to word; the ether's class-name rules never
+ * read it.
+ *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
  * (the class-name step's in CLASS_NAME_STEP_TEXTS), and DIAGNOSES gives
@@ -1196,7 +1223,8 @@ import {
   ESTER_ALKYL_ENDING, ESTER_ALKYL_JOIN,
 } from '../naming/lexicon.es.js';
 import {
-  assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, isClassName, esterPrefixKind, esterGroupsOf, isAminoNode,
+  assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, isClassName, isAmineClassName, esterPrefixKind, esterGroupsOf,
+  isAminoNode,
 } from './assemble.js';
 import { ownPrefixAtoms, specRings, isRing, isAromatic } from './build.js';
 import {
@@ -2623,16 +2651,17 @@ function unwrap(text) {
 }
 
 /**
- * The words of a prefix as the student wrote them, without its locants,
- * multiplier and outer enclosing marks: `metil`, `propan-2-il`,
- * `2,2-dimetilpropil`, `tert-butil`.
+ * The words of a prefix as the student wrote them, without its locants, its
+ * orto/meta/para letter (a locant too: R-6c3, `N-etil-p-metilanilina` cites
+ * «etil» before «metil», the letter not counted), multiplier and outer
+ * enclosing marks: `metil`, `propan-2-il`, `2,2-dimetilpropil`, `tert-butil`.
  *
  * @param {object} tree - The parse() tree.
  * @param {object} item - One of its prefix nodes.
  * @returns {string} The words.
  */
 function wordsOf(tree, item) {
-  return unwrap(itemText(tree, { ...item, locants: [], multiplier: null }));
+  return unwrap(itemText(tree, { ...item, locants: [], letter: null, multiplier: null }));
 }
 
 /**
@@ -7576,6 +7605,9 @@ export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
   const { parentKind } = verdict.naming.structure;
   if (!['chain', 'ring'].includes(parentKind)) {
     return null;
+  }
+  if (isAmineClassName(name.tree)) {
+    return null; // An amine's class name (R-6c3, file header «Amines»): its own mistakes are phase I-52c4's.
   }
   if (isClassName(name.tree)) { // `éter` only: the class word `ácido` (R-5d1) starts a substitutive name.
     // `(1-oxoetil) metil éter` is an ester, not an ether (R-6a3b, ESTER_CLASS_NAME); `metil etil éter` (R-5b2, «Ethers»).

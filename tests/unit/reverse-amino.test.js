@@ -343,9 +343,12 @@ test('tokenizer (R-6c2): amino names read; the amides\' words never tokenize', (
   assert.deepEqual(tokenize('etanoato de 2-aminoetilo'), seq('et ano oato 2 amino et ilo'));
   for (const name of ['2-(acetilamino)etan-1-ol', 'ácido 2-(acetilamino)etanoico', 'ácido 2-[acetil(metil)amino]etanoico',
     'ácido 2-(benzoilamino)etanoico', 'ácido 2-[(2-metilpropanoil)amino]etanoico', '2-aminopropanamida', '3-amino-N-metilpropanamida',
-    '4-aminociclohexano-1-carboxamida', 'ácido 3-carbamoilpropanoico', 'anilina', '4-metilanilina', 'metilamina', 'dimetilamina',
-    'trimetilamina', 'bencilamina']) {
+    '4-aminociclohexano-1-carboxamida', 'ácido 3-carbamoilpropanoico']) {
     assert.equal(tokenize(name), null, name);
+  }
+  // Since phase R-6c3 the retained amine names and the class names read (reverse-amine-templates.test.js).
+  for (const name of ['anilina', '4-metilanilina', 'metilamina', 'dimetilamina', 'trimetilamina', 'bencilamina']) {
+    assert.ok(tokenize(name), name);
   }
   // The helper that sets the amides' names apart (reverse-words.js): an acyl group among the groups on an amino prefix's nitrogen.
   assert.deepEqual(['ácido 2-[acetil(metil)amino]etanoico', 'ácido 2-{[4-(2-metilpropil)benzoil]amino}etanoico',
@@ -866,7 +869,7 @@ test('closed loop over the generators\' amino names: engine name → tiles → r
         continue; // Read by its own family's loop.
       }
       if (!isAmineName(name)) {
-        counts.later += 1; // The amides' words (R-6d), or `anilina` and the class names (R-6c3).
+        counts.later += 1; // The amides' words (R-6d).
         assert.equal(tokenize(name), null, name);
         continue;
       }

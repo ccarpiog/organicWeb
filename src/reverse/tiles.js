@@ -48,8 +48,10 @@
  *   –COO– is the principal group, followed by the O-bound side as after
  *   `oato` — all three on an open chain; R-6b2: the retained nitrile names
  *   `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`, whose –C≡N groups
- *   are the principal group — the first two on an open chain; value the
- *   TEMPLATES key),
+ *   are the principal group — the first two on an open chain; R-6c3: the
+ *   retained amine names `anilina` and `bencilamina`, whose nitrogen is the
+ *   principal group and takes `N` locants — the second on an open chain;
+ *   value the TEMPLATES key),
  *   'positional' (the old orto/meta/para letters `o`, `m`, `p`, R-4c: the two
  *   occupied positions of a benzene ring; value the locant of the second
  *   one, 2 | 3 | 4, the POSITIONAL_LETTERS keys), 'halogen' (the halogen
@@ -172,7 +174,11 @@
  *   prefix bonded to the nitrogen of the principal amine, not to a carbon —
  *   `N-metiletanamina`, `N,N-dimetilmetanamina`, `N,2-dimetilpropan-1-amina`;
  *   its text N_TEXT, structure.js locantText(N_LOCANT)), in the «Números»
- *   row after the numbers; and (R-6c2) `amino` (kind 'retained', value
+ *   row after the numbers; the `amina` tile is also the class word of an
+ *   amine's functional-class name (R-6c3: right after the groups on the
+ *   nitrogen, with no parent before it — `met il amina` → `metilamina`, `et
+ *   il di met il amina` → `etildimetilamina`; isAmineClassWord()); and
+ *   (R-6c2) `amino` (kind 'retained', value
  *   AMINO_KIND: an amine's nitrogen as a prefix, single-bonded to the carbon its
  *   locant gives — `2-aminoetan-1-ol`, `ácido 2-aminopropanoico`; the lexicon's
  *   GROUP_PREFIXES.amine), which like `fenil` may be the own chain of a
@@ -198,7 +204,8 @@
  *   names, `formaldehído` … `tereftalaldehído`; R-5d2: the retained acid
  *   names, `fórmico` … `tereftálico`; R-6a2a: the retained ester names,
  *   `formiato`, `acetato`, `fenilacetato`; R-6b2: the retained nitrile
- *   names, `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`);
+ *   names, `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`; R-6c3: the
+ *   retained amine names, `anilina`, `bencilamina`);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
  *   multipliers from hepta / heptakis, roots from undec).
  */
@@ -571,6 +578,36 @@ export const AMINE_NITROGEN_FREE = NITROGEN_VALENCE - 1;
 export const AMINE_NITROGEN = 'nitrógeno de la amina';
 
 /**
+ * How the messages call the group an amine template's word places (R-6c3:
+ * the NH₂ of `anilina` and `bencilamina`), as «grupo C≡N» for a nitrile
+ * template's.
+ */
+export const AMINE_GROUP = 'grupo NH₂';
+
+/**
+ * Tells whether a tile is the class word of an amine's functional-class name
+ * (R-6c3: `metilamina`, `dimetilamina`, `etildimetilamina`): the `amina` tile
+ * itself, the suffix of R-6c1. One tile, two places (decision of phase
+ * I-52c3): after a parent's ending it is the suffix (`etanamina`), right
+ * after the groups of a class name — a complete prefix, with no parent
+ * before it — the class word (parse.js makeClassParent()); the student
+ * picks the same `amina` either way, as the engine writes the same word.
+ *
+ * @param {{kind: string, value: *}} tile - A catalogue tile.
+ * @returns {boolean} True for `amina`.
+ */
+export function isAmineClassWord(tile) {
+  return tile.kind === 'suffix' && tile.value === AMINE_KIND;
+}
+
+/**
+ * The most groups the nitrogen of an amine's class name carries (R-6c3):
+ * its three bonds (`trimetilamina`); a fourth group is build.js's VALENCE on
+ * the nitrogen.
+ */
+export const AMINE_CLASS_GROUPS = NITROGEN_VALENCE;
+
+/**
  * Id of the `amino` tile (design.md §15.8 R-6c; phase R-6c2: an amine's
  * nitrogen as a prefix, `2-aminoetan-1-ol`; with the groups on its nitrogen,
  * the own chain of a compound branch, `(metilamino)`).
@@ -823,8 +860,19 @@ function placedSuffix(value, positions) {
  * (`substitutable`: `4-metilftalonitrilo`); it writes no `isoftalonitrilo` or
  * `tereftalonitrilo` (aromatic.js: of the benzene dinitriles only the 1,2 one
  * has a retained name), so neither is a tile.
- * Later phases add the retained parents with another principal group
- * (`anilina`, `acetamida`…).
+ * R-6c3 adds the retained amine names the forward engine gives (aromatic.js
+ * traditionalNameId(): 'aniline'; principal.js carbonylTraditionalId():
+ * 'benzylamine'), whose `suffix` places the amine's nitrogen as `fenol`
+ * places its OH (SUFFIX_GROUPS `amine`, at carbon 1): `anilina` (bencenamina:
+ * benzene with its NH₂ at carbon 1; keyed by its TRADITIONAL_NAMES id) and
+ * `bencilamina` (fenilmetanamina: a chain of one carbon with the NH₂ and a
+ * phenyl on it, as `acetofenona` holds its C=O and its phenyl on carbon 1).
+ * The engine writes `anilina` with every prefix it names on the ring and on
+ * the nitrogen (`substitutable`: `4-cloroanilina`, `N-metilanilina`,
+ * `N,4-dimetilanilina`, `p-bromo-N,N-dimetilanilina`; never for a diamine,
+ * which has no anilina), and `bencilamina` for the bare molecule only; both
+ * take `N` locants on their nitrogen like an `amina` suffix (parse.js
+ * checkNitrogen()). A later phase adds the amides' (`acetamida`…).
  */
 export const TEMPLATES = Object.freeze({
   toluene: Object.freeze({ id: 'toluene', group: METHYL, count: 1, positions: Object.freeze([1]), hydroxy: NONE }),
@@ -913,6 +961,15 @@ export const TEMPLATES = Object.freeze({
   phthalonitrile: Object.freeze({
     group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix('carbonitrile', [1, 2]), substitutable: true,
   }),
+  // R-6c3: the retained amine names; the NH₂ at carbon 1 of the ring, or of the one-carbon chain with its phenyl.
+  aniline: Object.freeze({
+    id: 'aniline', group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix(AMINE_KIND, [1]), substitutable: true,
+    feminine: true,
+  }),
+  benzylamine: Object.freeze({
+    id: 'benzylamine', chain: 1, group: PHENYL, count: 1, positions: Object.freeze([1]), hydroxy: NONE,
+    suffix: placedSuffix(AMINE_KIND, [1]), feminine: true,
+  }),
 });
 
 /**
@@ -921,14 +978,28 @@ export const TEMPLATES = Object.freeze({
  * `fenilacetaldehído`, the ftalaldehídos): its word places an aldehyde's or
  * a ketone's C=O (not an acid's –COOH: isAcidTemplate(); nor an ester's
  * –COO–, R-6a2a: isEsterTemplate(); nor a nitrile's –C≡N, R-6b2:
- * isNitrileTemplate()).
+ * isNitrileTemplate(); nor an amine's nitrogen, R-6c3: isAmineTemplate()).
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {boolean} True for a carbonyl template.
  */
 export function isCarbonylTemplate(value) {
   const { suffix } = TEMPLATES[value];
-  return Boolean(suffix) && !isAcidSuffix(suffix.value) && !isEsterSuffix(suffix.value) && !isNitrileSuffix(suffix.value);
+  return Boolean(suffix) && !isAcidSuffix(suffix.value) && !isEsterSuffix(suffix.value) && !isNitrileSuffix(suffix.value)
+    && !isAmineSuffix(suffix.value);
+}
+
+/**
+ * Tells whether a template is one of the retained amine names (R-6c3:
+ * `anilina`, `bencilamina`): its word places an amine's nitrogen at carbon 1,
+ * which takes the student's `N` locants (`N-metilanilina`).
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @returns {boolean} True for an amine template.
+ */
+export function isAmineTemplate(value) {
+  const { suffix } = TEMPLATES[value];
+  return Boolean(suffix) && isAmineSuffix(suffix.value);
 }
 
 /**
@@ -988,8 +1059,8 @@ export const ACID_ESTER_TEMPLATES = Object.freeze({ formicAcid: 'formate', aceti
  * one carbon, `acetaldehído`, `acetofenona` and `fenilacetaldehído` two,
  * `acetona` three; R-5d2: `fórmico` one, `acético`, `oxálico` and
  * `fenilacético` two; R-6a2a: `formiato` one, `acetato` and `fenilacetato`
- * two; R-6b2: `acetonitrilo` and `fenilacetonitrilo` two), not the benzene
- * ring.
+ * two; R-6b2: `acetonitrilo` and `fenilacetonitrilo` two; R-6c3:
+ * `bencilamina` one), not the benzene ring.
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {boolean} True for a chain template.
@@ -1018,8 +1089,9 @@ export function templateLength(value) {
  * 2, the two of `ftálico` outside the ring at 1 and 2) or the –COO– of an
  * ester template (R-6a2a: `acetato`'s at 1) or the –C≡N groups of a nitrile
  * template (R-6b2: `acetonitrilo`'s at 1, the two of `ftalonitrilo` outside
- * the ring at 1 and 2); null for a template without one (`tolueno`,
- * `anisol`…).
+ * the ring at 1 and 2) or the nitrogen of an amine template (R-6c3:
+ * `anilina`'s and `bencilamina`'s at 1); null for a template without one
+ * (`tolueno`, `anisol`…).
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {{value: string, positions: readonly number[]}|null} The SUFFIX_GROUPS key and the parent's carbons, or null.
@@ -1045,7 +1117,9 @@ export function templateSuffix(value) {
  * `fenilacético`), and (R-6a2a) `acetato` ('arylacetate': `2-(4-metilfenil)acetato
  * de etilo`; bare, the one word `fenilacetato`), and (R-6b2) `ftalonitrilo`
  * (`4-metilftalonitrilo`) and `acetonitrilo` ('arylacetonitrile':
- * `2-(4-metilfenil)acetonitrilo`; bare, the one word `fenilacetonitrilo`). The
+ * `2-(4-metilfenil)acetonitrilo`; bare, the one word `fenilacetonitrilo`), and
+ * (R-6c3) `anilina` with any prefixes, on the ring or on its nitrogen
+ * (`4-cloroanilina`, `N,4-dimetilanilina`; `bencilamina` none). The
  * student's prefixes are given as interpret.js PrefixSpecs.
  *
  * @param {string} value - A TEMPLATES key.
@@ -1172,7 +1246,7 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * `fenilacético`, `ftálico`, `isoftálico`, `tereftálico`, then the retained
  * ester names `formiato`, `acetato`, `fenilacetato`, R-6a2a, then the
  * retained nitrile names `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`,
- * R-6b2); R-6a1 adds
+ * R-6b2, then the retained amine names `anilina`, `bencilamina`, R-6c3); R-6a1 adds
  * `benzoato` to the rings, after `benzoico`, and `oato`, `carboxilato` and
  * `ilo` to the groups, at their end; R-6b1 `benzonitrilo` to the rings,
  * after `benzoato`, and `ciano`, `nitrilo` and `carbonitrilo` to the groups,

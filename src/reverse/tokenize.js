@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -108,13 +108,20 @@
  * `(aminometil)`), and as a compound branch's own chain it closes the groups
  * on its nitrogen, read inside the START / END controls as any prefixes,
  * every one after the first in an automatic enclosure (`(dimetilamino)`,
- * `[etil(metil)amino]`, `[(2-cloroetil)amino]`). A step budget bounds the
- * search: running out returns null, never a guess.
+ * `[etil(metil)amino]`, `[(2-cloroetil)amino]`). The retained amine names
+ * (R-6c3: `anilina`, `bencilamina`) are templates (TPL), after `N` locants
+ * too (`N,N-dimetilanilina`), and an orto/meta/para letter may stand on a
+ * later prefix as well (`N-etil-p-metilanilina`: POS after a complete
+ * prefix); an amine's class name (R-6c3: `metilamina`, `etildimetilamina`,
+ * `di-tert-butilamina`, `butiltert-butilamina`) reads its `amina` as class
+ * AMCLASS right after a complete group — `il`, a retained word or `fenil`,
+ * a closed enclosure —, one word with no space, which ends the name. A step
+ * budget bounds the search: running out returns null, never a guess.
  */
 
 import { CONNECTING_VOWEL, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN } from '../naming/lexicon.es.js';
 import {
-  TILES, START_ID, END_ID, CLOSING_ID, ALKOXY_RETAINED, GROUP_WORD_PARENTS, tileId, isEsterSuffix, isEsterTemplate,
+  TILES, START_ID, END_ID, CLOSING_ID, ALKOXY_RETAINED, GROUP_WORD_PARENTS, tileId, isEsterSuffix, isEsterTemplate, isAmineClassWord,
 } from './tiles.js';
 import { parse } from './parse.js';
 import { assemble, separator } from './assemble.js';
@@ -160,7 +167,8 @@ const PUNCTUATION = ',-';
  * before `ilo`: `isopropilo`, `fenilo`); for the retained ester names
  * (R-6a2a) TPLEST, a template whose word is an ester's acid part; for the
  * ester prefixes (R-6a2b) ALKCARB the `carbonil` after `oxi`, and INNER_ACYL /
- * INNER_ALK the closing mark of an ester prefix's inner part (innerClass()).
+ * INNER_ALK the closing mark of an ester prefix's inner part (innerClass()); for an amine's class name (R-6c3) AMCLASS, a
+ * second surface of the `amina` tile right after the groups (`metilamina`).
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -205,8 +213,11 @@ const BEFORE_SPACE = new Set(['FV', 'RET', 'PHE', 'END']);
 /** Classes that may begin a name, a prefix or a compound branch (RETX, PHEX: a retained word before `oxi`, R-5b). */
 const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'RETX', 'PHEX'];
 
-/** Classes that may follow a complete prefix: another prefix, the end of its compound branch, `benceno`, `fenol` or a template. */
-const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'PHEST', 'TPL', 'TPLEST'];
+/**
+ * Classes that may follow a complete prefix: another prefix, the end of its compound branch, `benceno`, `fenol` or a template;
+ * R-6c3: an orto/meta/para letter on the next prefix (`N-etil-p-metilanilina`: a group written `N` takes no ring position).
+ */
+const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'PHEST', 'TPL', 'TPLEST', 'POS'];
 
 /**
  * The classes that may follow each class in a valid name (design.md
@@ -243,9 +254,9 @@ const FOLLOW = Object.freeze({
   A: new Set(['NUM', 'CLO', 'MULT']),
   ANO: new Set(['NUM', 'MULT', 'MULTE', 'OL', 'EST', 'OIL', 'CARB']),
   ENE: new Set(['NUM', 'CLO', 'MULT', 'MULTE', 'ENE', 'FV', 'OL', 'EST', 'OIL', 'CARB', 'ILO']),
-  FV: new Set([...AFTER_PREFIX, 'OXI']),
-  RET: new Set([...AFTER_PREFIX, 'OXI']), // `acetil` + `oxi` (R-6a2b)
-  PHE: new Set(AFTER_PREFIX),
+  FV: new Set([...AFTER_PREFIX, 'OXI', 'AMCLASS']), // R-6c3: `metil` + `amina`, a class name
+  RET: new Set([...AFTER_PREFIX, 'OXI', 'AMCLASS']), // `acetil` + `oxi` (R-6a2b); `isopropil` + `amina` (R-6c3)
+  PHE: new Set([...AFTER_PREFIX, 'AMCLASS']),
   RETX: new Set(['OXI', 'ILO']), // `isoprop` + `oxi` (R-5b), + `ilo` (R-6a1)
   PHEX: new Set(['OXI', 'ILO']),
   OXI: new Set([...AFTER_PREFIX, 'ALKCARB']), // `oxi` + `carbonil` (R-6a2b)
@@ -258,7 +269,7 @@ const FOLLOW = Object.freeze({
   INNER_ALK: new Set(['ALKCARB']),
   HAL: new Set(AFTER_PREFIX),
   START: new Set(PREFIX_STARTS),
-  END: new Set(AFTER_PREFIX),
+  END: new Set([...AFTER_PREFIX, 'AMCLASS']), // `(2-cloroetil)` + `amina` (R-6c3)
   BEN: new Set(['NUM', 'MULT', 'MULTE', 'OL', 'EST']),
   BENE: new Set(['NUM', 'OL']),
   OL: new Set(),
@@ -267,6 +278,8 @@ const FOLLOW = Object.freeze({
   // R-5b2: after a class name's space, another group (its multiplier first) or `éter`, which ends the name.
   SPACE: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'START', 'ETHER']),
   ETHER: new Set(),
+  // R-6c3: the `amina` of an amine's class name, right after its groups (one word, no space), ends the name.
+  AMCLASS: new Set(),
   // R-6a1: after an ester suffix or `benzoato`, only ` de ` (search()); after ` de ` or ` y `, an O-bound group (its
   // multiplier or its bare prefixes first); after `ilo`, the END of its compound branch, ` y ` or the end of the name.
   // R-6a2a: after a retained ester word too, only ` de `.
@@ -280,9 +293,9 @@ const FOLLOW = Object.freeze({
 
 /**
  * Classes a valid name may end with (the parent's ending, `benceno`, `fenol`, a template, the suffix `ol` or `éter`; R-6a1: an
- * ester's last O-bound group, `ilo`).
+ * ester's last O-bound group, `ilo`; R-6c3: the `amina` of an amine's class name).
  */
-const FINAL = new Set(['ANO', 'ENE', 'BEN', 'PHOL', 'TPL', 'OL', 'ETHER', 'ILO']);
+const FINAL = new Set(['ANO', 'ENE', 'BEN', 'PHOL', 'TPL', 'OL', 'ETHER', 'ILO', 'AMCLASS']);
 
 /**
  * Classes after which an automatic enclosure closes: a chain's `il` / `iliden`, `fenil`, an alkoxy prefix's `oxi` (R-5b), or
@@ -384,6 +397,8 @@ function buildSurfaces() {
       surfaces.push({ text: tile.text, ids: [tileId('freeValence', 1), tile.id], cls: 'OXIC', piece }); // `met` + `oxi` (R-5b)
     } else if (cls === 'CARB') {
       surfaces.push({ text: tile.text, ids, cls: 'ALKCARB', piece }); // `carbonil` after `oxi`: `metoxicarbonil` (R-6a2b)
+    } else if (isAmineClassWord(tile)) {
+      surfaces.push({ text: tile.text, ids, cls: 'AMCLASS', piece }); // `amina` after the groups: `metilamina` (R-6c3)
     }
   } // End of the loop over the tiles
   return surfaces.map((surface, i) => ({ surface, i }))
@@ -432,12 +447,24 @@ function readsAs(ids, text) {
 }
 
 /**
+ * Writes a reading without its START and END controls, to tell two readings
+ * of one text apart (tokenize()'s class-name check, R-6c3): the same tiles
+ * with and without a compound branch's marks around one chain are one molecule.
+ *
+ * @param {string[]} ids - Tile ids.
+ * @returns {string} The other ids, space-separated.
+ */
+function plainReading(ids) {
+  return ids.filter((id) => id !== START_ID && id !== END_ID).join(' ');
+}
+
+/**
  * Finds the tiles of a name: the inverse of assemble() (design.md §15.4).
  *
  * @param {string} text - A name (compared in NFC, design.md §15.9 trap 7).
  * @param {{budget?: number}} [options] - `budget`: maximum search steps (default TOKENIZE_BUDGET).
  * @returns {string[]|null} The tile ids, or null when no sequence reads as the text within the budget
- *   (or the text is longer than TOKENIZE_MAX_LENGTH).
+ *   (or the text is longer than TOKENIZE_MAX_LENGTH, or it is an amine's class name with two readings).
  */
 export function tokenize(text, options = {}) {
   const target = String(text).normalize('NFC');
@@ -449,6 +476,8 @@ export function tokenize(text, options = {}) {
   const marks = [];
   let steps = 0;
   let ester = false; // Past an ester's ` de ` (R-6a1): ` y ` may join two O-bound groups.
+  let finalClass = null; // Class of the last tile of the reading found.
+  let rejected = null; // A reading the search may not return again (the class-name check below), as plainReading() writes it.
 
   /**
    * Explores the readings of the text from a position.
@@ -478,7 +507,11 @@ export function tokenize(text, options = {}) {
     if (at === target.length) {
       // An ester's last O-bound group may be a compound branch (R-6a1: `bis(2-cloroetilo)`), ending in its END.
       const final = FINAL.has(prev) || (ester && prev === 'END');
-      return skipped === '' && marks.length === 0 && final && readsAs(ids, target);
+      const found = skipped === '' && marks.length === 0 && final && plainReading(ids) !== rejected && readsAs(ids, target);
+      if (found) {
+        finalClass = prev;
+      }
+      return found;
     }
     const ch = target[at];
     if (ch === SPACE) {
@@ -635,5 +668,19 @@ export function tokenize(text, options = {}) {
     return found;
   } // End of function searchClosing()
 
-  return search(0, 'BEGIN', null) === true ? [...ids] : null;
+  if (search(0, 'BEGIN', null) !== true) {
+    return null;
+  }
+  const first = [...ids];
+  if (finalClass !== 'AMCLASS') {
+    return first;
+  }
+  // R-6c3: an amine's class name has no locants, so a multiplier may run into a root — `tridecilamina` is three decyl groups
+  // (`tri` `dec` `il`, the forward engine's name of N(C10)3) or one tridecyl (`tridec` `il`). A text with a second reading is
+  // ambiguous: null, never the first reading found. So is one whose check runs out of budget. A group's START and END around
+  // the same chain as automatic marks (`(propan-2-il)amina`) are the same molecule, not a second reading (plainReading()).
+  rejected = plainReading(first);
+  ids.length = 0;
+  steps = 0;
+  return search(0, 'BEGIN', null) === false ? first : null;
 } // End of function tokenize()

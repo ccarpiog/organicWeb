@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -216,6 +216,17 @@
  * acyl, alkoxy or one-atom group, nor `formil`, `carboxi`, `ciano`, nor an
  * amino prefix, R-6c2): `metiletanamina` is searched on carbons 1, 2 and `N`.
  *
+ * An amine's functional-class name (R-6c3: `metilamina`, `dimetilamina`,
+ * `etildimetilamina`, its class word the `amina` tile) is read as an ether's:
+ * its parent is the amine's nitrogen (ParentSpec kind 'amine', one atom, no
+ * carbons), its groups the name's prefixes, one implicit slot per occurrence
+ * at the nitrogen; it has no suffix, so no `N` slot (every group already
+ * stands on the nitrogen). The retained amine names (R-6c3: `anilina`, a
+ * benzene template, and `bencilamina`, a chain template of one carbon with
+ * its phenyl) are read like `benzonitrilo` and `fenilacetonitrilo`: their
+ * nitrogen is the placed suffix (kind 'amine', at carbon 1), so
+ * amineSlots() gives their prefixes' `N` slots as an `amina` suffix's.
+ *
  * An amino prefix (R-6c2: `amino`, alone or as the own chain of a compound
  * branch whose prefixes are the groups on its nitrogen, `(metilamino)`,
  * `[etil(metil)amino]`) is a branch of kind 'aminoGroup' (tiles.js
@@ -335,9 +346,11 @@ import { esterGroupsOf } from './assemble.js';
  * The parent chain or ring.
  *
  * @typedef {object} ParentSpec
- * @property {'chain'|'ring'|'benzene'|'ether'} kind - An open chain, a ring (`ciclo`, R-4a) or the benzene ring
- *   (`benceno`, R-4b; also a retained template, R-4c); 'ether' for the oxygen of a functional-class name (R-5b2).
- * @property {number} length - Carbons (for 'ether', its one atom: the oxygen, no carbon; build.js parentCarbons()).
+ * @property {'chain'|'ring'|'benzene'|'ether'|'amine'} kind - An open chain, a ring (`ciclo`, R-4a) or the benzene ring
+ *   (`benceno`, R-4b; also a retained template, R-4c); 'ether' for the oxygen of an ether's functional-class name (R-5b2),
+ *   'amine' for the nitrogen of an amine's (R-6c3).
+ * @property {number} length - Carbons (for 'ether' and 'amine', its one atom: the oxygen or the nitrogen, no carbon;
+ *   build.js parentCarbons()).
  * @property {Slot[]} double - Double-bond slots.
  * @property {Slot[]} triple - Triple-bond slots.
  * @property {TemplateSpec|null} template - The retained template (`tolueno`…, R-4c), or null.
@@ -383,9 +396,9 @@ import { esterGroupsOf } from './assemble.js';
  * @property {PrefixSpec[]} prefixes - The prefixes in the student's order.
  * @property {SuffixSpec|null} suffix - The principal characteristic group cited as a suffix (R-5a2: the alcohol's `ol`, or the
  *   OH of `fenol`), or null.
- * @property {{kind: 'ether'|'acid', text: string, tiles: [number, number]}|null} classWord - The class word of a
- *   functional-class name (R-5b2: `éter`, its tile range), or the class word `ácido` that starts an acid's name (R-5d1);
- *   null otherwise.
+ * @property {{kind: 'ether'|'amine'|'acid', text: string, tiles: [number, number]}|null} classWord - The class word of a
+ *   functional-class name (R-5b2: `éter`, its tile range; R-6c3: `amina`, kind 'amine'), or the class word `ácido` that
+ *   starts an acid's name (R-5d1); null otherwise.
  * @property {EsterSpec|null} ester - The O-bound side of an ester (R-6a1), or null.
  * @property {{value: string, tiles: [number, number]}|null} traditional - A traditional name tile: the retained template
  *   (R-4c; its TEMPLATES key and tile range), or null.
@@ -929,7 +942,9 @@ function suffixSpec(ctx, parent) {
  * The NameSpec of an ether's functional-class name (R-5b2; file header): the
  * ether oxygen as the parent (kind 'ether', one atom), each group a
  * PrefixSpec with one implicit slot per occurrence at the oxygen (`dietil
- * éter`: two), in the student's order.
+ * éter`: two), in the student's order; of an amine's (R-6c3: `metilamina`,
+ * `dimetilamina`), the amine's nitrogen as the parent (kind 'amine', one
+ * atom), its groups the same way (`trimetilamina`: three).
  *
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
  * @param {object} tree - An error-free parse() tree whose parent is the class word.
@@ -947,8 +962,10 @@ function classNameSpec(ctx, tree) {
       tiles: [item.range[0], item.range[1]],
     };
   });
+  // The `amina` tile read as the class word (R-6c3): its value is the amine's GROUP_SUFFIXES key, 'amine'.
+  const kind = ctx.tiles[word].value === AMINE_KIND ? AMINE_KIND : 'ether';
   return {
-    parent: { kind: 'ether', length: 1, double: [], triple: [], template: null, tiles: own },
+    parent: { kind, length: 1, double: [], triple: [], template: null, tiles: own },
     prefixes,
     suffix: null,
     classWord: { kind: ctx.tiles[word].value, text: ctx.tiles[word].text, tiles: [own[0], own[1]] },
@@ -1070,7 +1087,7 @@ export function interpret(tree) {
   }
   const ctx = { tiles: tree.tiles, leftOut: [] };
   if (tree.parent.chain.type === 'classWord') {
-    return classNameSpec(ctx, tree); // `etil metil éter` (R-5b2)
+    return classNameSpec(ctx, tree); // `etil metil éter` (R-5b2), `metilamina` (R-6c3)
   }
   const { chain, legacy, legacySegment, legacySuffix, suffix } = tree.parent;
   // `benceno` (R-4b), `fenol` (R-5a2) or a template (R-4c): no segments, no old-style locants of their own (parse.js

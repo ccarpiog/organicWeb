@@ -153,7 +153,7 @@ const ALTERNATIVES = [
 // ---------------------------------------------------------------------------
 
 test('«Nombres tradicionales» (R-6b2): the three nitrile tiles after the ester ones, each with a tooltip; quoted as on the tile', () => {
-  const nitriles = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(28);
+  const nitriles = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(28, 31); // R-6c3's after them.
   assert.deepEqual(nitriles.map((tile) => tile.text), [...NITRILE_TEMPLATE_WORDS]);
   assert.deepEqual(nitriles.map((tile) => tile.text), ['acetonitrilo', 'fenilacetonitrilo', 'ftalonitrilo']);
   assert.deepEqual(nitriles.map((tile) => tile.id), ['template-acetonitrile', 'template-phenylacetonitrile', 'template-phthalonitrile']);
