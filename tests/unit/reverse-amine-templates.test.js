@@ -17,7 +17,9 @@
  * `bencilamina` as `otherName` with SUBSTITUTED_TEMPLATE, the prefixes the
  * engine writes on `anilina` judged by the other rules; the amine's own
  * mistakes on a template, deliberate nulls of diagnose.js «Amines» until
- * phase I-52c4, each with its category read independently; the tooltips;
+ * phase I-52c4a, each with its category read independently and now its code,
+ * step and words (the prefix-style question, `style`, still a null, phase
+ * I-52c4b's); the tooltips;
  * the fixture names; a closed loop over the engine's retained amine names
  * with each locant list removed, and over the generators' ones; the mutation
  * sweeps; the ordered drawing; random and partial names; time budgets.
@@ -375,7 +377,7 @@ test('readName (R-6c3): prefixes the engine writes on `anilina` are judged by th
 
 /**
  * The category of an amine template's own mistake (a deliberate null of
- * diagnose.js «Amines», phase I-52c4), read from the engine's naming,
+ * diagnose.js «Amines» until phase I-52c4a), read from the engine's naming,
  * independently of diagnose.js: `seniority` (the engine's principal group is
  * another: `4-hidroxianilina` → «4-aminofenol»), `count` (more amine
  * groups: `4-aminoanilina`), `side` (the engine's parent is on the other
@@ -401,16 +403,61 @@ function templateCategory(verdict) {
   return verdict.naming.alternatives.some((alt) => isAmineTemplateName(alt.name)) ? 'style' : null;
 } // End of function templateCategory()
 
-/** The amine's own mistakes on a template, deliberate «Amines» nulls (phase I-52c4): [tile words, category]. */
+/**
+ * The amine's own mistakes on a template, deliberate «Amines» nulls until
+ * phase I-52c4a: [tile words, category, code, the step «Ver el paso» opens,
+ * the whole message]. A junior amine beside a senior group is
+ * CARBONYL_SENIORITY (the amide's nitrogen its own, `N-acetilanilina`), a
+ * second amine group written `amino` CARBONYL_PREFIX, and a group on
+ * `bencilamina`'s nitrogen that takes the parent SUBSTITUTED_TEMPLATE, as
+ * any prefix on `bencilamina` (`N-metilbencilamina`): the word admits none.
+ */
+const FORMER_NULLS = [
+  ['4 hidroxi anilina', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Cuando hay grupos distintos, solo uno es el grupo principal, y se '
+    + 'elige por este orden: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina. Aquí manda el alcohol (–OH), que '
+    + 'se nombra con «fenol» (el benceno con un grupo –OH); el grupo amino va delante, con el prefijo «amino». Se escribe '
+    + '«4-aminofenol».'],
+  ['N acetil anilina', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Cuando hay grupos distintos, solo uno es el grupo principal, y se '
+    + 'elige por este orden: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina. Aquí manda la amida (un C=O unido '
+    + 'a un nitrógeno), que se nombra con la terminación «-amida», al final del nombre; el grupo amino no va aparte: su nitrógeno, con '
+    + 'el C=O unido a él, forma la amida. Se escribe «N-feniletanamida».'],
+  ['4 ciano anilina', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Cuando hay grupos distintos, solo uno es el grupo principal, y se '
+    + 'elige por este orden: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina. Aquí manda el nitrilo (–C≡N), que '
+    + 'se nombra con «benzonitrilo» (el benceno con un grupo –C≡N); el grupo amino va delante, con el prefijo «amino». Se escribe '
+    + '«4-aminobenzonitrilo».'],
+  ['4 carboxi anilina', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Cuando hay grupos distintos, solo uno es el grupo principal, y se '
+    + 'elige por este orden: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina. Aquí manda el ácido (–COOH), que '
+    + 'se nombra con «ácido benzoico» (el benceno con un grupo –COOH); el grupo amino va delante, con el prefijo «amino». Se escribe '
+    + '«ácido 4-aminobenzoico».'],
+  ['4 amino anilina', 'count', 'CARBONYL_PREFIX', 'group', 'Los grupos amino son el grupo principal: los del anillo se nombran todos '
+    + 'juntos con la terminación «-diamina», al final del nombre, no con el prefijo «amino». Se escribe «benceno-1,4-diamina».'],
+  ['2 amino anilina', 'count', 'CARBONYL_PREFIX', 'group', 'Los grupos amino son el grupo principal: los del anillo se nombran todos '
+    + 'juntos con la terminación «-diamina», al final del nombre, no con el prefijo «amino». Se escribe «benceno-1,2-diamina».'],
+  ['N et il bencilamina', 'side', 'SUBSTITUTED_TEMPLATE', 'groupChain', 'El nombre tradicional «bencilamina» no admite sustituyentes: '
+    + 'con más grupos, la molécula se nombra con su nombre sistemático: «N-(fenilmetil)etanamina».'],
+  ['N prop il bencilamina', 'side', 'SUBSTITUTED_TEMPLATE', 'groupChain', 'El nombre tradicional «bencilamina» no admite '
+    + 'sustituyentes: con más grupos, la molécula se nombra con su nombre sistemático: «N-(fenilmetil)propan-1-amina».'],
+];
+
+/** The template nulls left (phase I-52c4b): [tile words, category]. */
 const NULLS = [
-  ['4 hidroxi anilina', 'seniority'], ['N acetil anilina', 'seniority'], ['4 ciano anilina', 'seniority'],
-  ['4 carboxi anilina', 'seniority'], ['4 amino anilina', 'count'], ['2 amino anilina', 'count'], ['N et il bencilamina', 'side'],
-  ['N prop il bencilamina', 'side'],
   // The open question of the retained words' prefix style (as `4-(propan-2-il)ftalonitrilo`): the engine writes `4-isopropilanilina`.
   ['4 prop ano 2 il anilina', 'style'],
 ];
 
-test('the amine\'s own mistakes on a template: deliberate «Amines» nulls (phase I-52c4), each with its category read independently', () => {
+test('the amine\'s own mistakes on a template: diagnosed since phase I-52c4a, each with its category read independently', () => {
+  for (const [words, category, code, opened, message] of FORMER_NULLS) {
+    const verdict = readName(seq(words));
+    assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
+    assert.equal(templateCategory(verdict), category, words);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.equal(d.code, code, `${words}: ${d.message}`);
+    assert.equal(d.message, message, words);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${words}: the step «Ver el paso» opens`);
+    assert.ok(verdict.draw && verdict.molecule, words);
+  } // End of the loop over the former deliberate nulls
   for (const [words, category] of NULLS) {
     const verdict = readName(seq(words));
     assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
@@ -561,19 +608,20 @@ test('closed loop (R-6c3): the generators\' retained amine names read back as th
 }); // End of test 'closed loop (R-6c3): the generators\'…'
 
 /**
- * The diagnosis codes an `otherName` of each mutation family may give, or
- * null for the amine's own mistakes (deliberate «Amines» nulls until phase
- * I-52c4, with the category FAMILY_CATEGORY gives).
+ * The diagnosis codes an `otherName` of each mutation family may give: the
+ * amine's own mistakes (deliberate «Amines» nulls until phase I-52c4a, with
+ * the category FAMILY_CATEGORY gives) CARBONYL_SENIORITY for an OH beside the
+ * word and CARBONYL_PREFIX for a second NH₂.
  */
 const FAMILY_CODES = Object.freeze({
   reflected: ['RING_NUMBERING'],
   unsorted: ['ALPHABETICAL_ORDER'],
   substituted: ['SUBSTITUTED_TEMPLATE'],
-  hydroxy: null,
-  amino: null,
+  hydroxy: ['CARBONYL_SENIORITY'],
+  amino: ['CARBONYL_PREFIX'],
 });
 
-/** The category of the amine's own mistakes each null family gives (templateCategory()). */
+/** The category of the amine's own mistakes each family of them gives (templateCategory()). */
 const FAMILY_CATEGORY = Object.freeze({ hydroxy: 'seniority', amino: 'count' });
 
 /**
@@ -637,9 +685,10 @@ function mutationsOf(ids) {
 } // End of function mutationsOf()
 
 /**
- * Reads every mutation of some retained amine names: an `otherName` of a
- * family with codes must carry a diagnosis of them whose step resolves in
- * its explanation; one of a null family a null diagnosis of its category.
+ * Reads every mutation of some retained amine names: an `otherName` must
+ * carry a diagnosis of its family's codes whose step resolves in its
+ * explanation, the amine's own mistakes (since phase I-52c4a) with the
+ * category of their family.
  *
  * @param {string[]} names - Retained amine names.
  * @returns {{otherName: Object<string, number>, codes: Set<string>, unexpected: string[]}} `otherName` counts by family, the
@@ -658,10 +707,8 @@ function sweep(names) {
       otherName[mutation.family] += 1;
       const label = `${name} → ${mutation.family} ${verdict.text}`;
       const d = verdict.diagnosis;
-      if (FAMILY_CODES[mutation.family] === null) {
-        assert.equal(d, null, `${label}: ${d && d.message}`);
+      if (FAMILY_CATEGORY[mutation.family]) {
         assert.equal(templateCategory(verdict), FAMILY_CATEGORY[mutation.family], label);
-        continue;
       }
       if (!d) {
         unexpected.push(label);
@@ -677,22 +724,26 @@ function sweep(names) {
   return { otherName, codes, unexpected };
 } // End of function sweep()
 
-test('mutations of the fixture\'s retained amine names: a diagnosis of the family\'s codes, or a deliberate «Amines» null', async () => {
+test('mutations of the fixture\'s retained amine names: a diagnosis of the family\'s codes, never null', async () => {
   const names = (await readFixtures()).filter((row) => isAmine(row.smiles)).flatMap((row) => row.names).filter(isAmineTemplateName);
   assert.equal(names.length, 16);
   const { otherName, codes, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   // The ring numbering reflected: RING_NUMBERING; two different prefixes swapped: ALPHABETICAL_ORDER; `N-metilbencilamina`:
-  // SUBSTITUTED_TEMPLATE; an OH beside the word (a senior group) and a second NH₂: the amine's own mistakes, deliberate nulls.
+  // SUBSTITUTED_TEMPLATE; an OH beside the word (a senior group) and a second NH₂: the amine's own mistakes, deliberate nulls until
+  // phase I-52c4a, now CARBONYL_SENIORITY and CARBONYL_PREFIX.
   assert.deepEqual(otherName, { reflected: 2, unsorted: 4, substituted: 1, hydroxy: 10, amino: 5 });
-  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'RING_NUMBERING', 'SUBSTITUTED_TEMPLATE']);
+  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'CARBONYL_PREFIX', 'CARBONYL_SENIORITY', 'RING_NUMBERING',
+    'SUBSTITUTED_TEMPLATE']);
 }); // End of test 'mutations of the fixture\'s retained amine names…'
 
-test('mutations of the generated retained amine names: every otherName is diagnosed or a deliberate «Amines» null', () => {
+test('mutations of the generated retained amine names: every otherName is diagnosed', () => {
   const { otherName, codes, unexpected } = sweep(generatedTemplateNames().map(({ name }) => name));
   assert.deepEqual(unexpected, []);
+  // `hydroxy` and `amino`: deliberate nulls until phase I-52c4a.
   assert.deepEqual(otherName, { reflected: 195, unsorted: 225, substituted: 1, hydroxy: 211, amino: 66 });
-  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'RING_NUMBERING', 'SUBSTITUTED_TEMPLATE']);
+  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'CARBONYL_PREFIX', 'CARBONYL_SENIORITY', 'RING_NUMBERING',
+    'SUBSTITUTED_TEMPLATE']);
 }); // End of test 'mutations of the generated retained amine names…'
 
 test('«Dibujar» (R-6c3): amine template verdicts have an ordered drawing (canonical layout without problems)', () => {

@@ -13,7 +13,7 @@
  * groups, VALENCE on a fourth), search (left-out locants inside a group),
  * readName() verdicts of every §15.3 kind with the molecule each describes
  * (compared by aromatic key with a SMILES), the class name's own mistakes —
- * deliberate nulls of diagnose.js «Amines» until phase I-52c4, each with its
+ * deliberate nulls of diagnose.js «Amines» until phase I-52c4b, each with its
  * category read independently —, the fixture round trip, the closed loop
  * over the oracle's amine generators, the mutation sweeps, the ordered
  * drawing, the dialog's tooltip, a property test and a time budget.
@@ -154,7 +154,7 @@ function groupWords(tree, item) {
 
 /**
  * The category of an amine class name's own mistake (the deliberate nulls
- * of diagnose.js «Amines», phase I-52c4), read from the student's tree and
+ * of diagnose.js «Amines», phase I-52c4b), read from the student's tree and
  * the engine's naming, independently of diagnose.js: `none` (the engine
  * gives the molecule no class name), `words` (the student's group words are
  * not the engine's), `multiplier` (a repeated group written twice, or with
@@ -439,7 +439,7 @@ test('readName (R-6c3): invalid, ambiguous and incomplete class names', () => {
 
 /**
  * The class name's own mistakes (deliberate «Amines» nulls until phase
- * I-52c4): [tile words or text, category].
+ * I-52c4b): [tile words or text, category].
  */
 const NULLS = [
   ['metiletilamina', 'order'], ['propilmetilamina', 'order'], ['metilisopropilamina', 'order'], ['met il tert-butil amina', 'order'],
@@ -451,7 +451,7 @@ const NULLS = [
   ['(2-metilpropil)amina', 'none'], ['metilciclohexilamina', 'none'],
 ];
 
-test('the class name\'s own mistakes: deliberate «Amines» nulls (phase I-52c4), each with its category read independently', () => {
+test('the class name\'s own mistakes: deliberate «Amines» nulls (phase I-52c4b), each with its category read independently', () => {
   const seen = new Set();
   for (const [name, category] of NULLS) {
     const ids = idsOf(name);
@@ -588,7 +588,7 @@ const FAMILY_CATEGORY = Object.freeze({ reversed: 'order', split: 'multiplier', 
 
 /**
  * Reads every mutation of some class names: every one is `otherName` with
- * a deliberate null diagnosis (diagnose.js «Amines», phase I-52c4) whose
+ * a deliberate null diagnosis (diagnose.js «Amines», phase I-52c4b) whose
  * category is its family's.
  *
  * @param {string[]} names - Class names.

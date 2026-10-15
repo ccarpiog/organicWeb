@@ -7,9 +7,9 @@
  * with «¡Correcto!»; `N 2 di met il prop ano 1 amina` (a mixed `N,2` list)
  * and `bencenamina` are correct; `met il et ano amina` draws N-metiletanamina
  * with «Casi: faltan los números…»; the shared rules speak on an amine name
- * (`N-metil-N-metiletanamina`: UNGROUPED), the amine's own mistakes are
- * deliberate nulls (`N-etilmetanamina`: drawn and named, no diagnosis yet,
- * phase I-52c4); `N` without `amina` and a third group on the nitrogen stay
+ * (`N-metil-N-metiletanamina`: UNGROUPED), and the amine's own mistakes
+ * since phase I-52c4a (`N-etilmetanamina`: drawn and named, AMINE_SIDE);
+ * `N` without `amina` and a third group on the nitrogen stay
  * in the dialog with their message and marked tiles, the canvas untouched.
  * Runs on the dev server and on dist (playwright.config.js).
  */
@@ -185,7 +185,7 @@ test('the `amina` and `N` tiles; `N met il et ano amina` draws N-metiletanamina,
   expect(errors).toEqual([]);
 }); // End of test 'the `amina` and `N` tiles…'
 
-test('left-out `N`: missing locants; the shared rules speak; an amine\'s own mistake has no diagnosis yet', async ({ page }) => {
+test('left-out `N`: missing locants; the shared rules speak; an amine\'s own mistake has its diagnosis', async ({ page }) => {
   const errors = await openApp(page);
   const verdict = page.locator('#verdict');
   // `metiletanamina`: the methyl's place left out, searched on the carbons and on the nitrogen; only `N` gives the app's name.
@@ -211,16 +211,17 @@ test('left-out `N`: missing locants; the shared rules speak; an amine\'s own mis
   expect(nitrogenBonds(await moleculeJSON(page))).toEqual(['C1 C1 C1']);
 
   // `N-etilmetanamina`: the parent on the other side of the nitrogen, a deliberate null of diagnose.js «Amines» until phase
-  // I-52c4: drawn and named, today's block without a diagnosis.
+  // I-52c4a, now AMINE_SIDE: drawn and named, the diagnosis between the verdict's two sentences.
   dialog = await buildName(page, 'N', 'et', 'il', 'met', 'ano', 'amina');
   await expect(page.locator('#name-builder-name')).toHaveText('N-etilmetanamina');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
-  expect(await verdict.getAttribute('data-diagnosis')).toBeNull();
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'AMINE_SIDE');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«N-metiletanamina». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);
+    + '«N-metiletanamina».');
+  await expect(verdict.locator('.verdict-diagnosis')).toContainText('Aquí la cadena principal está en el otro lado del nitrógeno');
+  await expect(verdict.locator('.verdict-hint')).toHaveText('Pulsa «Ver paso a paso» para ver por qué.');
   await expect(page.locator('#result-name')).toHaveText('N-metiletanamina');
   expect(elementsOf(await moleculeJSON(page))).toEqual(['C', 'C', 'C', 'N']);
   expect(errors).toEqual([]);

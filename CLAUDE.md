@@ -272,11 +272,7 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   left-out locants searched with `N` among the places (`metiletanamina` →
   `N-metiletanamina`), the engine's `substitutedPolyamine` and two-ring
   refusals `outOfScope`; the diagnosis keeps the rules that hold for an
-  amine name, and the amine's own mistakes (a junior `amina` beside a senior
-  group, the parent on the other side of the nitrogen, the amine groups'
-  parent choice and N0 numbering, the suffix's needless or missing locants)
-  are deliberate nulls of diagnose.js «Amines» (AMINE_NULLS, ranked among
-  the readings). R-6c2 (phase I-52c2) is done: the «Grupos» row's `amino`
+  amine name. R-6c2 (phase I-52c2) is done: the «Grupos» row's `amino`
   (`2-aminoetan-1-ol`, `ácido 2-aminopropanoico`, `etanoato de
   2-aminoetilo`, `4-aminobenzonitrilo`, `diamino`) and, as the own chain of
   a compound branch, the groups on its nitrogen written before it without
@@ -289,9 +285,7 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   VALENCE, the engine's refusals `outOfScope`; an amide prefix written
   `amino` + `oxo` reads too (`ácido 4-amino-4-oxobutanoico`); the diagnosis
   keeps the shared rules (the groups on the nitrogen read first:
-  `[metil(metil)amino]` UNGROUPED), a principal amine written `amino` and an
-  amine group written `amino` beside `amina` being the «Amines» `seniority`
-  and `count` nulls. R-6c3 (phase I-52c3) is done: the «Nombres
+  `[metil(metil)amino]` UNGROUPED). R-6c3 (phase I-52c3) is done: the «Nombres
   tradicionales» row's `anilina` and `bencilamina` read the retained amine
   names as the engine writes them (`anilina`, `N-metilanilina`,
   `N,4-dimetilanilina`, `4-cloroanilina`, `p-cloroanilina`,
@@ -302,10 +296,26 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   nitrogen is an amine class name's class word, the name one word
   (`metilamina`, `dimetilamina`, `trimetilamina`, `etildimetilamina`,
   `di-tert-butilamina`), read as the engine's alternatives and any other
-  class name as `otherName`; the class names' and the templates' own
-  mistakes are deliberate «Amines» nulls; the Ayuda has its amine line. Next
-  is R-6c4 (phase I-52c4): amine diagnosis messages (fill the «Amines»
-  nulls).
+  class name as `otherName`; the class names' own mistakes and a prefix on
+  `anilina` in a style the engine never writes are deliberate «Amines» nulls;
+  the Ayuda has its amine line. R-6c4a (phase I-52c4a) is done: `diagnose.js`
+  names the principal amine group's own mistakes (header «Amines», checked
+  first; the messages say «grupo amino»): a junior amine beside a senior
+  group, CARBONYL_SENIORITY with the seniority `ácido > éster > amida >
+  nitrilo > aldehído > cetona > alcohol > amina` (`2-hidroxietan-1-amina` →
+  «2-aminoetan-1-ol», `4-hidroxianilina` → «4-aminofenol»; its nitrogen an
+  amide's, `N-acetiletanamina` → «N-etiletanamida»); a principal amine group
+  written `amino`, CARBONYL_PREFIX (`aminoetano`, `(metilamino)metano` →
+  «N-metilmetanamina», `4-aminobutan-1-amina`, `4-aminoanilina`); the parent
+  on the other side of the nitrogen, the one new code AMINE_SIDE
+  (`N-etilmetanamina` → «N-metiletanamina», `N-ciclohexiletanamina`); the
+  ring or chain the amino groups choose and another chain with more of them
+  (CARBONYL_PARENT, MORE_CARBONYL_GROUPS); N0 numbering and the suffix's
+  needless locants (`butan-3-amina`, `ciclohexano-1,5-diamina`,
+  `etan-1-amina`, `N-metiletan-1-amina`), each with its «Ver el paso» step;
+  LOCANT_ORDER and LOCANT_COUNT no longer call `N` a number. Next is R-6c4b
+  (phase I-52c4b): amine class-name and template diagnoses (fill the last
+  «Amines» nulls).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

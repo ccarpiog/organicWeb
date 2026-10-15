@@ -10,7 +10,7 @@
  * `bencilamina` draw their molecules, a substituted `N-metilbencilamina` its
  * molecule with the app's name and why; `di`, `met`, `il` and `amina` build
  * the class name `dimetilamina`, a valid form, and `metiletilamina` its
- * molecule without a diagnosis yet (phase I-52c4); `N,p-dimetilanilina` and
+ * molecule without a diagnosis yet (phase I-52c4b); `N,p-dimetilanilina` and
  * `tetrametilamina` are refused with their tiles marked, the canvas
  * untouched; the Ayuda section «Del nombre al dibujo» has its amine line.
  * Runs on the dev server and on dist (playwright.config.js).
@@ -243,7 +243,7 @@ test('class names: `dimetilamina` draws N-metilmetanamina, a valid form; `metile
   await expect(page.locator('#result-name')).toHaveText('N,N-dimetiletanamina');
   expect(nitrogenBonds(await moleculeJSON(page))).toEqual(['C1 C1 C1']);
 
-  // Out of alphabetical order: the class name's own mistake, a deliberate null of diagnose.js «Amines» until phase I-52c4.
+  // Out of alphabetical order: the class name's own mistake, a deliberate null of diagnose.js «Amines» until phase I-52c4b.
   dialog = await buildName(page, 'met', 'il', 'et', 'il', 'amina');
   await expect(page.locator('#name-builder-name')).toHaveText('metiletilamina');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();

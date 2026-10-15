@@ -719,18 +719,20 @@ test('the drafts of the aldehyde and ketone rules: their place among the rules, 
     assert.doesNotMatch(text, /undefined|null|NaN|–OH/, code);
   }
   const { carbonylN0, groupWords, junior, groupsOn, ending } = DIAGNOSIS_PHRASES;
-  // The acid's –COOH groups (phase I-51d3), the ester's –COO– groups (phase I-52a3a) and the nitrile's –C≡N groups (phase I-52b3)
-  // beside them: reverse-diagnose-acids.test.js, reverse-diagnose-esters.test.js, reverse-diagnose-nitriles.test.js.
+  // The acid's –COOH groups (phase I-51d3), the ester's –COO– groups (phase I-52a3a), the nitrile's –C≡N groups (phase I-52b3)
+  // and the amine's amino groups (phase I-52c4a) beside them: reverse-diagnose-acids.test.js, reverse-diagnose-esters.test.js,
+  // reverse-diagnose-nitriles.test.js, reverse-diagnose-amines.test.js.
   assert.deepEqual(carbonylN0.numberingReasons, {
     aldehyde: 'los grupos –CHO (el grupo principal) tienen que llevar los números más bajos',
     ketone: 'los grupos C=O (el grupo principal) tienen que llevar los números más bajos',
     acid: 'los grupos –COOH (el grupo principal) tienen que llevar los números más bajos',
     ester: 'los grupos –COO– (el grupo principal) tienen que llevar los números más bajos',
     nitrile: 'los grupos –C≡N (el grupo principal) tienen que llevar los números más bajos',
+    amine: 'los grupos amino (el grupo principal) tienen que llevar los números más bajos',
   });
   assert.deepEqual(carbonylN0.lowerLocantsOf, { aldehyde: 'los grupos –CHO', ketone: 'los grupos C=O', acid: 'los grupos –COOH',
-    ester: 'los grupos –COO–', nitrile: 'los grupos –C≡N' });
-  assert.deepEqual(Object.keys(groupWords), ['alcohol', 'aldehyde', 'ketone', 'acid', 'ester', 'nitrile']);
+    ester: 'los grupos –COO–', nitrile: 'los grupos –C≡N', amine: 'los grupos amino' });
+  assert.deepEqual(Object.keys(groupWords), ['alcohol', 'aldehyde', 'ketone', 'acid', 'ester', 'nitrile', 'amine']);
   // The OH groups keep their N0 phrases (phase I-51a3b).
   assert.equal(DIAGNOSIS_TEXTS.NUMBERING({ rule: 'N0', app: '2', student: '3', unwritten: false }), 'Hay que numerar la cadena '
     + 'desde el otro extremo: los grupos –OH (el grupo principal) tienen que llevar los números más bajos (2 en vez de 3).');

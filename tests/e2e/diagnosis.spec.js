@@ -44,7 +44,13 @@
  * the molecule is a nitrile and the –C≡N's carbon a carbon of the chain; and
  * `3-carboxipropanonitrilo`, the nitrile's suffix beside an acid — the
  * message says the `ciano` takes the –C≡N's carbon out of the chain, and the
- * acid's group step it opens says so too.
+ * acid's group step it opens says so too. Amines (phase I-52c4a):
+ * `N-etilmetanamina`, the parent on the other side of the nitrogen — the
+ * message names the nitrogen, the student's chain striped apart from the
+ * parent, «Ver el paso» at «Busca la cadena principal», which says why the
+ * other side wins; and `2-hidroxietan-1-amina`, the amine beside an alcohol —
+ * the order and the `amino` prefix, «Ver el paso» at the alcohol's «Reconoce
+ * el grupo funcional».
  */
 
 import { test, expect } from '@playwright/test';
@@ -156,6 +162,12 @@ const NITRILE_CARBON = ['prop', 'ano', '1', 'carbonitrilo'];
 
 /** The tiles of «3-carboxipropanonitrilo» (the acid is the principal group: ácido 3-cianopropanoico). */
 const NITRILE_JUNIOR = ['3', 'carboxi', 'prop', 'ano', 'nitrilo'];
+
+/** The tiles of «N-etilmetanamina» (the parent is on the other side of the nitrogen: N-metiletanamina). */
+const AMINE_SIDE = ['N', 'et', 'il', 'met', 'ano', 'amina'];
+
+/** The tiles of «2-hidroxietan-1-amina» (the alcohol is the principal group: 2-aminoetan-1-ol). */
+const AMINE_JUNIOR = ['2', 'hidroxi', 'et', 'ano', '1', 'amina'];
 
 test('a longer chain: the message between the two sentences, the student\'s chain beside the parent, «Ver el paso» at «Busca la cadena»; Deshacer clears it all', async ({ page }) => {
   const errors = await openApp(page);
@@ -598,6 +610,65 @@ test('a nitrile (I-52b3): `carbonitrilo` on a chain, «Ver el paso» at «Recono
   await expect(stepper).toContainText('incluye el carbono del –C≡N: ese carbono no se cuenta en la cadena principal');
   expect(errors).toEqual([]);
 }); // End of test 'a nitrile (I-52b3)…'
+
+test('an amine (I-52c4a): the parent on the other side of the nitrogen, «Ver el paso» at «Busca la cadena principal»; an amine beside an alcohol', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, ...AMINE_SIDE);
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'AMINE_SIDE');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: N-etilmetanamina');
+  // The three sentences, in order: the verdict, the diagnosis, the hint.
+  const texts = await verdict.locator('.verdict-message, .verdict-style, .verdict-diagnosis, .verdict-hint, .verdict-note')
+    .allTextContents();
+  expect(texts).toEqual([
+    'Esta es la molécula que describe tu nombre, pero se llama «N-metiletanamina».',
+    'El nitrógeno de la amina está unido a varios grupos de carbonos, y la cadena principal no puede pasar por él: es uno de esos '
+      + 'grupos, y se elige con las reglas de siempre. Aquí la cadena principal está en el otro lado del nitrógeno, no en el de tu '
+      + 'cadena: en ese lado hay una cadena de 2 carbonos, más larga que la tuya, de 1. Tu cadena es el sustituyente «metil», que va '
+      + 'unido al nitrógeno y se escribe con la letra «N» delante: «N-metiletanamina».',
+    'Pulsa «Ver paso a paso» para ver por qué.',
+  ]);
+  await expect(page.locator('#result-name')).toHaveText('N-metiletanamina');
+  // The legend names both marks; the student's one carbon is striped apart from the parent (its two carbons, the amine's
+  // nitrogen marked with them).
+  await expect(verdict.getByRole('list', { name: 'Qué se ve en el dibujo' }).getByRole('listitem'))
+    .toHaveText(['Cadena principal', 'Tu cadena']);
+  const student = await marked(page, 'student');
+  const parent = await marked(page, 'parent');
+  expect(student.atoms).toHaveLength(1);
+  expect(new Set(parent.atoms).size).toBeGreaterThanOrEqual(2);
+  expect(parent.atoms.filter((id) => student.atoms.includes(id))).toEqual([]);
+
+  // «Ver el paso»: the stepper opens at «Busca la cadena principal», which says why the other side of the nitrogen wins.
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'groupChain');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 3 de 6');
+  await expect(stepper.locator('.step-title')).toHaveText('Busca la cadena principal');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  await expect(stepper).toContainText('El otro lado es el sustituyente «metil», que se escribe con la letra N delante.');
+  expect(await marked(page, 'student')).toEqual(student);
+
+  // An amine beside an alcohol: `2-hidroxietan-1-amina`. The message gives the order and the amino prefix; «Ver el paso» opens
+  // the alcohol's «Reconoce el grupo funcional», which says the alcohol wins and the amine is written `amino-`.
+  await drawName(page, ...AMINE_JUNIOR);
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'CARBONYL_SENIORITY');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: 2-hidroxietan-1-amina');
+  await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
+    + '«2-aminoetan-1-ol».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('Cuando hay grupos distintos, solo uno es el grupo principal, y se '
+    + 'elige por este orden: ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina. Aquí manda el alcohol (–OH), que '
+    + 'se nombra con la terminación «-ol», al final del nombre; el grupo amino va delante, con el prefijo «amino». Se escribe '
+    + '«2-aminoetan-1-ol».');
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'group');
+  await expect(stepper.locator('.step-title')).toHaveText('Reconoce el grupo funcional');
+  await expect(stepper).toContainText('Aquí manda el alcohol, así que el grupo amino se nombra con el prefijo «amino-»');
+  expect(errors).toEqual([]);
+}); // End of test 'an amine (I-52c4a)…'
 
 test('a ring (I-50d): the ring is the parent beside the student\'s chain, «Ver el paso» at «Reconoce el benceno»; a ring numbered otherwise', async ({ page }) => {
   const errors = await openApp(page);

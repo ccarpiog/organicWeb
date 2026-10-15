@@ -1548,15 +1548,55 @@ function checkLocantCount(state, locants, mult, counted, compound) {
   let message;
   if (mult !== null) {
     const list = locants.map((i) => tiles[i].text).join(',');
-    message = `Has puesto ${count} ${count === 1 ? 'número' : 'números'} (${list}), pero «${tiles[mult].text}» `
+    message = `Has puesto ${countedLocants(tiles, locants, String)} (${list}), pero «${tiles[mult].text}» `
       + `quiere decir ${numberWord(expected)} ${counted}.`;
   } else if (count <= MAX_MULTIPLIER) {
-    message = `Con ${numberWord(count)} números hace falta «${compound ? compoundMultiplier(count) : multiplier(count)}».`;
+    message = `Con ${countedLocants(tiles, locants, articleWord)} hace falta `
+      + `«${compound ? compoundMultiplier(count) : multiplier(count)}».`;
   } else {
-    message = `Con ${count} números hace falta un multiplicador.`;
+    message = `Con ${countedLocants(tiles, locants, String)} hace falta un multiplicador.`;
   }
   addError(state, 'LOCANT_COUNT', from, to, message);
 } // End of function checkLocantCount()
+
+/**
+ * How the LOCANT_COUNT messages count a locant list: «2 números», «dos
+ * números»; the letter `N` of a group on an amine's nitrogen (R-6c1) is no
+ * number, so a list with it counts its letters and its numbers apart (phase
+ * R-6c4a): «1 letra N», «una letra N y un número», «2 letras N y 1 número».
+ *
+ * @param {object[]} tiles - The tile objects.
+ * @param {number[]} locants - The list's tile indices.
+ * @param {(n: number, feminine: boolean) => string} word - Writes a count: digits (String) or words (articleWord()).
+ * @returns {string} The phrase.
+ */
+function countedLocants(tiles, locants, word) {
+  const letters = locants.filter((i) => tiles[i].kind === 'nitrogen').length;
+  const numbers = locants.length - letters;
+  const parts = [];
+  if (letters > 0) {
+    parts.push(`${word(letters, true)} ${letters === 1 ? 'letra' : 'letras'} ${N_TEXT}`);
+  }
+  if (numbers > 0) {
+    parts.push(`${word(numbers, false)} ${numbers === 1 ? 'número' : 'números'}`);
+  }
+  return parts.join(' y ');
+} // End of function countedLocants()
+
+/**
+ * A count as a Spanish word before a noun (LOCANT_COUNT): `un` / `una` for
+ * one, else numberWord() (`dos`, `tres`…).
+ *
+ * @param {number} n - The count.
+ * @param {boolean} feminine - Whether the noun is feminine (`letra`).
+ * @returns {string} The word.
+ */
+function articleWord(n, feminine) {
+  if (n === 1) {
+    return feminine ? 'una' : 'un';
+  }
+  return numberWord(n);
+}
 
 /**
  * Parses the unsaturation segments after a root: `[locants] [MULT] eno|ino`,

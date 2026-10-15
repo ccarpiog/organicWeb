@@ -18,8 +18,10 @@
  * (compared by aromatic key with a SMILES), out-of-scope amines (the
  * engine's `substitutedPolyamine`, a halogen on the nitrogen, two rings),
  * mutations and their diagnosis (the rules that hold for an amine name; the
- * amine's own mistakes deliberate nulls of diagnose.js «Amines», each with
- * its category read independently), the fixture round trip over every row
+ * amine's own mistakes, deliberate nulls of diagnose.js «Amines» until phase
+ * I-52c4a, each with its category read independently and since then the
+ * code of its category — the messages themselves are in
+ * reverse-diagnose-amines.test.js), the fixture round trip over every row
  * with an amine nitrogen of tests/fixtures/names.tsv and the closed loop
  * over the oracle's amine generators (pure imports, no Java) — their amino
  * names read too since phase R-6c2, their `anilina` and class names since
@@ -528,7 +530,7 @@ test('search (R-6c1): left-out locants, `N` included, give ambiguous lists; the 
 /**
  * Mutations of amine names (design.md §15.7): tile words, the verdict and the
  * diagnosis code of a rule that holds for an amine name (the amine's own
- * mistakes are the deliberate nulls of the next test).
+ * mistakes are the former deliberate nulls of the next test).
  */
 const MUTATIONS = Object.freeze([
   ['1 met il prop ano 1 amina', 'otherName', 'BRANCH_AT_END'],
@@ -570,7 +572,9 @@ test('mutations (R-6c1): the expected verdict, and the diagnosis of every rule t
       + 'carbonos.',
     'N met il N met il et ano amina': 'Las ramas iguales se escriben una sola vez, con «di», «tri»… delante: «N,N-dimetil», no '
       + '«N-metil-N-metil».',
-    '2 N di met il prop ano 1 amina': 'Los números de un mismo grupo se escriben de menor a mayor: «N,2-dimetil», no «2,N-dimetil».',
+    // The letter N is no number (phase I-52c4a): it goes before the numbers.
+    '2 N di met il prop ano 1 amina': 'Los números de un mismo grupo se escriben de menor a mayor, y la letra «N» va antes que los '
+      + 'números: «N,2-dimetil», no «2,N-dimetil».',
     'N met il 1 cloro met ano amina': 'Los sustituyentes se escriben por orden alfabético: «cloro» va antes que «metil» (c antes que '
       + 'm).',
     '5 met il benceno 1 amina': 'Hay que numerar el anillo de otra manera, empezando en otro carbono o contando hacia el otro lado: los '
@@ -581,9 +585,10 @@ test('mutations (R-6c1): the expected verdict, and the diagnosis of every rule t
   }
   // A group on the nitrogen never lengthens the chain (it is no carbon of the chain's end): the name is the engine's.
   assert.equal(read('N met il prop ano 1 amina').kind, 'correct');
-  // With the suffix's locant left out, a reading with the amine on the other end (an N0 null of rule 4) leaves the kinder reading's
-  // rule (UNGROUPED, rule 6) to speak.
+  // With the suffix's locant left out, a reading with the amine on the other end (NUMBERING at N0, rule 4) leaves the kinder
+  // reading's rule (UNGROUPED, rule 6) to speak.
   assert.equal(read('N met il N met il met ano amina').diagnosis.code, 'UNGROUPED');
+  assert.equal(read('N met il N met il et ano amina').diagnosis.code, 'UNGROUPED');
 }); // End of test 'mutations (R-6c1)…'
 
 /**
@@ -601,18 +606,22 @@ function sameSet(a, b) {
 /**
  * The category of an amine's own mistake, read independently of diagnose.js
  * from the engine's naming and the student's reading (diagnose.js «Amines»:
- * deliberate nulls until phase I-52c4): `seniority` — the student's suffix
+ * deliberate nulls until phase I-52c4a): `seniority` — the student's suffix
  * is `amina` while the engine's principal group is another, or none
  * (`2-hidroxietan-1-amina`, `N-acetiletanamina`); `count` — another number
- * of amine groups; `side` — the student's parent is bonded to the amine's
- * nitrogen by another carbon than the engine's (`N-etilmetanamina`);
- * `numbering` — the same carbons carry the amine groups, numbered otherwise
- * (N0: `butan-3-amina`, `ciclohexano-1,5-diamina`); `suffix` — the suffix's
+ * of amine groups; `side` — the same nitrogen as the engine's, bonded to the
+ * student's parent by another carbon than the engine's (`N-etilmetanamina`);
+ * `numbering` — the same carbons of the same chain or ring carry the amine
+ * groups, numbered otherwise (N0: `butan-3-amina`, `ciclohexano-1,5-diamina`;
+ * since phase I-52c4a the chain must be the engine's, so a branch that
+ * lengthens it is no amine mistake, `1-etilpentan-1-amina`); `suffix` — the suffix's
  * locants, which the engine leaves out (`etan-1-amina`, `bencen-1-amina`,
- * `N-metiletan-1-amina`); `parent` — the amine groups choose another parent:
- * the student's is a ring and the engine's a chain or the reverse, or no
- * chain the engine's P0 keeps contains the student's. Null when none
- * applies or neither name is an amine's.
+ * `N-metiletan-1-amina`); `parent` — the amine groups choose another
+ * parent: another nitrogen than the engine's (`2-(4-aminociclohexil)etan-1-amina`,
+ * phase I-52c4a: until then counted as `side`), the student's parent a ring
+ * and the engine's a chain or the reverse, or no chain the engine's P0 keeps
+ * contains the student's. Null when none applies or neither name is an
+ * amine's.
  *
  * @param {string[]} ids - The name's tile ids.
  * @param {object} verdict - Its `otherName` verdict.
@@ -620,7 +629,10 @@ function sameSet(a, b) {
  */
 function amineCategory(ids, verdict) {
   const engine = verdict.naming.structure.suffix;
-  const mine = (verdict.suffixAtoms || []).filter((g) => verdict.molecule.atoms.get(g.attachment).element === 'N');
+  const { tree } = parse(ids);
+  const spec = interpret(tree);
+  // The student's amine groups: its suffix's, when it is `amina` (or `anilina`, `bencilamina`), never a nitrile's nitrogen.
+  const mine = spec.suffix && spec.suffix.kind === 'amine' ? verdict.suffixAtoms || [] : [];
   if (!engine || engine.kind !== 'amine') {
     return mine.length > 0 ? 'seniority' : null;
   }
@@ -630,13 +642,16 @@ function amineCategory(ids, verdict) {
   if (mine.length !== engine.locants.length) {
     return 'count';
   }
+  if (!sameSet(mine.map((g) => g.attachment), engine.locants.map((site) => site.attachAtom))) {
+    return 'parent';
+  }
   if (!sameSet(mine.map((g) => g.parentAtom), engine.locants.map((site) => site.atom))) {
     return 'side';
   }
-  if (!sameSet(mine.map((g) => g.locant), engine.locants.map((site) => site.locant))) {
-    return 'numbering';
+  if (!sameSet(mine.map((g) => g.locant), engine.locants.map((site) => site.locant))
+    && sameSet(verdict.studentParent.atoms, verdict.naming.parent.atoms)) {
+    return 'numbering'; // On another chain the locants differ too: a chain rule's (`1-etilpentan-1-amina`, BRANCH_AT_END).
   }
-  const { tree } = parse(ids);
   if (tree.parent.suffix && tree.parent.suffix.locants.length > 0) {
     const bare = assemble({ ...tree, parent: { ...tree.parent, suffix: { ...tree.parent.suffix, locants: [] } } }).text;
     if ([verdict.naming.name, ...verdict.naming.alternatives.map((alt) => alt.name)].includes(bare)) {
@@ -653,44 +668,74 @@ function amineCategory(ids, verdict) {
   return !studentRing && p0 && !p0.survivors.some((c) => student.every((id) => c.atoms.includes(id))) ? 'parent' : null;
 } // End of function amineCategory()
 
-test('the deliberate nulls of R-6c1 (diagnose.js «Amines»): each category, read independently, gets no diagnosis', () => {
+/**
+ * The codes an amine's own mistake gets, by category (amineCategory();
+ * diagnose.js «Amines», phase I-52c4a): beside a senior group, the junior
+ * amine (CARBONYL_SENIORITY), or a principal amine written as an amino
+ * prefix (CARBONYL_PREFIX) or inside a compound branch (CARBONYL_PARENT,
+ * MORE_CARBONYL_GROUPS, told from an ether oxygen as ETHER_SIDE, or
+ * BRANCH_AT_END when that branch on an end of the student's chain lengthens
+ * it: `1-(aminometil)propano-1,3-diamina`); another number of amine groups
+ * (the same codes); the parent on the other side of the nitrogen
+ * (AMINE_SIDE); N0 (NUMBERING, RING_NUMBERING); the suffix's needless
+ * locants (NEEDLESS_LOCANTS); the parent chosen by the amine groups
+ * (CARBONYL_PARENT, MORE_CARBONYL_GROUPS, ETHER_SIDE).
+ */
+const CATEGORY_CODES = Object.freeze({
+  seniority: ['CARBONYL_SENIORITY', 'CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'ETHER_SIDE', 'BRANCH_AT_END'],
+  count: ['CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'BRANCH_AT_END'],
+  side: ['AMINE_SIDE'],
+  numbering: ['NUMBERING', 'RING_NUMBERING'],
+  suffix: ['NEEDLESS_LOCANTS'],
+  parent: ['CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'ETHER_SIDE', 'BRANCH_AT_END'],
+});
+
+test('the former deliberate nulls of R-6c1 (diagnose.js «Amines»): each category has its I-52c4a code, step and words', () => {
   const cases = [
-    // [tile words, category]
-    ['2 hidroxi et ano 1 amina', 'seniority'],
-    ['3 oxo but ano 1 amina', 'seniority'],
-    ['N acetil et ano amina', 'seniority'],
-    ['3 ciano prop ano 1 amina', 'seniority'],
-    ['N et il met ano amina', 'side'],
-    ['N prop il et ano amina', 'side'],
-    ['N fenil met ano amina', 'side'],
-    ['N ciclo hex il et ano amina', 'side'],
-    ['N START 5 met il fenil END et ano amina', 'side'], // the ring is the parent: `N-etil-3-metilbencen-1-amina`
-    ['but ano 3 amina', 'numbering'],
-    ['N met il prop ano 3 amina', 'numbering'],
-    ['ciclo hex ano 1 5 di amina', 'numbering'],
-    ['benceno 1 5 di amina', 'numbering'],
-    ['et ano 1 amina', 'suffix'],
-    ['benceno 1 amina', 'suffix'],
-    ['ciclo hex ano 1 amina', 'suffix'],
-    ['N met il et ano 1 amina', 'suffix'],
-    ['2 START 2 amina et il END prop ano', null], // `amina` inside a branch: TILE_ORDER, no verdict to categorize
+    // [tile words, category, code, step, a phrase of the message]
+    ['2 hidroxi et ano 1 amina', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Aquí manda el alcohol (–OH)'],
+    ['3 oxo but ano 1 amina', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Aquí manda la cetona (C=O)'],
+    ['N acetil et ano amina', 'seniority', 'CARBONYL_SENIORITY', 'group', 'su nitrógeno, con el C=O unido a él, forma la amida'],
+    ['3 ciano prop ano 1 amina', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Aquí manda el nitrilo (–C≡N)'],
+    ['N et il met ano amina', 'side', 'AMINE_SIDE', 'groupChain', 'en ese lado hay una cadena de 2 carbonos, más larga que la tuya'],
+    ['N prop il et ano amina', 'side', 'AMINE_SIDE', 'groupChain', 'en ese lado hay una cadena de 3 carbonos'],
+    ['N fenil met ano amina', 'side', 'AMINE_SIDE', 'benzene', 'en ese lado está el benceno'],
+    ['N ciclo hex il et ano amina', 'side', 'AMINE_SIDE', 'ring', 'en ese lado hay un anillo'],
+    ['N START 5 met il fenil END et ano amina', 'side', 'AMINE_SIDE', 'benzene', 'Tu cadena es el sustituyente «etil»'],
+    ['but ano 3 amina', 'numbering', 'NUMBERING', 'numbering', 'los grupos amino (el grupo principal)'],
+    ['N met il prop ano 3 amina', 'numbering', 'NUMBERING', 'numbering', 'los grupos amino (el grupo principal)'],
+    ['ciclo hex ano 1 5 di amina', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'los grupos amino (el grupo principal)'],
+    ['benceno 1 5 di amina', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'los grupos amino (el grupo principal)'],
+    ['et ano 1 amina', 'suffix', 'NEEDLESS_LOCANTS', 'numbering', 'de colocar el grupo amino'],
+    ['benceno 1 amina', 'suffix', 'NEEDLESS_LOCANTS', 'assemble', 'de colocar el grupo amino'],
+    ['ciclo hex ano 1 amina', 'suffix', 'NEEDLESS_LOCANTS', 'ringNumbering', 'de colocar el grupo amino'],
+    ['N met il et ano 1 amina', 'suffix', 'NEEDLESS_LOCANTS', 'numbering', 'de colocar el grupo amino'],
+    // The guarded parent choice of phase I-52c1, reached: another nitrogen chosen (`RINGCHAIN`, a tie), and since phase R-6c2
+    // an amine written inside a compound branch (P0, `RINGCHAIN`).
+    ['2 START 4 amino ciclo hex il END et ano 1 amina', 'parent', 'CARBONYL_PARENT', 'ringChain', 'así que gana el anillo'],
+    ['3 START amino met il END pent ano', 'seniority', 'MORE_CARBONYL_GROUPS', 'groupChain', 'Hay otra cadena con más grupos amino'],
+    ['START amino met il END benceno', 'seniority', 'CARBONYL_PARENT', 'ringChain', 'la que lleva más grupos amino'],
   ];
-  for (const [words, category] of cases) {
+  for (const [words, category, code, opened, phrase] of cases) {
     const ids = seq(words);
     const verdict = readName(ids);
-    if (category === null) {
-      assert.equal(verdict.kind, 'invalid', words);
-      continue;
-    }
     assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
     assert.equal(amineCategory(ids, verdict), category, words);
-    assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.equal(d.code, code, `${words}: ${d.message}`);
+    assert.ok(CATEGORY_CODES[category].includes(d.code), words);
+    assert.ok(d.message.includes(phrase), `${words}: ${d.message}`);
+    assert.ok(!/undefined|null|NaN|\[object/.test(d.message), `${words}: ${d.message}`);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${words}: the step «Ver el paso» opens`);
     assert.ok(verdict.draw && verdict.molecule, words);
-  } // End of the loop over the deliberate nulls
-  // The shared rules that hold still speak beside an amine's suffix written with needless locants or numbered otherwise when theirs
-  // is the earlier mistake.
+  } // End of the loop over the former deliberate nulls
+  // `amina` inside a branch is TILE_ORDER: no verdict to categorize.
+  assert.equal(readName(seq('2 START 2 amina et il END prop ano')).kind, 'invalid');
+  // The shared rules that hold still speak beside an amine's suffix when theirs is the earlier mistake.
   assert.equal(read('1 met il prop ano 1 amina').diagnosis.code, 'BRANCH_AT_END');
-}); // End of test 'the deliberate nulls of R-6c1…'
+}); // End of test 'the former deliberate nulls of R-6c1…'
 
 // ---------------------------------------------------------------------------
 // Fixture round trip and closed loop (design.md §15.7).
@@ -1046,15 +1091,17 @@ function mutationsOf(ids) {
 } // End of function mutationsOf()
 
 /**
- * Reads every mutation of some amine names: every `otherName` either
- * carries a diagnosis of its family's codes whose step resolves in its
- * explanation, or is an amine's own mistake, a deliberate null of
- * diagnose.js «Amines» (counted by category, amineCategory()); a null with
- * no category is unexpected.
+ * Reads every mutation of some amine names: every `otherName` must carry a
+ * diagnosis of its family's codes whose step resolves in its explanation;
+ * none is null (since phase I-52c4a, diagnose.js «Amines»). The amine's own
+ * mistakes among them, the deliberate nulls of phase I-52c1, are counted by
+ * category (amineCategory()), each with a code of its category
+ * (CATEGORY_CODES) and, for `numbering`, the trace rule N0 and the amino
+ * groups' words.
  *
  * @param {string[]} names - Amine names (engine names or alternatives).
  * @returns {{otherName: Object<string, number>, codes: Set<string>, own: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the amine's own mistakes by category and the unexpected nulls.
+ *   `otherName` counts by family, the codes seen, the amine's own mistakes by category and the nulls.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
@@ -1071,12 +1118,7 @@ function sweep(names) {
       const label = `${name} → ${mutation.family} ${verdict.text}`;
       const d = verdict.diagnosis;
       if (!d) {
-        const category = amineCategory(mutation.ids, verdict);
-        if (category) {
-          own[category] = (own[category] || 0) + 1;
-        } else {
-          unexpected.push(label);
-        }
+        unexpected.push(label);
         continue;
       }
       codes.add(d.code);
@@ -1084,15 +1126,24 @@ function sweep(names) {
       assert.ok(!/undefined|null|NaN|\[object|grupos? –?OH|–CHO|C=O|COOH|C≡N/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
+      const category = amineCategory(mutation.ids, verdict);
+      if (category) {
+        own[category] = (own[category] || 0) + 1;
+        assert.ok(CATEGORY_CODES[category].includes(d.code), `${label}: ${category}, ${d.code}`);
+        assert.ok(category !== 'numbering' || (d.traceRule === 'N0' && d.message.includes('los grupos amino')), `${label}: ${d.message}`);
+      }
     } // End of the loop over the mutations of one name
   } // End of the loop over the names
   return { otherName, codes, own, unexpected };
 } // End of function sweep()
 
 /**
- * How many mutations of the amine fixture names give `otherName`, by family,
- * and how many of them are the amine's own mistakes by category (deliberate
- * nulls until phase I-52c4): pinned by the test below.
+ * How many mutations of the amine fixture names give `otherName`, by family
+ * (every one diagnosed with one of its family's codes), and how many of them
+ * are the amine's own mistakes by category: 80 `numbering`, a ring amine's
+ * groups numbered otherwise by a reflection or a rotation and a chain amine's
+ * by a reversal — deliberate nulls until phase I-52c4a, now RING_NUMBERING
+ * and NUMBERING at N0. Pinned by the test below.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 17, reflected: 5, rotated: 63, swapped: 0, unsorted: 13, ungrouped: 9, diBis: 10, toEnd: 6, heteroToEnd: 0, removed: 0,
@@ -1100,7 +1151,7 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 });
 const FIXTURE_OWN = Object.freeze({ numbering: 80 });
 
-test('mutations of every amine fixture name: a diagnosis of the family\'s codes, or a deliberate «Amines» null', async () => {
+test('mutations of every amine fixture name: a diagnosis of the family\'s codes, never null', async () => {
   // The names of phase R-6c1: the amino names (R-6c2) are swept in reverse-amino.test.js, the retained amine names and the class
   // names (R-6c3) in reverse-amine-templates.test.js.
   const names = (await readFixtures()).filter((row) => isAmine(row.smiles)).flatMap((row) => row.names)
@@ -1114,7 +1165,7 @@ test('mutations of every amine fixture name: a diagnosis of the family\'s codes,
     'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of every amine fixture name…'
 
-test('mutations of the generated amines: every otherName is diagnosed or a deliberate «Amines» null, every step resolves', () => {
+test('mutations of the generated amines: every otherName is diagnosed, every step resolves', () => {
   const names = [];
   for (const mol of loopMolecules().filter((_, i) => i % 3 === 0)) { // Every generator's amines: chains, rings, benzenes.
     const naming = nameMolecule(mol);
@@ -1125,6 +1176,8 @@ test('mutations of the generated amines: every otherName is diagnosed or a delib
   const { otherName, codes, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
+  // The seeds give 1236 `otherName`, every one diagnosed; 742 of them the amine's own mistakes, its groups numbered otherwise
+  // (`numbering`: deliberate nulls until phase I-52c4a, now NUMBERING and RING_NUMBERING at N0).
   assert.deepEqual([names.length, total, own], [256, 1236, { numbering: 742 }]);
   assert.deepEqual([otherName.removed, otherName.added], [0, 9]);
   assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'CHAIN_LOCANTS', 'LONGER_CHAIN', 'MORE_SUBSTITUENTS',

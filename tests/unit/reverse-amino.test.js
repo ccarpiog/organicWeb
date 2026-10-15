@@ -609,17 +609,19 @@ function sameSet(a, b) {
  * The category of an amino prefix's own mistake (or of an amine's beside
  * one), read independently of diagnose.js from the engine's naming and the
  * student's reading (diagnose.js «Amines»: deliberate nulls until phase
- * I-52c4): `amide` — the engine's principal group is an amide (an amino
- * prefix on a C=O carbon, `1-aminobutanal` → «butanamida»: outside the
- * rules, the amides being phase R-6d's); else as reverse-amines.test.js
- * amineCategory(): `seniority` — a principal amine written as an amino
- * prefix (`aminoetano`), or the student's `amina` beside a senior group;
- * `count` — another number of amine groups (`4-aminobutan-1-amina`); `side`
- * — the student's parent bonded to the amine's nitrogen by another carbon;
- * `numbering` — the amine groups numbered otherwise; `suffix` — the suffix's
- * needless or missing locants; `parent` — the amine groups choose another
- * parent (ring against chain, or no chain the engine's P0 keeps). Null when
- * none applies.
+ * I-52c4a): `amide` — the engine's principal group is an amide and the
+ * student wrote no `amina` (an amino prefix on a C=O carbon, `1-aminobutanal`
+ * → «butanamida»: outside the rules, the amides being phase R-6d's, still a
+ * null); else as reverse-amines.test.js amineCategory(): `seniority` — a
+ * principal amine written as an amino prefix (`aminoetano`), or the
+ * student's `amina` beside a senior group, an amide's too; `count` — another
+ * number of amine groups (`4-aminobutan-1-amina`); `side` — the same
+ * nitrogen as the engine's, bonded to the student's parent by another
+ * carbon; `numbering` — the amine groups numbered otherwise on the engine's
+ * chain or ring; `suffix` — the suffix's needless or missing locants;
+ * `parent` — the amine groups choose another parent (another nitrogen, ring
+ * against chain, or no chain the engine's P0 keeps; until phase I-52c4a
+ * another nitrogen was counted as `side`). Null when none applies.
  *
  * @param {string[]} ids - The name's tile ids.
  * @param {object} verdict - Its `otherName` verdict.
@@ -627,10 +629,13 @@ function sameSet(a, b) {
  */
 function aminoCategory(ids, verdict) {
   const engine = verdict.naming.structure.suffix;
+  const { tree } = parse(ids);
+  const spec = interpret(tree);
+  // The student's amine groups: its suffix's, when it is `amina` (or `anilina`, `bencilamina`), never a nitrile's nitrogen.
+  const mine = spec.suffix && spec.suffix.kind === 'amine' ? verdict.suffixAtoms || [] : [];
   if (engine && engine.kind === 'amide') {
-    return 'amide';
+    return mine.length > 0 ? 'seniority' : 'amide';
   }
-  const mine = (verdict.suffixAtoms || []).filter((g) => verdict.molecule.atoms.get(g.attachment).element === 'N');
   if (!engine || engine.kind !== 'amine') {
     return mine.length > 0 ? 'seniority' : null;
   }
@@ -640,13 +645,16 @@ function aminoCategory(ids, verdict) {
   if (mine.length !== engine.locants.length) {
     return 'count';
   }
+  if (!sameSet(mine.map((g) => g.attachment), engine.locants.map((site) => site.attachAtom))) {
+    return 'parent';
+  }
   if (!sameSet(mine.map((g) => g.parentAtom), engine.locants.map((site) => site.atom))) {
     return 'side';
   }
-  if (!sameSet(mine.map((g) => g.locant), engine.locants.map((site) => site.locant))) {
+  if (!sameSet(mine.map((g) => g.locant), engine.locants.map((site) => site.locant))
+    && sameSet(verdict.studentParent.atoms, verdict.naming.parent.atoms)) {
     return 'numbering';
   }
-  const { tree } = parse(ids);
   if (tree.parent.suffix && tree.parent.suffix.locants.length > 0) {
     const bare = assemble({ ...tree, parent: { ...tree.parent, suffix: { ...tree.parent.suffix, locants: [] } } }).text;
     if ([verdict.naming.name, ...verdict.naming.alternatives.map((alt) => alt.name)].includes(bare)) {
@@ -663,32 +671,63 @@ function aminoCategory(ids, verdict) {
   return !studentRing && p0 && !p0.survivors.some((c) => student.every((id) => c.atoms.includes(id))) ? 'parent' : null;
 } // End of function aminoCategory()
 
-test('the deliberate nulls of R-6c2 (diagnose.js «Amines»): each category, read independently, gets no diagnosis', () => {
+/**
+ * The codes an amino prefix's own mistake (or an amine's beside one) gets, by
+ * category (aminoCategory(); diagnose.js «Amines», phase I-52c4a), as
+ * reverse-amines.test.js CATEGORY_CODES; `amide` has none (a null, phase
+ * R-6d's).
+ */
+const CATEGORY_CODES = Object.freeze({
+  seniority: ['CARBONYL_SENIORITY', 'CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'ETHER_SIDE', 'BRANCH_AT_END'],
+  count: ['CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'BRANCH_AT_END'],
+  side: ['AMINE_SIDE'],
+  numbering: ['NUMBERING', 'RING_NUMBERING'],
+  suffix: ['NEEDLESS_LOCANTS'],
+  parent: ['CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'ETHER_SIDE', 'BRANCH_AT_END'],
+});
+
+test('the former deliberate nulls of R-6c2 (diagnose.js «Amines»): each category has its I-52c4a code, step and words', () => {
   const cases = [
-    // [tile words, category]
-    ['amino et ano', 'seniority'], // a principal amine written `amino` → «etanamina»
-    ['2 amino prop ano', 'seniority'],
-    ['START met il amino END met ano', 'seniority'], // → «N-metilmetanamina»
-    ['1 START di met il amino END prop ano', 'seniority'],
-    ['4 amino but ano 1 amina', 'count'], // an amine group of the parent written `amino` beside `amina` → «butano-1,4-diamina»
-    ['2 amino et ano 1 amina', 'count'],
-    ['1 amino but ano al', 'amide'], // the amino prefix on the –CHO's carbon: an amide, «butanamida»
-    ['1 START et il met il amino END et ano al', 'amide'],
-    // → «4-(aminometil)ciclohexan-1-amina»: the engine cites the ring's nitrogen, the student's amino, as the suffix.
-    ['1 START 4 amino ciclo hex il END met ano amina', 'side'],
-    ['5 START amino met il END ciclo hex ano 2 amina', 'numbering'],
+    // [tile words, category, code, step, a phrase of the message]
+    ['amino et ano', 'seniority', 'CARBONYL_PREFIX', 'group', 'no con el prefijo «amino». Se escribe «etanamina»'],
+    ['2 amino prop ano', 'seniority', 'CARBONYL_PREFIX', 'group', 'Se escribe «propan-2-amina»'],
+    ['START met il amino END met ano', 'seniority', 'CARBONYL_PREFIX', 'group', 'no con el prefijo «metilamino». El otro grupo '
+      + 'unido al nitrógeno va delante, con la letra «N» en vez de un número. Se escribe «N-metilmetanamina»'],
+    ['1 START di met il amino END prop ano', 'seniority', 'CARBONYL_PREFIX', 'group', 'Los otros grupos unidos al nitrógeno van '
+      + 'delante'],
+    ['4 amino but ano 1 amina', 'count', 'CARBONYL_PREFIX', 'group', 'se nombran todos juntos con la terminación «-diamina»'],
+    ['2 amino et ano 1 amina', 'count', 'CARBONYL_PREFIX', 'group', 'Se escribe «etano-1,2-diamina»'],
+    // The student's amine on the other carbon piece: another nitrogen as the suffix, a tie the ring wins.
+    ['1 START 4 amino ciclo hex il END met ano amina', 'parent', 'CARBONYL_PARENT', 'ringChain', 'llevan uno cada uno, así que gana '
+      + 'el anillo: «4-(aminometil)ciclohexan-1-amina»'],
+    ['5 START amino met il END ciclo hex ano 2 amina', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'los grupos amino (el grupo '
+      + 'principal) tienen que llevar los números más bajos (1 en vez de 2)'],
   ];
-  for (const [words, category] of cases) {
+  for (const [words, category, code, opened, phrase] of cases) {
     const ids = seq(words);
     const verdict = readName(ids);
     assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
     assert.equal(aminoCategory(ids, verdict), category, words);
-    assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.equal(d.code, code, `${words}: ${d.message}`);
+    assert.ok(CATEGORY_CODES[category].includes(d.code), words);
+    assert.ok(d.message.includes(phrase), `${words}: ${d.message}`);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${words}: the step «Ver el paso» opens`);
     assert.ok(verdict.draw && verdict.molecule, words);
-  } // End of the loop over the deliberate nulls
+  } // End of the loop over the former deliberate nulls
+  // The amide nulls stay (phase R-6d): an amino prefix on the –CHO's carbon is an amide, «butanamida».
+  for (const words of ['1 amino but ano al', '1 START et il met il amino END et ano al']) {
+    const ids = seq(words);
+    const verdict = readName(ids);
+    assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
+    assert.equal(aminoCategory(ids, verdict), 'amide', words);
+    assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+  }
   assert.equal(read('amino et ano').name, 'etanamina');
   assert.equal(read('1 amino but ano al').name, 'butanamida');
-}); // End of test 'the deliberate nulls of R-6c2…'
+}); // End of test 'the former deliberate nulls of R-6c2…'
 
 // ---------------------------------------------------------------------------
 // Fixture round trip and closed loop (design.md §15.7).
@@ -1131,20 +1170,24 @@ function mutationsOf(ids) {
 } // End of function mutationsOf()
 
 /**
- * Reads every mutation of some amino names: every `otherName` either carries
- * a diagnosis of its family's codes whose step resolves in its explanation,
- * or is an amino prefix's (or an amine's) own mistake, a deliberate null of
- * diagnose.js «Amines» (counted by category, aminoCategory()); a null with
- * no category is unexpected.
+ * Reads every mutation of some amino names: every `otherName` carries a
+ * diagnosis of its family's codes whose step resolves in its explanation —
+ * the own mistakes among them, deliberate nulls until phase I-52c4a, counted
+ * by category (aminoCategory()), each with a code of its category
+ * (CATEGORY_CODES) and, for `numbering`, the trace rule N0 and the amino
+ * groups' words —, or is an amide null (`amide`: an amino prefix on a C=O
+ * carbon, phase R-6d's); any other null is unexpected.
  *
  * @param {string[]} names - Amino names (engine names or alternatives).
- * @returns {{otherName: Object<string, number>, codes: Set<string>, own: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the own mistakes by category and the unexpected nulls.
+ * @returns {{otherName: Object<string, number>, codes: Set<string>, own: Object<string, number>, nulls: Object<string, number>,
+ *   unexpected: string[]}} `otherName` counts by family, the codes seen, the own mistakes diagnosed by category, the amide nulls
+ *   and the unexpected nulls.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
   const codes = new Set();
   const own = {};
+  const nulls = {};
   const unexpected = [];
   for (const name of names) {
     for (const mutation of mutationsOf(idsOf(name))) {
@@ -1155,10 +1198,10 @@ function sweep(names) {
       otherName[mutation.family] += 1;
       const label = `${name} → ${mutation.family} ${verdict.text}`;
       const d = verdict.diagnosis;
+      const category = aminoCategory(mutation.ids, verdict);
       if (!d) {
-        const category = aminoCategory(mutation.ids, verdict);
-        if (category) {
-          own[category] = (own[category] || 0) + 1;
+        if (category === 'amide') {
+          nulls.amide = (nulls.amide || 0) + 1;
         } else {
           unexpected.push(label);
         }
@@ -1169,43 +1212,52 @@ function sweep(names) {
       assert.ok(!/undefined|null|NaN|\[object/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
+      if (category) {
+        own[category] = (own[category] || 0) + 1;
+        assert.ok((CATEGORY_CODES[category] || []).includes(d.code), `${label}: ${category}, ${d.code}`);
+        assert.ok(category !== 'numbering' || (d.traceRule === 'N0' && d.message.includes('los grupos amino')), `${label}: ${d.message}`);
+      }
     } // End of the loop over the mutations of one name
   } // End of the loop over the names
-  return { otherName, codes, own, unexpected };
+  return { otherName, codes, own, nulls, unexpected };
 } // End of function sweep()
 
 /**
  * How many mutations of the amino fixture names give `otherName`, by family,
- * and how many of them are own mistakes by category (deliberate nulls until
- * phase I-52c4): pinned by the test below.
+ * how many of them are own mistakes by category (FIXTURE_OWN: deliberate
+ * nulls until phase I-52c4a, now diagnosed with their category's codes) and
+ * how many stay amide nulls (FIXTURE_NULLS, phase R-6d's): pinned by the
+ * test below.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 7, shifted: 2, reflected: 7, rotated: 58, swapped: 2, unsorted: 15, ungrouped: 3, diBis: 3, toEnd: 1, heteroToEnd: 3,
   removed: 0, added: 0, aminoOrder: 2, aminoUngrouped: 7, aminoDiBis: 7,
 });
-const FIXTURE_OWN = Object.freeze({ amide: 2, numbering: 5 });
+const FIXTURE_OWN = Object.freeze({ numbering: 5 });
+const FIXTURE_NULLS = Object.freeze({ amide: 2 });
 
-test('mutations of every amino fixture name: a diagnosis of the family\'s codes, or a deliberate «Amines» null', async () => {
+test('mutations of every amino fixture name: a diagnosis of the family\'s codes, or an amide null', async () => {
   const names = (await readFixtures()).filter((row) => row.names.some(isAminoName)).flatMap((row) => row.names).filter(isAmineName);
   assert.equal(names.length, EXPECTED_NAMES.read);
-  const { otherName, codes, own, unexpected } = sweep(names);
+  const { otherName, codes, own, nulls, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
-  assert.deepEqual(own, { ...FIXTURE_OWN });
+  assert.deepEqual([own, nulls], [{ ...FIXTURE_OWN }, { ...FIXTURE_NULLS }]);
   assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND', 'NUMBERING',
     'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of every amino fixture name…'
 
-test('mutations of the generated amino names: every otherName is diagnosed or a deliberate «Amines» null, every step resolves', () => {
+test('mutations of the generated amino names: every otherName is diagnosed or an amide null, every step resolves', () => {
   const names = [];
   for (const mol of loopMolecules().filter((_, i) => i % 3 === 0)) {
     const naming = nameMolecule(mol);
     names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter((name) => isAminoName(name) && isAmineName(name)));
   }
-  const { otherName, codes, own, unexpected } = sweep(names);
+  const { otherName, codes, own, nulls, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
-  assert.deepEqual([names.length, total, own], [189, 707, { amide: 12, count: 2, numbering: 2 }]);
+  // Until phase I-52c4a the own mistakes (`count` 2, `numbering` 2) were deliberate nulls; the amide nulls stay (phase R-6d).
+  assert.deepEqual([names.length, total, own, nulls], [189, 707, { count: 2, numbering: 2 }, { amide: 12 }]);
   assert.deepEqual([otherName.aminoOrder, otherName.aminoUngrouped, otherName.aminoDiBis], [36, 15, 15]);
   assert.deepEqual([...codes].sort(), ['ACID_GROUP', 'ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'CHAIN_LOCANTS', 'ESTER_IN_CHAIN',
     'KETONE_NOT_ALDEHYDE', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MULTIPLIER_KIND', 'NEEDLESS_LOCANTS', 'NUMBERING', 'RING_NUMBERING',

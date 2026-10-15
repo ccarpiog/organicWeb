@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T22:31:50Z",
+  "updated": "2026-10-15T23:39:20Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -952,8 +952,23 @@
     {
       "id": "I-52c4",
       "title": "v4 R-6c4 Amine diagnosis messages",
+      "status": "in_progress",
+      "summary": "Split into I-52c4a (the principal amine group's mistakes, done) and I-52c4b (class names, the last template nulls)."
+    },
+    {
+      "id": "I-52c4a",
+      "title": "v4 R-6c4a Principal amine group diagnoses",
+      "status": "done",
+      "risk": "high",
+      "summary": "Names an amine's own mistakes: a junior amina, amino for the principal amine, the parent across the nitrogen, N0, suffix locants.",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-52c4a.md",
+      "narrative": "docs/progress-archive/i-52c4a.md"
+    },
+    {
+      "id": "I-52c4b",
+      "title": "v4 R-6c4b Amine class-name and template diagnoses",
       "status": "queued",
-      "summary": "Names the student's main mistake in an amine name, with its explanation step."
+      "summary": "Names the mistakes in amine class names (order, multiplier, a class name for an amine that has none) and the last template nulls."
     },
     {
       "id": "I-52d",

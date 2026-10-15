@@ -64,7 +64,9 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-52c1 | v4 R-6c1 Amine suffix `amina` and `N` locants (`N-metiletanamina`, `N,2-dimetilpropan-1-amina`); search with N slots, round trips, closed loop, deliberate «Amines» nulls, e2e | same, "R-6c" | done — `docs/progress-archive/i-52c1.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52c1.md` |
 | I-52c2 | v4 R-6c2 Amino prefixes (`amino`, `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`) beside senior groups, the rows waiting for them, e2e | same, "R-6c" | done — `docs/progress-archive/i-52c2.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52c2.md` |
 | I-52c3 | v4 R-6c3 `anilina` / `bencilamina` templates (`N,4-dimetilanilina`, `p-cloroanilina`, no `N,p-`), class names (`metilamina`, `dimetilamina`, `trimetilamina`), Ayuda amine line, e2e | same, "R-6c" | done — `docs/progress-archive/i-52c3.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52c3.md` |
-| I-52c4 | v4 R-6c4 Amine diagnosis messages (fill the «Amines» nulls of I-52c1…c3), e2e | same, "R-6c" | queued | — | — |
+| I-52c4 | v4 R-6c4 Amine diagnosis messages (fill the «Amines» nulls of I-52c1…c3), e2e | same, "R-6c" | split into I-52c4a, I-52c4b | — | — |
+| I-52c4a | v4 R-6c4a Principal amine group diagnoses (`seniority`, `count`, `side` → new AMINE_SIDE, `numbering`, `suffix`, `parent`; `N` no number in LOCANT_ORDER / LOCANT_COUNT), e2e | same, "R-6c" | done — `docs/progress-archive/i-52c4a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52c4a.md` |
+| I-52c4b | v4 R-6c4b Amine class-name diagnoses (`order`, `multiplier`, `words`, `none`), the last template nulls, POSITIONAL on `anilina`, e2e | same, "R-6c" | queued | — | — |
 | I-52d | v4 R-6d Amides | same, "R-6d" | queued | — | — |
 | I-53 | v4 R-7 Wrap-up | same, "R-7" | queued | — | — |
 | I-54 | o/m/p letters for two different prefixes on plain `benceno`, drawing → name and name → drawing (user decision 2026-10-15, reverses design §14.4) | `autoclaude/processed/240-omp-two-different-groups.md` | queued — after I-53 (user: «after v4») | — | — |
@@ -90,22 +92,24 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-52c4 (v4 R-6c4; design §15.8 row R-6c, the split recorded in the table): name the amine's own mistakes in
-`src/reverse/diagnose.js` (header «Amines») — fill every deliberate «Amines» null of I-52c1…I-52c3 (`AMINE_NULLS`, ranked among the
-readings) with a message and its «Ver el paso» step: a junior `amina` beside a senior group (seniority, with the order
-`ácido > éster > amida > nitrilo > aldehído > cetona > alcohol > amina`), a principal amine written `amino`, `amino` beside `amina`
-(count), the parent on the other side of the nitrogen, the amine groups' parent choice, N0 numbering, the suffix's needless or missing
-locants, `N` treated as a number by LOCANT_ORDER / LOCANT_COUNT, and the I-52c3 nulls (`anilina` beside a senior group or a second
-amine, a prefix style the template does not take, class-name mistakes: order, multiplier, a class name for an amine that has none).
-Flip the null assertions in `tests/unit/reverse-amines.test.js`, `reverse-amino.test.js`, `reverse-amine-templates.test.js`,
-`reverse-amine-classes.test.js` and the sweeps; an amine case in `tests/e2e/diagnosis.spec.js`; the CLAUDE.md v4 sentence (R-6c done,
-next R-6d). Model it on `docs/progress-archive/i-52b3.md` (nitrile diagnoses), `i-52a3a.md`, `i-52a3b.md` (class-name diagnoses) and
-`i-51b2.md` (ether class names); the nulls are listed in `i-52c1.md`, `i-52c2.md`, `i-52c3.md` («Deliberate nulls»). Spec: design §15 +
-§13 (I-36) — read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by
-explicit paths. Then I-52d (R-6d, amides; likely split like R-6b/R-6c).
+Select I-52c4b (v4 R-6c4b; design §15.8 row R-6c, the split recorded in the table): name the amine class names' own mistakes in
+`src/reverse/diagnose.js` (header «Amines») — fill the last deliberate «Amines» nulls (`classCategory()` in
+`tests/unit/reverse-amine-classes.test.js`): `order` (`metiletilamina` → «etilmetilamina», `propilmetilamina`, `metiltert-butilamina`,
+`propildimetilamina`), `multiplier` (`metilmetilamina`, `bismetilamina`, `trismetilamina`, `etilmetilmetilamina`), `words`
+(`(propan-2-il)amina`, `(1-metiletil)amina`), `none` — a class name for an amine that has none (`ciclohexilamina`, `fenilamina`,
+`etenilamina`, `(2-cloroetil)metilamina`, `(2-metilpropil)amina`, `metilciclohexilamina`), each with its «Ver el paso» step; today an
+amine class name is a null before every rule (`diagnose()`, `isAmineClassName()`). Also reword `parse.js` POSITIONAL on `anilina`
+(«…escribe los números (N,4-dimetilanilina)») so `N` is no number. The `anilina` `style` null (`4-(propan-2-il)anilina`) is the
+cross-family open user question (a retained word's prefix style, *Open risks* I-51d1…I-52a2b (1)) — keep it pinned unless the user
+has answered. Flip the null assertions and sweep counts; an amine class-name case in `tests/e2e/diagnosis.spec.js`; the CLAUDE.md v4
+sentence (R-6c done, next R-6d). Model it on `docs/progress-archive/i-51b2.md` (ether class names: CLASS_* codes, the `etherClass`
+step), `i-52a3b.md` (ESTER_CLASS_NAME) and `i-52c4a.md` (amine diagnoses); the nulls are listed in `i-52c3.md` and `i-52c4a.md`
+(«Deliberate nulls»). Spec: design §15 + §13 (I-36) — read from the working-tree `docs/design.md`; never edit or commit it (see
+*Open risks*). Risk high; worker opus. Commit by explicit paths. Then I-52d (R-6d, amides; likely split like R-6b/R-6c; the `amide`
+null `1-aminobutanal` → «butanamida» is R-6d's).
 
 - **Builds on** every v4 phase so far — the R-1 engine, dialog, «Dibujar», diagnosis engine and panel, rings, benzene,
-  templates, and the halogen … amine families (`docs/progress-archive/i-47a.md` … `i-52c3.md`; the "Key paths" below); the forward
+  templates, and the halogen … amine families (`docs/progress-archive/i-47a.md` … `i-52c4a.md`; the "Key paths" below); the forward
   naming engine already names every case (v2 §13, v3 §14).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
@@ -128,91 +132,8 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   fixtures `tests/fixtures/names.tsv` (§4.8 format, `#` section lines).
 - Oracle: `npm run oracle -- --count 1000 --seed 1` (`scripts/oracle/`, OPSIN 2.9.0
   jar in gitignored `scripts/oracle/vendor/`, `--download` fetches it).
-- Editor: `src/editor/{editor,geometry,history,render}.js` — DOM-free
-  `createEditorCore()` + `createEditor(svg)`; test API `window.__editor`
-  (see `editor.js` header); `onEdit({reason, kind})` with kind `chemical` /
-  `coordinates`. UI glue `src/ui/{app,toolbar,feedback,canvasbar,autosave,results}.js`.
-- Explanation: pure `explain()` in `src/explain/explain.js`; snapshots
-  `tests/fixtures/explain-snapshots.json` (`UPDATE_SNAPSHOTS=1 npm test`).
-- Model: `src/model/{molecule,graph,validate,smiles}.js` — `canonicalTreeKey`
-  in graph.js; `validateStructure` / `validateForNaming` in validate.js.
-- Help / a11y: `src/ui/help.js` (Ayuda dialog); aria-live region and tooltips
-  in `src/ui/results.js`; e2e projects `source` and `dist` in
-  `playwright.config.js` (`tests/e2e/global-setup.js` rebuilds dist).
-- Carbon dots: `showsCarbonDots()` / `atomLabelPosition()` in
-  `src/editor/render.js`; lone-label hit box `onLoneLabel()` in `geometry.js`.
-- Layout: pure `canonicalLayout()` in `src/layout/canonical.js`; examples list
-  `src/ui/examples.js`; editor `setCoordinates()` / `animateCoordinates()`.
-- 90° view: pure projection in `src/layout/rightangle.js`; editor
-  `shownMolecule()` / `isProjected()` / `refresh()` in `src/editor/editor.js`;
-  toggle in `src/ui/canvasbar.js` (localStorage `organicWeb.rightAngles`).
-- Deploy: `scripts/deploy.mjs` (injectable `deploy()`), tests
-  `tests/unit/deploy.test.js`; docs README "Deployment", design §10.1.
-- Element palette: toolbar `src/ui/toolbar.js`; DOM-free label sizing
-  `src/editor/labels.js`; heteroatom hit boxes `onHeteroLabel()` in `geometry.js`.
-- Ring naming: `src/naming/rings.js` (cycloalkanes I-25; substituted/unsaturated
-  rings I-26, numbering via `runNumberingCascade()` in `numbering.js`); explain steps
-  "Busca el anillo" / `ringNumbering` in `src/explain/explain.js`.
-- Rings: pure perception/classification `src/model/rings.js`; `canonicalKey()`
-  (trees + monocycles) in `graph.js`; errors `CYCLE` / `RING_SYSTEM` (`ringKind`)
-  in `validate.js`; SMILES ring closures in `smiles.js`.
-- Ring tool (I-27a): `ringPlan()` / `targetExists()` in `src/editor/editor.js`, polygon
-  geometry in `geometry.js`, inner double-bond lines in `render.js`, "Anillos" group in
-  `src/ui/toolbar.js` (`a` cycles sizes 3–8).
-- Ring layout (I-27b): pure `src/layout/rings.js` (locant 1 top, clockwise; sector and
-  intrusion checks), strategy in `canonical.js`, `layoutProblems()` `inside` count.
-- Benzene (I-28): pure `src/naming/aromatic.js` (detection + naming); `ringReason`
-  `polysubstitutedBenzene` in `validate.js`; Benceno template in the ring tool
-  (`editor.js`); explain step "Reconoce el benceno"; oracle kekulization in
-  `scripts/oracle/smiles-full.mjs`.
-- Groups (I-29): pure `src/naming/groups.js` (detection, no overlaps) and
-  `seniority.js` (principal group, suffix/prefix, `attachmentTowards()`); the
-  `HETEROATOM` refusal carries `groups`; explain steps "Reconoce los grupos" …;
-  snapshots `tests/fixtures/explain-group-snapshots.json`; design §13.6.
-- Halogens (I-30): halogen prefixes as `substituent.halogen` (render `substituentTokens()`),
-  admission in `validate.js`; tests `tests/unit/halogens.test.js`, `tests/e2e/halogens.spec.js`.
-- Alcohols (I-31): principal-group chain choice and numbering in `parent.js` /
-  `numbering.js`; suffix rendering and multiplier elision in `render.js`; ring closing-bond
-  compound locant `1(n)`; tests `tests/unit/alcohols.test.js`, `tests/e2e/alcohols.spec.js`.
-- v2 functional groups (I-32…I-40d; tests `tests/unit/<family>.test.js` + `tests/e2e/<family>.spec.js`,
-  details in each `docs/progress-archive/i-*.md`): kinds in `src/naming/principal.js` (carbonyl, acid,
-  amine, amide, nitrile; `outsideCarbons()` for `ciano-`), refusals in `validate.js` (`ringAldehyde`,
-  `sideChainCarbonyl`, `manyAcids`, `symmetricEther`, `esterPrefix`, `symmetricAmine`, `imide`,
-  `manyNitriles`, `symmetricRing`, `esterRingSplit()` / `isLactone()`, …); ether parent side in
-  `parent.js`, alkoxy prefixes in `substituent.js`, N5 tie-break `compareNameKeys()` in `numbering.js`;
-  ester O-bound group `esterAlkylName()`, acyl endings `acylEndingTokens()`, `N` locants in `render.js`;
-  ring prefixes (`ciclohexil`, `fenil`, `fenoxi`, `benzoil`, `(ciclohexanocarbonil)`) in
-  `substituent.js` / `render.js`; ring suffixes (`-carboxílico`, `-carbaldehído`, `-carbonitrilo`,
-  `-carboxamida`) in `rings.js`; oracle generators `generateAmides()` … `generateRingEsters()`.
-- 90° heteroatoms / CHO-COOH abbreviations / v2 wrap-up (I-41a…c): `projectRightAngles()` and group
-  detection in `src/layout/rightangle.js`, labels in `src/editor/labels.js` / `render.js`, toggle in
-  `src/ui/canvasbar.js` (localStorage `organicWeb.abbreviations`); Ayuda in `index.html`, grouped
-  examples in `src/ui/examples.js`; details in `docs/progress-archive/i-41a.md` … `i-41c.md`.
-- Polysubstituted benzenes (I-42a/b): design §14; Kekulé-neutral numbering in `numbering.js` /
-  `rings.js`, naming and aliases in `aromatic.js` / `index.js`, `ringOmitsLocants` in
-  `lexicon.es.js`, refusal message in `validate.js`, numbering step in `explain.js`; tests
-  `tests/unit/polysubstituted-benzenes.test.js`, `tests/e2e/polysubstituted-benzenes.spec.js`; oracle
-  `randomBenzene` places 1–6 groups.
-- Phenols/benzenamines with prefixes (I-43a): gate in `validate.js`, principal-locant-1 naming and
-  cresol/anilina aliases in `aromatic.js` / `render.js`; e2e `tests/e2e/phenols-anilines.spec.js`;
-  oracle `generateRingPrincipalBenzenes()`.
-- Ring suffix groups with prefixes (I-43b): e2e `tests/e2e/substituted-benzoic.spec.js`; oracle
-  `generateRingOutsideBenzenes()`.
-- Several identical ring principal groups (I-44): gate `ringPrincipalGroups()` in `validate.js`
-  (most senior ring group, one or more times); tests `tests/unit/benzene-polysuffix.test.js`,
-  `tests/e2e/benzene-polysuffix.spec.js`; oracle `generateRingPolysuffixBenzenes()`.
-- Substituted phenyl/phenoxy (I-45a): admission in `validate.js`, phenyl numbering in
-  `substituent.js` / `render.js`; tests `tests/unit/substituted-phenyl.test.js`,
-  `tests/e2e/substituted-phenyl.spec.js`; oracle `generateSubstitutedPhenyls()`.
-- Substituted benzoyl (I-45b): benzoyl prefixes in `render.js` / `index.js`, explanation in
-  `explain.js` (`ringCarbonylDescription`, `acylaminoDescription`); tests
-  `tests/unit/substituted-benzoyl.test.js`, `tests/e2e/substituted-benzoyl.spec.js`; oracle
-  `generateSubstitutedBenzoyls()`.
-- Substituted-ring esters (I-45c): per-ring gate in `validate.js`, benzoate/phenyl-ester naming in
-  `principal.js` / `render.js`, explain ester step; tests `tests/unit/substituted-esters.test.js`,
-  `tests/e2e/substituted-esters.spec.js`; oracle `generateSubstitutedEsters()`.
-- v3 wrap-up (I-46): Ayuda notes `#help-benzenes` / `#help-omp` in `index.html`, examples group
-  «Bencenos con varios sustituyentes» in `src/ui/examples.js`.
+- v1…v3 paths (editor, explanation, model, help, carbon dots, layout, 90° view, deploy, palette, rings, benzene, groups,
+  every v2 family, polysubstituted benzenes): `docs/progress-archive/key-paths-v1-v3.md`.
 - Name → drawing (v4, I-47a…): pure `src/reverse/` — `tiles.js` (catalogue from `lexicon.es.js`),
   `parse.js` (`parse(ids)` → `{tree, errors}`), `assemble.js` (`{text, spans}`), `tokenize.js`,
   `interpret.js`, `build.js`, `search.js` (left-out placements, budget, naming cache),
@@ -311,16 +232,18 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   class AMCLASS, `isAmineClassName()` in `assemble.js`; `tokenize()` returns null for a class name with two readings,
   `tridecilamina`); tests `tests/unit/reverse-amine-templates.test.js`, `reverse-amine-classes.test.js`,
   `tests/e2e/name-builder-amine-templates.spec.js`, Ayuda `#help-name-to-drawing-amines`.
+  Amine diagnoses (I-52c4a): new code AMINE_SIDE (`acrossNitrogen()`, `nitrogenBetween()`, `sideDropped()` / `nitrogenSide()` for an end
+  branch beside the nitrogen), the amine in the shared CARBONYL_* / N0 / locant codes («grupo(s) amino») in `diagnose.js`; tests
+  `tests/unit/reverse-diagnose-amines.test.js`, amine case in `diagnosis.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51c1 … I-52c2: see `docs/progress-archive/i-51c1.md` … `i-52c2.md`.
-- I-52c3 (orchestrator, after the worker and again after the review fix): `npm test` (2327 → 2365 → 2366 pass, 0 fail) ·
-  `npm run check` exit 0 (214 → 217 files) · `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (597 → 605 passed,
-  source + dist, both runs). `git diff --stat src/naming src/explain` empty; `docs/design.md` not edited (mtime 2026-10-14). Amine
-  fixture round trip 102 → 135 names (3 left: amides), amine closed loop 1122 → 1435 names (15 left: amides). Codex
-  ship-with-fixes, 1 should-fix fixed (`docs/reviews/I-52c3.md`).
+- I-51c1 … I-52c3: see `docs/progress-archive/i-51c1.md` … `i-52c3.md`.
+- I-52c4a (orchestrator, after the worker and again after the review fix): `npm test` (2366 → 2375 → 2376 pass, 0 fail) ·
+  `npm run check` exit 0 (217 → 218 files) · `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (605 → 607 passed,
+  source + dist, both runs). `git diff --stat src/naming src/explain` empty; `docs/design.md` not edited (mtime 2026-10-14). Codex
+  ship-with-fixes, 1 should-fix fixed (`docs/reviews/I-52c4a.md`).
 
 ## Open risks / deviations
 
@@ -429,6 +352,13 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   as one tridecyl by the test-only tokenizer) fixed by the orchestrator. Open questions for the user (forward engine, not changed):
   (1) `butiltert-butilamina` without a hyphen; (2) `tridecilamina` for N(C₁₀H₂₁)₃ is ambiguous with tridecylamine (usage:
   `tris(decil)amina`); (3) announce the class name on a `correct` verdict (`metanamina`)? `alcohol bencílico` stays unread (no phase).
+- I-52c4a (principal amine group diagnoses; decisions, Spanish drafts and review fix in `docs/progress-archive/i-52c4a.md`): the
+  group is «grupo(s) amino» in every message; `N-etilbencilamina` / `N-propilbencilamina` stay SUBSTITUTED_TEMPLATE (the engine writes
+  `bencilamina` bare), not AMINE_SIDE; AMINE_SIDE reads the principal amine's nitrogen only (an amino prefix's keeps the chain rules'
+  true messages); on benzene it opens «Reconoce el benceno», which does not say a ring beats a chain (the message does). For teacher
+  review: CARBONYL_SENIORITY beside an amine shows the whole order where the group's step lists a shorter one. Codex should-fix (an end
+  branch beside the nitrogen read as BRANCH_AT_END with the parent's length) fixed: `sideDropped()` → AMINE_SIDE. Left for I-52c4b: the
+  class-name nulls, `anilina` `style`, POSITIONAL's «los números (N,4-…)»; `amide` for R-6d.
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -442,5 +372,5 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-52c2 `6792314`, pushed. I-52c3 committed and pushed right after this checkpoint (see `git log`). User's
-  uncommitted paths, never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.
+- I-52c3 `ba846c5`, pushed. I-52c4a committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
+  never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

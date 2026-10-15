@@ -8,9 +8,9 @@
  * `2-[etil(metil)amino]etan-1-ol`, both correct); `ácido amino et ano oico`
  * draws the amino acid with «Casi: faltan los números…»; a shared rule speaks
  * on the groups on the nitrogen (`2-[metil(metil)amino]etan-1-ol`:
- * UNGROUPED); a principal amine written `amino` is a deliberate null
- * (`aminoetano`: drawn and named «etanamina», no diagnosis yet, phase
- * I-52c4); a locant on a group of the nitrogen, an acyl group on it and a
+ * UNGROUPED); a principal amine written `amino` has its diagnosis
+ * (`aminoetano`: drawn and named «etanamina», CARBONYL_PREFIX since phase
+ * I-52c4a); a locant on a group of the nitrogen, an acyl group on it and a
  * third group stay in the dialog with their message and marked tiles, the
  * canvas untouched. Runs on the dev server and on dist (playwright.config.js).
  */
@@ -177,7 +177,7 @@ test('the `amino` tile; `2 amino et ano 1 ol` draws 2-aminoetan-1-ol, correct, o
   expect(errors).toEqual([]);
 }); // End of test 'the `amino` tile…'
 
-test('left-out amino locant: missing locants; a shared rule on the nitrogen\'s groups; a principal amine written `amino` has no diagnosis yet', async ({ page }) => {
+test('left-out amino locant: missing locants; a shared rule on the nitrogen\'s groups; a principal amine written `amino` has its diagnosis', async ({ page }) => {
   const errors = await openApp(page);
   const verdict = page.locator('#verdict');
   // `ácido aminoetanoico`: the amino prefix's place left out, searched; the engine's name cites it.
@@ -200,17 +200,19 @@ test('left-out amino locant: missing locants; a shared rule on the nitrogen\'s g
     + 'delante: «2-(dimetilamino)», no «2-[metil(metil)amino]».');
   await expect(page.locator('#result-name')).toHaveText('2-(dimetilamino)etan-1-ol');
 
-  // `aminoetano`: a principal amine written as an amino prefix, a deliberate null of diagnose.js «Amines» until phase I-52c4:
-  // drawn and named, today's block without a diagnosis.
+  // `aminoetano`: a principal amine written as an amino prefix, a deliberate null of diagnose.js «Amines» until phase I-52c4a,
+  // now CARBONYL_PREFIX: drawn and named, the diagnosis between the verdict's two sentences.
   dialog = await buildName(page, 'amino', 'et', 'ano');
   await expect(page.locator('#name-builder-name')).toHaveText('aminoetano');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
-  expect(await verdict.getAttribute('data-diagnosis')).toBeNull();
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'CARBONYL_PREFIX');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«etanamina». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);
+    + '«etanamina».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('El grupo amino es el grupo principal: se nombra con la '
+    + 'terminación «-amina», al final del nombre, no con el prefijo «amino». Se escribe «etanamina».');
+  await expect(verdict.locator('.verdict-hint')).toHaveText('Pulsa «Ver paso a paso» para ver por qué.');
   await expect(page.locator('#result-name')).toHaveText('etanamina');
   expect(elementsOf(await moleculeJSON(page))).toEqual(['C', 'C', 'N']);
   expect(errors).toEqual([]);
