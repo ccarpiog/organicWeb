@@ -19,14 +19,16 @@
  * `carboxilato` and inside an O-bound group; the budget), readName()
  * verdicts with the molecule each describes (compared by aromatic key with a
  * SMILES), out-of-scope esters, mutations and their diagnosis (the rules that
- * hold for an ester's acid part; the ester's own mistakes, deliberate nulls
- * of diagnose.js «Esters» until phase I-52a3, each with its category read
- * independently), the fixture round trip over every ester row of
+ * hold for an ester's acid part; the ester's own mistakes, each with its
+ * category read independently — deliberate nulls of diagnose.js «Esters»
+ * until phase I-52a3a, which names them, the O-bound side still a deliberate
+ * null for phase I-52a3b), the fixture round trip over every ester row of
  * tests/fixtures/names.tsv and the closed loop over the oracle's ester
  * generators (pure imports, no Java), the retained names of phase R-6a2a
- * included, the diagnosis sweeps over the names of phase R-6a1 (every null a
- * deliberate «Esters» one, counted by category; the retained names are swept
- * apart, reverse-ester-templates.test.js), the ordered drawing, the dialog's
+ * included, the diagnosis sweeps over the names of phase R-6a1 (the ester's
+ * own mistakes counted by category with their codes, every null a deliberate
+ * `oBound` one; the retained names are swept apart,
+ * reverse-ester-templates.test.js), the ordered drawing, the dialog's
  * tooltips and time budgets.
  */
 
@@ -776,7 +778,8 @@ test('mutations (R-6a1): the expected verdict, and the diagnosis of every rule t
 /**
  * The category of an ester's own mistake, read independently of
  * diagnose.js from the engine's naming and the student's reading (each a
- * deliberate null of diagnose.js «Esters» until phase I-52a3): `seniority` —
+ * deliberate null of diagnose.js «Esters» until phase I-52a3a, which names
+ * all but `oBound`, still a null for phase I-52a3b): `seniority` —
  * the student's suffix is no –COO– beside the engine's, or the reverse
  * (`1-metoxipropanal`); `count` — another number of –COO– groups; `carbon` —
  * the –COO–'s carbon on the other side of the parent (`propano-1-carboxilato
@@ -830,43 +833,80 @@ function esterCategory(ids, verdict) {
   return null;
 } // End of function esterCategory()
 
-test('deliberate «Esters» nulls (diagnose.js, for I-52a3): an ester\'s own mistakes, each with its category, drawn with no diagnosis', () => {
+/**
+ * The codes an ester's own mistake gets, by category (esterCategory();
+ * diagnose.js «Esters», phase I-52a3a): the –COO– written as two groups
+ * (ESTER_GROUP), beside a junior suffix (CARBONYL_SENIORITY) or as an ester
+ * prefix (CARBONYL_PREFIX); another number of –COO– groups: written as two
+ * groups or as an ester prefix, or the groups of another parent
+ * (CARBONYL_PARENT, MORE_CARBONYL_GROUPS); the –COO–'s carbon (ESTER_CARBON);
+ * N0 (RING_NUMBERING); the suffix's needless locants (NEEDLESS_LOCANTS).
+ * `oBound` has none: a deliberate null for phase I-52a3b.
+ */
+const CATEGORY_CODES = Object.freeze({
+  seniority: ['ESTER_GROUP', 'CARBONYL_SENIORITY', 'CARBONYL_PREFIX'],
+  count: ['ESTER_GROUP', 'CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS'],
+  carbon: ['ESTER_CARBON'],
+  numbering: ['RING_NUMBERING'],
+  suffix: ['NEEDLESS_LOCANTS'],
+});
+
+test('the former deliberate «Esters» nulls of R-6a1 (diagnose.js): each category but `oBound` has its I-52a3a code, step and words', () => {
   const cases = [
-    // [tile words, category]
-    ['1 met il oxi prop ano al', 'seniority'],
-    ['1 met il oxi 1 oxo prop ano', 'seniority'],
-    ['3 met il oxi 3 oxo prop ano 1 ol', 'seniority'],
-    ['4 met il oxi 4 oxo but ano oato met ilo', 'count'], // `butanodioato de dimetilo`: one –COO– written as `metoxi` and `oxo`.
-    ['prop ano 1 carboxilato met ilo', 'carbon'],
-    ['ciclo hex il met ano oato met ilo', 'carbon'],
-    ['fenil met ano oato met ilo', 'carbon'],
-    ['et ano oato prop ano 1 ilo', 'oBound'],
-    ['et ano oato met ano 1 ilo', 'oBound'],
-    ['prop ano di oato met ilo et ilo', 'oBound'],
-    ['but ano di oato met ilo met ilo', 'oBound'],
-    ['but ano di oato di START 2 cloro et ilo END', 'oBound'],
-    ['but ano di oato bis met ilo', 'oBound'],
-    ['et ano oato but ano 3 ilo', 'oBound'],
-    ['et ano oato 6 met il fenil ilo', 'oBound'],
-    ['ciclo hex ano 1 5 di carboxilato di met ilo', 'numbering'],
-    ['ciclo hex ano 2 carboxilato met ilo', 'numbering'],
-    ['ciclo hex ano 1 carboxilato met ilo', 'suffix'],
-    ['benceno 1 carboxilato met ilo', 'suffix'],
+    // [tile words, category, code, the step «Ver el paso» opens, a phrase of the message]
+    ['1 met il oxi prop ano al', 'seniority', 'ESTER_GROUP', 'group', 'juntos forman un solo grupo, el –COO– de los ésteres'],
+    ['1 met il oxi 1 oxo prop ano', 'seniority', 'ESTER_GROUP', 'group', 'su C=O no es un aldehído ni una cetona'],
+    ['3 met il oxi 3 oxo prop ano 1 ol', 'seniority', 'ESTER_GROUP', 'group', 'Se escribe «3-hidroxipropanoato de metilo»'],
+    ['4 met il oxi 4 oxo but ano oato met ilo', 'count', 'ESTER_GROUP', 'group', 'los de la cadena principal se nombran todos juntos'],
+    ['prop ano 1 carboxilato met ilo', 'carbon', 'ESTER_CARBON', 'group', 'solo se usa cuando el grupo –COO– está unido a un anillo'],
+    ['ciclo hex il met ano oato met ilo', 'carbon', 'ESTER_CARBON', 'group', 'su carbono no forma parte del anillo'],
+    ['fenil met ano oato met ilo', 'carbon', 'ESTER_CARBON', 'group', '«benzoato» (el benceno con un grupo –COO–)'],
+    ['ciclo hex ano 1 5 di carboxilato di met ilo', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'los grupos –COO– (el grupo '
+      + 'principal)'],
+    ['ciclo hex ano 2 carboxilato met ilo', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'ese número ni siquiera se escribe'],
+    ['ciclo hex ano 1 carboxilato met ilo', 'suffix', 'NEEDLESS_LOCANTS', 'ringNumbering', 'de colocar el grupo –COO–'],
+    ['benceno 1 carboxilato met ilo', 'suffix', 'NEEDLESS_LOCANTS', 'assemble', 'de colocar el grupo –COO–'],
   ];
-  for (const [words, category] of cases) {
+  for (const [words, category, code, opened, phrase] of cases) {
     const ids = seq(words);
     const verdict = readName(ids);
     assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
     assert.equal(verdict.naming.structure.suffix.kind, 'ester', words);
     assert.equal(esterCategory(ids, verdict), category, words);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.equal(d.code, code, `${words}: ${d.message}`);
+    assert.ok(CATEGORY_CODES[category].includes(d.code), words);
+    assert.ok(d.message.includes(phrase), `${words}: ${d.message}`);
+    assert.ok(!/undefined|null|NaN|\[object|–OH|–COOH|grupo –CHO/.test(d.message), `${words}: ${d.message}`);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${words}: the step «Ver el paso» opens`);
+    assert.ok(verdict.draw && verdict.molecule, words);
+  } // End of the loop over the former deliberate nulls
+}); // End of test 'the former deliberate «Esters» nulls of R-6a1…'
+
+test('deliberate «Esters» nulls (diagnose.js, for I-52a3b): an O-bound side the engine does not write, drawn with no diagnosis', () => {
+  const cases = [
+    'et ano oato prop ano 1 ilo', 'et ano oato met ano 1 ilo', 'prop ano di oato met ilo et ilo', 'but ano di oato met ilo met ilo',
+    'but ano di oato di START 2 cloro et ilo END', 'but ano di oato bis met ilo', 'et ano oato but ano 3 ilo',
+    'et ano oato 6 met il fenil ilo',
+  ];
+  for (const words of cases) {
+    const ids = seq(words);
+    const verdict = readName(ids);
+    assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
+    assert.equal(verdict.naming.structure.suffix.kind, 'ester', words);
+    assert.equal(esterCategory(ids, verdict), 'oBound', words);
     assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
     assert.ok(verdict.draw && verdict.molecule, words);
   } // End of the loop over the deliberate nulls
-  // An acid-part mistake beside an O-bound one is a null too (the main mistake is the ester rules' to say, phase I-52a3); with the
-  // O-bound side the engine's, the acid part's rule speaks.
+  // An acid-part mistake beside an O-bound one is a null too (the main mistake is the O-bound rules' to say, phase I-52a3b); with
+  // the O-bound side the engine's, the acid part's rule speaks.
   assert.equal(read('4 met il but ano oato prop ano 1 ilo').diagnosis, null);
   assert.equal(read('4 met il but ano oato prop ilo').diagnosis.code, 'BRANCH_AT_END');
   assert.equal(read('4 met il but ano oato prop ano 2 ilo').diagnosis.code, 'BRANCH_AT_END', 'the pin style of the O-bound group');
+  // Another number of –COO– groups is the mistake, not the O-bound side that follows from it (R-6a3a).
+  assert.equal(read('4 met il oxi 4 oxo but ano oato met ilo').diagnosis.code, 'ESTER_GROUP');
 }); // End of test 'deliberate «Esters» nulls…'
 
 // ---------------------------------------------------------------------------
@@ -1240,17 +1280,22 @@ function mutationsOf(ids) {
 /**
  * Reads every mutation of some ester names: every `otherName` carries a
  * diagnosis of its family's codes whose step resolves in its explanation, or
- * is a deliberate «Esters» null with its category (esterCategory()); any
- * other null is unexpected.
+ * is a deliberate «Esters» `oBound` null (esterCategory(); phase I-52a3b's);
+ * any other null is unexpected. The ester's own mistakes diagnosed since
+ * phase I-52a3a are counted by category (esterCategory()), each with a code
+ * of its category (CATEGORY_CODES) and, for `numbering`, the trace rule N0
+ * and the –COO– groups' words.
  *
  * @param {string[]} names - Ester names (engine names or alternatives).
- * @returns {{otherName: Object<string, number>, codes: Set<string>, nulls: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the deliberate nulls by category and the unexpected ones.
+ * @returns {{otherName: Object<string, number>, codes: Set<string>, nulls: Object<string, number>, own: Object<string, number>,
+ *   unexpected: string[]}} `otherName` counts by family, the codes seen, the deliberate nulls by category, the ester's own
+ *   mistakes diagnosed by category and the unexpected nulls.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
   const codes = new Set();
   const nulls = {};
+  const own = {};
   const unexpected = [];
   for (const name of names) {
     for (const mutation of mutationsOf(idsOf(name))) {
@@ -1263,49 +1308,57 @@ function sweep(names) {
       const d = verdict.diagnosis;
       const category = esterCategory(mutation.ids, verdict);
       if (!d) {
-        if (category) {
+        if (category === 'oBound') {
           nulls[category] = (nulls[category] || 0) + 1;
         } else {
-          unexpected.push(label);
+          unexpected.push(`${label}${category ? ` (${category})` : ''}`);
         }
         continue;
       }
       codes.add(d.code);
-      assert.equal(category, null, `${label}: ${category} diagnosed ${d.code}`);
+      assert.notEqual(category, 'oBound', `${label}: oBound diagnosed ${d.code}`);
+      if (category) {
+        own[category] = (own[category] || 0) + 1;
+        assert.ok(CATEGORY_CODES[category].includes(d.code), `${label}: ${category}, ${d.code}`);
+        assert.ok(category !== 'numbering' || (d.traceRule === 'N0' && d.message.includes('los grupos –COO–')), `${label}: ${d.message}`);
+      }
       assert.ok(FAMILY_CODES[mutation.family].includes(d.code), `${label}: ${d.code}, ${d.message}`);
       assert.ok(!/undefined|null|NaN|\[object|–OH|–CHO|–COOH|C=O/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
     } // End of the loop over the mutations of one name
   } // End of the loop over the names
-  return { otherName, codes, nulls, unexpected };
+  return { otherName, codes, nulls, own, unexpected };
 } // End of function sweep()
 
 /**
  * How many mutations of the ester fixture names of phase R-6a1 (the 145 the
  * tiles write, the retained names of phase R-6a2a swept apart in
- * reverse-ester-templates.test.js) give `otherName`, by family (155), and the deliberate «Esters» nulls
- * among them by category (94, for phase I-52a3: 90 `numbering`, a ring
- * ester's –COO– groups numbered otherwise by a rotation or a reflection —
- * `2-metilciclohexano-1-carboxilato` rotated to `3-metilciclohexano-2-…` —,
- * and 4 `oBound`, two different O-bound groups in the other order,
- * `propanodioato de metilo y etilo`); the other 61 are diagnosed with one of
- * their family's codes. Removing or adding locants never gives `otherName`.
+ * reverse-ester-templates.test.js) give `otherName`, by family (155), and the
+ * deliberate «Esters» nulls among them by category: 4 `oBound`, two different
+ * O-bound groups in the other order (`propanodioato de metilo y etilo`), for
+ * phase I-52a3b; the other 151 are diagnosed with one of their family's codes
+ * — among them the ester's own mistakes by category, 90 `numbering`, a ring
+ * ester's –COO– groups numbered otherwise by a rotation or a reflection
+ * (`2-metilciclohexano-1-carboxilato` rotated to `3-metilciclohexano-2-…`),
+ * deliberate nulls until phase I-52a3a, now RING_NUMBERING at N0. Removing or
+ * adding locants never gives `otherName`.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 0, shifted: 4, reflected: 11, rotated: 113, swapped: 2, unsorted: 6, ungrouped: 3, diBis: 3, toEnd: 9, heteroToEnd: 0,
   removed: 0, added: 0, groupsSwapped: 4,
 });
-const FIXTURE_NULLS = Object.freeze({ numbering: 90, oBound: 4 });
+const FIXTURE_NULLS = Object.freeze({ oBound: 4 });
+const FIXTURE_OWN = Object.freeze({ numbering: 90 });
 
 test('mutations of every ester fixture name: a diagnosis of the family\'s codes, or a deliberate «Esters» null with its category', async () => {
   const names = (await readFixtures()).filter((row) => isEster(row.smiles)).flatMap((row) => row.names)
     .filter((name) => isEsterName(name) && !isEsterTemplateName(name));
   assert.equal(names.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES);
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  const { otherName, codes, nulls, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
-  assert.deepEqual(nulls, { ...FIXTURE_NULLS });
+  assert.deepEqual([nulls, own], [{ ...FIXTURE_NULLS }, { ...FIXTURE_OWN }]);
   assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND',
     'NUMBERING', 'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of every ester fixture name…'
@@ -1319,12 +1372,13 @@ test('mutations of the generated esters: every otherName is diagnosed or a delib
       && !isEsterTemplateName(name)));
   }
   assert.ok(names.length >= 500, `${names.length} names`); // The seeds give 507.
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  const { otherName, codes, nulls, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
-  // The seeds give 1040, 633 diagnosed and 407 deliberate «Esters» nulls for phase I-52a3: 384 `numbering` (a ring ester's –COO–
-  // groups numbered otherwise by a rotation or a reflection), 23 `oBound` (two different O-bound groups in the other order).
-  assert.deepEqual([total, nulls], [1040, { numbering: 384, oBound: 23 }]);
+  // The seeds give 1040, 1017 diagnosed and 23 deliberate «Esters» nulls for phase I-52a3b, every one `oBound` (two different
+  // O-bound groups in the other order). Until phase I-52a3a 384 more were `numbering` nulls (a ring ester's –COO– groups
+  // numbered otherwise by a rotation or a reflection), now RING_NUMBERING at N0.
+  assert.deepEqual([total, nulls, own], [1040, { oBound: 23 }, { numbering: 384 }]);
   assert.deepEqual([otherName.removed, otherName.added], [0, 0]);
   for (const code of ['NUMBERING', 'RING_NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'BRANCH_AT_END']) {
     assert.ok(codes.has(code), `${code}: ${[...codes]}`);

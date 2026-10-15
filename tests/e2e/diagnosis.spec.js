@@ -30,7 +30,11 @@
  * –COOH's carbon taken out of the chain — the message between the two
  * sentences, the student's chain striped beside the longer parent, «Ver el
  * paso» at «Reconoce el grupo funcional», which says the –COOH's carbon is a
- * carbon of the chain.
+ * carbon of the chain. Esters (phase I-52a3a): `propano-1-carboxilato de
+ * metilo`, the –COO–'s carbon taken out of the chain — the message between
+ * the two sentences, the student's chain striped beside the longer parent,
+ * «Ver el paso» at «Reconoce el grupo funcional», which says the molecule is
+ * an ester and the –COO–'s carbon a carbon of the chain.
  */
 
 import { test, expect } from '@playwright/test';
@@ -130,6 +134,9 @@ const ACYL_WORD = ['2', 'et', 'ano', 'oil', 'hept', 'ano', 'al'];
 
 /** The tiles of «ácido propano-1-carboxílico» (on a chain the –COOH's carbon is a chain carbon: ácido butanoico). */
 const ACID_CARBON = ['ácido', 'prop', 'ano', '1', 'carboxílico'];
+
+/** The tiles of «propano-1-carboxilato de metilo» (on a chain the –COO–'s carbon is a chain carbon: butanoato de metilo). */
+const ESTER_CARBON = ['prop', 'ano', '1', 'carboxilato', 'met', 'ilo'];
 
 test('a longer chain: the message between the two sentences, the student\'s chain beside the parent, «Ver el paso» at «Busca la cadena»; Deshacer clears it all', async ({ page }) => {
   const errors = await openApp(page);
@@ -444,6 +451,49 @@ test('an acid (I-51d3): `carboxílico` on a chain, the student\'s chain beside t
   expect(await marked(page, 'student')).toEqual(student);
   expect(errors).toEqual([]);
 }); // End of test 'an acid (I-51d3)…'
+
+test('an ester (I-52a3a): `carboxilato` on a chain, the student\'s chain beside the parent, «Ver el paso» at «Reconoce el grupo funcional»', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, ...ESTER_CARBON);
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'ESTER_CARBON');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: propano-1-carboxilato de metilo');
+  // The three sentences, in order: the verdict, the diagnosis, the hint.
+  const texts = await verdict.locator('.verdict-message, .verdict-style, .verdict-diagnosis, .verdict-hint, .verdict-note')
+    .allTextContents();
+  expect(texts).toEqual([
+    'Esta es la molécula que describe tu nombre, pero se llama «butanoato de metilo».',
+    'La terminación «-carboxilato» solo se usa cuando el grupo –COO– está unido a un anillo. En una cadena, el carbono del –COO– '
+      + 'es un carbono más de la cadena principal, siempre en un extremo, y el grupo se nombra con la terminación «-oato» y, '
+      + 'después de «de», el grupo unido al otro oxígeno, acabado en «-ilo». Se escribe «butanoato de metilo».',
+    'Pulsa «Ver paso a paso» para ver por qué.',
+  ]);
+  await expect(page.locator('#result-name')).toHaveText('butanoato de metilo');
+  // The legend names both marks; the student's three carbons are striped beside the parent, which adds the –COO–'s carbon.
+  await expect(verdict.getByRole('list', { name: 'Qué se ve en el dibujo' }).getByRole('listitem'))
+    .toHaveText(['Cadena principal', 'Tu cadena']);
+  const student = await marked(page, 'student');
+  const parent = await marked(page, 'parent');
+  expect(student.atoms).toHaveLength(3);
+  expect(student.bonds).toHaveLength(2);
+  expect(parent.atoms).toEqual(expect.arrayContaining(student.atoms));
+  expect(parent.atoms.some((id) => !student.atoms.includes(id))).toBe(true);
+
+  // «Ver el paso»: the stepper opens at «Reconoce el grupo funcional», the focus on its title; it says the molecule is an ester
+  // and that the –COO–'s carbon is a carbon of the chain.
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'group');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 2 de 6');
+  await expect(stepper.locator('.step-title')).toHaveText('Reconoce el grupo funcional');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  await expect(stepper).toContainText('la molécula es un éster');
+  await expect(stepper).toContainText('Ese carbono es un carbono más de la cadena');
+  expect(await marked(page, 'student')).toEqual(student);
+  expect(errors).toEqual([]);
+}); // End of test 'an ester (I-52a3a)…'
 
 test('a ring (I-50d): the ring is the parent beside the student\'s chain, «Ver el paso» at «Reconoce el benceno»; a ring numbered otherwise', async ({ page }) => {
   const errors = await openApp(page);

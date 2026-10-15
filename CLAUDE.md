@@ -209,7 +209,19 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   2-[4-(acetiloxi)ciclohexil]etanoico`), their left-out locants searched; the
   diagnosis keeps the rules that hold for a prefix, an ester prefix's own
   mistakes deliberate «Esters» nulls, and the Ayuda ester line says how to
-  build them. Next is R-6a3 (phase I-52a3): the ester diagnosis messages.
+  build them. R-6a3a (phase I-52a3a) is done: `diagnose.js` names the
+  principal –COO– group's own mistakes (header «Esters», checked first with
+  the acid's: a –COO– written as two groups on one carbon,
+  `1-metoxipropanal`; a junior group as the suffix, with the seniority
+  `ácido > éster > aldehído > cetona > alcohol`, also an ester's suffix beside
+  an acid; the –COO–'s carbon on the other side of the parent,
+  `propano-1-carboxilato de metilo`, `fenilformiato de metilo`; the principal
+  –COO– written as an ester prefix, `(acetiloxi)metano`; an alkoxycarbonyl
+  prefix whose C=O carbon the engine takes into an acid's chain, `ácido
+  3-(metoxicarbonil)propanoico`), and the parent choice, P0, N0 numbering and
+  the suffix's needless locants speak of «grupos –COO–», each with its «Ver el
+  paso» step. Next is R-6a3b (phase I-52a3b): the O-bound side, ester prefix
+  words and an ester written as an ether class name.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

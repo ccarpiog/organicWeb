@@ -10,8 +10,8 @@
  * verdict above «Se llama:» (`correct`, and the IUPAC-preferred
  * `[(propan-2-iloxi)carbonil]` an `alternative`); an alkoxycarbonyl prefix
  * whose C=O carbon the app puts in the chain draws its molecule with the
- * app's name and no diagnosis yet (a deliberate «Esters» null, phase
- * I-52a3); `carbonil` after an acyloxy prefix is refused with its tile
+ * app's name and, since phase I-52a3a, its diagnosis (ESTER_IN_CHAIN, a
+ * deliberate «Esters» null until then); `carbonil` after an acyloxy prefix is refused with its tile
  * marked, the canvas untouched; the Ayuda ester paragraph has its prefix
  * sentence. Runs on the dev server and on dist (playwright.config.js).
  */
@@ -191,18 +191,22 @@ test('`(metoxicarbonil)` from `met il oxi carbonil`, `[(2-metilpropanoil)oxi]` i
   expect(errors).toEqual([]);
 }); // End of test '`(metoxicarbonil)`…'
 
-test('an ester carbon the app puts in the chain: drawn, no diagnosis yet; `acetil oxi carbonil` refused; the Ayuda sentence', async ({ page }) => {
+test('an ester carbon the app puts in the chain: drawn, with its diagnosis; `acetil oxi carbonil` refused; the Ayuda sentence', async ({ page }) => {
   const errors = await openApp(page);
   const verdict = page.locator('#verdict');
-  // The C=O carbon of the prefix lengthens the chain: the app writes the ester with `metoxi` and `oxo` (phase I-52a3 will say why).
+  // The C=O carbon of the prefix lengthens the chain: the app writes the ester with `metoxi` and `oxo`, and says why (I-52a3a).
   let dialog = await buildName(page, 'ácido', '3', 'met', 'il', 'oxi', 'carbonil', 'prop', 'ano', 'oico');
   await expect(page.locator('#name-builder-name')).toHaveText('ácido 3-(metoxicarbonil)propanoico');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
-  expect(await verdict.getAttribute('data-diagnosis')).toBeNull();
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'ESTER_IN_CHAIN');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«ácido 4-metoxi-4-oxobutanoico». Pulsa «Ver paso a paso» para ver por qué.');
+    + '«ácido 4-metoxi-4-oxobutanoico».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('El prefijo «metoxicarbonil» está en el extremo de la cadena, y el '
+    + 'carbono de su C=O la alarga: la cadena principal tiene 4 carbonos. Con ese carbono en la cadena, el éster ya no se nombra '
+    + '«metoxicarbonil», sino con dos prefijos con el mismo número: «oxo» para su C=O y uno acabado en «-oxi» para su oxígeno del '
+    + 'medio con el grupo unido a él. Se escribe «ácido 4-metoxi-4-oxobutanoico».');
   await expect(page.locator('#result-name')).toHaveText('ácido 4-metoxi-4-oxobutanoico');
   expect(elementsOf(await moleculeJSON(page))).toEqual(['C', 'C', 'C', 'C', 'C', 'O', 'O', 'O', 'O']);
 

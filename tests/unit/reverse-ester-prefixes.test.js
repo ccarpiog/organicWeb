@@ -17,8 +17,10 @@
  * C=O carbon after the alkoxy oxygen, VALENCE), search (left-out locants of
  * and inside the prefixes), readName() verdicts with the molecule each name
  * describes (compared by aromatic key with a SMILES), the diagnosis of the
- * rules that hold for an ester prefix and the deliberate «Esters» nulls of
- * diagnose.js for phase I-52a3, each with its category read independently,
+ * rules that hold for an ester prefix and of an ester prefix's own mistakes,
+ * each with its category read independently (deliberate «Esters» nulls of
+ * diagnose.js until phase I-52a3a, which names `inChain` and `seniority`;
+ * `words` still a deliberate null for phase I-52a3b),
  * the fixture names with an ester prefix, a closed loop over the acids the
  * ester generators write (scripts/oracle/generate.mjs: the molecules the
  * ester closed loop of reverse-esters.test.js leaves out), the diagnosis
@@ -598,7 +600,8 @@ function prefixKind(branch) {
 /**
  * The category of an ester prefix's own mistake, read independently of
  * diagnose.js from the engine's naming and the student's reading (each a
- * deliberate null of diagnose.js «Esters» until phase I-52a3): `seniority` —
+ * deliberate null of diagnose.js «Esters» until phase I-52a3a, which names
+ * all but `words`, still a null for phase I-52a3b): `seniority` —
  * the student's suffix is no –COO– beside the engine's, or the reverse (an
  * ester prefix beside no group senior to an ester: `(acetiloxi)metano` →
  * `etanoato de metilo`); `inChain` — the C=O carbon of the student's
@@ -636,24 +639,80 @@ function prefixCategory(ids, verdict) {
   return differs || /(?:et|met)anoiloxi/.test(verdict.text) ? 'words' : null;
 } // End of function prefixCategory()
 
-/** Deliberate «Esters» nulls of the ester prefixes (for phase I-52a3): tile words and the category. */
+/**
+ * The codes an ester prefix's own mistake gets, by category (prefixCategory();
+ * diagnose.js «Esters», phase I-52a3a): an alkoxycarbonyl prefix whose C=O
+ * carbon the engine takes into the chain (ESTER_IN_CHAIN); an ester prefix
+ * beside no group senior to an ester, the molecule the ester itself — the
+ * principal –COO– written as the prefix (CARBONYL_PREFIX) or beside a junior
+ * suffix (CARBONYL_SENIORITY). `words` has none: a deliberate null for phase
+ * I-52a3b.
+ */
+const CATEGORY_CODES = Object.freeze({
+  inChain: ['ESTER_IN_CHAIN'],
+  seniority: ['CARBONYL_PREFIX', 'CARBONYL_SENIORITY'],
+});
+
+/**
+ * The former deliberate «Esters» nulls of the ester prefixes (phase I-52a2b), named since phase I-52a3a: tile words, the
+ * category, the code, the step «Ver el paso» opens and the whole message.
+ */
+const FORMER_NULLS = Object.freeze([
+  ['ácido 3 met il oxi carbonil prop ano oico', 'inChain', 'ESTER_IN_CHAIN', 'groupChain', 'El prefijo «metoxicarbonil» está en el '
+    + 'extremo de la cadena, y el carbono de su C=O la alarga: la cadena principal tiene 4 carbonos. Con ese carbono en la cadena, '
+    + 'el éster ya no se nombra «metoxicarbonil», sino con dos prefijos con el mismo número: «oxo» para su C=O y uno acabado en '
+    + '«-oxi» para su oxígeno del medio con el grupo unido a él. Se escribe «ácido 4-metoxi-4-oxobutanoico».'],
+  ['ácido 6 met il oxi carbonil hex ano oico', 'inChain', 'ESTER_IN_CHAIN', 'groupChain', 'El prefijo «metoxicarbonil» está en el '
+    + 'extremo de la cadena, y el carbono de su C=O la alarga: la cadena principal tiene 7 carbonos. Con ese carbono en la cadena, '
+    + 'el éster ya no se nombra «metoxicarbonil», sino con dos prefijos con el mismo número: «oxo» para su C=O y uno acabado en '
+    + '«-oxi» para su oxígeno del medio con el grupo unido a él. Se escribe «ácido 7-metoxi-7-oxoheptanoico».'],
+  ['acetil oxi met ano', 'seniority', 'CARBONYL_PREFIX', 'group', 'El grupo –COO– es el grupo principal: no se nombra con el prefijo '
+    + '«acetiloxi», sino con la terminación «-oato» y, después de «de», el grupo unido al otro oxígeno, acabado en «-ilo». Tu cadena '
+    + 'va en el grupo unido al otro oxígeno, después de «de». Se escribe «etanoato de metilo».'],
+  ['2 acetil oxi hept ano al', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Cuando hay grupos distintos, solo uno es el grupo '
+    + 'principal, y se elige por este orden: ácido > éster > aldehído > cetona > alcohol. Aquí manda el éster (–COO–), que se '
+    + 'nombra con la terminación «-oato» y, después de «de», el grupo unido al otro oxígeno, acabado en «-ilo»; el –CHO del '
+    + 'aldehído va en el nombre del grupo unido al otro oxígeno, con el prefijo «oxo». Se escribe «etanoato de 1-oxoheptan-2-ilo».'],
+  ['benzoil oxi benceno', 'seniority', 'CARBONYL_PREFIX', 'group', 'El grupo –COO– es el grupo principal: no se nombra con el prefijo '
+    + '«benzoiloxi», sino con «benzoato» (el benceno con un grupo –COO–) y, después de «de», el grupo unido al otro oxígeno, '
+    + 'acabado en «-ilo». Tu anillo va en el grupo unido al otro oxígeno, después de «de». Se escribe «benzoato de fenilo».'],
+  ['acetil oxi benceno', 'seniority', 'CARBONYL_PREFIX', 'group', 'El grupo –COO– es el grupo principal: no se nombra con el prefijo '
+    + '«acetiloxi», sino con la terminación «-oato» y, después de «de», el grupo unido al otro oxígeno, acabado en «-ilo». Tu anillo '
+    + 'va en el grupo unido al otro oxígeno, después de «de». Se escribe «etanoato de fenilo».'],
+  ['met il oxi carbonil benceno', 'seniority', 'CARBONYL_PREFIX', 'group', 'El grupo –COO– es el grupo principal: no se nombra con '
+    + 'el prefijo «metoxicarbonil», sino con «benzoato» (el benceno con un grupo –COO–) y, después de «de», el grupo unido al otro '
+    + 'oxígeno, acabado en «-ilo». Se escribe «benzoato de metilo».'],
+  ['3 met il oxi carbonil pent ano 2 ona', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Cuando hay grupos distintos, solo uno es el '
+    + 'grupo principal, y se elige por este orden: ácido > éster > aldehído > cetona > alcohol. Aquí manda el éster (–COO–), que se '
+    + 'nombra con la terminación «-oato» y, después de «de», el grupo unido al otro oxígeno, acabado en «-ilo»; el C=O de la cetona '
+    + 'va delante, con el prefijo «oxo». Se escribe «2-etil-3-oxobutanoato de metilo».'],
+]);
+
+test('the former deliberate «Esters» nulls of R-6a2b (diagnose.js): `inChain` and `seniority` have their I-52a3a codes', () => {
+  for (const [words, category, code, opened, message] of FORMER_NULLS) {
+    const ids = seq(words);
+    const verdict = readName(ids);
+    assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
+    assert.equal(prefixCategory(ids, verdict), category, words);
+    assert.ok(verdict.diagnosis, `${words}: no diagnosis`);
+    assert.deepEqual([verdict.diagnosis.code, verdict.diagnosis.message], [code, message], words);
+    assert.ok(CATEGORY_CODES[category].includes(code), words);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${words}: the step «Ver el paso» opens`);
+    assert.ok(verdict.draw && verdict.molecule, words);
+  } // End of the loop over the former deliberate nulls
+}); // End of test 'the former deliberate «Esters» nulls of R-6a2b…'
+
+/** Deliberate «Esters» nulls of the ester prefixes (for phase I-52a3b): tile words and the category. */
 const NULLS = Object.freeze([
-  ['ácido 3 met il oxi carbonil prop ano oico', 'inChain'],
-  ['ácido 6 met il oxi carbonil hex ano oico', 'inChain'],
   ['ácido 2 START 1 oxo et il oxi END et ano oico', 'words'],
   ['ácido 2 START 1 oxo met il oxi END et ano oico', 'words'], // Before R-6a2b's check, NEEDLESS_LOCANTS «(oxometoxi)»: wrong.
   ['ácido 2 et ano oil oxi et ano oico', 'words'],
   ['ácido 2 met ano oil oxi et ano oico', 'words'],
   ['ácido 3 START met il oxi oxo met il END pent ano di oico', 'words'],
-  ['acetil oxi met ano', 'seniority'],
-  ['2 acetil oxi hept ano al', 'seniority'],
-  ['benzoil oxi benceno', 'seniority'],
-  ['acetil oxi benceno', 'seniority'],
-  ['met il oxi carbonil benceno', 'seniority'],
-  ['3 met il oxi carbonil pent ano 2 ona', 'seniority'],
 ]);
 
-test('deliberate «Esters» nulls (diagnose.js, for I-52a3): an ester prefix\'s own mistakes, each with its category, drawn', () => {
+test('deliberate «Esters» nulls (diagnose.js, for I-52a3b): an ester prefix\'s own words, each with its category, drawn', () => {
   for (const [words, category] of NULLS) {
     const ids = seq(words);
     const verdict = readName(ids);
@@ -898,13 +957,15 @@ const FAMILY_CODES = Object.freeze({
   shifted: ['NUMBERING', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS'],
   reflected: ['RING_NUMBERING'],
   rotated: ['RING_NUMBERING'],
+  // ESTER_IN_CHAIN (R-6a3a): an alkoxycarbonyl prefix swapped or moved onto an end carbon, whose C=O carbon the engine takes into
+  // the chain (`ácido 6-(metoxicarbonil)hexanoico` → `ácido 7-metoxi-7-oxoheptanoico`).
   swapped: ['NUMBERING', 'RING_NUMBERING', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_DOUBLE_BONDS',
-    'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS'],
+    'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'ESTER_IN_CHAIN'],
   unsorted: ['ALPHABETICAL_ORDER'],
   ungrouped: ['UNGROUPED'],
   diBis: ['MULTIPLIER_KIND', 'ALKOXY_MULTIPLIER'],
   toEnd: ['BRANCH_AT_END', 'NUMBERING'],
-  heteroToEnd: ['NUMBERING', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS'],
+  heteroToEnd: ['NUMBERING', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'ESTER_IN_CHAIN'],
   removed: [],
   added: ['NEEDLESS_LOCANTS', 'NUMBERING', 'RING_NUMBERING'],
 });
@@ -1000,17 +1061,21 @@ function mutationsOf(ids) {
 /**
  * Reads every mutation of some names with an ester prefix: every `otherName`
  * carries a diagnosis of its family's codes whose step resolves in its
- * explanation, or is a deliberate «Esters» null with its category
- * (prefixCategory()); any other null is unexpected.
+ * explanation, or is a deliberate «Esters» `words` null (prefixCategory();
+ * phase I-52a3b's); any other null is unexpected. The ester prefixes' own
+ * mistakes diagnosed since phase I-52a3a are counted by category, each with
+ * a code of its category (CATEGORY_CODES).
  *
  * @param {string[]} names - Names (engine names or alternatives).
- * @returns {{otherName: Object<string, number>, codes: Set<string>, nulls: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the deliberate nulls by category and the unexpected ones.
+ * @returns {{otherName: Object<string, number>, codes: Set<string>, nulls: Object<string, number>, own: Object<string, number>,
+ *   unexpected: string[]}} `otherName` counts by family, the codes seen, the deliberate nulls by category, the ester prefixes'
+ *   own mistakes diagnosed by category and the unexpected nulls.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
   const codes = new Set();
   const nulls = {};
+  const own = {};
   const unexpected = [];
   for (const name of names) {
     for (const mutation of mutationsOf(idsOf(name))) {
@@ -1023,49 +1088,55 @@ function sweep(names) {
       const d = verdict.diagnosis;
       const category = prefixCategory(mutation.ids, verdict);
       if (!d) {
-        if (category) {
+        if (category === 'words') {
           nulls[category] = (nulls[category] || 0) + 1;
         } else {
-          unexpected.push(label);
+          unexpected.push(`${label}${category ? ` (${category})` : ''}`);
         }
         continue;
       }
       codes.add(d.code);
-      assert.equal(category, null, `${label}: ${category} diagnosed ${d.code}`);
+      assert.notEqual(category, 'words', `${label}: words diagnosed ${d.code}`);
+      if (category) {
+        own[category] = (own[category] || 0) + 1;
+        assert.ok(CATEGORY_CODES[category].includes(d.code), `${label}: ${category}, ${d.code}`);
+      }
       assert.ok(FAMILY_CODES[mutation.family].includes(d.code), `${label}: ${d.code}, ${d.message}`);
       assert.ok(!/undefined|null|NaN|\[object|grupo –OH|grupos –OH|–CHO/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
     } // End of the loop over the mutations of one name
   } // End of the loop over the names
-  return { otherName, codes, nulls, unexpected };
+  return { otherName, codes, nulls, own, unexpected };
 } // End of function sweep()
 
 /**
  * How many mutations of the 24 fixture names with an ester prefix give
- * `otherName`, by family, and the deliberate «Esters» nulls among them by
- * category (for phase I-52a3: 3 `inChain`, an alkoxycarbonyl prefix moved or
- * swapped where the engine puts its C=O carbon in the chain — `ácido
- * 6-(metoxicarbonil)hexanoico` → `ácido 7-metoxi-7-oxoheptanoico`); the other
- * 28 are diagnosed with one of their family's codes. Removing or adding
- * locants never gives `otherName`.
+ * `otherName`, by family (31), every one diagnosed with one of its family's
+ * codes, none a deliberate «Esters» null; among them the ester prefixes' own
+ * mistakes by category: 3 `inChain`, an alkoxycarbonyl prefix moved or
+ * swapped where the engine puts its C=O carbon in the chain (`ácido
+ * 6-(metoxicarbonil)hexanoico` → `ácido 7-metoxi-7-oxoheptanoico`),
+ * deliberate nulls until phase I-52a3a, now ESTER_IN_CHAIN. Removing or
+ * adding locants never gives `otherName`.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 0, shifted: 2, reflected: 1, rotated: 20, swapped: 2, unsorted: 1, ungrouped: 2, diBis: 2, toEnd: 0, heteroToEnd: 1,
   removed: 0, added: 0,
 });
-const FIXTURE_NULLS = Object.freeze({ inChain: 3 });
+const FIXTURE_NULLS = Object.freeze({});
+const FIXTURE_OWN = Object.freeze({ inChain: 3 });
 
 test('mutations of every fixture name with an ester prefix: a diagnosis of the family\'s codes, or a deliberate «Esters» null', async () => {
   const names = (await readFixtures()).filter((row) => isAcid(row.smiles)).flatMap((row) => row.names)
     .filter((name) => ESTER_PREFIX.test(name));
   assert.equal(names.length, EXPECTED_FIXTURE.names);
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  const { otherName, codes, nulls, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
-  assert.deepEqual(nulls, { ...FIXTURE_NULLS });
-  assert.deepEqual([...codes].sort(), ['ALKOXY_MULTIPLIER', 'ALPHABETICAL_ORDER', 'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND', 'NUMBERING',
-    'RING_NUMBERING', 'UNGROUPED']);
+  assert.deepEqual([nulls, own], [{ ...FIXTURE_NULLS }, { ...FIXTURE_OWN }]);
+  assert.deepEqual([...codes].sort(), ['ALKOXY_MULTIPLIER', 'ALPHABETICAL_ORDER', 'ESTER_IN_CHAIN', 'MORE_SUBSTITUENTS',
+    'MULTIPLIER_KIND', 'NUMBERING', 'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of every fixture name with an ester prefix…'
 
 test('mutations of the generated names with an ester prefix: every otherName is diagnosed or a deliberate «Esters» null', () => {
@@ -1075,12 +1146,13 @@ test('mutations of the generated names with an ester prefix: every otherName is 
     names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter((name) => ESTER_PREFIX.test(name)));
   }
   assert.ok(names.length >= 275, `${names.length} names`); // The seeds give 282.
-  const { otherName, codes, nulls, unexpected } = sweep(names);
+  const { otherName, codes, nulls, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
-  // The seeds give 853 `otherName`, 789 diagnosed and 64 deliberate «Esters» nulls for phase I-52a3, every one `inChain` (an
-  // alkoxycarbonyl prefix moved to an end of the chain or swapped where the engine puts its C=O carbon in the chain).
-  assert.deepEqual([total, nulls], [853, { inChain: 64 }]);
+  // The seeds give 853 `otherName`, every one diagnosed, none null; among them 64 `inChain` (an alkoxycarbonyl prefix moved to an
+  // end of the chain or swapped where the engine puts its C=O carbon in the chain), deliberate «Esters» nulls until phase
+  // I-52a3a, now ESTER_IN_CHAIN.
+  assert.deepEqual([total, nulls, own], [853, {}, { inChain: 64 }]);
   assert.deepEqual([otherName.removed, otherName.added], [0, 0]);
   for (const code of ['NUMBERING', 'RING_NUMBERING', 'ALPHABETICAL_ORDER', 'UNGROUPED', 'MULTIPLIER_KIND', 'ALKOXY_MULTIPLIER',
     'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_SUBSTITUENTS', 'MORE_MULTIPLE_BONDS']) {

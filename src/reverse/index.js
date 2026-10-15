@@ -39,7 +39,9 @@
  * `ambiguous`; `ácido 3-(metoxicarbonil)propanoico` → `otherName`, the
  * engine's `ácido 4-metoxi-4-oxobutanoico`; `2-(acetiloxi)etanoato de
  * metilo` → `outOfScope`, the engine's `esterPrefix`). Their own mistakes
- * are diagnose.js «Esters» deliberate nulls, for phase R-6a3.
+ * are diagnose.js «Esters»'s: an alkoxycarbonyl prefix whose C=O carbon the
+ * engine takes into the chain (ESTER_IN_CHAIN, R-6a3a), the prefixes' own
+ * words deliberate nulls for phase R-6a3b.
  *
  * The esters (R-6a1) need nothing of their own here either: the parser
  * reads the O-bound side after the ester suffix, the assembler writes the
@@ -53,8 +55,9 @@
  * `metilpropanoato de metilo` → `missingLocants`; `4-metilbutanoato de
  * metilo` → `otherName`; `benceno-1,4-dicarboxilato de dimetilo`,
  * `2-metilbutanodioato de etilo y metilo` → `outOfScope`, the engine's
- * refusals). An ester's own diagnosis messages are R-6a3's (diagnose.js
- * «Esters»: deliberate nulls).
+ * refusals). An ester's own mistakes are diagnose.js «Esters»'s (R-6a3a:
+ * the principal –COO– group's; the O-bound side a deliberate null for phase
+ * R-6a3b).
  *
  * The retained ester names (R-6a2a) need nothing of their own here either,
  * as the retained acids: the engine gives them as alternatives, with the

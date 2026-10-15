@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T15:05:19Z",
+  "updated": "2026-10-15T16:04:06Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -862,8 +862,23 @@
     {
       "id": "I-52a3",
       "title": "v4 R-6a3 Ester diagnosis messages",
+      "status": "in_progress",
+      "summary": "Split into I-52a3a (the principal ester group's mistakes) and I-52a3b (the O-bound side, ester prefix words, class names)."
+    },
+    {
+      "id": "I-52a3a",
+      "title": "v4 R-6a3a Principal ester group diagnoses",
+      "status": "done",
+      "risk": "high",
+      "summary": "Names the mistakes about an ester's own group: its seniority, count, carbon, numbering and needless locants.",
+      "review": "Codex ship, 0 findings — docs/reviews/I-52a3a.md",
+      "narrative": "docs/progress-archive/i-52a3a.md"
+    },
+    {
+      "id": "I-52a3b",
+      "title": "v4 R-6a3b O-bound side, ester prefix words and class-name diagnoses",
       "status": "queued",
-      "summary": "Names the mistakes in an ester name built from tiles, each with its step in the explanation."
+      "summary": "Names the mistakes in the group after de, in ester prefixes written as other branches, and an ester written as an ether."
     },
     {
       "id": "I-52b",

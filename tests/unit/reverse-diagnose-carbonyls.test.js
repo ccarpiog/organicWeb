@@ -706,8 +706,9 @@ test('the drafts of the aldehyde and ketone rules: their place among the rules, 
   assert.deepEqual(CARBONYL_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]),
     [[1, 'group'], [1, 'group'], [1, 'group'], [1, 'group'], [1, 'ringChain'], [2, 'groupChain']]);
   // Beside the alcohol code whose place each takes: after HYDROXY_PREFIX, HYDROXY_PARENT, MORE_HYDROXY_GROUPS (the acid codes of
-  // phase I-51d3, ACID_CARBON beside ALDEHYDE_CARBON, left out: reverse-diagnose-acids.test.js).
-  const codes = DIAGNOSIS_CODES.filter((code) => !code.startsWith('ACID_'));
+  // phase I-51d3, ACID_CARBON beside ALDEHYDE_CARBON, and the ester codes of phase I-52a3a, ESTER_CARBON beside ACID_CARBON, left
+  // out: reverse-diagnose-acids.test.js, reverse-diagnose-esters.test.js).
+  const codes = DIAGNOSIS_CODES.filter((code) => !code.startsWith('ACID_') && !code.startsWith('ESTER_'));
   const after = (code) => codes[codes.indexOf(code) - 1];
   assert.deepEqual(CARBONYL_CODES.map(after), ['HYDROXY_PREFIX', 'CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON',
     'HYDROXY_PARENT', 'MORE_HYDROXY_GROUPS']);
@@ -717,14 +718,17 @@ test('the drafts of the aldehyde and ketone rules: their place among the rules, 
     assert.doesNotMatch(text, /undefined|null|NaN|–OH/, code);
   }
   const { carbonylN0, groupWords, junior, groupsOn, ending } = DIAGNOSIS_PHRASES;
-  // The acid's –COOH groups (phase I-51d3) beside them: reverse-diagnose-acids.test.js.
+  // The acid's –COOH groups (phase I-51d3) and the ester's –COO– groups (phase I-52a3a) beside them: reverse-diagnose-acids.test.js,
+  // reverse-diagnose-esters.test.js.
   assert.deepEqual(carbonylN0.numberingReasons, {
     aldehyde: 'los grupos –CHO (el grupo principal) tienen que llevar los números más bajos',
     ketone: 'los grupos C=O (el grupo principal) tienen que llevar los números más bajos',
     acid: 'los grupos –COOH (el grupo principal) tienen que llevar los números más bajos',
+    ester: 'los grupos –COO– (el grupo principal) tienen que llevar los números más bajos',
   });
-  assert.deepEqual(carbonylN0.lowerLocantsOf, { aldehyde: 'los grupos –CHO', ketone: 'los grupos C=O', acid: 'los grupos –COOH' });
-  assert.deepEqual(Object.keys(groupWords), ['alcohol', 'aldehyde', 'ketone', 'acid']);
+  assert.deepEqual(carbonylN0.lowerLocantsOf, { aldehyde: 'los grupos –CHO', ketone: 'los grupos C=O', acid: 'los grupos –COOH',
+    ester: 'los grupos –COO–' });
+  assert.deepEqual(Object.keys(groupWords), ['alcohol', 'aldehyde', 'ketone', 'acid', 'ester']);
   // The OH groups keep their N0 phrases (phase I-51a3b).
   assert.equal(DIAGNOSIS_TEXTS.NUMBERING({ rule: 'N0', app: '2', student: '3', unwritten: false }), 'Hay que numerar la cadena '
     + 'desde el otro extremo: los grupos –OH (el grupo principal) tienen que llevar los números más bajos (2 en vez de 3).');

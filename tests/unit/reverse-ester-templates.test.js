@@ -15,8 +15,10 @@
  * itself (`2-(4-metilfenil)acetato de etilo`) an alternative, its left-out
  * locant searched; any other prefix `otherName` with the SUBSTITUTED_TEMPLATE
  * diagnosis, the prefixes the engine admits judged by the other rules; the
- * ester's own mistakes on a template, deliberate «Esters» nulls of
- * diagnose.js for phase I-52a3, each with its category read independently;
+ * ester's own mistakes on a template, each with its category read
+ * independently — the –COO–'s carbon on the other side of a ring, a
+ * deliberate «Esters» null until phase I-52a3a, now ESTER_CARBON; the
+ * O-bound side still a deliberate null of diagnose.js for phase I-52a3b;
  * the tooltips; the fixture names; a closed loop over the engine's retained
  * ester names with each locant list removed; the diagnosis sweeps over the
  * retained names (fixture and generated), apart from those of phase R-6a1
@@ -462,7 +464,8 @@ test('readName (R-6a2a): prefixes the engine admits on an ester template are jud
 
 /**
  * The category of an ester's own mistake on a retained ester name, read
- * independently of diagnose.js (file header «Esters», for phase I-52a3):
+ * independently of diagnose.js (file header «Esters»; `carbon` named since
+ * phase I-52a3a, `oBound` for phase I-52a3b):
  * `carbon` — the student's –COO– carbon is the chain's, the engine's
  * outside a ring (`fenilformiato de metilo` → `benzoato de metilo`);
  * `oBound` — the O-bound side is not the one the engine writes with the
@@ -490,13 +493,40 @@ function templateCategory(ids, verdict) {
 } // End of function templateCategory()
 
 /**
- * Ester templates whose ester part is not the engine's: deliberate nulls of
- * diagnose.js «Esters» until phase I-52a3 — [tile words, the engine's name,
+ * Ester templates whose –COO–'s carbon the engine puts outside a ring:
+ * deliberate nulls of diagnose.js «Esters» until phase I-52a3a, now
+ * ESTER_CARBON — [tile words, the engine's name, the category, the `formiato` tile's range, the message].
+ */
+const FORMER_NULLS = [
+  ['fenil formiato met ilo', 'benzoato de metilo', 'carbon', [1, 2], 'Cuando el grupo –COO– está unido a un anillo, su carbono no forma '
+    + 'parte del anillo ni es una cadena aparte: la cadena principal es el anillo, y el grupo se nombra con «benzoato» (el benceno '
+    + 'con un grupo –COO–) y, después de «de», el grupo unido al otro oxígeno, acabado en «-ilo». Se escribe «benzoato de metilo».'],
+  ['START 4 cloro fenil END formiato met ilo', '4-clorobenzoato de metilo', 'carbon', [5, 6], 'Cuando el grupo –COO– está unido a un '
+    + 'anillo, su carbono no forma parte del anillo ni es una cadena aparte: la cadena principal es el anillo, y el grupo se nombra '
+    + 'con «benzoato» (el benceno con un grupo –COO–) y, después de «de», el grupo unido al otro oxígeno, acabado en «-ilo». Se '
+    + 'escribe «4-clorobenzoato de metilo».'],
+];
+
+test('the former deliberate «Esters» nulls of R-6a2a (diagnose.js): the –COO–\'s carbon outside a ring, ESTER_CARBON', () => {
+  for (const [words, name, category, tiles, message] of FORMER_NULLS) {
+    const ids = seq(words);
+    const verdict = readName(ids);
+    assert.deepEqual([verdict.kind, verdict.name], ['otherName', name], `${words}: ${verdict.message}`);
+    assert.equal(templateCategory(ids, verdict), category, words);
+    assert.ok(verdict.diagnosis, `${words}: no diagnosis`);
+    assert.deepEqual([verdict.diagnosis.code, verdict.diagnosis.message], ['ESTER_CARBON', message], words);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, 'group', `${words}: the step «Ver el paso» opens`);
+    assert.deepEqual(verdict.diagnosis.tiles, tiles, `${words}: the template's tile`);
+  } // End of the loop over the former deliberate nulls
+}); // End of test 'the former deliberate «Esters» nulls of R-6a2a…'
+
+/**
+ * Ester templates whose O-bound side is not the engine's: deliberate nulls of
+ * diagnose.js «Esters» for phase I-52a3b — [tile words, the engine's name,
  * the category].
  */
 const NULLS = [
-  ['fenil formiato met ilo', 'benzoato de metilo', 'carbon'],
-  ['START 4 cloro fenil END formiato met ilo', '4-clorobenzoato de metilo', 'carbon'],
   // The traditional word beside an O-bound group in another style than the engine writes with it.
   ['acetato prop ano 2 ilo', 'etanoato de isopropilo', 'oBound'],
   ['acetato 1 met il et ilo', 'etanoato de isopropilo', 'oBound'],
@@ -507,7 +537,7 @@ const NULLS = [
   ['acetato 6 met il fenil ilo', 'etanoato de 2-metilfenilo', 'oBound'],
 ];
 
-test('deliberate «Esters» nulls (diagnose.js, for I-52a3): an ester template\'s own mistakes, each with its category, drawn', () => {
+test('deliberate «Esters» nulls (diagnose.js, for I-52a3b): an ester template\'s O-bound side, with its category, drawn', () => {
   for (const [words, name, category] of NULLS) {
     const ids = seq(words);
     const verdict = readName(ids);

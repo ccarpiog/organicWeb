@@ -18,9 +18,11 @@
  * 5), and their carboxylic acids (R-5d1, R-5d2 — the retained names —,
  * R-5d3; «Acids» below: the rules that hold for an acid name, and the
  * acid's own mistakes, checked first), and their esters (R-6a1, R-6a2a —
- * the retained names —, R-6a2b — the ester prefixes —; «Esters» below: the
- * rules that hold for an ester's acid part and for an ester prefix, the
- * ester's own mistakes deliberate nulls).
+ * the retained names —, R-6a2b — the ester prefixes —, R-6a3a; «Esters»
+ * below: the rules that hold for an ester's acid part and for an ester
+ * prefix, and the principal –COO– group's own mistakes, checked first with
+ * the acid's; the O-bound side and an ester prefix's own words deliberate
+ * nulls).
  *
  * The rules, in order (first match wins):
  *
@@ -212,8 +214,8 @@
  * `style` — `chain`, `tiebreak`, `numbering`, `substituents`, `order` or
  * `assemble`, for a ring `ring`, `benzene` or `ringNumbering` (a draft
  * may name the step of its own case: `ring` on a `ciclo` ring, `benzene` on
- * the benzene ring), for an alcohol, an aldehyde, a ketone or an acid `group`,
- * `ringChain` or `groupChain`, and for an ether `ether`, R-5b2 — or, for an
+ * the benzene ring), for an alcohol, an aldehyde, a ketone, an acid or an
+ * ester `group`, `ringChain` or `groupChain`, and for an ether `ether`, R-5b2 — or, for an
  * ether's class name, CLASS_NAME_STEP, the step diagnosisExplanation() adds to them);
  * diagnosisExplanation() builds those steps and finds it, with
  * the fallbacks of diagnosisStepIndex()), the student's chain and the
@@ -408,7 +410,7 @@
  * isopropyl group); and a class name whose oxygen is an ester's
  * (`(1-oxoetil) metil éter`, the engine's `etanoato de metilo`: the molecule
  * is no ether, and CLASS_NAME_NONE's «-oxi» prefix would be false; review of
- * phase I-51c1 — the ester messages are R-6a3's, «Esters» below).
+ * phase I-51c1 — a deliberate null of phase R-6a3b, «Esters» below).
  *
  * **Aldehydes and ketones** (design.md §13.4 I-32, I-40b, §15.8 R-5c;
  * phases R-5c1, R-5c2, R-5c3a, R-5c3b1). The C=O of an aldehyde (`al`,
@@ -588,13 +590,13 @@
  * Still null for an aldehyde or a ketone, as for any family («No rule
  * covers» above): an alkyl branch's own chain or numbering, and a branch in a
  * prefix style the engine does not offer, unless a rule names another mistake
- * in it; a benzene ring in a branch written with `ciclo` and numbered as the
- * engine numbers it (`(2-metilciclohexa-1,3,5-trien-1-il)`,
+ * in it; and a benzene ring in a branch written with `ciclo` and numbered as
+ * the engine numbers it (`(2-metilciclohexa-1,3,5-trien-1-il)`,
  * `(ciclohexa-1,3,5-trienocarbonil)`: the parent's BENZENE_RING has no branch
- * form); and an `otherName` whose principal group is an ester's, which an
- * alkoxy group on a –CHO's carbon makes (`1-metoxipropanal` → `propanoato de
- * metilo`: a deliberate null of «Esters» below, esterChecks()); an OH there
- * makes an acid, which «Acids» below names (ACID_GROUP).
+ * form). An alkoxy group on a –CHO's carbon makes an ester (`1-metoxipropanal`
+ * → `propanoato de metilo`), which «Esters» below names (ESTER_GROUP, since
+ * phase R-6a3a); an OH there makes an acid, which «Acids» below names
+ * (ACID_GROUP).
  *
  * The retained carbonyl templates (R-5c3a) take SUBSTITUTED_TEMPLATE like
  * the benzene ones where the engine never writes them with prefixes: on a
@@ -708,11 +710,11 @@
  *
  * After the checks the student's suffix is an acid's (every other suffix is
  * junior to it): with fewer or other –COOH groups than the engine's it goes on
- * to the parent choice and the rules. The one null left (BEYOND, never seen;
- * tested with a made-up naming): a student's acid suffix while the engine's
- * principal group is no –COOH (an acid's –COOH is the most senior group the
- * app names, and an ester's own mistakes are «Esters» nulls, esterChecks()
- * running first).
+ * to the parent choice and the rules; a student's ester suffix beside the
+ * –COOH is a junior group (CARBONYL_SENIORITY, R-6a3a, «Esters» below). The
+ * one null left (BEYOND, never seen; tested with a made-up naming): a
+ * student's acid suffix while the engine's principal group is no –COOH (an
+ * acid's –COOH is the most senior group the app names).
  *
  * The retained acid names (R-5d2: `ácido fórmico`, `ácido acético`, `ácido
  * oxálico`, `ácido fenilacético`, the ftálicos; tiles.js isAcidTemplate())
@@ -730,15 +732,19 @@
  * template whose –COOH groups are not the engine's gets the acid's own
  * checks, acidChecks() coming first (ACID_CARBON, CARBONYL_PREFIX above).
  *
- * **Esters** (design.md §13.4 I-35, I-39c, I-40d, I-45c, §15.8 R-6a; phase
- * R-6a1). The –COO– of `oato` (terminal by rule, as `oico`), `carboxilato`
- * or `benzoato` is the principal group; the engine's trace has P0 (most
- * –COO– groups on the chain) and N0, and the parent is the acid part, the
- * O-bound groups words of their own after ` de `. The rules keep working
- * wherever they say something true of an ester name, on its acid part:
- * BRANCH_AT_END (`4-metilbutanoato de metilo`), LONGER_CHAIN and the other
- * P1–P4 rules (`2-etilpropanoato de metilo`), NUMBERING and RING_NUMBERING at
- * N1–N4 (`3-metilbutanodioato de dimetilo`, `6-metilbenzoato de etilo`,
+ * **Esters** (design.md §13.4 I-35, I-39c, I-40d, I-45c, §15.8 R-6a; phases
+ * R-6a1, R-6a2a — the retained names —, R-6a2b — the ester prefixes —,
+ * R-6a3a). The –COO– of `oato` (terminal by rule, as `oico`), `carboxilato`
+ * or `benzoato` is the principal group, junior to an acid's –COOH only
+ * (naming/seniority.js: ácido > éster > aldehído > cetona > alcohol); the
+ * engine's trace has P0 (most –COO– groups on the chain) and N0, and the
+ * parent is the acid part, the O-bound groups words of their own after
+ * ` de `; the messages call them «grupos –COO–», as the explanation does
+ * (DIAGNOSIS_PHRASES `groupWords`). The rules keep working wherever they say
+ * something true of an ester name, on its acid part: BRANCH_AT_END
+ * (`4-metilbutanoato de metilo`), LONGER_CHAIN and the other P1–P4 rules
+ * (`2-etilpropanoato de metilo`), NUMBERING and RING_NUMBERING at N1–N4
+ * (`3-metilbutanodioato de dimetilo`, `6-metilbenzoato de etilo`,
  * `5-metilciclohexano-1-carboxilato de metilo`), BENZENE_RING
  * (`ciclohexa-1,3,5-trienocarboxilato de metilo`), the branch-name rules
  * (`2-(5-metilfenil)etanoato de metilo`), ALPHABETICAL_ORDER, UNGROUPED,
@@ -747,25 +753,98 @@
  * metilo` → «eno», `1,4-ciclohexanodicarboxilato de dimetilo` →
  * «dicarboxilato»), LETTER_LOCANTS. They read the acid part only: the
  * O-bound side is not one of the name's prefixes (branchOccurrences(),
- * prefixLists(), chainNodes() never see it), so the prefix style is the acid
- * part's.
+ * prefixLists(), chainNodes() never see it; oBoundOccurrences() reads its
+ * groups for the student's –COOH and –COO– groups), so the prefix style is
+ * the acid part's.
  *
- * Deliberate, tested nulls (for phase R-6a3, whose messages they need): an
+ * The ester's own mistakes (phase R-6a3a) are checked first, with the
+ * acid's (esterChecks(), when the engine's principal group is an ester's;
+ * acidChecks() when it is an acid's, the two never meet), in the acid's
+ * order, each opening «Reconoce el grupo funcional» (`group`), which says the
+ * three atoms of a –COO– are one group, how it is written (`-oato`,
+ * `-carboxilato`, `benzoato`, then `de` and the O-bound group in `-ilo`) and,
+ * beside other oxygen groups, the seniority. The codes are the C=O groups'
+ * where their message holds, with the –COO–'s words keyed by the group
+ * (`group` 'ester': «grupo –COO–», «con la terminación «-oato» y, después de
+ * «de», el grupo unido al otro oxígeno, acabado en «-ilo»»,
+ * DIAGNOSIS_PHRASES.ending()), and the ester's own where it must differ:
+ *
+ * 1. `ESTER_GROUP` — ACID_GROUP's twin: a –COO– of the engine's suffix
+ *    written as two groups on one carbon, its C=O and its bridge oxygen with
+ *    the group bonded to it apart (`1-metoxipropanal`,
+ *    `1-metoxi-1-oxopropano` → `propanoato de metilo`;
+ *    `3-metoxi-3-oxopropan-1-ol` → `3-hidroxipropanoato de metilo`;
+ *    `4-metoxi-4-oxobutanoato de metilo` → `butanodioato de dimetilo`): no
+ *    ester suffix and no ester prefix of the student's has that carbon
+ *    (studentEsterCarbons(), esterSplit()). Only the engine's suffix groups:
+ *    beside an acid the engine itself writes an ester whose C=O carbon is a
+ *    chain carbon as `oxo` and an `-oxi` prefix;
+ * 1. `CARBONYL_SENIORITY` — a junior suffix beside the –COO–
+ *    (`3-(metoxicarbonil)pentan-2-ona` → `2-etil-3-oxobutanoato de metilo`),
+ *    the junior groups in the O-bound group's name when their carbons are
+ *    its (`2-(acetiloxi)heptanal` → «…va en el nombre del grupo unido al otro
+ *    oxígeno, con el prefijo «oxo»», `etanoato de 1-oxoheptan-2-ilo`;
+ *    juniorPlacement()); and a student's ester suffix beside an acid's
+ *    –COOH, the junior `ester` (acidChecks(): `4-carboxibutanoato de metilo`
+ *    → «…con dos prefijos con el mismo número: «oxo» … y uno acabado en
+ *    «-oxi» …», `ácido 5-metoxi-5-oxopentanoico`; `etanoato de
+ *    2-carboxietilo` → «…con el prefijo «acetiloxi»»), with the seniority
+ *    ácido > éster > aldehído > cetona > alcohol;
+ * 1. `KETONE_NOT_ALDEHYDE` — an `al` beside the –COO– on a carbon a branch
+ *    bonds to a second carbon (`3-(acetiloxi)-1-metilpropanal`);
+ * 1. `ESTER_CARBON` — ACID_CARBON's twin (groupCarbon()): `carboxilato`
+ *    after a chain (`propano-1-carboxilato de metilo` → `butanoato de
+ *    metilo`), or the –COO–'s carbon taken as the student's chain beside a
+ *    ring (`ciclohexilmetanoato de metilo` → `ciclohexanocarboxilato de
+ *    metilo`, `fenilmetanoato de metilo`, the template `fenilformiato de
+ *    metilo` → `benzoato de metilo`, `(4-clorofenil)formiato de metilo`);
+ * 1. `CARBONYL_PREFIX` — a principal –COO– written as an ester prefix while
+ *    the student's ester suffix cites fewer –COO– groups (esterPrefix()): an
+ *    alkoxycarbonyl prefix of the parent (`(metoxicarbonil)benceno` →
+ *    `benzoato de metilo`; on a chain its carbon joins the parent,
+ *    `1-(metoxicarbonil)propano` → `butanoato de metilo`,
+ *    `3-(metoxicarbonil)propanoato de metilo` → `butanodioato de dimetilo`;
+ *    one inside a compound branch is the parent choice below, as a `carboxi`
+ *    is), or an acyloxy prefix at any depth, whose acyl group is the acid part
+ *    and the student's chain or ring the O-bound group's (`(acetiloxi)metano`
+ *    → `etanoato de metilo`, `(benzoiloxi)benceno` → `benzoato de fenilo`,
+ *    `[2-(acetiloxi)etil]benceno` → `etanoato de 2-feniletilo`: «Tu cadena va
+ *    en el grupo unido al otro oxígeno, después de «de».»; the parent-choice
+ *    messages would make that ring «una rama»);
+ * 1. `CARBONYL_PARENT` — the ring or the chain chosen by the –COO– groups
+ *    (`[(metoxicarbonil)metil]ciclohexano` → `2-ciclohexiletanoato de
+ *    metilo`, `[4-(metoxicarbonil)fenil]metano` → `4-metilbenzoato de
+ *    metilo`);
+ * 1. `ESTER_IN_CHAIN` — BRANCH_AT_END's twin beside an acid (branchAtEnd()):
+ *    an alkoxycarbonyl prefix on an end of the student's chain, whose C=O
+ *    carbon the engine takes into the chain and writes as `oxo` and an `-oxi`
+ *    prefix (`ácido 3-(metoxicarbonil)propanoico` → `ácido
+ *    4-metoxi-4-oxobutanoico`); step `groupChain`, which says the ester's
+ *    carbon is a carbon of the chain;
+ * 2. `MORE_CARBONYL_GROUPS` — another chain with more –COO– groups (P0:
+ *    `2-[(metoxicarbonil)metil]propanoato de metilo` → `2-metilbutanodioato
+ *    de dimetilo`, `3-[(metoxicarbonil)metil]pentano`), told from an ether
+ *    oxygen as ETHER_SIDE (`[2-(metoxicarbonil)etoxi]metano` →
+ *    `3-metoxipropanoato de metilo`);
+ * 4. `RING_NUMBERING` at N0 with the –COO– groups' phrase
+ *    (`ciclohexano-1,5-dicarboxilato de dimetilo`, `ciclohexano-2-carboxilato
+ *    de metilo`); NUMBERING and CHAIN_LOCANTS at N0 have the phrase too,
+ *    though no ester name reaches them (an ester's –COO– carbon ends a chain,
+ *    as an acid's –COOH);
+ * 9. NEEDLESS_LOCANTS for the suffix's locants (`ciclohexano-1-carboxilato
+ *    de metilo`, `benceno-1-carboxilato de metilo` → «…solo hay una manera de
+ *    colocar el grupo –COO–.»), and MISSING_LOCANTS names the –COO– groups
+ *    when the suffix's locant is the one missing (as for an acid, only
+ *    diagnose() on a `missingLocants` verdict says it).
+ *
+ * Deliberate, tested nulls (for phase R-6a3b, whose messages they need): an
  * O-bound side that is none the engine writes for the molecule, in any style
  * (esterSideDiffers(), before every rule: `etanoato de propan-1-ilo`,
  * `propanodioato de metilo y etilo`, `butanodioato de metilo y metilo`,
  * `di(2-cloroetilo)`, a group's locants left out — whatever the acid part
- * says); and, first in firstRule() (esterChecks()), the student's suffix no
- * ester's beside the engine's –COO– or the reverse (`1-metoxipropanal` →
- * `propanoato de metilo`: `seniority`), another number of –COO– groups
- * (`count`), the –COO–'s carbon on the other side of the parent
- * (`propano-1-carboxilato de metilo`, `ciclohexilmetanoato de metilo`:
- * `carbon`); then, as guards (BEYOND), a chain dropped at P0 or N0, a ring or
- * chain chosen by the –COO– groups (principalParent(), ringRules()), the
- * –COO– groups numbered otherwise (directionDraft() at N0:
- * `ciclohexano-1,5-dicarboxilato de dimetilo`: `numbering`), and the suffix's
- * needless or missing locants (`ciclohexano-1-carboxilato de metilo`:
- * `suffix`) — their present messages would speak of OH groups.
+ * says; not compared when the student's suffix cites another number of
+ * –COO– groups, whose O-bound groups differ for that reason: the number is
+ * the mistake, ESTER_GROUP or CARBONYL_PREFIX).
  *
  * The retained ester names (R-6a2a: `formiato`, `acetato`, `fenilacetato`;
  * tiles.js isEsterTemplate()) are chain templates whose word places the
@@ -777,17 +856,17 @@
  * `acetato` (templateAdmits()) is judged by the other rules
  * (`2-(5-metilfenil)acetato de etilo` → BRANCH_RING_NUMBERING), and the
  * locant `fenilacetato` leaves out, written, is traditionalLocants()'
- * NEEDLESS_LOCANTS (`2-fenilacetato de metilo`). Their own deliberate nulls
- * are those above: the –COO–'s carbon on the other side of a ring
- * (`fenilformiato de metilo` → `benzoato de metilo`: `carbon`, esterChecks()),
- * and an O-bound side the engine does not write beside the retained word
- * (esterSideDiffers(): `acetato de propan-1-ilo`, and `acetato de
- * propan-2-ilo`, the traditional word with the IUPAC-preferred group, since
- * the engine writes `acetato de isopropilo` only: `oBound`). An aryl prefix
- * in another style than the engine's default beside `acetato`
- * (`2-[4-(propan-2-il)fenil]acetato de metilo`) stays null, no ester's own
- * mistake: as on the retained aldehyde and acid (`2-[4-(propan-2-il)fenil]
- * acetaldehído`), no rule covers a retained word's prefix style.
+ * NEEDLESS_LOCANTS (`2-fenilacetato de metilo`). The –COO–'s carbon on the
+ * other side of a ring is ESTER_CARBON (`fenilformiato de metilo` →
+ * `benzoato de metilo`); an O-bound side the engine does not write beside the
+ * retained word is the deliberate null above (esterSideDiffers(): `acetato de
+ * propan-1-ilo`, and `acetato de propan-2-ilo`, the traditional word with the
+ * IUPAC-preferred group, since the engine writes `acetato de isopropilo`
+ * only). An aryl prefix in another style than the engine's default beside
+ * `acetato` (`2-[4-(propan-2-il)fenil]acetato de metilo`) stays null, no
+ * ester's own mistake: as on the retained aldehyde and acid
+ * (`2-[4-(propan-2-il)fenil]acetaldehído`), no rule covers a retained word's
+ * prefix style.
  *
  * The ester prefixes (R-6a2b: an acyloxy prefix, `acetiloxi`,
  * `[(2-metilpropanoil)oxi]`, and an alkoxycarbonyl prefix, `metoxicarbonil`,
@@ -796,7 +875,8 @@
  * so the rules read them as any prefix: their shape for the prefix style
  * (specShape(): an acyloxy group's acyl shape after `O:`, an alkoxycarbonyl
  * group's one carbon with its oxo and its alkoxy group, as the engine's
- * structures), a hetero group for rule 1, ALPHABETICAL_ORDER under their
+ * structures), a hetero group for rule 1 (an alkoxycarbonyl prefix on an end
+ * beside an acid is ESTER_IN_CHAIN, above), ALPHABETICAL_ORDER under their
  * whole word (`acetiloxi` under a), UNGROUPED, MULTIPLIER_KIND with `bis`
  * (an alkoxycarbonyl prefix is a C=O carbon with groups of its own,
  * MULTIPLIER_KIND's reason; an acyloxy prefix an `oxi` prefix that is not
@@ -805,19 +885,16 @@
  * acyl chain (ACYL_CHAIN: `[(3-metilpropanoil)oxi]`) and ring
  * (BRANCH_RING_NUMBERING: `[(6-metilbenzoil)oxi]`, `[(6-metilfenoxi)carbonil]`;
  * the engine's words with the opening mark its parts keep apart, partText()).
- * Deliberate, tested nulls (for phase R-6a3): an ester prefix written as
+ * Beside no group senior to an ester the molecule is the ester itself: the
+ * principal group's checks above (CARBONYL_PREFIX, CARBONYL_SENIORITY).
+ * Deliberate, tested nulls (for phase R-6a3b): an ester prefix written as
  * another kind of branch, or the reverse — an acyloxy group as an alkoxy
  * group with an `oxo` (`(1-oxoetoxi)`), an alkoxycarbonyl group as a
  * substituted methyl (`[(metoxi)oxometil]`) —, and an acyloxy group's acyl
  * part with the general rule's word (`(etanoiloxi)`, `(metanoiloxi)`)
- * (esterPrefixWords(), first of the branch-name checks: `words`); an
- * alkoxycarbonyl prefix whose C=O carbon the engine puts in the parent chain,
- * writing the ester as `alcoxi` and `oxo` (`ácido
- * 3-(metoxicarbonil)propanoico` → `ácido 4-metoxi-4-oxobutanoico`: rule 1
- * reads the prefix as a hetero group, which lengthens no chain, `inChain`);
- * and an ester prefix beside no group
- * senior to an ester (`2-(acetiloxi)heptanal`, `(acetiloxi)metano`,
- * `(benzoiloxi)benceno` → `benzoato de fenilo`: esterChecks()' `seniority`).
+ * (esterPrefixWords(), first of the branch-name checks: `words`); and an
+ * ether class name whose oxygen is an ester's (`(1-oxoetil) metil éter`,
+ * «Ethers» above).
  *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
@@ -830,7 +907,7 @@
 import { nameMolecule } from '../naming/index.js';
 import { compareLocantLists, compareCitationKeys } from '../naming/numbering.js';
 import { chainKey } from '../naming/parent.js';
-import { locantText } from '../naming/structure.js';
+import { locantText, esterParts } from '../naming/structure.js';
 import { PREFIX_STYLES, nameSubstituent, suffixSites } from '../naming/substituent.js';
 import { seniorityRank } from '../naming/seniority.js';
 import { adjacency, rootedBranchKey } from '../model/graph.js';
@@ -838,6 +915,7 @@ import {
   stem, multiplier, compoundMultiplier, ENDINGS, ENCLOSING_MARKS, RETAINED_PREFIXES, FREE_VALENCE_SUFFIXES, omitsLocants,
   chainOmitsPrefixLocants, ringOmitsLocants, BENZENE_NAME, RING_PREFIX, POSITIONAL_LETTERS, TRADITIONAL_NAMES, SATURATED_INFIX,
   ALKOXY_ENDING, ETHER_CLASS_WORD, GROUP_PREFIXES, groupSuffix, ringGroupSuffix, ACYL_ENDING, RING_CARBONYL_ENDING, ESTER_LINK,
+  ESTER_ALKYL_ENDING,
 } from '../naming/lexicon.es.js';
 import { assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, isClassName, esterPrefixKind } from './assemble.js';
 import { ownPrefixAtoms, specRings, isRing, isAromatic } from './build.js';
@@ -845,7 +923,7 @@ import {
   tileById, tileId, MAX_MULT, isAtomGroup, atomGroupOrder, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
   FORMYL_ID, ACETYL_ID, OXO_ID, OXO_ELEMENT, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, BENZOYL_ID, RING_CARBONYL_ID,
   templateAdmits, isChainTemplate, ACID_KIND, CARBOXY_ID, ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, ESTER_KIND,
-  isEsterTemplate,
+  isEsterTemplate, OATO_ID, CARBOXYLATE_ID, BENZOATE_ID,
 } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
@@ -900,6 +978,12 @@ const WORDS = Object.freeze({
   carboxilico: tileById(CARBOXYLIC_ID).text,
   acidoBenzoico: `${tileById(ACID_WORD_ID).text} ${tileById(BENZOIC_ID).text}`,
   carboxi: tileById(CARBOXY_ID).text,
+  // Esters (R-6a3a): the suffixes, the retained parent, the link word and the O-bound group's ending.
+  oato: tileById(OATO_ID).text,
+  carboxilato: tileById(CARBOXYLATE_ID).text,
+  benzoato: tileById(BENZOATE_ID).text,
+  de: ESTER_LINK.trim(),
+  ilo: `${FREE_VALENCE_SUFFIXES[1]}${ESTER_ALKYL_ENDING}`,
 });
 
 /** The style of the engine's functional-class alternative (naming/index.js etherClassAlternative(); R-5b2). */
@@ -924,12 +1008,19 @@ const CARBONYLS = Object.freeze([ALDEHYDE, KETONE]);
 const ACID = ACID_KIND;
 
 /**
- * The principal groups with a C=O of their own — an aldehyde's –CHO, a
- * ketone's C=O, an acid's –COOH (R-5c3b1, R-5d3) —, whose words the
- * parent-choice, P0, N0, prefix and seniority messages use
- * (DIAGNOSIS_PHRASES `groupWords`, `carbonylN0`; carbonylGroup()).
+ * The principal group of an ester (a lexicon GROUP_SUFFIXES key; tiles.js ESTER_KIND): no ether class name fits it
+ * (classNameDiagnosis()); its own mistakes are checked first with the acid's (file header «Esters», esterChecks(); R-6a3a),
+ * the O-bound side and the ester prefixes' words are deliberate nulls until phase R-6a3b.
  */
-const CARBONYL_GROUPS = Object.freeze([ALDEHYDE, KETONE, ACID]);
+const ESTER = ESTER_KIND;
+
+/**
+ * The principal groups with a C=O of their own — an aldehyde's –CHO, a
+ * ketone's C=O, an acid's –COOH (R-5c3b1, R-5d3), an ester's –COO– (R-6a3a)
+ * —, whose words the parent-choice, P0, N0, prefix and seniority messages
+ * use (DIAGNOSIS_PHRASES `groupWords`, `carbonylN0`; carbonylGroup()).
+ */
+const CARBONYL_GROUPS = Object.freeze([ALDEHYDE, KETONE, ACID, ESTER]);
 
 /** The `carboxi` tile's value (a retained word, R-5d1). */
 const CARBOXY = tileById(CARBOXY_ID).value;
@@ -944,17 +1035,11 @@ const OXO_KIND = tileById(OXO_ID).kind;
 const CARBON = 'C';
 
 /**
- * The principal group of an ester (a lexicon GROUP_SUFFIXES key; tiles.js ESTER_KIND): no ether class name fits it
- * (classNameDiagnosis()); its own mistakes are deliberate nulls until phase R-6a3 (file header «Esters», esterChecks()).
- */
-const ESTER = ESTER_KIND;
-
-/**
  * The null of a check that finds a case no message covers (file header
  * «Aldehydes and ketones»: a student's carbonyl suffix of another kind than
  * the engine's that no C=O check names; «Acids»: a student's acid suffix
  * while the engine's principal group is no –COOH; both never seen; «Esters»:
- * every ester's own mistake, until phase R-6a3): a draft that stops the
+ * an ester prefix's own words, until phase R-6a3b): a draft that stops the
  * diagnosis — firstRule() answers null for the reading, never a later rule.
  */
 const BEYOND = Object.freeze({ code: null });
@@ -998,13 +1083,19 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
       : `Los grupos –COOH son el grupo principal: ${DIAGNOSIS_PHRASES.groupsOn[d.on]} se nombran todos juntos `
         + `${DIAGNOSIS_PHRASES.ending(d)}.`} Se escribe «${d.name}».`;
   }, // End of the ACID_GROUP template
+  // Esters (R-6a3a, file header «Esters»): ACID_GROUP's twin, a –COO– of the engine's suffix written as two groups on one carbon.
+  ESTER_GROUP: (d) => 'Un C=O y un oxígeno unido a otro grupo de carbonos, en el mismo carbono, no son dos grupos distintos: '
+    + 'juntos forman un solo grupo, el –COO– de los ésteres (su C=O no es un aldehído ni una cetona, ni su oxígeno del medio '
+    + `un éter). ${d.count === 1 ? `El grupo –COO– es el grupo principal: se nombra ${DIAGNOSIS_PHRASES.ending(d)}.`
+      : `Los grupos –COO– son el grupo principal: ${DIAGNOSIS_PHRASES.groupsOn[d.on]} se nombran todos juntos `
+        + `${DIAGNOSIS_PHRASES.ending(d)}.`} Se escribe «${d.name}».`,
   // Aldehydes and ketones (R-5c3b1, file header «Aldehydes and ketones»): the principal C=O group's own mistakes; and an
-  // acid's (R-5d3, «Acids»), whose –COOH is senior to them all.
+  // acid's (R-5d3, «Acids»), whose –COOH is senior to them all; and an ester's (R-6a3a, «Esters»), or an ester's suffix
+  // beside an acid's –COOH (the junior `ester`).
   CARBONYL_SENIORITY: (d) => `Cuando hay grupos distintos, solo uno es el grupo principal, y se elige por este orden: `
-    + `${d.group === ACID ? DIAGNOSIS_PHRASES.acidSeniority : DIAGNOSIS_PHRASES.seniority}. Aquí manda `
-    + `${DIAGNOSIS_PHRASES.principal[d.group]}, que se nombra `
-    + `${DIAGNOSIS_PHRASES.ending(d)}; ${DIAGNOSIS_PHRASES.junior[d.junior][d.count === 1 ? 0 : 1]} va delante, `
-    + `${d.prefix ? `con el prefijo «${d.prefix}»` : 'en los prefijos'}. Se escribe «${d.name}».`,
+    + `${DIAGNOSIS_PHRASES.seniorityOf(d)}. Aquí manda ${DIAGNOSIS_PHRASES.principal[d.group]}, que se nombra `
+    + `${DIAGNOSIS_PHRASES.ending(d)}; ${DIAGNOSIS_PHRASES.junior[d.junior][d.count === 1 ? 0 : 1]} `
+    + `${DIAGNOSIS_PHRASES.juniorPlace(d)}. Se escribe «${d.name}».`,
   KETONE_NOT_ALDEHYDE: (d) => 'El grupo –CHO de un aldehído va en un extremo de la cadena: su carbono solo puede unirse a un '
     + `carbono más. Aquí ${d.branch ? `la rama «${d.branch}» está en el carbono ${d.locant}, que así queda unido`
       : `el carbono ${d.locant} está unido`} a dos carbonos: su C=O es el de una cetona, no el de un aldehído. `
@@ -1022,10 +1113,28 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
     : `La terminación «-${WORDS.carboxilico}» solo se usa cuando el grupo –COOH está unido a un anillo. En una cadena, el `
       + 'carbono del –COOH es un carbono más de la cadena principal, siempre en un extremo, y el grupo se nombra '
       + `${DIAGNOSIS_PHRASES.ending(d)}. Se escribe «${d.name}».`),
+  // ACID_CARBON's twin for the –COO– (R-6a3a, file header «Esters»).
+  ESTER_CARBON: (d) => (d.ring
+    ? 'Cuando el grupo –COO– está unido a un anillo, su carbono no forma parte del anillo ni es una cadena aparte: la cadena '
+      + `principal es el anillo, y el grupo se nombra ${DIAGNOSIS_PHRASES.ending(d)}. Se escribe «${d.name}».`
+    : `La terminación «-${WORDS.carboxilato}» solo se usa cuando el grupo –COO– está unido a un anillo. En una cadena, el `
+      + 'carbono del –COO– es un carbono más de la cadena principal, siempre en un extremo, y el grupo se nombra '
+      + `${DIAGNOSIS_PHRASES.ending(d)}. Se escribe «${d.name}».`),
   CARBONYL_PREFIX: (d) => {
     const words = DIAGNOSIS_PHRASES.groupWords[d.group];
     const how = `${d.acyl ? 'dentro del' : 'con el'} prefijo «${d.prefix}»`;
     const joins = d.joins ? ` Su carbono entra en la cadena principal${d.ringBranch ? ', y el anillo pasa a ser una rama' : ''}.` : '';
+    if (d.group === ESTER) {
+      // An ester (R-6a3a): its long ending last; an acyloxy prefix's carbons start the acid part, the student's chain goes after
+      // «de» (`oBound`: `(acetiloxi)metano` → «etanoato de metilo»).
+      const side = d.oBound ? ` ${d.studentRing ? 'Tu anillo' : 'Tu cadena'} va en el grupo unido al otro oxígeno, después de `
+        + `«${WORDS.de}».` : '';
+      return (d.count === 1
+        ? `El ${words.one} es el grupo principal: no se nombra ${how}, sino ${DIAGNOSIS_PHRASES.ending(d)}.`
+        : `Los ${words.many} son el grupo principal: ${DIAGNOSIS_PHRASES.groupsOn[d.on]} no se nombran ${how}, sino todos `
+          + `juntos ${DIAGNOSIS_PHRASES.ending(d)}.`)
+        + `${joins}${side} Se escribe «${d.name}».`;
+    }
     return (d.count === 1
       ? `El ${words.one} es el grupo principal: se nombra ${DIAGNOSIS_PHRASES.ending(d)}, no ${how}.`
       : `Los ${words.many} son el grupo principal: ${DIAGNOSIS_PHRASES.groupsOn[d.on]} se nombran todos juntos `
@@ -1038,6 +1147,11 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
     + `o una cadena abierta; solo si empatan manda el anillo. Aquí ${DIAGNOSIS_PHRASES.hydroxyChoice(d)}: «${d.name}».`,
   BRANCH_AT_END: (d) => `La rama «${d.branch}» está en el extremo de la cadena, así que la alarga: `
     + `la cadena principal tiene ${d.length} carbonos.`,
+  // BRANCH_AT_END's twin for an alkoxycarbonyl prefix beside an acid (R-6a3a, file header «Esters»): its C=O carbon joins the
+  // chain, and the engine writes the ester as `oxo` and an `-oxi` prefix on that carbon (explain.js chainEsterNote()).
+  ESTER_IN_CHAIN: (d) => `El prefijo «${d.prefix}» está en el extremo de la cadena, y el carbono de su C=O la alarga: la cadena `
+    + `principal tiene ${d.length} carbonos. Con ese carbono en la cadena, el éster ya no se nombra «${d.prefix}», sino `
+    + `${DIAGNOSIS_PHRASES.chainEster}. Se escribe «${d.name}».`,
   RING_IS_PARENT: (d) => 'El anillo es la cadena principal: un anillo manda siempre sobre una cadena abierta, aunque la cadena '
     + `sea más larga. Tu cadena de ${d.length} ${d.length === 1 ? 'carbono' : 'carbonos'} va en una rama del anillo: «${d.name}».`,
   MORE_HYDROXY_GROUPS: (d) => `Hay otra cadena con más grupos –OH (${d.app}; la tuya tiene ${d.student}). La cadena principal es `
@@ -1178,41 +1292,94 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
     N5: 'con los mismos números, gana la numeración cuyo nombre va antes por orden alfabético',
   }),
   /**
-   * N0 for an aldehyde, a ketone (R-5c3b1) or an acid (R-5d3), by principal group: why the other numbering is right
-   * (NUMBERING, RING_NUMBERING) and what another chain numbers lower (CHAIN_LOCANTS), as `numberingReasons.N0` and
-   * `lowerLocantsOf.N0` say it of the OH groups and the explanation's numbering step of the C=O and –COOH groups.
+   * N0 for an aldehyde, a ketone (R-5c3b1), an acid (R-5d3) or an ester (R-6a3a), by principal group: why the other
+   * numbering is right (NUMBERING, RING_NUMBERING) and what another chain numbers lower (CHAIN_LOCANTS), as
+   * `numberingReasons.N0` and `lowerLocantsOf.N0` say it of the OH groups and the explanation's numbering step of the C=O,
+   * –COOH and –COO– groups.
    */
   carbonylN0: Object.freeze({
     numberingReasons: Object.freeze({
       aldehyde: 'los grupos –CHO (el grupo principal) tienen que llevar los números más bajos',
       ketone: 'los grupos C=O (el grupo principal) tienen que llevar los números más bajos',
       acid: 'los grupos –COOH (el grupo principal) tienen que llevar los números más bajos',
+      ester: 'los grupos –COO– (el grupo principal) tienen que llevar los números más bajos',
     }),
-    lowerLocantsOf: Object.freeze({ aldehyde: 'los grupos –CHO', ketone: 'los grupos C=O', acid: 'los grupos –COOH' }),
+    lowerLocantsOf: Object.freeze({
+      aldehyde: 'los grupos –CHO', ketone: 'los grupos C=O', acid: 'los grupos –COOH', ester: 'los grupos –COO–',
+    }),
   }),
   /**
    * How the messages call one or several principal groups, by group (R-5c3b1; the explanation's SUFFIX_GROUP_WORDS): the
-   * C=O of a ketone «grupo C=O», an aldehyde's «grupo –CHO», an acid's «grupo –COOH» (R-5d3), as the explanation's group
-   * step says them.
+   * C=O of a ketone «grupo C=O», an aldehyde's «grupo –CHO», an acid's «grupo –COOH» (R-5d3), an ester's «grupo –COO–»
+   * (R-6a3a), as the explanation's group step says them.
    */
   groupWords: Object.freeze({
     alcohol: Object.freeze({ one: 'grupo –OH', many: 'grupos –OH' }),
     aldehyde: Object.freeze({ one: 'grupo –CHO', many: 'grupos –CHO' }),
     ketone: Object.freeze({ one: 'grupo C=O', many: 'grupos C=O' }),
     acid: Object.freeze({ one: 'grupo –COOH', many: 'grupos –COOH' }),
+    ester: Object.freeze({ one: 'grupo –COO–', many: 'grupos –COO–' }),
   }),
   /** The seniority of the principal groups the tiles write (CARBONYL_SENIORITY, R-5c3b1; design.md §13.4 I-32). */
   seniority: 'aldehído > cetona > alcohol',
   /** The same beside an acid (CARBONYL_SENIORITY, R-5d3; design.md §13.4 I-33), as the acid's group step words it. */
   acidSeniority: 'ácido > aldehído > cetona > alcohol',
+  /**
+   * The same with an ester (CARBONYL_SENIORITY, R-6a3a; design.md §13.4 I-35, naming/seniority.js SENIORITY), as the
+   * explanation's ester group step and the acid's beside an ester prefix word it.
+   */
+  esterSeniority: 'ácido > éster > aldehído > cetona > alcohol',
+  /**
+   * The seniority CARBONYL_SENIORITY states (R-6a3a): with an ester, as the principal group or as the student's junior
+   * suffix beside an acid, `esterSeniority`; beside an acid `acidSeniority`; else `seniority`.
+   *
+   * @param {{group: string, junior: string}} d - The principal group and the student's junior one.
+   * @returns {string} The phrase.
+   */
+  seniorityOf: (d) => {
+    if (d.group === ESTER || d.junior === ESTER) {
+      return DIAGNOSIS_PHRASES.esterSeniority;
+    }
+    return d.group === ACID ? DIAGNOSIS_PHRASES.acidSeniority : DIAGNOSIS_PHRASES.seniority;
+  },
   /** The principal group that wins, by group (CARBONYL_SENIORITY). */
-  principal: Object.freeze({ aldehyde: 'el aldehído (–CHO)', ketone: 'la cetona (C=O)', acid: 'el ácido (–COOH)' }),
-  /** The student's junior group, written as the suffix, one or several (CARBONYL_SENIORITY; an aldehyde's beside an acid, R-5d3). */
+  principal: Object.freeze({
+    aldehyde: 'el aldehído (–CHO)', ketone: 'la cetona (C=O)', acid: 'el ácido (–COOH)', ester: 'el éster (–COO–)',
+  }),
+  /**
+   * The student's junior group, written as the suffix, one or several (CARBONYL_SENIORITY; an aldehyde's beside an acid,
+   * R-5d3; an ester's beside an acid, R-6a3a).
+   */
   junior: Object.freeze({
     aldehyde: Object.freeze(['el –CHO del aldehído', 'cada –CHO']),
     ketone: Object.freeze(['el C=O de la cetona', 'cada C=O de cetona']),
     alcohol: Object.freeze(['el –OH', 'cada –OH']),
+    ester: Object.freeze(['el –COO– del éster', 'cada –COO–']),
   }),
+  /**
+   * How the engine writes an ester whose C=O carbon is a carbon of its parent chain beside an acid (R-6a3a: ESTER_IN_CHAIN,
+   * CARBONYL_SENIORITY), as the explanation's chainEsterNote() says it: `oxo` and an `-oxi` prefix with the same number.
+   */
+  chainEster: `con dos prefijos con el mismo número: «${WORDS.oxo}» para su C=O y uno acabado en «-${WORDS.oxi}» para su oxígeno `
+    + 'del medio con el grupo unido a él',
+  /**
+   * Where the student's junior groups go in the engine's name (CARBONYL_SENIORITY): in front, with their prefix (`oxo`,
+   * `hidroxi`, `formil`; an ester's `acetiloxi` or `metoxicarbonil`, R-6a3a) or «en los prefijos»; an ester's C=O carbon in
+   * the parent, as `oxo` and an `-oxi` prefix (`inChain`, R-6a3a); beside an ester, in the name of the group bonded to the
+   * other oxygen (`side` 'oBound', R-6a3a: `etanoato de 1-oxoheptan-2-ilo`).
+   *
+   * @param {{prefix: string|null, inChain?: boolean, side?: string|null}} d - The CARBONYL_SENIORITY data.
+   * @returns {string} The phrase.
+   */
+  juniorPlace: (d) => {
+    if (d.inChain) {
+      return `va delante, ${DIAGNOSIS_PHRASES.chainEster}`;
+    }
+    if (d.side === 'oBound') {
+      return `va en el nombre del grupo unido al otro oxígeno${d.prefix ? `, con el prefijo «${d.prefix}»` : ''}`;
+    }
+    return `va delante, ${d.prefix ? `con el prefijo «${d.prefix}»` : 'en los prefijos'}`;
+  }, // End of the juniorPlace phrase
   /** Which of several principal groups the suffix cites together (CARBONYL_PREFIX), by where they are. */
   groupsOn: Object.freeze({
     chain: 'los de la cadena principal',
@@ -1223,10 +1390,12 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
    * How the engine's principal C=O group is written (R-5c3b1): its suffix at the end of the name (`-al`, `-diona`,
    * `-carbaldehído`), or, for benzene with one –CHO, the name `benzaldehído`; an acid's –COOH (R-5d3) with the class word
    * `ácido` first and its suffix last (`-oico`, `-dioico`, `-carboxílico`), or, for benzene with one –COOH, `ácido
-   * benzoico`.
+   * benzoico`; an ester's –COO– (R-6a3a) with its suffix (`-oato`, `-dioato`, `-carboxilato`) or, for benzene with one
+   * –COO–, `benzoato`, then `de` and the O-bound groups ending in `-ilo`, as the explanation's ester group step says it.
    *
-   * @param {{ending: string, benzaldehyde: boolean, acid?: boolean, benzoic?: boolean}} d - The suffix's words
-   *   (suffixWordOf()), the benzaldehído case, and for an acid the `ácido benzoico` case (principalEnding()).
+   * @param {{ending: string, benzaldehyde: boolean, acid?: boolean, benzoic?: boolean, ester?: boolean, benzoate?: boolean,
+   *   groups?: number}} d - The suffix's words (suffixWordOf()), the benzaldehído case, for an acid the `ácido benzoico` case,
+   *   for an ester the `benzoato` case and how many –COO– groups (principalEnding()).
    * @returns {string} The phrase.
    */
   ending: (d) => {
@@ -1235,6 +1404,11 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
     }
     if (d.benzoic) {
       return `con «${WORDS.acidoBenzoico}» (el benceno con un grupo –COOH)`;
+    }
+    if (d.ester) {
+      const word = d.benzoate ? `con «${WORDS.benzoato}» (el benceno con un grupo –COO–)` : `con la terminación «-${d.ending}»`;
+      const side = d.groups > 1 ? 'los grupos unidos a los otros oxígenos, acabados' : 'el grupo unido al otro oxígeno, acabado';
+      return `${word} y, después de «${WORDS.de}», ${side} en «-${WORDS.ilo}»`;
     }
     return d.acid ? `con la palabra «${WORDS.acido}» al principio del nombre y la terminación «-${d.ending}» al final`
       : `con la terminación «-${d.ending}», al final del nombre`;
@@ -1294,6 +1468,9 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
     // The suffix's –COOH groups (R-5d3: `ácido ciclohexano-1-carboxílico`).
     acid: 'el grupo –COOH',
     acids: 'los grupos –COOH',
+    // The suffix's –COO– groups (R-6a3a: `ciclohexano-1-carboxilato de metilo`).
+    ester: 'el grupo –COO–',
+    esters: 'los grupos –COO–',
     /** The prefixes and the suffix's OH groups, both written with needless locants (`1,1,1-triclorometan-1-ol`). */
     together: (prefixes, hydroxy) => `${prefixes} y ${hydroxy}`,
   }),
@@ -1342,8 +1519,8 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
    * (explain.js etherSideReason()).
    *
    * @param {object} d - The ETHER_SIDE data: `reason`, the counts or locants of that rule, `benzene`; `group` for an aldehyde's
-   *   or a ketone's C=O groups (R-5c3b1: CARBONYL_PARENT, MORE_CARBONYL_GROUPS, CHAIN_LOCANTS at N0) or an acid's –COOH
-   *   groups (R-5d3).
+   *   or a ketone's C=O groups (R-5c3b1: CARBONYL_PARENT, MORE_CARBONYL_GROUPS, CHAIN_LOCANTS at N0), an acid's –COOH
+   *   groups (R-5d3) or an ester's –COO– groups (R-6a3a).
    * @returns {string} The phrase.
    */
   etherSide: (d) => {
@@ -1460,10 +1637,11 @@ export const CLASS_NAME_STEP_TEXTS = Object.freeze({
 /**
  * Every diagnosis code, in the order of the rules (design.md §15.8 R-3; the
  * ring rules of R-4, the alcohol rules of R-5a, the aldehyde and ketone
- * rules of R-5c3b1 and the acid rules of R-5d3 beside the rules whose place
- * they take — ACID_GROUP first, as acidChecks() runs first, ACID_CARBON
- * beside ALDEHYDE_CARBON —, the branch-name rules of R-5c3b2 before
- * ALPHABETICAL_ORDER, file header): its
+ * rules of R-5c3b1, the acid rules of R-5d3 and the ester rules of R-6a3a
+ * beside the rules whose place they take — ACID_GROUP and ESTER_GROUP first,
+ * as acidChecks() and esterChecks() run first, ACID_CARBON and ESTER_CARBON
+ * beside ALDEHYDE_CARBON, ESTER_IN_CHAIN beside BRANCH_AT_END —, the
+ * branch-name rules of R-5c3b2 before ALPHABETICAL_ORDER, file header): its
  * rule number (1–11), the
  * explanation step it points at (an explain() step id, design.md §5; a draft
  * may give its own case's step, `benzene` for RING_IS_PARENT on the benzene
@@ -1479,6 +1657,15 @@ export const DIAGNOSES = Object.freeze({
     example: Object.freeze({
       count: 1, ending: WORDS.oico, acid: true, benzoic: false, benzaldehyde: false, on: 'chain', principal: true,
       name: `${WORDS.acido} ${stem(3)}${SATURATED_INFIX}${WORDS.oico}`,
+    }),
+  }),
+  // Esters (R-6a3a): esterChecks() runs with acidChecks(), first; a –COO– written as two groups on one carbon.
+  ESTER_GROUP: Object.freeze({
+    rule: 1,
+    step: 'group',
+    example: Object.freeze({
+      count: 1, ending: WORDS.oato, ester: true, benzoate: false, groups: 1, benzaldehyde: false, on: 'chain',
+      name: `${stem(3)}${SATURATED_INFIX}${WORDS.oato}${ESTER_LINK}${WORDS.metil}${ESTER_ALKYL_ENDING}`,
     }),
   }),
   HYDROXY_PREFIX: Object.freeze({
@@ -1513,6 +1700,14 @@ export const DIAGNOSES = Object.freeze({
       name: `${WORDS.acido} ${stem(4)}${SATURATED_INFIX}${WORDS.oico}`,
     }),
   }),
+  ESTER_CARBON: Object.freeze({
+    rule: 1,
+    step: 'group',
+    example: Object.freeze({
+      ring: false, ending: WORDS.oato, ester: true, benzoate: false, groups: 1, benzaldehyde: false,
+      name: `${stem(4)}${SATURATED_INFIX}${WORDS.oato}${ESTER_LINK}${WORDS.metil}${ESTER_ALKYL_ENDING}`,
+    }),
+  }),
   CARBONYL_PREFIX: Object.freeze({
     rule: 1,
     step: 'group',
@@ -1543,6 +1738,16 @@ export const DIAGNOSES = Object.freeze({
     }),
   }),
   BRANCH_AT_END: Object.freeze({ rule: 1, step: 'chain', example: Object.freeze({ branch: WORDS.metil, length: 4 }) }),
+  // R-6a3a: BRANCH_AT_END's twin for an alkoxycarbonyl prefix; its step says the ester's carbon is a carbon of the chain.
+  ESTER_IN_CHAIN: Object.freeze({
+    rule: 1,
+    step: 'groupChain',
+    example: Object.freeze({
+      prefix: `${stem(1)}${WORDS.oxi}${WORDS.carbonil}`,
+      length: 4,
+      name: `${WORDS.acido} 4-${stem(1)}${WORDS.oxi}-4-${WORDS.oxo}${stem(4)}${SATURATED_INFIX}${WORDS.oico}`,
+    }),
+  }),
   RING_IS_PARENT: Object.freeze({
     rule: 1,
     step: 'ring',
@@ -1708,8 +1913,9 @@ export const DIAGNOSIS_CODES = Object.freeze(Object.keys(DIAGNOSES));
  * itself (it names `benzene` or `ring` otherwise); a monosubstituted
  * benzene or a one-carbon parent has no numbering step (`triclorometanol`:
  * «Monta el nombre»); so do an aldehyde and a ketone (R-5c3b1: CARBONYL_PARENT
- * as HYDROXY_PARENT; `benzaldehído` has no numbering step) and an acid
- * (R-5d3: `ácido benzoico` has none either); a branch-name
+ * as HYDROXY_PARENT; `benzaldehído` has no numbering step), an acid
+ * (R-5d3: `ácido benzoico` has none either) and an ester (R-6a3a: `benzoato
+ * de metilo` neither; ESTER_IN_CHAIN's `groupChain` is an acid's); a branch-name
  * rule (R-5c3b2) points at a prefix of the engine's name, which therefore
  * has «Nombra los sustituyentes». An ether (R-5b2)
  * always has «Reconoce el éter»
@@ -1745,8 +1951,9 @@ export const STEP_FALLBACKS = Object.freeze({
  *   rule whose place it takes, file header; ETHER_SIDE that of the draft it replaces, R-5b2).
  * @property {string|null} traceRule - The engine trace rule the diagnosis follows ('P0'…'P4', 'N0'…'N5'; 'RING' for
  *   RING_IS_PARENT; 'RINGCHAIN' or 'RING' for HYDROXY_PARENT and CARBONYL_PARENT; ETHER_SIDE that of the draft it replaces,
- *   R-5b2), or null for HYDROXY_PREFIX, the C=O checks CARBONYL_SENIORITY, KETONE_NOT_ALDEHYDE, ALDEHYDE_CARBON and
- *   CARBONYL_PREFIX (R-5c3b1), the acid checks ACID_GROUP and ACID_CARBON (R-5d3), BENZENE_RING, SUBSTITUTED_TEMPLATE,
+ *   R-5b2; 'P1' for BRANCH_AT_END and ESTER_IN_CHAIN, R-6a3a), or null for HYDROXY_PREFIX, the C=O checks
+ *   CARBONYL_SENIORITY, KETONE_NOT_ALDEHYDE, ALDEHYDE_CARBON and CARBONYL_PREFIX (R-5c3b1), the acid checks ACID_GROUP and
+ *   ACID_CARBON (R-5d3), the ester checks ESTER_GROUP and ESTER_CARBON (R-6a3a), BENZENE_RING, SUBSTITUTED_TEMPLATE,
  *   PHENOL, the class-name codes and rules 5–11.
  * @property {string} message - The Spanish message (DIAGNOSIS_TEXTS).
  * @property {string} step - The `id` of the explain() step that explains the rule, a step of the explanation of the naming
@@ -2088,6 +2295,8 @@ function replaceNode(node, target, replacement) {
  * @property {number} order - The order of the bond between them (1 `il`, 2 `iliden`).
  * @property {number[]} atoms - Its atoms in the order build() created them: its own chain or ring first, in the student's
  *   locant order (build.js ownPrefixAtoms(); R-5c3b2, the branch-name rules).
+ * @property {object} node - The student's prefix node (parse.js) it is an occurrence of (R-6a3a: the ester prefixes at any
+ *   depth, esterPrefix()).
  */
 
 /**
@@ -2137,7 +2346,7 @@ function branchOccurrences(name, reading, molecule, adj) {
    * @returns {void}
    */
   const record = (node, sub, join, atoms) => {
-    const occurrence = { sub, ...join, atoms };
+    const occurrence = { sub, ...join, atoms, node };
     all.push(occurrence);
     if (!first.has(node)) {
       first.set(node, occurrence);
@@ -2333,7 +2542,12 @@ const DROPPED_AT = Object.freeze({
  * tile order), which the trace shows is not a leaf-to-leaf path. A halogen
  * (R-5a1) on an end is no such branch: it is no carbon and never lengthens
  * the chain; nor is an alkoxy prefix (R-5b), whose ether oxygen splits the
- * carbon skeleton (`1-metoxi-1-metilpropano` blames `metil`).
+ * carbon skeleton (`1-metoxi-1-metilpropano` blames `metil`). An
+ * alkoxycarbonyl prefix beside an acid (R-6a3a, file header «Esters») is
+ * bonded by its C=O carbon, which the engine's parent takes in when it sits
+ * on an end, writing the ester as `oxo` and an `-oxi` prefix: ESTER_IN_CHAIN
+ * (`ácido 3-(metoxicarbonil)propanoico` → `ácido 4-metoxi-4-oxobutanoico`;
+ * only when that carbon is the engine's parent's).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null when no carbon branch sits on an end (never for a chain missing from P1).
@@ -2341,10 +2555,28 @@ const DROPPED_AT = Object.freeze({
 function branchAtEnd(ctx) {
   const { reading, tree, naming, spec } = ctx;
   const n = reading.studentParent.atoms.length;
+  const parent = new Set(naming.parent.atoms);
+  /**
+   * Tells whether a parent-level occurrence is an alkoxycarbonyl prefix whose C=O carbon the engine's parent takes in (R-6a3a).
+   *
+   * @param {object} o - A prefixAtoms entry.
+   * @returns {boolean} True for such a prefix.
+   */
+  const inChain = (o) => Boolean(spec.prefixes[o.prefix].substituent.alkoxycarbonyl) && acidPrincipal(ctx)
+    && parent.has(o.attachment);
   const end = reading.prefixAtoms
-    .find((o) => (o.locant === 1 || o.locant === n) && !isHeteroGroup(spec.prefixes[o.prefix].substituent));
+    .find((o) => (o.locant === 1 || o.locant === n) && (!isHeteroGroup(spec.prefixes[o.prefix].substituent) || inChain(o)));
   if (!end) {
     return null;
+  }
+  if (inChain(end)) {
+    return {
+      code: 'ESTER_IN_CHAIN',
+      traceRule: 'P1',
+      data: { prefix: wordsOf(tree, tree.items[end.prefix]), length: naming.parent.atoms.length, name: naming.name },
+      focus: occurrenceIds([end]),
+      tiles: end.tiles || spec.parent.tiles,
+    };
   }
   return {
     code: 'BRANCH_AT_END',
@@ -2364,7 +2596,9 @@ function branchAtEnd(ctx) {
  * CHAIN_LOCANTS with the C=O groups' words (the data's `group`), and an
  * acid's (R-5d3) with the –COOH groups' words (`ácido
  * 3-(carboximetil)pentanoico`, P0; N0 never drops an acid's chain: its
- * –COOH groups are at its ends, locants 1 and the last).
+ * –COOH groups are at its ends, locants 1 and the last), and an ester's
+ * (R-6a3a) with the –COO– groups' (`2-[(metoxicarbonil)metil]propanoato de
+ * metilo`, P0; nor N0 an ester's chain, for the same reason).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {object} step - The trace step that dropped the chain.
@@ -2372,9 +2606,6 @@ function branchAtEnd(ctx) {
  * @returns {object|null} The draft, or null for a rule this phase does not know.
  */
 function chainDropped(ctx, step, sameChain) {
-  if (esterPrincipal(ctx) && (step.rule === 'P0' || step.rule === 'N0')) {
-    return BEYOND; // «Esters» (R-6a1): the –COO– groups' P0 and N0 messages are phase R-6a3's.
-  }
   const group = carbonylGroup(ctx);
   const code = step.rule === 'P0' && group ? 'MORE_CARBONYL_GROUPS' : DROPPED_AT[step.rule];
   if (!code) {
@@ -2421,8 +2652,9 @@ function chainDropped(ctx, step, sameChain) {
  * count is its chain's own, as P0 counts it: the engine's suffix sites on
  * its carbons (substituent.js suffixSites()), however the student wrote
  * them. The data are chainDropped()'s for a P step. An aldehyde's or a
- * ketone's C=O groups (R-5c3b1), and an acid's –COOH groups (R-5d3), choose
- * the chain the same way: MORE_CARBONYL_GROUPS, with the group's words.
+ * ketone's C=O groups (R-5c3b1), an acid's –COOH groups (R-5d3) and an
+ * ester's –COO– groups (R-6a3a) choose the chain the same way:
+ * MORE_CARBONYL_GROUPS, with the group's words.
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {object} step - The trace's first chain step.
@@ -2442,9 +2674,6 @@ function fewerPrincipalGroups(ctx, step) {
   const student = suffixSites(molecule, adj, atoms).length;
   if (student >= app) {
     return null; // Never: every chain that contains the student's carries at least its OH groups, and P0 dropped them all.
-  }
-  if (esterPrincipal(ctx)) {
-    return BEYOND; // «Esters» (R-6a1): another chain with more –COO– groups, phase R-6a3's (never seen: esterChecks() first).
   }
   const group = carbonylGroup(ctx);
   const data = { student, app, length: naming.parent.atoms.length, halogen: hasHalogen(spec.prefixes) };
@@ -2668,7 +2897,9 @@ function acidPrincipal(ctx) {
  * writes no locant at all (`propeno`, `metilciclohexano`); for an aldehyde or
  * a ketone (R-5c3b1) the principal group, whose words N0 uses
  * (`pentan-4-ona`, `ciclohexan-3-ona`), and likewise for an acid (R-5d3:
- * `ácido ciclohexano-1,5-dicarboxílico`, `ácido benceno-1,5-dicarboxílico`).
+ * `ácido ciclohexano-1,5-dicarboxílico`, `ácido benceno-1,5-dicarboxílico`)
+ * and an ester (R-6a3a: `ciclohexano-1,5-dicarboxilato de dimetilo`,
+ * `ciclohexano-2-carboxilato de metilo`).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {string} code - 'NUMBERING' or 'RING_NUMBERING'.
@@ -2677,9 +2908,6 @@ function acidPrincipal(ctx) {
  * @returns {object} The draft.
  */
 function directionDraft(ctx, code, step, isStudent) {
-  if (step.rule === 'N0' && esterPrincipal(ctx)) {
-    return BEYOND; // «Esters» (R-6a1): the –COO– groups numbered otherwise (`ciclohexano-1,5-dicarboxilato`), phase R-6a3's.
-  }
   const { naming } = ctx;
   const winner = step.survivors[0];
   const terms = firstDifference(valueOf(step, (c) => c.key === winner.key), valueOf(step, isStudent));
@@ -2795,9 +3023,13 @@ function hydroxyPrefix(ctx) {
  * groups (file header «Alcohols», R-5a3b; «Aldehydes and ketones», R-5c3b1;
  * design.md §13.4 I-40a): the student's parent is an open chain and the
  * engine's the ring, or the reverse, in a molecule with OH groups
- * (HYDROXY_PARENT) or with an aldehyde's or a ketone's C=O groups, or an
- * acid's –COOH groups (CARBONYL_PARENT, the data's `group` naming them;
- * R-5c3b1, R-5d3). The engine's parent is
+ * (HYDROXY_PARENT) or with an aldehyde's or a ketone's C=O groups, an
+ * acid's –COOH groups or an ester's –COO– groups (CARBONYL_PARENT, the
+ * data's `group` naming them; R-5c3b1, R-5d3, R-6a3a:
+ * `[(metoxicarbonil)metil]ciclohexano` → `2-ciclohexiletanoato de metilo`;
+ * an ester prefix bonded by its oxygen, whose ring or chain goes into the
+ * O-bound group, never a branch, is CARBONYL_PREFIX first, esterChecks()).
+ * The engine's parent is
  * the one carrying more of them, the ring on a tie: the counts are the
  * `RINGCHAIN` step's (the ring's first, then the best chains'); without that
  * step the parent is the ring, which carries every one. The focus is the
@@ -2813,9 +3045,6 @@ function principalParent(ctx) {
   const ringParent = structure.parentKind === 'ring';
   if (!structure.suffix || isRing(spec.parent.kind) === ringParent) {
     return null;
-  }
-  if (esterPrincipal(ctx)) {
-    return BEYOND; // «Esters» (R-6a1): the ring or chain the –COO– groups choose, phase R-6a3's.
   }
   const choice = naming.trace.find((s) => s.rule === 'RINGCHAIN');
   const ring = choice ? choice.values[0] : structure.suffix.locants.length;
@@ -2843,10 +3072,15 @@ function principalParent(ctx) {
  * instead (benzene with one –CHO: `4-metilbenzaldehído`); for an acid's
  * –COOH (R-5d3) `acid` (the class word `ácido` first: `oico`, `dioico`,
  * `carboxílico`), and whether the name is built on `ácido benzoico` (benzene
- * with one –COOH: `ácido 4-metilbenzoico`).
+ * with one –COOH: `ácido 4-metilbenzoico`); for an ester's –COO– (R-6a3a)
+ * `ester` (`oato`, `dioato`, `carboxilato`, then `de` and the O-bound
+ * groups), whether the name is built on `benzoato` (benzene with one –COO–:
+ * `4-metilbenzoato de etilo`) and how many –COO– groups there are (`groups`,
+ * one O-bound group each).
  *
- * @param {object} naming - The naming compared with, its suffix an aldehyde's, a ketone's or an acid's.
- * @returns {{ending: string, benzaldehyde: boolean, acid: boolean, benzoic: boolean}} The words.
+ * @param {object} naming - The naming compared with, its suffix an aldehyde's, a ketone's, an acid's or an ester's.
+ * @returns {{ending: string, benzaldehyde: boolean, acid: boolean, benzoic: boolean, ester: boolean, benzoate: boolean,
+ *   groups: number}} The words.
  */
 function principalEnding(naming) {
   const { suffix } = naming.structure;
@@ -2856,6 +3090,9 @@ function principalEnding(naming) {
     benzaldehyde: one && suffix.kind === ALDEHYDE,
     acid: suffix.kind === ACID,
     benzoic: one && suffix.kind === ACID,
+    ester: suffix.kind === ESTER,
+    benzoate: one && suffix.kind === ESTER,
+    groups: suffix.locants.length,
   };
 } // End of function principalEnding()
 
@@ -2863,23 +3100,25 @@ function principalEnding(naming) {
  * The atoms and bonds of some suffix groups of the student's (build.js
  * `suffixAtoms` of the reading): each group's carbon — the –CHO's own carbon
  * of `carbaldehído`, else the parent carbon that carries it — and its oxygen,
- * with the bonds between them; a –COOH's OH too (R-5d3: `hydroxy`).
+ * with the bonds between them; a –COOH's OH too (R-5d3: `hydroxy`), and a
+ * –COO–'s bridge oxygen (R-6a3a: `bridge`).
  *
  * @param {object[]} groups - The reading's suffixAtoms entries.
  * @returns {{atoms: number[], bonds: number[]}} The ids.
  */
 function suffixFocus(groups) {
   /**
-   * The OH of a –COOH group, as atoms or bonds (none for another group).
+   * The OH of a –COOH group or the bridge O of a –COO– group, as atoms or bonds (none for another group).
    *
    * @param {object} g - A suffixAtoms entry.
-   * @param {string} key - 'hydroxy' or 'hydroxyBond'.
+   * @param {string} key - 'hydroxy', 'hydroxyBond', 'bridge' or 'bridgeBond'.
    * @returns {number[]} The id, or nothing.
    */
   const oh = (g, key) => (g[key] === undefined ? [] : [g[key]]);
   return {
-    atoms: groups.flatMap((g) => [g.carbon === undefined ? g.parentAtom : g.carbon, g.attachment, ...oh(g, 'hydroxy')]),
-    bonds: groups.flatMap((g) => [g.bond, ...oh(g, 'hydroxyBond')]),
+    atoms: groups.flatMap((g) => [g.carbon === undefined ? g.parentAtom : g.carbon, g.attachment, ...oh(g, 'hydroxy'),
+      ...oh(g, 'bridge')]),
+    bonds: groups.flatMap((g) => [g.bond, ...oh(g, 'hydroxyBond'), ...oh(g, 'bridgeBond')]),
   };
 } // End of function suffixFocus()
 
@@ -2892,14 +3131,17 @@ function suffixFocus(groups) {
  * it hangs from the parent (`4-carboxibenzaldehído` → `ácido
  * 4-formilbenzoico`); else null — part of another prefix (the ketone's
  * carbon in an `acetil` branch), or groups the engine writes otherwise.
+ * Beside an ester (R-6a3a) the chain may be an O-bound group's own
+ * (juniorPlacement()).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {string} kind - The student's suffix kind.
  * @param {object[]} groups - The reading's suffixAtoms entries.
+ * @param {number[]} chain - The chain the prefix would go on: the engine's parent, or an O-bound group's chain.
  * @returns {string|null} The prefix's word, or null.
  */
-function juniorPrefix(ctx, kind, groups) {
-  const parent = new Set(ctx.naming.parent.atoms);
+function juniorPrefix(ctx, kind, groups, chain) {
+  const parent = new Set(chain);
   if (groups.length === 0) {
     return null;
   }
@@ -2915,6 +3157,48 @@ function juniorPrefix(ctx, kind, groups) {
 } // End of function juniorPrefix()
 
 /**
+ * Where the engine writes the student's junior suffix groups
+ * (CARBONYL_SENIORITY; DIAGNOSIS_PHRASES.juniorPlace()): their prefix on the
+ * engine's parent (juniorPrefix()); beside an ester (R-6a3a, file header
+ * «Esters») the groups whose carbons are an O-bound group's go into that
+ * group's name (`side` 'oBound', the prefix on its own chain:
+ * `2-(acetiloxi)heptanal` → `etanoato de 1-oxoheptan-2-ilo`); a student's
+ * ester suffix beside an acid's –COOH (R-6a3a) is written `oxo` and an `-oxi`
+ * prefix when its C=O carbon is the engine's parent's (`inChain`:
+ * `4-carboxibutanoato de metilo` → `ácido 5-metoxi-5-oxopentanoico`), else
+ * as the ester prefix of the engine's name that holds that carbon
+ * (`etanoato de 2-carboxietilo` → `ácido 3-(acetiloxi)propanoico`), or null
+ * when the groups are written otherwise.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {string} kind - The student's suffix kind.
+ * @param {object[]} groups - The reading's suffixAtoms entries.
+ * @returns {{prefix: string|null, side?: string, inChain?: boolean}} The placement.
+ */
+function juniorPlacement(ctx, kind, groups) {
+  const { naming } = ctx;
+  if (kind === ESTER) {
+    const carbons = aldehydeCarbons(groups, 'parentAtom');
+    if (carbons.length > 0 && carbons.every((id) => naming.parent.atoms.includes(id))) {
+      return { prefix: null, inChain: true };
+    }
+    const words = carbons.map((id) => {
+      const part = (naming.parts || []).find((p) => p.kind === 'prefix' && (p.atoms || []).includes(id));
+      const text = part ? partText(naming.parts, part) : '';
+      return text.endsWith(WORDS.oxi) || text.endsWith(WORDS.carbonil) ? text : null; // `acetiloxi`, `metoxicarbonil`
+    });
+    return { prefix: words.length > 0 && words.every((w) => w && w === words[0]) ? words[0] : null };
+  }
+  const prefix = juniorPrefix(ctx, kind, groups, naming.parent.atoms);
+  if (prefix || !esterPrincipal(ctx) || groups.length === 0) {
+    return { prefix };
+  }
+  const carbons = kind === ALDEHYDE ? aldehydeCarbons(groups, 'parentAtom') : groups.map((g) => g.parentAtom);
+  const part = esterParts(naming.structure).find((p) => carbons.every((id) => p.alkyl.atoms.includes(id)));
+  return part ? { prefix: juniorPrefix(ctx, kind, groups, part.alkyl.chain.atoms), side: 'oBound' } : { prefix: null };
+} // End of function juniorPlacement()
+
+/**
  * CARBONYL_SENIORITY (R-5c3b1, file header «Aldehydes and ketones»): the
  * student's suffix is a group junior to the engine's principal one
  * (naming/seniority.js seniorityRank(): `ona` beside an aldehyde,
@@ -2922,9 +3206,13 @@ function juniorPrefix(ctx, kind, groups) {
  * `4-oxopentan-2-ol` → `4-hidroxipentan-2-ona`; `fenol` beside a –CHO; R-5d3,
  * «Acids»: any of them beside an acid's –COOH, `4-carboxibutan-2-ona` →
  * `ácido 4-oxopentanoico`, `4-carboxifenol` → `ácido 4-hidroxibenzoico`,
- * `3-carboxipropanal` → `ácido 4-oxobutanoico`). The student's groups become
- * prefixes of the engine's name (juniorPrefix()), or part of another prefix
- * (`prefix` null). The focus is the student's suffix groups; the tiles, the
+ * `3-carboxipropanal` → `ácido 4-oxobutanoico`; R-6a3a, «Esters»: any of
+ * them beside an ester's –COO–, `3-(metoxicarbonil)pentan-2-ona` →
+ * `2-etil-3-oxobutanoato de metilo`, `2-(acetiloxi)heptanal` → `etanoato de
+ * 1-oxoheptan-2-ilo`, and an ester's suffix beside an acid's –COOH,
+ * `4-carboxibutanoato de metilo`). The student's groups become prefixes of
+ * the engine's name (juniorPlacement()), or part of another prefix (`prefix`
+ * null). The focus is the student's suffix groups; the tiles, the
  * suffix's. An `al` beside an acid whose carbon a branch bonds to a second
  * carbon is no aldehyde at all (`1-carboxi-2,3-dietilbutanal`,
  * `1-(1,2-dicarboxietil)butanal`): KETONE_NOT_ALDEHYDE says what it is
@@ -2958,7 +3246,7 @@ function carbonylSeniority(ctx) {
       ...principalEnding(naming),
       junior: mine.kind,
       count: mine.slots.length,
-      prefix: juniorPrefix(ctx, mine.kind, groups),
+      ...juniorPlacement(ctx, mine.kind, groups),
       name: naming.name,
     },
     focus: suffixFocus(groups),
@@ -3134,10 +3422,6 @@ function carbonylPrefix(ctx) {
   }
   const sub = spec.prefixes[written[0].prefix].substituent;
   const count = suffix.locants.length;
-  let on = 'chain';
-  if (parentKind === 'ring') {
-    on = suffix.outside ? 'outside' : 'ring';
-  }
   return {
     code: 'CARBONYL_PREFIX',
     data: {
@@ -3148,7 +3432,7 @@ function carbonylPrefix(ctx) {
       acyl: Boolean(sub.acyl),
       joins: Boolean(sub.acyl || sub.retained === FORMYL || sub.retained === CARBOXY) && !suffix.outside,
       ringBranch: isRing(spec.parent.kind) && parentKind !== 'ring',
-      on,
+      on: groupsOnOf(naming.structure),
       name: naming.name,
     },
     focus: occurrenceIds(written),
@@ -3189,10 +3473,55 @@ function moleculeCarboxyls(ctx) {
 } // End of function moleculeCarboxyls()
 
 /**
+ * Every branch the student wrote inside the O-bound groups of an ester, at
+ * every depth, found on the molecule of one reading (R-6a3a): the O-bound
+ * side is no prefix of the name (branchOccurrences() never sees it), but a
+ * group written in it is the student's all the same (`etanoato de
+ * 2-carboxietilo`: its `carboxi`, the engine's –COOH). Each O-bound group's
+ * own branches are cut from its atoms (build.js ownPrefixAtoms(); reading
+ * `esterAtoms`, in creation order) and joined by their one bond, as
+ * branchOccurrences() does.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {{sub: object, attachment: number, parentAtom: number, order: number, atoms: number[]}[]} The occurrences.
+ */
+function oBoundOccurrences(ctx) {
+  const { reading, spec, adj } = ctx;
+  const out = [];
+  /**
+   * Records the own branches of a group's occurrence, then theirs.
+   *
+   * @param {object} sub - The group's SubstituentSpec.
+   * @param {number[]} atoms - Its atoms in creation order.
+   * @returns {void}
+   */
+  const visit = (sub, atoms) => {
+    ownPrefixAtoms(sub, atoms).forEach((slices, k) => {
+      for (const slice of slices) {
+        const join = joinOf(slice, adj);
+        if (join && sub.prefixes[k]) {
+          out.push({ sub: sub.prefixes[k].substituent, ...join, atoms: slice });
+          visit(sub.prefixes[k].substituent, slice);
+        }
+      }
+    });
+  }; // End of function visit()
+  for (const occurrence of reading.esterAtoms || []) {
+    const group = spec.ester && spec.ester.groups[occurrence.group];
+    if (group) {
+      visit(group.substituent, occurrence.atoms);
+    }
+  }
+  return out;
+} // End of function oBoundOccurrences()
+
+/**
  * The student's –COOH groups found on the molecule of one reading (R-5d3):
  * the carbon of each group of an acid suffix (`oico`, `carboxílico`,
  * `benzoico`, a retained acid's word; build.js suffixAtoms with `hydroxy`)
- * and of each `carboxi` prefix, at any depth (branchOccurrences()).
+ * and of each `carboxi` prefix, at any depth (branchOccurrences()), also
+ * inside an ester's O-bound groups (R-6a3a, oBoundOccurrences(): `etanoato de
+ * 2-carboxietilo`, the student's ester suffix beside the engine's –COOH).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {Set<number>} The groups' carbons.
@@ -3200,7 +3529,7 @@ function moleculeCarboxyls(ctx) {
 function studentCarboxylCarbons(ctx) {
   const { reading, tree, spec, molecule, adj } = ctx;
   const suffix = (reading.suffixAtoms || []).filter((g) => g.hydroxy !== undefined);
-  const prefixes = branchOccurrences({ tree, spec }, reading, molecule, adj).all
+  const prefixes = [...branchOccurrences({ tree, spec }, reading, molecule, adj).all, ...oBoundOccurrences(ctx)]
     .filter((o) => o.sub.kind === 'retained' && o.sub.retained === CARBOXY);
   return new Set([...aldehydeCarbons(suffix, 'parentAtom'), ...prefixes.map((o) => o.attachment)]);
 }
@@ -3231,7 +3560,7 @@ function studentCarboxylCarbons(ctx) {
  */
 function acidSplit(ctx) {
   const { naming, reading, spec } = ctx;
-  const { suffix, parentKind } = naming.structure;
+  const { suffix } = naming.structure;
   const mine = studentCarboxylCarbons(ctx);
   const split = moleculeCarboxyls(ctx).filter((group) => !mine.has(group.carbon));
   if (split.length === 0) {
@@ -3244,16 +3573,12 @@ function acidSplit(ctx) {
   if (holder && holder.tiles) {
     tiles = holder.tiles;
   }
-  let on = 'chain';
-  if (parentKind === 'ring') {
-    on = suffix.outside ? 'outside' : 'ring';
-  }
   return {
     code: 'ACID_GROUP',
     data: {
       count: suffix.locants.length,
       ...principalEnding(naming),
-      on,
+      on: groupsOnOf(naming.structure),
       principal: split.some((group) => engine.has(group.carbon)),
       name: naming.name,
     },
@@ -3278,9 +3603,7 @@ function acidCarbon(ctx) {
 
 /**
  * Tells whether the engine's principal group is an ester's –COO– (R-6a1,
- * file header «Esters»): its own mistakes are deliberate nulls until phase
- * R-6a3 (esterChecks(), and the guards of the P0, N0, parent-choice and
- * suffix-locant rules).
+ * file header «Esters»): its own checks then run (esterChecks(), R-6a3a).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {boolean} True for an ester.
@@ -3291,41 +3614,213 @@ function esterPrincipal(ctx) {
 }
 
 /**
- * The ester's own checks (R-6a1, file header «Esters»), first of all: the
- * deliberate nulls (BEYOND) of an ester's own mistakes, which need messages
- * of phase R-6a3 — the student's suffix no ester's beside the engine's
- * –COO– (`1-metoxipropanal` → `propanoato de metilo`) or an ester's beside
- * another principal group (`seniority`), another number of –COO– groups
- * (`count`), the –COO–'s carbon on the other side of the parent
- * (`propano-1-carboxilato de metilo` → `butanoato de metilo`,
- * `ciclohexilmetanoato de metilo` → `ciclohexanocarboxilato de metilo`:
- * `carbon`). After them the student's –COO– groups are the engine's, and the
- * rules that hold for an ester name run on its acid part (a branch on the end
- * of its chain, a longer chain, its prefixes' numbering, order, grouping,
- * multipliers and locants, the old style). (The O-bound side is checked once
- * for every reading, esterSideDiffers().)
+ * The C=O carbon of an occurrence of one of the student's ester prefixes
+ * (R-6a3a): an alkoxycarbonyl prefix's carbon by which it is bonded
+ * (`metoxicarbonil`), an acyloxy prefix's carbon on the other side of the
+ * oxygen by which it is bonded (`acetiloxi`, `benzoiloxi`); null for any
+ * other branch.
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} BEYOND, or null (no ester check applies, or neither name is an ester's).
+ * @param {BranchOccurrence} occurrence - A branch on the molecule (branchOccurrences()).
+ * @returns {number|null} The carbon's atom id, or null.
  */
-function esterChecks(ctx) {
-  const engine = ctx.naming.structure.suffix;
-  const mine = ctx.spec.suffix;
-  const theirs = Boolean(engine) && engine.kind === ESTER;
-  const own = Boolean(mine) && mine.kind === ESTER;
-  if (!theirs && !own) {
+function esterPrefixCarbon(ctx, occurrence) {
+  const kind = esterPrefixOf(occurrence.sub);
+  if (kind === 'alkoxycarbonyl') {
+    return occurrence.attachment;
+  }
+  if (kind !== 'acyloxy') {
     return null;
   }
-  if (theirs !== own || mine.slots.length !== engine.locants.length || Boolean(mine.outside) !== Boolean(engine.outside)) {
-    return BEYOND; // `seniority`, `count`, `carbon` (file header «Esters»).
+  const link = ctx.adj.get(occurrence.attachment).find((n) => n.atom !== occurrence.parentAtom && occurrence.atoms.includes(n.atom));
+  return link ? link.atom : null;
+} // End of function esterPrefixCarbon()
+
+/**
+ * The carbons of the student's –COO– groups found on the molecule of one
+ * reading (R-6a3a): each group of an ester suffix (`oato`, `carboxilato`,
+ * `benzoato`, a retained ester word; build.js suffixAtoms with `bridge`) and
+ * each ester prefix, at any depth (esterPrefixCarbon()), also inside the
+ * O-bound groups (oBoundOccurrences()).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {Set<number>} The groups' C=O carbons.
+ */
+function studentEsterCarbons(ctx) {
+  const { reading, tree, spec, molecule, adj } = ctx;
+  const suffix = (reading.suffixAtoms || []).filter((g) => g.bridge !== undefined);
+  const prefixes = [...branchOccurrences({ tree, spec }, reading, molecule, adj).all, ...oBoundOccurrences(ctx)]
+    .map((o) => esterPrefixCarbon(ctx, o)).filter((id) => id !== null);
+  return new Set([...aldehydeCarbons(suffix, 'parentAtom'), ...prefixes]);
+}
+
+/**
+ * Where the engine's principal groups are written together (the
+ * DIAGNOSIS_PHRASES `groupsOn` key): on a chain parent, on the ring, or
+ * bonded to the ring (a –COOH's or –COO–'s carbon outside it).
+ *
+ * @param {object} structure - The engine's name structure, with a suffix.
+ * @returns {'chain'|'ring'|'outside'} The key.
+ */
+function groupsOnOf(structure) {
+  if (structure.parentKind !== 'ring') {
+    return 'chain';
   }
-  return null;
+  return structure.suffix.outside ? 'outside' : 'ring';
+}
+
+/**
+ * ESTER_GROUP (R-6a3a, file header «Esters»), ACID_GROUP's twin: a –COO– of
+ * the engine's suffix written by the student as two groups on one carbon —
+ * its C=O and its bridge oxygen with the group bonded to it apart, each named
+ * as another group (`1-metoxipropanal`, `1-metoxi-1-oxopropano` →
+ * `propanoato de metilo`; `3-metoxi-3-oxopropan-1-ol` → `3-hidroxipropanoato
+ * de metilo`; `4-metoxi-4-oxobutanoato de metilo` → `butanodioato de
+ * dimetilo`): no ester suffix group and no ester prefix of the student's has
+ * that carbon (studentEsterCarbons()). Only the engine's suffix groups are
+ * inspected: beside an acid the engine itself writes an ester whose C=O
+ * carbon is a chain carbon as `oxo` and an `-oxi` prefix, and an ester
+ * prefix written as another kind of branch is a words null of phase R-6a3b
+ * (esterPrefixWords()). The message says the three atoms are one group and
+ * how the engine writes the –COO– groups; the focus is those groups (the
+ * carbon, both oxygens and their bonds); the tiles, those of the student's
+ * parent-level prefix that holds one of their oxygens, else the suffix's.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function esterSplit(ctx) {
+  const { naming, reading, spec } = ctx;
+  const { suffix } = naming.structure;
+  const mine = studentEsterCarbons(ctx);
+  const split = suffix.locants.filter((site) => !mine.has(site.carbon === undefined ? site.atom : site.carbon));
+  if (split.length === 0) {
+    return null;
+  }
+  const oxygens = split.flatMap((site) => [site.attachAtom, site.esterOxygen]);
+  const holder = reading.prefixAtoms.find((o) => o.atoms.some((id) => oxygens.includes(id)));
+  let tiles = spec.suffix ? [spec.suffix.tiles[0], spec.suffix.tiles[1]] : spec.parent.tiles;
+  if (holder && holder.tiles) {
+    tiles = holder.tiles;
+  }
+  return {
+    code: 'ESTER_GROUP',
+    data: { count: suffix.locants.length, ...principalEnding(naming), on: groupsOnOf(naming.structure), name: naming.name },
+    focus: {
+      atoms: split.flatMap((site) => [site.carbon === undefined ? site.atom : site.carbon, site.attachAtom, site.esterOxygen]),
+      bonds: split.flatMap((site) => [site.bond, site.esterBond]),
+    },
+    tiles,
+  };
+} // End of function esterSplit()
+
+/**
+ * ESTER_CARBON (R-6a3a, file header «Esters»): the –COO–'s carbon on the
+ * other side of the parent (groupCarbon()), ACID_CARBON's twin —
+ * `carboxilato` after a chain (`propano-1-carboxilato de metilo` →
+ * `butanoato de metilo`), or the –COO–'s carbon taken as the student's chain
+ * beside a ring (`ciclohexilmetanoato de metilo` → `ciclohexanocarboxilato
+ * de metilo`, `fenilmetanoato de metilo` and the template `fenilformiato de
+ * metilo` → `benzoato de metilo`).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function esterCarbon(ctx) {
+  return groupCarbon(ctx, ESTER, 'ESTER_CARBON');
+}
+
+/**
+ * CARBONYL_PREFIX for an ester (R-6a3a, file header «Esters»): a –COO– the
+ * engine cites in the suffix written by the student as an ester prefix —
+ * an alkoxycarbonyl prefix of the parent (`(metoxicarbonil)benceno` →
+ * `benzoato de metilo`, `1-(metoxicarbonil)propano` → `butanoato de metilo`,
+ * `3-(metoxicarbonil)propanoato de metilo` → `butanodioato de dimetilo`: its
+ * carbon joins the parent chain, `joins`; one inside a compound branch is the
+ * parent choice, as a `carboxi` is, CARBONYL_PARENT or MORE_CARBONYL_GROUPS),
+ * or an acyloxy prefix at any depth (`(acetiloxi)metano` → `etanoato de
+ * metilo`, `(benzoiloxi)benceno` → `benzoato de fenilo`, `[2-(acetiloxi)etil]benceno`
+ * → `etanoato de 2-feniletilo`: its acyl group is the acid part, and the
+ * student's chain or ring goes into the group bonded to the other oxygen,
+ * `oBound` — never «una rama», which the parent-choice messages would say) —
+ * while the student's ester suffix cites fewer –COO– groups than the engine's
+ * (or there is none). The focus is those prefixes; the tiles, the first
+ * one's.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function esterPrefix(ctx) {
+  const { naming, reading, spec, tree, molecule, adj } = ctx;
+  const { suffix, parentKind } = naming.structure;
+  if ((spec.suffix && spec.suffix.kind === ESTER ? spec.suffix.slots.length : 0) >= suffix.locants.length) {
+    return null; // The student's suffix cites every –COO– group.
+  }
+  const carbons = new Set(aldehydeCarbons(suffix.locants, 'atom'));
+  const written = branchOccurrences({ tree, spec }, reading, molecule, adj).all.filter((o) => {
+    const kind = esterPrefixOf(o.sub);
+    return (kind === 'acyloxy' || (kind === 'alkoxycarbonyl' && tree.items.includes(o.node))) && carbons.has(esterPrefixCarbon(ctx, o));
+  });
+  if (written.length === 0) {
+    return null;
+  }
+  const [first] = written;
+  const acyloxy = esterPrefixOf(first.sub) === 'acyloxy';
+  const index = tree.items.indexOf(first.node);
+  const placed = index >= 0 ? reading.prefixAtoms.find((o) => o.prefix === index) : null;
+  const ids = written.map((o) => branchIds(ctx, o));
+  const studentAtoms = reading.studentParent.atoms;
+  return {
+    code: 'CARBONYL_PREFIX',
+    data: {
+      group: ESTER,
+      count: suffix.locants.length,
+      ...principalEnding(naming),
+      prefix: wordsOf(tree, first.node),
+      acyl: false,
+      joins: !acyloxy && !suffix.outside,
+      ringBranch: !acyloxy && isRing(spec.parent.kind) && parentKind !== 'ring',
+      oBound: acyloxy && esterParts(naming.structure).some((part) => studentAtoms.every((id) => part.alkyl.atoms.includes(id))),
+      studentRing: isRing(spec.parent.kind),
+      on: groupsOnOf(naming.structure),
+      name: naming.name,
+    },
+    focus: { atoms: ids.flatMap((i) => i.atoms), bonds: ids.flatMap((i) => i.bonds) },
+    tiles: placed && placed.tiles ? placed.tiles : [first.node.range[0], first.node.range[1]],
+  };
+} // End of function esterPrefix()
+
+/**
+ * The ester's own checks (R-6a1, R-6a3a; file header «Esters»), when the
+ * engine's principal group is an ester's –COO–, first with the acid's (the
+ * two never meet: an acid's –COOH is the principal group beside an ester),
+ * in the acid's order: ESTER_GROUP (a –COO– written as two groups on one
+ * carbon), CARBONYL_SENIORITY (a junior group as the suffix, `ácido > éster >
+ * aldehído > cetona > alcohol`), KETONE_NOT_ALDEHYDE (an `al` a branch makes a
+ * ketone's), ESTER_CARBON (the –COO–'s carbon on the other side of the
+ * parent), CARBONYL_PREFIX (a principal –COO– written as an ester prefix,
+ * esterPrefix()). After them the student's suffix is an ester's: with fewer
+ * or other –COO– groups than the engine's it goes on to the parent choice
+ * and the rules (CARBONYL_PARENT; P0, MORE_CARBONYL_GROUPS; N0), and the
+ * rules that hold for an ester name run on its acid part. A student's ester
+ * suffix beside an acid's –COOH is a junior group, acidChecks()'
+ * CARBONYL_SENIORITY. (The O-bound side is checked once for every reading,
+ * esterSideDiffers(), a deliberate null of phase R-6a3b.)
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null (no ester check applies, or the engine's principal group is no ester's).
+ */
+function esterChecks(ctx) {
+  if (!esterPrincipal(ctx)) {
+    return null;
+  }
+  return esterSplit(ctx) || carbonylSeniority(ctx) || ketoneNotAldehyde(ctx) || esterCarbon(ctx) || esterPrefix(ctx);
 } // End of function esterChecks()
 
 /**
  * Tells whether the student's O-bound side of an ester (R-6a1, the words
  * after ` de `) is none the engine writes for the molecule, in any style it
- * offers (its name and every alternative): a deliberate null of phase R-6a3
+ * offers (its name and every alternative): a deliberate null of phase R-6a3b
  * whatever else the name says (`etanoato de propan-1-ilo`, `propanodioato de
  * metilo y etilo`, `butanodioato de metilo y metilo`, the group's locants
  * left out). The acid part's mistakes are named only when its O-bound side is
@@ -3337,7 +3832,12 @@ function esterChecks(ctx) {
  * null too); a retained word with prefixes the engine never writes on it
  * (`2-cloroacetato de metilo`, and `metilformiato de propan-2-ilo` even
  * though its molecule has the traditional name `acetato de isopropilo`)
- * compares with every style, and SUBSTITUTED_TEMPLATE speaks.
+ * compares with every style, and SUBSTITUTED_TEMPLATE speaks. A student's
+ * ester suffix that cites another number of –COO– groups than the engine's
+ * has another number of O-bound groups too, so its side is not compared: the
+ * number is the mistake, which esterChecks() names (R-6a3a:
+ * `4-metoxi-4-oxobutanoato de metilo` → ESTER_GROUP, «butanodioato de
+ * dimetilo»).
  *
  * @param {{tree: object, spec: object}} name - The student's parse() tree and NameSpec.
  * @param {object} naming - The verdict's successful naming.
@@ -3345,7 +3845,9 @@ function esterChecks(ctx) {
  */
 function esterSideDiffers(name, naming) {
   const { suffix } = naming.structure;
-  if (!name.tree.ester || !suffix || suffix.kind !== ESTER) {
+  const mine = name.spec.suffix;
+  if (!name.tree.ester || !suffix || suffix.kind !== ESTER || !mine || mine.kind !== ESTER
+    || mine.slots.length !== suffix.locants.length) {
     return false;
   }
   const { template } = name.spec.parent;
@@ -3380,9 +3882,10 @@ function esterSideDiffers(name, naming) {
  * junior to the –COOH, so after them the student's suffix is an acid's: with
  * fewer or other –COOH groups than the engine's it goes on to the parent
  * choice and the rules (CARBONYL_PARENT; P0, MORE_CARBONYL_GROUPS). A
- * student's acid suffix while the engine's principal group is no –COOH is a
- * null (BEYOND; never seen: a –COOH is the most senior group the app names,
- * and an ester's own mistakes are esterChecks()' deliberate nulls, R-6a1).
+ * student's ester suffix beside the –COOH is a junior group too
+ * (CARBONYL_SENIORITY, R-6a3a: `4-carboxibutanoato de metilo`). A student's
+ * acid suffix while the engine's principal group is no –COOH is a null
+ * (BEYOND; never seen: a –COOH is the most senior group the app names).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, BEYOND, or null (no acid check applies, or neither name is an acid's).
@@ -3496,8 +3999,8 @@ function substitutedChainTemplate(ctx) {
 function ringRules(ctx) {
   const { naming, reading, spec } = ctx;
   if (spec.parent.kind === 'chain') {
-    // «Esters» (R-6a1): a ring the –COO– makes the parent is the ester carbon's mistake, phase R-6a3's (esterChecks() first).
-    return esterPrincipal(ctx) ? BEYOND : ringIsParent(ctx);
+    // With a principal group (an ester's too, R-6a3a) the ring against a chain is principalParent()'s, checked first.
+    return ringIsParent(ctx);
   }
   if (spec.parent.kind === 'ring' && benzeneParent(naming)) {
     return { code: 'BENZENE_RING', data: { name: naming.name }, focus: idsOf(null), tiles: spec.parent.tiles };
@@ -3977,7 +4480,7 @@ function esterPrefixOf(branch) {
 
 /**
  * An ester prefix's own words (R-6a2b, file header «Esters»): a deliberate
- * null (BEYOND) for phase R-6a3 when the student wrote the engine's acyloxy
+ * null (BEYOND) for phase R-6a3b when the student wrote the engine's acyloxy
  * or alkoxycarbonyl prefix as another kind of branch, or the reverse — an
  * acyloxy group as an alkoxy group with an `oxo` on its carbon 1
  * (`(1-oxoetoxi)` for `(acetiloxi)`), an alkoxycarbonyl group as a
@@ -4044,7 +4547,7 @@ function branchNames(ctx) {
       for (const [code, check] of occurrence ? BRANCH_NAME_CHECKS : []) {
         const data = check(ctx, node, occurrence, words);
         if (data === BEYOND) {
-          return BEYOND; // An ester prefix's own words (R-6a2b, «Esters»): a deliberate null of phase R-6a3.
+          return BEYOND; // An ester prefix's own words (R-6a2b, «Esters»): a deliberate null of phase R-6a3b.
         }
         if (data) {
           return {
@@ -4316,7 +4819,9 @@ function parentOmissions(structure) {
  * aldehyde's or a ketone's (R-5c3b1) of its C=O groups (suffixWhat():
  * `ciclohexan-1-ona`, `propan-2-ona`, `ciclohexano-1-carbaldehído`); an
  * acid's (R-5d3) of its –COOH groups (`ácido ciclohexano-1-carboxílico`,
- * `ácido benceno-1-carboxílico` → «…el grupo –COOH»).
+ * `ácido benceno-1-carboxílico` → «…el grupo –COOH»); an ester's (R-6a3a) of
+ * its –COO– groups (`ciclohexano-1-carboxilato de metilo`,
+ * `benceno-1-carboxilato de metilo` → «…el grupo –COO–»).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.
@@ -4345,9 +4850,6 @@ function needlessLocants(ctx) {
   // The suffix's locants (R-5a3b: `etan-1-ol`, `ciclohexan-1-ol`) are omitted together with the prefixes'.
   const suffixSlots = spec.suffix ? supplied(spec.suffix.slots) : [];
   if (prefixSlots.length + suffixSlots.length > 0 && omitted.prefixes) {
-    if (suffixSlots.length > 0 && esterPrincipal(ctx)) {
-      return BEYOND; // «Esters» (R-6a1): `ciclohexano-1-carboxilato de metilo`, the –COO–'s words are phase R-6a3's.
-    }
     const { what, on } = DIAGNOSIS_PHRASES;
     const single = structure.prefixes.reduce((sum, group) => sum + group.locants.length, 0) === 1;
     const prefixWhat = single ? what.prefix : what.prefixes;
@@ -4435,9 +4937,10 @@ function traditionalLocants(ctx) {
  * What the suffix's groups are called in NEEDLESS_LOCANTS (DIAGNOSIS_PHRASES
  * `what`): «el grupo –OH» / «los grupos –OH» for an alcohol (R-5a3b), «el
  * grupo –CHO» or «el grupo C=O» and their plurals for an aldehyde or a ketone
- * (R-5c3b1), «el grupo –COOH» / «los grupos –COOH» for an acid (R-5d3).
+ * (R-5c3b1), «el grupo –COOH» / «los grupos –COOH» for an acid (R-5d3), «el
+ * grupo –COO–» / «los grupos –COO–» for an ester (R-6a3a).
  *
- * @param {string} kind - The engine's suffix kind ('alcohol', 'aldehyde', 'ketone', 'acid').
+ * @param {string} kind - The engine's suffix kind ('alcohol', 'aldehyde', 'ketone', 'acid', 'ester').
  * @param {number} count - How many groups it cites.
  * @returns {string} The phrase.
  */
@@ -4447,6 +4950,7 @@ function suffixWhat(kind, count) {
     [ALDEHYDE]: [what.aldehyde, what.aldehydes],
     [KETONE]: [what.ketone, what.ketones],
     [ACID]: [what.acid, what.acids],
+    [ESTER]: [what.ester, what.esters],
   }[kind] || [what.hydroxy, what.hydroxys];
   return count === 1 ? one : many;
 }
@@ -4503,7 +5007,8 @@ function shortForm(tree, chain, owner = null) {
  * located). A missing locant of the suffix names its groups too (R-5d3, the
  * data's `group`: `ácido 2-clorociclohexanocarboxílico` read with another
  * mistake would say «…y cada grupo –COOH»; alone it is `missingLocants`,
- * never `otherName`, and no later rule meets it on an acid).
+ * never `otherName`, and no later rule meets it on an acid; R-6a3a: «…y cada
+ * grupo –COO–» for an ester's).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @returns {object|null} The draft, or null.
@@ -4527,9 +5032,6 @@ function missingLocants(ctx) {
   }
   const { suffix } = naming.structure;
   const ofSuffix = Boolean(suffix) && Boolean(spec.suffix) && spec.suffix.slots.includes(missing);
-  if (ofSuffix && suffix.kind === ESTER) {
-    return BEYOND; // «Esters» (R-6a1): the –COO–'s missing locant, phase R-6a3's.
-  }
   const group = ofSuffix ? DIAGNOSIS_PHRASES.groupWords[CARBONYL_GROUPS.includes(suffix.kind) ? suffix.kind : ALCOHOL].one : null;
   return {
     code: 'MISSING_LOCANTS',
@@ -4869,9 +5371,10 @@ const FORM_RULES = Object.freeze([branchNames, alphabeticalOrder, ungrouped, mul
   missingLocants, segmentOrder, oldStyle, letterLocants]);
 
 /**
- * The first rule that applies to one reading of the name: the acid's own
- * checks (acidChecks(), file header «Acids»), an alcohol's OH written
- * `hidroxi` on the parent (hydroxyPrefix(), file header «Alcohols»),
+ * The first rule that applies to one reading of the name: the ester's or
+ * the acid's own checks (esterChecks(), acidChecks(); file header «Esters»,
+ * «Acids»), an alcohol's OH written `hidroxi` on the parent (hydroxyPrefix(),
+ * file header «Alcohols»),
  * the principal C=O group's own checks (carbonylChecks(), «Aldehydes and
  * ketones»), then the parent's kind decided by the principal groups (ring or
  * chain: principalParent()), the parent's rules (chainRules(), rules 1–4;
@@ -4886,23 +5389,20 @@ function firstRule(ctx) {
   const principal = esterChecks(ctx) || acidChecks(ctx) || hydroxyPrefix(ctx) || carbonylChecks(ctx) || principalParent(ctx);
   if (principal === BEYOND) {
     // A student's carbonyl suffix no C=O check names; a student's acid suffix beside another principal group (both never
-    // seen; file header «Aldehydes and ketones», «Acids»); an ester's own mistake (R-6a1, «Esters»).
+    // seen; file header «Aldehydes and ketones», «Acids»).
     return null;
   }
   if (principal) {
     return acrossOxygen(ctx, principal); // The ring or chain on the other side of an ether oxygen (R-5b2).
   }
   const parent = substitutedChainTemplate(ctx) || (ctx.naming.structure.parentKind === 'ring' ? ringRules(ctx) : chainRules(ctx));
-  if (parent === BEYOND) {
-    return null; // An ester's P0, N0 or ring-parent mistake (R-6a1, «Esters»).
-  }
   if (parent) {
     return acrossOxygen(ctx, parent); // `etoximetano` (R-5b2).
   }
   for (const rule of FORM_RULES) {
     const draft = rule(ctx);
     if (draft === BEYOND) {
-      return null; // An ester's suffix locants (R-6a1, «Esters»).
+      return null; // An ester prefix's own words (R-6a2b, «Esters»: branchNames()), a deliberate null of phase R-6a3b.
     }
     if (draft) {
       return draft;
@@ -5065,15 +5565,15 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
 /**
  * Tells whether an `otherName` lies outside every rule (the diagnosis is
  * null; file header «Alcohols»): a principal group other than the OH, an
- * aldehyde's or a ketone's C=O, an acid's –COOH or an ester's –COO– (R-6a1,
- * whose own mistakes esterChecks() and the guards keep null), which the
- * messages would misname (a later family's, until its phase adds its
+ * aldehyde's or a ketone's C=O, an acid's –COOH or an ester's –COO–, which
+ * the messages would misname (a later family's, until its phase adds its
  * messages: an amide's…), a student's suffix other than `ol` beside the
  * engine's OH (never: a C=O suffix makes the C=O principal), or, for a
  * molecule without a principal group, an engine's chain parent in a molecule
  * with a ring (never: such a ring is always the parent, design.md §13.5).
  * The aldehydes and ketones (R-5c3b1) run the rules, their own checks first
- * (carbonylChecks()); so do the acids (R-5d1, R-5d3: acidChecks()).
+ * (carbonylChecks()); so do the acids (R-5d1, R-5d3: acidChecks()) and the
+ * esters (R-6a1, R-6a3a: esterChecks()).
  *
  * @param {{spec: object}} name - The student's NameSpec.
  * @param {object} structure - The engine's name structure.
@@ -5081,10 +5581,8 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
  */
 function outsideRules(name, structure) {
   if (structure.suffix && CARBONYL_GROUPS.includes(structure.suffix.kind)) {
-    return false; // R-5c3b1: file header «Aldehydes and ketones»; R-5d1, R-5d3: «Acids» (acidChecks() first).
-  }
-  if (structure.suffix && structure.suffix.kind === ESTER) {
-    return false; // R-6a1: file header «Esters» (esterChecks() first, its own mistakes deliberate nulls).
+    // R-5c3b1: file header «Aldehydes and ketones»; R-5d1, R-5d3: «Acids»; R-6a1, R-6a3a: «Esters» (their checks first).
+    return false;
   }
   if (structure.suffix) {
     return structure.suffix.kind !== ALCOHOL || Boolean(name.spec.suffix && name.spec.suffix.kind !== ALCOHOL);
@@ -5312,7 +5810,7 @@ export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
     return null;
   }
   if (esterSideDiffers(name, verdict.naming)) {
-    return null; // An ester's O-bound side not the engine's (R-6a1, «Esters»): a deliberate null of phase R-6a3.
+    return null; // An ester's O-bound side not the engine's (R-6a1, «Esters»): a deliberate null of phase R-6a3b.
   }
   const adj = adjacency(molecule);
   const drawn = branchOccurrences(name, verdict, molecule, adj);
