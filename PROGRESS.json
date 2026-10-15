@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T04:43:58Z",
+  "updated": "2026-10-15T05:34:44Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -725,8 +725,31 @@
     {
       "id": "I-51c",
       "title": "v4 R-5c Aldehydes and ketones",
+      "status": "in_progress",
+      "summary": "Extends tile names to aldehydes and ketones; split into I-51c1 (suffixes, oxo, formil), I-51c2 (acyl prefixes), I-51c3 (templates, diagnosis)."
+    },
+    {
+      "id": "I-51c1",
+      "title": "v4 R-5c1 Carbonyl suffixes al/ona/carbaldehído, benzaldehído, oxo and formil prefixes",
+      "status": "done",
+      "risk": "high",
+      "summary": "Reads aldehyde and ketone suffixes, benzaldehído and the oxo and formil prefixes in tile names, with left-out locants searched.",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-51c1.md",
+      "narrative": "docs/progress-archive/i-51c1.md"
+    },
+    {
+      "id": "I-51c2",
+      "title": "v4 R-5c2 Acyl prefixes",
       "status": "queued",
-      "summary": "Extends tile names to aldehydes and ketones, acyl prefixes and their traditional names."
+      "risk": "high",
+      "summary": "Reads acyl prefixes such as acetil, propanoil, benzoil and ciclohexanocarbonil in tile names."
+    },
+    {
+      "id": "I-51c3",
+      "title": "v4 R-5c3 Carbonyl templates, aldehyde and ketone diagnosis, Ayuda line",
+      "status": "queued",
+      "risk": "high",
+      "summary": "Reads retained carbonyl names such as acetona and acetofenona and names the main mistake of a carbonyl name."
     },
     {
       "id": "I-51d",

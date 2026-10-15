@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -102,6 +102,17 @@
  * letter's locant, its carbon 1 being the OH's (`p-cresol`: 4) — or left
  * out (one left-out slot on the template tile, searched).
  *
+ * The aldehydes and ketones (R-5c1) read their suffix like the alcohol's:
+ * `ona` and `carbaldehído` with carbon slots of the parent (supplied, old
+ * style, or left out: `pentanona`, `ciclohexanocarbaldehído`), SuffixSpec
+ * `kind` 'ketone' / 'aldehyde' (tiles.js SUFFIX_GROUPS), `outside` for
+ * `carbaldehído` (the –CHO's carbon is not the parent's); `al` on a chain
+ * with its slots at the ends by rule (implicit, `terminal`: carbon 1, and the
+ * last carbon with `dial`, design.md §15.5.3 step 2); `benzaldehído` the
+ * benzene parent with its –CHO placed at carbon 1 by the word, as `fenol`'s
+ * OH (`placed`). `oxo` is a one-atom group, kind 'carbonyl', its oxygen
+ * double-bonded (build.js); `formil` a retained word.
+ *
  * An ether's functional-class name (R-5b2: `etil metil éter`, `dietil
  * éter`) has no parent chain: its parent is the ether oxygen itself
  * (ParentSpec kind 'ether', one atom, no carbons, no bonds of its own), and
@@ -114,8 +125,8 @@
  */
 
 import { slotDomain } from './search.js';
-import { TEMPLATES, HYDROXY_ELEMENT, isAtomGroup, isPhenolTemplate } from './tiles.js';
-import { isPhenol } from './parse.js';
+import { TEMPLATES, SUFFIX_GROUPS, isAtomGroup, isPhenolTemplate, atomGroupElement } from './tiles.js';
+import { groupWordOf } from './parse.js';
 
 /**
  * A locant position (design.md §15.4).
@@ -192,19 +203,25 @@ import { isPhenol } from './parse.js';
  */
 
 /**
- * The principal characteristic group cited as a suffix (R-5a2: `ol`).
+ * The principal characteristic group cited as a suffix (R-5a2: `ol`; R-5c1:
+ * `al`, `ona`, `carbaldehído`).
  *
  * @typedef {object} SuffixSpec
- * @property {'alcohol'} kind - The group (lexicon GROUP_SUFFIXES key).
- * @property {Slot[]} slots - One carbon slot of the parent per group, in the student's order (`fenol`: one implicit at 1;
- *   a retained phenol, R-5a3a: one implicit per OH, `catecol` 1 and 2).
+ * @property {'alcohol'|'aldehyde'|'ketone'} kind - The group (lexicon GROUP_SUFFIXES key, as the engine's SuffixStructure).
+ * @property {boolean} outside - The group's carbon is outside the parent (R-5c1: `carbaldehído`, `benzaldehído`): build.js
+ *   adds that carbon, bonded to the parent's carbon, with the =O on it.
+ * @property {Slot[]} slots - One carbon slot of the parent per group, in the student's order (`fenol` and `benzaldehído`: one
+ *   implicit at 1; a retained phenol, R-5a3a: one implicit per OH, `catecol` 1 and 2; `al` on a chain, R-5c1: implicit at
+ *   carbon 1, and at the last carbon with `dial`).
  * @property {{count: number, compound: boolean}} multiplier - The student's multiplier (count 1 without one; a retained
  *   phenol's OH count).
  * @property {{text: string, tiles: [number, number]}} word - The suffix as on its tile (`ol`; the `fenol` tile for `fenol`,
- *   the template tile for a retained phenol).
+ *   the template tile for a retained phenol, the `benzaldehído` tile for `benzaldehído`).
  * @property {boolean} phenol - The OH groups of `fenol` or of a retained phenol (R-5a3a), placed by the parent's word.
- * @property {[number, number]} tiles - Tile range of the suffix (its locants, multiplier and `ol`; the `fenol` or template
- *   tile).
+ * @property {boolean} placed - The group is placed by the parent's word: `phenol`, or the –CHO of `benzaldehído` (R-5c1).
+ * @property {boolean} terminal - The aldehyde suffix `al` on a chain (R-5c1): its slots sit at the chain's ends by rule.
+ * @property {[number, number]} tiles - Tile range of the suffix (its locants, multiplier and suffix tile; the `fenol`,
+ *   `benzaldehído` or template tile).
  */
 
 /**
@@ -463,9 +480,10 @@ function wordSubstituent(ctx, node, items, compound, range) {
 }
 
 /**
- * The SubstituentSpec of a one-atom group tile — a halogen (R-5a1) or
- * `hidroxi` (R-5a2, an oxygen): one atom, no chain, no slot or prefix of
- * its own (parse.js never makes it a branch's own chain).
+ * The SubstituentSpec of a one-atom group tile — a halogen (R-5a1),
+ * `hidroxi` (R-5a2, an oxygen) or `oxo` (R-5c1, an oxygen double-bonded to
+ * its carbon): one atom, no chain, no slot or prefix of its own (parse.js
+ * never makes it a branch's own chain).
  *
  * @param {{tiles: object[]}} ctx - Interpreter context.
  * @param {number} tile - The group's tile index.
@@ -482,7 +500,7 @@ function atomGroupSubstituent(ctx, tile) {
     prefixes: [],
     retained: null,
     word: { text, tiles: [tile, tile + 1] },
-    element: kind === 'hydroxy' ? HYDROXY_ELEMENT : value,
+    element: atomGroupElement(kind, value), // R-5c1: the oxygen of `oxo` too
     alkoxy: false,
     compound: false,
     tiles: [tile, tile + 1],
@@ -598,13 +616,17 @@ function templateSpec(ctx, parent) {
 } // End of function templateSpec()
 
 /**
- * The SuffixSpec of a parent (R-5a2): the `ol` suffix node with its slots on
- * the parent's carbons — its own locants, the old-style ones before the root
- * (parse.js `legacySuffix`: `2-propanol`) or as many left-out slots as its
- * multiplier says (`etanol`, `propanol`) —, or the OH of `fenol` (one
- * implicit slot at carbon 1, on the `fenol` tile), or the OH groups of a
- * retained phenol (R-5a3a: one implicit slot per OH where its word puts it,
- * on the template tile — `catecol` 1 and 2, `cresol` 1); null without any.
+ * The SuffixSpec of a parent (R-5a2): the suffix node (`ol`; R-5c1: `ona`,
+ * `carbaldehído`) with its slots on the parent's carbons — its own locants,
+ * the old-style ones before the root (parse.js `legacySuffix`: `2-propanol`,
+ * `2-pentanona`) or as many left-out slots as its multiplier says (`etanol`,
+ * `propanol`, `pentanona`) —, `al` on a chain (R-5c1) with its slots at the
+ * chain's ends by rule (implicit: carbon 1, and the last with `dial`), or the
+ * group of a whole-word parent (one implicit slot at carbon 1, on its tile:
+ * the OH of `fenol`, the –CHO of `benzaldehído`, R-5c1), or the OH groups of
+ * a retained phenol (R-5a3a: one implicit slot per OH where its word puts
+ * it, on the template tile — `catecol` 1 and 2, `cresol` 1); null without
+ * any.
  *
  * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
  * @param {object} parent - The parent node (parse.js).
@@ -613,16 +635,21 @@ function templateSpec(ctx, parent) {
 function suffixSpec(ctx, parent) {
   const { chain, suffix } = parent;
   const length = chain.type === 'chain' ? ctx.tiles[chain.root].value : BENZENE_LENGTH;
-  const placed = (isPhenol(ctx.tiles, chain) && [1])
-    || (chain.type === 'template' && isPhenolTemplate(ctx.tiles[chain.tile].value) && TEMPLATES[ctx.tiles[chain.tile].value].hydroxy);
+  const word = groupWordOf(ctx.tiles, chain); // `fenol` (R-5a2), `benzaldehído` (R-5c1)
+  const phenolTemplate = chain.type === 'template' && isPhenolTemplate(ctx.tiles[chain.tile].value);
+  const placed = (word && [1]) || (phenolTemplate && TEMPLATES[ctx.tiles[chain.tile].value].hydroxy);
   if (placed) {
     const own = [chain.tile, chain.tile + 1];
+    const group = SUFFIX_GROUPS[word ? word.suffix : 'alcohol'];
     return {
-      kind: 'alcohol',
+      kind: group.kind,
+      outside: group.outside,
       slots: placed.map((locant) => makeSlot('implicit', locant, 'carbon', BENZENE_LENGTH, own)),
       multiplier: { count: placed.length, compound: false },
       word: { text: ctx.tiles[chain.tile].text, tiles: own },
-      phenol: true,
+      phenol: group.kind === 'alcohol',
+      placed: true,
+      terminal: false,
       tiles: own,
     };
   }
@@ -630,13 +657,23 @@ function suffixSpec(ctx, parent) {
     return null;
   }
   const multiplier = multiplierOf(ctx.tiles, suffix.multiplier);
+  const group = SUFFIX_GROUPS[ctx.tiles[suffix.tile].value];
+  // `al` on a chain (R-5c1): carbon 1 by rule, and the last carbon with `dial` (parse.js keeps its locants out; more than two
+  // groups are build.js checkSpec()'s CARBONYL_POSITION).
+  const terminal = group.terminal && chain.type === 'chain';
   const locants = parent.legacySuffix ? parent.legacy : suffix.locants;
+  const slots = terminal
+    ? Array.from({ length: multiplier.count }, (_, i) => makeSlot('implicit', i === 1 ? length : 1, 'carbon', length, suffix.range))
+    : locantSlots(ctx, locants, multiplier.count, 'carbon', length, suffix.range);
   return {
-    kind: ctx.tiles[suffix.tile].value, // 'alcohol' (lexicon GROUP_SUFFIXES key)
-    slots: locantSlots(ctx, locants, multiplier.count, 'carbon', length, suffix.range),
+    kind: group.kind, // 'alcohol', 'aldehyde' or 'ketone' (lexicon GROUP_SUFFIXES keys)
+    outside: group.outside, // `carbaldehído` (R-5c1)
+    slots,
     multiplier,
     word: { text: ctx.tiles[suffix.tile].text, tiles: [suffix.tile, suffix.tile + 1] },
     phenol: false,
+    placed: false,
+    terminal,
     tiles: [suffix.range[0], suffix.range[1]],
   };
 } // End of function suffixSpec()
@@ -713,8 +750,10 @@ export function interpret(tree) {
     // A template's groups (R-4c) and OH groups (R-5a3a) where its word puts them (`xileno`'s and `cresol`'s methyls aside).
     const { positions, hydroxy } = TEMPLATES[ctx.tiles[chain.tile].value];
     placed = [...hydroxy, ...(positions || [])];
-  } else if (isPhenol(ctx.tiles, chain)) {
-    placed = [1]; // The OH of `fenol` (R-5a2), for an orto/meta/para letter: `p-metilfenol` puts the methyl at 4.
+  } else if (groupWordOf(ctx.tiles, chain)) {
+    // The OH of `fenol` (R-5a2) or the –CHO of `benzaldehído` (R-5c1), for an orto/meta/para letter: `p-metilfenol` puts the
+    // methyl at 4.
+    placed = [1];
   }
   const prefixes = tree.items.map((item) => prefixSpec(ctx, item, length, 'carbon', placed));
   const template = chain.type === 'template' ? templateSpec(ctx, tree.parent) : null; // After the prefixes: tile order.

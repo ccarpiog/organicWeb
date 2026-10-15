@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -11,7 +11,19 @@
  * the closing-bond locant `1(6)`; R-5a3a: the retained phenols `cresol`,
  * `pirocatecol`, `catecol`, `resorcinol`, `hidroquinona`) and their ethers
  * (R-5b: alkoxy prefixes — `metoxi`, `isopropoxi`, `fenoxi`, `(pentiloxi)`,
- * `(2-metilpropoxi)` — and the retained `anisol`). Pure, no DOM.
+ * `(2-metilpropoxi)` — and the retained `anisol`) and their aldehydes and
+ * ketones (R-5c1: the suffixes `al`, `ona`, `carbaldehído`, the prefixes
+ * `oxo` and `formil`, `benzaldehído`). Pure, no DOM.
+ *
+ * The aldehydes and ketones need nothing of their own here either: their
+ * groups are built on the parent (build.js) and searched like the alcohol's
+ * (search.js), and the engine names the molecule (`butanal`,
+ * `pentano-2,4-diona`, `ciclohexanocarbaldehído`, `4-metilbenzaldehído` →
+ * `correct`; `bencenocarbaldehído`, `p-clorobenzaldehído`, `propan-2-ona` →
+ * `alternative`; `butanona` → `missingLocants` (`butan-2-ona`);
+ * `pentanona` → `ambiguous`; `2-pentanona` → `otherName` with the note
+ * «…hoy se escribe «pentan-2-ona»»; `propano-1,2,3-tricarbaldehído` →
+ * `outOfScope`, the engine's `manyAldehydes`).
  *
  * The ethers need nothing of their own here either: an alkoxy prefix is
  * built as its branch and an ether oxygen (build.js) and searched like any

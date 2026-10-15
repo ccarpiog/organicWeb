@@ -271,7 +271,9 @@ test('a retained word cannot take prefixes of its own inside a compound branch (
 });
 
 test('structural errors are checked in tile order, ranges before valence, every code listed', () => {
-  assert.deepEqual([...BUILD_ERROR_CODES].sort(), ['BOND_RANGE', 'LOCANT_RANGE', 'SAME_BOND', 'TILE_ORDER', 'TOO_BIG', 'VALENCE']);
+  // CARBONYL_POSITION since phase R-5c1 (a C=O of a suffix where its group cannot be: reverse-carbonyls.test.js).
+  assert.deepEqual([...BUILD_ERROR_CODES].sort(), ['BOND_RANGE', 'CARBONYL_POSITION', 'LOCANT_RANGE', 'SAME_BOND', 'TILE_ORDER',
+    'TOO_BIG', 'VALENCE']);
   assert.equal(errorOf('7 met il hex 7 eno').from, 0, 'the first offending tile');
   assert.equal(errorOf('2 2 2 tri met il but 9 eno').code, 'LOCANT_RANGE', 'a range error before a valence error');
 });

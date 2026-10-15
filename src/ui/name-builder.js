@@ -27,7 +27,9 @@
  *   «Grupos» — the halogens `fluoro`, `cloro`, `bromo`, `yodo`, phase R-5a1,
  *   `hidroxi` and the suffix `ol`, phase R-5a2, the alkoxy ending `oxi`,
  *   phase R-5b, and the class word `éter` of an ether's functional-class
- *   name, phase R-5b2, both with a tooltip —, «Nombres tradicionales» — `tolueno`,
+ *   name, phase R-5b2, both with a tooltip; `oxo`, `formil` and the
+ *   suffixes `al`, `ona`, `carbaldehído`, phase R-5c1, each with a tooltip,
+ *   as `benzaldehído` in «Anillos» —, «Nombres tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
  *   `hidroquinona`, phase R-5a3a, these and `anisol` each with a tooltip
@@ -52,7 +54,10 @@
  * The DOM is built with createElement/textContent only (never innerHTML).
  */
 
-import { TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, ETHER_CLASS_ID, tileById } from '../reverse/tiles.js';
+import {
+  TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID,
+  BENZALDEHYDE_ID, tileById,
+} from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
 
@@ -97,8 +102,9 @@ export function positionalLabel(tile) {
  * nothing of their groups — what molecule each is, and that `cresol` takes
  * a letter; R-5b: the alkoxy ending `oxi`, where it goes and that the app
  * writes the short forms, and `anisol`; R-5b2: `éter`, after the two groups
- * of the oxygen; drafts pending teacher review). The tile's text stays its
- * accessible name.
+ * of the oxygen; R-5c1: `oxo`, `formil`, `al`, `ona`, `carbaldehído` and
+ * `benzaldehído`, what group each is and where it goes; drafts pending
+ * teacher review). The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
   [CLOSING_ID]: 'Número del enlace que cierra un anillo, del último carbono al 1: se escribe 1(6) en un anillo de 6 carbonos.',
@@ -106,6 +112,17 @@ export const TILE_HINTS = Object.freeze({
     + 'oxi dan (pentiloxi).',
   [ETHER_CLASS_ID]: 'Va al final, detrás de los dos grupos unidos al oxígeno, por orden alfabético: et, il, met, il y éter dan '
     + 'etil metil éter; con dos grupos iguales, di, et, il y éter dan dietil éter.',
+  // R-5c1: the aldehydes and ketones.
+  [OXO_ID]: 'Un oxígeno unido a un carbono por un enlace doble (C=O) que no es el grupo principal: 4-oxopentanal; en una rama, '
+    + '(2-oxoetil).',
+  [FORMYL_ID]: 'Un grupo CHO unido por su carbono, cuando ese carbono no es de la cadena ni del anillo: (4-formilciclohexil).',
+  [AL_ID]: 'Aldehído (grupo CHO). Va al final, detrás de la terminación de una cadena; el grupo CHO está siempre en un extremo, '
+    + 'así que no lleva números: butanal; con dos, butanodial.',
+  [ONA_ID]: 'Cetona (C=O en un carbono del interior). Va al final, detrás de la terminación, con su número: pentan-2-ona, '
+    + 'ciclohexanona.',
+  [CARBALDEHYDE_ID]: 'Grupo CHO unido a un anillo. Va al final, detrás del nombre del anillo: ciclohexanocarbaldehído, '
+    + 'benceno-1,4-dicarbaldehído.',
+  [BENZALDEHYDE_ID]: 'Benceno con un grupo CHO: bencenocarbaldehído.',
   'template-anisole': 'Benceno con un grupo metoxi: metoxibenceno.',
   'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
   'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',

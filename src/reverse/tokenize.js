@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -33,11 +33,14 @@
  * and the hyphen the assembler writes after it prunes every other reading
  * of a leading `o`, `m` or `p` at once. A halogen (R-5a1: `fluoro`, `cloro`,
  * `bromo`, `yodo`) stands wherever a retained branch word may, and is never
- * enclosed by itself; so does `hidroxi` (R-5a2). The alcohol suffix (R-5a2)
+ * enclosed by itself; so does `hidroxi` (R-5a2), and `oxo` (R-5c1). The alcohol suffix (R-5a2)
  * ends a name after the parent's ending (`an` / `en` / `in` or the whole
  * one, `benceno` or its elided `bencen`), its locants or its multiplier —
  * also the multiplier without its final `a` (`tetr` + `ol`, rule 4); `fenol`
- * ends a name like `benceno`. The closing-bond locant `1(6)` (R-5a2) is read
+ * ends a name like `benceno`. The suffixes `al`, `ona` and `carbaldehído`
+ * (R-5c1) are read where `ol` is (`butanal`, `pentano-2,4-diona`,
+ * `ciclohexanocarbaldehído`), `benzaldehído` where `fenol` is, and `formil`
+ * where a retained branch word is. The closing-bond locant `1(6)` (R-5a2) is read
  * wherever a ring's bond locant may stand, as the `1(n)` tile (the assembler
  * checks the ring size). The alkoxy ending `oxi` (R-5b) is read after `il`
  * (`pentiloxi`, `propan-2-iloxi`), and, contracted (assemble.js rule 6),
@@ -56,7 +59,7 @@
  */
 
 import { CONNECTING_VOWEL, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES } from '../naming/lexicon.es.js';
-import { TILES, START_ID, END_ID, CLOSING_ID, ALKOXY_RETAINED, tileId } from './tiles.js';
+import { TILES, START_ID, END_ID, CLOSING_ID, ALKOXY_RETAINED, GROUP_WORD_PARENTS, tileId } from './tiles.js';
 import { parse } from './parse.js';
 import { assemble, separator } from './assemble.js';
 
@@ -79,8 +82,10 @@ const PUNCTUATION = ',-';
  * ANO (`ano`), ENE (`eno` / `ino`), FV (`il` / `iliden`), RET (a retained
  * branch word), PHE (`fenil`, R-4b), BEN (`benceno`, R-4b), TPL (a retained
  * template, R-4c), POS (an orto/meta/para letter, R-4c), HAL (a one-atom
- * group: a halogen, R-5a1; `hidroxi`, R-5a2), OL (the suffix `ol`, R-5a2),
- * PHOL (`fenol`, R-5a2), CLO (the closing-bond locant `1(n)`, R-5a2), OXI
+ * group: a halogen, R-5a1; `hidroxi`, R-5a2; `oxo`, R-5c1), OL (a suffix:
+ * `ol`, R-5a2; `al`, `ona`, `carbaldehído`, R-5c1), PHOL (a whole-word
+ * parent that places its group: `fenol`, R-5a2; `benzaldehído`, R-5c1), CLO
+ * (the closing-bond locant `1(n)`, R-5a2), OXI
  * (the alkoxy ending `oxi` after `il` or a retained word, R-5b), START,
  * END, RING (`ciclo`). A is the automatic connecting vowel, AUTO_OPEN an
  * automatic opening mark; MULTE a multiplier without its final `a`, only
@@ -102,12 +107,12 @@ function tileClass(tile) {
   if (tile.kind === 'retained' && tile.value === 'phenyl') {
     return 'PHE';
   }
-  if (tile.kind === 'benzene' && tile.value === 'phenol') {
-    return 'PHOL';
+  if (tile.kind === 'benzene' && GROUP_WORD_PARENTS[tile.value]) {
+    return 'PHOL'; // `fenol` (R-5a2), `benzaldehído` (R-5c1)
   }
   const classes = {
     num: 'NUM', mult: 'MULT', cmult: 'CMULT', root: 'ROOT', freeValence: 'FV', retained: 'RET', start: 'START', end: 'END',
-    ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS', halogen: 'HAL', hydroxy: 'HAL', suffix: 'OL',
+    ring: 'RING', benzene: 'BEN', template: 'TPL', positional: 'POS', halogen: 'HAL', hydroxy: 'HAL', carbonyl: 'HAL', suffix: 'OL',
     closing: 'CLO', alkoxy: 'OXI', classWord: 'ETHER',
   };
   return classes[tile.kind];

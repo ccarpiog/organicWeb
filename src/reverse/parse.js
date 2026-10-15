@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -11,22 +11,24 @@
  * R-5a1, the alcohols — `hidroxi`, the suffix `ol`, `fenol`, the
  * closing-bond locant `1(n)` — from R-5a2, the retained phenol templates
  * from R-5a3a, the alkoxy ending `oxi` and `anisol` from R-5b, the ether
- * functional-class names from R-5b2):
+ * functional-class names from R-5b2, the aldehydes and ketones — the
+ * suffixes `al`, `ona`, `carbaldehído`, the prefixes `oxo` and `formil`,
+ * `benzaldehído` — from R-5c1):
  *
  *   name        = { prefix } , parent
  *               | { classGroup } , éter ;   (* R-5b2: exactly two groups *)
  *   classGroup  = [ MULT | CMULT ] , ( simple | START , { prefix } , simple , END ) ;
  *   prefix      = [ locants ] , [ letter ] , [ MULT | CMULT ] , substituent ;
  *   substituent = simple | group | START , { prefix } , simple , END ;
- *   group       = fluoro | cloro | bromo | yodo | hidroxi ;
+ *   group       = fluoro | cloro | bromo | yodo | hidroxi | oxo ;
  *   simple      = stem , ( il [ oxi ] | iliden )
  *               | stem , [ ano ] , locant , ( il [ oxi ] | iliden )
  *               | stem , segments , [ locant ] , ( il [ oxi ] | iliden )
- *               | ( isopropil | tert-butil | fenil ) , [ oxi ] | isopropiliden ;
+ *               | ( isopropil | tert-butil | fenil ) , [ oxi ] | isopropiliden | formil ;
  *   parent      = [ legacy ] , stem , ( ano | segments ) , [ suffix ]
- *               | [ legacy ] , benceno , [ suffix ] | fenol
+ *               | [ legacy ] , benceno , [ suffix ] | fenol | benzaldehído
  *               | [ locants | letter ] , template ;
- *   suffix      = [ locants ] , [ MULT ] , ol ;
+ *   suffix      = [ locants ] , [ MULT ] , ( ol | al | ona | carbaldehído ) ;
  *   template    = tolueno | estireno | xileno | mesitileno | anisol
  *               | cresol | pirocatecol | catecol | resorcinol | hidroquinona ;
  *   letter      = o | m | p ;
@@ -106,6 +108,27 @@
  * and which words the engine uses for the groups is the diagnosis's
  * business (diagnose.js «Ethers»), not the parser's.
  *
+ * The aldehydes and ketones (R-5c1) take the other suffixes the same way:
+ * `ona` (`pentan-2-ona`, `pentano-2,4-diona`, `ciclohexanona`, old style
+ * `2-pentanona`) and `carbaldehído` (`ciclohexanocarbaldehído`,
+ * `ciclohex-2-eno-1-carbaldehído`, `benceno-1,4-dicarbaldehído`; after a
+ * chain too, read and judged by the engine: `butano-1-carbaldehído` is
+ * pentanal). `al` puts the –CHO at the ends of a chain by rule (render.js
+ * TERMINAL_SUFFIXES: `butanal`, `butanodial`, `2-metilbutanal`), so it has no
+ * locants: numbers on it (`butan-1-al`, `butan-2-al`) or old-style ones that
+ * could only be its (`1-butanal`) are TILE_ORDER, and the old-style locants
+ * of `2-butenal` are the segment's; after a ring or `benceno` it is
+ * TILE_ORDER too (their –CHO is `carbaldehído`; `bencenal`). How many –CHO a
+ * chain can take (two ends) and where a ketone's C=O can be (a carbon with
+ * two carbon neighbours) need the chemistry: build.js CARBONYL_POSITION.
+ * `oxo` is a one-atom group like a halogen, its oxygen double-bonded
+ * (`4-oxopentanal`, `(2-oxoetil)`); `formil` a retained branch word, the –CHO
+ * bonded by its carbon (`(4-formilciclohexil)`; `oxi` after it, or `formil`
+ * as a group of an ether's class name, are TILE_ORDER with their hints);
+ * `benzaldehído` a whole-word parent like `fenol`, its –CHO at carbon 1
+ * (groupWordOf(): no suffix, numbers or letter of its own; it counts as one
+ * of the two positions of an orto/meta/para letter, `p-clorobenzaldehído`).
+ *
  * The tile `1(n)` (R-5a2) is the compound locant of a ring's closing bond,
  * the one from its last carbon n back to carbon 1 (the engine cites it
  * `1(6)`, IUPAC 2013 P-31.1.4.2.4: `ciclohex-1(6)-eno-1,2,4-triol`,
@@ -154,7 +177,7 @@
  *
  * - name    `{type: 'name', tiles, items: (prefix|stray)[], parent, trailing: stray[]}`
  * - prefix  `{type: 'prefix', locants: number[], letter: number|null, multiplier: number|null,
- *            substituent: chain|retained|halogen|hydroxy|branch|null}` (null: numbers, a
+ *            substituent: chain|retained|halogen|hydroxy|carbonyl|branch|null}` (null: numbers, a
  *            letter or a multiplier with nothing after them yet; `letter` the
  *            o / m / p tile, R-4c)
  * - chain   `{type: 'chain', ring: number|null, root: number|null, ano:
@@ -167,6 +190,7 @@
  * - retained `{type: 'retained', tile, oxi: number|null}` (`oxi` the alkoxy ending after it, R-5b)
  * - halogen `{type: 'halogen', tile}` (a halogen tile, R-5a1)
  * - hydroxy `{type: 'hydroxy', tile}` (the `hidroxi` tile, R-5a2)
+ * - carbonyl `{type: 'carbonyl', tile}` (the `oxo` tile, R-5c1)
  * - branch  `{type: 'branch', start, items: (prefix|stray)[], chain:
  *            chain|retained|null, end: number|null}` (`chain` is the
  *            branch's own simple chain, cited last; `end` null while open)
@@ -184,9 +208,11 @@
  *            (R-5a3a), out of place before any other stem; `suffix` the
  *            alcohol suffix, R-5a2)
  * - suffix  `{type: 'suffix', locants: number[], multiplier: number|null, tile}` (the
- *            `ol` tile with its locants and multiplier, R-5a2)
+ *            `ol` tile with its locants and multiplier, R-5a2; `al`, `ona`,
+ *            `carbaldehído`, R-5c1)
  * - benzene `{type: 'benzene', tile}` (the `benceno` tile, R-4b; also the
- *            `fenol` tile, R-5a2, value 'phenol': isPhenol())
+ *            `fenol` tile, R-5a2, value 'phenol', and the `benzaldehído`
+ *            tile, R-5c1, value 'benzaldehyde': groupWordOf())
  * - template `{type: 'template', tile}` (a retained template tile, R-4c)
  * - classWord `{type: 'classWord', tile}` (the `éter` tile of a functional-class name, R-5b2: the
  *            name-level prefixes are its groups; locants, a letter or a
@@ -216,11 +242,11 @@
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS, CONNECTING_VOWEL,
   MAX_MULTIPLIER, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, POSITIONAL_LETTERS, GROUP_SUFFIXES, GROUP_PREFIXES,
-  HALOGEN_PREFIXES, ALKOXY_ENDING, ETHER_CLASS_WORD,
+  HALOGEN_PREFIXES, ALKOXY_ENDING, ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, FORMYL_PREFIX,
 } from '../naming/lexicon.es.js';
 import {
   toTiles, TEMPLATES, templateGroupWord, groupPlural, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
-  isPhenolTemplate, withArticle, ALKOXY_RETAINED, ETHER_CLASS_GROUPS,
+  isPhenolTemplate, withArticle, ALKOXY_RETAINED, ETHER_CLASS_GROUPS, SUFFIX_GROUPS, GROUP_WORD_PARENTS, BENZALDEHYDE_ID,
 } from './tiles.js';
 import { itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore } from './assemble.js';
 
@@ -245,6 +271,12 @@ const CRESOL = tileById('template-cresol').text;
 const OL = GROUP_SUFFIXES.alcohol;
 const HIDROXI = GROUP_PREFIXES.alcohol;
 const FENOL = tileById(PHENOL_ID).text;
+const BENZALDEHIDO = tileById(BENZALDEHYDE_ID).text;
+const AL = GROUP_SUFFIXES.aldehyde;
+const ONA = GROUP_SUFFIXES.ketone;
+const CARBALDEHIDO = RING_GROUP_SUFFIXES.aldehyde;
+const OXO = GROUP_PREFIXES.ketone;
+const ANO = ENDINGS.saturated;
 const [ORTO, META, PARA] = Object.keys(POSITIONAL_IDS).map((locant) => POSITIONAL_LETTERS[locant]);
 
 /** Spanish number words for the LOCANT_COUNT messages (digits from 11 on). */
@@ -298,6 +330,15 @@ const EXAMPLES = Object.freeze({
   isopropoxi: `${RETAINED_PREFIXES.isopropyl.text.slice(0, -IL.length)}${ALKOXY_ENDING}`,
   metilpropoxi: `${OPEN}2-${stem(1)}${IL}${stem(3)}${ALKOXY_ENDING}${CLOSE}`,
   metoxifenil: `${OPEN}4-${stem(1)}${ALKOXY_ENDING}${FENIL}${CLOSE}`,
+  // R-5c1: the aldehydes and ketones.
+  butanal: `${stem(4)}${ANO.slice(0, -1)}${AL}`,
+  butanodial: `${stem(4)}${ANO}${multiplier(2)}${AL}`,
+  pentan2ona: `${stem(5)}${ANO.slice(0, -1)}-2-${ONA}`,
+  pentanodiona: `${stem(5)}${ANO}-2,4-${multiplier(2)}${ONA}`,
+  ciclohexanocarbaldehido: `${RING_PREFIX}${stem(6)}${ANO}${CARBALDEHIDO}`,
+  bencenodicarbaldehido: `${BENZENE_NAME}-1,4-${multiplier(2)}${CARBALDEHIDO}`,
+  oxoetil: `${OPEN}2-${OXO}${stem(2)}${IL}${CLOSE}`,
+  formilfenil: `${OPEN}4-${FORMYL_PREFIX}${FENIL}${CLOSE}`,
   etilMetilEter: `${stem(2)}${IL} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
   dietilEter: `${multiplier(2)}${stem(2)}${IL} ${ETHER_CLASS_WORD}`,
   cloroetilEter: `${OPEN}2-${HALOGEN_PREFIXES.Cl}${stem(2)}${IL}${CLOSE} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
@@ -332,8 +373,6 @@ const HINTS = Object.freeze({
     + `${EXAMPLES.pCresol}).`,
   suffix: `«${OL}» va al final del nombre, detrás de la terminación de la cadena principal (${EXAMPLES.propan2ol}, `
     + `${EXAMPLES.butanodiol}); en una rama, el grupo OH se escribe «${HIDROXI}».`,
-  cmultSuffix: `delante de «${OL}» va «${multiplier(2)}», «${multiplier(3)}»…, no «${compoundMultiplier(2)}» ni `
-    + `«${compoundMultiplier(3)}».`,
   phenolBranch: `«${FENOL}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo con su grupo OH `
     + `se escribe con «${HIDROXI}» y «${FENIL}», como en ${EXAMPLES.hidroxifenil}.`,
   closing: `«${closingText('n')}» es el número del enlace que cierra un anillo, del último carbono al 1, y solo va delante `
@@ -354,7 +393,69 @@ const HINTS = Object.freeze({
     + `${ETHER_CLASS_WORD} dan ${EXAMPLES.dietilEter}.`,
   classAlkoxy: `en un nombre con «${ETHER_CLASS_WORD}», el oxígeno ya lo dice «${ETHER_CLASS_WORD}»: los grupos acaban en `
     + `«${IL}», sin «${ALKOXY_ENDING}» (${EXAMPLES.etilMetilEter}).`,
+  // R-5c1: the aldehydes and ketones.
+  alRing: `«${AL}» solo va detrás de una cadena: en un anillo, el grupo CHO va unido a un carbono del anillo y se escribe `
+    + `«${CARBALDEHIDO}» (${EXAMPLES.ciclohexanocarbaldehido}).`,
+  alBenzene: `«${AL}» no va detrás de «${BENZENE_NAME}»: el ${BENZENE_NAME} con un grupo CHO es el «${BENZALDEHIDO}», y con `
+    + `varios se usa «${CARBALDEHIDO}» (${EXAMPLES.bencenodicarbaldehido}).`,
+  alLocants: `el grupo CHO de «${AL}» va siempre en un extremo de la cadena, en el carbono 1 (y en el último, con `
+    + `«${multiplier(2)}${AL}»), así que «${AL}» no lleva números: ${EXAMPLES.butanal}, ${EXAMPLES.butanodial}.`,
+  benzaldehydeBranch: `«${BENZALDEHIDO}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es `
+    + `«${FENIL}» y su grupo CHO se escribe «${FORMYL_PREFIX}», como en ${EXAMPLES.formilfenil}.`,
+  formylAlkoxy: `«${ALKOXY_ENDING}» no va detrás de «${FORMYL_PREFIX}»: un grupo CHO unido a un oxígeno no forma un éter.`,
+  classFormyl: `«${FORMYL_PREFIX}» no va en un nombre con «${ETHER_CLASS_WORD}»: un grupo CHO unido al oxígeno no forma un `
+    + `éter. Los dos grupos de un éter son cadenas o anillos de carbonos (${EXAMPLES.etilMetilEter}).`,
 });
+
+/**
+ * The TILE_ORDER hint of a suffix tile out of place (R-5a2: `ol`; R-5c1:
+ * `al`, `ona`, `carbaldehído`): it goes at the end of the name, after the
+ * parent's ending; in a branch the group is a prefix.
+ *
+ * @param {{text: string, value: string}} tile - The suffix tile.
+ * @returns {string} The hint.
+ */
+function suffixHint(tile) {
+  switch (tile.value) {
+    case 'aldehyde':
+      return `«${AL}» va al final del nombre, detrás de la terminación de la cadena principal (${EXAMPLES.butanal}, `
+        + `${EXAMPLES.butanodial}); en una rama, el grupo CHO se escribe con «${OXO}» (${EXAMPLES.oxoetil}) o, si su carbono no `
+        + `es de la rama, con «${FORMYL_PREFIX}».`;
+    case 'ketone':
+      return `«${ONA}» va al final del nombre, detrás de la terminación de la cadena principal (${EXAMPLES.pentan2ona}, `
+        + `${EXAMPLES.pentanodiona}); en una rama, el grupo C=O se escribe «${OXO}».`;
+    case 'carbaldehyde':
+      return `«${CARBALDEHIDO}» va al final del nombre, detrás del nombre del anillo principal `
+        + `(${EXAMPLES.ciclohexanocarbaldehido}); en una rama, el grupo CHO se escribe «${FORMYL_PREFIX}».`;
+    default:
+      return HINTS.suffix;
+  }
+} // End of function suffixHint()
+
+/**
+ * The TILE_ORDER hint of `bis`, `tris`… before a suffix (R-5a2, R-5c1): a
+ * suffix takes `di`, `tri`….
+ *
+ * @param {string} word - The suffix as on its tile (`ol`, `ona`…).
+ * @returns {string} The hint.
+ */
+function cmultSuffixHint(word) {
+  return `delante de «${word}» va «${multiplier(2)}», «${multiplier(3)}»…, no «${compoundMultiplier(2)}» ni `
+    + `«${compoundMultiplier(3)}».`;
+}
+
+/**
+ * Tells whether a suffix node is the aldehyde suffix `al` (R-5c1), whose
+ * –CHO sits at an end of a chain by rule (tiles.js SUFFIX_GROUPS
+ * `terminal`): it takes no locants.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object|null} suffix - A suffix node, or null.
+ * @returns {boolean} True for `al`.
+ */
+export function isTerminalSuffix(tiles, suffix) {
+  return Boolean(suffix) && SUFFIX_GROUPS[tiles[suffix.tile].value].terminal;
+}
 
 /**
  * The TILE_ORDER hint of a one-atom group (`cloro`, `hidroxi`) written as a
@@ -448,15 +549,16 @@ const PHENOL_GROUP = 'grupo OH';
 const PHENOL_GROUPS = 'grupos OH';
 
 /**
- * Tells whether a parent's chain node is `fenol` (R-5a2): a benzene node
- * whose tile is the `fenol` tile.
+ * The principal group a whole-word benzene parent places at its carbon 1
+ * (tiles.js GROUP_WORD_PARENTS): the OH of `fenol` (R-5a2), the –CHO of
+ * `benzaldehído` (R-5c1); null for `benceno` and any other node.
  *
  * @param {object[]} tiles - The tile sequence.
- * @param {object} node - A chain, benzene or template node.
- * @returns {boolean} True for `fenol`.
+ * @param {object} node - A chain, benzene, template or classWord node.
+ * @returns {{suffix: string, group: string}|null} The group's SUFFIX_GROUPS key and its name in the messages, or null.
  */
-export function isPhenol(tiles, node) {
-  return node.type === 'benzene' && tiles[node.tile].value === 'phenol';
+export function groupWordOf(tiles, node) {
+  return node.type === 'benzene' ? GROUP_WORD_PARENTS[tiles[node.tile].value] || null : null;
 }
 
 /**
@@ -474,8 +576,9 @@ export function isPhenol(tiles, node) {
  * §14.5): a retained template's (R-4c: the methyl of `tolueno` at 1, those
  * of `mesitileno` at 1, 3 and 5, the two of `xileno` where the student
  * says; R-5a3a: the OH groups of the retained phenols, `catecol` at 1 and 2,
- * and for `cresol` its OH at 1 and its methyl where the letter says) or the
- * OH of `fenol` at 1 (R-5a2); null for `benceno` and any other parent.
+ * and for `cresol` its OH at 1 and its methyl where the letter says), the
+ * OH of `fenol` at 1 (R-5a2) or the –CHO of `benzaldehído` at 1 (R-5c1:
+ * «grupo CHO»); null for `benceno` and any other parent.
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} chain - The parent's chain node.
@@ -500,10 +603,10 @@ function ownGroups(tiles, chain) {
       word: tile.text,
     };
   }
-  if (isPhenol(tiles, chain)) {
-    return {
-      count: 1, positions: [1], kinds: [{ count: 1, one: PHENOL_GROUP, many: PHENOL_GROUPS }], letterOnly: false, word: tiles[chain.tile].text,
-    };
+  const placed = groupWordOf(tiles, chain); // `fenol` (R-5a2), `benzaldehído` (R-5c1)
+  if (placed) {
+    const many = placed.group.replace(/^grupo /, 'grupos ');
+    return { count: 1, positions: [1], kinds: [{ count: 1, one: placed.group, many }], letterOnly: false, word: tiles[chain.tile].text };
   }
   return null;
 } // End of function ownGroups()
@@ -792,7 +895,9 @@ function takeAlkoxy(state, before) {
   const oxi = state.pos;
   state.pos += 1;
   const single = before.kind === 'freeValence' ? before.value === 1 : ALKOXY_RETAINED.includes(before.value);
-  if (!single) {
+  if (before.value === 'formyl') {
+    addTileOrder(state, oxi, oxi + 1, HINTS.formylAlkoxy); // `formil oxi` (R-5c1): an ester's prefix, not an ether's
+  } else if (!single) {
     addTileOrder(state, oxi, oxi + 1, alkoxyAfterDoubleHint(before.text)); // `metiliden oxi`, `isopropiliden oxi`
   }
   return oxi;
@@ -953,12 +1058,13 @@ function parseBranch(state) {
 } // End of function parseBranch()
 
 /**
- * Parses the alcohol suffix after a parent's ending, when there is one
- * (R-5a2): `[locants] [MULT] ol`, looking ahead so that numbers or a
- * multiplier without `ol` after them are left for what follows (tiles out
- * of place after the parent). `bis`, `tris`… before `ol` are TILE_ORDER; the
- * locant count must match the multiplier (LOCANT_COUNT; a list left out, or
- * given before the root in the old style, is not checked here).
+ * Parses the suffix after a parent's ending, when there is one (R-5a2:
+ * `ol`; R-5c1: `al`, `ona`, `carbaldehído`): `[locants] [MULT] suffix`,
+ * looking ahead so that numbers or a multiplier without a suffix after them
+ * are left for what follows (tiles out of place after the parent). `bis`,
+ * `tris`… before the suffix are TILE_ORDER; the locant count must match the
+ * multiplier (LOCANT_COUNT; a list left out, or given before the root in the
+ * old style, is not checked here; `al`'s place is makeParent()'s).
  *
  * @param {object} state - Parser state (right after the parent's ending).
  * @returns {object|null} The suffix node, or null.
@@ -975,7 +1081,7 @@ function parseSuffix(state) {
   const suffix = { type: 'suffix', locants, multiplier: mult, tile: state.pos, range: [save, state.pos + 1] };
   state.pos += 1;
   if (mult !== null && tiles[mult].kind === 'cmult') {
-    addTileOrder(state, mult, mult + 1, HINTS.cmultSuffix);
+    addTileOrder(state, mult, mult + 1, cmultSuffixHint(tiles[suffix.tile].text));
   }
   checkLocantCount(state, locants, mult, 'grupos', false);
   return suffix;
@@ -993,12 +1099,18 @@ function multiplierCount(tiles, mult) {
 }
 
 /**
- * Builds the parent node, with its alcohol suffix when one follows (R-5a2),
- * and checks its old-style locants (design.md §15.5.1 `legacy`): allowed
- * only when exactly one locant list is left open among the segments and the
- * suffix, and their count matches its multiplier (`2-buteno`, `2-propanol`,
- * `1,2-etanodiol`); any other allocation is LEGACY (`2-butenol`: two lists
- * left open). A multiplier between them and the root is out of place.
+ * Builds the parent node, with its suffix when one follows (R-5a2: `ol`;
+ * R-5c1: `al`, `ona`, `carbaldehído`), and checks its old-style locants
+ * (design.md §15.5.1 `legacy`): allowed only when exactly one locant list is
+ * left open among the segments and the suffix, and their count matches its
+ * multiplier (`2-buteno`, `2-propanol`, `1,2-etanodiol`, `2-pentanona`); any
+ * other allocation is LEGACY (`2-butenol`: two lists left open). A
+ * multiplier between them and the root is out of place. The aldehyde
+ * suffix `al` (R-5c1) sits at the ends of a chain by rule, so it has no
+ * locant list to leave open (`2-butenal` is `but-2-enal`), and locants of
+ * its own, or old-style ones that could only be its, are TILE_ORDER
+ * (`butan-1-al`, `1-butanal`); after a `ciclo` ring it is TILE_ORDER too
+ * (the ring's –CHO is `carbaldehído`).
  *
  * A letter before the root stays in the node, out of place (checkLetters()).
  *
@@ -1019,13 +1131,22 @@ function makeParent(state, legacy, letter, mult, chain, start) {
   if (mult !== null) {
     addTileOrder(state, mult, mult + 1, HINTS.legacyMultiplier);
   }
+  // `al` (R-5c1): on a ring the –CHO is `carbaldehído`; on a chain it sits at the ends by rule and takes no locants.
+  const terminal = isTerminalSuffix(tiles, suffix);
+  if (terminal && chain.ring !== null) {
+    addTileOrder(state, suffix.tile, suffix.tile + 1, HINTS.alRing); // `ciclohexanal`
+  } else if (terminal && suffix.locants.length > 0) {
+    addTileOrder(state, suffix.locants[0], suffix.locants[suffix.locants.length - 1] + 1, HINTS.alLocants); // `butan-1-al`
+  }
   if (legacy.length > 0 && chainEnded(chain)) {
     const open = chain.segments.map((segment, i) => (segment.locants.length === 0 ? i : -1)).filter((i) => i >= 0);
-    const suffixOpen = Boolean(suffix) && suffix.locants.length === 0;
+    const suffixOpen = Boolean(suffix) && suffix.locants.length === 0 && !terminal; // `al` has no list to open (R-5c1).
     if (open.length === 1 && !suffixOpen && multiplierCount(tiles, chain.segments[open[0]].multiplier) === legacy.length) {
-      parent.legacySegment = open[0];
+      parent.legacySegment = open[0]; // `2-buteno`; `2-butenal` (R-5c1).
     } else if (open.length === 0 && suffixOpen && multiplierCount(tiles, suffix.multiplier) === legacy.length) {
-      parent.legacySuffix = true; // `2-propanol`, `1,2-etanodiol` (R-5a2).
+      parent.legacySuffix = true; // `2-propanol`, `1,2-etanodiol` (R-5a2); `2-pentanona` (R-5c1).
+    } else if (open.length === 0 && terminal) {
+      addTileOrder(state, legacy[0], legacy[legacy.length - 1] + 1, HINTS.alLocants); // `1-butanal` (R-5c1)
     } else {
       addError(state, 'LEGACY', legacy[0], legacy[legacy.length - 1] + 1, MESSAGES.LEGACY);
     }
@@ -1034,15 +1155,17 @@ function makeParent(state, legacy, letter, mult, chain, start) {
 } // End of function makeParent()
 
 /**
- * Builds the parent node of `benceno` (R-4b) or `fenol` (R-5a2), the tile at
- * the parser position. `benceno` takes the alcohol suffix (`benceno-1,2-diol`,
- * `bencenohexol`); numbers or a multiplier before it are BENZENE_BONDS (its
- * double bonds are never numbered) — unless they are the old-style locants
- * of a suffix written without its own (`1,2-bencenodiol`) —, kept in the
- * node as `legacy` so the tree stays lossless; a letter before it is out of
- * place (checkLetters()). `fenol` places its own OH at carbon 1, so numbers
- * or a letter before it are TEMPLATE_LOCANTS and a multiplier TILE_ORDER;
- * it takes no suffix.
+ * Builds the parent node of `benceno` (R-4b), `fenol` (R-5a2) or
+ * `benzaldehído` (R-5c1), the tile at the parser position. `benceno` takes a
+ * suffix (`benceno-1,2-diol`, `bencenohexol`; R-5c1: `bencenocarbaldehído`,
+ * `benceno-1,4-dicarbaldehído`; `al` is TILE_ORDER there, the ring's –CHO
+ * being `carbaldehído`); numbers or a multiplier before it are
+ * BENZENE_BONDS (its double bonds are never numbered) — unless they are the
+ * old-style locants of a suffix written without its own (`1,2-bencenodiol`)
+ * —, kept in the node as `legacy` so the tree stays lossless; a letter
+ * before it is out of place (checkLetters()). `fenol` places its own OH at
+ * carbon 1, and `benzaldehído` its –CHO, so numbers or a letter before them
+ * are TEMPLATE_LOCANTS and a multiplier TILE_ORDER; they take no suffix.
  *
  * @param {object} state - Parser state (positioned on the `benceno` or `fenol` tile).
  * @param {number[]} legacy - Locant tiles before it.
@@ -1056,12 +1179,15 @@ function makeBenzeneParent(state, legacy, letter, mult, start) {
   const tile = state.pos;
   state.pos += 1;
   const chain = { type: 'benzene', tile, range: [tile, tile + 1] };
-  const phenol = isPhenol(tiles, chain);
-  const suffix = phenol ? null : parseSuffix(state);
+  const placed = Boolean(groupWordOf(tiles, chain)); // `fenol` (R-5a2), `benzaldehído` (R-5c1)
+  const suffix = placed ? null : parseSuffix(state);
   const parent = {
     type: 'parent', legacy, letter, legacyMultiplier: mult, legacySegment: null, legacySuffix: false, chain, suffix, range: [start, state.pos],
   };
-  if (phenol) {
+  if (isTerminalSuffix(tiles, suffix)) {
+    addTileOrder(state, suffix.tile, suffix.tile + 1, HINTS.alBenzene); // `bencenal` (R-5c1)
+  }
+  if (placed) {
     if (legacy.length > 0 || letter !== null) {
       const from = legacy.length > 0 ? legacy[0] : letter;
       const to = (letter === null ? legacy[legacy.length - 1] : letter) + 1;
@@ -1199,6 +1325,8 @@ function checkClassName(state, tree) {
       addTileOrder(state, oxi, oxi + 1, HINTS.classAlkoxy); // `metoxi etil éter`
     } else if (core && core.type === 'chain' && core.fv !== null && tiles[core.fv].value !== 1) {
       addTileOrder(state, core.fv, core.fv + 1, classDoubleHint(tiles[core.fv].text)); // `metiliden metil éter`
+    } else if (core && core.type === 'retained' && tiles[core.tile].value === 'formyl') {
+      addTileOrder(state, core.tile, core.tile + 1, HINTS.classFormyl); // `formil metil éter` (R-5c1)
     } else if (core && core.type === 'retained' && !ALKOXY_RETAINED.includes(tiles[core.tile].value)) {
       addTileOrder(state, core.tile, core.tile + 1, classDoubleHint(tiles[core.tile].text)); // `isopropiliden metil éter`
     }
@@ -1211,15 +1339,15 @@ function checkClassName(state, tree) {
 } // End of function checkClassName()
 
 /**
- * The hint of a whole-word parent (`benceno`, `fenol`, a template) found
- * inside a compound branch.
+ * The hint of a whole-word parent (`benceno`, `fenol`, `benzaldehído`, a
+ * template) found inside a compound branch.
  *
  * @param {object} tile - The tile.
  * @returns {string} The hint.
  */
 function wholeWordHint(tile) {
   if (tile.kind === 'benzene') {
-    return tile.value === 'phenol' ? HINTS.phenolBranch : HINTS.benzeneBranch;
+    return { phenol: HINTS.phenolBranch, benzaldehyde: HINTS.benzaldehydeBranch }[tile.value] || HINTS.benzeneBranch;
   }
   return templateHint(tile, 'branch');
 }
@@ -1244,7 +1372,8 @@ function parseItem(state, context) {
   const classInBranch = first.kind === 'classWord' && context === 'branch'; // `éter` inside a compound branch (R-5b2)
   if (['ending', 'freeValence', 'end', 'suffix', 'alkoxy'].includes(first.kind) || wholeWord || classInBranch) { // `oxi` alone: R-5b
     state.pos += 1;
-    const hint = (first.kind === 'end' && HINTS.endWithoutBranch) || (wholeWord && wholeWordHint(first)) || HINTS[first.kind];
+    const hint = (first.kind === 'end' && HINTS.endWithoutBranch) || (wholeWord && wholeWordHint(first))
+      || (first.kind === 'suffix' && suffixHint(first)) || HINTS[first.kind]; // `ona`, `al`… out of place (R-5c1)
     addTileOrder(state, start, start + 1, hint);
     return { type: 'stray', tile: start, range: [start, start + 1] };
   }
@@ -1262,7 +1391,7 @@ function parseItem(state, context) {
   if (next && next.kind === 'classWord' && context === 'name') {
     return makeClassParent(state, locants, letter, mult, start); // `etil metil éter` (R-5b2)
   }
-  if (!next || !['start', 'retained', 'halogen', 'hydroxy', 'root', 'ring'].includes(next.kind)) {
+  if (!next || !['start', 'retained', 'halogen', 'hydroxy', 'carbonyl', 'root', 'ring'].includes(next.kind)) {
     if (next) {
       addTileOrder(state, start, state.pos, HINTS[first.kind]); // numbers, a letter or a multiplier with no branch after them
     }
@@ -1277,7 +1406,7 @@ function parseItem(state, context) {
     node.range = [node.tile, state.pos];
     prefix.substituent = node;
   } else if (isAtomGroup(next.kind)) {
-    prefix.substituent = { type: next.kind, tile: state.pos, range: [state.pos, state.pos + 1] }; // `cloro`, `hidroxi`
+    prefix.substituent = { type: next.kind, tile: state.pos, range: [state.pos, state.pos + 1] }; // `cloro`, `hidroxi`, `oxo`
     state.pos += 1;
   } else {
     const chain = parseChain(state);
@@ -1534,7 +1663,7 @@ export function parse(sequence) {
     }
     // After `benceno`, numbers, multipliers and endings would number its double bonds (`benceno-1,3,5-trieno`).
     const { chain } = tree.parent;
-    const bonds = chain.type === 'benzene' && !isPhenol(tiles, chain)
+    const bonds = chain.type === 'benzene' && !groupWordOf(tiles, chain)
       && tiles.slice(state.pos).every((tile) => ['num', 'mult', 'ending'].includes(tile.kind));
     if (bonds) {
       addError(state, 'BENZENE_BONDS', state.pos, tiles.length, MESSAGES.BENZENE_BONDS);

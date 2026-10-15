@@ -17,7 +17,8 @@
  * the parent on the wrong side of the oxygen, `di` for `bis` before an
  * alkoxy prefix; diagnose.js header «Ethers»), the fixture round trip over
  * every ether row of tests/fixtures/names.tsv — the functional-class names
- * too since phase R-5b2 (their own tests: reverse-ether-classes.test.js) —,
+ * too since phase R-5b2 (their own tests: reverse-ether-classes.test.js),
+ * and since phase R-5c1 the ethers beside an aldehyde or a ketone —,
  * the closed loop over the oracle's ether generators (generateEthers(),
  * generateBenzenes(), generateSubstitutedPhenyls(),
  * generateRingPrincipalBenzenes(), ether molecules only; pure imports, no
@@ -63,8 +64,16 @@ const EXPECTED_NAMES = 57;
 /** The functional-class names among them (`dimetil éter`, `dietil éter`…), read since phase R-5b2 (I-51b2). */
 const EXPECTED_CLASS_NAMES = 11;
 
-/** The I-34 rows with a C=O beside the ether (an acid, an aldehyde, a ketone): their phases R-5c and R-5d. */
-const EXPECTED_CARBONYL_ROWS = 7;
+/**
+ * The ether rows with an aldehyde's or a ketone's C=O beside the ether, read since phase R-5c1 (I-51c1): the 5 of the I-34
+ * section the round trip had left out (`3-metoxipropanal`, `2-metoxietanal`, `4-metoxibutan-2-ona`, `2-metoxiciclohexan-1-ona`,
+ * `3-etoxi-2-metilpropanal`), 1 of I-39b (`2-(2-formilbutoxi)butanodial`) and 1 of I-43b (`4-metoxibenzaldehído` with its two
+ * alternatives); 9 names.
+ */
+const EXPECTED_CARBONYL_ROWS = Object.freeze({ total: 7, i34: 5, i39b: 1, i43b: 1, names: 9 });
+
+/** The I-34 rows with an acid's C=O beside the ether (`ácido 2-metoxietanoico`…): phase R-5d. */
+const EXPECTED_ACID_ROWS = 2;
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -723,9 +732,10 @@ test('dialog (R-5b): `oxi` and `anisol` have tooltips; the silent `il` of `metox
 // Fixture round trip and closed loop (design.md §15.7).
 // ---------------------------------------------------------------------------
 
-test('fixture round trip (R-5b1, R-5b2): every ether row and its class name, graph compared with the SMILES', async () => {
+test('fixture round trip (R-5b1, R-5b2, R-5c1): every ether row and its class name, graph compared with the SMILES', async () => {
   const fixtures = await readFixtures();
-  const rows = fixtures.filter((row) => isEther(row.smiles));
+  // The ethers beside an aldehyde or a ketone too, since phase R-5c1 (I-51c1).
+  const rows = fixtures.filter((row) => isEther(row.smiles, { carbonyl: true }));
   let covered = 0;
   let classNames = 0;
   let elapsed = 0;
@@ -758,17 +768,21 @@ test('fixture round trip (R-5b1, R-5b2): every ether row and its class name, gra
    * @returns {number} The count.
    */
   const inSection = (id) => rows.filter((row) => row.section.includes(`(${id})`) || row.section.includes(`(${id},`)).length;
-  assert.equal(rows.length, EXPECTED_ROWS.total);
-  assert.deepEqual([inSection('I-34'), inSection('I-40a'), inSection('I-42a'), inSection('I-43a'), inSection('I-45a')],
-    [EXPECTED_ROWS.i34, EXPECTED_ROWS.i40a, EXPECTED_ROWS.i42a, EXPECTED_ROWS.i43a, EXPECTED_ROWS.i45a]);
-  assert.equal(covered, EXPECTED_NAMES);
+  const carbonyl = rows.filter((row) => !isEther(row.smiles));
+  assert.equal(rows.length, EXPECTED_ROWS.total + EXPECTED_CARBONYL_ROWS.total);
+  assert.deepEqual([inSection('I-34'), inSection('I-40a'), inSection('I-42a'), inSection('I-43a'), inSection('I-45a'),
+    inSection('I-39b'), inSection('I-43b')], [EXPECTED_ROWS.i34 + EXPECTED_CARBONYL_ROWS.i34, EXPECTED_ROWS.i40a, EXPECTED_ROWS.i42a,
+    EXPECTED_ROWS.i43a, EXPECTED_ROWS.i45a, EXPECTED_CARBONYL_ROWS.i39b, EXPECTED_CARBONYL_ROWS.i43b]);
+  assert.equal(carbonyl.length, EXPECTED_CARBONYL_ROWS.total);
+  assert.equal(carbonyl.flatMap((row) => row.names).length, EXPECTED_CARBONYL_ROWS.names);
+  assert.equal(covered, EXPECTED_NAMES + EXPECTED_CARBONYL_ROWS.names);
   assert.equal(classNames, EXPECTED_CLASS_NAMES);
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
-  // Every I-34 row is read but those with a C=O beside the ether (acids, aldehydes, ketones: phases R-5c, R-5d).
-  const later = fixtures.filter((row) => row.section.includes('(I-34)') && !isEther(row.smiles));
-  assert.equal(later.length, EXPECTED_CARBONYL_ROWS);
-  assert.ok(later.every((row) => /=O|O=/.test(row.smiles)), 'every I-34 row left out has a C=O');
-}); // End of test 'fixture round trip (R-5b1, R-5b2): every ether row and its class name…'
+  // Every I-34 row is read but those with an acid's C=O beside the ether (phase R-5d).
+  const later = fixtures.filter((row) => row.section.includes('(I-34)') && !isEther(row.smiles, { carbonyl: true }));
+  assert.equal(later.length, EXPECTED_ACID_ROWS);
+  assert.ok(later.every((row) => row.names[0].startsWith('ácido ')), 'every I-34 row left out is an acid');
+}); // End of test 'fixture round trip (R-5b1, R-5b2, R-5c1): every ether row and its class name…'
 
 /** The closed loop's generators (scripts/oracle/generate.mjs; design.md §15.7), ether molecules only. */
 const LOOP = Object.freeze({

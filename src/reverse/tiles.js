@@ -9,7 +9,7 @@
  * RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
  * TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS,
  * HALOGEN_PREFIXES, GROUP_PREFIXES, GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING,
- * ETHER_CLASS_WORD),
+ * ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX),
  * never retyped here;
  * numbers are digits. Tile ids are language-neutral (`root-4`, `ending-double`,
  * `retained-tert-butyl`), so a sequence of ids survives a change of wording.
@@ -63,11 +63,27 @@
  *   the last tile of the name, after the two groups bonded to the oxygen —
  *   `et il met il éter` → `etil metil éter`, `di et il éter` → `dietil
  *   éter`; the spaces are automatic; value 'ether');
+ *   and for the aldehydes and ketones (R-5c1): the suffixes `al` (value
+ *   'aldehyde': a –CHO at an end of a chain, terminal by rule — `butanal`,
+ *   `butanodial`), `ona` (value 'ketone': a C=O on a carbon of the parent —
+ *   `pentan-2-ona`, `ciclohexanona`) and `carbaldehído` (value
+ *   'carbaldehyde': a –CHO whose carbon is outside the parent, bonded to the
+ *   carbon its locant gives — `ciclohexanocarbaldehído`,
+ *   `benceno-1,4-dicarbaldehído`), kind 'suffix' like `ol` (SUFFIX_GROUPS);
+ *   'carbonyl' (the prefix `oxo`: one oxygen double-bonded to its carbon, a
+ *   one-atom group like a halogen — `4-oxopentanal`, `(2-oxoetil)`; value
+ *   'ketone', the GROUP_PREFIXES key); `formil` (kind 'retained', value
+ *   'formyl': the –CHO as a branch, one carbon with its =O bonded by that
+ *   carbon — `(4-formilciclohexil)`; the lexicon's FORMYL_PREFIX); and in the
+ *   «Anillos» row `benzaldehído` (kind 'benzene', value 'benzaldehyde': the
+ *   benzene parent with its –CHO at carbon 1, as `fenol` with its OH —
+ *   `4-metilbenzaldehído`; GROUP_WORD_PARENTS);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers',
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
- *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2), 'groups'
- *   («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`; R-5b: `oxi`,
- *   and `éter` from R-5b2),
+ *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2,
+ *   `benzaldehído` from R-5c1), 'groups' («Grupos», R-5a1: the halogens;
+ *   R-5a2: `hidroxi` and `ol`; R-5b: `oxi`, and `éter` from R-5b2; R-5c1:
+ *   `oxo`, `formil`, `al`, `ona`, `carbaldehído`),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; later phases add acetona, ácido
  *   acético…);
@@ -78,7 +94,7 @@
 import {
   MAX_STEM, stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS,
   RING_PREFIX, BENZENE_NAME, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, POSITIONAL_LETTERS, HALOGEN_PREFIXES, GROUP_PREFIXES,
-  GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING, ETHER_CLASS_WORD, groupName,
+  GROUP_SUFFIXES, PHENOL_STEM, ALKOXY_ENDING, ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, BENZENE_GROUP_NAMES, FORMYL_PREFIX, groupName,
 } from '../naming/lexicon.es.js';
 
 /** Largest locant tile (the longest supported chain, design.md §1.1). */
@@ -156,6 +172,56 @@ export const ETHER_CLASS_ID = 'class-ether';
 /** How many groups the oxygen of an ether's functional-class name carries (`etil metil éter`, `dietil éter`; R-5b2). */
 export const ETHER_CLASS_GROUPS = 2;
 
+/** Id of the `oxo` tile (design.md §15.8 R-5c; phase R-5c1: a C=O that is not the principal group, as a prefix). */
+export const OXO_ID = 'group-oxo';
+
+/** The element of the atom an `oxo` prefix adds, double-bonded to its carbon (R-5c1). */
+export const OXO_ELEMENT = 'O';
+
+/** Id of the `formil` tile (design.md §15.8 R-5c; phase R-5c1: a –CHO bonded by its carbon, as a branch). */
+export const FORMYL_ID = 'retained-formyl';
+
+/** Id of the `al` tile (design.md §15.8 R-5c; phase R-5c1: the aldehyde suffix of a chain). */
+export const AL_ID = 'suffix-aldehyde';
+
+/** Id of the `ona` tile (design.md §15.8 R-5c; phase R-5c1: the ketone suffix). */
+export const ONA_ID = 'suffix-ketone';
+
+/** Id of the `carbaldehído` tile (design.md §15.8 R-5c; phase R-5c1: the –CHO suffix whose carbon is outside the parent). */
+export const CARBALDEHYDE_ID = 'suffix-carbaldehyde';
+
+/** Id of the `benzaldehído` tile (design.md §15.8 R-5c; phase R-5c1: the benzene parent with its –CHO at carbon 1). */
+export const BENZALDEHYDE_ID = 'ring-benzaldehyde';
+
+/**
+ * The principal groups of the suffix tiles, by tile value (R-5a2, R-5c1):
+ * the group (`kind`, a lexicon GROUP_SUFFIXES key, as the engine's
+ * SuffixStructure says it), whether its carbon is outside the parent
+ * (`outside`: `carbaldehído`, a new carbon bonded to the parent's carbon,
+ * the =O on it — render.js suffixWords() `outside`), the order of the bond
+ * from the carbon to its oxygen (`order`: 1 for the OH, 2 for a C=O) and
+ * whether it sits at a chain end by rule (`terminal`: `al`, render.js
+ * TERMINAL_SUFFIXES; never cited on a chain).
+ */
+export const SUFFIX_GROUPS = Object.freeze({
+  alcohol: Object.freeze({ kind: 'alcohol', outside: false, order: 1, terminal: false }),
+  aldehyde: Object.freeze({ kind: 'aldehyde', outside: false, order: 2, terminal: true }),
+  ketone: Object.freeze({ kind: 'ketone', outside: false, order: 2, terminal: false }),
+  carbaldehyde: Object.freeze({ kind: 'aldehyde', outside: true, order: 2, terminal: false }),
+});
+
+/**
+ * The whole-word benzene parents that place their principal group at
+ * carbon 1 themselves, by tile value: `fenol` (R-5a2, its OH) and
+ * `benzaldehído` (R-5c1, its –CHO, whose carbon is outside the ring):
+ * `suffix` the SUFFIX_GROUPS key of that group, `group` how the messages
+ * call it (the parser's and the builder's «grupo OH», «grupo CHO»).
+ */
+export const GROUP_WORD_PARENTS = Object.freeze({
+  phenol: Object.freeze({ suffix: 'alcohol', group: 'grupo OH' }),
+  benzaldehyde: Object.freeze({ suffix: 'carbaldehyde', group: 'grupo CHO' }),
+});
+
 /**
  * The retained branch words that take `oxi` (R-5b, render.js
  * isContractedAlkoxy(): `isopropoxi`, `tert-butoxi`, `fenoxi`, always
@@ -166,16 +232,43 @@ export const ALKOXY_RETAINED = Object.freeze(['isopropyl', 'tert-butyl', 'phenyl
 
 /**
  * Tells whether a tile kind, a parse.js node type or an interpret.js
- * SubstituentSpec kind is a one-atom group prefix: a halogen (R-5a1) or
- * `hidroxi` (R-5a2) — one heteroatom single-bonded to its carbon, never a
+ * SubstituentSpec kind is a one-atom group prefix: a halogen (R-5a1),
+ * `hidroxi` (R-5a2) or `oxo` (R-5c1) — one heteroatom bonded to its carbon
+ * (single-bonded, or double-bonded for `oxo`: atomGroupOrder()), never a
  * chain of its own, never enclosed by itself, no prefixes, no slots of its
  * own.
  *
  * @param {string} kind - A tile kind, node type or spec kind.
- * @returns {boolean} True for 'halogen' and 'hydroxy'.
+ * @returns {boolean} True for 'halogen', 'hydroxy' and 'carbonyl' (`oxo`).
  */
 export function isAtomGroup(kind) {
-  return kind === 'halogen' || kind === 'hydroxy';
+  return kind === 'halogen' || kind === 'hydroxy' || kind === 'carbonyl';
+}
+
+/**
+ * The order of the bond from a one-atom group to its carbon: 2 for the =O
+ * of `oxo` (R-5c1), 1 for a halogen or the OH of `hidroxi`.
+ *
+ * @param {string} kind - A one-atom group's kind (isAtomGroup()).
+ * @returns {number} 1 or 2.
+ */
+export function atomGroupOrder(kind) {
+  return kind === 'carbonyl' ? 2 : 1;
+}
+
+/**
+ * The element of a one-atom group's atom: the oxygen of `hidroxi` (R-5a2)
+ * or `oxo` (R-5c1), else the halogen tile's value.
+ *
+ * @param {string} kind - A one-atom group's kind (isAtomGroup()).
+ * @param {string} value - Its tile's value.
+ * @returns {string} The element symbol.
+ */
+export function atomGroupElement(kind, value) {
+  if (kind === 'hydroxy') {
+    return HYDROXY_ELEMENT;
+  }
+  return kind === 'carbonyl' ? OXO_ELEMENT : value;
 }
 
 /**
@@ -330,9 +423,10 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
 /**
  * Builds the whole catalogue in dialog order: numbers, multipliers (simple,
  * then compound), roots, endings, branch words and controls, rings (`ciclo`,
- * `benceno`, `fenol`, `fenil`, the letters `o`, `m`, `p`, `1(n)`), groups
- * (the halogens `fluoro`, `cloro`, `bromo`, `yodo`, then `hidroxi`, `ol`,
- * `oxi` and `éter`), traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`,
+ * `benceno`, `fenol`, `benzaldehído`, `fenil`, the letters `o`, `m`, `p`,
+ * `1(n)`), groups (the halogens `fluoro`, `cloro`, `bromo`, `yodo`, then
+ * `hidroxi`, `ol`, `oxi`, `éter`, `oxo`, `formil`, `al`, `ona` and
+ * `carbaldehído`), traditional names (`tolueno`, `estireno`, `xileno`, `mesitileno`,
  * `anisol`, then the retained phenols `cresol`, `pirocatecol`, `catecol`,
  * `resorcinol`, `hidroquinona`).
  *
@@ -368,6 +462,8 @@ function buildCatalogue() {
   tiles.push(makeTile(RING_ID, 'ring', 'cyclo', 'rings', RING_PREFIX));
   tiles.push(makeTile(BENZENE_ID, 'benzene', 'benzene', 'rings', BENZENE_NAME));
   tiles.push(makeTile(PHENOL_ID, 'benzene', 'phenol', 'rings', `${PHENOL_STEM}${GROUP_SUFFIXES.alcohol}`)); // `fenol` (R-5a2)
+  const benzaldehyde = BENZENE_GROUP_NAMES.aldehyde;
+  tiles.push(makeTile(BENZALDEHYDE_ID, 'benzene', 'benzaldehyde', 'rings', `${benzaldehyde.stem}${benzaldehyde.ending}`)); // R-5c1
   const phenyl = RETAINED_PREFIXES.phenyl;
   tiles.push(makeTile(PHENYL_ID, 'retained', 'phenyl', 'rings', `${phenyl.italic}${phenyl.text}`, false, { italic: phenyl.italic }));
   for (const [locant, id] of Object.entries(POSITIONAL_IDS)) {
@@ -381,6 +477,11 @@ function buildCatalogue() {
   tiles.push(makeTile(OL_ID, 'suffix', 'alcohol', 'groups', GROUP_SUFFIXES.alcohol)); // `ol` (R-5a2)
   tiles.push(makeTile(ALKOXY_ID, 'alkoxy', 'ether', 'groups', ALKOXY_ENDING)); // `oxi` (R-5b)
   tiles.push(makeTile(ETHER_CLASS_ID, 'classWord', 'ether', 'groups', ETHER_CLASS_WORD)); // `éter` (R-5b2)
+  tiles.push(makeTile(OXO_ID, 'carbonyl', 'ketone', 'groups', GROUP_PREFIXES.ketone)); // `oxo` (R-5c1)
+  tiles.push(makeTile(FORMYL_ID, 'retained', 'formyl', 'groups', FORMYL_PREFIX, false, { italic: '' })); // `formil` (R-5c1)
+  tiles.push(makeTile(AL_ID, 'suffix', 'aldehyde', 'groups', GROUP_SUFFIXES.aldehyde)); // `al` (R-5c1)
+  tiles.push(makeTile(ONA_ID, 'suffix', 'ketone', 'groups', GROUP_SUFFIXES.ketone)); // `ona` (R-5c1)
+  tiles.push(makeTile(CARBALDEHYDE_ID, 'suffix', 'carbaldehyde', 'groups', RING_GROUP_SUFFIXES.aldehyde)); // R-5c1
   for (const value of Object.keys(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }

@@ -109,8 +109,19 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   «Ethers»: the parent on the other side of the oxygen, told from the
   oxygen; `di` for `bis` before an alkoxy prefix; a class name for an ether
   that has none, in other words, out of order or with a repeated group),
-  each with its «Ver el paso» step. Next is R-5c (phase I-51c): aldehydes
-  and ketones.
+  each with its «Ver el paso» step. R-5c1 (phase I-51c1) is done: the
+  «Grupos» row's `al` (the –CHO at the ends of a chain by rule, no locants:
+  `butanal`, `butanodial`), `ona` (`pentan-2-ona`, `ciclohexanona`, old
+  style `2-pentanona`), `carbaldehído` (`ciclohexano-1,4-dicarbaldehído`,
+  `benceno-1,4-dicarbaldehído`), `oxo` and `formil` tiles and the
+  «Anillos» row's `benzaldehído` read aldehydes and ketones on chains,
+  rings and `benceno` and inside compound branches (`4-oxopentanal`,
+  `(2-oxoetil)`, `(4-formilciclohexil)`), their left-out locants searched
+  (`butanona` → `butan-2-ona`); a ketone's C=O on a bare end carbon is
+  `invalid` (CARBONYL_POSITION), and the diagnosis keeps the rules that
+  hold for a carbonyl name, with deliberate nulls under its «Aldehydes and
+  ketones» header. Next is R-5c2 (phase I-51c2): the acyl prefixes
+  (`acetil`, `propanoil`, `benzoil`, `ciclohexanocarbonil`).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

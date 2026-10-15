@@ -5,8 +5,10 @@
  * the open-chain, `ciclo` and benzene hydrocarbon rows of
  * tests/fixtures/names.tsv (the benzene ones with the retained templates
  * and the orto/meta/para forms, R-4c), their halogen derivatives (R-5a1),
- * their alcohols (R-5a2; the retained phenols, R-5a3a) and their ethers
- * (R-5b1: alkoxy prefixes and `anisol`).
+ * their alcohols (R-5a2; the retained phenols, R-5a3a), their ethers
+ * (R-5b1: alkoxy prefixes and `anisol`) and their aldehydes and ketones
+ * (R-5c1: the suffixes `al`, `ona`, `carbaldehído`, the prefixes `oxo` and
+ * `formil`, `benzaldehído`).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -15,7 +17,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
 import {
-  RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, ETHER_CLASS_WORD,
+  RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, ETHER_CLASS_WORD, ACETYL_PREFIX, ACYL_ENDING,
+  RING_CARBONYL_ENDING,
 } from '../../src/naming/lexicon.es.js';
 import { parseSmiles } from '../../src/model/smiles.js';
 
@@ -108,23 +111,46 @@ export function isAlcohol(smiles) {
 }
 
 /**
+ * Tells whether an oxygen of a molecule is the =O of an aldehyde or a
+ * ketone (phase R-5c1): one double bond, to a carbon bonded to no other
+ * oxygen (so not an acid's or an ester's C=O).
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @param {object[]} bonds - Its bonds.
+ * @param {number} id - The oxygen's atom id.
+ * @returns {boolean} True for a ketone's or an aldehyde's oxygen.
+ */
+function isCarbonylOxygen(mol, bonds, id) {
+  const own = bonds.filter((bond) => bond.a === id || bond.b === id);
+  if (own.length !== 1 || own[0].order !== 2) {
+    return false;
+  }
+  const carbon = own[0].a === id ? own[0].b : own[0].a;
+  return mol.atoms.get(carbon).element === 'C' && bonds.filter((bond) => (bond.a === carbon || bond.b === carbon) && bond !== own[0])
+    .every((bond) => mol.atoms.get(bond.a === carbon ? bond.b : bond.a).element !== 'O');
+} // End of function isCarbonylOxygen()
+
+/**
  * Tells whether a molecule is an ether of a hydrocarbon, of one of its
  * halogen derivatives or of one of its alcohols (phase R-5b1): carbons,
  * halogens and oxygens only, every oxygen single-bonded to carbons only —
  * an OH (one carbon) or an ether oxygen (two carbons; so no C=O, ester or
- * acid) —, at least one ether oxygen.
+ * acid) —, at least one ether oxygen. With `carbonyl` (phase R-5c1) the =O
+ * of an aldehyde or a ketone is allowed too (`3-metoxipropanal`), never an
+ * acid's or an ester's.
  *
  * @param {object} mol - A molecule (model/molecule.js).
+ * @param {{carbonyl?: boolean}} [options] - `carbonyl`: allow aldehyde and ketone C=O groups (default false).
  * @returns {boolean} True for an ether.
  */
-export function isEtherMolecule(mol) {
+export function isEtherMolecule(mol, options = {}) {
   const bonds = [...mol.bonds.values()];
   let ethers = 0;
   for (const [id, atom] of mol.atoms) {
     if (!['C', 'F', 'Cl', 'Br', 'I', 'O'].includes(atom.element)) {
       return false;
     }
-    if (atom.element !== 'O') {
+    if (atom.element !== 'O' || (options.carbonyl && isCarbonylOxygen(mol, bonds, id))) {
       continue;
     }
     const own = bonds.filter((bond) => bond.a === id || bond.b === id);
@@ -139,17 +165,94 @@ export function isEtherMolecule(mol) {
 
 /**
  * Tells whether a fixture SMILES is an ether (isEtherMolecule(), phase
- * R-5b1); a SMILES the model cannot read is not.
+ * R-5b1; with `carbonyl`, R-5c1, beside an aldehyde or a ketone too); a
+ * SMILES the model cannot read is not.
  *
  * @param {string} smiles - The SMILES.
+ * @param {{carbonyl?: boolean}} [options] - isEtherMolecule() options.
  * @returns {boolean} True for an ether.
  */
-export function isEther(smiles) {
+export function isEther(smiles, options = {}) {
   try {
-    return isEtherMolecule(parseSmiles(smiles));
+    return isEtherMolecule(parseSmiles(smiles), options);
   } catch (err) {
     return false;
   }
+}
+
+/**
+ * Tells whether a molecule is an aldehyde or a ketone of a hydrocarbon or of
+ * one of its halogen derivatives, alcohols or ethers (phase R-5c1): carbons,
+ * halogens and oxygens only, every oxygen an OH, an ether oxygen or the =O
+ * of an aldehyde or a ketone (isCarbonylOxygen(): no acid, ester or other
+ * C=O), at least one such =O.
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @returns {boolean} True for an aldehyde or a ketone.
+ */
+export function isCarbonylMolecule(mol) {
+  const bonds = [...mol.bonds.values()];
+  let carbonyls = 0;
+  for (const [id, atom] of mol.atoms) {
+    if (!['C', 'F', 'Cl', 'Br', 'I', 'O'].includes(atom.element)) {
+      return false;
+    }
+    if (atom.element !== 'O') {
+      continue;
+    }
+    if (isCarbonylOxygen(mol, bonds, id)) {
+      carbonyls += 1;
+      continue;
+    }
+    const own = bonds.filter((bond) => bond.a === id || bond.b === id);
+    if (own.some((bond) => bond.order !== 1) || own.some((bond) => mol.atoms.get(bond.a === id ? bond.b : bond.a).element !== 'C')) {
+      return false;
+    }
+  } // End of the loop over the atoms
+  return carbonyls > 0;
+} // End of function isCarbonylMolecule()
+
+/**
+ * Tells whether a fixture SMILES is an aldehyde or a ketone
+ * (isCarbonylMolecule(), phase R-5c1); a SMILES the model cannot read is
+ * not.
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True for an aldehyde or a ketone.
+ */
+export function isCarbonyl(smiles) {
+  try {
+    return isCarbonylMolecule(parseSmiles(smiles));
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * The words of the aldehyde and ketone names the tiles of phase R-5c1 do not
+ * write, from the lexicon: the acyl prefixes of phase R-5c2 (`acetil`, the
+ * `oil` ending of `propanoil` and `benzoil`, the `carbonil` of
+ * `ciclohexanocarbonil`) and the retained names of phase R-5c3
+ * (`formaldehído`, `acetaldehído` — `fenilacetaldehído`,
+ * `2-(4-metilfenil)acetaldehído` too —, `acetona`, `acetofenona`, the
+ * ftalaldehídos).
+ */
+export const LATER_CARBONYL_WORDS = Object.freeze([
+  ACETYL_PREFIX, ACYL_ENDING, RING_CARBONYL_ENDING, TRADITIONAL_NAMES.formaldehyde, TRADITIONAL_NAMES.acetaldehyde,
+  TRADITIONAL_NAMES.acetone, TRADITIONAL_NAMES.acetophenone, BENZENE_DIGROUP_NAMES.phthalaldehyde,
+]);
+
+/**
+ * Tells whether a name of an aldehyde or a ketone is written with the tiles
+ * of phase R-5c1: none of the words left for later phases
+ * (LATER_CARBONYL_WORDS; `ftalaldehído` covers `isoftalaldehído` and
+ * `tereftalaldehído`).
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True when the tiles read it.
+ */
+export function isCarbonylName(name) {
+  return !LATER_CARBONYL_WORDS.some((word) => name.includes(word));
 }
 
 /**

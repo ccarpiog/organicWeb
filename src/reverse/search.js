@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -46,7 +46,14 @@
  *   (R-5b2, ParentSpec kind 'ether') is a one-atom chain of the model whose
  *   two groups take one implicit slot each: only the left-out locants inside
  *   a compound group are searched (`(cloroetil) metil éter`: two
- *   structures).
+ *   structures). The aldehydes and ketones (R-5c1) add no role: a suffix's
+ *   C=O (`ona`) takes two bonds of its carbon, a `carbaldehído`'s –CHO one
+ *   (its own carbon is outside the parent), `oxo` two, `formil` one; the
+ *   slots of `ona` keep the carbon role, 1…n, since an end carbon that a ring
+ *   or a branch makes a ketone's is right (`feniletanona` →
+ *   `1-feniletan-1-ona`), so a placement on a bare end is left to build()
+ *   (CARBONYL_POSITION: `butanona` is butan-2-ona, `metanona` fits nowhere);
+ *   `al` on a chain has no left-out slot (its ends by rule).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -58,7 +65,8 @@
  *   from the current value on cannot hold the slots it still has to place.
  *   The pruning is exact for the chemistry build.js checks (ranges,
  *   SAME_BOND, VALENCE); only a parent lengthened past MAX_CHAIN (TOO_BIG)
- *   is left to build().
+ *   and a ketone's C=O on a bare end (CARBONYL_POSITION, R-5c1) are left to
+ *   build().
  * - **Structural merge** (step 4): each placement is built and keyed with
  *   the aromatic-equivalence key (model/graph.js aromaticKey(), R-4b: the
  *   canonicalKey() of a view where both Kekulé drawings of a benzene ring
@@ -102,7 +110,7 @@
 import { CARBON_VALENCE, cloneMolecule } from '../model/molecule.js';
 import { aromaticKey, aromaticIsomorphism } from '../model/graph.js';
 import { build, checkSpec, attachmentOrder, hasOwnChain, ringRefusal, isRing, isAromatic, templateGroups } from './build.js';
-import { TILES, CLOSING_ID, POSITIONAL_IDS, TEMPLATES, tileById } from './tiles.js';
+import { TILES, CLOSING_ID, POSITIONAL_IDS, TEMPLATES, SUFFIX_GROUPS, tileById } from './tiles.js';
 
 /**
  * Default limits of one search (design.md §15.5.3 step 3): valid
@@ -336,7 +344,9 @@ function modelOf(spec) {
   const model = { chains: [], groups: [], index: new Map(spec.leftOut.map((slot, i) => [slot, i])) };
   const parent = addChain(model, { ...spec.parent, prefixes: [...spec.prefixes, ...templateGroups(spec)] }, false); // A template's groups too (R-4c).
   if (spec.suffix) {
-    addSlots(model, spec.suffix.slots, { role: 'carbon', chain: parent, amount: 1 }); // One OH per slot (R-5a2).
+    // One OH per slot (R-5a2); a C=O of `al` or `ona` takes two bonds, a –CHO of `carbaldehído` one (its own carbon; R-5c1).
+    const amount = spec.suffix.outside ? 1 : SUFFIX_GROUPS[spec.suffix.kind].order;
+    addSlots(model, spec.suffix.slots, { role: 'carbon', chain: parent, amount });
   }
   model.groups.sort((p, q) => p.indices[0] - q.indices[0]);
   return model;
@@ -708,7 +718,12 @@ export function placementReading(spec, structure, placement) {
       bonds: occurrence.bonds.map(bond),
     })),
     suffixAtoms: built.suffixAtoms.map((group) => ({
-      ...group, parentAtom: atom(group.parentAtom), attachment: atom(group.attachment), bond: bond(group.bond),
+      ...group,
+      parentAtom: atom(group.parentAtom),
+      attachment: atom(group.attachment),
+      bond: bond(group.bond),
+      // The –CHO's own carbon of `carbaldehído` (R-5c1).
+      ...(group.carbon === undefined ? {} : { carbon: atom(group.carbon), carbonBond: bond(group.carbonBond) }),
     })),
   };
 } // End of function placementReading()

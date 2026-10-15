@@ -387,6 +387,23 @@ test('the deliberate null: `di-tert-butil éter`, which the engine writes `diter
   assert.match(read('tert-butil tert-butil éter').diagnosis.message, /«di-tert-butil éter», no «tert-butil tert-butil éter»\.$/);
 }); // End of test 'the deliberate null…'
 
+test('the deliberate null: a class name whose oxygen is an ester\'s (review of phase I-51c1)', () => {
+  for (const [name, engine] of [
+    ['(1-oxoetil) metil éter', 'etanoato de metilo'],
+    ['metil (1-oxoetil) éter', 'etanoato de metilo'],
+    ['(1-oxopropil) metil éter', 'propanoato de metilo'],
+  ]) {
+    const verdict = read(name);
+    assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis], ['otherName', engine, null], name);
+  } // End of the loop over the ester class names
+  // An ether beside a ketone or an OH is still an ether: its `-oxi` prefix is in the engine's name.
+  for (const [name, engine] of [['(2-oxopropil) metil éter', '1-metoxipropan-2-ona'], ['(2-hidroxietil) metil éter', '2-metoxietan-1-ol']]) {
+    const verdict = read(name);
+    assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis.code], ['otherName', engine, 'CLASS_NAME_NONE'], name);
+    assert.ok(verdict.diagnosis.message.endsWith(`«${engine}».`), name);
+  } // End of the loop over the ethers with a suffix
+}); // End of test 'the deliberate null: a class name whose oxygen is an ester's'
+
 test('the drafts of the ether rules: their place among the rules, their steps, every variant renders', () => {
   assert.deepEqual(DIAGNOSIS_CODES.filter((code) => ETHER_CODES.includes(code)), ETHER_CODES);
   assert.deepEqual(ETHER_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]),

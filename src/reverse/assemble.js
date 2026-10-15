@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -99,7 +99,18 @@
  *
  * The alcohol suffix (R-5a2) follows the parent's ending with its locants
  * (rule 1: `butano-1,4-diol`), its multiplier and `ol` (rule 4 above); the
- * `fenol` tile is one whole word, like `benceno`. The closing-bond locant
+ * `fenol` tile is one whole word, like `benceno`. The suffixes of the
+ * aldehydes and ketones (R-5c1) take rule 4 as `ol` does, by the first
+ * letter of multiplier + suffix (render.js suffixWords()): `butanal`,
+ * `but-2-enal`, `prop-2-inal`, `pentan-2-ona`, `ciclohexanona`,
+ * `ciclohex-2-en-1-ona`, but `butanodial`, `pentano-2,4-diona`,
+ * `ciclohexano-1,4-diona`; `carbaldehído` starts with a consonant, so the
+ * ending keeps its `o` (`ciclohexanocarbaldehído`,
+ * `ciclohex-2-eno-1-carbaldehído`, `bencenocarbaldehído`,
+ * `benceno-1,4-dicarbaldehído`); `al` never has locants on a chain
+ * (parse.js). `benzaldehído` is one whole word like `fenol`, and `oxo` a
+ * one-atom prefix like `hidroxi`, never enclosed by itself (`4-oxopentanal`,
+ * `(2-oxoetil)`); `formil` a retained word like `isopropil`. The closing-bond locant
  * `1(n)` (R-5a2) is written with the ring's own size, `1(6)` on a ring of six
  * (structure.js locantText(): `ciclohex-1(6)-eno-1,2,4-triol`), and
  * punctuated as any locant (`ciclopropa-1,1(3),2-trieno`); out of place it
@@ -379,7 +390,8 @@ function strayPieces(tiles, index, out) {
   const roles = { num: 'locant', positional: 'locant', closing: 'locant', mult: 'mult', cmult: 'mult', start: 'open', end: 'close' };
   const kinds = {
     num: 'locant', positional: 'locant', closing: 'locant', mult: 'multiplier', cmult: 'multiplier', root: 'stem', ending: 'ending',
-    freeValence: 'ending', retained: 'prefix', halogen: 'prefix', hydroxy: 'prefix', suffix: 'ending', start: 'punct', end: 'punct',
+    freeValence: 'ending', retained: 'prefix', halogen: 'prefix', hydroxy: 'prefix', carbonyl: 'prefix', suffix: 'ending', start: 'punct',
+    end: 'punct',
     ring: 'stem', benzene: 'stem', template: 'stem', alkoxy: 'ending', classWord: 'ending',
   };
   out.push(piece(tile.text, index, kinds[tile.kind], roles[tile.kind] || 'word', tile.italic ? { italic: true } : {}));
