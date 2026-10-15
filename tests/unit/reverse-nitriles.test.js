@@ -51,7 +51,7 @@ import {
 } from '../../scripts/oracle/generate.mjs';
 import {
   seq, readFixtures, leafIndices, isNitrile, isNitrileMolecule, isNitrileName, LATER_NITRILE_WORDS, NITRILE_WORD, isEster,
-  isNitrileTemplateName, NITRILE_TEMPLATE_WORDS,
+  isNitrileTemplateName, NITRILE_TEMPLATE_WORDS, isAminoName, isAmideName,
 } from './reverse-words.js';
 
 /**
@@ -62,22 +62,34 @@ import {
  * on two carbon pieces), 2 of I-39b (acyl prefixes), 1 of I-39c, 15 of I-40c
  * (ring nitriles), 1 of I-40d, 3 of I-43b (benzonitriles with ring prefixes,
  * `ácido 4-cianobenzoico`), 3 of I-44 (benzene polynitriles), 1 of I-45a and
- * 1 of I-45b; and 10 with an amine's or an amide's nitrogen (R-6c, R-6d:
- * `2-aminopropanonitrilo`, `3-cianopropanamida`, `4-aminobenzonitrilo`…),
- * which never tokenize.
+ * 1 of I-45b —; since phase R-6c2 the 5 with an amino prefix (EXPECTED_AMINO:
+ * 2 more of I-38, `2-aminopropanonitrilo`, `2-(dimetilamino)etanonitrilo`, 2
+ * of I-39a, `ácido 4-amino-2-cianobutanoico`,
+ * `3-[(cianometil)(metil)amino]propanonitrilo`, 1 of I-43b,
+ * `4-aminobenzonitrilo`), so 69 rows read; and 5 with an amide's nitrogen
+ * (R-6d: `3-cianopropanamida`, `3-cianobenzamida`…), which never tokenize
+ * (until phase R-6c2, 64 rows read and 10 with an amine's or an amide's
+ * nitrogen).
  */
 const EXPECTED_ROWS = Object.freeze({
-  total: 74, read: 64, i38: 17, i39a: 20, i39b: 2, i39c: 1, i40c: 15, i40d: 1, i43b: 3, i44: 3, i45a: 1, i45b: 1, later: 10,
+  total: 74, read: 69, i38: 19, i39a: 22, i39b: 2, i39c: 1, i40c: 15, i40d: 1, i43b: 4, i44: 3, i45a: 1, i45b: 1, later: 5,
 });
 
 /**
- * Their names and alternatives the tiles write, read back (79): those of
- * phase R-6b1 (75, swept below) and, since phase I-52b2, the retained
- * `acetonitrilo`, `fenilacetonitrilo`, `2-(4-metilfenil)acetonitrilo` and
- * `ftalonitrilo` (4, swept apart in reverse-nitrile-templates.test.js); none
- * left for later.
+ * The rows with an amino prefix among those read back since phase R-6c2, and their names (7: the 5 rows above and the
+ * `4-aminobenceno-1-carbonitrilo` and `p-aminobenzonitrilo` alternatives), swept in reverse-amino.test.js, not below.
  */
-const EXPECTED_NAMES = 79;
+const EXPECTED_AMINO = Object.freeze({ rows: 5, names: 7 });
+
+/**
+ * Their names and alternatives the tiles write, read back (86): those of
+ * phase R-6b1 (75, swept below), since phase I-52b2 the retained
+ * `acetonitrilo`, `fenilacetonitrilo`, `2-(4-metilfenil)acetonitrilo` and
+ * `ftalonitrilo` (4, swept apart in reverse-nitrile-templates.test.js) and
+ * since phase R-6c2 the 7 with an amino prefix (EXPECTED_AMINO); none left
+ * for later.
+ */
+const EXPECTED_NAMES = 86;
 const EXPECTED_TEMPLATE_NAMES = 4;
 const EXPECTED_LATER_NAMES = 0;
 
@@ -399,11 +411,13 @@ test('tokenizer (R-6b1): texts that only read with errors and the later families
   for (const name of ['nitrilo', 'butanonitril', 'butannitrilo', 'butan-1-onitrilo', 'butano-1-nitrilo', '1-butanonitrilo',
     'ciclohexanonitrilo', 'bencenonitrilo', 'ciclohexanocarbonitril', '1-benzonitrilo', 'p-benzonitrilo', 'benzonitrilonitrilo',
     '(cianooxi)metano', 'ciano', '2-ciano', 'ácido butanonitrilo', 'butanonitrilo de metilo', 'etanoato de cianilo',
-    // Phases R-6c, R-6d: amines and amides beside a nitrile.
-    '2-aminopropanonitrilo', '4-aminobenzonitrilo', '3-cianopropanamida', '4-cianociclohexano-1-carboxamida',
-    '3-cianobenzamida']) {
+    // Phase R-6d: amides beside a nitrile.
+    '3-cianopropanamida', '4-cianociclohexano-1-carboxamida', '3-cianobenzamida']) {
     assert.equal(tokenize(name), null, name);
   }
+  // Phase R-6c2: an amino prefix beside a nitrile reads (reverse-amino.test.js).
+  assert.deepEqual([tokenize('2-aminopropanonitrilo'), tokenize('4-aminobenzonitrilo')],
+    [seq('2 amino prop ano nitrilo'), seq('4 amino benzonitrilo')]);
   // Phase I-52b2: the retained nitrile names read (reverse-nitrile-templates.test.js); none is left for later.
   assert.deepEqual(LATER_NITRILE_WORDS, []);
   assert.deepEqual(NITRILE_TEMPLATE_WORDS, ['acetonitrilo', 'fenilacetonitrilo', 'ftalonitrilo']);
@@ -820,7 +834,7 @@ test('the former deliberate nulls of R-6b1 (diagnose.js «Nitriles»): each cate
 // Fixture round trip and closed loop (design.md §15.7).
 // ---------------------------------------------------------------------------
 
-test('fixture round trip (R-6b1, R-6b2): every nitrile name the tiles write, read back; graph compared with the SMILES; later names never tokenize', async () => {
+test('fixture round trip (R-6b1, R-6b2, R-6c2): every nitrile name the tiles write, read back; graph compared with the SMILES; later names never tokenize', async () => {
   const fixtures = await readFixtures();
   const rows = fixtures.filter((row) => /C#N|N#C/.test(row.smiles));
   let covered = 0;
@@ -829,12 +843,17 @@ test('fixture round trip (R-6b1, R-6b2): every nitrile name the tiles write, rea
   let laterRows = 0;
   let elapsed = 0;
   const readRows = new Set();
+  const aminos = { rows: 0, names: 0 };
   for (const row of rows) {
-    if (!isNitrile(row.smiles)) {
-      laterRows += 1; // An amine or an amide beside the nitrile (R-6c, R-6d).
+    // An amino prefix beside the nitrile (R-6c2): read since then, swept in reverse-amino.test.js.
+    const amino = !isNitrile(row.smiles) && row.names.every((name) => isAminoName(name) && !isAmideName(name));
+    if (!isNitrile(row.smiles) && !amino) {
+      laterRows += 1; // An amide beside the nitrile (R-6d).
       row.names.forEach((name) => assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`));
       continue;
     }
+    aminos.rows += amino ? 1 : 0;
+    aminos.names += amino ? row.names.length : 0;
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (!isNitrileName(name)) {
@@ -872,6 +891,7 @@ test('fixture round trip (R-6b1, R-6b2): every nitrile name the tiles write, rea
   assert.equal(rows.length, EXPECTED_ROWS.total);
   assert.equal(readRows.size, EXPECTED_ROWS.read);
   assert.equal(laterRows, EXPECTED_ROWS.later);
+  assert.deepEqual(aminos, { ...EXPECTED_AMINO });
   assert.deepEqual(['I-38', 'I-39a', 'I-39b', 'I-39c', 'I-40c', 'I-40d', 'I-43b', 'I-44', 'I-45a', 'I-45b'].map(inSection),
     [EXPECTED_ROWS.i38, EXPECTED_ROWS.i39a, EXPECTED_ROWS.i39b, EXPECTED_ROWS.i39c, EXPECTED_ROWS.i40c, EXPECTED_ROWS.i40d,
       EXPECTED_ROWS.i43b, EXPECTED_ROWS.i44, EXPECTED_ROWS.i45a, EXPECTED_ROWS.i45b]);
@@ -1255,7 +1275,8 @@ const FIXTURE_OWN = Object.freeze({ numbering: 72 });
 test('mutations of every nitrile fixture name: a diagnosis of the family\'s codes, never null', async () => {
   const names = (await readFixtures()).filter((row) => isNitrile(row.smiles)).flatMap((row) => row.names)
     .filter((name) => isNitrileName(name) && !isNitrileTemplateName(name));
-  assert.equal(names.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES);
+  // The names with an amino prefix (R-6c2) are swept with the amino prefixes (reverse-amino.test.js).
+  assert.equal(names.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES - EXPECTED_AMINO.names);
   const { otherName, codes, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });

@@ -25,7 +25,7 @@ import {
   suffixBondAmount, parentWordName, ACID_KIND, ACID_GROUP, isAcidTemplate, OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID,
   ESTER_KIND, ESTER_GROUP, isEsterSuffix, isEsterTemplate, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID, CYANO_ID, NITRILE_KIND,
   NITRILE_GROUP, isNitrileSuffix, suffixElement, isNitrileTemplate, AMINA_ID, NITROGEN_ID, N_VALUE, N_TEXT, AMINE_KIND,
-  isAmineSuffix, NITROGEN_VALENCE, AMINE_NITROGEN_FREE,
+  isAmineSuffix, NITROGEN_VALENCE, AMINE_NITROGEN_FREE, AMINO_ID, AMINO_KIND, AMINO_ELEMENT, isAminoTile,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
@@ -61,8 +61,9 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('root'), 30); // met…triacont
   assert.equal(count('ending'), 3);
   assert.equal(count('freeValence'), 2);
-  // isopropil, isopropiliden, tert-butil; fenil (R-4b); formil (R-5c1); acetil, benzoil (R-5c2); carboxi (R-5d1); ciano (R-6b1)
-  assert.equal(count('retained'), 9);
+  // isopropil, isopropiliden, tert-butil; fenil (R-4b); formil (R-5c1); acetil, benzoil (R-5c2); carboxi (R-5d1); ciano (R-6b1);
+  // amino (R-6c2)
+  assert.equal(count('retained'), 10);
   assert.equal(count('start'), 1);
   assert.equal(count('end'), 1);
   assert.equal(count('ring'), 1); // ciclo (R-4a)
@@ -101,9 +102,10 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       freeValence: () => FREE_VALENCE_SUFFIXES[tile.value],
       // `formil` (R-5c1), `acetil` and `benzoil` (R-5c2): the lexicon's acyl prefixes; the other retained words,
       // RETAINED_PREFIXES.
-      // `carboxi` (R-5d1): the lexicon's prefix of an acid; `ciano` (R-6b1), of a nitrile.
+      // `carboxi` (R-5d1): the lexicon's prefix of an acid; `ciano` (R-6b1), of a nitrile; `amino` (R-6c2), of an amine.
       retained: () => ({
         formyl: FORMYL_PREFIX, acetyl: ACETYL_PREFIX, benzoyl: BENZOYL_PREFIX, carboxy: GROUP_PREFIXES.acid, cyano: GROUP_PREFIXES.nitrile,
+        [AMINO_KIND]: GROUP_PREFIXES.amine,
       }[tile.value] || `${RETAINED_PREFIXES[tile.value].italic}${RETAINED_PREFIXES[tile.value].text}`),
       start: () => ENCLOSING_MARKS[0][0],
       end: () => ENCLOSING_MARKS[0][1],
@@ -142,7 +144,7 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
     assert.equal(tile.text, expected, tile.id);
   } // End of the loop over the tiles
   assert.deepEqual(TILES.filter((t) => t.kind === 'retained').map((t) => t.text), ['isopropil', 'isopropiliden', 'tert-butil', 'fenil',
-    'benzoil', 'formil', 'acetil', 'carboxi', 'ciano']);
+    'benzoil', 'formil', 'acetil', 'carboxi', 'ciano', 'amino']);
   // R-6b1: the nitrile tiles, their groups (a nitrogen triple-bonded to the group's carbon), and `benzonitrilo` quoted as it is.
   assert.deepEqual([CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID].map((id) => [tileById(id).text, tileById(id).kind,
     tileById(id).value, tileById(id).row]), [['ciano', 'retained', 'cyano', 'groups'], ['nitrilo', 'suffix', 'nitrile', 'groups'],
@@ -305,6 +307,12 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
   assert.deepEqual([NITROGEN_VALENCE, AMINE_NITROGEN_FREE], [VALENCES.N, VALENCES.N - 1]);
   assert.deepEqual([isAmineSuffix('amine'), isAmineSuffix('alcohol'), isAmineSuffix('nope'), suffixElement(SUFFIX_GROUPS.amine),
     suffixBondAmount(SUFFIX_GROUPS.amine)], [true, false, false, 'N', 1]);
+  // R-6c2: the amino prefix, a retained word with the lexicon's prefix of an amine; its value language-neutral, its atom a nitrogen.
+  assert.deepEqual([tileById(AMINO_ID).text, tileById(AMINO_ID).kind, tileById(AMINO_ID).value, tileById(AMINO_ID).row],
+    [GROUP_PREFIXES.amine, 'retained', AMINO_KIND, 'groups']);
+  assert.notEqual(AMINO_KIND, GROUP_PREFIXES.amine, 'the value is no Spanish word');
+  assert.deepEqual([isAminoTile(tileById(AMINO_ID)), isAminoTile(tileById(CYANO_ID)), isAminoTile(tileById(AMINA_ID)), AMINO_ELEMENT],
+    [true, false, false, 'N']);
   // R-5a1: the halogens by element symbol, in the lexicon's order.
   assert.deepEqual(Object.values(HALOGEN_IDS).map((id) => [tileById(id).text, tileById(id).value]),
     [['fluoro', 'F'], ['cloro', 'Cl'], ['bromo', 'Br'], ['yodo', 'I']]);
@@ -340,10 +348,10 @@ test('rows and «más» follow design.md §15.2', () => {
   assert.deepEqual(TILES.filter((tile) => tile.row === 'groups').map((tile) => tile.id),
     ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, ACETYL_ID,
       ACYL_ID, RING_CARBONYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, OATO_ID, CARBOXYLATE_ID,
-      ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, AMINA_ID],
+      ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, AMINA_ID, AMINO_ID],
     'R-5a1: «Grupos», the halogens; R-5a2: hidroxi, ol; R-5b: oxi; R-5b2: éter; R-5c1: oxo, formil, al, ona, carbaldehído; '
       + 'R-5c2: acetil, oil, carbonil; R-5d1: ácido, carboxi, oico, carboxílico; R-6a1: oato, carboxilato, ilo; R-6b1: ciano, nitrilo, '
-      + 'carbonitrilo; R-6c1: amina');
+      + 'carbonitrilo; R-6c1: amina; R-6c2: amino');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'branches' && tile.kind === 'retained').map((tile) => tile.value),
     ['isopropyl', 'isopropylidene', 'tert-butyl']);
 });

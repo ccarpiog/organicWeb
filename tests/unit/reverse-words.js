@@ -17,7 +17,10 @@
  * `metoxicarbonil`) and their nitriles (R-6b1: the suffixes `nitrilo` and
  * `carbonitrilo`, `benzonitrilo`, the prefix `ciano`; R-6b2: the retained
  * nitrile names) and their amines (R-6c1: the suffix `amina` and the locant
- * `N`; the `amino` prefixes, `anilina` and the class names later).
+ * `N`; R-6c2: the `amino` prefixes; `anilina` and the class names later) —
+ * the amides' own words (`amida`, `carbamoil`, the acylamino prefixes) being
+ * a later phase's (R-6d; isAmideName()), though an amide prefix the engine
+ * writes `amino` + `oxo` reads since R-6c2.
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -28,10 +31,11 @@ import { TILES, START_ID, END_ID } from '../../src/reverse/tiles.js';
 import {
   RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, TRADITIONAL_NAMES, BENZENE_DIGROUP_NAMES, ETHER_CLASS_WORD, ACETYL_PREFIX, ACYL_ENDING,
   RING_CARBONYL_ENDING, BENZOYL_PREFIX, ALKOXY_ENDING, FORMYL_PREFIX, SUFFIX_CLASS_WORDS, ESTER_LINK, GROUP_SUFFIXES, GROUP_PREFIXES,
-  RING_GROUP_SUFFIXES, FREE_VALENCE_SUFFIXES,
+  RING_GROUP_SUFFIXES, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS,
 } from '../../src/naming/lexicon.es.js';
 import { parseSmiles } from '../../src/model/smiles.js';
-import { amineNitrogens } from '../../src/model/validate.js';
+import { amineNitrogens, isAmideCarbon } from '../../src/model/validate.js';
+import { adjacency } from '../../src/model/graph.js';
 
 /** The fixture table (design.md §4.8). */
 const FIXTURES = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'names.tsv');
@@ -631,11 +635,114 @@ export function isAmine(smiles) {
 }
 
 /**
- * Words of amine names the tiles write only in later phases (R-6c2: the
- * prefix `amino`, also inside `(metilamino)`, `(dimetilamino)`; R-6c3: the
- * retained `anilina`, also `N,4-dimetilanilina`).
+ * Words of amine names the tiles write only in later phases (R-6c3: the
+ * retained `anilina`, also `N,4-dimetilanilina`); until phase R-6c2 the
+ * prefix `amino` too, also inside `(metilamino)`, `(dimetilamino)`.
  */
-export const LATER_AMINE_WORDS = Object.freeze([GROUP_PREFIXES.amine, TRADITIONAL_NAMES.aniline]);
+export const LATER_AMINE_WORDS = Object.freeze([TRADITIONAL_NAMES.aniline]);
+
+/** The amino prefix (R-6c2), from the lexicon: `amino`, also in `(metilamino)`, `[etil(metil)amino]`. */
+export const AMINO_WORD = GROUP_PREFIXES.amine;
+
+/**
+ * Tells whether a name has an amino prefix (R-6c2): `2-aminoetan-1-ol`,
+ * `2-(dimetilamino)etan-1-ol`, `ácido 4-amino-4-oxobutanoico`.
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for a name with `amino`.
+ */
+export function isAminoName(name) {
+  return name.includes(AMINO_WORD);
+}
+
+/** The acyl words and endings (R-5c2: `acetil`, `oil`, `carbonil`, `benzoil`; R-5c1: `formil`): a group bonded by a C=O carbon. */
+const ACYL_GROUP_END = new RegExp(`(?:${ACETYL_PREFIX}|${FORMYL_PREFIX}|${ACYL_ENDING}|${RING_CARBONYL_ENDING}|${BENZOYL_PREFIX})$`);
+
+/** The enclosing marks, opening and closing, as the lexicon writes them. */
+const OPENING_MARKS = ENCLOSING_MARKS.map(([open]) => open).join('');
+const CLOSING_MARKS = ENCLOSING_MARKS.map(([, close]) => close).join('');
+
+/**
+ * Tells whether a name has an acylamino prefix (phase R-6d): an amino
+ * prefix with a group bonded by a C=O carbon on its nitrogen — among the
+ * groups written right before `amino`, each enclosed one (`[(2-metilpropanoil)
+ * amino]`, `{[4-(2-metilpropil)benzoil]amino}`, `[(3-oxopropanoil)(propan-2-il)
+ * amino]`) or the first, unenclosed one (`(acetilamino)`, `[acetil(metil)
+ * amino]`), one whose word ends in an acyl word or ending (ACYL_GROUP_END);
+ * `[(2-acetiletil)amino]` has none (its group on the nitrogen is an ethyl).
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for a name with an acylamino prefix.
+ */
+export function hasAcylamino(name) {
+  for (let at = name.indexOf(GROUP_PREFIXES.amine); at >= 0; at = name.indexOf(GROUP_PREFIXES.amine, at + 1)) {
+    let k = at; // Walks back over the groups written before this `amino`, last one first.
+    while (k > 0 && CLOSING_MARKS.includes(name[k - 1])) {
+      let depth = 0;
+      let m = k - 1;
+      for (; m >= 0; m -= 1) {
+        depth += CLOSING_MARKS.includes(name[m]) ? 1 : 0;
+        depth -= OPENING_MARKS.includes(name[m]) ? 1 : 0;
+        if (depth === 0) {
+          break;
+        }
+      } // End of the loop that finds the group's opening mark
+      if (ACYL_GROUP_END.test(name.slice(m + 1, k - 1))) {
+        return true; // An enclosed group bonded by a C=O carbon.
+      }
+      k = m;
+    } // End of the loop over the enclosed groups
+    const word = /[a-z]+$/.exec(name.slice(0, k));
+    if (word && ACYL_GROUP_END.test(word[0])) {
+      return true; // The first group, unenclosed: `acetilamino`.
+    }
+  } // End of the loop over the `amino` words
+  return false;
+} // End of function hasAcylamino()
+
+/**
+ * Tells whether a name has the words of the amides, which the tiles write
+ * only in a later phase (R-6d): the suffix `amida` (also in `carboxamida`,
+ * `benzamida`, `acetamida`), the prefix `carbamoil`, or an acylamino prefix
+ * (hasAcylamino(); parse.js refuses an acyl group on an amino prefix's
+ * nitrogen). An amide prefix written `amino` + `oxo` on one carbon (`ácido
+ * 4-amino-4-oxobutanoico`) has none of them: the tiles write it since R-6c2.
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for a name with an amide's words.
+ */
+export function isAmideName(name) {
+  return name.includes(GROUP_SUFFIXES.amide) || name.includes(GROUP_PREFIXES.amide) || hasAcylamino(name);
+}
+
+/**
+ * Tells whether a molecule has an amide group (model/validate.js
+ * isAmideCarbon(): a C=O carbon single-bonded to a nitrogen) — named with
+ * the amides' words (R-6d) or, as a prefix beside an acid or an ester,
+ * `amino` + `oxo` (R-6c2).
+ *
+ * @param {object} mol - A molecule (model/molecule.js).
+ * @returns {boolean} True when it has one.
+ */
+export function isAmideMolecule(mol) {
+  const adj = adjacency(mol);
+  return [...mol.atoms.keys()].some((id) => isAmideCarbon(mol, adj, id));
+}
+
+/**
+ * Tells whether a fixture SMILES has an amide group (isAmideMolecule()); a
+ * SMILES the model cannot read has none.
+ *
+ * @param {string} smiles - The SMILES.
+ * @returns {boolean} True when it has one.
+ */
+export function isAmide(smiles) {
+  try {
+    return isAmideMolecule(parseSmiles(smiles));
+  } catch (err) {
+    return false;
+  }
+}
 
 /**
  * An amine's functional-class name (phase R-6c3: `metilamina`,
@@ -648,14 +755,16 @@ export const AMINE_CLASS_NAME = new RegExp(`${FREE_VALENCE_SUFFIXES[1]}${GROUP_S
 
 /**
  * Tells whether an amine's name (or an alternative) is one the tiles write
- * from phase R-6c1 on: no word of the later amine phases
- * (LATER_AMINE_WORDS) and no class name (AMINE_CLASS_NAME).
+ * (phases R-6c1 and R-6c2: the amino prefixes too): no word of the later
+ * amine phases (LATER_AMINE_WORDS), no class name (AMINE_CLASS_NAME) and no
+ * word of the amides (isAmideName(), R-6d: a molecule with an amine and an
+ * amide, `3-amino-N-metilpropanamida`).
  *
  * @param {string} name - The name.
  * @returns {boolean} True when it can be built from the tiles.
  */
 export function isAmineName(name) {
-  return !LATER_AMINE_WORDS.some((word) => name.includes(word)) && !AMINE_CLASS_NAME.test(name);
+  return !LATER_AMINE_WORDS.some((word) => name.includes(word)) && !AMINE_CLASS_NAME.test(name) && !isAmideName(name);
 }
 
 /**

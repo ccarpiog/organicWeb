@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1, R-6c2): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -102,6 +102,17 @@
  * enlaces, y un nitrógeno solo puede tener 3.»). Which groups may stand on
  * it is the engine's: a halogen, an oxygen or a double bond there is a
  * molecule it refuses (`outOfScope`), an acyl group makes an amide it names.
+ * An amino prefix (R-6c2, SubstituentSpec kind 'aminoGroup', tiles.js
+ * AMINO_KIND) is one nitrogen, created first, with the groups on it attached
+ * as prefixes (each to its one atom), single-bonded to the carbon the prefix
+ * hangs from: the nitrogen is
+ * the occurrence's `attachment`, it counts for the heavy-atom cap (never for
+ * the carbon cap or the chains, which it splits), and it holds three bonds
+ * (tiles.js NITROGEN_VALENCE), so a third group on it is VALENCE, blamed on
+ * the group that adds it («El nitrógeno del grupo amino tendría 4 enlaces, y
+ * un nitrógeno solo puede tener 3.»). Which groups may stand on it is the
+ * engine's, as for an amine's nitrogen (a halogen, an oxygen, a double bond
+ * or another nitrogen there: its refusals).
  * An alkoxy prefix (R-5b, SubstituentSpec `alkoxy`) is its branch built as
  * any other — chain, ring, phenyl or retained word, with its own prefixes —
  * and then an ether oxygen, created last, bonded by single bonds to the
@@ -202,7 +213,7 @@ import {
 import {
   templateGroupWord, isAtomGroup, atomGroupOrder, closingText, HYDROXY_ELEMENT, ALKOXY_ELEMENT, OXO_ELEMENT, SUFFIX_GROUPS,
   GROUP_WORD_PARENTS, withArticle, suffixBondAmount, ACID_KIND, ACID_GROUP, ESTER_KIND, ESTER_GROUP, NITRILE_KIND, NITRILE_GROUP,
-  suffixElement, AMINE_KIND, N_VALUE, AMINE_NITROGEN, NITROGEN_VALENCE,
+  suffixElement, AMINE_KIND, N_VALUE, AMINE_NITROGEN, NITROGEN_VALENCE, AMINO_KIND, AMINO_ELEMENT, AMINO_NITROGEN,
 } from './tiles.js';
 
 /**
@@ -547,7 +558,8 @@ function isRingAcyl(sub) {
 /**
  * Carbons of a branch, its own prefixes included (none for a one-atom
  * group: a halogen, R-5a1; `hidroxi`, R-5a2; the C=O carbon of a ring's
- * acyl prefix, R-5c2, outside the ring).
+ * acyl prefix, R-5c2, outside the ring; an amino prefix's groups only, its
+ * one atom being a nitrogen, R-6c2).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
@@ -555,6 +567,9 @@ function isRingAcyl(sub) {
 function substituentCarbons(sub) {
   if (isAtomGroup(sub.kind)) {
     return 0;
+  }
+  if (sub.kind === AMINO_KIND) {
+    return prefixCarbons(sub.prefixes); // `(dimetilamino)`: the methyls on the nitrogen (R-6c2).
   }
   if (sub.kind === 'retained') {
     const template = RETAINED_TEMPLATES[sub.retained];
@@ -592,7 +607,8 @@ function prefixCarbons(prefixes) {
  * the oxygen of `hidroxi`, R-5a2), the ether oxygen of an alkoxy prefix
  * (R-5b), the =O of an acyl prefix (R-5c2; with its C=O carbon on a
  * ring) and the heteroatoms of a retained word (`formil`'s =O; `carboxi`'s =O
- * and OH, R-5d1; `ciano`'s nitrogen, R-6b1).
+ * and OH, R-5d1; `ciano`'s nitrogen, R-6b1); an amino prefix's nitrogen is
+ * its one atom, `length` (R-6c2).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
@@ -1107,7 +1123,8 @@ function etherOxygen(state) {
  * Creates a branch: a one-atom group (a halogen atom, R-5a1; the oxygen of
  * `hidroxi`, R-5a2, or of `oxo`, R-5c1, double-bonded), a retained word from
  * its template (`formil` with its =O, R-5c1; `acetil`, R-5c2; `ciano` with
- * its triple-bonded nitrogen, R-6b1), or a chain;
+ * its triple-bonded nitrogen, R-6b1), an amino prefix's nitrogen with the
+ * groups on it (R-6c2, aminoNitrogen()), or a chain;
  * for an alkoxy prefix (R-5b) that branch and then its ether oxygen
  * (alkoxyOxygen()); for an acyl prefix (R-5c2) that branch and then its C=O
  * (acylCarbonyl()).
@@ -1121,6 +1138,9 @@ function buildSubstituent(state, sub) {
     const atom = addAtom(state.mol, {}, sub.element);
     state.atoms.set(atom, { locant: 1, branch: true, added: [] }); // One bond (a double one for `oxo`): never over its valence.
     return { attach: atom, order: atomGroupOrder(sub.kind), tiles: sub.tiles };
+  }
+  if (sub.kind === AMINO_KIND) {
+    return aminoNitrogen(state, sub); // `amino`, `(metilamino)` (R-6c2)
   }
   let branch;
   if (sub.kind === 'retained') {
@@ -1167,6 +1187,25 @@ function buildSubstituent(state, sub) {
   const alkoxy = alkoxyOxygen(state, sub, branch);
   return sub.alkoxycarbonyl ? esterCarbonyl(state, sub, alkoxy) : alkoxy; // `metoxicarbonil` (R-6a2b)
 } // End of function buildSubstituent()
+
+/**
+ * Creates an amino prefix (R-6c2): its nitrogen first (ownPrefixAtoms()
+ * cuts the groups on it from the atoms after it), holding three bonds
+ * (NITROGEN_VALENCE, the VALENCE message naming «el nitrógeno del grupo
+ * amino»), then the groups on it, each bonded to it by its one implicit
+ * slot; the nitrogen is left with its bond to the carbon the prefix hangs
+ * from to make, a single one.
+ *
+ * @param {object} state - Build state.
+ * @param {object} sub - The amino SubstituentSpec.
+ * @returns {{attach: number, order: number, tiles: [number, number]}} The nitrogen, bond order 1, and the prefix's tiles.
+ */
+function aminoNitrogen(state, sub) {
+  const nitrogen = addAtom(state.mol, {}, AMINO_ELEMENT);
+  state.atoms.set(nitrogen, { locant: 1, branch: true, added: [], valence: NITROGEN_VALENCE, nitrogenWord: AMINO_NITROGEN });
+  attachPrefixes(state, sub.prefixes, [nitrogen]);
+  return { attach: nitrogen, order: 1, tiles: sub.tiles };
+}
 
 /**
  * Puts the C=O carbon of an alkoxycarbonyl prefix (R-6a2b) on its alkoxy
@@ -1417,7 +1456,7 @@ function attachSuffix(state, suffix, atoms) {
     state.atoms.set(oxygen, { locant: 1, branch: true, added: [] }); // One bond (a triple one for a –C≡N): never over its valence.
     if (suffix.kind === AMINE_KIND) {
       // An amine's nitrogen (R-6c1): three bonds at most, two left for the groups written `N` (valenceError()).
-      Object.assign(state.atoms.get(oxygen), { valence: NITROGEN_VALENCE, amine: true });
+      Object.assign(state.atoms.get(oxygen), { valence: NITROGEN_VALENCE, nitrogenWord: AMINE_NITROGEN });
       state.nitrogen = state.nitrogen === undefined ? oxygen : state.nitrogen;
     }
     const bond = addBond(mol, holder, oxygen, order);
@@ -1570,9 +1609,9 @@ function valenceError(state) {
   if (!best) {
     return null;
   }
-  if (best.info.amine) {
-    // R-6c1: «El nitrógeno de la amina tendría 4 enlaces, y un nitrógeno solo puede tener 3.»
-    return buildError('VALENCE', `El ${AMINE_NITROGEN} tendría ${best.total} enlaces, y un nitrógeno solo puede tener `
+  if (best.info.nitrogenWord) {
+    // R-6c1: «El nitrógeno de la amina tendría 4 enlaces, y un nitrógeno solo puede tener 3.»; R-6c2: «…del grupo amino…».
+    return buildError('VALENCE', `El ${best.info.nitrogenWord} tendría ${best.total} enlaces, y un nitrógeno solo puede tener `
       + `${best.info.valence}.`, best.tiles);
   }
   let where = best.info.branch ? `El carbono ${best.info.locant} de la rama` : `El carbono ${best.info.locant}`;

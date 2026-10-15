@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -103,8 +103,13 @@
  * is read where `ol` is (OL, with the elisions before its vowel:
  * `etanamina`, `bencen-1-amina`, `butano-1,2,3,4-tetramina`), and the locant
  * `N` where a number is (NUM: `N,2-dimetil…`; parse() keeps it to an amine's
- * prefixes). A step budget bounds the search: running out returns null,
- * never a guess.
+ * prefixes). The amino prefixes (R-6c2) need none either: `amino` is read
+ * where a retained branch word is (RET: `2-aminoetan-1-ol`, `diamino`,
+ * `(aminometil)`), and as a compound branch's own chain it closes the groups
+ * on its nitrogen, read inside the START / END controls as any prefixes,
+ * every one after the first in an automatic enclosure (`(dimetilamino)`,
+ * `[etil(metil)amino]`, `[(2-cloroetil)amino]`). A step budget bounds the
+ * search: running out returns null, never a guess.
  */
 
 import { CONNECTING_VOWEL, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN } from '../naming/lexicon.es.js';

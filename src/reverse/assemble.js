@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -158,6 +158,21 @@
  * student's order (rule 1: `N-metiletanamina`, `N,N-dimetilmetanamina`,
  * `N,2-dimetilpropan-1-amina`, `1-cloro-N-metilmetanamina`).
  *
+ * 12. the amino prefixes (R-6c2; render.js substituentTokens(),
+ *    needsEnclosure(), enclosureLevel(), isCompoundPrefix()): `amino` is a
+ *    retained word, never enclosed by itself (`2-aminoetan-1-ol`,
+ *    `diamino`, `(aminometil)` a compound branch, `aminoclorometil` on a
+ *    crowded level); a compound branch whose own chain is `amino`
+ *    (isAminoNode()) holds the groups on its nitrogen, written without
+ *    locants, and every group after the first is enclosed whatever it is,
+ *    with no crowded rule of its own (aminoLevel: `[etil(metil)amino]`,
+ *    `[fenil(metil)amino]`), the first one only when it encloses itself
+ *    (`[(propan-2-il)amino]`, `[(2-cloroetil)amino]`); being a branch with
+ *    prefixes of its own it is enclosed and compound like any other
+ *    (`(metilamino)`, `(dimetilamino)`, `bis(metilamino)`, the student's
+ *    multipliers kept as chosen, with rule 5's hyphen before `tert-`:
+ *    `bis-(tert-butilamino)`).
+ *
  * A ring (R-4a) is a chain with its `ciclo` tile before the root, and takes
  * the same rules: `ciclohexa-1,3-dieno` (rule 2), `ciclooct-1-en-3-ino` and
  * `(ciclohex-2-en-1-il)` (rule 3), `ciclohexil`, `ciclohexiliden` and an
@@ -229,7 +244,7 @@
 import {
   ENDINGS, ENCLOSING_MARKS, CONNECTING_VOWEL, SATURATED_INFIX, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN,
 } from '../naming/lexicon.es.js';
-import { isAtomGroup, closingText, ALKOXY_RETAINED, isAcyloxyHead } from './tiles.js';
+import { isAtomGroup, closingText, ALKOXY_RETAINED, isAcyloxyHead, isAminoTile } from './tiles.js';
 
 /**
  * Longest alkyl chain whose alkoxy prefix is contracted (rule 6, R-5b:
@@ -256,6 +271,23 @@ export function alkoxyCore(node) {
   }
   const core = node.type === 'branch' ? node.chain : node;
   return core && (core.type === 'chain' || core.type === 'retained') && core.oxi !== null && core.oxi !== undefined ? core : null;
+}
+
+/**
+ * Tells whether a substituent is an amino prefix (R-6c2): the `amino` word,
+ * or a compound branch whose own chain is `amino`, its prefixes the groups
+ * on its nitrogen (`(metilamino)`, `[etil(metil)amino]`).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object|null} node - A substituent node (parse.js), or null.
+ * @returns {boolean} True for an amino prefix.
+ */
+export function isAminoNode(tiles, node) {
+  if (!node) {
+    return false;
+  }
+  const core = node.type === 'branch' ? node.chain : node;
+  return Boolean(core) && core.type === 'retained' && isAminoTile(tiles[core.tile]);
 }
 
 /**
@@ -545,17 +577,23 @@ export function crowdedLevel(items) {
  * `cloro(metoxi)metano`) and a ring branch — `ciclo` or `fenil` — after the
  * first prefix (a ring prefix cited first reads unambiguously). A compound
  * branch without prefixes of its own (`START ciclo hex il END`) is judged by
- * its chain, like isEnclosed().
+ * its chain, like isEnclosed(). On the nitrogen of an amino prefix (rule 12,
+ * R-6c2: `aminoLevel`) every group after the first is enclosed and there is
+ * no crowded rule (render.js substituentTokens(): `[etil(metil)amino]`).
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object[]} items - The level's prefix and stray nodes.
  * @param {number} index - The position of a prefix with a substituent.
+ * @param {boolean} [aminoLevel] - The level is the groups on an amino prefix's nitrogen (default false).
  * @returns {boolean} True when enclosed.
  */
-export function enclosedAt(tiles, items, index) {
+export function enclosedAt(tiles, items, index, aminoLevel = false) {
   const node = items[index].substituent;
   if (isEnclosed(tiles, node)) {
     return true;
+  }
+  if (aminoLevel) {
+    return index > 0; // Every group after the first (R-6c2): `[etil(metil)amino]`.
   }
   const core = node.type === 'branch' && node.items.length === 0 ? node.chain : node;
   if (core !== null && isAlkoxyNode(core)) {
@@ -592,8 +630,9 @@ export function enclosureLevel(tiles, node) {
     return inner;
   }
   let level = 0;
+  const aminoLevel = isAminoNode(tiles, node); // The groups on an amino prefix's nitrogen (rule 12, R-6c2).
   node.items.forEach((item, i) => {
-    if (item.type === 'prefix' && item.substituent && enclosedAt(tiles, node.items, i)) {
+    if (item.type === 'prefix' && item.substituent && enclosedAt(tiles, node.items, i, aminoLevel)) {
       level = Math.max(level, enclosureLevel(tiles, item.substituent) + 1);
     }
   });
@@ -818,7 +857,8 @@ function substituentPiecesOf(tiles, node, enclosed, out) {
     if (inner) {
       out.push(piece(inner[0], null, 'punct', 'open'));
     }
-    node.items.forEach((item, i) => itemPieces(tiles, node.items, i, true, out));
+    const aminoLevel = isAminoNode(tiles, node); // The groups on an amino prefix's nitrogen (rule 12, R-6c2).
+    node.items.forEach((item, i) => itemPieces(tiles, node.items, i, true, out, false, aminoLevel));
     if (node.chain) {
       ownChainPieces(tiles, node.chain, out, inner); // Inside the branch's marks, never enclosed again: `(3-metilbutan-2-il)`.
     }
@@ -882,9 +922,10 @@ function ownChainPieces(tiles, node, out, inner = null) {
  * @param {Piece[]} out - Receives the pieces.
  * @param {boolean} [classGroup] - A group of an ether's class name (R-5b2, rule 7): enclosed as a prefix by itself
  *   (isEnclosed()), never for its level (default false).
+ * @param {boolean} [aminoLevel] - A group on an amino prefix's nitrogen (rule 12, R-6c2; enclosedAt(); default false).
  * @returns {void}
  */
-function itemPieces(tiles, items, index, nested, out, classGroup = false) {
+function itemPieces(tiles, items, index, nested, out, classGroup = false, aminoLevel = false) {
   const item = items[index];
   if (item.type === 'stray') {
     strayPieces(tiles, item.tile, out);
@@ -899,7 +940,7 @@ function itemPieces(tiles, items, index, nested, out, classGroup = false) {
     out.push(piece(tiles[item.multiplier].text, item.multiplier, kinds.multiplier, 'mult'));
   }
   if (item.substituent) {
-    const enclosed = classGroup ? isEnclosed(tiles, item.substituent) : enclosedAt(tiles, items, index);
+    const enclosed = classGroup ? isEnclosed(tiles, item.substituent) : enclosedAt(tiles, items, index, aminoLevel);
     substituentPieces(tiles, item.substituent, enclosed, out);
   }
 } // End of function itemPieces()

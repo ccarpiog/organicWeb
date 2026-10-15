@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -89,7 +89,13 @@
  *   index N_VALUE: it starts with AMINE_NITROGEN_FREE (two) free, so a third
  *   group never fits there (`metiletanamina`: carbons 1, 2 and `N`, three
  *   structures; `trimetilmetanamina`: at most two of the methyls on the
- *   nitrogen).
+ *   nitrogen). The amino prefixes (R-6c2) add no role either: an amino
+ *   prefix takes one bond of the carbon it hangs from, and its nitrogen is a
+ *   one-atom chain of the model (as an ether class name's oxygen) whose
+ *   groups take one implicit slot each and whose valence is three
+ *   (NITROGEN_VALENCE: one less than a carbon's), so only the left-out
+ *   locants inside a group are searched (`[(cloroetil)amino]`) and the
+ *   prefix's own (`aminopropanol`: amino and OH on any carbons).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -150,7 +156,7 @@ import {
 } from './build.js';
 import {
   TILES, CLOSING_ID, POSITIONAL_IDS, TEMPLATES, SUFFIX_GROUPS, tileById, suffixBondAmount, NITROGEN_ID, N_VALUE, AMINE_KIND,
-  AMINE_NITROGEN_FREE,
+  AMINE_NITROGEN_FREE, AMINO_KIND, NITROGEN_VALENCE,
 } from './tiles.js';
 
 /**
@@ -375,6 +381,9 @@ function addChain(model, owner, branch) {
     addSlots(model, prefix.slots, { role: prefix.slots[0].role, chain: id, amount: attachmentOrder(sub) });
     if (hasOwnChain(sub)) { // Not a retained word nor a halogen (R-5a1), which have no numbered chain.
       const own = addChain(model, sub, true);
+      if (sub.kind === AMINO_KIND) {
+        model.chains[own].used[1] += CARBON_VALENCE - NITROGEN_VALENCE; // An amino prefix's nitrogen holds three bonds (R-6c2).
+      }
       addSlots(model, [sub.freeValence.slot], { role: 'carbon', chain: own, amount: sub.freeValence.order });
       if (sub.acyl && !isRing(sub.kind)) {
         model.chains[own].used[sub.freeValence.slot.value] += ACYL_OXYGEN_ORDER; // The =O of `propanoil` (R-5c2), on its carbon 1.

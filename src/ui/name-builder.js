@@ -40,7 +40,8 @@
  *   tooltip, as `benzoato` in «Anillos»; the nitriles' `ciano` and the
  *   suffixes `nitrilo` and `carbonitrilo`, phase R-6b1, each with a tooltip,
  *   as `benzonitrilo` in «Anillos»; the amines' suffix `amina`, phase R-6c1,
- *   with a tooltip —, «Nombres tradicionales» — `tolueno`,
+ *   and the prefix `amino`, phase R-6c2, each with a tooltip —, «Nombres
+ *   tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
  *   `hidroquinona`, phase R-5a3a, the retained carbonyl names
@@ -77,7 +78,7 @@ import {
   TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID,
   BENZALDEHYDE_ID, ACETYL_ID, ACYL_ID, RING_CARBONYL_ID, BENZOYL_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID,
   OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID, AMINA_ID, NITROGEN_ID,
-  tileById,
+  AMINO_ID, tileById,
 } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
@@ -138,8 +139,9 @@ export function positionalLabel(tile) {
  * `nitrilo`, `carbonitrilo` and `benzonitrilo`, what each is, where it goes
  * and whether the group's carbon counts in the chain; R-6b2: the retained
  * nitrile names, what molecule each is, and which take prefixes; R-6c1:
- * `amina` and the locant `N`, what each is and where it goes; drafts
- * pending teacher review).
+ * `amina` and the locant `N`, what each is and where it goes; R-6c2: `amino`
+ * and how the groups on its nitrogen are written; drafts pending teacher
+ * review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
@@ -203,6 +205,10 @@ export const TILE_HINTS = Object.freeze({
     + 'propan-2-amina, butano-1,4-diamina, ciclohexanamina, bencenamina.',
   [NITROGEN_ID]: 'Dice que una rama va unida al nitrógeno de la amina, no a un carbono. Va delante de la rama, como un número: '
     + 'N-metiletanamina; con dos ramas, N,N-dimetilmetanamina; junto a números, N,2-dimetilpropan-1-amina.',
+  // R-6c2: the amino prefixes.
+  [AMINO_ID]: 'Un grupo NH₂ unido a un carbono, cuando la amina no es el grupo principal: 2-aminoetan-1-ol, ácido '
+    + '2-aminopropanoico. Si el nitrógeno lleva ramas, van delante de «amino», sin números, en una rama compuesta: '
+    + '(metilamino), (dimetilamino), [etil(metil)amino].',
   'template-anisole': 'Benceno con un grupo metoxi: metoxibenceno.',
   'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
   'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',

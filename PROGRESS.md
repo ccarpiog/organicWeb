@@ -62,7 +62,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-52b3 | v4 R-6b3 Nitrile diagnosis messages (fill the I-52b1/b2 «Nitriles» nulls), e2e | same, "R-6b" | done — `docs/progress-archive/i-52b3.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52b3.md` |
 | I-52c | v4 R-6c Amines | same, "R-6c" | split into I-52c1, I-52c2, I-52c3, I-52c4 | — | — |
 | I-52c1 | v4 R-6c1 Amine suffix `amina` and `N` locants (`N-metiletanamina`, `N,2-dimetilpropan-1-amina`); search with N slots, round trips, closed loop, deliberate «Amines» nulls, e2e | same, "R-6c" | done — `docs/progress-archive/i-52c1.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52c1.md` |
-| I-52c2 | v4 R-6c2 Amino prefixes (`amino`, `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`) beside senior groups, the rows waiting for them, e2e | same, "R-6c" | queued | — | — |
+| I-52c2 | v4 R-6c2 Amino prefixes (`amino`, `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`) beside senior groups, the rows waiting for them, e2e | same, "R-6c" | done — `docs/progress-archive/i-52c2.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52c2.md` |
 | I-52c3 | v4 R-6c3 `anilina` templates (`N,4-dimetilanilina`, no `N,p-`), class names (`metilamina`, `dimetilamina`, `trimetilamina`), Ayuda amine line, e2e | same, "R-6c" | queued | — | — |
 | I-52c4 | v4 R-6c4 Amine diagnosis messages (fill the «Amines» nulls of I-52c1…c3), e2e | same, "R-6c" | queued | — | — |
 | I-52d | v4 R-6d Amides | same, "R-6d" | queued | — | — |
@@ -90,17 +90,18 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-52c2 (v4 R-6c2, amino prefixes; design §15.8 row R-6c, the split recorded in the table): the «Grupos» row's prefix
-`amino` and the N-substituted amino prefixes as the forward engine writes them (`amino`, `(metilamino)`, `(dimetilamino)`,
-`[etil(metil)amino]` — every group after the first parenthesised, I-36), beside senior groups (`ácido 2-aminopropanoico`,
-`2-(dimetilamino)etan-1-ol`, `etanoato de 2-aminoetilo`, `4-aminobenzonitrilo`) and inside compound branches, their left-out
-locants searched; the fixture rows I-52c1 asserted untokenisable for `amino` join the amine round trip and the other families'
-round trips (the ester / nitrile / acid helpers' «amine, later» rows); closed loop over the generators' amino names; the
-diagnosis keeps the rules that hold, the amino prefix's own mistakes deliberate «Amines» nulls for I-52c4; tooltip; e2e; the
-CLAUDE.md v4 sentence. Model it on `docs/progress-archive/i-52c1.md` (the `N` locant, `N_VALUE`, amineSlots(), polyamineRefusal())
-and `i-52b1.md` (`ciano`). Spec: design §15 + §13 (I-36) — read from the working-tree `docs/design.md`; never edit or commit it
-(see *Open risks*). Risk high; worker opus. Commit by explicit paths. Then I-52c3 (`anilina`, class names, Ayuda), I-52c4
-(amine diagnoses), I-52d (R-6d, amides).
+Select I-52c3 (v4 R-6c3; design §15.8 row R-6c, the split recorded in the table): the «Nombres tradicionales» row's `anilina`
+templates as the forward engine writes them (`anilina`, `N-metilanilina`, `N,4-dimetilanilina`, `4-cloroanilina`; no `N,p-` forms —
+an o/m/p letter beside an `N` locant refused; a prefix the engine does not write on `anilina` `otherName` with the
+substituted-template diagnosis), each with a tooltip; the amine class names (`metilamina`, `dimetilamina`, `trimetilamina`,
+`etildimetilamina`, `di-tert-butilamina` — check `src/naming/index.js` for the exact alternatives the engine writes and match them)
+read as the engine's alternatives, any other class name `otherName`; fixture rows I-52c1/I-52c2 asserted untokenisable for
+`anilina` / class names join the round trips; closed loop over the generators' amine names; the Ayuda amine line in `index.html`
+(«Del nombre al dibujo», beside the nitrile line `#help-name-to-drawing-nitriles`: `amina`, `N`, `amino`, `anilina`, class names);
+the amine class name's / `anilina`'s own mistakes deliberate «Amines» nulls for I-52c4; e2e; the CLAUDE.md v4 sentence. Model it on
+`docs/progress-archive/i-52b2.md` (retained nitrile names), `i-51b2.md` (ether class names, the `éter` tile), `i-52c1.md` and
+`i-52c2.md`. Spec: design §15 + §13 (I-36) — read from the working-tree `docs/design.md`; never edit or commit it (see *Open
+risks*). Risk high; worker opus. Commit by explicit paths. Then I-52c4 (amine diagnoses), I-52d (R-6d, amides).
 
 - **Builds on** every v4 phase so far — the R-1 engine, dialog, «Dibujar», diagnosis engine and panel, rings, benzene,
   templates, and the halogen … nitrile families with their diagnoses (`docs/progress-archive/i-47a.md` … `i-52b3.md`; the
@@ -301,17 +302,21 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - Amines in the reverse engine (I-52c1): `amina` (suffix, «Grupos») and `N` (kind `nitrogen`, «Números», `N_VALUE` 0 = the engine's
   N_LOCANT) in `tiles.js`; `checkNitrogen()` in `parse.js`; `amineSlots()` (domain `[N_VALUE, n]`, one amine group only) in
   `interpret.js`; the amine nitrogen (`state.nitrogen`, NITROGEN_VALENCE) and `polyamineRefusal()` in `build.js`; «Amines» nulls in
-  `diagnose.js`; tests `tests/unit/reverse-amines.test.js`, `tests/e2e/name-builder-amines.spec.js`.
+  `diagnose.js`; tests `tests/unit/reverse-amines.test.js`, `tests/e2e/name-builder-amines.spec.js`. Amino prefixes (I-52c2): `amino`
+  («Grupos», value `aminoGroup`, `AMINO_ID` / `AMINO_KIND` in `tiles.js`; the groups on its N as a compound branch's own chain,
+  `START di met il amino END`), `aminoGroups()` (innermost amino list first) in `diagnose.js`; tests `tests/unit/reverse-amino.test.js`,
+  `tests/e2e/name-builder-amino.spec.js`, helpers `isAminoName()` … in `reverse-words.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51c1 … I-52b3: see `docs/progress-archive/i-51c1.md` … `i-52b3.md`.
-- I-52c1 (orchestrator, after the worker and again after the review fix): `npm test` exit 0 (2290 → 2309 pass) · `npm run check`
-  exit 0 (210 → 212 files) · `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (585 → 591 passed, source + dist).
-  `git diff --stat src/naming src/explain` empty; `docs/design.md` untouched (mtime 2026-10-14). Amine fixture round trip 54 of 90
-  rows / 60 names; closed loop 1012 molecules / 773 names; other families' pinned counts unchanged. Codex ship-with-fixes, 1
-  should-fix fixed (`docs/reviews/I-52c1.md`).
+- I-51c1 … I-52c1: see `docs/progress-archive/i-51c1.md` … `i-52c1.md`.
+- I-52c2 (orchestrator, after the worker and again after the review fix): `npm test` (2309 → 2327 pass, 0 fail) · `npm run check`
+  exit 0 (212 → 214 files) · `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (591 → 597 passed, source + dist).
+  `git diff --stat src/naming src/explain` empty; `docs/design.md` not edited by the phase. Amine fixture round trip 87 rows / 102
+  names (was 54 / 60), amine closed loop 1122 names (was 773), new amino round trip 43 rows and closed loop 591 names; amino rows
+  joined the ester (+4), nitrile (+5), acyl and ester-prefix (+1 each) round trips. Codex ship-with-fixes, 1 should-fix fixed
+  (`docs/reviews/I-52c2.md`).
 
 ## Open risks / deviations
 
@@ -408,6 +413,11 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   review / I-52c4: LOCANT_ORDER's «de menor a mayor» and LOCANT_COUNT's «1 número (N)» treat `N` as a number; `N-cloroetanamina` gets
   the engine's general HETEROATOM refusal; `p-metilbencenamina` gets the two-different-groups letter message (letters on amines are
   `anilina`'s, I-52c3).
+- I-52c2 (amino prefixes; decisions, deliberate nulls and Spanish drafts in `docs/progress-archive/i-52c2.md`): a wrong order of the
+  groups on the nitrogen gets the shared ALPHABETICAL_ORDER (true), not a null; the amide prefixes the engine writes `amino` + `oxo`
+  (`ácido 4-amino-4-oxobutanoico`) now read, acylamino stays TILE_ORDER until R-6d; «Amines» nulls `seniority` (a principal amine
+  written `amino`) and `count` (`amino` beside `amina`) for I-52c4; the engine's `bis-(tert-butilamino)` hyphen followed. Codex
+  should-fix (nested amino lists diagnosed outer first) fixed by the orchestrator: `aminoGroups()` innermost first.
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -421,5 +431,5 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-52b3 `a761816`, pushed. I-52c1 committed and pushed right after this checkpoint (see `git log`). User's
+- I-52c1 `3aebd49`, pushed. I-52c2 committed and pushed right after this checkpoint (see `git log`). User's
   uncommitted paths, never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

@@ -276,8 +276,24 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   group, the parent on the other side of the nitrogen, the amine groups'
   parent choice and N0 numbering, the suffix's needless or missing locants)
   are deliberate nulls of diagnose.js «Amines» (AMINE_NULLS, ranked among
-  the readings). Next is R-6c2 (phase I-52c2): the `amino` prefixes,
-  `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`.
+  the readings). R-6c2 (phase I-52c2) is done: the «Grupos» row's `amino`
+  (`2-aminoetan-1-ol`, `ácido 2-aminopropanoico`, `etanoato de
+  2-aminoetilo`, `4-aminobenzonitrilo`, `diamino`) and, as the own chain of
+  a compound branch, the groups on its nitrogen written before it without
+  locants, every one after the first enclosed by the app (`(metilamino)`,
+  `(dimetilamino)`, `[etil(metil)amino]`, `[(2-cloroetil)amino]`,
+  `bis(metilamino)`), read beside senior groups on chains, rings, `benceno`
+  and the templates and inside compound branches (`(aminometil)`), their
+  left-out locants searched; a locant on a group of the nitrogen or an acyl
+  group on it (an amide's acylamino, R-6d) TILE_ORDER, a third group
+  VALENCE, the engine's refusals `outOfScope`; an amide prefix written
+  `amino` + `oxo` reads too (`ácido 4-amino-4-oxobutanoico`); the diagnosis
+  keeps the shared rules (the groups on the nitrogen read first:
+  `[metil(metil)amino]` UNGROUPED), a principal amine written `amino` and an
+  amine group written `amino` beside `amina` being the «Amines» `seniority`
+  and `count` nulls. Next is R-6c3 (phase I-52c3): `anilina` templates,
+  class names (`metilamina`, `dimetilamina`, `trimetilamina`), Ayuda amine
+  line.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

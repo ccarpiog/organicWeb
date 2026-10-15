@@ -47,7 +47,9 @@ import { aromaticKey } from '../../src/model/graph.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES, nameSubstituent } from '../../src/naming/substituent.js';
 import { generateEsterPrefixes, generateRingEsters } from '../../scripts/oracle/generate.mjs';
-import { seq, readFixtures, leafIndices, isAcid, isAcidMolecule, isAcidName, ESTER_PREFIX } from './reverse-words.js';
+import {
+  seq, readFixtures, leafIndices, isAcid, isAcidMolecule, isAcidName, ESTER_PREFIX, isAminoName, isAmideName,
+} from './reverse-words.js';
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -760,14 +762,15 @@ test('the former deliberate «Esters» nulls of R-6a2b (diagnose.js): `words`, a
 // ---------------------------------------------------------------------------
 
 /**
- * The fixture names with an ester prefix (ESTER_PREFIX): 24, all of acids
- * (I-39c, I-40d, I-45c), every one read back; one more, with an amide inside
- * an acyloxy prefix (`ácido 2-[(4-amino-4-oxobutanoil)oxi]etanoico`, R-6d),
- * never tokenizes.
+ * The fixture names with an ester prefix (ESTER_PREFIX): 25, every one read
+ * back — 24 of acids (I-39c, I-40d, I-45c) and, since phase R-6c2, one with
+ * an amide prefix written `amino` + `oxo` inside an acyloxy prefix (`ácido
+ * 2-[(4-amino-4-oxobutanoil)oxi]etanoico`, I-39d; swept in
+ * reverse-amino.test.js), which until then never tokenized.
  */
-const EXPECTED_FIXTURE = Object.freeze({ names: 24, rows: 22, nitrogen: 1 });
+const EXPECTED_FIXTURE = Object.freeze({ names: 25, rows: 23, nitrogen: 1 });
 
-test('fixture round trip (R-6a2b): every fixture name with an ester prefix reads back, graph compared with the SMILES', async () => {
+test('fixture round trip (R-6a2b, R-6c2): every fixture name with an ester prefix reads back, graph compared with the SMILES', async () => {
   const rows = (await readFixtures()).filter((row) => row.names.some((name) => ESTER_PREFIX.test(name)));
   let names = 0;
   let nitrogen = 0;
@@ -775,10 +778,8 @@ test('fixture round trip (R-6a2b): every fixture name with an ester prefix reads
   const readRows = new Set();
   for (const row of rows) {
     if (!isAcid(row.smiles)) {
-      nitrogen += 1; // An amide inside the prefix (R-6d).
-      assert.ok(/N/.test(row.smiles), `names.tsv:${row.line}`);
-      row.names.forEach((name) => assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`));
-      continue;
+      nitrogen += 1; // An amide inside the prefix, written `amino` + `oxo` (R-6c2).
+      assert.ok(/N/.test(row.smiles) && row.names.every((name) => isAminoName(name) && !isAmideName(name)), `names.tsv:${row.line}`);
     }
     for (const name of row.names.filter((n) => ESTER_PREFIX.test(n))) {
       assert.ok(!isAcidName(name), name);
@@ -1149,7 +1150,8 @@ const FIXTURE_OWN = Object.freeze({ inChain: 3 });
 test('mutations of every fixture name with an ester prefix: a diagnosis of the family\'s codes, or a deliberate «Esters» null', async () => {
   const names = (await readFixtures()).filter((row) => isAcid(row.smiles)).flatMap((row) => row.names)
     .filter((name) => ESTER_PREFIX.test(name));
-  assert.equal(names.length, EXPECTED_FIXTURE.names);
+  // The acids' names: the one with an amide prefix inside (R-6c2) is swept with the amino prefixes (reverse-amino.test.js).
+  assert.equal(names.length, EXPECTED_FIXTURE.names - EXPECTED_FIXTURE.nitrogen);
   const { otherName, codes, nulls, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });

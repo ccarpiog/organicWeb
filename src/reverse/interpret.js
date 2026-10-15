@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -213,14 +213,27 @@
  * prefix is a group the engine puts on an amine's nitrogen — a carbon
  * branch bonded by a single bond through a carbon of its own (a chain or
  * ring ending in `il`, `fenil`, `isopropil`, `tert-butil`; no `iliden`, no
- * acyl, alkoxy or one-atom group, nor `formil`, `carboxi`, `ciano`):
- * `metiletanamina` is searched on carbons 1, 2 and `N`.
+ * acyl, alkoxy or one-atom group, nor `formil`, `carboxi`, `ciano`, nor an
+ * amino prefix, R-6c2): `metiletanamina` is searched on carbons 1, 2 and `N`.
+ *
+ * An amino prefix (R-6c2: `amino`, alone or as the own chain of a compound
+ * branch whose prefixes are the groups on its nitrogen, `(metilamino)`,
+ * `[etil(metil)amino]`) is a branch of kind 'aminoGroup' (tiles.js
+ * AMINO_KIND; aminoSubstituent()): one nitrogen (`length` 1, as the oxygen
+ * of an ether's class name is a one-atom parent), bonded by a single bond to
+ * the carbon its prefix's slot gives (its free valence implicit at that one
+ * atom, on the `amino` tile); each group on it a PrefixSpec with one
+ * implicit slot per occurrence at
+ * that one atom (role `carbon`, domain 1…1, on the group's tiles), as the
+ * groups of a class name on its oxygen, so build.js and search.js attach
+ * them as any prefix and the left-out locants inside a group
+ * (`[(cloroetil)amino]`) are searched as usual.
  */
 
 import { slotDomain } from './search.js';
 import {
   TEMPLATES, SUFFIX_GROUPS, isAtomGroup, atomGroupElement, isAcylTile, templateSuffix, isChainTemplate,
-  templateLength, parentWordName, N_VALUE, AMINE_KIND,
+  templateLength, parentWordName, N_VALUE, AMINE_KIND, AMINO_KIND, isAminoTile,
 } from './tiles.js';
 import { groupWordOf } from './parse.js';
 import { esterGroupsOf } from './assemble.js';
@@ -259,8 +272,9 @@ import { esterGroupsOf } from './assemble.js';
  * tert-butil; build.js knows their atoms) or a halogen atom (R-5a1).
  *
  * @typedef {object} SubstituentSpec
- * @property {'chain'|'ring'|'phenyl'|'retained'|'halogen'|'hydroxy'} kind - A numbered chain, a numbered ring (`ciclohexil`),
- *   a benzene ring bonded by its carbon 1 (`fenil`), a retained word, a halogen atom (`cloro`) or the oxygen of `hidroxi`.
+ * @property {'chain'|'ring'|'phenyl'|'retained'|'halogen'|'hydroxy'|'carbonyl'|'aminoGroup'} kind - A numbered chain, a numbered
+ *   ring (`ciclohexil`), a benzene ring bonded by its carbon 1 (`fenil`), a retained word, a halogen atom (`cloro`), the
+ *   oxygen of `hidroxi` or `oxo`, or (R-6c2) the nitrogen of an amino prefix with the groups on it (length 1).
  * @property {number|null} length - Carbons of the chain or ring (6 for a phenyl; null for a retained word or a one-atom group).
  * @property {{slot: Slot, order: 1|2}|null} freeValence - Where the branch attaches and with which bond order (`il` 1, `iliden` 2;
  *   a phenyl's carbon 1, order 1); null for a retained word or a one-atom group (bonded by a single bond).
@@ -634,10 +648,56 @@ function phenylSubstituent(ctx, tile, items, compound, range, alkoxy) {
  */
 function wordSubstituent(ctx, node, items, compound, range) {
   const { tile } = node;
+  if (isAminoTile(ctx.tiles[tile])) {
+    return aminoSubstituent(ctx, tile, items, compound, range); // `amino`, `(metilamino)` (R-6c2)
+  }
   return withAlkoxycarbonyl(PHENYL_RINGS.includes(ctx.tiles[tile].value)
     ? phenylSubstituent(ctx, tile, items, compound, range, hasAlkoxy(node))
     : retainedSubstituent(ctx, tile, items, compound, range, hasAlkoxy(node)), node); // `isopropoxicarbonil` (R-6a2b)
 }
+
+/**
+ * The SubstituentSpec of an amino prefix (R-6c2; file header): the `amino`
+ * word's nitrogen (kind 'aminoGroup', length 1), bonded by a single bond
+ * (its free valence implicit at its one atom, on the `amino` tile), with the
+ * groups on it — a compound branch's prefixes, `(metilamino)`,
+ * `[etil(metil)amino]` — each a PrefixSpec with one implicit slot per
+ * occurrence at that atom (its multiplier the student's: `(dimetilamino)`,
+ * two methyls), on the group's tiles.
+ *
+ * @param {{tiles: object[], leftOut: Slot[]}} ctx - Interpreter context.
+ * @param {number} tile - The `amino` tile index.
+ * @param {object[]} items - The groups on the nitrogen: prefix nodes of a compound branch (empty for a bare `amino`).
+ * @param {boolean} compound - Written between START and END.
+ * @param {[number, number]} range - Tile range of the branch.
+ * @returns {SubstituentSpec} The branch.
+ */
+function aminoSubstituent(ctx, tile, items, compound, range) {
+  const own = [tile, tile + 1];
+  const prefixes = items.map((item) => {
+    const multiplier = multiplierOf(ctx.tiles, item.multiplier);
+    return {
+      slots: Array.from({ length: multiplier.count }, () => makeSlot('implicit', 1, 'carbon', 1, item.range)),
+      multiplier,
+      substituent: substituentSpec(ctx, item.substituent),
+      tiles: [item.range[0], item.range[1]],
+    };
+  });
+  return {
+    kind: AMINO_KIND,
+    length: 1,
+    freeValence: { slot: makeSlot('implicit', 1, 'carbon', 1, own), order: 1 },
+    double: [],
+    triple: [],
+    prefixes,
+    retained: AMINO_KIND,
+    word: { text: ctx.tiles[tile].text, tiles: own },
+    alkoxy: false,
+    acyl: false,
+    compound,
+    tiles: [range[0], range[1]],
+  };
+} // End of function aminoSubstituent()
 
 /**
  * The SubstituentSpec of a one-atom group tile — a halogen (R-5a1),
@@ -942,13 +1002,14 @@ const NITROGEN_RETAINED = Object.freeze(['isopropyl', 'tert-butyl']);
  * `N` prefix (R-6c1; model/validate.js isAmineNitrogen(): single bonds to
  * carbons that are no functional carbon): a chain, ring or phenyl bonded by
  * a single bond (`il`, `fenil`), `isopropil` or `tert-butil` — no `iliden`,
- * acyl, alkoxy or one-atom group, nor `formil`, `carboxi` or `ciano`.
+ * acyl, alkoxy or one-atom group, nor `formil`, `carboxi` or `ciano`, nor an
+ * amino prefix (R-6c2: a nitrogen on the nitrogen).
  *
  * @param {SubstituentSpec} sub - The branch.
  * @returns {boolean} True when a left-out locant of it may be `N`.
  */
 function bondsToNitrogen(sub) {
-  if (sub.alkoxy || sub.acyl || isAtomGroup(sub.kind)) {
+  if (sub.alkoxy || sub.acyl || isAtomGroup(sub.kind) || sub.kind === AMINO_KIND) {
     return false;
   }
   return sub.kind === 'retained' ? NITROGEN_RETAINED.includes(sub.retained) : sub.freeValence.order === 1;

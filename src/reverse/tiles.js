@@ -172,7 +172,15 @@
  *   prefix bonded to the nitrogen of the principal amine, not to a carbon —
  *   `N-metiletanamina`, `N,N-dimetilmetanamina`, `N,2-dimetilpropan-1-amina`;
  *   its text N_TEXT, structure.js locantText(N_LOCANT)), in the «Números»
- *   row after the numbers;
+ *   row after the numbers; and (R-6c2) `amino` (kind 'retained', value
+ *   AMINO_KIND: an amine's nitrogen as a prefix, single-bonded to the carbon its
+ *   locant gives — `2-aminoetan-1-ol`, `ácido 2-aminopropanoico`; the lexicon's
+ *   GROUP_PREFIXES.amine), which like `fenil` may be the own chain of a
+ *   compound branch whose prefixes are then the groups on its nitrogen,
+ *   written without locants, every one after the first enclosed by the
+ *   assembler as render.js writes them (`START met il amino END` →
+ *   `(metilamino)`, `START di met il amino END` → `(dimetilamino)`, `START et
+ *   il met il amino END` → `[etil(metil)amino]`; isAminoTile());
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers' (the
  *   locant `N` after them from R-6c1),
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
@@ -184,7 +192,7 @@
  *   `carbaldehído`; R-5c2: `acetil`, `oil`, `carbonil`, after `formil`;
  *   R-5d1: `ácido`, `carboxi`, `oico`, `carboxílico`; R-6a1: `oato`,
  *   `carboxilato`, `ilo`; R-6b1: `ciano`, `nitrilo`, `carbonitrilo`; R-6c1:
- *   `amina`, at the end),
+ *   `amina`, at the end; R-6c2: `amino`, after it),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; R-5c3a: the retained carbonyl
  *   names, `formaldehído` … `tereftalaldehído`; R-5d2: the retained acid
@@ -561,6 +569,38 @@ export const AMINE_NITROGEN_FREE = NITROGEN_VALENCE - 1;
 
 /** How the messages call the nitrogen of an amine (R-6c1), as «grupo C≡N» for a nitrile's group. */
 export const AMINE_NITROGEN = 'nitrógeno de la amina';
+
+/**
+ * Id of the `amino` tile (design.md §15.8 R-6c; phase R-6c2: an amine's
+ * nitrogen as a prefix, `2-aminoetan-1-ol`; with the groups on its nitrogen,
+ * the own chain of a compound branch, `(metilamino)`).
+ */
+export const AMINO_ID = 'retained-amino';
+
+/**
+ * The `amino` tile's value (R-6c2), a retained word's, and the interpret.js
+ * SubstituentSpec kind of an amino prefix (language-neutral, as the tile ids;
+ * the word on the tile is the lexicon's GROUP_PREFIXES.amine).
+ */
+export const AMINO_KIND = 'aminoGroup';
+
+/** The element of the atom an `amino` prefix adds (R-6c2): its nitrogen, single-bonded to its carbon (its hydrogens implicit). */
+export const AMINO_ELEMENT = 'N';
+
+/** How the messages call the nitrogen of an `amino` prefix (R-6c2), as AMINE_NITROGEN for a principal amine's. */
+export const AMINO_NITROGEN = 'nitrógeno del grupo amino';
+
+/**
+ * Tells whether a tile is the `amino` word (R-6c2): a retained word whose
+ * nitrogen may carry groups of its own, written before it inside a compound
+ * branch (`(metilamino)`).
+ *
+ * @param {{kind: string, value: *}} tile - A catalogue tile.
+ * @returns {boolean} True for `amino`.
+ */
+export function isAminoTile(tile) {
+  return tile.kind === 'retained' && tile.value === AMINO_KIND;
+}
 
 /**
  * The whole-word benzene parents that place their principal group at
@@ -1137,7 +1177,7 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * `ilo` to the groups, at their end; R-6b1 `benzonitrilo` to the rings,
  * after `benzoato`, and `ciano`, `nitrilo` and `carbonitrilo` to the groups,
  * at their end; R-6c1 the locant `N` after the numbers and `amina` to the
- * groups, at their end.
+ * groups, at their end; R-6c2 `amino` after `amina`.
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -1216,6 +1256,8 @@ function buildCatalogue() {
   tiles.push(makeTile(NITRILO_ID, 'suffix', NITRILE_KIND, 'groups', GROUP_SUFFIXES[NITRILE_KIND]));
   tiles.push(makeTile(CARBONITRILE_ID, 'suffix', 'carbonitrile', 'groups', RING_GROUP_SUFFIXES[NITRILE_KIND]));
   tiles.push(makeTile(AMINA_ID, 'suffix', AMINE_KIND, 'groups', GROUP_SUFFIXES[AMINE_KIND])); // `amina` (R-6c1)
+  // `amino` (R-6c2): a retained word, as `ciano`; with the groups on its nitrogen, a compound branch's own chain, as `fenil`.
+  tiles.push(makeTile(AMINO_ID, 'retained', AMINO_KIND, 'groups', GROUP_PREFIXES[AMINE_KIND], false, { italic: '' }));
   for (const value of Object.keys(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }

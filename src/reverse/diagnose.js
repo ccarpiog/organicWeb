@@ -25,9 +25,10 @@
  * the branch-name rules), and their nitriles (R-6b1, R-6b2 — the retained
  * names —, R-6b3; «Nitriles» below: the rules that hold for a nitrile name,
  * and the principal –C≡N group's own mistakes, checked first as the acid's
- * and the ester's are), and their amines (R-6c1; «Amines» below: the rules
- * that hold for an amine name, the amine's own mistakes deliberate nulls,
- * checked before every other family's).
+ * and the ester's are), and their amines (R-6c1, R-6c2 — the amino
+ * prefixes —; «Amines» below: the rules that hold for an amine name and for
+ * an amino prefix, the amine's own mistakes deliberate nulls, checked before
+ * every other family's).
  *
  * The rules, in order (first match wins):
  *
@@ -1113,10 +1114,13 @@
  *   group is another (`2-hidroxietanamina` → «2-aminoetan-1-ol»,
  *   `3-oxobutan-1-amina` → «4-aminobutan-2-ona», `N-acetiletanamina` →
  *   «N-etiletanamida»: the acyl group on the nitrogen makes an amide), or
- *   the engine's is an amine and the student's suffix is not (no tile writes
- *   `amino` yet: never seen);
- * - `count` — another number of amine groups (never seen: every amine group
- *   is the suffix's, and the parent holds them all);
+ *   the engine's is an amine and the student's suffix is not: since R-6c2 a
+ *   principal amine written as an amino prefix (`aminoetano` →
+ *   «etanamina», `2-aminopropano` → «propan-2-amina», `(metilamino)metano`
+ *   → «N-metilmetanamina»);
+ * - `count` — another number of amine groups: since R-6c2 an amine group of
+ *   the parent written `amino` beside `amina` (`4-aminobutan-1-amina` →
+ *   «butano-1,4-diamina»);
  * - `side` — the parent on the other side of the nitrogen: the student's
  *   parent carbon bonded to the amine's nitrogen is not the engine's
  *   (`N-etilmetanamina` → «N-metiletanamina», `N-ciclohexiletanamina`…);
@@ -1142,6 +1146,34 @@
  * A prefix on the nitrogen (its occurrence's `parentAtom` the nitrogen, not
  * a carbon of the student's chain) never lengthens the chain (rule 1).
  *
+ * The amino prefixes (R-6c2, phase I-52c2: `2-aminoetan-1-ol`,
+ * `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`, beside a senior
+ * group or inside a branch) run the rules as any prefix, and every rule
+ * that speaks was checked to say something true of them: an amino prefix is
+ * a hetero group (isHeteroGroup(): its nitrogen splits the carbon skeleton,
+ * so on an end it never lengthens the chain, rule 1, and the messages say
+ * «sustituyentes»); its shape for the prefix style is its nitrogen with its
+ * groups' shapes (aminoShape(), the same in every style), so its groups tell
+ * the style (`[(propan-2-il)amino]`: `pin`); the groups on its nitrogen are a prefix
+ * list of their own (prefixLists()), which ALPHABETICAL_ORDER
+ * (`[metil(etil)amino]`: render.js cites them alphabetically, as any
+ * prefixes), UNGROUPED (`[metil(metil)amino]` → «(dimetilamino)») and
+ * MULTIPLIER_KIND (`(bismetilamino)`) read before any other list
+ * (aminoGroups(): they decide the words the name-level order reads, a
+ * multiplier inside the prefix counting); at the name level `di(metilamino)`
+ * is MULTIPLIER_KIND «bis», an amino prefix with groups of its own being
+ * compound; the parent on the
+ * other side of an amino prefix's nitrogen gets the chain rules' own true
+ * messages (`[(3-hidroxipropil)amino]metanol` → LONGER_CHAIN), as an ether's
+ * oxygen did before ETHER_SIDE (a message told from the nitrogen is phase
+ * I-52c4's). The amino prefix's own mistakes are the `seniority` and `count`
+ * nulls above. An amino prefix on a C=O carbon makes an amide
+ * (`1-aminobutanal` → «butanamida»): with the amide principal the molecule
+ * is outside the rules (outsideRules(), the amides being phase R-6d's), the
+ * null of the sweeps' `amide` category; beside an acid or an ester the amide
+ * is a prefix the engine writes `amino` + `oxo` (`ácido
+ * 4-amino-4-oxobutanoico`), and the rules run as for any prefixes.
+ *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
  * (the class-name step's in CLASS_NAME_STEP_TEXTS), and DIAGNOSES gives
@@ -1164,7 +1196,7 @@ import {
   ESTER_ALKYL_ENDING, ESTER_ALKYL_JOIN,
 } from '../naming/lexicon.es.js';
 import {
-  assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, isClassName, esterPrefixKind, esterGroupsOf,
+  assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, isClassName, esterPrefixKind, esterGroupsOf, isAminoNode,
 } from './assemble.js';
 import { ownPrefixAtoms, specRings, isRing, isAromatic } from './build.js';
 import {
@@ -1172,7 +1204,7 @@ import {
   FORMYL_ID, ACETYL_ID, OXO_ID, OXO_ELEMENT, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, BENZOYL_ID, RING_CARBONYL_ID,
   templateAdmits, isChainTemplate, ACID_KIND, CARBOXY_ID, ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, ESTER_KIND,
   isEsterTemplate, OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, NITRILE_KIND, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID,
-  AMINE_KIND, N_VALUE,
+  AMINE_KIND, N_VALUE, AMINO_KIND, AMINO_ELEMENT,
 } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
@@ -2668,13 +2700,15 @@ function isHalogen(sub) {
  * ether oxygen between the chain and its branch); and `ciano` (R-6b1, file
  * header «Nitriles»), whose carbon the engine never counts in a chain
  * (IUPAC 2013 P-66.5: `ácido 3-cianopropanoico`), so on an end it never
- * lengthens it either.
+ * lengthens it either; and an amino prefix (R-6c2, file header «Amines»),
+ * whose nitrogen splits the carbon skeleton as an ether oxygen does
+ * (`1-aminopropan-2-ol`, `1-(metilamino)propan-2-ol`).
  *
  * @param {object} sub - A SubstituentSpec (interpret.js).
- * @returns {boolean} True for a halogen, `hidroxi`, an alkoxy prefix or `ciano`.
+ * @returns {boolean} True for a halogen, `hidroxi`, an alkoxy prefix, `ciano` or an amino prefix.
  */
 function isHeteroGroup(sub) {
-  return isHalogen(sub) || Boolean(sub.alkoxy) || sub.retained === CYANO;
+  return isHalogen(sub) || Boolean(sub.alkoxy) || sub.retained === CYANO || sub.kind === AMINO_KIND;
 }
 
 /**
@@ -6137,6 +6171,36 @@ function branchNames(ctx) {
 } // End of function branchNames()
 
 /**
+ * Rules 5–7 on the groups of an amino prefix's nitrogen (R-6c2, file header
+ * «Amines»), before any other list: those groups are written inside the
+ * prefix's own name (`(dimetilamino)`, `[etil(metil)amino]`, alphabetised
+ * under its first letter, a multiplier inside it counting), so their order,
+ * grouping and multiplier decide the words the name-level order reads, as a
+ * branch's own name does (branchNames()): `3-[metil(metil)amino]-2,2-dimetil…`
+ * is UNGROUPED («(dimetilamino)»), not an order of `metil` against
+ * `metil(metil)amino`. ALPHABETICAL_ORDER, UNGROUPED and MULTIPLIER_KIND
+ * read those lists alone here, with their own codes and words, one list at
+ * a time from the innermost out: an inner list's fix changes the words of
+ * the list around it (`({[metil(metil)amino]metil}(etil)amino)` is UNGROUPED
+ * inside, and `[(dimetilamino)metil]` then comes before `etil`).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} The draft, or null.
+ */
+function aminoGroups(ctx) {
+  const lists = ctx.lists.filter((list) => list.owner && isAminoNode(ctx.tree.tiles, list.owner));
+  // prefixLists() walks the tree in pre-order, so its reverse puts every list before the lists that enclose it.
+  for (const list of lists.reverse()) {
+    const inner = { ...ctx, lists: [list] };
+    const draft = alphabeticalOrder(inner) || ungrouped(inner) || multiplierKind(inner);
+    if (draft) {
+      return draft;
+    }
+  }
+  return null;
+} // End of function aminoGroups()
+
+/**
  * Rule 5: two different branches of one list not in alphabetical order
  * (compareCitationKeys() over the student's words; identical branches are
  * rule 6's).
@@ -6959,7 +7023,7 @@ function acrossOxygen(ctx, draft) {
  * The checks of rules 5–11, in order, the branch-name rules (R-5c3b2) first.
  * Later families insert theirs.
  */
-const FORM_RULES = Object.freeze([branchNames, alphabeticalOrder, ungrouped, multiplierKind, locantOrder, needlessLocants,
+const FORM_RULES = Object.freeze([branchNames, aminoGroups, alphabeticalOrder, ungrouped, multiplierKind, locantOrder, needlessLocants,
   missingLocants, segmentOrder, oldStyle, letterLocants]);
 
 /**
@@ -7034,6 +7098,18 @@ function chainShape(length, locant, order, nested) {
 }
 
 /**
+ * The shape of an amino prefix for recognising the prefix style (R-6c2):
+ * its nitrogen and the shapes of the groups on it, in a fixed order — the
+ * same in every style, so only its groups' shapes tell a style.
+ *
+ * @param {string[]} nested - The shapes of the groups on the nitrogen, one per occurrence.
+ * @returns {string} The shape.
+ */
+function aminoShape(nested) {
+  return `${AMINO_ELEMENT}:(${[...nested].sort().join(',')})`;
+}
+
+/**
  * The shape of a branch as the student wrote it (a SubstituentSpec): a
  * halogen (R-5a1; the same in every style), a retained word, or chainShape()
  * of its chain; an alkoxy prefix (R-5b) is its branch's shape after `O:`
@@ -7075,6 +7151,10 @@ function specShape(sub) {
   if (sub.kind === 'retained' && sub.retained === CYANO) {
     return CYANO_SHAPE; // `ciano` (R-6b1): the engine's cyano prefix, no chain of its own.
   }
+  if (sub.kind === AMINO_KIND) {
+    // An amino prefix (R-6c2): its nitrogen and the shapes of the groups on it, as structureShape() writes the engine's.
+    return aminoShape(sub.prefixes.flatMap((prefix) => prefix.slots.map(() => specShape(prefix.substituent))));
+  }
   if (sub.kind === 'retained') {
     return `${ether}R:${sub.retained}`;
   }
@@ -7115,6 +7195,10 @@ function structureShape(structure) {
   }
   if (structure.cyano) {
     return CYANO_SHAPE; // `ciano` (R-6b1), as specShape() writes it.
+  }
+  if (structure.amino) {
+    // An amino prefix (R-6c2, substituent.js aminoSubstituent()), as specShape() writes it.
+    return aminoShape((structure.prefixes || []).flatMap((group) => group.locants.map(() => structureShape(group.substituent))));
   }
   // An alkoxy group (R-5b, substituent.js alkoxySubstituent()): its alkyl group's shape after `O:`, as specShape() writes it.
   const ether = structure.alkoxy ? `${ALKOXY_ELEMENT}:` : '';
@@ -7185,7 +7269,9 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
  * The aldehydes and ketones (R-5c3b1) run the rules, their own checks first
  * (carbonylChecks()); so do the acids (R-5d1, R-5d3: acidChecks()), the
  * esters (R-6a1, R-6a3a: esterChecks()) and the nitriles (R-6b1, R-6b3:
- * nitrileChecks()) — NAMED_GROUPS.
+ * nitrileChecks()) — NAMED_GROUPS —, and the amines (R-6c1: amineChecks()).
+ * An amide principal group (R-6d, a later family; since R-6c2 also an amino
+ * prefix on a C=O carbon, `1-aminobutanal` → «butanamida») is outside them.
  *
  * @param {{spec: object}} name - The student's NameSpec.
  * @param {object} structure - The engine's name structure.

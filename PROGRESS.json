@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T20:25:40Z",
+  "updated": "2026-10-15T21:39:08Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -934,8 +934,11 @@
     {
       "id": "I-52c2",
       "title": "v4 R-6c2 Amino prefixes (amino, (metilamino), (dimetilamino))",
-      "status": "queued",
-      "summary": "Reads amino prefixes beside senior groups (ácido 2-aminopropanoico, 2-(dimetilamino)etan-1-ol) and draws them."
+      "status": "done",
+      "summary": "Reads amino prefixes beside senior groups (ácido 2-aminopropanoico, 2-(dimetilamino)etan-1-ol, [etil(metil)amino]) and draws them.",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, 1 should-fix fixed — docs/reviews/I-52c2.md",
+      "narrative": "docs/progress-archive/i-52c2.md"
     },
     {
       "id": "I-52c3",

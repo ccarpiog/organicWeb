@@ -55,7 +55,7 @@ import {
 } from '../../scripts/oracle/generate.mjs';
 import {
   seq, readFixtures, leafIndices, isEster, isEsterMolecule, isEsterName, LATER_ESTER_WORDS, ESTER_PREFIX, ESTER_WORD,
-  isEsterTemplateName, ESTER_TEMPLATE_WORDS,
+  isEsterTemplateName, ESTER_TEMPLATE_WORDS, isAminoName, isAmideName,
 } from './reverse-words.js';
 
 /**
@@ -67,14 +67,24 @@ import {
  * de metilo`, `etanoato de cianometilo`, `etanoato de 1-cianoetilo`), 3 of I-39b
  * (acyl prefixes), 12 of I-39c (diesters; `3-cianopentanodioato de dimetilo`
  * since R-6b1), 29 of I-40d (ring esters; `4-cianociclohexano-1-carboxilato de
- * metilo` since R-6b1), 23 of I-45c (substituted-ring esters) — and 9 with an
- * amine's or an amide's nitrogen, of later phases (R-6c, R-6d), which never
- * tokenize. Until phase R-6b1, 104 rows read and 15 with a nitrogen (the 6
- * nitrile rows among them, `nitrile` below).
+ * metilo` since R-6b1), 23 of I-45c (substituted-ring esters) —, since phase
+ * R-6c2 the 4 with an amino prefix (EXPECTED_AMINO: 3 of I-36, `2-aminoetanoato
+ * de metilo`, `etanoato de 2-aminoetilo`, `etanoato de 2-(dimetilamino)etilo`,
+ * and 1 of I-39d, the amide prefix `4-amino-4-oxobutanoato de metilo`), so
+ * 114 rows read; and 5 with an amide written with the amides' own words
+ * (`acetilamino`, `carbamoil`; phase R-6d), which never tokenize. Until phase
+ * R-6b1, 104 rows read and 15 with a nitrogen (the 6 nitrile rows among them,
+ * `nitrile` below); until phase R-6c2, 110 rows read and 9 with a nitrogen.
  */
 const EXPECTED_ROWS = Object.freeze({
-  total: 119, read: 110, i35: 39, i39a: 4, i39b: 3, i39c: 12, i40d: 29, i45c: 23, nitrogen: 9,
+  total: 119, read: 114, i35: 39, i36: 3, i39a: 4, i39b: 3, i39c: 12, i39d: 1, i40d: 29, i45c: 23, nitrogen: 5,
 });
+
+/**
+ * The rows with an amino prefix among those read back since phase R-6c2, and their names (6: the 4 rows above and the retained
+ * `acetato de 2-aminoetilo`, `acetato de 2-(dimetilamino)etilo`), swept in reverse-amino.test.js, not below.
+ */
+const EXPECTED_AMINO = Object.freeze({ rows: 4, names: 6 });
 
 /**
  * The rows with a `ciano` prefix among those read back since phase R-6b1, and their names (8: the 6 rows above and the
@@ -83,13 +93,14 @@ const EXPECTED_ROWS = Object.freeze({
 const EXPECTED_NITRILES = Object.freeze({ rows: 6, names: 8 });
 
 /**
- * Their names and alternatives the tiles write, read back (192): those of
+ * Their names and alternatives the tiles write, read back (198): those of
  * phase R-6a1 (145, swept below), since phase R-6a2a the retained
  * `formiato`, `acetato`, `fenilacetato` and `2-(4-metilfenil)acetato` names
- * (39, swept apart in reverse-ester-templates.test.js), and since phase R-6b1
- * the 8 names with a `ciano` prefix (EXPECTED_NITRILES); none left for later.
+ * (39, swept apart in reverse-ester-templates.test.js), since phase R-6b1
+ * the 8 names with a `ciano` prefix (EXPECTED_NITRILES) and since phase R-6c2
+ * the 6 with an amino prefix (EXPECTED_AMINO); none left for later.
  */
-const EXPECTED_NAMES = 192;
+const EXPECTED_NAMES = 198;
 const EXPECTED_TEMPLATE_NAMES = 39;
 const EXPECTED_LATER_NAMES = 0;
 
@@ -485,10 +496,14 @@ test('tokenizer (R-6a1): texts that only read with errors and the later families
     'etanoato de metilo de etilo', 'etanoato de (2-cloroetilo)', 'ciclohexanoato de metilo', 'bencenoato de metilo',
     'etan-1-oato de metilo', 'butano-1,4-dioato de dimetilo', 'etanoato de 2-propilo', 'etanoato de propanilo', 'benzoato',
     'etanoato de metiloxi', 'ácido etanoato de metilo',
-    // Phases R-6c, R-6d: amines, amides beside an ester.
-    '2-aminoetanoato de metilo', 'etanoato de 2-(dimetilamino)etilo', '4-amino-4-oxobutanoato de metilo']) {
+    // Phase R-6d: amides beside an ester, written with their own words.
+    '2-(acetilamino)etanoato de metilo', '3-carbamoilpentanodioato de dimetilo']) {
     assert.equal(tokenize(name), null, name);
   }
+  // Phase R-6c2: an amino prefix beside an ester reads, also an amide prefix written `amino` + `oxo` (reverse-amino.test.js).
+  assert.deepEqual([tokenize('2-aminoetanoato de metilo'), tokenize('etanoato de 2-(dimetilamino)etilo'),
+    tokenize('4-amino-4-oxobutanoato de metilo')], [seq('2 amino et ano oato met ilo'), seq('et ano oato 2 START di met il amino END et ilo'),
+    seq('4 amino 4 oxo but ano oato met ilo')]);
   // Phase R-6b1: a `ciano` prefix beside an ester reads, in its acid part or in its O-bound group (reverse-nitriles.test.js).
   assert.deepEqual(tokenize('2-cianoetanoato de metilo'), seq('2 ciano et ano oato met ilo'));
   assert.deepEqual(tokenize('etanoato de cianometilo'), seq('et ano oato ciano met ilo'));
@@ -978,7 +993,7 @@ test('the former deliberate «Esters» nulls of R-6a1 (diagnose.js): an O-bound 
 // Fixture round trip and closed loop (design.md §15.7).
 // ---------------------------------------------------------------------------
 
-test('fixture round trip (R-6a1, R-6a2a, R-6b1): every ester name the tiles write, graph compared with the SMILES; later names never tokenize', async () => {
+test('fixture round trip (R-6a1, R-6a2a, R-6b1, R-6c2): every ester name the tiles write, graph compared with the SMILES; later names never tokenize', async () => {
   const fixtures = await readFixtures();
   const rows = fixtures.filter((row) => row.names[0].includes(ESTER_WORD));
   let covered = 0;
@@ -986,16 +1001,22 @@ test('fixture round trip (R-6a1, R-6a2a, R-6b1): every ester name the tiles writ
   let later = 0;
   let nitrogen = 0;
   const nitriles = { rows: 0, names: 0 };
+  const aminos = { rows: 0, names: 0 };
   let elapsed = 0;
   const readRows = new Set();
   for (const row of rows) {
-    if (!isEster(row.smiles, { nitrile: true })) {
-      nitrogen += 1; // An amine or an amide beside the ester (R-6c, R-6d).
+    // An amino prefix beside the ester, or an amide prefix written `amino` + `oxo` (R-6c2): read since then, swept in
+    // reverse-amino.test.js.
+    const amino = !isEster(row.smiles, { nitrile: true }) && row.names.every((name) => isAminoName(name) && !isAmideName(name));
+    if (!isEster(row.smiles, { nitrile: true }) && !amino) {
+      nitrogen += 1; // An amide written with the amides' own words beside the ester (R-6d).
       assert.ok(/N/.test(row.smiles), `names.tsv:${row.line}`);
       row.names.forEach((name) => assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`));
       continue;
     }
-    const cyano = !isEster(row.smiles); // A `ciano` prefix beside the ester (R-6b1): read since then, swept in reverse-nitriles.test.js.
+    aminos.rows += amino ? 1 : 0;
+    aminos.names += amino ? row.names.length : 0;
+    const cyano = !amino && !isEster(row.smiles); // A `ciano` prefix beside the ester (R-6b1): read since then, swept in reverse-nitriles.test.js.
     nitriles.rows += cyano ? 1 : 0;
     nitriles.names += cyano ? row.names.length : 0;
     const expected = keyOf(row.smiles);
@@ -1006,7 +1027,7 @@ test('fixture round trip (R-6a1, R-6a2a, R-6b1): every ester name the tiles writ
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
       }
-      templates += !cyano && isEsterTemplateName(name) ? 1 : 0; // `formiato`, `acetato`, `fenilacetato` (R-6a2a).
+      templates += !cyano && !amino && isEsterTemplateName(name) ? 1 : 0; // `formiato`, `acetato`, `fenilacetato` (R-6a2a).
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
       assert.equal(assemble(parse(ids).tree).text, name, `names.tsv:${row.line}: assembly`);
@@ -1037,8 +1058,10 @@ test('fixture round trip (R-6a1, R-6a2a, R-6b1): every ester name the tiles writ
   assert.equal(readRows.size, EXPECTED_ROWS.read);
   assert.equal(nitrogen, EXPECTED_ROWS.nitrogen);
   assert.deepEqual(nitriles, { ...EXPECTED_NITRILES });
-  assert.deepEqual(['I-35', 'I-39a', 'I-39b', 'I-39c', 'I-40d', 'I-45c'].map(inSection),
-    [EXPECTED_ROWS.i35, EXPECTED_ROWS.i39a, EXPECTED_ROWS.i39b, EXPECTED_ROWS.i39c, EXPECTED_ROWS.i40d, EXPECTED_ROWS.i45c]);
+  assert.deepEqual(aminos, { ...EXPECTED_AMINO });
+  assert.deepEqual(['I-35', 'I-36', 'I-39a', 'I-39b', 'I-39c', 'I-39d', 'I-40d', 'I-45c'].map(inSection),
+    [EXPECTED_ROWS.i35, EXPECTED_ROWS.i36, EXPECTED_ROWS.i39a, EXPECTED_ROWS.i39b, EXPECTED_ROWS.i39c, EXPECTED_ROWS.i39d,
+      EXPECTED_ROWS.i40d, EXPECTED_ROWS.i45c]);
   assert.equal(covered, EXPECTED_NAMES);
   assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
   assert.equal(later, EXPECTED_LATER_NAMES);
@@ -1420,8 +1443,9 @@ const FIXTURE_OWN = Object.freeze({ oBound: 4, numbering: 90 });
 test('mutations of every ester fixture name: a diagnosis of the family\'s codes, or a deliberate «Esters» null with its category', async () => {
   const names = (await readFixtures()).filter((row) => isEster(row.smiles)).flatMap((row) => row.names)
     .filter((name) => isEsterName(name) && !isEsterTemplateName(name));
-  // The names with a `ciano` prefix (R-6b1) are swept with the nitriles (reverse-nitriles.test.js).
-  assert.equal(names.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES - EXPECTED_NITRILES.names);
+  // The names with a `ciano` prefix (R-6b1) are swept with the nitriles (reverse-nitriles.test.js), those with an amino prefix
+  // (R-6c2) with the amino prefixes (reverse-amino.test.js).
+  assert.equal(names.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES - EXPECTED_NITRILES.names - EXPECTED_AMINO.names);
   const { otherName, codes, nulls, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
