@@ -190,8 +190,14 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   ` y ` (`propanodioato de etilo y metilo`), their left-out locants searched
   and the engine's refusals `outOfScope`; the diagnosis keeps the rules that
   hold for an ester's acid part, the ester's own mistakes deliberate
-  «Esters» nulls. Next is R-6a2 (phase I-52a2): `formiato` / `acetato`, the
-  ester prefixes and the Ayuda ester line.
+  «Esters» nulls. R-6a2a (phase I-52a2a) is done: the «Nombres
+  tradicionales» row's retained ester names (`formiato`, `acetato`,
+  `fenilacetato`, each with a tooltip) read before the O-bound side as the
+  engine's alternatives (`acetato de etilo`, `formiato de isopropilo`,
+  `2-(4-metilfenil)acetato de etilo`), any other prefix as `otherName` with
+  the substituted-template diagnosis (`2-cloroacetato de metilo`), and the
+  Ayuda has its ester line. Next is R-6a2b (phase I-52a2b): the ester
+  prefixes `aciloxi` / `alcoxicarbonil`.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

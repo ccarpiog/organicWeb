@@ -43,7 +43,10 @@
  *   an open chain; R-5d2: the retained acid names `fórmico`, `acético`,
  *   `oxálico`, `fenilacético`, `ftálico`, `isoftálico`, `tereftálico`, written
  *   after the class word `ácido`, whose –COOH groups are the principal group
- *   — the first four on an open chain; value the TEMPLATES key),
+ *   — the first four on an open chain; R-6a2a: the retained ester names
+ *   `formiato`, `acetato`, `fenilacetato`, the acid part of an ester, whose
+ *   –COO– is the principal group, followed by the O-bound side as after
+ *   `oato` — all three on an open chain; value the TEMPLATES key),
  *   'positional' (the old orto/meta/para letters `o`, `m`, `p`, R-4c: the two
  *   occupied positions of a benzene ring; value the locant of the second
  *   one, 2 | 3 | 4, the POSITIONAL_LETTERS keys), 'halogen' (the halogen
@@ -147,7 +150,8 @@
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; R-5c3a: the retained carbonyl
  *   names, `formaldehído` … `tereftalaldehído`; R-5d2: the retained acid
- *   names, `fórmico` … `tereftálico`);
+ *   names, `fórmico` … `tereftálico`; R-6a2a: the retained ester names,
+ *   `formiato`, `acetato`, `fenilacetato`);
  * - `more` — the tile sits behind the row's «más» button (numbers 13–30,
  *   multipliers from hepta / heptakis, roots from undec).
  */
@@ -420,7 +424,8 @@ export const GROUP_WORD_PARENTS = Object.freeze({
  * (`fenol`, `benzaldehído`, `tolueno`), with the class word before it for a
  * parent that places an acid's –COOH (R-5d1: «ácido benzoico»; R-5d2: a
  * retained acid name, «ácido acético», «ácido ftálico»), as the engine
- * writes the name (GROUP_WORD_PARENTS, isAcidTemplate()).
+ * writes the name (GROUP_WORD_PARENTS, isAcidTemplate()); a retained ester
+ * word (R-6a2a) as on its tile, «acetato».
  *
  * @param {{kind: string, value: *, text: string}} tile - A catalogue tile (`benceno`, `fenol`, `benzoico`, a template…).
  * @returns {string} The name.
@@ -587,6 +592,20 @@ function placedSuffix(value, positions) {
  * bare molecules only, the ftálicos also with prefixes (`substitutable`:
  * `ácido 4-metilftálico`) and `acético` with one substituted phenyl on its
  * carbon 2 (`arylPrefix`: `ácido 2-(3-metilfenil)acético`).
+ * R-6a2a adds the retained ester names the forward engine gives
+ * (principal.js carbonylTraditionalId(): 'formate', 'acetate',
+ * 'phenylacetate', 'arylacetate'; render.js renderName() `traditional`), the
+ * acid part of an ester (isEsterTemplate()), whose `suffix` places the
+ * –COO– at the chain's carbon 1 as `acético` places its –COOH, the O-bound
+ * side following as after `oato` (`acetato de etilo`): `formiato` (a
+ * metanoato), `acetato` (an etanoato) and, with a phenyl on carbon 2,
+ * `fenilacetato` (a 2-feniletanoato) — chain templates, keyed by their
+ * TRADITIONAL_NAMES id. The engine writes `formiato` and `fenilacetato` for
+ * a bare acid part only, whatever its O-bound group, and `acetato` also with
+ * one substituted phenyl on its carbon 2 (`arylPrefix`, 'arylacetate', the
+ * same word: `2-(4-metilfenil)acetato de etilo`); no diester (an
+ * `etanodioato` is no acetate) and no benzene diester (the engine refuses
+ * them) has a retained name.
  * Later phases add the retained parents with another principal group
  * (`anilina`, `acetamida`…).
  */
@@ -653,20 +672,47 @@ export const TEMPLATES = Object.freeze({
   terephthalicAcid: Object.freeze({
     group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix('carboxylic', [1, 4]), substitutable: true,
   }),
+  // R-6a2a: the retained ester names, the acid part of an ester; the O-bound side follows.
+  formate: Object.freeze({
+    id: 'formate', chain: 1, group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix(ESTER_KIND, [1]),
+  }),
+  acetate: Object.freeze({
+    id: 'acetate', chain: 2, group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix(ESTER_KIND, [1]),
+    arylPrefix: true,
+  }),
+  phenylacetate: Object.freeze({
+    id: 'phenylacetate', chain: 2, group: PHENYL, count: 1, positions: Object.freeze([2]), hydroxy: NONE,
+    suffix: placedSuffix(ESTER_KIND, [1]),
+  }),
 });
 
 /**
  * Tells whether a template is one of the retained carbonyl names (R-5c3a:
  * `formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
  * `fenilacetaldehído`, the ftalaldehídos): its word places an aldehyde's or
- * a ketone's C=O (not an acid's –COOH: isAcidTemplate()).
+ * a ketone's C=O (not an acid's –COOH: isAcidTemplate(); nor an ester's
+ * –COO–, R-6a2a: isEsterTemplate()).
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {boolean} True for a carbonyl template.
  */
 export function isCarbonylTemplate(value) {
   const { suffix } = TEMPLATES[value];
-  return Boolean(suffix) && !isAcidSuffix(suffix.value);
+  return Boolean(suffix) && !isAcidSuffix(suffix.value) && !isEsterSuffix(suffix.value);
+}
+
+/**
+ * Tells whether a template is one of the retained ester names (R-6a2a:
+ * `formiato`, `acetato`, `fenilacetato`): its word is the acid part of an
+ * ester and places its –COO– at carbon 1, and the O-bound side follows it
+ * after the automatic ` de ` (`acetato de etilo`).
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @returns {boolean} True for an ester template.
+ */
+export function isEsterTemplate(value) {
+  const { suffix } = TEMPLATES[value];
+  return Boolean(suffix) && isEsterSuffix(suffix.value);
 }
 
 /**
@@ -684,10 +730,21 @@ export function isAcidTemplate(value) {
 }
 
 /**
+ * The retained ester word of each retained acid that has one (R-6a2a), by
+ * TEMPLATES key: the engine's `formiato`, `acetato` and `fenilacetato` are
+ * the esters of `ácido fórmico`, `ácido acético` and `ácido fenilacético`
+ * (principal.js carbonylTraditionalId(): 'formate', 'acetate',
+ * 'phenylacetate'), so a parse message can send a student who writes the
+ * acid's name before an O-bound group to the ester's word.
+ */
+export const ACID_ESTER_TEMPLATES = Object.freeze({ formicAcid: 'formate', aceticAcid: 'acetate', phenylaceticAcid: 'phenylacetate' });
+
+/**
  * Tells whether a template's parent is an open chain (R-5c3a: `formaldehído`
  * one carbon, `acetaldehído`, `acetofenona` and `fenilacetaldehído` two,
  * `acetona` three; R-5d2: `fórmico` one, `acético`, `oxálico` and
- * `fenilacético` two), not the benzene ring.
+ * `fenilacético` two; R-6a2a: `formiato` one, `acetato` and `fenilacetato`
+ * two), not the benzene ring.
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {boolean} True for a chain template.
@@ -713,8 +770,9 @@ export function templateLength(value) {
  * `hydroxy` carbons), the C=O of a carbonyl template (R-5c3a: `acetona`'s
  * ketone at 2, the two –CHO of `ftalaldehído` at 1 and 2) or the –COOH
  * groups of an acid template (R-5d2: `acético`'s at 1, `oxálico`'s at 1 and
- * 2, the two of `ftálico` outside the ring at 1 and 2); null for a template
- * without one (`tolueno`, `anisol`…).
+ * 2, the two of `ftálico` outside the ring at 1 and 2) or the –COO– of an
+ * ester template (R-6a2a: `acetato`'s at 1); null for a template without one
+ * (`tolueno`, `anisol`…).
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {{value: string, positions: readonly number[]}|null} The SUFFIX_GROUPS key and the parent's carbons, or null.
@@ -737,8 +795,9 @@ export function templateSuffix(value) {
  * `fenilacetaldehído`, 'phenylacetaldehyde'), wherever the student puts it;
  * likewise (R-5d2) the ftálicos (`ácido 4-metilftálico`) and `acético`
  * ('arylaceticAcid': `ácido 2-(3-metilfenil)acético`; bare, the one word
- * `fenilacético`). The student's prefixes are given as interpret.js
- * PrefixSpecs.
+ * `fenilacético`), and (R-6a2a) `acetato` ('arylacetate': `2-(4-metilfenil)acetato
+ * de etilo`; bare, the one word `fenilacetato`). The student's prefixes are
+ * given as interpret.js PrefixSpecs.
  *
  * @param {string} value - A TEMPLATES key.
  * @param {{slots: object[], substituent: {kind: string, retained: string|null, alkoxy: boolean, acyl: boolean,
@@ -861,7 +920,8 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * `formaldehído`, `acetaldehído`, `acetona`, `acetofenona`,
  * `fenilacetaldehído`, `ftalaldehído`, `isoftalaldehído`, `tereftalaldehído`,
  * then the retained acid names `fórmico`, `acético`, `oxálico`,
- * `fenilacético`, `ftálico`, `isoftálico`, `tereftálico`); R-6a1 adds
+ * `fenilacético`, `ftálico`, `isoftálico`, `tereftálico`, then the retained
+ * ester names `formiato`, `acetato`, `fenilacetato`, R-6a2a); R-6a1 adds
  * `benzoato` to the rings, after `benzoico`, and `oato`, `carboxilato` and
  * `ilo` to the groups, at their end.
  *

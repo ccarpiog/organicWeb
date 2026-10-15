@@ -43,7 +43,8 @@
  *   `fenilacetaldehído`, `ftalaldehído`, `isoftalaldehído`,
  *   `tereftalaldehído`, phase R-5c3a, the retained acid names `fórmico`,
  *   `acético`, `oxálico`, `fenilacético`, `ftálico`, `isoftálico`,
- *   `tereftálico`, phase R-5d2, these and `anisol` each with a tooltip
+ *   `tereftálico`, phase R-5d2, the retained ester names `formiato`,
+ *   `acetato`, `fenilacetato`, phase R-6a2a, these and `anisol` each with a tooltip
  *   saying what it is; drafts pending teacher review), each with a «más»
  *   button for the tiles the catalogue keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
@@ -123,7 +124,9 @@ export function positionalLabel(tile) {
  * R-5d2: the retained acid names, what molecule each is, that they go after
  * `ácido`, and which take prefixes; R-6a1: `oato`, `carboxilato`, `benzoato`
  * and `ilo`, what each is, where it goes and that ` de ` and ` y ` are the
- * app's; drafts pending teacher review).
+ * app's; R-6a2a: the retained ester names, what acid part each is, that the
+ * O-bound group follows, and which takes a phenyl; drafts pending teacher
+ * review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
@@ -204,6 +207,12 @@ export const TILE_HINTS = Object.freeze({
     + '«ácido»: ácido isoftálico.',
   'template-terephthalicAcid': 'Benceno con dos grupos COOH en los carbonos 1 y 4: ácido benceno-1,4-dicarboxílico. Va detrás de '
     + '«ácido»: ácido tereftálico.',
+  // R-6a2a: the retained ester names, the acid part of an ester; the O-bound group follows.
+  'template-formate': 'Un solo carbono con un grupo COO: metanoato. Detrás va el grupo unido al oxígeno: formiato de metilo.',
+  'template-acetate': 'Cadena de 2 carbonos con un grupo COO: etanoato. Detrás va el grupo unido al oxígeno: acetato de etilo. '
+    + 'Admite un fenil en el carbono 2: 2-(4-metilfenil)acetato de etilo.',
+  'template-phenylacetate': 'Etanoato con un fenil en el carbono 2: 2-feniletanoato. Detrás va el grupo unido al oxígeno: '
+    + 'fenilacetato de metilo.',
 });
 
 /** Text of the empty name line. */
@@ -265,7 +274,7 @@ function make(doc, tag, className, text) {
  * beside their mark (the mark hidden from screen readers); an orto/meta/para
  * letter shows its word, small, beside the letter (R-4c); a tile of
  * TILE_HINTS gets its tooltip (R-5a2: `1(n)`; R-5a3a: the retained phenols; R-5c3a: the retained carbonyl names; R-5d2: the
- * retained acid names).
+ * retained acid names; R-6a2a: the retained ester names).
  *
  * @param {Document} doc - The document.
  * @param {{id: string, kind: string, text: string, more: boolean}} tile - A catalogue tile.

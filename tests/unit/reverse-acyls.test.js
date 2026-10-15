@@ -70,9 +70,10 @@ import {
  * 2-acetilhexanoico`…, 4 of I-40b, 10 of I-45b; until then later rows) and,
  * since phase R-6a1, 3 esters (isEster(): `etanoato de 2-acetilhexilo` of
  * I-39b, `2-acetilpropanodioato de dietilo` of I-39c, `2-(4-metilbenzoil)butanoato
- * de etilo` of I-45c; their retained `acetato` names are R-6a2's) —, and 60 of
+ * de etilo` of I-45c; since phase R-6a2a with their retained `acetato de
+ * 2-acetilhexilo`) —, and 60 of
  * later families, which never tokenize: 21 esters (the acids with an ester
- * prefix, `acetiloxi`, `alcoxicarbonil`, R-6a2), 36 amides (R-6d: the 23 acids
+ * prefix, `acetiloxi`, `alcoxicarbonil`, R-6a2b), 36 amides (R-6d: the 23 acids
  * with `acetilamino`, `carbamoil`…, and since phase R-6a1 the 5 esters with an
  * amide prefix, `2-(acetilamino)etanoato de metilo`, counted as esters
  * before) and 3 nitriles (R-6b). No acid row is left: the retained acid names
@@ -83,14 +84,14 @@ const EXPECTED_ROWS = Object.freeze({
 });
 
 /**
- * Their acyl names: 46 read back (11 of the aldehydes and ketones, one per row, no alternative; 32 of the acids, R-5d1; 3 of the
- * esters, R-6a1), 69 of later families (23 esters, 43 amides, 3 nitriles; until phase R-5d1 the 84 acid names were later ones
- * too).
+ * Their acyl names: 47 read back (11 of the aldehydes and ketones, one per row, no alternative; 32 of the acids, R-5d1; 4 of the
+ * esters, R-6a1, one of them the retained `acetato de 2-acetilhexilo` since R-6a2a), 69 of later families (23 esters, 43 amides,
+ * 3 nitriles; until phase R-5d1 the 84 acid names were later ones too).
  */
-const EXPECTED_NAMES = Object.freeze({ read: 46, acid: 0, ester: 23, amide: 43, nitrile: 3 });
+const EXPECTED_NAMES = Object.freeze({ read: 47, acid: 0, ester: 23, amide: 43, nitrile: 3 });
 
-/** The ester rows among those read back, and their acyl names (phase R-6a1). */
-const EXPECTED_ESTER_ROWS = Object.freeze({ rows: 3, names: 3 });
+/** The ester rows among those read back, and their acyl names (phase R-6a1; R-6a2a: the retained `acetato` name too). */
+const EXPECTED_ESTER_ROWS = Object.freeze({ rows: 3, names: 4 });
 
 /** The acid rows among those read back, and their acyl names (phase R-5d1). */
 const EXPECTED_ACID_ROWS = Object.freeze({ rows: 30, names: 32 });
@@ -207,10 +208,10 @@ function oxygenBonds(mol) {
 /**
  * The family of a name with an acyl prefix that a later phase reads, by its
  * words: an ester prefix beside an acid (`acetiloxi`, `metoxicarbonil`,
- * R-6a2), a nitrile (`nitrilo`, `ciano`, R-6b), an amide (`amida`, `amino`,
+ * R-6a2b), a nitrile (`nitrilo`, `ciano`, R-6b), an amide (`amida`, `amino`,
  * `carbamoil`, R-6d; since phase R-6a1 also an ester's name with one), an
- * ester's name the tiles do not write yet (` de `: its retained `acetato`,
- * R-6a2), or an acid the tiles do not write yet (`ácido`: none since phase
+ * ester's name the tiles do not write yet (` de `: none since phase R-6a2a,
+ * which reads the retained `acetato`), or an acid the tiles do not write yet (`ácido`: none since phase
  * R-5d2, which reads the retained acid names, the other acids reading since
  * phase R-5d1).
  *
@@ -408,13 +409,14 @@ test('tokenizer (R-5c2): acyl names read back; forms the engine never writes, an
   }
   for (const name of ['2-propoilheptanal', '2-(ciclohexancarbonil)heptanal', '2-ciclohexanocarbonilheptanal', '2-(propanoil)heptanal',
     '2-acetoxiheptanal', '2-(acetiloxi)heptanal', 'propanoil', '2-(propan-1-oil)heptanal', 'bencenocarbonilmetano',
-    // Later families: ester prefixes beside an acid and the retained `acetato` (R-6a2), amides (R-6d), nitriles (R-6b).
-    'acetato de 2-acetilhexilo', '2-acetilpentanamida', '2-acetilpentanonitrilo', 'ácido 2-(acetilamino)etanoico',
+    // Later families: ester prefixes beside an acid (R-6a2b), amides (R-6d), nitriles (R-6b).
+    '2-acetilpentanamida', '2-acetilpentanonitrilo', 'ácido 2-(acetilamino)etanoico',
     'ácido 2-(acetiloxi)etanoico']) {
     assert.equal(tokenize(name), null, name);
   }
   assert.ok(tokenize('ácido 2-acetilhexanoico'), 'an acid with an acyl prefix reads since phase R-5d1');
   assert.ok(tokenize('etanoato de 2-acetilhexilo'), 'an ester with an acyl prefix reads since phase R-6a1');
+  assert.ok(tokenize('acetato de 2-acetilhexilo'), 'and its retained acetato since phase R-6a2a');
   assert.deepEqual(ACYL_WORDS, ['acetil', 'oil', 'carbonil', 'benzoil']);
 }); // End of test 'tokenizer (R-5c2)…'
 
@@ -775,7 +777,7 @@ test('the former deliberate nulls of R-5c2 that concern the principal C=O group:
 // Fixture round trip and closed loop (design.md §15.7).
 // ---------------------------------------------------------------------------
 
-test('fixture round trip (R-5c2, R-5d1, R-6a1): every acyl name of an aldehyde, a ketone, an acid or an ester reads back; later families never tokenize', async () => {
+test('fixture round trip (R-5c2, R-5d1, R-6a1, R-6a2a): every acyl name of an aldehyde, a ketone, an acid or an ester reads back; later families never tokenize', async () => {
   const fixtures = await readFixtures();
   const rows = fixtures.filter((row) => row.names.some(isAcylName));
   const read = new Set();
@@ -785,8 +787,8 @@ test('fixture round trip (R-5c2, R-5d1, R-6a1): every acyl name of an aldehyde, 
   const esters = { rows: 0, names: 0 };
   let elapsed = 0;
   for (const row of rows) {
-    // Since phase R-5d1 an acid's acyl names read too, but for an ester prefix beside it (R-6a2: isAcidName()); since phase R-6a1
-    // an ester's, but for its retained `acetato` (R-6a2: isEsterName()).
+    // Since phase R-5d1 an acid's acyl names read too, but for an ester prefix beside it (R-6a2b: isAcidName()); since phase R-6a1
+    // an ester's, and since phase R-6a2a its retained `acetato` too (isEsterName()).
     const acid = isAcid(row.smiles);
     const ester = isEster(row.smiles);
     const readable = isCarbonyl(row.smiles) || acid || ester

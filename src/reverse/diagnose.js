@@ -17,9 +17,9 @@
  * group's word and chain, a ring branch's numbering —, checked before rule
  * 5), and their carboxylic acids (R-5d1, R-5d2 — the retained names —,
  * R-5d3; «Acids» below: the rules that hold for an acid name, and the
- * acid's own mistakes, checked first), and their esters (R-6a1; «Esters»
- * below: the rules that hold for an ester's acid part, the ester's own
- * mistakes deliberate nulls).
+ * acid's own mistakes, checked first), and their esters (R-6a1, R-6a2a —
+ * the retained names —; «Esters» below: the rules that hold for an ester's
+ * acid part, the ester's own mistakes deliberate nulls).
  *
  * The rules, in order (first match wins):
  *
@@ -766,6 +766,28 @@
  * needless or missing locants (`ciclohexano-1-carboxilato de metilo`:
  * `suffix`) — their present messages would speak of OH groups.
  *
+ * The retained ester names (R-6a2a: `formiato`, `acetato`, `fenilacetato`;
+ * tiles.js isEsterTemplate()) are chain templates whose word places the
+ * –COO–, so they need no rule of their own, as the retained acids:
+ * SUBSTITUTED_TEMPLATE speaks where the engine never writes the prefixes
+ * (substitutedChainTemplate(): `2-cloroacetato de metilo` → «El nombre
+ * tradicional «acetato» no admite sustituyentes: … «2-cloroetanoato de
+ * metilo».», `metilformiato de metilo` → «etanoato de metilo»); a phenyl on
+ * `acetato` (templateAdmits()) is judged by the other rules
+ * (`2-(5-metilfenil)acetato de etilo` → BRANCH_RING_NUMBERING), and the
+ * locant `fenilacetato` leaves out, written, is traditionalLocants()'
+ * NEEDLESS_LOCANTS (`2-fenilacetato de metilo`). Their own deliberate nulls
+ * are those above: the –COO–'s carbon on the other side of a ring
+ * (`fenilformiato de metilo` → `benzoato de metilo`: `carbon`, esterChecks()),
+ * and an O-bound side the engine does not write beside the retained word
+ * (esterSideDiffers(): `acetato de propan-1-ilo`, and `acetato de
+ * propan-2-ilo`, the traditional word with the IUPAC-preferred group, since
+ * the engine writes `acetato de isopropilo` only: `oBound`). An aryl prefix
+ * in another style than the engine's default beside `acetato`
+ * (`2-[4-(propan-2-il)fenil]acetato de metilo`) stays null, no ester's own
+ * mistake: as on the retained aldehyde and acid (`2-[4-(propan-2-il)fenil]
+ * acetaldehído`), no rule covers a retained word's prefix style.
+ *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
  * (the class-name step's in CLASS_NAME_STEP_TEXTS), and DIAGNOSES gives
@@ -792,6 +814,7 @@ import {
   tileById, tileId, MAX_MULT, isAtomGroup, atomGroupOrder, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
   FORMYL_ID, ACETYL_ID, OXO_ID, OXO_ELEMENT, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, BENZOYL_ID, RING_CARBONYL_ID,
   templateAdmits, isChainTemplate, ACID_KIND, CARBOXY_ID, ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, ESTER_KIND,
+  isEsterTemplate,
 } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
@@ -3272,9 +3295,17 @@ function esterChecks(ctx) {
  * whatever else the name says (`etanoato de propan-1-ilo`, `propanodioato de
  * metilo y etilo`, `butanodioato de metilo y metilo`, the group's locants
  * left out). The acid part's mistakes are named only when its O-bound side is
- * the engine's.
+ * the engine's. Beside a retained ester word (R-6a2a: `formiato`, `acetato`,
+ * `fenilacetato`) whose molecule the engine gives a traditional name, the
+ * O-bound side must be the one of that name, which the engine writes in the
+ * default style only (`acetato de isopropilo`; `acetato de propan-2-ilo`
+ * mixes the traditional word with the IUPAC-preferred group: a deliberate
+ * null too); a retained word with prefixes the engine never writes on it
+ * (`2-cloroacetato de metilo`, and `metilformiato de propan-2-ilo` even
+ * though its molecule has the traditional name `acetato de isopropilo`)
+ * compares with every style, and SUBSTITUTED_TEMPLATE speaks.
  *
- * @param {{tree: object}} name - The student's parse() tree.
+ * @param {{tree: object, spec: object}} name - The student's parse() tree and NameSpec.
  * @param {object} naming - The verdict's successful naming.
  * @returns {boolean} True when the O-bound side is not the engine's.
  */
@@ -3283,6 +3314,12 @@ function esterSideDiffers(name, naming) {
   if (!name.tree.ester || !suffix || suffix.kind !== ESTER) {
     return false;
   }
+  const { template } = name.spec.parent;
+  const { prefixes } = name.spec;
+  const asWritten = template && isEsterTemplate(template.value)
+    && (prefixes.length === 0 || templateAdmits(template.value, prefixes));
+  const traditional = asWritten
+    ? (naming.alternatives || []).filter((alt) => alt.style === 'traditional').map((alt) => alt.name) : [];
   /**
    * The words after ` de ` of an ester's name, or null for another name.
    *
@@ -3293,8 +3330,8 @@ function esterSideDiffers(name, naming) {
     const at = text.normalize('NFC').indexOf(ESTER_LINK);
     return at < 0 ? null : text.normalize('NFC').slice(at + ESTER_LINK.length);
   };
-  const engine = [naming.name, ...(naming.alternatives || []).map((alt) => alt.name)].map(side);
-  return !engine.includes(side(assemble(name.tree).text));
+  const names = traditional.length > 0 ? traditional : [naming.name, ...(naming.alternatives || []).map((alt) => alt.name)];
+  return !names.map(side).includes(side(assemble(name.tree).text));
 } // End of function esterSideDiffers()
 
 /**
@@ -3380,11 +3417,13 @@ function bencenol(ctx) {
  * SUBSTITUTED_TEMPLATE on a chain template (R-5c3a: `acetona`,
  * `formaldehído`, `acetaldehído`, `acetofenona`, `fenilacetaldehído`; R-5d2:
  * `ácido fórmico`, `ácido acético`, `ácido oxálico`, `ácido fenilacético`,
- * quoted with the class word) with prefixes of the student's that the engine
- * never writes on it (tiles.js templateAdmits(): only `acetaldehído` or
- * `acético` with one phenyl, `2-(4-metilfenil)acetaldehído`): the molecule
- * has its systematic name (`1-cloroacetona` → «1-cloropropan-2-ona», `ácido
- * 2-cloroacético` → «ácido 2-cloroetanoico»), whatever its parent; the
+ * quoted with the class word; R-6a2a: `formiato`, `acetato`, `fenilacetato`)
+ * with prefixes of the student's that the engine never writes on it
+ * (tiles.js templateAdmits(): only `acetaldehído`, `acético` or `acetato`
+ * with one phenyl, `2-(4-metilfenil)acetaldehído`): the molecule has its
+ * systematic name (`1-cloroacetona` → «1-cloropropan-2-ona», `ácido
+ * 2-cloroacético` → «ácido 2-cloroetanoico», `2-cloroacetato de metilo` →
+ * «2-cloroetanoato de metilo»), whatever its parent; the
  * message names no parent (`parent` null). Rule 2, before the chain's and
  * the ring's rules, as for a substituted `tolueno`; its step is the choice
  * of the principal chain.
@@ -4266,7 +4305,8 @@ function needlessLocants(ctx) {
  * parent-level prefix locant left out is one of the engine's names
  * (`2-fenilacetaldehído` → `fenilacetaldehído`, the engine's alternative of
  * `2-feniletanal`; on `2-(3-metilfenil)acetaldehído` the engine writes the
- * 2; R-5d2: `ácido 2-fenilacético` → `ácido fenilacético`). The message
+ * 2; R-5d2: `ácido 2-fenilacético` → `ácido fenilacético`; R-6a2a:
+ * `2-fenilacetato de metilo` → `fenilacetato de metilo`). The message
  * quotes that name; its step is «Monta el nombre», which lists it among the
  * other valid forms.
  *

@@ -87,7 +87,9 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-51d3 | v4 R-5d3 Acid diagnosis messages (fill the I-51d1/d2 nulls and the carbonyl sweeps' acid nulls), e2e | same, "R-5d" | done — `docs/progress-archive/i-51d3.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-51d3.md` |
 | I-52a | v4 R-6a Esters | same, "R-6a" | split into I-52a1, I-52a2, I-52a3 | — | — |
 | I-52a1 | v4 R-6a1 Ester suffixes `oato` / `carboxilato`, `benzoato`, the O-bound side (automatic ` de ` / ` y `, `ilo`, its own multipliers); search, round trips, deliberate «Esters» nulls, e2e | same, "R-6a" | done — `docs/progress-archive/i-52a1.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52a1.md` |
-| I-52a2 | v4 R-6a2 Retained `formiato` / `acetato` (and any other retained ester name the engine writes), ester prefixes (`aciloxi`, `alcoxicarbonil`), Ayuda ester line, e2e | same, "R-6a" | queued | — | — |
+| I-52a2 | v4 R-6a2 Retained `formiato` / `acetato` (and any other retained ester name the engine writes), ester prefixes (`aciloxi`, `alcoxicarbonil`), Ayuda ester line, e2e | same, "R-6a" | split into I-52a2a, I-52a2b | — | — |
+| I-52a2a | v4 R-6a2a Retained ester names (`formiato`, `acetato`, `fenilacetato`, `2-(4-metilfenil)acetato`), Ayuda ester line, e2e | same, "R-6a" | done — `docs/progress-archive/i-52a2a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52a2a.md` |
+| I-52a2b | v4 R-6a2b Ester prefixes (`aciloxi`: `acetiloxi`…; `alcoxicarbonil`: `metoxicarbonil`…) as the engine writes them, Ayuda prefix sentence, e2e | same, "R-6a" | queued | — | — |
 | I-52a3 | v4 R-6a3 Ester diagnosis messages (fill the I-52a1/a2 nulls, the carbonyl fixture sweep's 8 ester nulls, `1-metoxipropanal`, an ester written as an ether class name), e2e | same, "R-6a" | queued | — | — |
 | I-52b | v4 R-6b Nitriles | same, "R-6b" | queued | — | — |
 | I-52c | v4 R-6c Amines | same, "R-6c" | queued | — | — |
@@ -116,16 +118,18 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-52a2 (v4 R-6a2): the retained ester names the forward engine writes (`formiato`, `acetato`, `fenilacetato`,
-`2-(4-metilfenil)acetato` — the 39 fixture names I-52a1 excluded, asserted untokenisable in `tests/unit/reverse-esters.test.js`,
-which must now read as alternatives), as «Nombres tradicionales» tiles in `TEMPLATES` (pattern: the retained acids, I-51d2,
-`docs/progress-archive/i-51d2.md`); the ester prefixes `aciloxi` (`acetiloxi`, …) and `alcoxicarbonil` (`metoxicarbonil`, …)
-as the engine writes them (pattern: acyl prefixes I-51c2, alkoxy I-51b1; the 24 acid-round-trip and 21 acyl-round-trip names
-with an ester prefix, excluded so far); the Ayuda ester line («Del nombre al dibujo», pattern I-51d2); e2e. Any new
-`otherName` with a null diagnosis joins the «Esters» nulls for I-52a3 (`esterCategory()` in `diagnose.js`). Then I-52a3, the
-ester diagnosis messages (I-52a1's nulls: fixture 94, generated 407, carbonyl fixture 8 — see `i-52a1.md` «Deliberate nulls»,
-and an ester written as an ether class name). Spec: design §15 + §13 — read from the working-tree `docs/design.md`; never
-edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths.
+Select I-52a2b (v4 R-6a2b): the ester prefixes as the forward engine writes them — `aciloxi` (`acetiloxi`, `propanoiloxi`,
+`benzoiloxi`…; lexicon `HETEROATOM_BOUND_PREFIXES.ester`) and `alcoxicarbonil` (`metoxicarbonil`, `(propan-2-iloxi)carbonil`…;
+lexicon `ALKOXYCARBONYL_ENDING`, `GROUP_PREFIXES.ester`) — on chains, rings and `benceno` and inside compound branches, reusing
+the `oxi` tile (I-51b1) and the acyl endings `oil` / `carbonil` / `acetil` / `benzoil` (I-51c2) where the words compose; the
+24 acid-round-trip and 21 acyl-round-trip names with an ester prefix and the ester closed loop's prefix names (asserted
+untokenisable so far in `reverse-acids` / `reverse-acyls` / `reverse-esters` tests) must now read; their left-out locants
+searched; a sentence on the prefixes added to the Ayuda ester paragraph `#help-name-to-drawing-esters` (`index.html`); e2e.
+Any new `otherName` with a null diagnosis joins the «Esters» nulls for I-52a3 (`esterCategory()` in `diagnose.js`). Then
+I-52a3, the ester diagnosis messages (nulls of I-52a1 — fixture 94, generated 407, carbonyl fixture 8 — and of I-52a2a —
+retained sweeps 9 / 54 `oBound` —, see the two archives' «Deliberate nulls», and an ester written as an ether class name).
+Spec: design §15 + §13 — read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high;
+worker opus. Commit by explicit paths.
 
 - **Builds on** the R-1 engine (`src/reverse/`: tiles, parser, assembler, tokenizer, `interpret.js`,
   `build.js`, `search.js`, `readName()` — `docs/progress-archive/i-47a.md` … `i-47c.md`), the dialog
@@ -136,7 +140,7 @@ edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit
   names and the ether diagnosis (`i-51b2.md`), carbonyl suffixes, `oxo`/`formil` and `benzaldehído`
   (`i-51c1.md`), acyl prefixes (`i-51c2.md`), carbonyl templates (`i-51c3a.md`), carbonyl diagnoses
   (`i-51c3b1.md`, `i-51c3b2.md`), acids (`i-51d1.md` … `i-51d3.md`), ester suffixes and the O-bound side
-  (`i-52a1.md`); the forward naming engine already names every
+  (`i-52a1.md`), retained ester names and the Ayuda ester line (`i-52a2a.md`); the forward naming engine already names every
   case (v2 §13, v3 §14; esters I-35, `i-35.md`).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
@@ -310,16 +314,19 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 - Esters in the reverse engine (I-52a1): `oato`, `carboxilato`, `ilo` («Grupos», `ilo` in place of a branch's `il` for the
   O-bound side; ` de ` / ` y ` automatic) and `benzoato` («Anillos») in `tiles.js`, parse codes ESTER_GROUPS / ESTER_SUFFIX,
   «Esters» nulls (`esterCategory()`) in `diagnose.js`; tests `tests/unit/reverse-esters.test.js`,
-  `tests/e2e/name-builder-esters.spec.js`.
+  `tests/e2e/name-builder-esters.spec.js`. Retained esters (I-52a2a): `formiato`, `acetato`, `fenilacetato` in `TEMPLATES`,
+  `isEsterTemplate()` in `tiles.js`, `esterSideDiffers()` in `diagnose.js`, Ayuda `#help-name-to-drawing-esters`; tests
+  `tests/unit/reverse-ester-templates.test.js`, `tests/e2e/name-builder-ester-templates.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51c1 … I-51d3: see `docs/progress-archive/i-51c1.md` … `i-51d3.md`.
-- I-52a1 (orchestrator, after the worker): `npm test` 0 (2170 → 2190) · `npm run check` 0 (198 → 200) · `npm run build` 0 ·
-  `npm run e2e -- --reporter=dot` 0 (549 → 557 passed, source + dist). Ester fixture round trip 104 rows / 145 names; closed
-  loop over the 4 ester generators 1184 molecules / 1529 names. «Esters» nulls: fixture 94 of 155 `otherName`, generated 407
-  of 1040, carbonyl fixture 8 (unchanged); other families unchanged. Codex ship, 0 findings (`docs/reviews/I-52a1.md`).
+- I-51c1 … I-52a1: see `docs/progress-archive/i-51c1.md` … `i-52a1.md`.
+- I-52a2a (orchestrator, after the worker and again after the review fix): `npm test` 0 (2190 → 2211) · `npm run check` 0
+  (200 → 202) · `npm run build` 0 · `npm run e2e -- --reporter=dot` 0 (557 → 563 passed, source + dist). Ester fixture round
+  trip 145 → 184 names (the 39 retained, none left); closed loop reads its 187 retained names. New retained-ester sweeps: fixture
+  9 of 51 `otherName` null, generated 54 of 253, all `oBound`; I-52a1 sweeps (94 / 407) and other families unchanged. Codex
+  ship-with-fixes, 1 should-fix fixed (`docs/reviews/I-52a2a.md`).
 
 ## Open risks / deviations
 
@@ -394,6 +401,11 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   branches is written without parentheses as the engine does (`2-cloroetilo`), with a multiplier it needs the branch controls
   (`bis(2-cloroetilo)`); a single O-bound compound branch shows two empty control boxes; 15 ester rows with a nitrogen wait
   for R-6b…R-6d; in the acyl round trip 5 ester rows with an amide prefix now count as amides.
+- I-52a2a (retained esters; decisions and Spanish drafts in `docs/progress-archive/i-52a2a.md`): every retained ester name is
+  `alternative` (the engine lists them under «Otras formas válidas»); the engine writes them with the default O-bound style
+  only, so `acetato de propan-2-ilo` is `otherName`, a deliberate «Esters» `oBound` null; `cloroformiato de metilo` is
+  `outOfScope` (engine refusal). Open question: a retained word's aryl prefix in the IUPAC-preferred style
+  (`2-[4-(propan-2-il)fenil]acetato de metilo`, also on the retained aldehyde and acid) gets a null no rule covers.
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -407,5 +419,5 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-51d3 `cfad1f3`, pushed. I-52a1 committed and pushed right after this checkpoint (see `git log`). User's
+- I-52a1 `e74ce54`, pushed. I-52a2a committed and pushed right after this checkpoint (see `git log`). User's
   uncommitted paths, never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

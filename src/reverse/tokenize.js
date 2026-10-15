@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -78,12 +78,18 @@
  * (`isoprop` + `ilo`, `fen` + `ilo`), an automatic enclosure closing right
  * after it (`di(propan-2-ilo)`), a compound branch's END too (`bis(2-cloroetilo)`,
  * which may end the name); the automatic ` y ` only after a complete group,
- * outside every mark. A step budget bounds the search: running out returns
- * null, never a guess.
+ * outside every mark. The retained ester names (R-6a2a: `formiato`,
+ * `acetato`, `fenilacetato`; class TPLEST) stand where a template does and,
+ * like `benzoato`, take exactly the automatic ` de ` after them (`acetato de
+ * etilo`, `2-(4-metilfenil)acetato de etilo`); `fenilacetato` reads as its
+ * one tile, the longer surface form. A step budget bounds the search: running
+ * out returns null, never a guess.
  */
 
 import { CONNECTING_VOWEL, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN } from '../naming/lexicon.es.js';
-import { TILES, START_ID, END_ID, CLOSING_ID, ALKOXY_RETAINED, GROUP_WORD_PARENTS, tileId, isEsterSuffix } from './tiles.js';
+import {
+  TILES, START_ID, END_ID, CLOSING_ID, ALKOXY_RETAINED, GROUP_WORD_PARENTS, tileId, isEsterSuffix, isEsterTemplate,
+} from './tiles.js';
 import { parse } from './parse.js';
 import { assemble, separator } from './assemble.js';
 
@@ -125,7 +131,8 @@ const PUNCTUATION = ',-';
  * after it; for the esters (R-6a1) EST the suffixes `oato` and
  * `carboxilato`, PHEST `benzoato`, ILO the ending `ilo` of an O-bound group,
  * DE the automatic ` de ` and Y the automatic ` y ` (RETX and PHEX also
- * before `ilo`: `isopropilo`, `fenilo`).
+ * before `ilo`: `isopropilo`, `fenilo`); for the retained ester names
+ * (R-6a2a) TPLEST, a template whose word is an ester's acid part.
  *
  * @param {object} tile - A catalogue tile.
  * @returns {string} The class.
@@ -142,6 +149,9 @@ function tileClass(tile) {
   }
   if (tile.kind === 'suffix' && isEsterSuffix(tile.value)) {
     return 'EST'; // `oato`, `carboxilato` (R-6a1): ` de ` follows
+  }
+  if (tile.kind === 'template' && isEsterTemplate(tile.value)) {
+    return 'TPLEST'; // `formiato`, `acetato`, `fenilacetato` (R-6a2a): ` de ` follows
   }
   if (tile.kind === 'acyl') {
     return tile.value === 'ring' ? 'CARB' : 'OIL'; // `carbonil`, `oil` (R-5c2)
@@ -167,7 +177,7 @@ const BEFORE_SPACE = new Set(['FV', 'RET', 'PHE', 'END']);
 const PREFIX_STARTS = ['NUM', 'MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'RETX', 'PHEX'];
 
 /** Classes that may follow a complete prefix: another prefix, the end of its compound branch, `benceno`, `fenol` or a template. */
-const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'PHEST', 'TPL'];
+const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'PHEST', 'TPL', 'TPLEST'];
 
 /**
  * The classes that may follow each class in a valid name (design.md
@@ -186,12 +196,12 @@ const AFTER_PREFIX = [...PREFIX_STARTS, 'END', 'BEN', 'BENE', 'PHOL', 'PHEST', '
  * after them; `ácido` (R-5d1) at the start only, and its space after it.
  */
 const FOLLOW = Object.freeze({
-  BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'PHEST', 'TPL', 'POS', 'ACID']),
+  BEGIN: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'PHEST', 'TPL', 'TPLEST', 'POS', 'ACID']),
   // R-5d1: `ácido`, then only its space (search()); after the space, the rest of the name as from the start.
   ACID: new Set(),
   ACIDSPACE: new Set([...PREFIX_STARTS, 'BEN', 'BENE', 'PHOL', 'TPL', 'POS']),
   AUTO_OPEN: new Set(['ROOT', 'RING', 'PHE', 'RETX', 'PHEX']),
-  NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL', 'BEN', 'BENE', 'CLO', 'MULTE', 'OL', 'EST', 'CARB', 'ILO']),
+  NUM: new Set([...PREFIX_STARTS, 'ENE', 'FV', 'TPL', 'TPLEST', 'BEN', 'BENE', 'CLO', 'MULTE', 'OL', 'EST', 'CARB', 'ILO']),
   CLO: new Set(['NUM', 'CLO', 'MULT', 'ENE']),
   POS: new Set(['MULT', 'CMULT', 'ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'TPL', 'RETX', 'PHEX']),
   MULT: new Set(['ROOT', 'RING', 'RET', 'PHE', 'HAL', 'START', 'ENE', 'OL', 'EST', 'RETX', 'PHEX']),
@@ -224,8 +234,10 @@ const FOLLOW = Object.freeze({
   ETHER: new Set(),
   // R-6a1: after an ester suffix or `benzoato`, only ` de ` (search()); after ` de ` or ` y `, an O-bound group (its
   // multiplier or its bare prefixes first); after `ilo`, the END of its compound branch, ` y ` or the end of the name.
+  // R-6a2a: after a retained ester word too, only ` de `.
   EST: new Set(),
   PHEST: new Set(),
+  TPLEST: new Set(),
   DE: new Set(PREFIX_STARTS),
   Y: new Set(PREFIX_STARTS),
   ILO: new Set(['END']),
@@ -406,7 +418,8 @@ export function tokenize(text, options = {}) {
         // The space after `ácido` (R-5d1, assemble.js rule 9), nothing skipped before it.
         return skipped === '' ? search(at + SPACE.length, 'ACIDSPACE', SPACE_ROLE) : false;
       }
-      const word = (prev === 'EST' || prev === 'PHEST') ? ESTER_WORDS.link : null; // ` de ` after the acid part (R-6a1)
+      // ` de ` after the acid part (R-6a1; R-6a2a: after a retained ester word too).
+      const word = ['EST', 'PHEST', 'TPLEST'].includes(prev) ? ESTER_WORDS.link : null;
       const join = ester && (prev === 'ILO' || prev === 'END') ? ESTER_WORDS.join : null; // ` y ` between two O-bound groups
       if (word || join) {
         if (skipped !== '' || marks.length > 0 || !target.startsWith(word || join, at)) {

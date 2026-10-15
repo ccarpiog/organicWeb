@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -164,6 +164,9 @@
  * `isopropil`, `tert-butil` or `fenil` before `ilo`, its own prefixes those
  * the student wrote before its chain or inside its compound branch, numbered
  * on it, their slots searched as any branch's; its multiplier the student's.
+ * A retained ester word (R-6a2a: `formiato`, `acetato`, `fenilacetato`) is a
+ * chain template like `acético`, its –COO– the placed suffix (kind 'ester',
+ * `bridge`, at carbon 1), the O-bound side after it read as after `oato`.
  *
  * An ether's functional-class name (R-5b2: `etil metil éter`, `dietil
  * éter`) has no parent chain: its parent is the ether oxygen itself
@@ -264,7 +267,7 @@ import { esterGroupsOf } from './assemble.js';
  * @typedef {object} TemplateSpec
  * @property {string} value - Its tiles.js TEMPLATES key ('toluene', 'styrene', 'xylene', 'mesitylene'; R-5a3a 'cresol',
  *   'pyrocatechol', 'catechol', 'resorcinol', 'hydroquinone'; R-5c3a 'acetone', 'phthalaldehyde'…; R-5d2 'aceticAcid',
- *   'phthalicAcid'…).
+ *   'phthalicAcid'…; R-6a2a 'formate', 'acetate', 'phenylacetate').
  * @property {{text: string, tiles: [number, number]}} word - The template word as the messages quote it (tiles.js
  *   parentWordName(): its tile's text, with the class word for an acid template, R-5d2: «ácido acético») and its tile range.
  * @property {PrefixSpec[]} groups - Its own carbon groups on the ring (one PrefixSpec: `xileno`'s two methyls share one;

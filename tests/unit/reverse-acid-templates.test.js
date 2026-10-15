@@ -132,7 +132,7 @@ const ALTERNATIVES = [
 // ---------------------------------------------------------------------------
 
 test('«Nombres tradicionales» (R-5d2): the seven acid tiles after the carbonyl ones, each with a tooltip; quoted with `ácido`', () => {
-  const acids = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(18);
+  const acids = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(18, 25); // R-6a2a's after
   assert.deepEqual(acids.map((tile) => tile.text), [...ACID_TEMPLATE_WORDS]);
   assert.deepEqual(acids.map((tile) => tile.text), ['fórmico', 'acético', 'oxálico', 'fenilacético', 'ftálico', 'isoftálico',
     'tereftálico']);

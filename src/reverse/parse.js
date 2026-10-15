@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -19,10 +19,10 @@
  * suffixes `oico` and `carboxílico`, `benzoico`, the prefix `carboxi` — from
  * R-5d1, the retained acid templates from R-5d2, the esters — the suffixes
  * `oato` and `carboxilato`, `benzoato`, the O-bound side with the ending
- * `ilo` — from R-6a1):
+ * `ilo` — from R-6a1, the retained ester templates from R-6a2a):
  *
  *   name        = [ ácido ] , { prefix } , parent   (* R-5d1: `ácido` with an acid suffix only *)
- *               , [ esterSide ]                   (* R-6a1: after an ester suffix only *)
+ *               , [ esterSide ]                   (* R-6a1: after an ester suffix only; R-6a2a: or an ester template *)
  *               | { classGroup } , éter ;   (* R-5b2: exactly two groups *)
  *   esterSide   = esterGroup , { esterGroup } ;   (* R-6a1: one group per –COO–, multipliers counted *)
  *   esterGroup  = { prefix } , oBound
@@ -48,7 +48,8 @@
  *               | formaldehído | acetaldehído | acetona | acetofenona | fenilacetaldehído   (* R-5c3a *)
  *               | ftalaldehído | isoftalaldehído | tereftalaldehído
  *               | fórmico | acético | oxálico | fenilacético                    (* R-5d2, after `ácido` *)
- *               | ftálico | isoftálico | tereftálico ;
+ *               | ftálico | isoftálico | tereftálico
+ *               | formiato | acetato | fenilacetato ;                     (* R-6a2a, before the O-bound side *)
  *   letter      = o | m | p ;
  *   stem        = [ ciclo ] , ROOT ;   (* ciclo: a ring of ROOT carbons, at least 3 *)
  *   segments    = segment , [ segment ] ;
@@ -264,6 +265,21 @@
  * («ácido acético» ya dice dónde va su grupo COOH…), and inside a compound
  * branch their hint says the –COOH is written `carboxi` there.
  *
+ * The retained ester templates (R-6a2a: `formiato`, `acetato`,
+ * `fenilacetato`, open chains; tiles.js isEsterTemplate()) are the acid part
+ * of an ester, as `benzoato` is: their word places the –COO– at carbon 1
+ * (esterSuffixOf(): one –COO–, so one O-bound group), and the O-bound side
+ * follows exactly as after `oato` (`acetato de etilo`, `formiato de
+ * isopropilo`, `acetato de fenilo`); without it they are ESTER_GROUPS, with
+ * the template's own word as the example (`acetato de metilo`); numbers or a
+ * letter on them are TEMPLATE_LOCANTS («acetato» ya dice dónde va su grupo
+ * COO…); `ácido` before one is ACID_WORD («acetato» names the acid part of
+ * an ester, written without `ácido`), and an O-bound side after the retained
+ * acid each one belongs to (`ácido acético de metilo`; tiles.js
+ * ACID_ESTER_TEMPLATES) is ESTER_SUFFIX with that ester's word (`acetato de
+ * metilo`); inside a compound branch or the O-bound side their hint says
+ * they name the acid part, before the O-bound group.
+ *
  * A stem starts a branch or the parent: what follows it decides (a
  * free-valence suffix makes a branch), so leading numbers are never
  * consumed greedily — `2 met il 2 but eno` is the prefix `2-metil` and the
@@ -359,7 +375,8 @@ import {
   toTiles, TEMPLATES, templateGroupWord, groupPlural, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
   isPhenolTemplate, withArticle, ALKOXY_RETAINED, ETHER_CLASS_GROUPS, SUFFIX_GROUPS, GROUP_WORD_PARENTS, BENZALDEHYDE_ID,
   isAcylTile, templateSuffix, isCarbonylTemplate, isChainTemplate, BENZOIC_ID, ACID_KIND, isAcidSuffix, parentWordName,
-  isAcidTemplate, ACID_GROUP, ESTER_KIND, isEsterSuffix, ESTER_GROUP, BENZOATE_ID, ESTER_ALKYL_ID,
+  isAcidTemplate, ACID_GROUP, ESTER_KIND, isEsterSuffix, ESTER_GROUP, BENZOATE_ID, ESTER_ALKYL_ID, isEsterTemplate,
+  ACID_ESTER_TEMPLATES,
 } from './tiles.js';
 import { itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, iloTileOf, esterGroupsOf } from './assemble.js';
 
@@ -639,23 +656,29 @@ function esterGroupHint(word, double) {
 /**
  * The ESTER_GROUPS message (R-6a1): an ester's name has after ` de ` one
  * O-bound group per –COO– of its suffix — two different ones joined by
- * ` y `, or one with `di` when both are the same.
+ * ` y `, or one with `di` when both are the same. For a retained ester word
+ * (R-6a2a: `acetato`, one –COO–) the example is that word's own ester:
+ * `acetato de metilo`.
  *
- * @param {string} suffix - The ester suffix as the student wrote it, with its multiplier (`oato`, `dioato`, `benzoato`…).
+ * @param {string} suffix - The ester suffix as the student wrote it, with its multiplier (`oato`, `dioato`, `benzoato`…), or
+ *   the retained ester word (`acetato`).
  * @param {number} esters - The –COO– groups the suffix gives.
  * @param {number} count - The O-bound groups the name gives (multipliers counted).
+ * @param {boolean} [template] - `suffix` is a retained ester word (R-6a2a; default false).
  * @returns {string} The message.
  */
-function esterGroupsMessage(suffix, esters, count) {
+function esterGroupsMessage(suffix, esters, count, template = false) {
   const the = esters === 1 ? `un solo ${ESTER_GROUP}` : `${numberWord(esters)} ${ESTER_GROUP.replace(/^grupo /, 'grupos ')}`;
+  const example = template ? `${suffix}${ESTER_LINK}${EXAMPLES.metilo}` : EXAMPLES.etanoatoDeMetilo; // `acetato de metilo` (R-6a2a)
   if (count === 0) {
+    const tiles = template ? `${suffix}, ${stem(1)} e ${ILO}` : `${stem(2)}, ${ANO}, ${OATO}, ${stem(1)} e ${ILO}`;
     return `Detrás de «${suffix}» va el grupo unido al oxígeno del éster, acabado en «${ILO}» (la palabra «de» la pone la app): `
-      + `${stem(2)}, ${ANO}, ${OATO}, ${stem(1)} e ${ILO} dan ${EXAMPLES.etanoatoDeMetilo}.`;
+      + `${tiles} dan ${example}.`;
   }
   const written = count === 1 ? 'pone uno' : `pone ${numberWord(count)}`;
   if (esters === 1) {
     return `Con «${suffix}» hay ${the}, que lleva un solo grupo unido al oxígeno, y tu nombre ${written}: `
-      + `${EXAMPLES.etanoatoDeMetilo}.`;
+      + `${example}.`;
   }
   return `Con «${suffix}» hay ${the}, y cada uno lleva su grupo unido al oxígeno; tu nombre ${written}: escribe `
     + `${numberWord(esters)}, por orden alfabético (${EXAMPLES.propanodioatoDeEtiloYMetilo}), o uno solo con «${multiplier(esters)}» `
@@ -909,7 +932,8 @@ const ACID_GROUPS = ACID_GROUP.replace(/^grupo /, 'grupos ');
  * its SUFFIX_GROUPS key (templateSuffix()): the OH of a retained phenol
  * (R-5a3a), the –CHO of `formaldehído` or of a ftalaldehído and the C=O of
  * `acetona` (R-5c3a; GROUP_WORD_PARENTS: «grupo CHO»), the –COOH of an acid
- * template (R-5d2: «grupo COOH», «grupos COOH»).
+ * template (R-5d2: «grupo COOH», «grupos COOH»), the –COO– of an ester
+ * template (R-6a2a: «grupo COO»).
  */
 const PLACED_GROUP_WORDS = Object.freeze({
   alcohol: Object.freeze({ one: PHENOL_GROUP, many: PHENOL_GROUPS }),
@@ -919,6 +943,8 @@ const PLACED_GROUP_WORDS = Object.freeze({
   // R-5d2: the –COOH groups of an acid template (`acético`, `oxálico`, the ftálicos).
   [ACID_KIND]: Object.freeze({ one: ACID_GROUP, many: ACID_GROUPS }),
   carboxylic: Object.freeze({ one: ACID_GROUP, many: ACID_GROUPS }),
+  // R-6a2a: the –COO– of an ester template (`formiato`, `acetato`, `fenilacetato`).
+  [ESTER_KIND]: Object.freeze({ one: ESTER_GROUP, many: ESTER_GROUP.replace(/^grupo /, 'grupos ') }),
 });
 
 /**
@@ -1083,7 +1109,9 @@ function templateCountMessage(tile) {
  * compound branch, or after a multiplier. A retained phenol (R-5a3a) in a
  * branch is written like `fenol` there, with `hidroxi` and `fenil`; `anisol`
  * (R-5b) with `metoxi` and `fenil`, `(4-metoxifenil)`; a carbonyl template
- * (R-5c3a) with `oxo` or `formil`; an acid template (R-5d2) with `carboxi`.
+ * (R-5c3a) with `oxo` or `formil`; an acid template (R-5d2) with `carboxi`;
+ * an ester template (R-6a2a), in a branch or in the O-bound side, names the
+ * acid part of an ester, before its O-bound group (`acetato de metilo`).
  *
  * @param {{text: string, kind: string, value: string}} tile - The template tile.
  * @param {'branch'|'multiplier'} where - Where it stands.
@@ -1098,6 +1126,11 @@ function templateHint(tile, where) {
     // `acético`, `ftálico` (R-5d2): their –COOH is written `carboxi` there.
     return `«${tile.text}» es el nombre de toda la molécula y va al final, detrás de «${ACIDO}»; dentro de una rama, el grupo `
       + `COOH se escribe «${CARBOXI}», como en ${EXAMPLES.carboximetil} o ${EXAMPLES.carboxifenil}.`;
+  }
+  if (where === 'branch' && tile.kind === 'template' && isEsterTemplate(tile.value)) {
+    // `acetato` (R-6a2a): the acid part of an ester, before its O-bound group, as `benzoato`.
+    return `«${tile.text}» es el nombre de la parte ácida de un éster y va delante del grupo unido al oxígeno `
+      + `(${tile.text}${ESTER_LINK}${EXAMPLES.metilo}).`;
   }
   if (where === 'branch' && tile.kind === 'template' && isCarbonylTemplate(tile.value)) {
     // `acetona`, `ftalaldehído` (R-5c3a): their C=O is written as a prefix there.
@@ -2166,6 +2199,36 @@ function acidWordTemplateMessage(tile) {
 }
 
 /**
+ * The ACID_WORD message of `ácido` before a retained ester word (R-6a2a:
+ * `ácido acetato de metilo`): the word names the acid part of an ester,
+ * which is written without `ácido` (draft pending teacher review).
+ *
+ * @param {{text: string}} tile - The ester template tile.
+ * @returns {string} The message.
+ */
+function acidWordEsterMessage(tile) {
+  return `La palabra «${ACIDO}» va delante del nombre de un ácido, y «${tile.text}» es el nombre de la parte ácida de un éster, `
+    + `que se escribe sin «${ACIDO}»: ${tile.text}${ESTER_LINK}${EXAMPLES.metilo}.`;
+}
+
+/**
+ * The ESTER_SUFFIX message of an O-bound side after a retained acid name
+ * that has a retained ester word (R-6a2a: `ácido acético de metilo`): the
+ * acid's name is no ester's acid part; in the ester the acid is named with
+ * its ester word, without `ácido` (`acetato de metilo`). Any other parent
+ * gets MESSAGES.ESTER_SUFFIX (draft pending teacher review).
+ *
+ * @param {{text: string, value: string}} tile - The acid template tile (`acético`).
+ * @returns {string} The message.
+ */
+function esterSuffixTemplateMessage(tile) {
+  const ester = tileById(`template-${ACID_ESTER_TEMPLATES[tile.value]}`).text;
+  const acid = parentWordName(tile);
+  return `El grupo acabado en «${ILO}» va unido al oxígeno de un éster, y «${acid}» es el nombre de un ácido. En el éster, el `
+    + `${acid} se nombra «${ester}», sin la palabra «${ACIDO}»: ${ester}${ESTER_LINK}${EXAMPLES.metilo}.`;
+}
+
+/**
  * Keeps the class word `ácido` and an acid suffix together (R-5d1,
  * ACID_WORD): `ácido` first with a parent that has no acid suffix (`ácido
  * butanal`), the error on `ácido`; an acid suffix (`oico`, `carboxílico`,
@@ -2173,8 +2236,10 @@ function acidWordTemplateMessage(tile) {
  * suffix's tile. R-5d2: a retained acid template is such a suffix
  * (`acético`, the message's example then the student's own word, `ácido
  * acético`), and `ácido` before another template (`ácido acetona`) names the
- * retained acid words. An `ácido` out of place already has its TILE_ORDER; a
- * name without a parent its NO_PARENT, ENDS_WITH_BRANCH or BRANCH_OPEN.
+ * retained acid words; R-6a2a: before a retained ester word (`ácido
+ * acetato`), that the ester's acid part is written without `ácido`. An
+ * `ácido` out of place already has its TILE_ORDER; a name without a parent
+ * its NO_PARENT, ENDS_WITH_BRANCH or BRANCH_OPEN.
  *
  * @param {object} state - Parser state.
  * @param {object} tree - The name tree.
@@ -2189,8 +2254,10 @@ function checkAcidWord(state, tree) {
   const { chain } = tree.parent;
   const template = chain.type === 'template' ? tiles[chain.tile] : null; // R-5d2
   if (tree.suffixClass && acid === null) {
+    // `ácido acetona` (R-5d2); `ácido acetato` (R-6a2a): a retained ester word is written without `ácido`.
+    const templateMessage = template && (isEsterTemplate(template.value) ? acidWordEsterMessage : acidWordTemplateMessage);
     addError(state, 'ACID_WORD', tree.suffixClass.tile, tree.suffixClass.tile + 1,
-      template ? acidWordTemplateMessage(template) : MESSAGES.ACID_WORD_ALONE);
+      templateMessage ? templateMessage(template) : MESSAGES.ACID_WORD_ALONE);
   } else if (!tree.suffixClass && acid !== null && !tiles.some((tile) => tile.kind === 'suffixClass')) {
     addError(state, 'ACID_WORD', acid, acid + 1, template ? acidWordMissingMessage(`${ACIDO} ${template.text}`)
       : MESSAGES.ACID_WORD_MISSING);
@@ -2202,11 +2269,14 @@ function checkAcidWord(state, tree) {
  * — the tile, how many –COO– groups its multiplier gives, and the suffix as
  * the student wrote it with its multiplier (`dioato`, the multiplier's final
  * `a` elided before the vowel as render.js suffixWords() does) —, or the
- * `benzoato` word, which places one; null for a parent without one.
+ * `benzoato` word, which places one, or (R-6a2a) a retained ester word
+ * (`formiato`, `acetato`, `fenilacetato`), which places one too, with
+ * `template` set (only then, so the other results keep their shape); null for
+ * a parent without one.
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object} parent - A parent node.
- * @returns {{tile: number, count: number, word: string}|null} The ester suffix, or null.
+ * @returns {{tile: number, count: number, word: string, template?: boolean}|null} The ester suffix, or null.
  */
 export function esterSuffixOf(tiles, parent) {
   const { suffix, chain } = parent;
@@ -2215,6 +2285,11 @@ export function esterSuffixOf(tiles, parent) {
     const full = suffix.multiplier === null ? '' : tiles[suffix.multiplier].text;
     const lead = /a$/.test(full) && /^[aeiou]/.test(text) ? full.slice(0, -1) : full;
     return { tile: suffix.tile, count: multiplierCount(tiles, suffix.multiplier), word: `${lead}${text}` };
+  }
+  if (chain.type === 'template') {
+    // `formiato`, `acetato`, `fenilacetato` (R-6a2a): the word places one –COO–.
+    const tile = tiles[chain.tile];
+    return isEsterTemplate(tile.value) ? { tile: chain.tile, count: 1, word: tile.text, template: true } : null;
   }
   const placed = groupWordOf(tiles, chain);
   return placed && isEsterSuffix(placed.suffix) ? { tile: chain.tile, count: 1, word: tiles[chain.tile].text } : null; // `benzoato`
@@ -2304,7 +2379,7 @@ function checkEsterSide(state, tree) {
   const side = tree.ester;
   if (!side) {
     if (ester) {
-      addError(state, 'ESTER_GROUPS', ester.tile, ester.tile + 1, esterGroupsMessage(ester.word, ester.count, 0)); // `etanoato`
+      addError(state, 'ESTER_GROUPS', ester.tile, ester.tile + 1, esterGroupsMessage(ester.word, ester.count, 0, ester.template));
     }
     return;
   }
@@ -2352,12 +2427,16 @@ function checkEsterSide(state, tree) {
     }
   }
   if (!ester) {
-    addError(state, 'ESTER_SUFFIX', side.range[0], side.range[1], MESSAGES.ESTER_SUFFIX); // `etano metilo`
+    // `etano met ilo`; `ácido acético met ilo` (R-6a2a): the acid's ester word, `acetato`.
+    const { chain } = tree.parent;
+    const twin = chain.type === 'template' && ACID_ESTER_TEMPLATES[tiles[chain.tile].value];
+    addError(state, 'ESTER_SUFFIX', side.range[0], side.range[1], twin ? esterSuffixTemplateMessage(tiles[chain.tile])
+      : MESSAGES.ESTER_SUFFIX);
     return;
   }
   const count = groups.reduce((sum, { end }) => sum + multiplierCount(tiles, end.multiplier), 0);
   if (rest.length === 0 && !misshapen && count !== ester.count) {
-    addError(state, 'ESTER_GROUPS', ester.tile, side.range[1], esterGroupsMessage(ester.word, ester.count, count));
+    addError(state, 'ESTER_GROUPS', ester.tile, side.range[1], esterGroupsMessage(ester.word, ester.count, count, ester.template));
   }
 } // End of function checkEsterSide()
 

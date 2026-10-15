@@ -12,7 +12,8 @@
  * `…carbonil`, `benzoil`) and their carboxylic acids (R-5d1: `ácido`, the
  * suffixes `oico` and `carboxílico`, `benzoico`, the prefix `carboxi`; R-5d2:
  * the retained acid names) and their esters (R-6a1: the suffixes `oato` and
- * `carboxilato`, `benzoato`, the O-bound groups ending in `ilo`).
+ * `carboxilato`, `benzoato`, the O-bound groups ending in `ilo`; R-6a2a: the
+ * retained ester names).
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -433,15 +434,39 @@ export function isEster(smiles) {
 export const ESTER_WORD = ESTER_LINK;
 
 /**
- * The words of the ester names the tiles do not write yet (phase R-6a2): the
- * retained `formiato` and `acetato` (which `fenilacetato` and `2-(4-metilfenil)acetato` contain), from the lexicon.
+ * The words of the ester names the tiles do not write yet: none since phase
+ * R-6a2a, whose «Nombres tradicionales» tiles write the retained `formiato`
+ * and `acetato` (ESTER_TEMPLATE_WORDS); the ester prefixes are ESTER_PREFIX
+ * (phase R-6a2b).
  */
-export const LATER_ESTER_WORDS = Object.freeze([TRADITIONAL_NAMES.formate, TRADITIONAL_NAMES.acetate]);
+export const LATER_ESTER_WORDS = Object.freeze([]);
 
 /**
- * Tells whether a name is an ester's name the tiles of phase R-6a1 write:
- * it has the automatic ` de `, none of the retained words of phase R-6a2
- * (LATER_ESTER_WORDS) and no ester prefix (ESTER_PREFIX).
+ * The words of the retained ester templates (R-6a2a), from the lexicon, in
+ * the order of their tiles: `formiato`, `acetato`, `fenilacetato`.
+ */
+export const ESTER_TEMPLATE_WORDS = Object.freeze([TRADITIONAL_NAMES.formate, TRADITIONAL_NAMES.acetate,
+  TRADITIONAL_NAMES.phenylacetate]);
+
+/**
+ * Tells whether an ester's name uses a retained ester template of phase
+ * R-6a2a (ESTER_TEMPLATE_WORDS before the automatic ` de `; `acetato` covers
+ * `fenilacetato` and `2-(4-metilfenil)acetato`), not the words of its O-bound
+ * side.
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for `acetato de etilo`, `formiato de metilo`…
+ */
+export function isEsterTemplateName(name) {
+  const at = name.indexOf(ESTER_WORD);
+  return at >= 0 && ESTER_TEMPLATE_WORDS.some((word) => name.slice(0, at).endsWith(word));
+}
+
+/**
+ * Tells whether a name is an ester's name the tiles of phases R-6a1 and
+ * R-6a2a write: it has the automatic ` de `, none of the words left for later
+ * phases (LATER_ESTER_WORDS, empty since R-6a2a) and no ester prefix
+ * (ESTER_PREFIX, phase R-6a2b).
  *
  * @param {string} name - A name.
  * @returns {boolean} True when the tiles read it.

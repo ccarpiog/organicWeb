@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -71,7 +71,10 @@
  * oxygen of its –COO– (attachEsterGroups(), `esterAtoms`); its carbons and
  * atoms count for the caps, its rings for ringRefusal() (`benzoato de
  * fenilo`: two rings, keyed), and its messages name «el grupo unido al
- * oxígeno» (LOCANT_RANGE, BOND_RANGE, VALENCE).
+ * oxígeno» (LOCANT_RANGE, BOND_RANGE, VALENCE). A retained ester word
+ * (R-6a2a: `formiato`, `acetato`, `fenilacetato`) is a chain template whose
+ * –COO–, placed at carbon 1 by the word, is the chain's own like `acético`'s
+ * –COOH («…en el acetato, ese carbono ya lleva un grupo COO»).
  * An alkoxy prefix (R-5b, SubstituentSpec `alkoxy`) is its branch built as
  * any other — chain, ring, phenyl or retained word, with its own prefixes —
  * and then an ether oxygen, created last, bonded by single bonds to the
@@ -293,7 +296,8 @@ function oBoundRangeMessage(owner, value) {
  * The systematic names the LOCANT_RANGE message of a chain template whose
  * word holds a ring (R-5c3a) offers for a group on that ring, by TEMPLATES
  * key: `1-(4-metilfenil)etan-1-ona`, `2-(4-metilfenil)etanal`; R-5d2: `ácido
- * 2-(4-metilfenil)etanoico` for `fenilacético`.
+ * 2-(4-metilfenil)etanoico` for `fenilacético`; R-6a2a: `2-(4-metilfenil)etanoato
+ * de metilo` for `fenilacetato`.
  */
 const RING_TEMPLATE_EXAMPLES = Object.freeze({
   acetophenone: `1-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}`
@@ -302,6 +306,8 @@ const RING_TEMPLATE_EXAMPLES = Object.freeze({
     + `${stem(2)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES.aldehyde}`,
   phenylaceticAcid: `${SUFFIX_CLASS_WORDS[ACID_KIND]} 2-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}`
     + `${ENCLOSING_MARKS[0][1]}${stem(2)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[ACID_KIND]}`,
+  phenylacetate: `2-${ENCLOSING_MARKS[0][0]}4-${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${FENIL}${ENCLOSING_MARKS[0][1]}${stem(2)}`
+    + `${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[ESTER_KIND]}${ESTER_LINK}${stem(1)}${FREE_VALENCE_SUFFIXES[1]}${ESTER_ALKYL_ENDING}`,
 });
 
 /**

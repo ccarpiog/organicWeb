@@ -23,7 +23,7 @@ import {
   atomGroupOrder, atomGroupElement, ACETYL_ID, BENZOYL_ID, ACYL_ID, RING_CARBONYL_ID, ACYL_RETAINED, isAcylTile, isChainTemplate,
   isCarbonylTemplate, templateSuffix, templateLength, ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, CARBOXY_ID, isAcidSuffix,
   suffixBondAmount, parentWordName, ACID_KIND, ACID_GROUP, isAcidTemplate, OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID,
-  ESTER_KIND, ESTER_GROUP, isEsterSuffix,
+  ESTER_KIND, ESTER_GROUP, isEsterSuffix, isEsterTemplate,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
@@ -65,8 +65,8 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('benzene'), 5); // benceno (R-4b), fenol (R-5a2), benzaldehído (R-5c1), benzoico (R-5d1), benzoato (R-6a1)
   assert.equal(count('positional'), 3); // o, m, p (R-4c)
   // tolueno, estireno, xileno, mesitileno (R-4c); anisol (R-5b); cresol…hidroquinona (R-5a3a); formaldehído…tereftalaldehído (R-5c3a);
-  // fórmico…tereftálico (R-5d2)
-  assert.equal(count('template'), 25);
+  // fórmico…tereftálico (R-5d2); formiato, acetato, fenilacetato (R-6a2a)
+  assert.equal(count('template'), 28);
   assert.equal(count('halogen'), 4); // fluoro, cloro, bromo, yodo (R-5a1)
   assert.equal(count('hydroxy'), 1); // hidroxi (R-5a2)
   assert.equal(count('suffix'), 8); // ol (R-5a2); al, ona, carbaldehído (R-5c1); oico, carboxílico (R-5d1); oato, carboxilato (R-6a1)
@@ -190,7 +190,7 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
   assert.deepEqual(TILES.filter((t) => t.kind === 'template').map((t) => t.text), ['tolueno', 'estireno', 'xileno', 'mesitileno',
     'anisol', 'cresol', 'pirocatecol', 'catecol', 'resorcinol', 'hidroquinona', 'formaldehído', 'acetaldehído', 'acetona',
     'acetofenona', 'fenilacetaldehído', 'ftalaldehído', 'isoftalaldehído', 'tereftalaldehído', 'fórmico', 'acético', 'oxálico',
-    'fenilacético', 'ftálico', 'isoftálico', 'tereftálico']);
+    'fenilacético', 'ftálico', 'isoftálico', 'tereftálico', 'formiato', 'acetato', 'fenilacetato']);
   assert.deepEqual(Object.entries(TEMPLATES).map(([value, t]) => [value, t.count, t.positions, t.group && t.group.length,
     t.group && t.group.double, t.hydroxy, Boolean(t.letterOnly)]), [
     ['toluene', 1, [1], 1, [], [], false], ['styrene', 1, [1], 2, [1], [], false], ['xylene', 2, null, 1, [], [], false],
@@ -211,13 +211,22 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
     ['oxalicAcid', 0, [], null, null, [], false], ['phenylaceticAcid', 1, [2], undefined, undefined, [], false],
     ['phthalicAcid', 0, [], null, null, [], false], ['isophthalicAcid', 0, [], null, null, [], false],
     ['terephthalicAcid', 0, [], null, null, [], false],
+    // R-6a2a: the retained ester names, their –COO– as a placed suffix (below); `fenilacetato`'s phenyl.
+    ['formate', 0, [], null, null, [], false], ['acetate', 0, [], null, null, [], false],
+    ['phenylacetate', 1, [2], undefined, undefined, [], false],
   ]);
   assert.deepEqual(Object.keys(TEMPLATES).map(templateGroupWord), ['metilo', 'etenilo', 'metilo', 'metilo', 'grupo metoxi', 'metilo',
-    null, null, null, null, null, null, null, 'fenilo', 'fenilo', null, null, null, null, null, null, 'fenilo', null, null, null]);
-  // R-5c3a: the chain templates' carbons and every template's placed principal group; R-5d2: the acid ones.
+    null, null, null, null, null, null, null, 'fenilo', 'fenilo', null, null, null, null, null, null, 'fenilo', null, null, null, null,
+    null, 'fenilo']);
+  // R-5c3a: the chain templates' carbons and every template's placed principal group; R-5d2: the acid ones; R-6a2a: the ester ones.
   assert.deepEqual(Object.keys(TEMPLATES).filter(isChainTemplate).map((value) => [value, templateLength(value)]), [
     ['formaldehyde', 1], ['acetaldehyde', 2], ['acetone', 3], ['acetophenone', 2], ['phenylacetaldehyde', 2], ['formicAcid', 1],
-    ['aceticAcid', 2], ['oxalicAcid', 2], ['phenylaceticAcid', 2]]);
+    ['aceticAcid', 2], ['oxalicAcid', 2], ['phenylaceticAcid', 2], ['formate', 1], ['acetate', 2], ['phenylacetate', 2]]);
+  assert.deepEqual(Object.keys(TEMPLATES).filter(isEsterTemplate).map((value) => [value, templateSuffix(value), parentWordName(
+    tileById(`template-${value}`))]), [['formate', { value: 'ester', positions: [1] }, TRADITIONAL_NAMES.formate],
+    ['acetate', { value: 'ester', positions: [1] }, TRADITIONAL_NAMES.acetate],
+    ['phenylacetate', { value: 'ester', positions: [1] }, TRADITIONAL_NAMES.phenylacetate]]);
+  assert.ok(Object.keys(TEMPLATES).filter(isEsterTemplate).every((value) => !isAcidTemplate(value) && !isCarbonylTemplate(value)));
   assert.deepEqual(Object.keys(TEMPLATES).filter(isAcidTemplate).map((value) => [value, templateSuffix(value)]), [
     ['formicAcid', { value: 'acid', positions: [1] }], ['aceticAcid', { value: 'acid', positions: [1] }],
     ['oxalicAcid', { value: 'acid', positions: [1, 2] }], ['phenylaceticAcid', { value: 'acid', positions: [1] }],
@@ -225,7 +234,7 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
     ['terephthalicAcid', { value: 'carboxylic', positions: [1, 4] }]]);
   assert.deepEqual(Object.keys(TEMPLATES).filter((value) => TEMPLATES[value].arylPrefix || TEMPLATES[value].substitutable), [
     'acetaldehyde', 'phthalaldehyde', 'isophthalaldehyde', 'terephthalaldehyde', 'aceticAcid', 'phthalicAcid', 'isophthalicAcid',
-    'terephthalicAcid']);
+    'terephthalicAcid', 'acetate']);
   assert.deepEqual(Object.keys(TEMPLATES).filter(isCarbonylTemplate).map((value) => [value, templateSuffix(value)]), [
     ['formaldehyde', { value: 'aldehyde', positions: [1] }], ['acetaldehyde', { value: 'aldehyde', positions: [1] }],
     ['acetone', { value: 'ketone', positions: [2] }], ['acetophenone', { value: 'ketone', positions: [1] }],
@@ -276,9 +285,9 @@ test('rows and «más» follow design.md §15.2', () => {
       'template-acetaldehyde', 'template-acetone', 'template-acetophenone', 'template-phenylacetaldehyde', 'template-phthalaldehyde',
       'template-isophthalaldehyde', 'template-terephthalaldehyde', 'template-formicAcid', 'template-aceticAcid',
       'template-oxalicAcid', 'template-phenylaceticAcid', 'template-phthalicAcid', 'template-isophthalicAcid',
-      'template-terephthalicAcid'],
+      'template-terephthalicAcid', 'template-formate', 'template-acetate', 'template-phenylacetate'],
     'R-4c: «Nombres tradicionales»; R-5b: anisol; R-5a3a: the retained phenols; R-5c3a: the retained carbonyl names; R-5d2: the '
-      + 'retained acid names');
+      + 'retained acid names; R-6a2a: the retained ester names');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'groups').map((tile) => tile.id),
     ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, ACETYL_ID,
       ACYL_ID, RING_CARBONYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, OATO_ID, CARBOXYLATE_ID,

@@ -9,8 +9,9 @@
  * bis(2-cloroetilo)`). Parser (the O-bound side, ESTER_GROUPS, ESTER_SUFFIX
  * and the misplaced tiles with their tile ranges, partial names), assembler
  * (every form checked against the forward engine's own text), tokenizer (the
- * retained `formiato` / `acetato` and the ester prefixes of phase R-6a2, and
- * the later families' names, never read), interpreter and builder (the =O
+ * ester prefixes of phase R-6a2b and the later families' names never read;
+ * the retained `formiato` / `acetato` read since phase R-6a2a,
+ * reverse-ester-templates.test.js), interpreter and builder (the =O
  * and the bridge oxygen of each –COO–, the O-bound groups bonded to it,
  * CARBONYL_POSITION, VALENCE, LOCANT_RANGE, BOND_RANGE with the O-bound
  * group's words, the caps), search (left-out locants of the acid part, of
@@ -20,10 +21,12 @@
  * hold for an ester's acid part; the ester's own mistakes, deliberate nulls
  * of diagnose.js «Esters» until phase I-52a3, each with its category read
  * independently), the fixture round trip over every ester row of
- * tests/fixtures/names.tsv, the closed loop over the oracle's ester
- * generators (pure imports, no Java), the diagnosis sweeps (every null a
- * deliberate «Esters» one, counted by category), the ordered drawing, the
- * dialog's tooltips and time budgets.
+ * tests/fixtures/names.tsv and the closed loop over the oracle's ester
+ * generators (pure imports, no Java), the retained names of phase R-6a2a
+ * included, the diagnosis sweeps over the names of phase R-6a1 (every null a
+ * deliberate «Esters» one, counted by category; the retained names are swept
+ * apart, reverse-ester-templates.test.js), the ordered drawing, the dialog's
+ * tooltips and time budgets.
  */
 
 import { test } from 'node:test';
@@ -49,6 +52,7 @@ import {
 } from '../../scripts/oracle/generate.mjs';
 import {
   seq, readFixtures, leafIndices, isEster, isEsterMolecule, isEsterName, LATER_ESTER_WORDS, ESTER_PREFIX, ESTER_WORD,
+  isEsterTemplateName, ESTER_TEMPLATE_WORDS,
 } from './reverse-words.js';
 
 /**
@@ -62,12 +66,14 @@ import {
 const EXPECTED_ROWS = Object.freeze({ total: 119, read: 104, i35: 39, i39b: 3, i39c: 11, i40d: 28, i45c: 23, nitrogen: 15 });
 
 /**
- * Their names and alternatives the tiles write, read back (145), and those
- * left to phase R-6a2 (39: the retained `formiato`, `acetato`, `fenilacetato`
- * and `2-(4-metilfenil)acetato` names).
+ * Their names and alternatives the tiles write, read back (184): those of
+ * phase R-6a1 (145, swept below) and, since phase R-6a2a, the retained
+ * `formiato`, `acetato`, `fenilacetato` and `2-(4-metilfenil)acetato` names
+ * (39, swept apart in reverse-ester-templates.test.js); none left for later.
  */
-const EXPECTED_NAMES = 145;
-const EXPECTED_LATER_NAMES = 39;
+const EXPECTED_NAMES = 184;
+const EXPECTED_TEMPLATE_NAMES = 39;
+const EXPECTED_LATER_NAMES = 0;
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -455,22 +461,29 @@ test('assembler (R-6a1): every ester form is the forward engine\'s own text; the
   assert.equal(text('1 4 ciclo hex ano di carboxilato di met ilo'), '1,4-ciclohexanodicarboxilato de dimetilo');
 }); // End of test 'assembler (R-6a1)…'
 
-test('tokenizer (R-6a1): texts that only read with errors, the retained ester names and the later families\' names never tokenize', () => {
+test('tokenizer (R-6a1): texts that only read with errors, the ester prefixes and the later families\' names never tokenize', () => {
   for (const name of ['etanoato', 'etanoato de', 'etanoato de ', 'etanoato  de metilo', 'etanoatode metilo', 'etanoato de metil',
     'etanoato de metilo y', 'etanoato de metilo etilo', 'etanoato y metilo', 'etano de metilo', 'metilo', 'metilo etanoato',
     'etanoato de metilo de etilo', 'etanoato de (2-cloroetilo)', 'ciclohexanoato de metilo', 'bencenoato de metilo',
     'etan-1-oato de metilo', 'butano-1,4-dioato de dimetilo', 'etanoato de 2-propilo', 'etanoato de propanilo', 'benzoato',
     'etanoato de metiloxi', 'ácido etanoato de metilo',
-    // Phase R-6a2: the retained ester names and the ester prefixes beside an acid.
-    'acetato de metilo', 'formiato de etilo', 'fenilacetato de metilo', '2-(4-metilfenil)acetato de etilo', 'acetato de fenilo',
+    // Phase R-6a2b: the ester prefixes beside an acid.
     'ácido 2-(acetiloxi)etanoico', 'ácido 3-(metoxicarbonil)pentanodioico',
     // Phases R-6b…R-6d: nitriles, amines, amides beside an ester.
     '2-aminoetanoato de metilo', '2-cianoetanoato de metilo', 'etanoato de 2-(dimetilamino)etilo', '4-amino-4-oxobutanoato de metilo']) {
     assert.equal(tokenize(name), null, name);
   }
-  assert.deepEqual(LATER_ESTER_WORDS, ['formiato', 'acetato']);
+  // Phase R-6a2a: the retained ester names read (reverse-ester-templates.test.js); none is left for later.
+  assert.deepEqual(LATER_ESTER_WORDS, []);
+  assert.deepEqual(ESTER_TEMPLATE_WORDS, ['formiato', 'acetato', 'fenilacetato']);
+  for (const name of ['acetato de metilo', 'formiato de etilo', 'fenilacetato de metilo', '2-(4-metilfenil)acetato de etilo',
+    'acetato de fenilo']) {
+    assert.ok(tokenize(name), name);
+    assert.ok(isEsterName(name) && isEsterTemplateName(name), name);
+  }
   assert.equal(ESTER_WORD, ESTER_LINK);
-  assert.ok(isEsterName('butanodioato de dimetilo') && !isEsterName('acetato de metilo') && !isEsterName('ácido etanoico'));
+  assert.ok(isEsterName('butanodioato de dimetilo') && !isEsterTemplateName('butanodioato de dimetilo') && !isEsterName('ácido etanoico'));
+  assert.ok(!isEsterName('ácido 2-(acetiloxi)etanoico') && !isEsterTemplateName('etanoato de 2-acetilhexilo'));
   assert.equal(tokenize('butanodioato de di(2-cloroetilo)').length, 11, 'the student\'s own multiplier reads (the engine writes bis)');
 }); // End of test 'tokenizer (R-6a1)…'
 
@@ -857,10 +870,11 @@ test('deliberate «Esters» nulls (diagnose.js, for I-52a3): an ester\'s own mis
 // Fixture round trip and closed loop (design.md §15.7).
 // ---------------------------------------------------------------------------
 
-test('fixture round trip (R-6a1): every ester name the tiles write, graph compared with the SMILES; later names never tokenize', async () => {
+test('fixture round trip (R-6a1, R-6a2a): every ester name the tiles write, graph compared with the SMILES; later names never tokenize', async () => {
   const fixtures = await readFixtures();
   const rows = fixtures.filter((row) => row.names[0].includes(ESTER_WORD));
   let covered = 0;
+  let templates = 0;
   let later = 0;
   let nitrogen = 0;
   let elapsed = 0;
@@ -875,11 +889,12 @@ test('fixture round trip (R-6a1): every ester name the tiles write, graph compar
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (!isEsterName(name)) {
-        later += 1; // `formiato`, `acetato` (R-6a2).
-        assert.ok(LATER_ESTER_WORDS.some((word) => name.includes(word)) && !ESTER_PREFIX.test(name), name);
+        later += 1; // An ester prefix (R-6a2b): none among the esters' own rows.
+        assert.ok(ESTER_PREFIX.test(name), name);
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
       }
+      templates += isEsterTemplateName(name) ? 1 : 0; // `formiato`, `acetato`, `fenilacetato` (R-6a2a).
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
       assert.equal(assemble(parse(ids).tree).text, name, `names.tsv:${row.line}: assembly`);
@@ -912,6 +927,7 @@ test('fixture round trip (R-6a1): every ester name the tiles write, graph compar
   assert.deepEqual(['I-35', 'I-39b', 'I-39c', 'I-40d', 'I-45c'].map(inSection),
     [EXPECTED_ROWS.i35, EXPECTED_ROWS.i39b, EXPECTED_ROWS.i39c, EXPECTED_ROWS.i40d, EXPECTED_ROWS.i45c]);
   assert.equal(covered, EXPECTED_NAMES);
+  assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
   assert.equal(later, EXPECTED_LATER_NAMES);
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
 }); // End of test 'fixture round trip (R-6a1)…'
@@ -928,13 +944,14 @@ const LOOP = Object.freeze({
  * Minimum coverage of the closed loop: ester molecules (distinct by aromatic
  * key), names read back, the forms among them (names with `oato` but not
  * `benzoato`, `carboxilato`, `benzoato`, diesters with ` y ` or a
- * multiplied O-bound side), removed-locant mutations and decisive verdicts
- * among them (the seeds give 1184, 1529, 951, 333, 245, 48, 52, 2305 and
- * 2305; the 187 retained `formiato` / `acetato` names, phase R-6a2, are left
- * out, asserted untokenisable).
+ * multiplied O-bound side, and since phase R-6a2a the retained `formiato`,
+ * `acetato` and `fenilacetato` names, until then left out), removed-locant
+ * mutations and decisive verdicts among them (the seeds give 1184, 1716, 951,
+ * 333, 245, 48, 52, 187, 2305 and 2305; no name is left for later).
  */
 const LOOP_MIN = Object.freeze({
-  molecules: 1170, names: 1510, oato: 940, carboxilato: 325, benzoato: 240, join: 45, multiplied: 50, removed: 2280, decisive: 2280,
+  molecules: 1170, names: 1700, oato: 940, carboxilato: 325, benzoato: 240, join: 45, multiplied: 50, templates: 185, removed: 2280,
+  decisive: 2280,
 });
 
 /**
@@ -1004,7 +1021,7 @@ function locantLists(tree) {
 
 test('closed loop over the ester generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, oato: 0, carboxilato: 0, benzoato: 0, join: 0, multiplied: 0, removed: 0, decisive: 0 };
+  const counts = { names: 0, oato: 0, carboxilato: 0, benzoato: 0, join: 0, multiplied: 0, templates: 0, removed: 0, decisive: 0 };
   const later = [];
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
@@ -1012,7 +1029,7 @@ test('closed loop over the ester generators: engine name → tiles → readName(
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
       if (!isEsterName(name)) {
-        later.push(name); // `formiato`, `acetato` (R-6a2).
+        later.push(name); // None since phase R-6a2a (the generators write no ester prefix beside an ester).
         assert.equal(tokenize(name), null, name);
         continue;
       }
@@ -1028,6 +1045,7 @@ test('closed loop over the ester generators: engine name → tiles → readName(
       counts.benzoato += /benzoato de /.test(name) ? 1 : 0;
       counts.join += name.includes(ESTER_ALKYL_JOIN) ? 1 : 0;
       counts.multiplied += / de (?:di|bis)/.test(name) ? 1 : 0;
+      counts.templates += isEsterTemplateName(name) ? 1 : 0; // `acetato de etilo` (R-6a2a)
       if (i > 0) {
         continue;
       }
@@ -1054,7 +1072,7 @@ test('closed loop over the ester generators: engine name → tiles → readName(
   } // End of the loop over the molecules
   const report = JSON.stringify({ molecules: molecules.length, ...counts, later: later.length });
   assert.ok(molecules.length >= LOOP_MIN.molecules, report);
-  assert.ok(later.every((name) => LATER_ESTER_WORDS.some((word) => name.includes(word))), report);
+  assert.deepEqual(later, [], report);
   for (const field of Object.keys(counts)) {
     assert.ok(counts[field] >= LOOP_MIN[field], `${field}: ${report}`);
   }
@@ -1261,8 +1279,9 @@ function sweep(names) {
 } // End of function sweep()
 
 /**
- * How many mutations of the ester fixture names (the 145 the tiles write)
- * give `otherName`, by family (155), and the deliberate «Esters» nulls
+ * How many mutations of the ester fixture names of phase R-6a1 (the 145 the
+ * tiles write, the retained names of phase R-6a2a swept apart in
+ * reverse-ester-templates.test.js) give `otherName`, by family (155), and the deliberate «Esters» nulls
  * among them by category (94, for phase I-52a3: 90 `numbering`, a ring
  * ester's –COO– groups numbered otherwise by a rotation or a reflection —
  * `2-metilciclohexano-1-carboxilato` rotated to `3-metilciclohexano-2-…` —,
@@ -1277,8 +1296,9 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 const FIXTURE_NULLS = Object.freeze({ numbering: 90, oBound: 4 });
 
 test('mutations of every ester fixture name: a diagnosis of the family\'s codes, or a deliberate «Esters» null with its category', async () => {
-  const names = (await readFixtures()).filter((row) => isEster(row.smiles)).flatMap((row) => row.names).filter(isEsterName);
-  assert.equal(names.length, EXPECTED_NAMES);
+  const names = (await readFixtures()).filter((row) => isEster(row.smiles)).flatMap((row) => row.names)
+    .filter((name) => isEsterName(name) && !isEsterTemplateName(name));
+  assert.equal(names.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES);
   const { otherName, codes, nulls, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
@@ -1291,7 +1311,9 @@ test('mutations of the generated esters: every otherName is diagnosed or a delib
   const names = [];
   for (const mol of loopMolecules().filter((_, i) => i % 3 === 0)) { // Every generator's esters: chains, diesters, rings, benzenes.
     const naming = nameMolecule(mol);
-    names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter(isEsterName));
+    // The names of phase R-6a1; the retained names (R-6a2a) are swept apart (reverse-ester-templates.test.js).
+    names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter((name) => isEsterName(name)
+      && !isEsterTemplateName(name)));
   }
   assert.ok(names.length >= 500, `${names.length} names`); // The seeds give 507.
   const { otherName, codes, nulls, unexpected } = sweep(names);

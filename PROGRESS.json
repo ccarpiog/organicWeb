@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-15T13:22:30Z",
+  "updated": "2026-10-15T14:04:19Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -838,8 +838,23 @@
     {
       "id": "I-52a2",
       "title": "v4 R-6a2 Retained ester names, ester prefixes and Ayuda ester line",
+      "status": "in_progress",
+      "summary": "Split into I-52a2a (retained formiato and acetato names, Ayuda ester line) and I-52a2b (aciloxi and alcoxicarbonil ester prefixes)."
+    },
+    {
+      "id": "I-52a2a",
+      "title": "v4 R-6a2a Retained ester names formiato/acetato and the Ayuda ester line",
+      "status": "done",
+      "risk": "high",
+      "summary": "Reads the retained ester names formiato, acetato and fenilacetato built from tiles and adds the Ayuda ester line.",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-52a2a.md",
+      "narrative": "docs/progress-archive/i-52a2a.md"
+    },
+    {
+      "id": "I-52a2b",
+      "title": "v4 R-6a2b Ester prefixes aciloxi and alcoxicarbonil",
       "status": "queued",
-      "summary": "Reads formiato and acetato, the aciloxi and alcoxicarbonil ester prefixes, and adds the Ayuda ester line."
+      "summary": "Reads the ester prefixes the engine writes, such as acetiloxi and metoxicarbonil, on chains, rings and benzene."
     },
     {
       "id": "I-52a3",
