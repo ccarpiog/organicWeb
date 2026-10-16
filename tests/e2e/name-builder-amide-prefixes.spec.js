@@ -13,8 +13,8 @@
  * shared rule speaks on the groups on the carbamoyl nitrogen
  * (`[metil(etil)carbamoil]`: ALPHABETICAL_ORDER), and an amide's own mistake
  * (`ácido 3-carbamoilpropanoico`, whose C=O carbon the engine takes into the
- * chain) is drawn and named without a diagnosis, a deliberate null of
- * diagnose.js «Amides» until phase I-52d4; a locant on a group of the
+ * chain) is drawn and named with its diagnosis (AMIDE_IN_CHAIN since phase
+ * I-52d4, a deliberate null before); a locant on a group of the
  * carbamoyl nitrogen, a third group on it and an acyl group on it (an imide)
  * stay in the dialog with their message (and marked tiles), the canvas
  * untouched. Runs on the dev server and on dist (playwright.config.js).
@@ -221,16 +221,20 @@ test('acylamino prefixes: correct beside an acid and an amide; left-out locant; 
   await expect(page.locator('#result-name')).toHaveText('ácido 3-[etil(metil)carbamoil]pentanodioico');
 
   // `ácido 3-carbamoilpropanoico`: the carbamoyl's C=O carbon on the chain's end, which the engine takes into the chain — a
-  // deliberate null of diagnose.js «Amides» until phase I-52d4: drawn and named, the block without a diagnosis.
+  // deliberate null of diagnose.js «Amides» until phase I-52d4, now AMIDE_IN_CHAIN: drawn and named, the diagnosis between the
+  // verdict's two sentences.
   dialog = await buildName(page, 'ácido', '3', 'carbamoil', 'prop', 'ano', 'oico');
   await expect(line).toHaveText('ácido 3-carbamoilpropanoico');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
-  expect(await verdict.getAttribute('data-diagnosis')).toBeNull();
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'AMIDE_IN_CHAIN');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama «ácido '
-    + '4-amino-4-oxobutanoico». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);
+    + '4-amino-4-oxobutanoico».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('El prefijo «carbamoil» está en el extremo de la cadena, y el carbono '
+    + 'de su C=O la alarga: la cadena principal tiene 4 carbonos. Con ese carbono en la cadena, la amida ya no se nombra «carbamoil», '
+    + 'sino con dos prefijos con el mismo número: «oxo» para su C=O y «amino» para su nitrógeno, con los grupos unidos a él. Se escribe '
+    + '«ácido 4-amino-4-oxobutanoico».');
   await expect(page.locator('#result-name')).toHaveText('ácido 4-amino-4-oxobutanoico');
   expect(errors).toEqual([]);
 }); // End of test 'acylamino prefixes…'

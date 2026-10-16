@@ -19,8 +19,9 @@
  * the molecule each describes (compared by aromatic key with a SMILES), the
  * engine's refusals (an imide, a halogen on the nitrogen), mutations and
  * their diagnosis (the shared rules, which hold for these prefixes; the
- * amide's own mistakes deliberate nulls of diagnose.js «Amides» until phase
- * I-52d4, each with its category read independently), the fixture round trip
+ * amide's own mistakes, deliberate nulls of diagnose.js «Amides» until phase
+ * I-52d4 and diagnosed since, each with its category read independently and
+ * a code of its category), the fixture round trip
  * over every row of tests/fixtures/names.tsv with an amide prefix and the
  * closed loop over the oracle's generators that write them (pure imports, no
  * Java), the diagnosis sweeps with exact counts, the ordered drawing, the
@@ -571,7 +572,7 @@ test('search (R-6d2): left-out locants give ambiguous lists; the budget gives in
 /**
  * Mutations of amide-prefix names (design.md §15.7): tile words, the verdict
  * and the diagnosis code of a rule that holds for these prefixes (the
- * amide's own mistakes are the deliberate nulls of the next test).
+ * amide's own mistakes are the former deliberate nulls of the next test).
  */
 const MUTATIONS = Object.freeze([
   ['ácido 3 START met il et il carbamoil END pent ano di oico', 'otherName', 'ALPHABETICAL_ORDER'],
@@ -727,7 +728,8 @@ function carbamoylCategory(spec, verdict) {
 /**
  * The category of an amide's own mistake, read independently of diagnose.js
  * from the engine's naming and the student's reading (diagnose.js «Amides»:
- * deliberate nulls until phase I-52d4): the R-6d1 categories (`seniority` —
+ * deliberate nulls until phase I-52d4, diagnosed since with a code of their
+ * category, CATEGORY_CODES): the R-6d1 categories (`seniority` —
  * the student's suffix an amide's while the engine's principal group is
  * another, or the engine's an amide and the student's suffix none or
  * another, an amine's aside: `carbamoilciclohexano`,
@@ -755,11 +757,13 @@ function amidePrefixCategory(ids, verdict) {
   if (mine.slots.length !== engine.locants.length) {
     return 'count';
   }
-  if (Boolean(mine.outside) !== Boolean(engine.outside)) {
-    return 'carbon';
-  }
   const groups = verdict.suffixAtoms || [];
   const sorted = (list) => [...list].sort((p, q) => p - q).join();
+  // The student's amide carbons the engine's own (phase I-52d4, as reverse-amides.test.js amideCategory()).
+  const carbons = (list, key) => list.map((g) => (g.carbon === undefined ? g[key] : g.carbon));
+  if (Boolean(mine.outside) !== Boolean(engine.outside) && sorted(carbons(groups, 'parentAtom')) === sorted(carbons(engine.locants, 'atom'))) {
+    return 'carbon';
+  }
   if (sorted(groups.map((g) => g.attachment)) !== sorted(engine.locants.map((site) => site.attachAtom))) {
     return 'parent';
   }
@@ -786,86 +790,141 @@ function amidePrefixCategory(ids, verdict) {
   return carbamoylCategory(spec, verdict);
 } // End of function amidePrefixCategory()
 
-test('the deliberate nulls of R-6d2 (diagnose.js «Amides»): each category, read independently, gets no diagnosis', () => {
+/**
+ * The codes an amide-prefix mistake gets, by category (amidePrefixCategory();
+ * diagnose.js «Amides», phase I-52d4): the R-6d1 categories as
+ * reverse-amides.test.js CATEGORY_CODES, and the amide prefixes' — a
+ * carbamoyl prefix whose C=O carbon the engine's chain takes in (on an end of
+ * the parent, AMIDE_IN_CHAIN; inside a compound branch or an O-bound group,
+ * AMIDE_PREFIX_NAME `inChain`), the engine's `carbamoil` written as another
+ * kind of branch (AMIDE_PREFIX_NAME `carbamoyl`).
+ */
+const CATEGORY_CODES = Object.freeze({
+  seniority: ['AMIDE_GROUP', 'CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS',
+    'ETHER_SIDE', 'BRANCH_AT_END'],
+  count: ['AMIDE_GROUP', 'CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'BRANCH_AT_END'],
+  carbon: ['AMIDE_CARBON'],
+  parent: ['CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'ETHER_SIDE', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS',
+    'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL'],
+  numbering: ['NUMBERING', 'RING_NUMBERING'],
+  suffix: ['NEEDLESS_LOCANTS', 'MISSING_LOCANTS'],
+  inChain: ['AMIDE_IN_CHAIN', 'AMIDE_PREFIX_NAME'],
+  words: ['AMIDE_PREFIX_NAME'],
+});
+
+test('the former deliberate nulls of R-6d2 (diagnose.js «Amides»): each category has its I-52d4 code, step and words', () => {
   const cases = [
-    // [tile words, category]
-    ['ácido 3 carbamoil prop ano oico', 'inChain'], // «ácido 4-amino-4-oxobutanoico»
-    ['ácido 2 carbamoil et ano oico', 'inChain'],
-    ['ácido 2 met il 3 carbamoil prop ano oico', 'inChain'],
-    ['3 carbamoil prop ano oato met ilo', 'inChain'],
-    ['ácido 2 START carbamoil met il END but ano di oico', 'inChain'], // «…2-(2-amino-2-oxoetil)…»: the branch's own chain
-    ['ácido 3 START met il carbamoil END prop ano oico', 'inChain'],
-    ['ácido 2 START met il carbamoil END et ano oico', 'inChain'], // «ácido 3-(metilamino)-3-oxopropanoico»
-    ['ácido 2 START amino oxo met il END but ano di oico', 'words'], // «ácido 2-carbamoilbutanodioico»
-    ['ácido 2 START 1 amino 1 oxo met il END but ano di oico', 'words'], // not NEEDLESS_LOCANTS «(aminooxometil)»
-    ['ácido 4 START amino oxo met il END benzoico', 'words'],
-    ['carbamoil ciclo hex ano', 'seniority'], // «ciclohexanocarboxamida»: the principal amide written `carbamoil`
-    ['carbamoil benceno', 'seniority'],
-    ['2 START acetil amino END et ano 1 ol', 'seniority'], // «N-(2-hidroxietil)etanamida»: the amide principal
-    ['2 START acetil amino END prop ano', 'seniority'],
-    ['2 carbamoil but ano nitrilo', 'seniority'], // «2-cianobutanamida»
-    ['4 carbamoil but ano amida', 'count'], // «pentanodiamida»
+    // [tile words, category, code, step, a phrase of the message]
+    ['ácido 3 carbamoil prop ano oico', 'inChain', 'AMIDE_IN_CHAIN', 'groupChain', 'El prefijo «carbamoil» está en el extremo de la '
+      + 'cadena, y el carbono de su C=O la alarga: la cadena principal tiene 4 carbonos'],
+    ['ácido 2 carbamoil et ano oico', 'inChain', 'AMIDE_IN_CHAIN', 'groupChain', 'Se escribe «ácido 3-amino-3-oxopropanoico»'],
+    ['ácido 2 met il 3 carbamoil prop ano oico', 'inChain', 'AMIDE_IN_CHAIN', 'groupChain', 'Se escribe «ácido '
+      + '4-amino-2-metil-4-oxobutanoico»'],
+    ['3 carbamoil prop ano oato met ilo', 'inChain', 'AMIDE_IN_CHAIN', 'groupChain', 'Se escribe «4-amino-4-oxobutanoato de metilo»'],
+    ['ácido 2 START carbamoil met il END but ano di oico', 'inChain', 'AMIDE_PREFIX_NAME', 'substituents', 'la amida no forma una rama '
+      + 'aparte, «carbamoil», sino que se nombra con dos prefijos con el mismo número'],
+    ['ácido 3 START met il carbamoil END prop ano oico', 'inChain', 'AMIDE_IN_CHAIN', 'groupChain', 'la amida ya no se nombra '
+      + '«metilcarbamoil»'],
+    ['ácido 2 START met il carbamoil END et ano oico', 'inChain', 'AMIDE_IN_CHAIN', 'groupChain', 'Se escribe «ácido '
+      + '3-(metilamino)-3-oxopropanoico»'],
+    ['ácido 2 START amino oxo met il END but ano di oico', 'words', 'AMIDE_PREFIX_NAME', 'substituents', 'Se escribe «carbamoil», no '
+      + '«aminooxometil»'],
+    ['ácido 2 START 1 amino 1 oxo met il END but ano di oico', 'words', 'AMIDE_PREFIX_NAME', 'substituents', 'no «1-amino-1-oxometil»'],
+    ['ácido 4 START amino oxo met il END benzoico', 'words', 'AMIDE_PREFIX_NAME', 'substituents', '«carbamoil»: el C=O con su '
+      + 'nitrógeno; su C=O no se nombra con «oxo»'],
+    ['carbamoil ciclo hex ano', 'seniority', 'CARBONYL_PREFIX', 'group', 'no con el prefijo «carbamoil». Se escribe '
+      + '«ciclohexanocarboxamida»'],
+    ['carbamoil benceno', 'seniority', 'CARBONYL_PREFIX', 'group', 'Se escribe «benzamida»'],
+    ['2 START acetil amino END et ano 1 ol', 'seniority', 'CARBONYL_SENIORITY', 'group', 'Aquí manda la amida (un C=O unido a un '
+      + 'nitrógeno)'],
+    ['2 START acetil amino END prop ano', 'seniority', 'CARBONYL_PREFIX', 'group', 'Tu cadena es el sustituyente «isopropil», que va '
+      + 'unido al nitrógeno'],
+    ['2 carbamoil but ano nitrilo', 'seniority', 'CARBONYL_SENIORITY', 'group', 'el –C≡N del nitrilo va delante, con el prefijo «ciano»'],
+    ['4 carbamoil but ano amida', 'count', 'CARBONYL_PREFIX', 'group', 'Su carbono entra en la cadena principal. Se escribe '
+      + '«pentanodiamida»'],
   ];
-  for (const [words, category] of cases) {
+  for (const [words, category, code, opened, phrase] of cases) {
     const ids = seq(words);
     const verdict = readName(ids);
     assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
     assert.equal(amidePrefixCategory(ids, verdict), category, words);
-    assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.equal(d.code, code, `${words}: ${d.message}`);
+    assert.ok(CATEGORY_CODES[category].includes(d.code), words);
+    assert.ok(d.message.includes(phrase), `${words}: ${d.message}`);
+    assert.ok(!/undefined|null|NaN|\[object/.test(d.message), `${words}: ${d.message}`);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${words}: the step «Ver el paso» opens`);
     assert.ok(verdict.draw && verdict.molecule, words);
-  } // End of the loop over the deliberate nulls
+  } // End of the loop over the former deliberate nulls
   assert.equal(read('ácido 3 carbamoil prop ano oico').name, 'ácido 4-amino-4-oxobutanoico');
   assert.equal(read('ácido 2 START amino oxo met il END but ano di oico').name, 'ácido 2-carbamoilbutanodioico');
+  // The right forms the messages quote read back as the engine's: a parent-level prefix's words in a complete name.
+  for (const name of ['ácido 2-(2-amino-2-oxoetil)butanodioico', 'ácido 2-carbamoilbutanodioico', 'ácido 4-carbamoilbenzoico']) {
+    assert.equal(read(name).kind, 'correct', name);
+  }
   // The shared rules that hold still speak when theirs is the earlier mistake: off an end, the chain through the C=O carbon is
   // compared by the trace (three prefixes, `amino`, `metil`, `oxo`, against one).
   assert.equal(read('ácido 4 carbamoil pent ano di oico').diagnosis.code, 'NUMBERING');
   assert.equal(read('ácido 3 carbamoil but ano oico').diagnosis.message, 'Hay otra cadena igual de larga con más sustituyentes (3; la '
     + 'tuya tiene 1). Entre cadenas igual de largas, gana la que tiene más sustituyentes.');
   assert.equal(read('ácido 3 START met il met il carbamoil END pent ano di oico').diagnosis.code, 'UNGROUPED');
-}); // End of test 'the deliberate nulls of R-6d2…'
+}); // End of test 'the former deliberate nulls of R-6d2…'
 
-test('the deliberate nulls of R-6d2 on an ester\'s O-bound side (review of phase I-52d2): no right form that is none of the engine\'s', () => {
+test('the former deliberate nulls of R-6d2 on an ester\'s O-bound side (review of phase I-52d2): AMIDE_PREFIX_NAME, its right form the engine\'s', () => {
   // The review's input: NEEDLESS_LOCANTS offered «3-(carbamoilmetil)heptilo», itself another name (the engine takes the C=O carbon
   // into the branch's chain: «3-(2-amino-2-oxoetil)heptilo»).
   assert.equal(read('etanoato de 3-(carbamoilmetil)heptilo').kind, 'otherName');
   assert.equal(read('etanoato de 3-(carbamoilmetil)heptilo').name, 'etanoato de 3-(2-amino-2-oxoetil)heptilo');
   assert.equal(read('etanoato de 3-(aminooxometil)heptilo').name, 'etanoato de 3-carbamoilheptilo');
   const cases = [
-    // [name, category]: a carbamoyl prefix whose C=O carbon the engine's name of the O-bound group takes into a chain …
-    ['etanoato de 3-(1-carbamoilmetil)heptilo', 'inChain'], // not NEEDLESS_LOCANTS «3-(carbamoilmetil)heptilo»
-    ['etanoato de 3-(carbamoilmetil)heptilo', 'inChain'], // not ESTER_ALKYL_NAME: the amide written `amino` + `oxo` is I-52d4's
-    ['acetato de 3-(1-carbamoilmetil)heptilo', 'inChain'], // beside a retained ester word
-    ['etanoato de 4-(1-carbamoilmetil)ciclohexilo', 'inChain'], // on a ring group
-    ['etanoato de 3-(2-carbamoiletil)heptilo', 'inChain'],
-    ['etanoato de 2-carbamoiletilo', 'inChain'], // the group's own chain: «3-amino-3-oxopropilo», as on the parent's end
-    ['etanoato de carbamoilmetilo', 'inChain'],
-    ['etanoato de 1-carbamoilpropan-2-ilo', 'inChain'],
-    ['butanodioato de bis(carbamoilmetilo)', 'inChain'],
-    ['butanodioato de metilo y carbamoilmetilo', 'inChain'], // before ALPHABETICAL_ORDER
-    ['etanoato de 3-[(1-carbamoilmetil)amino]propilo', 'inChain'], // a group on an amino prefix's nitrogen
-    ['etanoato de 3-(1-carbamoilmetoxi)propilo', 'inChain'], // inside an alkoxy prefix
+    // [name, category, the chain the message names (`oBound`: the group's own; `branch`: a branch's; null for `carbamoyl`), the
+    // engine's group]: a carbamoyl prefix whose C=O carbon the engine's name of the O-bound group takes into a chain …
+    ['etanoato de 3-(1-carbamoilmetil)heptilo', 'inChain', 'branch', '3-(2-amino-2-oxoetil)heptilo'],
+    ['etanoato de 3-(carbamoilmetil)heptilo', 'inChain', 'branch', '3-(2-amino-2-oxoetil)heptilo'],
+    ['acetato de 3-(1-carbamoilmetil)heptilo', 'inChain', 'branch', '3-(2-amino-2-oxoetil)heptilo'], // beside a retained ester word
+    ['etanoato de 4-(1-carbamoilmetil)ciclohexilo', 'inChain', 'branch', '4-(2-amino-2-oxoetil)ciclohexilo'], // on a ring group
+    ['etanoato de 3-(2-carbamoiletil)heptilo', 'inChain', 'branch', '3-(3-amino-3-oxopropil)heptilo'],
+    ['etanoato de 2-carbamoiletilo', 'inChain', 'oBound', '3-amino-3-oxopropilo'], // the group's own chain
+    ['etanoato de carbamoilmetilo', 'inChain', 'oBound', '2-amino-2-oxoetilo'],
+    ['etanoato de 1-carbamoilpropan-2-ilo', 'inChain', 'oBound', '4-amino-4-oxobutan-2-ilo'],
+    ['butanodioato de bis(carbamoilmetilo)', 'inChain', 'oBound', '2-amino-2-oxoetilo'],
+    ['butanodioato de metilo y carbamoilmetilo', 'inChain', 'oBound', '2-amino-2-oxoetilo'], // before ALPHABETICAL_ORDER
+    ['etanoato de 3-[(1-carbamoilmetil)amino]propilo', 'inChain', 'branch', '3-[(2-amino-2-oxoetil)amino]propilo'],
+    ['etanoato de 3-(1-carbamoilmetoxi)propilo', 'inChain', 'branch', '3-(2-amino-2-oxoetoxi)propilo'], // inside an alkoxy prefix
     // … and a branch the engine names `carbamoil` written as another kind.
-    ['etanoato de 3-(aminooxometil)heptilo', 'words'],
-    ['etanoato de 3-(1-amino-1-oxometil)heptilo', 'words'], // not NEEDLESS_LOCANTS «3-(aminooxometil)heptilo»
-    ['etanoato de 4-(1-amino-1-oxometil)ciclohexilo', 'words'],
-    ['etanoato de 5-(aminooxometil)ciclohexilo', 'words'], // before BRANCH_RING_NUMBERING
+    ['etanoato de 3-(aminooxometil)heptilo', 'words', null, '3-carbamoilheptilo'],
+    ['etanoato de 3-(1-amino-1-oxometil)heptilo', 'words', null, '3-carbamoilheptilo'], // not NEEDLESS_LOCANTS «3-(aminooxometil)…»
+    ['etanoato de 4-(1-amino-1-oxometil)ciclohexilo', 'words', null, '4-carbamoilciclohexilo'],
+    ['etanoato de 5-(aminooxometil)ciclohexilo', 'words', null, '3-carbamoilciclohexilo'], // before BRANCH_RING_NUMBERING
   ];
-  for (const [name, category] of cases) {
+  const chainOf = { oBound: 'para la cadena del grupo unido al oxígeno', branch: 'para la cadena de la rama' };
+  for (const [name, category, chain, right] of cases) {
     const ids = idsOf(name);
     const verdict = readName(ids);
     assert.equal(verdict.kind, 'otherName', `${name}: ${verdict.message}`);
     assert.equal(amidePrefixCategory(ids, verdict), category, name);
-    assert.equal(verdict.diagnosis, null, `${name}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${name}: no diagnosis`);
+    assert.deepEqual([d.code, d.rule], ['AMIDE_PREFIX_NAME', 5], `${name}: ${d.message}`);
+    assert.ok(['ester', 'diester'].includes(d.step), name);
+    assert.ok(d.message.includes(`Se escribe «${right}», no «`), `${name}: ${d.message}`);
+    assert.ok(verdict.name.includes(right), `${name}: the engine's group, «${verdict.name}»`);
+    assert.ok(chain ? d.message.includes(chainOf[chain]) : d.message.includes('«carbamoil»: el C=O con su nitrógeno'),
+      `${name}: ${d.message}`);
     assert.ok(verdict.draw && verdict.molecule, name);
-  } // End of the loop over the O-bound deliberate nulls
+  } // End of the loop over the O-bound former deliberate nulls
   // An `amino` + `oxo` branch whose C=O carbon the engine also writes `amino` + `oxo`, in a longer chain: the chain is the mistake
-  // (ESTER_ALKYL_CHAIN, its right form an engine's name); inside a compound branch, as carbamoylWritten() on the parent, a null
-  // rather than NEEDLESS_LOCANTS «3-[(aminooxometil)metil]heptilo».
+  // (ESTER_ALKYL_CHAIN, its right form an engine's name); inside a compound branch, as carbamoylWritten() on the parent,
+  // AMIDE_PREFIX_NAME rather than NEEDLESS_LOCANTS «3-[(aminooxometil)metil]heptilo».
   const chain = read('etanoato de 2-(1-amino-1-oxometil)etilo').diagnosis;
   assert.equal(chain.code, 'ESTER_ALKYL_CHAIN');
   assert.match(chain.message, /Se escribe «3-amino-3-oxopropilo»/);
   assert.equal(read('etanoato de 3-amino-3-oxopropilo').kind, 'correct');
-  assert.equal(read('etanoato de 3-[(1-amino-1-oxometil)metil]heptilo').diagnosis, null);
+  const nested = read('etanoato de 3-[(1-amino-1-oxometil)metil]heptilo').diagnosis;
+  assert.equal(nested.code, 'AMIDE_PREFIX_NAME');
+  assert.match(nested.message, /la amida no forma una rama aparte, «1-amino-1-oxometil».* Se escribe «3-\(2-amino-2-oxoetil\)heptilo»/);
   // Controls: the O-bound rules still speak where the engine writes the student's `carbamoil`, each right form an engine's name.
   for (const [name, code, right] of [
     ['etanoato de 3-carbamoilheptan-1-ilo', 'NEEDLESS_LOCANTS', '3-carbamoilheptilo'],
@@ -878,7 +937,7 @@ test('the deliberate nulls of R-6d2 on an ester\'s O-bound side (review of phase
     assert.ok(diagnosis.message.includes(`«${right}»`), `${name}: ${diagnosis.message}`);
     assert.equal(read(`etanoato de ${right}`).kind, 'correct', right);
   } // End of the loop over the controls
-}); // End of test 'the deliberate nulls of R-6d2 on an ester\'s O-bound side…'
+}); // End of test 'the former deliberate nulls of R-6d2 on an ester\'s O-bound side…'
 
 // ---------------------------------------------------------------------------
 // Fixture round trip and closed loop (design.md §15.7).
@@ -1320,15 +1379,15 @@ function mutationsOf(ids) {
 
 /**
  * Reads every mutation of some amide-prefix names: every `otherName` must
- * carry a diagnosis of its family's codes whose step resolves in its
- * explanation, or be one of the amide's own mistakes, a deliberate null of
- * diagnose.js «Amides» (counted by category, amidePrefixCategory()); a null
- * with no category is unexpected, and so is a diagnosis on a mutation of an
- * amide category.
+ * carry a diagnosis whose step resolves in its explanation; none is null
+ * (since phase I-52d4, diagnose.js «Amides»). The amide's own mistakes among
+ * them, the deliberate nulls of phase I-52d2, are counted by category
+ * (amidePrefixCategory()), each with a code of its category
+ * (CATEGORY_CODES); every other one with a code of its mutation's family.
  *
  * @param {string[]} names - Amide-prefix names (engine names or alternatives).
  * @returns {{otherName: Object<string, number>, codes: Set<string>, own: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the amide's own mistakes by category and the unexpected cases.
+ *   `otherName` counts by family, the codes seen, the amide's own mistakes by category and the nulls.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
@@ -1344,20 +1403,18 @@ function sweep(names) {
       otherName[mutation.family] += 1;
       const label = `${name} → ${mutation.family} ${verdict.text}`;
       const d = verdict.diagnosis;
-      const category = amidePrefixCategory(mutation.ids, verdict);
       if (!d) {
-        if (category) {
-          own[category] = (own[category] || 0) + 1;
-        } else {
-          unexpected.push(label);
-        }
+        unexpected.push(label);
         continue;
       }
-      if (category) {
-        unexpected.push(`${label}: ${category} diagnosed ${d.code}`);
-      }
       codes.add(d.code);
-      assert.ok(FAMILY_CODES[mutation.family].includes(d.code), `${label}: ${d.code}, ${d.message}`);
+      const category = amidePrefixCategory(mutation.ids, verdict);
+      if (category) {
+        own[category] = (own[category] || 0) + 1;
+        assert.ok(CATEGORY_CODES[category].includes(d.code), `${label}: ${category}, ${d.code}`);
+      } else {
+        assert.ok(FAMILY_CODES[mutation.family].includes(d.code), `${label}: ${d.code}, ${d.message}`);
+      }
       assert.ok(!/undefined|null|NaN|\[object|grupos? –?OH|–CHO|C≡N/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
@@ -1368,13 +1425,11 @@ function sweep(names) {
 
 /**
  * How many mutations of the amide-prefix fixture names give `otherName`, by
- * family (every one diagnosed with one of its family's codes, or a
- * deliberate «Amides» null of its category), and how many of them are the
- * amide's own mistakes by category: 1 `inChain`, a carbamoyl prefix moved to
- * the chain's end (`ácido 4-carbamoilhexanoico` → `ácido
- * 6-carbamoilhexanoico`, which the engine names «ácido
- * 7-amino-7-oxoheptanoico») — a deliberate null until phase I-52d4. Pinned by
- * the test below.
+ * family (every one diagnosed), and how many of them are the amide's own
+ * mistakes by category: 1 `inChain`, a carbamoyl prefix moved to the chain's
+ * end (`ácido 4-carbamoilhexanoico` → `ácido 6-carbamoilhexanoico`, which the
+ * engine names «ácido 7-amino-7-oxoheptanoico») — a deliberate null until
+ * phase I-52d4, now AMIDE_IN_CHAIN. Pinned by the test below.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 0, shifted: 3, reflected: 0, rotated: 39, swapped: 0, unsorted: 2, ungrouped: 3, diBis: 3, toEnd: 1, heteroToEnd: 0, removed: 0,
@@ -1382,7 +1437,7 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 });
 const FIXTURE_OWN = Object.freeze({ inChain: 1 });
 
-test('mutations of every amide-prefix fixture name: a diagnosis of the family\'s codes, or a deliberate «Amides» null', async () => {
+test('mutations of every amide-prefix fixture name: a diagnosis of the family\'s codes, never null', async () => {
   // The names of phase R-6d2 (also those of the amide, amino, acyl and ester round trips, swept here, not there).
   const names = (await readFixtures()).filter((row) => isAmide(row.smiles)).flatMap((row) => row.names).filter(isR6d2AmideName);
   assert.equal(names.length, EXPECTED_NAMES.read);
@@ -1390,11 +1445,11 @@ test('mutations of every amide-prefix fixture name: a diagnosis of the family\'s
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });
   assert.deepEqual(own, { ...FIXTURE_OWN });
-  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND', 'NUMBERING', 'RING_NUMBERING',
-    'UNGROUPED']);
+  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'AMIDE_IN_CHAIN', 'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND', 'NUMBERING',
+    'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of every amide-prefix fixture name…'
 
-test('mutations of the generated amide-prefix names: every otherName is diagnosed or a deliberate «Amides» null, every step resolves', () => {
+test('mutations of the generated amide-prefix names: every otherName is diagnosed, every step resolves', () => {
   const names = [];
   for (const mol of loopMolecules().filter((_, i) => i % 3 === 0)) { // Every generator's amide prefixes: chains, rings, benzenes.
     const naming = nameMolecule(mol);
@@ -1403,14 +1458,15 @@ test('mutations of the generated amide-prefix names: every otherName is diagnose
   const { otherName, codes, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
-  // The seeds give 247 names and 514 `otherName`; 30 of them the amide's own mistakes, deliberate nulls until phase I-52d4: a
-  // carbamoyl prefix moved onto the chain's end (15 `toEnd`, 15 `swapped`), whose C=O carbon the engine's chain then takes
-  // (`inChain`: `2-carbamoilpentanoato de isopropilo` → `5-carbamoil…`, «6-amino-6-oxohexanoato de isopropilo»).
+  // The seeds give 247 names and 514 `otherName`, every one diagnosed; 30 of them the amide's own mistakes, deliberate nulls until
+  // phase I-52d4: a carbamoyl prefix moved onto the chain's end (15 `toEnd`, 15 `swapped`), whose C=O carbon the engine's chain
+  // then takes (`inChain`: `2-carbamoilpentanoato de isopropilo` → `5-carbamoil…`, «6-amino-6-oxohexanoato de isopropilo», now
+  // AMIDE_IN_CHAIN).
   assert.deepEqual([names.length, total, own], [247, 514, { inChain: 30 }]);
   assert.deepEqual([otherName.removed, otherName.added, otherName.nitrogenOrder, otherName.nitrogenUngrouped, otherName.nitrogenDiBis],
     [0, 0, 41, 4, 4]);
-  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_SUBSTITUENTS',
-    'MULTIPLIER_KIND', 'NUMBERING', 'RING_NUMBERING', 'UNGROUPED']);
+  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'AMIDE_IN_CHAIN', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS',
+    'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND', 'NUMBERING', 'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of the generated amide-prefix names…'
 
 // ---------------------------------------------------------------------------

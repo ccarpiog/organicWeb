@@ -67,11 +67,11 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-52c4 | v4 R-6c4 Amine diagnosis messages (fill the «Amines» nulls of I-52c1…c3), e2e | same, "R-6c" | done — split into I-52c4a, I-52c4b | — | — |
 | I-52c4a | v4 R-6c4a Principal amine group diagnoses (`seniority`, `count`, `side` → new AMINE_SIDE, `numbering`, `suffix`, `parent`; `N` no number in LOCANT_ORDER / LOCANT_COUNT), e2e | same, "R-6c" | done — `docs/progress-archive/i-52c4a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52c4a.md` |
 | I-52c4b | v4 R-6c4b Amine class-name diagnoses (`order`, `multiplier`, `words`, `none`), the last template nulls, POSITIONAL on `anilina`, e2e | same, "R-6c" | done — `docs/progress-archive/i-52c4b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52c4b.md` |
-| I-52d | v4 R-6d Amides | same, "R-6d" | split into I-52d1, I-52d2, I-52d3, I-52d4 | — | — |
+| I-52d | v4 R-6d Amides | same, "R-6d" | done — split into I-52d1, I-52d2, I-52d3, I-52d4 | — | — |
 | I-52d1 | v4 R-6d1 Amide suffixes `amida` / `carboxamida`, `benzamida`, `N` on the amide nitrogen (`N-metiletanamida`, `N-etil-p-metilbenzamida`); search with N slots, round trip, closed loop, deliberate «Amides» nulls, e2e | same, "R-6d" | done — `docs/progress-archive/i-52d1.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52d1.md` |
 | I-52d2 | v4 R-6d2 Amide prefixes `carbamoil` (`(metilcarbamoil)`, `[etil(metil)carbamoil]`, `bis(metilcarbamoil)`) and acylamino (`(acetilamino)`, `[acetil(metil)amino]`), the rows waiting for them, e2e | same, "R-6d" | done — `docs/progress-archive/i-52d2.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52d2.md` |
 | I-52d3 | v4 R-6d3 Retained amide names (`formamida`, `acetamida`, `N-metilacetamida`, `2-fenilacetamida`, `ftalamida` …), Ayuda amide line, e2e | same, "R-6d" | done — `docs/progress-archive/i-52d3.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52d3.md` |
-| I-52d4 | v4 R-6d4 Amide diagnosis messages (fill the «Amides» nulls of I-52d1…d3 and the `1-aminobutanal` → «butanamida» null), e2e | same, "R-6d" | queued | — | — |
+| I-52d4 | v4 R-6d4 Amide diagnosis messages (fill the «Amides» nulls of I-52d1…d3 and the `1-aminobutanal` → «butanamida» null), e2e | same, "R-6d" | done — `docs/progress-archive/i-52d4.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52d4.md` |
 | I-53 | v4 R-7 Wrap-up | same, "R-7" | queued | — | — |
 | I-54 | o/m/p letters for two different prefixes on plain `benceno`, drawing → name and name → drawing (user decision 2026-10-15, reverses design §14.4) | `autoclaude/processed/240-omp-two-different-groups.md` | queued — after I-53 (user: «after v4») | — | — |
 
@@ -96,25 +96,20 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-52d4 (v4 R-6d4, amide diagnoses): `diagnose.js` names an amide's own mistakes (header «Amides», `amideChecks()` /
-AMIDE_NULLS after `amineChecks()`), filling every deliberate «Amides» null of I-52d1…d3 with a message and its «Ver el paso» step, in
-the shared codes where they fit (as I-52b3 did for nitriles and I-52c4a for amines: CARBONYL_SENIORITY with the seniority `ácido >
-éster > amida > nitrilo > aldehído > cetona > alcohol > amina`, CARBONYL_PREFIX, CARBONYL_PARENT, MORE_CARBONYL_GROUPS, N0 numbering
-and the suffix's needless locants with «grupo(s) amida» words) and new codes only where none fits. The null categories to fill:
-I-52d1's `seniority`, `count`, `carbon` (`propano-1-carboxamida` → «butanamida», `1-fenilformamida` → «benzamida»), `parent`,
-`numbering`, `suffix`; I-52d2's `inChain` (a carbamoyl whose C=O carbon the engine takes into a chain, `ácido 3-carbamoilpropanoico`,
-also on an ester's O-bound side) and `words` (the engine's carbamoyl written as another branch); I-52d3's 15 template nulls pinned in
-`tests/unit/reverse-amide-templates.test.js` (`count` `2-carbamoilacetamida`, `seniority` `2-carboxiacetamida`, `carbon`
-`1-fenilformamida`; the `style` null `N-(propan-2-il)acetamida` stays — open user question I-51d1…I-52a2b (1)); and the
-`1-aminobutanal` → «butanamida» null left by I-52c4a. Flip the null assertions, add `tests/unit/reverse-diagnose-amides.test.js`
-and an amide case in `tests/e2e/diagnosis.spec.js`. Model it on `i-52b3.md`, `i-52c4a.md`, `i-52a3a.md` and the nulls listed in
-`i-52d1.md` … `i-52d3.md`; split into d4a/d4b if it does not fit one worker. Spec: design §15 — read from the working-tree
-`docs/design.md`; never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths. Then I-53 (R-7
-wrap-up), I-54.
+Select I-53 (v4 R-7 wrap-up; design §15.8 row R-7: «closed loop over every generator; Ayuda; README; CLAUDE.md scope line;
+design.md cleanup; the list of new wording pending teacher review»). R-6 is done (I-52a1…I-52d4), so every v4 family is read and
+diagnosed. Run the reverse closed loop (name → drawing → name) over every generator the earlier phases' round trips use and fix or pin
+what fails; bring the Ayuda «Del nombre al dibujo» section and README up to date with the families v4 reads; shorten CLAUDE.md's
+v4 scope sentence (now very long) to a present-state summary; write one teacher-review list (`docs/teacher-review-v4.md`, or the name
+design §15 asks for) collecting every v4 Spanish draft listed under "New Spanish drafts" in `docs/progress-archive/i-47a.md` …
+`i-52d4.md`, and list the open user questions from *Open risks* in one place. **design.md cleanup is blocked**: `docs/design.md` is
+the user's uncommitted file (see *Open risks*) — never edit or commit it; record the intended §15.8 Status / cleanup edits in the
+archive and flag them for the user, unless the user has committed it by then (`git status --short docs/design.md` empty). Risk
+routine to high (split into I-53a/b if needed); worker opus. Commit by explicit paths. Then I-54 (o/m/p for two different prefixes on
+`benceno`, `autoclaude/processed/240-omp-two-different-groups.md`).
 
-- **Builds on** every v4 phase so far — the R-1 engine, dialog, «Dibujar», diagnosis engine and panel, rings, benzene,
-  templates, and the halogen … retained-amide families (`docs/progress-archive/i-47a.md` … `i-52d3.md`; the "Key paths" below); the
-  forward naming engine already names every case (v2 §13, v3 §14).
+- **Builds on** every v4 phase (`docs/progress-archive/i-47a.md` … `i-52d4.md`; the "Key paths" below); the forward naming engine
+  names every case (v2 §13, v3 §14).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6, §15.9).
@@ -253,14 +248,18 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   `tests/e2e/name-builder-amide-prefixes.spec.js`. Retained amides (I-52d3): `formamida`, `acetamida`, `ftalamida` in `TEMPLATES`
   (`tiles.js`), the amide wording of SUBSTITUTED_TEMPLATE and the template nulls in the «Amides» header of `diagnose.js`, Ayuda
   `#help-name-to-drawing-amides`; tests `tests/unit/reverse-amide-templates.test.js`, `tests/e2e/name-builder-amide-templates.spec.js`.
+  Amide diagnoses (I-52d4): the amide in NAMED_GROUPS (shared CARBONYL_* / N0 / locant codes, «grupo(s) amida»), new codes
+  AMIDE_GROUP / AMIDE_CARBON / AMIDE_IN_CHAIN / AMIDE_PREFIX_NAME, `ringChainCounts()` for CARBONYL_PARENT on benzene in `diagnose.js`
+  (AMIDE_NULLS gone); tests `tests/unit/reverse-diagnose-amides.test.js`, amide case in `diagnosis.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51c1 … I-52d2: see `docs/progress-archive/i-51c1.md` … `i-52d2.md`.
-- I-52d3 (orchestrator, after the worker): `npm test` exit 0 (2417 → 2438 pass, 0 fail) · `npm run check` exit 0 (224 files) ·
-  `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (621 → 627 passed, source + dist). `git diff --stat -- src/naming
-  src/explain` empty; `docs/design.md` not edited (mtime 2026-10-14). Codex ship, 0 findings (`docs/reviews/I-52d3.md`).
+- I-51c1 … I-52d3: see `docs/progress-archive/i-51c1.md` … `i-52d3.md`.
+- I-52d4 (orchestrator, after the worker and again after the review fix): `npm test` exit 0 (2438 → 2447 → 2448 pass, 0 fail) ·
+  `npm run check` exit 0 (225 files) · `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (627 → 629 passed, source +
+  dist, both runs). `git diff --stat -- src/naming src/explain` empty; `docs/design.md` not edited (mtime 2026-10-14). Worker sweep:
+  43 000 random names, 6 559 `otherName`, 6 556 diagnosed, every suggestion the engine's name.
 
 ## Open risks / deviations
 
@@ -361,30 +360,19 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   order; the class names' multiplier hint says «Los prefijos di-, tri-…». Open questions for the user (forward engine, not changed):
   (1) `butiltert-butilamina` without a hyphen; (2) `tridecilamina` for N(C₁₀H₂₁)₃ is ambiguous (usage: `tris(decil)amina`); (3) announce
   the class name on a `correct` verdict (`metanamina`)? `alcohol bencílico` stays unread (no phase).
-- I-52d1 (amide suffixes, `benzamida`, `N` on the amide nitrogen; decisions, deliberate nulls, Spanish drafts in
-  `docs/progress-archive/i-52d1.md`): the amide nitrogen is a suffix field (`amideNitrogen`), the `N` machinery shared with amines;
-  `carboxamida` after a chain is read and judged (`propano-1-carboxamida` → «butanamida», a `carbon` null); «Amides» nulls (seniority,
-  count, carbon, parent, numbering, suffix) wait for I-52d4; 57 amide fixture names wait for `carbamoil` / acylamino (I-52d2) or the
-  retained names (I-52d3), pinned. For teacher review: `ciclohexilmetanamida` (locant left out) reads `missingLocants`
-  «N-ciclohexilmetanamida» (only the ring on the N fills to an engine name); a prefix style the engine never writes on
-  `bencenocarboxamida` is a null, part of the open question I-51d1…I-52a2b (1).
-- I-52d2 (`carbamoil`, acylamino; decisions, deliberate nulls, Spanish drafts and review fixes in `docs/progress-archive/i-52d2.md`):
-  `carbamoil` is no hetero group for rule 1 (its carbon may lengthen a chain); a carbamoyl the engine takes into a chain is the
-  `inChain` null and the engine's carbamoyl written as another branch the `words` null, both for I-52d4, also on an ester's O-bound
-  side (review fix 1: `etanoato de 3-(1-carbamoilmetil)heptilo` got a NEEDLESS_LOCANTS suggestion that was itself no engine name);
-  an acyl on a carbamoyl N or two acyls on an amino N (imides) `outOfScope`. Review fix 2: the `benzamida` hint no longer cites
-  `(4-carbamoilfenil)` (the engine refuses a benzene with groups on the ring and a side chain); a test now reads every example this
-  phase's hints and tooltips cite. Open for the user / teacher: the earlier families' hints still cite such refused forms
-  (`(4-cianofenil)`, `(4-formilfenil)`, `(4-carboxifenil)`, `(4-hidroxifenil)`, templateHint()); a pre-existing R-6a3b O-bound case,
-  `butanodioato de 2-metil-3-cloropropilo y metilo` → ALPHABETICAL_ORDER «metilo y 2-metil-3-cloropropilo» (engine: «3-cloro-2-metilpropilo
-  y metilo»), not changed; VALENCE «nitrógeno del grupo carbamoil» and the tooltip are drafts for teacher review.
-- I-52d3 (retained amides; decisions, deliberate nulls and Spanish drafts in `docs/progress-archive/i-52d3.md`): tiles `formamida`,
-  `acetamida`, `ftalamida` only — the forward engine writes no `isoftalamida` / `tereftalamida` / `oxamida`, and writes
-  `2-fenilacetamida` with its locant (built from `2` `fenil` `acetamida`; `fenilacetamida` left out reads `ambiguous`, C2 or N); an
-  `N` on `ftalamida` `outOfScope`. For teacher review: SUBSTITUTED_TEMPLATE has an amide wording («solo admite grupos en el nitrógeno,
-  con «N» (N-metilacetamida), o solo un fenil en el carbono 2 (2-fenilacetamida)…»), the tooltips and the Ayuda «Amidas» line;
-  `N acetamida` gets «no lleva números ni letras propios», as `N anilina` does (calls `N` a number, pre-existing wording). 15
-  template nulls pinned for I-52d4.
+- I-52d1…I-52d4 (amides: suffixes, `N` on the amide nitrogen, `carbamoil`, acylamino, retained `formamida` / `acetamida` /
+  `ftalamida`, diagnoses; decisions, Spanish drafts and review fixes in `docs/progress-archive/i-52d1.md` … `i-52d4.md`): the amide
+  nitrogen is a suffix field sharing the amine's `N` machinery; `carbamoil` is no hetero group for rule 1; imides `outOfScope`; no
+  `isoftalamida` / `tereftalamida` / `oxamida` tiles (the engine writes none). Deliberate nulls left (pinned): the retained words'
+  prefix style (`N-(propan-2-il)acetamida`, open question I-51d1…I-52a2b (1)) and a cross-family gap — an outside suffix after a chain
+  whose group is not the engine's parent's, across an N or O (`N-(2-amino-2-oxoetil)metano-1-carboxamida`, also the acid / nitrile /
+  aldehyde twins). I-52d4 review fix (Codex should-fix): CARBONYL_PARENT on a benzene parent read a missing RINGCHAIN trace step as
+  «las cadenas no llevan ninguno» (`2-(benzoilamino)etanamida`); `ringChainCounts()` now takes the counts from the engine's
+  `ringOrChain()`, tested (8 names changed in a 1 768-name sweep, all amides). For teacher review: the seniority order shown whole
+  (the acid's and ester's own steps show a shorter one); two amides on two carbon pieces get MORE_SUBSTITUENTS without saying the
+  chain cannot pass through the nitrogen; «Ver el paso» for that benzene tie opens the benzene step, which does not mention the tie
+  (`src/explain/` unchanged); the earlier families' hints still cite refused forms (`(4-cianofenil)` …); SUBSTITUTED_TEMPLATE's amide
+  wording, tooltips and the Ayuda «Amidas» line; pre-existing O-bound ALPHABETICAL_ORDER case (`i-52d2.md`).
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -398,5 +386,5 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-52d2 `435c77f`, pushed. I-52d3 committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
+- I-52d3 `9858755`, pushed. I-52d4 committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
   never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

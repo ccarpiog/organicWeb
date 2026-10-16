@@ -51,7 +51,8 @@
  * `propano-1-carboxamida` → `otherName` «butanamida»; `metanodiamida` →
  * `invalid` CARBONYL_POSITION; `N,N,N-trimetiletanamida` → `invalid` VALENCE
  * on the nitrogen; `N-metilbutanodiamida` → `outOfScope`). An amide's own
- * mistakes are diagnose.js «Amides»'s deliberate nulls (phase I-52d4).
+ * mistakes are diagnose.js «Amides»'s (phase R-6d4: `1-aminobutanal` →
+ * AMIDE_GROUP, `propano-1-carboxamida` → AMIDE_CARBON).
  *
  * The retained amine names and the amines' class names (R-6c3) need nothing
  * of their own here either: the parser reads `anilina` and `bencilamina` as
@@ -112,7 +113,8 @@
  * «N-metilacetamida»; `fenilacetamida` → `ambiguous` (2- or `N`);
  * `2-cloroacetamida` → `otherName`, SUBSTITUTED_TEMPLATE; `N-metilftalamida`
  * → `outOfScope`, the engine's `substitutedBenzenePolyamide`). Their own
- * mistakes are diagnose.js «Amides»'s deliberate nulls (phase I-52d4).
+ * mistakes are diagnose.js «Amides»'s (phase R-6d4: `2-carbamoilacetamida` →
+ * CARBONYL_PREFIX, `1-fenilformamida` → AMIDE_CARBON).
  *
  * The amines (R-6c1) need nothing of their own here either: the parser
  * reads `amina` as a suffix and `N` among a name-level prefix's locants, the

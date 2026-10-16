@@ -24,9 +24,10 @@
  * UNGROUPED); the amide's own mistakes on a template, each with its category
  * read independently — another –CONH₂ written `carbamoil` (`count`), the word
  * beside a senior group (`seniority`), a ring on `formamida`'s carbon
- * (`carbon`) — and a prefix in a style the engine
- * never writes beside the word (`style`, the cross-family open question),
- * deliberate nulls of diagnose.js «Amides» until phase I-52d4; the tooltips
+ * (`carbon`) —, deliberate nulls of diagnose.js «Amides» until phase I-52d4
+ * and diagnosed since (CARBONYL_PREFIX, CARBONYL_SENIORITY, AMIDE_CARBON),
+ * and a prefix in a style the engine never writes beside the word (`style`,
+ * the cross-family open question), still a pinned null; the tooltips
  * and every example this phase cites; the fixture names; a closed loop over
  * the engine's retained amide names with each locant list removed, and over
  * the generators' ones; the diagnosis sweeps over the retained names (fixture
@@ -529,25 +530,86 @@ function templateCategory(verdict) {
   return verdict.naming.alternatives.some((alt) => isAmideTemplateName(alt.name)) ? 'style' : null;
 } // End of function templateCategory()
 
+/** The codes the amide's own mistakes on a template get, by category (templateCategory(); diagnose.js «Amides», phase I-52d4). */
+const CATEGORY_CODES = Object.freeze({
+  count: ['CARBONYL_PREFIX'],
+  seniority: ['CARBONYL_SENIORITY'],
+  carbon: ['AMIDE_CARBON'],
+});
+
+/** The seniority sentence CARBONYL_SENIORITY starts with beside a template's junior amide, up to «Aquí manda el ácido (–COOH)». */
+const ACID_FIRST = 'Cuando hay grupos distintos, solo uno es el grupo principal, y se elige por este orden: ácido > éster > amida > '
+  + 'nitrilo > aldehído > cetona > alcohol > amina. Aquí manda el ácido (–COOH), que se nombra ';
+
+/** How the engine writes a junior amide whose C=O carbon is a chain carbon (CARBONYL_SENIORITY, `chainAmide`). */
+const IN_CHAIN = 'el grupo amida va delante, con dos prefijos con el mismo número: «oxo» para su C=O y «amino» para su nitrógeno, con '
+  + 'los grupos unidos a él';
+
+/** AMIDE_CARBON beside a ring, before how the engine writes the amide. */
+const ON_RING = 'Cuando el grupo amida está unido a un anillo, su carbono no forma parte del anillo ni es una cadena aparte: la cadena '
+  + 'principal es el anillo, y el grupo se nombra ';
+
 /**
- * The amide's own mistakes on a template and the prefix-style ones, pinned
- * deliberate nulls (diagnose.js «Amides», phase I-52d4; the `style` ones the
- * cross-family open question): [tile words or a name, the engine's name, the
- * category].
+ * The amide's own mistakes on a template, deliberate «Amides» nulls until
+ * phase I-52d4 and diagnosed since: [tile words, the engine's name, the
+ * category, the code, the tiles, the message].
+ */
+const FORMER_NULLS = [
+  ['2 carbamoil acetamida', 'propanodiamida', 'count', 'CARBONYL_PREFIX', [0, 2], 'Los grupos amida son el grupo principal: los de '
+    + 'la cadena principal se nombran todos juntos con la terminación «-diamida», al final del nombre, no con el prefijo «carbamoil». '
+    + 'Su carbono entra en la cadena principal. Se escribe «propanodiamida».'],
+  ['1 carbamoil formamida', 'etanodiamida', 'count', 'CARBONYL_PREFIX', [0, 2], 'Los grupos amida son el grupo principal: los de la '
+    + 'cadena principal se nombran todos juntos con la terminación «-diamida», al final del nombre, no con el prefijo «carbamoil». Su '
+    + 'carbono entra en la cadena principal. Se escribe «etanodiamida».'],
+  ['2 carbamoil 2 fenil acetamida', '2-fenilpropanodiamida', 'count', 'CARBONYL_PREFIX', [0, 2], 'Los grupos amida son el grupo '
+    + 'principal: los de la cadena principal se nombran todos juntos con la terminación «-diamida», al final del nombre, no con el '
+    + 'prefijo «carbamoil». Su carbono entra en la cadena principal. Se escribe «2-fenilpropanodiamida».'],
+  ['4 carbamoil ftalamida', 'benceno-1,2,4-tricarboxamida', 'count', 'CARBONYL_PREFIX', [0, 2], 'Los grupos amida son el grupo '
+    + 'principal: los unidos al anillo se nombran todos juntos con la terminación «-tricarboxamida», al final del nombre, no con el '
+    + 'prefijo «carbamoil». Se escribe «benceno-1,2,4-tricarboxamida».'],
+  ['2 carboxi acetamida', 'ácido 3-amino-3-oxopropanoico', 'seniority', 'CARBONYL_SENIORITY', [2, 3], `${ACID_FIRST}con la palabra `
+    + `«ácido» al principio del nombre y la terminación «-oico» al final; ${IN_CHAIN}. Se escribe «ácido 3-amino-3-oxopropanoico».`],
+  ['2 carboxi N met il acetamida', 'ácido 3-(metilamino)-3-oxopropanoico', 'seniority', 'CARBONYL_SENIORITY', [5, 6], `${ACID_FIRST}con `
+    + `la palabra «ácido» al principio del nombre y la terminación «-oico» al final; ${IN_CHAIN}. Se escribe «ácido `
+    + '3-(metilamino)-3-oxopropanoico».'],
+  ['1 carboxi N N di met il formamida', 'ácido 2-(dimetilamino)-2-oxoetanoico', 'seniority', 'CARBONYL_SENIORITY', [7, 8],
+    `${ACID_FIRST}con la palabra «ácido» al principio del nombre y la terminación «-oico» al final; ${IN_CHAIN}. Se escribe «ácido `
+    + '2-(dimetilamino)-2-oxoetanoico».'],
+  ['4 carboxi ftalamida', 'ácido 3,4-dicarbamoilbenzoico', 'seniority', 'CARBONYL_SENIORITY', [2, 3], `${ACID_FIRST}con «ácido `
+    + 'benzoico» (el benceno con un grupo –COOH); cada grupo amida va delante, con el prefijo «carbamoil». Se escribe «ácido '
+    + '3,4-dicarbamoilbenzoico».'],
+  // A ring on `formamida`'s carbon: the amide's carbon outside the ring, as `1-fenilmetanamida` (R-6d1).
+  ['1 fenil formamida', 'benzamida', 'carbon', 'AMIDE_CARBON', [2, 3], `${ON_RING}con «benzamida» (el benceno con un grupo amida). Se `
+    + 'escribe «benzamida».'],
+  ['N N di met il 1 fenil formamida', 'N,N-dimetilbenzamida', 'carbon', 'AMIDE_CARBON', [7, 8], `${ON_RING}con «benzamida» (el benceno `
+    + 'con un grupo amida). Se escribe «N,N-dimetilbenzamida».'],
+  ['1 ciclo hex il formamida', 'ciclohexanocarboxamida', 'carbon', 'AMIDE_CARBON', [4, 5], `${ON_RING}con la terminación `
+    + '«-carboxamida», al final del nombre. Se escribe «ciclohexanocarboxamida».'],
+];
+
+test('readName (R-6d3, R-6d4): a template whose amide groups are not the engine\'s gets the amide\'s own diagnosis, by category', () => {
+  for (const [words, name, category, code, tiles, message] of FORMER_NULLS) {
+    const verdict = readName(idsOf(words));
+    assert.deepEqual([verdict.kind, verdict.name], ['otherName', name], `${words}: ${verdict.message}`);
+    assert.equal(templateCategory(verdict), category, words);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.ok(CATEGORY_CODES[category].includes(d.code), words);
+    assert.deepEqual([d.code, d.rule, d.traceRule, d.step, d.message], [code, 1, null, 'group', message], words);
+    // The tiles: the `carbamoil` prefix with its locant (CARBONYL_PREFIX), or the template's word, the student's suffix.
+    assert.deepEqual(d.tiles, tiles, words);
+    const opened = diagnosisExplanation(verdict, explain);
+    assert.equal(opened.steps[opened.index].id, 'group', words);
+    assert.ok(verdict.draw && verdict.molecule, words);
+  } // End of the loop over the former deliberate nulls
+}); // End of test 'readName (R-6d3, R-6d4): a template whose amide groups…'
+
+/**
+ * The prefix-style nulls, still pinned (the cross-family open question of a
+ * retained word's prefix style; no amide's own mistake): [a name, the
+ * engine's name, the category].
  */
 const NULLS = [
-  ['2 carbamoil acetamida', 'propanodiamida', 'count'],
-  ['1 carbamoil formamida', 'etanodiamida', 'count'],
-  ['2 carbamoil 2 fenil acetamida', '2-fenilpropanodiamida', 'count'],
-  ['4 carbamoil ftalamida', 'benceno-1,2,4-tricarboxamida', 'count'],
-  ['2 carboxi acetamida', 'ácido 3-amino-3-oxopropanoico', 'seniority'],
-  ['2 carboxi N met il acetamida', 'ácido 3-(metilamino)-3-oxopropanoico', 'seniority'],
-  ['1 carboxi N N di met il formamida', 'ácido 2-(dimetilamino)-2-oxoetanoico', 'seniority'],
-  ['4 carboxi ftalamida', 'ácido 3,4-dicarbamoilbenzoico', 'seniority'],
-  // A ring on `formamida`'s carbon: the amide's carbon outside the ring, as `1-fenilmetanamida` (R-6d1).
-  ['1 fenil formamida', 'benzamida', 'carbon'],
-  ['N N di met il 1 fenil formamida', 'N,N-dimetilbenzamida', 'carbon'],
-  ['1 ciclo hex il formamida', 'ciclohexanocarboxamida', 'carbon'],
   // The engine writes `isopropil` beside a retained word (`N-isopropilacetamida`, `4-isopropilftalamida`).
   ['N-(propan-2-il)acetamida', 'N-isopropiletanamida', 'style'],
   ['N-(1-metiletil)formamida', 'N-isopropilmetanamida', 'style'],
@@ -555,7 +617,7 @@ const NULLS = [
   ['2-[4-(propan-2-il)fenil]acetamida', '2-(4-isopropilfenil)etanamida', 'style'],
 ];
 
-test('the amide\'s own mistakes on a template: deliberate «Amides» nulls (phase I-52d4), each with its category read independently', () => {
+test('a prefix in a style the engine never writes beside a retained amide word: a pinned null (the open question of the style)', () => {
   for (const [words, name, category] of NULLS) {
     const verdict = readName(idsOf(words));
     assert.deepEqual([verdict.kind, verdict.name], ['otherName', name], `${words}: ${verdict.message}`);
@@ -567,7 +629,7 @@ test('the amide\'s own mistakes on a template: deliberate «Amides» nulls (phas
   for (const name of ['N-isopropilacetamida', '4-isopropilftalamida', '2-(4-isopropilfenil)acetamida']) {
     assert.equal(readName(tokenize(name)).kind, 'alternative', name);
   }
-}); // End of test 'the amide\'s own mistakes on a template…'
+}); // End of test 'a prefix in a style the engine never writes…'
 
 test('every example this phase cites (tooltips, hints, the SUBSTITUTED_TEMPLATE message, the Ayuda amide line) reads as the engine\'s', () => {
   // The retained forms: the engine's alternatives.
@@ -746,15 +808,16 @@ test('closed loop (R-6d3): the generators\' retained amide names read back as th
 /**
  * The diagnosis codes an `otherName` of each mutation family may give; the
  * `carbamoyl` and `carboxy` families, the amide's own mistakes (`count`,
- * `seniority`), are deliberate «Amides» nulls until phase I-52d4.
+ * `seniority`), deliberate «Amides» nulls until phase I-52d4, take that
+ * phase's codes.
  */
 const FAMILY_CODES = Object.freeze({
   substituted: ['SUBSTITUTED_TEMPLATE'],
   arylReflected: ['BRANCH_RING_NUMBERING'],
   ringReflected: ['RING_NUMBERING'],
   unsorted: ['ALPHABETICAL_ORDER'],
-  carbamoyl: [],
-  carboxy: [],
+  carbamoyl: CATEGORY_CODES.count,
+  carboxy: CATEGORY_CODES.seniority,
 });
 
 /** The category of the amide's own mistakes each family of them gives (templateCategory()). */
@@ -854,8 +917,8 @@ function mutationsOf(ids) {
 /**
  * Reads every mutation of some retained amide names: an `otherName` must
  * carry a diagnosis of its family's codes whose step resolves in its
- * explanation, or be one of the amide's own mistakes (a deliberate «Amides»
- * null until phase I-52d4) with the category of its family.
+ * explanation — the amide's own mistakes among them (deliberate «Amides»
+ * nulls until phase I-52d4) with the category of their family, counted.
  *
  * @param {string[]} names - Retained amide names.
  * @returns {{otherName: Object<string, number>, codes: Set<string>, own: Object<string, number>, unexpected: string[]}}
@@ -878,9 +941,7 @@ function sweep(names) {
       const category = FAMILY_CATEGORY[mutation.family];
       if (category) {
         assert.equal(templateCategory(verdict), category, label);
-        assert.equal(d, null, `${label}: ${d && d.message}`); // A deliberate «Amides» null (phase I-52d4).
         own[category] = (own[category] || 0) + 1;
-        continue;
       }
       if (!d) {
         unexpected.push(label);
@@ -896,29 +957,32 @@ function sweep(names) {
   return { otherName, codes, own, unexpected };
 } // End of function sweep()
 
-test('mutations of the fixture\'s retained amide names: a diagnosis of the family\'s codes, or the amide\'s own deliberate null', async () => {
+test('mutations of the fixture\'s retained amide names: a diagnosis of the family\'s codes, never null', async () => {
   const names = (await readFixtures()).filter((row) => isAmide(row.smiles)).flatMap((row) => row.names).filter(isAmideTemplateName);
   assert.equal(names.length, 15);
   const { otherName, codes, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   // A methyl on a chain template's last carbon: SUBSTITUTED_TEMPLATE; two different groups swapped: ALPHABETICAL_ORDER; a `carbamoil`
-  // or a `carboxi` beside the word: the amide's own mistakes (`count`, `seniority`; a `carbamoil` beside a group on the nitrogen is
-  // the engine's refusal of an N-substituted diamide, `outOfScope`, not counted). The aryl phenyls reflect onto themselves and bare
-  // `ftalamida` has no prefix to renumber.
+  // or a `carboxi` beside the word: the amide's own mistakes (`count`, `seniority`: deliberate nulls until phase I-52d4, now
+  // CARBONYL_PREFIX and CARBONYL_SENIORITY; a `carbamoil` beside a group on the nitrogen is the engine's refusal of an
+  // N-substituted diamide, `outOfScope`, not counted). The aryl phenyls reflect onto themselves and bare `ftalamida` has no prefix
+  // to renumber.
   assert.deepEqual(otherName, { substituted: 14, arylReflected: 0, ringReflected: 0, unsorted: 2, carbamoyl: 5, carboxy: 15 });
   assert.deepEqual(own, { count: 5, seniority: 15 });
-  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'SUBSTITUTED_TEMPLATE']);
+  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'CARBONYL_PREFIX', 'CARBONYL_SENIORITY', 'SUBSTITUTED_TEMPLATE']);
 }); // End of test 'mutations of the fixture\'s retained amide names…'
 
-test('mutations of the generated retained amide names: every otherName diagnosed or the amide\'s own deliberate null', () => {
+test('mutations of the generated retained amide names: every otherName diagnosed, every step resolves', () => {
   const { otherName, codes, own, unexpected } = sweep(generatedTemplateNames().map(({ name }) => name));
   assert.deepEqual(unexpected, []);
   // The seeds give 120 names: SUBSTITUTED_TEMPLATE on every chain template, BRANCH_RING_NUMBERING on a reflected substituted phenyl
   // (on carbon 2 or on the nitrogen), RING_NUMBERING on a reflected substituted ftalamida, ALPHABETICAL_ORDER on two different groups
-  // swapped, and every `carbamoil` or `carboxi` beside the word the amide's own mistake, a deliberate null until phase I-52d4.
+  // swapped, and every `carbamoil` or `carboxi` beside the word the amide's own mistake, a deliberate null until phase I-52d4, now
+  // CARBONYL_PREFIX and CARBONYL_SENIORITY.
   assert.deepEqual(otherName, { substituted: 107, arylReflected: 34, ringReflected: 10, unsorted: 38, carbamoyl: 14, carboxy: 116 });
   assert.deepEqual(own, { count: 14, seniority: 116 });
-  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_RING_NUMBERING', 'RING_NUMBERING', 'SUBSTITUTED_TEMPLATE']);
+  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_RING_NUMBERING', 'CARBONYL_PREFIX', 'CARBONYL_SENIORITY',
+    'RING_NUMBERING', 'SUBSTITUTED_TEMPLATE']);
 }); // End of test 'mutations of the generated retained amide names…'
 
 test('«Dibujar» (R-6d3): amide template verdicts have an ordered drawing (canonical layout without problems)', () => {
@@ -971,7 +1035,10 @@ test('property (R-6d3): random names with a retained amide word — prefixes, `N
       assert.ok(verdict.errors.every((e) => !/undefined|null|NaN|\[object/.test(e.message)), name);
     }
     if (verdict.kind === 'otherName' && verdict.diagnosis) {
-      assert.ok(!/undefined|null|NaN|\[object|–OH|–COOH/.test(verdict.diagnosis.message), `${name}: ${verdict.diagnosis.message}`);
+      // An acid's –COOH only where the acid is the principal group (R-6d4: the word beside a `carboxi`, CARBONYL_SENIORITY).
+      const acid = verdict.naming.structure.suffix && verdict.naming.structure.suffix.kind === 'acid';
+      assert.ok(!/undefined|null|NaN|\[object|–OH/.test(verdict.diagnosis.message), `${name}: ${verdict.diagnosis.message}`);
+      assert.ok(acid || !/–COOH/.test(verdict.diagnosis.message), `${name}: ${verdict.diagnosis.message}`);
     }
   } // End of the loop over the random names
   for (const kind of ['alternative', 'otherName', 'missingLocants', 'invalid', 'outOfScope']) {

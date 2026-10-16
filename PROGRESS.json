@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-16T03:24:36Z",
+  "updated": "2026-10-16T04:39:59Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -976,7 +976,7 @@
     {
       "id": "I-52d",
       "title": "v4 R-6d Amides",
-      "status": "in_progress",
+      "status": "done",
       "summary": "Split into I-52d1 (suffixes, N locants, benzamida), I-52d2 (carbamoil, acylamino), I-52d3 (retained names, Ayuda), I-52d4 (diagnoses)."
     },
     {
@@ -1009,8 +1009,11 @@
     {
       "id": "I-52d4",
       "title": "v4 R-6d4 Amide diagnosis messages",
-      "status": "queued",
-      "summary": "Names an amide's own mistakes in the diagnosis, each with its step."
+      "status": "done",
+      "summary": "Names the mistakes of an amide name in the diagnosis (AMIDE_GROUP, AMIDE_CARBON, AMIDE_IN_CHAIN, AMIDE_PREFIX_NAME and the shared codes), each with its step.",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-52d4.md",
+      "narrative": "docs/progress-archive/i-52d4.md"
     },
     {
       "id": "I-53",

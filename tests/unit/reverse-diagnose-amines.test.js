@@ -25,8 +25,9 @@
  * CLASS_NAME_NONE with the amine's words, CARBONYL_SENIORITY for a class
  * name beside a senior group), each with its tiles and the class-name step
  * «Ver el paso» opens (AMINE_CLASS_STEP, after «Reconoce el grupo
- * funcional»), whose text agrees with the message; the «Amines» nulls left
- * (the templates' prefix style, a pinned open question; an amide, R-6d);
+ * funcional»), whose text agrees with the message; the «Amines» null left
+ * (the templates' prefix style, a pinned open question; an amide written
+ * `amino` + `al`, R-6d's null until phase I-52d4, now «Amides»' AMIDE_GROUP);
  * controls; the drafts.
  */
 
@@ -685,15 +686,16 @@ test('the letter N is no number: LOCANT_COUNT counts the letters N and the numbe
   }
 }); // End of test 'the letter N is no number…'
 
-test('the «Amines» nulls left: the templates\' prefix style (a pinned open question), an amide (R-6d)', () => {
+test('the «Amines» null left: the templates\' prefix style (a pinned open question); an amide is «Amides»\' since I-52d4', () => {
   // The class names' own mistakes are named since phase I-52c4b (above); a retained word's prefix in another style
-  // (`4-(propan-2-il)anilina`, the engine's `4-isopropilanilina`) is the cross-family open question; an amide is R-6d's.
-  for (const name of ['4 prop ano 2 il anilina', '1 amino but ano al']) {
-    const verdict = read(name);
-    assert.equal(verdict.kind, 'otherName', `${name}: ${verdict.message}`);
-    assert.equal(verdict.diagnosis, null, `${name}: ${verdict.diagnosis && verdict.diagnosis.message}`);
-  }
-}); // End of test 'the «Amines» nulls left…'
+  // (`4-(propan-2-il)anilina`, the engine's `4-isopropilanilina`) is the cross-family open question.
+  const style = read('4 prop ano 2 il anilina');
+  assert.equal(style.kind, 'otherName', style.message);
+  assert.equal(style.diagnosis, null, style.diagnosis && style.diagnosis.message);
+  // An amino prefix on the –CHO's carbon is an amide (R-6d's null until phase I-52d4): diagnose.js «Amides»' AMIDE_GROUP.
+  const amide = read('1 amino but ano al');
+  assert.deepEqual([amide.kind, amide.name, amide.diagnosis.code], ['otherName', 'butanamida', 'AMIDE_GROUP']);
+}); // End of test 'the «Amines» null left…'
 
 test('controls: correct amine names have no diagnosis; a mistake the earlier rules name stays theirs', () => {
   for (const name of ['etanamina', 'propan-2-amina', 'butano-1,4-diamina', 'N-metiletanamina', 'N,N-dimetilpropan-1-amina',

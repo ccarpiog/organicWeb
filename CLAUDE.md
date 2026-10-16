@@ -344,8 +344,7 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   searched with `N` among the places (`metiletanamida` → `N-metiletanamida`),
   the engine's `substitutedPolyamide` (an `N` beside two amide groups, also
   read from the name), `manyAmides`, imide and two-ring refusals
-  `outOfScope`; the amide's own mistakes are deliberate «Amides» nulls (for
-  R-6d4) and the diagnosis keeps the rules that hold for an amide name. R-6d2
+  `outOfScope`; the diagnosis keeps the rules that hold for an amide name. R-6d2
   (phase I-52d2) is done: the «Grupos» row's `carbamoil` (the whole –CONH₂ as
   a prefix bonded by its C=O carbon: `ácido 3-carbamoilpentanodioico`, `ácido
   2,2-dicarbamoilbutanoico`, `ácido 4-carbamoilbenzoico`,
@@ -360,9 +359,7 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   their left-out locants searched, a third group on the nitrogen VALENCE, an
   imide or a halogen on it `outOfScope`; the amide hints name `carbamoil`;
   the diagnosis keeps the shared rules (the groups on the nitrogen read
-  first), and a carbamoyl whose C=O carbon the engine takes into a chain
-  (`ácido 3-carbamoilpropanoico`) or written otherwise is a deliberate
-  «Amides» null for R-6d4. R-6d3 (phase I-52d3) is done: the «Nombres
+  first). R-6d3 (phase I-52d3) is done: the «Nombres
   tradicionales» row's retained amide names (`formamida`, `acetamida`,
   `ftalamida`, each with a tooltip; the engine writes no `isoftalamida`,
   `tereftalamida` or `oxamida`, and its `2-fenilacetamida` keeps the locant,
@@ -373,10 +370,30 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   prefixes the engine writes on them (`2-(4-metilfenil)acetamida`,
   `4-metilftalamida`; an `N` on `ftalamida` `outOfScope`), any other prefix
   as `otherName` with the SUBSTITUTED_TEMPLATE diagnosis saying what the word
-  admits (`2-cloroacetamida`), the templates' own mistakes deliberate
-  «Amides» nulls for R-6d4 (`2-carbamoilacetamida`, `2-carboxiacetamida`,
-  `1-fenilformamida`), and the Ayuda has its amide line. Next is R-6d4
-  (phase I-52d4): the amide diagnoses.
+  admits (`2-cloroacetamida`), and the Ayuda has its amide line. R-6d4 (phase
+  I-52d4) is done, and with it R-6d: `diagnose.js` names the amide's own
+  mistakes (header «Amides», checked right after the amine's): an amide
+  written as two groups on one carbon, AMIDE_GROUP (`1-aminobutanal`,
+  `1-amino-1-oxobutano` → «butanamida»); a junior group as the suffix, or an
+  amide's suffix beside an acid or an ester, CARBONYL_SENIORITY with the
+  seniority `ácido > éster > amida > nitrilo > aldehído > cetona > alcohol >
+  amina` (`2-carbamoilbutanonitrilo` → «2-cianobutanamida»,
+  `4-carboxibutanamida` → «ácido 5-amino-5-oxopentanoico», the amide written
+  `oxo` and `amino`, `2-carboxiacetamida`); the amide's carbon on the other
+  side of the parent, AMIDE_CARBON (`propano-1-carboxamida` → «butanamida»,
+  `1-fenilformamida` → «benzamida»); a principal amide written `carbamoil`
+  or as an acylamino prefix, CARBONYL_PREFIX (`carbamoilciclohexano`,
+  `2-carbamoilacetamida` → «propanodiamida», `2-(acetilamino)propano` →
+  «N-isopropiletanamida», the student's chain on the nitrogen); a carbamoyl
+  prefix on an end whose C=O carbon the chain takes in, AMIDE_IN_CHAIN
+  (`ácido 3-carbamoilpropanoico` → «ácido 4-amino-4-oxobutanoico»); an amide
+  prefix's own words, AMIDE_PREFIX_NAME, also on an ester's O-bound side
+  (`ácido 2-(carbamoilmetil)butanodioico` → «2-amino-2-oxoetil», `ácido
+  2-(aminooxometil)butanodioico` → «carbamoil»); and CARBONYL_PARENT,
+  MORE_CARBONYL_GROUPS, N0 numbering and the suffix's needless locants with
+  «grupo(s) amida», each with its «Ver el paso» step; a prefix in a style the
+  engine never writes beside a retained amide word stays the pinned null of
+  the open question. Next is R-7 (phase I-53): the wrap-up.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

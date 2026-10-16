@@ -10,8 +10,8 @@
  * correct, `N et il p met il benzamida` an alternative; `met il et ano amida`
  * draws N-metiletanamida with «Casi: faltan los números…»; the shared rules
  * speak on an amide name (`N-metil-N-metiletanamida`: UNGROUPED), and an
- * amide's own mistake (`propano-1-carboxamida`) is drawn and named without a
- * diagnosis, a deliberate null of diagnose.js «Amides» until phase I-52d4;
+ * amide's own mistake (`propano-1-carboxamida`) is drawn and named with its
+ * diagnosis (AMIDE_CARBON since phase I-52d4, a deliberate null before);
  * an `N` and a letter on one prefix, a third group on the amide's nitrogen
  * and a group on one nitrogen of a diamide stay in the dialog with their
  * message (and marked tiles), the canvas untouched.
@@ -235,16 +235,19 @@ test('`benzamida` with `N`: correct and the o/m/p alternative; left-out `N`; the
   await expect(page.locator('#result-name')).toHaveText('N,N-dimetiletanamida');
 
   // `propano-1-carboxamida`: the amide's carbon on the other side of the parent, a deliberate null of diagnose.js «Amides» until
-  // phase I-52d4: drawn and named, the block without a diagnosis.
+  // phase I-52d4, now AMIDE_CARBON: drawn and named, the diagnosis between the verdict's two sentences.
   dialog = await buildName(page, 'prop', 'ano', '1', 'carboxamida');
   await expect(line).toHaveText('propano-1-carboxamida');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
-  expect(await verdict.getAttribute('data-diagnosis')).toBeNull();
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'AMIDE_CARBON');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«butanamida». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);
+    + '«butanamida».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('La terminación «-carboxamida» solo se usa cuando el grupo amida '
+    + 'está unido a un anillo. En una cadena, el carbono del grupo amida es un carbono más de la cadena principal, siempre en un '
+    + 'extremo, y el grupo se nombra con la terminación «-amida», al final del nombre. Se escribe «butanamida».');
+  await expect(verdict.locator('.verdict-hint')).toHaveText('Pulsa «Ver paso a paso» para ver por qué.');
   await expect(page.locator('#result-name')).toHaveText('butanamida');
   expect(elementsOf(await moleculeJSON(page))).toEqual(['C', 'C', 'C', 'C', 'N', 'O']);
   expect(errors).toEqual([]);

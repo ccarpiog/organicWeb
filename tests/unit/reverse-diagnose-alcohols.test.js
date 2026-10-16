@@ -413,10 +413,11 @@ test('the drafts of the alcohol rules: their place among the rules, their steps,
   assert.deepEqual(ALCOHOL_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]),
     [[1, 'group'], [1, 'ringChain'], [2, 'groupChain'], [2, 'group']]);
   // Each beside the rule whose place it takes: before BRANCH_AT_END, after LONGER_CHAIN, after SUBSTITUTED_TEMPLATE (the
-  // aldehyde and ketone codes of phase I-51c3b1, the acid codes of phase I-51d3, the ester codes of phase I-52a3a and the
-  // nitrile code of phase I-52b3, beside them, left out: reverse-diagnose-carbonyls.test.js, reverse-diagnose-acids.test.js,
-  // reverse-diagnose-esters.test.js, reverse-diagnose-nitriles.test.js).
-  assert.deepEqual(DIAGNOSIS_CODES.filter((code) => !/CARBONYL|ALDEHYDE|ACID|ESTER|NITRILE/.test(code)).slice(0, 9), ['HYDROXY_PREFIX',
+  // aldehyde and ketone codes of phase I-51c3b1, the acid codes of phase I-51d3, the ester codes of phase I-52a3a, the
+  // nitrile code of phase I-52b3 and the amide codes of phase I-52d4, beside them, left out: reverse-diagnose-carbonyls.test.js,
+  // reverse-diagnose-acids.test.js, reverse-diagnose-esters.test.js, reverse-diagnose-nitriles.test.js,
+  // reverse-diagnose-amides.test.js).
+  assert.deepEqual(DIAGNOSIS_CODES.filter((code) => !/CARBONYL|ALDEHYDE|ACID|ESTER|NITRILE|AMIDE/.test(code)).slice(0, 9), ['HYDROXY_PREFIX',
     'HYDROXY_PARENT', 'BRANCH_AT_END', 'RING_IS_PARENT', 'MORE_HYDROXY_GROUPS', 'LONGER_CHAIN', 'BENZENE_RING',
     'SUBSTITUTED_TEMPLATE', 'PHENOL']);
   for (const code of ALCOHOL_CODES) {

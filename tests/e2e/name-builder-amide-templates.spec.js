@@ -11,9 +11,9 @@
  * `4-metilftalamida`, which the engine writes, draw their molecules;
  * `metilacetamida` (the `N` left out) is «N-metilacetamida»; a substituted
  * `2-cloroacetamida` draws its molecule with the app's name and why; a second
- * amide group written `carbamoil` beside the word (`2-carbamoilacetamida`),
- * a deliberate null of diagnose.js «Amides» until phase I-52d4, is drawn and
- * named without a diagnosis; `1-acetamida` is refused with the number marked
+ * amide group written `carbamoil` beside the word (`2-carbamoilacetamida`) is
+ * drawn and named with its diagnosis (CARBONYL_PREFIX since phase I-52d4, a
+ * deliberate null before); `1-acetamida` is refused with the number marked
  * and `N-metilftalamida` with the engine's own message, the canvas
  * untouched; the Ayuda section «Del nombre al dibujo» has its amide line.
  * Runs on the dev server and on dist (playwright.config.js).
@@ -236,13 +236,15 @@ test('`acetamida`, `2-fenilacetamida`, `ftalamida` and `4-metilftalamida` draw t
   expect(await drawingInsideCanvas(page)).toBe(true);
 
   // A second amide group written `carbamoil` beside the word: the amide's own mistake, a deliberate null of diagnose.js «Amides»
-  // until phase I-52d4: drawn and named, the block without a diagnosis.
+  // until phase I-52d4, now CARBONYL_PREFIX: drawn and named, the diagnosis between the verdict's two sentences.
   await drawName(page, '2-carbamoilacetamida', '2', 'carbamoil', 'acetamida');
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
-  expect(await verdict.getAttribute('data-diagnosis')).toBeNull();
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'CARBONYL_PREFIX');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«propanodiamida». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);
+    + '«propanodiamida».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('Los grupos amida son el grupo principal: los de la cadena principal se '
+    + 'nombran todos juntos con la terminación «-diamida», al final del nombre, no con el prefijo «carbamoil». Su carbono entra en la '
+    + 'cadena principal. Se escribe «propanodiamida».');
   await expect(page.locator('#result-name')).toHaveText('propanodiamida');
   expect(errors).toEqual([]);
 }); // End of test '`acetamida`, `2-fenilacetamida`…'

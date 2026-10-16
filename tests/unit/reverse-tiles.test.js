@@ -494,7 +494,8 @@ test('src/reverse never retypes a tile word', async () => {
  * entry point to judge, the carbon valence and the structural key to search
  * (R-1c), and for the diagnosis (R-3) the engine's own comparators, chain
  * key, locant text, prefix styles and naming, and the branch key, and the
- * principal groups' seniority (R-5c3b1, CARBONYL_SENIORITY). Never
+ * principal groups' seniority (R-5c3b1, CARBONYL_SENIORITY), the ring-or-chain
+ * comparison and the ring count (review of I-52d4, CARBONYL_PARENT). Never
  * render.js or the engine's grouping (design.md §15.4): the assembler works
  * from the tree alone.
  */

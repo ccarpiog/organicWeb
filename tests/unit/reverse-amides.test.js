@@ -23,8 +23,9 @@
  * engine's refusals (`substitutedPolyamide`, `manyAmides`, an imide, two
  * rings, a halogen or an oxygen on the nitrogen), mutations and their
  * diagnosis (the rules that hold for an amide name; the amide's own mistakes,
- * deliberate nulls of diagnose.js «Amides» until phase I-52d4, each with its
- * category read independently), the fixture round trip over every row with
+ * deliberate nulls of diagnose.js «Amides» until phase I-52d4 and diagnosed
+ * since, each with its category read independently and a code of its
+ * category), the fixture round trip over every row with
  * an amide group of tests/fixtures/names.tsv and the closed loop over the
  * oracle's amide generators (pure imports, no Java), the diagnosis sweeps
  * with exact counts, the ordered drawing, the dialog's tooltips, robustness
@@ -628,7 +629,7 @@ test('search (R-6d1): left-out locants, `N` included, give ambiguous lists; the 
 /**
  * Mutations of amide names (design.md §15.7): tile words, the verdict and the
  * diagnosis code of a rule that holds for an amide name (the amide's own
- * mistakes are the deliberate nulls of the next test).
+ * mistakes are the former deliberate nulls of the next test).
  */
 const MUTATIONS = Object.freeze([
   ['2 et il prop ano amida', 'otherName', 'LONGER_CHAIN'],
@@ -689,14 +690,15 @@ test('mutations (R-6d1): the expected verdict, and the diagnosis of every rule t
 /**
  * The category of an amide's own mistake, read independently of diagnose.js
  * from the engine's naming and the student's reading (diagnose.js «Amides»:
- * deliberate nulls until phase I-52d4): `seniority` — the student's suffix is
+ * deliberate nulls until phase I-52d4, diagnosed since with a code of their
+ * category, CATEGORY_CODES): `seniority` — the student's suffix is
  * an amide's while the engine's principal group is another
  * (`4-carboxibutanamida`), or the engine's is an amide and the student's
  * suffix is none or another, an amine's aside (the amine's
  * CARBONYL_SENIORITY, `N-acetiletanamina`): `1-aminobutanal`,
  * `1-amino-1-oxobutano`; `count` — another number of amide groups
  * (`4-amino-4-oxobutanamida`); `carbon` — the student's amide carbon outside
- * the parent where the engine's is in it, or the reverse
+ * the parent where the engine's is in it, or the reverse, the same groups
  * (`propano-1-carboxamida`, `1-ciclohexilmetanamida`); `parent` — other amide
  * groups than the engine's suffix's (their =O), the student's parent a ring
  * and the engine's a chain or the reverse, or no chain the engine's P0 keeps
@@ -724,10 +726,13 @@ function amideCategory(ids, verdict) {
   if (mine.slots.length !== engine.locants.length) {
     return 'count';
   }
-  if (Boolean(mine.outside) !== Boolean(engine.outside)) {
+  const groups = verdict.suffixAtoms || [];
+  // The student's amide carbons the engine's own (phase I-52d4, as reverse-nitriles.test.js nitrileCategory()): another amide
+  // group on the other side of a parent is the parent choice (`2-(4-carbamoilciclohexil)etanamida`).
+  const carbons = (list, key) => list.map((g) => (g.carbon === undefined ? g[key] : g.carbon));
+  if (Boolean(mine.outside) !== Boolean(engine.outside) && sameSet(carbons(groups, 'parentAtom'), carbons(engine.locants, 'atom'))) {
     return 'carbon';
   }
-  const groups = verdict.suffixAtoms || [];
   if (!sameSet(groups.map((g) => g.attachment), engine.locants.map((site) => site.attachAtom))) {
     return 'parent';
   }
@@ -751,43 +756,84 @@ function amideCategory(ids, verdict) {
   return !studentRing && p0 && !p0.survivors.some((c) => student.every((id) => c.atoms.includes(id))) ? 'parent' : null;
 } // End of function amideCategory()
 
-test('the deliberate nulls of R-6d1 (diagnose.js «Amides»): each category, read independently, gets no diagnosis', () => {
+/**
+ * The codes an amide's own mistake gets, by category (amideCategory();
+ * diagnose.js «Amides», phase I-52d4): an amide written as two groups on one
+ * carbon (AMIDE_GROUP), a junior group as the suffix or a principal amide
+ * written `carbamoil` or acylamino (CARBONYL_SENIORITY, CARBONYL_PREFIX), or
+ * inside a compound branch (CARBONYL_PARENT, MORE_CARBONYL_GROUPS, told from
+ * an ether oxygen as ETHER_SIDE, or BRANCH_AT_END when that branch on an end
+ * lengthens the chain), an `al` a branch makes a ketone's
+ * (KETONE_NOT_ALDEHYDE); another number of amide groups (the same codes); the
+ * amide's carbon on the other side of the parent (AMIDE_CARBON); other amide
+ * groups than the engine's, which the parent choice decides (the parent rules
+ * and the chain rules); N0 (NUMBERING, RING_NUMBERING); the suffix's needless
+ * or missing locants.
+ */
+const CATEGORY_CODES = Object.freeze({
+  seniority: ['AMIDE_GROUP', 'CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS',
+    'ETHER_SIDE', 'BRANCH_AT_END'],
+  count: ['AMIDE_GROUP', 'CARBONYL_PREFIX', 'CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'BRANCH_AT_END'],
+  carbon: ['AMIDE_CARBON'],
+  parent: ['CARBONYL_PARENT', 'MORE_CARBONYL_GROUPS', 'ETHER_SIDE', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS',
+    'MORE_DOUBLE_BONDS', 'MORE_SUBSTITUENTS', 'CHAIN_LOCANTS', 'CHAIN_ALPHABETICAL'],
+  numbering: ['NUMBERING', 'RING_NUMBERING'],
+  suffix: ['NEEDLESS_LOCANTS', 'MISSING_LOCANTS'],
+});
+
+test('the former deliberate nulls of R-6d1 (diagnose.js «Amides»): each category has its I-52d4 code, step and words', () => {
   const cases = [
-    // [tile words, category]
-    ['4 carboxi but ano amida', 'seniority'],
-    ['2 START acetil oxi END et ano amida', 'seniority'],
-    ['1 amino but ano al', 'seniority'], // The `amide` null of phase I-52c2, kept.
-    ['1 amino 1 oxo but ano', 'seniority'],
-    ['4 amino 4 oxo but ano amida', 'count'],
-    ['prop ano 1 carboxamida', 'carbon'],
-    ['1 ciclo hex il met ano amida', 'carbon'],
-    ['1 fenil met ano amida', 'carbon'],
-    ['N START 2 amino 2 oxo et il END et ano amida', 'parent'],
-    ['ciclo hex ano 1 5 di carboxamida', 'numbering'],
-    ['benceno 1 5 di carboxamida', 'numbering'],
-    ['ciclo hex ano 1 carboxamida', 'suffix'],
-    ['benceno 1 carboxamida', 'suffix'],
-    ['N met il ciclo hex ano 1 carboxamida', 'suffix'],
-    ['2 START amida et il END prop ano', null], // `amida` inside a branch: TILE_ORDER, no verdict to categorize
+    // [tile words, category, code, step, a phrase of the message]
+    ['4 carboxi but ano amida', 'seniority', 'CARBONYL_SENIORITY', 'group', 'el grupo amida va delante, con dos prefijos con el mismo '
+      + 'número: «oxo» para su C=O y «amino» para su nitrógeno, con los grupos unidos a él. Se escribe «ácido 5-amino-5-oxopentanoico»'],
+    ['2 START acetil oxi END et ano amida', 'seniority', 'CARBONYL_SENIORITY', 'group', 'el grupo amida va en el nombre del grupo unido '
+      + 'al otro oxígeno, con dos prefijos con el mismo número'],
+    ['1 amino but ano al', 'seniority', 'AMIDE_GROUP', 'group', 'Un C=O y un nitrógeno en el mismo carbono no son dos grupos distintos'],
+    ['1 amino 1 oxo but ano', 'seniority', 'AMIDE_GROUP', 'group', 'Se escribe «butanamida»'],
+    ['4 amino 4 oxo but ano amida', 'count', 'AMIDE_GROUP', 'group', 'se nombran todos juntos con la terminación «-diamida»'],
+    ['prop ano 1 carboxamida', 'carbon', 'AMIDE_CARBON', 'group', 'La terminación «-carboxamida» solo se usa cuando el grupo amida está '
+      + 'unido a un anillo'],
+    ['1 ciclo hex il met ano amida', 'carbon', 'AMIDE_CARBON', 'group', 'Se escribe «ciclohexanocarboxamida»'],
+    ['1 fenil met ano amida', 'carbon', 'AMIDE_CARBON', 'group', 'con «benzamida» (el benceno con un grupo amida)'],
+    // Two amides on two carbon pieces: the engine's chain has more substituents (a group on the nitrogen counts for no chain).
+    ['N START 2 amino 2 oxo et il END et ano amida', 'parent', 'MORE_SUBSTITUENTS', 'tiebreak', 'Hay otra cadena igual de larga con '
+      + 'más sustituyentes (1; la tuya tiene 0)'],
+    ['ciclo hex ano 1 5 di carboxamida', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'los grupos amida (el grupo principal) tienen '
+      + 'que llevar los números más bajos (3 en vez de 5)'],
+    ['benceno 1 5 di carboxamida', 'numbering', 'RING_NUMBERING', 'ringNumbering', 'los grupos amida (el grupo principal)'],
+    ['ciclo hex ano 1 carboxamida', 'suffix', 'NEEDLESS_LOCANTS', 'ringNumbering', 'de colocar el grupo amida'],
+    ['benceno 1 carboxamida', 'suffix', 'NEEDLESS_LOCANTS', 'assemble', 'de colocar el grupo amida'],
+    ['N met il ciclo hex ano 1 carboxamida', 'suffix', 'NEEDLESS_LOCANTS', 'ringNumbering', 'de colocar el grupo amida'],
+    // The guarded parent choice of phase I-52d1, reached: the ring or the chain, another chain with more amide groups (P0).
+    ['START carbamoil met il END benceno', 'seniority', 'CARBONYL_PARENT', 'ringChain', 'la que lleva más grupos amida'],
+    ['2 START 4 carbamoil ciclo hex il END et ano amida', 'parent', 'CARBONYL_PARENT', 'ringChain', 'llevan uno cada uno, así que gana '
+      + 'el anillo'],
+    ['3 START 2 amino 2 oxo et il END pent ano', 'seniority', 'MORE_CARBONYL_GROUPS', 'groupChain', 'Hay otra cadena con más grupos '
+      + 'amida (1; la tuya tiene 0)'],
   ];
-  for (const [words, category] of cases) {
+  for (const [words, category, code, opened, phrase] of cases) {
     const ids = seq(words);
     const verdict = readName(ids);
-    if (category === null) {
-      assert.equal(verdict.kind, 'invalid', words);
-      continue;
-    }
     assert.equal(verdict.kind, 'otherName', `${words}: ${verdict.message}`);
     assert.equal(amideCategory(ids, verdict), category, words);
-    assert.equal(verdict.diagnosis, null, `${words}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    const d = verdict.diagnosis;
+    assert.ok(d, `${words}: no diagnosis`);
+    assert.equal(d.code, code, `${words}: ${d.message}`);
+    assert.ok(CATEGORY_CODES[category].includes(d.code), words);
+    assert.ok(d.message.includes(phrase), `${words}: ${d.message}`);
+    assert.ok(!/undefined|null|NaN|\[object|–OH/.test(d.message), `${words}: ${d.message}`);
+    const explanation = diagnosisExplanation(verdict, explain);
+    assert.equal(explanation.steps[explanation.index].id, opened, `${words}: the step «Ver el paso» opens`);
     assert.ok(verdict.draw && verdict.molecule, words);
-  } // End of the loop over the deliberate nulls
-  // A student's `amina` beside an amide keeps the amine's CARBONYL_SENIORITY (phase I-52c4a), checked before the amide's nulls.
+  } // End of the loop over the former deliberate nulls
+  // `amida` inside a branch is TILE_ORDER: no verdict to categorize.
+  assert.equal(readName(seq('2 START amida et il END prop ano')).kind, 'invalid');
+  // A student's `amina` beside an amide keeps the amine's CARBONYL_SENIORITY (phase I-52c4a), checked before the amide's own.
   assert.equal(read('N acetil et ano amina').diagnosis.code, 'CARBONYL_SENIORITY');
   // The shared rules that hold still speak when theirs is the earlier mistake.
   assert.equal(read('2 et il prop ano amida').diagnosis.code, 'LONGER_CHAIN');
   assert.equal(read('N met il N met il ciclo hex ano carboxamida').diagnosis.code, 'UNGROUPED');
-}); // End of test 'the deliberate nulls of R-6d1…'
+}); // End of test 'the former deliberate nulls of R-6d1…'
 
 // ---------------------------------------------------------------------------
 // Fixture round trip and closed loop (design.md §15.7).
@@ -1172,14 +1218,16 @@ function mutationsOf(ids) {
 
 /**
  * Reads every mutation of some amide names: every `otherName` must carry a
- * diagnosis of its family's codes whose step resolves in its explanation, or
- * be one of the amide's own mistakes, a deliberate null of diagnose.js
- * «Amides» (counted by category, amideCategory()); a null with no category is
- * unexpected, and so is a diagnosis on a mutation of an amide category.
+ * diagnosis whose step resolves in its explanation; none is null (since
+ * phase I-52d4, diagnose.js «Amides»). The amide's own mistakes among them,
+ * the deliberate nulls of phase I-52d1, are counted by category
+ * (amideCategory()), each with a code of its category (CATEGORY_CODES) and,
+ * for `numbering`, the trace rule N0 and the amide groups' words; every other
+ * one with a code of its mutation's family.
  *
  * @param {string[]} names - Amide names (engine names or alternatives).
  * @returns {{otherName: Object<string, number>, codes: Set<string>, own: Object<string, number>, unexpected: string[]}}
- *   `otherName` counts by family, the codes seen, the amide's own mistakes by category and the unexpected cases.
+ *   `otherName` counts by family, the codes seen, the amide's own mistakes by category and the nulls.
  */
 function sweep(names) {
   const otherName = Object.fromEntries(Object.keys(FAMILY_CODES).map((family) => [family, 0]));
@@ -1195,21 +1243,21 @@ function sweep(names) {
       otherName[mutation.family] += 1;
       const label = `${name} → ${mutation.family} ${verdict.text}`;
       const d = verdict.diagnosis;
-      const category = amideCategory(mutation.ids, verdict);
       if (!d) {
-        if (category) {
-          own[category] = (own[category] || 0) + 1;
-        } else {
-          unexpected.push(label);
-        }
+        unexpected.push(label);
         continue;
       }
-      if (category) {
-        unexpected.push(`${label}: ${category} diagnosed ${d.code}`);
-      }
       codes.add(d.code);
-      assert.ok(FAMILY_CODES[mutation.family].includes(d.code), `${label}: ${d.code}, ${d.message}`);
-      assert.ok(!/undefined|null|NaN|\[object|grupos? –?OH|–CHO|C=O|COOH|C≡N/.test(d.message), `${label}: ${d.message}`);
+      const category = amideCategory(mutation.ids, verdict);
+      if (category) {
+        own[category] = (own[category] || 0) + 1;
+        assert.ok(CATEGORY_CODES[category].includes(d.code), `${label}: ${category}, ${d.code}`);
+        assert.ok(category !== 'numbering' || (d.traceRule === 'N0' && d.message.includes('los grupos amida')), `${label}: ${d.message}`);
+      } else {
+        assert.ok(FAMILY_CODES[mutation.family].includes(d.code), `${label}: ${d.code}, ${d.message}`);
+      }
+      // An amide's message may speak of its C=O (`un C=O unido a un nitrógeno`), never of another group's.
+      assert.ok(!/undefined|null|NaN|\[object|grupos? –?OH|–CHO|COOH|C≡N/.test(d.message), `${label}: ${d.message}`);
       const opened = diagnosisExplanation(verdict, explain);
       assert.ok(opened.index >= 0 && [d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), label);
     } // End of the loop over the mutations of one name
@@ -1219,11 +1267,10 @@ function sweep(names) {
 
 /**
  * How many mutations of the amide fixture names give `otherName`, by family
- * (every one diagnosed with one of its family's codes, or a deliberate
- * «Amides» null of its category), and how many of them are the amide's own
- * mistakes by category: 59 `numbering`, a ring amide's groups numbered
- * otherwise by a reflection or a rotation (`benceno-1,5-dicarboxamida`) —
- * deliberate nulls until phase I-52d4. Pinned by the test below.
+ * (every one diagnosed), and how many of them are the amide's own mistakes by
+ * category: 59 `numbering`, a ring amide's groups numbered otherwise by a
+ * reflection or a rotation (`benceno-1,5-dicarboxamida`) — deliberate nulls
+ * until phase I-52d4, now RING_NUMBERING at N0. Pinned by the test below.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
   reversed: 2, reflected: 5, rotated: 66, swapped: 0, unsorted: 14, ungrouped: 11, diBis: 11, toEnd: 4, heteroToEnd: 0, removed: 0,
@@ -1231,7 +1278,7 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 });
 const FIXTURE_OWN = Object.freeze({ numbering: 59 });
 
-test('mutations of every amide fixture name: a diagnosis of the family\'s codes, or a deliberate «Amides» null', async () => {
+test('mutations of every amide fixture name: a diagnosis of the family\'s codes, never null', async () => {
   // The names of phase R-6d1, the amide as the principal group (also those of the amine, amino, nitrile and acyl round trips,
   // swept here, not there); the amide prefixes written `amino` + `oxo` are swept in reverse-amino.test.js.
   const names = (await readFixtures()).filter((row) => isAmide(row.smiles)).flatMap((row) => row.names).filter(isR6d1AmideName);
@@ -1244,7 +1291,7 @@ test('mutations of every amide fixture name: a diagnosis of the family\'s codes,
     'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of every amide fixture name…'
 
-test('mutations of the generated amides: every otherName is diagnosed or a deliberate «Amides» null, every step resolves', () => {
+test('mutations of the generated amides: every otherName is diagnosed, every step resolves', () => {
   const names = [];
   for (const mol of loopMolecules().filter((_, i) => i % 3 === 0)) { // Every generator's amides: chains, rings, benzenes.
     const naming = nameMolecule(mol);
@@ -1253,13 +1300,14 @@ test('mutations of the generated amides: every otherName is diagnosed or a delib
   const { otherName, codes, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   const total = Object.values(otherName).reduce((sum, count) => sum + count, 0);
-  // The seeds give 480 names and 1362 `otherName`; 374 of them the amide's own mistakes, deliberate nulls until phase I-52d4: 373 a
-  // ring amide's groups numbered otherwise (`numbering`), 1 an amide prefix moved onto the chain's end, where it is a second amide
-  // group (`count`: `7-amino-3-(2-cianoetanoil)-7-oxoheptanamida`).
+  // The seeds give 480 names and 1362 `otherName`, every one diagnosed; 374 of them the amide's own mistakes, deliberate nulls until
+  // phase I-52d4: 373 a ring amide's groups numbered otherwise (`numbering`, now RING_NUMBERING at N0), 1 an amide prefix moved
+  // onto the chain's end, where it is a second amide group (`count`: `7-amino-3-(2-cianoetanoil)-7-oxoheptanamida`, now
+  // AMIDE_GROUP).
   assert.deepEqual([names.length, total, own], [480, 1362, { numbering: 373, count: 1 }]);
   assert.deepEqual([otherName.removed, otherName.added], [0, 0]);
-  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS', 'MORE_SUBSTITUENTS',
-    'MULTIPLIER_KIND', 'NUMBERING', 'RING_NUMBERING', 'UNGROUPED']);
+  assert.deepEqual([...codes].sort(), ['ALPHABETICAL_ORDER', 'AMIDE_GROUP', 'BRANCH_AT_END', 'LONGER_CHAIN', 'MORE_MULTIPLE_BONDS',
+    'MORE_SUBSTITUENTS', 'MULTIPLIER_KIND', 'NUMBERING', 'RING_NUMBERING', 'UNGROUPED']);
 }); // End of test 'mutations of the generated amides…'
 
 // ---------------------------------------------------------------------------

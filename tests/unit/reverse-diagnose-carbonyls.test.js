@@ -706,10 +706,12 @@ test('the drafts of the aldehyde and ketone rules: their place among the rules, 
   assert.deepEqual(CARBONYL_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]),
     [[1, 'group'], [1, 'group'], [1, 'group'], [1, 'group'], [1, 'ringChain'], [2, 'groupChain']]);
   // Beside the alcohol code whose place each takes: after HYDROXY_PREFIX, HYDROXY_PARENT, MORE_HYDROXY_GROUPS (the acid codes of
-  // phase I-51d3, ACID_CARBON beside ALDEHYDE_CARBON, the ester codes of phase I-52a3a, ESTER_CARBON beside ACID_CARBON, and the
-  // nitrile code of phase I-52b3, NITRILE_CARBON beside ESTER_CARBON, left out: reverse-diagnose-acids.test.js,
-  // reverse-diagnose-esters.test.js, reverse-diagnose-nitriles.test.js).
-  const codes = DIAGNOSIS_CODES.filter((code) => !code.startsWith('ACID_') && !code.startsWith('ESTER_') && !code.startsWith('NITRILE_'));
+  // phase I-51d3, ACID_CARBON beside ALDEHYDE_CARBON, the ester codes of phase I-52a3a, ESTER_CARBON beside ACID_CARBON, the
+  // nitrile code of phase I-52b3, NITRILE_CARBON beside ESTER_CARBON, and the amide codes of phase I-52d4, AMIDE_CARBON beside
+  // NITRILE_CARBON, left out: reverse-diagnose-acids.test.js, reverse-diagnose-esters.test.js, reverse-diagnose-nitriles.test.js,
+  // reverse-diagnose-amides.test.js).
+  const codes = DIAGNOSIS_CODES.filter((code) => !code.startsWith('ACID_') && !code.startsWith('ESTER_') && !code.startsWith('NITRILE_')
+    && !code.startsWith('AMIDE_'));
   const after = (code) => codes[codes.indexOf(code) - 1];
   assert.deepEqual(CARBONYL_CODES.map(after), ['HYDROXY_PREFIX', 'CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON',
     'HYDROXY_PARENT', 'MORE_HYDROXY_GROUPS']);
@@ -719,9 +721,10 @@ test('the drafts of the aldehyde and ketone rules: their place among the rules, 
     assert.doesNotMatch(text, /undefined|null|NaN|–OH/, code);
   }
   const { carbonylN0, groupWords, junior, groupsOn, ending } = DIAGNOSIS_PHRASES;
-  // The acid's –COOH groups (phase I-51d3), the ester's –COO– groups (phase I-52a3a), the nitrile's –C≡N groups (phase I-52b3)
-  // and the amine's amino groups (phase I-52c4a) beside them: reverse-diagnose-acids.test.js, reverse-diagnose-esters.test.js,
-  // reverse-diagnose-nitriles.test.js, reverse-diagnose-amines.test.js.
+  // The acid's –COOH groups (phase I-51d3), the ester's –COO– groups (phase I-52a3a), the nitrile's –C≡N groups (phase I-52b3),
+  // the amine's amino groups (phase I-52c4a) and the amide's amide groups (phase I-52d4) beside them:
+  // reverse-diagnose-acids.test.js, reverse-diagnose-esters.test.js, reverse-diagnose-nitriles.test.js,
+  // reverse-diagnose-amines.test.js, reverse-diagnose-amides.test.js.
   assert.deepEqual(carbonylN0.numberingReasons, {
     aldehyde: 'los grupos –CHO (el grupo principal) tienen que llevar los números más bajos',
     ketone: 'los grupos C=O (el grupo principal) tienen que llevar los números más bajos',
@@ -729,10 +732,11 @@ test('the drafts of the aldehyde and ketone rules: their place among the rules, 
     ester: 'los grupos –COO– (el grupo principal) tienen que llevar los números más bajos',
     nitrile: 'los grupos –C≡N (el grupo principal) tienen que llevar los números más bajos',
     amine: 'los grupos amino (el grupo principal) tienen que llevar los números más bajos',
+    amide: 'los grupos amida (el grupo principal) tienen que llevar los números más bajos',
   });
   assert.deepEqual(carbonylN0.lowerLocantsOf, { aldehyde: 'los grupos –CHO', ketone: 'los grupos C=O', acid: 'los grupos –COOH',
-    ester: 'los grupos –COO–', nitrile: 'los grupos –C≡N', amine: 'los grupos amino' });
-  assert.deepEqual(Object.keys(groupWords), ['alcohol', 'aldehyde', 'ketone', 'acid', 'ester', 'nitrile', 'amine']);
+    ester: 'los grupos –COO–', nitrile: 'los grupos –C≡N', amine: 'los grupos amino', amide: 'los grupos amida' });
+  assert.deepEqual(Object.keys(groupWords), ['alcohol', 'aldehyde', 'ketone', 'acid', 'ester', 'nitrile', 'amine', 'amide']);
   // The OH groups keep their N0 phrases (phase I-51a3b).
   assert.equal(DIAGNOSIS_TEXTS.NUMBERING({ rule: 'N0', app: '2', student: '3', unwritten: false }), 'Hay que numerar la cadena '
     + 'desde el otro extremo: los grupos –OH (el grupo principal) tienen que llevar los números más bajos (2 en vez de 3).');
@@ -756,10 +760,11 @@ test('the drafts of the branch-name rules (I-51c3b2): their place before ALPHABE
   assert.deepEqual(BRANCH_CODES.map((code) => [DIAGNOSES[code].rule, DIAGNOSES[code].step]),
     [[5, 'substituents'], [5, 'substituents'], [5, 'substituents']]);
   // After the parent's rules (the ring numbering last), before the alphabetical order, which reads the branches' words (the
-  // ester codes of phase I-52a3b among them left out: reverse-diagnose-esters.test.js).
+  // ester codes of phase I-52a3b and the amide's of phase I-52d4 among them left out: reverse-diagnose-esters.test.js,
+  // reverse-diagnose-amides.test.js).
   const at = (code) => DIAGNOSIS_CODES.indexOf(code);
   const between = DIAGNOSIS_CODES.slice(at('RING_NUMBERING') + 1, at('ALPHABETICAL_ORDER'));
-  assert.deepEqual(between.filter((code) => !code.startsWith('ESTER_')), BRANCH_CODES);
+  assert.deepEqual(between.filter((code) => !code.startsWith('ESTER_') && !code.startsWith('AMIDE_')), BRANCH_CODES);
   for (const code of BRANCH_CODES) {
     const text = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);
     assert.match(text, /^[«¿A-ZÁÉÍÓÚ].*\.$/u, code);

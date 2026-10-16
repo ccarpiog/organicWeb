@@ -56,7 +56,14 @@
  * tradicional de la amina» after «Reconoce el grupo funcional», which says how
  * that name is formed, the groups and the nitrogen marked; and `fenilamina`,
  * a class name for an amine that has none — the substitutive name and
- * `anilina`, the same step saying which amines get one.
+ * `anilina`, the same step saying which amines get one. Amides (phase
+ * I-52d4): `1-aminobutanal`, an amide written as two groups on one carbon —
+ * the message between the two sentences, the student's chain the parent,
+ * «Ver el paso» at «Reconoce el grupo funcional», which says the C=O and the
+ * nitrogen are one group; and `ácido 3-carbamoilpropanoico`, a carbamoyl
+ * prefix on the chain's end — the student's chain striped beside the longer
+ * parent, «Ver el paso» at «Busca la cadena principal», which says the
+ * amide's carbon is a carbon of the chain.
  */
 
 import { test, expect } from '@playwright/test';
@@ -180,6 +187,12 @@ const AMINE_CLASS_ORDER = ['met', 'il', 'et', 'il', 'amina'];
 
 /** The tiles of «fenilamina» (a class name for an amine that has none: bencenamina, or anilina). */
 const AMINE_CLASS_NONE = ['fenil', 'amina'];
+
+/** The tiles of «1-aminobutanal» (the C=O and the nitrogen on one carbon are one amide group: butanamida). */
+const AMIDE_SPLIT = ['1', 'amino', 'but', 'ano', 'al'];
+
+/** The tiles of «ácido 3-carbamoilpropanoico» (the carbamoyl's carbon is a chain carbon: ácido 4-amino-4-oxobutanoico). */
+const AMIDE_IN_CHAIN = ['ácido', '3', 'carbamoil', 'prop', 'ano', 'oico'];
 
 test('a longer chain: the message between the two sentences, the student\'s chain beside the parent, «Ver el paso» at «Busca la cadena»; Deshacer clears it all', async ({ page }) => {
   const errors = await openApp(page);
@@ -742,6 +755,71 @@ test('an amine class name (I-52c4b): the groups out of order, no student\'s chai
     + 'ese nombre: se nombra como en los otros pasos, con la terminación «-amina»: «bencenamina» (también vale «anilina»).');
   expect(errors).toEqual([]);
 }); // End of test 'an amine class name (I-52c4b)…'
+
+test('an amide (I-52d4): two groups on one carbon, «Ver el paso» at «Reconoce el grupo funcional»; a carbamoyl prefix on the chain\'s end', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, ...AMIDE_SPLIT);
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'AMIDE_GROUP');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: 1-aminobutanal');
+  // The three sentences, in order: the verdict, the diagnosis, the hint.
+  const texts = await verdict.locator('.verdict-message, .verdict-style, .verdict-diagnosis, .verdict-hint, .verdict-note')
+    .allTextContents();
+  expect(texts).toEqual([
+    'Esta es la molécula que describe tu nombre, pero se llama «butanamida».',
+    'Un C=O y un nitrógeno en el mismo carbono no son dos grupos distintos: juntos forman un solo grupo, el grupo amida (su C=O no '
+      + 'es un aldehído ni una cetona, ni su nitrógeno una amina). El grupo amida es el grupo principal: se nombra con la terminación '
+      + '«-amida», al final del nombre. Se escribe «butanamida».',
+    'Pulsa «Ver paso a paso» para ver por qué.',
+  ]);
+  await expect(page.locator('#result-name')).toHaveText('butanamida');
+  // The student's chain is the parent (4 carbons).
+  await expect(verdict.getByRole('listitem')).toHaveText(['Cadena principal', 'Tu cadena (es la misma)']);
+  const student = await marked(page, 'student');
+  expect(student.atoms).toHaveLength(4);
+  expect((await marked(page, 'parent')).atoms).toEqual(expect.arrayContaining(student.atoms));
+
+  // «Ver el paso»: the stepper opens at «Reconoce el grupo funcional», the focus on its title; it says the C=O and the nitrogen
+  // are one group, the molecule an amide.
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'group');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 2 de 5');
+  await expect(stepper.locator('.step-title')).toHaveText('Reconoce el grupo funcional');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  await expect(stepper).toContainText('la molécula es una amida');
+  await expect(stepper).toContainText('El C=O y el nitrógeno forman un solo grupo');
+  expect(await marked(page, 'student')).toEqual(student);
+
+  // A carbamoyl prefix on the chain's end beside an acid: `ácido 3-carbamoilpropanoico`. The student's three carbons are striped
+  // beside the parent, which adds the carbamoyl's carbon; «Ver el paso» opens «Busca la cadena principal», which says the amide's
+  // carbon is a carbon of the chain.
+  await drawName(page, ...AMIDE_IN_CHAIN);
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'AMIDE_IN_CHAIN');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: ácido 3-carbamoilpropanoico');
+  await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama «ácido '
+    + '4-amino-4-oxobutanoico».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('El prefijo «carbamoil» está en el extremo de la cadena, y el carbono '
+    + 'de su C=O la alarga: la cadena principal tiene 4 carbonos. Con ese carbono en la cadena, la amida ya no se nombra «carbamoil», '
+    + 'sino con dos prefijos con el mismo número: «oxo» para su C=O y «amino» para su nitrógeno, con los grupos unidos a él. Se escribe '
+    + '«ácido 4-amino-4-oxobutanoico».');
+  await expect(verdict.getByRole('list', { name: 'Qué se ve en el dibujo' }).getByRole('listitem'))
+    .toHaveText(['Cadena principal', 'Tu cadena']);
+  const chain = await marked(page, 'student');
+  const parent = await marked(page, 'parent');
+  expect(chain.atoms).toHaveLength(3);
+  expect(parent.atoms).toEqual(expect.arrayContaining(chain.atoms));
+  expect(parent.atoms.some((id) => !chain.atoms.includes(id))).toBe(true);
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'groupChain');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 3 de 7');
+  await expect(stepper.locator('.step-title')).toHaveText('Busca la cadena principal');
+  await expect(stepper).toContainText('El carbono de la amida que se nombra con «4-amino» y «4-oxo» sí forma parte de la cadena');
+  expect(errors).toEqual([]);
+}); // End of test 'an amide (I-52d4)…'
 
 test('a ring (I-50d): the ring is the parent beside the student\'s chain, «Ver el paso» at «Reconoce el benceno»; a ring numbered otherwise', async ({ page }) => {
   const errors = await openApp(page);
