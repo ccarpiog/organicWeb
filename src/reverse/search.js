@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -13,7 +13,7 @@
  *   2…6 of a phenyl's own prefixes, chain bonds 1…n−1, ring bonds 1…n —
  *   bond n joins carbon n to carbon 1). interpret.js asks slotDomain() for
  *   every slot, so later families add their roles here only; the locant `N`
- *   (R-6c1) is no role of its own: interpret.js amineSlots() widens a carbon
+ *   (R-6c1) is no role of its own: interpret.js nitrogenSlots() widens a carbon
  *   slot's domain to `[N_VALUE, n]`. A benzene ring (`benceno`, `fenil`;
  *   R-4b) has no bond slots: its carbons each already use three bonds (two
  *   in the ring, one of them double), so one single-bond branch fits on
@@ -101,7 +101,12 @@
  *   slot each (`(cloroetil)metilamina`: the chlorine's locant searched); the
  *   retained `anilina` and `bencilamina` (R-6c3) are templates whose
  *   nitrogen, the placed suffix, counts its bonds at index N_VALUE as an
- *   `amina` suffix's (`metilanilina`: `N`, 2, 3 or 4).
+ *   `amina` suffix's (`metilanilina`: `N`, 2, 3 or 4). The amides (R-6d1)
+ *   add no role either: `amida` is terminal like `oico` (its carbon takes
+ *   three bonds of the chain's end, implicit), `carboxamida` one of its ring
+ *   carbon like `carbonitrilo`, and the amide's nitrogen counts its bonds at
+ *   index N_VALUE as an amine's (`metiletanamida`: carbon 2 or `N`, carbon 1
+ *   being full; `metilbenzamida`: `N`, 2, 3 or 4).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,
@@ -158,11 +163,11 @@
 import { CARBON_VALENCE, cloneMolecule } from '../model/molecule.js';
 import { aromaticKey, aromaticIsomorphism } from '../model/graph.js';
 import {
-  build, checkSpec, attachmentOrder, hasOwnChain, ringRefusal, polyamineRefusal, isRing, isAromatic, templateGroups,
+  build, checkSpec, attachmentOrder, hasOwnChain, ringRefusal, polyamineRefusal, polyamideRefusal, isRing, isAromatic, templateGroups,
 } from './build.js';
 import {
   TILES, CLOSING_ID, POSITIONAL_IDS, TEMPLATES, SUFFIX_GROUPS, tileById, suffixBondAmount, NITROGEN_ID, N_VALUE, AMINE_KIND,
-  AMINE_NITROGEN_FREE, AMINO_KIND, NITROGEN_VALENCE,
+  AMINE_NITROGEN_FREE, AMINO_KIND, NITROGEN_VALENCE, isNitrogenSuffix,
 } from './tiles.js';
 
 /**
@@ -182,7 +187,7 @@ export const SEARCH_BUDGET = Object.freeze({ placements: 3000, namings: 200, ms:
  * lower carbon, one of a ring any ring bond, bond n being the one from
  * carbon n to carbon 1. Later families add their roles here; the locant
  * `N` of the amines (R-6c1) widens a carbon slot's domain instead
- * (interpret.js amineSlots(): `[N_VALUE, n]`).
+ * (interpret.js nitrogenSlots(): `[N_VALUE, n]`; R-6d1: an amide's nitrogen too).
  */
 export const ROLE_DOMAINS = Object.freeze({
   carbon: (length) => [1, length],
@@ -415,12 +420,17 @@ function modelOf(spec) {
   }
   if (spec.suffix) {
     // One OH per slot (R-5a2); a C=O of `al` or `ona` takes two bonds, a –CHO of `carbaldehído` one (its own carbon; R-5c1); a
-    // –COOH of `oico` three, of `carboxílico` one (R-5d1); a –COO– of `oato` three, of `carboxilato` one (R-6a1).
+    // –COOH of `oico` three, of `carboxílico` one (R-5d1); a –COO– of `oato` three, of `carboxilato` one (R-6a1); a –CONH₂ of
+    // `amida` three, of `carboxamida` one (R-6d1).
     const { order } = SUFFIX_GROUPS[spec.suffix.kind];
-    const amount = suffixBondAmount({ outside: spec.suffix.outside, order, hydroxy: spec.suffix.hydroxy, bridge: spec.suffix.bridge });
+    const amount = suffixBondAmount({
+      outside: spec.suffix.outside, order, hydroxy: spec.suffix.hydroxy, bridge: spec.suffix.bridge,
+      amideNitrogen: spec.suffix.amideNitrogen,
+    });
     addSlots(model, spec.suffix.slots, { role: 'carbon', chain: parent, amount });
-    if (spec.suffix.kind === AMINE_KIND) {
-      // The amine's nitrogen (R-6c1), at index N_VALUE: two bonds free for the groups written `N`, counted like a carbon's.
+    if (isNitrogenSuffix(spec.suffix.kind)) {
+      // The amine's nitrogen (R-6c1), or the amide's (R-6d1, bonded to its C=O carbon), at index N_VALUE: two bonds free for
+      // the groups written `N`, counted like a carbon's.
       model.chains[parent].used[N_VALUE] += CARBON_VALENCE - AMINE_NITROGEN_FREE;
     }
   }
@@ -667,8 +677,8 @@ export function searchStructures(spec, options) {
    * @returns {object} The result.
    */
   const none = (error) => ({ ...result, status: 'none', error });
-  // No placement of a name with too many rings has a key; an `N` on a polyamine names no one nitrogen.
-  const early = checkSpec(spec) || ringRefusal(spec) || polyamineRefusal(spec);
+  // No placement of a name with too many rings has a key; an `N` on a polyamine (R-6d1: a polyamide) names no one nitrogen.
+  const early = checkSpec(spec) || ringRefusal(spec) || polyamineRefusal(spec) || polyamideRefusal(spec);
   if (early) {
     return none(early);
   }
@@ -811,6 +821,8 @@ export function placementReading(spec, structure, placement) {
       ...(group.carbon === undefined ? {} : { carbon: atom(group.carbon), carbonBond: bond(group.carbonBond) }),
       ...(group.hydroxy === undefined ? {} : { hydroxy: atom(group.hydroxy), hydroxyBond: bond(group.hydroxyBond) }),
       ...(group.bridge === undefined ? {} : { bridge: atom(group.bridge), bridgeBond: bond(group.bridgeBond) }),
+      // The nitrogen of a –CONH₂ (R-6d1).
+      ...(group.amideNitrogen === undefined ? {} : { amideNitrogen: atom(group.amideNitrogen), amideBond: bond(group.amideBond) }),
     })),
     esterAtoms: built.esterAtoms.map((occurrence) => ({ // An ester's O-bound groups (R-6a1).
       ...occurrence,
@@ -843,18 +855,20 @@ export function placementReading(spec, structure, placement) {
  * cites `N`, and then its carbon prefixes' locants too, but omits the
  * suffix's by its own rule, counted without the groups on the nitrogen
  * (render.js carbonLocantPrefixes(): `metiletanamina` → `N-metiletanamina`,
- * `dimetiletanamina` → `N,N-dimetiletanamina`).
+ * `dimetiletanamina` → `N,N-dimetiletanamina`); so does an amide whose
+ * suffix takes locants (R-6d1: `carboxamida`, `metilciclohexanocarboxamida`
+ * → `N-metilciclohexanocarboxamida`; `amida`'s are implicit).
  *
  * @param {object} spec - A NameSpec.
  * @returns {{prefixes: boolean, parent: boolean, suffix?: boolean}[]} The lists to keep without locants, one entry per way,
- *   every list filled first (`suffix` only on the amines' own ways).
+ *   every list filled first (`suffix` only on the amines' and the amides' own ways).
  */
 export function fillVariants(spec) {
   const leftOut = (slots) => slots.some((slot) => slot.kind === 'leftOut' && slot.domain[0] !== slot.domain[1]);
   const prefixes = spec.prefixes.some((prefix) => leftOut(prefix.slots)) || Boolean(spec.suffix && leftOut(spec.suffix.slots));
   const parent = leftOut([...spec.parent.double, ...spec.parent.triple]);
-  // R-6c1: an amine's suffix list left out beside prefixes that may stand on its nitrogen.
-  const suffix = Boolean(spec.suffix && spec.suffix.kind === AMINE_KIND && leftOut(spec.suffix.slots))
+  // R-6c1: an amine's suffix list left out beside prefixes that may stand on its nitrogen; R-6d1: an amide's.
+  const suffix = Boolean(spec.suffix && isNitrogenSuffix(spec.suffix.kind) && leftOut(spec.suffix.slots))
     && spec.prefixes.some((prefix) => prefix.slots.some((slot) => slot.nitrogen));
   return [
     { prefixes: false, parent: false },

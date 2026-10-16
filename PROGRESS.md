@@ -67,7 +67,11 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-52c4 | v4 R-6c4 Amine diagnosis messages (fill the «Amines» nulls of I-52c1…c3), e2e | same, "R-6c" | done — split into I-52c4a, I-52c4b | — | — |
 | I-52c4a | v4 R-6c4a Principal amine group diagnoses (`seniority`, `count`, `side` → new AMINE_SIDE, `numbering`, `suffix`, `parent`; `N` no number in LOCANT_ORDER / LOCANT_COUNT), e2e | same, "R-6c" | done — `docs/progress-archive/i-52c4a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52c4a.md` |
 | I-52c4b | v4 R-6c4b Amine class-name diagnoses (`order`, `multiplier`, `words`, `none`), the last template nulls, POSITIONAL on `anilina`, e2e | same, "R-6c" | done — `docs/progress-archive/i-52c4b.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52c4b.md` |
-| I-52d | v4 R-6d Amides | same, "R-6d" | queued | — | — |
+| I-52d | v4 R-6d Amides | same, "R-6d" | split into I-52d1, I-52d2, I-52d3, I-52d4 | — | — |
+| I-52d1 | v4 R-6d1 Amide suffixes `amida` / `carboxamida`, `benzamida`, `N` on the amide nitrogen (`N-metiletanamida`, `N-etil-p-metilbenzamida`); search with N slots, round trip, closed loop, deliberate «Amides» nulls, e2e | same, "R-6d" | done — `docs/progress-archive/i-52d1.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52d1.md` |
+| I-52d2 | v4 R-6d2 Amide prefixes `carbamoil` (`(metilcarbamoil)`, `[etil(metil)carbamoil]`, `bis(metilcarbamoil)`) and acylamino (`(acetilamino)`, `[acetil(metil)amino]`), the rows waiting for them, e2e | same, "R-6d" | queued | — | — |
+| I-52d3 | v4 R-6d3 Retained amide names (`formamida`, `acetamida`, `N-metilacetamida`, `2-fenilacetamida`, `ftalamida` …), Ayuda amide line, e2e | same, "R-6d" | queued | — | — |
+| I-52d4 | v4 R-6d4 Amide diagnosis messages (fill the «Amides» nulls of I-52d1…d3 and the `1-aminobutanal` → «butanamida» null), e2e | same, "R-6d" | queued | — | — |
 | I-53 | v4 R-7 Wrap-up | same, "R-7" | queued | — | — |
 | I-54 | o/m/p letters for two different prefixes on plain `benceno`, drawing → name and name → drawing (user decision 2026-10-15, reverses design §14.4) | `autoclaude/processed/240-omp-two-different-groups.md` | queued — after I-53 (user: «after v4») | — | — |
 
@@ -92,20 +96,25 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-52d (v4 R-6d, amides; design §15.8 row R-6d: `amida`, `carboxamida`, `benzamida`, `carbamoil`, `acilamino`; retained
-`formamida`, `acetamida`, `2-fenilacetamida`, `ftalamida`). Split it first like R-6b / R-6c and record the split in the table, e.g.
-I-52d1 (suffixes `amida` / `carboxamida`, `benzamida`, `N` locants on the amide nitrogen — `N-metiletanamida`,
-`N,N-dimetilmetanamida` — reusing I-52c1's `N` tile, the `carbamoil` prefix; search, round trips, closed loop, deliberate «Amides»
-nulls, e2e), I-52d2 (acylamino prefixes — today TILE_ORDER, `i-52c2.md` — and the retained amide names, Ayuda amide line, e2e),
-I-52d3 (amide diagnoses: fill the «Amides» nulls and the `amide` null `1-aminobutanal` → «butanamida»). The reverse engine reads
-exactly the amide forms the forward engine writes (and its refusals: N-substituted benzene diamides …) — find them in `src/naming/`,
-`tests/fixtures/names.tsv` and the v2 amide phase's archive (`rg -l amida docs/progress-archive`). Model it on `i-52b1.md` … `i-52b3.md`
-(nitriles) and `i-52c1.md` … `i-52c4b.md` (amines, `N` locants). Spec: design §15 + §13 — read from the working-tree `docs/design.md`;
-never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit paths. Then I-53 (R-7 wrap-up), then I-54.
+Select I-52d2 (v4 R-6d2, amide prefixes): the «Grupos» row's `carbamoil` (the whole –CONH₂ as a prefix bonded through its C=O
+carbon: `ácido 3-carbamoilpentanodioico`, `ácido 2,2-dicarbamoilbutanoico`, `ácido 4-carbamoilciclohexano-1-carboxílico`,
+`3-carbamoilpentanodioato de dimetilo`, `2-(4-carbamoilciclohexil)butanodiamida`, `ácido 4-carbamoilbenzoico`; with groups on its
+nitrogen written before it without locants as a compound branch, as I-52c2 did for `amino`: `(metilcarbamoil)`,
+`(dimetilcarbamoil)`, `[etil(metil)carbamoil]`, `(isopropilcarbamoil)` / `[(propan-2-il)carbamoil]` / `[(1-metiletil)carbamoil]`,
+`bis(metilcarbamoil)`) and the acylamino prefixes, an acyl word or ending before `amino` (today TILE_ORDER, `i-52c2.md`:
+`(acetilamino)`, `(formilamino)`, `[acetil(metil)amino]`, `2-(acetilamino)etanamida`, `ácido 2-(acetilamino)etanoico`,
+`2-(acetilamino)-N-(2-amino-2-oxoetil)etanamida`), read beside senior groups on chains, rings, `benceno` and the templates and inside
+compound branches as the forward engine writes them, their left-out locants searched; the rows pinned in
+`tests/unit/reverse-amides.test.js` for d2 flip to read; the d1 hints gain their `carbamoil` clause (`i-52d1.md` *Decisions*); the
+diagnosis keeps the shared rules, amide-specific mistakes deliberate «Amides» nulls for I-52d4. Find the forms in `src/naming/`,
+`tests/fixtures/names.tsv` («Amide prefixes and the pair matrix (I-39d)», I-40c, I-43b) and `tests/unit/amide-prefixes.test.js`;
+model it on `i-52c2.md` (amino, compound N branches) and `i-51c2.md` (acyl words/endings), and `i-52d1.md`. Spec: design §15 + §13 —
+read from the working-tree `docs/design.md`; never edit or commit it (see *Open risks*). Risk high; worker opus. Commit by explicit
+paths. Then I-52d3 (retained amide names, Ayuda line), I-52d4 (amide diagnoses), I-53 (R-7 wrap-up), I-54.
 
 - **Builds on** every v4 phase so far — the R-1 engine, dialog, «Dibujar», diagnosis engine and panel, rings, benzene,
-  templates, and the halogen … amine families (`docs/progress-archive/i-47a.md` … `i-52c4b.md`; the "Key paths" below); the forward
-  naming engine already names every case (v2 §13, v3 §14).
+  templates, and the halogen … amide-suffix families (`docs/progress-archive/i-47a.md` … `i-52d1.md`; the "Key paths" below); the
+  forward naming engine already names every case (v2 §13, v3 §14).
 
 Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
 (design §14.6, §15.9).
@@ -232,14 +241,19 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   `tests/unit/reverse-diagnose-amines.test.js`, amine case in `diagnosis.spec.js`.
   Amine class-name diagnoses (I-52c4b): the ether CLASS_ORDER / CLASS_DI / CLASS_GROUP_WORDS / CLASS_NAME_NONE codes with amine wording
   and the diagnosis-only step `amineClass` in `diagnose.js`; tests in `reverse-diagnose-amines.test.js`, `reverse-amine-classes.test.js`.
+- Amides in the reverse engine (I-52d1): `amida` / `carboxamida` («Grupos», SUFFIX_GROUPS `amide` / `carboxamide` with
+  `amideNitrogen`) and `benzamida` («Anillos», GROUP_WORD_PARENTS `benzamide`) in `tiles.js`; `checkNitrogen()` (`parse.js`) lets `N`
+  onto an amide's prefixes, `nitrogenSlots()` (was `amineSlots()`, `interpret.js`), `isNitrogenSuffix()` / `polyamideRefusal()`
+  (`build.js`); `amideChecks()` / AMIDE_NULLS after `amineChecks()` in `diagnose.js` («Amides» header); tests
+  `tests/unit/reverse-amides.test.js` (`isR6d1AmideName()`, `amideCategory()`), `tests/e2e/name-builder-amides.spec.js`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51c1 … I-52c4a: see `docs/progress-archive/i-51c1.md` … `i-52c4a.md`.
-- I-52c4b (orchestrator, after the worker): `npm test` exit 0 (2376 → 2378 pass, 0 fail) · `npm run check` exit 0 (218 files) ·
-  `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (607 → 609 passed, source + dist). `src/naming`, `src/explain`
-  unchanged; `docs/design.md` not edited (mtime 2026-10-14). Codex ship, 0 findings (`docs/reviews/I-52c4b.md`).
+- I-51c1 … I-52c4b: see `docs/progress-archive/i-51c1.md` … `i-52c4b.md`.
+- I-52d1 (orchestrator, after the worker): `npm test` 2378 → 2397 pass, 0 fail · `npm run check` exit 0 (220 files) ·
+  `npm run build` exit 0 · `npm run e2e -- --reporter=dot` 609 → 615 passed (source + dist). `src/naming`, `src/explain`
+  unchanged; `docs/design.md` not edited (mtime 2026-10-14). Codex ship, 0 findings (`docs/reviews/I-52d1.md`).
 
 ## Open risks / deviations
 
@@ -340,6 +354,13 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   order; the class names' multiplier hint says «Los prefijos di-, tri-…». Open questions for the user (forward engine, not changed):
   (1) `butiltert-butilamina` without a hyphen; (2) `tridecilamina` for N(C₁₀H₂₁)₃ is ambiguous (usage: `tris(decil)amina`); (3) announce
   the class name on a `correct` verdict (`metanamina`)? `alcohol bencílico` stays unread (no phase).
+- I-52d1 (amide suffixes, `benzamida`, `N` on the amide nitrogen; decisions, deliberate nulls, Spanish drafts in
+  `docs/progress-archive/i-52d1.md`): the amide nitrogen is a suffix field (`amideNitrogen`), the `N` machinery shared with amines;
+  `carboxamida` after a chain is read and judged (`propano-1-carboxamida` → «butanamida», a `carbon` null); «Amides» nulls (seniority,
+  count, carbon, parent, numbering, suffix) wait for I-52d4; 57 amide fixture names wait for `carbamoil` / acylamino (I-52d2) or the
+  retained names (I-52d3), pinned. For teacher review: `ciclohexilmetanamida` (locant left out) reads `missingLocants`
+  «N-ciclohexilmetanamida» (only the ring on the N fills to an engine name); a prefix style the engine never writes on
+  `bencenocarboxamida` is a null, part of the open question I-51d1…I-52a2b (1).
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
@@ -353,5 +374,5 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-52c4a `1e85900`, pushed. I-52c4b committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
+- I-52c4b `e412709`, pushed. I-52d1 committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
   never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

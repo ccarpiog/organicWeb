@@ -235,13 +235,13 @@ test('`N` without `amina` and a third group on the nitrogen stay in the dialog, 
   await expect(dialog).toBeHidden();
   await expect(page.locator('#result-name')).toHaveText('etanamina');
 
-  // `N-metiletano`: `N` names an amine's nitrogen, and the name has no `amina`.
+  // `N-metiletano`: `N` names an amine's nitrogen (since phase R-6d1, or an amide's), and the name has neither.
   dialog = await buildName(page, 'N', 'met', 'il', 'et', 'ano');
   await expect(page.locator('#name-builder-name')).toHaveText('N-metiletano');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   const message = page.locator('#name-builder-message');
-  await expect(message).toHaveText('Esta ficha no puede ir aquí: «N» dice que un grupo va unido al nitrógeno de una amina, así que '
-    + 'solo va en un nombre que acaba en «amina» (N-metiletanamina).');
+  await expect(message).toHaveText('Esta ficha no puede ir aquí: «N» dice que un grupo va unido al nitrógeno de una amina o de una '
+    + 'amida, así que solo va en un nombre que acaba en «amina» o en «amida» (N-metiletanamina, N-metiletanamida).');
   await expect(message).toHaveClass(/nb-message--error/);
   expect(await invalidTiles(page)).toEqual([0]);
   await expect(dialog).toBeVisible();

@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -32,7 +32,26 @@
  * the principal amine's nitrogen; R-6c2: the amino prefixes, `amino`,
  * `(metilamino)`, `(dimetilamino)`, `[etil(metil)amino]`; R-6c3: the
  * retained `anilina` and `bencilamina` and the class names, `metilamina`,
- * `dimetilamina`, `trimetilamina`). Pure, no DOM.
+ * `dimetilamina`, `trimetilamina`) and their amides (R-6d1: the suffixes
+ * `amida` and `carboxamida`, `benzamida`, and the locant `N` of a group on
+ * the amide's nitrogen). Pure, no DOM.
+ *
+ * The amides (R-6d1) need nothing of their own here either but the
+ * engine's `substitutedPolyamide` refusal read from the name (build.js
+ * polyamideRefusal(), beside polyamineRefusal()): the parser reads their
+ * tiles and `N` on their prefixes, the interpreter gives the amide's
+ * nitrogen the `N` slots an amine's gets, the builder puts the =O and the
+ * nitrogen on the group's carbon (the chain's end, or a carbon outside the
+ * ring), the search places left-out locants on that nitrogen too, and the
+ * engine names the molecule (`etanamida`, `N,N-dimetiletanamida`,
+ * `ciclohexano-1,4-dicarboxamida`, `N-etil-4-metilbenzamida` → `correct`;
+ * `bencenocarboxamida`, `N-(propan-2-il)propanamida`,
+ * `N-etil-p-metilbenzamida` → `alternative`; `metiletanamida` →
+ * `missingLocants` «N-metiletanamida»; `metilpropanamida` → `ambiguous`;
+ * `propano-1-carboxamida` → `otherName` «butanamida»; `metanodiamida` →
+ * `invalid` CARBONYL_POSITION; `N,N,N-trimetiletanamida` → `invalid` VALENCE
+ * on the nitrogen; `N-metilbutanodiamida` → `outOfScope`). An amide's own
+ * mistakes are diagnose.js «Amides»'s deliberate nulls (phase I-52d4).
  *
  * The retained amine names and the amines' class names (R-6c3) need nothing
  * of their own here either: the parser reads `anilina` and `bencilamina` as
@@ -68,7 +87,7 @@
  * `2-(trimetilamino)etan-1-ol` → `invalid` VALENCE on the nitrogen;
  * `2-(cloroamino)etan-1-ol` → `outOfScope`, the engine's HETEROATOM). An
  * acyl group on the nitrogen (`(acetilamino)`, an amide's prefix) is a parse
- * error until the amides' phase (R-6d).
+ * error until the acylamino prefixes' phase (R-6d2).
  *
  * The amines (R-6c1) need nothing of their own here either: the parser
  * reads `amina` as a suffix and `N` among a name-level prefix's locants, the
@@ -330,7 +349,7 @@ import { nameMolecule } from '../naming/index.js';
 import { parse } from './parse.js';
 import { assemble } from './assemble.js';
 import { interpret } from './interpret.js';
-import { checkSpec, ringRefusal, polyamineRefusal } from './build.js';
+import { checkSpec, ringRefusal, polyamineRefusal, polyamideRefusal } from './build.js';
 import { searchStructures, filledTree, fillVariants, placementReading } from './search.js';
 import { diagnose, MAX_READINGS } from './diagnose.js';
 import { TEMPLATES } from './tiles.js';
@@ -662,7 +681,7 @@ export function readName(tiles, options = {}) {
     return invalid(early);
   }
   const notes = spec.oldStyle ? [`${VERDICT_TEXTS.oldStyle} «${modernText(tree)}».`] : [];
-  const refusal = ringRefusal(spec) || polyamineRefusal(spec);
+  const refusal = ringRefusal(spec) || polyamineRefusal(spec) || polyamideRefusal(spec); // R-6d1: `N-metilbutanodiamida`
   if (refusal) {
     return verdict('outOfScope', `${VERDICT_TEXTS.outOfScope} ${refusal.message}`, assembled, { notes });
   }

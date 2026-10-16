@@ -41,7 +41,9 @@
  *   suffixes `nitrilo` and `carbonitrilo`, phase R-6b1, each with a tooltip,
  *   as `benzonitrilo` in «Anillos»; the amines' suffix `amina`, phase R-6c1,
  *   and the prefix `amino`, phase R-6c2, each with a tooltip (`amina`'s
- *   also says it ends an amine's class name, `metilamina`, phase R-6c3) —, «Nombres
+ *   also says it ends an amine's class name, `metilamina`, phase R-6c3); the
+ *   amides' suffixes `amida` and `carboxamida`, phase R-6d1, each with a
+ *   tooltip, as `benzamida` in «Anillos» —, «Nombres
  *   tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
@@ -80,7 +82,7 @@ import {
   TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID,
   BENZALDEHYDE_ID, ACETYL_ID, ACYL_ID, RING_CARBONYL_ID, BENZOYL_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID,
   OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID, AMINA_ID, NITROGEN_ID,
-  AMINO_ID, tileById,
+  AMINO_ID, AMIDA_ID, CARBOXAMIDE_ID, BENZAMIDE_ID, tileById,
 } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
@@ -144,7 +146,9 @@ export function positionalLabel(tile) {
  * `amina` and the locant `N`, what each is and where it goes; R-6c2: `amino`
  * and how the groups on its nitrogen are written; R-6c3: the retained amine
  * names, what molecule each is and which takes prefixes, and `amina` after
- * the groups of a class name; drafts pending teacher review).
+ * the groups of a class name; R-6d1: `amida`, `carboxamida` and `benzamida`,
+ * what each is, where it goes and that the groups on the amide's nitrogen
+ * take `N`, which the `N` tooltip says too; drafts pending teacher review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
@@ -208,11 +212,19 @@ export const TILE_HINTS = Object.freeze({
     + 'propan-2-amina, butano-1,4-diamina, ciclohexanamina, bencenamina. También va justo detrás de los grupos unidos al '
     + 'nitrógeno, sin números: met, il y amina dan metilamina; di, met, il y amina, dimetilamina.',
   [NITROGEN_ID]: 'Dice que una rama va unida al nitrógeno de la amina, no a un carbono. Va delante de la rama, como un número: '
-    + 'N-metiletanamina; con dos ramas, N,N-dimetilmetanamina; junto a números, N,2-dimetilpropan-1-amina.',
+    + 'N-metiletanamina; con dos ramas, N,N-dimetilmetanamina; junto a números, N,2-dimetilpropan-1-amina. También en las '
+    + 'amidas, para las ramas unidas a su nitrógeno: N-metiletanamida, N,N-dimetilbenzamida.',
   // R-6c2: the amino prefixes.
   [AMINO_ID]: 'Un grupo NH₂ unido a un carbono, cuando la amina no es el grupo principal: 2-aminoetan-1-ol, ácido '
     + '2-aminopropanoico. Si el nitrógeno lleva ramas, van delante de «amino», sin números, en una rama compuesta: '
     + '(metilamino), (dimetilamino), [etil(metil)amino].',
+  // R-6d1: the amides.
+  [AMIDA_ID]: 'Amida (un C=O unido a un nitrógeno, –CONH₂). Va al final, detrás de la terminación de una cadena; el carbono '
+    + 'del grupo amida es el carbono 1 de la cadena (con dos, también el último), así que no lleva números: propanamida; con '
+    + 'dos, butanodiamida. Las ramas unidas al nitrógeno llevan «N»: N-metiletanamida.',
+  [CARBOXAMIDE_ID]: 'Grupo amida unido a un anillo. Va al final, detrás del nombre del anillo: ciclohexanocarboxamida, '
+    + 'ciclohexano-1,4-dicarboxamida.',
+  [BENZAMIDE_ID]: 'Benceno con un grupo amida: bencenocarboxamida. Las ramas unidas al nitrógeno llevan «N»: N-metilbenzamida.',
   'template-anisole': 'Benceno con un grupo metoxi: metoxibenceno.',
   'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
   'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',

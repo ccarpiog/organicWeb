@@ -30,7 +30,10 @@
  * R-6c4b; «Amines» below: the rules that hold for an amine name and for an
  * amino prefix, the principal amine group's own mistakes, checked before
  * every other family's, and the class names' own mistakes, a track of their
- * own as an ether's; a template's prefix style still a deliberate null).
+ * own as an ether's; a template's prefix style still a deliberate null), and
+ * their amides (R-6d1; «Amides» below: the rules that hold for an amide name,
+ * the amide's own mistakes deliberate nulls until phase I-52d4, checked right
+ * after the amine's).
  *
  * The rules, in order (first match wins):
  *
@@ -327,8 +330,9 @@
  * beside a prefix being three positions). The alcohol messages speak of OH
  * groups, so they are given only when the engine's principal group is the
  * OH (outsideRules(): a principal group of a later family gets null until
- * its phase adds its messages — an amide's, R-6d —; the aldehydes, ketones,
- * acids, esters, nitriles and amines have their own codes and phrases, below;
+ * its phase adds its messages; the aldehydes, ketones, acids, esters,
+ * nitriles and amines have their own codes and phrases, below, and an
+ * amide's own mistakes are deliberate nulls until phase I-52d4, «Amides»;
  * a student's `amina` beside the OH is a junior amine, «Amines»: an OH on an
  * aldehyde's
  * carbon makes an acid, `1-hidroxipropanal`, ACID_GROUP). A ring branch of
@@ -1212,9 +1216,9 @@
  * rules' own true messages (`[(3-hidroxipropil)amino]metanol` →
  * LONGER_CHAIN). A principal amine written as an amino prefix is
  * CARBONYL_PREFIX (above). An amino prefix on a C=O carbon makes an amide
- * (`1-aminobutanal` → «butanamida»): without a student's `amina` the
- * molecule is outside the rules (outsideRules(), the amides being phase
- * R-6d's), the null of the sweeps' `amide` category; beside an acid or an
+ * (`1-aminobutanal` → «butanamida»): without a student's `amina` it is an
+ * amide's own mistake, the «Amides» `seniority` null (amideChecks(), phase
+ * I-52d4), the null of the sweeps' `amide` category; beside an acid or an
  * ester the amide is a prefix the engine writes `amino` + `oxo` (`ácido
  * 4-amino-4-oxobutanoico`), and the rules run as for any prefixes.
  *
@@ -1288,6 +1292,66 @@
  * one and the substitutive name of this one. No amine class name is left a
  * null (an ad hoc sweep of random class names found none).
  *
+ * **Amides** (design.md §13.4 I-37, I-39d, I-40c, §14 I-43b, I-44, §15.8
+ * R-6d; phase R-6d1): the suffixes `amida` (terminal by rule, as `oico`: its
+ * carbon is the chain's end carbon), `carboxamida` and `benzamida`, and the
+ * locant `N` of a group on the amide's nitrogen (`N-metiletanamida`,
+ * `N,2-dimetilpropanamida`, `N-etil-4-metilbenzamida`). The amide is the
+ * principal group below an acid and an ester (naming/seniority.js: ácido >
+ * éster > amida > nitrilo > aldehído > cetona > alcohol > amina); the
+ * engine's trace has P0 (most amide groups on the chain; a group on the
+ * amide's nitrogen counts for no chain, I-39d) and N0, and, with a ring, a
+ * `RINGCHAIN` step. outsideRules() lets amides through, and amideChecks()
+ * runs right after amineChecks() — a student's `amina` beside an amide keeps
+ * its CARBONYL_SENIORITY (`N-acetiletanamina` → «N-etiletanamida», R-6c4a) —
+ * and before the nitrile's, the ester's and the acid's checks (a student's
+ * amide suffix beside an acid or an ester must not reach their seniority
+ * code, whose words would put the amide's nitrogen apart), answering an
+ * AMIDE_NULLS draft for the amide's own mistakes — a null that keeps the rule
+ * number of the mistake among the name's readings, as the amines' were in
+ * phase I-52c1, so the kindest reading still wins (diagnose()) — which phase
+ * I-52d4 words, by category (AMIDE_NULLS `amide`; the tests read each one
+ * independently):
+ *
+ * - `seniority` — the student's suffix is an amide's and the engine's
+ *   principal group is another, senior to it (`4-carboxibutanamida` → «ácido
+ *   5-amino-5-oxopentanoico»), or the engine's is an amide and the student's
+ *   suffix is not (the amide written `amino` + `oxo`, `1-amino-1-oxobutano`;
+ *   `1-aminobutanal` → «butanamida», the `amide` null of phase I-52c2, kept;
+ *   a student's `amina` there is the amine's CARBONYL_SENIORITY, above);
+ * - `count` — another number of amide groups (`4-amino-4-oxobutanamida` →
+ *   «butanodiamida»);
+ * - `carbon` — the amide's carbon on the other side of the parent:
+ *   `carboxamida` after a chain (`propano-1-carboxamida` → «butanamida»),
+ *   or `amida` on a chain whose carbon 1 hangs from the ring that carries the
+ *   group (`1-ciclohexilmetanamida` → «ciclohexanocarboxamida»), as
+ *   NITRILE_CARBON's nitriles;
+ * - `parent` — other amide groups than the engine's suffix's (two amides on
+ *   different carbon pieces: `N-(2-amino-2-oxoetil)etanamida` →
+ *   «2-(acetilamino)etanamida»), or the ring or chain the amide groups
+ *   choose (principalParent(), P0: fewerPrincipalGroups(), chainDropped());
+ * - `numbering` — the amide groups numbered otherwise (N0: chainDropped(),
+ *   directionDraft(): `ciclohexano-1,5-dicarboxamida`,
+ *   `benceno-1,5-dicarboxamida`);
+ * - `suffix` — the suffix's needless or missing locants
+ *   (`ciclohexano-1-carboxamida`, `benceno-1-carboxamida`,
+ *   `N-metilciclohexano-1-carboxamida`; needlessLocants(),
+ *   missingLocants()): the alcohol's rule, which holds, but its words speak
+ *   of the OH; with groups on the nitrogen the omission is counted without
+ *   them, as for an amine (render.js carbonLocantPrefixes()), and beside an
+ *   `N` the carbon prefixes' locants are never needless.
+ *
+ * Every other rule runs as for an amine name and says something true of an
+ * amide name: BRANCH_AT_END (a group on the amide's nitrogen never lengthens
+ * the chain: its occurrence's `parentAtom` is the nitrogen), LONGER_CHAIN,
+ * MORE_SUBSTITUENTS (the trace's own counts), CHAIN_LOCANTS (N1–N4),
+ * NUMBERING, RING_NUMBERING (N1–N4, the groups on the nitrogen at `N` in
+ * every numbering), BENZENE_RING, BRANCH_RING_NUMBERING, ALPHABETICAL_ORDER
+ * (`N-metil-N-etil…`), UNGROUPED (`N-metil-N-metil…`, `2-metil-N-metil…`),
+ * MULTIPLIER_KIND, LOCANT_ORDER (`2,N-dimetil…`: the letter before the
+ * numbers), the needless and missing locants of the prefixes and inside a
+ * branch, OLD_STYLE («eno»), LETTER_LOCANTS.
+ *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
  * (the class-name steps' in CLASS_NAME_STEP_TEXTS and AMINE_CLASS_STEP_TEXTS), and DIAGNOSES gives
@@ -1319,7 +1383,7 @@ import {
   FORMYL_ID, ACETYL_ID, OXO_ID, OXO_ELEMENT, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, BENZOYL_ID, RING_CARBONYL_ID,
   templateAdmits, isChainTemplate, ACID_KIND, CARBOXY_ID, ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, ESTER_KIND,
   isEsterTemplate, OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, NITRILE_KIND, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID,
-  AMINE_KIND, N_VALUE, N_TEXT, AMINO_KIND, AMINO_ELEMENT, AMINA_ID, AMINO_ID, NITROGEN_ID,
+  AMINE_KIND, N_VALUE, N_TEXT, AMINO_KIND, AMINO_ELEMENT, AMINA_ID, AMINO_ID, NITROGEN_ID, AMIDE_KIND,
 } from './tiles.js';
 
 /** Most placements of a name with left-out locants that readName() hands over as readings (the drawn one first). */
@@ -1465,10 +1529,12 @@ const NITRILE = NITRILE_KIND;
 const AMINE = AMINE_KIND;
 
 /**
- * The principal group of an amide (a lexicon GROUP_SUFFIXES key, naming/seniority.js; no tile writes it yet, R-6d): a
- * student's `amina` whose nitrogen is an amide's is CARBONYL_SENIORITY (R-6c4a, file header «Amines»).
+ * The principal group of an amide (tiles.js AMIDE_KIND, a lexicon GROUP_SUFFIXES key, naming/seniority.js): a student's
+ * `amina` whose nitrogen is an amide's is CARBONYL_SENIORITY (R-6c4a, file header «Amines»); since phase R-6d1 the tiles
+ * write it (`amida`, `carboxamida`, `benzamida`), its own mistakes deliberate nulls checked right after the amine's
+ * (amideChecks(), file header «Amides»).
  */
-const AMIDE = 'amide';
+const AMIDE = AMIDE_KIND;
 
 /**
  * The principal groups whose own words the parent-choice, P0, N0, prefix,
@@ -1507,6 +1573,35 @@ const CARBON = 'C';
  * the reading, never a later rule.
  */
 const BEYOND = Object.freeze({ code: null });
+
+/**
+ * The deliberate nulls of an amide's own mistakes (R-6d1, file header
+ * «Amides»; phase I-52d4 words them), by category: drafts without a code
+ * that keep the rule number the mistake holds among a name's readings (as
+ * the amines' did in phase I-52c1), so diagnose() still keeps the reading of
+ * the latest rule (with the suffix's locant left out,
+ * `N-metil-N-metilciclohexanocarboxamida` is also read with the amide on
+ * carbon 2, an N0 null of rule 4, beside the UNGROUPED of rule 6 that the
+ * kindest reading gets), and answers null when the kept one is such a null.
+ */
+const AMIDE_NULLS = Object.freeze({
+  seniority: Object.freeze({ code: null, amide: 'seniority', rule: 1 }),
+  count: Object.freeze({ code: null, amide: 'count', rule: 1 }),
+  carbon: Object.freeze({ code: null, amide: 'carbon', rule: 1 }),
+  parent: Object.freeze({ code: null, amide: 'parent', rule: 2 }),
+  numbering: Object.freeze({ code: null, amide: 'numbering', rule: 4 }),
+  suffix: Object.freeze({ code: null, amide: 'suffix', rule: 9 }),
+});
+
+/**
+ * Tells whether a draft is one of an amide's deliberate nulls (AMIDE_NULLS).
+ *
+ * @param {object|null} draft - A draft, BEYOND or null.
+ * @returns {boolean} True for an amide's null.
+ */
+function isAmideNull(draft) {
+  return Boolean(draft) && Boolean(draft.amide);
+}
 
 /** The `formil` tile's value (a retained word, R-5c1). */
 const FORMYL = tileById(FORMYL_ID).value;
@@ -3610,12 +3705,19 @@ function sideDropped(ctx) {
  * the amino groups' (`3-(aminometil)pentano`, P0; N0 a chain as long with
  * lower locants for them).
  *
+ * An amide's P0 and N0 (R-6d1, file header «Amides») are deliberate nulls
+ * until phase I-52d4 (AMIDE_NULLS).
+ *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {object} step - The trace step that dropped the chain.
  * @param {(candidate: object) => boolean} sameChain - Tells the student's chain's candidates.
- * @returns {object|null} The draft, or null for a rule this phase does not know.
+ * @returns {object|null} The draft (an AMIDE_NULLS one for an amide's P0 or N0), or null for a rule this phase does not know.
  */
 function chainDropped(ctx, step, sameChain) {
+  if (amidePrincipal(ctx) && ['P0', 'N0'].includes(step.rule)) {
+    // The amide groups choose or number the chain (R-6d1, file header «Amides»): phase I-52d4.
+    return step.rule === 'P0' ? AMIDE_NULLS.parent : AMIDE_NULLS.numbering;
+  }
   const group = carbonylGroup(ctx);
   const code = step.rule === 'P0' && group ? 'MORE_CARBONYL_GROUPS' : DROPPED_AT[step.rule];
   if (!code) {
@@ -3665,7 +3767,8 @@ function chainDropped(ctx, step, sameChain) {
  * ketone's C=O groups (R-5c3b1), an acid's –COOH groups (R-5d3), an
  * ester's –COO– groups (R-6a3a), a nitrile's –C≡N groups (R-6b3) and an
  * amine's amino groups (R-6c4a) choose the chain the same way:
- * MORE_CARBONYL_GROUPS, with the group's words.
+ * MORE_CARBONYL_GROUPS, with the group's words; an amide's (R-6d1, file
+ * header «Amides») are a deliberate null until phase I-52d4 (AMIDE_NULLS).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {object} step - The trace's first chain step.
@@ -3679,6 +3782,9 @@ function fewerPrincipalGroups(ctx, step) {
   const atoms = reading.studentParent.atoms;
   if (step.survivors.some((c) => atoms.every((id) => c.atoms.includes(id)))) {
     return null; // Lengthened through its end, the student's chain carries the most OH groups: rule 1.
+  }
+  if (amidePrincipal(ctx)) {
+    return AMIDE_NULLS.parent; // The amide groups choose the chain (R-6d1, file header «Amides»): phase I-52d4.
   }
   const winner = step.survivors[0];
   const app = valueOf(step, (c) => c.key === winner.key);
@@ -3934,6 +4040,31 @@ function aminePrincipal(ctx) {
 }
 
 /**
+ * Tells whether the engine's principal group is an amide (R-6d1, file
+ * header «Amides»): its parent choice, P0, N0 and suffix locants are then
+ * deliberate nulls (AMIDE_NULLS, phase I-52d4).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {boolean} True for an amide.
+ */
+function amidePrincipal(ctx) {
+  const { suffix } = ctx.naming.structure;
+  return Boolean(suffix) && suffix.kind === AMIDE;
+}
+
+/**
+ * Tells whether a principal group's nitrogen takes the groups written `N`
+ * (an amine's, R-6c1; an amide's, R-6d1), so that the omission of the
+ * locants is counted without them (carbonPrefixGroups()).
+ *
+ * @param {string|null} kind - The engine's suffix kind, or null.
+ * @returns {boolean} True for an amine or an amide.
+ */
+function takesNitrogenLocants(kind) {
+  return kind === AMINE || kind === AMIDE;
+}
+
+/**
  * The engine's prefix groups without their occurrences on an amine's
  * nitrogen (R-6c1; locant `N`, N_VALUE), as render.js carbonLocantPrefixes()
  * counts them for the omission of the locants (not imported: the reverse
@@ -3961,15 +4092,20 @@ function carbonPrefixGroups(prefixes) {
  * and an ester (R-6a3a: `ciclohexano-1,5-dicarboxilato de dimetilo`,
  * `ciclohexano-2-carboxilato de metilo`) and a nitrile (R-6b3:
  * `ciclohexano-1,5-dicarbonitrilo`, `benceno-1,5-dicarbonitrilo`) and an
- * amine (R-6c4a: `butan-3-amina`, `ciclohexano-1,5-diamina`).
+ * amine (R-6c4a: `butan-3-amina`, `ciclohexano-1,5-diamina`); an amide's N0
+ * (R-6d1: `ciclohexano-1,5-dicarboxamida`) is a deliberate null until phase
+ * I-52d4 (AMIDE_NULLS, file header «Amides»).
  *
  * @param {ReadingContext} ctx - The reading's context.
  * @param {string} code - 'NUMBERING' or 'RING_NUMBERING'.
  * @param {object} step - The trace step that dropped the student's numbering.
  * @param {(candidate: object) => boolean} isStudent - Tells the student's directed candidate.
- * @returns {object} The draft.
+ * @returns {object} The draft, or an AMIDE_NULLS one for an amide's N0.
  */
 function directionDraft(ctx, code, step, isStudent) {
+  if (step.rule === 'N0' && amidePrincipal(ctx)) {
+    return AMIDE_NULLS.numbering; // The amide groups number the chain or ring (R-6d1, file header «Amides»): phase I-52d4.
+  }
   const { naming } = ctx;
   const winner = step.survivors[0];
   const terms = firstDifference(valueOf(step, (c) => c.key === winner.key), valueOf(step, isStudent));
@@ -4103,8 +4239,8 @@ function hydroxyPrefix(ctx) {
  * engine's parent outside the student's; the tiles, the prefix that holds it.
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} The draft (with the step of its case), or null when the parents are of one kind or the molecule
- *   has no principal group.
+ * @returns {object|null} The draft (with the step of its case; AMIDE_NULLS.parent for an amide, R-6d1, file header
+ *   «Amides»), or null when the parents are of one kind or the molecule has no principal group.
  */
 function principalParent(ctx) {
   const { naming, reading, spec } = ctx;
@@ -4112,6 +4248,9 @@ function principalParent(ctx) {
   const ringParent = structure.parentKind === 'ring';
   if (!structure.suffix || isRing(spec.parent.kind) === ringParent) {
     return null;
+  }
+  if (amidePrincipal(ctx)) {
+    return AMIDE_NULLS.parent; // The amide groups choose the ring or the chain (R-6d1, file header «Amides»): phase I-52d4.
   }
   const choice = naming.trace.find((s) => s.rule === 'RINGCHAIN');
   const ring = choice ? choice.values[0] : structure.suffix.locants.length;
@@ -5889,6 +6028,59 @@ function amineChecks(ctx) {
 } // End of function amineChecks()
 
 /**
+ * Tells whether two lists of atom ids hold the same ids, in any order.
+ *
+ * @param {number[]} a - A list.
+ * @param {number[]} b - Another.
+ * @returns {boolean} True for the same ids.
+ */
+function sameIds(a, b) {
+  const sorted = (list) => [...list].sort((p, q) => p - q).join();
+  return sorted(a) === sorted(b);
+}
+
+/**
+ * The amide's own checks (R-6d1, file header «Amides»), right after the
+ * amine's: a student's amide suffix (`amida`, `carboxamida`, `benzamida`)
+ * while the engine's principal group is another, senior to it, or the
+ * engine's an amide while the student's suffix is not (`seniority`; a
+ * student's `amina` there is amineChecks()'s CARBONYL_SENIORITY, which runs
+ * first); another number of amide groups (`count`); the amide's carbon on
+ * the other side of the parent — the student's group outside the parent
+ * where the engine's is in it, or the reverse (`carbon`); other amide groups
+ * than the engine's suffix's — their =O not the engine's (`parent`). Each is
+ * an AMIDE_NULLS draft, a deliberate null worded in phase I-52d4; null when
+ * neither name is an amide's, or when the other rules may speak (with their
+ * own AMIDE_NULLS guards for the parent choice, P0, N0 and the suffix's
+ * locants).
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @returns {object|null} An AMIDE_NULLS draft, or null.
+ */
+function amideChecks(ctx) {
+  const engine = ctx.naming.structure.suffix;
+  const mine = ctx.spec.suffix;
+  const student = Boolean(mine) && mine.kind === AMIDE;
+  if (!amidePrincipal(ctx)) {
+    return student ? AMIDE_NULLS.seniority : null;
+  }
+  if (!student) {
+    return AMIDE_NULLS.seniority;
+  }
+  if (mine.slots.length !== engine.locants.length) {
+    return AMIDE_NULLS.count;
+  }
+  if (Boolean(mine.outside) !== Boolean(engine.outside)) {
+    return AMIDE_NULLS.carbon; // `propano-1-carboxamida`, `1-ciclohexilmetanamida`
+  }
+  const own = (ctx.reading.suffixAtoms || []).map((group) => group.attachment);
+  if (!sameIds(own, engine.locants.map((site) => site.attachAtom))) {
+    return AMIDE_NULLS.parent; // `N-(2-amino-2-oxoetil)etanamida`: the other amide group is the engine's suffix.
+  }
+  return null;
+} // End of function amideChecks()
+
+/**
  * The acid's own checks (R-5d3, file header «Acids»), when the engine's
  * principal group is a –COOH, in order: ACID_GROUP (a –COOH written as two
  * groups on one carbon), CARBONYL_SENIORITY (a junior group as the suffix),
@@ -6978,10 +7170,13 @@ function parentOmissions(structure) {
  * nitrogen, and beside an `N` only the suffix's locants are needless — the
  * carbon prefixes' are always cited then (`N-metiletan-1-amina`, and
  * `1-cloro-N-metilmetan-1-amina`, whose message says why the 1 of `cloro`
- * stays, `nitrogen`).
+ * stays, `nitrogen`); an amide's (R-6d1) counts its groups on the nitrogen
+ * the same way, and its suffix's needless locants are a deliberate null
+ * until phase I-52d4 (AMIDE_NULLS, file header «Amides»:
+ * `ciclohexano-1-carboxamida`).
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} The draft, or null.
+ * @returns {object|null} The draft (AMIDE_NULLS.suffix for an amide's suffix), or null.
  */
 function needlessLocants(ctx) {
   const { tree, spec, naming } = ctx;
@@ -7007,11 +7202,15 @@ function needlessLocants(ctx) {
   const suffixSlots = spec.suffix ? supplied(spec.suffix.slots) : [];
   // R-6c1, R-6c4a, file header «Amines»: the omission counted without the groups on the nitrogen (render.js
   // carbonLocantPrefixes()); beside an `N` the carbon prefixes' locants are always cited, so only the suffix's are needless
-  // (`N-metiletan-1-amina`), and an `N` is never a needless locant.
-  const amine = Boolean(structure.suffix) && structure.suffix.kind === AMINE ? carbonPrefixGroups(structure.prefixes) : null;
+  // (`N-metiletan-1-amina`), and an `N` is never a needless locant. R-6d1, «Amides»: the same on an amide's nitrogen.
+  const kind = structure.suffix ? structure.suffix.kind : null;
+  const amine = takesNitrogenLocants(kind) ? carbonPrefixGroups(structure.prefixes) : null;
   const nitrogen = Boolean(amine) && amine.nitrogen;
   const prefixSlots = nitrogen ? [] : supplied(spec.prefixes.flatMap((prefix) => prefix.slots)).filter((s) => s.value !== N_VALUE);
   const omittedPrefixes = amine ? parentOmissions({ ...structure, prefixes: amine.prefixes }).prefixes : omitted.prefixes;
+  if (kind === AMIDE && suffixSlots.length > 0 && omittedPrefixes) {
+    return AMIDE_NULLS.suffix; // `ciclohexano-1-carboxamida` (R-6d1, file header «Amides»): phase I-52d4.
+  }
   if (prefixSlots.length + suffixSlots.length > 0 && omittedPrefixes) {
     const { what, on } = DIAGNOSIS_PHRASES;
     const single = (amine ? amine.prefixes : structure.prefixes).reduce((sum, group) => sum + group.locants.length, 0) === 1;
@@ -7179,10 +7378,12 @@ function shortForm(tree, chain, owner = null) {
  * mistake would say «…y cada grupo –COOH»; alone it is `missingLocants`,
  * never `otherName`, and no later rule meets it on an acid; R-6a3a: «…y cada
  * grupo –COO–» for an ester's; R-6b3: «…y cada grupo –C≡N» for a nitrile's;
- * R-6c4a: «…y cada grupo amino» for an amine's).
+ * R-6c4a: «…y cada grupo amino» for an amine's; R-6d1: an amide's is a
+ * deliberate null until phase I-52d4, AMIDE_NULLS, file header «Amides»,
+ * its omission counted without the groups on its nitrogen as an amine's).
  *
  * @param {ReadingContext} ctx - The reading's context.
- * @returns {object|null} The draft, or null.
+ * @returns {object|null} The draft (AMIDE_NULLS.suffix for an amide's suffix), or null.
  */
 function missingLocants(ctx) {
   const { spec, naming } = ctx;
@@ -7190,9 +7391,9 @@ function missingLocants(ctx) {
   const parentPrefixes = new Set([...spec.prefixes.flatMap((prefix) => prefix.slots), ...(spec.suffix ? spec.suffix.slots : [])]);
   const omitted = parentOmissions(naming.structure);
   // R-6c1, file header «Amines»: the omission counted without the groups on the nitrogen, and beside an `N` every prefix's
-  // locant cited.
+  // locant cited; R-6d1, «Amides»: the same on an amide's nitrogen.
   const { suffix } = naming.structure;
-  const amine = Boolean(suffix) && suffix.kind === AMINE ? carbonPrefixGroups(naming.structure.prefixes) : null;
+  const amine = Boolean(suffix) && takesNitrogenLocants(suffix.kind) ? carbonPrefixGroups(naming.structure.prefixes) : null;
   const carbonOmitted = amine ? parentOmissions({ ...naming.structure, prefixes: amine.prefixes }).prefixes : omitted.prefixes;
   const cited = (slot) => (amine && amine.nitrogen && !(spec.suffix && spec.suffix.slots.includes(slot))) || !carbonOmitted;
   const missing = spec.leftOut.find((slot) => {
@@ -7208,6 +7409,9 @@ function missingLocants(ctx) {
     return carbonylLocant(ctx);
   }
   const ofSuffix = Boolean(suffix) && Boolean(spec.suffix) && spec.suffix.slots.includes(missing);
+  if (ofSuffix && suffix.kind === AMIDE) {
+    return AMIDE_NULLS.suffix; // An amide's missing suffix locant (R-6d1, file header «Amides»): phase I-52d4.
+  }
   const group = ofSuffix ? DIAGNOSIS_PHRASES.groupWords[NAMED_GROUPS.includes(suffix.kind) ? suffix.kind : ALCOHOL].one : null;
   return {
     code: 'MISSING_LOCANTS',
@@ -7629,7 +7833,8 @@ const FORM_RULES = Object.freeze([branchNames, aminoGroups, alphabeticalOrder, u
 
 /**
  * The first rule that applies to one reading of the name: the amine's own
- * checks (amineChecks(), file header «Amines»), the nitrile's own
+ * checks (amineChecks(), file header «Amines»), the amide's (amideChecks(),
+ * «Amides», deliberate nulls until phase I-52d4), the nitrile's own
  * checks (nitrileChecks(), file header «Nitriles»), the ester's own
  * checks and its O-bound side's (esterChecks(), oBoundChecks(); file header
  * «Esters») or the acid's (acidChecks(), «Acids») — each when the engine's
@@ -7647,19 +7852,25 @@ const FORM_RULES = Object.freeze([branchNames, aminoGroups, alphabeticalOrder, u
  * @returns {object|null} The draft `{code, rule?, traceRule?, data, focus, tiles, step?, style?}`, or null.
  */
 function firstRule(ctx) {
-  const principal = amineChecks(ctx) || nitrileChecks(ctx) || esterChecks(ctx) || oBoundChecks(ctx) || acidChecks(ctx) || hydroxyPrefix(ctx)
-    || carbonylChecks(ctx) || principalParent(ctx);
+  const principal = amineChecks(ctx) || amideChecks(ctx) || nitrileChecks(ctx) || esterChecks(ctx) || oBoundChecks(ctx)
+    || acidChecks(ctx) || hydroxyPrefix(ctx) || carbonylChecks(ctx) || principalParent(ctx);
   if (principal === BEYOND) {
     // A student's carbonyl suffix no C=O check names; a student's acid suffix beside another principal group; an O-bound
     // side mixing prefix styles; a student's nitrile suffix beside a principal group junior to it (all never seen; file
     // header «Aldehydes and ketones», «Acids», «Esters», «Nitriles»).
     return null;
   }
+  if (isAmideNull(principal)) {
+    return principal; // An amide's own mistake (R-6d1, «Amides»: phase I-52d4), kept with its rule among the readings.
+  }
   if (principal) {
     // The ring or chain on the other side of an amine's nitrogen (R-6c4a) or of an ether oxygen (R-5b2).
     return acrossOxygen(ctx, acrossNitrogen(ctx, principal));
   }
   const parent = substitutedChainTemplate(ctx) || (ctx.naming.structure.parentKind === 'ring' ? ringRules(ctx) : chainRules(ctx));
+  if (isAmideNull(parent)) {
+    return parent; // The amide groups choose or number the parent (R-6d1, «Amides»: phase I-52d4).
+  }
   if (parent) {
     return acrossOxygen(ctx, acrossNitrogen(ctx, parent)); // `N-etilmetanamina` (R-6c4a), `etoximetano` (R-5b2).
   }
@@ -7669,7 +7880,7 @@ function firstRule(ctx) {
       return null; // An ester prefix of the student's the engine names otherwise (never seen; branchNames(), «Esters»).
     }
     if (draft) {
-      return draft;
+      return draft; // R-6d1: an amide suffix's needless or missing locants are an AMIDE_NULLS draft («Amides»: phase I-52d4).
     }
   }
   return null;
@@ -7867,9 +8078,10 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
  * nitrileChecks()) and the amines (R-6c1, R-6c4a: amineChecks()) —
  * NAMED_GROUPS —, and a student's `amina` beside any principal group, an
  * amide's too (R-6c4a: CARBONYL_SENIORITY, `N-acetiletanamina` →
- * «N-etiletanamida»). Any other name with an amide principal group (R-6d, a
- * later family; since R-6c2 also an amino prefix on a C=O carbon,
- * `1-aminobutanal` → «butanamida») is outside them.
+ * «N-etiletanamida»); and since phase R-6d1 the amides (amideChecks(), file
+ * header «Amides»: their own mistakes deliberate nulls until phase I-52d4,
+ * also an amino prefix on a C=O carbon, `1-aminobutanal` → «butanamida»,
+ * the rules that hold for an amide name speaking).
  *
  * @param {{spec: object}} name - The student's NameSpec.
  * @param {object} structure - The engine's name structure.
@@ -7878,6 +8090,9 @@ function namingInStudentStyle(naming, molecule, occurrences, namer) {
 function outsideRules(name, structure) {
   if (name.spec.suffix && name.spec.suffix.kind === AMINE) {
     return false; // R-6c4a: file header «Amines» (amineChecks() first: a junior amine beside any principal group).
+  }
+  if ((structure.suffix && structure.suffix.kind === AMIDE) || (name.spec.suffix && name.spec.suffix.kind === AMIDE)) {
+    return false; // R-6d1: file header «Amides» (amideChecks() right after the amine's; the amide's own mistakes deliberate nulls).
   }
   if (structure.suffix && NAMED_GROUPS.includes(structure.suffix.kind)) {
     // R-5c3b1: file header «Aldehydes and ketones»; R-5d1, R-5d3: «Acids»; R-6a1, R-6a3a: «Esters»; R-6b1, R-6b3: «Nitriles»;
@@ -8441,6 +8656,9 @@ export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
     }
   } // End of the loop over the readings
   const { draft, reading } = best;
+  if (isAmideNull(draft)) {
+    return null; // The kindest reading's mistake is an amide's own (R-6d1, file header «Amides»): phase I-52d4.
+  }
   const shown = shownNaming(draft, { style, naming }, verdict, namer);
   return {
     code: draft.code,

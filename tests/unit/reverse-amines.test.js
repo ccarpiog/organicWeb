@@ -9,8 +9,9 @@
  * number is and kept to an amine's name-level prefixes, the misplaced tiles
  * with their tile ranges and hints, partial names), assembler (every form
  * checked against the forward engine's own text), tokenizer (the amides'
- * names never read; the `amino` prefixes read since phase R-6c2, `anilina`,
- * `bencilamina` and the class names since phase R-6c3), interpreter (the `N`
+ * later names never read — their suffixes read since phase R-6d1 —; the
+ * `amino` prefixes read since phase R-6c2, `anilina`, `bencilamina` and the
+ * class names since phase R-6c3), interpreter (the `N`
  * slots and their domain),
  * builder (the nitrogen and its groups, VALENCE on a third group, the caps),
  * search (left-out locants, `N` included: missingLocants, ambiguous,
@@ -25,9 +26,11 @@
  * with an amine nitrogen of tests/fixtures/names.tsv and the closed loop
  * over the oracle's amine generators (pure imports, no Java) — their amino
  * names read too since phase R-6c2, their `anilina` and class names since
- * phase R-6c3 —, the diagnosis sweeps with exact counts (over the R-6c1
- * names: the amino names are swept in reverse-amino.test.js, the retained
- * amine names and the class names in reverse-amine-templates.test.js), the
+ * phase R-6c3, their amide names since phase R-6d1 —, the diagnosis sweeps
+ * with exact counts (over the R-6c1 names: the amino names are swept in
+ * reverse-amino.test.js, the retained amine names and the class names in
+ * reverse-amine-templates.test.js, the amide names in
+ * reverse-amides.test.js), the
  * ordered drawing, the dialog's tooltips and time budgets.
  */
 
@@ -53,33 +56,36 @@ import {
 } from '../../scripts/oracle/generate.mjs';
 import {
   seq, readFixtures, isAmine, isAmineMolecule, isAmineName, isAminoName, isAmideName, LATER_AMINE_WORDS, AMINE_CLASS_NAME,
-  isAmineTemplateName, isAmineClassName,
+  isAmineTemplateName, isAmineClassName, isLaterAmideName,
 } from './reverse-words.js';
 
 /**
  * Fixture rows with an amine nitrogen (isAmine(): an N single-bonded to one
- * to three carbons, none a C=O carbon): 90, of which 87 the tiles read (I-36
- * 54, I-38 2, I-39a 2, I-39d 1, I-40a 8, I-40b 1, I-43a 10, I-43b 4, I-44 3,
- * I-45a 2); until phase R-6c2 54 (I-36 39, I-40a 5, I-43a 7, I-44 2, I-45a
- * 1), the 33 rows with only `amino` names read since then; phase R-6c3
- * reads more of their names (`anilina`, the class names) but no new row. The
- * other 3 rows' names are the amides' (R-6d: `3-amino-N-metilpropanamida`).
+ * to three carbons, none a C=O carbon): 90, all of which the tiles read
+ * since phase R-6d1 (I-36 54, I-37 2, I-38 2, I-39a 2, I-39d 1, I-40a 8,
+ * I-40b 1, I-40c 1, I-43a 10, I-43b 4, I-44 3, I-45a 2), the 3 rows named as
+ * amides (`2-aminopropanamida`, `3-amino-N-metilpropanamida`,
+ * `4-aminociclohexano-1-carboxamida`) read since then; until phase R-6c2 54
+ * (I-36 39, I-40a 5, I-43a 7, I-44 2, I-45a 1), the 33 rows with only `amino`
+ * names read since then; phase R-6c3 reads more of their names (`anilina`,
+ * the class names) but no new row.
  */
 const EXPECTED_ROWS = Object.freeze({
-  total: 90, read: 87, i36: 54, i38: 2, i39a: 2, i39d: 1, i40a: 8, i40b: 1, i43a: 10, i43b: 4, i44: 3, i45a: 2,
+  total: 90, read: 90, i36: 54, i37: 2, i38: 2, i39a: 2, i39d: 1, i40a: 8, i40b: 1, i40c: 1, i43a: 10, i43b: 4, i44: 3, i45a: 2,
 });
 
 /**
- * Their names and alternatives: 135 the tiles write, read back — the 60 of
+ * Their names and alternatives: 138 the tiles write, read back — the 60 of
  * phase R-6c1, since phase R-6c2 42 with an amino prefix (swept in
- * reverse-amino.test.js) and since phase R-6c3 16 with a retained amine word
+ * reverse-amino.test.js), since phase R-6c3 16 with a retained amine word
  * (15 with `anilina`, `bencilamina`) and 17 class names (`metilamina`…;
- * both swept in reverse-amine-templates.test.js) —; 3 left for later, with
- * the amides' words (R-6d), never tokenized. Until phase R-6c3 36 were left
- * (15 with `anilina`, 18 class names with `bencilamina`), until phase R-6c2
- * 78 (45 with `amino`).
+ * both swept in reverse-amine-templates.test.js), and since phase R-6d1 the 3
+ * amide names (swept in reverse-amides.test.js) —; none left for later.
+ * Until phase R-6d1 those 3 were left; until phase R-6c3 36 more (15 with
+ * `anilina`, 18 class names with `bencilamina`), until phase R-6c2 78 (45
+ * with `amino`).
  */
-const EXPECTED_NAMES = Object.freeze({ read: 135, r6c1: 60, amino: 42, templates: 16, classNames: 17, later: 3, amides: 3 });
+const EXPECTED_NAMES = Object.freeze({ read: 138, r6c1: 60, amino: 42, templates: 16, classNames: 17, later: 0, amides: 3 });
 
 /**
  * Tells whether a name is one of phase R-6c1's (the suffix `amina` and `N`
@@ -235,8 +241,9 @@ test('parser (R-6c1): `amina` in the parent node; `N` among a prefix\'s locants,
 }); // End of test 'parser (R-6c1): `amina`…'
 
 test('parser (R-6c1): `N` without `amina`, or anywhere but a name-level prefix, is TILE_ORDER with its tile range and hint', () => {
-  const nitrogen = 'Esta ficha no puede ir aquí: «N» dice que un grupo va unido al nitrógeno de una amina, así que solo va en un '
-    + 'nombre que acaba en «amina» (N-metiletanamina).';
+  // Since phase R-6d1 the hint names the amides too, whose nitrogen takes `N` as well.
+  const nitrogen = 'Esta ficha no puede ir aquí: «N» dice que un grupo va unido al nitrógeno de una amina o de una amida, así que '
+    + 'solo va en un nombre que acaba en «amina» o en «amida» (N-metiletanamina, N-metiletanamida).';
   const place = 'Esta ficha no puede ir aquí: «N» va delante de una rama unida al nitrógeno de la amina, como un número más de esa '
     + 'rama (N-metiletanamina, N,2-dimetilpropan-1-amina); no va delante de la cadena principal, de «eno», «ino» o «amina», ni '
     + 'dentro de una rama compuesta.';
@@ -331,10 +338,14 @@ test('assembler (R-6c1): every amine form is the forward engine\'s own text; the
   assert.deepEqual(strays.map((span) => span.kind), ['locant', 'multiplier', 'stem', 'ending']);
 }); // End of test 'assembler (R-6c1)…'
 
-test('tokenizer (R-6c1): the amides\' names never tokenize; `amino` (R-6c2), `anilina` and the class names (R-6c3) read', () => {
-  for (const name of ['etanamida', 'N-metiletanamida', 'acetamida', 'ciclohexanocarboxamida', 'benzamida', 'ácido 3-carbamoilpropanoico',
-    'N-fenilacetamida', '2-(acetilamino)etan-1-ol']) {
+test('tokenizer (R-6c1): the later amides\' names never tokenize; `amino` (R-6c2), `anilina` and the class names (R-6c3) read', () => {
+  // The amide suffixes read since phase R-6d1 (reverse-amides.test.js); `carbamoil`, the acylamino prefixes (R-6d2) and the
+  // retained amide names (R-6d3) do not yet.
+  for (const name of ['acetamida', 'ácido 3-carbamoilpropanoico', 'N-fenilacetamida', '2-(acetilamino)etan-1-ol']) {
     assert.equal(tokenize(name), null, name);
+  }
+  for (const name of ['etanamida', 'N-metiletanamida', 'ciclohexanocarboxamida', 'benzamida']) {
+    assert.ok(tokenize(name), name);
   }
   // Since phase R-6c2 the amino prefixes read (reverse-amino.test.js); since phase R-6c3 the retained amine names and the class
   // names (reverse-amine-templates.test.js).
@@ -750,15 +761,18 @@ test('fixture round trip (R-6c1): every amine name the tiles write, read back; g
   for (const row of rows) {
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
-      if (!isAmineName(name)) {
-        counts.later += 1; // R-6d (the amides' words).
-        counts.amides += isAmideName(name) ? 1 : 0;
+      if (isLaterAmideName(name)) {
+        counts.later += 1; // R-6d2, R-6d3 (`carbamoil`, the acylamino prefixes, the retained amide names).
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
       }
-      counts.amino += isAminoName(name) ? 1 : 0; // R-6c2
-      counts.templates += !isAminoName(name) && isAmineTemplateName(name) ? 1 : 0; // R-6c3: `anilina`, `bencilamina`
-      counts.classNames += !isAminoName(name) && isAmineClassName(name) ? 1 : 0; // R-6c3: `metilamina`…
+      // R-6d1: a molecule with an amine named as an amide (`2-aminopropanamida`), read since then and swept in
+      // reverse-amides.test.js.
+      const amide = isAmideName(name);
+      counts.amides += amide ? 1 : 0;
+      counts.amino += !amide && isAminoName(name) ? 1 : 0; // R-6c2
+      counts.templates += !amide && !isAminoName(name) && isAmineTemplateName(name) ? 1 : 0; // R-6c3: `anilina`, `bencilamina`
+      counts.classNames += !amide && !isAminoName(name) && isAmineClassName(name) ? 1 : 0; // R-6c3: `metilamina`…
       counts.r6c1 += isR6c1Name(name) ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
@@ -788,9 +802,9 @@ test('fixture round trip (R-6c1): every amine name the tiles write, read back; g
   const inSection = (id) => [...readRows].filter((row) => /\((I-\d+[a-z]?)[),:]/.exec(row.section)[1] === id).length; // Its own id only.
   assert.equal(rows.length, EXPECTED_ROWS.total);
   assert.equal(readRows.size, EXPECTED_ROWS.read);
-  assert.deepEqual(['I-36', 'I-38', 'I-39a', 'I-39d', 'I-40a', 'I-40b', 'I-43a', 'I-43b', 'I-44', 'I-45a'].map(inSection),
-    [EXPECTED_ROWS.i36, EXPECTED_ROWS.i38, EXPECTED_ROWS.i39a, EXPECTED_ROWS.i39d, EXPECTED_ROWS.i40a, EXPECTED_ROWS.i40b,
-      EXPECTED_ROWS.i43a, EXPECTED_ROWS.i43b, EXPECTED_ROWS.i44, EXPECTED_ROWS.i45a]);
+  assert.deepEqual(['I-36', 'I-37', 'I-38', 'I-39a', 'I-39d', 'I-40a', 'I-40b', 'I-40c', 'I-43a', 'I-43b', 'I-44', 'I-45a'].map(inSection),
+    [EXPECTED_ROWS.i36, EXPECTED_ROWS.i37, EXPECTED_ROWS.i38, EXPECTED_ROWS.i39a, EXPECTED_ROWS.i39d, EXPECTED_ROWS.i40a,
+      EXPECTED_ROWS.i40b, EXPECTED_ROWS.i40c, EXPECTED_ROWS.i43a, EXPECTED_ROWS.i43b, EXPECTED_ROWS.i44, EXPECTED_ROWS.i45a]);
   assert.deepEqual(counts, { ...EXPECTED_NAMES });
   assert.ok(elapsed / counts.read < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / counts.read).toFixed(2)} ms on average`);
 }); // End of test 'fixture round trip (R-6c1)…'
@@ -807,17 +821,20 @@ const LOOP = Object.freeze({
  * Minimum coverage of the closed loop: amine molecules (distinct by aromatic
  * key), names read back, the forms among them (names with `N`, ring and
  * benzene amines, polyamines, since phase R-6c3 the retained amine names and
- * the class names), removed-locant mutations and decisive verdicts among
- * them (three removals run out of budget, `incomplete`); and the later names
- * (the amides' words) never tokenized (the seeds give 1012, 1435, 639, 81,
- * 379, 103, 291, 22, 3227, 3224 and 15). Until phase R-6c3 the 291 names with
- * `anilina` or `bencilamina` and the 22 class names were later ones too (1122
+ * the class names, since phase R-6d1 the amines named as amides),
+ * removed-locant mutations and decisive verdicts among them (three removals
+ * run out of budget, `incomplete`); and the later names (the amides' later
+ * words: `carbamoil`, the acylamino prefixes, the retained amide names) never
+ * tokenized (the seeds give 1012, 1446, 646, 81, 382, 103, 291, 22, 11, 3264,
+ * 3261 and 4). Until phase R-6d1 the 11 amide names were later ones too (1435
+ * names read, 639 with `N`, 3227 removals, 15 later); until phase R-6c3 the
+ * 291 names with `anilina` or `bencilamina` and the 22 class names (1122
  * names read, 442 with `N`, 328 later); until phase R-6c2 the 349 amino names
  * too (773 names read, 677 later; 2225 removals, 2223 decisive).
  */
 const LOOP_MIN = Object.freeze({
-  molecules: 1000, names: 1430, nitrogen: 630, ring: 78, benzene: 370, poly: 100, templates: 285, classNames: 20, removed: 3200,
-  decisive: 3200, later: 15,
+  molecules: 1000, names: 1440, nitrogen: 640, ring: 78, benzene: 375, poly: 100, templates: 285, classNames: 20, amides: 10,
+  removed: 3250, decisive: 3250, later: 4,
 });
 
 /**
@@ -886,17 +903,20 @@ function locantLists(tree) {
 
 test('closed loop over the amine generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, nitrogen: 0, ring: 0, benzene: 0, poly: 0, templates: 0, classNames: 0, removed: 0, decisive: 0, later: 0 };
+  const counts = {
+    names: 0, nitrogen: 0, ring: 0, benzene: 0, poly: 0, templates: 0, classNames: 0, amides: 0, removed: 0, decisive: 0, later: 0,
+  };
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
     const key = aromaticKey(mol);
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
-      if (!isAmineName(name)) {
-        counts.later += 1; // R-6d (the amides' words).
+      if (isLaterAmideName(name)) {
+        counts.later += 1; // R-6d2, R-6d3 (`carbamoil`, the acylamino prefixes, the retained amide names).
         assert.equal(tokenize(name), null, name);
         continue;
       }
+      counts.amides += isAmideName(name) ? 1 : 0; // R-6d1: an amine named as an amide (`2-aminopropanamida`), read since then.
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);
       const verdict = readName(ids);

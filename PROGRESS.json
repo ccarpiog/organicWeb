@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-16T00:12:33Z",
+  "updated": "2026-10-16T01:10:30Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -976,8 +976,35 @@
     {
       "id": "I-52d",
       "title": "v4 R-6d Amides",
+      "status": "in_progress",
+      "summary": "Split into I-52d1 (suffixes, N locants, benzamida), I-52d2 (carbamoil, acylamino), I-52d3 (retained names, Ayuda), I-52d4 (diagnoses)."
+    },
+    {
+      "id": "I-52d1",
+      "title": "v4 R-6d1 Amide suffixes amida / carboxamida, benzamida, N locants on the amide nitrogen",
+      "status": "done",
+      "risk": "high",
+      "summary": "Reads amide names such as N-metiletanamida, ciclohexanocarboxamida and 4-metilbenzamida, searching left-out locants.",
+      "review": "Codex ship, 0 findings — docs/reviews/I-52d1.md",
+      "narrative": "docs/progress-archive/i-52d1.md"
+    },
+    {
+      "id": "I-52d2",
+      "title": "v4 R-6d2 Amide prefixes carbamoil and acylamino",
       "status": "queued",
-      "summary": "Extends tile names to amides, carboxamides, carbamoil and acylamino prefixes and traditional amide names."
+      "summary": "Reads amide prefixes such as (metilcarbamoil) and (acetilamino) beside senior groups."
+    },
+    {
+      "id": "I-52d3",
+      "title": "v4 R-6d3 Retained amide names and Ayuda amide line",
+      "status": "queued",
+      "summary": "Reads formamida, acetamida, 2-fenilacetamida and ftalamida as the engine writes them, with the Ayuda amide line."
+    },
+    {
+      "id": "I-52d4",
+      "title": "v4 R-6d4 Amide diagnosis messages",
+      "status": "queued",
+      "summary": "Names an amide's own mistakes in the diagnosis, each with its step."
     },
     {
       "id": "I-53",

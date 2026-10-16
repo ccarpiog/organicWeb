@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -157,6 +157,16 @@
  * suffixWords() does; the locant `N` is punctuated as any locant, in the
  * student's order (rule 1: `N-metiletanamina`, `N,N-dimetilmetanamina`,
  * `N,2-dimetilpropan-1-amina`, `1-cloro-N-metilmetanamina`).
+ *
+ * The amides (R-6d1) need no rule of their own either: the suffix `amida`
+ * starts with a vowel, so rule 4 elides the parent's last vowel before it
+ * (`etanamida`, `prop-2-enamida`), while `diamida` and `carboxamida` start
+ * with a consonant and keep it (`etanodiamida`, `butanodiamida`,
+ * `ciclohexanocarboxamida`, `ciclohexano-1,4-dicarboxamida`,
+ * `ciclohex-1-eno-1-carboxamida`), as render.js suffixWords() does;
+ * `benzamida` is one whole word like `benzonitrilo`, and the locant `N` is
+ * punctuated as for an amine (`N-metiletanamida`, `N,N-dimetilbenzamida`,
+ * `N,2-dimetilpropanamida`).
  *
  * 12. the amino prefixes (R-6c2; render.js substituentTokens(),
  *    needsEnclosure(), enclosureLevel(), isCompoundPrefix()): `amino` is a

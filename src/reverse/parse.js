@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -26,7 +26,8 @@
  * templates from R-6b2, the amines — the suffix `amina` and the locant `N`
  * — from R-6c1, the prefix `amino` and the groups on its nitrogen from
  * R-6c2, the retained amine templates and the amines' class names from
- * R-6c3):
+ * R-6c3, the amides — the suffixes `amida` and `carboxamida`, `benzamida`,
+ * the locant `N` on the amide's nitrogen — from R-6d1):
  *
  *   name        = [ ácido ] , { prefix } , parent   (* R-5d1: `ácido` with an acid suffix only *)
  *               , [ esterSide ]                   (* R-6a1: after an ester suffix only; R-6a2a: or an ester template *)
@@ -52,9 +53,11 @@
  *   alkoxy      = oxi , [ carbonil ] ;   (* R-6a2b: carbonil, an alkoxycarbonyl prefix, (metoxicarbonil) *)
  *   parent      = [ legacy ] , stem , ( ano | segments ) , [ suffix ]
  *               | [ legacy ] , benceno , [ suffix ] | fenol | benzaldehído | benzoico | benzoato | benzonitrilo
+ *               | benzamida   (* R-6d1 *)
  *               | [ locants | letter ] , template ;
  *   suffix      = [ locants ] , [ MULT ] , ( ol | al | ona | carbaldehído | oico | carboxílico | oato | carboxilato
- *                                         | nitrilo | carbonitrilo | amina ) ;   (* R-6b1; R-6c1: amina *)
+ *                                         | nitrilo | carbonitrilo | amina   (* R-6b1; R-6c1: amina *)
+ *                                         | amida | carboxamida ) ;   (* R-6d1 *)
  *   template    = tolueno | estireno | xileno | mesitileno | anisol
  *               | cresol | pirocatecol | catecol | resorcinol | hidroquinona
  *               | formaldehído | acetaldehído | acetona | acetofenona | fenilacetaldehído   (* R-5c3a *)
@@ -69,7 +72,8 @@
  *   segments    = segment , [ segment ] ;
  *   segment     = [ locants ] , [ MULT ] , ( eno | ino ) ;
  *   locants     = locant , { locant } ;
- *   locant      = NUM | 1(n) | N ;   (* 1(n): only on a ring's eno / ino; N (R-6c1): only on a name-level prefix of an amine *)
+ *   locant      = NUM | 1(n) | N ;   (* 1(n): only on a ring's eno / ino; N (R-6c1): only on a name-level prefix of an amine
+ *                                       (R-6d1: or of an amide) *)
  *
  * A ring takes the same endings, segments and free-valence suffixes as a
  * chain (`ciclohexano`, `ciclohexa-1,3-dieno`, `ciclohexil`,
@@ -324,6 +328,23 @@
  * Numbers or a multiplier right before that `amina`, and tiles after it, are
  * TILE_ORDER. No new error code.
  *
+ * The amides (R-6d1) are named as the engine names them (render.js
+ * suffixWords(), renderPrefixes()): the suffix `amida` puts the –CONH₂ at
+ * the ends of a chain by rule, as `oico` puts the –COOH (`etanamida`,
+ * `butanodiamida`, `prop-2-enamida`: the parent's `o` elided before its
+ * vowel, kept before `diamida`'s consonant); numbers on it, or `amida` after
+ * a ring or `benceno`, are TILE_ORDER with their hints (terminalHints());
+ * `carboxamida` takes locants like `carbonitrilo`
+ * (`ciclohexano-1,4-dicarboxamida`, `ciclohex-1-eno-1-carboxamida`; after a
+ * chain it is read too, and judged by the engine: `propano-1-carboxamida` is
+ * butanamida); `benzamida` is a whole-word parent like `benzonitrilo`
+ * (`4-metilbenzamida`; numbers or a letter of its own are TEMPLATE_LOCANTS,
+ * «grupo amida»). The amide's nitrogen takes the locant `N` exactly as an
+ * amine's (checkNitrogen(): `N-metiletanamida`, `N,N-dimetilbenzamida`,
+ * `N,2-dimetilpropanamida`), and a group written `N` occupies no ring
+ * position (`N-etil-p-metilbenzamida`; an `N` and a letter on one prefix
+ * POSITIONAL, `N,p-dimetilbenzamida`). No new error code.
+ *
  * The tile `1(n)` (R-5a2) is the compound locant of a ring's closing bond,
  * the one from its last carbon n back to carbon 1 (the engine cites it
  * `1(6)`, IUPAC 2013 P-31.1.4.2.4: `ciclohex-1(6)-eno-1,2,4-triol`,
@@ -463,8 +484,9 @@
  * - benzene `{type: 'benzene', tile}` (the `benceno` tile, R-4b; also the
  *            `fenol` tile, R-5a2, value 'phenol', the `benzaldehído`
  *            tile, R-5c1, value 'benzaldehyde', the `benzoico` tile, R-5d1,
- *            value 'benzoic', the `benzoato` tile, R-6a1, value 'benzoate', and
- *            the `benzonitrilo` tile, R-6b1, value 'benzonitrile': groupWordOf())
+ *            value 'benzoic', the `benzoato` tile, R-6a1, value 'benzoate',
+ *            the `benzonitrilo` tile, R-6b1, value 'benzonitrile', and the
+ *            `benzamida` tile, R-6d1, value 'benzamide': groupWordOf())
  * - template `{type: 'template', tile}` (a retained template tile, R-4c)
  * - classWord `{type: 'classWord', tile}` (the `éter` tile of a functional-class name, R-5b2: the
  *            name-level prefixes are its groups; locants, a letter or a
@@ -506,7 +528,7 @@ import {
   isAcylTile, templateSuffix, isCarbonylTemplate, isChainTemplate, BENZOIC_ID, ACID_KIND, isAcidSuffix, parentWordName,
   isAcidTemplate, ACID_GROUP, ESTER_KIND, isEsterSuffix, ESTER_GROUP, BENZOATE_ID, ESTER_ALKYL_ID, isEsterTemplate,
   ACID_ESTER_TEMPLATES, isAcyloxyHead, NITRILE_KIND, BENZONITRILE_ID, NITRILE_GROUP, isNitrileTemplate, AMINE_KIND, isAmineSuffix,
-  NITROGEN_ID, isAminoTile, isAmineTemplate, AMINE_GROUP, isAmineClassWord,
+  NITROGEN_ID, isAminoTile, isAmineTemplate, AMINE_GROUP, isAmineClassWord, AMIDE_KIND, isAmideSuffix, BENZAMIDE_ID,
 } from './tiles.js';
 import { itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, iloTileOf, esterGroupsOf, isAminoNode } from './assemble.js';
 
@@ -562,6 +584,10 @@ const N_TEXT = tileById(NITROGEN_ID).text;
 const AMINO = GROUP_PREFIXES[AMINE_KIND];
 // R-6c3: the retained amine names.
 const ANILINA = tileById('template-aniline').text;
+// R-6d1: the amides.
+const AMIDA = GROUP_SUFFIXES[AMIDE_KIND];
+const CARBOXAMIDA = RING_GROUP_SUFFIXES[AMIDE_KIND];
+const BENZAMIDA = tileById(BENZAMIDE_ID).text;
 const [ORTO, META, PARA] = Object.keys(POSITIONAL_IDS).map((locant) => POSITIONAL_LETTERS[locant]);
 
 /** Spanish number words for the LOCANT_COUNT messages (digits from 11 on). */
@@ -687,6 +713,15 @@ const EXAMPLES = Object.freeze({
   metilamina: `${stem(1)}${IL}${AMINA}`,
   dimetilamina: `${multiplier(2)}${stem(1)}${IL}${AMINA}`,
   etilmetilamina: `${stem(2)}${IL}${stem(1)}${IL}${AMINA}`,
+  // R-6d1: the amides.
+  etanamida: `${stem(2)}${ANO.slice(0, -1)}${AMIDA}`,
+  butanodiamida: `${stem(4)}${ANO}${multiplier(2)}${AMIDA}`,
+  ciclohexanocarboxamida: `${RING_PREFIX}${stem(6)}${ANO}${CARBOXAMIDA}`,
+  bencenodicarboxamida: `${BENZENE_NAME}-1,4-${multiplier(2)}${CARBOXAMIDA}`,
+  nMetiletanamida: `${N_TEXT}-${stem(1)}${IL}${stem(2)}${ANO.slice(0, -1)}${AMIDA}`,
+  nDimetilpropanamida: `${N_TEXT},2-${multiplier(2)}${stem(1)}${IL}${stem(3)}${ANO.slice(0, -1)}${AMIDA}`,
+  n4Dimetilbenzamida: `${N_TEXT},4-${multiplier(2)}${stem(1)}${IL}${BENZAMIDA}`,
+  nEtilPMetilbenzamida: `${N_TEXT}-${stem(2)}${IL}-${PARA}-${stem(1)}${IL}${BENZAMIDA}`,
   etilMetilEter: `${stem(2)}${IL} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
   dietilEter: `${multiplier(2)}${stem(2)}${IL} ${ETHER_CLASS_WORD}`,
   cloroetilEter: `${OPEN}2-${HALOGEN_PREFIXES.Cl}${stem(2)}${IL}${CLOSE} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
@@ -819,12 +854,23 @@ const HINTS = Object.freeze({
   cyanoAlkoxy: `«${ALKOXY_ENDING}» no va detrás de «${CIANO}»: un grupo C≡N unido a un oxígeno no forma un éter.`,
   classCyano: `«${CIANO}» no va en un nombre con «${ETHER_CLASS_WORD}»: un grupo C≡N unido al oxígeno no forma un éter. Los dos `
     + `grupos de un éter son cadenas o anillos de carbonos (${EXAMPLES.etilMetilEter}).`,
-  // R-6c1: the locant `N` of the amines.
-  nitrogen: `«${N_TEXT}» dice que un grupo va unido al nitrógeno de una amina, así que solo va en un nombre que acaba en `
-    + `«${AMINA}» (${EXAMPLES.nMetiletanamina}).`,
+  // R-6c1: the locant `N` of the amines; R-6d1: and of the amides.
+  nitrogen: `«${N_TEXT}» dice que un grupo va unido al nitrógeno de una amina o de una amida, así que solo va en un nombre que `
+    + `acaba en «${AMINA}» o en «${AMIDA}» (${EXAMPLES.nMetiletanamina}, ${EXAMPLES.nMetiletanamida}).`,
   nitrogenPlace: `«${N_TEXT}» va delante de una rama unida al nitrógeno de la amina, como un número más de esa rama `
     + `(${EXAMPLES.nMetiletanamina}, ${EXAMPLES.nDimetilpropanamina}); no va delante de la cadena principal, de «${ENDINGS.double}», `
     + `«${ENDINGS.triple}» o «${AMINA}», ni dentro de una rama compuesta.`,
+  nitrogenAmidePlace: `«${N_TEXT}» va delante de una rama unida al nitrógeno de la amida, como un número más de esa rama `
+    + `(${EXAMPLES.nMetiletanamida}, ${EXAMPLES.nDimetilpropanamida}); no va delante de la cadena principal, de «${ENDINGS.double}», `
+    + `«${ENDINGS.triple}» o de la terminación de la amida, ni dentro de una rama compuesta.`,
+  // R-6d1: the amides.
+  amidaRing: `«${AMIDA}» solo va detrás de una cadena: en un anillo, el grupo amida va unido a un carbono del anillo y se escribe `
+    + `«${CARBOXAMIDA}» (${EXAMPLES.ciclohexanocarboxamida}).`,
+  amidaBenzene: `«${AMIDA}» no va detrás de «${BENZENE_NAME}»: el ${BENZENE_NAME} con un grupo amida es la «${BENZAMIDA}», y con `
+    + `varios se usa «${CARBOXAMIDA}» (${EXAMPLES.bencenodicarboxamida}).`,
+  amidaLocants: `el grupo amida de «${AMIDA}» va siempre en un extremo de la cadena, en el carbono 1 (y en el último, con `
+    + `«${multiplier(2)}${AMIDA}»), así que «${AMIDA}» no lleva números: ${EXAMPLES.etanamida}, ${EXAMPLES.butanodiamida}.`,
+  benzamideBranch: `«${BENZAMIDA}» es el nombre de toda la molécula y va al final; dentro de una rama, el anillo es «${FENIL}».`,
   // R-6a2b: `carbonil` after the END of a compound branch.
   carbonilAfterEnd: `en una rama compuesta, «${RING_CARBONYL_ENDING}» va dentro de ella, antes de cerrarla; detrás de «${ALKOXY_ENDING}» `
     + `forma un éster como rama: ${EXAMPLES.cloroetoxicarbonil}.`,
@@ -942,11 +988,11 @@ function esterGroupsMessage(suffix, esters, count, template = false) {
 
 /**
  * The TILE_ORDER hints of a terminal suffix out of its place (R-5c1: `al`;
- * R-5d1: `oico`; R-6a1: `oato`; R-6b1: `nitrilo`), whose group sits at the
- * ends of a chain by rule: after a `ciclo` ring (`ring`), after `benceno`
- * (`benzene`) and with locants of its own (`locants`).
+ * R-5d1: `oico`; R-6a1: `oato`; R-6b1: `nitrilo`; R-6d1: `amida`), whose
+ * group sits at the ends of a chain by rule: after a `ciclo` ring (`ring`),
+ * after `benceno` (`benzene`) and with locants of its own (`locants`).
  *
- * @param {{value: string}} tile - The `al`, `oico`, `oato` or `nitrilo` tile.
+ * @param {{value: string}} tile - The `al`, `oico`, `oato`, `nitrilo` or `amida` tile.
  * @returns {{ring: string, benzene: string, locants: string}} The hints.
  */
 function terminalHints(tile) {
@@ -955,6 +1001,9 @@ function terminalHints(tile) {
   }
   if (tile.value === NITRILE_KIND) {
     return { ring: HINTS.nitriloRing, benzene: HINTS.nitriloBenzene, locants: HINTS.nitriloLocants }; // `nitrilo` (R-6b1)
+  }
+  if (tile.value === AMIDE_KIND) {
+    return { ring: HINTS.amidaRing, benzene: HINTS.amidaBenzene, locants: HINTS.amidaLocants }; // `amida` (R-6d1)
   }
   return tile.value === ACID_KIND
     ? { ring: HINTS.oicoRing, benzene: HINTS.oicoBenzene, locants: HINTS.oicoLocants }
@@ -995,9 +1044,10 @@ function classAcylHint(word) {
 /**
  * The TILE_ORDER hint of a suffix tile out of place (R-5a2: `ol`; R-5c1:
  * `al`, `ona`, `carbaldehído`; R-5d1: `oico`, `carboxílico`; R-6a1: `oato`,
- * `carboxilato`; R-6b1: `nitrilo`, `carbonitrilo`): it goes at the end of the
- * name, after the parent's ending (an ester's, before its O-bound group); in
- * a branch the group is a prefix.
+ * `carboxilato`; R-6b1: `nitrilo`, `carbonitrilo`; R-6c1: `amina`; R-6d1:
+ * `amida`, `carboxamida`): it goes at the end of the name, after the
+ * parent's ending (an ester's, before its O-bound group); in a branch the
+ * group is a prefix (the amide's, `carbamoil`, is phase R-6d2's tile).
  *
  * @param {{text: string, value: string}} tile - The suffix tile.
  * @returns {string} The hint.
@@ -1035,6 +1085,11 @@ function suffixHint(tile) {
     case AMINE_KIND: // `amina` (R-6c1)
       return `«${AMINA}» va al final del nombre, detrás de la terminación de la cadena o del anillo principal `
         + `(${EXAMPLES.propan2amina}, ${EXAMPLES.butanodiamina}, ${EXAMPLES.ciclohexanamina}).`;
+    case AMIDE_KIND: // `amida` (R-6d1)
+      return `«${AMIDA}» va al final del nombre, detrás de la terminación de la cadena principal (${EXAMPLES.etanamida}, `
+        + `${EXAMPLES.butanodiamida}).`;
+    case 'carboxamide': // `carboxamida` (R-6d1)
+      return `«${CARBOXAMIDA}» va al final del nombre, detrás del nombre del anillo principal (${EXAMPLES.ciclohexanocarboxamida}).`;
     default:
       return HINTS.suffix;
   }
@@ -1054,14 +1109,14 @@ function cmultSuffixHint(word) {
 
 /**
  * Tells whether a suffix node is the aldehyde suffix `al` (R-5c1), the
- * acid suffix `oico` (R-5d1), the ester suffix `oato` (R-6a1) or the
- * nitrile suffix `nitrilo` (R-6b1), whose –CHO, –COOH, –COO– or –C≡N sits at
- * an end of a chain by rule (tiles.js SUFFIX_GROUPS `terminal`): it takes no
- * locants.
+ * acid suffix `oico` (R-5d1), the ester suffix `oato` (R-6a1), the nitrile
+ * suffix `nitrilo` (R-6b1) or the amide suffix `amida` (R-6d1), whose –CHO,
+ * –COOH, –COO–, –C≡N or –CONH₂ sits at an end of a chain by rule (tiles.js
+ * SUFFIX_GROUPS `terminal`): it takes no locants.
  *
  * @param {object[]} tiles - The tile sequence.
  * @param {object|null} suffix - A suffix node, or null.
- * @returns {boolean} True for `al`, `oico`, `oato` and `nitrilo`.
+ * @returns {boolean} True for `al`, `oico`, `oato`, `nitrilo` and `amida`.
  */
 export function isTerminalSuffix(tiles, suffix) {
   return Boolean(suffix) && SUFFIX_GROUPS[tiles[suffix.tile].value].terminal;
@@ -1176,10 +1231,11 @@ const POSITIONAL_MESSAGES = Object.freeze({
   ester: `En el grupo unido al oxígeno de un éster no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: escribe los números, `
     + `como en ${EXAMPLES.etanoatoDeMetilfenilo}.`,
   // R-6c3: a letter beside an `N` on one prefix (`N,p-dimetilanilina`: no used form, design.md §14.4), and a letter on `bencenamina`.
-  // R-6c4b: the `N` is no number (as LOCANT_ORDER and LOCANT_COUNT say it since R-6c4a).
-  nitrogen: `«${N_TEXT}» y las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} no van juntas delante de un mismo grupo: con un `
-    + `grupo en el nitrógeno y otro en el anillo, escribe «${N_TEXT}» para el del nitrógeno y un número para el del anillo `
-    + `(${EXAMPLES.n4Dimetilanilina}).`,
+  // R-6c4b: the `N` is no number (as LOCANT_ORDER and LOCANT_COUNT say it since R-6c4a). R-6d1: on an amide, the amide's
+  // example (`N,p-dimetilbenzamida` → `N,4-dimetilbenzamida`).
+  nitrogen: (example) => `«${N_TEXT}» y las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} no van juntas delante de un mismo `
+    + `grupo: con un grupo en el nitrógeno y otro en el anillo, escribe «${N_TEXT}» para el del nitrógeno y un número para el del `
+    + `anillo (${example}).`,
   amine: `Con «${EXAMPLES.bencenamina}» no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: escribe los números `
     + `(${EXAMPLES.metilbencenamina}) o usa «${ANILINA}», de «Nombres tradicionales» (${EXAMPLES.pMetilanilina}).`,
 });
@@ -1311,14 +1367,15 @@ function ownGroupsPhrase(kinds, [one, many]) {
  *
  * @param {number} positions - Occupied ring positions the name describes.
  * @param {{kinds: OwnGroupKind[], word: string}|null} owner - ownGroups() of the parent, or null for `benceno`.
- * @param {boolean} [nitrogen] - An amine's name with a group written without numbers that may stand on its nitrogen (R-6c3:
- *   `etil-p-metilanilina`): the message adds that such a group takes `N` (default false).
+ * @param {string|null} [nitrogen] - For an amine's name with a group written without numbers that may stand on its
+ *   nitrogen (R-6c3: `etil-p-metilanilina`), or an amide's (R-6d1: `etil-p-metilbenzamida`), the example of a group written
+ *   `N` (`N-etil-p-metilanilina`, `N-etil-p-metilbenzamida`): the message adds that such a group takes `N` (default none).
  * @returns {string} The message.
  */
-function threePositionsMessage(positions, owner, nitrogen = false) {
+function threePositionsMessage(positions, owner, nitrogen = null) {
   const counted = owner ? ` (contando ${ownGroupsPhrase(owner.kinds, ['el', 'los'])} ${withArticle(owner.word, 'de')})` : '';
-  // R-6c3: on an amine, a group without numbers may be the one the student meant on the nitrogen.
-  const hint = nitrogen ? ` Si un grupo va unido al nitrógeno, escribe «${N_TEXT}» delante (${EXAMPLES.nEtilPMetilanilina}).` : '';
+  // R-6c3: on an amine (R-6d1: or an amide), a group without numbers may be the one the student meant on the nitrogen.
+  const hint = nitrogen ? ` Si un grupo va unido al nitrógeno, escribe «${N_TEXT}» delante (${nitrogen}).` : '';
   return `Las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} solo sirven cuando el ${BENZENE_NAME} lleva dos grupos, `
     + `y tu nombre pone ${numberWord(positions)}${counted}: escribe los números (${EXAMPLES.trimetilbenceno}).${hint}`;
 } // End of function threePositionsMessage()
@@ -2014,7 +2071,11 @@ function makeParent(state, legacy, letter, mult, chain, start) {
     } else if (open.length === 0 && suffixOpen && multiplierCount(tiles, suffix.multiplier) === legacy.length) {
       parent.legacySuffix = true; // `2-propanol`, `1,2-etanodiol` (R-5a2); `2-pentanona` (R-5c1).
     } else if (open.length === 0 && terminal) {
-      addTileOrder(state, legacy[0], legacy[legacy.length - 1] + 1, hints.locants); // `1-butanal` (R-5c1), `ácido 1-butanoico`
+      // `1-butanal` (R-5c1), `ácido 1-butanoico`; an `N` alone there (R-6d1: `N-etanamida`) is checkNitrogen()'s, whose hint says
+      // where `N` goes.
+      if (legacy.some((i) => tiles[i].kind !== 'nitrogen')) {
+        addTileOrder(state, legacy[0], legacy[legacy.length - 1] + 1, hints.locants);
+      }
     } else {
       addError(state, 'LEGACY', legacy[0], legacy[legacy.length - 1] + 1, MESSAGES.LEGACY);
     }
@@ -2292,7 +2353,7 @@ function startsAmineClass(state, tile, context) {
 
 /**
  * The hint of a whole-word parent (`benceno`, `fenol`, `benzaldehído`,
- * `benzoico`, `benzoato`, `benzonitrilo`, a template) found inside a compound
+ * `benzoico`, `benzoato`, `benzonitrilo`, `benzamida`, a template) found inside a compound
  * branch, or in an ester's O-bound side (R-6a1).
  *
  * @param {object} tile - The tile.
@@ -2307,6 +2368,7 @@ function wholeWordHint(tile, ester = false) {
     return {
       phenol: HINTS.phenolBranch, benzaldehyde: HINTS.benzaldehydeBranch, benzoic: HINTS.benzoicBranch, benzoate: HINTS.benzoateBranch,
       benzonitrile: HINTS.benzonitrileBranch, // R-6b1
+      benzamide: HINTS.benzamideBranch, // R-6d1
     }[tile.value] || HINTS.benzeneBranch;
   }
   return templateHint(tile, 'branch');
@@ -2506,7 +2568,10 @@ function checkBranchLetters(state, branch) {
  * the engine's forms), and a letter beside an `N` on one prefix is
  * POSITIONAL (`N,p-dimetilanilina`: no used form, design.md §14.4, the
  * engine writes `N,4-dimetilanilina`); on `bencenamina` a letter gets its
- * own message (the engine letters only `anilina`: `p-metilanilina`).
+ * own message (the engine letters only `anilina`: `p-metilanilina`). So does
+ * a group written `N` on an amide's nitrogen (R-6d1: `N-etil-p-metilbenzamida`,
+ * `p-bromo-N,N-dimetilbenzamida`; `N,p-dimetilbenzamida` POSITIONAL, the
+ * engine writing `N,4-dimetilbenzamida`).
  *
  * @param {object} state - Parser state.
  * @param {object} tree - The name tree.
@@ -2565,15 +2630,23 @@ function checkLetters(state, tree) {
       .reduce((sum, item) => sum + Math.max(0, (item.multiplier === null ? 1 : tiles[item.multiplier].value) - nitrogens(item.locants)), 0);
   // `p-metilbencenamina` (R-6c3): the letters on an amine of benzene go with `anilina`, the engine's only lettered form.
   const amine = chain.type === 'benzene' && !owner && Boolean(parent.suffix) && isAmineSuffix(tiles[parent.suffix.tile].value);
-  // R-6c3: a carbon group without numbers on an amine's name may be the one the student meant on the nitrogen.
+  // R-6c3: a carbon group without numbers on an amine's name may be the one the student meant on the nitrogen; R-6d1: on an
+  // amide's too (`benzamida`, or `benceno` with `carboxamida`), each with its own example.
   const amineParent = amine || (chain.type === 'template' && isAmineTemplate(tiles[chain.tile].value));
-  const unplaced = amineParent && prefixes.some((item) => item.substituent && item.locants.length === 0 && item.letter === null
+  const placed = groupWordOf(tiles, chain);
+  const amideParent = (Boolean(placed) && isAmideSuffix(placed.suffix))
+    || (chain.type === 'benzene' && Boolean(parent.suffix) && isAmideSuffix(tiles[parent.suffix.tile].value));
+  let example = amineParent ? EXAMPLES.nEtilPMetilanilina : null;
+  example = amideParent ? EXAMPLES.nEtilPMetilbenzamida : example;
+  const unplaced = Boolean(example) && prefixes.some((item) => item.substituent && item.locants.length === 0 && item.letter === null
     && mayStandOnNitrogen(tiles, item.substituent));
   for (const holder of [...lettered, ...own]) {
     const locants = holder.type === 'parent' ? holder.legacy : holder.locants;
     const count = holder.type === 'parent' || holder.multiplier === null ? 1 : tiles[holder.multiplier].value;
     if (holder.type !== 'parent' && nitrogens(locants) > 0) {
-      report(locants[0], holder.letter + 1, POSITIONAL_MESSAGES.nitrogen); // `N,p-dimetilanilina` (R-6c3): no used form.
+      // `N,p-dimetilanilina` (R-6c3), `N,p-dimetilbenzamida` (R-6d1): no used form.
+      report(locants[0], holder.letter + 1, POSITIONAL_MESSAGES.nitrogen(amideParent ? EXAMPLES.n4Dimetilbenzamida
+        : EXAMPLES.n4Dimetilanilina));
     } else if (locants.length > 0) {
       if (holder.type !== 'parent' || !owner.letterOnly) { // Numbers before `cresol` are its TEMPLATE_LOCANTS (R-5a3a).
         report(locants[0], holder.letter + 1, holder.type === 'parent' ? POSITIONAL_MESSAGES.bothXylene : POSITIONAL_MESSAGES.both);
@@ -2581,7 +2654,7 @@ function checkLetters(state, tree) {
     } else if (positions >= 3) {
       // `2-cloro-p-cresol` (R-5a3a review): numbers would not do either, so the message points at the name from `fenol`.
       report(holder.letter, holder.letter + 1, owner && owner.letterOnly ? substitutedLetterOnlyMessage(owner)
-        : threePositionsMessage(positions, owner, unplaced));
+        : threePositionsMessage(positions, owner, unplaced ? example : null));
     } else if (positions < 2) {
       report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.one);
     } else if (!owner && count !== 2) {
@@ -2684,7 +2757,7 @@ function checkClosing(state, tree) {
 /**
  * Keeps the locant `N` (R-6c1) to the locants of the name-level prefixes of
  * a name whose parent carries the amine suffix `amina` (the nitrogen it
- * names is that suffix's) or is an amine template (R-6c3: `anilina`,
+ * names is that suffix's; R-6d1: or an amide's) or is an amine template (R-6c3: `anilina`,
  * `bencilamina`, whose word places that nitrogen: `N-metilanilina`),
  * recording TILE_ORDER on each one anywhere else: a name without `amina`
  * (HINTS.nitrogen), or in such a name a compound branch's own prefixes, a
@@ -2692,8 +2765,12 @@ function checkClosing(state, tree) {
  * the suffix's locants (HINTS.nitrogenPlace), and an ester's O-bound side.
  * In an amine's class name (R-6c3) every group is on the nitrogen and takes
  * no `N` (checkAmineClassName() says so first; one inside a compound group
- * gets HINTS.nitrogenPlace). A name with no parent yet has its own error,
- * and so has a tile already inside another error's range.
+ * gets HINTS.nitrogenPlace). The amide's nitrogen (R-6d1: a parent with
+ * `amida` or `carboxamida`, or the `benzamida` word, which places it) takes
+ * `N` the same way (`N-metiletanamida`, `N,N-dimetilbenzamida`), anywhere
+ * else in such a name HINTS.nitrogenAmidePlace; the hint for a name with
+ * neither names both (HINTS.nitrogen). A name with no parent yet has its own
+ * error, and so has a tile already inside another error's range.
  *
  * @param {object} state - Parser state.
  * @param {object} tree - The name tree.
@@ -2707,13 +2784,17 @@ function checkNitrogen(state, tree) {
   const { suffix, chain } = tree.parent;
   const template = chain.type === 'template' && isAmineTemplate(tiles[chain.tile].value); // `anilina` (R-6c3)
   const amine = (Boolean(suffix) && isAmineSuffix(tiles[suffix.tile].value)) || template;
+  const placed = groupWordOf(tiles, chain); // `benzamida` (R-6d1)
+  const amide = (Boolean(suffix) && isAmideSuffix(tiles[suffix.tile].value)) || (Boolean(placed) && isAmideSuffix(placed.suffix));
   const classed = chain.type === 'classWord' && isAmineClassWord(tiles[chain.tile]); // `metilamina` (R-6c3): no `N` at all
-  const allowed = new Set(amine ? tree.items.filter((item) => item.type === 'prefix').flatMap((item) => item.locants) : []);
+  const allowed = new Set(amine || amide ? tree.items.filter((item) => item.type === 'prefix').flatMap((item) => item.locants) : []);
   // A tile already inside another error's range (a stray `N`, numbers with no branch after them) keeps that error alone.
   const covered = (i) => state.errors.some((error) => error.from <= i && i < error.to);
+  let hint = amine || classed ? HINTS.nitrogenPlace : HINTS.nitrogen;
+  hint = amide ? HINTS.nitrogenAmidePlace : hint; // R-6d1
   tiles.forEach((tile, i) => {
     if (tile.kind === 'nitrogen' && !allowed.has(i) && !covered(i)) {
-      addTileOrder(state, i, i + 1, amine || classed ? HINTS.nitrogenPlace : HINTS.nitrogen);
+      addTileOrder(state, i, i + 1, hint);
     }
   });
 } // End of function checkNitrogen()

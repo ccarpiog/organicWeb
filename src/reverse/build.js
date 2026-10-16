@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -102,6 +102,21 @@
  * enlaces, y un nitrógeno solo puede tener 3.»). Which groups may stand on
  * it is the engine's: a halogen, an oxygen or a double bond there is a
  * molecule it refuses (`outOfScope`), an acyl group makes an amide it names.
+ * The amides (R-6d1) are built as the acids, with the amide's nitrogen
+ * single-bonded beside the =O on the group's carbon (SuffixSpec
+ * `amideNitrogen`, suffixAtoms `amideNitrogen` / `amideBond`, the engine's
+ * own names) in place of the OH: `amida` at the ends of the chain by rule
+ * (more groups than ends is CARBONYL_POSITION, worded for the amide; the
+ * VALENCE note of an end carbon names «amida»), `carboxamida` and
+ * `benzamida` a new carbon outside the parent («…en la benzamida, ese
+ * carbono ya lleva un grupo amida»). That nitrogen — the first amide
+ * group's — takes the name-level prefixes whose slot is `N`, as an amine's
+ * (`state.nitrogen`): three bonds (tiles.js NITROGEN_VALENCE), so a third
+ * group on it is VALENCE «El nitrógeno de la amida tendría 4 enlaces…»; a
+ * supplied `N` beside two or more amide groups is the engine's
+ * `substitutedPolyamide` refusal, read from the name by polyamideRefusal().
+ * Which groups may stand on it is the engine's (an acyl group there makes an
+ * imide, a halogen or an oxygen another refusal).
  * An amino prefix (R-6c2, SubstituentSpec kind 'aminoGroup', tiles.js
  * AMINO_KIND) is one nitrogen, created first, with the groups on it attached
  * as prefixes (each to its one atom), single-bonded to the carbon the prefix
@@ -210,7 +225,8 @@
 import { createMolecule, addAtom, addBond, setBondOrder, bondOrderSum, CARBON_VALENCE } from '../model/molecule.js';
 import {
   MAX_CARBONS, MAX_HEAVY_ATOMS, MAX_CHAIN, MESSAGES as VALIDATION_MESSAGES, RING_SYSTEM_MESSAGES, TOO_MANY_ATOMS_MESSAGE,
-  SUBSTITUTED_POLYAMINE_MESSAGE, SUBSTITUTED_BENZENE_POLYAMINE_MESSAGE, longestCarbonChain, longestSideChain,
+  SUBSTITUTED_POLYAMINE_MESSAGE, SUBSTITUTED_BENZENE_POLYAMINE_MESSAGE, SUBSTITUTED_POLYAMIDE_MESSAGE,
+  SUBSTITUTED_BENZENE_POLYAMIDE_MESSAGE, longestCarbonChain, longestSideChain,
 } from '../model/validate.js';
 import {
   BENZENE_NAME, RETAINED_PREFIXES, GROUP_SUFFIXES, ENDINGS, HALOGEN_PREFIXES, ACYL_ENDING, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, stem,
@@ -220,6 +236,7 @@ import {
   templateGroupWord, isAtomGroup, atomGroupOrder, closingText, HYDROXY_ELEMENT, ALKOXY_ELEMENT, OXO_ELEMENT, SUFFIX_GROUPS,
   GROUP_WORD_PARENTS, withArticle, suffixBondAmount, ACID_KIND, ACID_GROUP, ESTER_KIND, ESTER_GROUP, NITRILE_KIND, NITRILE_GROUP,
   suffixElement, AMINE_KIND, N_VALUE, AMINE_NITROGEN, NITROGEN_VALENCE, AMINO_KIND, AMINO_ELEMENT, AMINO_NITROGEN, AMINE_GROUP,
+  AMIDE_KIND, AMIDE_GROUP, AMIDE_NITROGEN,
 } from './tiles.js';
 
 /**
@@ -238,6 +255,9 @@ const AMINE_CLASS_ELEMENT = suffixElement(SUFFIX_GROUPS[AMINE_KIND]);
 
 /** The element of the nitrogen of `ciano`'s –C≡N (R-6b1), as tiles.js suffixElement() gives a nitrile suffix's. */
 const NITRILE_NITROGEN = suffixElement(SUFFIX_GROUPS[NITRILE_KIND]);
+
+/** The element of an amide's nitrogen (R-6d1), the element of an amine's (tiles.js suffixElement()). */
+const AMIDE_NITROGEN_ELEMENT = AMINE_CLASS_ELEMENT;
 
 /**
  * Atoms of the retained branch words (design.md §4.5), numbered as their
@@ -721,7 +741,8 @@ function parentCarbons(parent) {
  * one per C=O of `al` and `ona`, two — the carbon and its oxygen — per –CHO
  * of `carbaldehído` and `benzaldehído`; R-5d1: one more per –COOH, its OH;
  * R-6b1: one nitrogen per –C≡N, two — with its carbon — for `carbonitrilo`
- * and `benzonitrilo`; none without a suffix).
+ * and `benzonitrilo`; R-6d1: an oxygen and a nitrogen per –CONH₂, three with
+ * its carbon for `carboxamida` and `benzamida`; none without a suffix).
  *
  * @param {object} spec - A NameSpec.
  * @returns {number} The count.
@@ -730,8 +751,9 @@ function suffixAtomCount(spec) {
   if (!spec.suffix) {
     return 0;
   }
-  // A –COOH's OH (R-5d1), a –COO–'s bridge oxygen (R-6a1): two oxygens per group.
-  return spec.suffix.slots.length * (spec.suffix.hydroxy || spec.suffix.bridge ? 2 : 1) + suffixCarbons(spec);
+  // A –COOH's OH (R-5d1), a –COO–'s bridge oxygen (R-6a1), a –CONH₂'s nitrogen (R-6d1): two heteroatoms per group.
+  const pair = spec.suffix.hydroxy || spec.suffix.bridge || spec.suffix.amideNitrogen;
+  return spec.suffix.slots.length * (pair ? 2 : 1) + suffixCarbons(spec);
 }
 
 /**
@@ -868,6 +890,34 @@ export function polyamineRefusal(spec) {
 }
 
 /**
+ * The engine's `substitutedPolyamide` refusal, read from the name (R-6d1),
+ * as polyamineRefusal() reads the amines': a supplied `N` beside an amide
+ * suffix of two or more groups (`N-metilbutanodiamida`,
+ * `N-metilciclohexano-1,4-dicarboxamida`, `N-metilbenceno-1,4-dicarboxamida`)
+ * names no one nitrogen — IUPAC 2013 tells them apart with N¹, N⁴…, which
+ * the app does not write. The engine refuses such a molecule while the
+ * amide is its principal group; beside a senior group (`carboxi`) the
+ * builder would put the group on a nitrogen of its own choosing
+ * (attachSuffix() keeps the first): refused before any placement, with the
+ * engine's message (the benzene one on `benceno`).
+ *
+ * @param {object} spec - A NameSpec.
+ * @returns {{code: string, message: string, tiles: [number, number]}|null} The refusal, or null.
+ */
+export function polyamideRefusal(spec) {
+  const { suffix } = spec;
+  if (!suffix || suffix.kind !== AMIDE_KIND || suffix.slots.length < 2) {
+    return null;
+  }
+  const named = spec.prefixes.some((prefix) => prefix.slots.some((slot) => slot.kind === 'supplied' && slot.value === N_VALUE));
+  if (!named) {
+    return null;
+  }
+  const message = spec.parent.kind === 'benzene' ? SUBSTITUTED_BENZENE_POLYAMIDE_MESSAGE : SUBSTITUTED_POLYAMIDE_MESSAGE;
+  return buildError('HETEROATOM', message, spec.tiles);
+} // End of function polyamideRefusal()
+
+/**
  * The structural errors that need no placement, or that a placement's
  * values give (design.md §15.6): retained words with prefixes, ranges (a
  * template's own locants too, R-4c), repeated bonds (left-out slots without
@@ -927,7 +977,10 @@ function checkEsterGroups(spec, values) {
   return null;
 } // End of function checkEsterGroups()
 
-/** Words of the CARBONYL_POSITION messages (R-5c1; R-5d1: the acids'; R-6a1: the esters'; R-6b1: the nitriles'), from the lexicon. */
+/**
+ * Words of the CARBONYL_POSITION messages (R-5c1; R-5d1: the acids'; R-6a1: the esters'; R-6b1: the nitriles'; R-6d1: the
+ * amides'), from the lexicon.
+ */
 const CARBONYL_WORDS = Object.freeze({
   al: GROUP_SUFFIXES.aldehyde,
   ona: GROUP_SUFFIXES.ketone,
@@ -944,6 +997,10 @@ const CARBONYL_WORDS = Object.freeze({
   nitrilo: GROUP_SUFFIXES[NITRILE_KIND],
   metanonitrilo: `${stem(1)}${ENDINGS.saturated}${GROUP_SUFFIXES[NITRILE_KIND]}`,
   butanodinitrilo: `${stem(4)}${ENDINGS.saturated}${multiplier(2)}${GROUP_SUFFIXES[NITRILE_KIND]}`,
+  // R-6d1: the amides.
+  amida: GROUP_SUFFIXES[AMIDE_KIND],
+  metanamida: `${stem(1)}${ENDINGS.saturated.slice(0, -1)}${GROUP_SUFFIXES[AMIDE_KIND]}`,
+  butanodiamida: `${stem(4)}${ENDINGS.saturated}${multiplier(2)}${GROUP_SUFFIXES[AMIDE_KIND]}`,
 });
 
 /**
@@ -984,18 +1041,29 @@ const CARBONYL_MESSAGES = Object.freeze({
       + `(${CARBONYL_WORDS.butanodinitrilo}).`),
   /** The end of VALENCE on a chain end that `nitrilo` takes by rule (R-6b1): «…el grupo C≡N de «nitrilo» va en ese carbono.» */
   nitrileTerminalNote: `el ${NITRILE_GROUP} de «${CARBONYL_WORDS.nitrilo}» va en ese carbono`,
+  // R-6d1: the same for the –CONH₂ groups of `amida`.
+  amideEnds: (length) => (length === 1
+    ? `La cadena de 1 carbono solo tiene un extremo: lleva un solo ${AMIDE_GROUP} (${CARBONYL_WORDS.metanamida}).`
+    : `La cadena tiene dos extremos: con «${CARBONYL_WORDS.amida}» lleva como mucho dos grupos amida, uno en cada extremo `
+      + `(${CARBONYL_WORDS.butanodiamida}).`),
+  /** The end of VALENCE on a chain end that `amida` takes by rule (R-6d1): «…el grupo amida de «amida» va en ese carbono.» */
+  amideTerminalNote: `el ${AMIDE_GROUP} de «${CARBONYL_WORDS.amida}» va en ese carbono`,
 });
 
 /**
  * The CARBONYL_POSITION message of more groups of a terminal suffix than
  * the chain has ends, and the end of the VALENCE message on an end it takes
  * by rule, by the suffix's group (R-5c1: the –CHO of `al`; R-5d1: the –COOH
- * of `oico`; R-6a1: the –COO– of `oato`; R-6b1: the –C≡N of `nitrilo`).
+ * of `oico`; R-6a1: the –COO– of `oato`; R-6b1: the –C≡N of `nitrilo`;
+ * R-6d1: the –CONH₂ of `amida`).
  *
- * @param {string} kind - The SuffixSpec's kind ('aldehyde', 'acid', 'ester' or 'nitrile').
+ * @param {string} kind - The SuffixSpec's kind ('aldehyde', 'acid', 'ester', 'nitrile' or 'amide').
  * @returns {{ends: (length: number) => string, note: string}} The message and the note.
  */
 function terminalWords(kind) {
+  if (kind === AMIDE_KIND) {
+    return { ends: CARBONYL_MESSAGES.amideEnds, note: CARBONYL_MESSAGES.amideTerminalNote };
+  }
   if (kind === ACID_KIND) {
     return { ends: CARBONYL_MESSAGES.acidEnds, note: CARBONYL_MESSAGES.acidTerminalNote };
   }
@@ -1013,7 +1081,7 @@ function terminalWords(kind) {
  * it (LOCANT_RANGE); and (R-5c1) no more –CHO groups of `al` than the chain
  * has ends (CARBONYL_POSITION: two, one on a one-carbon chain, whose only
  * carbon would take two =O), nor –COOH groups of `oico` (R-5d1), –COO– of
- * `oato` (R-6a1) or –C≡N of `nitrilo` (R-6b1).
+ * `oato` (R-6a1), –C≡N of `nitrilo` (R-6b1) or –CONH₂ of `amida` (R-6d1).
  *
  * @param {object} spec - A NameSpec.
  * @param {{length: number, branch: boolean}} parent - The parent, as checkSpec() describes it.
@@ -1421,7 +1489,8 @@ const KETONE_GROUP = 'grupo C=O';
  * R-5c3a: «grupo CHO», and «grupo C=O» for `acetona` and `acetofenona`;
  * R-5d1: «grupo COOH» for `benzoico`; R-6b1: «grupo C≡N» for `benzonitrilo`;
  * R-6b2: and for the retained nitrile words, `acetonitrilo`, `ftalonitrilo`;
- * R-6c3: «grupo NH₂» for the retained amine words, `anilina`, `bencilamina`).
+ * R-6c3: «grupo NH₂» for the retained amine words, `anilina`, `bencilamina`;
+ * R-6d1: «grupo amida» for `benzamida`).
  *
  * @param {{kind: string}} suffix - A SuffixSpec placed by its parent's word.
  * @returns {string} The group's name.
@@ -1442,6 +1511,9 @@ function placedGroupWord(suffix) {
   if (suffix.kind === AMINE_KIND) {
     return AMINE_GROUP; // `anilina`, `bencilamina` (R-6c3)
   }
+  if (suffix.kind === AMIDE_KIND) {
+    return AMIDE_GROUP; // `benzamida` (R-6d1)
+  }
   return suffix.kind === 'alcohol' ? GROUP_WORD_PARENTS.phenol.group : GROUP_WORD_PARENTS.benzaldehyde.group;
 }
 
@@ -1453,7 +1525,10 @@ function placedGroupWord(suffix) {
  * R-6b1: `carbonitrilo`, `benzonitrilo`) a new carbon single-bonded to the
  * parent's carbon with the =O (or the N) on it; an acid's –COOH
  * (R-5d1: `oico`, `carboxílico`, `benzoico`) has an OH too, single-bonded
- * to the =O's carbon after the =O (`hydroxy`, `hydroxyBond`). A slot the
+ * to the =O's carbon after the =O (`hydroxy`, `hydroxyBond`), and an
+ * amide's –CONH₂ (R-6d1: `amida`, `carboxamida`, `benzamida`) its nitrogen
+ * there instead (`amideNitrogen`, `amideBond`), the first group's the
+ * nitrogen the `N` prefixes go to (`state.nitrogen`). A slot the
  * parent's word places by rule (the OH of `fenol`, the –CHO of
  * `benzaldehído`, implicit and `placed`) is the ring's own, as a template's
  * group: it adds no bond order to blame, and its carbon remembers the word
@@ -1465,9 +1540,10 @@ function placedGroupWord(suffix) {
  * @param {object|null} suffix - The NameSpec's SuffixSpec, or null.
  * @param {number[]} atoms - The parent's atoms in locant order.
  * @returns {{locant: number, parentAtom: number, attachment: number, bond: number, tiles: [number, number], carbon?: number,
- *   carbonBond?: number, hydroxy?: number, hydroxyBond?: number}[]} One entry per suffix group, in slot order: the parent's
- *   carbon, the oxygen and the bond to it (from the parent's carbon, or from the group's own carbon `carbon`, bonded to the
- *   parent's by `carbonBond`), and an acid's OH and its bond (R-5d1).
+ *   carbonBond?: number, hydroxy?: number, hydroxyBond?: number, amideNitrogen?: number, amideBond?: number}[]} One entry per
+ *   suffix group, in slot order: the parent's carbon, the oxygen and the bond to it (from the parent's carbon, or from the
+ *   group's own carbon `carbon`, bonded to the parent's by `carbonBond`), and an acid's OH and its bond (R-5d1), an amide's
+ *   nitrogen and its bond (R-6d1).
  */
 function attachSuffix(state, suffix, atoms) {
   if (!suffix) {
@@ -1476,8 +1552,10 @@ function attachSuffix(state, suffix, atoms) {
   const { mol, values } = state;
   const { order } = SUFFIX_GROUPS[suffix.kind];
   const element = suffixElement(SUFFIX_GROUPS[suffix.kind]); // The N of a –C≡N (R-6b1), else an oxygen.
-  // 3 for `oico` (R-5d1), `oato` (R-6a1) and `nitrilo` (R-6b1).
-  const amount = suffixBondAmount({ outside: suffix.outside, order, hydroxy: suffix.hydroxy, bridge: suffix.bridge });
+  // 3 for `oico` (R-5d1), `oato` (R-6a1), `nitrilo` (R-6b1) and `amida` (R-6d1).
+  const amount = suffixBondAmount({
+    outside: suffix.outside, order, hydroxy: suffix.hydroxy, bridge: suffix.bridge, amideNitrogen: suffix.amideNitrogen,
+  });
   return suffix.slots.map((slot) => {
     const locant = slotValue(slot, values);
     const target = atoms[locant - 1];
@@ -1509,10 +1587,19 @@ function attachSuffix(state, suffix, atoms) {
       state.atoms.set(extra.bridge, { locant: 1, branch: true, added: [] });
       extra.bridgeBond = addBond(mol, holder, extra.bridge, 1);
     }
+    if (suffix.amideNitrogen) {
+      // The nitrogen of a –CONH₂ (R-6d1), after its =O: three bonds, two left for the groups written `N` (valenceError()).
+      extra.amideNitrogen = addAtom(mol, {}, AMIDE_NITROGEN_ELEMENT);
+      state.atoms.set(extra.amideNitrogen, {
+        locant: 1, branch: true, added: [], valence: NITROGEN_VALENCE, nitrogenWord: AMIDE_NITROGEN,
+      });
+      extra.amideBond = addBond(mol, holder, extra.amideNitrogen, 1);
+      state.nitrogen = state.nitrogen === undefined ? extra.amideNitrogen : state.nitrogen;
+    }
     if (slot.kind === 'implicit' && suffix.placed) {
       state.atoms.get(target).template = { word: suffix.word.text, group: placedGroupWord(suffix) };
     } else if (slot.kind === 'implicit') {
-      // `al` (R-5c1), `oico` (R-5d1), `oato` (R-6a1), `nitrilo` (R-6b1): blame the locant that overloads its end.
+      // `al` (R-5c1), `oico` (R-5d1), `oato` (R-6a1), `nitrilo` (R-6b1), `amida` (R-6d1): blame the locant that overloads its end.
       state.atoms.get(target).note = terminalWords(suffix.kind).note;
     } else {
       contribute(state, target, slot.tiles, amount);

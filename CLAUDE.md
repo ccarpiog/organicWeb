@@ -328,8 +328,25 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   (`ciclohexilamina` → «ciclohexanamina», `fenilamina` → «bencenamina»
   (también vale «anilina»)), and a class name beside a senior group
   CARBONYL_SENIORITY (`(2-hidroxietil)amina` → «2-aminoetan-1-ol»); the
-  parser's POSITIONAL on `anilina` no longer calls `N` a number. Next is R-6d
-  (phase I-52d): amides.
+  parser's POSITIONAL on `anilina` no longer calls `N` a number. R-6d1
+  (phase I-52d1) is done: the «Grupos» row's suffixes `amida` (the –CONH₂ at
+  the ends of a chain by rule, no locants: `etanamida`, `butanodiamida`,
+  `prop-2-enamida`) and `carboxamida` (`ciclohexanocarboxamida`,
+  `ciclohexano-1,4-dicarboxamida`, `ciclohex-1-eno-1-carboxamida`; after a
+  chain read and judged, `propano-1-carboxamida` → «butanamida») and the
+  «Anillos» row's `benzamida` (`4-metilbenzamida`, `p-metilbenzamida`), with
+  the «Números» row's `N` on the amide's nitrogen (`N-metiletanamida`,
+  `N,2-dimetilpropanamida`, `N-isopropilpropanamida` in its three styles,
+  `N,N-dimetilbenzamida`, `N-etil-p-metilbenzamida`; an `N` and an o/m/p
+  letter on one prefix POSITIONAL, a third group on the nitrogen VALENCE),
+  read amides on chains, rings and `benceno` beside the earlier families'
+  groups (`N-(2-amino-2-oxoetil)butanamida`), their left-out locants
+  searched with `N` among the places (`metiletanamida` → `N-metiletanamida`),
+  the engine's `substitutedPolyamide` (an `N` beside two amide groups, also
+  read from the name), `manyAmides`, imide and two-ring refusals
+  `outOfScope`; the amide's own mistakes are deliberate «Amides» nulls (for
+  R-6d4) and the diagnosis keeps the rules that hold for an amide name. Next
+  is R-6d2 (phase I-52d2): the `carbamoil` and acylamino prefixes.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

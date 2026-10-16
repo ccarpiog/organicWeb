@@ -72,7 +72,7 @@ import {
  * de metilo`, `etanoato de 2-aminoetilo`, `etanoato de 2-(dimetilamino)etilo`,
  * and 1 of I-39d, the amide prefix `4-amino-4-oxobutanoato de metilo`), so
  * 114 rows read; and 5 with an amide written with the amides' own words
- * (`acetilamino`, `carbamoil`; phase R-6d), which never tokenize. Until phase
+ * (`acetilamino`, `carbamoil`; phase R-6d2), which never tokenize. Until phase
  * R-6b1, 104 rows read and 15 with a nitrogen (the 6 nitrile rows among them,
  * `nitrile` below); until phase R-6c2, 110 rows read and 9 with a nitrogen.
  */
@@ -496,7 +496,7 @@ test('tokenizer (R-6a1): texts that only read with errors and the later families
     'etanoato de metilo de etilo', 'etanoato de (2-cloroetilo)', 'ciclohexanoato de metilo', 'bencenoato de metilo',
     'etan-1-oato de metilo', 'butano-1,4-dioato de dimetilo', 'etanoato de 2-propilo', 'etanoato de propanilo', 'benzoato',
     'etanoato de metiloxi', 'ácido etanoato de metilo',
-    // Phase R-6d: amides beside an ester, written with their own words.
+    // Phase R-6d2: amides beside an ester, written with the acylamino and `carbamoil` prefixes.
     '2-(acetilamino)etanoato de metilo', '3-carbamoilpentanodioato de dimetilo']) {
     assert.equal(tokenize(name), null, name);
   }
@@ -1009,7 +1009,7 @@ test('fixture round trip (R-6a1, R-6a2a, R-6b1, R-6c2): every ester name the til
     // reverse-amino.test.js.
     const amino = !isEster(row.smiles, { nitrile: true }) && row.names.every((name) => isAminoName(name) && !isAmideName(name));
     if (!isEster(row.smiles, { nitrile: true }) && !amino) {
-      nitrogen += 1; // An amide written with the amides' own words beside the ester (R-6d).
+      nitrogen += 1; // An amide written with the amides' later words beside the ester (R-6d2: acylamino, `carbamoil`).
       assert.ok(/N/.test(row.smiles), `names.tsv:${row.line}`);
       row.names.forEach((name) => assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`));
       continue;

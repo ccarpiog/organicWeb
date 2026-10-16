@@ -187,18 +187,34 @@
  *   assembler as render.js writes them (`START met il amino END` →
  *   `(metilamino)`, `START di met il amino END` → `(dimetilamino)`, `START et
  *   il met il amino END` → `[etil(metil)amino]`; isAminoTile());
+ *   and for the amides (R-6d1): the suffixes `amida` (value 'amide': a
+ *   –CONH₂ at an end of a chain, terminal by rule like `oico` — its carbon is
+ *   the chain's end carbon, which carries the =O and the amide's nitrogen,
+ *   single-bonded: `etanamida`, `butanodiamida`, `prop-2-enamida`) and
+ *   `carboxamida` (value 'carboxamide': a –CONH₂ whose carbon is outside the
+ *   parent, bonded to the carbon its locant gives — `ciclohexanocarboxamida`,
+ *   `ciclohexano-1,4-dicarboxamida`, `benceno-1,4-dicarboxamida`), kind
+ *   'suffix' (SUFFIX_GROUPS `amideNitrogen`: the group's carbon also carries
+ *   a nitrogen, single-bonded, whose groups the locant `N` names, as an
+ *   amine's — `N-metiletanamida`, `N,N-dimetilbenzamida`; isNitrogenSuffix());
+ *   and in the «Anillos» row `benzamida` (kind 'benzene', value 'benzamide':
+ *   the benzene parent with its –CONH₂ at carbon 1, as `benzonitrilo` with its
+ *   –C≡N — `4-metilbenzamida`, `N-metilbenzamida`; GROUP_WORD_PARENTS, a
+ *   feminine word, «la benzamida»);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers' (the
  *   locant `N` after them from R-6c1),
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
  *   the letters o, m, p from R-4c, `fenol` and `1(n)` from R-5a2,
  *   `benzaldehído` from R-5c1, `benzoil` from R-5c2, `benzoico` from R-5d1,
- *   `benzoato` from R-6a1, `benzonitrilo` from R-6b1),
+ *   `benzoato` from R-6a1, `benzonitrilo` from R-6b1, `benzamida` from
+ *   R-6d1),
  *   'groups' («Grupos», R-5a1: the halogens; R-5a2: `hidroxi` and `ol`; R-5b:
  *   `oxi`, and `éter` from R-5b2; R-5c1: `oxo`, `formil`, `al`, `ona`,
  *   `carbaldehído`; R-5c2: `acetil`, `oil`, `carbonil`, after `formil`;
  *   R-5d1: `ácido`, `carboxi`, `oico`, `carboxílico`; R-6a1: `oato`,
  *   `carboxilato`, `ilo`; R-6b1: `ciano`, `nitrilo`, `carbonitrilo`; R-6c1:
- *   `amina`, at the end; R-6c2: `amino`, after it),
+ *   `amina`, at the end; R-6c2: `amino`, after it; R-6d1: `amida`,
+ *   `carboxamida`, after `amino`),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; R-5c3a: the retained carbonyl
  *   names, `formaldehído` … `tereftalaldehído`; R-5d2: the retained acid
@@ -371,6 +387,15 @@ export const CYANO_ID = 'retained-cyano';
 /** Id of the `amina` tile (design.md §15.8 R-6c; phase R-6c1: the amine suffix, `etanamina`, `propan-2-amina`). */
 export const AMINA_ID = 'suffix-amine';
 
+/** Id of the `amida` tile (design.md §15.8 R-6d; phase R-6d1: the amide suffix of a chain, `etanamida`, `butanodiamida`). */
+export const AMIDA_ID = 'suffix-amide';
+
+/** Id of the `carboxamida` tile (design.md §15.8 R-6d; phase R-6d1: the –CONH₂ suffix whose carbon is outside the parent). */
+export const CARBOXAMIDE_ID = 'suffix-carboxamide';
+
+/** Id of the `benzamida` tile (design.md §15.8 R-6d; phase R-6d1: the benzene parent with its –CONH₂ at carbon 1). */
+export const BENZAMIDE_ID = 'ring-benzamide';
+
 /**
  * Id of the locant tile `N` (design.md §15.5.2 item 6, §15.8 R-6c; phase
  * R-6c1: a prefix on the nitrogen of the principal amine, `N-metiletanamina`).
@@ -446,7 +471,10 @@ export function isAcyloxyHead(tile) {
  * nitrile (R-6b1: `nitrilo`, terminal like `oico`, and `carbonitrilo`,
  * outside like `carboxílico`), `element` 'N': the group's atom is a
  * nitrogen, bonded by a triple bond (`order` 3) to its carbon (the –C≡N;
- * suffixElement()).
+ * suffixElement()); for an amide (R-6d1: `amida`, terminal like `oico`, and
+ * `carboxamida`, outside like `carboxílico`), `amideNitrogen`: the carbon of
+ * the C=O also carries the amide's nitrogen, single-bonded (the –CONH₂),
+ * whose groups the locant `N` names, as an amine's (isNitrogenSuffix()).
  */
 export const SUFFIX_GROUPS = Object.freeze({
   alcohol: Object.freeze({ kind: 'alcohol', outside: false, order: 1, terminal: false }),
@@ -463,6 +491,9 @@ export const SUFFIX_GROUPS = Object.freeze({
   carbonitrile: Object.freeze({ kind: 'nitrile', outside: true, order: 3, terminal: false, element: 'N' }),
   // R-6c1: the amines, their nitrogen single-bonded to the parent's carbon as an alcohol's OH is.
   amine: Object.freeze({ kind: 'amine', outside: false, order: 1, terminal: false, element: 'N' }),
+  // R-6d1: the amides, the C=O carbon of the group also carrying the amide's nitrogen, single-bonded.
+  amide: Object.freeze({ kind: 'amide', outside: false, order: 2, terminal: true, amideNitrogen: true }),
+  carboxamide: Object.freeze({ kind: 'amide', outside: true, order: 2, terminal: false, amideNitrogen: true }),
 });
 
 /** The element of the atom a suffix group bonds to its carbon when the SUFFIX_GROUPS entry names none: an oxygen. */
@@ -486,18 +517,19 @@ export function suffixElement(group) {
  * parent (`carbaldehído`, `carboxílico`, `carboxilato`, `carbonitrilo`: the
  * single bond to that carbon), else the bond to its oxygen — one for the OH,
  * two for a C=O — and one more for the OH of an acid's –COOH (R-5d1: `oico`,
- * three) or the bridge oxygen of an ester's –COO– (R-6a1: `oato`, three), or
- * the triple bond to the nitrogen of a nitrile's –C≡N (R-6b1: `nitrilo`,
- * three).
+ * three) or the bridge oxygen of an ester's –COO– (R-6a1: `oato`, three) or
+ * the nitrogen of an amide's –CONH₂ (R-6d1: `amida`, three), or the triple
+ * bond to the nitrogen of a nitrile's –C≡N (R-6b1: `nitrilo`, three).
  *
- * @param {{outside: boolean, order: number, hydroxy?: boolean, bridge?: boolean}} group - A SUFFIX_GROUPS entry.
+ * @param {{outside: boolean, order: number, hydroxy?: boolean, bridge?: boolean, amideNitrogen?: boolean}} group - A
+ *   SUFFIX_GROUPS entry.
  * @returns {number} 1, 2 or 3.
  */
 export function suffixBondAmount(group) {
   if (group.outside) {
     return 1;
   }
-  return group.order + (group.hydroxy || group.bridge ? 1 : 0);
+  return group.order + (group.hydroxy || group.bridge || group.amideNitrogen ? 1 : 0);
 }
 
 /** The principal group of an ester (a lexicon GROUP_SUFFIXES key; R-6a1). */
@@ -584,6 +616,44 @@ export const AMINE_NITROGEN = 'nitrógeno de la amina';
  */
 export const AMINE_GROUP = 'grupo NH₂';
 
+/** The principal group of an amide (a lexicon GROUP_SUFFIXES key; R-6d1). */
+export const AMIDE_KIND = 'amide';
+
+/**
+ * Tells whether a suffix tile value is an amide's (R-6d1: `amida`,
+ * `carboxamida`).
+ *
+ * @param {string} value - A SUFFIX_GROUPS key.
+ * @returns {boolean} True for an amide suffix.
+ */
+export function isAmideSuffix(value) {
+  return Boolean(SUFFIX_GROUPS[value]) && SUFFIX_GROUPS[value].kind === AMIDE_KIND;
+}
+
+/**
+ * Tells whether a suffix tile value (or a SuffixSpec kind) names a nitrogen
+ * whose groups the locant `N` places: an amine's (R-6c1: `amina`, the
+ * nitrogen bonded to the parent's carbon) or an amide's (R-6d1: `amida`,
+ * `carboxamida`, the nitrogen bonded to the group's C=O carbon), as the
+ * forward engine gives both the locant N_LOCANT (structure.js).
+ *
+ * @param {string} value - A SUFFIX_GROUPS key, or a SuffixSpec kind ('amine', 'amide').
+ * @returns {boolean} True for an amine or an amide suffix.
+ */
+export function isNitrogenSuffix(value) {
+  return value === AMINE_KIND || value === AMIDE_KIND || isAmineSuffix(value) || isAmideSuffix(value);
+}
+
+/**
+ * How the messages call the –CONH₂ of an amide (R-6d1), as «grupo C≡N» for a
+ * nitrile's: «grupo amida», whatever the groups on its nitrogen (–CONH₂,
+ * –CONH–, –CON<, model/validate.js says «grupo amida» too).
+ */
+export const AMIDE_GROUP = 'grupo amida';
+
+/** How the messages call the nitrogen of an amide (R-6d1), as AMINE_NITROGEN for an amine's. */
+export const AMIDE_NITROGEN = 'nitrógeno de la amida';
+
 /**
  * Tells whether a tile is the class word of an amine's functional-class name
  * (R-6c3: `metilamina`, `dimetilamina`, `etildimetilamina`): the `amina` tile
@@ -645,9 +715,12 @@ export function isAminoTile(tile) {
  * `benzaldehído` (R-5c1, its –CHO, whose carbon is outside the ring) and
  * `benzoico` (R-5d1, its –COOH, likewise; written after the class word
  * `ácido`) and `benzoato` (R-6a1, its –COO–, likewise; the O-bound group
- * after it) and `benzonitrilo` (R-6b1, its –C≡N, likewise):
- * `suffix` the SUFFIX_GROUPS key of that group, `group` how the messages
- * call it (the parser's and the builder's «grupo OH», «grupo CHO»).
+ * after it) and `benzonitrilo` (R-6b1, its –C≡N, likewise) and `benzamida`
+ * (R-6d1, its –CONH₂, likewise; its nitrogen takes the student's `N`
+ * groups, `N-metilbenzamida`): `suffix` the SUFFIX_GROUPS key of that group,
+ * `group` how the messages call it (the parser's and the builder's «grupo
+ * OH», «grupo CHO»), `feminine` for a word the messages quote with «la»
+ * (`benzamida`, withArticle()).
  */
 export const GROUP_WORD_PARENTS = Object.freeze({
   phenol: Object.freeze({ suffix: 'alcohol', group: 'grupo OH' }),
@@ -655,6 +728,7 @@ export const GROUP_WORD_PARENTS = Object.freeze({
   benzoic: Object.freeze({ suffix: 'carboxylic', group: ACID_GROUP }),
   benzoate: Object.freeze({ suffix: 'carboxylate', group: ESTER_GROUP }),
   benzonitrile: Object.freeze({ suffix: 'carbonitrile', group: NITRILE_GROUP }),
+  benzamide: Object.freeze({ suffix: 'carboxamide', group: AMIDE_GROUP, feminine: true }), // R-6d1
 });
 
 /**
@@ -1251,7 +1325,9 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * `ilo` to the groups, at their end; R-6b1 `benzonitrilo` to the rings,
  * after `benzoato`, and `ciano`, `nitrilo` and `carbonitrilo` to the groups,
  * at their end; R-6c1 the locant `N` after the numbers and `amina` to the
- * groups, at their end; R-6c2 `amino` after `amina`.
+ * groups, at their end; R-6c2 `amino` after `amina`; R-6d1 `benzamida` to
+ * the rings, after `benzonitrilo`, and `amida` and `carboxamida` to the
+ * groups, after `amino`.
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -1295,6 +1371,8 @@ function buildCatalogue() {
   tiles.push(makeTile(BENZOATE_ID, 'benzene', 'benzoate', 'rings', `${benzoate.stem}${benzoate.ending}`)); // `benzoato` (R-6a1)
   const benzonitrile = BENZENE_GROUP_NAMES[NITRILE_KIND];
   tiles.push(makeTile(BENZONITRILE_ID, 'benzene', 'benzonitrile', 'rings', `${benzonitrile.stem}${benzonitrile.ending}`)); // R-6b1
+  const benzamide = BENZENE_GROUP_NAMES[AMIDE_KIND];
+  tiles.push(makeTile(BENZAMIDE_ID, 'benzene', 'benzamide', 'rings', `${benzamide.stem}${benzamide.ending}`)); // `benzamida` (R-6d1)
   const phenyl = RETAINED_PREFIXES.phenyl;
   tiles.push(makeTile(PHENYL_ID, 'retained', 'phenyl', 'rings', `${phenyl.italic}${phenyl.text}`, false, { italic: phenyl.italic }));
   tiles.push(makeTile(BENZOYL_ID, 'retained', 'benzoyl', 'rings', BENZOYL_PREFIX, false, { italic: '' })); // `benzoil` (R-5c2)
@@ -1332,6 +1410,9 @@ function buildCatalogue() {
   tiles.push(makeTile(AMINA_ID, 'suffix', AMINE_KIND, 'groups', GROUP_SUFFIXES[AMINE_KIND])); // `amina` (R-6c1)
   // `amino` (R-6c2): a retained word, as `ciano`; with the groups on its nitrogen, a compound branch's own chain, as `fenil`.
   tiles.push(makeTile(AMINO_ID, 'retained', AMINO_KIND, 'groups', GROUP_PREFIXES[AMINE_KIND], false, { italic: '' }));
+  // R-6d1: the amides' suffixes `amida` and `carboxamida`.
+  tiles.push(makeTile(AMIDA_ID, 'suffix', AMIDE_KIND, 'groups', GROUP_SUFFIXES[AMIDE_KIND]));
+  tiles.push(makeTile(CARBOXAMIDE_ID, 'suffix', 'carboxamide', 'groups', RING_GROUP_SUFFIXES[AMIDE_KIND]));
   for (const value of Object.keys(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }
@@ -1348,15 +1429,19 @@ const BY_ID = new Map(TILES.map((tile) => [tile.id, tile]));
  * A parent's word with its Spanish definite article, after a preposition
  * when one is given, as the messages quote it: «del tolueno», «en el
  * fenol», and for a feminine template (TEMPLATES `feminine`, R-5a3a) «de la
- * hidroquinona», «en la hidroquinona» (`de` + `el` contract to `del`).
+ * hidroquinona», «en la hidroquinona» (`de` + `el` contract to `del`), or a
+ * feminine whole-word benzene parent (GROUP_WORD_PARENTS `feminine`, R-6d1:
+ * «de la benzamida», «en la benzamida»).
  *
- * @param {string} word - A whole-word parent as on its tile (`tolueno`, `fenol`, `hidroquinona`).
+ * @param {string} word - A whole-word parent as on its tile (`tolueno`, `fenol`, `hidroquinona`, `benzamida`).
  * @param {string} [preposition] - `de`, `en`… (default none).
  * @returns {string} The phrase.
  */
 export function withArticle(word, preposition = '') {
   const template = TILES.find((tile) => tile.kind === 'template' && tile.text === word);
-  const article = template && TEMPLATES[template.value].feminine ? 'la' : 'el';
+  const placing = TILES.find((tile) => tile.kind === 'benzene' && tile.text === word && GROUP_WORD_PARENTS[tile.value]);
+  const feminine = (template && TEMPLATES[template.value].feminine) || (placing && GROUP_WORD_PARENTS[placing.value].feminine);
+  const article = feminine ? 'la' : 'el';
   if (preposition === 'de' && article === 'el') {
     return `del ${word}`;
   }
