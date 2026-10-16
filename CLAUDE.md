@@ -296,9 +296,10 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   nitrogen is an amine class name's class word, the name one word
   (`metilamina`, `dimetilamina`, `trimetilamina`, `etildimetilamina`,
   `di-tert-butilamina`), read as the engine's alternatives and any other
-  class name as `otherName`; the class names' own mistakes and a prefix on
-  `anilina` in a style the engine never writes are deliberate «Amines» nulls;
-  the Ayuda has its amine line. R-6c4a (phase I-52c4a) is done: `diagnose.js`
+  class name as `otherName`; a prefix on `anilina` in a style the engine
+  never writes is a deliberate «Amines» null, pinned (the open question of a
+  retained word's prefix style); the Ayuda has its amine line. R-6c4a (phase
+  I-52c4a) is done: `diagnose.js`
   names the principal amine group's own mistakes (header «Amines», checked
   first; the messages say «grupo amino»): a junior amine beside a senior
   group, CARBONYL_SENIORITY with the seniority `ácido > éster > amida >
@@ -313,9 +314,22 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   (CARBONYL_PARENT, MORE_CARBONYL_GROUPS); N0 numbering and the suffix's
   needless locants (`butan-3-amina`, `ciclohexano-1,5-diamina`,
   `etan-1-amina`, `N-metiletan-1-amina`), each with its «Ver el paso» step;
-  LOCANT_ORDER and LOCANT_COUNT no longer call `N` a number. Next is R-6c4b
-  (phase I-52c4b): amine class-name and template diagnoses (fill the last
-  «Amines» nulls).
+  LOCANT_ORDER and LOCANT_COUNT no longer call `N` a number. R-6c4b (phase
+  I-52c4b) is done, and with it R-6c: `diagnose.js` names an amine class
+  name's own mistakes (header «Amines», a track of its own as the ether's,
+  the ether's class-name codes with the amine's words, each opening the
+  diagnosis-only step «Monta el nombre tradicional de la amina» after
+  «Reconoce el grupo funcional»): groups out of alphabetical order
+  CLASS_ORDER (`metiletilamina` → «etilmetilamina», `metiltert-butilamina`),
+  a repeated group written twice or with `bis` CLASS_DI (`metilmetilamina`,
+  `bismetilamina`, `etilmetilmetilamina` → «etildimetilamina»), other group
+  words CLASS_GROUP_WORDS (`(propan-2-il)amina` → «isopropilamina»), a class
+  name for an amine that has none CLASS_NAME_NONE with the engine's name
+  (`ciclohexilamina` → «ciclohexanamina», `fenilamina` → «bencenamina»
+  (también vale «anilina»)), and a class name beside a senior group
+  CARBONYL_SENIORITY (`(2-hidroxietil)amina` → «2-aminoetan-1-ol»); the
+  parser's POSITIONAL on `anilina` no longer calls `N` a number. Next is R-6d
+  (phase I-52d): amides.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

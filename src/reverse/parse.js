@@ -1176,8 +1176,10 @@ const POSITIONAL_MESSAGES = Object.freeze({
   ester: `En el grupo unido al oxígeno de un éster no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: escribe los números, `
     + `como en ${EXAMPLES.etanoatoDeMetilfenilo}.`,
   // R-6c3: a letter beside an `N` on one prefix (`N,p-dimetilanilina`: no used form, design.md §14.4), and a letter on `bencenamina`.
+  // R-6c4b: the `N` is no number (as LOCANT_ORDER and LOCANT_COUNT say it since R-6c4a).
   nitrogen: `«${N_TEXT}» y las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} no van juntas delante de un mismo grupo: con un `
-    + `grupo en el nitrógeno y otro en el anillo, escribe los números (${EXAMPLES.n4Dimetilanilina}).`,
+    + `grupo en el nitrógeno y otro en el anillo, escribe «${N_TEXT}» para el del nitrógeno y un número para el del anillo `
+    + `(${EXAMPLES.n4Dimetilanilina}).`,
   amine: `Con «${EXAMPLES.bencenamina}» no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: escribe los números `
     + `(${EXAMPLES.metilbencenamina}) o usa «${ANILINA}», de «Nombres tradicionales» (${EXAMPLES.pMetilanilina}).`,
 });

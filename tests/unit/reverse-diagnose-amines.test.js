@@ -20,9 +20,14 @@
  * the student's chain with the parent across the nitrogen (AMINE_SIDE, not
  * BRANCH_AT_END; review of I-52c4a); a sweep over the
  * amine fixture names with every `amina` written as `amino` prefixes;
- * MISSING_LOCANTS with the amino groups' words; the «Amines» nulls left
- * (class names and the templates' prefix style, phase I-52c4b; an amide,
- * R-6d); controls; the drafts.
+ * MISSING_LOCANTS with the amino groups' words; the class names' own
+ * mistakes (phase I-52c4b: CLASS_ORDER, CLASS_DI, CLASS_GROUP_WORDS and
+ * CLASS_NAME_NONE with the amine's words, CARBONYL_SENIORITY for a class
+ * name beside a senior group), each with its tiles and the class-name step
+ * «Ver el paso» opens (AMINE_CLASS_STEP, after «Reconoce el grupo
+ * funcional»), whose text agrees with the message; the «Amines» nulls left
+ * (the templates' prefix style, a pinned open question; an amide, R-6d);
+ * controls; the drafts.
  */
 
 import { test } from 'node:test';
@@ -34,8 +39,10 @@ import { tokenize } from '../../src/reverse/tokenize.js';
 import { AMINA_ID, AMINO_ID, NITROGEN_ID, tileId } from '../../src/reverse/tiles.js';
 import {
   diagnose, diagnosisNaming, diagnosisExplanation, DIAGNOSES, DIAGNOSIS_CODES, DIAGNOSIS_TEXTS, DIAGNOSIS_PHRASES, STEP_FALLBACKS,
+  AMINE_CLASS_STEP, AMINE_CLASS_STEP_TEXTS, diagnosisStepIndex,
 } from '../../src/reverse/diagnose.js';
-import { explain } from '../../src/explain/explain.js';
+import { explain, GLOSSARY, parseMarkup, plainText } from '../../src/explain/explain.js';
+import { adjacency } from '../../src/model/graph.js';
 import { diagnosisLegend } from '../../src/ui/draw-name.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
 import { SENIORITY } from '../../src/naming/seniority.js';
@@ -400,6 +407,196 @@ test('an end branch beside the nitrogen (I-52c4a review): AMINE_SIDE when the pa
     + 'carbonos, más larga que la tuya, de 2');
 }); // End of test 'an end branch beside the nitrogen…'
 
+// ---------------------------------------------------------------------------
+// The class names' own mistakes (phase I-52c4b).
+// ---------------------------------------------------------------------------
+
+/** The first words of the amine class-name messages (CLASS_GROUP_WORDS, CLASS_ORDER, CLASS_DI with `amine`). */
+const LIKE = 'En un nombre como «metilamina», ';
+
+/** CLASS_NAME_NONE with `amine`, before the engine's name. */
+const NONE = 'Un nombre como «etilmetilamina» (los grupos unidos al nitrógeno y la palabra «amina», todo junto) solo lo doy cuando el '
+  + 'nitrógeno lleva grupos sencillos: cadenas sin ramas unidas por su extremo (metil, etil, propil…), isopropil o tert-butil, sin '
+  + 'enlaces dobles ni triples, sin anillos y sin más átomos que esos carbonos y el nitrógeno. Esta molécula se nombra con la '
+  + 'terminación «-amina»: ';
+
+/** CLASS_ORDER with `amine`, before the two groups. */
+const ORDER = `${LIKE}los grupos unidos al nitrógeno se escriben por orden alfabético: `;
+
+/** CLASS_DI with `amine`, before the names. */
+const DI = `${LIKE}los grupos iguales unidos al nitrógeno se escriben una sola vez, con «di» o «tri» delante`;
+
+/** CLASS_GROUP_WORDS with `amine`, before the engine's class name. */
+const WORDS_FIRST = `${LIKE}cada grupo unido al nitrógeno se nombra con su forma más sencilla, sin números: metil, etil, propil…, `
+  + 'isopropil o tert-butil. Se escribe ';
+
+/**
+ * One case per class-name message (phase I-52c4b; the former deliberate
+ * «Amines» nulls of I-52c3 and their variants): [name, code, rule, the step
+ * «Ver el paso» opens, tiles, message].
+ */
+const CLASS_CASES = [
+  // `order`: the groups out of alphabetical order; `tert-` or a multiplier counted (hints); the plain word first on a tie.
+  ['metiletilamina', 'CLASS_ORDER', 5, AMINE_CLASS_STEP, [0, 4], `${ORDER}«etil» va antes que «metil» (e antes que m). Se escribe `
+    + '«etilmetilamina».'],
+  ['propilmetilamina', 'CLASS_ORDER', 5, AMINE_CLASS_STEP, [0, 4], `${ORDER}«metil» va antes que «propil» (m antes que p). Se `
+    + 'escribe «metilpropilamina».'],
+  ['metiltert-butilamina', 'CLASS_ORDER', 5, AMINE_CLASS_STEP, [0, 3], `${ORDER}«tert-butil» va antes que «metil» (b antes que m). `
+    + '«tert-» no cuenta para el orden. Se escribe «tert-butilmetilamina».'],
+  ['dimetiletilamina', 'CLASS_ORDER', 5, AMINE_CLASS_STEP, [0, 5], `${ORDER}«etil» va antes que «metil» (e antes que m). Los `
+    + 'prefijos di-, tri-… no cuentan para el orden. Se escribe «etildimetilamina».'],
+  ['propildimetilamina', 'CLASS_ORDER', 5, AMINE_CLASS_STEP, [0, 5], `${ORDER}«metil» va antes que «propil» (m antes que p). Se `
+    + 'escribe «dimetilpropilamina».'],
+  ['tert-butilbutilamina', 'CLASS_ORDER', 5, AMINE_CLASS_STEP, [0, 3], `${ORDER}«butil» va antes que «tert-butil» (con las mismas `
+    + 'letras, va primero el grupo sin «tert-»). Se escribe «butiltert-butilamina».'],
+  // `multiplier`: a repeated group written twice, or with `bis`, `tris`; the repeated groups' tiles.
+  ['metilmetilamina', 'CLASS_DI', 6, AMINE_CLASS_STEP, [0, 4], `${DI}: «dimetilamina», no «metilmetilamina».`],
+  ['bis met il amina', 'CLASS_DI', 6, AMINE_CLASS_STEP, [0, 3], `${DI} («bis», «tris»… solo van delante de grupos que tienen sus `
+    + 'propios sustituyentes): «dimetilamina», no «bismetilamina».'],
+  ['tris met il amina', 'CLASS_DI', 6, AMINE_CLASS_STEP, [0, 3], `${DI} («bis», «tris»… solo van delante de grupos que tienen sus `
+    + 'propios sustituyentes): «trimetilamina», no «trismetilamina».'],
+  ['etilmetilmetilamina', 'CLASS_DI', 6, AMINE_CLASS_STEP, [2, 6], `${DI}: «etildimetilamina», no «etilmetilmetilamina».`],
+  // `words`: a group in a style the class names never use; the tiles of that group alone.
+  ['(propan-2-il)amina', 'CLASS_GROUP_WORDS', 2, AMINE_CLASS_STEP, [0, 4], `${WORDS_FIRST}«isopropilamina».`],
+  ['(1-metiletil)amina', 'CLASS_GROUP_WORDS', 2, AMINE_CLASS_STEP, [0, 7], `${WORDS_FIRST}«isopropilamina».`],
+  ['(propan-2-il)metilamina', 'CLASS_GROUP_WORDS', 2, AMINE_CLASS_STEP, [0, 4], `${WORDS_FIRST}«isopropilmetilamina».`],
+  ['START 2 met il prop ano 2 il END amina', 'CLASS_GROUP_WORDS', 2, AMINE_CLASS_STEP, [0, 9], `${WORDS_FIRST}«tert-butilamina».`],
+  // `none`: an amine with no class name; the substitutive name, and the retained one when the engine gives it; the class word.
+  ['ciclohexilamina', 'CLASS_NAME_NONE', 2, AMINE_CLASS_STEP, [3, 4], `${NONE}«ciclohexanamina».`],
+  ['fenilamina', 'CLASS_NAME_NONE', 2, AMINE_CLASS_STEP, [1, 2], `${NONE}«bencenamina» (también vale «anilina»).`],
+  ['etenilamina', 'CLASS_NAME_NONE', 2, AMINE_CLASS_STEP, [3, 4], `${NONE}«etenamina».`],
+  ['(2-cloroetil)metilamina', 'CLASS_NAME_NONE', 2, AMINE_CLASS_STEP, [8, 9], `${NONE}«2-cloro-N-metiletan-1-amina».`],
+  ['(2-metilpropil)amina', 'CLASS_NAME_NONE', 2, AMINE_CLASS_STEP, [7, 8], `${NONE}«2-metilpropan-1-amina».`],
+  ['metilciclohexilamina', 'CLASS_NAME_NONE', 2, AMINE_CLASS_STEP, [5, 6], `${NONE}«N-metilciclohexanamina».`],
+  ['fenilmetilamina', 'CLASS_NAME_NONE', 2, AMINE_CLASS_STEP, [3, 4], `${NONE}«N-metilbencenamina» (también vale «N-metilanilina»).`],
+  ['(2-aminoetil)amina', 'CLASS_NAME_NONE', 2, AMINE_CLASS_STEP, [6, 7], `${NONE}«etano-1,2-diamina».`],
+  // A class name beside a senior group: the amine is no principal group (CARBONYL_SENIORITY, as for a student's `amina`).
+  ['(2-hidroxietil)amina', 'CARBONYL_SENIORITY', 1, 'group', [6, 7], `${SENIORITY_FIRST}el alcohol (–OH), que se nombra `
+    + `${WRITTEN('ol')}; el grupo amino va delante, con el prefijo «amino». Se escribe «2-aminoetan-1-ol».`],
+  ['(2-hidroxietil)metilamina', 'CARBONYL_SENIORITY', 1, 'group', [8, 9], `${SENIORITY_FIRST}el alcohol (–OH), que se nombra `
+    + `${WRITTEN('ol')}; el grupo amino va delante, con el prefijo «metilamino». Se escribe «2-(metilamino)etan-1-ol».`],
+  ['(4-hidroxifenil)amina', 'CARBONYL_SENIORITY', 1, 'group', [5, 6], `${SENIORITY_FIRST}el alcohol (–OH), que se nombra con «fenol» `
+    + '(el benceno con un grupo –OH); el grupo amino va delante, con el prefijo «amino». Se escribe «4-aminofenol».'],
+  ['(2-oxopropil)amina', 'CARBONYL_SENIORITY', 1, 'group', [6, 7], `${SENIORITY_FIRST}la cetona (C=O), que se nombra ${WRITTEN('ona')}; `
+    + 'el grupo amino va delante, con el prefijo «amino». Se escribe «1-aminopropan-2-ona».'],
+  ['(carboximetil)amina', 'CARBONYL_SENIORITY', 1, 'group', [5, 6], `${SENIORITY_FIRST}el ácido (–COOH), que se nombra con la `
+    + 'palabra «ácido» al principio del nombre y la terminación «-oico» al final; el grupo amino va delante, con el prefijo «amino». '
+    + 'Se escribe «ácido 2-aminoetanoico».'],
+  ['(1-oxoetil)amina', 'CARBONYL_SENIORITY', 1, 'group', [6, 7], `${SENIORITY_FIRST}la amida (un C=O unido a un nitrógeno), que se `
+    + `nombra ${WRITTEN('amida')}; ${IN_AMIDE}. Se escribe «etanamida».`],
+];
+
+test('the class names\' own mistakes (I-52c4b): the code, its rule, the step «Ver el paso» opens, the tiles and the message', () => {
+  const seen = new Set();
+  for (const [name, code, rule, opened, tiles, message] of CLASS_CASES) {
+    const verdict = read(name);
+    const step = assertAmineDiagnosis(verdict, name);
+    const d = verdict.diagnosis;
+    assert.deepEqual([d.code, d.rule, d.traceRule, d.step], [code, rule, null, opened], `${name}: ${d.message}`);
+    assert.equal(step.id, opened, `${name}: the step «Ver el paso» opens`);
+    assert.equal(d.message, message, name);
+    assert.deepEqual(d.tiles, tiles, `${name}: tiles`);
+    // A class name has no chain of its own: no stripe, no legend.
+    assert.deepEqual([d.student, diagnosisLegend(d)], [{ atoms: [], bonds: [] }, null], name);
+    // The focus: the groups the message is about (none for CLASS_NAME_NONE), or the amine's nitrogen and its bond.
+    const occurrences = verdict.prefixAtoms.filter((o) => o.tiles[0] >= tiles[0] && o.tiles[1] <= tiles[1]);
+    if (code === 'CARBONYL_SENIORITY') {
+      assert.ok(d.focus.atoms.includes(verdict.studentParent.atoms[0]) && d.focus.bonds.length === 1, name);
+      assert.ok(!('className' in d), name);
+    } else if (code === 'CLASS_NAME_NONE') {
+      assert.deepEqual(d.focus, { atoms: [], bonds: [] }, name);
+    } else {
+      assert.deepEqual(sorted(d.focus.atoms), sorted(occurrences.flatMap((o) => o.atoms)), name);
+    }
+    seen.add(code);
+  } // End of the loop over the class-name cases
+  assert.deepEqual([...seen].sort(), ['CARBONYL_SENIORITY', 'CLASS_DI', 'CLASS_GROUP_WORDS', 'CLASS_NAME_NONE', 'CLASS_ORDER']);
+}); // End of test 'the class names\' own mistakes (I-52c4b)…'
+
+/**
+ * The class-name diagnoses and what the step «Ver el paso» opens must say
+ * (phase I-52c4b): [name, code, the substitutive name the other steps
+ * explain, the groups as the step names them and the class name the message
+ * recommends (null for CLASS_NAME_NONE)].
+ */
+const CLASS_STEP_CASES = [
+  ['metiletilamina', 'CLASS_ORDER', 'N-metiletanamina', ['etil', 'metil'], 'etilmetilamina'],
+  ['metiltert-butilamina', 'CLASS_ORDER', 'N,2-dimetilpropan-2-amina', ['tert-butil', 'metil'], 'tert-butilmetilamina'],
+  ['metilmetilamina', 'CLASS_DI', 'N-metilmetanamina', ['metil', 'metil'], 'dimetilamina'],
+  ['tris met il amina', 'CLASS_DI', 'N,N-dimetilmetanamina', ['metil', 'metil', 'metil'], 'trimetilamina'],
+  ['etilmetilmetilamina', 'CLASS_DI', 'N,N-dimetiletanamina', ['etil', 'metil', 'metil'], 'etildimetilamina'],
+  ['(propan-2-il)amina', 'CLASS_GROUP_WORDS', 'propan-2-amina', ['isopropil'], 'isopropilamina'],
+  ['(propan-2-il)metilamina', 'CLASS_GROUP_WORDS', 'N-metilpropan-2-amina', ['isopropil', 'metil'], 'isopropilmetilamina'],
+  ['ciclohexilamina', 'CLASS_NAME_NONE', 'ciclohexanamina', null, null],
+  ['fenilamina', 'CLASS_NAME_NONE', 'bencenamina', null, null],
+  ['(2-cloroetil)metilamina', 'CLASS_NAME_NONE', '2-cloro-N-metiletan-1-amina', null, null],
+];
+
+test('the class-name step (I-52c4b): right after «Reconoce el grupo funcional», it agrees with the message; its marks', () => {
+  for (const [name, code, substitutive, groups, className] of CLASS_STEP_CASES) {
+    const verdict = read(name);
+    const d = verdict.diagnosis;
+    assert.deepEqual([verdict.kind, verdict.name, d.code], ['otherName', substitutive, code], name);
+    const opened = diagnosisExplanation(verdict, explain);
+    const step = opened.steps[opened.index];
+    // The class-name step, right after «Reconoce el grupo funcional»; explain()'s own steps all stay, in their order.
+    assert.deepEqual([step.id, step.title, opened.steps[opened.index - 1].id], [AMINE_CLASS_STEP,
+      'Monta el nombre tradicional de la amina', 'group'], name);
+    assert.equal(step.title, AMINE_CLASS_STEP_TEXTS.title);
+    assert.deepEqual(opened.steps.filter((s) => s.id !== AMINE_CLASS_STEP), explain(verdict.naming), name);
+    const text = step.text.map(plainText);
+    const all = text.join(' ');
+    // The class name's form: the groups as branches, no numbers, alphabetical order without `tert-`, `di` / `tri`, `amina` last.
+    for (const pattern of [/se nombran como ramas/, /sin números/, /por orden alfabético/, /«tert-»/, /con «di» o «tri» delante/,
+      /palabra «amina»/, /junto/]) {
+      assert.match(all, pattern, name);
+    }
+    // It tells it from the substitutive name of the other steps.
+    assert.ok(all.includes('nombre sustitutivo'), `${name}: ${all}`);
+    if (className) {
+      // The groups and the name the step builds are the ones the message recommends.
+      assert.deepEqual(d.className, { name: className, groups }, name);
+      assert.ok(d.message.includes(`«${className}»`), `${name}: ${d.message}`);
+      assert.ok(all.includes(`«${substitutive}»`), name);
+      assert.ok(text[text.length - 1].endsWith(`Para esta molécula: «${className}».`), `${name}: ${text[text.length - 1]}`);
+      const here = `aquí, ${DIAGNOSIS_PHRASES.amineClassGroups(groups)}.`;
+      assert.ok(text.some((t) => t.endsWith(here)), `${name}: ${here}`);
+      assert.match(text[0], /^El nombre que explican los otros pasos, «.+», es el que doy primero, el nombre sustitutivo/, name);
+    } else {
+      // No class name for this amine: the same condition as the message, and the substitutive name the other steps explain.
+      assert.equal(d.className, null, name);
+      const only = `Ese nombre solo lo doy cuando el nitrógeno lleva grupos sencillos: ${DIAGNOSIS_PHRASES.simpleAmineGroups}.`;
+      assert.ok(text.includes(only) && d.message.includes(DIAGNOSIS_PHRASES.simpleAmineGroups), name);
+      const traditional = verdict.naming.alternatives.find((alt) => alt.style === 'traditional');
+      assert.equal(text[text.length - 1], 'Esta molécula no es una de esas aminas sencillas, así que no tiene ese nombre: se nombra '
+        + `como en los otros pasos, con la terminación «-amina»: «${substitutive}»`
+        + `${traditional ? ` (también vale «${traditional.name}»)` : ''}.`, name);
+    }
+    for (const paragraph of step.text) {
+      parseMarkup(paragraph).filter((segment) => segment.term).forEach((segment) => assert.ok(GLOSSARY[segment.term], segment.term));
+    }
+    // Marks: each group bonded to the class name's nitrogen as a substituent, the nitrogen and its bonds; the whole molecule.
+    const nitrogen = verdict.studentParent.atoms[0];
+    const adj = adjacency(verdict.molecule);
+    assert.equal(verdict.molecule.atoms.get(nitrogen).element, 'N', name);
+    const n = adj.get(nitrogen).length;
+    assert.deepEqual(step.highlight.map((h) => h.style), [...Array(n).fill('substituent'), 'candidate'], name);
+    const center = step.highlight[n];
+    assert.deepEqual(center, { atoms: [nitrogen], bonds: center.bonds, style: 'candidate' }, name);
+    assert.deepEqual(sorted(center.bonds), sorted(adj.get(nitrogen).map((e) => e.bond)), name);
+    assert.deepEqual(sorted(step.highlight.flatMap((h) => h.atoms)), sorted([...verdict.molecule.atoms.keys()]), name);
+    assert.deepEqual(sorted(step.highlight.flatMap((h) => h.bonds)), sorted([...verdict.molecule.bonds.keys()]), name);
+    assert.equal(step.locants, null, name);
+  } // End of the loop over the class-name step cases
+  // explain() alone has no class-name step: its fallback is «Reconoce el grupo funcional»; a CARBONYL_SENIORITY on a class name
+  // opens explain()'s own steps, unchanged.
+  const ordered = read('metiletilamina');
+  const alone = explain(ordered.naming);
+  assert.equal(alone[diagnosisStepIndex(alone, ordered.diagnosis)].id, 'group');
+  const senior = read('(2-hidroxietil)amina');
+  assert.deepEqual(diagnosisExplanation(senior, explain).steps, explain(senior.naming));
+}); // End of test 'the class-name step (I-52c4b)…'
+
 /**
  * The tile ids of an amine name with its `amina` suffix rewritten as `amino`
  * prefixes before the parent (`butan-2-amina` → `2-aminobutano`,
@@ -488,8 +685,10 @@ test('the letter N is no number: LOCANT_COUNT counts the letters N and the numbe
   }
 }); // End of test 'the letter N is no number…'
 
-test('the «Amines» nulls left: the class names and the templates\' prefix style (phase I-52c4b), an amide (R-6d)', () => {
-  for (const name of ['metiletilamina', 'metilmetilamina', 'ciclohexilamina', '4 prop ano 2 il anilina', '1 amino but ano al']) {
+test('the «Amines» nulls left: the templates\' prefix style (a pinned open question), an amide (R-6d)', () => {
+  // The class names' own mistakes are named since phase I-52c4b (above); a retained word's prefix in another style
+  // (`4-(propan-2-il)anilina`, the engine's `4-isopropilanilina`) is the cross-family open question; an amide is R-6d's.
+  for (const name of ['4 prop ano 2 il anilina', '1 amino but ano al']) {
     const verdict = read(name);
     assert.equal(verdict.kind, 'otherName', `${name}: ${verdict.message}`);
     assert.equal(verdict.diagnosis, null, `${name}: ${verdict.diagnosis && verdict.diagnosis.message}`);
@@ -570,4 +769,32 @@ test('the drafts of the amine rules: their place among the rules, their steps, e
     + 'escriben de menor a mayor: «2,3», no «3,2».', 'without an N, unchanged');
   assert.equal(DIAGNOSIS_PHRASES.etherSide({ reason: 'CARBONYL_PARENT', group: 'amine', ring: 1, chain: 1, chainParent: false }),
     'primero cuenta el grupo principal, y los dos lados llevan un grupo amino cada uno; en el empate, manda el anillo');
+  // The class names (phase I-52c4b): the ether's class-name codes with `amine`, which speak of the nitrogen, never of an ether.
+  for (const code of ['CLASS_NAME_NONE', 'CLASS_GROUP_WORDS', 'CLASS_ORDER', 'CLASS_DI']) {
+    const ether = DIAGNOSIS_TEXTS[code](DIAGNOSES[code].example);
+    const amine = DIAGNOSIS_TEXTS[code]({ ...DIAGNOSES[code].example, amine: true, name: 'X', right: 'X', student: 'Y' });
+    assert.match(amine, /^[«¿A-ZÁÉÍÓÚ].*\.$/u, code);
+    assert.doesNotMatch(amine, /undefined|null|NaN|éter|oxígeno|-oxi/, code);
+    assert.match(amine, /nitrógeno/, code);
+    assert.match(ether, /éter|oxígeno/, `${code}: the ether's message unchanged`);
+  }
+  assert.equal(DIAGNOSIS_TEXTS.CLASS_DI({ amine: true, compound: false, right: 'dimetilamina', student: 'metilmetilamina' }),
+    `${DI}: «dimetilamina», no «metilmetilamina».`);
+  assert.equal(DIAGNOSIS_TEXTS.CLASS_NAME_NONE({ amine: true, name: 'bencenamina', traditional: 'anilina' }),
+    `${NONE}«bencenamina» (también vale «anilina»).`);
+  const { amineClassGroups, simpleAmineGroups, compoundOnly } = DIAGNOSIS_PHRASES;
+  assert.deepEqual([['metil'], ['metil', 'metil'], ['metil', 'metil', 'metil'], ['etil', 'metil'], ['etil', 'metil', 'metil'],
+    ['etil', 'metil', 'propil']].map(amineClassGroups), ['«metil»', 'los dos son «metil»', 'los tres son «metil»',
+    '«etil» y «metil»', '«etil» y dos «metil»', '«etil», «metil» y «propil»']);
+  assert.ok(simpleAmineGroups.endsWith('sin más átomos que esos carbonos y el nitrógeno'));
+  assert.equal(compoundOnly, ' («bis», «tris»… solo van delante de grupos que tienen sus propios sustituyentes)');
+  // The class-name step: its fallback, its paragraphs render.
+  assert.deepEqual([...STEP_FALLBACKS[AMINE_CLASS_STEP]], ['group', 'count']);
+  const texts = AMINE_CLASS_STEP_TEXTS;
+  for (const paragraph of [texts.substitutive({ substitutive: 'X' }), texts.groups({ groups: ['etil', 'metil'] }), texts.order,
+    texts.di, texts.word({ name: 'X' }), texts.general, texts.generalForm, texts.only, texts.none({ substitutive: 'X' }),
+    texts.none({ substitutive: 'X', traditional: 'Y' })]) {
+    assert.match(paragraph, /^[«A-ZÁÉÍÓÚ].*\.$/u, paragraph);
+    assert.doesNotMatch(paragraph, /undefined|null|NaN|éter|oxígeno/, paragraph);
+  }
 }); // End of test 'the drafts of the amine rules…'

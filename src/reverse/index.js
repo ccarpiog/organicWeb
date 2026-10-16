@@ -51,8 +51,9 @@
  * `outOfScope`, two rings). Their own mistakes are diagnose.js «Amines»'s
  * (phase I-52c4a: `4-hidroxianilina` CARBONYL_SENIORITY, `4-aminoanilina`
  * CARBONYL_PREFIX), with SUBSTITUTED_TEMPLATE on `bencilamina` and the shared
- * rules on `anilina`'s prefixes; the class names' own mistakes are still
- * deliberate nulls (phase I-52c4b).
+ * rules on `anilina`'s prefixes; the class names' own mistakes too (phase
+ * I-52c4b: `metiletilamina` CLASS_ORDER, `metilmetilamina` CLASS_DI,
+ * `ciclohexilamina` CLASS_NAME_NONE, each opening the class-name step).
  *
  * The amino prefixes (R-6c2) need nothing of their own here either: the
  * parser reads `amino` as a retained word and, as a compound branch's own

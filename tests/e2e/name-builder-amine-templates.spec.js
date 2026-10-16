@@ -10,7 +10,7 @@
  * `bencilamina` draw their molecules, a substituted `N-metilbencilamina` its
  * molecule with the app's name and why; `di`, `met`, `il` and `amina` build
  * the class name `dimetilamina`, a valid form, and `metiletilamina` its
- * molecule without a diagnosis yet (phase I-52c4b); `N,p-dimetilanilina` and
+ * molecule with the app's name and why (phase I-52c4b); `N,p-dimetilanilina` and
  * `tetrametilamina` are refused with their tiles marked, the canvas
  * untouched; the Ayuda section «Del nombre al dibujo» has its amine line.
  * Runs on the dev server and on dist (playwright.config.js).
@@ -218,7 +218,7 @@ test('`N,4-dimetilanilina`, `p-cloroanilina` and `bencilamina` draw their molecu
   expect(errors).toEqual([]);
 }); // End of test '`N,4-dimetilanilina`, `p-cloroanilina`…'
 
-test('class names: `dimetilamina` draws N-metilmetanamina, a valid form; `metiletilamina` its molecule, no diagnosis yet', async ({ page }) => {
+test('class names: `dimetilamina` draws N-metilmetanamina, a valid form; `metiletilamina` its molecule and why', async ({ page }) => {
   const errors = await openApp(page);
   const verdict = page.locator('#verdict');
   let dialog = await buildName(page, 'di', 'met', 'il', 'amina');
@@ -243,16 +243,17 @@ test('class names: `dimetilamina` draws N-metilmetanamina, a valid form; `metile
   await expect(page.locator('#result-name')).toHaveText('N,N-dimetiletanamina');
   expect(nitrogenBonds(await moleculeJSON(page))).toEqual(['C1 C1 C1']);
 
-  // Out of alphabetical order: the class name's own mistake, a deliberate null of diagnose.js «Amines» until phase I-52c4b.
+  // Out of alphabetical order: the class name's own mistake, named since phase I-52c4b (diagnosis.spec.js opens its step).
   dialog = await buildName(page, 'met', 'il', 'et', 'il', 'amina');
   await expect(page.locator('#name-builder-name')).toHaveText('metiletilamina');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   await expect(dialog).toBeHidden();
   await expect(verdict).toHaveAttribute('data-kind', 'otherName');
-  expect(await verdict.getAttribute('data-diagnosis')).toBeNull();
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'CLASS_ORDER');
   await expect(verdict.locator('.verdict-message')).toHaveText('Esta es la molécula que describe tu nombre, pero se llama '
-    + '«N-metiletanamina». Pulsa «Ver paso a paso» para ver por qué.');
-  await expect(verdict.locator('.verdict-diagnosis')).toHaveCount(0);
+    + '«N-metiletanamina».');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('En un nombre como «metilamina», los grupos unidos al nitrógeno se '
+    + 'escriben por orden alfabético: «etil» va antes que «metil» (e antes que m). Se escribe «etilmetilamina».');
   await expect(page.locator('#result-name')).toHaveText('N-metiletanamina');
   drawn = await moleculeJSON(page);
   expect(elementsOf(drawn)).toEqual(['C', 'C', 'C', 'N']);
@@ -266,7 +267,7 @@ test('`N,p-dimetilanilina` and `tetrametilamina` are refused with their tiles ma
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
   const message = page.locator('#name-builder-message');
   await expect(message).toHaveText('«N» y las letras «o», «m» y «p» no van juntas delante de un mismo grupo: con un grupo en el '
-    + 'nitrógeno y otro en el anillo, escribe los números (N,4-dimetilanilina).');
+    + 'nitrógeno y otro en el anillo, escribe «N» para el del nitrógeno y un número para el del anillo (N,4-dimetilanilina).');
   await expect(message).toHaveClass(/nb-message--error/);
   expect(await invalidTiles(page)).toEqual([0, 1]);
   await expect(dialog).toBeVisible();

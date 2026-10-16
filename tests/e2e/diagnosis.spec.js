@@ -50,7 +50,13 @@
  * parent, «Ver el paso» at «Busca la cadena principal», which says why the
  * other side wins; and `2-hidroxietan-1-amina`, the amine beside an alcohol —
  * the order and the `amino` prefix, «Ver el paso» at the alcohol's «Reconoce
- * el grupo funcional».
+ * el grupo funcional». Amine class names (phase I-52c4b): `metiletilamina`,
+ * the groups on the nitrogen out of alphabetical order — no student's chain,
+ * no legend, «Ver el paso» at the class-name step «Monta el nombre
+ * tradicional de la amina» after «Reconoce el grupo funcional», which says how
+ * that name is formed, the groups and the nitrogen marked; and `fenilamina`,
+ * a class name for an amine that has none — the substitutive name and
+ * `anilina`, the same step saying which amines get one.
  */
 
 import { test, expect } from '@playwright/test';
@@ -168,6 +174,12 @@ const AMINE_SIDE = ['N', 'et', 'il', 'met', 'ano', 'amina'];
 
 /** The tiles of «2-hidroxietan-1-amina» (the alcohol is the principal group: 2-aminoetan-1-ol). */
 const AMINE_JUNIOR = ['2', 'hidroxi', 'et', 'ano', '1', 'amina'];
+
+/** The tiles of «metiletilamina» (a class name with its groups out of order: etilmetilamina). */
+const AMINE_CLASS_ORDER = ['met', 'il', 'et', 'il', 'amina'];
+
+/** The tiles of «fenilamina» (a class name for an amine that has none: bencenamina, or anilina). */
+const AMINE_CLASS_NONE = ['fenil', 'amina'];
 
 test('a longer chain: the message between the two sentences, the student\'s chain beside the parent, «Ver el paso» at «Busca la cadena»; Deshacer clears it all', async ({ page }) => {
   const errors = await openApp(page);
@@ -669,6 +681,67 @@ test('an amine (I-52c4a): the parent on the other side of the nitrogen, «Ver el
   await expect(stepper).toContainText('Aquí manda el alcohol, así que el grupo amino se nombra con el prefijo «amino-»');
   expect(errors).toEqual([]);
 }); // End of test 'an amine (I-52c4a)…'
+
+test('an amine class name (I-52c4b): the groups out of order, no student\'s chain, «Ver el paso» at the class-name step; a class name for an amine that has none', async ({ page }) => {
+  const errors = await openApp(page);
+  await drawName(page, ...AMINE_CLASS_ORDER);
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'CLASS_ORDER');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: metiletilamina');
+  // The three sentences, in order: the verdict, the diagnosis, the hint.
+  const texts = await verdict.locator('.verdict-message, .verdict-style, .verdict-diagnosis, .verdict-hint, .verdict-note')
+    .allTextContents();
+  expect(texts).toEqual([
+    'Esta es la molécula que describe tu nombre, pero se llama «N-metiletanamina».',
+    'En un nombre como «metilamina», los grupos unidos al nitrógeno se escriben por orden alfabético: «etil» va antes que «metil» '
+      + '(e antes que m). Se escribe «etilmetilamina».',
+    'Pulsa «Ver paso a paso» para ver por qué.',
+  ]);
+  await expect(page.locator('#result-name')).toHaveText('N-metiletanamina');
+  // A class name has no chain of its own: no stripe, no legend.
+  await expect(verdict.getByRole('list', { name: 'Qué se ve en el dibujo' })).toHaveCount(0);
+  await expect(page.locator('svg#canvas .hl-student')).toHaveCount(0);
+
+  // «Ver el paso»: the class-name step, right after «Reconoce el grupo funcional», says how this name is formed and tells it from
+  // N-metiletanamina; the groups and the nitrogen are marked.
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  const stepper = page.locator('#stepper');
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'amineClass');
+  await expect(stepper.locator('.step-title')).toHaveText('Monta el nombre tradicional de la amina');
+  await expect(stepper.locator('.step-title')).toBeFocused();
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 3 de 7');
+  const content = stepper.locator('.step-content');
+  for (const phrase of ['El nombre que explican los otros pasos, «N-metiletanamina», es el que doy primero, el nombre sustitutivo',
+    'aquí, «etil» y «metil».', '«tert-» no cuenta para el orden', '«dimetilamina», no «metilmetilamina»',
+    'Para esta molécula: «etilmetilamina».']) {
+    await expect(content).toContainText(phrase);
+  }
+  await expect(page.locator('svg#canvas .hl-substituent.hl-atom')).toHaveCount(3);
+  await expect(page.locator('svg#canvas .hl-candidate.hl-atom')).toHaveCount(1);
+  // One step back, «Reconoce el grupo funcional»: the amine.
+  await stepper.getByRole('button', { name: 'Anterior' }).click();
+  await expect(stepper).toHaveAttribute('data-step-id', 'group');
+
+  // `fenilamina`: no class name for an amine with a ring; the substitutive name and the retained one, and the same step says which
+  // amines get one.
+  await drawName(page, ...AMINE_CLASS_NONE);
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'CLASS_NAME_NONE');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: fenilamina');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('Un nombre como «etilmetilamina» (los grupos unidos al nitrógeno y '
+    + 'la palabra «amina», todo junto) solo lo doy cuando el nitrógeno lleva grupos sencillos: cadenas sin ramas unidas por su '
+    + 'extremo (metil, etil, propil…), isopropil o tert-butil, sin enlaces dobles ni triples, sin anillos y sin más átomos que esos '
+    + 'carbonos y el nitrógeno. Esta molécula se nombra con la terminación «-amina»: «bencenamina» (también vale «anilina»).');
+  await expect(page.locator('#result-name')).toHaveText('bencenamina');
+  await verdict.getByRole('button', { name: 'Ver el paso' }).click();
+  await expect(stepper).toBeVisible();
+  await expect(stepper).toHaveAttribute('data-step-id', 'amineClass');
+  await expect(stepper.locator('.step-count')).toHaveText('Paso 3 de 5');
+  await expect(stepper.locator('.step-content')).toContainText('Esta molécula no es una de esas aminas sencillas, así que no tiene '
+    + 'ese nombre: se nombra como en los otros pasos, con la terminación «-amina»: «bencenamina» (también vale «anilina»).');
+  expect(errors).toEqual([]);
+}); // End of test 'an amine class name (I-52c4b)…'
 
 test('a ring (I-50d): the ring is the parent beside the student\'s chain, «Ver el paso» at «Reconoce el benceno»; a ring numbered otherwise', async ({ page }) => {
   const errors = await openApp(page);

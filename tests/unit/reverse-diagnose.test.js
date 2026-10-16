@@ -55,8 +55,13 @@ const RING_ONLY_CODES = Object.freeze(['RING_IS_PARENT', 'BENZENE_RING', 'SUBSTI
 const ALCOHOL_ONLY_CODES = Object.freeze(['HYDROXY_PREFIX', 'HYDROXY_PARENT', 'MORE_HYDROXY_GROUPS', 'PHENOL']);
 
 /** The codes only an ether gives (phase I-51b2; their cases are in reverse-diagnose-ethers.test.js). */
-const ETHER_ONLY_CODES = Object.freeze(['ETHER_SIDE', 'CLASS_NAME_NONE', 'CLASS_GROUP_WORDS', 'CLASS_ORDER', 'CLASS_DI',
-  'ALKOXY_MULTIPLIER']);
+const ETHER_ONLY_CODES = Object.freeze(['ETHER_SIDE', 'ALKOXY_MULTIPLIER']);
+
+/**
+ * The class-name codes, which only a class name gives: an ether's (phase I-51b2; cases in reverse-diagnose-ethers.test.js) and,
+ * with the amine's words, an amine's (phase I-52c4b; cases in reverse-diagnose-amines.test.js).
+ */
+const CLASS_NAME_CODES = Object.freeze(['CLASS_NAME_NONE', 'CLASS_GROUP_WORDS', 'CLASS_ORDER', 'CLASS_DI']);
 
 /** The codes only an aldehyde or a ketone gives (phase I-51c3b1; their cases are in reverse-diagnose-carbonyls.test.js). */
 const CARBONYL_ONLY_CODES = Object.freeze(['CARBONYL_SENIORITY', 'KETONE_NOT_ALDEHYDE', 'ALDEHYDE_CARBON', 'CARBONYL_PREFIX',
@@ -314,8 +319,8 @@ test('one case per diagnosis code: the code, its trace rule, the step and the me
     seen.add(code);
   } // End of the loop over the cases
   const chainCodes = DIAGNOSIS_CODES
-    .filter((code) => ![...RING_ONLY_CODES, ...ALCOHOL_ONLY_CODES, ...ETHER_ONLY_CODES, ...CARBONYL_ONLY_CODES, ...ACID_ONLY_CODES,
-      ...ESTER_ONLY_CODES, ...NITRILE_ONLY_CODES, ...AMINE_ONLY_CODES, ...BRANCH_NAME_CODES].includes(code));
+    .filter((code) => ![...RING_ONLY_CODES, ...ALCOHOL_ONLY_CODES, ...ETHER_ONLY_CODES, ...CLASS_NAME_CODES, ...CARBONYL_ONLY_CODES,
+      ...ACID_ONLY_CODES, ...ESTER_ONLY_CODES, ...NITRILE_ONLY_CODES, ...AMINE_ONLY_CODES, ...BRANCH_NAME_CODES].includes(code));
   assert.deepEqual([...seen].sort(), [...chainCodes].sort(), 'every code an open chain can give has a case');
 }); // End of test 'one case per diagnosis code: the code, its trace rule, the step and the message'
 

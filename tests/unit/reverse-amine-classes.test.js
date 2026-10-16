@@ -13,10 +13,12 @@
  * groups, VALENCE on a fourth), search (left-out locants inside a group),
  * readName() verdicts of every §15.3 kind with the molecule each describes
  * (compared by aromatic key with a SMILES), the class name's own mistakes —
- * deliberate nulls of diagnose.js «Amines» until phase I-52c4b, each with its
- * category read independently —, the fixture round trip, the closed loop
- * over the oracle's amine generators, the mutation sweeps, the ordered
- * drawing, the dialog's tooltip, a property test and a time budget.
+ * named by diagnose.js «Amines» since phase I-52c4b (CLASS_ORDER, CLASS_DI,
+ * CLASS_GROUP_WORDS, CLASS_NAME_NONE, the step AMINE_CLASS_STEP; their
+ * messages in reverse-diagnose-amines.test.js), each with its category read
+ * independently —, the fixture round trip, the closed loop over the oracle's
+ * amine generators, the mutation sweeps, the ordered drawing, the dialog's
+ * tooltip, a property test and a time budget.
  */
 
 import { test } from 'node:test';
@@ -29,6 +31,8 @@ import { build, specAtoms, specCarbons } from '../../src/reverse/build.js';
 import { searchStructures } from '../../src/reverse/search.js';
 import { tokenize } from '../../src/reverse/tokenize.js';
 import { AMINA_ID, isAmineClassWord, tileById } from '../../src/reverse/tiles.js';
+import { AMINE_CLASS_STEP, STEP_FALLBACKS, diagnosisExplanation } from '../../src/reverse/diagnose.js';
+import { explain } from '../../src/explain/explain.js';
 import { verdictLayout, verdictBlock } from '../../src/ui/draw-name.js';
 import { TILE_HINTS } from '../../src/ui/name-builder.js';
 import { parseSmiles } from '../../src/model/smiles.js';
@@ -153,11 +157,11 @@ function groupWords(tree, item) {
 }
 
 /**
- * The category of an amine class name's own mistake (the deliberate nulls
- * of diagnose.js «Amines», phase I-52c4b), read from the student's tree and
- * the engine's naming, independently of diagnose.js: `none` (the engine
- * gives the molecule no class name), `words` (the student's group words are
- * not the engine's), `multiplier` (a repeated group written twice, or with
+ * The category of an amine class name's own mistake (diagnose.js «Amines»,
+ * phase I-52c4b: CATEGORY_CODES), read from the student's tree and the
+ * engine's naming, independently of diagnose.js: `none` (the engine gives
+ * the molecule no class name), `words` (the student's group words are not
+ * the engine's), `multiplier` (a repeated group written twice, or with
  * `bis`, `tris`), `order` (the groups out of the engine's order).
  *
  * @param {string[]} ids - The name's tile ids.
@@ -437,11 +441,50 @@ test('readName (R-6c3): invalid, ambiguous and incomplete class names', () => {
   assert.equal(read('START cloro et il END met il amina', { budget: { placements: 1 } }).kind, 'incomplete');
 }); // End of test 'readName (R-6c3): invalid, ambiguous and incomplete class names'
 
+/** The diagnosis code of each class-name category (diagnose.js «Amines», phase I-52c4b). */
+const CATEGORY_CODES = Object.freeze({
+  order: 'CLASS_ORDER', multiplier: 'CLASS_DI', words: 'CLASS_GROUP_WORDS', none: 'CLASS_NAME_NONE',
+});
+
+/**
+ * Asserts the diagnosis of a class name's own mistake (phase I-52c4b): the
+ * code of its category, the step «Ver el paso» opens (AMINE_CLASS_STEP, added
+ * right after «Reconoce el grupo funcional»), no student's chain, the class
+ * word or the groups as its tiles, and the class name it recommends — the
+ * engine's own, quoted by its message («Se escribe «…».» or «…», no «the
+ * student's name».) — or none for `none`.
+ *
+ * @param {object} verdict - The `otherName` verdict.
+ * @param {string} category - Its category (classCategory()).
+ * @param {string} label - Assertion label.
+ * @returns {void}
+ */
+function assertClassDiagnosis(verdict, category, label) {
+  const d = verdict.diagnosis;
+  assert.ok(d, `${label}: no diagnosis`);
+  assert.equal(d.code, CATEGORY_CODES[category], `${label}: ${d.message}`);
+  assert.equal(d.step, AMINE_CLASS_STEP, label);
+  assert.ok(!/undefined|null|NaN|\[object/.test(d.message), `${label}: ${d.message}`);
+  assert.deepEqual(d.student, { atoms: [], bonds: [] }, label);
+  assert.ok(d.tiles[0] >= 0 && d.tiles[0] < d.tiles[1], `${label}: tiles ${d.tiles}`);
+  const opened = diagnosisExplanation(verdict, explain);
+  assert.deepEqual([opened.steps[opened.index].id, opened.steps[opened.index - 1].id], [AMINE_CLASS_STEP, 'group'], label);
+  const offered = verdict.naming.alternatives.find((alt) => alt.style === 'amineClass');
+  if (category === 'none') {
+    assert.equal(d.className, null, label);
+    assert.ok(d.message.includes(`«${verdict.name}»`), `${label}: ${d.message}`);
+  } else {
+    assert.equal(d.className.name, offered.name, label);
+    assert.ok(d.message.includes(`Se escribe «${offered.name}».`) || d.message.endsWith(`«${offered.name}», no «${verdict.text}».`),
+      `${label}: ${d.message}`);
+  }
+} // End of function assertClassDiagnosis()
+
 /**
  * The class name's own mistakes (deliberate «Amines» nulls until phase
- * I-52c4b): [tile words or text, category].
+ * I-52c4b, named since): [tile words or text, category].
  */
-const NULLS = [
+const FORMER_NULLS = [
   ['metiletilamina', 'order'], ['propilmetilamina', 'order'], ['metilisopropilamina', 'order'], ['met il tert-butil amina', 'order'],
   ['metilmetilamina', 'multiplier'], ['bis met il amina', 'multiplier'], ['etilmetilmetilamina', 'multiplier'],
   ['propildimetilamina', 'order'],
@@ -451,18 +494,19 @@ const NULLS = [
   ['(2-metilpropil)amina', 'none'], ['metilciclohexilamina', 'none'],
 ];
 
-test('the class name\'s own mistakes: deliberate «Amines» nulls (phase I-52c4b), each with its category read independently', () => {
+test('the class name\'s own mistakes: diagnosed since phase I-52c4b, each with its category read independently', () => {
   const seen = new Set();
-  for (const [name, category] of NULLS) {
+  for (const [name, category] of FORMER_NULLS) {
     const ids = idsOf(name);
     const verdict = readName(ids);
     assert.equal(verdict.kind, 'otherName', `${name}: ${verdict.message}`);
     assert.equal(classCategory(ids, verdict), category, name);
-    assert.equal(verdict.diagnosis, null, `${name}: ${verdict.diagnosis && verdict.diagnosis.message}`);
+    assertClassDiagnosis(verdict, category, name);
     assert.ok(verdict.draw && verdict.molecule, name);
     seen.add(category);
-  } // End of the loop over the nulls
+  } // End of the loop over the former nulls
   assert.deepEqual([...seen].sort(), ['multiplier', 'none', 'order', 'words']);
+  assert.deepEqual([...STEP_FALLBACKS[AMINE_CLASS_STEP]], ['group', 'count']);
 }); // End of test 'the class name\'s own mistakes…'
 
 // ---------------------------------------------------------------------------
@@ -587,9 +631,9 @@ function mutationsOf(ids) {
 const FAMILY_CATEGORY = Object.freeze({ reversed: 'order', split: 'multiplier', compound: 'multiplier', pin: 'words' });
 
 /**
- * Reads every mutation of some class names: every one is `otherName` with
- * a deliberate null diagnosis (diagnose.js «Amines», phase I-52c4b) whose
- * category is its family's.
+ * Reads every mutation of some class names: every one is `otherName`, its
+ * category its family's and its diagnosis that category's code (diagnose.js
+ * «Amines», phase I-52c4b; a deliberate null until then).
  *
  * @param {string[]} names - Class names.
  * @returns {Object<string, number>} The mutations by family.
@@ -601,15 +645,15 @@ function sweep(names) {
       const verdict = readName(mutation.ids);
       const label = `${name} → ${mutation.family} ${verdict.text}`;
       assert.equal(verdict.kind, 'otherName', `${label}: ${verdict.message}`);
-      assert.equal(verdict.diagnosis, null, `${label}: ${verdict.diagnosis && verdict.diagnosis.message}`);
       assert.equal(classCategory(mutation.ids, verdict), FAMILY_CATEGORY[mutation.family], label);
+      assertClassDiagnosis(verdict, FAMILY_CATEGORY[mutation.family], label);
       counts[mutation.family] += 1;
     } // End of the loop over the mutations of one name
   } // End of the loop over the names
   return counts;
 } // End of function sweep()
 
-test('mutations of the class names: otherName, a deliberate «Amines» null of the family\'s category', async () => {
+test('mutations of the class names: otherName, the code of the family\'s category (a deliberate null until I-52c4b)', async () => {
   const fixture = (await readFixtures()).filter((row) => isAmine(row.smiles)).flatMap((row) => row.names).filter(isClassText);
   assert.deepEqual(sweep(fixture), { reversed: 5, split: 6, compound: 6, pin: 5 });
   assert.deepEqual(sweep(generatedClassNames().map(({ name }) => name)), { reversed: 15, split: 6, compound: 6, pin: 5 });
@@ -661,6 +705,7 @@ test('property (R-6c3): random class names — any groups, multipliers, locants 
     '2 met il', 'di met il', 'bis et il', 'tri met il', 'di tert-butil', ''];
   const tails = ['amina', 'amina', 'amina', 'amina met', '2 amina', 'di amina', 'N amina', 'éter'];
   const kinds = new Map();
+  let diagnosed = 0;
   for (let i = 0; i < 300; i += 1) {
     const words = [pick(groups), pick(groups), pick(tails)].filter(Boolean).join(' ');
     const ids = seq(words);
@@ -674,12 +719,18 @@ test('property (R-6c3): random class names — any groups, multipliers, locants 
         words);
     }
     if (verdict.kind === 'otherName' && isAmineClassName(parse(ids).tree)) {
-      assert.equal(verdict.diagnosis, null, `${words}: a class name's mistake is a deliberate null`);
+      // Since phase I-52c4b every class name's mistake is named, with a step «Ver el paso» opens.
+      const d = verdict.diagnosis;
+      assert.ok(d && !/undefined|null|NaN|\[object/.test(d.message), `${words}: ${d && d.message}`);
+      const opened = diagnosisExplanation(verdict, explain);
+      assert.ok([d.step, ...STEP_FALLBACKS[d.step]].includes(opened.steps[opened.index].id), `${words}: ${d.step}`);
+      diagnosed += 1;
     }
   } // End of the loop over the random names
   for (const kind of ['alternative', 'otherName', 'invalid']) {
     assert.ok(kinds.get(kind) > 0, `no ${kind} verdict: ${JSON.stringify([...kinds])}`);
   }
+  assert.ok(diagnosed > 0, 'no class name diagnosed');
 }); // End of test 'property (R-6c3): random class names…'
 
 test('time budget: class-name readName() calls well within budget', () => {

@@ -18,8 +18,9 @@
  * engine writes on `anilina` judged by the other rules; the amine's own
  * mistakes on a template, deliberate nulls of diagnose.js «Amines» until
  * phase I-52c4a, each with its category read independently and now its code,
- * step and words (the prefix-style question, `style`, still a null, phase
- * I-52c4b's); the tooltips;
+ * step and words (the prefix-style question, `style`, still a null: the
+ * cross-family open question, pinned by phase I-52c4b); `N` called no number
+ * by POSITIONAL (phase I-52c4b); the tooltips;
  * the fixture names; a closed loop over the engine's retained amine names
  * with each locant list removed, and over the generators' ones; the mutation
  * sweeps; the ordered drawing; random and partial names; time budgets.
@@ -193,8 +194,10 @@ test('parser (R-6c3): numbers, `N` or a letter on an amine template, `N` beside 
   assert.equal(messageOf('4 anilina'), '«anilina» ya dice dónde va su grupo NH₂, en el carbono 1: no lleva números ni letras propios.');
   assert.equal(messageOf('1 bencilamina'), '«bencilamina» ya dice dónde van su grupo NH₂ y su fenilo, en el carbono 1: no lleva '
     + 'números ni letras propios.');
+  // The `N` is no number (phase I-52c4b).
   assert.equal(messageOf('N p di met il anilina'), '«N» y las letras «o», «m» y «p» no van juntas delante de un mismo grupo: con un '
-    + 'grupo en el nitrógeno y otro en el anillo, escribe los números (N,4-dimetilanilina).');
+    + 'grupo en el nitrógeno y otro en el anillo, escribe «N» para el del nitrógeno y un número para el del anillo '
+    + '(N,4-dimetilanilina).');
   assert.equal(messageOf('et il p met il anilina'), 'Las letras «o», «m» y «p» solo sirven cuando el benceno lleva dos grupos, y tu '
     + 'nombre pone tres (contando el grupo NH₂ de la anilina): escribe los números (1,2,4-trimetilbenceno). Si un grupo va unido al '
     + 'nitrógeno, escribe «N» delante (N-etil-p-metilanilina).');
@@ -439,7 +442,10 @@ const FORMER_NULLS = [
     + 'sustituyentes: con más grupos, la molécula se nombra con su nombre sistemático: «N-(fenilmetil)propan-1-amina».'],
 ];
 
-/** The template nulls left (phase I-52c4b): [tile words, category]. */
+/**
+ * The template null left, pinned (phase I-52c4b keeps it: the cross-family open question of a retained word's prefix style):
+ * [tile words, category].
+ */
 const NULLS = [
   // The open question of the retained words' prefix style (as `4-(propan-2-il)ftalonitrilo`): the engine writes `4-isopropilanilina`.
   ['4 prop ano 2 il anilina', 'style'],

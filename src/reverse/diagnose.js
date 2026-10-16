@@ -26,11 +26,11 @@
  * names —, R-6b3; «Nitriles» below: the rules that hold for a nitrile name,
  * and the principal –C≡N group's own mistakes, checked first as the acid's
  * and the ester's are), and their amines (R-6c1, R-6c2 — the amino
- * prefixes —, R-6c3 — the retained names and the class names —, R-6c4a;
- * «Amines» below: the rules that hold for an amine name and for an amino
- * prefix, and the principal amine group's own mistakes, checked before
- * every other family's; the class names' and the templates' prefix-style
- * mistakes still deliberate nulls).
+ * prefixes —, R-6c3 — the retained names and the class names —, R-6c4a,
+ * R-6c4b; «Amines» below: the rules that hold for an amine name and for an
+ * amino prefix, the principal amine group's own mistakes, checked before
+ * every other family's, and the class names' own mistakes, a track of their
+ * own as an ether's; a template's prefix style still a deliberate null).
  *
  * The rules, in order (first match wins):
  *
@@ -224,8 +224,8 @@
  * may name the step of its own case: `ring` on a `ciclo` ring, `benzene` on
  * the benzene ring), for an alcohol, an aldehyde, a ketone, an acid, an
  * ester or a nitrile `group`, `ringChain` or `groupChain`, for an ester's O-bound side `ester` or `diester`
- * (R-6a3b), and for an ether `ether`, R-5b2 — or, for an ether's class name, CLASS_NAME_STEP, the
- * step diagnosisExplanation() adds to them);
+ * (R-6a3b), and for an ether `ether`, R-5b2 — or, for an ether's class name, CLASS_NAME_STEP, and for
+ * an amine's, AMINE_CLASS_STEP (R-6c4b), the step diagnosisExplanation() adds to them);
  * diagnosisExplanation() builds those steps and finds it, with
  * the fallbacks of diagnosisStepIndex()), the student's chain and the
  * parent (atom and bond ids of the verdict's molecule, each in its own
@@ -409,6 +409,9 @@
  *   substitutive name the other steps explain, with the name the message
  *   recommends (Diagnosis `className`); for CLASS_NAME_NONE, which ethers get
  *   a class name and that this one is named only with its `-oxi` prefix.
+ *
+ * The four class-name codes serve an amine's class name too, with the
+ * amine's words and a step of its own (R-6c4b, «Amines» below).
  *
  * Deliberate, tested nulls: `di-tert-butil éter`, the IUPAC form, which the
  * engine writes `ditert-butil éter` (naming/index.js etherClassAlternative()
@@ -1231,21 +1234,63 @@
  * «1-fenil-N-metilmetanamina»), also one whose group on the nitrogen takes
  * the parent (`N-etilbencilamina` → «N-(fenilmetil)etanamina»: the word
  * admits no prefix, the plainest message, before any side of the nitrogen).
- * Two deliberate nulls are left for phase I-52c4b: a prefix in a style the
- * engine never writes on `anilina` (`4-(propan-2-il)anilina`, which it
- * writes `4-isopropilanilina`), the cross-family open question of the
- * retained words' prefix style, a null as for `ftalonitrilo`; and an amine's
- * functional-class name (R-6c3: `metilamina`, `dimetilamina`; assemble.js
- * isAmineClassName()) the engine does not list — its groups out of
- * alphabetical order (`metiletilamina`), a repeated group written twice
- * (`metilmetilamina`), other words (`(propan-2-il)amina`), or an amine
- * with no class name (`ciclohexilamina`, `fenilamina`, `etenilamina`,
- * `(2-cloroetil)metilamina`) — a null before every rule (diagnose()); the
- * ether's class-name rules never read it.
+ * One deliberate null is left, pinned: a prefix in a style the engine never
+ * writes on `anilina` (`4-(propan-2-il)anilina`, which it writes
+ * `4-isopropilanilina`), the cross-family open question of the retained
+ * words' prefix style, a null as for `ftalonitrilo`.
+ *
+ * An amine's class name (R-6c3: `metilamina`, `dimetilamina`; assemble.js
+ * isAmineClassName(); R-6c4b, phase I-52c4b) has a track of its own before
+ * every other rule, as an ether's (classNameDiagnosis(), amineClassDraft(),
+ * compared with the verdict's own naming, which lists the engine's class name
+ * as naming/index.js amineClassName() writes it): the ether's class-name
+ * codes, whose meaning fits, with the amine's words (`amine`: «En un nombre
+ * como «metilamina»…», the nitrogen, `di` or `tri`, one word), in order —
+ *
+ * 1. `CARBONYL_SENIORITY` — the engine's principal group is another, so the
+ *    amine the class word names is no principal group: the message of a
+ *    student's `amina` beside it (amineClassSeniority(), amineJunior():
+ *    `(2-hidroxietil)amina` → «2-aminoetan-1-ol», `(2-hidroxietil)metilamina`
+ *    → «2-(metilamino)etan-1-ol», `(1-oxoetil)amina` → «etanamida», the
+ *    nitrogen the amide's own), step `group`, the class word's tile;
+ * 2. `CLASS_NAME_NONE` — the engine gives the molecule no class name (a group
+ *    with branches other than isopropil / tert-butil, a ring, a multiple bond,
+ *    another atom: `ciclohexilamina`, `fenilamina`, `etenilamina`,
+ *    `(2-cloroetil)metilamina`, `(2-metilpropil)amina`,
+ *    `metilciclohexilamina`), the message giving the condition
+ *    (DIAGNOSIS_PHRASES.simpleAmineGroups) and the engine's substitutive name,
+ *    with its retained one when it gives one («bencenamina» (también vale
+ *    «anilina»)), the class word's tile;
+ * 2. `CLASS_GROUP_WORDS` — the student's group words are not the engine's
+ *    (`(propan-2-il)amina`, `(1-metiletil)amina` → «isopropilamina»), the
+ *    tiles of the groups whose words differ;
+ * 6. `CLASS_DI` — a repeated group written twice or with `bis`, `tris`
+ *    (`metilmetilamina`, `bismetilamina`, `trismetilamina`,
+ *    `etilmetilmetilamina` → «etildimetilamina»; `compound` says why not
+ *    `bis`), the repeated groups' tiles;
+ * 5. `CLASS_ORDER` — two groups out of alphabetical order, `tert-` and the
+ *    multipliers not counted, the plain word first on a tie
+ *    (`metiletilamina`, `propildimetilamina`, `metiltert-butilamina` with the
+ *    `tert-` hint, `dimetiletilamina` with the multipliers' hint,
+ *    `tert-butilbutilamina`), the first pair out of order.
+ *
+ * The right form quoted is the engine's own class name (the assembler writes
+ * every one exactly, `di-tert-butilamina` too, so no deliberate null as the
+ * ether's `ditert-butil éter`); the student has no chain to stripe. The four
+ * class codes open a step of their own that diagnosisExplanation() adds right
+ * after «Reconoce el grupo funcional» (AMINE_CLASS_STEP, «Monta el nombre
+ * tradicional de la amina», amineClassStep()): how the class name is formed —
+ * the groups bonded to the nitrogen named as branches, simplest form and no
+ * numbers, alphabetical order without `tert-`, `di` or `tri` when equal,
+ * `amina` last, all in one word — and how it differs from the substitutive
+ * name the other steps explain, with the groups and the name the message
+ * recommends (Diagnosis `className`); for CLASS_NAME_NONE, which amines get
+ * one and the substitutive name of this one. No amine class name is left a
+ * null (an ad hoc sweep of random class names found none).
  *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
- * (the class-name step's in CLASS_NAME_STEP_TEXTS), and DIAGNOSES gives
+ * (the class-name steps' in CLASS_NAME_STEP_TEXTS and AMINE_CLASS_STEP_TEXTS), and DIAGNOSES gives
  * example data for each code so the wording can be listed (R-7). Later
  * family phases (R-5a…R-6d) add their codes to DIAGNOSES / DIAGNOSIS_TEXTS
  * and their checks to FORM_RULES (or new trace rules to the chain walk).
@@ -1262,7 +1307,7 @@ import {
   stem, multiplier, compoundMultiplier, ENDINGS, ENCLOSING_MARKS, RETAINED_PREFIXES, FREE_VALENCE_SUFFIXES, omitsLocants,
   chainOmitsPrefixLocants, ringOmitsLocants, BENZENE_NAME, RING_PREFIX, POSITIONAL_LETTERS, TRADITIONAL_NAMES, SATURATED_INFIX,
   ALKOXY_ENDING, ETHER_CLASS_WORD, GROUP_PREFIXES, groupSuffix, ringGroupSuffix, ACYL_ENDING, RING_CARBONYL_ENDING, ESTER_LINK,
-  ESTER_ALKYL_ENDING, ESTER_ALKYL_JOIN, BENZENE_GROUP_NAMES,
+  ESTER_ALKYL_ENDING, ESTER_ALKYL_JOIN, BENZENE_GROUP_NAMES, AMINE_CLASS_WORD, alkylPrefix,
 } from '../naming/lexicon.es.js';
 import {
   assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, isClassName, isAmineClassName, esterPrefixKind, esterGroupsOf,
@@ -1350,6 +1395,26 @@ const WORDS = Object.freeze({
 
 /** The style of the engine's functional-class alternative (naming/index.js etherClassAlternative(); R-5b2). */
 const FUNCTIONAL_CLASS = 'functionalClass';
+
+/** The style of the engine's alkylamine alternative (naming/index.js amineClassAlternative(); R-6c4b). */
+const AMINE_CLASS = 'amineClass';
+
+/** The style of the engine's retained-name alternatives (`anilina`, `bencilamina`; naming/index.js). */
+const TRADITIONAL = 'traditional';
+
+/**
+ * The amine class names the messages quote as examples (R-6c4b, file header
+ * «Amines»), from the lexicon's words: one word, the groups bonded to the
+ * nitrogen and `amina` (naming/index.js amineClassName()).
+ */
+const CLASS_EXAMPLES = Object.freeze({
+  metilamina: `${WORDS.metil}${AMINE_CLASS_WORD}`,
+  dimetilamina: `${WORDS.di}${WORDS.metil}${AMINE_CLASS_WORD}`,
+  metilmetilamina: `${WORDS.metil}${WORDS.metil}${AMINE_CLASS_WORD}`,
+  etilmetilamina: `${WORDS.etil}${WORDS.metil}${AMINE_CLASS_WORD}`,
+  etildimetilamina: `${WORDS.etil}${WORDS.di}${WORDS.metil}${AMINE_CLASS_WORD}`,
+  tertButilmetilamina: `${WORDS.tertButil}${WORDS.metil}${AMINE_CLASS_WORD}`,
+});
 
 /** The SubstituentSpec kind of a `hidroxi` prefix (tiles.js; R-5a2). */
 const HYDROXY_KIND = tileById(HYDROXY_ID).kind;
@@ -1710,15 +1775,29 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
     : `Un prefijo «-${WORDS.oxi}» que no se acorta, como «${d.prefix}», es un prefijo compuesto (un grupo más «${WORDS.oxi}») y `
       + `va entre paréntesis; delante de un prefijo compuesto se usa «${WORDS.bis}», «${WORDS.tris}»…: «${d.right}», `
       + `no «${d.student}».`),
-  CLASS_NAME_NONE: (d) => `El nombre con «${WORDS.eter}» (nombre de clase funcional) solo lo doy cuando el oxígeno une dos `
-    + `grupos sencillos: ${DIAGNOSIS_PHRASES.simpleGroups}. Esta molécula se nombra con un prefijo acabado en `
-    + `«-${WORDS.oxi}»: «${d.name}».`,
-  CLASS_GROUP_WORDS: (d) => `En el nombre con «${WORDS.eter}», cada grupo se nombra con su forma más sencilla, sin números: `
+  // The class names (R-5b2: an ether's; R-6c4b, `amine`: an amine's, `etilmetilamina`, file header «Amines»).
+  CLASS_NAME_NONE: (d) => (d.amine
+    ? `Un nombre como «${CLASS_EXAMPLES.etilmetilamina}» (los grupos unidos al nitrógeno y la palabra «${AMINE_CLASS_WORD}», `
+      + `todo junto) solo lo doy cuando el nitrógeno lleva grupos sencillos: ${DIAGNOSIS_PHRASES.simpleAmineGroups}. Esta `
+      + `molécula se nombra con la terminación «-${WORDS.amina}»: «${d.name}»`
+      + `${d.traditional ? ` (también vale «${d.traditional}»)` : ''}.`
+    : `El nombre con «${WORDS.eter}» (nombre de clase funcional) solo lo doy cuando el oxígeno une dos `
+      + `grupos sencillos: ${DIAGNOSIS_PHRASES.simpleGroups}. Esta molécula se nombra con un prefijo acabado en `
+      + `«-${WORDS.oxi}»: «${d.name}».`),
+  CLASS_GROUP_WORDS: (d) => `${d.amine
+    ? `En un nombre como «${CLASS_EXAMPLES.metilamina}», cada grupo unido al nitrógeno`
+    : `En el nombre con «${WORDS.eter}», cada grupo`} se nombra con su forma más sencilla, sin números: `
     + `${WORDS.metil}, ${WORDS.etil}, ${WORDS.propil}…, ${WORDS.isopropil} o ${WORDS.tertButil}. Se escribe «${d.name}».`,
-  CLASS_ORDER: (d) => `En el nombre con «${WORDS.eter}», los dos grupos se escriben por orden alfabético: «${d.first}» va antes `
+  CLASS_ORDER: (d) => `${d.amine
+    ? `En un nombre como «${CLASS_EXAMPLES.metilamina}», los grupos unidos al nitrógeno`
+    : `En el nombre con «${WORDS.eter}», los dos grupos`} se escriben por orden alfabético: «${d.first}» va antes `
     + `que «${d.second}» (${d.why}).${d.hint ? ` ${d.hint}` : ''} Se escribe «${d.right}».`,
-  CLASS_DI: (d) => `Si los dos grupos unidos al oxígeno son iguales, su nombre se escribe una sola vez, con «${WORDS.di}» delante: `
-    + `«${d.right}», no «${d.student}».`,
+  CLASS_DI: (d) => (d.amine
+    ? `En un nombre como «${CLASS_EXAMPLES.metilamina}», los grupos iguales unidos al nitrógeno se escriben una sola vez, con `
+      + `«${WORDS.di}» o «${WORDS.tri}» delante${d.compound ? DIAGNOSIS_PHRASES.compoundOnly : ''}: `
+      + `«${d.right}», no «${d.student}».`
+    : `Si los dos grupos unidos al oxígeno son iguales, su nombre se escribe una sola vez, con «${WORDS.di}» delante: `
+      + `«${d.right}», no «${d.student}».`),
 });
 
 /** The phrases the templates of DIAGNOSIS_TEXTS fill in (Spanish drafts, pending teacher review). */
@@ -2094,6 +2173,34 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
   simpleGroups: `cadenas sin ramas unidas por su extremo (${WORDS.metil}, ${WORDS.etil}, ${WORDS.propil}…), ${WORDS.isopropil} o `
     + `${WORDS.tertButil}, sin enlaces dobles ni triples, sin anillos y sin más átomos que esos carbonos y el oxígeno`,
   /**
+   * The amines the engine gives a class name, «…grupos sencillos: <this>» (CLASS_NAME_NONE with `amine` and the amine
+   * class-name step, R-6c4b; naming/index.js amineClassName(): one nitrogen, every group as an ether's side).
+   */
+  simpleAmineGroups: `cadenas sin ramas unidas por su extremo (${WORDS.metil}, ${WORDS.etil}, ${WORDS.propil}…), `
+    + `${WORDS.isopropil} o ${WORDS.tertButil}, sin enlaces dobles ni triples, sin anillos y sin más átomos que esos carbonos y `
+    + 'el nitrógeno',
+  /** Why not `bis`, `tris`… before an amine class name's groups (CLASS_DI with `amine` and `compound`, R-6c4b). */
+  compoundOnly: ` («${WORDS.bis}», «${WORDS.tris}»… solo van delante de grupos que tienen sus propios sustituyentes)`,
+  /**
+   * The groups of an amine's class name, «…aquí, <this>.» (the amine class-name step, R-6c4b): one, the same one two or three
+   * times, or several, a repeated one counted (`«etil» y dos «metil»`).
+   *
+   * @param {string[]} groups - The group words in the class name's order, a repeated group as many times as it is there.
+   * @returns {string} The phrase.
+   */
+  amineClassGroups: (groups) => {
+    const distinct = [...new Set(groups)];
+    const counts = ['', '', 'dos', 'tres'];
+    if (distinct.length === 1) {
+      return groups.length === 1 ? `«${groups[0]}»` : `los ${counts[groups.length]} son «${groups[0]}»`;
+    }
+    const each = distinct.map((word) => {
+      const n = groups.filter((w) => w === word).length;
+      return n > 1 ? `${counts[n]} «${word}»` : `«${word}»`;
+    });
+    return `${each.slice(0, -1).join(', ')} y ${each[each.length - 1]}`;
+  }, // End of the amineClassGroups phrase
+  /**
    * Why the parent is on the other side of the ether oxygen (ETHER_SIDE, R-5b2), by the chain or ring rule that chose it
    * (the code that rule gives on its own, `reason`, with its data), as the explanation's «Reconoce el éter» step words it
    * (explain.js etherSideReason()).
@@ -2216,8 +2323,14 @@ export const DIAGNOSIS_PHRASES = Object.freeze({
  */
 export const CLASS_NAME_STEP = 'etherClass';
 
-/** The class-name diagnosis codes (R-5b2), which open CLASS_NAME_STEP. */
-const CLASS_CODES = Object.freeze(['CLASS_NAME_NONE', 'CLASS_GROUP_WORDS', 'CLASS_ORDER', 'CLASS_DI']);
+/**
+ * The id of the explanation step that diagnosisExplanation() adds, right
+ * after «Reconoce el grupo funcional», for the diagnosis of an amine's class
+ * name (amineClassStep(); R-6c4b): no explain() step says how that name is
+ * formed (its «Monta el nombre» only lists it), and CLASS_NAME_STEP speaks of
+ * the ether's oxygen, its spaces and its `-oxi` prefix.
+ */
+export const AMINE_CLASS_STEP = 'amineClass';
 
 /**
  * The Spanish drafts (pending teacher review) of CLASS_NAME_STEP
@@ -2256,6 +2369,43 @@ export const CLASS_NAME_STEP_TEXTS = Object.freeze({
 });
 
 /**
+ * The Spanish drafts (pending teacher review) of AMINE_CLASS_STEP
+ * (amineClassStep(), R-6c4b): its title and paragraphs, in the explanation's
+ * glossary markup. For an amine the engine gives a class name: the
+ * substitutive name of the other steps and how the class name differs from
+ * it, its groups, their order, `di` / `tri`, the word `amina` and the name;
+ * for one it gives none (CLASS_NAME_NONE): the class name in general, which
+ * amines get one, and the substitutive name of this one (with its retained
+ * name, `anilina`, when the engine gives one).
+ */
+export const AMINE_CLASS_STEP_TEXTS = Object.freeze({
+  title: 'Monta el nombre tradicional de la amina',
+  substitutive: (d) => `El nombre que explican los otros pasos, «${d.substitutive}», es el que doy primero, el nombre `
+    + `sustitutivo, con la [[cadena principal]] y el [[sufijo]] «-${WORDS.amina}». Una amina sencilla como esta tiene también `
+    + 'otro nombre, el nombre tradicional, muy usado en los libros. Se monta de otra manera, sin cadena principal y sin números.',
+  groups: (d) => `Los grupos unidos al nitrógeno se nombran como ramas, acabados en «-${WORDS.il}», cada uno con su forma más `
+    + `sencilla y sin números (${WORDS.metil}, ${WORDS.etil}, ${WORDS.propil}…, ${WORDS.isopropil} o ${WORDS.tertButil}): aquí, `
+    + `${DIAGNOSIS_PHRASES.amineClassGroups(d.groups)}.`,
+  order: 'Los grupos se escriben por orden alfabético, como los sustituyentes de un nombre: '
+    + `«${WORDS.tert}» no cuenta para el orden («${CLASS_EXAMPLES.tertButilmetilamina}»), y si las letras empatan va primero el `
+    + `grupo sin «${WORDS.tert}».`,
+  di: `Si hay grupos iguales, se escriben una sola vez, con «${WORDS.di}» o «${WORDS.tri}» delante, que tampoco cuentan para el `
+    + `orden: «${CLASS_EXAMPLES.dimetilamina}», no «${CLASS_EXAMPLES.metilmetilamina}»; «${CLASS_EXAMPLES.etildimetilamina}».`,
+  word: (d) => `Al final va la palabra «${AMINE_CLASS_WORD}», y todo se escribe junto, en una sola palabra. Para esta molécula: `
+    + `«${d.name}».`,
+  general: 'Una amina sencilla tiene también un nombre tradicional, muy usado en los libros: los grupos unidos al nitrógeno y la '
+    + `palabra «${AMINE_CLASS_WORD}», todo junto, como «${CLASS_EXAMPLES.etilmetilamina}» (el nombre sustitutivo, el que explican `
+    + `los otros pasos, se monta de otra manera, con el [[sufijo]] «-${WORDS.amina}»).`,
+  generalForm: 'Ese nombre se monta sin cadena principal y sin números: los grupos unidos al nitrógeno se nombran como ramas '
+    + `acabadas en «-${WORDS.il}», por orden alfabético («${WORDS.tert}», «${WORDS.di}» y «${WORDS.tri}» no cuentan), una sola `
+    + `vez con «${WORDS.di}» o «${WORDS.tri}» delante si son iguales, y al final va «${AMINE_CLASS_WORD}», todo junto: `
+    + `«${CLASS_EXAMPLES.metilamina}», «${CLASS_EXAMPLES.dimetilamina}», «${CLASS_EXAMPLES.etilmetilamina}».`,
+  only: `Ese nombre solo lo doy cuando el nitrógeno lleva grupos sencillos: ${DIAGNOSIS_PHRASES.simpleAmineGroups}.`,
+  none: (d) => 'Esta molécula no es una de esas aminas sencillas, así que no tiene ese nombre: se nombra como en los otros pasos, '
+    + `con la terminación «-${WORDS.amina}»: «${d.substitutive}»${d.traditional ? ` (también vale «${d.traditional}»)` : ''}.`,
+});
+
+/**
  * Every diagnosis code, in the order of the rules (design.md §15.8 R-3; the
  * ring rules of R-4, the alcohol rules of R-5a, the aldehyde and ketone
  * rules of R-5c3b1, the acid rules of R-5d3 and the ester rules of R-6a3a
@@ -2275,7 +2425,8 @@ export const CLASS_NAME_STEP_TEXTS = Object.freeze({
  * explanation step it points at (an explain() step id, design.md §5; a draft
  * may give its own case's step, `benzene` for RING_IS_PARENT on the benzene
  * ring, `ester` or `diester` for a rule read on an ester's O-bound side; the
- * class names CLASS_NAME_STEP, which diagnosisExplanation() adds)
+ * class names CLASS_NAME_STEP, which diagnosisExplanation() adds; an amine's class-name draft gives AMINE_CLASS_STEP,
+ * R-6c4b, the ether's codes with the amine's words)
  * and example data for its message (R-7 lists the drafts with it).
  * Frozen; later families add their codes.
  */
@@ -2627,7 +2778,9 @@ export const DIAGNOSIS_CODES = Object.freeze(Object.keys(DIAGNOSES));
  * (`ether`): its oxygen is an alkoxy prefix of the engine's name, at some
  * depth; the fallbacks are the chain or ring steps that follow it. The
  * class-name step (CLASS_NAME_STEP) is always among diagnosisExplanation()'s
- * steps; on explain()'s alone it falls back to «Reconoce el éter».
+ * steps; on explain()'s alone it falls back to «Reconoce el éter». So is an
+ * amine's class-name step (AMINE_CLASS_STEP, R-6c4b), which falls back to
+ * «Reconoce el grupo funcional» (`group`), the amine's.
  */
 export const STEP_FALLBACKS = Object.freeze({
   group: Object.freeze(['count']),
@@ -2646,6 +2799,7 @@ export const STEP_FALLBACKS = Object.freeze({
   ester: Object.freeze(['diester', 'group', 'count']),
   diester: Object.freeze(['ester', 'group', 'count']),
   [CLASS_NAME_STEP]: Object.freeze(['ether', 'chain', 'ring', 'benzene', 'count']),
+  [AMINE_CLASS_STEP]: Object.freeze(['group', 'count']),
 });
 
 /**
@@ -2665,17 +2819,18 @@ export const STEP_FALLBACKS = Object.freeze({
  *   SUBSTITUTED_TEMPLATE, PHENOL, the class-name codes and rules 5–11.
  * @property {string} message - The Spanish message (DIAGNOSIS_TEXTS).
  * @property {string} step - The `id` of the explain() step that explains the rule, a step of the explanation of the naming
- *   in `style` (diagnosisExplanation() builds it and finds the step; diagnosisStepIndex()); for a class name,
- *   CLASS_NAME_STEP, the step diagnosisExplanation() adds; for an ester's O-bound side (R-6a3b) `ester` or `diester`.
- * @property {{name: string, groups: string[]}|null} [className] - Only on a class-name diagnosis (R-5b2): the class name
- *   its message recommends and its two group words in that order (a repeated group twice), or null for CLASS_NAME_NONE;
- *   the class-name step quotes them (classNameStep()).
+ *   in `style` (diagnosisExplanation() builds it and finds the step; diagnosisStepIndex()); for an ether's class name,
+ *   CLASS_NAME_STEP, and for an amine's (R-6c4b) AMINE_CLASS_STEP, the step diagnosisExplanation() adds; for an ester's
+ *   O-bound side (R-6a3b) `ester` or `diester`.
+ * @property {{name: string, groups: string[]}|null} [className] - Only on a class-name diagnosis (R-5b2; an amine's,
+ *   R-6c4b): the class name its message recommends and its group words in that order (a repeated group as many times as
+ *   it is there), or null for CLASS_NAME_NONE; the class-name step quotes them (classNameStep(), amineClassStep()).
  * @property {string} style - The prefix style compared with (substituent.js PREFIX_STYLES; the student's own), the
  *   explanation context: the trace, `parent` and `step` belong to nameMolecule(molecule, {prefixStyle: style})
  *   (diagnosisNaming(); the verdict's own naming for the default style). For a rule read on an ester's O-bound side, the
  *   style of the side its message quotes (shownNaming(); review of phase I-52a3b).
  * @property {{atoms: number[], bonds: number[]}} student - The student's parent chain (or ring, its closing bond last), in
- *   the student's locant order; empty for an ether's class name (R-5b2), which has none.
+ *   the student's locant order; empty for an ether's or an amine's class name (R-5b2, R-6c4b), which has none.
  * @property {{atoms: number[], bonds: number[]}} parent - The app's parent chain or ring in that style (the naming's
  *   `parent`; the verdict's naming for the default style), in its locant order.
  * @property {{atoms: number[], bonds: number[]}} focus - The atoms and bonds the message is about (empty when none).
@@ -7850,7 +8005,7 @@ function classNameDraft(name, verdict) {
   const { naming } = verdict;
   const offered = (naming.alternatives || []).find((alt) => alt.style === FUNCTIONAL_CLASS);
   if (!offered) {
-    return { code: 'CLASS_NAME_NONE', data: { name: naming.name }, focus: idsOf(null), tiles: [word, word + 1] };
+    return { code: 'CLASS_NAME_NONE', data: { name: naming.name }, className: null, focus: idsOf(null), tiles: [word, word + 1] };
   }
   const groups = [items[0].range[0], items[items.length - 1].range[1]];
   const focus = occurrenceIds(verdict.prefixAtoms);
@@ -7890,33 +8045,259 @@ function classNameDraft(name, verdict) {
 } // End of function classNameDraft()
 
 /**
- * The diagnosis of an ether's functional-class name (R-5b2): classNameDraft()
- * as a Diagnosis, compared with the verdict's own naming (the class name is
- * offered beside the default style), the class-name step (CLASS_NAME_STEP,
- * which diagnosisExplanation() adds; review of phase I-51b2) with the name
- * the message recommends (`className`), no student's chain (a class name has
- * none: no stripe, no legend) and the engine's parent.
+ * The engine's alkylamine name written from group words (R-6c4b, file header
+ * «Amines»), as naming/index.js amineClassName() writes it (not exported in
+ * this form: it reads the molecule): the distinct words in the class order
+ * (compareClassWords(): alphabetical without `tert-`, the plain word first
+ * on a tie), each once with its multiplier (`di`, `tri`; rule 5's hyphen
+ * before `tert-`), then `amina`, all in one word. Equal to the engine's
+ * alternative exactly when the student's words are the engine's.
+ *
+ * @param {string[]} words - The group words, a repeated group as many times as it is there.
+ * @returns {string} The name.
+ */
+function amineClassNameOf(words) {
+  const distinct = [...new Set(words)].sort(compareClassWords);
+  const written = distinct.map((word) => {
+    const n = words.filter((w) => w === word).length;
+    const mult = n > 1 ? multiplier(n) : '';
+    return mult && word.startsWith(WORDS.tert) ? `${mult}-${word}` : `${mult}${word}`; // `di-tert-butilamina`.
+  });
+  return `${written.join('')}${AMINE_CLASS_WORD}`;
+} // End of function amineClassNameOf()
+
+/**
+ * The engine's word for one group of an amine's class name (R-6c4b), read
+ * from the molecule as naming/index.js etherSideName() reads a group on the
+ * nitrogen (default style): `isopropil`, `tert-butil`, else the unbranched
+ * chain's `metil`, `etil`…; only called when the engine gives the molecule a
+ * class name, so every group is one of those.
+ *
+ * @param {object} molecule - The verdict's molecule.
+ * @param {number} nitrogen - The class name's nitrogen.
+ * @param {number} atom - The group's carbon bonded to it.
+ * @returns {string} The word.
+ */
+function amineClassWord(molecule, nitrogen, atom) {
+  const sub = nameSubstituent(molecule, nitrogen, atom);
+  if (sub.retained === 'isopropyl' || sub.retained === 'tert-butyl') {
+    return `${RETAINED_PREFIXES[sub.retained].italic}${RETAINED_PREFIXES[sub.retained].text}`;
+  }
+  return alkylPrefix(sub.chain.length);
+}
+
+/**
+ * The engine's group words of an amine's class name (R-6c4b), one per group
+ * on the nitrogen (amineClassWord()), in the class order (compareClassWords()).
+ *
+ * @param {object} molecule - The verdict's molecule.
+ * @param {Map<number, {atom: number, bond: number}[]>} adj - Its adjacency.
+ * @param {number} nitrogen - The class name's nitrogen.
+ * @returns {string[]} The words, a repeated group as many times as it is there.
+ */
+function amineClassGroups(molecule, adj, nitrogen) {
+  return adj.get(nitrogen).map((n) => amineClassWord(molecule, nitrogen, n.atom)).sort(compareClassWords);
+}
+
+/**
+ * The tiles and the atoms of some groups of a class name (R-6c4b): the span
+ * of their tiles, from the first to the last, and their occurrences on the
+ * molecule (each group with the bond to the nitrogen).
+ *
+ * @param {object[]} items - The class name's groups (its name-level prefix nodes).
+ * @param {number[]} indexes - The groups meant, in ascending order.
+ * @param {object[]} occurrences - The verdict's prefixAtoms (their `prefix` the group's index).
+ * @returns {{tiles: [number, number], focus: {atoms: number[], bonds: number[]}}} The tiles and atoms.
+ */
+function classGroupSpan(items, indexes, occurrences) {
+  const meant = occurrences.filter((o) => indexes.includes(o.prefix));
+  return { tiles: [items[indexes[0]].range[0], items[indexes[indexes.length - 1]].range[1]], focus: occurrenceIds(meant) };
+}
+
+/**
+ * CARBONYL_SENIORITY for an amine's class name whose molecule has another
+ * principal group (R-6c4b, file header «Amines»): the class word names the
+ * amine as the principal group, as a student's `amina` suffix does
+ * (amineChecks()), so the message is the same — the seniority, the group
+ * that wins and where the amine goes: an amino prefix, `amino` or the
+ * engine's own words (`(2-hidroxietil)amina` → `2-aminoetan-1-ol`,
+ * `(2-hidroxietil)metilamina` → `2-(metilamino)etan-1-ol`), or the amide's
+ * own nitrogen (`(1-oxoetil)amina` → `etanamida`; amineJunior()). The amine
+ * group is the class name's nitrogen with its bond to a carbon of the
+ * engine's parent (or of the chain of an ester's O-bound group, or any of its
+ * carbons when none is there: the prefix is then the engine's «en los
+ * prefijos»); the focus, that bond; the tiles, the class word. Null for a
+ * principal group no message names (none is known).
+ *
+ * @param {object} verdict - The `otherName` verdict (its naming's suffix not an amine's).
+ * @param {Map<number, {atom: number, bond: number}[]>} adj - The molecule's adjacency.
+ * @param {number} nitrogen - The class name's nitrogen.
+ * @param {number} word - The class word's tile.
+ * @returns {object|null} The draft, or null.
+ */
+function amineClassSeniority(verdict, adj, nitrogen, word) {
+  const { naming, molecule } = verdict;
+  const engine = naming.structure.suffix;
+  if (!engine || !DIAGNOSIS_PHRASES.principal[engine.kind]) {
+    return null;
+  }
+  const ctx = { naming, adj, molecule };
+  const carbons = adj.get(nitrogen).filter((n) => molecule.atoms.get(n.atom).element === CARBON);
+  const chains = [naming.parent.atoms, ...(esterPrincipal(ctx) ? esterParts(naming.structure).map((p) => p.alkyl.chain.atoms) : [])];
+  const on = carbons.find((n) => chains.some((chain) => chain.includes(n.atom))) || carbons[0];
+  const group = { attachment: nitrogen, parentAtom: on.atom, bond: on.bond };
+  return {
+    code: 'CARBONYL_SENIORITY',
+    data: {
+      group: engine.kind,
+      ...principalEnding(naming),
+      junior: AMINE,
+      count: 1,
+      ...amineJunior(ctx, [group]),
+      ring: naming.structure.parentKind === 'ring',
+      name: naming.name,
+    },
+    focus: suffixFocus([group]),
+    tiles: [word, word + 1],
+  };
+} // End of function amineClassSeniority()
+
+/**
+ * The draft of an amine's class name (R-6c4b, file header «Amines»), in
+ * order: the engine's principal group is another, so the amine is no
+ * principal group at all (CARBONYL_SENIORITY, amineClassSeniority()); the
+ * engine gives the molecule no class name (CLASS_NAME_NONE with `amine`: a
+ * group with branches other than isopropil / tert-butil, a ring, a multiple
+ * bond, another atom — `ciclohexilamina`, `fenilamina`, `etenilamina`,
+ * `(2-cloroetil)metilamina`, `(2-metilpropil)amina`; the class word's tile;
+ * the engine's retained name too, `anilina`, when it gives one); the
+ * student's group words are not the engine's (CLASS_GROUP_WORDS:
+ * `(propan-2-il)amina`, `(1-metiletil)amina`; the groups whose words
+ * differ); a repeated group written twice or with `bis`, `tris`
+ * (CLASS_DI: `metilmetilamina`, `bismetilamina`, `etilmetilmetilamina`; the
+ * repeated groups); two groups out of the class order (CLASS_ORDER:
+ * `metiletilamina`, `metiltert-butilamina` with the `tert-` hint,
+ * `dimetiletilamina` with the multipliers' hint; the first pair out of
+ * order). The right form quoted is the engine's own class name (the
+ * assembler writes it exactly, also `di-tert-butilamina`). Every class-code
+ * draft opens AMINE_CLASS_STEP and carries `className`, the name its message
+ * recommends and the engine's group words (null for CLASS_NAME_NONE). Null
+ * when none applies (never seen: the words, the count and the order right
+ * are the engine's name, an `alternative`).
+ *
+ * @param {{tree: object, spec: object}} name - The student's tree and NameSpec.
+ * @param {object} verdict - The `otherName` verdict (its naming and reading: the class name's nitrogen is its studentParent).
+ * @returns {object|null} The draft `{code, data, step, className?, focus, tiles}`, or null.
+ */
+function amineClassDraft(name, verdict) {
+  const { tree } = name;
+  const { tiles, items } = tree;
+  const word = tree.parent.chain.tile;
+  const { naming, molecule } = verdict;
+  const adj = adjacency(molecule);
+  const nitrogen = verdict.studentParent.atoms[0];
+  const engine = naming.structure.suffix;
+  if (!engine || engine.kind !== AMINE) {
+    return amineClassSeniority(verdict, adj, nitrogen, word);
+  }
+  const step = AMINE_CLASS_STEP;
+  const alternatives = naming.alternatives || [];
+  const offered = alternatives.find((alt) => alt.style === AMINE_CLASS);
+  if (!offered) {
+    const traditional = alternatives.find((alt) => alt.style === TRADITIONAL);
+    const data = { amine: true, name: naming.name, traditional: traditional ? traditional.name : null };
+    return { code: 'CLASS_NAME_NONE', data, step, className: null, focus: idsOf(null), tiles: [word, word + 1] };
+  }
+  const right = offered.name.normalize('NFC');
+  const className = { name: right, groups: amineClassGroups(molecule, adj, nitrogen) };
+  const own = items.map((item) => wordsOf(tree, item));
+  const words = items.flatMap((item, k) => Array.from({ length: countOf(tiles, item) }, () => own[k]));
+  const all = items.map((_, k) => k);
+  if (amineClassNameOf(words) !== right) {
+    // The groups whose words are not the engine's for the atoms they stand for.
+    const differ = all.filter((k) => verdict.prefixAtoms
+      .some((o) => o.prefix === k && amineClassWord(molecule, nitrogen, o.attachment) !== own[k]));
+    const { tiles: span, focus } = classGroupSpan(items, differ.length > 0 ? differ : all, verdict.prefixAtoms);
+    return { code: 'CLASS_GROUP_WORDS', data: { amine: true, name: right }, step, className, focus, tiles: span };
+  }
+  const compound = (item) => item.multiplier !== null && tiles[item.multiplier].kind === 'cmult';
+  const repeated = all.filter((k) => compound(items[k]) || own.filter((w) => w === own[k]).length > 1);
+  if (repeated.length > 0) {
+    const { tiles: span, focus } = classGroupSpan(items, repeated, verdict.prefixAtoms);
+    const data = { amine: true, compound: items.some(compound), right, student: assemble(tree).text };
+    return { code: 'CLASS_DI', data, step, className, focus, tiles: span };
+  }
+  /**
+   * The multiplier text of a group ('' without one).
+   *
+   * @param {object} item - A group (prefix node).
+   * @returns {string} The text.
+   */
+  const lead = (item) => (item.multiplier === null ? '' : tiles[item.multiplier].text);
+  /**
+   * A group's words with its multiplier's letters before them and without `tert-` (the order counting the multipliers).
+   *
+   * @param {number} k - The group's index.
+   * @returns {string} The letters.
+   */
+  const withLead = (k) => `${lead(items[k])}${own[k].replace(WORDS.tert, '')}`;
+  for (let i = 0; i < items.length; i += 1) {
+    for (let j = i + 1; j < items.length; j += 1) {
+      if (compareClassWords(own[i], own[j]) <= 0) {
+        continue;
+      }
+      // The student's order is right counting the multipliers (`dimetiletilamina`) or `tert-` (`metiltert-butilamina`).
+      let hint = '';
+      if ((lead(items[i]) || lead(items[j])) && withLead(i) < withLead(j)) {
+        hint = DIAGNOSIS_PHRASES.hints.multipliers;
+      } else if (own[i] < own[j]) {
+        hint = DIAGNOSIS_PHRASES.hints.italic;
+      }
+      const { tiles: span, focus } = classGroupSpan(items, [i, j], verdict.prefixAtoms);
+      const data = { amine: true, first: own[j], second: own[i], why: classOrderReason(own[j], own[i]), hint, right };
+      return { code: 'CLASS_ORDER', data, step, className, focus, tiles: span };
+    } // End of the loop over the later groups
+  } // End of the loop over the groups
+  return null;
+} // End of function amineClassDraft()
+
+/**
+ * The diagnosis of a class name (R-5b2: an ether's, classNameDraft(); R-6c4b:
+ * an amine's, amineClassDraft()) as a Diagnosis, compared with the verdict's
+ * own naming (the class name is offered beside the default style), the step
+ * the draft gives — for an amine's, AMINE_CLASS_STEP, or the group step of
+ * CARBONYL_SENIORITY —, else the code's (an ether's class-name step,
+ * CLASS_NAME_STEP; both added by diagnosisExplanation(); review of phase
+ * I-51b2), with the name the message recommends (`className`, on the
+ * class-name codes only), no student's chain (a class name has none: no
+ * stripe, no legend) and the engine's parent.
  *
  * @param {{tree: object, spec: object}} name - The student's tree and NameSpec.
  * @param {object} verdict - The `otherName` verdict.
  * @returns {Diagnosis|null} The diagnosis, or null.
  */
 function classNameDiagnosis(name, verdict) {
-  const draft = classNameDraft(name, verdict);
+  const draft = isAmineClassName(name.tree) ? amineClassDraft(name, verdict) : classNameDraft(name, verdict);
   if (!draft) {
     return null;
   }
-  return {
+  const diagnosis = {
     code: draft.code,
     rule: ruleOf(draft),
     traceRule: null,
     message: DIAGNOSIS_TEXTS[draft.code](draft.data),
-    step: DIAGNOSES[draft.code].step,
+    step: draft.step || DIAGNOSES[draft.code].step,
     style: PREFIX_STYLES[0],
     student: idsOf(null),
     parent: idsOf(verdict.naming.parent),
     focus: idsOf(draft.focus),
     tiles: [draft.tiles[0], draft.tiles[1]],
+  };
+  if (!('className' in draft)) {
+    return diagnosis; // CARBONYL_SENIORITY on an amine's class name: no class name to recommend.
+  }
+  return {
+    ...diagnosis,
     className: draft.className ? { name: draft.className.name, groups: [...draft.className.groups] } : null,
   };
 } // End of function classNameDiagnosis()
@@ -8021,7 +8402,7 @@ export function diagnose(name, verdict, readings = [], namer = nameMolecule) {
     return null;
   }
   if (isAmineClassName(name.tree)) {
-    return null; // An amine's class name (R-6c3, file header «Amines»): its own mistakes are phase I-52c4b's.
+    return classNameDiagnosis(name, verdict); // An amine's class name (R-6c3, R-6c4b; file header «Amines»).
   }
   if (isClassName(name.tree)) { // `éter` only: the class word `ácido` (R-5d1) starts a substitutive name.
     // `(1-oxoetil) metil éter` is an ester, not an ether (R-6a3b, ESTER_CLASS_NAME); `metil etil éter` (R-5b2, «Ethers»).
@@ -8114,31 +8495,35 @@ export function diagnosisNaming(verdict, namer = nameMolecule) {
 }
 
 /**
- * The canvas marks of the class-name step (review of phase I-51b2): the two
- * groups bonded to the ether oxygen of a class name (the student's parent,
- * build.js etherOxygen()), each as a `substituent`, and the oxygen with its
- * two bonds as a `candidate`, as «Reconoce el éter» marks an oxygen. None
- * when that atom is not an ether oxygen (never seen).
+ * The canvas marks of the class-name step (review of phase I-51b2): the
+ * groups bonded to the class name's own atom (the student's parent) — the
+ * ether oxygen of an ether's class name (build.js etherOxygen()), its two
+ * groups, or the nitrogen of an amine's (R-6c4b, build.js
+ * amineClassNitrogen()), its one to three groups —, each as a
+ * `substituent`, and that atom with its bonds as a `candidate`, as «Reconoce
+ * el éter» marks an oxygen. None when that atom is neither (never seen).
  *
  * @param {object} molecule - The verdict's molecule.
- * @param {number|undefined} oxygen - The class name's oxygen (the verdict's studentParent).
+ * @param {number|undefined} center - The class name's oxygen or nitrogen (the verdict's studentParent).
  * @returns {{atoms: number[], bonds: number[], style: string}[]} The highlight specs.
  */
-function classNameHighlight(molecule, oxygen) {
+function classNameHighlight(molecule, center) {
   const adj = adjacency(molecule);
-  const atom = molecule.atoms.get(oxygen);
-  if (!atom || atom.element !== ALKOXY_ELEMENT || adj.get(oxygen).length !== 2) {
+  const atom = molecule.atoms.get(center);
+  const ether = Boolean(atom) && atom.element === ALKOXY_ELEMENT && adj.get(center).length === 2;
+  const amine = Boolean(atom) && atom.element === AMINO_ELEMENT && adj.get(center).length >= 1;
+  if (!ether && !amine) {
     return [];
   }
-  const sides = adj.get(oxygen).map((start) => {
+  const sides = adj.get(center).map((start) => {
     const atoms = new Set([start.atom]);
     const bonds = new Set();
     const queue = [start.atom];
     while (queue.length > 0) {
       const id = queue.shift();
       for (const n of adj.get(id)) {
-        if (n.atom === oxygen) {
-          continue; // The other side lies beyond the oxygen.
+        if (n.atom === center) {
+          continue; // The other groups lie beyond the oxygen or the nitrogen.
         }
         bonds.add(n.bond);
         if (!atoms.has(n.atom)) {
@@ -8148,8 +8533,8 @@ function classNameHighlight(molecule, oxygen) {
       }
     } // End of the breadth-first search of one side
     return { atoms: [...atoms], bonds: [...bonds], style: 'substituent' };
-  }); // End of the map over the oxygen's two sides
-  return [...sides, { atoms: [oxygen], bonds: adj.get(oxygen).map((n) => n.bond), style: 'candidate' }];
+  }); // End of the map over the groups bonded to the centre
+  return [...sides, { atoms: [center], bonds: adj.get(center).map((n) => n.bond), style: 'candidate' }];
 } // End of function classNameHighlight()
 
 /**
@@ -8183,11 +8568,46 @@ function classNameStep(verdict, naming) {
 } // End of function classNameStep()
 
 /**
+ * The explanation step of an amine class-name diagnosis (AMINE_CLASS_STEP,
+ * «Monta el nombre tradicional de la amina»; R-6c4b): no explain() step says
+ * how that name is formed («Monta el nombre» only lists it). For an amine the
+ * engine gives a class name, how that name is formed and how it differs from
+ * the substitutive name of the other steps, with the groups and the name the
+ * diagnosis recommends (Diagnosis `className`); for CLASS_NAME_NONE, the
+ * class name in general, which amines get one and the substitutive name of
+ * this one, with its retained name when the engine gives one
+ * (AMINE_CLASS_STEP_TEXTS). Marks: classNameHighlight(), the groups on the
+ * nitrogen and the nitrogen.
+ *
+ * @param {{molecule: object, studentParent: {atoms: number[]}, diagnosis: Diagnosis}} verdict - The class-name verdict.
+ * @param {object} naming - The naming its explanation explains (diagnosisNaming()).
+ * @returns {{id: string, title: string, text: string[], highlight: object[], locants: null}} The step.
+ */
+function amineClassStep(verdict, naming) {
+  const texts = AMINE_CLASS_STEP_TEXTS;
+  const { className } = verdict.diagnosis;
+  const traditional = (naming.alternatives || []).find((alt) => alt.style === TRADITIONAL);
+  const text = className
+    ? [texts.substitutive({ substitutive: naming.name }), texts.groups(className), texts.order, texts.di, texts.word(className)]
+    : [texts.general, texts.generalForm, texts.only,
+      texts.none({ substitutive: naming.name, traditional: traditional ? traditional.name : null })];
+  return {
+    id: AMINE_CLASS_STEP,
+    title: texts.title,
+    text,
+    highlight: classNameHighlight(verdict.molecule, verdict.studentParent && verdict.studentParent.atoms[0]),
+    locants: null,
+  };
+} // End of function amineClassStep()
+
+/**
  * The explanation steps a diagnosis shows (diagnosisExplanation()): the
- * naming's own steps, with the class-name step (classNameStep()) right after
- * «Reconoce el éter» for a class-name diagnosis (before the last step, «Monta
- * el nombre», should that step be missing; never seen: a class name always
- * builds an ether oxygen).
+ * naming's own steps, with the class-name step of an ether's class-name
+ * diagnosis (CLASS_NAME_STEP, classNameStep()) right after «Reconoce el éter»
+ * or the one of an amine's (AMINE_CLASS_STEP, amineClassStep(); R-6c4b) right
+ * after «Reconoce el grupo funcional» (before the last step, «Monta el
+ * nombre», should that step be missing; never seen: a class name always
+ * builds an ether oxygen or an amine nitrogen).
  *
  * @param {object[]} steps - The naming's explanation steps (explain()).
  * @param {{molecule: object, studentParent: {atoms: number[]}, diagnosis: Diagnosis}} verdict - The diagnosed verdict.
@@ -8195,12 +8615,14 @@ function classNameStep(verdict, naming) {
  * @returns {object[]} The steps to show.
  */
 function diagnosisSteps(steps, verdict, naming) {
-  if (!CLASS_CODES.includes(verdict.diagnosis.code) || steps.length === 0) {
+  const { step } = verdict.diagnosis;
+  if (![CLASS_NAME_STEP, AMINE_CLASS_STEP].includes(step) || steps.length === 0) {
     return steps;
   }
-  const ether = steps.findIndex((step) => step.id === 'ether');
-  const at = ether >= 0 ? ether + 1 : steps.length - 1;
-  return [...steps.slice(0, at), classNameStep(verdict, naming), ...steps.slice(at)];
+  const ether = step === CLASS_NAME_STEP;
+  const before = steps.findIndex((s) => s.id === (ether ? 'ether' : 'group'));
+  const at = before >= 0 ? before + 1 : steps.length - 1;
+  return [...steps.slice(0, at), ether ? classNameStep(verdict, naming) : amineClassStep(verdict, naming), ...steps.slice(at)];
 }
 
 /**
