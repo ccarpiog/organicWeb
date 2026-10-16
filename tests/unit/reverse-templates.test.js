@@ -138,12 +138,16 @@ test('`xileno` takes two numbers or a letter (LOCANT_COUNT); a multiplier or a c
 
 /**
  * The o/m/p letter forms of design.md §14.4 the parser accepts: exactly two
- * occupied ring positions, a template's own group counting as one.
+ * occupied ring positions, a template's own group counting as one; since
+ * I-54b two prefixes on `benceno` with one letter before the first (the
+ * order and the words are the engine's business: `o-metil(etil)benceno`
+ * written with a compound branch reads, and is `otherName`).
  */
 const ALLOWED_LETTERS = [
   'o di met il benceno', 'm di met il benceno', 'p di met il benceno', 'p di et eno il benceno', 'o di isopropil benceno',
   'o di tert-butil benceno', 'o bis START 2 met il prop il END benceno', 'o xileno', 'm xileno', 'p xileno',
-  'p met il tolueno', 'o et il tolueno', 'm met il estireno',
+  'p met il tolueno', 'o et il tolueno', 'm met il estireno', 'm et il met il benceno', 'o met il START et il END benceno',
+  'p isopropil met il benceno',
 ];
 
 /** Refused letter forms: [tile words, error range, start of the message]. */
@@ -158,9 +162,17 @@ const REFUSED_LETTERS = [
     + '(contando los tres metilos del mesitileno):'],
   ['o di met il 4 et il benceno', [0, 1], 'Las letras «o», «m» y «p» solo sirven cuando el benceno lleva dos grupos, y tu nombre '
     + 'pone tres:'],
-  // Two different prefixes on plain benzene (never, §14.4: `m-cloroetilbenceno`).
-  ['m et il met il benceno', [0, 1], 'Con dos grupos distintos en el benceno no se usan «o», «m» ni «p»: escribe los números'],
-  ['o met il START et il END benceno', [0, 1], 'Con dos grupos distintos en el benceno no se usan «o», «m» ni «p»'],
+  // Two different prefixes on plain benzene (I-54b): one letter, before the first, and no numbers.
+  ['et il m met il benceno', [2, 3], 'Con dos grupos distintos en el benceno, la letra va al principio del nombre, delante del primer '
+    + 'grupo'],
+  ['m et il m met il benceno', [3, 4], 'Con dos grupos distintos en el benceno se escribe una sola letra, al principio del nombre'],
+  ['m et il 3 met il benceno', [0, 1], 'Escribe los números de los dos grupos (1-cloro-3-etilbenceno) o una sola letra al principio '
+    + 'del nombre (m-cloroetilbenceno), no las dos cosas.'],
+  ['1 et il m met il benceno', [3, 4], 'Escribe los números de los dos grupos'],
+  ['1 m et il met il benceno', [0, 2], 'Escribe los números de los dos grupos'],
+  // A letter on `benceno` with a group written after it: the whole word with its group takes it.
+  ['p met il benceno ol', [0, 1], 'Con un grupo escrito detrás de «benceno» no se usan «o», «m» ni «p»: escribe los números, o usa '
+    + '«fenol», de la fila «Anillos», con la letra (p-metilfenol).'],
   // One occupied position only.
   ['o met il benceno', [0, 1], 'Las letras «o», «m» y «p» dicen dónde está el segundo de dos grupos del benceno; con un solo grupo'],
   // Numbers and a letter on one prefix or on `xileno`.
@@ -174,7 +186,7 @@ const REFUSED_LETTERS = [
   ['o benceno', [0, 1], 'Las letras «o», «m» y «p» van delante de los dos grupos del benceno que sitúan'],
 ];
 
-test('o/m/p letters (design.md §14.4): exactly two occupied positions; refused with three, with two different prefixes…', () => {
+test('o/m/p letters (design.md §14.4): exactly two occupied positions; refused with three, out of place on two prefixes…', () => {
   for (const words of ALLOWED_LETTERS) {
     assert.deepEqual(errorsOf(words), [], words);
   }
@@ -187,6 +199,10 @@ test('o/m/p letters (design.md §14.4): exactly two occupied positions; refused 
   // A letter with nothing it can stand before is TILE_ORDER; with no parent at all, NO_PARENT says it first.
   assert.deepEqual(errorsOf('o 2 met il benceno'), ['TILE_ORDER[0,1)']);
   assert.deepEqual(errorsOf('o'), ['NO_PARENT[0,1)']);
+  // `different` is gone (I-54b): no message says two different groups take no letter.
+  for (const [words] of REFUSED_LETTERS) {
+    assert.ok(!read(words).errors.some((e) => e.message.includes('no se usan «o», «m» ni «p»: escribe los números (')), words);
+  }
 }); // End of test 'o/m/p letters (design.md §14.4)…'
 
 test('assemble (R-4c): `xileno` after its locants, letters punctuated as locants, spans of kind locant / stem', () => {
@@ -513,16 +529,21 @@ test('time budget: each representative template readName() well within budget', 
   }
 }); // End of test 'time budget: each representative template readName() well within budget'
 
-test('the examples the Ayuda «Del nombre al dibujo» added in R-7b (phase I-53b) read as the help says', () => {
+test('the examples the Ayuda «Del nombre al dibujo» added in R-7b (phase I-53b) and I-54b read as the help says', () => {
   // Rings line: the letters for a second group on a benzene with its own group, and the closing-bond locant.
   for (const name of ['p-metilfenol', 'p-cloroanilina', 'p-metilbenzaldehído', 'ácido p-metilbenzoico', 'p-metilbenzoato de etilo',
     'p-metilbenzonitrilo', 'p-metilbenzamida']) {
     const verdict = readName(tokenize(name));
     assert.equal(verdict.kind, 'alternative', `${name}: ${verdict.message}`);
   }
-  // Two different groups on plain «benceno» are written with numbers; the closing-bond locant `1(n)`.
-  for (const name of ['1-bromo-4-clorobenceno', 'ciclohex-1(6)-eno-1,2,4-triol']) {
+  // Two different groups on plain «benceno»: the numbers, or since I-54b one letter before the first group; the
+  // closing-bond locant `1(n)`.
+  for (const name of ['1-bromo-4-clorobenceno', '1-cloro-3-etilbenceno', 'ciclohex-1(6)-eno-1,2,4-triol']) {
     assert.equal(readName(tokenize(name)).kind, 'correct', name);
+  }
+  for (const name of ['m-cloroetilbenceno', 'p-bromoclorobenceno']) {
+    const verdict = readName(tokenize(name));
+    assert.deepEqual([verdict.kind, verdict.matched && verdict.matched.style], ['alternative', 'positional'], `${name}: ${verdict.message}`);
   }
   // Intro: a compound branch between its two controls.
   const branched = readName(seq('4 START 2 met il prop il END oct ano'));
@@ -531,4 +552,4 @@ test('the examples the Ayuda «Del nombre al dibujo» added in R-7b (phase I-53b
   // Out of scope: two rings bonded together; an ester may carry a ring on each side.
   assert.equal(readName(tokenize('ciclohexilbenceno')).kind, 'outOfScope');
   assert.equal(readName(tokenize('benzoato de fenilo')).kind, 'correct');
-}); // End of test 'the examples the Ayuda «Del nombre al dibujo» added in R-7b…'
+}); // End of test 'the examples the Ayuda «Del nombre al dibujo» added in R-7b and I-54b…'

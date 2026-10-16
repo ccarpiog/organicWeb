@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3, I-54b): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -310,7 +310,13 @@
  * student's (`4-metiltolueno`), which the engine never writes, describes its
  * molecule and gets `otherName`, or `ambiguous` with left-out locants;
  * `xileno` alone is three structures, listed as `1,2-xileno`, `1,3-xileno`
- * and `1,4-xileno` (step 6).
+ * and `1,4-xileno` (step 6). Nor does the letter of two different prefixes
+ * on `benceno` (phase I-54b): the parser takes one letter before the first
+ * prefix, the interpreter places both from it, and the engine writes that
+ * form in every prefix style (`m-cloroetilbenceno`,
+ * `p-metil(propan-2-il)benceno` → `alternative`; `p-metilclorobenceno` →
+ * `otherName`, ALPHABETICAL_ORDER; `cloro-m-etilbenceno` → `invalid`
+ * POSITIONAL; `clorometilbenceno` → `ambiguous`, as before).
  *
  * Pipeline (design.md §15.5.3):
  *

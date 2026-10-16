@@ -28,7 +28,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readName } from '../../src/reverse/index.js';
-import { parse } from '../../src/reverse/parse.js';
+import { parse, pairLetter } from '../../src/reverse/parse.js';
 import { assemble } from '../../src/reverse/assemble.js';
 import { interpret } from '../../src/reverse/interpret.js';
 import { build, ownPrefixAtoms, specAtoms, specCarbons } from '../../src/reverse/build.js';
@@ -48,7 +48,7 @@ import {
   generateEthers, generateBenzenes, generateSubstitutedPhenyls, generateRingPrincipalBenzenes,
 } from '../../scripts/oracle/generate.mjs';
 import {
-  seq, readFixtures, leafIndices, isEther, isEtherMolecule, isEtherClassName, pendingLetterForms, pendingLetterFormFails,
+  seq, readFixtures, leafIndices, isEther, isEtherMolecule, isEtherClassName,
 } from './reverse-words.js';
 
 /**
@@ -62,19 +62,18 @@ import {
 const EXPECTED_ROWS = Object.freeze({ total: 41, i34: 33, i40a: 2, i42a: 3, i43a: 1, i45a: 2 });
 
 /**
- * Their names and alternatives read back: 47 substitutive and traditional
- * names, and the class names (phase R-5b2); the pending o/m/p forms left
- * out (EXPECTED_PENDING_LETTER_NAMES).
+ * Their names and alternatives read back: 49 substitutive and traditional
+ * names (since I-54b the o/m/p forms of two different prefixes too,
+ * EXPECTED_LETTER_PAIRS), and the class names (phase R-5b2).
  */
-const EXPECTED_NAMES = 58;
+const EXPECTED_NAMES = 60;
 
 /**
- * The o/m/p forms of two different prefixes the ether rows list since I-54a
- * (`p-metil(metoxi)benceno`, `p-(etoxi)metilbenceno`; reverse-words.js
- * pendingLetterForms()): no tiles until phase I-54b, which flips them into
- * EXPECTED_NAMES and the mutation sweeps.
+ * Of them, the o/m/p forms of two different prefixes the ether rows list
+ * since I-54a (`p-metil(metoxi)benceno`, `p-(etoxi)metilbenceno`; parse.js
+ * pairLetter()), read since I-54b.
  */
-const EXPECTED_PENDING_LETTER_NAMES = 2;
+const EXPECTED_LETTER_PAIRS = 2;
 
 /** The functional-class names among them (`dimetil éter`, `dietil éter`…), read since phase R-5b2 (I-51b2). */
 const EXPECTED_CLASS_NAMES = 11;
@@ -759,21 +758,16 @@ test('fixture round trip (R-5b1, R-5b2, R-5c1, R-5d1): every ether row and its c
   let covered = 0;
   let classNames = 0;
   let elapsed = 0;
-  let pending = 0;
+  let pairs = 0;
   for (const row of rows) {
     const expected = keyOf(row.smiles);
-    const letterForms = pendingLetterForms(row.smiles);
     for (const name of row.names) {
-      if (letterForms.has(name)) {
-        // Two different prefixes with an o/m/p letter (forward engine since I-54a): no tiles until phase I-54b flips it.
-        assert.ok(pendingLetterFormFails(name), `names.tsv:${row.line}: ${name} reads before I-54b`);
-        pending += 1;
-        continue;
-      }
       classNames += isEtherClassName(name) ? 1 : 0; // `dietil éter`…: read since phase R-5b2 (I-51b2).
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
-      assert.equal(assemble(parse(ids).tree).text, name, `names.tsv:${row.line}: assembly`);
+      const { tree } = parse(ids);
+      assert.equal(assemble(tree).text, name, `names.tsv:${row.line}: assembly`);
+      pairs += pairLetter(tree.tiles, tree) === null ? 0 : 1; // `p-metil(metoxi)benceno` (I-54b)
       const start = performance.now();
       const verdict = readName(ids);
       elapsed += performance.now() - start;
@@ -807,7 +801,7 @@ test('fixture round trip (R-5b1, R-5b2, R-5c1, R-5d1): every ether row and its c
     EXPECTED_ACID_ROWS.i40b, EXPECTED_ACID_ROWS.i45b]);
   assert.equal(carbonyl.length, EXPECTED_CARBONYL_ROWS.total);
   assert.equal(carbonyl.flatMap((row) => row.names).length, EXPECTED_CARBONYL_ROWS.names);
-  assert.equal(pending, EXPECTED_PENDING_LETTER_NAMES);
+  assert.equal(pairs, EXPECTED_LETTER_PAIRS);
   assert.equal(acid.length, EXPECTED_ACID_ROWS.total);
   assert.equal(acid.flatMap((row) => row.names).length, EXPECTED_ACID_ROWS.names);
   assert.ok(acid.every((row) => row.names[0].startsWith('ácido ')), 'every acid row is named as an acid');
@@ -841,10 +835,10 @@ const LOOP_MIN = Object.freeze({
 
 /**
  * The o/m/p forms of two different prefixes the loop's molecules get since
- * I-54a (reverse-words.js pendingLetterForms()), exact: no tiles until
- * phase I-54b, which flips them into the names read back.
+ * I-54a (parse.js pairLetter()), read back since I-54b: at least this many
+ * (the seeds give 41).
  */
-const LOOP_PENDING_LETTER_NAMES = 41;
+const LOOP_LETTER_PAIRS = 41;
 
 /**
  * The prefix of the forward engine's class name of a di-tert-butyl ether,
@@ -920,21 +914,14 @@ function locantLists(tree) {
 
 test('closed loop over the ether generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, iloxi: 0, fenoxi: 0, isopropoxi: 0, classNames: 0, removed: 0, decisive: 0, pending: 0 };
+  const counts = { names: 0, iloxi: 0, fenoxi: 0, isopropoxi: 0, classNames: 0, removed: 0, decisive: 0, pairs: 0 };
   const unreadable = [];
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
     assert.ok(naming.ok, naming.ok ? '' : naming.error.message);
     const key = aromaticKey(mol);
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
-    const letterForms = pendingLetterForms(naming);
     for (const [i, name] of all.entries()) {
-      if (letterForms.has(name)) {
-        // Two different prefixes with an o/m/p letter (forward engine since I-54a): no tiles until phase I-54b flips it.
-        assert.ok(pendingLetterFormFails(name), `${name} reads before I-54b`);
-        counts.pending += 1;
-        continue;
-      }
       if (isEtherClassName(name) && name.startsWith(DITERT)) {
         unreadable.push(name); // `ditert-butil éter`: the engine's form, which no tiles write (DITERT).
         continue;
@@ -946,6 +933,8 @@ test('closed loop over the ether generators: engine name → tiles → readName(
       assert.equal(verdict.name, naming.name);
       assert.equal(aromaticKey(verdict.molecule), key, `${name} builds another graph`);
       counts.names += 1;
+      const { tree } = parse(ids);
+      counts.pairs += pairLetter(tree.tiles, tree) === null ? 0 : 1; // `p-metil(metoxi)benceno` (I-54b)
       counts.iloxi += /iloxi/.test(name) ? 1 : 0;
       counts.fenoxi += /fenoxi/.test(name) ? 1 : 0;
       counts.isopropoxi += /isopropoxi/.test(name) ? 1 : 0;
@@ -980,7 +969,7 @@ test('closed loop over the ether generators: engine name → tiles → readName(
   for (const field of ['names', 'iloxi', 'fenoxi', 'isopropoxi', 'classNames', 'removed', 'decisive']) {
     assert.ok(counts[field] >= LOOP_MIN[field], `${field}: ${report}`);
   }
-  assert.equal(counts.pending, LOOP_PENDING_LETTER_NAMES, report);
+  assert.ok(counts.pairs >= LOOP_LETTER_PAIRS, report);
 }); // End of test 'closed loop over the ether generators…'
 
 // ---------------------------------------------------------------------------
@@ -1178,9 +1167,8 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 });
 
 test('mutations of every ether fixture name: a diagnosis of the family\'s codes for every otherName, and a coverage count', async () => {
-  // Class names too (R-5b2); the pending o/m/p forms of two different prefixes (I-54a) have no tiles until phase I-54b.
-  const names = (await readFixtures()).filter((row) => isEther(row.smiles))
-    .flatMap((row) => row.names.filter((name) => !pendingLetterForms(row.smiles).has(name)));
+  // Class names too (R-5b2); the o/m/p forms of two different prefixes too (I-54b).
+  const names = (await readFixtures()).filter((row) => isEther(row.smiles)).flatMap((row) => row.names);
   assert.equal(names.length, EXPECTED_NAMES);
   const { otherName, codes, nulls } = sweep(names);
   assert.deepEqual(nulls, []);
@@ -1193,11 +1181,9 @@ test('mutations of the generated ethers: every otherName is diagnosed, every ste
   const names = [];
   for (const mol of loopMolecules().slice(0, 300)) {
     const naming = nameMolecule(mol);
-    // Class names too (R-5b2), but the engine's `ditert-butil éter`, which no tiles write (DITERT), and the pending o/m/p
-    // forms of two different prefixes (I-54a), which no tiles write until phase I-54b.
-    const letterForms = pendingLetterForms(naming);
-    names.push(naming.name, ...naming.alternatives.map((alt) => alt.name)
-      .filter((name) => !name.startsWith(DITERT) && !letterForms.has(name)));
+    // Class names too (R-5b2), but the engine's `ditert-butil éter`, which no tiles write (DITERT); the o/m/p forms of two
+    // different prefixes too (I-54b).
+    names.push(naming.name, ...naming.alternatives.map((alt) => alt.name).filter((name) => !name.startsWith(DITERT)));
   }
   assert.ok(names.length >= 300, `${names.length} names`);
   const { otherName, codes, nulls } = sweep(names);

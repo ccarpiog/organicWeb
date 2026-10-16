@@ -31,9 +31,7 @@ import { explain } from '../../src/explain/explain.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { PREFIX_STYLES } from '../../src/naming/substituent.js';
 import { generateMonocycles, generateBenzenes } from '../../scripts/oracle/generate.mjs';
-import {
-  seq, readFixtures, isMonocyclicHydrocarbon, isCycloName, isBenzeneName, pendingLetterForms, pendingLetterFormFails,
-} from './reverse-words.js';
+import { seq, readFixtures, isMonocyclicHydrocarbon, isCycloName, isBenzeneName } from './reverse-words.js';
 
 /** The codes only a ring gives. */
 const RING_CODES = Object.freeze(['RING_IS_PARENT', 'BENZENE_RING', 'SUBSTITUTED_TEMPLATE', 'RING_NUMBERING', 'LETTER_LOCANTS']);
@@ -747,13 +745,10 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 test('mutations of every ring fixture name: the expected diagnosis for every otherName, and a coverage count', async () => {
   const rows = (await readFixtures()).filter((row) => isMonocyclicHydrocarbon(row.smiles)
     && (row.names.every(isCycloName) || isBenzeneName(row.names[0])));
-  // The o/m/p forms of two different prefixes (forward engine since I-54a) have no tiles until phase I-54b, which adds them
-  // here: the four of `1-isopropil-4-metilbenceno` (three prefix styles) and `1-tert-butil-4-metilbenceno`.
-  const pending = rows.flatMap((row) => [...pendingLetterForms(row.smiles)]);
-  assert.equal(pending.length, 4, pending.join(', '));
-  assert.ok(pending.every(pendingLetterFormFails), pending.join(', '));
-  const names = rows.flatMap((row) => row.names).filter((name) => !pending.includes(name));
-  assert.equal(names.length, 109, 'the `ciclo` and benzene rows, alternatives included');
+  // Since I-54b the o/m/p forms of two different prefixes too: the four of `1-isopropil-4-metilbenceno` (three prefix
+  // styles) and `1-tert-butil-4-metilbenceno`.
+  const names = rows.flatMap((row) => row.names);
+  assert.equal(names.length, 113, 'the `ciclo` and benzene rows, alternatives included');
   const { tally, otherName, nulls } = sweep(names, assertRingDiagnosis);
   assert.deepEqual(nulls, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME }, JSON.stringify(tally));

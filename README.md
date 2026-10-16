@@ -181,7 +181,8 @@ documentation are in English. The design and phase plan live in
   `dimetilamina`) and amides (`carbamoil`, acylamino), the retained names
   (`tolueno`, `xileno`, `cresol`, `catecol`, `acetona`, `ácido acético`,
   `acetato`, `acetonitrilo`, `anilina`, `acetamida`…) and the orto/meta/para
-  letters (`p-xileno`, `p-metilfenol`).
+  letters (`p-xileno`, `p-metilfenol`, and for two different groups on
+  `benceno` one letter before the first, `m-cloroetilbenceno`).
 - **Ejemplos**: a menu of 39 molecules, one per feature, in five groups:
   open-chain hydrocarbons, hydrocarbons with a ring, functional groups (one
   per family), rings with a functional group and benzenes with several

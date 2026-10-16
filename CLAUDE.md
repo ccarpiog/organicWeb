@@ -44,15 +44,17 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   Spanish wording pending teacher review: `docs/teacher-review-v4.md`;
   open user questions: `docs/open-questions.md`. I-54, o/m/p letters for
   two different prefixes on plain `benceno`
-  (`autoclaude/processed/240-omp-two-different-groups.md`): the drawing →
-  name half (I-54a) is done — `1-cloro-3-etilbenceno` lists
-  `m-cloroetilbenceno` under «Otras formas válidas», one form per prefix
-  style (`aromatic.js` `positionalParts()`), and the explanation says why
-  the numbers are recommended; OPSIN reads `p-clorometilbenceno`-type forms
-  as one substituted group, a known disagreement recorded in
-  `scripts/oracle/README.md`. Next: the name → drawing half (I-54b), whose
-  reader still refuses these letters (`parse.js` `checkLetters()`; pinned in
-  the closed loop).
+  (`autoclaude/processed/240-omp-two-different-groups.md`), is done in both
+  directions: `1-cloro-3-etilbenceno` lists `m-cloroetilbenceno` under
+  «Otras formas válidas», one form per prefix style (`aromatic.js`
+  `positionalParts()`), and the explanation says why the numbers are
+  recommended (I-54a); the reader takes one letter before the first of the
+  two prefixes (`parse.js` `benzenePair()`, `pairLetter()`; a letter before
+  the second, a second letter or a letter beside numbers is POSITIONAL) and
+  draws the form with the `alternative` verdict, prefixes out of
+  alphabetical order being ALPHABETICAL_ORDER (I-54b). OPSIN reads
+  `p-clorometilbenceno`-type forms as one substituted group, a known
+  disagreement recorded in `scripts/oracle/README.md` (open question Q16).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

@@ -19,7 +19,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readName } from '../../src/reverse/index.js';
-import { parse } from '../../src/reverse/parse.js';
+import { parse, pairLetter } from '../../src/reverse/parse.js';
 import { assemble } from '../../src/reverse/assemble.js';
 import { interpret } from '../../src/reverse/interpret.js';
 import { build, ownPrefixAtoms, specAtoms, specCarbons } from '../../src/reverse/build.js';
@@ -34,9 +34,7 @@ import { aromaticKey } from '../../src/model/graph.js';
 import { MAX_HEAVY_ATOMS, TOO_MANY_ATOMS_MESSAGE } from '../../src/model/validate.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import { generateHalogenated, generateBenzenes } from '../../scripts/oracle/generate.mjs';
-import {
-  seq, readFixtures, isHalogenDerivative, pendingLetterForms, pendingLetterFormFails,
-} from './reverse-words.js';
+import { seq, readFixtures, isHalogenDerivative } from './reverse-words.js';
 
 /**
  * Halogen fixture rows: 63 of the I-30 section, 11 of the I-42a section
@@ -48,18 +46,19 @@ const EXPECTED_ROWS = Object.freeze({ total: 74, i30: 63, i42a: 11 });
 /**
  * Their names and alternatives read back (`5-cloro-5-isopropilnonano` has
  * two, `1,4-diclorobenceno` one, `1-cloro-3-isopropilbenceno` two prefix
- * styles), the pending o/m/p forms left out (EXPECTED_PENDING_LETTER_NAMES).
+ * styles), and since I-54b the o/m/p forms of two different prefixes the
+ * I-42a rows list since I-54a (EXPECTED_LETTER_PAIRS).
  */
-const EXPECTED_NAMES = 79;
+const EXPECTED_NAMES = 89;
 
 /**
- * The o/m/p forms of two different prefixes the halogen rows list since
- * I-54a (`m-bromoclorobenceno`, `o-metilyodobenceno`, `m-cloroetilbenceno`,
+ * Of them, the o/m/p forms of two different prefixes (`m-bromoclorobenceno`,
+ * `o-bromoclorobenceno`, `o-metilyodobenceno`, `m-cloroetilbenceno`,
+ * `p-cloro(clorometil)benceno`, `p-(clorometil)metilbenceno`,
  * `p-clorometilbenceno`, `m-cloroisopropilbenceno` in its three prefix
- * styles…; reverse-words.js pendingLetterForms()): no tiles until phase
- * I-54b, which flips them into EXPECTED_NAMES and the mutation sweeps.
+ * styles; parse.js pairLetter()), read since I-54b.
  */
-const EXPECTED_PENDING_LETTER_NAMES = 10;
+const EXPECTED_LETTER_PAIRS = 10;
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -180,8 +179,10 @@ test('parse (R-5a1): errors and partial names with halogens, each with its tile 
   // `il` after a halogen is out of place.
   assert.deepEqual(errorsOf('cloro il prop ano'), ['TILE_ORDER[1,2)']);
   // o/m/p (design.md §14.4, checkLetters()): two different prefixes on benceno, three positions, a halogen on a chain.
-  assert.deepEqual(errorsOf('o bromo cloro benceno'), ['POSITIONAL[0,1)']);
-  assert.match(parse(seq('o bromo cloro benceno')).errors[0].message, /^Con dos grupos distintos en el benceno/);
+  // I-54b: two different prefixes take one letter, before the first (`o-bromoclorobenceno`); before the second it is POSITIONAL.
+  assert.deepEqual(errorsOf('o bromo cloro benceno'), []);
+  assert.deepEqual(errorsOf('bromo o cloro benceno'), ['POSITIONAL[1,2)']);
+  assert.match(parse(seq('bromo o cloro benceno')).errors[0].message, /^Con dos grupos distintos en el benceno, la letra va al principio/);
   assert.deepEqual(errorsOf('p di cloro tolueno'), ['POSITIONAL[0,1)']);
   assert.match(parse(seq('p di cloro tolueno')).errors[0].message, /pone tres \(contando el metilo del tolueno\)/);
   assert.deepEqual(errorsOf('o di cloro et ano'), ['POSITIONAL[0,1)']);
@@ -568,20 +569,15 @@ test('fixture round trip (R-5a1): every halogen row of I-30 and I-42a, graph com
   const rows = fixtures.filter((row) => isHalogenDerivative(row.smiles));
   let covered = 0;
   let elapsed = 0;
-  let pending = 0;
+  let pairs = 0;
   for (const row of rows) {
     const expected = keyOf(row.smiles);
-    const letterForms = pendingLetterForms(row.smiles);
     for (const name of row.names) {
-      if (letterForms.has(name)) {
-        // Two different prefixes with an o/m/p letter (forward engine since I-54a): no tiles until phase I-54b flips it.
-        assert.ok(pendingLetterFormFails(name), `names.tsv:${row.line}: ${name} reads before I-54b`);
-        pending += 1;
-        continue;
-      }
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
-      assert.equal(assemble(parse(ids).tree).text, name, `names.tsv:${row.line}: assembly`);
+      const { tree } = parse(ids);
+      assert.equal(assemble(tree).text, name, `names.tsv:${row.line}: assembly`);
+      pairs += pairLetter(tree.tiles, tree) === null ? 0 : 1; // `m-cloroetilbenceno` (I-54b)
       const start = performance.now();
       const verdict = readName(ids);
       elapsed += performance.now() - start;
@@ -601,7 +597,7 @@ test('fixture round trip (R-5a1): every halogen row of I-30 and I-42a, graph com
   assert.equal(rows.filter((row) => row.section.includes('(I-30)')).length, EXPECTED_ROWS.i30);
   assert.equal(rows.filter((row) => row.section.includes('(I-42a')).length, EXPECTED_ROWS.i42a);
   assert.equal(covered, EXPECTED_NAMES);
-  assert.equal(pending, EXPECTED_PENDING_LETTER_NAMES);
+  assert.equal(pairs, EXPECTED_LETTER_PAIRS);
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
   // Every I-30 row is a halogen derivative of a hydrocarbon: none is left for a later phase.
   assert.equal(fixtures.filter((row) => row.section.includes('(I-30)') && !isHalogenDerivative(row.smiles)).length, 0);
@@ -623,10 +619,10 @@ const LOOP_MIN = Object.freeze({ molecules: 500, names: 510, removed: 1800, deci
 
 /**
  * The o/m/p forms of two different prefixes the loop's molecules get since
- * I-54a (reverse-words.js pendingLetterForms()), exact: no tiles until
- * phase I-54b, which flips them into the names read back.
+ * I-54a (parse.js pairLetter()), read back since I-54b: at least this many
+ * (the seeds give 44).
  */
-const LOOP_PENDING_LETTER_NAMES = 44;
+const LOOP_LETTER_PAIRS = 44;
 
 /**
  * Tells whether a molecule is a halogen derivative of a hydrocarbon:
@@ -699,22 +695,17 @@ function locantLists(tree) {
 
 test('closed loop over the halogen generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, removed: 0, decisive: 0, pending: 0 };
+  const counts = { names: 0, removed: 0, decisive: 0, pairs: 0 };
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
     assert.ok(naming.ok, naming.ok ? '' : naming.error.message);
     const key = aromaticKey(mol);
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
-    const letterForms = pendingLetterForms(naming);
     for (const [i, name] of all.entries()) {
-      if (letterForms.has(name)) {
-        // Two different prefixes with an o/m/p letter (forward engine since I-54a): no tiles until phase I-54b flips it.
-        assert.ok(pendingLetterFormFails(name), `${name} reads before I-54b`);
-        counts.pending += 1;
-        continue;
-      }
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);
+      const { tree } = parse(ids);
+      counts.pairs += pairLetter(tree.tiles, tree) === null ? 0 : 1; // `m-cloroetilbenceno` (I-54b)
       const verdict = readName(ids);
       assert.equal(verdict.kind, i === 0 ? 'correct' : 'alternative', `${name}: ${verdict.message}`);
       assert.equal(verdict.name, naming.name);
@@ -746,7 +737,7 @@ test('closed loop over the halogen generators: engine name → tiles → readNam
   assert.ok(counts.names >= LOOP_MIN.names, `${counts.names} names read back`);
   assert.ok(counts.removed >= LOOP_MIN.removed, `${counts.removed} removed-locant mutations`);
   assert.ok(counts.decisive >= LOOP_MIN.decisive, `${counts.decisive} decisive verdicts`);
-  assert.equal(counts.pending, LOOP_PENDING_LETTER_NAMES, `${counts.pending} pending o/m/p forms`);
+  assert.ok(counts.pairs >= LOOP_LETTER_PAIRS, `${counts.pairs} o/m/p forms of two different prefixes read back`);
 }); // End of test 'closed loop over the halogen generators…'
 
 // ---------------------------------------------------------------------------
@@ -925,9 +916,7 @@ const FIXTURE_OTHER_NAME = Object.freeze({
 });
 
 test('mutations of every halogen fixture name: a diagnosis of the family\'s codes for every otherName, and a coverage count', async () => {
-  // The pending o/m/p forms of two different prefixes (I-54a) have no tiles to mutate until phase I-54b.
-  const names = (await readFixtures()).filter((row) => isHalogenDerivative(row.smiles))
-    .flatMap((row) => row.names.filter((name) => !pendingLetterForms(row.smiles).has(name)));
+  const names = (await readFixtures()).filter((row) => isHalogenDerivative(row.smiles)).flatMap((row) => row.names);
   assert.equal(names.length, EXPECTED_NAMES);
   const { otherName, codes, nulls } = sweep(names);
   assert.deepEqual(nulls, []);
@@ -940,9 +929,7 @@ test('mutations of the generated halogen derivatives: every otherName is diagnos
   const names = [];
   for (const mol of loopMolecules().slice(0, 300)) {
     const naming = nameMolecule(mol);
-    // The pending o/m/p forms of two different prefixes (I-54a) have no tiles to mutate until phase I-54b.
-    const letterForms = pendingLetterForms(naming);
-    names.push(...[naming.name, ...naming.alternatives.map((alt) => alt.name)].filter((name) => !letterForms.has(name)));
+    names.push(naming.name, ...naming.alternatives.map((alt) => alt.name)); // The o/m/p forms too (I-54b).
   }
   assert.ok(names.length >= 300, `${names.length} names`);
   const { otherName, codes, nulls } = sweep(names);

@@ -107,6 +107,14 @@
  *    the default prefix style (`p-diisopropilbenceno`, never
  *    `p-di(propan-2-il)benceno`).
  *
+ * The old form of two different prefixes on `benceno` (phase I-54b,
+ * isLetterPair(): `m-cloroetilbenceno`) puts the prefix the student cites
+ * first at 1, so its ring numbering is the student's citation order: rule 4
+ * gives way, and two prefixes out of order are ALPHABETICAL_ORDER, quoting
+ * the letter and the right form (letterPairOrder(): «Se escribe
+ * «p-clorometilbenceno», no «p-metilclorobenceno».»). The engine writes that
+ * form in every prefix style, so LETTER_LOCANTS never fires for it.
+ *
  * Rules 5–11 read a ring parent as a chain: the ring's omission rules
  * (lexicon ringOmitsLocants(): `metilciclohexano`, `ciclohexeno`,
  * `metilbenceno`, `hexametilbenceno`) decide rule 9; a monosubstituted
@@ -1958,8 +1966,10 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
   ALPHABETICAL_ORDER: (d) => (d.oBound
     ? `Los grupos unidos a los oxígenos se escriben por orden alfabético, unidos por «${WORDS.and}»: «${d.first}» va antes que `
       + `«${d.second}» (${d.why}).${d.hint ? ` ${d.hint}` : ''} Se escribe «${d.right}», no «${d.student}».`
-    : `Los sustituyentes se escriben por orden alfabético: «${d.first}» va antes que «${d.second}» (${d.why}).`
-      + `${d.hint ? ` ${d.hint}` : ''}`),
+    // I-54b (`letter`): the old form of two prefixes on benzene, `p-metilclorobenceno`, quoted with its fix.
+    : `Los sustituyentes se escriben por orden alfabético${d.letter ? `, también con la letra «${d.letter}» delante` : ''}: `
+      + `«${d.first}» va antes que «${d.second}» (${d.why}).${d.hint ? ` ${d.hint}` : ''}`
+      + `${d.letter ? ` Se escribe «${d.right}», no «${d.student}».` : ''}`),
   // R-6a3b (`oBound`): the same O-bound group of an ester written apart (`metilo y metilo`).
   UNGROUPED: (d) => `${DIAGNOSIS_PHRASES.equalGroups(d)} se escriben una sola vez, con `
     + `${d.compound ? `«${WORDS.bis}», «${WORDS.tris}»…` : `«${WORDS.di}», «${WORDS.tri}»…`} delante: `
@@ -6745,6 +6755,19 @@ function substitutedChainTemplate(ctx) {
 } // End of function substitutedChainTemplate()
 
 /**
+ * Tells whether a name is the old orto/meta/para form of two prefixes on
+ * `benceno` (design.md §14.4, I-54b; parse.js pairLetter(): `m-cloroetilbenceno`):
+ * two prefixes of one occurrence each, both placed by the one letter
+ * (interpret.js: the first at 1, the second at the letter's locant).
+ *
+ * @param {object} spec - The NameSpec.
+ * @returns {boolean} True for such a name.
+ */
+function isLetterPair(spec) {
+  return spec.prefixes.length === 2 && spec.prefixes.every((prefix) => prefix.slots.length === 1 && Boolean(prefix.slots[0].letter));
+}
+
+/**
  * Ring rules 1, 2 and 4 (file header «Rings»), in place of the chain rules
  * 1–4 when the engine's parent is the ring: the ring as a branch of the
  * student's chain (a hydrocarbon's: an alcohol's is HYDROXY_PARENT, checked
@@ -6781,6 +6804,11 @@ function ringRules(ctx) {
   const phenol = bencenol(ctx);
   if (phenol) {
     return phenol;
+  }
+  if (isLetterPair(spec)) {
+    // I-54b: the old form of two prefixes (`p-metilclorobenceno`) numbers the ring by the order the student cites them, the
+    // first at 1: a wrong order is ALPHABETICAL_ORDER's, worded for the letter, not a numbering of the student's.
+    return null;
   }
   const directed = reading.studentParent.atoms.join('-');
   /**
@@ -7586,6 +7614,27 @@ function aminoGroups(ctx) {
 } // End of function aminoGroups()
 
 /**
+ * The fields ALPHABETICAL_ORDER adds for the old orto/meta/para form of two
+ * prefixes on `benceno` out of alphabetical order (I-54b,
+ * isLetterPair(): `p-metilclorobenceno`): the letter, and the student's form
+ * and the right one, the two prefixes swapped and the letter before the new
+ * first (`p-clorometilbenceno`), assembled from the student's tiles.
+ *
+ * @param {ReadingContext} ctx - The reading's context.
+ * @param {PrefixList} list - The list whose order is wrong.
+ * @returns {{letter: string, right: string, student: string}|{}} The fields, or none for any other list.
+ */
+function letterPairOrder(ctx, list) {
+  const { tree, spec } = ctx;
+  if (!list.top || !isLetterPair(spec)) {
+    return {};
+  }
+  const [a, b] = tree.items;
+  const right = assemble({ ...tree, items: [{ ...b, letter: a.letter }, { ...a, letter: null }] }).text.normalize('NFC');
+  return { letter: tree.tiles[a.letter].text, right, student: assemble(tree).text.normalize('NFC') };
+}
+
+/**
  * Rule 5: two different branches of one list not in alphabetical order
  * (compareCitationKeys() over the student's words; identical branches are
  * rule 6's).
@@ -7620,7 +7669,7 @@ function alphabeticalOrder(ctx) {
         }
         return {
           code: 'ALPHABETICAL_ORDER',
-          data: { first: words[j], second: words[i], why: orderReason(keys[j], keys[i]), hint },
+          data: { first: words[j], second: words[i], why: orderReason(keys[j], keys[i]), hint, ...letterPairOrder(ctx, list) },
           focus: prefixFocus(ctx, list, [i, j]),
           tiles: [a.range[0], b.range[1]],
         };
@@ -8205,7 +8254,9 @@ function suffixWordOf(suffix) {
  * The student's tree with the orto/meta/para letter of each name-level
  * prefix written as the numbers it stands for (interpret.js: the prefix's
  * supplied slots with `letter`): `p-di(propan-2-il)benceno` →
- * `1,4-di(propan-2-il)benceno`. The number tiles are appended to the tiles
+ * `1,4-di(propan-2-il)benceno`; for the old form of two prefixes each its
+ * own number (I-54b: `m-cloroetilbenceno` → `1-cloro-3-etilbenceno`). The
+ * number tiles are appended to the tiles
  * and the prefixes point at them, as rule 6 does with its multiplier. (A
  * letter on `xileno` never gets here: alone it is an alternative, beside
  * prefixes SUBSTITUTED_TEMPLATE comes first.)
@@ -8224,8 +8275,9 @@ function withNumbersForLetters(tree, spec) {
    */
   const numbers = (slots) => slots.filter((slot) => slot.letter).map((slot) => slot.value).sort((p, q) => p - q)
     .map((value) => tiles.push(tileById(tileId('num', value))) - 1);
-  const items = tree.items.map((item, k) => (item.letter === null ? item
-    : { ...item, letter: null, locants: numbers(spec.prefixes[k].slots) }));
+  // I-54b: the second prefix of the old form of two prefixes (`m-cloroetilbenceno`) has the letter's slot but no letter tile.
+  const items = tree.items.map((item, k) => (spec.prefixes[k].slots.some((slot) => slot.letter)
+    ? { ...item, letter: null, locants: numbers(spec.prefixes[k].slots) } : item));
   return { ...tree, tiles, items };
 } // End of function withNumbersForLetters()
 

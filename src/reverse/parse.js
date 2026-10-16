@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3, I-54b): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -402,8 +402,12 @@
  * template's group at 1 counting as one of them — and checkLetters() keeps
  * them to the forms that have a meaning (POSITIONAL otherwise): on a
  * name-level prefix or on `xileno` or `cresol`, with a benzene or template
- * parent, exactly two occupied positions, never two different prefixes on
- * `benceno`, never beside numbers on the same prefix.
+ * parent, exactly two occupied positions, never beside numbers. Two
+ * prefixes cited once on plain `benceno` (I-54b, design.md §14.4: the old
+ * form of two different groups, `m-cloroetilbenceno`) take one letter,
+ * before the first prefix, which gives both positions (pairLetter()); a
+ * letter before the second, a second letter or a letter beside numbers is
+ * POSITIONAL with its own message.
  *
  * The retained phenols (R-5a3a, tiles.js TEMPLATES with `hydroxy`) are
  * templates too, whose OH groups count as occupied positions like a
@@ -561,7 +565,7 @@ import {
   BENZOYL_PREFIX, SUFFIX_CLASS_WORDS, ESTER_LINK, ESTER_ALKYL_JOIN, ACETYL_PREFIX,
 } from '../naming/lexicon.es.js';
 import {
-  toTiles, TEMPLATES, templateGroupWord, groupPlural, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
+  toTiles, TILES, TEMPLATES, templateGroupWord, groupPlural, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
   isPhenolTemplate, withArticle, ALKOXY_RETAINED, ETHER_CLASS_GROUPS, SUFFIX_GROUPS, GROUP_WORD_PARENTS, BENZALDEHYDE_ID,
   isAcylTile, templateSuffix, isCarbonylTemplate, isChainTemplate, BENZOIC_ID, ACID_KIND, isAcidSuffix, parentWordName,
   isAcidTemplate, ACID_GROUP, ESTER_KIND, isEsterSuffix, ESTER_GROUP, BENZOATE_ID, ESTER_ALKYL_ID, isEsterTemplate,
@@ -667,7 +671,9 @@ const EXAMPLES = Object.freeze({
   oDimetilbenceno: `${ORTO}-${multiplier(2)}${stem(1)}${IL}${BENZENE_NAME}`,
   metilbenceno: `${stem(1)}${IL}${BENZENE_NAME}`,
   trimetilbenceno: `1,2,4-${multiplier(3)}${stem(1)}${IL}${BENZENE_NAME}`,
-  etilMetilbenceno: `1-${stem(2)}${IL}-2-${stem(1)}${IL}${BENZENE_NAME}`,
+  // I-54b: two different groups on `benceno`, with numbers and with the letter.
+  cloroEtilbenceno: `1-${HALOGEN_PREFIXES.Cl}-3-${stem(2)}${IL}${BENZENE_NAME}`,
+  mCloroetilbenceno: `${META}-${HALOGEN_PREFIXES.Cl}${stem(2)}${IL}${BENZENE_NAME}`,
   metilfenil: `${OPEN}4-${stem(1)}${IL}${FENIL}${CLOSE}`,
   xileno12: `1,2-${XILENO}`,
   oXileno: `${ORTO}-${XILENO}`,
@@ -1281,8 +1287,28 @@ const POSITIONAL_MESSAGES = Object.freeze({
   bothXylene: `Escribe los números (${EXAMPLES.xileno12}) o la letra (${EXAMPLES.oXileno}), no las dos cosas.`,
   one: `Las letras ${LETTERS[0]}, ${LETTERS[1]} y ${LETTERS[2]} dicen dónde está el segundo de dos grupos del `
     + `${BENZENE_NAME}; con un solo grupo no hacen falta (${EXAMPLES.metilbenceno}).`,
-  different: `Con dos grupos distintos en el ${BENZENE_NAME} no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: `
-    + `escribe los números (${EXAMPLES.etilMetilbenceno}).`,
+  // I-54b: two different groups on plain `benceno` take one letter, before the first group (design.md §14.4,
+  // `m-cloroetilbenceno`): a letter before the second group, a second letter, a letter beside numbers.
+  pairPlace: `Con dos grupos distintos en el ${BENZENE_NAME}, la letra va al principio del nombre, delante del primer grupo, `
+    + `que va en el carbono 1: la letra dice dónde está el segundo (${EXAMPLES.mCloroetilbenceno}).`,
+  pairTwice: `Con dos grupos distintos en el ${BENZENE_NAME} se escribe una sola letra, al principio del nombre: el primer `
+    + `grupo va en el carbono 1 y la letra dice dónde está el segundo (${EXAMPLES.mCloroetilbenceno}).`,
+  pairMixed: `Escribe los números de los dos grupos (${EXAMPLES.cloroEtilbenceno}) o una sola letra al principio del nombre `
+    + `(${EXAMPLES.mCloroetilbenceno}), no las dos cosas.`,
+  /**
+   * A letter on `benceno` with a group written after it (`p-clorobencenol`, `p-metilbencenocarbaldehído`; I-54b: what the
+   * old `different` message still refused): the letters go with the whole word that holds that group, `fenol`,
+   * `benzaldehído`…
+   *
+   * @param {string} word - The whole word (parentWordName(): «fenol», «ácido benzoico»).
+   * @param {string} example - That word with a letter (`p-metilfenol`, `ácido p-metilbenzoico`).
+   * @returns {string} The message.
+   */
+  groupWord: (word, example) => `Con un grupo escrito detrás de «${BENZENE_NAME}» no se usan ${LETTERS[0]}, ${LETTERS[1]} `
+    + `ni ${LETTERS[2]}: escribe los números, o usa «${word}», de la fila «Anillos», con la letra (${example}).`,
+  // I-54b review: the same, for a group no whole word holds (`p-clorobencenona`).
+  groupNoWord: `Con un grupo escrito detrás de «${BENZENE_NAME}» no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: `
+    + 'escribe los números.',
   // R-6a1: a letter in an ester's O-bound group.
   ester: `En el grupo unido al oxígeno de un éster no se usan ${LETTERS[0]}, ${LETTERS[1]} ni ${LETTERS[2]}: escribe los números, `
     + `como en ${EXAMPLES.etanoatoDeMetilfenilo}.`,
@@ -2629,6 +2655,118 @@ function checkBranchLetters(state, branch) {
 } // End of function checkBranchLetters()
 
 /**
+ * The two name-level prefixes of a name whose parent is plain `benceno` —
+ * no group written after it (no suffix), not `fenol` nor another whole word
+ * that places a group, no template — when it has exactly two, each complete,
+ * cited once (no multiplier) and on the ring (no locant `N`): the names whose
+ * two ring positions an orto/meta/para letter before the first may give
+ * (design.md §14.4, I-54b: `m-cloroetilbenceno`). Whether the two are
+ * different is the diagnosis's business (`p-metilmetilbenceno` reads as
+ * 1,4-dimetilbenceno, UNGROUPED), not the parser's.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} tree - The name tree.
+ * @returns {[object, object]|null} The two prefix nodes, in the student's order, or null.
+ */
+export function benzenePair(tiles, tree) {
+  const { parent } = tree;
+  const prefixes = tree.items.filter((item) => item.type === 'prefix'); // A tile out of place is TILE_ORDER's.
+  if (!parent || parent.chain.type !== 'benzene' || groupWordOf(tiles, parent.chain) || parent.suffix || prefixes.length !== 2) {
+    return null;
+  }
+  /**
+   * Tells whether a prefix is complete, cited once and on the ring.
+   *
+   * @param {object} item - A prefix node.
+   * @returns {boolean} True for such a prefix.
+   */
+  const single = (item) => Boolean(item.substituent) && item.multiplier === null && item.locants.every((i) => tiles[i].kind !== 'nitrogen');
+  return prefixes.every(single) ? [prefixes[0], prefixes[1]] : null;
+}
+
+/**
+ * The orto/meta/para letter of the old form of two prefixes on plain
+ * `benceno` (design.md §14.4, I-54b: `m-cloroetilbenceno`,
+ * `p-metil(metoxi)benceno`): benzenePair() with one letter, before the first
+ * prefix, and no numbers. The letter gives both positions: the first prefix
+ * at carbon 1, the second at the letter's locant (interpret.js).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} tree - The name tree.
+ * @returns {number|null} The letter's tile index, or null when the name is no such form.
+ */
+export function pairLetter(tiles, tree) {
+  const pair = benzenePair(tiles, tree);
+  if (!pair) {
+    return null;
+  }
+  const [first, second] = pair;
+  const bare = first.locants.length === 0 && second.locants.length === 0 && second.letter === null;
+  return bare && first.letter !== null ? first.letter : null;
+}
+
+/**
+ * Records POSITIONAL on each orto/meta/para letter of two prefixes on plain
+ * `benceno` (benzenePair()) that is not the old form's one letter before the
+ * first prefix (design.md §14.4, I-54b): a letter beside numbers, on the
+ * same prefix or the other (`m-cloro-3-etilbenceno`, `1-cloro-m-etilbenceno`:
+ * numbers or the letter, not both), a letter before the second prefix
+ * (`cloro-m-etilbenceno`: it goes at the start) and a second letter
+ * (`m-cloro-m-etilbenceno`: one letter only).
+ *
+ * @param {object} state - Parser state.
+ * @param {[object, object]} pair - The two prefix nodes (benzenePair()).
+ * @returns {void}
+ */
+function checkPairLetters(state, pair) {
+  pair.forEach((holder, k) => {
+    if (holder.letter === null) {
+      return;
+    }
+    const other = pair[1 - k];
+    if (holder.locants.length > 0) {
+      addError(state, 'POSITIONAL', holder.locants[0], holder.letter + 1, POSITIONAL_MESSAGES.pairMixed);
+    } else if (other.locants.length > 0) {
+      addError(state, 'POSITIONAL', holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.pairMixed);
+    } else if (k === 1) {
+      addError(state, 'POSITIONAL', holder.letter, holder.letter + 1, other.letter === null ? POSITIONAL_MESSAGES.pairPlace
+        : POSITIONAL_MESSAGES.pairTwice);
+    }
+  });
+}
+
+/**
+ * The POSITIONAL message of a letter on `benceno` with a group written after
+ * it (`p-clorobencenol`, I-54b; not an amine's, which has its own): the whole
+ * word that holds that group (tiles.js GROUP_WORD_PARENTS: «fenol»,
+ * «benzaldehído», «ácido benzoico», «benzoato», «benzonitrilo», «benzamida»)
+ * and that word with a letter, as the engine writes it (`p-metilfenol`,
+ * `ácido p-metilbenzoico`, `p-metilbenzoato de metilo`). The word is the one
+ * of the suffix's group kind (SUFFIX_GROUPS), so a terminal suffix that
+ * cannot follow `benceno` (`p-clorobencenal`, also TILE_ORDER) points at the
+ * same word as its TILE_ORDER hint (`benzaldehído`); a group with no whole
+ * word (`p-clorobencenona`) gets the message without one (I-54b review).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} suffix - The parent's suffix node.
+ * @returns {string} The message.
+ */
+function groupWordMessage(tiles, suffix) {
+  const group = SUFFIX_GROUPS[tiles[suffix.tile].value];
+  const value = Object.keys(GROUP_WORD_PARENTS).find((key) => group
+    && SUFFIX_GROUPS[GROUP_WORD_PARENTS[key].suffix].kind === group.kind);
+  if (!value) {
+    return POSITIONAL_MESSAGES.groupNoWord;
+  }
+  const word = TILES.find((tile) => tile.kind === 'benzene' && tile.value === value);
+  const { suffix: kind } = GROUP_WORD_PARENTS[value];
+  const body = `${PARA}-${stem(1)}${IL}${word.text}`;
+  let example = isAcidSuffix(kind) ? `${ACIDO} ${body}` : body;
+  example = isEsterSuffix(kind) ? `${body}${ESTER_LINK}${stem(1)}${ILO}` : example;
+  return POSITIONAL_MESSAGES.groupWord(parentWordName(word), example);
+}
+
+/**
  * Keeps the orto/meta/para letters (R-4c) to the forms that have a meaning
  * (design.md §14.4), recording POSITIONAL on each other one: a letter says
  * that the parent benzene ring has exactly two occupied positions, at 1,2 /
@@ -2639,8 +2777,12 @@ function checkBranchLetters(state, branch) {
  * the two positions); never inside a compound branch, with another
  * parent, before `benceno`, beside numbers on the same prefix, with one or
  * three or more occupied positions (`2-cloro-p-cresol`, `p-metilcatecol`:
- * the OH groups of a retained phenol count), nor for two different prefixes
- * on `benceno` (`m-etilmetilbenceno`). A letter before `tolueno`, `estireno`,
+ * the OH groups of a retained phenol count). Two prefixes cited once on
+ * plain `benceno` (I-54b, benzenePair(): `m-cloroetilbenceno`) take one
+ * letter, before the first prefix, and no numbers (checkPairLetters());
+ * with a group written after `benceno` (`p-clorobencenol`) a letter is
+ * refused, its message pointing at the whole word, `fenol`…
+ * (groupWordMessage()). A letter before `tolueno`, `estireno`,
  * `mesitileno` or a diol of R-5a3a is their TEMPLATE_LOCANTS
  * (makeTemplateParent()), and so are numbers before `cresol`. A group
  * written `N` (R-6c3) stands on the amine's nitrogen, not on the ring, so it
@@ -2694,6 +2836,11 @@ function checkLetters(state, tree) {
   if (chain.type === 'benzene' && parent.letter !== null && !owner) {
     report(parent.letter, parent.letter + 1, POSITIONAL_MESSAGES.beforeStem); // Before `fenol`: TEMPLATE_LOCANTS.
   }
+  const pair = benzenePair(tiles, tree);
+  if (pair) {
+    checkPairLetters(state, pair); // I-54b: `m-cloroetilbenceno`, one letter before the first prefix.
+    return;
+  }
   const own = owner && !owner.positions && parent.letter !== null ? [parent] : []; // `o-xileno`, `p-cresol` (R-5a3a)
   // The groups of a suffix on `benceno` (R-5a2) occupy ring positions too.
   const suffixGroups = parent.suffix ? multiplierCount(tiles, parent.suffix.multiplier) : 0;
@@ -2740,8 +2887,10 @@ function checkLetters(state, tree) {
         : threePositionsMessage(positions, owner, unplaced ? example : null));
     } else if (positions < 2) {
       report(holder.letter, holder.letter + 1, POSITIONAL_MESSAGES.one);
-    } else if (!owner && count !== 2) {
-      report(holder.letter, holder.letter + 1, amine ? POSITIONAL_MESSAGES.amine : POSITIONAL_MESSAGES.different);
+    } else if (!owner && count !== 2 && parent.suffix) {
+      // Two prefixes and nothing else are benzenePair()'s (I-54b), so a group follows `benceno` here. (Without one, a prefix
+      // has the locant `N` with no amine to hold it, checkNitrogen()'s TILE_ORDER.)
+      report(holder.letter, holder.letter + 1, amine ? POSITIONAL_MESSAGES.amine : groupWordMessage(tiles, parent.suffix));
     }
   } // End of the loop over the letters
 } // End of function checkLetters()

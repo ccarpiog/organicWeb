@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3, I-54b): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -17,8 +17,9 @@
  *   (parse.js `legacySegment`, `legacySuffix`); the name is then marked
  *   `oldStyle`; and the positions
  *   an orto/meta/para letter stands for (R-4c: `o-dimetilbenceno` 1 and 2,
- *   `p-metiltolueno` 4, `o-xileno` 1 and 2), each slot of the letter's tile
- *   with `letter` set;
+ *   `p-metiltolueno` 4, `o-xileno` 1 and 2; I-54b: `m-cloroetilbenceno`, the
+ *   first prefix 1 and the second 3, parse.js pairLetter()), each slot of the
+ *   letter's tile with `letter` set;
  * - `implicit` — given by rule: `il` / `iliden` without a locant puts the
  *   free valence at the branch's carbon 1 (on a ring branch too:
  *   `ciclohexil`, `ciclohexiliden`), and so does `fenil` (R-4b); a retained
@@ -276,7 +277,7 @@ import {
   TEMPLATES, SUFFIX_GROUPS, isAtomGroup, atomGroupElement, isAcylTile, templateSuffix, isChainTemplate,
   templateLength, parentWordName, N_VALUE, AMINE_KIND, isNitrogenSuffix, isNitrogenGroupTile, isNitrogenGroupKind,
 } from './tiles.js';
-import { groupWordOf } from './parse.js';
+import { groupWordOf, pairLetter } from './parse.js';
 import { esterGroupsOf } from './assemble.js';
 
 /**
@@ -1154,7 +1155,12 @@ export function interpret(tree) {
     // methyl at 4.
     placed = [1];
   }
-  const prefixes = tree.items.map((item) => prefixSpec(ctx, item, length, 'carbon', placed));
+  // I-54b: the old form of two prefixes on `benceno` (`m-cloroetilbenceno`): its one letter, before the first prefix, puts
+  // that prefix at 1 and the second at the letter's locant, both supplied by the letter's tile.
+  const pair = pairLetter(ctx.tiles, tree);
+  const second = pair === null ? null : ctx.tiles[pair].value;
+  const prefixes = tree.items.map((item, k) => (pair === null ? prefixSpec(ctx, item, length, 'carbon', placed)
+    : prefixSpec(ctx, { ...item, letter: pair }, length, 'carbon', k === 0 ? [second] : [1])));
   const template = chain.type === 'template' ? templateSpec(ctx, tree.parent) : null; // After the prefixes: tile order.
   const segmentLegacy = legacy.length > 0 && !legacySuffix ? legacySegment : null;
   const bonds = benzene || chainTemplate

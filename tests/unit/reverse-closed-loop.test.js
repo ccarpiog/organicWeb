@@ -22,10 +22,9 @@
  * reads every name it writes), or a pin of PINS — a form not read on
  * purpose, or a forward-engine form behind an open user question —,
  * asserted to behave exactly as pinned, as often as pinned, so a fix flips
- * it; or a form of PIN_FORMS, pinned the same way but recognised by the
- * molecule rather than by its text (the o/m/p letters of two different
- * prefixes on `benceno`, written by the forward engine since I-54a and read
- * from I-54b). REACH adds the molecules whose forms the open questions are about,
+ * it. The o/m/p letters of two different prefixes on `benceno`, written by
+ * the forward engine since I-54a, read back since I-54b like every other
+ * form. REACH adds the molecules whose forms the open questions are about,
  * which the seeds may not draw. The family files keep their own closed
  * loops (left-out locants, their family's counters); this one has no
  * filter. Pure imports, no Java.
@@ -41,7 +40,7 @@ import { parseSmiles } from '../../src/model/smiles.js';
 import { aromaticKey } from '../../src/model/graph.js';
 import { nameMolecule } from '../../src/naming/index.js';
 import * as oracle from '../../scripts/oracle/generate.mjs';
-import { readFixtures, seq, pendingLetterForms } from './reverse-words.js';
+import { readFixtures, seq } from './reverse-words.js';
 
 /**
  * The generators, in the order of the oracle's file header, with their
@@ -50,25 +49,27 @@ import { readFixtures, seq, pendingLetterForms } from './reverse-words.js';
  * ring size from 3 to 30) and the minimum coverage each must give
  * (molecules distinct by aromatic key, names met): exactly what the seeds
  * gave when the table was written (phase I-53a; 30 899 molecules, 37 581
- * names). More is fine (a new alternative of the engine's is read too);
+ * names), the names of generateBenzenes, generateHalogenated and
+ * generateEthers raised by phase I-54b to count the o/m/p forms of two
+ * different prefixes (231, 46 and 16 more). More is fine (a new alternative of the engine's is read too);
  * fewer means a generator or the engine changed. The whole file runs in
  * about 41 s on the development machine.
  */
 const GENERATORS = Object.freeze([
   ['generateMolecules', { count: 1200, seed: 7101 }, { molecules: 1200, names: 1270 }],
   ['generateMonocycles', { count: 1200, seed: 7102 }, { molecules: 1200, names: 1270 }],
-  ['generateBenzenes', { count: 1200, seed: 7103 }, { molecules: 1145, names: 1319 }],
+  ['generateBenzenes', { count: 1200, seed: 7103 }, { molecules: 1145, names: 1550 }],
   ['generateRingPrincipalBenzenes', { count: 1200, seed: 7104 }, { molecules: 1169, names: 2144 }],
   ['generateRingOutsideBenzenes', { count: 1200, seed: 7105 }, { molecules: 1179, names: 2605 }],
   ['generateRingPolysuffixBenzenes', { count: 1200, seed: 7106 }, { molecules: 1155, names: 1465 }],
   ['generateSubstitutedPhenyls', { count: 1200, seed: 7107 }, { molecules: 1192, names: 1489 }],
   ['generateSubstitutedBenzoyls', { count: 1200, seed: 7108 }, { molecules: 1100, names: 1136 }],
-  ['generateHalogenated', { count: 1200, seed: 7109 }, { molecules: 1199, names: 1209 }],
+  ['generateHalogenated', { count: 1200, seed: 7109 }, { molecules: 1199, names: 1255 }],
   ['generateAlcohols', { count: 1200, seed: 7110 }, { molecules: 1198, names: 1250 }],
   ['generateCarbonyls', { count: 1200, seed: 7111 }, { molecules: 1200, names: 1274 }],
   ['generateAcids', { count: 1200, seed: 7112 }, { molecules: 1200, names: 1243 }],
   ['generateEsters', { count: 1200, seed: 7113 }, { molecules: 1200, names: 1421 }],
-  ['generateEthers', { count: 1200, seed: 7114 }, { molecules: 1199, names: 1254 }],
+  ['generateEthers', { count: 1200, seed: 7114 }, { molecules: 1199, names: 1270 }],
   ['generateAmines', { count: 1200, seed: 7115 }, { molecules: 1194, names: 1517 }],
   ['generateAmides', { count: 1200, seed: 7116 }, { molecules: 1200, names: 1416 }],
   ['generateNitriles', { count: 1200, seed: 7117 }, { molecules: 1200, names: 1273 }],
@@ -89,7 +90,6 @@ const PIN_CATEGORIES = Object.freeze({
   notRead: 'a form the reverse engine does not read on purpose',
   forwardForm: 'a forward-engine form no tiles write (open user question)',
   tokenizer: 'a tokenizer ambiguity in the forward engine\'s form (open user question)',
-  pending: 'a forward-engine form the reverse engine reads from a later phase',
 });
 
 /**
@@ -136,44 +136,6 @@ const PINS = Object.freeze({
 });
 
 /**
- * Forms the forward engine writes that do not read back, recognised by the
- * molecule (`matches`: the naming and the name) rather than listed by text,
- * with the fields of PINS; `met` counts every name of the form a source
- * meets (exact). The o/m/p letters of two different prefixes on plain
- * `benceno` (design.md §14.4, user decision of
- * `autoclaude/processed/240-omp-two-different-groups.md`): the forward engine
- * writes them since phase I-54a, one per prefix style (`m-cloroetilbenceno`,
- * `p-metil(metoxi)benceno`, `p-isopropilmetilbenceno`,
- * `p-metil(propan-2-il)benceno`); parse.js checkLetters() still refuses a
- * letter before two different prefixes (POSITIONAL), so no tiles write them
- * and a student's tiles read `invalid`. Phase I-54b flips this pin (the
- * forms then read as the engine's alternatives) and removes it.
- */
-const PIN_FORMS = Object.freeze({
-  'o/m/p letters, two different prefixes on benceno': {
-    outcome: 'noTiles',
-    category: PIN_CATEGORIES.pending,
-    reason: 'parse.js checkLetters() refuses an o/m/p letter before two different prefixes until phase I-54b',
-    /**
-     * Tells whether a name is one of the molecule's o/m/p forms of two different prefixes.
-     *
-     * @param {object} naming - The forward engine's naming of the molecule.
-     * @param {string} name - One of its names.
-     * @returns {boolean} True for such a form.
-     */
-    matches: (naming, name) => pendingLetterForms(naming).has(name),
-    met: { generateBenzenes: 231, generateHalogenated: 46, generateEthers: 16, fixtures: 16 },
-    tiles: [
-      { smiles: 'CCC1=CC=CC(Cl)=C1', words: 'm cloro et il benceno', kind: 'invalid', text: 'm-cloroetilbenceno' },
-      { smiles: 'CC(C)C1=CC=C(C)C=C1', words: 'p isopropil met il benceno', kind: 'invalid', text: 'p-isopropilmetilbenceno' },
-      { smiles: 'CC(C)C1=CC=C(C)C=C1', words: 'p met il prop ano 2 il benceno', kind: 'invalid', text: 'p-metil(propan-2-il)benceno' },
-      { smiles: 'ClCC1=CC=C(Cl)C=C1', words: 'p cloro START cloro met il END benceno', kind: 'invalid',
-        text: 'p-cloro(clorometil)benceno' },
-    ],
-  },
-});
-
-/**
  * The refusals met, by source and reason (exact): `naming: CODE` for a
  * molecule the forward engine does not name (no name to read), `readName:
  * message` for an `outOfScope` verdict of the reverse engine on a name the
@@ -212,7 +174,7 @@ const REACH = Object.freeze([
 /**
  * The fixture rows and the names they list (systematic name and
  * alternatives), exact; I-54a added five rows and 23 names (16 of them o/m/p
- * forms of two different prefixes, PIN_FORMS).
+ * forms of two different prefixes, read back since I-54b).
  */
 const FIXTURE_COUNTS = Object.freeze({ rows: 1053, names: 1405 });
 
@@ -283,23 +245,19 @@ function bump(map, key) {
  * @param {string[]} styles - The form of each name (`first`, an alternative's style, `listed`).
  * @param {string} key - The molecule's aromatic key.
  * @param {string} where - Where the molecule comes from, for the failure report.
- * @param {object} naming - The forward engine's naming of the molecule (PIN_FORMS `matches`).
  * @returns {void}
  */
-function tallyNames(tally, names, styles, key, where, naming) {
+function tallyNames(tally, names, styles, key, where) {
   for (const [i, name] of names.entries()) {
     tally.names += 1;
     bump(tally.styles, styles[i]);
     const { outcome, verdict } = readBack(name, { first: names[0], key, isFirst: i === 0 });
-    const form = Object.keys(PIN_FORMS).find((id) => PIN_FORMS[id].matches(naming, name));
     if (outcome === null) {
       tally.read += 1;
     } else if (outcome === 'kind:outOfScope') {
       bump(tally.refused, `readName: ${verdict.message.slice(VERDICT_TEXTS.outOfScope.length).trim()}`);
     } else if (Object.hasOwn(PINS, name) && PINS[name].outcome === outcome) {
       bump(tally.pinned, name);
-    } else if (form && PIN_FORMS[form].outcome === outcome) {
-      bump(tally.pinned, form);
     } else {
       tally.failures.push(`${where}: ${name} → ${outcome}${verdict ? ` (${verdict.kind}: ${verdict.message})` : ''}`);
     }
@@ -331,21 +289,19 @@ function loopMolecules(molecules, where) {
       continue;
     }
     const names = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
-    tallyNames(tally, names, ['first', ...naming.alternatives.map((alt) => alt.style)], key, where(i), naming);
+    tallyNames(tally, names, ['first', ...naming.alternatives.map((alt) => alt.style)], key, where(i));
   } // End of the loop over the molecules
   return tally;
 } // End of function loopMolecules()
 
 /**
- * The pinned names and forms one source must meet, with how often (PINS and
- * PIN_FORMS `met`).
+ * The pinned names one source must meet, with how often (PINS `met`).
  *
  * @param {string} source - A generator's name, `fixtures` or `reach`.
- * @returns {object} Counts by name or form.
+ * @returns {object} Counts by name.
  */
 function pinsMet(source) {
-  return Object.fromEntries(Object.entries({ ...PINS, ...PIN_FORMS }).filter(([, pin]) => pin.met[source])
-    .map(([name, pin]) => [name, pin.met[source]]));
+  return Object.fromEntries(Object.entries(PINS).filter(([, pin]) => pin.met[source]).map(([name, pin]) => [name, pin.met[source]]));
 }
 
 /**
@@ -374,12 +330,11 @@ test('closed loop (R-7a): the table holds every generator of scripts/oracle/gene
   assert.equal(exported.length, 27);
   assert.deepEqual(GENERATORS.map(([name]) => name).sort(), exported);
   const sources = new Set([...exported, 'fixtures', 'reach']);
-  for (const [name, pin] of Object.entries({ ...PINS, ...PIN_FORMS })) {
+  for (const [name, pin] of Object.entries(PINS)) {
     assert.ok(Object.values(PIN_CATEGORIES).includes(pin.category), name);
     assert.ok(Object.keys(pin.met).length > 0 && Object.keys(pin.met).every((source) => sources.has(source)), name);
     assert.ok(pin.reason.length > 0, name);
   }
-  assert.ok(Object.keys(PIN_FORMS).every((id) => !Object.hasOwn(PINS, id)), 'a form id is no pinned name');
 }); // End of test 'closed loop (R-7a): the table holds every generator…'
 
 for (const [generator, options, floor] of GENERATORS) {
@@ -399,8 +354,7 @@ test('closed loop (R-7a): every fixture row — its systematic name and listed a
   for (const row of rows) {
     tally.molecules += 1;
     const styles = row.names.map((_, i) => (i === 0 ? 'first' : 'listed'));
-    const mol = parseSmiles(row.smiles);
-    tallyNames(tally, row.names, styles, aromaticKey(mol), `names.tsv:${row.line}`, nameMolecule(mol));
+    tallyNames(tally, row.names, styles, aromaticKey(parseSmiles(row.smiles)), `names.tsv:${row.line}`);
   }
   assert.deepEqual({ rows: tally.molecules, names: tally.names }, { ...FIXTURE_COUNTS });
   t.diagnostic(assertTally('fixtures', tally));
@@ -423,17 +377,4 @@ test('closed loop (R-7a): the pinned names as a student builds them from tiles',
       assert.equal(aromaticKey(verdict.molecule), aromaticKey(parseSmiles(smiles)), words);
     }
   } // End of the loop over the pins
-  // The pinned forms (PIN_FORMS): each example is a form of its molecule, no tiles write it, and a student's tiles for it
-  // read as pinned — for the o/m/p letters of two different prefixes, `invalid` with the POSITIONAL refusal, nothing drawn.
-  for (const [id, pin] of Object.entries(PIN_FORMS)) {
-    for (const { smiles, words, kind, text } of pin.tiles) {
-      assert.ok(pin.matches(nameMolecule(parseSmiles(smiles)), text), `${id}: ${text}`);
-      if (pin.outcome === 'noTiles') {
-        assert.equal(tokenize(text), null, text);
-      }
-      const verdict = readName(seq(words));
-      assert.deepEqual([verdict.kind, verdict.text], [kind, text], `${words}: ${verdict.message}`);
-      assert.deepEqual([verdict.errors.map((error) => error.code), verdict.draw], [['POSITIONAL'], false], words);
-    }
-  } // End of the loop over the pinned forms
 }); // End of test 'closed loop (R-7a): the pinned names as a student builds them from tiles'

@@ -21,8 +21,7 @@ import {
   GROUP_PREFIXES, GROUP_SUFFIXES, ALKOXY_ENDING, TRADITIONAL_NAMES,
 } from '../../src/naming/lexicon.es.js';
 import {
-  seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName, isBenzeneName, isTemplateName, pendingLetterForms,
-  pendingLetterFormFails,
+  seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName, isBenzeneName, isTemplateName,
 } from './reverse-words.js';
 import { TILES, tileById, PHENOL_ID, CLOSING_ID } from '../../src/reverse/tiles.js';
 
@@ -56,26 +55,18 @@ const EXPECTED_BENZENE_ROWS = 26;
 
 /**
  * Their names and alternatives: 32 written with R-4b tiles (four
- * alternatives in the propan-2-il and 1-metiletil styles) and 18 with the
+ * alternatives in the propan-2-il and 1-metiletil styles) and 22 with the
  * R-4c tiles — the retained templates (`tolueno` ×2, `estireno`, the eight
  * xylene forms, `mesitileno`) and the old o/m/p forms (`o-dimetilbenceno`
  * ×2, `m-` / `p-dimetilbenceno`, `p-dietenilbenceno`,
- * `o-diisopropilbenceno`) —, the pending o/m/p forms of two different
- * prefixes left out (EXPECTED_PENDING_LETTER_NAMES).
+ * `o-diisopropilbenceno`; since I-54b those of two different prefixes,
+ * `p-isopropilmetilbenceno`, `p-metil(propan-2-il)benceno`,
+ * `p-metil(1-metiletil)benceno`, `p-tert-butilmetilbenceno`).
  */
-const EXPECTED_BENZENE_NAMES = 50;
+const EXPECTED_BENZENE_NAMES = 54;
 
 /** Of them, the names written with R-4c tiles. */
-const EXPECTED_TEMPLATE_NAMES = 18;
-
-/**
- * The o/m/p forms of two different prefixes these rows list since I-54a
- * (`p-isopropilmetilbenceno`, `p-metil(propan-2-il)benceno`,
- * `p-metil(1-metiletil)benceno`, `p-tert-butilmetilbenceno`;
- * reverse-words.js pendingLetterForms()): no tiles until phase I-54b, which
- * flips them into EXPECTED_BENZENE_NAMES and EXPECTED_TEMPLATE_NAMES.
- */
-const EXPECTED_PENDING_LETTER_NAMES = 4;
+const EXPECTED_TEMPLATE_NAMES = 22;
 
 /**
  * Reads a tile sequence back as text.
@@ -126,17 +117,9 @@ test('fixture round trip (R-4b, R-4c): every benzene hydrocarbon name and altern
   const rows = (await readFixtures()).filter((row) => isMonocyclicHydrocarbon(row.smiles) && isBenzeneName(row.names[0]));
   let covered = 0;
   let templates = 0;
-  let pending = 0;
   for (const row of rows) {
-    const letterForms = pendingLetterForms(row.smiles);
     for (const name of row.names) {
       assert.ok(isBenzeneName(name), `names.tsv:${row.line}: ${name}`);
-      if (letterForms.has(name)) {
-        // Two different prefixes with an o/m/p letter (forward engine since I-54a): no tiles until phase I-54b flips it.
-        assert.ok(pendingLetterFormFails(name), `names.tsv:${row.line}: ${name} reads before I-54b`);
-        pending += 1;
-        continue;
-      }
       templates += isTemplateName(name) ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
@@ -149,7 +132,6 @@ test('fixture round trip (R-4b, R-4c): every benzene hydrocarbon name and altern
   assert.equal(rows.length, EXPECTED_BENZENE_ROWS);
   assert.equal(covered, EXPECTED_BENZENE_NAMES);
   assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
-  assert.equal(pending, EXPECTED_PENDING_LETTER_NAMES);
 }); // End of test 'fixture round trip (R-4b, R-4c): every benzene hydrocarbon name and alternative…'
 
 test('benzene forms tokenize to their tiles (R-4b): `benceno` last, `fenil` a branch word, its compound branch marked', () => {
@@ -196,6 +178,10 @@ test('template and o/m/p forms tokenize to their tiles (R-4c): the template last
     ['o-diisopropilbenceno', 'o di isopropil benceno'],
     ['o-di-tert-butilbenceno', 'o di tert-butil benceno'],
     ['o-bis(2-metilpropil)benceno', 'o bis START 2 met il prop il END benceno'],
+    // I-54b: two different prefixes, the one letter before the first.
+    ['m-etilmetilbenceno', 'm et il met il benceno'],
+    ['p-isopropilmetilbenceno', 'p isopropil met il benceno'],
+    ['p-metil(propan-2-il)benceno', 'p met il prop ano 2 il benceno'],
     ['p-difenilbenceno', 'p di fenil benceno'],
     ['4-metiltolueno', '4 met il tolueno'],
     ['p-metiltolueno', 'p met il tolueno'],
@@ -207,7 +193,9 @@ test('template and o/m/p forms tokenize to their tiles (R-4c): the template last
     assert.deepEqual(tokenize(text), seq(words), text);
   }
   // The refused o/m/p forms, misplaced letters and numbers on a template read only with errors: never tokenized.
-  for (const text of ['o-trimetilbenceno', 'o-metilbenceno', 'm-etilmetilbenceno', 'o-dimetiltolueno', '4-metil-o-xileno',
+  // I-54b: a letter before the second of two prefixes, a second letter, a letter beside numbers.
+  for (const text of ['o-trimetilbenceno', 'o-metilbenceno', 'etil-m-metilbenceno', 'm-etil-m-metilbenceno', 'm-etil-3-metilbenceno',
+    '1-etil-m-metilbenceno', 'o-dimetiltolueno', '4-metil-o-xileno',
     'o-hexano', 'o-benceno', 'o-tolueno', '1-tolueno', '1,3,5-mesitileno', '1-xileno', '1,2,3-xileno', 'xileno-1,2',
     '(o-metilfenil)metano', 'tolueno-1', 'ditolueno', '(tolueno)metano', 'p-dimetil']) {
     assert.equal(tokenize(text), null, text);

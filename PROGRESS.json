@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-16T06:31:09Z",
+  "updated": "2026-10-16T07:15:20Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -1042,8 +1042,8 @@
     {
       "id": "I-54",
       "title": "o/m/p letters for two different prefixes on benceno, both directions",
-      "status": "in_progress",
-      "summary": "Split into I-54a (drawing to name) and I-54b (name to drawing) for benzenes with two different groups named by o/m/p letters."
+      "status": "done",
+      "summary": "Split into I-54a (drawing to name) and I-54b (name to drawing); benzenes with two different groups are named and read with o/m/p letters."
     },
     {
       "id": "I-54a",
@@ -1057,9 +1057,11 @@
     {
       "id": "I-54b",
       "title": "o/m/p for two different prefixes on benceno: name to drawing",
-      "status": "queued",
+      "status": "done",
       "risk": "high",
-      "summary": "Lets the name builder read and judge o/m/p letter names of benzenes with two different groups, such as m-cloroetilbenceno."
+      "summary": "Lets the name builder read and judge o/m/p letter names of benzenes with two different groups, such as m-cloroetilbenceno.",
+      "review": "docs/reviews/I-54b.md",
+      "narrative": "docs/progress-archive/i-54b.md"
     }
   ]
 }

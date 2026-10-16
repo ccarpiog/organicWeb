@@ -36,8 +36,9 @@ and who should then make the design.md updates that are waiting?
 **Current behaviour.** In the §15.8 table, R-1a…R-7 still say «Pending», although R-1a…R-7a are done. PROGRESS.md tracks
 their status instead. The design.md cleanup planned for I-53b is written down in the I-53b archive and not applied. I-54
 (o/m/p letters for two different prefixes on `benceno`, your decision of 2026-10-15) reverses design.md §14.4: I-54a wrote
-its §14 edits (§14.4, the explanation paragraph, the pending-review note) in `docs/progress-archive/i-54a.md` and did not
-apply them; the §15 R-4 row and its o/m/p notes are I-54b's. Both records are blocked for the same reason.
+its §14 edits (§14.4, the explanation paragraph, the pending-review note) in `docs/progress-archive/i-54a.md`, and I-54b its
+§15 edits (the R-4 row, the o/m/p notes, the §15.9 pending-review note) in `docs/progress-archive/i-54b.md`; neither applied
+them. Both records are blocked for the same reason.
 
 **Options.**
 - (a) Commit both files as they are, yourself or by asking an agent to commit them by explicit path. The next phase then
@@ -416,8 +417,10 @@ structure is that isomer (`isKnownDisagreement()` in `scripts/oracle/run.mjs`, R
 - (c) Drop the letter form for exactly those cases (halogen or alkoxy before an unbracketed chain prefix).
 
 **Where the code would change.** `src/naming/aromatic.js` `positionalParts()`; `tests/fixtures/names.tsv` and
-`tests/unit/polysubstituted-benzenes.test.js`; `src/explain/explain.js` `twoPrefixLetterSentence()`; the reverse reader of
-I-54b (`src/reverse/parse.js` `checkLetters()`) and its tests; `scripts/oracle/run.mjs`, `README.md`,
+`tests/unit/polysubstituted-benzenes.test.js`; `src/explain/explain.js` `twoPrefixLetterSentence()`; for (b), the reverse
+reader, which writes the letter form's prefixes as the engine does (`src/reverse/assemble.js` `crowdedLevel()`,
+`enclosedAt()`; I-54b); for (c), no reader code (the dropped forms would read `otherName` with LETTER_LOCANTS), only its
+tests (`tests/unit/reverse-letter-pairs.test.js` and the closed loops); `scripts/oracle/run.mjs`, `README.md`,
 `tests/unit/oracle.test.js`.
 
 **Source.** I-54a (`docs/progress-archive/i-54a.md`, worker report and Codex review `docs/reviews/I-54a.md`).

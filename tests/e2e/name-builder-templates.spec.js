@@ -8,10 +8,12 @@
  * «¡Correcto!… es una forma válida» above «Se llama: 1,4-dimetilbenceno»;
  * `tolueno` and a substituted `4-metiltolueno` draw too (the latter with the
  * app's name and why), `xileno` alone asks for its numbers; a
- * refused o/m/p form (`o-trimetilbenceno`, `m-etilmetilbenceno`) stays in the
+ * refused o/m/p form (`o-trimetilbenceno`, and since I-54b a letter before
+ * the second of two different prefixes, `etil-m-metilbenceno`) stays in the
  * dialog with its message and the letter marked, the canvas untouched; the
- * Ayuda section «Del nombre al dibujo» has the rings line. Runs on the dev
- * server and on dist (playwright.config.js).
+ * Ayuda section «Del nombre al dibujo» has the rings line. Since I-54b the
+ * tiles `m cloro et il benceno` draw `m-cloroetilbenceno`, a valid form.
+ * Runs on the dev server and on dist (playwright.config.js).
  */
 
 import { test, expect } from '@playwright/test';
@@ -191,17 +193,17 @@ test('refused o/m/p forms stay in the dialog with the letter marked, the canvas 
   await expect(message).toHaveClass(/nb-message--error/);
   expect(await invalidTiles(page)).toEqual([0]);
   await expect(dialog).toBeVisible();
-  // Two different groups on benzene: never with a letter (design.md §14.4).
+  // Two different groups on benzene (I-54b): one letter, at the start, before the first group — not before the second.
   await dialog.getByRole('button', { name: 'Borrar todo' }).click();
   const rows = page.locator('#name-builder-rows');
-  for (const text of ['m (meta, 1,3)', 'et', 'il', 'met', 'il', 'benceno']) {
+  for (const text of ['et', 'il', 'm (meta, 1,3)', 'met', 'il', 'benceno']) {
     await rows.getByRole('button', { name: text, exact: true }).click();
   }
-  await expect(page.locator('#name-builder-name')).toHaveText('m-etilmetilbenceno');
+  await expect(page.locator('#name-builder-name')).toHaveText('etil-m-metilbenceno');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
-  await expect(message).toHaveText('Con dos grupos distintos en el benceno no se usan «o», «m» ni «p»: escribe los números '
-    + '(1-etil-2-metilbenceno).');
-  expect(await invalidTiles(page)).toEqual([0]);
+  await expect(message).toHaveText('Con dos grupos distintos en el benceno, la letra va al principio del nombre, delante del primer '
+    + 'grupo, que va en el carbono 1: la letra dice dónde está el segundo (m-cloroetilbenceno).');
+  expect(await invalidTiles(page)).toEqual([2]);
   await page.keyboard.press('Escape');
   expect((await moleculeJSON(page)).atoms).toHaveLength(0);
 
@@ -210,10 +212,48 @@ test('refused o/m/p forms stay in the dialog with the letter marked, the canvas 
   const help = page.getByRole('dialog', { name: 'Cómo se usa' });
   const line = help.locator('#help-name-to-drawing-rings');
   for (const phrase of ['«ciclo» va delante de la raíz', '«fenil»', '(4-metilfenil)', '«Nombres tradicionales»', 'tolueno', 'estireno',
-    'mesitileno', '(1,2-xileno)', 'p (para) = 1,4', 'p-dimetilbenceno', 'no con tres grupos ni con dos grupos distintos']) {
+    'mesitileno', '(1,2-xileno)', 'p (para) = 1,4', 'p-dimetilbenceno', 'o distintos: entonces la letra va al principio del nombre',
+    '(m-cloroetilbenceno, que con números es el 1-cloro-3-etilbenceno)', 'pero no con tres grupos.']) {
     await expect(line).toContainText(phrase);
   }
   await expect(help.locator('#help-name-to-drawing')).toContainText('o con un anillo');
   await page.keyboard.press('Escape');
   expect(errors).toEqual([]);
 }); // End of test 'refused o/m/p forms stay in the dialog…'
+
+test('two different groups on benzene (I-54b): tiles `m cloro et il benceno` draw m-cloroetilbenceno, a valid form', async ({ page }) => {
+  const errors = await openApp(page);
+  const dialog = await buildName(page, 'm (meta, 1,3)', 'cloro', 'et', 'il', 'benceno');
+  await expect(page.locator('#name-builder-name')).toHaveText('m-cloroetilbenceno');
+  await expect(page.locator('#name-builder-name .part-locant')).toHaveText('m');
+  await dialog.getByRole('button', { name: 'Dibujar' }).click();
+  await expect(dialog).toBeHidden();
+
+  // 1-Chloro-3-ethylbenzene on the canvas: eight carbons and the chlorine, nine bonds (three of them double), in view.
+  const drawn = await moleculeJSON(page);
+  expect([drawn.atoms.length, drawn.bonds.length]).toEqual([9, 9]);
+  expect(drawn.atoms.filter((atom) => atom.element === 'Cl')).toHaveLength(1);
+  expect(drawn.bonds.filter((bond) => bond.order === 2)).toHaveLength(3);
+  expect(await drawingInsideCanvas(page)).toBe(true);
+
+  // The `alternative` verdict: the old letter form with its label, then «Se llama:» with the name the app gives first.
+  const verdict = page.locator('#verdict');
+  await expect(verdict).toHaveAttribute('data-kind', 'alternative');
+  await expect(verdict.locator('.verdict-student')).toHaveText('Tu nombre: m-cloroetilbenceno');
+  await expect(verdict.locator('.verdict-message')).toHaveText('¡Correcto! «m-cloroetilbenceno» es una forma válida (forma antigua '
+    + 'con orto/meta/para; hoy se recomienda el número (1,2 / 1,3 / 1,4)). El nombre que doy primero es «1-cloro-3-etilbenceno».');
+  await expect(page.locator('#result-name')).toHaveText('1-cloro-3-etilbenceno');
+  await expect(page.locator('svg#canvas .hl-parent.hl-atom')).toHaveCount(6);
+
+  // The two groups out of alphabetical order: the molecule, the app's name and the order rule, worded for the letter.
+  const again = await buildName(page, 'p (para, 1,4)', 'met', 'il', 'cloro', 'benceno');
+  await expect(page.locator('#name-builder-name')).toHaveText('p-metilclorobenceno');
+  await again.getByRole('button', { name: 'Dibujar' }).click();
+  await expect(again).toBeHidden();
+  await expect(verdict).toHaveAttribute('data-kind', 'otherName');
+  await expect(verdict).toHaveAttribute('data-diagnosis', 'ALPHABETICAL_ORDER');
+  await expect(verdict.locator('.verdict-diagnosis')).toHaveText('Los sustituyentes se escriben por orden alfabético, también con la '
+    + 'letra «p» delante: «cloro» va antes que «metil» (c antes que m). Se escribe «p-clorometilbenceno», no «p-metilclorobenceno».');
+  await expect(page.locator('#result-name')).toHaveText('1-cloro-4-metilbenceno');
+  expect(errors).toEqual([]);
+}); // End of test 'two different groups on benzene (I-54b)…'

@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, I-54b): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -42,8 +42,10 @@
  *    beside other prefixes, where a ring prefix after the first one is
  *    enclosed (`cloro(fenil)metanol`, `metil(ciclohexil)metano`) — is
  *    read on the student's tree: two or more prefixes at one level (the
- *    name, or a compound branch) and none of them with locants
- *    (crowdedLevel()). Its alkoxy half (R-5b): an alkoxy prefix of a crowded
+ *    name, or a compound branch) and none of them with locants, nor with a
+ *    letter but the first (crowdedLevel(); I-54b: the old form of two
+ *    prefixes on `benceno`, `p-metil(metoxi)benceno`). Its alkoxy half
+ *    (R-5b): an alkoxy prefix of a crowded
  *    level is enclosed wherever it stands, first too (`cloro(metoxi)metano`,
  *    `dicloro(metoxi)metano`, `difluorodi(metoxi)metano`,
  *    `(metoxi)yodometano`; render.js enclosedInName() checks the alkoxy
@@ -250,7 +252,10 @@
  * orto/meta/para letter is written where its tile stands and punctuated as
  * a locant (render.js positionalParts() gives it the part kind 'locant'):
  * `o-xileno`, `o-dimetilbenceno`, `p-di-tert-butilbenceno`; a prefix with a
- * letter counts as one with locants for the crowded case.
+ * letter counts as one with locants for the crowded case, except the first
+ * of two prefixes on `benceno` (I-54b: the letter of `m-cloroetilbenceno`
+ * stands for both, written without locants and crowded, as
+ * aromatic.js positionalParts() renders them).
  *
  * Rule 5 reads "a cited locant" for render.js's "free-valence locant above
  * 1 or unsaturation in a chain of three or more carbons": on every name the
@@ -611,14 +616,17 @@ export function isEnclosed(tiles, node) {
  * Tells whether the prefixes of one level (the name, or a compound branch)
  * are "crowded" as render.js renderPrefixes() / enclosureLevel() say: two or
  * more of them, all written without locants or a letter (a one-carbon parent
- * or branch: `metil(ciclohexil)metano`).
+ * or branch: `metil(ciclohexil)metano`) — or with one orto/meta/para letter,
+ * before the first: the old form of two prefixes on `benceno` writes them
+ * without locants, crowded (I-54b, aromatic.js positionalParts():
+ * `p-metil(metoxi)benceno`, `p-(etoxi)metilbenceno`).
  *
  * @param {object[]} items - The level's prefix and stray nodes.
  * @returns {boolean} True when crowded.
  */
 export function crowdedLevel(items) {
   const prefixes = items.filter((item) => item.type === 'prefix' && item.substituent);
-  return prefixes.length > 1 && prefixes.every((item) => item.locants.length === 0 && item.letter === null);
+  return prefixes.length > 1 && prefixes.every((item, k) => item.locants.length === 0 && (item.letter === null || k === 0));
 }
 
 /**

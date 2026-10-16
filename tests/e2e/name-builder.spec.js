@@ -933,7 +933,7 @@ test('Ayuda «Del nombre al dibujo» (R-7b): every family, the compound-branch c
     await expect(help.locator(`#help-name-to-drawing-${id}`)).toBeVisible();
   }
   const rings = help.locator('#help-name-to-drawing-rings');
-  for (const phrase of ['«1(n)»', 'ciclohex-1(6)-eno-1,2,4-triol', 'p-metilfenol', 'p-cloroanilina', '(1-bromo-4-clorobenceno)']) {
+  for (const phrase of ['«1(n)»', 'ciclohex-1(6)-eno-1,2,4-triol', 'p-metilfenol', 'p-cloroanilina', '(m-cloroetilbenceno']) {
     await expect(rings).toContainText(phrase);
   }
   const scope = help.locator('#help-name-to-drawing-scope');
