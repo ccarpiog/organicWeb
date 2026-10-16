@@ -52,7 +52,7 @@ import {
 } from '../../scripts/oracle/generate.mjs';
 import {
   seq, readFixtures, isAmine, isAmide, isAmideMolecule, isAminoName, isAmineName, isAmideName, hasAcylamino, AMINO_WORD,
-  isLaterAmideName, isAmidePrefixName, isR6d2AmideName,
+  isLaterAmideName, isAmidePrefixName, isR6d2AmideName, isAmideTemplateName,
 } from './reverse-words.js';
 
 /**
@@ -375,9 +375,12 @@ test('tokenizer (R-6c2): amino names read; the amides\' words never tokenize', (
     '2-acetil-3-aminobutanal', '2-[(2-acetiletil)amino]etan-1-ol', '3-[(cianometil)(metil)amino]propanonitrilo'].map(hasAcylamino),
   [true, true, true, true, false, false, false, false]);
   assert.ok(isAmideName('etanamida') && isAmideName('ácido 3-carbamoilpropanoico') && !isAmideName('ácido 4-amino-4-oxobutanoico'));
-  // The amides' later words (R-6d3: the retained amide names); the amide prefixes are R-6d2's (isAmidePrefixName()).
+  // No amide word is left for later since phase R-6d3, whose retained amide names read (isAmideTemplateName()); the amide prefixes
+  // are R-6d2's (isAmidePrefixName()).
   assert.deepEqual(['etanamida', 'ácido 3-carbamoilpropanoico', '2-(acetilamino)etan-1-ol', 'acetamida', 'N-metilbenzamida']
-    .map(isLaterAmideName), [false, false, false, true, false]);
+    .map(isLaterAmideName), [false, false, false, false, false]);
+  assert.deepEqual(['etanamida', 'ácido 3-carbamoilpropanoico', '2-(acetilamino)etan-1-ol', 'acetamida', 'N-metilbenzamida']
+    .map(isAmideTemplateName), [false, false, false, true, false]);
   assert.deepEqual(['etanamida', 'ácido 3-carbamoilpropanoico', '2-(acetilamino)etan-1-ol', 'acetamida', 'ácido 4-amino-4-oxobutanoico']
     .map(isAmidePrefixName), [false, true, true, false, false]);
   assert.equal(AMINO_WORD, 'amino');
@@ -768,7 +771,7 @@ test('fixture round trip (R-6c2): every amino name the tiles write, read back; g
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (isLaterAmideName(name)) {
-        counts.later += 1; // The amides' later words (R-6d3: the retained amide names).
+        counts.later += 1; // The amides' later words: none since phase R-6d3 (the retained amide names read).
         assert.ok(isAmideName(name), name);
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
@@ -846,15 +849,16 @@ const LOOP = Object.freeze([
  * multiplied one), removed-locant mutations and decisive verdicts among them
  * (two run out of budget, `incomplete`), since phase R-6d1 the amino names
  * beside an amide suffix among them, since phase R-6d2 the acylamino names
- * among them too; and the amino names with the amides' later words (R-6d3,
- * the retained amide names) never tokenized (the seeds give 677, 836, 591,
- * 46, 231, 337, 56, 91, 154, 2099, 2097 and 7; until phase R-6d1 591 names,
+ * among them too, since phase R-6d3 those with a retained amide name
+ * (`templates`); no name left for later (the seeds give 677, 843, 596, 46,
+ * 232, 344, 56, 91, 154, 7, 2099, 2097 and 0; until phase R-6d1 591 names,
  * 386 substituted, 36 nested, 202 ring, 92 amide, 52 multiplied, 1468
- * removals, 1466 decisive, 252 later; until R-6d2 682 names, 161 later).
+ * removals, 1466 decisive, 252 later; until R-6d2 682 names, 161 later;
+ * until R-6d3 836 names, 7 later).
  */
 const LOOP_MIN = Object.freeze({
-  molecules: 670, names: 830, substituted: 585, nested: 45, ring: 225, amide: 330, multiplied: 55, amideNames: 85, amidePrefixes: 150,
-  removed: 2090, decisive: 2090, later: 5,
+  molecules: 670, names: 840, substituted: 590, nested: 45, ring: 225, amide: 340, multiplied: 55, amideNames: 85, amidePrefixes: 150,
+  templates: 7, removed: 2090, decisive: 2090, later: 0,
 });
 
 /**
@@ -931,8 +935,8 @@ function locantLists(tree) {
 test('closed loop over the generators\' amino names: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
   const counts = {
-    names: 0, substituted: 0, nested: 0, ring: 0, amide: 0, multiplied: 0, amideNames: 0, amidePrefixes: 0, removed: 0, decisive: 0,
-    later: 0,
+    names: 0, substituted: 0, nested: 0, ring: 0, amide: 0, multiplied: 0, amideNames: 0, amidePrefixes: 0, templates: 0, removed: 0,
+    decisive: 0, later: 0,
   };
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
@@ -943,12 +947,14 @@ test('closed loop over the generators\' amino names: engine name → tiles → r
         continue; // Read by its own family's loop.
       }
       if (isLaterAmideName(name)) {
-        counts.later += 1; // The amides' later words (R-6d3: the retained amide names).
+        counts.later += 1; // The amides' later words: none since phase R-6d3.
         assert.equal(tokenize(name), null, name);
         continue;
       }
-      counts.amideNames += isAmideName(name) && !isAmidePrefixName(name) ? 1 : 0; // R-6d1: beside an amide suffix, read since then.
+      const template = isAmideTemplateName(name); // R-6d3: beside a retained amide name, read since then.
+      counts.amideNames += isAmideName(name) && !isAmidePrefixName(name) && !template ? 1 : 0; // R-6d1: beside an amide suffix.
       counts.amidePrefixes += isR6d2AmideName(name) ? 1 : 0; // R-6d2: an acylamino prefix, read since then.
+      counts.templates += template ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);
       const verdict = readName(ids);
@@ -990,6 +996,7 @@ test('closed loop over the generators\' amino names: engine name → tiles → r
   for (const field of Object.keys(counts)) {
     assert.ok(counts[field] >= LOOP_MIN[field], `${field}: ${report}`);
   }
+  assert.equal(counts.later, 0, report);
 }); // End of test 'closed loop over the generators\' amino names…'
 
 // ---------------------------------------------------------------------------

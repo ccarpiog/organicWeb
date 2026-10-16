@@ -7,10 +7,10 @@
  * carbon, never a carbon of the chain it hangs from), and the «Anillos»
  * row's `benzonitrilo`. Parser (the suffix nodes, the misplaced tiles with
  * their tile ranges and hints, partial names), assembler (every form checked
- * against the forward engine's own text), tokenizer (the amides' later
- * names never read — the amines' read since phase R-6c1, the amides'
- * suffixes since phase R-6d1 —; the retained nitrile names read since phase
- * I-52b2, reverse-nitrile-templates.test.js),
+ * against the forward engine's own text), tokenizer (the amines' names read
+ * since phase R-6c1, the amides' suffixes since phase R-6d1, their prefixes
+ * since R-6d2 and their retained names since R-6d3; the retained nitrile
+ * names read since phase I-52b2, reverse-nitrile-templates.test.js),
  * interpreter and builder (the nitrogen triple-bonded to each –C≡N's carbon,
  * the –C≡N's own carbon, CARBONYL_POSITION, VALENCE, LOCANT_RANGE, the caps),
  * search (left-out locants of `carbonitrilo` and of the prefixes; the budget),
@@ -52,7 +52,7 @@ import {
 } from '../../scripts/oracle/generate.mjs';
 import {
   seq, readFixtures, leafIndices, isNitrile, isNitrileMolecule, isNitrileName, LATER_NITRILE_WORDS, NITRILE_WORD, isEster,
-  isNitrileTemplateName, NITRILE_TEMPLATE_WORDS, isAminoName, isAmideName, isR6d1AmideName, isLaterAmideName,
+  isNitrileTemplateName, NITRILE_TEMPLATE_WORDS, isAminoName, isAmideName, isR6d1AmideName, isLaterAmideName, isAmideTemplateName,
 } from './reverse-words.js';
 
 /**
@@ -87,8 +87,8 @@ const EXPECTED_AMINO = Object.freeze({ rows: 5, names: 7 });
 
 /**
  * The rows with an amide suffix beside a `ciano` prefix read back since phase R-6d1, and their names the tiles write (7: the 5
- * rows' names and the `3-cianobenceno-1-carboxamida` and `m-cianobenzamida` alternatives; `N-(cianometil)acetamida` is a later
- * name, R-6d3), swept in reverse-amides.test.js, not below.
+ * rows' names and the `3-cianobenceno-1-carboxamida` and `m-cianobenzamida` alternatives; the retained `N-(cianometil)acetamida`
+ * reads since phase R-6d3, swept in reverse-amide-templates.test.js), swept in reverse-amides.test.js, not below.
  */
 const EXPECTED_AMIDE = Object.freeze({ rows: 5, names: 7 });
 
@@ -97,13 +97,15 @@ const EXPECTED_AMIDE = Object.freeze({ rows: 5, names: 7 });
  * phase R-6b1 (75, swept below), since phase I-52b2 the retained
  * `acetonitrilo`, `fenilacetonitrilo`, `2-(4-metilfenil)acetonitrilo` and
  * `ftalonitrilo` (4, swept apart in reverse-nitrile-templates.test.js),
- * since phase R-6c2 the 7 with an amino prefix (EXPECTED_AMINO) and since
- * phase R-6d1 the 7 amide names (EXPECTED_AMIDE); 1 left for later, the
- * retained `N-(cianometil)acetamida` (R-6d3).
+ * since phase R-6c2 the 7 with an amino prefix (EXPECTED_AMINO), since
+ * phase R-6d1 the 7 amide names (EXPECTED_AMIDE) and since phase R-6d3 the
+ * retained `N-(cianometil)acetamida` (94 in all); none left for later (1
+ * until phase R-6d3).
  */
-const EXPECTED_NAMES = 93;
+const EXPECTED_NAMES = 94;
 const EXPECTED_TEMPLATE_NAMES = 4;
-const EXPECTED_LATER_NAMES = 1;
+const EXPECTED_AMIDE_TEMPLATE_NAMES = 1;
+const EXPECTED_LATER_NAMES = 0;
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -856,6 +858,7 @@ test('fixture round trip (R-6b1, R-6b2, R-6c2): every nitrile name the tiles wri
   const rows = fixtures.filter((row) => /C#N|N#C/.test(row.smiles));
   let covered = 0;
   let templates = 0;
+  let amideTemplates = 0;
   let later = 0;
   let laterRows = 0;
   let elapsed = 0;
@@ -878,13 +881,14 @@ test('fixture round trip (R-6b1, R-6b2, R-6c2): every nitrile name the tiles wri
     amides.names += amide ? row.names.filter(isR6d1AmideName).length : 0;
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
-      // No nitrile word is left for later since phase I-52b2; an amide's later words are (R-6d3: `N-(cianometil)acetamida`).
+      // No nitrile word is left for later since phase I-52b2, no amide word since phase R-6d3 (`N-(cianometil)acetamida` reads).
       if (!isNitrileName(name) || isLaterAmideName(name)) {
         later += 1;
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
       }
       templates += isNitrileTemplateName(name) ? 1 : 0; // `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo` (R-6b2).
+      amideTemplates += isAmideTemplateName(name) ? 1 : 0; // `N-(cianometil)acetamida` (R-6d3).
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
       assert.equal(assemble(parse(ids).tree).text, name, `names.tsv:${row.line}: assembly`);
@@ -921,6 +925,7 @@ test('fixture round trip (R-6b1, R-6b2, R-6c2): every nitrile name the tiles wri
       EXPECTED_ROWS.i43b, EXPECTED_ROWS.i44, EXPECTED_ROWS.i45a, EXPECTED_ROWS.i45b]);
   assert.equal(covered, EXPECTED_NAMES);
   assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
+  assert.equal(amideTemplates, EXPECTED_AMIDE_TEMPLATE_NAMES);
   assert.equal(later, EXPECTED_LATER_NAMES);
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
 }); // End of test 'fixture round trip (R-6b1, R-6b2)…'
@@ -1300,8 +1305,10 @@ test('mutations of every nitrile fixture name: a diagnosis of the family\'s code
   const names = (await readFixtures()).filter((row) => isNitrile(row.smiles)).flatMap((row) => row.names)
     .filter((name) => isNitrileName(name) && !isNitrileTemplateName(name));
   // The names with an amino prefix (R-6c2) are swept with the amino prefixes (reverse-amino.test.js), the amide names (R-6d1) with
-  // the amides (reverse-amides.test.js).
-  assert.equal(names.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES - EXPECTED_AMINO.names - EXPECTED_AMIDE.names);
+  // the amides (reverse-amides.test.js), the retained `N-(cianometil)acetamida` (R-6d3) with the amide templates
+  // (reverse-amide-templates.test.js).
+  assert.equal(names.length, EXPECTED_NAMES - EXPECTED_TEMPLATE_NAMES - EXPECTED_AMINO.names - EXPECTED_AMIDE.names
+    - EXPECTED_AMIDE_TEMPLATE_NAMES);
   const { otherName, codes, own, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });

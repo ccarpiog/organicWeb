@@ -362,8 +362,21 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   the diagnosis keeps the shared rules (the groups on the nitrogen read
   first), and a carbamoyl whose C=O carbon the engine takes into a chain
   (`ácido 3-carbamoilpropanoico`) or written otherwise is a deliberate
-  «Amides» null for R-6d4. Next is R-6d3 (phase I-52d3): the retained amide
-  names and the Ayuda amide line.
+  «Amides» null for R-6d4. R-6d3 (phase I-52d3) is done: the «Nombres
+  tradicionales» row's retained amide names (`formamida`, `acetamida`,
+  `ftalamida`, each with a tooltip; the engine writes no `isoftalamida`,
+  `tereftalamida` or `oxamida`, and its `2-fenilacetamida` keeps the locant,
+  built from `2`, `fenil` and `acetamida`) read as the engine's
+  alternatives, also with the `N` locants on the nitrogen of `formamida` and
+  `acetamida` (`N,N-dimetilformamida`, `N-metilacetamida`,
+  `N-fenilacetamida`; `metilacetamida` → `N-metilacetamida`) and the
+  prefixes the engine writes on them (`2-(4-metilfenil)acetamida`,
+  `4-metilftalamida`; an `N` on `ftalamida` `outOfScope`), any other prefix
+  as `otherName` with the SUBSTITUTED_TEMPLATE diagnosis saying what the word
+  admits (`2-cloroacetamida`), the templates' own mistakes deliberate
+  «Amides» nulls for R-6d4 (`2-carbamoilacetamida`, `2-carboxiacetamida`,
+  `1-fenilformamida`), and the Ayuda has its amide line. Next is R-6d4
+  (phase I-52d4): the amide diagnoses.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

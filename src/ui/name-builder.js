@@ -57,8 +57,9 @@
  *   `tereftálico`, phase R-5d2, the retained ester names `formiato`,
  *   `acetato`, `fenilacetato`, phase R-6a2a, the retained nitrile names
  *   `acetonitrilo`, `fenilacetonitrilo`, `ftalonitrilo`, phase R-6b2, the
- *   retained amine names `anilina` and `bencilamina`, phase R-6c3, these
- *   and `anisol` each with a tooltip
+ *   retained amine names `anilina` and `bencilamina`, phase R-6c3, the
+ *   retained amide names `formamida`, `acetamida`, `ftalamida`, phase R-6d3,
+ *   these and `anisol` each with a tooltip
  *   saying what it is; drafts pending teacher review), each with a «más»
  *   button for the tiles the catalogue keeps behind it;
  * - «Borrar ficha» (also Backspace while the focus is in the dialog),
@@ -282,6 +283,13 @@ export const TILE_HINTS = Object.freeze({
   'template-aniline': 'Benceno con un grupo NH₂: bencenamina. Admite ramas en el anillo y, con «N», en el nitrógeno: '
     + '4-cloroanilina, N-metilanilina, N,4-dimetilanilina.',
   'template-benzylamine': 'Un carbono con un grupo NH₂ y un fenil: fenilmetanamina.',
+  // R-6d3: the retained amide names; the nitrogen of `formamida` and `acetamida` takes `N` locants.
+  'template-formamide': 'Un solo carbono con un grupo amida: metanamida. Admite ramas en el nitrógeno, con «N»: '
+    + 'N,N-dimetilformamida.',
+  'template-acetamide': 'Cadena de 2 carbonos con un grupo amida: etanamida. Admite ramas en el nitrógeno, con «N» '
+    + '(N-metilacetamida), o un fenil en el carbono 2 (2-fenilacetamida, 2-(4-metilfenil)acetamida).',
+  'template-phthalamide': 'Benceno con dos grupos amida en carbonos vecinos: benceno-1,2-dicarboxamida. Admite ramas en el '
+    + 'anillo: 4-metilftalamida.',
 });
 
 /** Text of the empty name line. */

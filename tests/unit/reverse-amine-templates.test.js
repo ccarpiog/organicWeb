@@ -149,7 +149,7 @@ const ALTERNATIVES = [
 // ---------------------------------------------------------------------------
 
 test('«Nombres tradicionales» (R-6c3): the two amine tiles after the nitrile ones, each with a tooltip; quoted as on the tile', () => {
-  const amines = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(31);
+  const amines = TILES.filter((tile) => tile.kind === 'template' && tile.row === 'traditional').slice(31, 33); // R-6d3's after them.
   assert.deepEqual(amines.map((tile) => tile.text), [...AMINE_TEMPLATE_WORDS]);
   assert.deepEqual(amines.map((tile) => [tile.id, tile.text]), [['template-aniline', 'anilina'], ['template-benzylamine', 'bencilamina']]);
   for (const tile of amines) {

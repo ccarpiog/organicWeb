@@ -1,6 +1,6 @@
 /**
  * @file Interpreter of «¿Cómo se dibuja?» (design.md §15.4, §15.5.3; phases
- * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2): turns the lossless syntax tree of parse.js into a
+ * R-1b, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3): turns the lossless syntax tree of parse.js into a
  * `NameSpec`, the language-neutral reading of the name — which chain or
  * ring, which multiple bonds, which branches on which carbons — with no atom
  * ids and no chemistry checks (ranges, valence and size are build.js's).
@@ -238,7 +238,13 @@
  * a left-out slot of a carbon branch on a one-group amide may take `N` too,
  * `metiletanamida` searched on carbons 1, 2 and `N`), the engine putting the
  * same groups there (model/validate.js isAmideCarbon(): single bonds to
- * carbons that are no functional carbon).
+ * carbons that are no functional carbon). The retained amide names (R-6d3:
+ * `formamida`, `acetamida`, chain templates of one and two carbons, and
+ * `ftalamida`, a benzene template) are read like the retained nitriles:
+ * their –CONH₂ groups are the placed suffix (kind 'amide', `amideNitrogen`;
+ * `ftalamida`'s two `outside`), so nitrogenSlots() gives the prefixes of a
+ * one-amide word their `N` slots as an `amida` suffix's
+ * (`N,N-dimetilformamida`; `metilacetamida` searched on carbon 2 and `N`).
  *
  * An amino prefix (R-6c2: `amino`, alone or as the own chain of a compound
  * branch whose prefixes are the groups on its nitrogen, `(metilamino)`,

@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -185,7 +185,12 @@
  * group is VALENCE «El nitrógeno de la amina tendría 4 enlaces…»; the
  * retained `anilina` and `bencilamina` (R-6c3) place their nitrogen as the
  * amine suffix's (attachSuffix(): `N` groups bonded to it, «…en la anilina,
- * ese carbono ya lleva un grupo NH₂»).
+ * ese carbono ya lleva un grupo NH₂»); the retained amide names (R-6d3:
+ * `formamida`, `acetamida`, `ftalamida`) place their –CONH₂ groups as the
+ * amide suffixes' (attachSuffix(): the =O and the nitrogen on each group's
+ * carbon, the `N` groups bonded to the first one's nitrogen, «…en la
+ * acetamida, ese carbono ya lleva un grupo amida»; polyamideRefusal() on an
+ * `N` beside `ftalamida`'s two groups).
  *
  * The molecule is the student's reading, numbered as the student numbered
  * it: `studentParent` lists the parent's atoms in the student's locant

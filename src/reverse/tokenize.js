@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -125,8 +125,11 @@
  * chain, closes the groups on its nitrogen as `amino` does
  * (`(metilcarbamoil)`, `[etil(metil)carbamoil]`); an acylamino prefix is an
  * amino prefix whose first group is an acyl word or ending (`(acetilamino)`,
- * `[acetil(metil)amino]`, `[(2-metilpropanoil)amino]`). A step budget bounds
- * the search: running out returns null, never a guess.
+ * `[acetil(metil)amino]`, `[(2-metilpropanoil)amino]`). The retained amide
+ * names (R-6d3: `formamida`, `acetamida`, `ftalamida`) are templates (TPL),
+ * after `N` locants too (`N,N-dimetilformamida`); the engine's
+ * `2-fenilacetamida` is `2`, `fenil`, `acetamida` (no tile of its own). A
+ * step budget bounds the search: running out returns null, never a guess.
  */
 
 import { CONNECTING_VOWEL, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN } from '../naming/lexicon.es.js';

@@ -1025,7 +1025,7 @@ test('fixture round trip (R-6a1, R-6a2a, R-6b1, R-6c2, R-6d2): every ester name 
     // reverse-amide-prefixes.test.js.
     const amidePrefix = !isEster(row.smiles, { nitrile: true }) && !amino && row.names.every(isR6d2AmideName);
     if (!isEster(row.smiles, { nitrile: true }) && !amino && !amidePrefix) {
-      nitrogen += 1; // An amide written with the amides' later words beside the ester (R-6d3: the retained amide names).
+      nitrogen += 1; // An amide with words the tiles do not write beside the ester: none since R-6d2 (and R-6d3, retained names).
       assert.ok(/N/.test(row.smiles), `names.tsv:${row.line}`);
       row.names.forEach((name) => assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`));
       continue;

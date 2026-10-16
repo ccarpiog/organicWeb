@@ -1,6 +1,6 @@
 /**
  * @file «¿Cómo se dibuja?» entry point (design.md §15.3, §15.5.3; phases
- * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2): `readName(tiles) → verdict` for
+ * R-1b, R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3): `readName(tiles) → verdict` for
  * open-chain and monocyclic hydrocarbon names (`ciclo` parents and ring
  * branches; the `benceno` parent with branch prefixes, `fenil` and
  * substituted `(4-metilfenil)` branches; the retained templates `tolueno`,
@@ -100,6 +100,19 @@
  * 3-[(propan-2-il)carbamoil]pentanodioico` → `alternative`;
  * `carbamoilpentanodioato de dimetilo` → `missingLocants`;
  * `2-(acetilcarbamoil)…`, an imide → `outOfScope`, the engine's HETEROATOM).
+ *
+ * The retained amide names (R-6d3) need nothing of their own here either:
+ * the parser reads `formamida`, `acetamida` and `ftalamida` as templates
+ * whose –CONH₂ groups are the placed suffix, the nitrogen of the first two
+ * taking `N` locants; the builder puts each group's =O and nitrogen on its
+ * carbon; and the engine names the molecule (`formamida`,
+ * `N,N-dimetilformamida`, `N-metilacetamida`, `N-fenilacetamida`,
+ * `2-fenilacetamida`, `2-(4-metilfenil)acetamida`, `ftalamida`,
+ * `4-metilftalamida` → `alternative`; `metilacetamida` → `missingLocants`
+ * «N-metilacetamida»; `fenilacetamida` → `ambiguous` (2- or `N`);
+ * `2-cloroacetamida` → `otherName`, SUBSTITUTED_TEMPLATE; `N-metilftalamida`
+ * → `outOfScope`, the engine's `substitutedBenzenePolyamide`). Their own
+ * mistakes are diagnose.js «Amides»'s deliberate nulls (phase I-52d4).
  *
  * The amines (R-6c1) need nothing of their own here either: the parser
  * reads `amina` as a suffix and `N` among a name-level prefix's locants, the

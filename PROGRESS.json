@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-16T02:33:59Z",
+  "updated": "2026-10-16T03:24:36Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -1000,8 +1000,11 @@
     {
       "id": "I-52d3",
       "title": "v4 R-6d3 Retained amide names and Ayuda amide line",
-      "status": "queued",
-      "summary": "Reads formamida, acetamida, 2-fenilacetamida and ftalamida as the engine writes them, with the Ayuda amide line."
+      "status": "done",
+      "summary": "Reads the retained amide names formamida, acetamida and ftalamida, with N locants and engine-style prefixes, and adds the Ayuda amide line.",
+      "risk": "high",
+      "review": "Codex ship, 0 findings — docs/reviews/I-52d3.md",
+      "narrative": "docs/progress-archive/i-52d3.md"
     },
     {
       "id": "I-52d4",

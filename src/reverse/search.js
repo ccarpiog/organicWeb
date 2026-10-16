@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -111,7 +111,9 @@
  *   three bonds of the chain's end, implicit), `carboxamida` one of its ring
  *   carbon like `carbonitrilo`, and the amide's nitrogen counts its bonds at
  *   index N_VALUE as an amine's (`metiletanamida`: carbon 2 or `N`, carbon 1
- *   being full; `metilbenzamida`: `N`, 2, 3 or 4).
+ *   being full; `metilbenzamida`: `N`, 2, 3 or 4); so does the nitrogen of
+ *   the retained `formamida` and `acetamida` (R-6d3: `metilacetamida`: carbon
+ *   2 or `N`; `fenilacetamida` ambiguous, both engine names).
  * - **Multisets** (step 3): the slots of one multiplied prefix or one
  *   multiplied segment are identical occurrences, so only their sorted
  *   value lists are enumerated (combinations with repetition for carbons,

@@ -51,6 +51,9 @@
  *   are the principal group — the first two on an open chain; R-6c3: the
  *   retained amine names `anilina` and `bencilamina`, whose nitrogen is the
  *   principal group and takes `N` locants — the second on an open chain;
+ *   R-6d3: the retained amide names `formamida`, `acetamida`, `ftalamida`,
+ *   whose –CONH₂ groups are the principal group, the first two taking `N`
+ *   locants on their nitrogen and on an open chain;
  *   value the TEMPLATES key),
  *   'positional' (the old orto/meta/para letters `o`, `m`, `p`, R-4c: the two
  *   occupied positions of a benzene ring; value the locant of the second
@@ -1023,7 +1026,31 @@ function placedSuffix(value, positions) {
  * `N,4-dimetilanilina`, `p-bromo-N,N-dimetilanilina`; never for a diamine,
  * which has no anilina), and `bencilamina` for the bare molecule only; both
  * take `N` locants on their nitrogen like an `amina` suffix (parse.js
- * checkNitrogen()). A later phase adds the amides' (`acetamida`…).
+ * checkNitrogen()).
+ * R-6d3 adds the retained amide names the forward engine gives (principal.js
+ * carbonylTraditionalId(): 'formamide', 'acetamide', 'phenylacetamide',
+ * 'arylacetamide'; aromatic.js retainedDigroupIds(): 'phthalamide'), whose
+ * `suffix` places the –CONH₂ groups as `acético` places its –COOH (the
+ * amide's nitrogen beside the =O, SUFFIX_GROUPS `amideNitrogen`):
+ * `formamida` (metanamida) and `acetamida` (etanamida) — chain templates, the
+ * amide's carbon the chain's carbon 1 (SUFFIX_GROUPS `amide`), keyed by their
+ * TRADITIONAL_NAMES id —, and `ftalamida` (benzene with two –CONH₂,
+ * `carboxamide`, outside the ring at 1 and 2; keyed by its
+ * BENZENE_DIGROUP_NAMES id). The engine writes `formamida` and `acetamida`
+ * also with groups on their nitrogen (`nitrogenPrefixes`:
+ * `N,N-dimetilformamida`, `N-metilacetamida`, `N-fenilacetamida`; the `N`
+ * locants as on an `amida` suffix, parse.js checkNitrogen()), `acetamida`
+ * also with one phenyl on its carbon 2, bare or with prefixes of its own
+ * (`arylPrefix`: 'phenylacetamide' `2-fenilacetamida`, which keeps its
+ * locant — its N could carry the phenyl too —, and 'arylacetamide'
+ * `2-(4-metilfenil)acetamida`), never both; so `2-fenilacetamida` has no tile
+ * of its own (the student writes `2`, `fenil`, `acetamida`, which assemble to
+ * the engine's text), unlike `fenilacetonitrilo`. `ftalamida` takes prefixes
+ * on its ring (`substitutable`: `4-metilftalamida`), never on a nitrogen (the
+ * engine refuses an N-substituted diamide); it writes no `isoftalamida`,
+ * `tereftalamida` or `oxamida` (aromatic.js: of the benzene diamides only the
+ * 1,2 one has a retained name; principal.js: no retained ethanediamide), so
+ * none is a tile.
  */
 export const TEMPLATES = Object.freeze({
   toluene: Object.freeze({ id: 'toluene', group: METHYL, count: 1, positions: Object.freeze([1]), hydroxy: NONE }),
@@ -1121,6 +1148,19 @@ export const TEMPLATES = Object.freeze({
     id: 'benzylamine', chain: 1, group: PHENYL, count: 1, positions: Object.freeze([1]), hydroxy: NONE,
     suffix: placedSuffix(AMINE_KIND, [1]), feminine: true,
   }),
+  // R-6d3: the retained amide names; the –CONH₂'s carbon is the chain's carbon 1, or outside the ring.
+  formamide: Object.freeze({
+    id: 'formamide', chain: 1, group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix(AMIDE_KIND, [1]),
+    nitrogenPrefixes: true, feminine: true,
+  }),
+  acetamide: Object.freeze({
+    id: 'acetamide', chain: 2, group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix(AMIDE_KIND, [1]),
+    nitrogenPrefixes: true, arylPrefix: true, feminine: true,
+  }),
+  phthalamide: Object.freeze({
+    group: null, count: 0, positions: NONE, hydroxy: NONE, suffix: placedSuffix('carboxamide', [1, 2]), substitutable: true,
+    feminine: true,
+  }),
 });
 
 /**
@@ -1129,7 +1169,8 @@ export const TEMPLATES = Object.freeze({
  * `fenilacetaldehído`, the ftalaldehídos): its word places an aldehyde's or
  * a ketone's C=O (not an acid's –COOH: isAcidTemplate(); nor an ester's
  * –COO–, R-6a2a: isEsterTemplate(); nor a nitrile's –C≡N, R-6b2:
- * isNitrileTemplate(); nor an amine's nitrogen, R-6c3: isAmineTemplate()).
+ * isNitrileTemplate(); nor an amine's nitrogen, R-6c3: isAmineTemplate();
+ * nor an amide's –CONH₂, R-6d3: isAmideTemplate()).
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {boolean} True for a carbonyl template.
@@ -1137,7 +1178,22 @@ export const TEMPLATES = Object.freeze({
 export function isCarbonylTemplate(value) {
   const { suffix } = TEMPLATES[value];
   return Boolean(suffix) && !isAcidSuffix(suffix.value) && !isEsterSuffix(suffix.value) && !isNitrileSuffix(suffix.value)
-    && !isAmineSuffix(suffix.value);
+    && !isAmineSuffix(suffix.value) && !isAmideSuffix(suffix.value);
+}
+
+/**
+ * Tells whether a template is one of the retained amide names (R-6d3:
+ * `formamida`, `acetamida`, `ftalamida`): its word places one or two –CONH₂
+ * groups, `acetamida`'s carbon 1 the amide's carbon, `ftalamida`'s outside
+ * the ring; the nitrogen of a one-amide word takes the student's `N`
+ * locants (`N-metilacetamida`).
+ *
+ * @param {string} value - A TEMPLATES key.
+ * @returns {boolean} True for an amide template.
+ */
+export function isAmideTemplate(value) {
+  const { suffix } = TEMPLATES[value];
+  return Boolean(suffix) && isAmideSuffix(suffix.value);
 }
 
 /**
@@ -1211,7 +1267,8 @@ export const ACID_ESTER_TEMPLATES = Object.freeze({ formicAcid: 'formate', aceti
  * `acetona` three; R-5d2: `fórmico` one, `acético`, `oxálico` and
  * `fenilacético` two; R-6a2a: `formiato` one, `acetato` and `fenilacetato`
  * two; R-6b2: `acetonitrilo` and `fenilacetonitrilo` two; R-6c3:
- * `bencilamina` one), not the benzene ring.
+ * `bencilamina` one; R-6d3: `formamida` one, `acetamida` two), not the
+ * benzene ring.
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {boolean} True for a chain template.
@@ -1241,8 +1298,10 @@ export function templateLength(value) {
  * ester template (R-6a2a: `acetato`'s at 1) or the –C≡N groups of a nitrile
  * template (R-6b2: `acetonitrilo`'s at 1, the two of `ftalonitrilo` outside
  * the ring at 1 and 2) or the nitrogen of an amine template (R-6c3:
- * `anilina`'s and `bencilamina`'s at 1); null for a template without one
- * (`tolueno`, `anisol`…).
+ * `anilina`'s and `bencilamina`'s at 1) or the –CONH₂ groups of an amide
+ * template (R-6d3: `acetamida`'s at 1, the two of `ftalamida` outside the
+ * ring at 1 and 2); null for a template without one (`tolueno`,
+ * `anisol`…).
  *
  * @param {string} value - A TEMPLATES key.
  * @returns {{value: string, positions: readonly number[]}|null} The SUFFIX_GROUPS key and the parent's carbons, or null.
@@ -1270,8 +1329,14 @@ export function templateSuffix(value) {
  * (`4-metilftalonitrilo`) and `acetonitrilo` ('arylacetonitrile':
  * `2-(4-metilfenil)acetonitrilo`; bare, the one word `fenilacetonitrilo`), and
  * (R-6c3) `anilina` with any prefixes, on the ring or on its nitrogen
- * (`4-cloroanilina`, `N,4-dimetilanilina`; `bencilamina` none). The
- * student's prefixes are given as interpret.js PrefixSpecs.
+ * (`4-cloroanilina`, `N,4-dimetilanilina`; `bencilamina` none), and (R-6d3)
+ * `ftalamida` with any prefixes (`4-metilftalamida`), `formamida` and
+ * `acetamida` with any prefixes written `N`, on their nitrogen
+ * (`nitrogenPrefixes`: `N,N-dimetilformamida`, `N-fenilacetamida`;
+ * principal.js: only groups on the N), and `acetamida` with one phenyl
+ * instead ('phenylacetamide' `2-fenilacetamida`, 'arylacetamide'
+ * `2-(4-metilfenil)acetamida`). The student's prefixes are given as
+ * interpret.js PrefixSpecs.
  *
  * @param {string} value - A TEMPLATES key.
  * @param {{slots: object[], substituent: {kind: string, retained: string|null, alkoxy: boolean, acyl: boolean,
@@ -1283,7 +1348,11 @@ export function templateAdmits(value, prefixes) {
   if (template.substitutable) {
     return true;
   }
-  if (!template.arylPrefix || prefixes.length !== 1 || prefixes[0].slots.length !== 1) {
+  const onNitrogen = (slot) => slot.kind === 'supplied' && slot.value === N_VALUE;
+  if (template.nitrogenPrefixes && prefixes.every((prefix) => prefix.slots.every(onNitrogen))) {
+    return true; // `N-metilacetamida`, `N,N-dimetilformamida` (R-6d3)
+  }
+  if (!template.arylPrefix || prefixes.length !== 1 || prefixes[0].slots.length !== 1 || onNitrogen(prefixes[0].slots[0])) {
     return false;
   }
   const sub = prefixes[0].substituent;
@@ -1346,8 +1415,9 @@ export function groupPlural(word) {
 
 /**
  * The text of a template tile: its TRADITIONAL_NAMES name (or, for a diol of
- * R-5a3a, a ftalaldehído of R-5c3a, a ftálico of R-5d2 or `ftalonitrilo` of
- * R-6b2, its BENZENE_DIGROUP_NAMES word, keyed by the template's own key),
+ * R-5a3a, a ftalaldehído of R-5c3a, a ftálico of R-5d2, `ftalonitrilo` of
+ * R-6b2 or `ftalamida` of R-6d3, its BENZENE_DIGROUP_NAMES word, keyed by the
+ * template's own key),
  * without the locants or letter the student writes on tiles of their own
  * (`1,2-xileno` → `xileno`, `o-cresol` → `cresol`) and without the class
  * word `ácido`, a tile of its own (R-5d2: `ácido acético` → `acético`).

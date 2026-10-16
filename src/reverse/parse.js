@@ -1,6 +1,6 @@
 /**
  * @file Parser of «¿Cómo se dibuja?» (design.md §15.4, §15.5.1, §15.6;
- * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2): recursive descent over a tile sequence
+ * phases R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2, R-6d3): recursive descent over a tile sequence
  * into a lossless syntax tree. Pure, no DOM, no chemistry (the tree is not
  * checked against a molecule; that is interpret.js / build.js, R-1b).
  *
@@ -371,6 +371,18 @@
  * position (`N-etil-p-metilbenzamida`; an `N` and a letter on one prefix
  * POSITIONAL, `N,p-dimetilbenzamida`). No new error code.
  *
+ * The retained amide names (R-6d3: `formamida`, `acetamida`, `ftalamida`)
+ * are templates like the retained nitriles (makeTemplateParent(),
+ * TEMPLATE_LOCANTS: ««acetamida» ya dice dónde va su grupo amida…»,
+ * «grupo amida», «grupos amida»), the nitrogen of `formamida` and
+ * `acetamida` taking `N` as an `amida` suffix's (checkNitrogen():
+ * `N,N-dimetilformamida`, `N-metilacetamida`); an `N` on `ftalamida` is the
+ * engine's refusal of an N-substituted diamide (`outOfScope`), an `N` and a
+ * letter on one of its prefixes POSITIONAL with the amide's example. In a
+ * compound branch or an ester's O-bound side a template tile is TILE_ORDER
+ * with its hint (templateHint(): the amide there written `amino` + `oxo` or
+ * `carbamoil`). No new error code.
+ *
  * The tile `1(n)` (R-5a2) is the compound locant of a ring's closing bond,
  * the one from its last carbon n back to carbon 1 (the engine cites it
  * `1(6)`, IUPAC 2013 P-31.1.4.2.4: `ciclohex-1(6)-eno-1,2,4-triol`,
@@ -555,7 +567,7 @@ import {
   isAcidTemplate, ACID_GROUP, ESTER_KIND, isEsterSuffix, ESTER_GROUP, BENZOATE_ID, ESTER_ALKYL_ID, isEsterTemplate,
   ACID_ESTER_TEMPLATES, isAcyloxyHead, NITRILE_KIND, BENZONITRILE_ID, NITRILE_GROUP, isNitrileTemplate, AMINE_KIND, isAmineSuffix,
   NITROGEN_ID, isAminoTile, isAmineTemplate, AMINE_GROUP, isAmineClassWord, AMIDE_KIND, isAmideSuffix, BENZAMIDE_ID,
-  isCarbamoylTile, AMIDE_GROUP,
+  isCarbamoylTile, AMIDE_GROUP, isAmideTemplate,
 } from './tiles.js';
 import {
   itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, iloTileOf, esterGroupsOf, isAminoNode, isNitrogenGroupNode,
@@ -764,6 +776,8 @@ const EXAMPLES = Object.freeze({
   metilbenzamida: `4-${stem(1)}${IL}${BENZAMIDA}`,
   acidoCarbamoilciclohexiletanoico: `${ACIDO} 2-${OPEN}4-${CARBAMOIL}${RING_PREFIX}${stem(6)}${IL}${CLOSE}${stem(2)}${ANO.slice(0, -1)}`
     + `${OICO}`,
+  // R-6d3: an amide group in a chain branch, as the engine writes it (its carbon the branch's).
+  aminoOxoetil: `${OPEN}2-${AMINO}-2-${OXO}${stem(2)}${IL}${CLOSE}`,
   etilMetilEter: `${stem(2)}${IL} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
   dietilEter: `${multiplier(2)}${stem(2)}${IL} ${ETHER_CLASS_WORD}`,
   cloroetilEter: `${OPEN}2-${HALOGEN_PREFIXES.Cl}${stem(2)}${IL}${CLOSE} ${stem(1)}${IL} ${ETHER_CLASS_WORD}`,
@@ -1292,6 +1306,9 @@ const ACID_GROUPS = ACID_GROUP.replace(/^grupo /, 'grupos ');
 /** The plural of the –C≡N of a nitrile as the messages say it (tiles.js NITRILE_GROUP; R-6b2: `ftalonitrilo`). */
 const NITRILE_GROUPS = NITRILE_GROUP.replace(/^grupo /, 'grupos ');
 
+/** The plural of the –CONH₂ of an amide as the messages say it (tiles.js AMIDE_GROUP; R-6d3: `ftalamida`). */
+const AMIDE_GROUPS = AMIDE_GROUP.replace(/^grupo /, 'grupos ');
+
 /**
  * How the messages call the principal group a template's word places, by
  * its SUFFIX_GROUPS key (templateSuffix()): the OH of a retained phenol
@@ -1301,7 +1318,9 @@ const NITRILE_GROUPS = NITRILE_GROUP.replace(/^grupo /, 'grupos ');
  * template (R-6a2a: «grupo COO»), the –C≡N of a nitrile template (R-6b2:
  * `acetonitrilo`'s on its chain, `ftalonitrilo`'s two outside the ring:
  * «grupo C≡N», «grupos C≡N»), the NH₂ of an amine template (R-6c3:
- * `anilina`'s, `bencilamina`'s: «grupo NH₂»).
+ * `anilina`'s, `bencilamina`'s: «grupo NH₂»), the –CONH₂ of an amide
+ * template (R-6d3: `acetamida`'s on its chain, `ftalamida`'s two outside the
+ * ring: «grupo amida», «grupos amida»).
  */
 const PLACED_GROUP_WORDS = Object.freeze({
   alcohol: Object.freeze({ one: PHENOL_GROUP, many: PHENOL_GROUPS }),
@@ -1318,6 +1337,9 @@ const PLACED_GROUP_WORDS = Object.freeze({
   carbonitrile: Object.freeze({ one: NITRILE_GROUP, many: NITRILE_GROUPS }),
   // R-6c3: the NH₂ of an amine template (`anilina`, `bencilamina`).
   [AMINE_KIND]: Object.freeze({ one: AMINE_GROUP, many: AMINE_GROUP.replace(/^grupo /, 'grupos ') }),
+  // R-6d3: the –CONH₂ groups of an amide template (`formamida`, `acetamida`, `ftalamida`).
+  [AMIDE_KIND]: Object.freeze({ one: AMIDE_GROUP, many: AMIDE_GROUPS }),
+  carboxamide: Object.freeze({ one: AMIDE_GROUP, many: AMIDE_GROUPS }),
 });
 
 /**
@@ -1491,7 +1513,7 @@ function templateCountMessage(tile) {
  * an ester template (R-6a2a), in a branch or in the O-bound side, names the
  * acid part of an ester, before its O-bound group (`acetato de metilo`); a
  * nitrile template (R-6b2) with `ciano`; an amine template (R-6c3) with
- * `amino`.
+ * `amino`; an amide template (R-6d3) with `amino` + `oxo` or `carbamoil`.
  *
  * @param {{text: string, kind: string, value: string}} tile - The template tile.
  * @param {'branch'|'multiplier'} where - Where it stands.
@@ -1516,6 +1538,16 @@ function templateHint(tile, where) {
     // `anilina`, `bencilamina` (R-6c3): their NH₂ is written `amino` there, as `bencenamina`'s.
     return `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el ${AMINE_GROUP} se escribe `
       + `«${AMINO}», como en ${EXAMPLES.aminofenil} o ${EXAMPLES.aminometil}.`;
+  }
+  if (where === 'branch' && tile.kind === 'template' && isAmideTemplate(tile.value)) {
+    // `acetamida`, `ftalamida` (R-6d3): in a branch the amide is written as the engine writes it there, `amino` + `oxo` on a
+    // carbon of the branch or `carbamoil`; the engine names no branch of a benzene with an amide group (`benzamida`'s hint).
+    const lead = `«${tile.text}» es el nombre de toda la molécula y va al final; dentro de una rama, el ${AMIDE_GROUP} se escribe `;
+    return isChainTemplate(tile.value)
+      ? `${lead}con «${AMINO}» y «${OXO}» en un mismo carbono de la rama, como en ${EXAMPLES.aminoOxoetil}, o con «${CARBAMOIL}» `
+        + `si su carbono no es de la rama (${EXAMPLES.acidoCarbamoilciclohexiletanoico}).`
+      : `${lead}«${CARBAMOIL}» (${EXAMPLES.acidoCarbamoilciclohexiletanoico}), pero de momento no sé nombrar una rama con un `
+        + `${BENZENE_NAME} que lleve un ${AMIDE_GROUP}.`;
   }
   if (where === 'branch' && tile.kind === 'template' && isNitrileTemplate(tile.value)) {
     // `acetonitrilo`, `ftalonitrilo` (R-6b2): their –C≡N is written `ciano` there, as `benzonitrilo`'s.
@@ -2686,6 +2718,9 @@ function checkLetters(state, tree) {
     || (chain.type === 'benzene' && Boolean(parent.suffix) && isAmideSuffix(tiles[parent.suffix.tile].value));
   let example = amineParent ? EXAMPLES.nEtilPMetilanilina : null;
   example = amideParent ? EXAMPLES.nEtilPMetilbenzamida : example;
+  // R-6d3: `ftalamida` takes no `N` (the engine refuses an N-substituted diamide), but an `N` beside a letter there gets the
+  // amide's example, not the amine's.
+  const amideWord = amideParent || (chain.type === 'template' && isAmideTemplate(tiles[chain.tile].value));
   const unplaced = Boolean(example) && prefixes.some((item) => item.substituent && item.locants.length === 0 && item.letter === null
     && mayStandOnNitrogen(tiles, item.substituent));
   for (const holder of [...lettered, ...own]) {
@@ -2693,7 +2728,7 @@ function checkLetters(state, tree) {
     const count = holder.type === 'parent' || holder.multiplier === null ? 1 : tiles[holder.multiplier].value;
     if (holder.type !== 'parent' && nitrogens(locants) > 0) {
       // `N,p-dimetilanilina` (R-6c3), `N,p-dimetilbenzamida` (R-6d1): no used form.
-      report(locants[0], holder.letter + 1, POSITIONAL_MESSAGES.nitrogen(amideParent ? EXAMPLES.n4Dimetilbenzamida
+      report(locants[0], holder.letter + 1, POSITIONAL_MESSAGES.nitrogen(amideWord ? EXAMPLES.n4Dimetilbenzamida
         : EXAMPLES.n4Dimetilanilina));
     } else if (locants.length > 0) {
       if (holder.type !== 'parent' || !owner.letterOnly) { // Numbers before `cresol` are its TEMPLATE_LOCANTS (R-5a3a).
@@ -2815,7 +2850,8 @@ function checkClosing(state, tree) {
  * no `N` (checkAmineClassName() says so first; one inside a compound group
  * gets HINTS.nitrogenPlace). The amide's nitrogen (R-6d1: a parent with
  * `amida` or `carboxamida`, or the `benzamida` word, which places it) takes
- * `N` the same way (`N-metiletanamida`, `N,N-dimetilbenzamida`), anywhere
+ * `N` the same way (`N-metiletanamida`, `N,N-dimetilbenzamida`; R-6d3: and
+ * an amide template's, `N,N-dimetilformamida`, `N-metilacetamida`), anywhere
  * else in such a name HINTS.nitrogenAmidePlace; the hint for a name with
  * neither names both (HINTS.nitrogen). A name with no parent yet has its own
  * error, and so has a tile already inside another error's range.
@@ -2833,7 +2869,8 @@ function checkNitrogen(state, tree) {
   const template = chain.type === 'template' && isAmineTemplate(tiles[chain.tile].value); // `anilina` (R-6c3)
   const amine = (Boolean(suffix) && isAmineSuffix(tiles[suffix.tile].value)) || template;
   const placed = groupWordOf(tiles, chain); // `benzamida` (R-6d1)
-  const amide = (Boolean(suffix) && isAmideSuffix(tiles[suffix.tile].value)) || (Boolean(placed) && isAmideSuffix(placed.suffix));
+  const amide = (Boolean(suffix) && isAmideSuffix(tiles[suffix.tile].value)) || (Boolean(placed) && isAmideSuffix(placed.suffix))
+    || (chain.type === 'template' && isAmideTemplate(tiles[chain.tile].value)); // `acetamida` (R-6d3)
   const classed = chain.type === 'classWord' && isAmineClassWord(tiles[chain.tile]); // `metilamina` (R-6c3): no `N` at all
   const allowed = new Set(amine || amide ? tree.items.filter((item) => item.type === 'prefix').flatMap((item) => item.locants) : []);
   // A tile already inside another error's range (a stray `N`, numbers with no branch after them) keeps that error alone.

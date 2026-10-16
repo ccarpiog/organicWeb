@@ -9,8 +9,9 @@
  * number is and kept to an amine's name-level prefixes, the misplaced tiles
  * with their tile ranges and hints, partial names), assembler (every form
  * checked against the forward engine's own text), tokenizer (the amides'
- * later names never read — their suffixes read since phase R-6d1 —; the
- * `amino` prefixes read since phase R-6c2, `anilina`, `bencilamina` and the
+ * names read — their suffixes since phase R-6d1, their prefixes since R-6d2,
+ * their retained names since R-6d3 —; the `amino` prefixes read since phase
+ * R-6c2, `anilina`, `bencilamina` and the
  * class names since phase R-6c3), interpreter (the `N`
  * slots and their domain),
  * builder (the nitrogen and its groups, VALENCE on a third group, the caps),
@@ -338,14 +339,11 @@ test('assembler (R-6c1): every amine form is the forward engine\'s own text; the
   assert.deepEqual(strays.map((span) => span.kind), ['locant', 'multiplier', 'stem', 'ending']);
 }); // End of test 'assembler (R-6c1)…'
 
-test('tokenizer (R-6c1): the later amides\' names never tokenize; `amino` (R-6c2), `anilina` and the class names (R-6c3) read', () => {
+test('tokenizer (R-6c1): the amides\' names, `amino` (R-6c2), `anilina` and the class names (R-6c3) read', () => {
   // The amide suffixes read since phase R-6d1 (reverse-amides.test.js), `carbamoil` and the acylamino prefixes since R-6d2
-  // (reverse-amide-prefixes.test.js); the retained amide names (R-6d3) do not yet.
-  for (const name of ['acetamida', 'N-fenilacetamida']) {
-    assert.equal(tokenize(name), null, name);
-  }
+  // (reverse-amide-prefixes.test.js), the retained amide names since R-6d3 (reverse-amide-templates.test.js).
   for (const name of ['etanamida', 'N-metiletanamida', 'ciclohexanocarboxamida', 'benzamida', 'ácido 3-carbamoilpropanoico',
-    '2-(acetilamino)etan-1-ol']) {
+    '2-(acetilamino)etan-1-ol', 'acetamida', 'N-fenilacetamida']) {
     assert.ok(tokenize(name), name);
   }
   // Since phase R-6c2 the amino prefixes read (reverse-amino.test.js); since phase R-6c3 the retained amine names and the class
@@ -763,7 +761,7 @@ test('fixture round trip (R-6c1): every amine name the tiles write, read back; g
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (isLaterAmideName(name)) {
-        counts.later += 1; // R-6d3 (the retained amide names).
+        counts.later += 1; // None since phase R-6d3 (the retained amide names read).
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
       }
@@ -824,10 +822,11 @@ const LOOP = Object.freeze({
  * benzene amines, polyamines, since phase R-6c3 the retained amine names and
  * the class names, since phase R-6d1 the amines named as amides),
  * removed-locant mutations and decisive verdicts among them (three removals
- * run out of budget, `incomplete`); and the later names (the amides' later
- * words: the retained amide names) never tokenized (the seeds give 1012,
- * 1447, 646, 81, 382, 103, 291, 22, 12, 3269, 3266 and 3). Until phase R-6d2
- * the acylamino name was a later one too (1446 names read, 11 amides, 3264
+ * run out of budget, `incomplete`); no later name since phase R-6d3, whose
+ * three retained amide names read among the amides (the seeds give 1012,
+ * 1450, 649, 81, 382, 103, 291, 22, 15, 3269, 3266 and 0). Until phase R-6d3
+ * those three were later ones (1447 names read, 646 with `N`, 12 amides, 3
+ * later); until phase R-6d2 the acylamino name was a later one too (1446 names read, 11 amides, 3264
  * removals, 4 later); until phase R-6d1 the 11 amide names were later ones
  * too (1435 names read, 639 with `N`, 3227 removals, 15 later); until phase R-6c3 the
  * 291 names with `anilina` or `bencilamina` and the 22 class names (1122
@@ -835,8 +834,8 @@ const LOOP = Object.freeze({
  * too (773 names read, 677 later; 2225 removals, 2223 decisive).
  */
 const LOOP_MIN = Object.freeze({
-  molecules: 1000, names: 1440, nitrogen: 640, ring: 78, benzene: 375, poly: 100, templates: 285, classNames: 20, amides: 10,
-  removed: 3250, decisive: 3250, later: 3,
+  molecules: 1000, names: 1445, nitrogen: 645, ring: 78, benzene: 375, poly: 100, templates: 285, classNames: 20, amides: 15,
+  removed: 3250, decisive: 3250, later: 0,
 });
 
 /**
@@ -914,11 +913,12 @@ test('closed loop over the amine generators: engine name → tiles → readName(
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
       if (isLaterAmideName(name)) {
-        counts.later += 1; // R-6d3 (the retained amide names).
+        counts.later += 1; // None since phase R-6d3 (the retained amide names read).
         assert.equal(tokenize(name), null, name);
         continue;
       }
-      // R-6d1: an amine named as an amide (`2-aminopropanamida`), read since then; R-6d2: with an acylamino prefix too.
+      // R-6d1: an amine named as an amide (`2-aminopropanamida`), read since then; R-6d2: with an acylamino prefix too; R-6d3:
+      // with a retained amide name (`N-(2-aminoetil)acetamida`).
       counts.amides += isAmideName(name) ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);
@@ -962,6 +962,7 @@ test('closed loop over the amine generators: engine name → tiles → readName(
   for (const field of Object.keys(counts)) {
     assert.ok(counts[field] >= LOOP_MIN[field], `${field}: ${report}`);
   }
+  assert.equal(counts.later, 0, report);
 }); // End of test 'closed loop over the amine generators…'
 
 // ---------------------------------------------------------------------------

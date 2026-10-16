@@ -52,7 +52,7 @@ import {
   generateRingPolysuffixBenzenes, generateAcyl,
 } from '../../scripts/oracle/generate.mjs';
 import {
-  seq, readFixtures, isAmide, isAmidePrefixName, isR6d2AmideName, isLaterAmideName, hasAcylamino, CARBAMOYL_WORD,
+  seq, readFixtures, isAmide, isAmidePrefixName, isR6d2AmideName, isLaterAmideName, isAmideTemplateName, hasAcylamino, CARBAMOYL_WORD,
 } from './reverse-words.js';
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
@@ -356,14 +356,15 @@ test('assembler (R-6d2): every carbamoyl and acylamino form is the forward engin
     [4, 'il'], [null, '('], [5, 'met'], [6, 'il'], [null, ')'], [7, 'carbamoil'], [8, ']']]);
 }); // End of test 'assembler (R-6d2)…'
 
-test('tokenizer (R-6d2): the amide prefixes read; the retained amide names (R-6d3) never tokenize', () => {
+test('tokenizer (R-6d2): the amide prefixes read; the retained amide names read since R-6d3, swept apart', () => {
   assert.deepEqual(tokenize('ácido 3-[etil(metil)carbamoil]pentanodioico'), seq('ácido 3 START et il met il carbamoil END pent ano di oico'));
   assert.deepEqual(tokenize('ácido 2,2-dicarbamoilbutanoico'), seq('ácido 2 2 di carbamoil but ano oico'));
   assert.deepEqual(tokenize('ácido 2-[acetil(metil)amino]etanoico'), seq('ácido 2 START acetil met il amino END et ano oico'));
   assert.deepEqual(tokenize('ácido 2-(benzoilamino)etanoico'), seq('ácido 2 START benzoil amino END et ano oico'));
+  // R-6d3: the retained amide names are «Nombres tradicionales» tiles (reverse-amide-templates.test.js), never R-6d2 names.
   for (const name of ['acetamida', 'N-metilacetamida', '2-fenilacetamida', 'ftalamida', 'N,N-dimetilformamida']) {
-    assert.equal(tokenize(name), null, name);
-    assert.ok(isLaterAmideName(name), name);
+    assert.ok(tokenize(name), name);
+    assert.ok(isAmideTemplateName(name) && !isLaterAmideName(name) && !isR6d2AmideName(name), name);
   }
   // The helpers that set the R-6d2 names apart (reverse-words.js).
   assert.deepEqual(['ácido 3-carbamoilpentanodioico', 'ácido 2-(acetilamino)etanoico', 'ácido 4-amino-4-oxobutanoico', 'etanamida',
@@ -910,8 +911,7 @@ test('fixture round trip (R-6d2): every amide-prefix name the tiles write, read 
     const expected = keyOf(row.smiles);
     for (const name of row.names.filter(isAmidePrefixName)) {
       if (!isR6d2AmideName(name)) {
-        counts.later += 1; // A retained amide name too (R-6d3).
-        assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
+        counts.later += 1; // A retained amide name too (R-6d3), read in reverse-amide-templates.test.js: none.
         continue;
       }
       const ids = tokenize(name);
@@ -1058,7 +1058,7 @@ test('closed loop over the generators\' amide-prefix names: engine name → tile
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
       if (!isR6d2AmideName(name)) {
-        continue; // Read by its own family's loop, or a retained amide name (R-6d3).
+        continue; // Read by its own family's loop, or a retained amide name (R-6d3: reverse-amide-templates.test.js).
       }
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);

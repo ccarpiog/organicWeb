@@ -1295,7 +1295,7 @@
  * null (an ad hoc sweep of random class names found none).
  *
  * **Amides** (design.md §13.4 I-37, I-39d, I-40c, §14 I-43b, I-44, §15.8
- * R-6d; phases R-6d1, R-6d2): the suffixes `amida` (terminal by rule, as `oico`: its
+ * R-6d; phases R-6d1, R-6d2, R-6d3): the suffixes `amida` (terminal by rule, as `oico`: its
  * carbon is the chain's end carbon), `carboxamida` and `benzamida`, and the
  * locant `N` of a group on the amide's nitrogen (`N-metiletanamida`,
  * `N,2-dimetilpropanamida`, `N-etil-4-metilbenzamida`). The amide is the
@@ -1394,6 +1394,36 @@
  *   (`2-(acetilamino)etan-1-ol` → «N-(2-hidroxietil)etanamida»), are
  *   `seniority`; `4-carbamoilbutanamida` → «pentanodiamida» is `count`.
  *
+ * The retained amide names (phase R-6d3: `formamida`, `acetamida`,
+ * `ftalamida`; their –CONH₂ groups the placed suffix, kind 'amide') run the
+ * rules as the retained nitriles do, and amideChecks() is theirs. The engine
+ * writes `formamida` and `acetamida` with groups on their nitrogen only, or
+ * `acetamida` with one phenyl instead (tiles.js templateAdmits():
+ * `nitrogenPrefixes`, `arylPrefix`), so any other prefix is
+ * SUBSTITUTED_TEMPLATE, its message saying what the word admits
+ * (substitutedChainTemplate(): `2-cloroacetamida` → «El nombre tradicional
+ * «acetamida» solo admite grupos en el nitrógeno, con «N» (N-metilacetamida),
+ * o solo un fenil en el carbono 2 (2-fenilacetamida): con otros grupos…
+ * «2-cloroetanamida»», `N-metil-2-fenilacetamida`, `1-metilformamida` →
+ * «etanamida»); `ftalamida` with any ring prefixes, judged by the ring rules
+ * (RING_NUMBERING `5-metilftalamida`); the shared rules on the groups on the
+ * nitrogen (ALPHABETICAL_ORDER `N-metil-N-etilacetamida`, UNGROUPED
+ * `N-metil-N-metilacetamida`) and on an aryl phenyl's own prefixes
+ * (BRANCH_RING_NUMBERING `2-(5-metilfenil)acetamida`). A template whose
+ * amide groups are not the engine's is amideChecks()'s, a deliberate null
+ * for phase I-52d4: another –CONH₂ written `carbamoil` beside the word
+ * (`count`: `2-carbamoilacetamida` → «propanodiamida»,
+ * `4-carbamoilftalamida` → «benceno-1,2,4-tricarboxamida») and the word
+ * beside a senior group (`seniority`: `2-carboxiacetamida` → «ácido
+ * 3-amino-3-oxopropanoico», `4-carboxiftalamida` → «ácido
+ * 3,4-dicarbamoilbenzoico») and a ring on `formamida`'s carbon, whose amide
+ * carbon the engine puts outside that ring (`carbon`: `1-fenilformamida` →
+ * «benzamida», as `1-fenilmetanamida`). A prefix in a style the engine never
+ * writes beside the word (`N-(propan-2-il)acetamida`, `4-(propan-2-il)ftalamida`,
+ * `2-[4-(propan-2-il)fenil]acetamida`; the engine writes `isopropil` there)
+ * is the null of the retained words' prefix style, the cross-family open
+ * question of the retained aldehydes, acids, esters, nitriles and `anilina`.
+ *
  * Every Spanish string is a draft pending teacher review (design.md §15,
  * last paragraph): all of them live in DIAGNOSIS_TEXTS and DIAGNOSIS_PHRASES
  * (the class-name steps' in CLASS_NAME_STEP_TEXTS and AMINE_CLASS_STEP_TEXTS), and DIAGNOSES gives
@@ -1423,7 +1453,7 @@ import { ownPrefixAtoms, specRings, isRing, isAromatic } from './build.js';
 import {
   tileById, tileId, MAX_MULT, isAtomGroup, atomGroupOrder, HYDROXY_ELEMENT, HYDROXY_ID, OL_ID, PHENOL_ID, ALKOXY_ELEMENT,
   FORMYL_ID, ACETYL_ID, OXO_ID, OXO_ELEMENT, AL_ID, ONA_ID, CARBALDEHYDE_ID, BENZALDEHYDE_ID, BENZOYL_ID, RING_CARBONYL_ID,
-  templateAdmits, isChainTemplate, ACID_KIND, CARBOXY_ID, ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, ESTER_KIND,
+  templateAdmits, isChainTemplate, TEMPLATES, ACID_KIND, CARBOXY_ID, ACID_WORD_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID, ESTER_KIND,
   isEsterTemplate, OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, NITRILE_KIND, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID,
   AMINE_KIND, N_VALUE, N_TEXT, AMINO_KIND, AMINO_ELEMENT, AMINA_ID, AMINO_ID, NITROGEN_ID, AMIDE_KIND, CARBAMOYL_KIND,
 } from './tiles.js';
@@ -1497,6 +1527,8 @@ const WORDS = Object.freeze({
   amino: tileById(AMINO_ID).text,
   n: N_TEXT,
   benzamida: `${BENZENE_GROUP_NAMES.amide.stem}${BENZENE_GROUP_NAMES.amide.ending}`,
+  // The retained amide names (R-6d3): `2-fenilacetamida`, the phenyl `acetamida` admits instead of groups on its nitrogen.
+  fenilacetamida: TRADITIONAL_NAMES.phenylacetamide,
 });
 
 /** The style of the engine's functional-class alternative (naming/index.js etherClassAlternative(); R-5b2). */
@@ -1760,12 +1792,21 @@ export const DIAGNOSIS_TEXTS = Object.freeze({
     + `y la cadena principal tiene ${d.length}.`,
   BENZENE_RING: (d) => 'Un anillo de 6 carbonos con tres enlaces dobles alternados, uno sí y uno no, es el benceno, y tiene '
     + `nombre propio: «${WORDS.benceno}».${d.name === WORDS.benceno ? '' : ` Se escribe «${d.name}».`}`,
-  // A chain template (R-5c3a: `acetona`, `acetaldehído`…) has no ring: `parent` null, the systematic name.
-  SUBSTITUTED_TEMPLATE: (d) => (d.parent === null
-    ? `El nombre tradicional «${d.template}» no admite sustituyentes: con más grupos, la molécula se nombra con su nombre `
-      + `sistemático: «${d.name}».`
-    : `El nombre tradicional «${d.template}» no admite más sustituyentes: con más ramas en el anillo, `
-      + `la molécula se nombra a partir de «${d.parent}», con todas las ramas delante: «${d.name}».`),
+  // A chain template (R-5c3a: `acetona`, `acetaldehído`…) has no ring: `parent` null, the systematic name. A retained amide
+  // name (R-6d3: `formamida`, `acetamida`) admits groups on its nitrogen (`nitrogen`, an example) and `acetamida` one phenyl
+  // instead (`aryl`).
+  SUBSTITUTED_TEMPLATE: (d) => {
+    if (d.parent === null && d.nitrogen) {
+      return `El nombre tradicional «${d.template}» solo admite grupos en el nitrógeno, con «${WORDS.n}» (${d.nitrogen})`
+        + `${d.aryl ? `, o solo un fenil en el carbono 2 (${d.aryl})` : ''}: con otros grupos, la molécula se nombra con su `
+        + `nombre sistemático: «${d.name}».`;
+    }
+    return d.parent === null
+      ? `El nombre tradicional «${d.template}» no admite sustituyentes: con más grupos, la molécula se nombra con su nombre `
+        + `sistemático: «${d.name}».`
+      : `El nombre tradicional «${d.template}» no admite más sustituyentes: con más ramas en el anillo, `
+        + `la molécula se nombra a partir de «${d.parent}», con todas las ramas delante: «${d.name}».`;
+  }, // End of the SUBSTITUTED_TEMPLATE message
   // A retained ester word with an O-bound group in another style than its traditional name's (R-6a3b, file header «Esters»).
   ESTER_TRADITIONAL: (d) => `El nombre tradicional «${d.template}» solo lo uso con el nombre del grupo unido al oxígeno que doy `
     + `primero, «${d.side}»: «${d.traditional}». Con «${d.student}», la primera palabra es la sistemática: «${d.systematic}».`,
@@ -6295,7 +6336,9 @@ function bencenol(ctx) {
  * `formaldehído`, `acetaldehído`, `acetofenona`, `fenilacetaldehído`; R-5d2:
  * `ácido fórmico`, `ácido acético`, `ácido oxálico`, `ácido fenilacético`,
  * quoted with the class word; R-6a2a: `formiato`, `acetato`, `fenilacetato`;
- * R-6b2: `acetonitrilo`, `fenilacetonitrilo`)
+ * R-6b2: `acetonitrilo`, `fenilacetonitrilo`; R-6d3: `formamida`,
+ * `acetamida`, whose message says they admit groups on their nitrogen,
+ * `nitrogen`, and `acetamida` a phenyl instead, `aryl`)
  * with prefixes of the student's that the engine never writes on it
  * (tiles.js templateAdmits(): only `acetaldehído`, `acético`, `acetato` or
  * `acetonitrilo` with one phenyl, `2-(4-metilfenil)acetaldehído`): the molecule has its
@@ -6316,9 +6359,13 @@ function substitutedChainTemplate(ctx) {
   if (!template || !isChainTemplate(template.value) || spec.prefixes.length === 0 || templateAdmits(template.value, spec.prefixes)) {
     return null;
   }
+  // A retained amide name (R-6d3) admits groups on its nitrogen: `N-metilformamida`, `N-metilacetamida`; `acetamida` a phenyl.
+  const { nitrogenPrefixes, arylPrefix } = TEMPLATES[template.value];
+  const nitrogen = nitrogenPrefixes ? `${WORDS.n}-${WORDS.metil}${template.word.text}` : null;
+  const aryl = nitrogenPrefixes && arylPrefix ? WORDS.fenilacetamida : null;
   return {
     code: 'SUBSTITUTED_TEMPLATE',
-    data: { template: template.word.text, parent: null, name: naming.name },
+    data: { template: template.word.text, parent: null, name: naming.name, nitrogen, aryl },
     focus: occurrenceIds(reading.prefixAtoms),
     tiles: template.word.tiles,
     step: 'groupChain',
