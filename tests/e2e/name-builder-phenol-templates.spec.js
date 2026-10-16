@@ -237,7 +237,7 @@ test('`cresol` alone asks for its letter, `4-cresol` is refused with the number 
   // Ayuda, «Del nombre al dibujo»: alcohols and phenols are read; the phenol templates and the alcohol tiles.
   await page.getByRole('button', { name: 'Ayuda' }).click();
   const help = page.getByRole('dialog', { name: 'Cómo se usa' });
-  await expect(help.locator('#help-name-to-drawing')).toContainText('de sus derivados halogenados y de sus alcoholes y fenoles');
+  await expect(help.locator('#help-name-to-drawing')).toContainText('de sus derivados halogenados, alcoholes y fenoles');
   const rings = help.locator('#help-name-to-drawing-rings');
   for (const phrase of ['el cresol, el pirocatecol o catecol, el resorcinol y la hidroquinona', 'solo lleva la letra (p-cresol)',
     '4-clorocatecol']) {

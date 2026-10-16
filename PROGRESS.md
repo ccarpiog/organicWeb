@@ -72,10 +72,10 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-52d2 | v4 R-6d2 Amide prefixes `carbamoil` (`(metilcarbamoil)`, `[etil(metil)carbamoil]`, `bis(metilcarbamoil)`) and acylamino (`(acetilamino)`, `[acetil(metil)amino]`), the rows waiting for them, e2e | same, "R-6d" | done — `docs/progress-archive/i-52d2.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52d2.md` |
 | I-52d3 | v4 R-6d3 Retained amide names (`formamida`, `acetamida`, `N-metilacetamida`, `2-fenilacetamida`, `ftalamida` …), Ayuda amide line, e2e | same, "R-6d" | done — `docs/progress-archive/i-52d3.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52d3.md` |
 | I-52d4 | v4 R-6d4 Amide diagnosis messages (fill the «Amides» nulls of I-52d1…d3 and the `1-aminobutanal` → «butanamida» null), e2e | same, "R-6d" | done — `docs/progress-archive/i-52d4.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52d4.md` |
-| I-53 | v4 R-7 Wrap-up | same, "R-7" | split into I-53a, I-53b | — | — |
+| I-53 | v4 R-7 Wrap-up | same, "R-7" | done — split into I-53a, I-53b | — | — |
 | I-53a | v4 R-7a Closed loop over every generator (27 generators + `names.tsv`, every forward form read back, pins asserted) | same, "R-7" | done — `docs/progress-archive/i-53a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-53a.md` |
-| I-53b | v4 R-7b Ayuda, README, CLAUDE.md scope line, teacher-review list, open user questions in one place, design.md cleanup notes | same, "R-7" | queued — next | — | — |
-| I-54 | o/m/p letters for two different prefixes on plain `benceno`, drawing → name and name → drawing (user decision 2026-10-15, reverses design §14.4) | `autoclaude/processed/240-omp-two-different-groups.md` | queued — after I-53 (user: «after v4») | — | — |
+| I-53b | v4 R-7b Ayuda, README, CLAUDE.md scope line, `docs/teacher-review-v4.md`, `docs/open-questions.md`, design.md cleanup recorded (blocked) | same, "R-7" | done — `docs/progress-archive/i-53b.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-53b.md` |
+| I-54 | o/m/p letters for two different prefixes on plain `benceno`, drawing → name and name → drawing (user decision 2026-10-15, reverses design §14.4) | `autoclaude/processed/240-omp-two-different-groups.md` | queued — next | — | — |
 
 v1 (I-1…I-12), user feedback (I-13…I-20), v2 (I-21…I-41c, plan in `docs/design.md` §13) and v3
 (I-42…I-46, polysubstituted benzenes, user-confirmed 2026-10-13, design §14) are all done; phases
@@ -98,23 +98,20 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-53b (v4 R-7b, the second half of the wrap-up; design §15.8 row R-7: «Ayuda; README; CLAUDE.md scope line; design.md cleanup;
-the list of new wording pending teacher review»). I-53a is done: the closed loop over all 27 generators and `names.tsv` reads every
-forward form back (3 pins: `alcohol bencílico`, `ditert-butil éter`, `tridecilamina`; `docs/progress-archive/i-53a.md`). I-53b: bring the
-Ayuda «Del nombre al dibujo» section (`index.html` / `src/ui/` help, ids `#help-name-to-drawing-*`) and README up to date with every
-family v4 reads; shorten CLAUDE.md's v4 scope sentence (now very long) to a present-state summary; write one teacher-review list
-`docs/teacher-review-v4.md` collecting every v4 Spanish draft listed under "New Spanish drafts" in `docs/progress-archive/i-47a.md` …
-`i-53a.md`, and one place listing the open user questions from *Open risks* (plus `i-53a.md` "Open questions"). **design.md cleanup is
-blocked**: `docs/design.md` is the user's uncommitted file — never edit or commit it; record the intended §15.8 Status / cleanup edits in
-`docs/progress-archive/i-53b.md` and flag them for the user, unless the user has committed it by then (`git status --short
-docs/design.md` empty). Risk routine; worker opus. Commit by explicit paths. Then I-54 (o/m/p for two different prefixes on `benceno`,
-`autoclaude/processed/240-omp-two-different-groups.md`).
+Select I-54 (`autoclaude/processed/240-omp-two-different-groups.md`, user decision 2026-10-15): o/m/p letters for two different
+prefixes on plain `benceno`, both directions — drawing → name (new alternatives under «Otras formas válidas», main names never
+change) and name → drawing (`checkLetters()` in `src/reverse/parse.js` stops refusing two different prefixes; the diagnosis and
+search follow). Read the item's "The rule", "Drawing → name", "Name → drawing" and "Tests" sections; split into I-54a (forward
+engine) and I-54b (reader) if it does not fit one worker. Risk high; worker opus. Also update what I-53b wrote for the old rule:
+the Ayuda rings line (`index.html` `#help-name-to-drawing-rings`, «no con … dos grupos distintos en «benceno» (1-bromo-4-clorobenceno)»),
+its test in `tests/unit/reverse-templates.test.js` («the examples the Ayuda … cites»), `docs/teacher-review-v4.md` and CLAUDE.md.
+**design.md is still the user's uncommitted file** (`git status --short docs/design.md` → ` M`): if so, do not edit it — record the
+§14.4 / §14.1 / §15 R-4 decision-change edits the item asks for in `docs/progress-archive/i-54.md` beside the I-53b ones
+(`docs/progress-archive/i-53b.md` "Intended design.md edits") and flag them; if the user has committed it, make those edits and the
+I-53b ones. Commit by explicit paths. After I-54 the plan is finished (DONE once the inbox is empty).
 
-- **Builds on** every v4 phase (`docs/progress-archive/i-47a.md` … `i-52d4.md`; the "Key paths" below); the forward naming engine
-  names every case (v2 §13, v3 §14).
-
-Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awaits teacher review
-(design §14.6, §15.9).
+- **v4 is done** (I-47a…I-53b). Open user questions: `docs/open-questions.md` (Q1…Q15); Spanish wording pending teacher review:
+  `docs/teacher-review-v4.md`. Deploying (`npm run deploy`) stays a manual user step.
 
 ## Decisions (user, final — 2026-09-27)
 
@@ -255,14 +252,17 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   (AMIDE_NULLS gone); tests `tests/unit/reverse-diagnose-amides.test.js`, amide case in `diagnosis.spec.js`.
 - Closed loop over every generator (I-53a): `tests/unit/reverse-closed-loop.test.js` (27 generators of
   `scripts/oracle/generate.mjs`, `names.tsv`, REACH molecules for the open questions; one asserted PINS table).
+- v4 wrap-up docs (I-53b): `docs/teacher-review-v4.md` (v4 Spanish strings, ids T/V/E/S/D/A/C), `docs/open-questions.md` (Q1…Q15),
+  Ayuda `#help-name-to-drawing-scope` («Qué queda fuera») in `index.html`.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
 - I-51c1 … I-52d4: see `docs/progress-archive/i-51c1.md` … `i-52d4.md`.
-- I-53a (orchestrator, after the worker): `npm test` exit 0 (2448 → 2479 pass, 0 fail, 79 s, was 52 s) · `npm run check` exit 0 (226
-  files) · `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (629 passed). `git diff --stat -- src scripts` empty;
-  `docs/design.md` not edited (mtime 2026-10-14). Worker's ad hoc sweep: 334 927 molecules / 412 491 names, only 5 × `alcohol bencílico`.
+- I-53a: see `docs/progress-archive/i-53a.md`.
+- I-53b (orchestrator, after the worker): `npm test` exit 0 (2480 pass, 0 fail, 79 s) · `npm run check` exit 0 (226 files) ·
+  `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (631 passed). `git diff --stat -- src/naming src/reverse src/model
+  scripts` empty; `docs/design.md` not edited (mtime 2026-10-14 17:11).
 
 ## Open risks / deviations
 
@@ -307,93 +307,29 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   retained-name and o/m/p choices (xileno/mesitileno, `catecol`, `bencenohexol`, no
   `toluoil`/`toluato`/`tolilo`/`cresilo`) rest on memory; v3 Ayuda wording pending teacher review.
 
-- I-47a…I-50c (v4 engine, dialog, «Dibujar», chain diagnosis, rings, benzene, templates):
-  deviations, decisions and review resolutions in `docs/progress-archive/i-47a.md` … `i-50c.md`.
-  Still relevant: every v4 Spanish string is a draft pending teacher review; tile cap 100; «Tu nombre: …» verdict line not in spec; `ciclohex-1-eno` →
-  `otherName`; left-out locants → kindest of up to 16 readings; e2e has load-dependent flakes
-  (`diagnosis.spec.js` keyboard, `polish.spec.js` phone toolbar, dist only).
-- I-50d…I-51a3b (ring diagnoses, halogens, alcohols, phenol templates, alcohol diagnoses): deliberate
-  nulls, tile decisions (`fenol`, `1(n)`, no numeric cresol, a prefix on `cresol` → POSITIONAL) and
-  new Spanish drafts in `docs/progress-archive/i-50d.md` … `i-51a3b.md`; no alcohol null left.
-- I-51b1/I-51b2 (ethers): details and Spanish drafts in `docs/progress-archive/i-51b1.md`, `i-51b2.md`.
-  Open questions for the user: (1) forward-engine bug, not fixed — `src/naming/index.js`
-  `etherClassAlternative()` writes `ditert-butil éter` without the hyphen, so the student's
-  `di-tert-butil éter` is `otherName` with a null diagnosis (tested); (2) the forward «Reconoce el
-  éter» step says an ether «nunca va al final del nombre», true of the substitutive name only; (3) the
-  forward engine writes `1,6-bis-tert-butoxihexano` where usage is `di-tert-butoxi` — followed.
-- I-51c1…I-51c3b2 (carbonyl suffixes, acyl prefixes, carbonyl templates, carbonyl and acyl-word diagnoses): decisions,
-  review resolutions and Spanish drafts in `docs/progress-archive/i-51c1.md` … `i-51c3b2.md`. Still relevant: an ester
-  written as an ether class name gets a null (R-6a's); `cloroacetaldehído` stays `ambiguous`; BRANCH_RING_NUMBERING
-  runs on any family and wins over LOCANT_ORDER; still null: a benzene written with `ciclo` in a branch, numbered as the
-  engine numbers it; open wording question — the ring-numbering message quotes the engine's form of the whole prefix, so
-  it may also show a style change («3-tert-butilfenil» for «5-(1,1-dimetiletil)fenil»).
-- I-51d1…I-52a2b (acids, ester suffixes, retained esters, ester prefixes): decisions, deviations and Spanish drafts in
-  `docs/progress-archive/i-51d1.md` … `i-52a2b.md`. Still relevant: one deliberate acid null (unbuildable); benzene diesters and
-  ester prefixes on `benceno` beside an acid are engine refusals (`outOfScope`); 15 ester rows with a nitrogen wait for
-  R-6b…R-6d. Open questions for the user: (1) a retained word's prefix in the IUPAC-preferred style
-  (`2-[4-(propan-2-il)fenil]acetato de metilo`, `ácido 4-(propan-2-il)ftálico`, also on the retained aldehyde and, since I-52b2, the
-  nitrile: `4-(propan-2-il)ftalonitrilo` — Codex's I-52b2 should-fix) gets a null no rule covers; a fix (one message for all four
-  families) waits for the user's wording; (2) the
-  forward engine writes `bis-(tert-butoxicarbonil)` / `bis-(tert-butoxi)` with a hyphen before the parenthesis (IUPAC usage,
-  from memory: `bis(tert-butoxicarbonil)`), followed by the reverse engine — a fix means changing `src/naming/render.js`.
-- I-52a3a (principal ester group diagnoses; decisions and Spanish drafts in `docs/progress-archive/i-52a3a.md`): the O-bound side is not
-  compared when the student's –COO– count differs; groups inside the O-bound part are read (`etanoato de 2-carboxietilo` is no
-  ACID_GROUP); an acyloxy prefix at any depth is CARBONYL_PREFIX ester. Open risk: ETHER_SIDE's `oxygenBetween()` does not tell an
-  ester's bridge oxygen from an ether's (23 000 random names: no case). KETONE_NOT_ALDEHYDE beside an ester does not mention it.
-- I-52a3b (O-bound side, ester prefix words, ester as ether class name; decisions, Spanish drafts and review resolutions in
-  `docs/progress-archive/i-52a3b.md`): one deliberate null left — an O-bound side mixing the engine's two prefix styles, each group right
-  in one (`pentanodioato de isopropilo y 4-(propan-2-il)fenilo`; 2 of ~4 800 ad hoc names, none in the sweeps); ESTER_ALKYL_NAME is the
-  generic message for mistakes inside an O-bound group's own prefixes (`4-metil-2-clorofenilo`). Open question for the user: the forward
-  engine always joins two O-bound groups with «y» (`etilo y isopropilo`), where Spanish writes «e» before «i» — not changed.
-- I-52b1…I-52b3 (nitriles: suffixes, `benzonitrilo`, `ciano`, retained names, diagnoses; decisions and Spanish drafts in
-  `docs/progress-archive/i-52b1.md` … `i-52b3.md`): `carbonitrilo` after an open chain is read and judged (`propano-1-carbonitrilo` →
-  NITRILE_CARBON «butanonitrilo»); the forward engine writes no `isoftalonitrilo` / `tereftalonitrilo`, so no tiles; one deliberate
-  nitrile null left (a nitrile suffix beside a junior principal group, unbuildable, pinned). For teacher review: the seniority order
-  beside a nitrile names `amida` and `amina` (tiles not yet written; it matches the opened step); CARBONYL_SENIORITY beside an acid
-  with a `ciano` elsewhere omits «nitrilo» from its order (pre-existing, still true). CLAUDE.md's stale R-6a1 / R-6a2b
-  «deliberate «Esters» nulls» clauses (stale since I-52a3) were removed in this phase by the orchestrator.
-- I-52c1…I-52c4b (amines: suffix, `N` locants, amino prefixes, `anilina` / `bencilamina`, class names, diagnoses; decisions, deliberate
-  nulls, Spanish drafts and review fixes in `docs/progress-archive/i-52c1.md` … `i-52c4b.md`): `N` is locant 0 inside the engine (`N,2-`
-  sorts first); a supplied `N` on a polyamine is `outOfScope`; acylamino stays TILE_ORDER until R-6d; `N-etilbencilamina` stays
-  SUBSTITUTED_TEMPLATE; AMINE_SIDE reads the principal amine's nitrogen only; amine class names reuse the ether CLASS_* codes with the
-  diagnosis-only step `amineClass`, a class name beside a senior group is CARBONYL_SENIORITY, CLASS_NAME_NONE also cites the engine's
-  retained name («bencenamina», también «anilina»). Deliberate nulls left: `anilina` `style` (`4-(propan-2-il)anilina`, the open question
-  I-51d1…I-52a2b (1)) and `amide` (`1-aminobutanal` → «butanamida», R-6d's). For teacher review: `N-cloroetanamina` gets the general
-  HETEROATOM refusal; `p-metilbencenamina` the two-different-groups letter message; CARBONYL_SENIORITY beside an amine shows the whole
-  order; the class names' multiplier hint says «Los prefijos di-, tri-…». Open questions for the user (forward engine, not changed):
-  (1) `butiltert-butilamina` without a hyphen; (2) `tridecilamina` for N(C₁₀H₂₁)₃ is ambiguous (usage: `tris(decil)amina`); (3) announce
-  the class name on a `correct` verdict (`metanamina`)? `alcohol bencílico` stays unread (no phase).
-- I-52d1…I-52d4 (amides: suffixes, `N` on the amide nitrogen, `carbamoil`, acylamino, retained `formamida` / `acetamida` /
-  `ftalamida`, diagnoses; decisions, Spanish drafts and review fixes in `docs/progress-archive/i-52d1.md` … `i-52d4.md`): the amide
-  nitrogen is a suffix field sharing the amine's `N` machinery; `carbamoil` is no hetero group for rule 1; imides `outOfScope`; no
-  `isoftalamida` / `tereftalamida` / `oxamida` tiles (the engine writes none). Deliberate nulls left (pinned): the retained words'
-  prefix style (`N-(propan-2-il)acetamida`, open question I-51d1…I-52a2b (1)) and a cross-family gap — an outside suffix after a chain
-  whose group is not the engine's parent's, across an N or O (`N-(2-amino-2-oxoetil)metano-1-carboxamida`, also the acid / nitrile /
-  aldehyde twins). I-52d4 review fix (Codex should-fix): CARBONYL_PARENT on a benzene parent read a missing RINGCHAIN trace step as
-  «las cadenas no llevan ninguno» (`2-(benzoilamino)etanamida`); `ringChainCounts()` now takes the counts from the engine's
-  `ringOrChain()`, tested (8 names changed in a 1 768-name sweep, all amides). For teacher review: the seniority order shown whole
-  (the acid's and ester's own steps show a shorter one); two amides on two carbon pieces get MORE_SUBSTITUENTS without saying the
-  chain cannot pass through the nitrogen; «Ver el paso» for that benzene tie opens the benzene step, which does not mention the tie
-  (`src/explain/` unchanged); the earlier families' hints still cite refused forms (`(4-cianofenil)` …); SUBSTITUTED_TEMPLATE's amide
-  wording, tooltips and the Ayuda «Amidas» line; pre-existing O-bound ALPHABETICAL_ORDER case (`i-52d2.md`).
-
-- I-53a (closed loop over every generator; details in `docs/progress-archive/i-53a.md`): no new forward-engine bug, no `src/` change; 3
-  asserted pins — `alcohol bencílico` (no tile; read it in a later phase or keep it unread? — user question), `ditert-butil éter`
-  (forward, open question I-51b1/I-51b2 (1)), `tridecilamina` (forward, I-52c3 (2)). The reverse engine follows four forward forms
-  that are open questions (`bis-tert-butoxi`, `bis-(tert-butoxicarbonil)`, `butiltert-butilamina`, «y» before «i»): changing one means a
-  matching reverse change, which the loop will show. `npm test` wall time 52 s → 79 s (lower `count` in `GENERATORS` if it matters).
+- v4 (I-47a…I-53b, «¿Cómo se dibuja?»): every open user question is in `docs/open-questions.md` (Q1…Q15: design.md commit, closed-loop
+  test time, the I-49b stepper style, class name on `correct`, forward `ditert-butil éter` / `bis-tert-butoxi` /
+  `bis-(tert-butoxicarbonil)` / `butiltert-butilamina` / `tridecilamina` / «y» before «i», `alcohol bencílico`, retained-word prefix
+  style, ring-numbering message style, hints citing refused substituted phenyls, «nunca va al final»); every v4 Spanish string pending
+  teacher review is in `docs/teacher-review-v4.md`; per-phase deviations, deliberate pinned nulls and review resolutions in
+  `docs/progress-archive/i-47a.md` … `i-53b.md`. Still-relevant non-question risks: tile cap 100; left-out locants → kindest of up to
+  16 readings; e2e load-dependent flakes (`diagnosis.spec.js` keyboard, `polish.spec.js` phone toolbar, dist only); the reverse
+  engine follows the forward engine's open-question forms, so changing one needs a matching reverse change (the closed loop
+  `tests/unit/reverse-closed-loop.test.js` shows it); three asserted pins in that loop (`alcohol bencílico`, `ditert-butil éter`,
+  `tridecilamina`).
 
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
   (the runner's preflight-dirty list, 2026-10-14). Per the autoclaude rules they are the user's:
   phases read them from disk but never edit, commit or revert them, and commit by explicit path.
   So the item's «every phase updates the Status column of §15.8» is tracked here in the phase table
-  instead; once the user commits design.md, the next phase brings the §15.8 Status column up to date.
+  instead; the exact §15.8 / §15.9 cleanup edits are written in `docs/progress-archive/i-53b.md` ("Intended design.md edits") for
+  whoever applies them once the user commits design.md (open question Q1).
   User action wanted: commit `docs/design.md` and `docs/reviews/v4-plan-codex.md`.
 
 - Bundler regex-literal detection is heuristic; duplicate `export *` names: first wins (`i-1.md`).
 
 ## Git state
 
-- I-52d4 `d062f70`, pushed. I-53a committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
+- I-53a `0db667d`, pushed. I-53b committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
   never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

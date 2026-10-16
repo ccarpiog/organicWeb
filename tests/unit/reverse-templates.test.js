@@ -10,7 +10,8 @@
  * engine's own label, the molecule compared by aromatic key; the o/m/p rules
  * of §14.4 (allowed and refused cases); substituted templates, which the
  * engine never writes, read as `otherName` / `ambiguous`; left-out locants on
- * a template; mutations; the ordered drawing; the diagnosis (I-50d); time budgets.
+ * a template; mutations; the ordered drawing; the diagnosis (I-50d); time budgets;
+ * the examples the Ayuda «Del nombre al dibujo» cites since R-7b (phase I-53b).
  * The fixture round trip and the closed loop over these names are in
  * reverse-benzene.test.js and reverse-tokenize.test.js.
  */
@@ -511,3 +512,23 @@ test('time budget: each representative template readName() well within budget', 
     assert.ok(elapsed < SEARCH_BUDGET.ms);
   }
 }); // End of test 'time budget: each representative template readName() well within budget'
+
+test('the examples the Ayuda «Del nombre al dibujo» added in R-7b (phase I-53b) read as the help says', () => {
+  // Rings line: the letters for a second group on a benzene with its own group, and the closing-bond locant.
+  for (const name of ['p-metilfenol', 'p-cloroanilina', 'p-metilbenzaldehído', 'ácido p-metilbenzoico', 'p-metilbenzoato de etilo',
+    'p-metilbenzonitrilo', 'p-metilbenzamida']) {
+    const verdict = readName(tokenize(name));
+    assert.equal(verdict.kind, 'alternative', `${name}: ${verdict.message}`);
+  }
+  // Two different groups on plain «benceno» are written with numbers; the closing-bond locant `1(n)`.
+  for (const name of ['1-bromo-4-clorobenceno', 'ciclohex-1(6)-eno-1,2,4-triol']) {
+    assert.equal(readName(tokenize(name)).kind, 'correct', name);
+  }
+  // Intro: a compound branch between its two controls.
+  const branched = readName(seq('4 START 2 met il prop il END oct ano'));
+  assert.equal(branched.text, '4-(2-metilpropil)octano');
+  assert.ok(branched.draw, branched.message);
+  // Out of scope: two rings bonded together; an ester may carry a ring on each side.
+  assert.equal(readName(tokenize('ciclohexilbenceno')).kind, 'outOfScope');
+  assert.equal(readName(tokenize('benzoato de fenilo')).kind, 'correct');
+}); // End of test 'the examples the Ayuda «Del nombre al dibujo» added in R-7b…'

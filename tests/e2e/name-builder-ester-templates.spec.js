@@ -216,7 +216,7 @@ test('`acetato` without its O-bound group is refused with its tile marked; the A
   // Ayuda, «Del nombre al dibujo»: esters are read; their tiles, the automatic words and the retained names.
   await page.getByRole('button', { name: 'Ayuda' }).click();
   const help = page.getByRole('dialog', { name: 'Cómo se usa' });
-  await expect(help.locator('#help-name-to-drawing')).toContainText('y de sus ácidos carboxílicos y ésteres');
+  await expect(help.locator('#help-name-to-drawing')).toContainText('ácidos carboxílicos, ésteres');
   const line = help.locator('#help-name-to-drawing-esters');
   for (const phrase of ['Ésteres.', 'la parte ácida', 'el grupo unido al oxígeno', '«oato»', '«carboxilato»',
     'ciclohexanocarboxilato de etilo', 'el benzoato', 'acaba en «ilo»', 'etanoato de metilo', 'La palabra «de» la pongo yo',

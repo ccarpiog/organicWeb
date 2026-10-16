@@ -276,7 +276,7 @@ test('`1-acetonitrilo` is refused with the number marked; the Ayuda line of nitr
   // Ayuda, «Del nombre al dibujo»: nitriles are read; their tiles and the retained names.
   await page.getByRole('button', { name: 'Ayuda' }).click();
   const help = page.getByRole('dialog', { name: 'Cómo se usa' });
-  await expect(help.locator('#help-name-to-drawing')).toContainText('y de sus ácidos carboxílicos y ésteres, y de sus nitrilos');
+  await expect(help.locator('#help-name-to-drawing')).toContainText('ácidos carboxílicos, ésteres, nitrilos');
   const line = help.locator('#help-name-to-drawing-nitriles');
   for (const phrase of ['Nitrilos.', '«nitrilo» va al final', 'no lleva números', 'butanonitrilo', 'butanodinitrilo',
     '«carbonitrilo»', 'ciclohexanocarbonitrilo', 'el benzonitrilo', '«ciano»', 'ácido 3-cianopropanoico',

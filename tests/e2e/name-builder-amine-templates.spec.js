@@ -287,7 +287,7 @@ test('`N,p-dimetilanilina` and `tetrametilamina` are refused with their tiles ma
   // Ayuda, «Del nombre al dibujo»: amines are read; their tiles, `N`, `amino`, the retained names and the class names.
   await page.getByRole('button', { name: 'Ayuda' }).click();
   const help = page.getByRole('dialog', { name: 'Cómo se usa' });
-  await expect(help.locator('#help-name-to-drawing')).toContainText('y de sus nitrilos y aminas');
+  await expect(help.locator('#help-name-to-drawing')).toContainText('nitrilos, aminas');
   const line = help.locator('#help-name-to-drawing-amines');
   for (const phrase of ['Aminas.', '«amina» va al final', 'propan-2-amina', '«N»', 'N-metiletanamina', 'N,N-dimetilmetanamina',
     '«amino»', '2-aminoetan-1-ol', '(dimetilamino)', 'la anilina', '4-cloroanilina', 'N-metilanilina', 'la bencilamina',

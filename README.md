@@ -2,9 +2,12 @@
 
 A static, offline web app for secondary-school students (ESO, Spain): draw an
 acyclic hydrocarbon or a hydrocarbon with one ring (or a halogen derivative, alcohol, aldehyde, ketone, carboxylic acid, ether, ester, amine, amide or nitrile of one, benzenes with two to six substituents included) and get its IUPAC name **in Spanish**, with a
-step-by-step explanation and a redraw that makes the main chain obvious. The
-user interface is in Spanish; code and documentation are in English. The
-design and phase plan live in [`docs/design.md`](docs/design.md).
+step-by-step explanation and a redraw that makes the main chain obvious. It
+also works the other way round: build a name from tiles and the app draws the
+molecule and tells you whether the name is right, and if not, your main
+mistake («¿Cómo se dibuja?»). The user interface is in Spanish; code and
+documentation are in English. The design and phase plan live in
+[`docs/design.md`](docs/design.md).
 
 ## Features
 
@@ -151,6 +154,34 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 - **Ordenar dibujo**: redraws the molecule with the main chain laid out left
   to right and numbered, or a ring as a regular polygon with locant 1 on top
   and the numbering clockwise (one animated, undoable edit).
+- **¿Cómo se dibuja?** (name → drawing): a dialog where the name is built
+  from tiles, never typed, in labelled rows (Números, with `N` for a group on
+  a nitrogen; ¿Cuántos?; Raíces; Terminaciones; Ramas, with the two
+  compound-branch controls; Anillos; Grupos; Nombres tradicionales). The app
+  writes the hyphens, commas, enclosing marks, spaces, the `de` / `y` of
+  esters and the elided vowels itself. **Dibujar** reads the name, draws the
+  molecule as one undoable edit (ordered, main chain highlighted) and shows a
+  verdict above the name: correct; another valid form (with the name the app
+  gives first); «Casi» for left-out locants (`metilpropano` →
+  `2-metilpropano`); or another name — the molecule the name describes, the
+  app's name and, almost always, the student's main mistake (longer chain,
+  numbering from the other end, alphabetical order, di/bis, a principal group
+  written as a prefix, the wrong side of an ether's oxygen…), with the
+  student's chain striped beside the main chain and **Ver el paso** opening
+  the explanation at the step that covers it. A name with an error, with
+  left-out locants that fit several molecules (`propanol`), or describing a
+  molecule the app does not name stays in the dialog with the message and
+  the wrong tiles marked; the canvas is untouched. It reads every family the
+  app names: hydrocarbons (chains, compound branches, `ciclo` rings,
+  `benceno`, `fenil`, old-style locants such as `2-buteno`), halogen
+  derivatives, alcohols and phenols, ethers (alkoxy prefixes and class names
+  such as `etil metil éter`), aldehydes and ketones (with acyl prefixes),
+  carboxylic acids, esters (with `aciloxi` / `alcoxicarbonil` prefixes),
+  nitriles, amines (`N` locants, `amino`, class names such as
+  `dimetilamina`) and amides (`carbamoil`, acylamino), the retained names
+  (`tolueno`, `xileno`, `cresol`, `catecol`, `acetona`, `ácido acético`,
+  `acetato`, `acetonitrilo`, `anilina`, `acetamida`…) and the orto/meta/para
+  letters (`p-xileno`, `p-metilfenol`).
 - **Ejemplos**: a menu of 39 molecules, one per feature, in five groups:
   open-chain hydrocarbons, hydrocarbons with a ring, functional groups (one
   per family), rings with a functional group and benzenes with several
@@ -160,7 +191,9 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
 - **Ayuda**: a short in-page guide: the families the app names (benzenes
   with several substituents included, with a short orto/meta/para note) and
   what is out of scope, how to draw (elements, rings, the 90° view with heteroatoms
-  and the «Abreviar CHO y COOH» toggle), keyboard shortcuts and the glossary.
+  and the «Abreviar CHO y COOH» toggle), «Del nombre al dibujo» (the tiles of
+  each family, what is out of scope and the verdicts of «¿Cómo se dibuja?»),
+  keyboard shortcuts and the glossary.
 - Friendly Spanish messages for ring systems out of scope (several, fused, bridged or spiro rings, heterocycles, benzenes with functional groups on the ring and on a side chain or on two side chains, or an ester beside another functional group of its ring), disconnected pieces, an empty canvas
   and impossible bonds. Light and dark theme following the system.
 - Accessible: every control is reachable with the keyboard and has a visible
@@ -177,6 +210,8 @@ design and phase plan live in [`docs/design.md`](docs/design.md).
    direction. Use **Enlace doble** / **Enlace triple** on a bond to change it.
 3. Press **¿Cómo se llama?**, then **Ver paso a paso** to follow the
    reasoning, and **Ordenar dibujo** to see the main chain laid out.
+4. Or press **¿Cómo se dibuja?**, build a name from the tiles (`2`, `met`,
+   `il`, `but`, `ano` → `2-metilbutano`) and press **Dibujar**.
 
 The **Ayuda** button in the app explains the same in Spanish.
 
@@ -225,6 +260,30 @@ End-to-end tests drive the editor through `window.__editor`, the editor
 instance published by `src/ui/app.js` (test API documented in the header of
 `src/editor/editor.js`).
 
+### Name → drawing engine
+
+«¿Cómo se dibuja?» is specified in [`docs/design.md`](docs/design.md) §15. Its
+engine is pure (no DOM, no coordinates) and lives in `src/reverse/`: the tile
+catalogue (`tiles.js`, every text taken from the naming lexicon), an
+error-tolerant parser into a lossless syntax tree (`parse.js`), the assembler
+that writes the punctuation (`assemble.js`), its inverse (`tokenize.js`, for
+tests and the diagnosis), `interpret.js` and `build.js` (tree → molecule),
+the search for left-out locants with a budget (`search.js`), `readName()` in
+`index.js` (tiles → verdict: the forward engine names every candidate and the
+student's text is compared with the name and every alternative form) and
+`diagnose.js` (the main mistake of an «otro nombre» verdict, with the
+explanation step it points to). The dialog is `src/ui/name-builder.js` (with
+the DOM-free `name-builder-state.js`); «Dibujar» is `src/ui/draw-name.js`
+and `showVerdict()` in `src/ui/results.js`. Besides one test file per family
+(`tests/unit/reverse-*.test.js`, `tests/e2e/name-builder-*.spec.js`),
+`tests/unit/reverse-closed-loop.test.js` closes the loop over every molecule
+generator of `scripts/oracle/generate.mjs` and every fixture name: each name
+and alternative form the forward engine writes is turned into tiles, read
+back and compared with the original molecule. Every Spanish string of the
+feature is listed for teacher review in
+[`docs/teacher-review-v4.md`](docs/teacher-review-v4.md); open decisions are
+in [`docs/open-questions.md`](docs/open-questions.md).
+
 ### Oracle
 
 `npm run oracle` generates random acyclic hydrocarbons, random
@@ -243,10 +302,11 @@ index.html        app shell (Spanish UI, Ayuda dialog)
 css/app.css       styles, light/dark colour tokens, responsive layout
 src/model/        molecule model, validation, graph utilities, SMILES subset
 src/naming/       naming engine (pure: never reads coordinates or the DOM)
+src/reverse/      name → drawing engine for «¿Cómo se dibuja?» (pure)
 src/explain/      step-by-step explanation and glossary
 src/layout/       canonical layout for "Ordenar dibujo"
 src/editor/       SVG editor
-src/ui/           application glue (toolbar, results, examples, help…)
+src/ui/           application glue (toolbar, results, examples, help, the «¿Cómo se dibuja?» dialog…)
 tests/unit/       node --test
 tests/e2e/        Playwright
 scripts/          build, static server, checks, oracle tooling
@@ -340,8 +400,19 @@ the Keychain account is the WebDAV user).
   not given); the 90° view keeps
   the normal drawing for any molecule with a ring.
 - Parent chain up to 30 carbons, whole molecule up to 60.
-- Structure → name only; there is no name → structure.
-- Future (design §12): E/Z and a quiz mode ("¿Cómo se llama?" in reverse: read a name, draw it).
+- Name → drawing («¿Cómo se dibuja?») reads only what the app names: there
+  are no tiles for stereodescriptors, charges, salts or heterocycles, and a
+  name describing a molecule the app does not name (two rings bonded
+  together, three rings, a refused polyamine, an imide…) gets an «out of
+  scope» message with the engine's reason. A name is at most 100 tiles; the
+  search for left-out locants has a budget and then asks for the numbers
+  instead of guessing. `alcohol bencílico` has no tile (`fenilmetanol` is
+  read). A few spellings follow the forward engine and are open questions
+  ([`docs/open-questions.md`](docs/open-questions.md)), and all its Spanish
+  wording awaits teacher review
+  ([`docs/teacher-review-v4.md`](docs/teacher-review-v4.md)).
+- Future (design §12): E/Z and a quiz mode (the app shows a name and the
+  student draws it).
 
 ## Author
 

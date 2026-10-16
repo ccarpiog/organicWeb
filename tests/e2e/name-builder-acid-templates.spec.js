@@ -257,7 +257,7 @@ test('`acético` without `ácido` is refused with its tile marked; the Ayuda lin
   // Ayuda, «Del nombre al dibujo»: acids are read; their tiles and the retained names.
   await page.getByRole('button', { name: 'Ayuda' }).click();
   const help = page.getByRole('dialog', { name: 'Cómo se usa' });
-  await expect(help.locator('#help-name-to-drawing')).toContainText('y de sus ácidos carboxílicos');
+  await expect(help.locator('#help-name-to-drawing')).toContainText('aldehídos y cetonas, ácidos carboxílicos');
   const line = help.locator('#help-name-to-drawing-acids');
   for (const phrase of ['empieza por la palabra «ácido»', '«oico» va al final', 'ácido butanoico', '«carboxílico»',
     'ácido benzoico', '«carboxi»', 'el fórmico, el acético, el oxálico, el fenilacético y los ftálicos', 'ácido acético',

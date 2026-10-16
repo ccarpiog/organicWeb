@@ -275,7 +275,7 @@ test('`1-acetamida` and `N-metilftalamida` stay in the dialog, canvas untouched;
   // Ayuda, «Del nombre al dibujo»: amides are read; their tiles and the retained names.
   await page.getByRole('button', { name: 'Ayuda' }).click();
   const help = page.getByRole('dialog', { name: 'Cómo se usa' });
-  await expect(help.locator('#help-name-to-drawing')).toContainText('y de sus nitrilos y aminas, y de sus amidas');
+  await expect(help.locator('#help-name-to-drawing')).toContainText('nitrilos, aminas y amidas');
   const line = help.locator('#help-name-to-drawing-amides');
   for (const phrase of ['Amidas.', '«amida» va al final', 'no lleva números', 'etanamida', 'butanodiamida', '«carboxamida»',
     'ciclohexanocarboxamida', 'la benzamida', '«N»', 'N-metiletanamida', 'N,N-dimetilbenzamida', 'ácido 4-amino-4-oxobutanoico',

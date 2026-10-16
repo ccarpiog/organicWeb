@@ -19,6 +19,11 @@
  * 90° view. The centring is part of the edit: Deshacer restores the old
  * drawing's view (zoom and pan), Rehacer the centred one, with the 90° view
  * off and on, while ordinary edits never move the view.
+ *
+ * The Ayuda section «Del nombre al dibujo» as a whole (R-7b, phase I-53b):
+ * every family, the compound-branch controls, what is out of scope, the
+ * verdicts, and no paragraph saying a family comes later (each family's own
+ * paragraph is checked by its name-builder-<family>.spec.js).
  */
 
 import { test, expect } from '@playwright/test';
@@ -912,3 +917,44 @@ test.describe('phone (375 × 667), Dibujar', () => {
     expect(errors).toEqual([]);
   }); // End of test 'the dialog closes…'
 }); // End of describe 'phone (375 × 667), Dibujar'
+
+test('Ayuda «Del nombre al dibujo» (R-7b): every family, the compound-branch controls, what is out of scope and the verdicts', async ({ page }) => {
+  const errors = await openApp(page);
+  await page.getByRole('button', { name: 'Ayuda' }).click();
+  const help = page.getByRole('dialog', { name: 'Cómo se usa' });
+  const intro = help.locator('#help-name-to-drawing');
+  for (const phrase of ['«empieza rama compuesta» y «acaba rama»', '(2-metilpropil)', 'Leo nombres de hidrocarburos de cadena abierta',
+    'de sus derivados halogenados, alcoholes y fenoles, éteres, aldehídos y cetonas, ácidos carboxílicos, ésteres, nitrilos, '
+    + 'aminas y amidas.']) {
+    await expect(intro).toContainText(phrase);
+  }
+  // One paragraph per family, then what is out of scope.
+  for (const id of ['rings', 'groups', 'ethers', 'carbonyls', 'acids', 'esters', 'nitriles', 'amines', 'amides', 'scope']) {
+    await expect(help.locator(`#help-name-to-drawing-${id}`)).toBeVisible();
+  }
+  const rings = help.locator('#help-name-to-drawing-rings');
+  for (const phrase of ['«1(n)»', 'ciclohex-1(6)-eno-1,2,4-triol', 'p-metilfenol', 'p-cloroanilina', '(1-bromo-4-clorobenceno)']) {
+    await expect(rings).toContainText(phrase);
+  }
+  const scope = help.locator('#help-name-to-drawing-scope');
+  for (const phrase of ['Qué queda fuera.', 'estereoquímica', 'las cargas, las sales ni los heterociclos', 'dos anillos unidos entre sí',
+    'tres anillos', 'benzoato de fenilo', 'te digo por qué']) {
+    await expect(scope).toContainText(phrase);
+  }
+  await expect(help.locator('#help-verdicts li')).toHaveCount(4);
+  for (const phrase of ['«¡Correcto!»', '«Otras formas válidas»', '«Casi»', 'pero se llama…', 'tu error principal',
+    'o si la molécula queda fuera de lo que sé dibujar']) {
+    await expect(help.locator('#help-verdicts')).toContainText(phrase);
+  }
+  await expect(help.locator('#help-diagnosis')).toContainText('«Ver el paso»');
+  // No paragraph of the section still says a family comes later.
+  const notes = help.locator('[id^="help-name-to-drawing"]');
+  const count = await notes.count();
+  for (let i = 0; i < count; i += 1) {
+    for (const stale of ['Por ahora', 'todavía', 'más adelante']) {
+      await expect(notes.nth(i)).not.toContainText(stale);
+    }
+  }
+  await page.keyboard.press('Escape');
+  expect(errors).toEqual([]);
+}); // End of test 'Ayuda «Del nombre al dibujo» (R-7b)…'

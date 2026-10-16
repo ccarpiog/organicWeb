@@ -264,7 +264,7 @@ test('`oxi` out of place, or left-out locants, stay in the dialog with their mes
   // Ayuda, «Del nombre al dibujo»: ethers are read; the `oxi` line and `anisol`.
   await page.getByRole('button', { name: 'Ayuda' }).click();
   const help = page.getByRole('dialog', { name: 'Cómo se usa' });
-  await expect(help.locator('#help-name-to-drawing')).toContainText('y también de sus éteres');
+  await expect(help.locator('#help-name-to-drawing')).toContainText('alcoholes y fenoles, éteres');
   const line = help.locator('#help-name-to-drawing-ethers');
   for (const phrase of ['«oxi» va detrás de una rama', 'met, il y oxi dan metoxi', '1-metoxipropano', '(pentiloxi)',
     '(propan-2-iloxi)', '(2-metilpropoxi)', 'El anisol (metoxibenceno)', 'con la palabra «éter», que está en «Grupos»',

@@ -252,7 +252,7 @@ test('`1-acetona` is refused with the number marked; the Ayuda line of aldehydes
   // Ayuda, «Del nombre al dibujo»: aldehydes and ketones are read; their tiles and the retained names.
   await page.getByRole('button', { name: 'Ayuda' }).click();
   const help = page.getByRole('dialog', { name: 'Cómo se usa' });
-  await expect(help.locator('#help-name-to-drawing')).toContainText('y también de sus éteres, aldehídos y cetonas');
+  await expect(help.locator('#help-name-to-drawing')).toContainText('éteres, aldehídos y cetonas');
   const line = help.locator('#help-name-to-drawing-carbonyls');
   for (const phrase of ['«al» va al final', 'butanal', 'pentan-2-ona', '«carbaldehído»', '«oxo»', '«formil»', '«acetil»', '«oil»',
     '«carbonil»', '«benzoil»', 'el formaldehído, el acetaldehído, la acetona, la acetofenona, el fenilacetaldehído y los '
