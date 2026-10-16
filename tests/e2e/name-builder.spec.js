@@ -130,9 +130,18 @@ test('the button opens the dialog; tiles build a coloured name; Escape closes; r
   await expect(dialog.getByRole('heading', { name: '¿Cómo se dibuja?' })).toBeFocused();
   // Tiles only: no text field of any kind.
   expect(await dialog.locator('input, textarea, select, [contenteditable]').count()).toBe(0);
-  for (const label of ['Números', '¿Cuántos?', 'Raíces (cuántos carbonos)', 'Terminaciones', 'Ramas']) {
+  for (const label of ['Números', 'Terminaciones', 'Ramas']) {
     await expect(dialog.getByRole('heading', { name: label, exact: true })).toBeVisible();
   }
+  // The roots come first; they and the multipliers say what they are for (oct and octa look alike).
+  const rowTitles = await dialog.locator('.nb-row-label').allTextContents();
+  expect(rowTitles.slice(0, 3)).toEqual(['Raíces', 'Números', '¿Cuántos?']);
+  await expect(dialog.getByRole('heading', { name: 'Raíces (solo el número de carbonos: met = 1, et = 2, prop = 3…)', exact: true }))
+    .toBeVisible();
+  await expect(dialog.getByRole('group', { name: 'Raíces', exact: true }))
+    .toHaveAccessibleDescription('(solo el número de carbonos: met = 1, et = 2, prop = 3…)');
+  await expect(dialog.getByRole('group', { name: '¿Cuántos?', exact: true }))
+    .toHaveAccessibleDescription('(de ramas, grupos o terminaciones iguales: dimetil, dicloro, dieno…)');
   for (const text of ['empieza rama compuesta', 'acaba rama', 'isopropil', 'isopropiliden', 'tert-butil', 'iliden', 'bis']) {
     await expect(dialog.getByRole('button', { name: text, exact: true })).toBeVisible();
   }
@@ -161,7 +170,7 @@ test('the button opens the dialog; tiles build a coloured name; Escape closes; r
   await expect(numbers.getByRole('button', { name: '13', exact: true })).toBeVisible();
   await expect(numbers.getByRole('button', { name: '30', exact: true })).toBeVisible();
   await expect(numbers.getByRole('button', { name: 'menos' })).toHaveAttribute('aria-expanded', 'true');
-  const roots = dialog.getByRole('group', { name: 'Raíces (cuántos carbonos)' });
+  const roots = dialog.getByRole('group', { name: 'Raíces', exact: true });
   await expect(roots.getByRole('button', { name: 'undec', exact: true })).toBeHidden();
   await roots.getByRole('button', { name: 'más' }).click();
   await expect(roots.getByRole('button', { name: 'undec', exact: true })).toBeVisible();
@@ -464,7 +473,7 @@ for (const viewport of [{ width: 320, height: 480 }, { width: 320, height: 568 }
       expect(rowsBox.height).toBeGreaterThan(60);
       expect(inside(rowsBox, box)).toBe(true);
       await rows.evaluate((el) => { el.scrollTop = 0; });
-      await expect(one).toBeInViewport({ ratio: 1 });
+      await expect(rows.locator('.nb-tile').first()).toBeInViewport({ ratio: 1 });
       const last = rows.getByRole('button', { name: 'acaba rama', exact: true });
       await last.scrollIntoViewIfNeeded();
       await expect(last).toBeInViewport();

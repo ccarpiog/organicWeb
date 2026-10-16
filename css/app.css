@@ -1499,6 +1499,10 @@ kbd {
   color: var(--color-text-muted);
 }
 
+.nb-row-hint {
+  font-weight: normal;
+}
+
 .nb-tiles {
   display: flex;
   flex-wrap: wrap;

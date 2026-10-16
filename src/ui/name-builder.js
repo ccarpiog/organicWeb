@@ -19,10 +19,11 @@
  *   that writes nothing (a compound-branch control without marks, the `il`
  *   of a contracted alkoxy prefix, R-5b: `met il oxi` → `metoxi`) is a small
  *   dashed box with an accessible name of its own;
- * - the tile rows («Números» — with the locant `N` of a group on the
+ * - the tile rows («Raíces» and «¿Cuántos?», each with a hint beside its
+ *   label saying what it is for — the root `oct` and the multiplier `octa`
+ *   look alike —, «Números» — with the locant `N` of a group on the
  *   principal amine's nitrogen after the numbers, phase R-6c1, with a
- *   tooltip —, «¿Cuántos?», «Raíces (cuántos carbonos)»,
- *   «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a,
+ *   tooltip —, «Terminaciones», «Ramas», «Anillos» — the `ciclo` tile, phase R-4a,
  *   `benceno` and `fenil`, phase R-4b, the letters `o`, `m`, `p`, phase
  *   R-4c, each with its word (orto, meta, para) beside it, `fenol` and the
  *   closing-bond locant `1(n)`, phase R-5a2, the latter with a tooltip —,
@@ -90,11 +91,18 @@ import {
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
 
-/** The tile rows in dialog order, with their labels (design.md §15.2; drafts pending teacher review). */
+/**
+ * The tile rows in dialog order, with their labels and, for the two rows
+ * whose tiles look alike (the root `oct` and the multiplier `octa`), a hint
+ * shown beside the label saying what each is for (design.md §15.2; drafts
+ * pending teacher review). The roots come first: every name needs one.
+ */
 export const ROWS = Object.freeze([
+  Object.freeze({ id: 'roots', label: 'Raíces', hint: '(solo el número de carbonos: met = 1, et = 2, prop = 3…)' }),
   Object.freeze({ id: 'numbers', label: 'Números' }),
-  Object.freeze({ id: 'multipliers', label: '¿Cuántos?' }),
-  Object.freeze({ id: 'roots', label: 'Raíces (cuántos carbonos)' }),
+  Object.freeze({
+    id: 'multipliers', label: '¿Cuántos?', hint: '(de ramas, grupos o terminaciones iguales: dimetil, dicloro, dieno…)',
+  }),
   Object.freeze({ id: 'endings', label: 'Terminaciones' }),
   Object.freeze({ id: 'branches', label: 'Ramas' }),
   Object.freeze({ id: 'rings', label: 'Anillos' }),
@@ -439,11 +447,20 @@ export function fillRows(container) {
     const titleId = `name-builder-row-${row.id}`;
     const section = make(doc, 'section', 'nb-row');
     section.dataset.row = row.id;
-    const title = make(doc, 'h3', 'nb-row-title', row.label);
-    title.id = titleId;
+    // The group is named by the label alone (also in «más (Raíces)»); the hint describes it.
+    const title = make(doc, 'h3', 'nb-row-title');
+    const label = make(doc, 'span', 'nb-row-label', row.label);
+    label.id = titleId;
+    title.appendChild(label);
     const group = make(doc, 'div', 'nb-tiles');
     group.setAttribute('role', 'group');
     group.setAttribute('aria-labelledby', titleId);
+    if (row.hint) {
+      const hint = make(doc, 'span', 'nb-row-hint', row.hint);
+      hint.id = `${titleId}-hint`;
+      title.append(' ', hint);
+      group.setAttribute('aria-describedby', hint.id);
+    }
     tiles.forEach((tile) => group.appendChild(makeTileButton(doc, tile)));
     if (tiles.some((tile) => tile.more)) {
       group.appendChild(makeMoreButton(doc, group, row.label));

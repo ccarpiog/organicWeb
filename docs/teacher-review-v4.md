@@ -56,10 +56,14 @@ meta y para with two different groups (O-).
 
 ### 1.2 Tile rows and controls
 
-- T-8 Row titles — «Números», «¿Cuántos?», «Raíces (cuántos carbonos)»,
-  «Terminaciones», «Ramas», «Anillos», «Grupos», «Nombres tradicionales»
-  [I-48a; «Anillos» I-50a, «Nombres tradicionales» I-50c, «Grupos» I-51a1 ·
-  `name-builder.js` `ROWS`]
+- T-8 Row titles, in dialog order — «Raíces», «Números», «¿Cuántos?»,
+  «Terminaciones», «Ramas», «Anillos», «Grupos», «Nombres tradicionales»;
+  beside «Raíces» the hint «(solo el número de carbonos: met = 1, et = 2,
+  prop = 3…)» and beside «¿Cuántos?» «(de ramas, grupos o terminaciones
+  iguales: dimetil, dicloro, dieno…)», because the root `oct` and the
+  multiplier `octa` look alike in the name [I-48a; «Anillos» I-50a,
+  «Nombres tradicionales» I-50c, «Grupos» I-51a1; order and hints after a
+  user report (`octa` picked as a root) · `name-builder.js` `ROWS`]
 - T-9 The button that shows a row's other tiles — «más» / «menos» (read as
   «más (Números)») [I-48a · `MORE_LABEL`, `LESS_LABEL`]
 - T-10 The two compound-branch controls of the «Ramas» row — «empieza rama

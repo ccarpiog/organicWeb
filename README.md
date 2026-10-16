@@ -155,8 +155,8 @@ documentation are in English. The design and phase plan live in
   to right and numbered, or a ring as a regular polygon with locant 1 on top
   and the numbering clockwise (one animated, undoable edit).
 - **¿Cómo se dibuja?** (name → drawing): a dialog where the name is built
-  from tiles, never typed, in labelled rows (Números, with `N` for a group on
-  a nitrogen; ¿Cuántos?; Raíces; Terminaciones; Ramas, with the two
+  from tiles, never typed, in labelled rows (Raíces; Números, with `N` for a
+  group on a nitrogen; ¿Cuántos?; Terminaciones; Ramas, with the two
   compound-branch controls; Anillos; Grupos; Nombres tradicionales). The app
   writes the hyphens, commas, enclosing marks, spaces, the `de` / `y` of
   esters and the elided vowels itself. **Dibujar** reads the name, draws the
