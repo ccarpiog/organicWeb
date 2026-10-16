@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-16T01:10:30Z",
+  "updated": "2026-10-16T02:33:59Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -991,8 +991,11 @@
     {
       "id": "I-52d2",
       "title": "v4 R-6d2 Amide prefixes carbamoil and acylamino",
-      "status": "queued",
-      "summary": "Reads amide prefixes such as (metilcarbamoil) and (acetilamino) beside senior groups."
+      "status": "done",
+      "summary": "Reads amide prefixes such as (metilcarbamoil), [etil(metil)carbamoil] and (acetilamino) beside senior groups, searching left-out locants.",
+      "risk": "high",
+      "review": "Codex ship-with-fixes, 2 should-fix fixed — docs/reviews/I-52d2.md",
+      "narrative": "docs/progress-archive/i-52d2.md"
     },
     {
       "id": "I-52d3",

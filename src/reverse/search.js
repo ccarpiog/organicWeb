@@ -1,6 +1,6 @@
 /**
  * @file Search of the left-out locants of «¿Cómo se dibuja?» (design.md
- * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1). Pure, no
+ * §15.4, §15.5.3 steps 2–4; phases R-1c, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2). Pure, no
  * DOM, no coordinates.
  *
  * A name may leave out locants (`metilpropano`, `buteno`): interpret.js
@@ -96,6 +96,11 @@
  *   (NITROGEN_VALENCE: one less than a carbon's), so only the left-out
  *   locants inside a group are searched (`[(cloroetil)amino]`) and the
  *   prefix's own (`aminopropanol`: amino and OH on any carbons). The
+ *   carbamoyl prefixes (R-6d2) are modelled the same way: the carbon they
+ *   hang from gives one bond, and the one-atom chain is the amide's
+ *   nitrogen (valence three, its bond to the C=O carbon the free-valence
+ *   slot's), the C=O carbon itself full and never searched
+ *   (`carbamoilpentanodioico`, `(metilcarbamoil)`). The
  *   nitrogen of an amine's class name (R-6c3, ParentSpec kind 'amine') is
  *   such a one-atom chain too, the parent, whose groups take one implicit
  *   slot each (`(cloroetil)metilamina`: the chlorine's locant searched); the
@@ -167,7 +172,7 @@ import {
 } from './build.js';
 import {
   TILES, CLOSING_ID, POSITIONAL_IDS, TEMPLATES, SUFFIX_GROUPS, tileById, suffixBondAmount, NITROGEN_ID, N_VALUE, AMINE_KIND,
-  AMINE_NITROGEN_FREE, AMINO_KIND, NITROGEN_VALENCE, isNitrogenSuffix,
+  AMINE_NITROGEN_FREE, NITROGEN_VALENCE, isNitrogenSuffix, isNitrogenGroupKind,
 } from './tiles.js';
 
 /**
@@ -392,8 +397,9 @@ function addChain(model, owner, branch) {
     addSlots(model, prefix.slots, { role: prefix.slots[0].role, chain: id, amount: attachmentOrder(sub) });
     if (hasOwnChain(sub)) { // Not a retained word nor a halogen (R-5a1), which have no numbered chain.
       const own = addChain(model, sub, true);
-      if (sub.kind === AMINO_KIND) {
-        model.chains[own].used[1] += CARBON_VALENCE - NITROGEN_VALENCE; // An amino prefix's nitrogen holds three bonds (R-6c2).
+      if (isNitrogenGroupKind(sub.kind)) {
+        // An amino prefix's nitrogen holds three bonds (R-6c2); a carbamoyl prefix's too, the amide's nitrogen (R-6d2).
+        model.chains[own].used[1] += CARBON_VALENCE - NITROGEN_VALENCE;
       }
       addSlots(model, [sub.freeValence.slot], { role: 'carbon', chain: own, amount: sub.freeValence.order });
       if (sub.acyl && !isRing(sub.kind)) {

@@ -43,7 +43,9 @@
  *   and the prefix `amino`, phase R-6c2, each with a tooltip (`amina`'s
  *   also says it ends an amine's class name, `metilamina`, phase R-6c3); the
  *   amides' suffixes `amida` and `carboxamida`, phase R-6d1, each with a
- *   tooltip, as `benzamida` in «Anillos» —, «Nombres
+ *   tooltip, as `benzamida` in «Anillos»; the amides' prefix `carbamoil`,
+ *   phase R-6d2, with a tooltip (`amino`'s also says that an acyl group on
+ *   its nitrogen makes an amide's prefix, `(acetilamino)`) —, «Nombres
  *   tradicionales» — `tolueno`,
  *   `estireno`, `xileno`, `mesitileno`, phase R-4c, `anisol`, phase R-5b, and
  *   the retained phenols `cresol`, `pirocatecol`, `catecol`, `resorcinol`,
@@ -82,7 +84,7 @@ import {
   TILES, START_ID, END_ID, POSITIONAL_IDS, CLOSING_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID,
   BENZALDEHYDE_ID, ACETYL_ID, ACYL_ID, RING_CARBONYL_ID, BENZOYL_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, BENZOIC_ID,
   OATO_ID, CARBOXYLATE_ID, BENZOATE_ID, ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID, AMINA_ID, NITROGEN_ID,
-  AMINO_ID, AMIDA_ID, CARBOXAMIDE_ID, BENZAMIDE_ID, tileById,
+  AMINO_ID, AMIDA_ID, CARBOXAMIDE_ID, BENZAMIDE_ID, CARBAMOYL_ID, tileById,
 } from '../reverse/tiles.js';
 import { readName } from '../reverse/index.js';
 import { createNameBuilderState, isSuccess, verdictFeedback, START } from './name-builder-state.js';
@@ -148,7 +150,10 @@ export function positionalLabel(tile) {
  * names, what molecule each is and which takes prefixes, and `amina` after
  * the groups of a class name; R-6d1: `amida`, `carboxamida` and `benzamida`,
  * what each is, where it goes and that the groups on the amide's nitrogen
- * take `N`, which the `N` tooltip says too; drafts pending teacher review).
+ * take `N`, which the `N` tooltip says too; R-6d2: `carbamoil`, what it is,
+ * when it is used (its carbon no carbon of the chain or ring) and how the
+ * groups on its nitrogen are written, and `amino`'s acylamino form; drafts
+ * pending teacher review).
  * The tile's text stays its accessible name.
  */
 export const TILE_HINTS = Object.freeze({
@@ -217,7 +222,8 @@ export const TILE_HINTS = Object.freeze({
   // R-6c2: the amino prefixes.
   [AMINO_ID]: 'Un grupo NH₂ unido a un carbono, cuando la amina no es el grupo principal: 2-aminoetan-1-ol, ácido '
     + '2-aminopropanoico. Si el nitrógeno lleva ramas, van delante de «amino», sin números, en una rama compuesta: '
-    + '(metilamino), (dimetilamino), [etil(metil)amino].',
+    + '(metilamino), (dimetilamino), [etil(metil)amino]. Con un grupo C=O unido al nitrógeno es una amida como rama: '
+    + '(acetilamino), [acetil(metil)amino].',
   // R-6d1: the amides.
   [AMIDA_ID]: 'Amida (un C=O unido a un nitrógeno, –CONH₂). Va al final, detrás de la terminación de una cadena; el carbono '
     + 'del grupo amida es el carbono 1 de la cadena (con dos, también el último), así que no lleva números: propanamida; con '
@@ -225,6 +231,10 @@ export const TILE_HINTS = Object.freeze({
   [CARBOXAMIDE_ID]: 'Grupo amida unido a un anillo. Va al final, detrás del nombre del anillo: ciclohexanocarboxamida, '
     + 'ciclohexano-1,4-dicarboxamida.',
   [BENZAMIDE_ID]: 'Benceno con un grupo amida: bencenocarboxamida. Las ramas unidas al nitrógeno llevan «N»: N-metilbenzamida.',
+  // R-6d2: the amide prefix.
+  [CARBAMOYL_ID]: 'Un grupo amida (–CONH₂) unido por el carbono del C=O, cuando no es el grupo principal y ese carbono no es de la '
+    + 'cadena ni del anillo: ácido 3-carbamoilpentanodioico, ácido 4-carbamoilbenzoico. Si el nitrógeno lleva ramas, van delante '
+    + 'de «carbamoil», sin números, en una rama compuesta: (metilcarbamoil), [etil(metil)carbamoil].',
   'template-anisole': 'Benceno con un grupo metoxi: metoxibenceno.',
   'template-cresol': 'Fenol con un metilo. Delante va una letra que dice dónde está el metilo: o-cresol, m-cresol o p-cresol.',
   'template-pyrocatechol': 'Benceno con dos grupos OH en carbonos vecinos: benceno-1,2-diol. También se llama catecol.',

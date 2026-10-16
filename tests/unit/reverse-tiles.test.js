@@ -27,7 +27,8 @@ import {
   NITRILE_GROUP, isNitrileSuffix, suffixElement, isNitrileTemplate, AMINA_ID, NITROGEN_ID, N_VALUE, N_TEXT, AMINE_KIND,
   isAmineSuffix, NITROGEN_VALENCE, AMINE_NITROGEN_FREE, AMINO_ID, AMINO_KIND, AMINO_ELEMENT, isAminoTile, isAmineTemplate,
   isAmineClassWord, AMINE_GROUP, AMINE_CLASS_GROUPS, templateAdmits, AMIDA_ID, CARBOXAMIDE_ID, BENZAMIDE_ID, AMIDE_KIND, AMIDE_GROUP,
-  AMIDE_NITROGEN, isAmideSuffix, isNitrogenSuffix, withArticle,
+  AMIDE_NITROGEN, isAmideSuffix, isNitrogenSuffix, withArticle, CARBAMOYL_ID, CARBAMOYL_KIND, CARBAMOYL_ATOMS, CARBAMOYL_NITROGEN,
+  isCarbamoylTile, isNitrogenGroupTile, isNitrogenGroupKind,
 } from '../../src/reverse/tiles.js';
 import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, RETAINED_PREFIXES, ENCLOSING_MARKS, RING_PREFIX, BENZENE_NAME,
@@ -64,8 +65,8 @@ test('catalogue: every tile kind of design.md §15.5.1 with its range', () => {
   assert.equal(count('ending'), 3);
   assert.equal(count('freeValence'), 2);
   // isopropil, isopropiliden, tert-butil; fenil (R-4b); formil (R-5c1); acetil, benzoil (R-5c2); carboxi (R-5d1); ciano (R-6b1);
-  // amino (R-6c2)
-  assert.equal(count('retained'), 10);
+  // amino (R-6c2); carbamoil (R-6d2)
+  assert.equal(count('retained'), 11);
   assert.equal(count('start'), 1);
   assert.equal(count('end'), 1);
   assert.equal(count('ring'), 1); // ciclo (R-4a)
@@ -105,10 +106,11 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
       freeValence: () => FREE_VALENCE_SUFFIXES[tile.value],
       // `formil` (R-5c1), `acetil` and `benzoil` (R-5c2): the lexicon's acyl prefixes; the other retained words,
       // RETAINED_PREFIXES.
-      // `carboxi` (R-5d1): the lexicon's prefix of an acid; `ciano` (R-6b1), of a nitrile; `amino` (R-6c2), of an amine.
+      // `carboxi` (R-5d1): the lexicon's prefix of an acid; `ciano` (R-6b1), of a nitrile; `amino` (R-6c2), of an amine; `carbamoil`
+      // (R-6d2), of an amide.
       retained: () => ({
         formyl: FORMYL_PREFIX, acetyl: ACETYL_PREFIX, benzoyl: BENZOYL_PREFIX, carboxy: GROUP_PREFIXES.acid, cyano: GROUP_PREFIXES.nitrile,
-        [AMINO_KIND]: GROUP_PREFIXES.amine,
+        [AMINO_KIND]: GROUP_PREFIXES.amine, [CARBAMOYL_KIND]: GROUP_PREFIXES.amide,
       }[tile.value] || `${RETAINED_PREFIXES[tile.value].italic}${RETAINED_PREFIXES[tile.value].text}`),
       start: () => ENCLOSING_MARKS[0][0],
       end: () => ENCLOSING_MARKS[0][1],
@@ -148,7 +150,7 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
     assert.equal(tile.text, expected, tile.id);
   } // End of the loop over the tiles
   assert.deepEqual(TILES.filter((t) => t.kind === 'retained').map((t) => t.text), ['isopropil', 'isopropiliden', 'tert-butil', 'fenil',
-    'benzoil', 'formil', 'acetil', 'carboxi', 'ciano', 'amino']);
+    'benzoil', 'formil', 'acetil', 'carboxi', 'ciano', 'amino', 'carbamoil']);
   // R-6b1: the nitrile tiles, their groups (a nitrogen triple-bonded to the group's carbon), and `benzonitrilo` quoted as it is.
   assert.deepEqual([CYANO_ID, NITRILO_ID, CARBONITRILE_ID, BENZONITRILE_ID].map((id) => [tileById(id).text, tileById(id).kind,
     tileById(id).value, tileById(id).row]), [['ciano', 'retained', 'cyano', 'groups'], ['nitrilo', 'suffix', 'nitrile', 'groups'],
@@ -347,6 +349,15 @@ test('every tile text comes from the lexicon (numbers are digits)', () => {
     'nitrógeno de la amida']);
   assert.deepEqual([withArticle('benzamida', 'de'), withArticle('benzamida', 'en'), withArticle('benzonitrilo', 'de'),
     withArticle('hidroquinona')], ['de la benzamida', 'en la benzamida', 'del benzonitrilo', 'la hidroquinona']);
+  // R-6d2: the carbamoyl prefix, a retained word with the lexicon's prefix of an amide; its value language-neutral, its atoms the
+  // C=O carbon, its =O and the amide's nitrogen, which takes the groups written before it as `amino`'s does.
+  assert.deepEqual([tileById(CARBAMOYL_ID).text, tileById(CARBAMOYL_ID).kind, tileById(CARBAMOYL_ID).value, tileById(CARBAMOYL_ID).row],
+    [GROUP_PREFIXES.amide, 'retained', CARBAMOYL_KIND, 'groups']);
+  assert.notEqual(CARBAMOYL_KIND, GROUP_PREFIXES.amide, 'the value is no Spanish word');
+  assert.deepEqual([CARBAMOYL_ATOMS, CARBAMOYL_NITROGEN], [3, 'nitrógeno del grupo carbamoil']);
+  assert.deepEqual([CARBAMOYL_ID, AMINO_ID, CYANO_ID, AMIDA_ID].map((id) => [isCarbamoylTile(tileById(id)), isNitrogenGroupTile(tileById(id))]),
+    [[true, true], [false, true], [false, false], [false, false]]);
+  assert.deepEqual([CARBAMOYL_KIND, AMINO_KIND, 'retained', 'chain'].map(isNitrogenGroupKind), [true, true, false, false]);
   // R-5a1: the halogens by element symbol, in the lexicon's order.
   assert.deepEqual(Object.values(HALOGEN_IDS).map((id) => [tileById(id).text, tileById(id).value]),
     [['fluoro', 'F'], ['cloro', 'Cl'], ['bromo', 'Br'], ['yodo', 'I']]);
@@ -382,10 +393,10 @@ test('rows and «más» follow design.md §15.2', () => {
   assert.deepEqual(TILES.filter((tile) => tile.row === 'groups').map((tile) => tile.id),
     ['halogen-F', 'halogen-Cl', 'halogen-Br', 'halogen-I', HYDROXY_ID, OL_ID, ALKOXY_ID, ETHER_CLASS_ID, OXO_ID, FORMYL_ID, ACETYL_ID,
       ACYL_ID, RING_CARBONYL_ID, AL_ID, ONA_ID, CARBALDEHYDE_ID, ACID_WORD_ID, CARBOXY_ID, OICO_ID, CARBOXYLIC_ID, OATO_ID, CARBOXYLATE_ID,
-      ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, AMINA_ID, AMINO_ID, AMIDA_ID, CARBOXAMIDE_ID],
+      ESTER_ALKYL_ID, CYANO_ID, NITRILO_ID, CARBONITRILE_ID, AMINA_ID, AMINO_ID, AMIDA_ID, CARBOXAMIDE_ID, CARBAMOYL_ID],
     'R-5a1: «Grupos», the halogens; R-5a2: hidroxi, ol; R-5b: oxi; R-5b2: éter; R-5c1: oxo, formil, al, ona, carbaldehído; '
       + 'R-5c2: acetil, oil, carbonil; R-5d1: ácido, carboxi, oico, carboxílico; R-6a1: oato, carboxilato, ilo; R-6b1: ciano, nitrilo, '
-      + 'carbonitrilo; R-6c1: amina; R-6c2: amino; R-6d1: amida, carboxamida');
+      + 'carbonitrilo; R-6c1: amina; R-6c2: amino; R-6d1: amida, carboxamida; R-6d2: carbamoil');
   assert.deepEqual(TILES.filter((tile) => tile.row === 'branches' && tile.kind === 'retained').map((tile) => tile.value),
     ['isopropyl', 'isopropylidene', 'tert-butyl']);
 });

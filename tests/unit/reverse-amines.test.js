@@ -339,12 +339,13 @@ test('assembler (R-6c1): every amine form is the forward engine\'s own text; the
 }); // End of test 'assembler (R-6c1)…'
 
 test('tokenizer (R-6c1): the later amides\' names never tokenize; `amino` (R-6c2), `anilina` and the class names (R-6c3) read', () => {
-  // The amide suffixes read since phase R-6d1 (reverse-amides.test.js); `carbamoil`, the acylamino prefixes (R-6d2) and the
-  // retained amide names (R-6d3) do not yet.
-  for (const name of ['acetamida', 'ácido 3-carbamoilpropanoico', 'N-fenilacetamida', '2-(acetilamino)etan-1-ol']) {
+  // The amide suffixes read since phase R-6d1 (reverse-amides.test.js), `carbamoil` and the acylamino prefixes since R-6d2
+  // (reverse-amide-prefixes.test.js); the retained amide names (R-6d3) do not yet.
+  for (const name of ['acetamida', 'N-fenilacetamida']) {
     assert.equal(tokenize(name), null, name);
   }
-  for (const name of ['etanamida', 'N-metiletanamida', 'ciclohexanocarboxamida', 'benzamida']) {
+  for (const name of ['etanamida', 'N-metiletanamida', 'ciclohexanocarboxamida', 'benzamida', 'ácido 3-carbamoilpropanoico',
+    '2-(acetilamino)etan-1-ol']) {
     assert.ok(tokenize(name), name);
   }
   // Since phase R-6c2 the amino prefixes read (reverse-amino.test.js); since phase R-6c3 the retained amine names and the class
@@ -762,7 +763,7 @@ test('fixture round trip (R-6c1): every amine name the tiles write, read back; g
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (isLaterAmideName(name)) {
-        counts.later += 1; // R-6d2, R-6d3 (`carbamoil`, the acylamino prefixes, the retained amide names).
+        counts.later += 1; // R-6d3 (the retained amide names).
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
       }
@@ -824,17 +825,18 @@ const LOOP = Object.freeze({
  * the class names, since phase R-6d1 the amines named as amides),
  * removed-locant mutations and decisive verdicts among them (three removals
  * run out of budget, `incomplete`); and the later names (the amides' later
- * words: `carbamoil`, the acylamino prefixes, the retained amide names) never
- * tokenized (the seeds give 1012, 1446, 646, 81, 382, 103, 291, 22, 11, 3264,
- * 3261 and 4). Until phase R-6d1 the 11 amide names were later ones too (1435
- * names read, 639 with `N`, 3227 removals, 15 later); until phase R-6c3 the
+ * words: the retained amide names) never tokenized (the seeds give 1012,
+ * 1447, 646, 81, 382, 103, 291, 22, 12, 3269, 3266 and 3). Until phase R-6d2
+ * the acylamino name was a later one too (1446 names read, 11 amides, 3264
+ * removals, 4 later); until phase R-6d1 the 11 amide names were later ones
+ * too (1435 names read, 639 with `N`, 3227 removals, 15 later); until phase R-6c3 the
  * 291 names with `anilina` or `bencilamina` and the 22 class names (1122
  * names read, 442 with `N`, 328 later); until phase R-6c2 the 349 amino names
  * too (773 names read, 677 later; 2225 removals, 2223 decisive).
  */
 const LOOP_MIN = Object.freeze({
   molecules: 1000, names: 1440, nitrogen: 640, ring: 78, benzene: 375, poly: 100, templates: 285, classNames: 20, amides: 10,
-  removed: 3250, decisive: 3250, later: 4,
+  removed: 3250, decisive: 3250, later: 3,
 });
 
 /**
@@ -912,11 +914,12 @@ test('closed loop over the amine generators: engine name → tiles → readName(
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
     for (const [i, name] of all.entries()) {
       if (isLaterAmideName(name)) {
-        counts.later += 1; // R-6d2, R-6d3 (`carbamoil`, the acylamino prefixes, the retained amide names).
+        counts.later += 1; // R-6d3 (the retained amide names).
         assert.equal(tokenize(name), null, name);
         continue;
       }
-      counts.amides += isAmideName(name) ? 1 : 0; // R-6d1: an amine named as an amide (`2-aminopropanamida`), read since then.
+      // R-6d1: an amine named as an amide (`2-aminopropanamida`), read since then; R-6d2: with an acylamino prefix too.
+      counts.amides += isAmideName(name) ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);
       const verdict = readName(ids);

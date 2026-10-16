@@ -9,10 +9,11 @@
  * after the first enclosed — `(metilamino)`, `(dimetilamino)`,
  * `[etil(metil)amino]`, `bis(metilamino)`), composed from the tiles as a
  * compound branch whose own chain is `amino`. Parser (the tree, the groups'
- * locants and acyl groups refused with their tile ranges and hints, `oxi`,
- * class names and O-bound groups), assembler (every form checked against
- * the forward engine's own text), tokenizer (the amides' later words never
- * read; their suffixes, beside an amino prefix too, since phase R-6d1),
+ * locants refused with their tile ranges and hints, an acyl group read
+ * since phase R-6d2, `oxi`, class names and O-bound groups), assembler
+ * (every form checked against the forward engine's own text), tokenizer (the
+ * retained amide names never read; the amide suffixes, beside an amino
+ * prefix too, since phase R-6d1; the acylamino prefixes since R-6d2),
  * interpreter (the amino SubstituentSpec, its groups' implicit slots, the
  * left-out slots), builder (the nitrogen and its groups, VALENCE on a third
  * group), search (left-out locants: missingLocants, ambiguous, incomplete),
@@ -51,34 +52,35 @@ import {
 } from '../../scripts/oracle/generate.mjs';
 import {
   seq, readFixtures, isAmine, isAmide, isAmideMolecule, isAminoName, isAmineName, isAmideName, hasAcylamino, AMINO_WORD,
-  isLaterAmideName,
+  isLaterAmideName, isAmidePrefixName, isR6d2AmideName,
 } from './reverse-words.js';
 
 /**
- * Fixture rows with an amino name (isAminoName()): 67, of which 47 the tiles
- * read — 36 with an amine nitrogen (the amino prefix's; isAmine()) and 11
- * amides: the amide prefixes the engine writes `amino` + `oxo` on one carbon
- * (isAmide(), I-39d: `ácido 4-amino-4-oxobutanoico`) and, since phase R-6d1,
- * an amino prefix beside an amide suffix (`2-aminopropanamida`,
- * `N-(2-amino-2-oxoetil)butanamida`) —, by section: I-36 15, I-37 2, I-38 2,
- * I-39a 2, I-39d 12, I-40a 3, I-40b 1, I-40c 1, I-43a 3, I-43b 4, I-44 1,
- * I-45a 1; the other 20 rows are amides whose names have the amides' later
- * words (isLaterAmideName(), phases R-6d2 and R-6d3: `carbamoil`, acylamino,
- * the retained amide names). Until phase R-6d1 43 rows were read (33 and
- * 10).
+ * Fixture rows with an amino name (isAminoName()): 67, all of which the tiles
+ * read since phase R-6d2 — 36 with an amine nitrogen (the amino prefix's;
+ * isAmine()) and 31 amides: the amide prefixes the engine writes `amino` +
+ * `oxo` on one carbon (isAmide(), I-39d: `ácido 4-amino-4-oxobutanoico`),
+ * since phase R-6d1 an amino prefix beside an amide suffix
+ * (`2-aminopropanamida`, `N-(2-amino-2-oxoetil)butanamida`) and since phase
+ * R-6d2 the acylamino prefixes (`ácido 2-(acetilamino)etanoico`,
+ * `2-(acetilamino)etanamida`) —, by section: I-36 15, I-37 2, I-38 2, I-39a
+ * 2, I-39d 26, I-40a 3, I-40b 1, I-40c 4, I-40d 1, I-43a 3, I-43b 4, I-44 1,
+ * I-45a 1, I-45b 2. Until phase R-6d1 43 rows were read (33 and 10), until
+ * R-6d2 47 (36 and 11).
  */
 const EXPECTED_ROWS = Object.freeze({
-  total: 67, read: 47, amine: 36, amide: 11, i36: 15, i37: 2, i38: 2, i39a: 2, i39d: 12, i40a: 3, i40b: 1, i40c: 1, i43a: 3, i43b: 4,
-  i44: 1, i45a: 1,
+  total: 67, read: 67, amine: 36, amide: 31, i36: 15, i37: 2, i38: 2, i39a: 2, i39d: 26, i40a: 3, i40b: 1, i40c: 4, i40d: 1, i43a: 3,
+  i43b: 4, i44: 1, i45a: 1, i45b: 2,
 });
 
 /**
- * Their names and alternatives: 58 the tiles write, read back, 4 of them
- * amide names read since phase R-6d1 (swept in reverse-amides.test.js); 21
- * with the amides' later words, never tokenized (until phase R-6d1, 54 and
- * 25).
+ * Their names and alternatives: 79 the tiles write, read back, 4 of them
+ * amide names read since phase R-6d1 (swept in reverse-amides.test.js) and
+ * 21 with an acylamino prefix read since phase R-6d2 (swept in
+ * reverse-amide-prefixes.test.js); none with the amides' later words (until
+ * phase R-6d1, 54 read and 25 later; until R-6d2, 58 and 21).
  */
-const EXPECTED_NAMES = Object.freeze({ read: 58, amides: 4, later: 21 });
+const EXPECTED_NAMES = Object.freeze({ read: 79, amides: 4, amidePrefixes: 21, later: 0 });
 
 /** Average time budget of one readName() call over the fixture round trip, in milliseconds (phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -218,7 +220,7 @@ test('parser (R-6c2): `amino` a retained word; as a compound branch\'s own chain
   }
 }); // End of test 'parser (R-6c2): `amino` a retained word…'
 
-test('parser (R-6c2): the groups on an amino prefix\'s nitrogen take no locants or acyl groups; `amino` out of place', () => {
+test('parser (R-6c2): the groups on an amino prefix\'s nitrogen take no locants (acyl groups read since R-6d2); `amino` out of place', () => {
   const place = 'Esta ficha no puede ir aquí: los grupos unidos al nitrógeno de «amino» van delante de «amino», sin números ni letras: '
     + '(metilamino), (dimetilamino), [etil(metil)amino]. Si un grupo lleva sus propias ramas, va en su propia rama compuesta, con '
     + 'sus números dentro: [(2-cloroetil)amino].';
@@ -233,20 +235,20 @@ test('parser (R-6c2): the groups on an amino prefix\'s nitrogen take no locants 
   }
   assert.deepEqual(errorsOf('2 START 1 2 di met il amino END et ano 1 ol'), ['TILE_ORDER[2,4)']);
   assert.match(messageOf('2 START 1 2 di met il amino END et ano 1 ol'), /^Estas fichas no pueden ir aquí: los grupos unidos/);
-  // An acyl group on the nitrogen makes an amide (the acylamino prefixes, phase R-6d).
-  const acyl = (word) => `Esta ficha no puede ir aquí: «${word}» no va unido al nitrógeno de «amino»: un grupo C=O unido al nitrógeno no `
-    + 'forma una amina, sino una amida.';
-  for (const [words, range, word] of [
-    ['2 START acetil amino END et ano 1 ol', [2, 3], 'acetil'],
-    ['2 START formil amino END et ano 1 ol', [2, 3], 'formil'],
-    ['2 START benzoil amino END et ano 1 ol', [2, 3], 'benzoil'],
-    ['2 START prop ano oil amino END et ano 1 ol', [4, 5], 'oil'],
-    ['2 START ciclo hex ano carbonil amino END et ano 1 ol', [5, 6], 'carbonil'],
-    ['2 START START 2 met il prop ano oil END amino END et ano 1 ol', [8, 9], 'oil'],
-    ['2 START acetil met il amino END et ano 1 ol', [2, 3], 'acetil'],
+  // An acyl group on the nitrogen makes an amide: the acylamino prefixes, read since phase R-6d2 (reverse-amide-prefixes.test.js);
+  // beside an alcohol the amide is the principal group, so the engine names the molecule otherwise («Amides» `seniority`).
+  for (const [words, name] of [
+    ['2 START acetil amino END et ano 1 ol', 'N-(2-hidroxietil)etanamida'],
+    ['2 START formil amino END et ano 1 ol', 'N-(2-hidroxietil)metanamida'],
+    ['2 START benzoil amino END et ano 1 ol', 'N-(2-hidroxietil)benzamida'],
+    ['2 START prop ano oil amino END et ano 1 ol', 'N-(2-hidroxietil)propanamida'],
+    ['2 START ciclo hex ano carbonil amino END et ano 1 ol', 'N-(2-hidroxietil)ciclohexanocarboxamida'],
+    ['2 START START 2 met il prop ano oil END amino END et ano 1 ol', 'N-(2-hidroxietil)-2-metilpropanamida'],
+    ['2 START acetil met il amino END et ano 1 ol', 'N-(2-hidroxietil)-N-metiletanamida'],
   ]) {
-    assert.deepEqual(errorsOf(words), [`TILE_ORDER[${range[0]},${range[1]})`], words);
-    assert.equal(messageOf(words), acyl(word), words);
+    assert.deepEqual(errorsOf(words), [], words);
+    const verdict = read(words);
+    assert.deepEqual([verdict.kind, verdict.name, verdict.diagnosis], ['otherName', name, null], words);
   }
   // `oxi` after `amino`, `amino` in an ether's class name or as an ester's O-bound group.
   assert.deepEqual(errorsOf('amino oxi et ano ol'), ['TILE_ORDER[1,2)']);
@@ -353,9 +355,11 @@ test('tokenizer (R-6c2): amino names read; the amides\' words never tokenize', (
   assert.deepEqual(tokenize('2-[(2-cloroetil)amino]etan-1-ol'), seq('2 START START 2 cloro et il END amino END et ano 1 ol'));
   assert.deepEqual(tokenize('4-(aminoclorometil)ciclohexan-1-ol'), seq('4 START amino cloro met il END ciclo hex ano 1 ol'));
   assert.deepEqual(tokenize('etanoato de 2-aminoetilo'), seq('et ano oato 2 amino et ilo'));
+  // Since phase R-6d2 the acylamino and carbamoyl prefixes read (reverse-amide-prefixes.test.js).
   for (const name of ['2-(acetilamino)etan-1-ol', 'ácido 2-(acetilamino)etanoico', 'ácido 2-[acetil(metil)amino]etanoico',
     'ácido 2-(benzoilamino)etanoico', 'ácido 2-[(2-metilpropanoil)amino]etanoico', 'ácido 3-carbamoilpropanoico']) {
-    assert.equal(tokenize(name), null, name);
+    assert.ok(tokenize(name), name);
+    assert.ok(isAmidePrefixName(name) && isR6d2AmideName(name), name);
   }
   // Since phase R-6d1 the amide suffixes read, an amino prefix beside them too (reverse-amides.test.js).
   for (const name of ['2-aminopropanamida', '3-amino-N-metilpropanamida', '4-aminociclohexano-1-carboxamida']) {
@@ -371,9 +375,11 @@ test('tokenizer (R-6c2): amino names read; the amides\' words never tokenize', (
     '2-acetil-3-aminobutanal', '2-[(2-acetiletil)amino]etan-1-ol', '3-[(cianometil)(metil)amino]propanonitrilo'].map(hasAcylamino),
   [true, true, true, true, false, false, false, false]);
   assert.ok(isAmideName('etanamida') && isAmideName('ácido 3-carbamoilpropanoico') && !isAmideName('ácido 4-amino-4-oxobutanoico'));
-  // Since phase R-6d1: the amides' later words (R-6d2: `carbamoil`, acylamino; R-6d3: the retained amide names).
+  // The amides' later words (R-6d3: the retained amide names); the amide prefixes are R-6d2's (isAmidePrefixName()).
   assert.deepEqual(['etanamida', 'ácido 3-carbamoilpropanoico', '2-(acetilamino)etan-1-ol', 'acetamida', 'N-metilbenzamida']
-    .map(isLaterAmideName), [false, true, true, true, false]);
+    .map(isLaterAmideName), [false, false, false, true, false]);
+  assert.deepEqual(['etanamida', 'ácido 3-carbamoilpropanoico', '2-(acetilamino)etan-1-ol', 'acetamida', 'ácido 4-amino-4-oxobutanoico']
+    .map(isAmidePrefixName), [false, true, true, false, false]);
   assert.equal(AMINO_WORD, 'amino');
 }); // End of test 'tokenizer (R-6c2)…'
 
@@ -754,7 +760,7 @@ test('the former deliberate nulls of R-6c2 (diagnose.js «Amines»): each catego
 test('fixture round trip (R-6c2): every amino name the tiles write, read back; graph compared with the SMILES; the amides\' never tokenize', async () => {
   const fixtures = await readFixtures();
   const rows = fixtures.filter((row) => row.names.some(isAminoName));
-  const counts = { read: 0, amides: 0, later: 0 };
+  const counts = { read: 0, amides: 0, amidePrefixes: 0, later: 0 };
   const kinds = { amine: 0, amide: 0 };
   let elapsed = 0;
   const readRows = new Set();
@@ -762,12 +768,13 @@ test('fixture round trip (R-6c2): every amino name the tiles write, read back; g
     const expected = keyOf(row.smiles);
     for (const name of row.names) {
       if (isLaterAmideName(name)) {
-        counts.later += 1; // The amides' later words (R-6d2: `carbamoil`, acylamino; R-6d3: the retained amide names).
+        counts.later += 1; // The amides' later words (R-6d3: the retained amide names).
         assert.ok(isAmideName(name), name);
         assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`);
         continue;
       }
-      counts.amides += isAmideName(name) ? 1 : 0; // R-6d1: an amino prefix beside an amide suffix (`2-aminopropanamida`).
+      counts.amides += isAmideName(name) && !isAmidePrefixName(name) ? 1 : 0; // R-6d1: an amino prefix beside an amide suffix.
+      counts.amidePrefixes += isR6d2AmideName(name) ? 1 : 0; // R-6d2: an acylamino prefix (`(acetilamino)`), read since then.
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
       assert.equal(assemble(parse(ids).tree).text, name, `names.tsv:${row.line}: assembly`);
@@ -801,9 +808,10 @@ test('fixture round trip (R-6c2): every amino name the tiles write, read back; g
   assert.equal(rows.length, EXPECTED_ROWS.total);
   assert.equal(readRows.size, EXPECTED_ROWS.read);
   assert.deepEqual(kinds, { amine: EXPECTED_ROWS.amine, amide: EXPECTED_ROWS.amide });
-  assert.deepEqual(['I-36', 'I-37', 'I-38', 'I-39a', 'I-39d', 'I-40a', 'I-40b', 'I-40c', 'I-43a', 'I-43b', 'I-44', 'I-45a'].map(inSection),
-    [EXPECTED_ROWS.i36, EXPECTED_ROWS.i37, EXPECTED_ROWS.i38, EXPECTED_ROWS.i39a, EXPECTED_ROWS.i39d, EXPECTED_ROWS.i40a,
-      EXPECTED_ROWS.i40b, EXPECTED_ROWS.i40c, EXPECTED_ROWS.i43a, EXPECTED_ROWS.i43b, EXPECTED_ROWS.i44, EXPECTED_ROWS.i45a]);
+  assert.deepEqual(['I-36', 'I-37', 'I-38', 'I-39a', 'I-39d', 'I-40a', 'I-40b', 'I-40c', 'I-40d', 'I-43a', 'I-43b', 'I-44', 'I-45a',
+    'I-45b'].map(inSection), [EXPECTED_ROWS.i36, EXPECTED_ROWS.i37, EXPECTED_ROWS.i38, EXPECTED_ROWS.i39a, EXPECTED_ROWS.i39d,
+    EXPECTED_ROWS.i40a, EXPECTED_ROWS.i40b, EXPECTED_ROWS.i40c, EXPECTED_ROWS.i40d, EXPECTED_ROWS.i43a, EXPECTED_ROWS.i43b,
+    EXPECTED_ROWS.i44, EXPECTED_ROWS.i45a, EXPECTED_ROWS.i45b]);
   assert.deepEqual(counts, { ...EXPECTED_NAMES });
   assert.ok(elapsed / counts.read < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / counts.read).toFixed(2)} ms on average`);
 }); // End of test 'fixture round trip (R-6c2)…'
@@ -837,15 +845,16 @@ const LOOP = Object.freeze([
  * on a ring or benzene parent, an amide prefix written `amino` + `oxo`, a
  * multiplied one), removed-locant mutations and decisive verdicts among them
  * (two run out of budget, `incomplete`), since phase R-6d1 the amino names
- * beside an amide suffix among them; and the amino names with the amides'
- * later words (R-6d2, R-6d3) never tokenized (the seeds give 677, 682, 441,
- * 43, 229, 183, 55, 91, 1728, 1726 and 161; until phase R-6d1 591 names, 386
- * substituted, 36 nested, 202 ring, 92 amide, 52 multiplied, 1468 removals,
- * 1466 decisive, 252 later).
+ * beside an amide suffix among them, since phase R-6d2 the acylamino names
+ * among them too; and the amino names with the amides' later words (R-6d3,
+ * the retained amide names) never tokenized (the seeds give 677, 836, 591,
+ * 46, 231, 337, 56, 91, 154, 2099, 2097 and 7; until phase R-6d1 591 names,
+ * 386 substituted, 36 nested, 202 ring, 92 amide, 52 multiplied, 1468
+ * removals, 1466 decisive, 252 later; until R-6d2 682 names, 161 later).
  */
 const LOOP_MIN = Object.freeze({
-  molecules: 670, names: 670, substituted: 430, nested: 40, ring: 220, amide: 175, multiplied: 50, amideNames: 85, removed: 1700,
-  decisive: 1700, later: 155,
+  molecules: 670, names: 830, substituted: 585, nested: 45, ring: 225, amide: 330, multiplied: 55, amideNames: 85, amidePrefixes: 150,
+  removed: 2090, decisive: 2090, later: 5,
 });
 
 /**
@@ -922,7 +931,8 @@ function locantLists(tree) {
 test('closed loop over the generators\' amino names: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
   const counts = {
-    names: 0, substituted: 0, nested: 0, ring: 0, amide: 0, multiplied: 0, amideNames: 0, removed: 0, decisive: 0, later: 0,
+    names: 0, substituted: 0, nested: 0, ring: 0, amide: 0, multiplied: 0, amideNames: 0, amidePrefixes: 0, removed: 0, decisive: 0,
+    later: 0,
   };
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
@@ -933,11 +943,12 @@ test('closed loop over the generators\' amino names: engine name → tiles → r
         continue; // Read by its own family's loop.
       }
       if (isLaterAmideName(name)) {
-        counts.later += 1; // The amides' later words (R-6d2: `carbamoil`, acylamino; R-6d3: the retained amide names).
+        counts.later += 1; // The amides' later words (R-6d3: the retained amide names).
         assert.equal(tokenize(name), null, name);
         continue;
       }
-      counts.amideNames += isAmideName(name) ? 1 : 0; // R-6d1: an amino prefix beside an amide suffix, read since then.
+      counts.amideNames += isAmideName(name) && !isAmidePrefixName(name) ? 1 : 0; // R-6d1: beside an amide suffix, read since then.
+      counts.amidePrefixes += isR6d2AmideName(name) ? 1 : 0; // R-6d2: an acylamino prefix, read since then.
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);
       const verdict = readName(ids);
@@ -1263,9 +1274,10 @@ const FIXTURE_OWN = Object.freeze({ numbering: 5 });
 const FIXTURE_NULLS = Object.freeze({ amide: 2 });
 
 test('mutations of every amino fixture name: a diagnosis of the family\'s codes, or an amide null', async () => {
-  // The amide names among them (R-6d1) are swept in reverse-amides.test.js.
+  // The amide names among them (R-6d1) are swept in reverse-amides.test.js, the acylamino ones (R-6d2) in
+  // reverse-amide-prefixes.test.js.
   const names = (await readFixtures()).filter((row) => row.names.some(isAminoName)).flatMap((row) => row.names).filter(isAmineName);
-  assert.equal(names.length, EXPECTED_NAMES.read - EXPECTED_NAMES.amides);
+  assert.equal(names.length, EXPECTED_NAMES.read - EXPECTED_NAMES.amides - EXPECTED_NAMES.amidePrefixes);
   const { otherName, codes, own, nulls, unexpected } = sweep(names);
   assert.deepEqual(unexpected, []);
   assert.deepEqual(otherName, { ...FIXTURE_OTHER_NAME });

@@ -1,6 +1,6 @@
 /**
  * @file Builder of «¿Cómo se dibuja?» (design.md §15.4, §15.6; phases R-1b,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1): a NameSpec (interpret.js) and one placement — a value for each
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5a3a, R-5b, R-5b2, R-5c1, R-5c2, R-5c3a, R-5d1, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2): a NameSpec (interpret.js) and one placement — a value for each
  * left-out slot — become a molecule (model/molecule.js), or a structural
  * error with the offending tiles. Pure, no DOM; atoms are created without
  * meaningful coordinates (the UI lays the molecule out, design.md §15.2).
@@ -127,7 +127,19 @@
  * the group that adds it («El nitrógeno del grupo amino tendría 4 enlaces, y
  * un nitrógeno solo puede tener 3.»). Which groups may stand on it is the
  * engine's, as for an amine's nitrogen (a halogen, an oxygen, a double bond
- * or another nitrogen there: its refusals).
+ * or another nitrogen there: its refusals). Since phase R-6d2 an acyl group
+ * may be one of them (the acylamino prefixes, `(acetilamino)`): its C=O
+ * carbon bonded to the nitrogen, built as any acyl prefix.
+ * A carbamoyl prefix (R-6d2, SubstituentSpec kind 'carbamoylGroup', tiles.js
+ * CARBAMOYL_KIND) is the whole –CONH₂ (carbamoylGroup()): its C=O carbon,
+ * created first, the occurrence's `attachment`, single-bonded to the carbon
+ * the prefix hangs from, then the =O on it and the amide's nitrogen,
+ * single-bonded to it, with the groups on that nitrogen attached as an amino
+ * prefix's are (three bonds, so a third group is VALENCE «El nitrógeno del
+ * grupo carbamoil tendría 4 enlaces…»); one carbon and three heavy atoms per
+ * occurrence besides its groups (tiles.js CARBAMOYL_ATOMS). Its carbon is
+ * full (four bonds) and never over its valence. An acyl group on that
+ * nitrogen makes an imide, the engine's refusal.
  * An alkoxy prefix (R-5b, SubstituentSpec `alkoxy`) is its branch built as
  * any other — chain, ring, phenyl or retained word, with its own prefixes —
  * and then an ether oxygen, created last, bonded by single bonds to the
@@ -236,7 +248,7 @@ import {
   templateGroupWord, isAtomGroup, atomGroupOrder, closingText, HYDROXY_ELEMENT, ALKOXY_ELEMENT, OXO_ELEMENT, SUFFIX_GROUPS,
   GROUP_WORD_PARENTS, withArticle, suffixBondAmount, ACID_KIND, ACID_GROUP, ESTER_KIND, ESTER_GROUP, NITRILE_KIND, NITRILE_GROUP,
   suffixElement, AMINE_KIND, N_VALUE, AMINE_NITROGEN, NITROGEN_VALENCE, AMINO_KIND, AMINO_ELEMENT, AMINO_NITROGEN, AMINE_GROUP,
-  AMIDE_KIND, AMIDE_GROUP, AMIDE_NITROGEN,
+  AMIDE_KIND, AMIDE_GROUP, AMIDE_NITROGEN, CARBAMOYL_KIND, CARBAMOYL_ATOMS, CARBAMOYL_NITROGEN,
 } from './tiles.js';
 
 /**
@@ -594,7 +606,8 @@ function isRingAcyl(sub) {
  * Carbons of a branch, its own prefixes included (none for a one-atom
  * group: a halogen, R-5a1; `hidroxi`, R-5a2; the C=O carbon of a ring's
  * acyl prefix, R-5c2, outside the ring; an amino prefix's groups only, its
- * one atom being a nitrogen, R-6c2).
+ * one atom being a nitrogen, R-6c2; a carbamoyl prefix's C=O carbon and its
+ * groups, R-6d2).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
@@ -605,6 +618,9 @@ function substituentCarbons(sub) {
   }
   if (sub.kind === AMINO_KIND) {
     return prefixCarbons(sub.prefixes); // `(dimetilamino)`: the methyls on the nitrogen (R-6c2).
+  }
+  if (sub.kind === CARBAMOYL_KIND) {
+    return 1 + prefixCarbons(sub.prefixes); // `(metilcarbamoil)`: the C=O carbon and the methyl on the nitrogen (R-6d2).
   }
   if (sub.kind === 'retained') {
     const template = RETAINED_TEMPLATES[sub.retained];
@@ -643,7 +659,8 @@ function prefixCarbons(prefixes) {
  * (R-5b), the =O of an acyl prefix (R-5c2; with its C=O carbon on a
  * ring) and the heteroatoms of a retained word (`formil`'s =O; `carboxi`'s =O
  * and OH, R-5d1; `ciano`'s nitrogen, R-6b1); an amino prefix's nitrogen is
- * its one atom, `length` (R-6c2).
+ * its one atom, `length` (R-6c2); a carbamoyl prefix's C=O carbon, =O and
+ * nitrogen, CARBAMOYL_ATOMS (R-6d2).
  *
  * @param {object} sub - A SubstituentSpec.
  * @returns {number} The count.
@@ -651,6 +668,9 @@ function prefixCarbons(prefixes) {
 function substituentAtoms(sub) {
   if (isAtomGroup(sub.kind)) {
     return 1;
+  }
+  if (sub.kind === CARBAMOYL_KIND) {
+    return CARBAMOYL_ATOMS + prefixAtomCount(sub.prefixes); // The –CONH₂ and the groups on its nitrogen (R-6d2).
   }
   // The ether oxygen of an alkoxy prefix (R-5b); the =O of an alkoxycarbonyl prefix's C=O carbon (R-6a2b), counted by
   // substituentCarbons().
@@ -1225,7 +1245,8 @@ function amineClassNitrogen(state) {
  * `hidroxi`, R-5a2, or of `oxo`, R-5c1, double-bonded), a retained word from
  * its template (`formil` with its =O, R-5c1; `acetil`, R-5c2; `ciano` with
  * its triple-bonded nitrogen, R-6b1), an amino prefix's nitrogen with the
- * groups on it (R-6c2, aminoNitrogen()), or a chain;
+ * groups on it (R-6c2, aminoNitrogen()), a carbamoyl prefix's –CONH₂ with
+ * the groups on its nitrogen (R-6d2, carbamoylGroup()), or a chain;
  * for an alkoxy prefix (R-5b) that branch and then its ether oxygen
  * (alkoxyOxygen()); for an acyl prefix (R-5c2) that branch and then its C=O
  * (acylCarbonyl()).
@@ -1242,6 +1263,9 @@ function buildSubstituent(state, sub) {
   }
   if (sub.kind === AMINO_KIND) {
     return aminoNitrogen(state, sub); // `amino`, `(metilamino)` (R-6c2)
+  }
+  if (sub.kind === CARBAMOYL_KIND) {
+    return carbamoylGroup(state, sub); // `carbamoil`, `(metilcarbamoil)` (R-6d2)
   }
   let branch;
   if (sub.kind === 'retained') {
@@ -1307,6 +1331,34 @@ function aminoNitrogen(state, sub) {
   attachPrefixes(state, sub.prefixes, [nitrogen]);
   return { attach: nitrogen, order: 1, tiles: sub.tiles };
 }
+
+/**
+ * Creates a carbamoyl prefix (R-6d2): its C=O carbon first, then the =O
+ * double-bonded to it and the amide's nitrogen single-bonded to it, the
+ * nitrogen holding three bonds (NITROGEN_VALENCE, the VALENCE message naming
+ * «el nitrógeno del grupo carbamoil»), then the groups on that nitrogen, each
+ * bonded to it by its one implicit slot (ownPrefixAtoms() cuts them from the
+ * atoms after the first CARBAMOYL_ATOMS); the carbon is left with its bond to
+ * the carbon the prefix hangs from to make, a single one (four in all, never
+ * over its valence).
+ *
+ * @param {object} state - Build state.
+ * @param {object} sub - The carbamoyl SubstituentSpec.
+ * @returns {{attach: number, order: number, tiles: [number, number]}} The C=O carbon, bond order 1, and the prefix's tiles.
+ */
+function carbamoylGroup(state, sub) {
+  const { mol } = state;
+  const carbon = addAtom(mol, {}, CARBON);
+  state.atoms.set(carbon, { locant: 1, branch: true, added: [] });
+  const oxygen = addAtom(mol, {}, OXO_ELEMENT);
+  state.atoms.set(oxygen, { locant: 1, branch: true, added: [] }); // One double bond: never over its valence.
+  addBond(mol, carbon, oxygen, 2);
+  const nitrogen = addAtom(mol, {}, AMIDE_NITROGEN_ELEMENT);
+  state.atoms.set(nitrogen, { locant: 1, branch: true, added: [], valence: NITROGEN_VALENCE, nitrogenWord: CARBAMOYL_NITROGEN });
+  addBond(mol, carbon, nitrogen, 1);
+  attachPrefixes(state, sub.prefixes, [nitrogen]);
+  return { attach: carbon, order: 1, tiles: sub.tiles };
+} // End of function carbamoylGroup()
 
 /**
  * Puts the C=O carbon of an alkoxycarbonyl prefix (R-6a2b) on its alkoxy
@@ -1459,7 +1511,8 @@ function attachPrefixes(state, prefixes, atoms, record = null, template = null) 
  * R-5b), and an alkoxy branch's own ether oxygen last of all (so are an acyl
  * branch's C=O carbon outside its ring and its =O, R-5c2, before that
  * oxygen in an acyloxy prefix, and an alkoxycarbonyl prefix's C=O carbon
- * and its =O after it, R-6a2b).
+ * and its =O after it, R-6a2b; a carbamoyl prefix's C=O carbon, =O and
+ * nitrogen first, R-6d2).
  * For the diagnosis (diagnose.js), which compares branches inside a compound
  * branch by their structure.
  *
@@ -1470,6 +1523,9 @@ function attachPrefixes(state, prefixes, atoms, record = null, template = null) 
 export function ownPrefixAtoms(sub, atoms) {
   const template = sub.kind === 'retained' ? RETAINED_TEMPLATES[sub.retained] : null;
   let next = template ? template.length + template.methyls.length : sub.length;
+  if (sub.kind === CARBAMOYL_KIND) {
+    next = CARBAMOYL_ATOMS; // The C=O carbon, its =O and the nitrogen, before the groups on it (R-6d2, carbamoylGroup()).
+  }
   return sub.prefixes.map((prefix) => prefix.slots.map(() => {
     const size = substituentAtoms(prefix.substituent);
     const slice = atoms.slice(next, next + size);

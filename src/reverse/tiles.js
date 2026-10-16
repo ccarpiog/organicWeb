@@ -200,7 +200,18 @@
  *   and in the «Anillos» row `benzamida` (kind 'benzene', value 'benzamide':
  *   the benzene parent with its –CONH₂ at carbon 1, as `benzonitrilo` with its
  *   –C≡N — `4-metilbenzamida`, `N-metilbenzamida`; GROUP_WORD_PARENTS, a
- *   feminine word, «la benzamida»);
+ *   feminine word, «la benzamida»); and (R-6d2) `carbamoil` (kind 'retained',
+ *   value CARBAMOYL_KIND: the whole –CONH₂ as a prefix, its C=O carbon
+ *   single-bonded to the carbon its locant gives, the =O and the amide's
+ *   nitrogen on that carbon — `ácido 3-carbamoilpentanodioico`, `ácido
+ *   4-carbamoilbenzoico`; the lexicon's GROUP_PREFIXES.amide), which like
+ *   `amino` may be the own chain of a compound branch whose prefixes are then
+ *   the groups on its nitrogen, written without locants, every one after the
+ *   first enclosed (`START met il carbamoil END` → `(metilcarbamoil)`, `START
+ *   et il met il carbamoil END` → `[etil(metil)carbamoil]`;
+ *   isCarbamoylTile()); the acylamino prefixes (R-6d2) need no tile: an acyl
+ *   word or ending among the groups on an `amino` nitrogen (`START acetil
+ *   amino END` → `(acetilamino)`);
  * - `row` — the tile row of the dialog (design.md §15.2): 'numbers' (the
  *   locant `N` after them from R-6c1),
  *   'multipliers', 'roots', 'endings', 'branches', 'rings' («Anillos», with
@@ -214,7 +225,7 @@
  *   R-5d1: `ácido`, `carboxi`, `oico`, `carboxílico`; R-6a1: `oato`,
  *   `carboxilato`, `ilo`; R-6b1: `ciano`, `nitrilo`, `carbonitrilo`; R-6c1:
  *   `amina`, at the end; R-6c2: `amino`, after it; R-6d1: `amida`,
- *   `carboxamida`, after `amino`),
+ *   `carboxamida`, after `amino`; R-6d2: `carbamoil`, after them),
  *   'traditional' («Nombres tradicionales», R-4c: the templates; R-5a3a:
  *   the retained phenols; R-5b: `anisol`; R-5c3a: the retained carbonyl
  *   names, `formaldehído` … `tereftalaldehído`; R-5d2: the retained acid
@@ -707,6 +718,72 @@ export const AMINO_NITROGEN = 'nitrógeno del grupo amino';
  */
 export function isAminoTile(tile) {
   return tile.kind === 'retained' && tile.value === AMINO_KIND;
+}
+
+/**
+ * Id of the `carbamoil` tile (design.md §15.8 R-6d; phase R-6d2: the whole
+ * –CONH₂ of an amide as a prefix, bonded by its C=O carbon, `ácido
+ * 3-carbamoilpentanodioico`; with the groups on its nitrogen, the own chain
+ * of a compound branch, `(metilcarbamoil)`).
+ */
+export const CARBAMOYL_ID = 'retained-carbamoyl';
+
+/**
+ * The `carbamoil` tile's value (R-6d2), a retained word's, and the
+ * interpret.js SubstituentSpec kind of a carbamoyl prefix (language-neutral,
+ * as AMINO_KIND; the word on the tile is the lexicon's GROUP_PREFIXES.amide).
+ */
+export const CARBAMOYL_KIND = 'carbamoylGroup';
+
+/**
+ * The atoms a `carbamoil` prefix adds besides the groups on its nitrogen
+ * (R-6d2): its C=O carbon, the =O on it and the amide's nitrogen bonded to
+ * it (build.js carbamoylGroup()).
+ */
+export const CARBAMOYL_ATOMS = 3;
+
+/** How the messages call the nitrogen of a `carbamoil` prefix (R-6d2), as AMINO_NITROGEN for an amino prefix's. */
+export const CARBAMOYL_NITROGEN = 'nitrógeno del grupo carbamoil';
+
+/**
+ * Tells whether a tile is the `carbamoil` word (R-6d2): a retained word whose
+ * nitrogen may carry groups of its own, written before it inside a compound
+ * branch (`(metilcarbamoil)`), as `amino`'s.
+ *
+ * @param {{kind: string, value: *}} tile - A catalogue tile.
+ * @returns {boolean} True for `carbamoil`.
+ */
+export function isCarbamoylTile(tile) {
+  return tile.kind === 'retained' && tile.value === CARBAMOYL_KIND;
+}
+
+/**
+ * Tells whether a tile is a prefix word whose nitrogen takes the groups
+ * written before it inside a compound branch: `amino` (R-6c2) or `carbamoil`
+ * (R-6d2) — render.js writes both the same way (the groups without locants,
+ * every one after the first enclosed: `[etil(metil)amino]`,
+ * `[etil(metil)carbamoil]`).
+ *
+ * @param {{kind: string, value: *}} tile - A catalogue tile.
+ * @returns {boolean} True for `amino` and `carbamoil`.
+ */
+export function isNitrogenGroupTile(tile) {
+  return isAminoTile(tile) || isCarbamoylTile(tile);
+}
+
+/**
+ * Tells whether an interpret.js SubstituentSpec kind is a prefix whose
+ * nitrogen holds the groups written before its word: an amino prefix
+ * (R-6c2, AMINO_KIND, the nitrogen its one atom) or a carbamoyl prefix
+ * (R-6d2, CARBAMOYL_KIND, the nitrogen on its C=O carbon) — for the search
+ * a one-atom chain of valence three each (search.js), never a group on an
+ * amine's or an amide's nitrogen (interpret.js bondsToNitrogen()).
+ *
+ * @param {string} kind - A SubstituentSpec kind.
+ * @returns {boolean} True for 'aminoGroup' and 'carbamoylGroup'.
+ */
+export function isNitrogenGroupKind(kind) {
+  return kind === AMINO_KIND || kind === CARBAMOYL_KIND;
 }
 
 /**
@@ -1327,7 +1404,7 @@ function makeTile(id, kind, value, row, text, more = false, extra = {}) {
  * at their end; R-6c1 the locant `N` after the numbers and `amina` to the
  * groups, at their end; R-6c2 `amino` after `amina`; R-6d1 `benzamida` to
  * the rings, after `benzonitrilo`, and `amida` and `carboxamida` to the
- * groups, after `amino`.
+ * groups, after `amino`; R-6d2 `carbamoil` after `carboxamida`.
  *
  * @returns {Readonly<object>[]} The tiles.
  */
@@ -1413,6 +1490,8 @@ function buildCatalogue() {
   // R-6d1: the amides' suffixes `amida` and `carboxamida`.
   tiles.push(makeTile(AMIDA_ID, 'suffix', AMIDE_KIND, 'groups', GROUP_SUFFIXES[AMIDE_KIND]));
   tiles.push(makeTile(CARBOXAMIDE_ID, 'suffix', 'carboxamide', 'groups', RING_GROUP_SUFFIXES[AMIDE_KIND]));
+  // `carbamoil` (R-6d2): a retained word, as `amino`; with the groups on its nitrogen, a compound branch's own chain.
+  tiles.push(makeTile(CARBAMOYL_ID, 'retained', CARBAMOYL_KIND, 'groups', GROUP_PREFIXES[AMIDE_KIND], false, { italic: '' }));
   for (const value of Object.keys(TEMPLATES)) {
     tiles.push(makeTile(`template-${value}`, 'template', value, 'traditional', templateWord(value)));
   }

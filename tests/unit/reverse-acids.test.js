@@ -389,11 +389,12 @@ test('tokenizer (R-5d1): texts that only read with errors, and the later familie
   for (const name of ['butanoico', 'benzoico', 'ácido', 'ácido ', 'ácido  butanoico', 'ácido-butanoico', 'ácidobutanoico', 'ácido butanal',
     'ácido ciclohexanoico', 'ácido bencenoico', 'ácido butan-1-oico', 'ácido 1-butanoico', 'ácido 1-benzoico', 'ácido p-benzoico',
     'ácido benzoicooico', '2-metilácido propanoico', 'ácido butanoico ácido', 'ácido ácido butanoico', '(carboxioxi)metano',
-    'ácido butano-1,4-bisoico', 'carboxi',
-    // Phase R-6d2: the carbamoil prefix.
-    'ácido 4-carbamoilbenzoico']) {
+    'ácido butano-1,4-bisoico', 'carboxi']) {
     assert.equal(tokenize(name), null, name);
   }
+  // Phase R-6d2: the carbamoil and acylamino prefixes beside an acid read (reverse-amide-prefixes.test.js).
+  assert.deepEqual(tokenize('ácido 4-carbamoilbenzoico'), seq('ácido 4 carbamoil benzoico'));
+  assert.deepEqual(tokenize('ácido 2-(acetilamino)etanoico'), seq('ácido 2 START acetil amino END et ano oico'));
   // Phase R-6d1: the amide suffixes read (reverse-amides.test.js).
   assert.deepEqual([tokenize('etanamida'), tokenize('benzamida')], [seq('et ano amida'), seq('benzamida')]);
   // Phase R-6c2: an amino prefix beside an acid reads (reverse-amino.test.js).

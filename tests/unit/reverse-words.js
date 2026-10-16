@@ -20,11 +20,11 @@
  * `N`; R-6c2: the `amino` prefixes; R-6c3: the retained `anilina` and
  * `bencilamina` and the class names, `metilamina`, `dimetilamina`) and
  * their amides (R-6d1: the suffixes `amida` and `carboxamida`, `benzamida`,
- * the locant `N` on the amide's nitrogen; isAmideName()) — the `carbamoil`
- * and acylamino prefixes and the retained amide names (`formamida`,
- * `acetamida`, `ftalamida`) being later phases' (R-6d2, R-6d3;
- * isLaterAmideName()), though an amide prefix the engine writes `amino` +
- * `oxo` reads since R-6c2.
+ * the locant `N` on the amide's nitrogen; isAmideName(); R-6d2: the
+ * `carbamoil` and acylamino prefixes, isAmidePrefixName()) — the retained
+ * amide names (`formamida`, `acetamida`, `ftalamida`) being a later phase's
+ * (R-6d3; isLaterAmideName()), though an amide prefix the engine writes
+ * `amino` + `oxo` reads since R-6c2.
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -727,7 +727,8 @@ export function hasAcylamino(name) {
  * Tells whether a name has the words of the amides (phase R-6d): the suffix
  * `amida` (also in `carboxamida`, `benzamida`, `acetamida`), the prefix
  * `carbamoil`, or an acylamino prefix (hasAcylamino()). The tiles write the
- * suffixes since phase R-6d1; the other words are later phases'
+ * suffixes since phase R-6d1 and the prefixes since R-6d2
+ * (isAmidePrefixName()); the retained names are a later phase's
  * (isLaterAmideName()). An amide prefix written `amino` + `oxo` on one
  * carbon (`ácido 4-amino-4-oxobutanoico`) has none of them: the tiles write
  * it since R-6c2.
@@ -740,38 +741,66 @@ export function isAmideName(name) {
 }
 
 /**
- * The words of the amide names the tiles do not write yet (phase R-6d1):
- * the prefix `carbamoil` (R-6d2) and the retained amide names `formamida`,
- * `acetamida` (also in `fenilacetamida`, `2-(4-metilfenil)acetamida`) and
- * `ftalamida` (R-6d3), from the lexicon; the acylamino prefixes (R-6d2) are
- * hasAcylamino()'s.
+ * The words of the amide names the tiles do not write yet (phase R-6d2):
+ * the retained amide names `formamida`, `acetamida` (also in
+ * `fenilacetamida`, `2-(4-metilfenil)acetamida`) and `ftalamida` (R-6d3),
+ * from the lexicon.
  */
-export const LATER_AMIDE_WORDS = Object.freeze([GROUP_PREFIXES.amide, TRADITIONAL_NAMES.formamide, TRADITIONAL_NAMES.acetamide,
+export const LATER_AMIDE_WORDS = Object.freeze([TRADITIONAL_NAMES.formamide, TRADITIONAL_NAMES.acetamide,
   BENZENE_DIGROUP_NAMES.phthalamide]);
 
 /**
  * Tells whether a name has an amide's words the tiles write only in a later
- * phase (R-6d2: `carbamoil`, an acylamino prefix; R-6d3: `formamida`,
- * `acetamida`, `ftalamida`; LATER_AMIDE_WORDS, hasAcylamino()).
+ * phase (R-6d3: `formamida`, `acetamida`, `ftalamida`; LATER_AMIDE_WORDS).
  *
  * @param {string} name - A name.
  * @returns {boolean} True for a name the tiles do not write yet.
  */
 export function isLaterAmideName(name) {
-  return LATER_AMIDE_WORDS.some((word) => name.includes(word)) || hasAcylamino(name);
+  return LATER_AMIDE_WORDS.some((word) => name.includes(word));
+}
+
+/** The prefix of an amide bonded through its C=O carbon (R-6d2), from the lexicon: `carbamoil`, also in `(metilcarbamoil)`. */
+export const CARBAMOYL_WORD = GROUP_PREFIXES.amide;
+
+/**
+ * Tells whether a name has an amide prefix of phase R-6d2: `carbamoil`
+ * (CARBAMOYL_WORD: `ácido 3-carbamoilpentanodioico`,
+ * `[etil(metil)carbamoil]`) or an acylamino prefix (hasAcylamino():
+ * `(acetilamino)`, `[acetil(metil)amino]`).
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for a name with a carbamoyl or an acylamino prefix.
+ */
+export function isAmidePrefixName(name) {
+  return name.includes(CARBAMOYL_WORD) || hasAcylamino(name);
 }
 
 /**
  * Tells whether a name is one of phase R-6d1's amide names: an amide's words
  * (isAmideName()) the tiles write since that phase — the suffixes `amida`,
- * `carboxamida`, `benzamida` —, none of a later phase's
- * (isLaterAmideName()).
+ * `carboxamida`, `benzamida` —, none of a later phase's (R-6d2: the amide
+ * prefixes, isAmidePrefixName(); R-6d3: isLaterAmideName()). The R-6d1
+ * sweeps keep their names and exact counts so.
  *
  * @param {string} name - A name.
  * @returns {boolean} True for an R-6d1 amide name.
  */
 export function isR6d1AmideName(name) {
-  return isAmideName(name) && !isLaterAmideName(name);
+  return isAmideName(name) && !isAmidePrefixName(name) && !isLaterAmideName(name);
+}
+
+/**
+ * Tells whether a name is one of phase R-6d2's amide names: one with an
+ * amide prefix (isAmidePrefixName(): `carbamoil`, an acylamino prefix) and no
+ * word of a later phase (isLaterAmideName()); swept in
+ * reverse-amide-prefixes.test.js.
+ *
+ * @param {string} name - A name.
+ * @returns {boolean} True for an R-6d2 amide name.
+ */
+export function isR6d2AmideName(name) {
+  return isAmidePrefixName(name) && !isLaterAmideName(name);
 }
 
 /**

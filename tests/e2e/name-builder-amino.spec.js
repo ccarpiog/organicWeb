@@ -10,9 +10,10 @@
  * on the groups on the nitrogen (`2-[metil(metil)amino]etan-1-ol`:
  * UNGROUPED); a principal amine written `amino` has its diagnosis
  * (`aminoetano`: drawn and named «etanamina», CARBONYL_PREFIX since phase
- * I-52c4a); a locant on a group of the nitrogen, an acyl group on it and a
- * third group stay in the dialog with their message and marked tiles, the
- * canvas untouched. Runs on the dev server and on dist (playwright.config.js).
+ * I-52c4a); a locant on a group of the nitrogen, two acyl groups on it (an
+ * imide; one is an amide's acylamino prefix since phase R-6d2) and a third
+ * group stay in the dialog with their message (and marked tiles), the canvas
+ * untouched. Runs on the dev server and on dist (playwright.config.js).
  */
 
 import { test, expect } from '@playwright/test';
@@ -218,7 +219,7 @@ test('left-out amino locant: missing locants; a shared rule on the nitrogen\'s g
   expect(errors).toEqual([]);
 }); // End of test 'left-out amino locant…'
 
-test('a locant or an acyl group on the nitrogen\'s groups and a third group stay in the dialog, tiles marked, canvas untouched', async ({ page }) => {
+test('a locant on the nitrogen\'s groups, two acyl groups on it and a third group stay in the dialog, canvas untouched', async ({ page }) => {
   const errors = await openApp(page);
   // Something on the canvas first, which a failure must keep.
   let dialog = await buildName(page, '2', 'amino', 'et', 'ano', '1', 'ol');
@@ -238,17 +239,17 @@ test('a locant or an acyl group on the nitrogen\'s groups and a third group stay
   expect(await invalidTiles(page)).toEqual([2]);
   await expect(dialog).toBeVisible();
 
-  // `2-(acetilamino)etan-1-ol`: a C=O group on the nitrogen makes an amide (the amides' phase).
+  // `2-(diacetilamino)etan-1-ol`: two C=O groups on the nitrogen make an imide, out of scope (one makes the acylamino prefix of an
+  // amide, read since phase R-6d2: name-builder-amide-prefixes.spec.js).
   const rows = page.locator('#name-builder-rows');
   await dialog.getByRole('button', { name: 'Borrar todo' }).click();
-  for (const text of ['2', 'empieza rama compuesta', 'acetil', 'amino', 'acaba rama', 'et', 'ano', '1', 'ol']) {
+  for (const text of ['2', 'empieza rama compuesta', 'di', 'acetil', 'amino', 'acaba rama', 'et', 'ano', '1', 'ol']) {
     await rows.getByRole('button', { name: text, exact: true }).click();
   }
-  await expect(page.locator('#name-builder-name')).toHaveText('2-(acetilamino)etan-1-ol');
+  await expect(page.locator('#name-builder-name')).toHaveText('2-(diacetilamino)etan-1-ol');
   await dialog.getByRole('button', { name: 'Dibujar' }).click();
-  await expect(message).toHaveText('Esta ficha no puede ir aquí: «acetil» no va unido al nitrógeno de «amino»: un grupo C=O unido al '
-    + 'nitrógeno no forma una amina, sino una amida.');
-  expect(await invalidTiles(page)).toEqual([2]);
+  await expect(message).toContainText('Entiendo tu nombre, pero esa molécula queda fuera de lo que sé dibujar: Esta molécula tiene un '
+    + 'nitrógeno unido a dos grupos C=O (–CO–NH–CO–).');
 
   // `2-(trimetilamino)etan-1-ol`: the nitrogen holds three bonds; the group that adds the fourth is marked.
   await dialog.getByRole('button', { name: 'Borrar todo' }).click();
@@ -265,4 +266,4 @@ test('a locant or an acyl group on the nitrogen\'s groups and a third group stay
   expect(elementsOf(await moleculeJSON(page))).toEqual(['C', 'C', 'N', 'O']);
   await expect(page.locator('#result-name')).toHaveText('2-aminoetan-1-ol');
   expect(errors).toEqual([]);
-}); // End of test 'a locant or an acyl group…'
+}); // End of test 'a locant on the nitrogen\'s groups…'

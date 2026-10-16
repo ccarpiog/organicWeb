@@ -1,6 +1,6 @@
 /**
  * @file Tokenizer of «¿Cómo se dibuja?» (design.md §15.4; phases R-1a,
- * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1): the inverse of the assembler, `tokenize(text) → tile
+ * R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-5d2, R-6a1, R-6a2a, R-6a2b, R-6b1, R-6b2, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2): the inverse of the assembler, `tokenize(text) → tile
  * ids | null`, for the tests and the diagnosis (R-3). Pure, no DOM.
  *
  * A bounded depth-first search over the tiles' surface forms (each tile's
@@ -119,8 +119,14 @@
  * amides (R-6d1) need no class of their own either: `amida` and
  * `carboxamida` are read where `ol` is (OL: `etanamida`, `butanodiamida`,
  * `ciclohexanocarboxamida`), `benzamida` where `fenol` is (PHOL), and `N`
- * where a number is, as for an amine. A step budget bounds the search:
- * running out returns null, never a guess.
+ * where a number is, as for an amine. The amide prefixes (R-6d2) need none
+ * either: `carbamoil` is read where a retained branch word is (RET:
+ * `3-carbamoilpentanodioico`, `dicarbamoil`) and, as a compound branch's own
+ * chain, closes the groups on its nitrogen as `amino` does
+ * (`(metilcarbamoil)`, `[etil(metil)carbamoil]`); an acylamino prefix is an
+ * amino prefix whose first group is an acyl word or ending (`(acetilamino)`,
+ * `[acetil(metil)amino]`, `[(2-metilpropanoil)amino]`). A step budget bounds
+ * the search: running out returns null, never a guess.
  */
 
 import { CONNECTING_VOWEL, ENCLOSING_MARKS, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN } from '../naming/lexicon.es.js';

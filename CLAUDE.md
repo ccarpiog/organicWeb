@@ -280,9 +280,9 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   `(dimetilamino)`, `[etil(metil)amino]`, `[(2-cloroetil)amino]`,
   `bis(metilamino)`), read beside senior groups on chains, rings, `benceno`
   and the templates and inside compound branches (`(aminometil)`), their
-  left-out locants searched; a locant on a group of the nitrogen or an acyl
-  group on it (an amide's acylamino, R-6d) TILE_ORDER, a third group
-  VALENCE, the engine's refusals `outOfScope`; an amide prefix written
+  left-out locants searched; a locant on a group of the nitrogen TILE_ORDER
+  (an acyl group on it, an amide's acylamino prefix, reads since R-6d2), a
+  third group VALENCE, the engine's refusals `outOfScope`; an amide prefix written
   `amino` + `oxo` reads too (`ácido 4-amino-4-oxobutanoico`); the diagnosis
   keeps the shared rules (the groups on the nitrogen read first:
   `[metil(metil)amino]` UNGROUPED). R-6c3 (phase I-52c3) is done: the «Nombres
@@ -345,8 +345,25 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   the engine's `substitutedPolyamide` (an `N` beside two amide groups, also
   read from the name), `manyAmides`, imide and two-ring refusals
   `outOfScope`; the amide's own mistakes are deliberate «Amides» nulls (for
-  R-6d4) and the diagnosis keeps the rules that hold for an amide name. Next
-  is R-6d2 (phase I-52d2): the `carbamoil` and acylamino prefixes.
+  R-6d4) and the diagnosis keeps the rules that hold for an amide name. R-6d2
+  (phase I-52d2) is done: the «Grupos» row's `carbamoil` (the whole –CONH₂ as
+  a prefix bonded by its C=O carbon: `ácido 3-carbamoilpentanodioico`, `ácido
+  2,2-dicarbamoilbutanoico`, `ácido 4-carbamoilbenzoico`,
+  `2-(4-carbamoilciclohexil)butanodiamida`), the groups on its nitrogen
+  written before it as a compound branch's own chain, as `amino`'s
+  (`(metilcarbamoil)`, `[etil(metil)carbamoil]`, `[(propan-2-il)carbamoil]`,
+  `bis(metilcarbamoil)`), and the acylamino prefixes, an acyl word or ending
+  among the groups on an `amino` nitrogen (`(acetilamino)`, `(formilamino)`,
+  `[acetil(metil)amino]`, `[(2-metilpropanoil)amino]`,
+  `2-(acetilamino)etanamida`, `ácido 2-(acetilamino)etanoico`), read beside
+  senior groups on chains, rings and `benceno` and inside compound branches,
+  their left-out locants searched, a third group on the nitrogen VALENCE, an
+  imide or a halogen on it `outOfScope`; the amide hints name `carbamoil`;
+  the diagnosis keeps the shared rules (the groups on the nitrogen read
+  first), and a carbamoyl whose C=O carbon the engine takes into a chain
+  (`ácido 3-carbamoilpropanoico`) or written otherwise is a deliberate
+  «Amides» null for R-6d4. Next is R-6d3 (phase I-52d3): the retained amide
+  names and the Ayuda amide line.
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

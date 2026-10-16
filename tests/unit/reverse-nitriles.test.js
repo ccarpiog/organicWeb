@@ -422,11 +422,13 @@ test('assembler (R-6b1): every nitrile form is the forward engine\'s own text; t
 test('tokenizer (R-6b1): texts that only read with errors and the later families\' names never tokenize', () => {
   for (const name of ['nitrilo', 'butanonitril', 'butannitrilo', 'butan-1-onitrilo', 'butano-1-nitrilo', '1-butanonitrilo',
     'ciclohexanonitrilo', 'bencenonitrilo', 'ciclohexanocarbonitril', '1-benzonitrilo', 'p-benzonitrilo', 'benzonitrilonitrilo',
-    '(cianooxi)metano', 'ciano', '2-ciano', 'ácido butanonitrilo', 'butanonitrilo de metilo', 'etanoato de cianilo',
-    // Phase R-6d2: a `carbamoil` prefix beside a nitrile.
-    '2-carbamoilbutanonitrilo']) {
+    '(cianooxi)metano', 'ciano', '2-ciano', 'ácido butanonitrilo', 'butanonitrilo de metilo', 'etanoato de cianilo']) {
     assert.equal(tokenize(name), null, name);
   }
+  // Phase R-6d2: a `carbamoil` prefix beside a nitrile reads (reverse-amide-prefixes.test.js); the amide is the principal group, so
+  // the engine names the molecule from it.
+  assert.deepEqual(tokenize('2-carbamoilbutanonitrilo'), seq('2 carbamoil but ano nitrilo'));
+  assert.equal(readName(seq('2 carbamoil but ano nitrilo')).name, '2-cianobutanamida');
   // Phase R-6d1: an amide suffix beside a `ciano` prefix reads (reverse-amides.test.js).
   assert.deepEqual([tokenize('3-cianopropanamida'), tokenize('3-cianobenzamida')],
     [seq('3 ciano prop ano amida'), seq('3 ciano benzamida')]);
@@ -866,7 +868,7 @@ test('fixture round trip (R-6b1, R-6b2, R-6c2): every nitrile name the tiles wri
     // An amide suffix beside a `ciano` prefix (R-6d1): read since then, swept in reverse-amides.test.js.
     const amide = !isNitrile(row.smiles) && !amino && row.names.some(isR6d1AmideName);
     if (!isNitrile(row.smiles) && !amino && !amide) {
-      laterRows += 1; // An amide's later words beside the nitrile (R-6d2: `carbamoil`).
+      laterRows += 1; // An amide's later words beside the nitrile (R-6d3: the retained amide names; R-6d2's prefixes read).
       row.names.forEach((name) => assert.equal(tokenize(name), null, `names.tsv:${row.line}: ${name} reads before its phase`));
       continue;
     }

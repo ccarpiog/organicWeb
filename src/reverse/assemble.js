@@ -1,6 +1,6 @@
 /**
  * @file Assembler of «¿Cómo se dibuja?» (design.md §15.4, §15.5.2; phases
- * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1): turns the lossless syntax tree of parse.js into
+ * R-1a, R-4a, R-4b, R-4c, R-5a1, R-5a2, R-5b, R-5b2, R-5c1, R-5c2, R-5d1, R-6a1, R-6a2b, R-6b1, R-6c1, R-6c2, R-6c3, R-6d1, R-6d2): turns the lossless syntax tree of parse.js into
  * the name text and one span per piece of text. Pure, no DOM.
  *
  * The text comes from the tree — the student's own tiles, multipliers,
@@ -181,7 +181,16 @@
  *    prefixes of its own it is enclosed and compound like any other
  *    (`(metilamino)`, `(dimetilamino)`, `bis(metilamino)`, the student's
  *    multipliers kept as chosen, with rule 5's hyphen before `tert-`:
- *    `bis-(tert-butilamino)`).
+ *    `bis-(tert-butilamino)`). The carbamoyl prefixes (R-6d2; render.js
+ *    substituentTokens() and enclosureLevel() write a `carbamoil` prefix as
+ *    an amino prefix, its groups those on the amide's nitrogen) take the
+ *    same rule (isNitrogenGroupNode(): `carbamoil`, `dicarbamoil`,
+ *    `(metilcarbamoil)`, `[etil(metil)carbamoil]`, `[(propan-2-il)carbamoil]`,
+ *    `bis(metilcarbamoil)`), and so do the acylamino prefixes, an acyl
+ *    group among the groups on an amino nitrogen (`(acetilamino)`,
+ *    `[acetil(metil)amino]`, `[(2-metilpropanoil)amino]`,
+ *    `[(ciclohexanocarbonil)amino]`: the first group enclosed only when it
+ *    encloses itself, rule 8).
  * 13. an amine's functional-class name (R-6c3, design.md §2; naming/index.js
  *    amineClassName()): one word — the groups on the nitrogen written one
  *    after the other with no space and no mark between them, then the
@@ -265,7 +274,9 @@
 import {
   ENDINGS, ENCLOSING_MARKS, CONNECTING_VOWEL, SATURATED_INFIX, FREE_VALENCE_SUFFIXES, ESTER_LINK, ESTER_ALKYL_JOIN,
 } from '../naming/lexicon.es.js';
-import { isAtomGroup, closingText, ALKOXY_RETAINED, isAcyloxyHead, isAminoTile, isAmineClassWord } from './tiles.js';
+import {
+  isAtomGroup, closingText, ALKOXY_RETAINED, isAcyloxyHead, isAminoTile, isAmineClassWord, isNitrogenGroupTile,
+} from './tiles.js';
 
 /**
  * Longest alkyl chain whose alkoxy prefix is contracted (rule 6, R-5b:
@@ -309,6 +320,25 @@ export function isAminoNode(tiles, node) {
   }
   const core = node.type === 'branch' ? node.chain : node;
   return Boolean(core) && core.type === 'retained' && isAminoTile(tiles[core.tile]);
+}
+
+/**
+ * Tells whether a substituent is a prefix whose nitrogen takes the groups
+ * written before its word (rule 12): an amino prefix (R-6c2, isAminoNode())
+ * or a carbamoyl prefix (R-6d2: the `carbamoil` word, or a compound branch
+ * whose own chain is `carbamoil`, `(metilcarbamoil)`,
+ * `[etil(metil)carbamoil]`; tiles.js isNitrogenGroupTile()).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object|null} node - A substituent node (parse.js), or null.
+ * @returns {boolean} True for an amino or a carbamoyl prefix.
+ */
+export function isNitrogenGroupNode(tiles, node) {
+  if (!node) {
+    return false;
+  }
+  const core = node.type === 'branch' ? node.chain : node;
+  return Boolean(core) && core.type === 'retained' && isNitrogenGroupTile(tiles[core.tile]);
 }
 
 /**
@@ -651,7 +681,7 @@ export function enclosureLevel(tiles, node) {
     return inner;
   }
   let level = 0;
-  const aminoLevel = isAminoNode(tiles, node); // The groups on an amino prefix's nitrogen (rule 12, R-6c2).
+  const aminoLevel = isNitrogenGroupNode(tiles, node); // The groups on an amino (R-6c2) or carbamoyl (R-6d2) nitrogen, rule 12.
   node.items.forEach((item, i) => {
     if (item.type === 'prefix' && item.substituent && enclosedAt(tiles, node.items, i, aminoLevel)) {
       level = Math.max(level, enclosureLevel(tiles, item.substituent) + 1);
@@ -878,7 +908,7 @@ function substituentPiecesOf(tiles, node, enclosed, out) {
     if (inner) {
       out.push(piece(inner[0], null, 'punct', 'open'));
     }
-    const aminoLevel = isAminoNode(tiles, node); // The groups on an amino prefix's nitrogen (rule 12, R-6c2).
+    const aminoLevel = isNitrogenGroupNode(tiles, node); // The groups on an amino (R-6c2) or carbamoyl (R-6d2) nitrogen, rule 12.
     node.items.forEach((item, i) => itemPieces(tiles, node.items, i, true, out, false, aminoLevel));
     if (node.chain) {
       ownChainPieces(tiles, node.chain, out, inner); // Inside the branch's marks, never enclosed again: `(3-metilbutan-2-il)`.
