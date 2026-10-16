@@ -77,8 +77,9 @@
  * 1,3 / m and 1,4 / p forms) for the bare dimethylbenzenes, `mesitileno`
  * for 1,3,5-trimetilbenceno, `o-cresol` / `m-cresol` / `p-cresol` for the
  * bare methylphenols (I-43a), and the old orto/meta/para form for two
- * identical prefixes or a retained parent plus one prefix
- * (`o-diclorobenceno`, `p-metilfenol`, `o-cloroanilina`,
+ * identical prefixes, two different prefixes (I-54a, one per prefix style)
+ * or a retained parent plus one prefix (`o-diclorobenceno`,
+ * `m-cloroetilbenceno`, `p-metilfenol`, `o-cloroanilina`,
  * `ácido p-metilbenzoico`, its own label); for two identical principal
  * groups (I-44) `pirocatecol` / `catecol`, `resorcinol`, `hidroquinona`
  * (bare diols only) and the ftálico family, also substituted
@@ -294,6 +295,38 @@ export function retainedPolyIds(structure) {
 const CRESOL_IDS = Object.freeze({ 2: 'oCresol', 3: 'mCresol', 4: 'pCresol' });
 
 /**
+ * Tells whether a name structure is plain `benceno` (no principal group, so
+ * no retained parent) carrying exactly two different prefixes, each cited
+ * once (design.md §14.4, I-54a): `1-cloro-3-etilbenceno`,
+ * `1-metil-4-metoxibenceno`, `1-cloro-4-(clorometil)benceno`. Every prefix
+ * kind a benzene parent takes counts (hydrocarbon branches of any
+ * branching, halogens, alkoxy groups); two identical prefixes are one group
+ * cited twice (`1,2-dimetilbenceno`), so they never match.
+ *
+ * @param {object} structure - A name structure (structure.js NameStructure).
+ * @returns {boolean} True for two different prefixes on plain benzene.
+ */
+export function hasTwoDifferentPrefixes(structure) {
+  return structure.parentKind === 'ring' && structure.parent.retained === 'benzene' && !structure.suffix
+    && structure.prefixes.length === 2 && structure.prefixes.every((group) => group.locants.length === 1);
+}
+
+/**
+ * The parts that end a benzene name after its prefixes (the parent word,
+ * `benceno` / `benzene`): the trailing `stem` and `ending` parts.
+ *
+ * @param {object[]} parts - The parts of a name.
+ * @returns {object[]} The trailing parts (empty when the name ends with a prefix part).
+ */
+function parentTail(parts) {
+  let start = parts.length;
+  while (start > 0 && (parts[start - 1].kind === 'stem' || parts[start - 1].kind === 'ending')) {
+    start -= 1;
+  }
+  return parts.slice(start);
+}
+
+/**
  * The old orto/meta/para form of a benzene name with exactly two occupied
  * ring positions (design.md §14.4, P-14.3.1: no longer recommended, so
  * only under "Otras formas válidas" with its own label), from the parts of
@@ -301,6 +334,19 @@ const CRESOL_IDS = Object.freeze({ 2: 'oCresol', 3: 'mCresol', 4: 'pCresol' });
  * - two identical prefixes and nothing else: the leading `1,2-` becomes
  *   the letter, `o-diclorobenceno`, `m-dibromobenceno`,
  *   `p-dietenilbenceno`;
+ * - two different prefixes on plain benzene, each cited once (I-54a,
+ *   hasTwoDifferentPrefixes()): the letter of the second locant, then the
+ *   prefixes in the order of the name (alphabetical), without locants or
+ *   hyphens between them, then the parent word — `m-cloroetilbenceno`,
+ *   `o-metilyodobenceno`, `p-tert-butilmetilbenceno`. The prefixes are
+ *   rendered again without locants (render.js renderPrefixes(), the main
+ *   name's text is never edited), so the engine's crowded enclosure applies
+ *   (render.js enclosedInName()): an alkoxy prefix is enclosed, also cited
+ *   first (`p-metil(metoxi)benceno`, `p-(etoxi)metilbenceno`), a prefix the
+ *   name already encloses stays so (`p-metil(propan-2-il)benceno`,
+ *   `p-cloro(clorometil)benceno`), a plain alkyl is not
+ *   (`p-clorometilbenceno`, distinct from `(clorometil)benceno`, since a
+ *   compound prefix is always enclosed);
  * - a retained parent with its group at the implicit 1 plus one prefix
  *   (I-43a): the prefix locant becomes the letter, `p-metilfenol`,
  *   `p-aminofenol`, `o-cloroanilina` (built on the `anilina` name; the
@@ -308,21 +354,40 @@ const CRESOL_IDS = Object.freeze({ 2: 'oCresol', 3: 'mCresol', 4: 'pCresol' });
  *   when one multiplied prefix is both on the N and on the ring
  *   (`N,4-dimetilanilina`: `N,p-dimetilanilina` is no used form, and OPSIN
  *   does not read it either).
- * Never for two different prefixes on plain benzene (`m-cloroetilbenceno`
- * would read like a substituted ethyl) nor for three or more positions.
- * The new locant part refers to the same atoms and bonds.
+ * Never for three or more positions, nor for a retained parent with two
+ * prefixes. The letter part refers to both ring carbons, the attachment
+ * atoms and their bonds (the atoms and bonds of the locants it replaces);
+ * every other part keeps its atoms and bonds.
  *
  * @param {object} structure - The name structure (a benzene parent).
  * @param {object[]} parts - The parts of the name to rewrite (`fenol`, `anilina` or `benceno` form).
+ * @param {object} [lexicon] - The lexicon of those parts (default: Spanish; the oracle passes the English one).
  * @returns {object[]|null} The parts of the old form, or null when it does not apply.
  */
-export function positionalParts(structure, parts) {
+export function positionalParts(structure, parts, lexicon = lexiconEs) {
   if (structure.parentKind !== 'ring' || structure.parent.retained !== 'benzene') {
     return null;
   }
   const groups = carbonLocantPrefixes(structure.prefixes);
   const { suffix } = structure;
   const copy = (p) => ({ ...p, atoms: [...p.atoms], bonds: [...p.bonds] });
+  if (hasTwoDifferentPrefixes(structure)) {
+    // Two different prefixes on plain benzene (I-54a): `m-cloroetilbenceno`; the first cited is always at 1.
+    const sites = structure.prefixes.map((group) => group.locants[0]);
+    const letter = lexicon.positionalLetters[Math.max(...sites.map((site) => site.locant))];
+    const tail = parentTail(parts);
+    if (!letter || !sites.some((site) => site.locant === 1) || tail.length === 0) {
+      return null;
+    }
+    const locant = {
+      text: letter,
+      kind: 'locant',
+      atoms: [...new Set(sites.flatMap((site) => [site.atom, site.attachAtom]))],
+      bonds: sites.map((site) => site.bond),
+    };
+    const dash = { text: '-', kind: 'punct', atoms: [], bonds: [] };
+    return [locant, dash, ...renderPrefixes(structure.prefixes, lexicon, true, true), ...tail.map(copy)];
+  }
   if (suffix) {
     // One group at the implicit 1 (`fenol`, `anilina`) and one ring prefix.
     if (suffix.locants.length !== 1 || groups.length !== 1 || groups[0].locants.length !== 1) {
@@ -334,7 +399,7 @@ export function positionalParts(structure, parts) {
     if (shared) {
       return null;
     }
-    const letter = lexiconEs.positionalLetters[groups[0].locants[0].locant];
+    const letter = lexicon.positionalLetters[groups[0].locants[0].locant];
     const ringAtoms = new Set(structure.parent.atoms);
     const text = String(groups[0].locants[0].locant);
     const at = parts.findIndex((p) => p.kind === 'locant' && p.text === text && ringAtoms.has(p.atoms[0]));
@@ -346,7 +411,7 @@ export function positionalParts(structure, parts) {
   if (structure.prefixes.length !== 1 || structure.prefixes[0].locants.length !== 2) {
     return null;
   }
-  const letter = lexiconEs.positionalLetters[structure.prefixes[0].locants[1].locant];
+  const letter = lexicon.positionalLetters[structure.prefixes[0].locants[1].locant];
   const dash = parts.findIndex((p) => p.kind === 'punct' && p.text === '-');
   if (!letter || dash < 1 || parts.slice(0, dash).some((p) => p.kind !== 'locant' && p.kind !== 'punct')) {
     return null;
@@ -363,9 +428,13 @@ export function positionalParts(structure, parts) {
 
 /**
  * The old orto/meta/para form of a benzene derivative as an alternative
- * (positionalParts()), built on the main name (`o-diclorobenceno`,
- * `p-metilfenol`, `p-aminofenol`) or, for a benzene amine, on its
- * `anilina` form (`o-cloroanilina`, design.md §14.4–§14.5).
+ * (positionalParts()), built on the name of the result it is given
+ * (`o-diclorobenceno`, `m-cloroetilbenceno`, `p-metilfenol`,
+ * `p-aminofenol`) or, for a benzene amine, on its `anilina` form
+ * (`o-cloroanilina`, design.md §14.4–§14.5). For two different prefixes
+ * on plain benzene (I-54a) benzeneAlternatives() also calls it with the
+ * result of every other prefix style, so each style has its own form
+ * (`p-isopropilmetilbenceno`, `p-metil(propan-2-il)benceno`).
  *
  * @param {object} result - A naming result with a benzene parent.
  * @param {{parts: object[]}|null} [traditional] - The traditional alternative (traditionalAlternative()), if any.
@@ -461,13 +530,17 @@ export function digroupParts(structure, lexicon, id) {
  * the retained xileno / mesitileno / cresol names (retainedPolyIds(), one
  * part for the whole molecule), the names of two identical principal groups
  * (retainedDigroupIds(), I-44: `hidroquinona`, `ácido 4-metilftálico`) and
- * the orto/meta/para form
- * (positionalAlternative()).
+ * the orto/meta/para form (positionalAlternative()); for two different
+ * prefixes on plain benzene (I-54a, hasTwoDifferentPrefixes()) one such
+ * form per prefix style, built on that style's name, in the order of
+ * `styled` and without repeats (`p-isopropilmetilbenceno`,
+ * `p-metil(propan-2-il)benceno`, `p-metil(1-metiletil)benceno`).
  *
  * @param {object} result - A naming result (NamingSuccess) with a benzene parent.
+ * @param {object[]} [styled] - The naming results of the other prefix styles listed as alternatives (default none).
  * @returns {{style: string, label: string, name: string, parts: object[]}[]} The alternatives, in display order.
  */
-export function benzeneAlternatives(result) {
+export function benzeneAlternatives(result, styled = []) {
   const single = traditionalAlternative(result);
   const { atoms, bonds } = wholeMolecule(result);
   const retained = retainedPolyIds(result.structure).map((id) => {
@@ -480,8 +553,17 @@ export function benzeneAlternatives(result) {
     const parts = digroupParts(result.structure, lexiconEs, id);
     return { style: 'traditional', label: lexiconEs.traditionalLabel(id), name: parts.map((p) => p.text).join(''), parts };
   });
-  const positional = positionalAlternative(result, single);
-  return [single, ...retained, ...digroup, positional].filter(Boolean);
+  const positional = [positionalAlternative(result, single)];
+  if (hasTwoDifferentPrefixes(result.structure)) {
+    // Two different prefixes (I-54a): each prefix style's name has its own letter form.
+    for (const other of styled) {
+      const form = positionalAlternative(other);
+      if (form && positional.every((known) => !known || known.name !== form.name)) {
+        positional.push(form);
+      }
+    }
+  }
+  return [single, ...retained, ...digroup, ...positional].filter(Boolean);
 } // End of function benzeneAlternatives()
 
 /**

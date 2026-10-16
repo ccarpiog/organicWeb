@@ -16,7 +16,10 @@
  * `N-etil-4-metilbenzamida`, `ácido 4-formilbenzoico`, `3-cianobenzamida`):
  * the retained name first with its group at an implicit 1, the systematic
  * `benceno-1-…` and o/m/p forms present and absent, invariance,
- * explanation, legend, Ordenar dibujo and 90° view.
+ * explanation, legend, Ordenar dibujo and 90° view; and for phase I-54a,
+ * the orto/meta/para form of two different prefixes on `benceno`, one per
+ * prefix style (`m-cloroetilbenceno`, `p-metil(metoxi)benceno`), its parts,
+ * the cases that stay without it and the explanation sentence.
  */
 
 import { test } from 'node:test';
@@ -25,6 +28,9 @@ import { parseSmiles } from '../../src/model/smiles.js';
 import { validateForNaming, SUBSTITUTED_BENZENE_ESTER_MESSAGE } from '../../src/model/validate.js';
 import { perceiveRings } from '../../src/model/rings.js';
 import { nameMolecule } from '../../src/naming/index.js';
+import { positionalParts } from '../../src/naming/aromatic.js';
+import { renderName } from '../../src/naming/render.js';
+import { lexiconEn } from '../../src/naming/lexicon.en.js';
 import { explain, plainText } from '../../src/explain/explain.js';
 import { canArrange } from '../../src/ui/results.js';
 import { projectRightAngles } from '../../src/ui/canvasbar.js';
@@ -85,22 +91,24 @@ const CASES = [
   ['CC1=CC=CC=C1C', '1,2-dimetilbenceno', [['traditional', '1,2-xileno'], ['traditional', 'o-xileno'], ['positional', 'o-dimetilbenceno']]],
   ['CC1=CC(C)=CC=C1', '1,3-dimetilbenceno', [['traditional', '1,3-xileno'], ['traditional', 'm-xileno'], ['positional', 'm-dimetilbenceno']]],
   ['CC1=CC=C(C)C=C1', '1,4-dimetilbenceno', [['traditional', '1,4-xileno'], ['traditional', 'p-xileno'], ['positional', 'p-dimetilbenceno']]],
-  ['ClC1=CC(Br)=CC=C1', '1-bromo-3-clorobenceno', []],
+  ['ClC1=CC(Br)=CC=C1', '1-bromo-3-clorobenceno', [['positional', 'm-bromoclorobenceno']]],
   ['CCC1=CC(C)=C(C)C=C1', '4-etil-1,2-dimetilbenceno', []],
   ['CC1=CC(C)=CC(C)=C1', '1,3,5-trimetilbenceno', [['traditional', 'mesitileno']]],
   ['CC1=CC=CC(C)=C1C', '1,2,3-trimetilbenceno', []],
   ['ClC1=C(Cl)C(Cl)=C(Cl)C(Cl)=C1Cl', 'hexaclorobenceno', []],
   ['CC1=C(C)C(C)=C(C)C(C)=C1C', 'hexametilbenceno', []],
   ['CCC1=C(C)C(C)=C(C)C(C)=C1C', '1-etil-2,3,4,5,6-pentametilbenceno', []],
-  ['COC1=CC=C(C)C=C1', '1-metil-4-metoxibenceno', []],
-  ['CC1=CC=CC=C1I', '1-metil-2-yodobenceno', []],
-  ['ClC1=CC=CC=C1Br', '1-bromo-2-clorobenceno', []],
+  ['COC1=CC=C(C)C=C1', '1-metil-4-metoxibenceno', [['positional', 'p-metil(metoxi)benceno']]],
+  ['CC1=CC=CC=C1I', '1-metil-2-yodobenceno', [['positional', 'o-metilyodobenceno']]],
+  ['ClC1=CC=CC=C1Br', '1-bromo-2-clorobenceno', [['positional', 'o-bromoclorobenceno']]],
   ['C=CC1=CC=C(C=C)C=C1', '1,4-dietenilbenceno', [['positional', 'p-dietenilbenceno']]],
   ['ClC1=CC=C(Cl)C=C1', '1,4-diclorobenceno', [['positional', 'p-diclorobenceno']]],
-  ['CCC1=CC=CC(Cl)=C1', '1-cloro-3-etilbenceno', []],
-  ['ClCC1=CC=C(C)C=C1', '1-(clorometil)-4-metilbenceno', []],
+  ['CCC1=CC=CC(Cl)=C1', '1-cloro-3-etilbenceno', [['positional', 'm-cloroetilbenceno']]],
+  ['ClCC1=CC=C(C)C=C1', '1-(clorometil)-4-metilbenceno', [['positional', 'p-(clorometil)metilbenceno']]],
   ['CC(C)C1=CC=C(C)C=C1', '1-isopropil-4-metilbenceno',
-    [['pin', '1-metil-4-(propan-2-il)benceno'], ['substituted', '1-metil-4-(1-metiletil)benceno']]],
+    [['pin', '1-metil-4-(propan-2-il)benceno'], ['substituted', '1-metil-4-(1-metiletil)benceno'],
+      ['positional', 'p-isopropilmetilbenceno'], ['positional', 'p-metil(propan-2-il)benceno'],
+      ['positional', 'p-metil(1-metiletil)benceno']]],
   ['CC(C)C1=CC=CC=C1C(C)C', '1,2-diisopropilbenceno',
     [['pin', '1,2-di(propan-2-il)benceno'], ['substituted', '1,2-bis(1-metiletil)benceno'], ['positional', 'o-diisopropilbenceno']]],
 ];
@@ -111,7 +119,7 @@ test('benzenes with two to six prefixes are named, with exactly the expected alt
     const result = named(smiles);
     assert.equal(result.name, name, smiles);
     assert.deepEqual(result.alternatives.map((a) => [a.style, a.name]), alternatives, smiles);
-    // Never a substituted tolueno / xileno / anisol, never a positional name for different prefixes.
+    // Never a substituted tolueno / xileno / anisol; the positional forms (two different prefixes too, I-54a) with their label.
     for (const alt of result.alternatives) {
       assert.doesNotMatch(alt.name, /tolueno|anisol|estireno|cumeno/, smiles);
       assert.ok(alt.style !== 'positional' || alt.label === POSITIONAL, smiles);
@@ -125,7 +133,12 @@ test('the isopropyl prefix in its three styles: each style numbers on its own (a
   assert.equal(named(smiles).name, '1-isopropil-4-metilbenceno');
   assert.equal(named(smiles, 'pin').name, '1-metil-4-(propan-2-il)benceno');
   assert.equal(named(smiles, 'substituted').name, '1-metil-4-(1-metiletil)benceno');
-  assert.deepEqual(named(smiles, 'pin').alternatives.map((a) => a.style), ['isopropil', 'substituted']);
+  // Two different prefixes (I-54a): one orto/meta/para form per prefix style, the main style's first.
+  assert.deepEqual(named(smiles, 'pin').alternatives.map((a) => [a.style, a.name]), [
+    ['isopropil', '1-isopropil-4-metilbenceno'], ['substituted', '1-metil-4-(1-metiletil)benceno'],
+    ['positional', 'p-metil(propan-2-il)benceno'], ['positional', 'p-isopropilmetilbenceno'],
+    ['positional', 'p-metil(1-metiletil)benceno'],
+  ]);
 });
 
 test('the traditional labels: xileno and mesitileno as accepted names, the o/m/p form with its own label', () => {
@@ -560,3 +573,134 @@ test('I-43b: Ordenar dibujo is offered; the 90° view still falls back', () => {
     assert.deepEqual(projectRightAngles(parseSmiles(smiles)), { ok: false, reason: 'CYCLE' }, smiles);
   }
 });
+
+/**
+ * Phase I-54a (design.md §14.4, user decision of
+ * `autoclaude/processed/240-omp-two-different-groups.md`): two different
+ * prefixes on plain `benceno` also get the old orto/meta/para form, under
+ * «Otras formas válidas», one per prefix style. SMILES, main name (never
+ * changed), and every positional form in order.
+ */
+const TWO_PREFIX_CASES = [
+  ['CCC1=CC=CC(Cl)=C1', '1-cloro-3-etilbenceno', ['m-cloroetilbenceno']],
+  ['CCC1=CC=CC(C)=C1', '1-etil-3-metilbenceno', ['m-etilmetilbenceno']],
+  ['ClC1=CC=CC=C1Br', '1-bromo-2-clorobenceno', ['o-bromoclorobenceno']],
+  ['ClC1=CC=C(C)C=C1', '1-cloro-4-metilbenceno', ['p-clorometilbenceno']], // A plain alkyl is not enclosed.
+  ['CC1=CC=CC=C1I', '1-metil-2-yodobenceno', ['o-metilyodobenceno']],
+  ['CC(C)(C)C1=CC=C(C)C=C1', '1-tert-butil-4-metilbenceno', ['p-tert-butilmetilbenceno']],
+  ['COC1=CC=C(C)C=C1', '1-metil-4-metoxibenceno', ['p-metil(metoxi)benceno']], // The crowded alkoxy is enclosed…
+  ['CCOC1=CC=C(C)C=C1', '1-etoxi-4-metilbenceno', ['p-(etoxi)metilbenceno']], // …also cited first.
+  ['ClCC1=CC=C(Cl)C=C1', '1-cloro-4-(clorometil)benceno', ['p-cloro(clorometil)benceno']], // Enclosed in the name, enclosed here.
+  ['CC(C)C1=CC=C(C)C=C1', '1-isopropil-4-metilbenceno',
+    ['p-isopropilmetilbenceno', 'p-metil(propan-2-il)benceno', 'p-metil(1-metiletil)benceno']], // One per prefix style.
+  ['ClC1=CC=CC(C(C)C)=C1', '1-cloro-3-isopropilbenceno',
+    ['m-cloroisopropilbenceno', 'm-cloro(propan-2-il)benceno', 'm-cloro(1-metiletil)benceno']],
+];
+
+test('I-54a: two different prefixes on benceno get the orto/meta/para form, one per prefix style, the main name unchanged', () => {
+  for (const [smiles, name, forms] of TWO_PREFIX_CASES) {
+    const result = named(smiles);
+    assert.equal(result.name, name, smiles);
+    const positional = result.alternatives.filter((a) => a.style === 'positional');
+    assert.deepEqual(positional.map((a) => a.name), forms, smiles);
+    assert.ok(positional.every((a) => a.label === POSITIONAL), smiles);
+    // Last in the list, after the prefix-style alternatives; never a traditional name (no p-clorotolueno, no anisol).
+    assert.deepEqual(result.alternatives.slice(-forms.length).map((a) => a.style), forms.map(() => 'positional'), smiles);
+    assert.ok(result.alternatives.every((a) => a.style !== 'traditional'), smiles);
+    for (const alt of positional) {
+      assert.equal(alt.parts.map((p) => p.text).join(''), alt.name, smiles);
+    }
+  } // End of the loop over the two-prefix cases
+});
+
+test('I-54a: the letter points at both ring carbons, the prefix and parent parts keep their atoms and bonds', () => {
+  const result = named('CCC1=CC=CC(Cl)=C1');
+  const [form] = result.alternatives.filter((a) => a.style === 'positional');
+  assert.deepEqual(form.parts.map((p) => [p.text, p.kind]), [['m', 'locant'], ['-', 'punct'], ['cloro', 'prefix'], ['etil', 'prefix'],
+    ['benceno', 'stem']]);
+  // The letter refers to what the two locants of the name refer to: both ring carbons, the attachment atoms, their bonds.
+  const locants = result.parts.filter((p) => p.kind === 'locant');
+  const sorted = (ids) => [...new Set(ids)].sort((a, b) => a - b);
+  assert.deepEqual(sorted(form.parts[0].atoms), sorted(locants.flatMap((p) => p.atoms)));
+  assert.deepEqual(sorted(form.parts[0].bonds), sorted(locants.flatMap((p) => p.bonds)));
+  const ring = new Set(result.structure.parent.atoms);
+  assert.equal(form.parts[0].atoms.filter((id) => ring.has(id)).length, 2);
+  // Every other part refers to the same atoms and bonds as in the name.
+  for (const text of ['cloro', 'etil', 'benceno']) {
+    const own = result.parts.find((p) => p.text === text);
+    const other = form.parts.find((p) => p.text === text);
+    assert.deepEqual([other.atoms, other.bonds], [own.atoms, own.bonds], text);
+  }
+  // An enclosed prefix keeps its marks as punctuation parts, its words one prefix part.
+  const methoxy = named('COC1=CC=C(C)C=C1').alternatives.find((a) => a.style === 'positional');
+  assert.deepEqual(methoxy.parts.map((p) => p.text), ['p', '-', 'metil', '(', 'metoxi', ')', 'benceno']);
+}); // End of test 'I-54a: the letter points at both ring carbons…'
+
+test('I-54a: what stays without the new form — three positions, identical prefixes, a retained parent, tolueno and anisol', () => {
+  /**
+   * The positional forms of a molecule.
+   *
+   * @param {string} smiles - The molecule.
+   * @returns {string[]} The names of its `positional` alternatives.
+   */
+  const positional = (smiles) => named(smiles).alternatives.filter((a) => a.style === 'positional').map((a) => a.name);
+  // Three or more positions: none.
+  assert.deepEqual(positional('CCC1=CC(C)=C(C)C=C1'), []);
+  assert.deepEqual(positional('ClC1=CC(Br)=CC(C)=C1'), []);
+  // Identical prefixes: the form on the main name only, as before (no per-style form).
+  assert.deepEqual(positional('CC(C)C1=CC=CC=C1C(C)C'), ['o-diisopropilbenceno']);
+  assert.deepEqual(positional('ClC1=CC=C(Cl)C=C1'), ['p-diclorobenceno']);
+  // A retained parent plus one prefix: unchanged.
+  assert.deepEqual(positional('CC(C)C1=CC=C(O)C=C1'), ['p-isopropilfenol']);
+  assert.deepEqual(positional('NC1=CC=CC=C1Cl'), ['o-cloroanilina']);
+  // No substituted tolueno or anisol: `1-cloro-4-metilbenceno`, `1-cloro-4-metoxibenceno` keep the benceno forms only.
+  assert.deepEqual(named('ClC1=CC=C(C)C=C1').alternatives.map((a) => a.name), ['p-clorometilbenceno']);
+  assert.deepEqual(named('COC1=CC=C(Cl)C=C1').alternatives.map((a) => a.name), ['p-cloro(metoxi)benceno']);
+  // One substituent: no form.
+  assert.deepEqual(positional('CC1=CC=CC=C1'), []);
+}); // End of test 'I-54a: what stays without the new form…'
+
+test('I-54a: positionalParts() is lexicon-agnostic — the English parts give the English form (oracle)', () => {
+  /**
+   * The orto/meta/para form built on the English parts of a molecule's name.
+   *
+   * @param {string} smiles - The molecule.
+   * @param {string} [style] - Prefix style.
+   * @returns {string} The English form.
+   */
+  const english = (smiles, style) => {
+    const result = named(smiles, style);
+    return positionalParts(result.structure, renderName(result.structure, lexiconEn).parts, lexiconEn).map((p) => p.text).join('');
+  };
+  assert.equal(english('CCC1=CC=CC(Cl)=C1'), 'm-chloroethylbenzene');
+  assert.equal(english('COC1=CC=C(C)C=C1'), 'p-methyl(methoxy)benzene'); // The Spanish citation order, as englishName().
+  assert.equal(english('CC(C)C1=CC=C(C)C=C1', 'pin'), 'p-methyl(propan-2-yl)benzene');
+  assert.equal(english('CC1=CC=CC=C1C'), 'o-dimethylbenzene');
+}); // End of test 'I-54a: positionalParts() is lexicon-agnostic…'
+
+test('I-54a: «Numera el anillo» quotes the old letter name and says why the numbers are recommended', () => {
+  /**
+   * The plain text of the «Numera el anillo» step of a molecule.
+   *
+   * @param {string} smiles - The molecule.
+   * @returns {string} The step text.
+   */
+  const numbering = (smiles) => explain(named(smiles)).find((s) => s.id === 'ringNumbering').text.map(plainText).join(' ');
+  const meta = numbering('CCC1=CC=CC(Cl)=C1');
+  assert.match(meta, /«cloro» y «etil» están en posición meta \(1,3\)\. Antes se decía orto \(1,2\), meta \(1,3\) o para \(1,4\), y este compuesto se llamaba «m-cloroetilbenceno»\./);
+  assert.match(meta, /Hoy se recomienda escribir los números, porque con la letra los dos grupos se escriben seguidos, sin números, y se pueden confundir con un solo grupo: «m-cloroetilbenceno» se puede leer como «\(cloroetil\)benceno»\./);
+  assert.match(numbering('ClC1=CC=C(C)C=C1'), /«p-clorometilbenceno» se puede leer como «\(clorometil\)benceno»/);
+  // With an enclosed group, or a halogen second (no carbon branch to carry the first), «a veces» and no look-alike.
+  const para = numbering('COC1=CC=C(C)C=C1');
+  assert.match(para, /se llamaba «p-metil\(metoxi\)benceno»\. Hoy se recomienda escribir los números, porque con la letra los dos grupos se escriben seguidos, sin números, y a veces se pueden confundir con un solo grupo\. /);
+  assert.doesNotMatch(para, /se puede leer como/);
+  const halogens = numbering('ClC1=CC(Br)=CC=C1');
+  assert.match(halogens, /se llamaba «m-bromoclorobenceno»\. Hoy se recomienda escribir los números, porque con la letra los dos grupos se escriben seguidos, sin números, y a veces se pueden confundir con un solo grupo\. /);
+  assert.doesNotMatch(halogens, /se puede leer como/);
+  // In another prefix style the explanation quotes that style's form.
+  const pin = explain(named('CC(C)C1=CC=C(C)C=C1', 'pin')).find((s) => s.id === 'ringNumbering').text.map(plainText).join(' ');
+  assert.match(pin, /se llamaba «p-metil\(propan-2-il\)benceno»/);
+  // Identical prefixes and a retained parent keep the old sentence.
+  assert.match(numbering('ClC1=CC=C(Cl)C=C1'), /Los dos «cloro» están en posición para \(1,4\)\. Antes se decía orto \(1,2\), meta \(1,3\) o para \(1,4\); hoy se recomienda escribir los números\./);
+  assert.doesNotMatch(numbering('CC1=CC=C(O)C=C1'), /se llamaba/);
+}); // End of test 'I-54a: «Numera el anillo» quotes the old letter name…'

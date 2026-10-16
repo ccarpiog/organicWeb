@@ -21,7 +21,8 @@ import {
   GROUP_PREFIXES, GROUP_SUFFIXES, ALKOXY_ENDING, TRADITIONAL_NAMES,
 } from '../../src/naming/lexicon.es.js';
 import {
-  seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName, isBenzeneName, isTemplateName,
+  seq, readFixtures, isOpenChainHydrocarbon, isMonocyclicHydrocarbon, isCycloName, isBenzeneName, isTemplateName, pendingLetterForms,
+  pendingLetterFormFails,
 } from './reverse-words.js';
 import { TILES, tileById, PHENOL_ID, CLOSING_ID } from '../../src/reverse/tiles.js';
 
@@ -45,25 +46,36 @@ const EXPECTED_RING_NAMES = 59;
 /**
  * Fixture rows of benzene hydrocarbons (phase R-4b scope: the hydrocarbon
  * rows of the sections "Benzene and monosubstituted benzenes (I-28)", 13,
- * and "Polysubstituted benzenes with prefixes only (I-42a)", 12; of the 10
- * I-42a rows with halogens or alkoxy groups, the 8 with halogens only are
- * tokenized by reverse-halogens.test.js since I-51a1, the 2 with alkoxy
- * groups by reverse-ethers.test.js since I-51b1).
+ * and "Polysubstituted benzenes with prefixes only (I-42a)", 13 since I-54a
+ * added `1-tert-butil-4-metilbenceno`; of the I-42a rows with halogens or
+ * alkoxy groups, those with halogens only are tokenized by
+ * reverse-halogens.test.js since I-51a1, those with alkoxy groups by
+ * reverse-ethers.test.js since I-51b1).
  */
-const EXPECTED_BENZENE_ROWS = 25;
+const EXPECTED_BENZENE_ROWS = 26;
 
 /**
- * Their names and alternatives: 31 written with R-4b tiles (four
+ * Their names and alternatives: 32 written with R-4b tiles (four
  * alternatives in the propan-2-il and 1-metiletil styles) and 18 with the
- * R-4c tiles, none skipped since I-50c — the retained templates (`tolueno`
- * ×2, `estireno`, the eight xylene forms, `mesitileno`) and the old o/m/p
- * forms (`o-dimetilbenceno` ×2, `m-` / `p-dimetilbenceno`,
- * `p-dietenilbenceno`, `o-diisopropilbenceno`).
+ * R-4c tiles — the retained templates (`tolueno` ×2, `estireno`, the eight
+ * xylene forms, `mesitileno`) and the old o/m/p forms (`o-dimetilbenceno`
+ * ×2, `m-` / `p-dimetilbenceno`, `p-dietenilbenceno`,
+ * `o-diisopropilbenceno`) —, the pending o/m/p forms of two different
+ * prefixes left out (EXPECTED_PENDING_LETTER_NAMES).
  */
-const EXPECTED_BENZENE_NAMES = 49;
+const EXPECTED_BENZENE_NAMES = 50;
 
 /** Of them, the names written with R-4c tiles. */
 const EXPECTED_TEMPLATE_NAMES = 18;
+
+/**
+ * The o/m/p forms of two different prefixes these rows list since I-54a
+ * (`p-isopropilmetilbenceno`, `p-metil(propan-2-il)benceno`,
+ * `p-metil(1-metiletil)benceno`, `p-tert-butilmetilbenceno`;
+ * reverse-words.js pendingLetterForms()): no tiles until phase I-54b, which
+ * flips them into EXPECTED_BENZENE_NAMES and EXPECTED_TEMPLATE_NAMES.
+ */
+const EXPECTED_PENDING_LETTER_NAMES = 4;
 
 /**
  * Reads a tile sequence back as text.
@@ -114,9 +126,17 @@ test('fixture round trip (R-4b, R-4c): every benzene hydrocarbon name and altern
   const rows = (await readFixtures()).filter((row) => isMonocyclicHydrocarbon(row.smiles) && isBenzeneName(row.names[0]));
   let covered = 0;
   let templates = 0;
+  let pending = 0;
   for (const row of rows) {
+    const letterForms = pendingLetterForms(row.smiles);
     for (const name of row.names) {
       assert.ok(isBenzeneName(name), `names.tsv:${row.line}: ${name}`);
+      if (letterForms.has(name)) {
+        // Two different prefixes with an o/m/p letter (forward engine since I-54a): no tiles until phase I-54b flips it.
+        assert.ok(pendingLetterFormFails(name), `names.tsv:${row.line}: ${name} reads before I-54b`);
+        pending += 1;
+        continue;
+      }
       templates += isTemplateName(name) ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
@@ -129,6 +149,7 @@ test('fixture round trip (R-4b, R-4c): every benzene hydrocarbon name and altern
   assert.equal(rows.length, EXPECTED_BENZENE_ROWS);
   assert.equal(covered, EXPECTED_BENZENE_NAMES);
   assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
+  assert.equal(pending, EXPECTED_PENDING_LETTER_NAMES);
 }); // End of test 'fixture round trip (R-4b, R-4c): every benzene hydrocarbon name and alternative…'
 
 test('benzene forms tokenize to their tiles (R-4b): `benceno` last, `fenil` a branch word, its compound branch marked', () => {

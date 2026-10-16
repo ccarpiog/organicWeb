@@ -20,7 +20,7 @@ import { nameMolecule, amineClassName } from '../../src/naming/index.js';
 import { lexiconEs } from '../../src/naming/lexicon.es.js';
 import { lexiconEn, stem } from '../../src/naming/lexicon.en.js';
 import { parseFullSmiles, heavyAtomTree, OracleSmilesError } from '../../scripts/oracle/smiles-full.mjs';
-import { englishName, compareWithOpsin, kekuleKeys } from '../../scripts/oracle/compare.mjs';
+import { englishName, compareWithOpsin, kekuleKeys, DIFFERENT_STRUCTURE_REASON } from '../../scripts/oracle/compare.mjs';
 import {
   generateMolecules, generateMonocycles, generateBenzenes, generateHalogenated, halogenate, seededRandom,
   generateAmines, aminate, randomBenzene, generateRingPrincipalBenzenes, generateRingOutsideBenzenes, generateRingPolysuffixBenzenes,
@@ -29,9 +29,27 @@ import { perceiveRings } from '../../src/model/rings.js';
 import { isBenzeneRing, amineNitrogens } from '../../src/model/validate.js';
 import { formula } from '../../src/model/molecule.js';
 import { checkAvailability } from '../../scripts/oracle/opsin.mjs';
-import { main, parseArgs, evaluate, buildCases } from '../../scripts/oracle/run.mjs';
+import {
+  main, parseArgs, evaluate, buildCases, isKnownDisagreement, isSubstitutedChainReading, KNOWN_POSITIONAL_DISAGREEMENT,
+} from '../../scripts/oracle/run.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+/**
+ * The five failures of `npm run oracle -- --count 200 --seed 42` (I-54a), each the known disagreement of
+ * scripts/oracle/README.md: the molecule (writeSmiles()), its orto/meta/para form in Spanish and English, and OPSIN
+ * 2.9.0's SMILES for the English form — the halogen or the alkoxy read on the chain prefix, one substituted group.
+ */
+const SEED_42_KNOWN = [
+  {
+    smiles: 'CC(OC1=CC(=CC=C1)C#C)CC', spanish: 'm-(butan-2-iloxi)etinilbenceno', english: 'm-(butan-2-yloxy)ethynylbenzene',
+    opsin: 'CC(CC)OC#CC=1C=CC=CC1',
+  },
+  { smiles: 'ClC=1C=CC=C(C1)C', spanish: 'm-clorometilbenceno', english: 'm-chloromethylbenzene', opsin: 'ClCC=1C=CC=CC1' },
+  { smiles: 'CC=1C=C(C=CC1)F', spanish: 'm-fluorometilbenceno', english: 'm-fluoromethylbenzene', opsin: 'FCC=1C=CC=CC1' },
+  { smiles: 'ClC1=CC=C(C=C1)C', spanish: 'p-clorometilbenceno', english: 'p-chloromethylbenzene', opsin: 'ClCC1=CC=CC=C1' },
+  { smiles: 'FC=1C(=CC=CC1)C', spanish: 'o-fluorometilbenceno', english: 'o-fluoromethylbenzene', opsin: 'FCC1=CC=CC=C1' },
+];
 
 /**
  * English name of a SMILES in one prefix style.
@@ -275,9 +293,18 @@ test('real OPSIN round trip over 200 random molecules, 100 monocycles, 100 benze
   }
   const lines = [];
   t.mock.method(console, 'log', (text) => lines.push(text));
-  const status = await main(['--count', '200', '--seed', '42']);
-  assert.equal(status, 0, lines.join('\n'));
-  assert.ok(lines.includes('passed: 2361  failed: 0  skipped: 0  adapter failures: 0'), lines.join('\n'));
+  const status = await main(['--count', '200', '--seed', '42', '--log', path.join(tmpdir(), 'opsin-oracle-test-seed-42.log')]);
+  // Since I-54a the five failures are the known disagreement of scripts/oracle/README.md: the old orto/meta/para form of
+  // a halogen or alkoxy prefix beside an unenclosed chain prefix (`m-chloromethylbenzene`), which OPSIN reads as one
+  // substituted group. They stay failures (exit status 1); any other failure changes these counts.
+  assert.equal(status, 1, lines.join('\n'));
+  assert.ok(lines.includes('passed: 2356  failed: 5  skipped: 0  adapter failures: 0'), lines.join('\n'));
+  assert.ok(lines.includes('known disagreements (scripts/oracle/README.md): 5 of 5 failed molecules'), lines.join('\n'));
+  // Each one pinned: molecule, names, OPSIN's isomer, the reason and the label.
+  for (const item of SEED_42_KNOWN) {
+    const line = `  ${item.smiles}  positional: ${item.spanish} / ${item.english} → ${item.opsin}  [${DIFFERENT_STRUCTURE_REASON}]  (known)`;
+    assert.ok(lines.includes(line), `${line}\n${lines.join('\n')}`);
+  }
 }); // End of test 'real OPSIN round trip over 200 random molecules, 100 monocycles, 100 benzenes, 50 phenols and benzenamines, 50 substituted benzoic acids, benzaldehydes, benzonitriles and benzamides, 50 benzenes with several identical principal groups, 100 halogen derivatives, 100 alcohols, 100 aldehydes and ketones, 100 carboxylic acids, 100 ethers, 100 esters, 100 amines, 100 amides, 100 nitriles, 100 ciano- molecules, 100 acyl molecules, 100 ester-prefix molecules, 100 amide-prefix molecules, 100 ring-prefix molecules, 100 ring acids and aldehydes, 100 ring nitriles and amides, 100 ring esters, 50 substituted-phenyl molecules, 25 substituted-benzoyl molecules, 25 substituted-ring esters and the cycloalkanes'
 
 test('the English lexicon never reaches the app', async () => {
@@ -517,8 +544,93 @@ test('buildCases checks the xylene and mesitylene names and the orto/meta/para f
   assert.deepEqual(extra(xylene), ['1,2-xileno / 1,2-xylene', 'o-xileno / o-xylene', 'o-dimetilbenceno / o-dimethylbenzene']);
   assert.deepEqual(extra(mesitylene), ['mesitileno / mesitylene']);
   assert.deepEqual(extra(dichloro), ['p-diclorobenceno / p-dichlorobenzene']);
-  assert.deepEqual(extra(mixed), []);
+  // Two different prefixes (I-54a): the form is checked too, the English prefixes in the Spanish citation order.
+  assert.deepEqual(extra(mixed), ['m-cloroetilbenceno / m-chloroethylbenzene']);
 });
+
+test('buildCases checks the orto/meta/para form of two different prefixes in every prefix style, the crowded enclosure (I-54a)', () => {
+  const [isopropyl, methoxy, ethoxy] = buildCases(['CC(C)C1=CC=C(C)C=C1', 'COC1=CC=C(C)C=C1', 'CCOC1=CC=C(C)C=C1'].map(parseSmiles));
+  /**
+   * The positional entries of a case, Spanish and English.
+   *
+   * @param {{names: object[]}} c - A buildCases() case.
+   * @returns {string[]} `spanish / english` per positional entry.
+   */
+  const extra = (c) => c.names.filter((n) => n.style === 'positional').map((n) => `${n.spanish} / ${n.english}`);
+  assert.deepEqual(extra(isopropyl), [
+    'p-isopropilmetilbenceno / p-isopropylmethylbenzene',
+    'p-metil(propan-2-il)benceno / p-methyl(propan-2-yl)benzene',
+    'p-metil(1-metiletil)benceno / p-methyl(1-methylethyl)benzene',
+  ]);
+  assert.deepEqual(extra(methoxy), ['p-metil(metoxi)benceno / p-methyl(methoxy)benzene']);
+  assert.deepEqual(extra(ethoxy), ['p-(etoxi)metilbenceno / p-(ethoxy)methylbenzene']);
+  // The names of the known disagreement of README.md: a halogen or an enclosed alkoxy before an unenclosed chain prefix.
+  for (const english of ['p-chloromethylbenzene', 'm-fluoromethylbenzene', 'o-bromoethylbenzene', 'p-(ethoxy)methylbenzene',
+    'm-(butan-2-yloxy)ethynylbenzene']) {
+    assert.equal(KNOWN_POSITIONAL_DISAGREEMENT.test(english), true, english);
+    // The name alone is never enough: isKnownDisagreement() also needs OPSIN's isomer (the seed-42 pins below).
+    assert.equal(isKnownDisagreement({ style: 'positional', status: 'failed', english, reason: null, opsin: '' }), false, english);
+  }
+  for (const english of ['p-isopropylmethylbenzene', 'p-methyl(methoxy)benzene', 'm-chloroisopropylbenzene', 'p-dichlorobenzene',
+    'p-chloro(chloromethyl)benzene', 'o-methyliodobenzene']) {
+    assert.equal(KNOWN_POSITIONAL_DISAGREEMENT.test(english), false, english);
+  }
+  const outcome = { status: 'failed', reason: DIFFERENT_STRUCTURE_REASON, opsin: 'ClCC1=CC=CC=C1' };
+  assert.equal(isKnownDisagreement({ style: 'positional', english: 'p-chloromethylbenzene', ...outcome }), true);
+  assert.equal(isKnownDisagreement({ style: 'isopropil', english: 'p-chloromethylbenzene', ...outcome }), false);
+  assert.equal(isKnownDisagreement({ style: 'positional', english: 'p-isopropylmethylbenzene', ...outcome }), false);
+}); // End of test 'buildCases checks the orto/meta/para form of two different prefixes in every prefix style…'
+
+test('each seed-42 failure is the known disagreement only with OPSIN\'s substituted-chain isomer (I-54a)', () => {
+  /**
+   * Evaluates one pinned molecule with OPSIN's output for its orto/meta/para form replaced; every other name of the
+   * molecule gets the molecule's own SMILES, so it passes.
+   *
+   * @param {{smiles: string, english: string}} item - A SEED_42_KNOWN entry.
+   * @param {string} opsin - What stands for OPSIN's SMILES for the English orto/meta/para form.
+   * @returns {{known: number, problems: object[]}} How many failed molecules main() would label known, and the failing names.
+   */
+  const run = (item, opsin) => {
+    const cases = buildCases([parseSmiles(item.smiles)]);
+    assert.equal(cases[0].smiles, item.smiles);
+    const out = new Map(cases[0].names.map((n) => [n.english, n.english === item.english ? opsin : item.smiles]));
+    const { failed, adapter } = evaluate(cases, out);
+    const known = failed.filter((entry) => entry.problems.every(isKnownDisagreement)).length;
+    return { known, problems: [...failed, ...adapter].flatMap((entry) => entry.problems) };
+  };
+  for (const item of SEED_42_KNOWN) {
+    const { known, problems } = run(item, item.opsin);
+    assert.equal(known, 1, item.english);
+    assert.deepEqual(problems.map((p) => [p.style, p.spanish, p.english, p.status, p.reason, p.opsin]), [
+      ['positional', item.spanish, item.english, 'failed', DIFFERENT_STRUCTURE_REASON, item.opsin],
+    ]);
+    assert.equal(isKnownDisagreement(problems[0]), true, item.english);
+    // The same name with OPSIN's output emptied (unparsed), methane (formula mismatch) or unreadable (adapter failure).
+    for (const [opsin, status, reason] of [['', 'failed', /could not parse/], ['C', 'failed', /formula CH4 differs/],
+      ['C?O', 'adapter', /unreadable OPSIN SMILES/]]) {
+      const other = run(item, opsin);
+      assert.equal(other.known, 0, `${item.english} → ${opsin}`);
+      assert.equal(other.problems.length, 1, `${item.english} → ${opsin}`);
+      assert.equal(other.problems[0].status, status, `${item.english} → ${opsin}`);
+      assert.match(other.problems[0].reason, reason, `${item.english} → ${opsin}`);
+      assert.equal(isKnownDisagreement(other.problems[0]), false, `${item.english} → ${opsin}`);
+    } // End of the loop over the replaced OPSIN outputs
+  } // End of the loop over the pinned seed-42 failures
+  // Other C7H7Cl readings of p-chloromethylbenzene: an acyclic one (ring count), the ortho isomer (two substituted ring
+  // carbons) and a one-ring isomer that is no benzene. Only the substituted-chain reading is known.
+  const para = SEED_42_KNOWN.find((item) => item.english === 'p-chloromethylbenzene');
+  for (const [opsin, reason] of [['ClCC#CC#CCC', /ring\(s\)/], ['CC1=CC=CC=C1Cl', /canonical keys/], ['ClC#CC1CC=CC1', /canonical keys/]]) {
+    const other = run(para, opsin);
+    assert.match(other.problems[0].reason, reason, opsin);
+    assert.equal(other.known, 0, opsin);
+    assert.equal(isKnownDisagreement(other.problems[0]), false, opsin);
+  }
+  assert.equal(isSubstitutedChainReading('ClCC1=CC=CC=C1'), true);
+  // No heteroatom, two substituted ring carbons, no benzene ring, the side chain bonded through its O (anisole).
+  for (const opsin of ['', undefined, 'C', 'C?O', 'CCC1=CC=CC=C1', 'CC1=CC=CC=C1Cl', 'ClC1CCCCC1C', 'COC1=CC=CC=C1']) {
+    assert.equal(isSubstitutedChainReading(opsin), false, String(opsin));
+  }
+}); // End of test 'each seed-42 failure is the known disagreement only with OPSIN's substituted-chain isomer (I-54a)'
 
 test('buildCases checks aniline with the groups on its N and the functional-class amine name (I-36)', () => {
   const [aniline, methylAniline, ethylMethylAmine] = buildCases(['NC1=CC=CC=C1', 'CNC1=CC=CC=C1', 'CNCC'].map(parseSmiles));

@@ -111,6 +111,9 @@ The seven v3 generators (design.md §14, all phases done) are
    `xylene` / `mesitylene` / `cresol` name, the names of two identical
    principal groups (`hydroquinone`, `4-methylphthalic acid`, I-44) and its
    old orto/meta/para form (`o-dichlorobenzene`, `p-methylphenol`, `o-chloroaniline`;
+   for two different prefixes on plain benzene, I-54a, every form listed, one
+   per prefix style, each built on its style's naming: `m-chloroethylbenzene`,
+   `p-isopropylmethylbenzene`, `p-methyl(propan-2-yl)benzene`;
    `polyBenzeneNames()` in `run.mjs`). The same name structures are rendered in English
    with `src/naming/lexicon.en.js` (`englishName()` in `compare.mjs`) — never
    a translation of the Spanish string.
@@ -133,7 +136,59 @@ The seven v3 generators (design.md §14, all phases done) are
 
 The English names keep the Spanish citation order of the prefixes
 (`2-methyl-4-iodopentane` for `2-metil-4-yodopentano`); OPSIN reads them
-regardless.
+regardless. So does the orto/meta/para form of two different prefixes
+(`p-methyl(methoxy)benzene` for `p-metil(metoxi)benceno`, where English
+order would give `p-methoxymethylbenzene`).
+
+## Known disagreements
+
+One class of names fails on purpose, and stays a failure (the check is not
+loosened: the run exits 1, the molecule counts as failed):
+
+- **orto/meta/para form, a halogen or an alkoxy prefix before an unenclosed
+  chain prefix (I-54a).** The user chose the old letter form for two
+  different prefixes on plain benzene written as the engine writes
+  prefixes without locants (`p-clorometilbenceno`, `m-cloroetilbenceno`,
+  `p-(etoxi)metilbenceno`; design.md §14.4). OPSIN 2.9.0 reads the halogen
+  or the enclosed alkoxy prefix as a substituent of the chain prefix after
+  it, and the letter as nothing: `p-chloromethylbenzene` →
+  `(chloromethyl)benzene`, `o-chloroethylbenzene` →
+  `(2-chloroethyl)benzene`, `p-(ethoxy)methylbenzene` →
+  `(ethoxymethyl)benzene`, `m-(butan-2-yloxy)ethynylbenzene` → a
+  `(butan-2-yloxy)ethynyl` group. This is the ambiguity the app's
+  explanation names (`m-cloroetilbenceno` can be read as
+  `(cloroetil)benceno`). OPSIN reads the other letter forms as two ring
+  prefixes: a hydrocarbon prefix first (`p-isopropylmethylbenzene`,
+  `m-ethylmethylbenzene`), an enclosed or retained second prefix
+  (`p-methyl(methoxy)benzene`, `p-chloro(chloromethyl)benzene`,
+  `m-chloroisopropylbenzene`) or a halogen second (`o-methyliodobenzene`,
+  `m-bromochlorobenzene`).
+
+`run.mjs` tells these apart (`isKnownDisagreement()`) by the name and by
+the outcome, never by the name alone. A failing name is known only when
+all of these hold: it is an orto/meta/para form (style `positional`)
+matching `KNOWN_POSITIONAL_DISAGREEMENT` (a halogen or an enclosed alkoxy
+prefix, then an unenclosed chain prefix); the failure is an isomer —
+OPSIN's SMILES was read and has the original's formula and ring count but
+another canonical key (`compare.mjs` `DIFFERENT_STRUCTURE_REASON`); and
+OPSIN's structure is the substituted-chain reading
+(`isSubstitutedChainReading()`): one all-carbon benzene ring with a single
+substituted ring carbon, bonded to a carbon of a side chain that carries
+the halogen or the ether O. The same name with no OPSIN output, an adapter
+failure, a formula or ring-count mismatch, or any other isomer (two
+substituted ring carbons, no benzene ring, a side chain bonded through its
+O) is an ordinary failure. After the summary `run.mjs` prints
+`known disagreements (scripts/oracle/README.md): K of F failed molecules`,
+and labels each such name `(known)` in the listing and `(known
+disagreement, README.md)` in the log. A failure not so labelled is new.
+Measured in I-54a: `--count 1000 --seed 1` 16 of 16 failed molecules,
+`--count 1000 --seed 7` 13 of 13, `--count 200 --seed 42` 5 of 5 (the
+round trip of `tests/unit/oracle.test.js` pins these five one by one —
+molecule, names, OPSIN's SMILES and the `(known)` label — and a unit test
+without Java checks that the same names with an empty, methane or
+unreadable OPSIN output are not known), out of about
+11 760 molecules per 1000-run; `generateBenzenes()` alone, 2000 molecules,
+seed 1: 39 failed, all of this class, among 453 orto/meta/para forms.
 
 A round trip proves that a name denotes the right structure, not that the
 parent choice, numbering or spelling are the preferred ones; the fixtures

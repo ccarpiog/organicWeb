@@ -215,6 +215,7 @@ import {
   ringCarbonylRing, isSubstitutedPhenyl, enclosureLevel,
 } from '../naming/render.js';
 import { locantText, siteLocantText, N_LOCANT, esterParts } from '../naming/structure.js';
+import { hasTwoDifferentPrefixes, positionalParts } from '../naming/aromatic.js';
 
 /** Glossary for the underlined terms (design.md §5): key → Spanish definition. */
 export const GLOSSARY = Object.freeze({
@@ -4956,8 +4957,9 @@ function polysuffixOnBenzeneSentences(result, positions) {
  * para word with the numbers, e.g. "«cloro» y «etil» están en posición meta
  * (1,3)", or for one prefix beside the OH or amine group at 1 (I-43a)
  * "«metil» está en posición para (1,4) respecto al grupo –OH". The app
- * never puts these words first in a name; for two different prefixes it
- * gives no orto/meta/para name at all.
+ * never puts these words first in a name. For two different prefixes on
+ * plain benzene (I-54a) it then quotes the old letter form of the name
+ * (twoPrefixLetterSentence()) and why the numbers are recommended.
  *
  * @param {object} result - A naming result with a benzene parent and two occupied positions.
  * @returns {string|null} The sentence, or null when it does not apply.
@@ -4989,8 +4991,51 @@ function benzenePositionSentence(result) {
     return `Los dos ${q(prefix)} están en posición ${word} ${numbers}. ${old}`;
   }
   const [first, second] = groups.map((g) => q(substituentPrefix(g.substituent, lexiconEs)));
+  const letters = twoPrefixLetterSentence(result);
+  if (letters) {
+    return `${first} y ${second} están en posición ${word} ${numbers}. ${letters}`;
+  }
   return `${first} y ${second} están en posición ${word} ${numbers}. ${old}`;
 } // End of function benzenePositionSentence()
+
+/**
+ * The old orto/meta/para form of a benzene with two different prefixes
+ * (design.md §14.4, I-54a; naming/aromatic.js positionalParts(), built on
+ * the name explained) and why the numbers are recommended today: the
+ * letter form writes the two groups one after the other, so they can be
+ * taken for one group. When that really happens — no group is enclosed and
+ * the second is a carbon branch, which could carry the first — the sentence
+ * shows the look-alike: `m-cloroetilbenceno` against `(cloroetil)benceno`,
+ * `p-clorometilbenceno` against `(clorometil)benceno`; otherwise
+ * (`p-metil(metoxi)benceno`, `m-bromoclorobenceno`) it says it happens
+ * «a veces».
+ *
+ * @param {object} result - A naming result with a benzene parent.
+ * @returns {string|null} The sentences, or null when the name has no such form.
+ */
+function twoPrefixLetterSentence(result) {
+  if (!hasTwoDifferentPrefixes(result.structure)) {
+    return null;
+  }
+  const parts = positionalParts(result.structure, result.parts);
+  if (!parts) {
+    return null;
+  }
+  const oldName = parts.map((p) => p.text).join('');
+  const lead = `Antes se decía orto (1,2), meta (1,3) o para (1,4), y este compuesto se llamaba ${q(oldName)}.`;
+  const why = 'Hoy se recomienda escribir los números, porque con la letra los dos grupos se escriben seguidos, sin números, y';
+  // The parts after the letter and its hyphen: the prefixes, then the parent word (`benceno`).
+  const body = parts.slice(2);
+  const prefixes = body.filter((p) => p.kind !== 'stem' && p.kind !== 'ending');
+  const second = result.structure.prefixes[1].substituent;
+  if (prefixes.some((p) => p.kind === 'punct') || second.halogen || second.alkoxy) {
+    return `${lead} ${why} a veces se pueden confundir con un solo grupo.`;
+  }
+  const [open, close] = lexiconEs.enclosingMarks[0];
+  const parent = body.filter((p) => p.kind === 'stem' || p.kind === 'ending').map((p) => p.text).join('');
+  const lookAlike = `${open}${prefixes.map((p) => p.text).join('')}${close}${parent}`;
+  return `${lead} ${why} se pueden confundir con un solo grupo: ${q(oldName)} se puede leer como ${q(lookAlike)}.`;
+} // End of function twoPrefixLetterSentence()
 
 /**
  * "Numera el anillo" for a benzene with two or more occupied positions

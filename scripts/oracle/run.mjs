@@ -62,7 +62,8 @@
  * `propanone`), renders the same name structures in English, lets OPSIN
  * turn the English names back into SMILES and checks that they denote the
  * original molecule (ring count, canonical key + formula). Prints passed / failed /
- * skipped. Without Java or the pinned jar every molecule is reported as
+ * skipped, and how many failed molecules are the known disagreement of
+ * README.md (isKnownDisagreement(): still failures, never skipped). Without Java or the pinned jar every molecule is reported as
  * skipped (never passed) and the exit status is 0. Failures are written to a
  * log with the seed, SMILES, Spanish and English names, OPSIN version and
  * output.
@@ -95,8 +96,11 @@ import {
   generateEsterPrefixes, generateAmidePrefixes, generateRingSubstituents, generateRingAcids, generateRingNitrilesAmides,
   generateRingEsters, generateCycloalkanes, generateSubstitutedPhenyls, generateSubstitutedBenzoyls, generateSubstitutedEsters,
 } from './generate.mjs';
+import { perceiveRings } from '../../src/model/rings.js';
+import { isBenzeneRing } from '../../src/model/validate.js';
 import { OPSIN_VERSION, JAR_PATH, checkAvailability, downloadJar, runOpsin } from './opsin.mjs';
-import { englishName, compareWithOpsin } from './compare.mjs';
+import { englishName, compareWithOpsin, DIFFERENT_STRUCTURE_REASON } from './compare.mjs';
+import { heavyAtomTree } from './smiles-full.mjs';
 
 /** Directory of this script. */
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -144,15 +148,18 @@ export function parseArgs(argv) {
  * The extra names of a polysubstituted benzene (design.md §14.4, §14.5):
  * the retained xylene / mesitylene / cresol names (aromatic.js
  * retainedPolyIds()), the names of two identical principal groups
- * (retainedDigroupIds(), I-44: `hydroquinone`, `4-methylphthalic acid`) and the old orto/meta/para form (style 'positional':
- * aromatic.js positionalParts() applied to the English name, as the Spanish
+ * (retainedDigroupIds(), I-44: `hydroquinone`, `4-methylphthalic acid`) and every old orto/meta/para form listed (style
+ * 'positional': aromatic.js positionalParts() applied to the English name with the English lexicon, as the Spanish
  * alternative is built — `o-dichlorobenzene`, `p-methylphenol`, and on the
- * `aniline` form for an amine, `o-chloroaniline`, `N,p-dimethylaniline`).
+ * `aniline` form for an amine, `o-chloroaniline`, `N,p-dimethylaniline`; for two different prefixes on plain benzene,
+ * I-54a, one form per prefix style, each built on its style's naming: `m-chloroethylbenzene`,
+ * `p-isopropylmethylbenzene`, `p-methyl(propan-2-yl)benzene`, the prefixes in the Spanish citation order).
  *
- * @param {object} result - A naming result (NamingSuccess).
+ * @param {object} mol - The molecule.
+ * @param {object} result - Its naming result (NamingSuccess) in the first prefix style.
  * @returns {{style: string, spanish: string, english: string, error: null}[]} The entries (empty when none applies).
  */
-function polyBenzeneNames(result) {
+function polyBenzeneNames(mol, result) {
   const entries = [];
   for (const id of retainedPolyIds(result.structure)) {
     const spanish = result.alternatives.find((a) => a.style === 'traditional' && a.name === lexiconEsName(id)).name;
@@ -163,13 +170,24 @@ function polyBenzeneNames(result) {
     const spanish = digroupParts(result.structure, lexiconEs, id).map((p) => p.text).join('');
     entries.push({ style: 'traditional', spanish, english: digroupParts(result.structure, lexiconEn, id).map((p) => p.text).join(''), error: null });
   }
-  const positional = result.alternatives.find((a) => a.style === 'positional');
-  if (positional) {
-    const { suffix } = result.structure;
-    const options = suffix && suffix.kind === 'amine' ? { traditional: 'aniline' } : {};
-    const parts = positionalParts(result.structure, renderName(result.structure, lexiconEn, options).parts);
-    entries.push({ style: 'positional', spanish: positional.name, english: parts ? parts.map((p) => p.text).join('') : '', error: null });
-  }
+  const listed = result.alternatives.filter((a) => a.style === 'positional');
+  // Each style's naming builds its own form on its main name (its first positional alternative); one form per style
+  // is listed only for two different prefixes on plain benzene (I-54a).
+  const sources = listed.length > 1
+    ? PREFIX_STYLES.map((style) => (style === PREFIX_STYLES[0] ? result : nameMolecule(mol, { prefixStyle: style })))
+    : [result];
+  for (const positional of listed) {
+    const source = sources.find((named) => named.ok
+      && named.alternatives.find((a) => a.style === 'positional')?.name === positional.name);
+    let english = '';
+    if (source) {
+      const { suffix } = source.structure;
+      const options = suffix && suffix.kind === 'amine' ? { traditional: 'aniline' } : {};
+      const parts = positionalParts(source.structure, renderName(source.structure, lexiconEn, options).parts, lexiconEn);
+      english = parts ? parts.map((p) => p.text).join('') : '';
+    }
+    entries.push({ style: 'positional', spanish: positional.name, english, error: null });
+  } // End of the loop over the listed positional forms
   return entries;
 } // End of function polyBenzeneNames()
 
@@ -217,7 +235,7 @@ export function buildCases(molecules) {
         names.push({ style: 'traditional', spanish, english, error: null });
       }
       if (first) {
-        names.push(...polyBenzeneNames(result));
+        names.push(...polyBenzeneNames(mol, result));
       }
       const located = first ? result.alternatives.find((a) => a.style === 'locants') : null;
       if (located) {
@@ -276,6 +294,81 @@ export function evaluate(cases, opsinOut) {
 } // End of function evaluate()
 
 /**
+ * The English names of the known disagreement with OPSIN 2.9.0 (README.md,
+ * «Known disagreements»): the old orto/meta/para form of two different
+ * prefixes on plain benzene (I-54a) whose first prefix is a halogen or an
+ * enclosed alkoxy prefix and whose second is an unenclosed chain prefix
+ * (`p-chloromethylbenzene`, `m-(butoxy)propylbenzene`): OPSIN reads the two
+ * words as one substituted chain prefix, `(chloromethyl)benzene`.
+ */
+export const KNOWN_POSITIONAL_DISAGREEMENT = /^[omp]-(?:fluoro|chloro|bromo|iodo|\([^()]+oxy\))(?!iso|tert-)[a-z]+ylbenzene$/;
+
+/**
+ * Tells whether OPSIN's SMILES is the substituted-chain reading of the known
+ * disagreement (README.md, «Known disagreements»): one all-carbon benzene ring
+ * with a single substituted ring carbon, bonded to a carbon of the one side
+ * chain, which therefore carries every heteroatom — and there is at least one,
+ * the halogen or the ether O of the name's first prefix (`ClCc1ccccc1`,
+ * `(chloromethyl)benzene`). An unparsed name, unreadable or unrepresentable
+ * SMILES, another ring system, two substituted ring carbons or a side chain
+ * bonded through its heteroatom (`COc1ccccc1`) are not this reading.
+ *
+ * @param {string|undefined} opsinSmiles - OPSIN's SMILES for the name ('' when unparsed).
+ * @returns {boolean} True for one benzene ring bearing one heteroatom-carrying carbon side chain.
+ */
+export function isSubstitutedChainReading(opsinSmiles) {
+  if (!opsinSmiles) {
+    return false;
+  }
+  let tree;
+  try {
+    tree = heavyAtomTree(opsinSmiles);
+  } catch {
+    return false; // Unreadable SMILES: an adapter failure, never the known reading.
+  }
+  if (!tree.mol || tree.problem) {
+    return false;
+  }
+  const { mol } = tree;
+  const { rings, attachments } = perceiveRings(mol);
+  if (rings.length !== 1 || !isBenzeneRing(mol, rings[0]) || attachments.length !== 1) {
+    return false;
+  }
+  /**
+   * The element of an atom of OPSIN's structure.
+   *
+   * @param {number} id - The atom.
+   * @returns {string} Its element symbol.
+   */
+  const element = (id) => mol.atoms.get(id).element;
+  const [{ neighbours: chain }] = attachments;
+  return rings[0].atoms.every((id) => element(id) === 'C') && chain.length === 1 && element(chain[0]) === 'C'
+    && [...mol.atoms.keys()].some((id) => element(id) !== 'C');
+} // End of function isSubstitutedChainReading()
+
+/**
+ * Tells whether a failing name is the known disagreement with OPSIN
+ * (README.md, «Known disagreements»), by its name and by its outcome: an
+ * orto/meta/para form (style 'positional') matching
+ * KNOWN_POSITIONAL_DISAGREEMENT whose failure is an isomer — OPSIN's SMILES
+ * was read and has the original's formula and ring count but another
+ * canonical key (compare.mjs DIFFERENT_STRUCTURE_REASON) — and whose
+ * structure is the substituted-chain reading (isSubstitutedChainReading()).
+ * An unparsed name, an adapter failure, a formula or ring-count mismatch or
+ * any other isomer is not known. It stays a failure — the exit status and
+ * the counts do not change —; the summary and the log only say it is known.
+ *
+ * @param {{style: string, status: string, english: string, reason: string|null, opsin: string}} problem - One failing name of evaluate().
+ * @returns {boolean} True for the known disagreement.
+ */
+export function isKnownDisagreement(problem) {
+  return problem.style === 'positional' && problem.status === 'failed'
+    && KNOWN_POSITIONAL_DISAGREEMENT.test(problem.english)
+    && problem.reason === DIFFERENT_STRUCTURE_REASON
+    && isSubstitutedChainReading(problem.opsin);
+} // End of function isKnownDisagreement()
+
+/**
  * Formats the failure log.
  *
  * @param {{seed: number, count: number}} options - Run options.
@@ -289,7 +382,7 @@ function formatLog(options, entries, stderrByName) {
     lines.push(`seed: ${options.seed}`, `smiles: ${entry.smiles}`);
     for (const p of entry.problems) {
       lines.push(
-        `  style: ${p.style}  status: ${p.status}`,
+        `  style: ${p.style}  status: ${p.status}${isKnownDisagreement(p) ? '  (known disagreement, README.md)' : ''}`,
         `  spanish: ${p.spanish}`,
         `  english: ${p.english}`,
         `  opsin ${OPSIN_VERSION} output: ${p.opsin || '(none)'}`,
@@ -417,9 +510,13 @@ export async function main(argv) {
   const logPath = options.log || path.join(HERE, 'logs', `failures-seed-${options.seed}.log`);
   await mkdir(path.dirname(logPath), { recursive: true });
   await writeFile(logPath, formatLog(options, entries, stderrByName));
+  // Still failures (exit status 1): only labelled when every failing name of the molecule is the known disagreement.
+  const known = failed.filter((entry) => entry.problems.every(isKnownDisagreement)).length;
+  console.log(`known disagreements (scripts/oracle/README.md): ${known} of ${failed.length} failed molecules`);
   for (const entry of entries.slice(0, 20)) {
     const p = entry.problems[0];
-    console.log(`  ${entry.smiles}  ${p.style}: ${p.spanish} / ${p.english} → ${p.opsin || '(none)'}  [${p.reason}]`);
+    const label = isKnownDisagreement(p) ? '  (known)' : '';
+    console.log(`  ${entry.smiles}  ${p.style}: ${p.spanish} / ${p.english} → ${p.opsin || '(none)'}  [${p.reason}]${label}`);
   }
   console.log(`Failure log: ${logPath}`);
   return 1;

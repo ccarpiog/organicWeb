@@ -24,7 +24,9 @@
  * `carbamoil` and acylamino prefixes, isAmidePrefixName(); R-6d3: the
  * retained amide names `formamida`, `acetamida`, `ftalamida`,
  * isAmideTemplateName()) — an amide prefix the engine writes `amino` + `oxo`
- * reading since R-6c2.
+ * reading since R-6c2. The orto/meta/para forms of two different prefixes on
+ * `benceno` (forward engine since I-54a, read from I-54b) are told apart by
+ * pendingLetterForms().
  * Not a test file itself (the test glob only runs `*.test.js`).
  */
 
@@ -38,6 +40,9 @@ import {
   RING_GROUP_SUFFIXES, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS,
 } from '../../src/naming/lexicon.es.js';
 import { parseSmiles } from '../../src/model/smiles.js';
+import { nameMolecule } from '../../src/naming/index.js';
+import { hasTwoDifferentPrefixes } from '../../src/naming/aromatic.js';
+import { tokenize } from '../../src/reverse/tokenize.js';
 import { amineNitrogens, isAmideCarbon } from '../../src/model/validate.js';
 import { adjacency } from '../../src/model/graph.js';
 
@@ -1035,6 +1040,41 @@ export function isBenzeneName(name) {
  */
 export function isTemplateName(name) {
   return TEMPLATE_WORDS.some((word) => name.includes(word)) || /^[omp]-/.test(name);
+}
+
+/**
+ * The orto/meta/para forms of two different prefixes on plain `benceno`
+ * that the forward engine writes since phase I-54a (design.md §14.4;
+ * naming/aromatic.js hasTwoDifferentPrefixes(), positionalParts(): one per
+ * prefix style, `m-cloroetilbenceno`, `p-isopropilmetilbenceno`,
+ * `p-metil(propan-2-il)benceno`) and the reverse engine reads only from
+ * phase I-54b: until then parse.js checkLetters() refuses an o/m/p letter
+ * before two different prefixes (POSITIONAL), so no tile sequence writes
+ * them (pendingLetterFormFails()). The round trips and closed loops of the
+ * reverse tests count them apart, asserted to fail exactly so; phase I-54b
+ * flips them (they then read as the engine's alternatives).
+ *
+ * @param {object|string} source - A nameMolecule() result, or a fixture SMILES (named here).
+ * @returns {Set<string>} The forms (empty for any other molecule).
+ */
+export function pendingLetterForms(source) {
+  const naming = typeof source === 'string' ? nameMolecule(parseSmiles(source)) : source;
+  if (!naming.ok || !hasTwoDifferentPrefixes(naming.structure)) {
+    return new Set();
+  }
+  return new Set(naming.alternatives.filter((alt) => alt.style === 'positional').map((alt) => alt.name));
+}
+
+/**
+ * Tells whether a pending orto/meta/para form (pendingLetterForms()) fails
+ * exactly as it does before phase I-54b: no tile sequence writes it
+ * (tokenize() returns null, since every reading of its letter is refused).
+ *
+ * @param {string} name - A pending form.
+ * @returns {boolean} True when it fails so.
+ */
+export function pendingLetterFormFails(name) {
+  return tokenize(name) === null;
 }
 
 /**

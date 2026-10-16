@@ -61,6 +61,13 @@ export function kekuleKeys(mol) {
 }
 
 /**
+ * The reason compareWithOpsin() gives for an isomer: OPSIN's SMILES was read, has the original's formula, is a
+ * representable single molecule with the original's ring count, and its canonical key is none of the original's
+ * (run.mjs isKnownDisagreement() requires this outcome).
+ */
+export const DIFFERENT_STRUCTURE_REASON = 'different structure (canonical keys over elements, bond orders and rings differ)';
+
+/**
  * Compares the original molecule with OPSIN's SMILES for its name.
  *
  * @param {object} mol - The original molecule.
@@ -102,7 +109,7 @@ export function compareWithOpsin(mol, opsinSmiles) {
     return { status: 'failed', reason: `OPSIN's structure cannot be compared: ${err.message}` };
   }
   if (!kekuleKeys(mol).includes(key)) {
-    return { status: 'failed', reason: 'different structure (canonical keys over elements, bond orders and rings differ)' };
+    return { status: 'failed', reason: DIFFERENT_STRUCTURE_REASON };
   }
   return { status: 'passed', reason: null };
 } // End of function compareWithOpsin()

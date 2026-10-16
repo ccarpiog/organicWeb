@@ -42,9 +42,17 @@ a step-by-step explanation, and optionally redraw it so the main chain is clear.
   `tests/unit/reverse-closed-loop.test.js` reads back every form the
   forward engine writes for every generator and fixture (pins asserted).
   Spanish wording pending teacher review: `docs/teacher-review-v4.md`;
-  open user questions: `docs/open-questions.md`. Next queued: I-54, o/m/p
-  letters for two different prefixes on plain `benceno`, both directions
-  (`autoclaude/processed/240-omp-two-different-groups.md`).
+  open user questions: `docs/open-questions.md`. I-54, o/m/p letters for
+  two different prefixes on plain `benceno`
+  (`autoclaude/processed/240-omp-two-different-groups.md`): the drawing →
+  name half (I-54a) is done — `1-cloro-3-etilbenceno` lists
+  `m-cloroetilbenceno` under «Otras formas válidas», one form per prefix
+  style (`aromatic.js` `positionalParts()`), and the explanation says why
+  the numbers are recommended; OPSIN reads `p-clorometilbenceno`-type forms
+  as one substituted group, a known disagreement recorded in
+  `scripts/oracle/README.md`. Next: the name → drawing half (I-54b), whose
+  reader still refuses these letters (`parse.js` `checkLetters()`; pinned in
+  the closed loop).
   Out of scope: stereo (E/Z, cis/trans, R/S), charges, salts, heterocycles,
   polycycles, and benzenes with functional groups on the ring and on a side
   chain (or on two side chains) or an ester beside another ring group.

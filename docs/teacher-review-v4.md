@@ -27,7 +27,8 @@ steps v4 added (§5).
 Sections: 1. The dialog and its tiles (T-) · 2. Verdicts and the results
 panel (V-) · 3. Structural errors (E-) · 4. Search messages (S-) ·
 5. Diagnosis messages (D-) · 6. Ayuda «Del nombre al dibujo» (A-) ·
-7. Points the developers flagged for the teacher (C-).
+7. Points the developers flagged for the teacher (C-) · 8. I-54: orto,
+meta y para with two different groups (O-).
 
 ## 1. The dialog and its tiles
 
@@ -803,3 +804,33 @@ read), are in `docs/open-questions.md`.
   `formamida` and `acetamida`, «…acepta», «…conserva»…) are the naming
   engine's, written from memory of IUPAC 2013 (`src/naming/lexicon.es.js`).
   [I-52d3; forward engine]
+
+## 8. I-54: orto, meta y para with two different groups (O-)
+
+A user decision after v4 (`autoclaude/processed/240-omp-two-different-groups.md`):
+a benzene with two different groups and nothing else (`1-cloro-3-etilbenceno`)
+also gets the old letter form (`m-cloroetilbenceno`) under «Otras formas
+válidas», with the existing label «forma antigua con orto/meta/para; hoy se
+recomienda el número (1,2 / 1,3 / 1,4)». Phase I-54a (drawing → name) adds
+the texts below; I-54b (name → drawing, «¿Cómo se dibuja?») will add its
+own. The letter forms themselves (`p-metil(metoxi)benceno`,
+`p-clorometilbenceno`…) are the naming engine's (design.md §14.4).
+
+- O-1 «Numera el anillo», two different groups on `benceno` (the sentence
+  that ends the step's position note) — ««cloro» y «etil» están en posición
+  meta (1,3). Antes se decía orto (1,2), meta (1,3) o para (1,4), y este
+  compuesto se llamaba «m-cloroetilbenceno». Hoy se recomienda escribir los
+  números, porque con la letra los dos grupos se escriben seguidos, sin
+  números, y se pueden confundir con un solo grupo: «m-cloroetilbenceno» se
+  puede leer como «(cloroetil)benceno».» When a group of the letter form is
+  between parentheses (`p-metil(metoxi)benceno`) or the second group is no
+  carbon branch (`m-bromoclorobenceno`, `o-metilyodobenceno`) the end reads
+  «…sin números, y a veces se pueden confundir con un solo grupo.», without
+  the look-alike. The first sentence was already shown since v3; «Monta el
+  nombre» lists the letter form under «También es correcto:» with its
+  existing label, as for every alternative. [I-54a · `explain.js`
+  `benzenePositionSentence()`, `twoPrefixLetterSentence()`]
+- O-2 Ayuda «Orto, meta y para» (`#help-omp`), the new example after «Por
+  ejemplo, el 1,4-diclorobenceno es el p-diclorobenceno.» — «Si los dos
+  grupos son distintos, se escriben seguidos, sin números: el
+  1-cloro-3-etilbenceno es el m-cloroetilbenceno.» [I-54a · `index.html`]

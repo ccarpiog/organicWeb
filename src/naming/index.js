@@ -562,8 +562,9 @@ function nameValidated(input, options) {
   if (systematic) {
     alternatives.push(systematic);
   }
-  // A benzene may give several (`1,2-xileno`, `o-xileno`, then the orto/meta/para form; design.md §14.4–§14.5).
-  const traditional = benzene ? benzeneAlternatives(main) : [carbonylAlternative(main)].filter(Boolean);
+  // A benzene may give several (`1,2-xileno`, `o-xileno`, then the orto/meta/para form, one per prefix style for two
+  // different prefixes, I-54a; design.md §14.4–§14.5).
+  const traditional = benzene ? benzeneAlternatives(main, others.map(named)) : [carbonylAlternative(main)].filter(Boolean);
   alternatives.push(...traditional);
   const functionalClass = etherClassAlternative(mol, main) || amineClassAlternative(mol, main);
   if (functionalClass) {

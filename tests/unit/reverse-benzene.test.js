@@ -34,34 +34,50 @@ import { RING_SYSTEM_MESSAGES, validateForNaming } from '../../src/model/validat
 import { nameMolecule } from '../../src/naming/index.js';
 import { generateBenzenes, randomBenzene, seededRandom, randomInt } from '../../scripts/oracle/generate.mjs';
 import {
-  seq, readFixtures, isMonocyclicHydrocarbon, isHalogenDerivative, isBenzeneName, isTemplateName, isEther,
+  seq, readFixtures, isMonocyclicHydrocarbon, isHalogenDerivative, isBenzeneName, isTemplateName, isEther, pendingLetterForms,
+  pendingLetterFormFails,
 } from './reverse-words.js';
 
 /** Benzene hydrocarbon fixture rows (the I-28 and I-42a sections; as in reverse-tokenize.test.js). */
-const EXPECTED_ROWS = 25;
+const EXPECTED_ROWS = 26;
 
 /**
  * Their names and alternatives, every one read back as correct /
- * alternative: 31 written with the R-4b tiles, and since I-50c (R-4c) the 18
+ * alternative: 32 written with the R-4b tiles, and since I-50c (R-4c) the 18
  * written with a retained template or an orto/meta/para letter (`tolueno`
  * ×2, `estireno`, the eight xylene forms, `mesitileno`, `o-` / `m-` /
  * `p-dimetilbenceno` with the second Kekulé drawing of the 1,2 row,
- * `p-dietenilbenceno`, `o-diisopropilbenceno`). None is skipped.
+ * `p-dietenilbenceno`, `o-diisopropilbenceno`). Only the pending o/m/p forms
+ * of two different prefixes are left out (EXPECTED_PENDING_LETTER_NAMES).
  */
-const EXPECTED_COVERED = 49;
+const EXPECTED_COVERED = 50;
 
 /** Of them, the names written with R-4c tiles. */
 const EXPECTED_TEMPLATE_NAMES = 18;
 
 /**
- * The I-42a rows with alkoxy prefixes, read back by the ether round trip
- * since I-51b1 (R-5b1, reverse-ethers.test.js; the eight with halogens only
- * by reverse-halogens.test.js since I-51a1, R-5a1): none is left out.
+ * The o/m/p forms of two different prefixes these rows list since I-54a
+ * (`p-isopropilmetilbenceno` in its three prefix styles,
+ * `p-tert-butilmetilbenceno`; reverse-words.js pendingLetterForms()): no
+ * tiles until phase I-54b, which flips them into EXPECTED_COVERED.
  */
-const EXPECTED_ETHER_ROWS = 2;
+const EXPECTED_PENDING_LETTER_NAMES = 4;
 
-/** The I-42a rows with halogens only, read back by the halogen round trip (reverse-halogens.test.js). */
-const EXPECTED_HALOGEN_ROWS = 8;
+/**
+ * The I-42a rows with alkoxy prefixes, read back by the ether round trip
+ * since I-51b1 (R-5b1, reverse-ethers.test.js; those with halogens only
+ * by reverse-halogens.test.js since I-51a1, R-5a1): none is left out; three
+ * since I-54a added `1-etoxi-4-metilbenceno`.
+ */
+const EXPECTED_ETHER_ROWS = 3;
+
+/**
+ * The I-42a rows with halogens only, read back by the halogen round trip
+ * (reverse-halogens.test.js); eleven since I-54a added
+ * `1-cloro-4-(clorometil)benceno`, `1-cloro-4-metilbenceno` and
+ * `1-cloro-3-isopropilbenceno`.
+ */
+const EXPECTED_HALOGEN_ROWS = 11;
 
 /** Average time budget of one readName() call, in milliseconds (design.md §15.7; phones are slower). */
 const AVERAGE_BUDGET_MS = 50;
@@ -285,10 +301,18 @@ test('fixture round trip (R-4b, R-4c): the branch-only benzene rows of I-28 and 
   let covered = 0;
   let templates = 0;
   let elapsed = 0;
+  let pending = 0;
   for (const row of rows) {
     const expected = keyOf(row.smiles);
+    const letterForms = pendingLetterForms(row.smiles);
     for (const name of row.names) {
       assert.ok(isBenzeneName(name), `names.tsv:${row.line}: ${name} is no benzene name`);
+      if (letterForms.has(name)) {
+        // Two different prefixes with an o/m/p letter (forward engine since I-54a): no tiles until phase I-54b flips it.
+        assert.ok(pendingLetterFormFails(name), `names.tsv:${row.line}: ${name} reads before I-54b`);
+        pending += 1;
+        continue;
+      }
       templates += isTemplateName(name) ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
@@ -310,6 +334,7 @@ test('fixture round trip (R-4b, R-4c): the branch-only benzene rows of I-28 and 
   assert.equal(rows.length, EXPECTED_ROWS);
   assert.equal(covered, EXPECTED_COVERED);
   assert.equal(templates, EXPECTED_TEMPLATE_NAMES);
+  assert.equal(pending, EXPECTED_PENDING_LETTER_NAMES);
   assert.ok(elapsed / covered < AVERAGE_BUDGET_MS, `readName() took ${(elapsed / covered).toFixed(2)} ms on average`);
   // The I-42a rows with halogens are the halogen round trip's (R-5a1), those with alkoxy prefixes the ether round trip's
   // (R-5b1): no row of the section is left out.
@@ -319,7 +344,12 @@ test('fixture round trip (R-4b, R-4c): the branch-only benzene rows of I-28 and 
   assert.equal(ethers.length, EXPECTED_ETHER_ROWS);
   assert.ok(ethers.every((row) => isEther(row.smiles)), 'every other row is an ether (reverse-ethers.test.js)');
   for (const row of ethers) {
+    const letterForms = pendingLetterForms(row.smiles);
     for (const name of row.names) {
+      if (letterForms.has(name)) {
+        assert.ok(pendingLetterFormFails(name), name); // `p-metil(metoxi)benceno` (I-54a): read from phase I-54b.
+        continue;
+      }
       assert.equal(readName(tokenize(name)).kind, name === row.names[0] ? 'correct' : 'alternative', name);
     }
   }
@@ -340,6 +370,13 @@ const EXTRA = Object.freeze({ seed: 47031, count: 300, attempts: 3000 });
  * 968 and 968).
  */
 const LOOP_MIN = Object.freeze({ molecules: 400, names: 460, templates: 15, removed: 950, decisive: 940 });
+
+/**
+ * The o/m/p forms of two different prefixes the loop's molecules get since
+ * I-54a (reverse-words.js pendingLetterForms()), exact: no tiles until
+ * phase I-54b, which flips them into the names read back.
+ */
+const LOOP_PENDING_LETTER_NAMES = 106;
 
 /**
  * Tells whether a molecule has carbons only: a benzene with hydrocarbon
@@ -434,15 +471,22 @@ function locantLists(tree) {
 
 test('closed loop over the benzene generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, templates: 0, removed: 0, decisive: 0 };
+  const counts = { names: 0, templates: 0, removed: 0, decisive: 0, pending: 0 };
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
     assert.ok(naming.ok, naming.ok ? '' : naming.error.message);
     const key = aromaticKey(mol);
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
+    const letterForms = pendingLetterForms(naming);
     assert.ok(isBenzeneName(naming.name), naming.name);
     for (const [i, name] of all.entries()) {
       assert.ok(isBenzeneName(name), name); // Retained templates and o/m/p forms too (R-4c).
+      if (letterForms.has(name)) {
+        // Two different prefixes with an o/m/p letter (forward engine since I-54a): no tiles until phase I-54b flips it.
+        assert.ok(pendingLetterFormFails(name), `${name} reads before I-54b`);
+        counts.pending += 1;
+        continue;
+      }
       counts.templates += isTemplateName(name) ? 1 : 0;
       const ids = tokenize(name);
       assert.ok(ids, `no tiles for ${name}`);
@@ -478,6 +522,7 @@ test('closed loop over the benzene generators: engine name → tiles → readNam
   assert.ok(counts.templates >= LOOP_MIN.templates, `${counts.templates} template and o/m/p names read back`);
   assert.ok(counts.removed >= LOOP_MIN.removed, `${counts.removed} removed-locant mutations`);
   assert.ok(counts.decisive >= LOOP_MIN.decisive, `${counts.decisive} decisive verdicts`);
+  assert.equal(counts.pending, LOOP_PENDING_LETTER_NAMES, `${counts.pending} pending o/m/p forms`);
 }); // End of test 'closed loop over the benzene generators…'
 
 /**

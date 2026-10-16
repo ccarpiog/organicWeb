@@ -25,6 +25,7 @@ archive of the phase that carries it out. Spanish wording that only needs a teac
 | Q13 | The ring-numbering message may change the branch's style | Diagnosis approach | I-51c3b2 |
 | Q14 | Hints that cite substituted-phenyl prefixes the engine never writes | Diagnosis / hint approach | I-52d2 |
 | Q15 | «Reconoce el éter» says an ether «nunca va al final del nombre» | Explanation wording approach | I-51b2 |
+| Q16 | `p-clorometilbenceno` reads as `(clorometil)benceno` to OPSIN | Forward-engine spelling | I-54a |
 
 ## Q1 — Commit `docs/design.md` §15 and the Codex plan review
 
@@ -34,8 +35,9 @@ and who should then make the design.md updates that are waiting?
 
 **Current behaviour.** In the §15.8 table, R-1a…R-7 still say «Pending», although R-1a…R-7a are done. PROGRESS.md tracks
 their status instead. The design.md cleanup planned for I-53b is written down in the I-53b archive and not applied. I-54
-(o/m/p letters for two different prefixes on `benceno`, your decision of 2026-10-15) must record that it reverses design.md
-§14.4 (also the §14.1 row and the §15 R-4 row and its o/m/p notes). That record is blocked for the same reason.
+(o/m/p letters for two different prefixes on `benceno`, your decision of 2026-10-15) reverses design.md §14.4: I-54a wrote
+its §14 edits (§14.4, the explanation paragraph, the pending-review note) in `docs/progress-archive/i-54a.md` and did not
+apply them; the §15 R-4 row and its o/m/p notes are I-54b's. Both records are blocked for the same reason.
 
 **Options.**
 - (a) Commit both files as they are, yourself or by asking an agent to commit them by explicit path. The next phase then
@@ -393,3 +395,29 @@ final» of the substitutive name only. explain() itself has no class-name path.
 
 **Source.** I-51b2 (`i-51b2.md` Review fixes: «a forward wording question, left to the user»); PROGRESS.md *Open risks*
 I-51b1/I-51b2 (2).
+
+## Q16 — `p-clorometilbenceno` reads as `(clorometil)benceno` to OPSIN
+
+**Question.** The orto/meta/para form of two different prefixes on plain benzene (I-54a) writes the two prefixes one after
+the other, as the item you approved asks (`p-clorometilbenceno`). OPSIN, the oracle's name-to-structure program, reads a
+halogen or an alkoxy prefix followed by an unbracketed chain prefix as one substituted group: `p-chloromethylbenzene` →
+`(chloromethyl)benzene`, `p-(ethoxy)methylbenzene` → `(ethoxymethyl)benzene`. Keep the form, or bracket the second prefix?
+
+**Current behaviour.** `src/naming/aromatic.js` `positionalParts()` writes `p-clorometilbenceno`, `m-cloroetilbenceno`,
+`p-(etoxi)metilbenceno` under «Otras formas válidas»; the «Numera el anillo» step warns that the letter form can be read as
+one group. `npm run oracle` now exits 1 on every seed: each failure is this class, labelled «known» only when OPSIN's
+structure is that isomer (`isKnownDisagreement()` in `scripts/oracle/run.mjs`, README «Known disagreements»).
+
+**Options.**
+- (a) Keep the form you chose (the ambiguity is the one the explanation names); the oracle keeps exiting 1 with the known
+  label.
+- (b) Bracket a chain prefix that follows a halogen or alkoxy prefix (`p-cloro(metil)benceno`, `p-(etoxi)(metil)benceno`),
+  which OPSIN reads as two ring prefixes; the oracle would exit 0 again.
+- (c) Drop the letter form for exactly those cases (halogen or alkoxy before an unbracketed chain prefix).
+
+**Where the code would change.** `src/naming/aromatic.js` `positionalParts()`; `tests/fixtures/names.tsv` and
+`tests/unit/polysubstituted-benzenes.test.js`; `src/explain/explain.js` `twoPrefixLetterSentence()`; the reverse reader of
+I-54b (`src/reverse/parse.js` `checkLetters()`) and its tests; `scripts/oracle/run.mjs`, `README.md`,
+`tests/unit/oracle.test.js`.
+
+**Source.** I-54a (`docs/progress-archive/i-54a.md`, worker report and Codex review `docs/reviews/I-54a.md`).

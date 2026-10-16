@@ -47,19 +47,34 @@ import { multiplier, RETAINED_PREFIXES } from '../../src/naming/lexicon.es.js';
 import {
   generateEthers, generateBenzenes, generateSubstitutedPhenyls, generateRingPrincipalBenzenes,
 } from '../../scripts/oracle/generate.mjs';
-import { seq, readFixtures, leafIndices, isEther, isEtherMolecule, isEtherClassName } from './reverse-words.js';
+import {
+  seq, readFixtures, leafIndices, isEther, isEtherMolecule, isEtherClassName, pendingLetterForms, pendingLetterFormFails,
+} from './reverse-words.js';
 
 /**
  * Ether fixture rows (isEther(): carbons, halogens, OH groups and at least
  * one ether oxygen; no C=O): 33 of the I-34 section, 2 of I-40a (rings as
- * substituents: `2-fenoxietan-1-ol`…), 2 of I-42a (the alkoxy benzenes the
- * benzene round trip left out until this phase), 1 of I-43a (a phenol with an
- * alkoxy prefix) and 2 of I-45a (substituted phenoxy).
+ * substituents: `2-fenoxietan-1-ol`…), 3 of I-42a (the alkoxy benzenes the
+ * benzene round trip left out until this phase; `1-etoxi-4-metilbenceno`
+ * added by I-54a), 1 of I-43a (a phenol with an alkoxy prefix) and 2 of
+ * I-45a (substituted phenoxy).
  */
-const EXPECTED_ROWS = Object.freeze({ total: 40, i34: 33, i40a: 2, i42a: 2, i43a: 1, i45a: 2 });
+const EXPECTED_ROWS = Object.freeze({ total: 41, i34: 33, i40a: 2, i42a: 3, i43a: 1, i45a: 2 });
 
-/** Their names and alternatives read back: 46 substitutive and traditional names, and the class names (phase R-5b2). */
-const EXPECTED_NAMES = 57;
+/**
+ * Their names and alternatives read back: 47 substitutive and traditional
+ * names, and the class names (phase R-5b2); the pending o/m/p forms left
+ * out (EXPECTED_PENDING_LETTER_NAMES).
+ */
+const EXPECTED_NAMES = 58;
+
+/**
+ * The o/m/p forms of two different prefixes the ether rows list since I-54a
+ * (`p-metil(metoxi)benceno`, `p-(etoxi)metilbenceno`; reverse-words.js
+ * pendingLetterForms()): no tiles until phase I-54b, which flips them into
+ * EXPECTED_NAMES and the mutation sweeps.
+ */
+const EXPECTED_PENDING_LETTER_NAMES = 2;
 
 /** The functional-class names among them (`dimetil éter`, `dietil éter`…), read since phase R-5b2 (I-51b2). */
 const EXPECTED_CLASS_NAMES = 11;
@@ -744,9 +759,17 @@ test('fixture round trip (R-5b1, R-5b2, R-5c1, R-5d1): every ether row and its c
   let covered = 0;
   let classNames = 0;
   let elapsed = 0;
+  let pending = 0;
   for (const row of rows) {
     const expected = keyOf(row.smiles);
+    const letterForms = pendingLetterForms(row.smiles);
     for (const name of row.names) {
+      if (letterForms.has(name)) {
+        // Two different prefixes with an o/m/p letter (forward engine since I-54a): no tiles until phase I-54b flips it.
+        assert.ok(pendingLetterFormFails(name), `names.tsv:${row.line}: ${name} reads before I-54b`);
+        pending += 1;
+        continue;
+      }
       classNames += isEtherClassName(name) ? 1 : 0; // `dietil éter`…: read since phase R-5b2 (I-51b2).
       const ids = tokenize(name);
       assert.ok(ids, `names.tsv:${row.line}: no tiles for ${name}`);
@@ -784,6 +807,7 @@ test('fixture round trip (R-5b1, R-5b2, R-5c1, R-5d1): every ether row and its c
     EXPECTED_ACID_ROWS.i40b, EXPECTED_ACID_ROWS.i45b]);
   assert.equal(carbonyl.length, EXPECTED_CARBONYL_ROWS.total);
   assert.equal(carbonyl.flatMap((row) => row.names).length, EXPECTED_CARBONYL_ROWS.names);
+  assert.equal(pending, EXPECTED_PENDING_LETTER_NAMES);
   assert.equal(acid.length, EXPECTED_ACID_ROWS.total);
   assert.equal(acid.flatMap((row) => row.names).length, EXPECTED_ACID_ROWS.names);
   assert.ok(acid.every((row) => row.names[0].startsWith('ácido ')), 'every acid row is named as an acid');
@@ -814,6 +838,13 @@ const LOOP = Object.freeze({
 const LOOP_MIN = Object.freeze({
   molecules: 550, names: 600, iloxi: 130, fenoxi: 4, isopropoxi: 10, classNames: 8, removed: 1550, decisive: 1550,
 });
+
+/**
+ * The o/m/p forms of two different prefixes the loop's molecules get since
+ * I-54a (reverse-words.js pendingLetterForms()), exact: no tiles until
+ * phase I-54b, which flips them into the names read back.
+ */
+const LOOP_PENDING_LETTER_NAMES = 41;
 
 /**
  * The prefix of the forward engine's class name of a di-tert-butyl ether,
@@ -889,14 +920,21 @@ function locantLists(tree) {
 
 test('closed loop over the ether generators: engine name → tiles → readName() → the same graph, then without each locant list', () => {
   const molecules = loopMolecules();
-  const counts = { names: 0, iloxi: 0, fenoxi: 0, isopropoxi: 0, classNames: 0, removed: 0, decisive: 0 };
+  const counts = { names: 0, iloxi: 0, fenoxi: 0, isopropoxi: 0, classNames: 0, removed: 0, decisive: 0, pending: 0 };
   const unreadable = [];
   for (const mol of molecules) {
     const naming = nameMolecule(mol);
     assert.ok(naming.ok, naming.ok ? '' : naming.error.message);
     const key = aromaticKey(mol);
     const all = [naming.name, ...naming.alternatives.map((alt) => alt.name)];
+    const letterForms = pendingLetterForms(naming);
     for (const [i, name] of all.entries()) {
+      if (letterForms.has(name)) {
+        // Two different prefixes with an o/m/p letter (forward engine since I-54a): no tiles until phase I-54b flips it.
+        assert.ok(pendingLetterFormFails(name), `${name} reads before I-54b`);
+        counts.pending += 1;
+        continue;
+      }
       if (isEtherClassName(name) && name.startsWith(DITERT)) {
         unreadable.push(name); // `ditert-butil éter`: the engine's form, which no tiles write (DITERT).
         continue;
@@ -942,6 +980,7 @@ test('closed loop over the ether generators: engine name → tiles → readName(
   for (const field of ['names', 'iloxi', 'fenoxi', 'isopropoxi', 'classNames', 'removed', 'decisive']) {
     assert.ok(counts[field] >= LOOP_MIN[field], `${field}: ${report}`);
   }
+  assert.equal(counts.pending, LOOP_PENDING_LETTER_NAMES, report);
 }); // End of test 'closed loop over the ether generators…'
 
 // ---------------------------------------------------------------------------
@@ -1130,15 +1169,18 @@ function sweep(names) {
  * since phase R-5b2 the one deliberate null of «Ethers» is `di-tert-butil
  * éter`, which no fixture name gives). Removing locants never gives
  * `otherName`. The class names (R-5b2) add 8 unsorted (`metil etil éter`:
- * CLASS_ORDER) and 3 di ↔ bis (`bisetil éter`: CLASS_DI).
+ * CLASS_ORDER) and 3 di ↔ bis (`bisetil éter`: CLASS_DI); the row
+ * `1-etoxi-4-metilbenceno` (I-54a) adds 5 rotated, 1 swapped and 1 unsorted.
  */
 const FIXTURE_OTHER_NAME = Object.freeze({
-  reversed: 20, reflected: 2, rotated: 22, swapped: 10, unsorted: 15, ungrouped: 2, diBis: 7, toEnd: 4, heteroToEnd: 17, removed: 0,
+  reversed: 20, reflected: 2, rotated: 27, swapped: 11, unsorted: 16, ungrouped: 2, diBis: 7, toEnd: 4, heteroToEnd: 17, removed: 0,
   added: 22,
 });
 
 test('mutations of every ether fixture name: a diagnosis of the family\'s codes for every otherName, and a coverage count', async () => {
-  const names = (await readFixtures()).filter((row) => isEther(row.smiles)).flatMap((row) => row.names); // Class names too (R-5b2).
+  // Class names too (R-5b2); the pending o/m/p forms of two different prefixes (I-54a) have no tiles until phase I-54b.
+  const names = (await readFixtures()).filter((row) => isEther(row.smiles))
+    .flatMap((row) => row.names.filter((name) => !pendingLetterForms(row.smiles).has(name)));
   assert.equal(names.length, EXPECTED_NAMES);
   const { otherName, codes, nulls } = sweep(names);
   assert.deepEqual(nulls, []);
@@ -1151,8 +1193,11 @@ test('mutations of the generated ethers: every otherName is diagnosed, every ste
   const names = [];
   for (const mol of loopMolecules().slice(0, 300)) {
     const naming = nameMolecule(mol);
-    // Class names too (R-5b2), but the engine's `ditert-butil éter`, which no tiles write (DITERT).
-    names.push(naming.name, ...naming.alternatives.map((alt) => alt.name).filter((name) => !name.startsWith(DITERT)));
+    // Class names too (R-5b2), but the engine's `ditert-butil éter`, which no tiles write (DITERT), and the pending o/m/p
+    // forms of two different prefixes (I-54a), which no tiles write until phase I-54b.
+    const letterForms = pendingLetterForms(naming);
+    names.push(naming.name, ...naming.alternatives.map((alt) => alt.name)
+      .filter((name) => !name.startsWith(DITERT) && !letterForms.has(name)));
   }
   assert.ok(names.length >= 300, `${names.length} names`);
   const { otherName, codes, nulls } = sweep(names);

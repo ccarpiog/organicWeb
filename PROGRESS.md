@@ -75,7 +75,9 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-53 | v4 R-7 Wrap-up | same, "R-7" | done — split into I-53a, I-53b | — | — |
 | I-53a | v4 R-7a Closed loop over every generator (27 generators + `names.tsv`, every forward form read back, pins asserted) | same, "R-7" | done — `docs/progress-archive/i-53a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-53a.md` |
 | I-53b | v4 R-7b Ayuda, README, CLAUDE.md scope line, `docs/teacher-review-v4.md`, `docs/open-questions.md`, design.md cleanup recorded (blocked) | same, "R-7" | done — `docs/progress-archive/i-53b.md` | routine / opus | Codex ship, 0 findings — `docs/reviews/I-53b.md` |
-| I-54 | o/m/p letters for two different prefixes on plain `benceno`, drawing → name and name → drawing (user decision 2026-10-15, reverses design §14.4) | `autoclaude/processed/240-omp-two-different-groups.md` | queued — next | — | — |
+| I-54 | o/m/p letters for two different prefixes on plain `benceno`, drawing → name and name → drawing (user decision 2026-10-15, reverses design §14.4) | `autoclaude/processed/240-omp-two-different-groups.md` | split into I-54a, I-54b | — | — |
+| I-54a | Drawing → name: `positionalParts()` letter form (`m-cloroetilbenceno`, one per prefix style, crowded enclosure), «Numera el anillo» sentence, Ayuda `#help-omp`, fixtures, oracle known disagreement, reverse tests pinned for I-54b | same, "Drawing → name" | done — `docs/progress-archive/i-54a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-54a.md` |
+| I-54b | Name → drawing: `checkLetters()` lifts the `different` refusal, letter supplies both positions, verdicts/diagnosis, Ayuda rings line, flip the I-54a pins, e2e | same, "Name → drawing" | queued — next | — | — |
 
 v1 (I-1…I-12), user feedback (I-13…I-20), v2 (I-21…I-41c, plan in `docs/design.md` §13) and v3
 (I-42…I-46, polysubstituted benzenes, user-confirmed 2026-10-13, design §14) are all done; phases
@@ -98,17 +100,25 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-54 (`autoclaude/processed/240-omp-two-different-groups.md`, user decision 2026-10-15): o/m/p letters for two different
-prefixes on plain `benceno`, both directions — drawing → name (new alternatives under «Otras formas válidas», main names never
-change) and name → drawing (`checkLetters()` in `src/reverse/parse.js` stops refusing two different prefixes; the diagnosis and
-search follow). Read the item's "The rule", "Drawing → name", "Name → drawing" and "Tests" sections; split into I-54a (forward
-engine) and I-54b (reader) if it does not fit one worker. Risk high; worker opus. Also update what I-53b wrote for the old rule:
-the Ayuda rings line (`index.html` `#help-name-to-drawing-rings`, «no con … dos grupos distintos en «benceno» (1-bromo-4-clorobenceno)»),
-its test in `tests/unit/reverse-templates.test.js` («the examples the Ayuda … cites»), `docs/teacher-review-v4.md` and CLAUDE.md.
-**design.md is still the user's uncommitted file** (`git status --short docs/design.md` → ` M`): if so, do not edit it — record the
-§14.4 / §14.1 / §15 R-4 decision-change edits the item asks for in `docs/progress-archive/i-54.md` beside the I-53b ones
-(`docs/progress-archive/i-53b.md` "Intended design.md edits") and flag them; if the user has committed it, make those edits and the
-I-53b ones. Commit by explicit paths. After I-54 the plan is finished (DONE once the inbox is empty).
+Select I-54b (`autoclaude/processed/240-omp-two-different-groups.md` "Name → drawing" and the reader "Tests" bullets; risk high,
+worker opus): «¿Cómo se dibuja?» reads the letter forms I-54a added. `checkLetters()` in `src/reverse/parse.js` lifts the
+`different` refusal for two different prefixes on plain `benceno` (the letter before the first prefix); a letter before the second
+prefix, a second letter, or a letter plus numbers stay POSITIONAL with new wording saying where the letter goes; the letter supplies
+both positions (1 and 2/3/4) in `interpret.js`/`search.js`, nothing searched; `alternative` when the assembly equals an engine form in
+any prefix style; non-alphabetical order (`p-metilclorobenceno`) `otherName` via the alphabetical-order rule worded for the letter
+form in `diagnose.js`; the «o/m/p letter the app does not offer» diagnosis no longer fires here. **Flip every I-54a pin**: the closed
+loop's PINS entry (`tests/unit/reverse-closed-loop.test.js`) and the exact-count skips through `pendingLetterForms()`
+(`tests/unit/reverse-words.js`) in `reverse-tokenize`, `reverse-benzene`, `reverse-halogens`, `reverse-ethers`,
+`reverse-diagnose-rings` (counts in `docs/progress-archive/i-54a.md` "Completed"). Round trip over the new fixture alternatives;
+mutations (letter on the second prefix, two letters, letter plus numbers, three positions, letter on `tolueno`, non-alphabetical);
+e2e: tiles `m` `cloro` `etil` `benceno` draw it with the `alternative` verdict. Update what I-53b wrote for the old rule: the Ayuda
+rings line (`index.html` `#help-name-to-drawing-rings`, «no con … dos grupos distintos en «benceno» (1-bromo-4-clorobenceno)»), its
+test in `tests/unit/reverse-templates.test.js` («the examples the Ayuda … cites»), `docs/teacher-review-v4.md` (new strings), the
+CLAUDE.md «Next queued» sentence (I-54 done) and the scope words it invalidates. **design.md is still the user's uncommitted file**
+(`git status --short docs/design.md` → ` M`): if so, do not edit it — write the §15 R-4 row / o/m/p notes / §15.9 pending-review
+edits in `docs/progress-archive/i-54b.md` "Intended design.md edits" (the §14 ones are in `i-54a.md`). If Q16
+(`docs/open-questions.md`) has been answered by then, follow the answer. Commit by explicit paths. After I-54b the plan is finished
+(DONE once the inbox is empty).
 
 - **v4 is done** (I-47a…I-53b). Open user questions: `docs/open-questions.md` (Q1…Q15); Spanish wording pending teacher review:
   `docs/teacher-review-v4.md`. Deploying (`npm run deploy`) stays a manual user step.
@@ -252,17 +262,24 @@ I-53b ones. Commit by explicit paths. After I-54 the plan is finished (DONE once
   (AMIDE_NULLS gone); tests `tests/unit/reverse-diagnose-amides.test.js`, amide case in `diagnosis.spec.js`.
 - Closed loop over every generator (I-53a): `tests/unit/reverse-closed-loop.test.js` (27 generators of
   `scripts/oracle/generate.mjs`, `names.tsv`, REACH molecules for the open questions; one asserted PINS table).
-- v4 wrap-up docs (I-53b): `docs/teacher-review-v4.md` (v4 Spanish strings, ids T/V/E/S/D/A/C), `docs/open-questions.md` (Q1…Q15),
+- v4 wrap-up docs (I-53b): `docs/teacher-review-v4.md` (v4 Spanish strings, ids T/V/E/S/D/A/C), `docs/open-questions.md` (Q1…Q16),
   Ayuda `#help-name-to-drawing-scope` («Qué queda fuera») in `index.html`.
+- o/m/p for two different prefixes (I-54a): `positionalParts()` / `hasTwoDifferentPrefixes()` / `benzeneAlternatives()` in
+  `src/naming/aromatic.js`, `twoPrefixLetterSentence()` in `src/explain/explain.js`, Ayuda `#help-omp`, oracle
+  `isKnownDisagreement()` / `isSubstitutedChainReading()` in `scripts/oracle/run.mjs`; reverse pins via `pendingLetterForms()` in
+  `tests/unit/reverse-words.js` and the closed loop's PINS.
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
 - I-51c1 … I-52d4: see `docs/progress-archive/i-51c1.md` … `i-52d4.md`.
 - I-53a: see `docs/progress-archive/i-53a.md`.
-- I-53b (orchestrator, after the worker): `npm test` exit 0 (2480 pass, 0 fail, 79 s) · `npm run check` exit 0 (226 files) ·
-  `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (631 passed). `git diff --stat -- src/naming src/reverse src/model
-  scripts` empty; `docs/design.md` not edited (mtime 2026-10-14 17:11).
+- I-53b: see `docs/progress-archive/i-53b.md`.
+- I-54a (orchestrator): after the worker `npm test` exit 0 (2491 pass, 80 s) · `npm run check` exit 0 (226 files) · `npm run build`
+  exit 0 · `npm run e2e -- --reporter=dot` 630 passed + 1 known flake (`diagnosis.spec.js:1037` keyboard, [source]), re-run alone
+  40/40 pass; after the review fix `npm test` exit 0 (2492 pass) · `npm run check` exit 0. `git diff --stat -- src/reverse src/ui`
+  empty; `docs/design.md` not edited (mtime 2026-10-14 17:11). Oracle (worker, Java present): exit 1 by design, every failure the
+  known class — seed 1 ×1000 16/16, seed 42 ×200 5/5.
 
 ## Open risks / deviations
 
@@ -327,9 +344,14 @@ I-53b ones. Commit by explicit paths. After I-54 the plan is finished (DONE once
   whoever applies them once the user commits design.md (open question Q1).
   User action wanted: commit `docs/design.md` and `docs/reviews/v4-plan-codex.md`.
 
+- I-54a: `npm run oracle` now **exits 1 on every seed** — OPSIN reads the user-chosen `p-clorometilbenceno` as
+  `(clorometil)benceno` (halogen or alkoxy before an unbracketed chain prefix); failures labelled «known» only when OPSIN's
+  structure is that isomer (`isKnownDisagreement()`, `scripts/oracle/README.md`). Open user question Q16. The reverse reader
+  still refuses the new letter forms until I-54b (pinned, asserted).
+
 - Bundler regex-literal detection is heuristic; duplicate `export *` names: first wins (`i-1.md`).
 
 ## Git state
 
-- I-53a `0db667d`, pushed. I-53b committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
+- I-53b `d68c1e2`, pushed. I-54a committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
   never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

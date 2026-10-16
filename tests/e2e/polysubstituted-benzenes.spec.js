@@ -132,16 +132,23 @@ test('o-xylene in either Kekulé drawing: name, xileno and orto forms, numbering
   expect(errors).toEqual([]);
 }); // End of test 'o-xylene in either Kekulé drawing…'
 
-test('two different prefixes: alphabetical tie-break, the meta note but no m- form', async ({ page }) => {
+test('two different prefixes: alphabetical tie-break, the meta note and the m- form under «Otras formas válidas» (I-54a)', async ({ page }) => {
   const errors = await openApp(page);
   // Atoms 3–8 are the ring: the ethyl on atom 3, the chlorine (atom 9) on atom 7.
   await loadSmiles(page, 'CCC1=CC=CC(Cl)=C1');
   await expectName(page, '1-cloro-3-etilbenceno');
-  expect(await alternatives(page)).toEqual([]);
+  // The old letter form of two different groups (design.md §14.4, I-54a), with the orto/meta/para label.
+  await expect(page.locator('#alternatives .alternatives-title')).toHaveText('Otras formas válidas');
+  const alts = await alternatives(page);
+  expect(alts).toHaveLength(1);
+  expect(alts[0]).toContain('m-cloroetilbenceno');
+  expect(alts[0]).toContain('forma antigua con orto/meta/para');
   const text = await openStep(page, 'Numera el anillo');
   expect(text).toContain('el número más bajo es para el sustituyente que se escribe primero');
   expect(text).toContain('opción A: 1, 3; opción B: 3, 1');
   expect(text).toContain('«cloro» y «etil» están en posición meta (1,3).');
+  expect(text).toContain('este compuesto se llamaba «m-cloroetilbenceno»');
+  expect(text).toContain('«m-cloroetilbenceno» se puede leer como «(cloroetil)benceno»');
   const locants = await canvasLocants(page);
   expect([locants[7], locants[3]]).toEqual(['1', '3']);
   expect(errors).toEqual([]);
@@ -151,8 +158,8 @@ for (const c of [
   { smiles: 'CC1=CC(C)=CC(C)=C1', name: '1,3,5-trimetilbenceno', present: ['mesitileno'], absent: ['m-'] },
   { smiles: 'CCC1=CC(C)=C(C)C=C1', name: '4-etil-1,2-dimetilbenceno', present: [], absent: ['xileno', 'o-'] },
   { smiles: 'ClC1=CC=C(Cl)C=C1', name: '1,4-diclorobenceno', present: ['p-diclorobenceno'], absent: ['xileno'] },
-  { smiles: 'COC1=CC=C(C)C=C1', name: '1-metil-4-metoxibenceno', present: [], absent: ['anisol', 'p-'] },
-  { smiles: 'CC1=CC=CC=C1I', name: '1-metil-2-yodobenceno', present: [], absent: ['o-'] },
+  { smiles: 'COC1=CC=C(C)C=C1', name: '1-metil-4-metoxibenceno', present: ['p-metil(metoxi)benceno'], absent: ['anisol'] },
+  { smiles: 'CC1=CC=CC=C1I', name: '1-metil-2-yodobenceno', present: ['o-metilyodobenceno'], absent: [] },
   { smiles: 'CC(C)C1=CC=C(C(C)C)C=C1', name: '1,4-diisopropilbenceno', present: ['1,4-di(propan-2-il)benceno', 'p-diisopropilbenceno'], absent: [] },
   { smiles: 'ClC1=C(Cl)C(Cl)=C(Cl)C(Cl)=C1Cl', name: 'hexaclorobenceno', present: [], absent: [] },
 ]) {
