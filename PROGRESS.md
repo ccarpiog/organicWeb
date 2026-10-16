@@ -72,7 +72,9 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-52d2 | v4 R-6d2 Amide prefixes `carbamoil` (`(metilcarbamoil)`, `[etil(metil)carbamoil]`, `bis(metilcarbamoil)`) and acylamino (`(acetilamino)`, `[acetil(metil)amino]`), the rows waiting for them, e2e | same, "R-6d" | done — `docs/progress-archive/i-52d2.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52d2.md` |
 | I-52d3 | v4 R-6d3 Retained amide names (`formamida`, `acetamida`, `N-metilacetamida`, `2-fenilacetamida`, `ftalamida` …), Ayuda amide line, e2e | same, "R-6d" | done — `docs/progress-archive/i-52d3.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-52d3.md` |
 | I-52d4 | v4 R-6d4 Amide diagnosis messages (fill the «Amides» nulls of I-52d1…d3 and the `1-aminobutanal` → «butanamida» null), e2e | same, "R-6d" | done — `docs/progress-archive/i-52d4.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-52d4.md` |
-| I-53 | v4 R-7 Wrap-up | same, "R-7" | queued | — | — |
+| I-53 | v4 R-7 Wrap-up | same, "R-7" | split into I-53a, I-53b | — | — |
+| I-53a | v4 R-7a Closed loop over every generator (27 generators + `names.tsv`, every forward form read back, pins asserted) | same, "R-7" | done — `docs/progress-archive/i-53a.md` | high / opus | Codex ship, 0 findings — `docs/reviews/I-53a.md` |
+| I-53b | v4 R-7b Ayuda, README, CLAUDE.md scope line, teacher-review list, open user questions in one place, design.md cleanup notes | same, "R-7" | queued — next | — | — |
 | I-54 | o/m/p letters for two different prefixes on plain `benceno`, drawing → name and name → drawing (user decision 2026-10-15, reverses design §14.4) | `autoclaude/processed/240-omp-two-different-groups.md` | queued — after I-53 (user: «after v4») | — | — |
 
 v1 (I-1…I-12), user feedback (I-13…I-20), v2 (I-21…I-41c, plan in `docs/design.md` §13) and v3
@@ -96,17 +98,17 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
 
 ## Next action
 
-Select I-53 (v4 R-7 wrap-up; design §15.8 row R-7: «closed loop over every generator; Ayuda; README; CLAUDE.md scope line;
-design.md cleanup; the list of new wording pending teacher review»). R-6 is done (I-52a1…I-52d4), so every v4 family is read and
-diagnosed. Run the reverse closed loop (name → drawing → name) over every generator the earlier phases' round trips use and fix or pin
-what fails; bring the Ayuda «Del nombre al dibujo» section and README up to date with the families v4 reads; shorten CLAUDE.md's
-v4 scope sentence (now very long) to a present-state summary; write one teacher-review list (`docs/teacher-review-v4.md`, or the name
-design §15 asks for) collecting every v4 Spanish draft listed under "New Spanish drafts" in `docs/progress-archive/i-47a.md` …
-`i-52d4.md`, and list the open user questions from *Open risks* in one place. **design.md cleanup is blocked**: `docs/design.md` is
-the user's uncommitted file (see *Open risks*) — never edit or commit it; record the intended §15.8 Status / cleanup edits in the
-archive and flag them for the user, unless the user has committed it by then (`git status --short docs/design.md` empty). Risk
-routine to high (split into I-53a/b if needed); worker opus. Commit by explicit paths. Then I-54 (o/m/p for two different prefixes on
-`benceno`, `autoclaude/processed/240-omp-two-different-groups.md`).
+Select I-53b (v4 R-7b, the second half of the wrap-up; design §15.8 row R-7: «Ayuda; README; CLAUDE.md scope line; design.md cleanup;
+the list of new wording pending teacher review»). I-53a is done: the closed loop over all 27 generators and `names.tsv` reads every
+forward form back (3 pins: `alcohol bencílico`, `ditert-butil éter`, `tridecilamina`; `docs/progress-archive/i-53a.md`). I-53b: bring the
+Ayuda «Del nombre al dibujo» section (`index.html` / `src/ui/` help, ids `#help-name-to-drawing-*`) and README up to date with every
+family v4 reads; shorten CLAUDE.md's v4 scope sentence (now very long) to a present-state summary; write one teacher-review list
+`docs/teacher-review-v4.md` collecting every v4 Spanish draft listed under "New Spanish drafts" in `docs/progress-archive/i-47a.md` …
+`i-53a.md`, and one place listing the open user questions from *Open risks* (plus `i-53a.md` "Open questions"). **design.md cleanup is
+blocked**: `docs/design.md` is the user's uncommitted file — never edit or commit it; record the intended §15.8 Status / cleanup edits in
+`docs/progress-archive/i-53b.md` and flag them for the user, unless the user has committed it by then (`git status --short
+docs/design.md` empty). Risk routine; worker opus. Commit by explicit paths. Then I-54 (o/m/p for two different prefixes on `benceno`,
+`autoclaude/processed/240-omp-two-different-groups.md`).
 
 - **Builds on** every v4 phase (`docs/progress-archive/i-47a.md` … `i-52d4.md`; the "Key paths" below); the forward naming engine
   names every case (v2 §13, v3 §14).
@@ -251,15 +253,16 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   Amide diagnoses (I-52d4): the amide in NAMED_GROUPS (shared CARBONYL_* / N0 / locant codes, «grupo(s) amida»), new codes
   AMIDE_GROUP / AMIDE_CARBON / AMIDE_IN_CHAIN / AMIDE_PREFIX_NAME, `ringChainCounts()` for CARBONYL_PARENT on benzene in `diagnose.js`
   (AMIDE_NULLS gone); tests `tests/unit/reverse-diagnose-amides.test.js`, amide case in `diagnosis.spec.js`.
+- Closed loop over every generator (I-53a): `tests/unit/reverse-closed-loop.test.js` (27 generators of
+  `scripts/oracle/generate.mjs`, `names.tsv`, REACH molecules for the open questions; one asserted PINS table).
 
 ## Verification (last phases)
 
 - Older phases: see each `docs/progress-archive/i-*.md`.
-- I-51c1 … I-52d3: see `docs/progress-archive/i-51c1.md` … `i-52d3.md`.
-- I-52d4 (orchestrator, after the worker and again after the review fix): `npm test` exit 0 (2438 → 2447 → 2448 pass, 0 fail) ·
-  `npm run check` exit 0 (225 files) · `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (627 → 629 passed, source +
-  dist, both runs). `git diff --stat -- src/naming src/explain` empty; `docs/design.md` not edited (mtime 2026-10-14). Worker sweep:
-  43 000 random names, 6 559 `otherName`, 6 556 diagnosed, every suggestion the engine's name.
+- I-51c1 … I-52d4: see `docs/progress-archive/i-51c1.md` … `i-52d4.md`.
+- I-53a (orchestrator, after the worker): `npm test` exit 0 (2448 → 2479 pass, 0 fail, 79 s, was 52 s) · `npm run check` exit 0 (226
+  files) · `npm run build` exit 0 · `npm run e2e -- --reporter=dot` exit 0 (629 passed). `git diff --stat -- src scripts` empty;
+  `docs/design.md` not edited (mtime 2026-10-14). Worker's ad hoc sweep: 334 927 molecules / 412 491 names, only 5 × `alcohol bencílico`.
 
 ## Open risks / deviations
 
@@ -374,6 +377,12 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
   (`src/explain/` unchanged); the earlier families' hints still cite refused forms (`(4-cianofenil)` …); SUBSTITUTED_TEMPLATE's amide
   wording, tooltips and the Ayuda «Amidas» line; pre-existing O-bound ALPHABETICAL_ORDER case (`i-52d2.md`).
 
+- I-53a (closed loop over every generator; details in `docs/progress-archive/i-53a.md`): no new forward-engine bug, no `src/` change; 3
+  asserted pins — `alcohol bencílico` (no tile; read it in a later phase or keep it unread? — user question), `ditert-butil éter`
+  (forward, open question I-51b1/I-51b2 (1)), `tridecilamina` (forward, I-52c3 (2)). The reverse engine follows four forward forms
+  that are open questions (`bis-tert-butoxi`, `bis-(tert-butoxicarbonil)`, `butiltert-butilamina`, «y» before «i»): changing one means a
+  matching reverse change, which the loop will show. `npm test` wall time 52 s → 79 s (lower `count` in `GENERATORS` if it matters).
+
 - **design.md §15 uncommitted (user's working tree).** The v4 plan (§15, ~370 added lines) and the
   Codex plan review `docs/reviews/v4-plan-codex.md` exist only as the user's uncommitted changes
   (the runner's preflight-dirty list, 2026-10-14). Per the autoclaude rules they are the user's:
@@ -386,5 +395,5 @@ Deploying (`npm run deploy`) stays a manual user step; Ayuda/example wording awa
 
 ## Git state
 
-- I-52d3 `9858755`, pushed. I-52d4 committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
+- I-52d4 `d062f70`, pushed. I-53a committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
   never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.

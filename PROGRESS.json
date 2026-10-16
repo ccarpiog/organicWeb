@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-16T04:39:59Z",
+  "updated": "2026-10-16T05:10:33Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -1018,8 +1018,24 @@
     {
       "id": "I-53",
       "title": "v4 R-7 Wrap-up",
+      "status": "in_progress",
+      "summary": "Split into I-53a (closed loop over every generator) and I-53b (Ayuda, README, CLAUDE.md, teacher-review list)."
+    },
+    {
+      "id": "I-53a",
+      "title": "v4 R-7a Closed loop over every generator",
+      "status": "done",
+      "risk": "high",
+      "summary": "Reads back every name the forward engine writes for all 27 molecule generators and the fixtures; three names stay pinned.",
+      "review": "Codex ship, 0 findings — docs/reviews/I-53a.md",
+      "narrative": "docs/progress-archive/i-53a.md"
+    },
+    {
+      "id": "I-53b",
+      "title": "v4 R-7b Ayuda, README, CLAUDE.md, teacher-review and open-questions lists",
       "status": "queued",
-      "summary": "Runs the closed loop over every generator and finishes help, README, CLAUDE.md and the wording list for teacher review."
+      "risk": "routine",
+      "summary": "Brings help, README and CLAUDE.md up to date with v4 and lists every Spanish draft and open user question in one place."
     },
     {
       "id": "I-54",
