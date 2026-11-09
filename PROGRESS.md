@@ -78,6 +78,7 @@ order, each queued as an `I-n` phase when triaged. Spec: `docs/design.md`.
 | I-54 | o/m/p letters for two different prefixes on plain `benceno`, drawing → name and name → drawing (user decision 2026-10-15, reverses design §14.4) | `autoclaude/processed/240-omp-two-different-groups.md` | done — split into I-54a, I-54b | — | — |
 | I-54a | Drawing → name: `positionalParts()` letter form (`m-cloroetilbenceno`, one per prefix style, crowded enclosure), «Numera el anillo» sentence, Ayuda `#help-omp`, fixtures, oracle known disagreement, reverse tests pinned for I-54b | same, "Drawing → name" | done — `docs/progress-archive/i-54a.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-54a.md` |
 | I-54b | Name → drawing: `checkLetters()` lifts the `different` refusal, letter supplies both positions, verdicts/diagnosis, Ayuda rings line, flip the I-54a pins, e2e | same, "Name → drawing" | done — `docs/progress-archive/i-54b.md` | high / opus | Codex ship-with-fixes, fixed — `docs/reviews/I-54b.md` |
+| I-55 | «¿Cómo se dibuja?»: a clear message when a look-alike multiplier tile (`hexa`, `octa`…) stands where a root goes (after `ciclo`, where a parent chain starts), multiplier marked, error first, recovery | `autoclaude/processed/250-multiplier-as-root-message.md` | queued (after I-54b, the plan's last) | — | — |
 
 v1 (I-1…I-12), user feedback (I-13…I-20), v2 (I-21…I-41c, plan in `docs/design.md` §13) and v3
 (I-42…I-46, polysubstituted benzenes, user-confirmed 2026-10-13, design §14) are all done; phases
@@ -97,11 +98,13 @@ split further if a phase does not fit one worker. Spec: `autoclaude/processed/23
   both directions) → I-54, queued after I-53 as the item asks. It also asks to record the decision change
   in design.md §14.4/§14.1/§15 — design.md is the user's uncommitted file (see *Open risks*), so I-54
   must either wait for the user's commit or record the change in its archive and flag it.
+  Pickup 13 (2026-11-09): `250-multiplier-as-root-message.md` (user request: `hexa`/`octa` from «¿Cuántos?» used as a
+  root gets a message that names the multiplier and the root) → I-55, queued after I-54b.
 
 ## Next action
 
-**The plan is finished** (I-1…I-54b all done, inbox empty at the I-54b boundary). Nothing is queued. Before any new work:
-poll the inbox (`~/.claude/scripts/autoclaude-inbox.sh list`); a new item is triaged into a new `I-n` phase. Waiting on the
+**Run I-55** (queued from inbox pickup 13, spec `autoclaude/processed/250-multiplier-as-root-message.md`). Then poll the inbox
+(`~/.claude/scripts/autoclaude-inbox.sh list`); a new item is triaged into a new `I-n` phase. Waiting on the
 user (no agent action possible): commit `docs/design.md` + `docs/reviews/v4-plan-codex.md` (Q1) — then apply the intended
 design.md edits recorded in `docs/progress-archive/i-53b.md`, `i-54a.md` and `i-54b.md` ("Intended design.md edits"); answer
 Q16 (`p-clorometilbenceno` vs OPSIN) and the other questions in `docs/open-questions.md`; teacher review of

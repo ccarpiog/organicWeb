@@ -27,3 +27,4 @@ up. The item itself is in this directory, unchanged.
 - 2026-10-13 19:01 · 220-polysubstituted-benzenes.md · queued · phases I-42…I-46 — v3: polysubstituted benzenes (8 phases, user-confirmed scope)
 - 2026-10-14 17:15 · 230-name-to-structure.md · queued · phases I-47a…I-53 — v4: from the name to the drawing (16 phases R-1a…R-7, user-confirmed scope)
 - 2026-10-15 10:04 · 240-omp-two-different-groups.md · queued · phase I-54 — o/m/p letters for two different prefixes on benceno, both directions (after I-53)
+- 2026-11-09 09:05 · 250-multiplier-as-root-message.md · queued · phase I-55 — multiplier tile where a root goes: clear message in «¿Cómo se dibuja?»
