@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-11-09T09:43:32Z",
+  "updated": "2026-11-09T09:48:00Z",
   "stamped_since": "2026-11-09T09:05:39Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
@@ -839,8 +839,9 @@
     {
       "id": "I-52a2",
       "title": "v4 R-6a2 Retained ester names, ester prefixes and Ayuda ester line",
-      "status": "in_progress",
-      "summary": "Split into I-52a2a (retained formiato and acetato names, Ayuda ester line) and I-52a2b (aciloxi and alcoxicarbonil ester prefixes)."
+      "status": "done",
+      "summary": "Split into I-52a2a (retained formiato and acetato names, Ayuda ester line) and I-52a2b (aciloxi and alcoxicarbonil ester prefixes), both done.",
+      "status_since": "2026-11-09T09:48:00Z"
     },
     {
       "id": "I-52a2a",

@@ -361,5 +361,9 @@ Q16 (`p-clorometilbenceno` vs OPSIN) and the other questions in `docs/open-quest
 
 ## Git state
 
-- I-54b `8f1af5a`, pushed. Inbox triage `fb454b4`. I-55 committed and pushed right after this checkpoint (see `git log`). User's uncommitted paths,
+- I-54b `8f1af5a`, pushed. Inbox triage `fb454b4`. I-55 `4350a66`, pushed. User's uncommitted paths,
   never ours to commit: `docs/design.md`, `docs/reviews/v4-plan-codex.md`, `.DS_Store`.
+- Confirm-done pass (2026-11-09, `/autoclaude-opus confirm-done`): I-54a, I-54b, I-55 re-verified on `4350a66` — `npm run check`
+  exit 0 (228 files) · `npm test` 2516 pass / 0 fail · `npm run build` exit 0 · `npm run e2e` 635 passed; reviews and archives
+  present; inbox count 0; tree clean apart from the user's paths. `PROGRESS.json` row I-52a2 (split parent) corrected from a stale
+  `in_progress` to `done` (both children done).
