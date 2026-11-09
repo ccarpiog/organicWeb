@@ -8,7 +8,9 @@
  * molecule the app names on its ring (another name, with the ring
  * diagnosis of phase I-50d); a ring too small and
  * two rings bonded together stay in the dialog with their message, the
- * canvas untouched. Runs on the dev server and on dist (playwright.config.js).
+ * canvas untouched; the multiplier `hexa` where the ring's root goes (phase
+ * I-55, MULT_AS_ROOT) stays in the dialog with its own message, only the
+ * `hexa` tile marked. Runs on the dev server and on dist (playwright.config.js).
  */
 
 import { test, expect } from '@playwright/test';
@@ -191,3 +193,30 @@ test('rings the app cannot draw stay in the dialog: a ring too small (tiles mark
   expect((await moleculeJSON(page)).atoms).toHaveLength(0);
   expect(errors).toEqual([]);
 }); // End of test 'rings the app cannot draw stay in the dialog…'
+
+test('a multiplier where the ring\'s root goes: `4 met il ciclo hexa 1 eno` names the root «hex», only `hexa` marked', async ({ page }) => {
+  const errors = await openApp(page);
+  const dialog = await drawName(page, '4', 'met', 'il', 'ciclo', 'hexa', '1', 'eno');
+  // The name line keeps the student's tiles; «Dibujar» draws nothing and says what `hexa` is and which root was meant.
+  await expect(page.locator('#name-builder-name')).toHaveText('4-metilciclohexa-1-eno');
+  const message = page.locator('#name-builder-message');
+  await expect(message).toHaveText('«hexa», de la fila «¿Cuántos?», dice cuántos grupos iguales hay (hexametil). La raíz de seis '
+    + 'carbonos es «hex», de la fila «Raíces»: ciclohex-1-eno. La «a» de ciclohexa-1,3-dieno la pone la aplicación sola delante '
+    + 'de «di».');
+  await expect(message).toHaveClass(/nb-message--error/);
+  expect(await invalidTiles(page)).toEqual([4]);
+  await expect(page.locator('#name-builder-name [aria-invalid="true"]')).toHaveText('hexa');
+  await expect(dialog).toBeVisible();
+  expect((await moleculeJSON(page)).atoms).toHaveLength(0);
+  // With the root «hex» from «Raíces» in its place, the name is right and the molecule is drawn.
+  await dialog.getByRole('button', { name: 'Borrar todo' }).click();
+  const rows = page.locator('#name-builder-rows');
+  for (const text of ['4', 'met', 'il', 'ciclo', 'hex', '1', 'eno']) {
+    await rows.getByRole('button', { name: text, exact: true }).click();
+  }
+  await dialog.getByRole('button', { name: 'Dibujar' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.locator('#verdict')).toHaveAttribute('data-kind', 'correct');
+  await expect(page.locator('#result-name')).toHaveText('4-metilciclohex-1-eno');
+  expect(errors).toEqual([]);
+}); // End of test 'a multiplier where the ring's root goes…'

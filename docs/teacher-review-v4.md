@@ -64,6 +64,26 @@ meta y para with two different groups (O-).
   multiplier `octa` look alike in the name [I-48a; «Anillos» I-50a,
   «Nombres tradicionales» I-50c, «Grupos» I-51a1; order and hints after a
   user report (`octa` picked as a root) · `name-builder.js` `ROWS`]
+- T-8a A «¿Cuántos?» tile where a root goes (**MULT_AS_ROOT**, a structural
+  error: nothing is drawn and only the multiplier tile is marked) —
+  ««hexa», de la fila «¿Cuántos?», dice cuántos grupos iguales hay
+  (hexametil). La raíz de seis carbonos es «hex», de la fila «Raíces»:
+  ciclohex-1-eno. La «a» de ciclohexa-1,3-dieno la pone la aplicación sola
+  delante de «di».» (tiles `4 met il ciclo hexa 1 eno`). The multiplier, its
+  number and the root follow the student's tile, from «penta» / «pent» to
+  «triaconta» / «triacont», and after «ciclo» also «tri» / «prop» and
+  «tetra» / «but» (a ring of three or four carbons); from eleven on the
+  number is in digits («La raíz de 11 carbonos es «undec»…»). The name after
+  the colon is the student's own chain with the root («octano» for `octa
+  ano`, «hexil», «hexan-2-il», «hexilo»), or the root with «ano»
+  («ciclohexano») when that chain is unfinished or has another mistake. The
+  last sentence only when the chain has an «eno» or «ino» ending and the
+  multiplier is the root plus «a»: for `octa ano` the message ends at
+  «…: octano.». For these tiles it replaces RING_ROOT (E-10) after «ciclo»
+  and the «di», «tri»… hint (E-35) where a chain or a branch starts, also
+  after a branch's numbers or its own multiplier (`2 hexa il`, `di hexa il
+  éter`, which keeps its «di»: «dihexil éter»). [I-55, after a
+  user report (`hexa` taken for the root) · parse.js `addMultAsRoot()`]
 - T-9 The button that shows a row's other tiles — «más» / «menos» (read as
   «más (Números)») [I-48a · `MORE_LABEL`, `LESS_LABEL`]
 - T-10 The two compound-branch controls of the «Ramas» row — «empieza rama
@@ -231,7 +251,7 @@ parts, one rendered example is quoted and the other wordings follow as «…» f
 - E-7 **LOCANT_COUNT** (two numbers before «il») — «Una rama se une a la cadena por un solo carbono: delante de «il» va un solo número.» The ending quoted is the student's («iliden», «oil»). In an ester's O-bound group: «El grupo unido al oxígeno se une a él por un solo carbono: delante de «ilo» va un solo número.» (I-52a1). [I-47a, I-52a1 · parse.js]
 - E-8 **LOCANT_COUNT** (xileno) — «Con «xileno» van dos números, los de sus dos metilos (1,2-xileno), o una letra (o-xileno).» [I-50c · parse.js]
 - E-9 **LEGACY** — «Con la forma antigua no sé a qué enlace va cada número: escríbelos detrás de la raíz (hex-1-en-3-ino).» (Old-style numbers before the root that cannot be assigned to the bonds: «1,3-hexenino», or a count that does not match.) [I-47a · parse.js]
-- E-10 **RING_ROOT** — «Después de «ciclo» va una raíz que dice cuántos carbonos tiene el anillo: ciclopropano, ciclohexano, ciclohexil…» [I-50a · parse.js]
+- E-10 **RING_ROOT** — «Después de «ciclo» va una raíz que dice cuántos carbonos tiene el anillo: ciclopropano, ciclohexano, ciclohexil…» (since I-55 a multiplier after «ciclo», `ciclo hexa`, gets T-8a instead; «ciclo di» and «ciclo ano» keep this one) [I-50a · parse.js]
 - E-11 **RING_SIZE** — «Un anillo tiene por lo menos 3 carbonos: el más pequeño es el ciclopropano.» («cicloetano», «ciclometano») [I-50a · parse.js]
 - E-12 **BENZENE_BONDS** — «El benceno no lleva números propios: sus enlaces dobles no se numeran. Los números van delante de cada rama (1,2-dimetilbenceno).» («1,2-benceno», «benceno-1,3,5-trieno») [I-50b · parse.js]
 - E-13 **TEMPLATE_LOCANTS** (numbers or a letter on a word that places its own groups) — ««tolueno» ya dice dónde va su metilo, en el carbono 1: no lleva números ni letras propios.» The middle part names the word's own groups and where they are: «estireno» «va su etenilo, en el carbono 1», «mesitileno» «van sus tres metilos, en los carbonos 1, 3 y 5» (I-50c); «fenol» «va su grupo OH» (I-51a2); «catecol», «pirocatecol» «van sus dos grupos OH, en los carbonos 1 y 2», «resorcinol» «…1 y 3», «hidroquinona» «…1 y 4» (I-51a3a); «anisol» «va su grupo metoxi» (I-51b1); «benzaldehído» «va su grupo CHO» (I-51c1); «formaldehído», «acetaldehído» «va su grupo CHO, en el carbono 1», «acetona» «va su grupo C=O, en el carbono 2», «acetofenona» «van su grupo C=O y su fenilo, en el carbono 1», «fenilacetaldehído» «van su grupo CHO y su fenilo, en los carbonos 1 y 2», «ftalaldehído» «van sus dos grupos CHO, en los carbonos 1 y 2» («isoftalaldehído» 1 y 3, «tereftalaldehído» 1 y 4) (I-51c3a); «ácido benzoico» «va su grupo COOH» (I-51d1); «ácido fórmico», «ácido acético» «va su grupo COOH, en el carbono 1», «ácido oxálico» «van sus dos grupos COOH, en los carbonos 1 y 2», «ácido fenilacético» «van su grupo COOH y su fenilo, en los carbonos 1 y 2», «ácido ftálico» («isoftálico», «tereftálico») (I-51d2); «benzoato» «va su grupo COO» (I-52a1); «formiato», «acetato» «va su grupo COO», «fenilacetato» «van su grupo COO y su fenilo, en los carbonos 1 y 2» (I-52a2a); «benzonitrilo» «va su grupo C≡N» (I-52b1); «acetonitrilo», «fenilacetonitrilo», «ftalonitrilo» «van sus dos grupos C≡N, en los carbonos 1 y 2» (I-52b2); «anilina» «va su grupo NH₂», «bencilamina» «van su grupo NH₂ y su fenilo, en el carbono 1» (I-52c3); «benzamida» «va su grupo amida» (I-52d1); «formamida», «acetamida» «va su grupo amida», «ftalamida» «van sus dos grupos amida, en los carbonos 1 y 2» (I-52d3). [I-50c, I-51a2, I-51a3a, I-51b1, I-51c1, I-51c3a, I-51d1, I-51d2, I-52a1, I-52a2a, I-52b1, I-52b2, I-52c3, I-52d1, I-52d3 · parse.js]
@@ -263,7 +283,7 @@ Every TILE_ORDER message starts «Esta ficha no puede ir aquí: » when it marks
 **Hydrocarbons**
 
 - E-34 **TILE_ORDER · numbers with no branch or ending after them** — «Esta ficha no puede ir aquí: los números van delante de una rama (2-metil) o de una terminación (but-2-eno).» [I-47a · parse.js]
-- E-35 **TILE_ORDER · «di», «tri»… with nothing to multiply** — «Esta ficha no puede ir aquí: «di», «tri»… van delante de una rama (dimetil) o de una terminación (buta-1,3-dieno).» [I-47a · parse.js]
+- E-35 **TILE_ORDER · «di», «tri»… with nothing to multiply** — «Esta ficha no puede ir aquí: «di», «tri»… van delante de una rama (dimetil) o de una terminación (buta-1,3-dieno).» (since I-55 «penta»… «triaconta» before an ending, a number or «il», `octa ano`, get T-8a instead) [I-47a · parse.js]
 - E-36 **TILE_ORDER · «bis», «tris»… before a simple branch** — «Esta ficha no puede ir aquí: «bis», «tris»… van delante de una rama compuesta: bis(2-metilpropil).» [I-47a · parse.js]
 - E-37 **TILE_ORDER · «ano», «eno», «ino» without a root** — «Esta ficha no puede ir aquí: «ano», «eno» e «ino» van detrás de una raíz (butano, but-2-eno).» [I-47a · parse.js]
 - E-38 **TILE_ORDER · «il», «iliden» without a root** — «Esta ficha no puede ir aquí: «il» e «iliden» van detrás de la raíz de una rama (metil, metiliden).» [I-47a · parse.js]

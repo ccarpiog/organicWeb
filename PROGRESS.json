@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "updated": "2026-10-16T07:15:20Z",
+  "updated": "2026-11-09T09:43:32Z",
+  "stamped_since": "2026-11-09T09:05:39Z",
   "plan": "PLAN.md",
   "goal": "Build a Spanish ESO/Bachillerato web app that names drawn organic molecules by IUPAC 2013 rules and, in v4, draws a molecule from a name built from tiles.",
   "phases": [
@@ -1062,6 +1063,18 @@
       "summary": "Lets the name builder read and judge o/m/p letter names of benzenes with two different groups, such as m-cloroetilbenceno.",
       "review": "docs/reviews/I-54b.md",
       "narrative": "docs/progress-archive/i-54b.md"
+    },
+    {
+      "id": "I-55",
+      "title": "Multiplier tile where a root goes: clear message in the name builder",
+      "status": "done",
+      "risk": "high",
+      "summary": "Tells a student who picks a multiplier tile like hexa where the root hex goes that it is a multiplier and names the right root.",
+      "review": "Codex ship-with-fixes, fixed — docs/reviews/I-55.md",
+      "narrative": "docs/progress-archive/i-55.md",
+      "added": "2026-11-09T09:05:39Z",
+      "started": "2026-11-09T09:05:39Z",
+      "status_since": "2026-11-09T09:43:32Z"
     }
   ]
 }

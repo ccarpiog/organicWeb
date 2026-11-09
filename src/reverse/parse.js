@@ -492,7 +492,8 @@
  *            number|null, segments: segment[], fvLocants: number[], fv:
  *            number|null, oxi: number|null, carbonil?: number}` (`ring` the `ciclo` tile of a
  *            ring, else null; `root` null only after a `ciclo` with no root,
- *            RING_ROOT; a branch's chain has `fv` — `il` / `iliden`, or the
+ *            RING_ROOT, and a multiplier tile read as the root of its
+ *            number, MULT_AS_ROOT, I-55; a branch's chain has `fv` — `il` / `iliden`, or the
  *            acyl ending `oil` / `carbonil`, R-5c2, or the ending `ilo` of an
  *            ester's O-bound group, R-6a1 —; the parent's has none;
  *            `oxi` the alkoxy ending after `fv`, R-5b; `carbonil`, only when
@@ -551,7 +552,11 @@
  * `éter`), and for the acids (R-5d1) ACID_WORD (`ácido` without an acid
  * suffix, or an acid suffix without `ácido`), and for the esters (R-6a1)
  * ESTER_GROUPS (not one O-bound group per –COO– of the suffix) and
- * ESTER_SUFFIX (an O-bound group after a parent with no ester suffix).
+ * ESTER_SUFFIX (an O-bound group after a parent with no ester suffix), and
+ * (I-55) MULT_AS_ROOT (a multiplier tile where a root goes: `ciclo hexa 1
+ * eno`, `octa ano`; the multiplier is then read as the root of its number,
+ * so the rest of the name parses as the student meant it; it comes before
+ * the errors of a larger unit that holds its tile).
  * The structural codes (LOCANT_RANGE, BOND_RANGE, SAME_BOND, VALENCE,
  * TOO_BIG) need the chemistry and belong to R-1b. The Spanish messages are
  * drafts pending teacher review (design.md §15, last paragraph); their
@@ -562,7 +567,7 @@ import {
   stem, multiplier, compoundMultiplier, ENDINGS, FREE_VALENCE_SUFFIXES, ENCLOSING_MARKS, CONNECTING_VOWEL,
   MAX_MULTIPLIER, RING_PREFIX, BENZENE_NAME, RETAINED_PREFIXES, POSITIONAL_LETTERS, GROUP_SUFFIXES, GROUP_PREFIXES,
   HALOGEN_PREFIXES, ALKOXY_ENDING, ETHER_CLASS_WORD, RING_GROUP_SUFFIXES, FORMYL_PREFIX, ACYL_ENDING, RING_CARBONYL_ENDING,
-  BENZOYL_PREFIX, SUFFIX_CLASS_WORDS, ESTER_LINK, ESTER_ALKYL_JOIN, ACETYL_PREFIX,
+  BENZOYL_PREFIX, SUFFIX_CLASS_WORDS, ESTER_LINK, ESTER_ALKYL_JOIN, ACETYL_PREFIX, MAX_STEM,
 } from '../naming/lexicon.es.js';
 import {
   toTiles, TILES, TEMPLATES, templateGroupWord, groupPlural, tileById, POSITIONAL_IDS, PHENOL_ID, isAtomGroup, closingText,
@@ -571,21 +576,21 @@ import {
   isAcidTemplate, ACID_GROUP, ESTER_KIND, isEsterSuffix, ESTER_GROUP, BENZOATE_ID, ESTER_ALKYL_ID, isEsterTemplate,
   ACID_ESTER_TEMPLATES, isAcyloxyHead, NITRILE_KIND, BENZONITRILE_ID, NITRILE_GROUP, isNitrileTemplate, AMINE_KIND, isAmineSuffix,
   NITROGEN_ID, isAminoTile, isAmineTemplate, AMINE_GROUP, isAmineClassWord, AMIDE_KIND, isAmideSuffix, BENZAMIDE_ID,
-  isCarbamoylTile, AMIDE_GROUP, isAmideTemplate,
+  isCarbamoylTile, AMIDE_GROUP, isAmideTemplate, tileId,
 } from './tiles.js';
 import {
-  itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, iloTileOf, esterGroupsOf, isAminoNode, isNitrogenGroupNode,
+  assemble, itemText, isAlkoxyNode, isCompoundAlkoxy, alkoxyCore, iloTileOf, esterGroupsOf, isAminoNode, isNitrogenGroupNode,
 } from './assemble.js';
 
 /**
  * The syntactic error codes of design.md §15.6 handled by the parser (RING_ROOT, RING_SIZE from R-4a; BENZENE_BONDS
  * from R-4b; TEMPLATE_LOCANTS, POSITIONAL from R-4c; ETHER_GROUPS from R-5b2; ACID_WORD from R-5d1; ESTER_GROUPS,
- * ESTER_SUFFIX from R-6a1).
+ * ESTER_SUFFIX from R-6a1; MULT_AS_ROOT from I-55).
  */
 export const ERROR_CODES = Object.freeze([
   'EMPTY', 'NO_PARENT', 'ROOT_END', 'ENDS_WITH_BRANCH', 'BRANCH_OPEN', 'LOCANT_COUNT', 'LEGACY', 'TILE_ORDER',
   'RING_ROOT', 'RING_SIZE', 'BENZENE_BONDS', 'TEMPLATE_LOCANTS', 'POSITIONAL', 'ETHER_GROUPS', 'ACID_WORD', 'ESTER_GROUPS',
-  'ESTER_SUFFIX',
+  'ESTER_SUFFIX', 'MULT_AS_ROOT',
 ]);
 
 /** Fewest carbons of a ring (`ciclopropano`). */
@@ -1881,6 +1886,149 @@ function takeEsterEnding(state) {
 }
 
 /**
+ * The dialog rows of the roots and of the multipliers as the MULT_AS_ROOT
+ * message names them (I-55): the labels of name-builder.js ROWS, where the
+ * tiles' rows (tiles.js `row`: 'roots', 'multipliers') are shown.
+ */
+const ROOT_ROW = 'Raíces';
+const MULTIPLIER_ROW = '¿Cuántos?';
+
+/**
+ * Tells whether a tile is a multiplier that looks like a root (I-55): its
+ * text is the root of the same number plus the vowel the assembler adds
+ * before a multiplied ending (`hexa` = `hex` + `a`, as in
+ * `ciclohexa-1,3-dieno`). Computed from the lexicon: `penta` … `triaconta`;
+ * not `di`, `tri`, `tetra` (`et`, `prop`, `but`), nor `bis`, `tris`….
+ *
+ * @param {object|undefined} tile - A tile.
+ * @returns {boolean} True for a look-alike multiplier.
+ */
+export function isLookAlikeMultiplier(tile) {
+  return Boolean(tile) && tile.kind === 'mult' && tile.value <= MAX_STEM && tile.text === `${stem(tile.value)}${CONNECTING_VOWEL}`;
+}
+
+/**
+ * Tells whether a tile right after `ciclo` is a multiplier the reader takes
+ * for the ring's root (I-55, MULT_AS_ROOT): a simple multiplier of a ring
+ * size, `tri` … `triaconta` (`ciclo tri ano`, `ciclo hexa 1 eno`). `di`
+ * would make a ring too small and keeps RING_ROOT.
+ *
+ * @param {object|undefined} tile - The tile after `ciclo`.
+ * @returns {boolean} True when read as the ring's root.
+ */
+function isRingMultiplier(tile) {
+  return Boolean(tile) && tile.kind === 'mult' && tile.value >= MIN_RING && tile.value <= MAX_STEM;
+}
+
+/**
+ * Tells whether the tiles from a position are what follows a root in a
+ * chain (parseChain()): an ending (`octa ano`), an unsaturation segment
+ * with its numbers and multiplier (`hexa 1 eno`, `hexa 1 3 di eno`), or a
+ * branch's free-valence suffix, acyl ending or `ilo` with its numbers (`hexa
+ * il`, `hexa 2 il`, `hexa ilo`), after the chain's own endings or not (`hexa
+ * ano oil`, `penta 1 eno 3 il`). A multiplier with nothing of the sort after
+ * it counts groups (`hexa met il`, `hexa cloro`) or is out of place. With
+ * `branchOnly`, only a branch's ending counts, after the chain's endings or
+ * not (after numbers or a letter: `2 hexa il`, `6 penta 1 eno 3 il`; `1 3 5
+ * 7 9 penta eno` may be a root left out, as `1 3 di eno` is).
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {number} pos - The position right after the multiplier.
+ * @param {boolean} branchOnly - Only a branch's ending counts.
+ * @returns {boolean} True when they continue a root.
+ */
+function continuesRoot(tiles, pos, branchOnly) {
+  const kindAt = (i) => (i < tiles.length ? tiles[i].kind : null);
+  const isEnding = (i, saturated) => kindAt(i) === 'ending' && (tiles[i].value === 'saturated') === saturated;
+  /**
+   * The position after a run of locant tiles, as takeNums() reads them.
+   *
+   * @param {number} from - The first position.
+   * @returns {number} The position after them.
+   */
+  const afterNums = (from) => {
+    let i = from;
+    while (['num', 'closing', 'nitrogen'].includes(kindAt(i))) {
+      i += 1;
+    }
+    return i;
+  };
+  // The chain's own endings, as parseChain() reads them: `ano`, or segments `[numbers] [multiplier] eno|ino`.
+  let i = pos;
+  let ended = false;
+  if (isEnding(i, true)) {
+    i += 1;
+    ended = true;
+  } else {
+    for (;;) {
+      let j = afterNums(i);
+      j += kindAt(j) === 'mult' || kindAt(j) === 'cmult' ? 1 : 0;
+      if (!isEnding(j, false)) {
+        break;
+      }
+      i = j + 1;
+      ended = true;
+    } // End of the loop over the unsaturation segments
+  }
+  if (ended && !branchOnly) {
+    return true;
+  }
+  return ['freeValence', 'acyl', 'esterAlkyl'].includes(kindAt(afterNums(i))); // `il`, `iliden`, `oil`, `carbonil`, `ilo`
+} // End of function continuesRoot()
+
+/**
+ * The example of the MULT_AS_ROOT message (I-55): the student's own chain
+ * with the root tile in the multiplier's place (`ciclohex-1-eno`, `octano`,
+ * `ciclohexil`, `hexan-2-il`, `hexilo`); when that chain has no ending or
+ * suffix of its own, or another mistake of its own, the root with `ano`
+ * (`ciclohexano`), so the example never shows a mistake.
+ *
+ * @param {object[]} tiles - The tile sequence.
+ * @param {object} chain - The chain node, its `root` the multiplier tile.
+ * @param {boolean} clean - No other error was recorded while reading the chain.
+ * @returns {string} The example.
+ */
+function multAsRootExample(tiles, chain, clean) {
+  const n = tiles[chain.root].value;
+  if (!clean || (!chainEnded(chain) && chain.fv === null)) {
+    return `${chain.ring === null ? '' : RING_PREFIX}${stem(n)}${ANO}`;
+  }
+  const swapped = tiles.slice();
+  swapped[chain.root] = tileById(tileId('root', n));
+  const parent = {
+    type: 'parent', legacy: [], letter: null, legacyMultiplier: null, legacySegment: null, legacySuffix: false, chain, suffix: null,
+  };
+  return assemble({ type: 'name', tiles: swapped, suffixClass: null, items: [], parent, ester: null, trailing: [] }).text;
+} // End of function multAsRootExample()
+
+/**
+ * Records MULT_AS_ROOT (I-55) on a chain whose root is a multiplier tile,
+ * marking that tile: ««hexa», de la fila «¿Cuántos?», dice cuántos grupos
+ * iguales hay (hexametil). La raíz de seis carbonos es «hex», de la fila
+ * «Raíces»: ciclohex-1-eno.» After a look-alike with an unsaturation ending
+ * in its chain, one more sentence says where the `a` of
+ * `ciclohexa-1,3-dieno` comes from (the assembler adds it before the
+ * ending's multiplier).
+ *
+ * @param {object} state - Parser state.
+ * @param {object} chain - The chain node, read to its end, its `root` the multiplier tile.
+ * @param {boolean} clean - No other error was recorded while reading the chain.
+ * @returns {void}
+ */
+function addMultAsRoot(state, chain, clean) {
+  const tile = state.tiles[chain.root];
+  const n = tile.value;
+  const example = multAsRootExample(state.tiles, chain, clean);
+  let message = `«${tile.text}», de la fila «${MULTIPLIER_ROW}», dice cuántos grupos iguales hay (${tile.text}${EXAMPLES.metil}). `
+    + `La raíz de ${numberWord(n)} carbonos es «${stem(n)}», de la fila «${ROOT_ROW}»: ${example}.`;
+  if (chain.segments.length > 0 && isLookAlikeMultiplier(tile)) {
+    const dieno = `${chain.ring === null ? '' : RING_PREFIX}${stem(n)}${CONNECTING_VOWEL}-1,3-${multiplier(2)}${ENDINGS.double}`;
+    message += ` La «${CONNECTING_VOWEL}» de ${dieno} la pone la aplicación sola delante de «${multiplier(2)}».`;
+  }
+  addError(state, 'MULT_AS_ROOT', chain.root, chain.root + 1, message);
+} // End of function addMultAsRoot()
+
+/**
  * Parses a chain from its stem — a root, or `ciclo` and a root for a ring
  * (RING_ROOT when no root follows `ciclo`, RING_SIZE for a ring of fewer
  * than MIN_RING carbons) —, then `ano` or unsaturation segments, then the
@@ -1889,7 +2037,12 @@ function takeEsterEnding(state) {
  * ester's O-bound group (R-6a1, in the free-valence place: `metilo`,
  * `propan-2-ilo`) —, and the alkoxy ending `oxi` after them (R-5b).
  *
- * @param {object} state - Parser state (positioned on a root or `ciclo` tile).
+ * A multiplier in the root's place (I-55: after `ciclo`, isRingMultiplier();
+ * or where parseItem() saw a look-alike one start a chain) is read as the
+ * root of its number, so the rest of the chain parses as the student meant
+ * it, and MULT_AS_ROOT marks it once the chain is read (addMultAsRoot()).
+ *
+ * @param {object} state - Parser state (positioned on a root or `ciclo` tile, or a multiplier read as a root).
  * @returns {object} The chain node.
  */
 function parseChain(state) {
@@ -1899,7 +2052,7 @@ function parseChain(state) {
   if (at(state, 'ring')) {
     chain.ring = state.pos;
     state.pos += 1;
-    if (!at(state, 'root')) {
+    if (!at(state, 'root') && !isRingMultiplier(tiles[state.pos])) { // `ciclo hexa 1 eno` (I-55): read on as `ciclo hex 1 eno`
       chain.range = [start, state.pos];
       addError(state, 'RING_ROOT', chain.ring, chain.ring + 1, MESSAGES.RING_ROOT);
       return chain; // An unfinished ring: what follows is read on its own.
@@ -1910,6 +2063,7 @@ function parseChain(state) {
   }
   chain.root = state.pos;
   state.pos += 1;
+  const errorsBefore = state.errors.length; // MULT_AS_ROOT's example is the student's chain only when it adds no other error.
   if (at(state, 'ending', 'saturated')) {
     chain.ano = state.pos;
     state.pos += 1;
@@ -1942,6 +2096,9 @@ function parseChain(state) {
     state.pos = save;
   }
   chain.range = [start, state.pos];
+  if (tiles[chain.root].kind === 'mult') {
+    addMultAsRoot(state, chain, state.errors.length === errorsBefore); // `ciclo hexa 1 eno`, `octa ano` (I-55)
+  }
   return chain;
 } // End of function parseChain()
 
@@ -1986,7 +2143,8 @@ function checkAcyl(state, chain) {
  * Records ROOT_END for a chain without its ending (or, inside a compound
  * branch, without `il`): «Después de «but»…», «Después de «ciclohex»… si es
  * el anillo principal…» for a ring. Nothing for a `ciclo` without its root
- * (RING_ROOT says it).
+ * (RING_ROOT says it), nor for a multiplier read as the root (I-55:
+ * MULT_AS_ROOT's example shows the chain with its ending).
  *
  * In an ester's O-bound side (R-6a1) the chain is the O-bound group or a
  * branch of it: «Después de «met» va «ilo» si es el grupo unido al
@@ -1998,8 +2156,8 @@ function checkAcyl(state, chain) {
  * @returns {void}
  */
 function addRootEnd(state, chain, ester = false) {
-  if (chain.root === null) {
-    return;
+  if (chain.root === null || state.tiles[chain.root].kind === 'mult') {
+    return; // RING_ROOT says it; MULT_AS_ROOT (I-55) too, its example being the chain with an ending (`ciclohexano`).
   }
   const ring = chain.ring !== null;
   const word = `${ring ? state.tiles[chain.ring].text : ''}${state.tiles[chain.root].text}`;
@@ -2485,6 +2643,11 @@ function wholeWordHint(tile, ester = false) {
  * chain or ring without free valence, `benceno`, `fenol` or a template, with
  * its suffix), or a tile that cannot start either (a stray; also `benceno`,
  * `fenol` or a template inside a compound branch, and `ol` before a parent).
+ * A look-alike multiplier that starts a chain (I-55, MULT_AS_ROOT: `octa
+ * ano`, `hexa 1 eno`, `hexa il`; after numbers or a letter only before a
+ * branch's ending, `2 hexa il`, `6 penta 1 eno 3 il`), or right after a
+ * multiplier of its own (`di hexa il`, which keeps its `di`), is read as its
+ * root, in every context.
  *
  * In an ester's O-bound side (R-6a1, context 'ester') the items are read as
  * inside a compound branch (no parent: whole words are strays), the O-bound
@@ -2519,7 +2682,21 @@ function parseItem(state, context) {
   }
   const locants = takeNums(state);
   const letter = takeLetter(state);
-  const mult = takeMultiplier(state);
+  let mult = takeMultiplier(state);
+  // MULT_AS_ROOT (I-55): a look-alike multiplier with what follows a root after it (`octa ano`, `hexa 1 eno`, `hexa il`;
+  // after numbers or a letter, only a branch's ending: `2 hexa il`, `6 penta 1 eno 3 il`) was taken for the root;
+  // parseChain() reads it as that root and records the error. Not `hexa met il` (a multiplier), nor `1 3 di eno` (a root
+  // left out).
+  let multRoot = mult !== null && isLookAlikeMultiplier(tiles[mult])
+    && continuesRoot(tiles, mult + 1, locants.length > 0 || letter !== null);
+  if (multRoot) {
+    state.pos = mult;
+    mult = null;
+  } else if (mult !== null && isLookAlikeMultiplier(tiles[state.pos]) && continuesRoot(tiles, state.pos + 1, false)) {
+    // After a multiplier of its own (two in a row never read), the root: `di hexa il éter`, `2 3 di hexa il but ano`; before a
+    // parent's ending the multiplier keeps the error it has before a root (`di hexa ano` as `di hex ano`).
+    multRoot = true;
+  }
   const prefix = { type: 'prefix', locants, letter, multiplier: mult, substituent: null, range: [start, state.pos] };
   const next = tiles[state.pos];
   if (next && next.kind === 'benzene' && context === 'name') {
@@ -2534,7 +2711,7 @@ function parseItem(state, context) {
   if (state.pos > start && startsAmineClass(state, next, context)) {
     return makeClassParent(state, locants, letter, mult, start); // `metil 2 amina`, `metil di amina` (R-6c3): TILE_ORDER there.
   }
-  if (!next || !['start', 'retained', 'halogen', 'hydroxy', 'carbonyl', 'root', 'ring'].includes(next.kind)) {
+  if (!multRoot && (!next || !['start', 'retained', 'halogen', 'hydroxy', 'carbonyl', 'root', 'ring'].includes(next.kind))) {
     if (next) {
       addTileOrder(state, start, state.pos, HINTS[first.kind]); // numbers, a letter or a multiplier with no branch after them
     }
@@ -3401,7 +3578,8 @@ function startsEsterSide(tiles, parent, pos) {
  * errors (design.md §15.5.1, §15.6). Never throws on a tile sequence.
  *
  * @param {(string|object)[]} sequence - Tile ids or catalogue tiles (tiles.js).
- * @returns {{tree: object, errors: {code: string, from: number, to: number, message: string}[]}} The tree and the errors, by position.
+ * @returns {{tree: object, errors: {code: string, from: number, to: number, message: string}[]}} The tree and the errors, by position
+ *   (a MULT_AS_ROOT before the errors of a larger unit that holds its tile, multAsRootFirst()).
  * @throws {Error} Only for an unknown tile id.
  */
 export function parse(sequence) {
@@ -3475,5 +3653,27 @@ export function parse(sequence) {
   const errors = state.errors.map((error, i) => ({ error, i }))
     .sort((a, b) => a.error.from - b.error.from || a.i - b.i)
     .map(({ error }) => error);
-  return { tree, errors };
+  return { tree, errors: multAsRootFirst(errors) };
 } // End of function parse()
+
+/**
+ * Moves each MULT_AS_ROOT error (I-55) before the errors of a larger unit
+ * that holds its tile — `2 hexa il` alone: ENDS_WITH_BRANCH over the whole
+ * prefix starts at the `2` —, so the message about the tile the student
+ * took for a root comes first; errors wholly before it keep their place.
+ *
+ * @param {{code: string, from: number, to: number}[]} errors - The errors, sorted by position.
+ * @returns {object[]} The same errors, reordered.
+ */
+function multAsRootFirst(errors) {
+  const out = [...errors];
+  for (const error of errors.filter((e) => e.code === 'MULT_AS_ROOT')) {
+    const from = out.indexOf(error);
+    const to = out.findIndex((e) => e.from <= error.from && error.from < e.to);
+    if (to < from) {
+      out.splice(from, 1);
+      out.splice(to, 0, error);
+    }
+  } // End of the loop over the MULT_AS_ROOT errors
+  return out;
+} // End of function multAsRootFirst()
